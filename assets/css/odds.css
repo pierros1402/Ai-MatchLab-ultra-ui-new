@@ -1,0 +1,469 @@
+/* =========================================================
+   AI MatchLab ULTRA — Odds Intelligence Center Panels
+   Clean consolidated version (no duplicates)
+   Layout: vertical bookmakers, horizontal odds
+   Global Market Bar on right of title
+========================================================= */
+
+/* ---- Title Row / Market Bar ---- */
+.oic-titlebar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.oic-marketbar{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-left:auto;
+}
+
+.oic-marketbar .oic-tab{
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.15);
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.oic-marketbar .oic-tab:hover{
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.28);
+  transform:translateY(-1px);
+}
+.oic-marketbar .oic-tab.is-active{
+  font-weight:900;
+  border-color:rgba(255,255,255,.35);
+  background:rgba(255,255,255,.08);
+}
+
+/* ---- Panel Surface ---- */
+.odds-surface{
+  padding:12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.20);
+  margin-bottom:16px;
+}
+
+/* ---- Odds Rows ---- */
+.odds-row2{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:14px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.odds-row2:last-child{border-bottom:none;}
+
+.odds-bm{
+  min-width:170px;
+  max-width:220px;
+  font-weight:900;
+  opacity:.95;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.odds-cells2{
+  display:flex;
+  gap:16px;
+  flex-wrap:nowrap;
+  justify-content:flex-end;
+  overflow:hidden;
+}
+
+.odds-cell2{
+  display:flex;
+  gap:6px;
+  align-items:baseline;
+  min-width:160px;
+}
+
+.odds-cell2 .k{font-weight:900;opacity:.85;}
+.odds-cell2 .o{opacity:.70;}
+.odds-cell2 .arr{opacity:.60;}
+.odds-cell2 .c{font-weight:950;}
+.odds-cell2 .d{margin-left:4px;font-weight:900;opacity:.9;}
+.odds-cell2 .d.hot{text-decoration:underline;text-underline-offset:3px;}
+
+/* ---- Typography / Spacing ---- */
+.odds-surface,
+.odds-row2,
+.odds-cell2,
+.odds-bm{
+  font-size:13px;
+}
+.odds-cell2 .k,
+.odds-cell2 .d{
+  font-size:12px;
+}
+
+/* ---- Empty / Offline ---- */
+.odds-empty{
+  opacity:.85;
+  padding:6px 2px;
+}
+.odds-note{opacity:.75;}
+
+/* ---- Scroll reach for Betfair ---- */
+#betfair-odds-body{
+  scroll-margin-bottom:140px;
+}
+
+/* ---- Ensure center column scrolls properly ---- */
+.center-column{
+  overflow-y:auto;
+  overflow-x:hidden;
+  min-height:0;
+  min-width:0;
+  padding-bottom:140px;
+}
+/* =========================================================
+   TEMP FIX — hide redundant line in AI Radar panel
+========================================================= */
+#panel-ai-radar .odds-card-header .odds-card-title,
+#panel-ai-radar .odds-card-header h3,
+#panel-ai-radar .odds-card-header span {
+  display: none !important;
+}
+/* =========================================================
+   CLEANUP — Remove demo header line from AI Radar
+========================================================= */
+#panel-ai-radar .right-card-header .panel-title,
+#panel-ai-radar .right-card-header .odds-card-title,
+#panel-ai-radar .right-card-header h3,
+#panel-ai-radar .right-card-header span {
+  display: none !important;
+}
+/* ==========================================================
+   CENTER ODDS COLORING (Opening -> Current), accent-aware
+========================================================== */
+
+html{
+  --accent-positive:#22c55e;
+  --accent-negative:#ef4444;
+}
+
+/* Το “κουτί” που περιέχει O→C */
+.oc-chip[data-delta]{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:4px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  transition: background .2s ease, border-color .2s ease, transform .1s ease;
+}
+
+/* pos / neg */
+.oc-chip[data-sign="pos"]{
+  border-color: rgba(34,197,94,0.35);
+  background: rgba(34,197,94,0.10);
+}
+.oc-chip[data-sign="neg"]{
+  border-color: rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.10);
+}
+
+/* intensity tiers */
+.oc-chip[data-intense="true"]{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06) inset,
+    0 8px 16px rgba(0,0,0,0.22);
+  background: rgba(255,255,255,0.06);
+}
+.oc-chip[data-critical="true"]{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.10) inset,
+    0 12px 24px rgba(0,0,0,0.30);
+  background: rgba(255,255,255,0.08);
+}
+
+.oc-chip:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.10);
+}
+
+/* προαιρετικά: μικρό badge του Δ */
+.oc-chip .oc-delta{
+  font-weight:700;
+  opacity:0.9;
+}
+.oc-chip[data-sign="pos"] .oc-delta{ color: var(--accent-positive); }
+.oc-chip[data-sign="neg"] .oc-delta{ color: var(--accent-negative); }
+/* prettier O→C chips spacing */
+.oc-chip {
+  padding: 4px 10px;
+  font-weight: 800;
+}
+.oc-chip .oc-o,
+.oc-chip .oc-c {
+  font-size: 13px;
+  font-weight: 900;
+}
+.oc-chip .oc-arrow {
+  opacity: 0.7;
+  font-weight: 700;
+}
+.oc-chip .oc-delta {
+  margin-left: 8px;
+  font-weight: 900;
+}
+/* ==========================================================
+   FIX — Odds probability coloring
+   Odds DOWN (delta neg) => GREEN
+   Odds UP   (delta pos) => RED
+========================================================== */
+
+/* Invert pos/neg meaning for odds probability */
+.oc-chip[data-sign="pos"]{
+  /* odds increased => red */
+  border-color: rgba(239,68,68,0.35) !important;
+  background: rgba(239,68,68,0.10) !important;
+}
+
+.oc-chip[data-sign="neg"]{
+  /* odds decreased => green */
+  border-color: rgba(34,197,94,0.35) !important;
+  background: rgba(34,197,94,0.10) !important;
+}
+
+/* Delta text color follows same logic */
+.oc-chip[data-sign="pos"] .oc-delta{ color: var(--accent-negative, #ef4444) !important; }
+.oc-chip[data-sign="neg"] .oc-delta{ color: var(--accent-positive, #22c55e) !important; }
+/* Active Match Bar — Market selector (Tab Markets) */
+#active-match-bar .amb-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+#active-match-bar .amb-title{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#active-match-bar .amb-market-select{
+  flex: 0 0 auto;
+  max-width: 44vw;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  font-weight: 800;
+  outline: none;
+}
+
+@media (max-width: 900px){
+  #active-match-bar .amb-market-select{ max-width: 52vw; }
+}
+/* =========================================================
+   MOBILE-ONLY FIX
+   Desktop: dropdown στο Active Match Bar
+   Mobile: market tabs στο Odds Intelligence Center
+========================================================= */
+
+/* Tabs κρυφά στο desktop (default) */
+.oic-marketbar {
+  display: none;
+}
+
+/* Mobile behaviour */
+@media (max-width: 900px) {
+  /* Εμφανίζουμε tabs μόνο στο mobile */
+  .oic-marketbar {
+    display: inline-flex;
+  }
+}
+/* ===============================
+   MARKETS TABS — ACTIVE MATCH BAR
+================================ */
+
+#active-match-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#active-match-bar .amb-right {
+  display: flex;
+  align-items: center;
+}
+
+/* Tabs container */
+.markets-bar {
+  display: flex;
+  gap: 6px;
+  background: rgba(255,255,255,0.04);
+  padding: 4px;
+  border-radius: 10px;
+}
+
+/* Individual tab */
+.market-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #cfd6ff;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+
+.market-btn:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.market-btn.active {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  font-weight: 600;
+}
+/* =========================================================
+   ODDS INTELLIGENCE CENTER – FINAL STYLES
+   ========================================================= */
+
+/* ---------- Active Match Bar ---------- */
+
+#active-match-bar {
+  position: sticky;
+  top: 48px; /* κάτω από τον main header */
+  z-index: 30;
+  background: linear-gradient(180deg, #0f1724, #0b1220);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+#active-match-bar .amb-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.market-select {
+  background: #111a2a;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+/* ---------- Panels ---------- */
+
+.odds-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.odds-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+}
+
+/* ---------- Odds Table ---------- */
+
+.odds-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.odds-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #0e1626;
+  color: #9fb3d1;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+
+.odds-table th,
+.odds-table td {
+  padding: 8px 10px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.odds-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.odds-table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+/* ---------- Columns ---------- */
+
+.odds-table .col-book {
+  text-align: left;
+  font-weight: 600;
+  color: #ffffff;
+  width: 160px;
+}
+
+.odds-table .col-odd {
+  width: auto;
+  color: #dbe7ff;
+}
+
+/* ---------- Empty / Placeholder ---------- */
+
+.odds-table td:contains("—") {
+  color: rgba(255,255,255,0.35);
+}
+
+/* ---------- Scrollbars ---------- */
+
+.odds-panel-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.odds-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 4px;
+}
+
+.odds-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* ===== Odds Intelligence Center Sticky Layout ===== */
+
+/* Το wrapper του Odds Intelligence Center */
+#odds-intelligence-center {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Το Active Match Bar κολλάει ΚΑΤΩ από τον τίτλο */
+#active-match-bar {
+  position: sticky;
+  top: 0;              /* σχετικό με το OIC header */
+  z-index: 20;
+  background: linear-gradient(180deg, #0f1724, #0b1220);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ΜΟΝΟ τα panels κάνουν scroll */
+.odds-card-body {
+  overflow-y: auto;
+  flex: 1;
+}

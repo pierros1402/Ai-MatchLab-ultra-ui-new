@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-accent="default">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI MatchLab ULTRA</title>
+
+  <meta name="theme-color" content="#050711" />
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <link rel="stylesheet" href="/assets/css/matches.css" />
+  <link rel="stylesheet" href="/assets/css/odds.css" />
+  <link rel="stylesheet" href="/assets/css/skin-premium.css" />
+  <link rel="stylesheet" href="/assets/css/right-panels.css" />
+</head>
+
+<body>
+
+<!-- ================= TOPBAR ================= -->
+<header class="app-topbar">
+  <div class="topbar-center">
+    <div class="brand-title">AI MatchLab ULTRA</div>
+  </div>
+</header>
+
+<!-- ================= MAIN GRID ================= -->
+<div class="app-shell">
+  <main class="app-main">
+
+    <!-- LEFT -->
+<aside id="left-panel" class="app-panel">
+  <div class="panel-header">
+    <div class="panel-title">Today</div>
+  </div>
+  <div class="panel-body">
+    <div id="today-list"></div>
+  </div>
+
+  <div class="panel-header">
+    <div class="panel-title">Active Leagues Today</div>
+  </div>
+  <div class="panel-body">
+    <div id="active-leagues-list"></div>
+  </div>
+
+  <div class="panel-header">
+    <div class="panel-title">Saved</div>
+  </div>
+  <div class="panel-body">
+    <div id="saved-list"></div>
+  </div>
+</aside>
+
+
+    <!-- CENTER -->
+    <section id="center-panel" class="app-panel">
+      <div class="panel-header">
+        <div class="panel-title">Odds Intelligence Center</div>
+      </div>
+      <div class="panel-body">
+        <div class="active-match-bar" id="active-match-bar">
+          <div id="amb-title">No match selected</div>
+        </div>
+
+        <div class="odds-grid">
+          <div id="greek-odds-body"></div>
+          <div id="eu-odds-body"></div>
+          <div id="asian-odds-body"></div>
+          <div id="betfair-odds-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <aside id="right-panel" class="app-panel">
+      <div class="panel-header">
+        <div class="panel-title">Intelligence Panels</div>
+      </div>
+      <div class="panel-body">
+        <div id="radar-list"></div>
+        <div id="picks-list"></div>
+        <div id="value-picks-list"></div>
+        <div id="live-list"></div>
+      </div>
+    </aside>
+
+  </main>
+</div>
+
+<!-- CORE APP / EVENT BUS (ΧΩΡΙΣ DEFER) -->
+<script src="/assets/js/ui/app.js"></script>
+
+<script>
+  window.AIML_LIVE_CFG = {
+    emitToday: true,
+    emitLive: true,
+    timezone: "Europe/Athens",
+    fixturesBase: "https://aimatchlab-main-worker.pierros1402.workers.dev",
+    fixturesPath: "/fixtures",
+    fixturesScope: "all"
+  };
+</script>
+
+<!-- CORE STATE -->
+<script src="/assets/js/state.js"></script>
+
+<!-- LEFT PANELS -->
+<script src="/assets/js/ui/today-panel.js"></script>
+<script src="/assets/js/ui/active-leagues-panel.js"></script>
+<script src="/assets/js/ui/saved-store.js"></script>
+<script src="/assets/js/ui/saved-panel.js"></script>
+
+<!-- LIVE -->
+<script src="/assets/js/live/live-engine.js"></script>
+<script src="/assets/js/live/fixtures-loader.js"></script>
+
+<!-- ODDS -->
+<script src="/assets/js/live/odds-engine.js"></script>
+<script src="/assets/js/ui/odds-panels.js"></script>
+
+<!-- RIGHT -->
+<script src="/assets/js/right-panels.js"></script>
+<script src="/assets/js/ui/odds-radar.js"></script>
+<script src="/assets/js/ui/top-picks.js"></script>
+<script src="/assets/js/ui/value-picks.js"></script>
+</body>
+</html>

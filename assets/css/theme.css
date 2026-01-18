@@ -1,0 +1,144 @@
+/* =========================================================
+   AI MatchLab ULTRA — THEME TOKENS
+   Dark/Light + Accents (vibrant dual-tone + WOW glows)
+========================================================= */
+
+/* ---------- DARK (default) ---------- */
+html{
+  color-scheme: dark;
+
+  /* Background layers */
+  --bg0: #05070c;
+  --bg1: #070b12;
+  --bg2: #0b1220;
+
+  /* Glass panels */
+  --panel: rgba(12, 18, 30, 0.72);
+  --panel-2: rgba(10, 14, 22, 0.86);
+  --panel-solid: #0a0f18;
+
+  /* Text */
+  --text: rgba(245, 248, 255, 0.96);
+  --muted: rgba(245, 248, 255, 0.68);
+
+  /* Lines / separators */
+  --line: rgba(255,255,255,0.10);
+  --line-2: rgba(255,255,255,0.14);
+
+  /* Accent (Blue / Orange) */
+  --accent: #38b6ff;
+  --accent-2: #ff6a00;
+
+  /* Default glow / ring (balanced) */
+  --glow:  color-mix(in srgb, var(--accent) 55%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 55%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 52%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 44%, transparent);
+
+  /* Shadows */
+  --shadow: 0 14px 34px rgba(0,0,0,0.35);
+  --shadow-2: 0 10px 24px rgba(0,0,0,0.26);
+
+  /* Radius scale */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+}
+
+/* ---------- LIGHT ---------- */
+html.light{
+  color-scheme: light;
+
+  --bg0: #f6f8ff;
+  --bg1: #eef3ff;
+  --bg2: #e7efff;
+
+  --panel: rgba(255, 255, 255, 0.72);
+  --panel-2: rgba(255, 255, 255, 0.88);
+  --panel-solid: #ffffff;
+
+  --text: rgba(18, 24, 38, 0.96);
+  --muted: rgba(18, 24, 38, 0.62);
+
+  --line: rgba(18,24,38,0.10);
+  --line-2: rgba(18,24,38,0.14);
+
+  --accent: #2aa9ff;
+  --accent-2: #ff6a00;
+
+  --glow:  color-mix(in srgb, var(--accent) 55%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 55%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 52%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 44%, transparent);
+
+  --shadow: 0 14px 34px rgba(16,24,40,0.14);
+  --shadow-2: 0 10px 24px rgba(16,24,40,0.10);
+}
+
+/* ---------- ACCENTS (data-accent overrides) ---------- */
+
+/* Default: more orange, balanced glow */
+html[data-accent="default"]{
+  --accent:#38b6ff;
+  --accent-2:#ff6a00;
+  --glow:  color-mix(in srgb, var(--accent) 58%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 60%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 54%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 48%, transparent);
+}
+
+/* Green-Gold: richer gold presence */
+html[data-accent="green-gold"]{
+  --accent:#19e3a3;
+  --accent-2:#ffd400;
+  --glow:  color-mix(in srgb, var(--accent) 62%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 62%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 58%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 50%, transparent);
+}
+
+/* Red-Silver: crisp “ice” secondary (keep controlled to avoid washout) */
+html[data-accent="red-silver"]{
+  --accent:#ff3b5c;
+  --accent-2:#e9f1ff;
+  --glow:  color-mix(in srgb, var(--accent) 60%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 52%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 56%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 44%, transparent);
+}
+
+/* Purple-Aqua: WOW neon (stronger secondary glow + ring) */
+html[data-accent="purple-aqua"]{
+  --accent:#a775ff;
+  --accent-2:#00f0ff;
+  --glow:  color-mix(in srgb, var(--accent) 68%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 72%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 62%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 58%, transparent);
+}
+
+/* Black-Lime: WOW contrast (lime + saturated cyan-blue) */
+html[data-accent="black-lime"]{
+  --accent:#b7ff2a;
+  --accent-2:#00b8ff;
+  --glow:  color-mix(in srgb, var(--accent) 70%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 68%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 64%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 56%, transparent);
+}
+
+/* Minimal classic */
+html[data-accent="minimal"]{
+  --accent:#8aa2c6;
+  --accent-2:#6f7f98;
+  --glow:  color-mix(in srgb, var(--accent) 50%, transparent);
+  --glow2: color-mix(in srgb, var(--accent-2) 46%, transparent);
+  --ring:  color-mix(in srgb, var(--accent) 46%, transparent);
+  --ring-2:color-mix(in srgb, var(--accent-2) 40%, transparent);
+}
+
+/* ---------- Common focus styles ---------- */
+:focus-visible{
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}

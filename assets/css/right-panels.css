@@ -1,0 +1,334 @@
+/* =========================================================
+   AI MatchLab ULTRA — RIGHT PANELS (STACK + BIG CARDS)
+   - Bigger cards (~2x) with outer scroll
+   - Single scroll per card: .right-card-body
+   - Value header: title single-line, button+meta below
+========================================================= */
+
+#right-panel{ min-height:0; }
+
+/* Outer scroll container (STACK) */
+#right-panel > .panel-body{
+  flex: 1 1 auto;
+  min-height: 0;
+
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px;
+}
+
+/* Card (bigger) */
+#right-panel .right-card{
+  flex: 0 0 auto;
+  height: clamp(260px, 34vh, 420px); /* αντί για min-height */
+  min-height: 0;
+
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: color-mix(in srgb, rgba(10,14,22,0.86) 92%, transparent);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.22);
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header (generic) */
+#right-panel .right-card-header{
+  flex: 0 0 auto;
+
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: relative;
+}
+
+/* Single underline (source of truth) */
+#right-panel .right-card-header::after{
+  content: "";
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+  width: 88px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(61,184,255,.95), rgba(255,140,0,.92));
+}
+
+/* Title */
+#right-panel .right-card-header .panel-title{
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+/* Meta + button (generic helpers) */
+#right-panel .right-meta{
+  font-size: 12px;
+  opacity: 0.72;
+  white-space: nowrap;
+  font-weight: 900;
+}
+
+#right-panel .right-btn{
+  appearance:none;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.05);
+  color: inherit;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+}
+#right-panel .right-btn:hover{ background: rgba(255,255,255,0.10); }
+#right-panel .right-btn:active{ transform: translateY(1px); }
+
+#right-panel .hidden{ display:none !important; }
+
+/* Body = the ONLY inner scroll */
+#right-panel .right-card-body{
+  flex: 1 1 auto;
+  min-height: 0;
+
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+
+  padding: 10px 12px 12px;
+}
+
+/* Lists */
+#right-panel .right-list{
+  display: grid;
+  gap: 10px;
+}
+
+/* Items */
+#right-panel .right-item{
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+  transition: background .20s ease, border-color .20s ease, transform .10s ease;
+}
+#right-panel .right-item:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.10);
+}
+
+/* Directional coloring (odds drop=green, rise=red) */
+#panel-radar .right-item.up,
+#panel-top-picks .right-item.up{
+  border-left: 4px solid #22c55e;
+  background: rgba(34,197,94,0.10);
+  color: #22c55e;
+}
+#panel-radar .right-item.down,
+#panel-top-picks .right-item.down{
+  border-left: 4px solid #ef4444;
+  background: rgba(239,68,68,0.10);
+  color: #ef4444;
+}
+
+/* =====================================================
+   TOP PICKS (your existing 2-line header stays)
+===================================================== */
+#card-top-picks .right-card-header.right-header-2lines{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+  padding-top:10px;
+  padding-bottom:10px;
+}
+#card-top-picks .rheader-line2{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  width:100%;
+  gap:10px;
+}
+
+/* =====================================================
+   VALUE — requested layout
+   - Title: single-line (no wrap)
+   - Button + meta: below title (2nd line)
+   - No inner scroll on #value-picks-list
+===================================================== */
+
+/* Make Value header 2-line */
+#panel-value-picks .right-card-header{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+
+/* Force title in one line (in “ευθεία”) */
+#panel-value-picks .right-card-header .panel-title{
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Second line container comes from JS: #value-picks-meta -> .rheader-line2 */
+#value-picks-meta{
+  width: 100%;
+}
+
+#value-picks-meta .rheader-line2{
+  display:flex;
+  align-items:center;
+  width:100%;
+  gap:10px;
+}
+
+/* Keep button where it is; push meta far-right */
+#value-picks-meta .rheader-line2 .right-meta{
+  margin-left:auto;
+  text-align:right;
+}
+
+/* Kill any inner list scroll (only card-body scrolls) */
+#value-picks-list{
+  max-height:none !important;
+  overflow:visible !important;
+}
+/* ===== FINAL INLINE HISTORY BUTTON (Right of Intelligence Panels title) ===== */
+#btn-history-viewer {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+  z-index: 10;
+}
+#btn-history-viewer:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.4);
+}
+/* Disable absolute positioning when anchored manually in header */
+[data-aiml-hv-anchor="1"] #btn-history-viewer {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  transform: none !important;
+  margin-left: auto !important;
+}
+#right-panels-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 12px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  position:relative;
+}
+
+#right-panels-header .panel-title {
+  font-weight:800;
+  font-size:15px;
+}
+
+#right-panels-header #btn-history-viewer {
+  position:relative !important;
+  margin-left:auto;
+}
+/* =========================================================
+   AI MatchLab ULTRA — Right Panel Tabs (FINAL)
+   - Stable panel titles
+   - Tabs for AI Radar / Top Picks
+   - Value & Live remain unchanged
+   - Desktop-safe, Mobile-friendly
+========================================================= */
+
+/* ---------- Tabs container ---------- */
+.right-tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+/* ---------- Tab buttons ---------- */
+.right-tab {
+  appearance: none;
+  border: none;
+  cursor: pointer;
+
+  padding: 4px 10px;
+  font-size: 13px;
+  line-height: 1.2;
+  border-radius: 6px;
+
+  background: rgba(255,255,255,0.06);
+  color: #cfd6df;
+
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.right-tab:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.right-tab.active {
+  background: transparent;
+  color: #ffffff;
+  border-bottom: 2px solid var(--accent);
+  border-radius: 0;
+}
+
+/* ---------- Panel header alignment ---------- */
+#right-panels-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* ---------- Mobile polish ---------- */
+@media (max-width: 900px) {
+
+  #right-panels-header {
+    padding-bottom: 6px;
+  }
+
+  .right-tabs {
+    width: 100%;
+  }
+
+  .right-tab {
+    flex: 1;
+    text-align: center;
+  }
+}
+/* =========================================================
+   RIGHT PANEL — CLEAN SECTION TITLE
+   Remove buttons & tabs ONLY from title
+========================================================= */
+
+/* Hide View History button ONLY in the title */
+#right-panels-header #btn-history-viewer {
+  display: none !important;
+}
+
+/* Hide tabs ONLY if they appear inside the title */
+#right-panels-header .right-tabs {
+  display: none !important;
+}
+.conf-badge { margin-left:6px; font-size:11px; padding:2px 6px; border-radius:10px; }
+.conf-high { background:#1f8f4e; color:#fff; }
+.conf-med  { background:#b88a1d; color:#fff; }
+.conf-low  { background:#6c757d; color:#fff; }
