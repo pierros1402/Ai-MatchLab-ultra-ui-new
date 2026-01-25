@@ -1,9 +1,8 @@
 /* assets/js/mobile-ui.js
    FINAL MOBILE UI
-   - Tabs (LEFT / ODDS / RIGHT)
+   - Tabs (LEFT / ODDS / RIGHT) with "hide active tab"
    - LEFT panels open/close (mobile)
    - RIGHT panels open/close (mobile)
-   - Robust: reboots when switching between desktop/mobile widths
 */
 
 (function () {
@@ -17,13 +16,20 @@
     return MQ && MQ.matches;
   }
 
+  function updateTabs(view) {
+    document.querySelectorAll(".mobile-tab").forEach((b) => {
+      const active = b.dataset.view === view;
+      b.classList.toggle("active", active);
+
+      // ✅ Hide the current view button (show only the other 2)
+      b.style.display = active ? "none" : "inline-flex";
+    });
+  }
+
   function setView(view) {
     document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
     document.body.classList.add("mobile-view-" + view);
-
-    document.querySelectorAll(".mobile-tab").forEach((b) => {
-      b.classList.toggle("active", b.dataset.view === view);
-    });
+    updateTabs(view);
   }
 
   function initTabs() {
@@ -52,7 +58,6 @@
     if (leftCol.dataset.bound === "1") return;
     leftCol.dataset.bound = "1";
 
-    // Init: hide all bodies except Today
     panels.forEach((p) => {
       const body = p.querySelector(".panel-body");
       if (!body) return;
@@ -78,7 +83,6 @@
 
       const wasOpen = !body.hidden;
 
-      // Single-open behavior
       panels.forEach((p) => {
         const b = p.querySelector(".panel-body");
         if (!b) return;
@@ -86,7 +90,6 @@
         p.classList.remove("open");
       });
 
-      // Toggle current
       body.hidden = wasOpen;
       panel.classList.toggle("open", !body.hidden);
     });
@@ -108,7 +111,6 @@
       const panel = header.closest(".intelligence-panel");
       if (!panel) return;
 
-      // single-open behavior
       right.querySelectorAll(".intelligence-panel.open").forEach((p) => {
         if (p !== panel) p.classList.remove("open");
       });
@@ -116,7 +118,6 @@
       panel.classList.toggle("open");
     });
 
-    // default open Radar
     const first = right.querySelector(".intelligence-panel");
     if (first) first.classList.add("open");
   }
@@ -128,17 +129,15 @@
     initLeftAccordionMobile();
     initRightAccordionMobile();
 
-    // default view always left on entry
+    // default view
     setView("left");
   }
 
   function onReady() {
     boot();
 
-    // if resize crosses breakpoint, re-boot
     if (MQ && MQ.addEventListener) {
       MQ.addEventListener("change", () => {
-        // when entering mobile, boot again
         if (isMobile()) boot();
       });
     }
@@ -150,7 +149,5 @@
     onReady();
   }
 
-  // Debug API
   window.AIML_MOBILE_SET_VIEW = setView;
-
 })();
