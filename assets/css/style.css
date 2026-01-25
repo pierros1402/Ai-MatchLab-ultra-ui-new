@@ -1,35 +1,568 @@
-html, body {
+/* =========================================================
+   AI MATCHLAB ULTRA — style.css (CLEANED)
+   - Layout framework (Desktop 30/40/30 + Mobile stacking)
+   - Scroll policy (Left & Right outer scroll)
+   - Header sizing unification
+   - Left lists: Active/Saved row layout + League separators
+========================================================= */
+
+
+/* =========================================================
+   GLOBAL RESET / BASE
+========================================================= */
+
+*{ box-sizing:border-box; }
+
+html, body{
   height: 100%;
   margin: 0;
+  padding: 0;
+  overflow: hidden; /* ✅ app controls scroll */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-#app,
-.app-shell {
-  height: 100%;
+body{
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
+/* =========================================================
+   TOPBAR (LAYOUT ONLY)
+========================================================= */
+
+:root{
+  --topbar-height: 56px;
+
+  /* Header sizing tokens (main + subheaders) */
+  --panelHeaderMinH: 56px;
+  --panelHeaderPadY: 14px;
+  --panelHeaderPadX: 16px;
+
+  --panelHeaderTitleSize: 22px;
+  --panelHeaderTitleWeight: 800;
+  --panelHeaderTitleLetter: 0.2px;
+
+  --subHeaderMinH: 44px;
+  --subHeaderPadY: 10px;
+  --subHeaderPadX: 16px;
+
+  --subHeaderTitleSize: 18px;
+  --subHeaderTitleWeight: 800;
+  --subHeaderTitleLetter: 0.15px;
+}
+
+#topbar{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--topbar-height);
+  z-index: 1000;
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+
+  padding: 0 12px;
+}
+
+.topbar-left{
   display: flex;
-  flex-direction: column;
+  align-items: center;
+}
+.topbar-center{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+.topbar-right{
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
 
-/* TOPBAR */
-.app-topbar {
-  flex: 0 0 auto;
+.topbar-btn{
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  font-size: 14px;
 }
 
-/* MAIN GRID */
-.app-main {
-  flex: 1 1 auto;
+
+/* =========================================================
+   APP ROOT / GRID (DESKTOP)
+========================================================= */
+
+.app{
+  position: absolute;
+  top: var(--topbar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+
   display: grid;
   grid-template-columns: 30% 40% 30%;
-  gap: 12px;
-  padding: 12px;
   overflow: hidden;
 }
 
-/* PANELS */
-#left-panel,
-#center-panel,
-#right-panel {
+
+/* =========================================================
+   COLUMNS (DESKTOP)
+========================================================= */
+
+.left-column,
+.center-column,
+.right-column{
   height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* ✅ critical for nested scrolling */
+}
+
+/* Left column frame */
+.left-column{
+  border-right: 1px solid var(--line, rgba(255,255,255,0.06));
+}
+
+/* Center column frame */
+.center-column{
+  overflow: hidden;
+  border-right: 1px solid var(--line, rgba(255,255,255,0.06));
+}
+
+/* =========================================================
+   OUTER SCROLL POLICY
+   ✅ Right column always outer-scroll
+   ✅ Left column outer-scroll (so you can reach Matches/Saved)
+========================================================= */
+
+#right-panel,
+.right-column{
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.left-column{
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Keep accordion flexible */
+.left-column .accordion{
+  min-height: 0;
+}
+
+/* Optional: allow inner bodies to scroll if needed */
+.left-column .accordion .panel .panel-body{
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+
+/* =========================================================
+   PANELS (GENERIC for right intelligence cards)
+========================================================= */
+
+.intelligence-panel{
+  display: flex;
+  flex-direction: column;
+  margin: 8px;
+}
+
+.intelligence-panel .panel-header{
+  flex: 0 0 auto;
+}
+
+.intelligence-panel .panel-body{
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Live panel height rule */
+.intelligence-panel.live-panel .panel-body{
+  max-height: 380px;
+}
+
+
+/* =========================================================
+   TOPBAR MENUS (POSITIONING ONLY)
+========================================================= */
+
+.topbar-menu{
+  position: fixed;
+  top: var(--topbar-height);
+  right: 12px;
+  z-index: 1100;
+  display: none;
+}
+
+.topbar-menu.open{
+  display: block;
+}
+
+
+/* =========================================================
+   HEADER ALIGNMENT UNIFICATION (REAL SELECTORS FROM index.html)
+   Applies ONLY to title bars, not match rows
+========================================================= */
+
+/* LEFT main header: Navigation */
+.left-column > .panel-header{
+  min-height: var(--panelHeaderMinH) !important;
+  padding: var(--panelHeaderPadY) var(--panelHeaderPadX) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.left-column > .panel-header .panel-title{
+  font-size: var(--panelHeaderTitleSize) !important;
+  font-weight: var(--panelHeaderTitleWeight) !important;
+  letter-spacing: var(--panelHeaderTitleLetter) !important;
+  line-height: 1 !important;
+  color: var(--accent, #ff8c00) !important;
+}
+
+/* CENTER main header: Odds Intelligence Center */
+#odds-intelligence-center .oic-header{
+  min-height: var(--panelHeaderMinH) !important;
+  padding: var(--panelHeaderPadY) var(--panelHeaderPadX) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+#odds-intelligence-center .oic-title{
+  font-size: var(--panelHeaderTitleSize) !important;
+  font-weight: var(--panelHeaderTitleWeight) !important;
+  letter-spacing: var(--panelHeaderTitleLetter) !important;
+  line-height: 1 !important;
+  color: var(--accent, #ff8c00) !important;
+}
+
+/* RIGHT main header: Intelligence Panels */
+.right-column > .panel-header{
+  min-height: var(--panelHeaderMinH) !important;
+  padding: var(--panelHeaderPadY) var(--panelHeaderPadX) !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.right-column > .panel-header .panel-title{
+  font-size: var(--panelHeaderTitleSize) !important;
+  font-weight: var(--panelHeaderTitleWeight) !important;
+  letter-spacing: var(--panelHeaderTitleLetter) !important;
+  line-height: 1 !important;
+  color: var(--accent, #ff8c00) !important;
+}
+
+/* LEFT accordion subpanel headers: Today / Active / Matches / Saved */
+.left-column .accordion .panel > .panel-header{
+  min-height: var(--subHeaderMinH) !important;
+  padding: var(--subHeaderPadY) var(--subHeaderPadX) !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  font-size: var(--subHeaderTitleSize) !important;
+  font-weight: var(--subHeaderTitleWeight) !important;
+  letter-spacing: var(--subHeaderTitleLetter) !important;
+  line-height: 1 !important;
+
+  color: var(--accent, #ff8c00) !important;
+}
+
+/* RIGHT subpanel headers: AI Radar / Smart Money / Value / Live */
+.right-column .intelligence-panel .panel-header{
+  min-height: var(--subHeaderMinH) !important;
+  padding: var(--subHeaderPadY) var(--subHeaderPadX) !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  font-size: var(--subHeaderTitleSize) !important;
+  font-weight: var(--subHeaderTitleWeight) !important;
+  letter-spacing: var(--subHeaderTitleLetter) !important;
+  line-height: 1 !important;
+
+  color: var(--accent, #ff8c00) !important;
+}
+
+
+/* =========================================================
+   LEFT SUBPANELS ROW LAYOUT FIX (Active + Saved)
+   Restores right-side meta column (time/score/icons)
+========================================================= */
+
+#active-leagues-list,
+#saved-list{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Active/Saved: each item becomes a 2-column row */
+#active-leagues-list > *,
+#saved-list > *{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+/* League headers must NOT behave like rows */
+#active-leagues-list > .today-league,
+#saved-list > .today-league{
+  display: block !important;
+  justify-content: initial !important;
+  gap: 0 !important;
+}
+
+/* Left text area wraps */
+#active-leagues-list > * > :first-child,
+#saved-list > * > :first-child{
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+/* Right meta stays aligned right */
+#active-leagues-list > * > :last-child,
+#saved-list > * > :last-child{
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+  opacity: 0.95 !important;
+}
+
+/* If spans exist, keep readable */
+#active-leagues-list span,
+#saved-list span{
+  display: inline-block;
+}
+
+
+/* =========================================================
+   LEFT COLUMN — LEAGUE SEPARATORS (Today + Active + Saved)
+========================================================= */
+
+#today-list .today-league,
+#active-leagues-list .today-league,
+#saved-list .today-league{
+  margin: 10px 0 6px 0 !important;
+  padding: 6px 12px !important;
+
+  font-weight: 900 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.2px !important;
+
+  color: var(--accent, #ff8c00) !important;
+  opacity: 0.95 !important;
+
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* Compact rows */
+#today-list .today-row,
+#active-leagues-list .today-row,
+#saved-list .today-row{
+  padding: 6px 12px !important;
+  border-radius: 10px !important;
+}
+
+#today-list .today-row:hover,
+#active-leagues-list .today-row:hover,
+#saved-list .today-row:hover{
+  background: rgba(255,255,255,0.04);
+}
+
+
+/* =========================================================
+   MOBILE (REAL STACKING)
+   Left -> Center -> Right in 3 rows
+========================================================= */
+
+@media (max-width: 1100px){
+
+  .app{
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto auto !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .left-column,
+  .center-column,
+  .right-column{
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  #right-panel,
+  .right-column{
+    overflow: visible !important;
+  }
+
+  .intelligence-panel .panel-body{
+    max-height: none !important;
+  }
+}
+/* =========================================================
+   STICKY MAIN TITLES (LEFT / RIGHT)
+   - Keep "Navigation" and "Intelligence Panels" fixed
+   - Do NOT scroll away with the lists
+========================================================= */
+
+/* LEFT main header: Navigation */
+.left-column > .panel-header{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-main);
+}
+
+/* RIGHT main header: Intelligence Panels */
+.right-column > .panel-header{
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--bg-main);
+}
+
+/* Ensure it doesn't get transparent from skins */
+.left-column > .panel-header,
+.right-column > .panel-header{
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+/* =====================================================
+   MATCHES LIST (FULL REPLACE OF matches.css)
+   - League headers
+   - Match row single line (teams left / time right)
+   - States: hover / live / ft
+   - Hard lock: no wrapping ever
+===================================================== */
+
+/* LEAGUE HEADERS */
+#matches-list .match-league {
+  display: block;
+  margin: 12px 0 4px;
+  padding: 6px 12px;
+
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  color: #ff9f43;
+  border-left: 3px solid #ff9f43;
+  background: rgba(255,159,67,0.08);
+}
+
+/* MATCH ROW — ONE LINE ONLY */
+#matches-list .match-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 7px 12px;
+  gap: 12px;
+
+  font-size: 14px;
+  line-height: 1.2;
+
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+#matches-list .match-row .teams {
+  flex: 1 1 auto;
+  min-width: 0;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  color: #e6e6e6;
+  font-weight: 500;
+}
+
+#matches-list .match-row .time {
+  flex: 0 0 auto;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 500;
+  color: #cfd6e4;
+
+  white-space: nowrap;
+}
+
+/* STATES */
+#matches-list .match-row:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+#matches-list .match-row.live .time {
+  color: #4dd2ff;
+  font-weight: 600;
+}
+
+#matches-list .match-row.ft .time {
+  color: #9aa3b2;
+}
+
+/* HARD LOCK — NO SECOND LINE EVER */
+#matches-list .match-row,
+#matches-list .match-row * {
+  white-space: nowrap !important;
+  box-sizing: border-box;
+}
+/* =====================================================
+   TODAY PANEL — FORCE HORIZONTAL ROW (FIXED)
+   Uses actual DOM from today-panel.js:
+   .match-row + .today-match + .today-right
+===================================================== */
+
+#today-list .match-row{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+
+  padding: 7px 12px !important;
+}
+
+#today-list .match-row .today-match{
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#today-list .match-row .today-right{
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+
+  white-space: nowrap !important;
+}
+
+/* ώρα / λεπτό / σκορ */
+#today-list .match-row .today-right span:first-child{
+  display: inline-block !important;
+  min-width: 54px !important;   /* κρατάει σταθερό δεξιά */
+  text-align: right !important;
+  opacity: 0.95 !important;
 }

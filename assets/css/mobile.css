@@ -1,0 +1,117 @@
+/* =========================================================
+   AI MatchLab Ultra — MOBILE LAYOUT (CLEAN)
+   File: assets/css/mobile.css
+========================================================= */
+
+.mobile-tabs{ display:none; } /* tabs appear only on mobile */
+
+@media (max-width: 900px){
+
+  /* Keep page stable, but allow scrolling inside the active view */
+  html, body{
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Tabs visible only on mobile */
+  .mobile-tabs{
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-left: 8px;
+  }
+
+  .mobile-tab{
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.06);
+    color: rgba(255,255,255,.92);
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .mobile-tab.active{
+    border-color: rgba(255,140,0,.60);
+    background: rgba(255,140,0,.12);
+  }
+
+  /* Disable overlay only (not right panel) */
+  #drawer-overlay{
+    display: none !important;
+  }
+
+  /* MAIN APP: single surface below topbar */
+  .app{
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* 3 views = full-screen scrollable surfaces */
+  .left-column,
+  #odds-intelligence-center,
+  aside.right-column{
+    width: 100% !important;
+    min-width: 0 !important;
+
+    height: calc(100vh - 56px) !important;
+    margin-top: 56px !important;
+
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch;
+
+    display: none !important;
+  }
+
+  /* ACTIVE VIEW */
+  body.mobile-view-left .left-column{ display: block !important; }
+  body.mobile-view-odds #odds-intelligence-center{ display: block !important; }
+  body.mobile-view-right aside.right-column{ display: block !important; }
+
+  /* =========================================================
+     LEFT COLUMN — MOBILE ACCORDION (OPEN/CLOSE)
+     Uses: .panel.open
+  ========================================================= */
+  .left-column .panel .panel-header{
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .left-column .panel .panel-body{
+    display: none;
+  }
+
+  .left-column .panel.open .panel-body{
+    display: block;
+  }
+
+  /* =========================================================
+     RIGHT COLUMN — MOBILE ACCORDION (OPEN/CLOSE)
+     Uses: .intelligence-panel.open
+  ========================================================= */
+  #right-panel .intelligence-panel{
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    margin: 10px 12px;
+    overflow: hidden;
+  }
+
+  #right-panel .intelligence-panel .panel-header{
+    cursor: pointer;
+    user-select: none;
+    padding: 12px 12px;
+  }
+
+  #right-panel .intelligence-panel .panel-body{
+    display: none;
+    padding: 10px 12px 14px 12px;
+  }
+
+  #right-panel .intelligence-panel.open .panel-body{
+    display: block;
+  }
+}

@@ -1,334 +1,355 @@
 /* =========================================================
-   AI MatchLab ULTRA — RIGHT PANELS (STACK + BIG CARDS)
-   - Bigger cards (~2x) with outer scroll
-   - Single scroll per card: .right-card-body
-   - Value header: title single-line, button+meta below
+   VALUE PICKS — UI POLISH (ADD-ON)
+   Scope: Right column Value panel only
 ========================================================= */
 
-#right-panel{ min-height:0; }
-
-/* Outer scroll container (STACK) */
-#right-panel > .panel-body{
-  flex: 1 1 auto;
-  min-height: 0;
-
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-
+/* Toolbar (dropdowns in correct place) */
+.right-column .intelligence-panel .panel-body .value-head {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 10px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-/* Card (bigger) */
-#right-panel .right-card{
-  flex: 0 0 auto;
-  height: clamp(260px, 34vh, 420px); /* αντί για min-height */
-  min-height: 0;
-
-  overflow: hidden;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: color-mix(in srgb, rgba(10,14,22,0.86) 92%, transparent);
-  box-shadow: 0 10px 26px rgba(0,0,0,0.22);
-
+.right-column .intelligence-panel .panel-body .value-head-top {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-/* Header (generic) */
-#right-panel .right-card-header{
-  flex: 0 0 auto;
+.right-column .intelligence-panel .panel-body .value-head-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  opacity: 0.95;
+}
 
-  padding: 10px 12px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+.right-column .intelligence-panel .panel-body .value-head-sub {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.right-column .intelligence-panel .panel-body .value-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.right-column .intelligence-panel .panel-body .value-toolbar-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.right-column .intelligence-panel .panel-body .value-toolbar-label {
+  font-size: 12px;
+  opacity: 0.65;
+  font-weight: 600;
+}
+
+.right-column .intelligence-panel .panel-body .value-filter-market,
+.right-column .intelligence-panel .panel-body .value-filter-league {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  outline: none;
+}
+
+/* Sections */
+.right-column .intelligence-panel .panel-body .value-section {
+  margin-top: 12px;
+}
+
+.right-column .intelligence-panel .panel-body .value-section-title {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  opacity: 0.85;
+  margin-bottom: 8px;
+  color: color-mix(in srgb, var(--accent) 80%, #fff);
+}
+
+/* Rows */
+.right-column .intelligence-panel .panel-body .value-row {
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  padding: 10px 10px;
+  margin-bottom: 8px;
+  background: color-mix(in srgb, var(--panel-2) 82%, transparent);
+}
+
+.right-column .intelligence-panel .panel-body .value-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.right-column .intelligence-panel .panel-body .value-league {
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.right-column .intelligence-panel .panel-body .value-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.right-column .intelligence-panel .panel-body .value-time {
+  font-size: 12px;
+  opacity: 0.75;
+  font-weight: 700;
+}
+
+.right-column .intelligence-panel .panel-body .value-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  border: 1px solid var(--line-soft);
+}
+
+.right-column .intelligence-panel .panel-body .value-badge.live {
+  background: color-mix(in srgb, #ff4d4d 25%, transparent);
+  border-color: color-mix(in srgb, #ff4d4d 55%, var(--line-soft));
+}
+
+.right-column .intelligence-panel .panel-body .value-badge.ft {
+  background: color-mix(in srgb, #9aa4b2 25%, transparent);
+  border-color: color-mix(in srgb, #9aa4b2 55%, var(--line-soft));
+}
+
+/* Fixture line */
+.right-column .intelligence-panel .panel-body .value-fixture {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.15;
+  opacity: 0.95;
+}
+
+.right-column .intelligence-panel .panel-body .value-vs {
+  margin: 0 6px;
+  opacity: 0.55;
+  font-weight: 700;
+}
+
+/* Bottom line */
+.right-column .intelligence-panel .panel-body .value-row-bot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.right-column .intelligence-panel .panel-body .value-score {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+}
+
+.right-column .intelligence-panel .panel-body .value-conf {
+  font-size: 12px;
+  font-weight: 900;
+  opacity: 0.85;
+}
+
+/* Confidence coloring (subtle, premium) */
+.right-column .intelligence-panel .panel-body .value-row.conf-low {
+  background: color-mix(in srgb, #9aa4b2 12%, color-mix(in srgb, var(--panel-2) 88%, transparent));
+  border-color: color-mix(in srgb, #9aa4b2 25%, var(--line-soft));
+}
+
+.right-column .intelligence-panel .panel-body .value-row.conf-medium {
+  background: color-mix(in srgb, #ffb020 12%, color-mix(in srgb, var(--panel-2) 88%, transparent));
+  border-color: color-mix(in srgb, #ffb020 25%, var(--line-soft));
+}
+
+.right-column .intelligence-panel .panel-body .value-row.conf-high {
+  background: color-mix(in srgb, #20e3a2 12%, color-mix(in srgb, var(--panel-2) 88%, transparent));
+  border-color: color-mix(in srgb, #20e3a2 25%, var(--line-soft));
+}
+/* =========================================================
+   LEAGUE GROUPING — VISUAL SEPARATION (RIGHT PANELS)
+========================================================= */
+
+.right-column .league-block {
+  margin: 10px 0 14px;
+  padding: 10px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel-2) 88%, transparent);
+}
+
+.right-column .league-title {
+  color: var(--accent);
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: .3px;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  border-bottom: 1px dashed var(--line-soft);
+}
+
+.right-column .match-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line-soft) 60%, transparent);
+}
+
+.right-column .match-row:last-child {
+  border-bottom: none;
+}
+
+.right-column .match-row .teams {
+  font-weight: 700;
+  opacity: .95;
+}
+
+.right-column .match-row .meta {
+  font-weight: 800;
+  opacity: .85;
+  white-space: nowrap;
+}
+/* FORCE ORANGE TITLES FOR RIGHT PANELS */
+.right-column .intelligence-panel .panel-header {
+  color: var(--accent) !important;
+}
+.right-column .intelligence-panel .panel-header::after {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2)) !important;
+}
+/* FIX: MAIN RIGHT COLUMN TITLE MUST FOLLOW THEME ACCENT */
+#right-panel > .panel-header {
+  color: var(--accent) !important;
+}
+/* =========================================================
+   VALUE PICKS — REQUIRED FIX (SCROLL + CONF BAR) — CLEAN
+   (NO GLOBAL panel-body overrides)
+========================================================= */
+
+/* ✅ Value panel scroll (ONLY value card, not all right panels) */
+#right-panel #value-picks-panel .panel-body,
+#right-panel .intelligence-panel.value-panel .panel-body,
+#right-panel .intelligence-panel[data-panel="value"] .panel-body {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ✅ Dropdown options dark (ONLY inside value panel) */
+#right-panel #value-picks-panel option,
+#right-panel .intelligence-panel.value-panel option,
+#right-panel .intelligence-panel[data-panel="value"] option {
+  background: #101316;
+  color: #fff;
+}
+
+/* ✅ Visible confidence left bar (ONLY value rows) */
+#right-panel #value-picks-panel .value-row,
+#right-panel .intelligence-panel.value-panel .value-row,
+#right-panel .intelligence-panel[data-panel="value"] .value-row {
   position: relative;
+  overflow: hidden;
 }
 
-/* Single underline (source of truth) */
-#right-panel .right-card-header::after{
+#right-panel #value-picks-panel .value-row::before,
+#right-panel .intelligence-panel.value-panel .value-row::before,
+#right-panel .intelligence-panel[data-panel="value"] .value-row::before {
   content: "";
   position: absolute;
-  left: 12px;
-  bottom: 8px;
-  width: 88px;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(61,184,255,.95), rgba(255,140,0,.92));
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 12px 0 0 12px;
+  opacity: 0.95;
 }
 
-/* Title */
-#right-panel .right-card-header .panel-title{
-  font-size: 15px;
-  font-weight: 800;
+#right-panel #value-picks-panel .value-row.conf-low::before,
+#right-panel .intelligence-panel.value-panel .value-row.conf-low::before,
+#right-panel .intelligence-panel[data-panel="value"] .value-row.conf-low::before {
+  background: #9aa4b2;
+}
+
+#right-panel #value-picks-panel .value-row.conf-medium::before,
+#right-panel .intelligence-panel.value-panel .value-row.conf-medium::before,
+#right-panel .intelligence-panel[data-panel="value"] .value-row.conf-medium::before {
+  background: #ffb020;
+}
+
+#right-panel #value-picks-panel .value-row.conf-high::before,
+#right-panel .intelligence-panel.value-panel .value-row.conf-high::before,
+#right-panel .intelligence-panel[data-panel="value"] .value-row.conf-high::before {
+  background: #20e3a2;
+}
+/* LIVE header dropdown (fix invisible options) */
+.right-column .live-mode-select {
+  background: rgba(18, 22, 28, 0.95) !important;
+  color: #fff !important;
+}
+
+.right-column .live-mode-select option {
+  background: #0f1318 !important;
+  color: #fff !important;
+}
+/* =========================================================
+   LIVE PANEL: compact spacing (like Today)
+========================================================= */
+
+.right-column .live-panel #live-list {
+  padding-top: 6px;
+}
+
+/* league group container: remove big gaps */
+.right-column .live-panel .league-block {
+  margin: 0 0 8px 0 !important;
+  padding: 0 !important;
+  border-radius: 10px;
+}
+
+/* league title: tighter */
+.right-column .live-panel .league-title {
+  margin: 0 0 4px 0 !important;
+  padding: 6px 10px !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.2px;
+}
+
+/* each match row: tighter like Today */
+.right-column .live-panel .match-row.live-row {
+  padding: 8px 10px !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
+/* row divider similar to Today */
+.right-column .live-panel .match-row.live-row + .match-row.live-row {
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* make teams + meta align like Today */
+.right-column .live-panel .match-row.live-row .teams {
+  font-size: 14px !important;
+  font-weight: 700 !important;
   line-height: 1.2;
 }
 
-/* Meta + button (generic helpers) */
-#right-panel .right-meta{
-  font-size: 12px;
-  opacity: 0.72;
-  white-space: nowrap;
-  font-weight: 900;
+.right-column .live-panel .match-row.live-row .meta {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  opacity: 0.9;
 }
 
-#right-panel .right-btn{
-  appearance:none;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(255,255,255,0.05);
-  color: inherit;
-  font-weight: 900;
-  font-size: 12px;
-  line-height: 1;
-  padding: 6px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  user-select: none;
-}
-#right-panel .right-btn:hover{ background: rgba(255,255,255,0.10); }
-#right-panel .right-btn:active{ transform: translateY(1px); }
-
-#right-panel .hidden{ display:none !important; }
-
-/* Body = the ONLY inner scroll */
-#right-panel .right-card-body{
-  flex: 1 1 auto;
-  min-height: 0;
-
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-
-  padding: 10px 12px 12px;
-}
-
-/* Lists */
-#right-panel .right-list{
-  display: grid;
-  gap: 10px;
-}
-
-/* Items */
-#right-panel .right-item{
-  padding: 10px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(0,0,0,0.18);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
-  transition: background .20s ease, border-color .20s ease, transform .10s ease;
-}
-#right-panel .right-item:hover{
-  transform: translateY(-1px);
-  background: rgba(255,255,255,0.10);
-}
-
-/* Directional coloring (odds drop=green, rise=red) */
-#panel-radar .right-item.up,
-#panel-top-picks .right-item.up{
-  border-left: 4px solid #22c55e;
-  background: rgba(34,197,94,0.10);
-  color: #22c55e;
-}
-#panel-radar .right-item.down,
-#panel-top-picks .right-item.down{
-  border-left: 4px solid #ef4444;
-  background: rgba(239,68,68,0.10);
-  color: #ef4444;
-}
-
-/* =====================================================
-   TOP PICKS (your existing 2-line header stays)
-===================================================== */
-#card-top-picks .right-card-header.right-header-2lines{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:6px;
-  padding-top:10px;
-  padding-bottom:10px;
-}
-#card-top-picks .rheader-line2{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  width:100%;
-  gap:10px;
-}
-
-/* =====================================================
-   VALUE — requested layout
-   - Title: single-line (no wrap)
-   - Button + meta: below title (2nd line)
-   - No inner scroll on #value-picks-list
-===================================================== */
-
-/* Make Value header 2-line */
-#panel-value-picks .right-card-header{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:6px;
-}
-
-/* Force title in one line (in “ευθεία”) */
-#panel-value-picks .right-card-header .panel-title{
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Second line container comes from JS: #value-picks-meta -> .rheader-line2 */
-#value-picks-meta{
-  width: 100%;
-}
-
-#value-picks-meta .rheader-line2{
-  display:flex;
-  align-items:center;
-  width:100%;
-  gap:10px;
-}
-
-/* Keep button where it is; push meta far-right */
-#value-picks-meta .rheader-line2 .right-meta{
-  margin-left:auto;
-  text-align:right;
-}
-
-/* Kill any inner list scroll (only card-body scrolls) */
-#value-picks-list{
-  max-height:none !important;
-  overflow:visible !important;
-}
-/* ===== FINAL INLINE HISTORY BUTTON (Right of Intelligence Panels title) ===== */
-#btn-history-viewer {
-  position: absolute;
-  top: 50%;
-  right: 12px;
-  transform: translateY(-50%);
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 6px;
-  padding: 3px 10px;
-  font-size: 12px;
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.2s, border 0.2s;
-  z-index: 10;
-}
-#btn-history-viewer:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.4);
-}
-/* Disable absolute positioning when anchored manually in header */
-[data-aiml-hv-anchor="1"] #btn-history-viewer {
-  position: relative !important;
-  top: auto !important;
-  right: auto !important;
-  transform: none !important;
-  margin-left: auto !important;
-}
-#right-panels-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  padding:8px 12px;
-  border-bottom:1px solid rgba(255,255,255,0.08);
-  position:relative;
-}
-
-#right-panels-header .panel-title {
-  font-weight:800;
-  font-size:15px;
-}
-
-#right-panels-header #btn-history-viewer {
-  position:relative !important;
-  margin-left:auto;
-}
-/* =========================================================
-   AI MatchLab ULTRA — Right Panel Tabs (FINAL)
-   - Stable panel titles
-   - Tabs for AI Radar / Top Picks
-   - Value & Live remain unchanged
-   - Desktop-safe, Mobile-friendly
-========================================================= */
-
-/* ---------- Tabs container ---------- */
-.right-tabs {
-  display: flex;
-  gap: 10px;
-  margin-top: 6px;
-}
-
-/* ---------- Tab buttons ---------- */
-.right-tab {
-  appearance: none;
-  border: none;
-  cursor: pointer;
-
-  padding: 4px 10px;
-  font-size: 13px;
-  line-height: 1.2;
-  border-radius: 6px;
-
-  background: rgba(255,255,255,0.06);
-  color: #cfd6df;
-
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.right-tab:hover {
-  background: rgba(255,255,255,0.1);
-}
-
-.right-tab.active {
-  background: transparent;
-  color: #ffffff;
-  border-bottom: 2px solid var(--accent);
-  border-radius: 0;
-}
-
-/* ---------- Panel header alignment ---------- */
-#right-panels-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-/* ---------- Mobile polish ---------- */
-@media (max-width: 900px) {
-
-  #right-panels-header {
-    padding-bottom: 6px;
-  }
-
-  .right-tabs {
-    width: 100%;
-  }
-
-  .right-tab {
-    flex: 1;
-    text-align: center;
-  }
-}
-/* =========================================================
-   RIGHT PANEL — CLEAN SECTION TITLE
-   Remove buttons & tabs ONLY from title
-========================================================= */
-
-/* Hide View History button ONLY in the title */
-#right-panels-header #btn-history-viewer {
-  display: none !important;
-}
-
-/* Hide tabs ONLY if they appear inside the title */
-#right-panels-header .right-tabs {
-  display: none !important;
-}
-.conf-badge { margin-left:6px; font-size:11px; padding:2px 6px; border-radius:10px; }
-.conf-high { background:#1f8f4e; color:#fff; }
-.conf-med  { background:#b88a1d; color:#fff; }
-.conf-low  { background:#6c757d; color:#fff; }

@@ -1,161 +1,135 @@
 /* assets/js/mobile-ui.js
-   STABLE MOBILE DRAWERS (state-locked)
-   - Adds body classes: drawer-left-open / drawer-right-open
-   - Overlay supports both .visible and .show
-   - Home opens LEFT drawer on mobile
+   CLEAN MOBILE UI
+   - Tabs (LEFT / ODDS / RIGHT)
+   - LEFT panels open/close (mobile)
+   - RIGHT panels open/close (mobile)
 */
+
 (function () {
   "use strict";
   if (window.__AIML_MOBILE_UI__) return;
   window.__AIML_MOBILE_UI__ = true;
 
-  function $(sel, root) { return (root || document).querySelector(sel); }
-
-  var overlay = $("#drawer-overlay");
-  var leftPanel = $("#left-panel");
-  var rightPanel = $("#right-panel");
-
-  var btnLeft  = $("#btn-drawer") || $("#btn-left-drawer");
-  var btnRight = $("#btn-panels") || $("#btn-right-drawer");
-  var btnHome  = $("#btn-home");
-  var btnBack  = $("#btn-back");
+  const MQ = window.matchMedia("(max-width: 900px)");
 
   function isMobile() {
-    return window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
+    return MQ && MQ.matches;
   }
 
-  function isOpen(el) {
-    return !!(el && el.classList.contains("drawer-open"));
-  }
+  function setView(view) {
+    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
+    document.body.classList.add("mobile-view-" + view);
 
-  function setBodyState(state) {
-    document.body.classList.remove("drawer-left-open", "drawer-right-open");
-    if (state) document.body.classList.add(state);
-  }
-
-  function showOverlay() {
-    if (!overlay) return;
-    overlay.classList.add("visible");
-    overlay.classList.add("show");
-    overlay.setAttribute("aria-hidden", "false");
-  }
-
-  function hideOverlay() {
-    if (!overlay) return;
-    overlay.classList.remove("visible");
-    overlay.classList.remove("show");
-    overlay.setAttribute("aria-hidden", "true");
-  }
-
-  function openLeft() {
-    if (!isMobile() || !leftPanel) return;
-    leftPanel.classList.add("drawer-open");
-    if (rightPanel) rightPanel.classList.remove("drawer-open");
-    setBodyState("drawer-left-open");
-    showOverlay();
-    if (typeof window.emit === "function") window.emit("drawer-opened", "left");
-  }
-
-  function openRight() {
-    if (!isMobile() || !rightPanel) return;
-    rightPanel.classList.add("drawer-open");
-    if (leftPanel) leftPanel.classList.remove("drawer-open");
-    setBodyState("drawer-right-open");
-    showOverlay();
-    if (typeof window.emit === "function") window.emit("drawer-opened", "right");
-  }
-
-  function closeDrawers() {
-    if (leftPanel) leftPanel.classList.remove("drawer-open");
-    if (rightPanel) rightPanel.classList.remove("drawer-open");
-    setBodyState(null);
-    hideOverlay();
-  }
-
-  function toggleLeft() {
-    if (!isMobile()) return;
-    if (isOpen(leftPanel)) closeDrawers();
-    else openLeft();
-  }
-
-  function toggleRight() {
-    if (!isMobile()) return;
-    if (isOpen(rightPanel)) closeDrawers();
-    else openRight();
-  }
-
-  // Accordion open (no changes to accordion.js)
-  function openAccordionSafe(targetId) {
-    if (!targetId) return;
-    if (typeof window.openAccordion === "function") {
-      try { window.openAccordion(targetId); } catch (e) {}
-      return;
-    }
-    var hdr = document.querySelector('#left-accordion .accordion-header[data-target="' + targetId + '"]');
-    if (hdr) hdr.click();
-  }
-
-  // Details modal close (for Back)
-  function getDetailsModal() {
-    return $("#match-details-modal") || $("#details-modal");
-  }
-  function isDetailsModalOpen() {
-    var modal = getDetailsModal();
-    if (!modal) return false;
-    return !modal.classList.contains("hidden") || modal.getAttribute("aria-hidden") === "false";
-  }
-  function closeDetailsModalIfAny() {
-    if (window.DetailsModal && typeof window.DetailsModal.close === "function") {
-      try { window.DetailsModal.close(); return true; } catch (e) {}
-    }
-    var modal = getDetailsModal();
-    if (!modal) return false;
-    modal.classList.add("hidden");
-    modal.setAttribute("aria-hidden", "true");
-    return true;
-  }
-
-  function goHome() {
-    closeDrawers();
-    openAccordionSafe("panel-continents");
-    if (isMobile()) openLeft();
-    if (typeof window.emit === "function") {
-      window.emit("home");
-      window.emit("match-clear");
-    }
-  }
-
-  function goBack() {
-    if (isDetailsModalOpen()) { closeDetailsModalIfAny(); return; }
-    if (isMobile() && (isOpen(leftPanel) || isOpen(rightPanel))) { closeDrawers(); return; }
-    if (isMobile()) openLeft();
-  }
-
-  if (btnLeft)  btnLeft.addEventListener("click", function (e) { e.preventDefault(); toggleLeft(); });
-  if (btnRight) btnRight.addEventListener("click", function (e) { e.preventDefault(); toggleRight(); });
-  if (btnHome)  btnHome.addEventListener("click", function (e) { e.preventDefault(); goHome(); });
-  if (btnBack)  btnBack.addEventListener("click", function (e) { e.preventDefault(); goBack(); });
-
-  if (overlay) overlay.addEventListener("click", function () { closeDrawers(); });
-
-  // After match select: focus center -> close drawer
-  if (typeof window.on === "function") {
-    window.on("match-selected", function () {
-      if (isMobile()) closeDrawers();
+    document.querySelectorAll(".mobile-tab").forEach((b) => {
+      b.classList.toggle("active", b.dataset.view === view);
     });
   }
 
-  function initMobileHome() {
+  function initTabs() {
+    const tabs = document.getElementById("mobile-tabs");
+    if (!tabs) return;
+
+    tabs.addEventListener("click", (e) => {
+      const btn = e.target.closest(".mobile-tab");
+      if (!btn) return;
+      setView(btn.dataset.view);
+    });
+  }
+
+  function initLeftAccordionMobile() {
+  if (!isMobile()) return;
+
+  const leftCol = document.querySelector(".left-column");
+  if (!leftCol) return;
+
+  const panels = leftCol.querySelectorAll(".panel");
+  if (!panels.length) return;
+
+  // Init: hide all bodies except Today
+  panels.forEach((p) => {
+    const body = p.querySelector(".panel-body");
+    if (!body) return;
+
+    if (p.id === "panel-today") {
+      body.hidden = false;
+      p.classList.add("open");
+    } else {
+      body.hidden = true;
+      p.classList.remove("open");
+    }
+  });
+
+  leftCol.addEventListener("click", (e) => {
+    const header = e.target.closest(".panel-header");
+    if (!header) return;
+
+    const panel = header.closest(".panel");
+    if (!panel) return;
+
+    const body = panel.querySelector(".panel-body");
+    if (!body) return;
+
+    const wasOpen = !body.hidden;
+
+    // Single-open behavior
+    panels.forEach((p) => {
+      const b = p.querySelector(".panel-body");
+      if (!b) return;
+      b.hidden = true;
+      p.classList.remove("open");
+    });
+
+    // Toggle current
+    body.hidden = wasOpen;
+    panel.classList.toggle("open", !body.hidden);
+  });
+}
+
+
+  function initRightAccordionMobile() {
     if (!isMobile()) return;
-    openAccordionSafe("panel-today");
-  openLeft(); // ⬅️ SHOW TODAY ON MOBILE
+
+    const right = document.getElementById("right-panel");
+    if (!right) return;
+
+    right.addEventListener("click", (e) => {
+      const header = e.target.closest(".intelligence-panel .panel-header");
+      if (!header) return;
+
+      const panel = header.closest(".intelligence-panel");
+      if (!panel) return;
+
+      // single-open behavior
+      right.querySelectorAll(".intelligence-panel.open").forEach((p) => {
+        if (p !== panel) p.classList.remove("open");
+      });
+
+      panel.classList.toggle("open");
+    });
+
+    // default open Radar
+    const first = right.querySelector(".intelligence-panel");
+    if (first) first.classList.add("open");
+  }
+
+  function boot() {
+    if (!isMobile()) return;
+
+    initTabs();
+    initLeftAccordionMobile();
+    initRightAccordionMobile();
+
+    // default view
+    setView("left");
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initMobileHome);
+    document.addEventListener("DOMContentLoaded", boot);
   } else {
-    initMobileHome();
+    boot();
   }
 
-  window.MobileUI = { openLeft: openLeft, openRight: openRight, closeDrawers: closeDrawers, home: goHome };
+  // Debug API
+  window.AIML_MOBILE_SET_VIEW = setView;
+
 })();

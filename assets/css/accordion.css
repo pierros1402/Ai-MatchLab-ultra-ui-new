@@ -1,0 +1,24 @@
+/* =====================================================
+   LEFT ACCORDION — FINAL (STABLE)
+===================================================== */
+
+/* Panel container */
+.left-column .panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Panel body — CLOSED */
+.left-column .panel-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+  padding: 0 14px;
+}
+
+/* Panel body — OPEN */
+.left-column .panel.open .panel-body {
+  max-height: 60vh;      /* αρκετό για περιεχόμενο */
+  overflow-y: auto;
+  padding: 10px 14px;
+}

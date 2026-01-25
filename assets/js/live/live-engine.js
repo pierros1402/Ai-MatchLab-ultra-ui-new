@@ -1,67 +1,42 @@
-/**
- * LIVE ENGINE — WORKER-DRIVEN (NORMALIZED)
- *
- * Purpose:
- * - Fetch LIVE matches from live-matches-worker
- * - Normalize league name (competition, όχι stages)
- * - Emit live:update for right panels
- * - No dependency on Today
- * - No KV
- */
-
+// assets/js/live/live-engine.js
 (function () {
-  if (window.__LIVE_ENGINE_STARTED__) return;
-  window.__LIVE_ENGINE_STARTED__ = true;
+  if (window.__AIML_LIVE_ENGINE__) return;
+  window.__AIML_LIVE_ENGINE__ = true;
 
-  const LIVE_WORKER_URL =
-    window.AIML_LIVE_WORKER_URL ||
-    "https://live-matches-worker.pierros1402.workers.dev/api/unified-live";
-
-  const POLL_MS = 60_000; // 60s
-
-  let timer = null;
-
-  function normalizeMatch(m) {
-    // Παίρνουμε ΜΟΝΟ competition ως league
-    const leagueName =
-      m.competition?.name ||
-      m.leagueName ||
-      m.league ||
-      "";
-
-    return {
-      ...m,
-      leagueName
-    };
+  const cfg = window.AIML_LIVE_CFG;
+  if (!cfg || !cfg.liveBase || !cfg.livePath) {
+    console.error("[live-engine] missing AIML_LIVE_CFG");
+    return;
   }
+
+  const LIVE_URL = cfg.liveBase + cfg.livePath;
+  const POLL_MS = 15000;
 
   async function fetchLive() {
     try {
-      const res = await fetch(LIVE_WORKER_URL, { cache: "no-store" });
-      if (!res.ok) return;
+      const res = await fetch(LIVE_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
 
-      const data = await res.json();
-      if (!data || !Array.isArray(data.matches)) return;
+      const json = await res.json();
+      const all = Array.isArray(json.matches) ? json.matches : [];
 
-      const normalized = data.matches.map(normalizeMatch);
+      // ΜΟΝΟ LIVE
+      const liveMatches = all.filter(
+        m => m.status === "LIVE" || m.completed === false
+      );
 
-      emit("live:update", {
-        source: "worker",
-        matches: normalized
+      window.emit("live:update", {
+        ts: Date.now(),
+        matches: liveMatches
       });
+
     } catch (err) {
-      // σιωπηλό fail – LIVE δεν πρέπει να σπάει UI
+      console.error("[live-engine] fetch failed", err);
+      window.emit("live:update", { matches: [] });
     }
   }
 
-  function start() {
-    fetchLive();
-    timer = setInterval(fetchLive, POLL_MS);
-  }
-
-  if (document.readyState === "complete") {
-    start();
-  } else {
-    window.addEventListener("load", start);
-  }
+  // start
+  fetchLive();
+  setInterval(fetchLive, POLL_MS);
 })();

@@ -59,26 +59,8 @@
   function applyStrings(lang) {
     const t = STR[lang] || STR.en;
 
-    // Top-level panel titles
-    const leftTitle = document.querySelector("#left-panel .panel-header .panel-title");
-    const centerTitle = document.querySelector("#center-panel .panel-header .panel-title");
-    const rightTitle = document.querySelector("#right-panel .panel-header .panel-title");
-    if (leftTitle) leftTitle.textContent = t.nav;
-    if (centerTitle) centerTitle.textContent = t.oic;
-    if (rightTitle) rightTitle.textContent = t.intel;
 
-    // Accordion headers
-    const map = {
-      "panel-continents": t.continents,
-      "panel-countries": t.countries,
-      "panel-leagues": t.leagues,
-      "panel-matches": t.matches,
-      "panel-saved": t.saved,
-    };
-    document.querySelectorAll(".accordion-header[data-target]").forEach((h) => {
-      const key = h.getAttribute("data-target");
-      if (key && map[key]) h.textContent = map[key];
-    });
+  
 
     // Active match bar defaults (only if still default text)
     const ambTitle = $("amb-title");

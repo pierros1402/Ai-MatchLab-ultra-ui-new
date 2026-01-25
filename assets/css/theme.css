@@ -1,144 +1,136 @@
 /* =========================================================
-   AI MatchLab ULTRA — THEME TOKENS
-   Dark/Light + Accents (vibrant dual-tone + WOW glows)
+   THEME TOKENS — SOURCE OF TRUTH
+   - Dark / Light modes
+   - Accent themes
+   - NO layout, NO positioning
 ========================================================= */
 
-/* ---------- DARK (default) ---------- */
-html{
-  color-scheme: dark;
+/* =========================================================
+   BASE TOKENS (SHARED)
+========================================================= */
 
-  /* Background layers */
-  --bg0: #05070c;
-  --bg1: #070b12;
-  --bg2: #0b1220;
-
-  /* Glass panels */
-  --panel: rgba(12, 18, 30, 0.72);
-  --panel-2: rgba(10, 14, 22, 0.86);
-  --panel-solid: #0a0f18;
-
+:root {
   /* Text */
-  --text: rgba(245, 248, 255, 0.96);
-  --muted: rgba(245, 248, 255, 0.68);
+  --text-primary: #e6e6e6;
+  --text-secondary: #b8b8b8;
+  --text-muted: #8a8a8a;
 
-  /* Lines / separators */
-  --line: rgba(255,255,255,0.10);
-  --line-2: rgba(255,255,255,0.14);
+  /* Backgrounds */
+  --bg-main: #0e0f13;
+  --bg-panel: #14161c;
+  --bg-elevated: #1a1d25;
 
-  /* Accent (Blue / Orange) */
-  --accent: #38b6ff;
-  --accent-2: #ff6a00;
+  /* Lines / dividers */
+  --line-soft: rgba(255,255,255,0.06);
+  --line-strong: rgba(255,255,255,0.12);
 
-  /* Default glow / ring (balanced) */
-  --glow:  color-mix(in srgb, var(--accent) 55%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 55%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 52%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 44%, transparent);
-
-  /* Shadows */
-  --shadow: 0 14px 34px rgba(0,0,0,0.35);
-  --shadow-2: 0 10px 24px rgba(0,0,0,0.26);
-
-  /* Radius scale */
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 18px;
+  /* Status */
+  --success: #2ecc71;
+  --warning: #f1c40f;
+  --danger:  #e74c3c;
 }
 
-/* ---------- LIGHT ---------- */
-html.light{
-  color-scheme: light;
+/* =========================================================
+   DARK MODE (DEFAULT)
+========================================================= */
 
-  --bg0: #f6f8ff;
-  --bg1: #eef3ff;
-  --bg2: #e7efff;
+html[data-theme="dark"] {
+  --text-primary: #e6e6e6;
+  --text-secondary: #b8b8b8;
+  --text-muted: #8a8a8a;
 
-  --panel: rgba(255, 255, 255, 0.72);
-  --panel-2: rgba(255, 255, 255, 0.88);
-  --panel-solid: #ffffff;
-
-  --text: rgba(18, 24, 38, 0.96);
-  --muted: rgba(18, 24, 38, 0.62);
-
-  --line: rgba(18,24,38,0.10);
-  --line-2: rgba(18,24,38,0.14);
-
-  --accent: #2aa9ff;
-  --accent-2: #ff6a00;
-
-  --glow:  color-mix(in srgb, var(--accent) 55%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 55%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 52%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 44%, transparent);
-
-  --shadow: 0 14px 34px rgba(16,24,40,0.14);
-  --shadow-2: 0 10px 24px rgba(16,24,40,0.10);
+  --bg-main: #0e0f13;
+  --bg-panel: #14161c;
+  --bg-elevated: #1a1d25;
 }
 
-/* ---------- ACCENTS (data-accent overrides) ---------- */
+/* =========================================================
+   LIGHT MODE
+========================================================= */
 
-/* Default: more orange, balanced glow */
-html[data-accent="default"]{
-  --accent:#38b6ff;
-  --accent-2:#ff6a00;
-  --glow:  color-mix(in srgb, var(--accent) 58%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 60%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 54%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 48%, transparent);
+html[data-theme="light"] {
+  --text-primary: #1a1a1a;
+  --text-secondary: #3a3a3a;
+  --text-muted: #6a6a6a;
+
+  --bg-main: #f4f5f7;
+  --bg-panel: #ffffff;
+  --bg-elevated: #f0f1f3;
+
+  --line-soft: rgba(0,0,0,0.08);
+  --line-strong: rgba(0,0,0,0.16);
 }
 
-/* Green-Gold: richer gold presence */
-html[data-accent="green-gold"]{
-  --accent:#19e3a3;
-  --accent-2:#ffd400;
-  --glow:  color-mix(in srgb, var(--accent) 62%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 62%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 58%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 50%, transparent);
+/* =========================================================
+   ACCENT THEMES (5 TOTAL)
+   Usage: html[data-accent="orange|blue|green|purple|red"]
+========================================================= */
+
+/* ORANGE (DEFAULT / BRAND) */
+html[data-accent="orange"] {
+  --accent: #ff8c00;
+  --accent-soft: rgba(255,140,0,0.25);
 }
 
-/* Red-Silver: crisp “ice” secondary (keep controlled to avoid washout) */
-html[data-accent="red-silver"]{
-  --accent:#ff3b5c;
-  --accent-2:#e9f1ff;
-  --glow:  color-mix(in srgb, var(--accent) 60%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 52%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 56%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 44%, transparent);
+/* BLUE */
+html[data-accent="blue"] {
+  --accent: #3498db;
+  --accent-soft: rgba(52,152,219,0.25);
 }
 
-/* Purple-Aqua: WOW neon (stronger secondary glow + ring) */
-html[data-accent="purple-aqua"]{
-  --accent:#a775ff;
-  --accent-2:#00f0ff;
-  --glow:  color-mix(in srgb, var(--accent) 68%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 72%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 62%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 58%, transparent);
+/* GREEN */
+html[data-accent="green"] {
+  --accent: #2ecc71;
+  --accent-soft: rgba(46,204,113,0.25);
 }
 
-/* Black-Lime: WOW contrast (lime + saturated cyan-blue) */
-html[data-accent="black-lime"]{
-  --accent:#b7ff2a;
-  --accent-2:#00b8ff;
-  --glow:  color-mix(in srgb, var(--accent) 70%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 68%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 64%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 56%, transparent);
+/* PURPLE */
+html[data-accent="purple"] {
+  --accent: #9b59b6;
+  --accent-soft: rgba(155,89,182,0.25);
 }
 
-/* Minimal classic */
-html[data-accent="minimal"]{
-  --accent:#8aa2c6;
-  --accent-2:#6f7f98;
-  --glow:  color-mix(in srgb, var(--accent) 50%, transparent);
-  --glow2: color-mix(in srgb, var(--accent-2) 46%, transparent);
-  --ring:  color-mix(in srgb, var(--accent) 46%, transparent);
-  --ring-2:color-mix(in srgb, var(--accent-2) 40%, transparent);
+/* RED */
+html[data-accent="red"] {
+  --accent: #e74c3c;
+  --accent-soft: rgba(231,76,60,0.25);
 }
 
-/* ---------- Common focus styles ---------- */
-:focus-visible{
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
+/* =========================================================
+   GLOBAL USAGE HELPERS (OPTIONAL)
+========================================================= */
+
+.accent {
+  color: var(--accent);
 }
+
+.bg-accent {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.border-accent {
+  border-color: var(--accent);
+}
+/* THEMED SCROLLBARS */
+:root{
+  --scroll-track: rgba(255,255,255,0.06);
+  --scroll-thumb: rgba(255,140,0,0.35);
+  --scroll-thumb-hover: rgba(255,140,0,0.60);
+}
+
+/* Light theme override */
+html.light, html[data-theme="light"]{
+  --scroll-track: rgba(0,0,0,0.06);
+  --scroll-thumb: rgba(255,140,0,0.30);
+  --scroll-thumb-hover: rgba(255,140,0,0.55);
+}
+
+/* Chromium */
+*::-webkit-scrollbar{ width: 10px; height: 10px; }
+*::-webkit-scrollbar-track{ background: var(--scroll-track); border-radius: 999px; }
+*::-webkit-scrollbar-thumb{ background: var(--scroll-thumb); border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover{ background: var(--scroll-thumb-hover); }
+
+/* Firefox */
+*{ scrollbar-color: var(--scroll-thumb) var(--scroll-track); scrollbar-width: thin; }

@@ -1,129 +1,429 @@
-<!DOCTYPE html>
-<html lang="en" class="dark" data-accent="default">
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI MatchLab ULTRA</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <meta name="theme-color" content="#050711" />
+  <!-- CORE LAYOUT -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/accordion.css">
+  
+  <link rel="stylesheet" href="assets/css/odds.css">
+  <link rel="stylesheet" href="assets/css/right-panels.css">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="/assets/css/theme.css" />
-  <link rel="stylesheet" href="/assets/css/style.css" />
-  <link rel="stylesheet" href="/assets/css/matches.css" />
-  <link rel="stylesheet" href="/assets/css/odds.css" />
-  <link rel="stylesheet" href="/assets/css/skin-premium.css" />
-  <link rel="stylesheet" href="/assets/css/right-panels.css" />
+  <!-- THEME -->
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/skin-premium.css">
+
+  <!-- TOPBAR (ISOLATED – ΠΡΕΠΕΙ ΝΑ ΕΙΝΑΙ ΤΕΛΕΥΤΑΙΟ) -->
+  <link rel="stylesheet" href="assets/css/topbar.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
+
 </head>
+
 
 <body>
 
-<!-- ================= TOPBAR ================= -->
-<header class="app-topbar">
-  <div class="topbar-center">
-    <div class="brand-title">AI MatchLab ULTRA</div>
+<!-- =====================================================
+     TOPBAR (GLOBAL / FIXED)
+     Theme handled by assets/js/theme.js
+     Legal handled by assets/js/legal-menu.js
+===================================================== -->
+<header id="topbar" class="topbar">
+  <!-- LEFT -->
+  <div class="topbar-left">
+    <button id="btn-home" class="topbar-btn accent" title="Home">⌂</button>
+    <button id="btn-refresh" class="topbar-btn" title="Reset selection">⟳</button>
   </div>
+
+  <!-- CENTER -->
+  <div class="topbar-center">
+    <img src="assets/icons/logo-header.png" class="topbar-logo" alt="AI MatchLab" />
+    <div class="topbar-brand">
+      <div class="brand-title">AI MatchLab ULTRA</div>
+      <div class="brand-version" id="app-version">v2.15.5</div>
+    </div>
+  </div>
+
+<!--- RIGHT -->
+<div class="topbar-right">
+
+  <!-- MOBILE TABS (LEFT / ODDS / RIGHT) -->
+  <div class="mobile-tabs" id="mobile-tabs" aria-label="Mobile navigation tabs">
+    <button class="mobile-tab active" type="button" data-view="left"  title="Left Panels">LEFT</button>
+    <button class="mobile-tab"         type="button" data-view="odds"  title="Odds Center">ODDS</button>
+    <button class="mobile-tab"         type="button" data-view="right" title="Right Panels">RIGHT</button>
+  </div>
+
+  <button id="btn-theme" class="topbar-btn" title="Theme">🎨</button>
+  <button id="btn-lang" class="topbar-btn" title="Language">🌐</button>
+
+  <!-- EXPORT (ADMIN TOOL) -->
+  <button id="btn-export" class="topbar-btn glow" title="Export (Value)">⤓</button>
+
+  <button id="btn-legal" class="topbar-btn" title="Info">ⓘ</button>
+  <button id="btn-user" class="topbar-btn" title="User">👤</button>
+
+</div>
+
+<!-- EXPORT MENU (ADMIN ONLY TOOL) -->
+<div id="export-menu" class="topbar-menu hidden" aria-hidden="true"></div>
+`
+
+
 </header>
 
-<!-- ================= MAIN GRID ================= -->
-<div class="app-shell">
-  <main class="app-main">
-
-    <!-- LEFT -->
-<aside id="left-panel" class="app-panel">
-  <div class="panel-header">
-    <div class="panel-title">Today</div>
-  </div>
-  <div class="panel-body">
-    <div id="today-list"></div>
+<!-- =====================================================
+     THEME MENU (CONTAINER + CONTENT)
+     Required by assets/js/theme.js
+===================================================== -->
+<div id="theme-menu" class="theme-menu hidden" aria-hidden="true">
+  <div class="aiml-theme-head">
+    <div class="aiml-theme-title">Theme</div>
+    <button id="btn-theme-close" class="aiml-theme-close" type="button" aria-label="Close">×</button>
   </div>
 
-  <div class="panel-header">
-    <div class="panel-title">Active Leagues Today</div>
-  </div>
-  <div class="panel-body">
-    <div id="active-leagues-list"></div>
+  <div class="aiml-theme-section">
+    <div class="aiml-theme-label">Mode</div>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-theme="dark">
+      Dark
+    </button>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-theme="light">
+      Light
+    </button>
   </div>
 
-  <div class="panel-header">
-    <div class="panel-title">Saved</div>
+  <div class="aiml-theme-section">
+    <div class="aiml-theme-label">Accents</div>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-accent="default">
+      Blue / Orange (Default)
+    </button>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-accent="green-gold">
+      Green / Gold
+    </button>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-accent="crimson-silver">
+      Crimson / Silver
+    </button>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-accent="purple-aqua">
+      Purple / Aqua
+    </button>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-accent="neon-spectrum">
+      Neon / Spectrum
+    </button>
+
+    <button class="aiml-theme-pill popover-link" type="button" data-accent="minimal">
+      Minimal (Classic)
+    </button>
   </div>
-  <div class="panel-body">
-    <div id="saved-list"></div>
+</div>
+
+<!-- =====================================================
+     LEGAL MENU (CONTAINER)
+     Required by assets/js/legal-menu.js
+===================================================== -->
+<div id="legal-menu" class="legal-menu hidden" aria-hidden="true"></div>
+
+
+<!-- =====================================================
+     APP ROOT
+===================================================== -->
+<div class="app">
+<!-- ======================================================================
+     LEFT COLUMN — NEW (TODAY / ACTIVE / MATCHES / SAVED)
+====================================================================== -->
+<aside class="left-column">
+
+<!-- LEFT COLUMN TITLE (ΣΤΑΘΕΡΟΣ) -->
+  <div class="panel-header">
+    <div class="panel-title">Navigation</div>
+  </div>
+
+  <div class="accordion">
+
+    <div class="panel open" id="panel-today">
+      <!-- ✅ CHANGED: structured header -->
+      <div class="panel-header">
+        <div class="panel-title">Today</div>
+      </div>
+      <div class="panel-body" id="today-list"></div>
+    </div>
+
+    <div class="panel" id="panel-active-leagues">
+      <!-- ✅ CHANGED: structured header -->
+      <div class="panel-header">
+        <div class="panel-title">Active Leagues Today</div>
+      </div>
+      <div class="panel-body">
+        <div id="active-leagues-list"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-matches">
+      <!-- ✅ CHANGED: structured header -->
+      <div class="panel-header">
+        <div class="panel-title">Matches</div>
+      </div>
+      <div class="panel-body">
+        <div id="matches-list"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-saved">
+      <!-- ✅ CHANGED: structured header -->
+      <div class="panel-header">
+        <div class="panel-title">Saved</div>
+      </div>
+      <div class="panel-body">
+        <div id="saved-list"></div>
+      </div>
+    </div>
+
   </div>
 </aside>
 
 
-    <!-- CENTER -->
-    <section id="center-panel" class="app-panel">
-      <div class="panel-header">
-        <div class="panel-title">Odds Intelligence Center</div>
-      </div>
-      <div class="panel-body">
-        <div class="active-match-bar" id="active-match-bar">
-          <div id="amb-title">No match selected</div>
-        </div>
+<!-- ======================================================
+     ODDS INTELLIGENCE CENTER (DIV-BASED – FINAL)
+====================================================== -->
+<section id="odds-intelligence-center">
 
-        <div class="odds-grid">
-          <div id="greek-odds-body"></div>
-          <div id="eu-odds-body"></div>
-          <div id="asian-odds-body"></div>
-          <div id="betfair-odds-body"></div>
+  <!-- ===== STICKY HEADER (ΔΕΝ SCROLLΑΡΕΙ) ===== -->
+  <header class="oic-header">
+
+    <!-- TITLE -->
+    <div class="oic-title">
+      Odds Intelligence Center
+    </div>
+
+    <!-- ACTIVE MATCH BAR -->
+    <div class="oic-active-match">
+
+      <div class="oic-match-text">
+        <div class="oic-match-title">No match selected</div>
+        <div class="oic-match-sub">
+          Select a match from the left panel.
         </div>
+      </div>
+
+      <!-- MARKET SELECTOR (ΑΝΗΚΕΙ ΣΤΟ OIC) -->
+      <div class="oic-market-control">
+        <select class="oic-market-select">
+          <option value="1X2">1X2</option>
+          <option value="DC">Double Chance</option>
+          <option value="BTTS">BTTS</option>
+          <option value="OU15">Over / Under 1.5</option>
+          <option value="OU25">Over / Under 2.5</option>
+          <option value="OU35">Over / Under 3.5</option>
+        </select>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ===== SCROLLABLE CONTENT ===== -->
+  <div class="oic-scroll">
+
+    <!-- GREEK -->
+    <section class="oic-card greek" id="oic-greek">
+      <div class="oic-card-header">Greek</div>
+      <div class="oic-card-body" id="greek-odds-body"></div>
+    </section>
+
+    <!-- EUROPEAN -->
+    <section class="oic-card european" id="oic-eu">
+      <div class="oic-card-header">European</div>
+      <div class="oic-card-body" id="eu-odds-body"></div>
+    </section>
+
+    <!-- ASIAN -->
+    <section class="oic-card asian" id="oic-asian">
+      <div class="oic-card-header">Asian</div>
+      <div class="oic-card-body" id="asian-odds-body"></div>
+    </section>
+
+    <!-- BETFAIR -->
+    <section class="oic-card betfair" id="oic-betfair">
+      <div class="oic-card-header">Betfair</div>
+      <div class="oic-card-body" id="betfair-odds-body"></div>
+    </section>
+
+    <!-- MATCH DETAILS -->
+    <section class="oic-card match-details" id="oic-details">
+      <div class="oic-card-header oic-details-header">
+        <span>Match Details</span>
+        <button class="oic-details-open">Open</button>
+      </div>
+      <div class="oic-card-body">
+        Select a match to view details.
       </div>
     </section>
 
-    <!-- RIGHT -->
-    <aside id="right-panel" class="app-panel">
-      <div class="panel-header">
-        <div class="panel-title">Intelligence Panels</div>
-      </div>
-      <div class="panel-body">
-        <div id="radar-list"></div>
-        <div id="picks-list"></div>
-        <div id="value-picks-list"></div>
-        <div id="live-list"></div>
-      </div>
-    </aside>
+  </div>
+</section>
 
-  </main>
-</div>
 
-<!-- CORE APP / EVENT BUS (ΧΩΡΙΣ DEFER) -->
-<script src="/assets/js/ui/app.js"></script>
+<!-- ======================================================================
+     RIGHT COLUMN — INTELLIGENCE PANELS
+====================================================================== -->
+<aside class="right-column no-accordion" id="right-panel">
 
+  <!-- HEADER -->
+  <div class="panel-header">
+    <div class="panel-title">Intelligence Panels</div>
+  </div>
+
+  <!-- RADAR -->
+  <section class="intelligence-panel radar-panel">
+    <div class="panel-header">
+      <span>AI Radar</span>
+      <span class="panel-subtitle">Line Moves</span>
+    </div>
+    <div class="panel-body">
+      <div class="panel-placeholder">Radar ready.</div>
+      <div id="radar-list"></div>
+    </div>
+  </section>
+
+  <!-- TOP PICKS -->
+  <section class="intelligence-panel top-picks-panel">
+    <div class="panel-header">
+      <span>AI Smart Money</span>
+      <span class="panel-subtitle">Top Picks</span>
+    </div>
+    <div class="panel-body">
+      <div class="panel-placeholder">No picks yet.</div>
+      <div id="picks-list"></div>
+    </div>
+  </section>
+
+  <!-- VALUE PICKS -->
+  <section class="intelligence-panel value-panel">
+    <div class="panel-header">
+      <span>AI Value Picks</span>
+    </div>
+    <div class="panel-body">
+      <div class="panel-placeholder">Analyzing...</div>
+      <div id="value-picks-list"></div>
+    </div>
+  </section>
+
+  <!-- LIVE -->
+  <section class="intelligence-panel live-panel">
+    <div class="panel-header">
+      <span>Live Matches</span>
+    </div>
+    <div class="panel-body">
+      <div class="panel-placeholder">Waiting for live data...</div>
+      <div id="live-list"></div>
+    </div>
+  </section>
+
+</aside>
+
+
+<!-- =====================================================
+     CORE EVENT BUS (ΠΡΕΠΕΙ ΝΑ ΕΚΤΕΛΕΣΤΕΙ ΠΡΩΤΟ)
+===================================================== -->
+<script src="assets/js/ui/app.js"></script>
+
+<!-- =====================================================
+     GLOBAL STATE / THEME / LANGUAGE / LEGAL / INSTALL
+     (FOUNDATION – ΠΡΙΝ ΟΠΟΙΟΔΗΠΟΤΕ UI)
+===================================================== -->
+<script src="assets/js/state.js"></script>
+<script src="assets/js/theme.js"></script>
+<script src="assets/js/language.js"></script>
+<script src="assets/js/legal-menu.js"></script>
+<script src="assets/js/install.js"></script>
+<script src="assets/js/mobile-ui.js"></script>
+
+<!-- =====================================================
+     ODDS KV DEBUG LOGGER (ΠΡΟΣΩΡΙΝΟ – ΜΟΝΟ LOG)
+===================================================== -->
+<script src="assets/js/odds/odds-kv-log.js"></script>
+
+<!-- =====================================================
+     GLOBAL CONFIG (LIVE – ΟΠΩΣ ΕΙΝΑΙ)
+===================================================== -->
 <script>
   window.AIML_LIVE_CFG = {
-    emitToday: true,
-    emitLive: true,
-    timezone: "Europe/Athens",
-    fixturesBase: "https://aimatchlab-main-worker.pierros1402.workers.dev",
-    fixturesPath: "/fixtures",
-    fixturesScope: "all"
+    liveBase: "https://live-matches-worker.pierros1402.workers.dev",
+    livePath: "/api/unified-live"
+  };
+</script>
+<script>
+  window.AIML_VALUE_CFG = {
+    valueBase: "https://aimatchlab-main-worker.pierros1402.workers.dev"
   };
 </script>
 
-<!-- CORE STATE -->
-<script src="/assets/js/state.js"></script>
+<!-- =====================================================
+     LEFT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
+===================================================== -->
+<script src="assets/js/ui/today-panel.js"></script>
+<script src="assets/js/ui/active-leagues-panel.js"></script>
+<script src="assets/js/ui/matches-panel.js"></script>
+<script src="assets/js/ui/saved-store.js"></script>
+<script src="assets/js/ui/saved-panel.js"></script>
 
-<!-- LEFT PANELS -->
-<script src="/assets/js/ui/today-panel.js"></script>
-<script src="/assets/js/ui/active-leagues-panel.js"></script>
-<script src="/assets/js/ui/saved-store.js"></script>
-<script src="/assets/js/ui/saved-panel.js"></script>
+<!-- =====================================================
+     TOPBAR ORCHESTRATOR (ΜΕΤΑ THEME / STATE)
+===================================================== -->
+<script defer src="assets/js/ui/topbar.js"></script>
 
-<!-- LIVE -->
-<script src="/assets/js/live/live-engine.js"></script>
-<script src="/assets/js/live/fixtures-loader.js"></script>
+<!-- =====================================================
+     LIVE ENGINE (ΔΕΝ ΑΛΛΑΖΕΙ)
+===================================================== -->
+<script src="assets/js/live/live-engine.js"></script>
+<!-- =====================================================
+     VALUE ENGINE ADAPTER (Worker -> UI)
+===================================================== -->
+<script src="assets/js/live/value-adapter.js"></script>
+<!-- =====================================================
+     ODDS DATA PIPELINE
+     (SINGLE SOURCE OF TRUTH – KV → CORE)
+===================================================== -->
+<script src="assets/js/odds/odds-canonical-batch-to-core.js"></script>
+<!-- <script src="assets/js/odds/odds-core-bridge.js"></script> -->
 
-<!-- ODDS -->
-<script src="/assets/js/live/odds-engine.js"></script>
-<script src="/assets/js/ui/odds-panels.js"></script>
+<!-- =====================================================
+     ODDS INTELLIGENCE CENTER (ΝΕΟ – ΚΑΘΑΡΟ)
+     ❌ ΔΕΝ φορτώνουμε odds-panels.js
+     ❌ ΔΕΝ χρησιμοποιούμε market-sync / odds-engine εδώ
+===================================================== -->
+<script src="assets/js/ui/oic-engine.js"></script>
+<script src="assets/js/ui/oic-renderer.js"></script>
 
-<!-- RIGHT -->
-<script src="/assets/js/right-panels.js"></script>
-<script src="/assets/js/ui/odds-radar.js"></script>
-<script src="/assets/js/ui/top-picks.js"></script>
-<script src="/assets/js/ui/value-picks.js"></script>
+<!-- =====================================================
+     RIGHT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
+===================================================== -->
+<script src="assets/js/ui/odds-radar.js"></script>
+<script src="assets/js/ui/top-picks.js"></script>
+<script src="assets/js/ui/value-picks.js"></script>
+<script src="assets/js/ui/live-panel.js"></script>
+
+<!-- =====================================================
+     LEFT ACCORDION (SAFE – ΜΙΑ ΦΟΡΑ)
+===================================================== -->
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document
+      /* ✅ CHANGED: Only toggle real left panels inside accordion.
+         Prevents "Navigation" header from toggling the whole <aside>. */
+      .querySelectorAll(".left-column .accordion .panel > .panel-header")
+      .forEach(h => {
+        h.addEventListener("click", () => {
+          h.parentElement.classList.toggle("open");
+        });
+      });
+  });
+</script>
 </body>
 </html>
