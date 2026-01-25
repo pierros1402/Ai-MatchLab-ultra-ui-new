@@ -1,55 +1,18 @@
 /* =========================================================
-   TOPBAR INTERACTIONS
+   TOPBAR INTERACTIONS (FINAL)
    - Home
    - Refresh
    - Export (Value Picks CSV)  [ADMIN ONLY]
+   - Admin Unlock (Ctrl+Shift+E)
 ========================================================= */
 
 (function () {
-
-  // -------------------------------------------------------
-  // Admin unlock (local only)
-  // -------------------------------------------------------
-  const ADMIN_PIN = "1234";
-  const ADMIN_KEY = "aiml_admin_enabled";
-
-  function enableAdmin() {
-    document.body.classList.add("aiml-admin");
-    localStorage.setItem(ADMIN_KEY, "1");
-  }
-
-  function disableAdmin() {
-    document.body.classList.remove("aiml-admin");
-    localStorage.removeItem(ADMIN_KEY);
-  }
-
-  // auto-restore admin if enabled on this device
-  if (localStorage.getItem(ADMIN_KEY) === "1") {
-    enableAdmin();
-  }
-
-  // unlock with Ctrl+Shift+E
-  document.addEventListener("keydown", (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "e") {
-      const pin = prompt("Admin PIN:");
-      if (pin === ADMIN_PIN) enableAdmin();
-      else alert("Wrong PIN");
-    }
-
-    // lock with Ctrl+Shift+L
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "l") {
-      disableAdmin();
-      alert("Admin locked");
-    }
-  });
+  "use strict";
 
   // -------------------------------------------------------
   // Helpers
   // -------------------------------------------------------
-
-  function $(id) {
-    return document.getElementById(id);
-  }
+  function $(id) { return document.getElementById(id); }
 
   function formatDateYYYYMMDD(d) {
     const pad = (n) => String(n).padStart(2, "0");
@@ -67,10 +30,7 @@
     }).formatToParts(dt);
 
     const map = {};
-    parts.forEach(p => {
-      if (p.type !== "literal") map[p.type] = p.value;
-    });
-
+    parts.forEach(p => { if (p.type !== "literal") map[p.type] = p.value; });
     return `${map.year}-${map.month}-${map.day}`;
   }
 
@@ -81,41 +41,53 @@
     return formatDateYYYYMMDD(base);
   }
 
-  function toggleMenu(menuEl, open) {
-    if (!menuEl) return;
-    const isOpen = !menuEl.classList.contains("hidden");
-    const next = typeof open === "boolean" ? open : !isOpen;
-
-    if (next) {
-      menuEl.classList.remove("hidden");
-      menuEl.setAttribute("aria-hidden", "false");
-    } else {
-      menuEl.classList.add("hidden");
-      menuEl.setAttribute("aria-hidden", "true");
-    }
-  }
-
-  function closeMenusOnOutsideClick(menuEl, btnEl) {
-    document.addEventListener("pointerdown", (e) => {
-      if (!menuEl || !btnEl) return;
-      const insideMenu = menuEl.contains(e.target);
-      const insideBtn = btnEl.contains(e.target);
-      if (!insideMenu && !insideBtn) toggleMenu(menuEl, false);
-    });
-  }
-
   function getValueBase() {
     return (window.AIML_VALUE_CFG && window.AIML_VALUE_CFG.valueBase)
       ? window.AIML_VALUE_CFG.valueBase
       : "";
   }
 
+  function closeOnOutside(menuEl, btnEl) {
+    document.addEventListener("pointerdown", (e) => {
+      if (!menuEl || !btnEl) return;
+      const insideMenu = menuEl.contains(e.target);
+      const insideBtn = btnEl.contains(e.target);
+      if (!insideMenu && !insideBtn) {
+        menuEl.classList.add("hidden");
+        menuEl.setAttribute("aria-hidden", "true");
+      }
+    });
+  }
+
+  function toggleHidden(el) {
+    if (!el) return;
+    const isHidden = el.classList.contains("hidden");
+    if (isHidden) {
+      el.classList.remove("hidden");
+      el.setAttribute("aria-hidden", "false");
+    } else {
+      el.classList.add("hidden");
+      el.setAttribute("aria-hidden", "true");
+    }
+  }
+
   // -------------------------------------------------------
   // Home / Refresh
   // -------------------------------------------------------
-
   const btnHome = $("btn-home");
   const btnRefresh = $("btn-refresh");
+
+// -------------------------------------------------------
+// Update (online-only, no SW) — cache-bust reload
+// -------------------------------------------------------
+const btnUpdate = document.getElementById("btn-update");
+if (btnUpdate) {
+  btnUpdate.addEventListener("click", () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", String(Date.now())); // cache-bust
+    window.location.replace(url.toString());
+  });
+}
 
   if (btnHome) {
     btnHome.addEventListener("click", () => {
@@ -133,9 +105,8 @@
   }
 
   // -------------------------------------------------------
-  // Export Menu (Daily / Range / Week)
+  // Export Menu (ADMIN ONLY)
   // -------------------------------------------------------
-
   const btnExport = $("btn-export");
   const exportMenu = $("export-menu");
 
@@ -147,7 +118,7 @@
     exportMenu.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:10px;">
 
-        <div style="font-weight:800; opacity:.95;">Value Export (CSV)</div>
+        <div style="font-weight:900; opacity:.95;">Value Export (CSV)</div>
 
         <div style="display:flex; gap:8px; align-items:center;">
           <label style="opacity:.85; font-size:12px; min-width:36px;">From</label>
@@ -199,130 +170,82 @@
     const btnDownload = $("export-download");
 
     function setRange(days) {
-      // range ends today, starts (today - days + 1)
       const end = getTodayAthensYYYYMMDD();
       const start = addDays(end, -(days - 1));
       if (fromEl) fromEl.value = start;
       if (toEl) toEl.value = end;
     }
 
-    if (btnDaily) {
-      btnDaily.addEventListener("click", () => setRange(1));
-    }
-    if (btn3) {
-      btn3.addEventListener("click", () => setRange(3));
-    }
-    if (btnWeek) {
-      btnWeek.addEventListener("click", () => setRange(7));
-    }
+    if (btnDaily) btnDaily.addEventListener("click", () => setRange(1));
+    if (btn3) btn3.addEventListener("click", () => setRange(3));
+    if (btnWeek) btnWeek.addEventListener("click", () => setRange(7));
 
     if (btnDownload) {
       btnDownload.addEventListener("click", () => {
         const base = getValueBase();
-        const from = fromEl && fromEl.value ? fromEl.value : today;
-        const to = toEl && toEl.value ? toEl.value : today;
+        const from = (fromEl && fromEl.value) ? fromEl.value : today;
+        const to = (toEl && toEl.value) ? toEl.value : today;
 
-        // cache-bust for guaranteed fresh
+        // cache-bust for fresh output
         const t = Date.now();
-
         const url = `${base}/value-export/range?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&format=csv&t=${t}&token=1234`;
 
         window.open(url, "_blank");
-        toggleMenu(exportMenu, false);
+        exportMenu.classList.add("hidden");
+        exportMenu.setAttribute("aria-hidden", "true");
       });
     }
   }
 
-  // ✅ UPDATED BLOCK (Force open/close, no toggleMenu)
   if (btnExport && exportMenu) {
     buildExportMenu();
 
     btnExport.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-
-      // force open/close
-      const isHidden = exportMenu.classList.contains("hidden");
-      if (isHidden) {
-        exportMenu.classList.remove("hidden");
-        exportMenu.setAttribute("aria-hidden", "false");
-      } else {
-        exportMenu.classList.add("hidden");
-        exportMenu.setAttribute("aria-hidden", "true");
-      }
+      toggleHidden(exportMenu);
     });
 
-    closeMenusOnOutsideClick(exportMenu, btnExport);
+    closeOnOutside(exportMenu, btnExport);
   }
 
-})();
-// =====================================================
-// TOPBAR INIT (required)
-// =====================================================
-window.AIML_TOPBAR_INIT = function AIML_TOPBAR_INIT(){
-  // You can keep this empty for now.
-  // The important thing: it must exist so tools and admin work consistently.
-};
-
-// =====================================================
-// ADMIN UNLOCK (Ctrl+Shift+E) — ALWAYS ACTIVE
-// =====================================================
-(function(){
-  const ADMIN_KEY = "aiml_admin_enabled";
+  // -------------------------------------------------------
+  // Admin unlock (local only)
+  // -------------------------------------------------------
   const ADMIN_PIN = "1234";
+  const ADMIN_KEY = "aiml_admin_enabled";
 
-  function applyAdminClass(){
-    try{
-      if(localStorage.getItem(ADMIN_KEY) === "1"){
-        document.body.classList.add("aiml-admin");
-        document.documentElement.classList.add("aiml-admin");
-      }
-    }catch(e){}
+  function enableAdmin() {
+    document.body.classList.add("aiml-admin");
+    document.documentElement.classList.add("aiml-admin");
+    localStorage.setItem(ADMIN_KEY, "1");
   }
 
-  function enableAdmin(){
-    try{
-      localStorage.setItem(ADMIN_KEY, "1");
-      document.body.classList.add("aiml-admin");
-      document.documentElement.classList.add("aiml-admin");
-      alert("ADMIN MODE ENABLED ✅");
-    }catch(e){
-      console.warn("[admin] enable failed", e);
-    }
+  function disableAdmin() {
+    document.body.classList.remove("aiml-admin");
+    document.documentElement.classList.remove("aiml-admin");
+    localStorage.removeItem(ADMIN_KEY);
   }
 
-  function disableAdmin(){
-    try{
-      localStorage.removeItem(ADMIN_KEY);
-      document.body.classList.remove("aiml-admin");
-      document.documentElement.classList.remove("aiml-admin");
-      alert("ADMIN MODE DISABLED");
-    }catch(e){
-      console.warn("[admin] disable failed", e);
-    }
-  }
+  // Restore on load
+  if (localStorage.getItem(ADMIN_KEY) === "1") enableAdmin();
 
-  // apply admin class on load (if enabled)
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", applyAdminClass, { once:true });
-  } else {
-    applyAdminClass();
-  }
-
+  // Ctrl+Shift+E toggles admin (safe single handler)
   window.addEventListener("keydown", (e) => {
-    const isCombo = e.ctrlKey && e.shiftKey && (e.code === "KeyE" || (e.key && e.key.toLowerCase() === "e"));
-    if(!isCombo) return;
+    const isCombo = e.ctrlKey && e.shiftKey && (e.key && e.key.toLowerCase() === "e");
+    if (!isCombo) return;
 
     e.preventDefault();
 
-    const already = (localStorage.getItem(ADMIN_KEY) === "1");
-    if(already){
-      if(confirm("Disable ADMIN MODE?")) disableAdmin();
+    const already = localStorage.getItem(ADMIN_KEY) === "1";
+    if (already) {
+      if (confirm("Disable ADMIN MODE?")) disableAdmin();
       return;
     }
 
     const pin = prompt("Enter ADMIN PIN:");
-    if(pin === ADMIN_PIN) enableAdmin();
-    else if(pin !== null) alert("Wrong PIN");
+    if (pin === ADMIN_PIN) enableAdmin();
+    else if (pin !== null) alert("Wrong PIN");
   });
+
 })();

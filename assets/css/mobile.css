@@ -1,16 +1,30 @@
 /* =========================================================
-   AI MatchLab Ultra — MOBILE LAYOUT (CLEAN)
+   AI MatchLab Ultra — MOBILE LAYOUT (FINAL)
    File: assets/css/mobile.css
+   Goals:
+   - Full topbar visible
+   - Tabs work reliably
+   - Right panels stable + scroll OK
 ========================================================= */
 
 .mobile-tabs{ display:none; } /* tabs appear only on mobile */
 
 @media (max-width: 900px){
 
-  /* Keep page stable, but allow scrolling inside the active view */
+  /* Keep page stable, allow scrolling ONLY inside active view */
   html, body{
     height: 100%;
     overflow: hidden;
+  }
+
+  /* Topbar must always stay visible */
+  #topbar{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    z-index: 1000;
   }
 
   /* Tabs visible only on mobile */
@@ -19,6 +33,9 @@
     gap: 6px;
     align-items: center;
     margin-left: 8px;
+    max-width: 100%;
+    overflow: hidden;
+    flex-wrap: nowrap;
   }
 
   .mobile-tab{
@@ -31,6 +48,7 @@
     font-weight: 800;
     cursor: pointer;
     user-select: none;
+    white-space: nowrap;
   }
 
   .mobile-tab.active{
@@ -51,7 +69,7 @@
     overflow: hidden !important;
   }
 
-  /* 3 views = full-screen scrollable surfaces */
+  /* 3 views = full-screen scrollable surfaces under topbar */
   .left-column,
   #odds-intelligence-center,
   aside.right-column{
@@ -79,6 +97,7 @@
   .left-column .panel .panel-header{
     cursor: pointer;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .left-column .panel .panel-body{
@@ -103,6 +122,7 @@
   #right-panel .intelligence-panel .panel-header{
     cursor: pointer;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
     padding: 12px 12px;
   }
 
@@ -113,5 +133,10 @@
 
   #right-panel .intelligence-panel.open .panel-body{
     display: block;
+  }
+
+  /* Protect right panels from collapsing weirdly */
+  aside.right-column{
+    padding-bottom: 18px;
   }
 }

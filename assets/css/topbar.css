@@ -1,5 +1,5 @@
 /* =====================================================
-   TOPBAR – LAYOUT & BRANDING (FINAL)
+   TOPBAR – LAYOUT & BRANDING (FINAL + MOBILE SAFE)
 ===================================================== */
 
 #topbar {
@@ -22,6 +22,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 /* CENTER (LOGO + BRAND) */
@@ -30,6 +31,7 @@
   align-items: center;
   gap: 12px;
   pointer-events: none;
+  min-width: 0;
 }
 
 .topbar-logo {
@@ -43,6 +45,7 @@
   display: flex;
   flex-direction: column;
   line-height: 1.05;
+  min-width: 0;
 }
 
 .brand-title {
@@ -61,6 +64,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 /* ICON BUTTONS */
@@ -92,120 +96,19 @@
 .topbar-btn.glow:hover {
   text-shadow: 0 0 8px rgba(255, 140, 0, 0.85);
 }
+
 /* =========================================================
-   LEGAL MENU — Render-like Popover UI
-   (Fixes: blue links, inline layout, spacing, close button)
+   MOBILE SAFETY
+   - prevent center from stealing space
 ========================================================= */
-
-#legal-menu.legal-menu{
-  width: 340px;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 96px);
-  overflow: auto;
-
-  padding: 14px;
-  border-radius: 18px;
-
-  background: rgba(10, 12, 18, 0.96);
-  border: 1px solid rgba(255, 140, 0, 0.35);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-
-  color: rgba(255,255,255,0.92);
+@media (max-width: 900px){
+  .topbar-center{
+    display: none;
+  }
 }
 
-/* header row */
-#legal-menu .aiml-legal-head{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-#legal-menu .aiml-legal-title{
-  font-weight: 900;
-  font-size: 16px;
-  letter-spacing: 0.2px;
-  color: rgba(255,255,255,0.92);
-}
-
-/* close button */
-#legal-menu .aiml-legal-close{
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.88);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
-/* list */
-#legal-menu .aiml-legal-list{
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* item */
-#legal-menu .aiml-legal-item{
-  display: block;
-  width: 100%;
-  padding: 12px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.92);
-  text-decoration: none;
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 0.2px;
-  text-align: center;
-  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
-}
-
-#legal-menu .aiml-legal-item:hover{
-  background: rgba(255,255,255,0.08);
-  border-color: rgba(255, 140, 0, 0.35);
-  transform: translateY(-1px);
-}
-
-/* Light mode */
-html.light #legal-menu.legal-menu,
-html[data-theme="light"] #legal-menu.legal-menu{
-  background: rgba(255,255,255,0.96);
-  border-color: rgba(0,0,0,0.12);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.22);
-  color: rgba(0,0,0,0.86);
-}
-
-html.light #legal-menu .aiml-legal-title,
-html[data-theme="light"] #legal-menu .aiml-legal-title{
-  color: rgba(0,0,0,0.86);
-}
-
-html.light #legal-menu .aiml-legal-item,
-html[data-theme="light"] #legal-menu .aiml-legal-item{
-  background: rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0.10);
-  color: rgba(0,0,0,0.86);
-}
-
-html.light #legal-menu .aiml-legal-close,
-html[data-theme="light"] #legal-menu .aiml-legal-close{
-  background: rgba(0,0,0,0.04);
-  border-color: rgba(0,0,0,0.10);
-  color: rgba(0,0,0,0.72);
-}
 /* =========================================================
-   FINAL OVERRIDE — hidden must ALWAYS hide legal/theme menus
+   LEGAL + THEME MENU — stable hidden behavior
 ========================================================= */
 #legal-menu.hidden,
 #theme-menu.hidden {
@@ -215,71 +118,14 @@ html[data-theme="light"] #legal-menu .aiml-legal-close{
   pointer-events: none !important;
 }
 .hidden { display: none !important; }
-#legal-menu.legal-menu{
-  border: 1px solid rgba(255, 140, 0, 0.45);
-}
-/* ===============================
-   THEME MENU – Render-like look
-================================ */
-#theme-menu.theme-menu{
-  width: 420px;
-  max-width: calc(100vw - 24px);
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(10, 12, 18, 0.96);
-  border: 1px solid rgba(255, 140, 0, 0.35);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
 
-#theme-menu .aiml-theme-title{
-  font-weight: 900;
-  font-size: 16px;
-}
-
-#theme-menu .aiml-theme-pill{
-  width: 100%;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.92);
-  padding: 12px 12px;
-  font-weight: 800;
-}
-
-#theme-menu .aiml-theme-pill:hover{
-  border-color: rgba(255, 140, 0, 0.35);
-  background: rgba(255,255,255,0.08);
-}
-
-#theme-menu .aiml-theme-pill.active{
-  border-color: rgba(255, 140, 0, 0.55);
-  box-shadow: 0 0 0 2px rgba(255, 140, 0, 0.18);
-}
-/* ===============================
-   ACCENTS (data-accent)
-================================ */
-html[data-accent="default"]{ --accent:#ff8c00; }
-html[data-accent="green-gold"]{ --accent:#2bdc7b; }
-html[data-accent="crimson-silver"]{ --accent:#ff3b6a; }
-html[data-accent="purple-aqua"]{ --accent:#a855f7; }
-html[data-accent="neon-spectrum"]{ --accent:#35c7ff; }
-html[data-accent="minimal"]{ --accent:#c9d2de; }
-
-/* Apply accent to topbar buttons */
-.topbar-btn.accent,
-.topbar-btn.glow{
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent) !important;
-}
 /* =========================================================
    EXPORT MENU (ADMIN TOOL) — single source of truth
 ========================================================= */
 
-/* Export menu popover */
 #export-menu.topbar-menu{
   position: absolute;
-  top: 58px;               /* κάτω από topbar (56px) */
+  top: 58px;
   right: 12px;
   z-index: 99999;
 
@@ -302,7 +148,6 @@ html[data-accent="minimal"]{ --accent:#c9d2de; }
   color: rgba(255,255,255,0.92);
 }
 
-/* Must ALWAYS hide when hidden */
 #export-menu.hidden{
   display: none !important;
   visibility: hidden !important;
@@ -310,38 +155,12 @@ html[data-accent="minimal"]{ --accent:#c9d2de; }
   pointer-events: none !important;
 }
 
-/* Light mode */
-html.light #export-menu.topbar-menu,
-html[data-theme="light"] #export-menu.topbar-menu{
-  background: rgba(255,255,255,0.96);
-  border-color: rgba(0,0,0,0.12);
-  box-shadow: 0 18px 60px rgba(0,0,0,0.22);
-  color: rgba(0,0,0,0.86);
-}
-
-/* Date input readable */
-#export-menu input[type="date"]{
-  color-scheme: dark;
-}
-html.light #export-menu input[type="date"],
-html[data-theme="light"] #export-menu input[type="date"]{
-  color-scheme: light;
-}
-
-/* =========================================================
-   ADMIN ONLY — Export button visibility
-========================================================= */
-
 #btn-export{
   display: none;
 }
 body.aiml-admin #btn-export{
   display: inline-flex;
 }
-/* Force export menu visible when not hidden (guards against other CSS) */
-#export-menu.topbar-menu:not(.hidden){
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
+@media (max-width: 900px){
+  .topbar-center{ display:none; }
 }

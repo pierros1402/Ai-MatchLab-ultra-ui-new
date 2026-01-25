@@ -1,8 +1,9 @@
 /* assets/js/mobile-ui.js
-   CLEAN MOBILE UI
+   FINAL MOBILE UI
    - Tabs (LEFT / ODDS / RIGHT)
    - LEFT panels open/close (mobile)
    - RIGHT panels open/close (mobile)
+   - Robust: reboots when switching between desktop/mobile widths
 */
 
 (function () {
@@ -29,6 +30,9 @@
     const tabs = document.getElementById("mobile-tabs");
     if (!tabs) return;
 
+    if (tabs.dataset.bound === "1") return;
+    tabs.dataset.bound = "1";
+
     tabs.addEventListener("click", (e) => {
       const btn = e.target.closest(".mobile-tab");
       if (!btn) return;
@@ -37,60 +41,65 @@
   }
 
   function initLeftAccordionMobile() {
-  if (!isMobile()) return;
+    if (!isMobile()) return;
 
-  const leftCol = document.querySelector(".left-column");
-  if (!leftCol) return;
+    const leftCol = document.querySelector(".left-column");
+    if (!leftCol) return;
 
-  const panels = leftCol.querySelectorAll(".panel");
-  if (!panels.length) return;
+    const panels = leftCol.querySelectorAll(".panel");
+    if (!panels.length) return;
 
-  // Init: hide all bodies except Today
-  panels.forEach((p) => {
-    const body = p.querySelector(".panel-body");
-    if (!body) return;
+    if (leftCol.dataset.bound === "1") return;
+    leftCol.dataset.bound = "1";
 
-    if (p.id === "panel-today") {
-      body.hidden = false;
-      p.classList.add("open");
-    } else {
-      body.hidden = true;
-      p.classList.remove("open");
-    }
-  });
-
-  leftCol.addEventListener("click", (e) => {
-    const header = e.target.closest(".panel-header");
-    if (!header) return;
-
-    const panel = header.closest(".panel");
-    if (!panel) return;
-
-    const body = panel.querySelector(".panel-body");
-    if (!body) return;
-
-    const wasOpen = !body.hidden;
-
-    // Single-open behavior
+    // Init: hide all bodies except Today
     panels.forEach((p) => {
-      const b = p.querySelector(".panel-body");
-      if (!b) return;
-      b.hidden = true;
-      p.classList.remove("open");
+      const body = p.querySelector(".panel-body");
+      if (!body) return;
+
+      if (p.id === "panel-today") {
+        body.hidden = false;
+        p.classList.add("open");
+      } else {
+        body.hidden = true;
+        p.classList.remove("open");
+      }
     });
 
-    // Toggle current
-    body.hidden = wasOpen;
-    panel.classList.toggle("open", !body.hidden);
-  });
-}
+    leftCol.addEventListener("click", (e) => {
+      const header = e.target.closest(".panel-header");
+      if (!header) return;
 
+      const panel = header.closest(".panel");
+      if (!panel) return;
+
+      const body = panel.querySelector(".panel-body");
+      if (!body) return;
+
+      const wasOpen = !body.hidden;
+
+      // Single-open behavior
+      panels.forEach((p) => {
+        const b = p.querySelector(".panel-body");
+        if (!b) return;
+        b.hidden = true;
+        p.classList.remove("open");
+      });
+
+      // Toggle current
+      body.hidden = wasOpen;
+      panel.classList.toggle("open", !body.hidden);
+    });
+  }
 
   function initRightAccordionMobile() {
     if (!isMobile()) return;
 
     const right = document.getElementById("right-panel");
     if (!right) return;
+
+    if (right.dataset.bound === "1") return;
+    right.dataset.bound = "1";
 
     right.addEventListener("click", (e) => {
       const header = e.target.closest(".intelligence-panel .panel-header");
@@ -119,14 +128,26 @@
     initLeftAccordionMobile();
     initRightAccordionMobile();
 
-    // default view
+    // default view always left on entry
     setView("left");
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot);
-  } else {
+  function onReady() {
     boot();
+
+    // if resize crosses breakpoint, re-boot
+    if (MQ && MQ.addEventListener) {
+      MQ.addEventListener("change", () => {
+        // when entering mobile, boot again
+        if (isMobile()) boot();
+      });
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", onReady, { once: true });
+  } else {
+    onReady();
   }
 
   // Debug API
