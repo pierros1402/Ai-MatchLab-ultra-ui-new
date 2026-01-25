@@ -164,3 +164,40 @@ body.aiml-admin #btn-export{
 @media (max-width: 900px){
   .topbar-center{ display:none; }
 }
+/* ============================
+   MOBILE TOPBAR FIX (NO OVERLAP)
+============================ */
+@media (max-width: 900px){
+
+  .topbar-right{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .topbar-right::-webkit-scrollbar{
+    height: 6px;
+  }
+
+  .topbar-right::-webkit-scrollbar-thumb{
+    background: rgba(255,255,255,0.18);
+    border-radius: 20px;
+  }
+
+  .mobile-tabs{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .topbar-btn,
+  .mobile-tab{
+    flex: 0 0 auto;
+  }
+}
