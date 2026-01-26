@@ -1,8 +1,10 @@
 /* assets/js/mobile-ui.js
-   FINAL MOBILE UI
-   - Tabs (LEFT / ODDS / RIGHT) with "hide active tab"
-   - LEFT panels open/close (mobile)
-   - RIGHT panels open/close (mobile)
+   FINAL MOBILE UI (LOCKED)
+   - Tabs (LEFT / ODDS / RIGHT) hide active tab (show only the other 2)
+   - HARD show/hide panels (display) => guaranteed switching
+   - Remembers last view (localStorage)
+   - LEFT accordion mobile
+   - RIGHT accordion mobile
 */
 
 (function () {
@@ -11,9 +13,21 @@
   window.__AIML_MOBILE_UI__ = true;
 
   const MQ = window.matchMedia("(max-width: 900px)");
+  const STORAGE_KEY = "AIML_MOBILE_VIEW";
 
   function isMobile() {
     return MQ && MQ.matches;
+  }
+
+  function getEls() {
+    const left = document.querySelector(".left-column");
+    const odds = document.querySelector("#odds-intelligence-center") || document.querySelector(".center-column");
+    const right =
+      document.querySelector("aside.right-column") ||
+      document.querySelector(".right-column") ||
+      document.getElementById("right-panel");
+
+    return { left, odds, right };
   }
 
   function updateTabs(view) {
@@ -21,15 +35,52 @@
       const active = b.dataset.view === view;
       b.classList.toggle("active", active);
 
-      // ✅ Hide the current view button (show only the other 2)
+      // Hide the current view button (show only the other 2)
       b.style.display = active ? "none" : "inline-flex";
     });
   }
 
+  function saveView(view) {
+    try {
+      localStorage.setItem(STORAGE_KEY, view);
+    } catch (_) {}
+  }
+
+  function loadView() {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v === "left" || v === "odds" || v === "right") return v;
+    } catch (_) {}
+    return null;
+  }
+
+  function hardApply(view) {
+    const { left, odds, right } = getEls();
+    if (!left || !odds || !right) return;
+
+    // Hide all 3
+    left.style.display = "none";
+    odds.style.display = "none";
+    right.style.display = "none";
+
+    // Show selected
+    if (view === "left") left.style.display = "block";
+    if (view === "odds") odds.style.display = "block";
+    if (view === "right") right.style.display = "block";
+  }
+
   function setView(view) {
+    if (view !== "left" && view !== "odds" && view !== "right") view = "left";
+
     document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
     document.body.classList.add("mobile-view-" + view);
+
+    if (isMobile()) {
+      hardApply(view);
+    }
+
     updateTabs(view);
+    saveView(view);
   }
 
   function initTabs() {
@@ -98,7 +149,11 @@
   function initRightAccordionMobile() {
     if (!isMobile()) return;
 
-    const right = document.getElementById("right-panel");
+    const right =
+      document.getElementById("right-panel") ||
+      document.querySelector("aside.right-column") ||
+      document.querySelector(".right-column");
+
     if (!right) return;
 
     if (right.dataset.bound === "1") return;
@@ -129,8 +184,21 @@
     initLeftAccordionMobile();
     initRightAccordionMobile();
 
-    // default view
-    setView("left");
+    // IMPORTANT: DO NOT force left every time.
+    const saved = loadView();
+    if (saved) {
+      setView(saved);
+      return;
+    }
+
+    // If no saved view, keep existing body class or fallback left
+    const current =
+      document.body.classList.contains("mobile-view-odds") ? "odds" :
+      document.body.classList.contains("mobile-view-right") ? "right" :
+      document.body.classList.contains("mobile-view-left") ? "left" :
+      "left";
+
+    setView(current);
   }
 
   function onReady() {

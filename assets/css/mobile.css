@@ -1,23 +1,31 @@
 /* =========================================================
-   AI MatchLab Ultra — MOBILE LAYOUT (FINAL)
+   AI MatchLab Ultra — MOBILE LAYOUT (FINAL CLEAN)
    File: assets/css/mobile.css
+
    Goals:
-   - Full topbar visible
-   - Tabs work reliably
-   - Right panels stable + scroll OK
+   - Full topbar always visible
+   - Mobile navigation tabs show ONLY 2 options (hide active)
+   - Single-column view switching: LEFT / ODDS / RIGHT
+   - No horizontal overflow / no panel drifting
+   - Accordion behavior inside left & right panels
 ========================================================= */
 
-.mobile-tabs{ display:none; } /* tabs appear only on mobile */
+/* Tabs appear only on mobile */
+.mobile-tabs{
+  display: none;
+}
 
 @media (max-width: 900px){
 
-  /* Keep page stable, allow scrolling ONLY inside active view */
+  /* =========================================================
+     GLOBAL MOBILE BASE
+  ========================================================= */
   html, body{
     height: 100%;
-    overflow: hidden;
+    overflow: hidden; /* scrolling happens inside active view only */
   }
 
-  /* Topbar must always stay visible */
+  /* Topbar must stay fixed */
   #topbar{
     position: fixed;
     top: 0;
@@ -27,41 +35,12 @@
     z-index: 1000;
   }
 
-  /* Tabs visible only on mobile */
-  .mobile-tabs{
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    margin-left: 8px;
-    max-width: 100%;
-    overflow: hidden;
-    flex-wrap: nowrap;
-  }
-
-  .mobile-tab{
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: rgba(255,255,255,.06);
-    color: rgba(255,255,255,.92);
-    font-weight: 800;
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-  }
-
-  .mobile-tab.active{
-    border-color: rgba(255,140,0,.60);
-    background: rgba(255,140,0,.12);
-  }
-
-  /* Disable overlay only (not right panel) */
+  /* Disable any overlay that could block taps */
   #drawer-overlay{
     display: none !important;
   }
 
-  /* MAIN APP: single surface below topbar */
+  /* Main app surface */
   .app{
     display: block !important;
     width: 100% !important;
@@ -69,7 +48,9 @@
     overflow: hidden !important;
   }
 
-  /* 3 views = full-screen scrollable surfaces under topbar */
+  /* =========================================================
+     MOBILE VIEW SURFACES (LEFT / ODDS / RIGHT)
+  ========================================================= */
   .left-column,
   #odds-intelligence-center,
   aside.right-column{
@@ -80,15 +61,21 @@
     margin-top: 56px !important;
 
     overflow: auto !important;
+    overflow-x: hidden !important; /* critical */
     -webkit-overflow-scrolling: touch;
 
     display: none !important;
   }
 
-  /* ACTIVE VIEW */
-  body.mobile-view-left .left-column{ display: block !important; }
-  body.mobile-view-odds #odds-intelligence-center{ display: block !important; }
-  body.mobile-view-right aside.right-column{ display: block !important; }
+  body.mobile-view-left .left-column{
+    display: block !important;
+  }
+  body.mobile-view-odds #odds-intelligence-center{
+    display: block !important;
+  }
+  body.mobile-view-right aside.right-column{
+    display: block !important;
+  }
 
   /* =========================================================
      LEFT COLUMN — MOBILE ACCORDION (OPEN/CLOSE)
@@ -135,8 +122,114 @@
     display: block;
   }
 
-  /* Protect right panels from collapsing weirdly */
   aside.right-column{
     padding-bottom: 18px;
+  }
+
+  /* =========================================================
+     ODDS MOBILE — prevent horizontal overflow
+  ========================================================= */
+  #odds-intelligence-center{
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  #odds-intelligence-center *{
+    max-width: 100% !important;
+  }
+
+  #odds-intelligence-center select{
+    width: 100% !important;
+    max-width: 220px !important;
+  }
+
+  #odds-intelligence-center .oic-header,
+  #odds-intelligence-center .oic-top,
+  #odds-intelligence-center header{
+    flex-wrap: wrap !important;
+  }
+
+  /* =========================================================
+     FINAL MOBILE TOPBAR FIX
+     - Tabs show only the 2 non-active options
+     - Topbar never breaks: right icons can scroll horizontally
+  ========================================================= */
+
+  /* left side can shrink to allow tabs */
+  .topbar-left{
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+  }
+
+  /* Tabs visible on mobile */
+  .mobile-tabs{
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-left: 8px;
+    max-width: 100%;
+    flex-wrap: nowrap;
+    min-width: 0; /* ✅ important */
+  }
+
+  /* Tabs container must be scrollable (NOT hidden) */
+  #mobile-tabs{
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+
+    /* ✅ KEY FIX: guarantee space + never get pushed out */
+    max-width: 48vw !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  #mobile-tabs::-webkit-scrollbar{
+    display: none !important;
+  }
+
+  #mobile-tabs .mobile-tab{
+    display: inline-flex !important;
+    height: 34px !important;
+    padding: 0 12px !important;
+    min-width: 84px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+    background: rgba(255,255,255,.06) !important;
+    color: rgba(255,255,255,.92) !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  /* Hide only the active tab (so you see ONLY 2 choices) */
+  #mobile-tabs .mobile-tab.active{
+    display: none !important;
+  }
+
+  /* right side icons: scroll horizontally (never overlap / never hide tabs) */
+  .topbar-right{
+    flex: 0 0 auto !important;
+
+    /* ✅ slightly lower to protect tabs area */
+    max-width: 48% !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .topbar-right::-webkit-scrollbar{
+    display: none !important;
   }
 }

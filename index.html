@@ -47,11 +47,19 @@
      Legal handled by assets/js/legal-menu.js
 ===================================================== -->
 <header id="topbar" class="topbar">
-  <!-- LEFT -->
+<!-- LEFT -->
   <div class="topbar-left">
-    <button id="btn-home" class="topbar-btn accent" title="Home">⌂</button>
-    <button id="btn-refresh" class="topbar-btn" title="Reset selection">⟳</button>
+    <button id="btn-home" class="topbar-btn" title="Home">⌂</button>
+    <button id="btn-refresh" class="topbar-btn" title="Refresh">⟳</button>
+
+ <!-- MOBILE TABS (LEFT / ODDS / RIGHT) -->
+  <div class="mobile-tabs" id="mobile-tabs" aria-label="Mobile navigation tabs">
+    <button class="mobile-tab active" type="button" data-view="left"  title="Left Panels">LEFT</button>
+    <button class="mobile-tab"         type="button" data-view="odds"  title="Odds Center">ODDS</button>
+    <button class="mobile-tab"         type="button" data-view="right" title="Right Panels">RIGHT</button>
   </div>
+</div>
+
 
   <!-- CENTER -->
   <div class="topbar-center">
@@ -65,12 +73,7 @@
 <!--- RIGHT -->
 <div class="topbar-right">
 
-  <!-- MOBILE TABS (LEFT / ODDS / RIGHT) -->
-  <div class="mobile-tabs" id="mobile-tabs" aria-label="Mobile navigation tabs">
-    <button class="mobile-tab active" type="button" data-view="left"  title="Left Panels">LEFT</button>
-    <button class="mobile-tab"         type="button" data-view="odds"  title="Odds Center">ODDS</button>
-    <button class="mobile-tab"         type="button" data-view="right" title="Right Panels">RIGHT</button>
-  </div>
+  
 
   <!-- INSTALL / UPDATE (ONLINE ONLY) -->
   <button id="btn-install" class="topbar-btn glow" title="Install">⬇</button>
@@ -398,13 +401,20 @@
 <script defer src="assets/js/ui/topbar.js"></script>
 
 <!-- =====================================================
+     MOBILE NAV (LEFT / ODDS / RIGHT)
+===================================================== -->
+<script defer src="assets/js/mobile-ui.js"></script>
+
+<!-- =====================================================
      LIVE ENGINE (ΔΕΝ ΑΛΛΑΖΕΙ)
 ===================================================== -->
 <script src="assets/js/live/live-engine.js"></script>
+
 <!-- =====================================================
      VALUE ENGINE ADAPTER (Worker -> UI)
 ===================================================== -->
 <script src="assets/js/live/value-adapter.js"></script>
+
 <!-- =====================================================
      ODDS DATA PIPELINE
      (SINGLE SOURCE OF TRUTH – KV → CORE)
