@@ -116,6 +116,10 @@
     if (dd.dataset.bound === "1") return;
     dd.dataset.bound = "1";
 
+    // 🔒 FIX: dropdown must always be clickable on mobile
+    dd.style.pointerEvents = "auto";
+
+
     function open() {
       menu.classList.remove("hidden");
       btn.setAttribute("aria-expanded", "true");
