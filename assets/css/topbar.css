@@ -1,32 +1,59 @@
 /* =====================================================
-   TOPBAR – LAYOUT & BRANDING (FINAL + MOBILE SAFE)
+   TOPBAR – CLEAN + MOBILE SAFE (SINGLE SOURCE OF TRUTH)
+   File: assets/css/topbar.css
+
+   Goals:
+   - Fixed premium topbar
+   - Theme + Legal popovers stable
+   - Export menu stable (admin)
+   - Mobile VIEW dropdown (LEFT / ODDS / RIGHT) works
+   - No overlap: dropdown NEVER blocks right buttons (Install etc)
 ===================================================== */
 
-#topbar {
+/* =====================================================
+   CORE TOPBAR CONTAINER
+===================================================== */
+
+#topbar{
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 56px;
+
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+
   padding: 0 14px;
+
   background: linear-gradient(180deg, #0c0f14, #0a0c10);
   border-bottom: 1px solid var(--line);
   z-index: 1000;
+
+  overflow: visible !important;
+  transform: none !important;
+  filter: none !important;
 }
 
-/* LEFT */
-.topbar-left {
+/* Ensure page starts below fixed topbar */
+.app{
+  padding-top: 56px !important;
+}
+
+/* =====================================================
+   TOPBAR GROUPS
+===================================================== */
+
+.topbar-left{
   display: flex;
   align-items: center;
   gap: 6px;
   min-width: 0;
+  overflow: visible !important;
 }
 
-/* CENTER (LOGO + BRAND) */
-.topbar-center {
+.topbar-center{
   display: flex;
   align-items: center;
   gap: 12px;
@@ -34,89 +61,106 @@
   min-width: 0;
 }
 
-.topbar-logo {
+.topbar-right{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+
+  margin-left: auto;
+  overflow: visible !important;
+}
+
+/* =====================================================
+   BRANDING
+===================================================== */
+
+.topbar-logo{
   height: 36px;
   width: auto;
   display: block;
   filter: drop-shadow(0 0 6px rgba(0, 200, 255, 0.35));
 }
 
-.topbar-brand {
+.topbar-brand{
   display: flex;
   flex-direction: column;
   line-height: 1.05;
   min-width: 0;
 }
 
-.brand-title {
+.brand-title{
   font-weight: 700;
   letter-spacing: 0.4px;
   white-space: nowrap;
 }
 
-.brand-version {
+.brand-version{
   font-size: 11px;
   opacity: 0.6;
 }
 
-/* RIGHT */
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
+/* =====================================================
+   ICON BUTTONS
+===================================================== */
 
-/* ICON BUTTONS */
-.topbar-btn {
+.topbar-btn{
   width: 36px;
   height: 36px;
   border-radius: 8px;
+
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   color: var(--text);
+
   font-size: 15px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   cursor: pointer;
   transition: all 0.15s ease;
+
+  position: relative;
+  z-index: 5;
 }
 
-.topbar-btn:hover {
+.topbar-btn:hover{
   background: rgba(255,255,255,0.08);
   border-color: rgba(255,255,255,0.18);
   color: var(--accent);
 }
 
-.topbar-btn:active {
+.topbar-btn:active{
   transform: translateY(1px);
 }
 
-.topbar-btn.glow:hover {
+.topbar-btn.glow:hover{
   text-shadow: 0 0 8px rgba(255, 140, 0, 0.85);
 }
 
 /* =========================================================
    MOBILE SAFETY
-   - prevent center from stealing space
+   - hide center logo area
 ========================================================= */
 @media (max-width: 900px){
   .topbar-center{
-    display: none;
+    display: none !important;
   }
 }
 
 /* =========================================================
    LEGAL + THEME MENU — stable hidden behavior
 ========================================================= */
+
 #legal-menu.hidden,
-#theme-menu.hidden {
+#theme-menu.hidden{
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
 /* Only hide TOPBAR menus - do NOT affect app panels */
 #topbar .hidden,
 #topbar .topbar-menu.hidden,
@@ -128,7 +172,6 @@
   opacity: 0 !important;
   pointer-events: none !important;
 }
-
 
 /* =========================================================
    EXPORT MENU (ADMIN TOOL) — single source of truth
@@ -166,29 +209,23 @@
   pointer-events: none !important;
 }
 
-#btn-export{
-  display: none;
-}
-body.aiml-admin #btn-export{
-  display: inline-flex;
-}
-@media (max-width: 900px){
-  .topbar-center{ display:none; }
-}
-/* =========================================================
-   HARD MOBILE FIX — THEME + LEGAL POPOVERS (ALWAYS OK)
-========================================================= */
-@media (max-width: 900px) {
+/* Admin-only export button */
+#btn-export{ display: none; }
+body.aiml-admin #btn-export{ display: inline-flex; }
 
-  /* make sure topbar is below popovers */
-  #topbar {
+/* =========================================================
+   HARD MOBILE FIX — THEME + LEGAL POPOVERS
+========================================================= */
+
+@media (max-width: 900px){
+
+  #topbar{
     position: fixed !important;
     z-index: 1000 !important;
   }
 
-  /* FORCE: theme + legal popovers always on top */
   #theme-menu,
-  #legal-menu {
+  #legal-menu{
     position: fixed !important;
     top: 64px !important;
     left: 12px !important;
@@ -210,194 +247,107 @@ body.aiml-admin #btn-export{
 
     padding: 14px !important;
 
-    /* prevent weird interaction with underlying UI */
     pointer-events: auto !important;
     isolation: isolate !important;
   }
 
-  /* HIDE states (your code uses .hidden class) */
   #theme-menu.hidden,
-  #legal-menu.hidden {
+  #legal-menu.hidden{
     display: none !important;
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
   }
 
-  /* Fix legal text readability */
   #legal-menu,
-  #legal-menu * {
+  #legal-menu *{
     color: rgba(255,255,255,0.92) !important;
   }
 
-  #legal-menu a {
+  #legal-menu a{
     color: rgba(255,255,255,0.92) !important;
     text-decoration: underline !important;
   }
 
-  /* Fix theme buttons that look "white/unskinned" on mobile */
   #theme-menu button,
   #theme-menu .aiml-theme-pill,
-  #theme-menu .pill {
+  #theme-menu .pill{
     background: rgba(255,255,255,0.06) !important;
     color: rgba(255,255,255,0.92) !important;
     border: 1px solid rgba(255,255,255,0.10) !important;
     border-radius: 12px !important;
   }
 
-  /* Close buttons visible */
   #theme-menu .aiml-theme-close,
   #legal-menu button,
   #legal-menu .close,
-  #legal-menu .aiml-legal-close {
+  #legal-menu .aiml-legal-close{
     background: rgba(255,255,255,0.06) !important;
     color: rgba(255,255,255,0.92) !important;
     border: 1px solid rgba(255,255,255,0.12) !important;
     border-radius: 12px !important;
   }
 }
+
 /* =========================================================
    MOBILE ACCENTS (data-accent mapping)
-   Fix: theme.js writes data-accent but CSS had no variables
 ========================================================= */
 
-:root[data-accent="blue-orange"] {
+:root[data-accent="blue-orange"]{
   --accent: #ff8c00;
   --accent-2: #2aa8ff;
   --line: rgba(255,140,0,0.30);
 }
 
-:root[data-accent="green-gold"] {
+:root[data-accent="green-gold"]{
   --accent: #30c46c;
   --accent-2: #d9b65c;
   --line: rgba(48,196,108,0.30);
 }
 
-:root[data-accent="crimson-silver"] {
+:root[data-accent="crimson-silver"]{
   --accent: #ff4d5a;
   --accent-2: #c9c9c9;
   --line: rgba(255,77,90,0.30);
 }
 
-:root[data-accent="purple-aqua"] {
+:root[data-accent="purple-aqua"]{
   --accent: #b366ff;
   --accent-2: #2ee6d6;
   --line: rgba(179,102,255,0.30);
 }
 
-:root[data-accent="neon-spectrum"] {
+:root[data-accent="neon-spectrum"]{
   --accent: #00ff9c;
   --accent-2: #ff2bd6;
   --line: rgba(0,255,156,0.30);
 }
 
-:root[data-accent="minimal-classic"] {
+:root[data-accent="minimal-classic"]{
   --accent: #e6e6e6;
   --accent-2: #9aa0a6;
   --line: rgba(255,255,255,0.18);
 }
+
 /* =========================================================
-   MOBILE VIEW DROPDOWN (premium select)
+   MOBILE VIEW DROPDOWN MENU (ID-BASED)
+   IMPORTANT: exactly ONE mobile block for this feature
 ========================================================= */
 
-#mobile-view-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  height: 34px;
-  padding: 0 34px 0 12px;
-
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.12);
-
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.92);
-
-  font-weight: 700;
-  letter-spacing: 0.3px;
-
-  outline: none;
-  cursor: pointer;
+/* Hide dropdown by default (desktop/tablet) */
+#mobile-view-dd{
+  display: none !important;
 }
 
-/* focus ring */
-#mobile-view-select:focus {
-  border-color: rgba(255,140,0,0.55);
-  box-shadow: 0 0 0 3px rgba(255,140,0,0.20);
-}
-
-/* small arrow icon (fake) */
-#mobile-view-select {
-  background-image:
-    linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.75) 50%),
-    linear-gradient(135deg, rgba(255,255,255,0.75) 50%, transparent 50%),
-    linear-gradient(to right, transparent, transparent);
-  background-position:
-    calc(100% - 16px) 14px,
-    calc(100% - 11px) 14px,
-    0 0;
-  background-size:
-    5px 5px,
-    5px 5px,
-    100% 100%;
-  background-repeat: no-repeat;
-}
-/* =========================================================
-   CUSTOM MOBILE VIEW DROPDOWN (LEFT / ODDS / RIGHT)
-========================================================= */
-
-.mobile-view-dd {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  width: auto;
-}
-
-.mobile-view-btn {
-  height: 34px;
-  padding: 0 12px;
-  min-width: 86px;
-
-    flex: 0 0 auto;
-  width: auto;
-  max-width: 120px;
-  white-space: nowrap;
-
-
-  width: auto !important;
-  max-width: 120px !important;
-  flex: 0 0 auto !important;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  border-radius: 12px;
-  border: 1px solid rgba(255, 140, 0, 0.35);
-  background: rgba(255, 255, 255, 0.06);
-
-  color: rgba(255,255,255,0.92);
-  font-weight: 800;
-  letter-spacing: 0.3px;
-
-  cursor: pointer;
-  outline: none;
-}
-
-.mobile-view-btn:focus {
-  box-shadow: 0 0 0 3px rgba(255,140,0,0.20);
-}
-
-.mobile-view-caret {
+/* Dropdown caret (inside the button) */
+#mobile-view-dd .mobile-view-caret{
   opacity: 0.9;
   font-size: 12px;
   transform: translateY(-1px);
 }
 
-.mobile-view-menu {
+/* Dropdown menu (popup) */
+#mobile-view-menu{
   position: fixed !important;
   top: 56px !important;
   left: 12px !important;
@@ -411,14 +361,17 @@ body.aiml-admin #btn-export{
   border: 1px solid rgba(255,255,255,0.14);
   box-shadow: 0 18px 60px rgba(0,0,0,0.65);
 
-  z-index: 2147483647 !important;
+  /* ✅ BELOW TOPBAR and BELOW theme/legal popovers */
+  z-index: 999998 !important;
 }
 
-.mobile-view-menu.hidden {
+#mobile-view-menu.hidden{
   display: none !important;
+  pointer-events: none !important;
 }
 
-.mobile-view-item {
+/* Dropdown menu items */
+#mobile-view-menu .mobile-view-item{
   width: 100%;
   height: 34px;
 
@@ -437,103 +390,123 @@ body.aiml-admin #btn-export{
   cursor: pointer;
 }
 
-.mobile-view-item:hover {
+#mobile-view-menu .mobile-view-item:hover{
   background: rgba(255, 140, 0, 0.18);
 }
-/* =========================================================
-   MOBILE VIEW DROPDOWN: ONLY ON MOBILE
-========================================================= */
 
-/* Hide dropdown by default (desktop/tablet) */
-#mobile-view-dd {
-  display: none !important;
-}
+/* Ensure LEFT never overlays RIGHT */
+  .topbar-left{
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: calc(100% - 190px) !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
 
-/* Show dropdown only on mobile */
-@media (max-width: 900px) {
-  #mobile-view-dd {
+  .topbar-right{
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  /* Dropdown button must stay tight */
+  #mobile-view-btn{
     display: inline-flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+
+    height: 34px !important;
+    padding: 0 14px !important;
+
+    width: max-content !important;
+    max-width: 170px !important;
+
+    border-radius: 14px !important;
+    border: 1px solid rgba(255, 140, 0, 0.35) !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+
+    color: rgba(255,255,255,0.92) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.4px !important;
+
+    cursor: pointer !important;
+    outline: none !important;
+
+    position: relative !important;
+    z-index: 20 !important;
   }
 }
-/* =========================================================
-   FIX: topbar must NOT cover the page
-========================================================= */
-.topbar{
-  height: 56px !important;
-  min-height: 56px !important;
-  overflow: visible !important;
-}
-/* Ensure the rest of the page starts below topbar */
-.app{
-  padding-top: 56px !important;
-}
-#topbar{
-  overflow: visible !important;
-  transform: none !important;
-  filter: none !important;
+/* ✅ dropdown να ΜΗΝ απλώνει πάνω από δεξιά */
+  #mobile-view-dd,
+  #mobile-view-btn{
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: 110px !important;
+  }
+
+  /* ✅ stop the actual overlap by limiting LEFT growth */
+  .topbar-left{
+    flex: 0 0 auto !important;
+    max-width: calc(100vw - 220px) !important;
+    overflow: hidden !important;
+  }
+
+  /* ✅ right stays clickable */
+  .topbar-right{
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+    position: relative !important;
+    z-index: 10 !important;
+  }
+
+  #btn-install{
+    position: relative !important;
+    z-index: 11 !important;
+  }
 }
 
-.topbar-left,
-.topbar-right{
-  overflow: visible !important;
-}
-#topbar{
-  transform: none !important;
-  filter: none !important;
-}
-#topbar{
-  overflow: visible !important;
-}
-.mobile-view-dd{
-  position: relative;
-  z-index: 5 !important;
-}
+
 /* =========================================================
-   FINAL MOBILE FIX: reserve space so RIGHT buttons
-   never overlap the mobile dropdown button
+   FINAL MOBILE OVERRIDE (ANTI-OVERLAP / INSTALL CLICK FIX)
+   Keep this block LAST in the file.
 ========================================================= */
 @media (max-width: 900px){
 
-  /* Keep topbar layout stable */
   #topbar{
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
+    height: 92px !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
   }
 
-  /* Left and right must live on the same row */
-  .topbar{
-    display: flex;
-    align-items: center;
-  }
-
-  /* LEFT area */
   .topbar-left{
-    display: flex;
-    align-items: center;
-    flex: 1 1 auto;
-    min-width: 0;
-    gap: 8px;
+    width: 100% !important;
+    order: 1 !important;
+    padding-right: 0 !important;
   }
 
-  /* RIGHT area – always on the far right */
   .topbar-right{
-    display: flex;
-    align-items: center;
-    flex: 0 0 auto;
-    margin-left: auto;
-    gap: 8px;
+    width: 100% !important;
+    order: 0 !important;
+    justify-content: flex-end !important;
+    position: relative !important;
+    right: auto !important;
+    top: auto !important;
   }
 
-  /* Make the dropdown button take only its real width */
   #mobile-view-dd{
-    flex: 0 0 auto;
-    width: auto;
+    display: inline-flex !important;
+    margin-left: 8px !important;
   }
-
-  #mobile-view-btn{
-    width: auto;
-    flex: 0 0 auto;
+}
+@media (max-width: 900px){
+  #mobile-view-dd{
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
   }
 }
