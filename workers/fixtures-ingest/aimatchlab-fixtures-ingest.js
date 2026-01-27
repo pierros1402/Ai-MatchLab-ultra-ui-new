@@ -1,557 +1,427 @@
 /**
- * AIMATCHLAB — FIXTURES INGEST (BATCHED, TODAY + 7 DAYS)
- * Source of Truth for FIXTURES:DATE:YYYY-MM-DD
- * Timezone: Europe/Athens
+ * aimatchlab-fixtures-ingest.js
+ * V6.2 FINAL — RESUMABLE ALL-LEAGUES FIXTURES INGEST
  *
- * FIXES:
- * - Avoid Cloudflare "Too many subrequests" by batching LEAGUE_SEEDS per run.
- * - Persist cursor in KV to continue next batch on next cron.
+ * Goals:
+ * - Fetch ALL league scoreboards for a given date (manual league slugs)
+ * - Avoid Cloudflare "Too many subrequests" by chunking work across runs
+ * - Resume progress via KV queue + staging
+ * - Write FIXTURES:DATE:<day> ONLY when finished (never partial overwrite)
  *
  * KV Keys:
- * - FIXTURES:DATE:<YYYY-MM-DD>
- * - FIXTURES:INGEST:CURSOR
- * - FIXTURES:INGEST:LAST_RUN
- * - FIXTURES:INGEST:LAST_OK
- * - FIXTURES:INGEST:LAST_ERROR
+ * - FIXTURES:QUEUE:DATE:<day>             (remaining league slugs)
+ * - FIXTURES:STAGING:DATE:<day>           (incremental merged matches)
+ * - FIXTURES:DEBUG:DATE:<day>:LAST_RUN    (debug snapshot)
+ * - FIXTURES:DATE:<day>                  (final fixtures payload for MAIN UI)
  */
 
-const TZ = "Europe/Athens";
-const HORIZON_DAYS = 7;
-const KV_PREFIX = "FIXTURES:DATE:";
+const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
+const DEFAULT_TZ = "Europe/Athens";
 
-// How many leagues per run (safe for CF subrequest budget)
-const BATCH_SIZE = 12;
-
-// Cursor state key
-const CURSOR_KEY = "FIXTURES:INGEST:CURSOR";
-
-// ================= LEAGUES =================
-
+/** ✅ ALL leagues you want (81) */
 const LEAGUE_SEEDS = [
   "eng.1","eng.2","eng.3","eng.4","eng.5","eng.fa","eng.league_cup","eng.trophy",
-
   "esp.1","esp.2","esp.copa_del_rey","esp.super_cup","esp.w.1",
-
   "ita.1","ita.2","ita.coppa_italia",
-
   "fra.1","fra.2","fra.coupe_de_france","fra.super_cup","fra.w.1",
-
   "ger.1","ger.2",
-
   "sco.1","sco.2","sco.challenge","sco.tennents",
-
   "ned.1","ned.2","ned.3","ned.cup",
-
   "por.1","por.taca.portugal",
-
   "bel.1",
-
   "gre.1","cyp.1","ksa.1",
-
-  /* UEFA */
-  "uefa.champions",
-  "uefa.europa",
-  "uefa.europa.conf",
-
-  /* CAF */
+  "uefa.champions","uefa.europa","uefa.europa.conf",
   "caf.nations","caf.champions","caf.confed",
-
-  /* AFC */
   "afc.champions","afc.cup",
-
-  /* AMERICAS */
-  "mex.1","mex.2",
-  "usa.1","usa.w.1",
-
-  "arg.1",
-  "bra.1","bra.2",
-  "chi.1",
-  "uru.1",
-  "par.1",
-  "per.1",
-  "ecu.1",
-
-  "crc.1",
-  "gua.1",
-  "hon.1",
-  "pan.1",
-  "jam.1",
-  "col.1",
-
-  /* EUROPE – EXTRA */
-  "tur.1",
-  "sui.1",
-  "aut.1",
-  "den.1",
-  "swe.1",
-  "nor.1",
-
-  /* ASIA / OCEANIA */
-  "sgp.1","slv.1",
-  "jpn.1",
-  "kor.1",
-  "chn.1",
-  "tha.1",
-  "ind.1",
-  "aus.1","aus.w.1",
-
-  /* BRAZIL STATE */
-  "bra.camp.carioca",
-  "bra.camp.paulista",
-  "bra.camp.gaucho",
-  "bra.camp.mineiro",
-
+  "mex.1","mex.2","usa.1","usa.w.1",
+  "arg.1","bra.1","bra.2","chi.1","uru.1","par.1","per.1","ecu.1",
+  "crc.1","gua.1","hon.1","jam.1","col.1",
+  "tur.1","sui.1","aut.1","den.1","swe.1","nor.1",
+  "sgp.1","slv.1","jpn.1","chn.1","tha.1","ind.1","aus.1","aus.w.1",
+  "bra.camp.carioca","bra.camp.paulista","bra.camp.gaucho","bra.camp.mineiro",
   "club.friendly"
 ];
 
-const LEAGUE_NAME_MAP = {
-  "eng.1":"Premier League",
-  "eng.2":"Championship",
-  "eng.3":"League One",
-  "eng.4":"League Two",
-  "eng.5":"National League",
-  "eng.fa":"FA Cup",
-  "eng.league_cup":"EFL Cup",
-  "eng.trophy":"EFL Trophy",
+/**
+ * SAFE settings:
+ * - each run processes a limited chunk of leagues
+ * - sequential requests to avoid subrequest limits
+ */
+const RUN_CHUNK_SIZE = 10;               // leagues per run
+const BETWEEN_LEAGUES_DELAY_MS = 180;    // tiny delay
 
-  "esp.1":"LaLiga",
-  "esp.2":"LaLiga 2",
-  "esp.copa_del_rey":"Copa del Rey",
-  "esp.super_cup":"Supercopa de España",
-  "esp.w.1":"Liga F",
+/** retries per league request (avoid heavy retry storms) */
+const FETCH_RETRIES = 1;
+const RETRY_DELAY_MS = 350;
 
-  "ita.1":"Serie A",
-  "ita.2":"Serie B",
-  "ita.coppa_italia":"Coppa Italia",
+/**
+ * final write guard:
+ * - write FIXTURES:DATE:<day> only if enough matches
+ * - avoids writing nonsense (e.g. 22) as "final"
+ *
+ * NOTE: do NOT set this too high because some days are low volume.
+ */
+const MIN_TOTAL_MATCHES_FINAL = 30;
 
-  "fra.1":"Ligue 1",
-  "fra.2":"Ligue 2",
-  "fra.coupe_de_france":"Coupe de France",
-  "fra.super_cup":"Trophée des Champions",
-  "fra.w.1":"Première Ligue",
+/* =========================
+   Helpers
+========================= */
 
-  "ger.1":"Bundesliga",
-  "ger.2":"2. Bundesliga",
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
-  "sco.1":"Scottish Premiership",
-  "sco.2":"Scottish Championship",
-  "sco.challenge":"Scottish Challenge Cup",
-  "sco.tennents":"Scottish Premiership",
+function jsonResponse(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" }
+  });
+}
 
-  "ned.1":"Eredivisie",
-  "ned.2":"Keuken Kampioen Divisie",
-  "ned.3":"Tweede Divisie",
-  "ned.cup":"KNVB Beker",
+function ymdFromQueryOrToday(urlStr) {
+  const u = new URL(urlStr);
+  const q = u.searchParams.get("date");
+  if (q) return q;
 
-  "por.1":"Primeira Liga",
-  "por.taca.portugal":"Taça de Portugal",
+  const d = new Date();
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
 
-  "bel.1":"Belgian Pro League",
+function ymdCompact(ymd) {
+  return ymd.replaceAll("-", "");
+}
 
-  "gre.1":"Super League Greece",
-  "cyp.1":"Cypriot First Division",
-  "ksa.1":"Saudi Pro League",
+function dayKeyFromKickoffISO(kickoffISO, tz = DEFAULT_TZ) {
+  try {
+    const dt = new Date(kickoffISO);
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(dt);
 
-  /* UEFA */
-  "uefa.champions":"UEFA Champions League",
-  "uefa.europa":"UEFA Europa League",
-  "uefa.europa.conf":"UEFA Europa Conference League",
+    const y = parts.find((p) => p.type === "year")?.value;
+    const m = parts.find((p) => p.type === "month")?.value;
+    const d = parts.find((p) => p.type === "day")?.value;
 
-  /* CAF */
-  "caf.nations":"Africa Cup of Nations",
-  "caf.champions":"CAF Champions League",
-  "caf.confed":"CAF Confederation Cup",
+    return `${y}-${m}-${d}`;
+  } catch {
+    const dt = new Date(kickoffISO);
+    const yyyy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getUTCDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+}
 
-  /* AFC */
-  "afc.champions":"AFC Champions League",
-  "afc.cup":"AFC Cup",
+function normalizeEspnEvent(evt, leagueSlug, leagueName, tz, targetDayKey) {
+  const id = String(evt?.id || "");
+  const comp = evt?.competitions?.[0];
+  const competitors = comp?.competitors || [];
 
-  /* AMERICAS */
-  "mex.1":"Liga MX",
-  "mex.2":"Liga de Expansión MX",
-  "usa.1":"MLS",
-  "usa.w.1":"NWSL",
+  const home = competitors.find((c) => c?.homeAway === "home");
+  const away = competitors.find((c) => c?.homeAway === "away");
 
-  "arg.1":"Liga Profesional Argentina",
-  "bra.1":"Brasileirão Série A",
-  "bra.2":"Brasileirão Série B",
-  "chi.1":"Primera División de Chile",
-  "uru.1":"Uruguayan Primera División",
-  "par.1":"Paraguayan Primera División",
-  "per.1":"Peruvian Primera División",
-  "ecu.1":"Ecuadorian Serie A",
+  const kickoff = comp?.date || evt?.date || null;
+  const kickoff_ms = kickoff ? new Date(kickoff).getTime() : null;
 
-  "crc.1":"Costa Rican Primera División",
-  "gua.1":"Liga Nacional de Guatemala",
-  "hon.1":"Liga Nacional de Honduras",
-  "pan.1":"Liga Panameña de Fútbol",
-  "jam.1":"Jamaica Premier League",
-  "col.1":"Categoría Primera A",
+  const statusType =
+    comp?.status?.type?.name ||
+    evt?.status?.type?.name ||
+    "PRE";
 
-  /* EUROPE – EXTRA */
-  "tur.1":"Turkish Süper Lig",
-  "sui.1":"Swiss Super League",
-  "aut.1":"Austrian Bundesliga",
-  "den.1":"Danish Superliga",
-  "swe.1":"Allsvenskan",
-  "nor.1":"Eliteserien",
+  // minute: try displayClock else fallback
+  const minute = comp?.status?.displayClock
+    ? parseInt(String(comp.status.displayClock).split(":")[0], 10)
+    : (comp?.status?.type?.state === "in" ? 1 : 0);
 
-  /* ASIA / OCEANIA */
-  "sgp.1":"Singapore Premier League",
-  "slv.1":"Primera División de El Salvador",
-  "jpn.1":"J1 League",
-  "kor.1":"K League 1",
-  "chn.1":"Chinese Super League",
-  "tha.1":"Thai League 1",
-  "ind.1":"Indian Super League",
-  "aus.1":"A-League Men",
-  "aus.w.1":"A-League Women",
+  const scoreHome = home?.score != null ? Number(home.score) : 0;
+  const scoreAway = away?.score != null ? Number(away.score) : 0;
 
-  /* BRAZIL STATE */
-  "bra.camp.carioca":"Campeonato Carioca",
-  "bra.camp.paulista":"Campeonato Paulista",
-  "bra.camp.gaucho":"Campeonato Gaúcho",
-  "bra.camp.mineiro":"Campeonato Mineiro",
+  return {
+    id,
+    home: home?.team?.displayName || home?.team?.name || "Home",
+    away: away?.team?.displayName || away?.team?.name || "Away",
+    homeTeamId: home?.team?.id ? String(home.team.id) : null,
+    awayTeamId: away?.team?.id ? String(away.team.id) : null,
+    kickoff,
+    kickoff_ms,
+    status: statusType,
+    minute: Number.isFinite(minute) ? minute : 0,
+    scoreHome: Number.isFinite(scoreHome) ? scoreHome : 0,
+    scoreAway: Number.isFinite(scoreAway) ? scoreAway : 0,
+    leagueSlug,
+    leagueName: leagueName || leagueSlug,
+    dayKey: kickoff ? dayKeyFromKickoffISO(kickoff, tz) : targetDayKey
+  };
+}
 
-  "club.friendly":"Club Friendly"
-};
+function mergeUniqueById(existing, incoming) {
+  const map = new Map();
+  for (const m of existing || []) map.set(m.id, m);
+  for (const m of incoming || []) map.set(m.id, m);
+  return Array.from(map.values());
+}
 
-// ================= WORKER =================
+/* =========================
+   ESPN fetch
+========================= */
+
+async function fetchLeagueOnce(leagueSlug, dayYmd, tz) {
+  const url = `${ESPN_BASE}/${leagueSlug}/scoreboard?dates=${ymdCompact(dayYmd)}`;
+
+  const r = await fetch(url, {
+    headers: {
+      "accept": "application/json",
+      "user-agent": "aimatchlab-fixtures-ingest/v6.2-final"
+    }
+  });
+
+  if (!r.ok) {
+    return {
+      ok: false,
+      type: "fetch_failed",
+      league: leagueSlug,
+      status: r.status,
+      error: `HTTP ${r.status}`,
+      matches: []
+    };
+  }
+
+  const data = await r.json();
+
+  const leagueName =
+    data?.leagues?.[0]?.name ||
+    data?.leagues?.[0]?.shortName ||
+    leagueSlug;
+
+  const events = Array.isArray(data?.events) ? data.events : [];
+
+  const out = [];
+  for (const evt of events) {
+    const m = normalizeEspnEvent(evt, leagueSlug, leagueName, tz, dayYmd);
+    if (!m.id) continue;
+    if (m.dayKey !== dayYmd) continue; // only target day in target timezone
+    out.push(m);
+  }
+
+  return { ok: true, league: leagueSlug, matches: out };
+}
+
+async function fetchLeagueWithRetry(leagueSlug, dayYmd, tz) {
+  for (let attempt = 0; attempt <= FETCH_RETRIES; attempt++) {
+    try {
+      const res = await fetchLeagueOnce(leagueSlug, dayYmd, tz);
+      if (res.ok) return res;
+
+      // retry only on likely-transient failures
+      if ([429, 500, 502, 503, 504].includes(res.status)) {
+        if (attempt < FETCH_RETRIES) {
+          await sleep(RETRY_DELAY_MS);
+          continue;
+        }
+      }
+
+      return res;
+    } catch (e) {
+      if (attempt < FETCH_RETRIES) {
+        await sleep(RETRY_DELAY_MS);
+        continue;
+      }
+      return {
+        ok: false,
+        type: "exception",
+        league: leagueSlug,
+        error: String(e?.message || e),
+        matches: []
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    type: "exception",
+    league: leagueSlug,
+    error: "unknown",
+    matches: []
+  };
+}
+
+/* =========================
+   RESUMABLE RUN (Queue + Staging)
+========================= */
+
+function getKV(env) {
+  // MAIN reads from CORE, and you confirmed CORE is correct
+  return env.AIMATCHLAB_KV_CORE;
+}
+
+async function resumableRun(env, dayYmd) {
+  const tz = DEFAULT_TZ;
+  const KV = getKV(env);
+
+  if (!KV) {
+    return {
+      ok: false,
+      reason: "missing_kv_binding",
+      note: "Bind AIMATCHLAB_KV_CORE in this worker."
+    };
+  }
+
+  const queueKey = `FIXTURES:QUEUE:DATE:${dayYmd}`;
+  const stagingKey = `FIXTURES:STAGING:DATE:${dayYmd}`;
+  const debugKey = `FIXTURES:DEBUG:DATE:${dayYmd}:LAST_RUN`;
+  const finalKey = `FIXTURES:DATE:${dayYmd}`;
+
+  // Load or initialize queue
+  let queueRaw = await KV.get(queueKey);
+  let queue = queueRaw ? JSON.parse(queueRaw) : null;
+
+  if (!Array.isArray(queue) || queue.length === 0) {
+    queue = [...LEAGUE_SEEDS];
+    await KV.put(queueKey, JSON.stringify(queue));
+  }
+
+  // Load or initialize staging
+  let stagingRaw = await KV.get(stagingKey);
+  let stagingPayload = stagingRaw ? JSON.parse(stagingRaw) : null;
+
+  if (!stagingPayload || !Array.isArray(stagingPayload.matches)) {
+    stagingPayload = {
+      date: dayYmd,
+      timezone: tz,
+      createdAt: Date.now(),
+      source: "espn_resumable_staging",
+      matches: []
+    };
+  }
+
+  const startedWithQueue = queue.length;
+
+  // chunk
+  const chunk = queue.slice(0, RUN_CHUNK_SIZE);
+  const rest = queue.slice(RUN_CHUNK_SIZE);
+
+  const produced = [];
+  const errors = [];
+
+  // sequential fetch to avoid subrequest limits
+  for (const leagueSlug of chunk) {
+    const res = await fetchLeagueWithRetry(leagueSlug, dayYmd, tz);
+
+    if (res.ok) {
+      if (res.matches?.length) produced.push(...res.matches);
+    } else {
+      errors.push({
+        type: res.type || "error",
+        league: res.league,
+        status: res.status,
+        error: res.error
+      });
+
+      // push back to retry on next scheduler tick
+      rest.push(leagueSlug);
+    }
+
+    await sleep(BETWEEN_LEAGUES_DELAY_MS);
+  }
+
+  // Merge results into staging
+  stagingPayload.matches = mergeUniqueById(stagingPayload.matches, produced);
+  stagingPayload.createdAt = Date.now();
+
+  await KV.put(stagingKey, JSON.stringify(stagingPayload));
+  await KV.put(queueKey, JSON.stringify(rest));
+
+  // Finalize only when queue empty
+  let finalized = false;
+  let wroteFinal = false;
+
+  if (rest.length === 0) {
+    finalized = true;
+
+    if (stagingPayload.matches.length >= MIN_TOTAL_MATCHES_FINAL) {
+      const finalPayload = {
+        date: dayYmd,
+        timezone: tz,
+        createdAt: Date.now(),
+        source: "espn_resumable_final",
+        matches: stagingPayload.matches
+      };
+
+      await KV.put(finalKey, JSON.stringify(finalPayload));
+      wroteFinal = true;
+    }
+  }
+
+  const debugPayload = {
+    ok: true,
+    date: dayYmd,
+    timezone: tz,
+    createdAt: Date.now(),
+    source: "espn_resumable_batched",
+    runChunkSize: RUN_CHUNK_SIZE,
+    startedWithQueue,
+    processedNow: chunk.length,
+    queueRemaining: rest.length,
+    producedMatchesNow: produced.length,
+    totalUniqueMatchesStaging: stagingPayload.matches.length,
+    errorsCount: errors.length,
+    errors,
+    finalized,
+    wroteFinal,
+    keys: { queueKey, stagingKey, finalKey, debugKey }
+  };
+
+  await KV.put(debugKey, JSON.stringify(debugPayload));
+
+  return debugPayload;
+}
+
+/* =========================
+   Worker
+========================= */
 
 export default {
-  async scheduled(event, env, ctx) {
-    console.log("[CRON] fixtures-ingest triggered");
-    ctx.waitUntil(runIngest(env, { isCron: true }));
-  },
-
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    if (url.pathname !== "/internal/run") {
+    // health
+    if (url.pathname === "/health") {
+      return jsonResponse({
+        ok: true,
+        service: "aimatchlab-fixtures-ingest",
+        version: "v6.2-final-resumable-all-leagues",
+        leagues: LEAGUE_SEEDS.length,
+        runChunkSize: RUN_CHUNK_SIZE,
+        minFinal: MIN_TOTAL_MATCHES_FINAL
+      });
+    }
+
+    // scheduler-compatible run routes
+    const allowed =
+      url.pathname === "/" ||
+      url.pathname === "/internal/run" ||
+      url.pathname === "/internal/ingest";
+
+    if (!allowed) {
       return new Response("Not Found", { status: 404 });
     }
 
-    const reset = url.searchParams.get("reset") === "1";
-    const batchSize = Number(url.searchParams.get("batch") || BATCH_SIZE);
+    const dayYmd = ymdFromQueryOrToday(request.url);
 
-    console.log("[INTERNAL] fixtures-ingest run");
-    const res = await runIngest(env, { isCron: false, reset, batchSize });
+    // run in background, respond immediately
+    ctx.waitUntil(resumableRun(env, dayYmd));
 
-    return json(res);
+    return jsonResponse({
+      ok: true,
+      started: true,
+      date: dayYmd,
+      note: "Resumable ingest started in background (queue/staging). Check FIXTURES:DEBUG:* keys."
+    });
   }
 };
-
-// ================= CORE =================
-
-async function runIngest(env, opts = {}) {
-  const startedAt = Date.now();
-  const isCron = !!opts.isCron;
-  const reset = !!opts.reset;
-  const batchSize = Number(opts.batchSize || BATCH_SIZE);
-
-  if (!env?.AIMATCHLAB_KV_CORE) {
-    console.error("Missing AIMATCHLAB_KV_CORE binding");
-    return { ok: false, reason: "missing_binding_AIMATCHLAB_KV_CORE" };
-  }
-
-  // Load cursor
-  let cursor = 0;
-  const cursorRaw = await env.AIMATCHLAB_KV_CORE.get(CURSOR_KEY);
-  if (cursorRaw) {
-    const n = Number(cursorRaw);
-    if (Number.isFinite(n) && n >= 0) cursor = n;
-  }
-
-  if (reset) cursor = 0;
-
-  // Determine league batch slice
-  const totalLeagues = LEAGUE_SEEDS.length;
-
-  if (cursor >= totalLeagues) cursor = 0;
-
-  const from = cursor;
-  const to = Math.min(cursor + batchSize, totalLeagues);
-  const batch = LEAGUE_SEEDS.slice(from, to);
-
-  // Next cursor
-  let nextCursor = to;
-  if (nextCursor >= totalLeagues) nextCursor = 0;
-
-  // Persist next cursor
-  await env.AIMATCHLAB_KV_CORE.put(CURSOR_KEY, String(nextCursor));
-
-  const base = nowInTZ(TZ);
-
-  const runSummary = {
-    ok: true,
-    service: "fixtures-ingest",
-    timezone: TZ,
-    horizonDays: HORIZON_DAYS,
-    batchSize,
-    totalLeagues,
-    cursorFrom: from,
-    cursorTo: to,
-    nextCursor,
-    batchLeagues: batch,
-    wroteDays: [],
-    errors: [],
-    startedAt,
-    finishedAt: null,
-    durationMs: null,
-    isCron
-  };
-
-  await env.AIMATCHLAB_KV_CORE.put(
-    "FIXTURES:INGEST:LAST_RUN",
-    JSON.stringify({ ...runSummary, note: "started" })
-  );
-
-  // Loop days
-  for (let d = 0; d < HORIZON_DAYS; d++) {
-    const dp = addDaysTZ(base, d, TZ);
-    const dayKey = dp.dayKey;
-    const kvKey = `${KV_PREFIX}${dayKey}`;
-
-    console.log(`[INGEST] day=${dayKey} leagues=${batch.length} cursor=${from}-${to}`);
-
-    let allEvents = [];
-    let dayErrors = [];
-
-    // Fetch only this batch of leagues (safe)
-    for (const league of batch) {
-      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${dp.ymdCompact}`;
-      try {
-        const res = await fetch(url, { cf: { cacheTtl: 0 } });
-        if (!res.ok) {
-          dayErrors.push({ type: "fetch_failed", league, status: res.status });
-          continue;
-        }
-
-        const data = await res.json();
-        const events = Array.isArray(data?.events) ? data.events : [];
-
-        for (const ev of events) {
-          const m = mapEvent(ev, league);
-          if (!m || !m.kickoff) continue;
-
-          const realDayKey = dayKeyFromKickoff(m.kickoff, TZ);
-          if (realDayKey !== dayKey) continue;
-
-          allEvents.push(m);
-        }
-      } catch (e) {
-        dayErrors.push({ type: "exception", league, error: String(e) });
-      }
-    }
-
-    // Deduplicate by match id
-    const byId = new Map();
-    for (const m of allEvents) {
-      const prev = byId.get(m.id);
-      if (!prev) {
-        byId.set(m.id, m);
-      } else {
-        // keep stronger status
-        const strong = prev.status === "LIVE" || prev.status === "FT";
-        byId.set(m.id, strong ? prev : m);
-      }
-    }
-
-    const matchesBatch = Array.from(byId.values()).sort(
-      (a, b) => (a.kickoff_ms || 0) - (b.kickoff_ms || 0)
-    );
-
-    // Merge into existing day key (critical)
-    const existingRaw = await env.AIMATCHLAB_KV_CORE.get(kvKey);
-    const existing = safeJson(existingRaw, null);
-
-    const existingMatches = Array.isArray(existing?.matches) ? existing.matches : [];
-    const existingErrors = Array.isArray(existing?.errors) ? existing.errors : [];
-
-    // Merge matches by id (new batch overwrites weaker old)
-    const merged = new Map();
-    for (const m of existingMatches) merged.set(String(m.id), m);
-    for (const m of matchesBatch) merged.set(String(m.id), m);
-
-    const mergedMatches = Array.from(merged.values()).sort(
-      (a, b) => (a.kickoff_ms || 0) - (b.kickoff_ms || 0)
-    );
-
-    // Merge errors (keep a reasonable cap)
-    const mergedErrors = [...existingErrors, ...dayErrors].slice(-200);
-
-    const finalData = {
-      date: dayKey,
-      timezone: TZ,
-      createdAt: Date.now(),
-      source: "espn_per_league_batched",
-      matches: mergedMatches,
-      errors: mergedErrors
-    };
-
-    await env.AIMATCHLAB_KV_CORE.put(kvKey, JSON.stringify(finalData));
-
-    runSummary.wroteDays.push({
-      dayKey,
-      kvKey,
-      wroteBatchMatches: matchesBatch.length,
-      totalMatchesAfterMerge: mergedMatches.length,
-      errorsAdded: dayErrors.length
-    });
-
-    console.log(
-      `[INGEST] wrote ${kvKey} batch=${matchesBatch.length} mergedTotal=${mergedMatches.length} errorsAdded=${dayErrors.length}`
-    );
-  }
-
-  runSummary.finishedAt = Date.now();
-  runSummary.durationMs = runSummary.finishedAt - startedAt;
-
-  await env.AIMATCHLAB_KV_CORE.put(
-    "FIXTURES:INGEST:LAST_OK",
-    JSON.stringify(runSummary)
-  );
-
-  return runSummary;
-}
-
-// ================= TIME =================
-
-function nowInTZ(tz) {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  });
-  const p = fmt.formatToParts(new Date());
-  return {
-    y: Number(p.find(x => x.type === "year").value),
-    m: Number(p.find(x => x.type === "month").value),
-    d: Number(p.find(x => x.type === "day").value)
-  };
-}
-
-function addDaysTZ(base, add, tz) {
-  const utc = new Date(Date.UTC(base.y, base.m - 1, base.d, 12));
-  const dt = new Date(utc.getTime() + add * 86400000);
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  });
-  const s = fmt.format(dt);
-  const [y, m, d] = s.split("-").map(Number);
-  const dayKey = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  const ymdCompact = `${y}${String(m).padStart(2, "0")}${String(d).padStart(2, "0")}`;
-  return { dayKey, ymdCompact };
-}
-
-function dayKeyFromKickoff(iso, tz) {
-  if (!iso) return null;
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  });
-  const parts = fmt.formatToParts(new Date(iso));
-  const y = parts.find(p => p.type === "year").value;
-  const m = parts.find(p => p.type === "month").value;
-  const d = parts.find(p => p.type === "day").value;
-  return `${y}-${m}-${d}`;
-}
-
-// ================= UTIL =================
-
-function safeJson(txt, fallback) {
-  try { return txt ? JSON.parse(txt) : fallback; }
-  catch { return fallback; }
-}
-
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj, null, 2), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Access-Control-Allow-Origin": "*"
-    }
-  });
-}
-
-function cleanName(v) {
-  return String(v || "").replace(/\s+/g, " ").trim();
-}
-
-function teamIdFromCompetitor(c) {
-  const id =
-    c?.team?.id ??
-    c?.team?.uid ??
-    null;
-  if (id === null || id === undefined) return null;
-  const s = String(id).trim();
-  return s ? s : null;
-}
-
-function mapEvent(ev, leagueSeed) {
-  try {
-    const id = String(ev?.id || "");
-    if (!id) return null;
-
-    const comp = ev?.competitions?.[0];
-    const dateIso = comp?.date || ev?.date;
-    const kickoff_ms = dateIso ? Date.parse(dateIso) : null;
-
-    const cs = comp?.competitors || [];
-    const h = cs.find(c => c.homeAway === "home");
-    const a = cs.find(c => c.homeAway === "away");
-    if (!h || !a) return null;
-
-    const status = mapStatus(comp?.status);
-
-    const homeTeamId = teamIdFromCompetitor(h);
-    const awayTeamId = teamIdFromCompetitor(a);
-
-    return {
-      id,
-      home: cleanName(h.team?.displayName),
-      away: cleanName(a.team?.displayName),
-
-      homeTeamId,
-      awayTeamId,
-
-      kickoff: dateIso,
-      kickoff_ms,
-      status,
-      minute: extractMinute(comp?.status),
-      scoreHome: num(h.score),
-      scoreAway: num(a.score),
-
-      leagueSlug: leagueSeed,
-      leagueName: LEAGUE_NAME_MAP[leagueSeed] || leagueSeed,
-      dayKey: dayKeyFromKickoff(dateIso, TZ)
-    };
-  } catch {
-    return null;
-  }
-}
-
-function num(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function mapStatus(st) {
-  const t = (st?.type?.state || "").toUpperCase();
-  if (t === "IN") return "LIVE";
-  if (t === "POST") return "FT";
-  return "PRE";
-}
-
-function extractMinute(st) {
-  const c = st?.displayClock;
-  if (!c) return null;
-  const m = c.match(/^(\d+)/);
-  return m ? Number(m[1]) : null;
-}
