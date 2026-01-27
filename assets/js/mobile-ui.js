@@ -109,10 +109,6 @@
 
     if (!dd || !btn || !menu) return;
 
-    // ✅ HARD FIX: stop dropdown overlay from stealing taps (Install etc)
-    dd.style.pointerEvents = "none";
-    btn.style.pointerEvents = "auto";
-
     if (dd.dataset.bound === "1") return;
     dd.dataset.bound = "1";
 
@@ -154,6 +150,7 @@
       if (!view) return;
 
       setView(view);
+      window.dispatchEvent(new Event("resize"));
       close();
     });
 
