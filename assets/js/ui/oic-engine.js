@@ -1,14 +1,3 @@
-/* ============================================================
-   OIC ENGINE — LOCKED (SAFE, NO SIDE EFFECTS)
-   Contract:
-   - Consumes: match-selected {id,home,away,leagueName...}
-   - Consumes: odds-snapshot:core { matchId, markets?... } OR any snapshot object (optional)
-   - Emits:    market-selected { market, source:"oic" }
-   - Calls:    window.OICRenderer.renderAll({ market, match, snapshot })
-   Notes:
-   - Does NOT fetch odds.
-   - Handles missing/empty odds (snapshot null) gracefully.
-============================================================ */
 (function () {
   "use strict";
 
@@ -17,43 +6,106 @@
   var state = {
     market: DEFAULT_MARKET,
     match: null,
-    snapshotByMatchId: Object.create(null) // matchId -> snapshot
+    snapshotByMatchId: Object.create(null)
   };
 
+  // ---------------------------
+  // Event bus bridge
+  // ---------------------------
   function on(ev, fn) {
     if (window.on) return window.on(ev, fn);
-    window.addEventListener(ev, function (e) { fn(e.detail); });
+    window.addEventListener(ev, function (e) {
+      fn(e.detail);
+    });
   }
+
   function emit(ev, payload) {
     if (window.emit) return window.emit(ev, payload);
     window.dispatchEvent(new CustomEvent(ev, { detail: payload }));
   }
 
+  // ---------------------------
+  // Market normalization
+  // ---------------------------
   function normalizeMarket(v) {
-    var m = (v || "").toUpperCase().trim();
-    if (m === "BTTS") m = "GG"; // index.html uses BTTS; internal uses GG
-    if (m === "OU1.5" || m === "OU_15" || m === "OU15") m = "OU15";
-    if (m === "OU2.5" || m === "OU_25" || m === "OU25") m = "OU25";
-    if (m === "OU3.5" || m === "OU_35" || m === "OU35") m = "OU35";
-    return m;
+    var raw = (v || "").trim();
+
+    // dropdown VALUES (keys)
+    if (raw === "1X2") return "1X2";
+    if (raw === "DC") return "DC";
+    if (raw === "BTTS") return "BTTS";
+    if (raw === "OU15") return "OU15";
+    if (raw === "OU25") return "OU25";
+    if (raw === "OU35") return "OU35";
+
+    // dropdown LABELS (fallback safe)
+    if (raw === "Double Chance") return "DC";
+    if (raw === "Over / Under 1.5") return "OU15";
+    if (raw === "Over / Under 2.5") return "OU25";
+    if (raw === "Over / Under 3.5") return "OU35";
+
+    // tolerate old values
+    var up = raw.toUpperCase().trim();
+    if (up === "GG") return "BTTS";
+
+    return "1X2";
   }
 
   function clampMarket(m) {
     m = normalizeMarket(m);
-    var ok = { "1X2": 1, "DC": 1, "GG": 1, "OU15": 1, "OU25": 1, "OU35": 1 };
+    var ok = { "1X2": 1, "DC": 1, "BTTS": 1, "OU15": 1, "OU25": 1, "OU35": 1 };
     return ok[m] ? m : DEFAULT_MARKET;
   }
 
+  // ---------------------------
+  // UI
+  // ---------------------------
+  function updateActiveMatchUI(m) {
+    var titleEl = document.querySelector(".oic-match-title");
+    var subEl = document.querySelector(".oic-match-sub");
+    if (!titleEl || !subEl) return;
+
+    if (!m) {
+      titleEl.textContent = "No match selected";
+      subEl.textContent = "Select a match from the left panel.";
+      return;
+    }
+
+    var name = (m.home && m.away) ? (m.home + " – " + m.away) : ("Match " + m.id);
+    titleEl.textContent = name;
+    subEl.textContent = m.league ? m.league : ("ID: " + m.id);
+  }
+
+  // ---------------------------
+  // Renderer bridge
+  // ---------------------------
+  function currentSnapshot() {
+    if (!state.match) return null;
+    return state.snapshotByMatchId[state.match.id] || null;
+  }
+
+  function render() {
+    if (!window.OICRenderer || typeof window.OICRenderer.renderAll !== "function") return;
+
+    window.OICRenderer.renderAll({
+      market: state.market,   // ✅ always one of: 1X2, DC, BTTS, OU15, OU25, OU35
+      match: state.match,
+      snapshot: currentSnapshot()
+    });
+  }
+
+  // ---------------------------
+  // State updates
+  // ---------------------------
   function setMarket(m, source) {
     var next = clampMarket(m);
     if (next === state.market) return;
+
     state.market = next;
 
-    // keep UI selector in sync (if present)
+    // ✅ dropdown values are KEYS (1X2, DC, BTTS, OU25...)
     var sel = document.querySelector(".oic-market-select");
-if (sel) {
-  sel.value = (next === "GG") ? "BTTS" : next;
-}
+    if (sel) sel.value = next;
 
     emit("market-selected", { market: next, source: source || "oic" });
     render();
@@ -78,75 +130,45 @@ if (sel) {
     render();
   }
 
-  function updateActiveMatchUI(m) {
-    var titleEl = document.querySelector(".oic-match-title");
-    var subEl = document.querySelector(".oic-match-sub");
-    if (!titleEl || !subEl) return;
-
-    if (!m) {
-      titleEl.textContent = "No match selected";
-      subEl.textContent = "Select a match from the left panel.";
-      return;
-    }
-
-    var name = (m.home && m.away) ? (m.home + " – " + m.away) : ("Match " + m.id);
-    titleEl.textContent = name;
-    subEl.textContent = m.league ? m.league : ("ID: " + m.id);
-  }
-
-  // Accepts:
-  // - { matchId, snapshot } from KV endpoint
-  // - direct snapshot that includes matchId or id
   function upsertSnapshot(payload) {
     if (!payload) return;
 
     var matchId = payload.matchId || payload.id || (payload.match && payload.match.id);
     var snap = payload.snapshot || payload;
-
     if (!matchId) return;
+
     state.snapshotByMatchId[String(matchId)] = snap;
 
     if (state.match && String(matchId) === state.match.id) render();
   }
 
-  function currentSnapshot() {
-    if (!state.match) return null;
-    return state.snapshotByMatchId[state.match.id] || null;
-  }
+  // ---------------------------
+  // Bind UI select
+  // ---------------------------
+  function bindUI() {
+    var sel = document.querySelector(".oic-market-select");
+    if (!sel) return;
 
-  function render() {
-    if (!window.OICRenderer || typeof window.OICRenderer.renderAll !== "function") return;
+    // ✅ ensure select always has a valid option selected
+    if (!sel.value || sel.selectedIndex === -1) sel.value = state.market || "1X2";
 
-    window.OICRenderer.renderAll({
-      market: state.market,
-      match: state.match,
-      snapshot: currentSnapshot()
+    state.market = clampMarket(sel.value);
+
+    sel.addEventListener("change", function () {
+      setMarket(sel.value, "oic-ui");
     });
   }
 
-  function bindUI() {
-    var sel = document.querySelector(".oic-market-select");
-    if (sel) {
-      // initial sync
-      sel.value = sel.value || state.market;
-      state.market = clampMarket(sel.value);
-
-      sel.addEventListener("change", function () {
-        var v = sel.value === "BTTS" ? "GG" : sel.value;
-        setMarket(v, "oic-ui");
-      });
-    }
-  }
-
+  // ---------------------------
+  // Init
+  // ---------------------------
   function init() {
     bindUI();
 
     on("match-selected", setMatch);
 
-    // Core snapshot (optional, harmless if never emitted)
+    // optional snapshot events
     on("odds-snapshot:core", upsertSnapshot);
-
-    // Optional: canonical snapshot if used elsewhere (harmless)
     on("odds-snapshot:canonical", upsertSnapshot);
 
     updateActiveMatchUI(null);

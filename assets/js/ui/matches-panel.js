@@ -1,141 +1,100 @@
-/* =====================================================
-   MATCHES PANEL – DETAILS MODE (SAFE, ISOLATED)
-   Role:
-   - Opens ONLY via `details-open`
-   - Displays full match information
-   - Does NOT listen to fixtures / leagues
-===================================================== */
+/* matches-panel.js (patched: auto-switch to ODDS on match select) */
 
-(function () {
-  function ready(fn) {
-    if (document.readyState !== "loading") fn();
-    else document.addEventListener("DOMContentLoaded", fn);
+(() => {
+  if (!window.AIML || !window.AIML.emit) return;
+
+  const { on, emit, getState } = window.AIML;
+
+  const $ = (id) => document.getElementById(id);
+
+  const root = $("matches-panel");
+  if (!root) return;
+
+  let matches = [];
+  let activeLeague = null;
+
+  function renderEmpty() {
+    root.innerHTML = `
+      <div class="panel-empty">
+        <div class="muted">No matches loaded.</div>
+      </div>
+    `;
   }
 
-  ready(() => {
-    if (typeof window.on !== "function" || typeof window.emit !== "function") return;
-
-    const PANEL_ID = "panel-matches";
-    const BODY_ID = "matches-list";
-
-    function $(id) {
-      return document.getElementById(id);
+  function renderList() {
+    if (!matches || !matches.length) {
+      renderEmpty();
+      return;
     }
 
-    let CURRENT_MATCH = null;
+    const rows = matches
+      .map((m) => {
+        const id = m.id || m.matchId || "";
+        const home = m.home || m.homeTeam || m.homeTeamName || "Home";
+        const away = m.away || m.awayTeam || m.awayTeamName || "Away";
+        const status = m.status || m.state || m.shortStatus || "";
+        const time = m.kickoff || m.kickoffTime || m.time || "";
 
-    /* ===============================
-       OPEN PANEL
-    =============================== */
-    function openPanel() {
-      const panel = $(PANEL_ID);
-      if (!panel) return;
+        return `
+          <button class="match-row" data-mid="${id}">
+            <div class="match-row-main">
+              <div class="match-teams">
+                <span class="team home">${home}</span>
+                <span class="vs">vs</span>
+                <span class="team away">${away}</span>
+              </div>
+              <div class="match-meta">
+                <span class="match-time">${time}</span>
+                <span class="match-status">${status}</span>
+              </div>
+            </div>
+          </button>
+        `;
+      })
+      .join("");
 
-      panel.classList.add("open");
+    root.innerHTML = `<div class="match-list">${rows}</div>`;
 
-      if (typeof window.openAccordion === "function") {
-        window.openAccordion(PANEL_ID);
-      }
-    }
-
-    /* ===============================
-       RENDER
-    =============================== */
-    function render(match) {
-      const body = $(BODY_ID);
-      if (!body || !match) return;
-
-      body.innerHTML = `
-        <div class="details-header">
-          <div class="teams">
-            <strong>${match.home}</strong>
-            <span>vs</span>
-            <strong>${match.away}</strong>
-          </div>
-          <div class="league">${match.leagueName || ""}</div>
-          <div class="time">
-            ${renderStatus(match)}
-          </div>
-        </div>
-
-        <div class="details-section" id="details-stats">
-          <h4>Team Stats</h4>
-          <div class="placeholder">Loading stats…</div>
-        </div>
-
-        <div class="details-section" id="details-standings">
-          <h4>Standings</h4>
-          <div class="placeholder">Loading standings…</div>
-        </div>
-
-        <div class="details-section" id="details-history">
-          <h4>H2H / History</h4>
-          <div class="placeholder">Loading history…</div>
-        </div>
-      `;
-
-      // ενημερώνουμε τα υπόλοιπα panels (odds κλπ)
-      emit("match-selected", match);
-      emit("active-match:set", match);
-
-      loadExtras(match);
-    }
-
-    function renderStatus(m) {
-      if (m.status === "LIVE") {
-        return `${m.minute ?? ""}' ${m.scoreHome ?? ""}-${m.scoreAway ?? ""}`.trim();
-      }
-      if (m.status === "FT") {
-        return `FT ${m.scoreHome ?? ""}-${m.scoreAway ?? ""}`;
-      }
-      return new Date(m.kickoff_ms || m.kickoff).toLocaleTimeString("el-GR", {
-        hour: "2-digit",
-        minute: "2-digit"
+    // click binding
+    root.querySelectorAll(".match-row").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mid = btn.getAttribute("data-mid");
+        const match = matches.find((x) => String(x.id || x.matchId) === String(mid));
+        if (match) selectMatch(match);
       });
-    }
-
-    /* ===============================
-       LOAD EXTRA DATA (SAFE)
-    =============================== */
-    function loadExtras(match) {
-      // εδώ ΔΕΝ υποθέτουμε τίποτα
-      // αν υπάρχουν workers / adapters, απλώς θα απαντήσουν
-
-      emit("details:load:stats", match);
-      emit("details:load:standings", match);
-      emit("details:load:history", match);
-    }
-
-    /* ===============================
-       EVENTS
-    =============================== */
-
-    // 🔑 ΜΟΝΟΣ ΤΡΟΠΟΣ ΑΝΟΙΓΜΑΤΟΣ
-    on("details-open", payload => {
-      if (!payload || !payload.match) return;
-
-      CURRENT_MATCH = payload.match;
-      openPanel();
-      render(CURRENT_MATCH);
     });
+  }
 
-    /* ===============================
-       OPTIONAL LISTENERS (αν υπάρχουν)
-    =============================== */
+  function selectMatch(match) {
+    // 1) open details (existing behavior)
+    emit("details-open", match);
 
-    on("details:stats:loaded", data => {
-      const el = document.getElementById("details-stats");
-      if (el && data) el.querySelector(".placeholder").textContent = JSON.stringify(data, null, 2);
-    });
+    // 2) broadcast selection (existing behavior)
+    emit("match-selected", match);
+    emit("active-match:set", match);
 
-    on("details:standings:loaded", data => {
-      const el = document.getElementById("details-standings");
-      if (el && data) el.querySelector(".placeholder").textContent = JSON.stringify(data, null, 2);
-    });
+    // 3) ✅ NEW: auto-switch to ODDS on mobile (safe no-op on desktop)
+    try {
+      if (typeof window.AIML_MOBILE_SET_VIEW === "function") {
+        window.AIML_MOBILE_SET_VIEW("odds");
+      } else {
+        // fallback: if your mobile-ui listens to this event
+        emit("mobile-view:set", "odds");
+      }
+    } catch (_) {}
+  }
 
-    on("details:history:loaded", data => {
-      const el = document.getElementById("details-history");
-      if (el && data) el.querySelector(".placeholder").textContent = JSON.stringify(data, null, 2);
-    });
+  // Incoming matches list (existing style)
+  on("matches:set", (payload) => {
+    matches = (payload && payload.matches) ? payload.matches : (Array.isArray(payload) ? payload : []);
+    renderList();
   });
+
+  // If league changes, you may receive an event (keep compatible)
+  on("active-league:set", (lg) => {
+    activeLeague = lg || null;
+  });
+
+  // Initial
+  renderEmpty();
 })();

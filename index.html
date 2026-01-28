@@ -42,17 +42,48 @@
 <body>
   <div id="DEBUG_MARKER" style="display:none">LOCAL_INDEX_DROPDOWN_2026_01_26</div>
 
-  <!-- =====================================================
+<!-- =====================================================
        TOPBAR (GLOBAL / FIXED)
        Theme handled by assets/js/theme.js
        Legal handled by assets/js/legal-menu.js
   ===================================================== -->
-  <header id="topbar" class="topbar">
+<header id="topbar" class="topbar">
 
-    <!-- LEFT -->
-    <div class="topbar-left">
-      <button id="btn-home" class="topbar-btn" title="Home">⌂</button>
-      <button id="btn-refresh" class="topbar-btn" title="Refresh">⟳</button>
+  <!-- LEFT -->
+  <div class="topbar-left">
+    <button id="btn-home" class="topbar-btn" title="Home">⌂</button>
+    <button id="btn-refresh" class="topbar-btn" title="Refresh">⟳</button>
+  </div>
+
+  <!-- CENTER -->
+  <div class="topbar-center">
+    <img src="assets/icons/logo-header.png" class="topbar-logo" alt="AI MatchLab" />
+    <div class="topbar-brand">
+      <div class="brand-title">AI MatchLab ULTRA</div>
+      <div class="brand-version" id="app-version">v2.15.5</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="topbar-right">
+
+    <!-- UPDATE (ONLINE ONLY) -->
+    <button id="btn-update" class="topbar-btn" title="Update">⟳</button>
+
+    <button id="btn-theme" class="topbar-btn" title="Theme">🎨</button>
+    <button id="btn-lang" class="topbar-btn" title="Language">🌐</button>
+
+    <button id="btn-user" class="topbar-btn" title="User">👤</button>
+  </div>
+
+  <!-- =====================================================
+       MOBILE ROW 2
+       Dropdown centered + tools right
+  ===================================================== -->
+  <div class="topbar-row2" id="topbar-row2">
+
+    <!-- CENTER (Dropdown) -->
+    <div class="topbar-row2-center">
 
       <!-- MOBILE VIEW DROPDOWN (LEFT / ODDS / RIGHT) -->
       <div class="mobile-view-dd" id="mobile-view-dd" aria-label="Mobile view">
@@ -67,38 +98,28 @@
           <button class="mobile-view-item" type="button" data-view="right">RIGHT</button>
         </div>
       </div>
+
     </div>
 
-    <!-- CENTER -->
-    <div class="topbar-center">
-      <img src="assets/icons/logo-header.png" class="topbar-logo" alt="AI MatchLab" />
-      <div class="topbar-brand">
-        <div class="brand-title">AI MatchLab ULTRA</div>
-        <div class="brand-version" id="app-version">v2.15.5</div>
-      </div>
-    </div>
+    <!-- RIGHT (Legal / Install / Export) -->
+    <div class="topbar-row2-right">
 
-    <!-- RIGHT -->
-    <div class="topbar-right">
+      <button id="btn-legal" class="topbar-btn" title="Info">ⓘ</button>
 
-      <!-- INSTALL / UPDATE (ONLINE ONLY) -->
+      <!-- INSTALL (ONLINE ONLY) -->
       <button id="btn-install" class="topbar-btn" title="Install">⬇</button>
-      <button id="btn-update"  class="topbar-btn"      title="Update">⟳</button>
-
-      <button id="btn-theme" class="topbar-btn" title="Theme">🎨</button>
-      <button id="btn-lang"  class="topbar-btn" title="Language">🌐</button>
 
       <!-- EXPORT (ADMIN TOOL) -->
       <button id="btn-export" class="topbar-btn glow" title="Export (Value)">⤓</button>
 
-      <button id="btn-legal" class="topbar-btn" title="Info">ⓘ</button>
-      <button id="btn-user"  class="topbar-btn" title="User">👤</button>
     </div>
 
-    <!-- EXPORT MENU (ADMIN ONLY TOOL) -->
-    <div id="export-menu" class="topbar-menu hidden" aria-hidden="true"></div>
+  </div>
 
-  </header>
+  <!-- EXPORT MENU (ADMIN ONLY TOOL) -->
+  <div id="export-menu" class="topbar-menu hidden" aria-hidden="true"></div>
+
+</header>
 
   <!-- =====================================================
        THEME MENU (CONTAINER + CONTENT)
@@ -151,10 +172,10 @@
     </div>
   </div>
 
-  <!-- =====================================================
+<!-- =====================================================
        LEGAL MENU (CONTAINER)
        Required by assets/js/legal-menu.js
-  ===================================================== -->
+===================================================== -->
   <div id="legal-menu" class="legal-menu hidden" aria-hidden="true"></div>
 
   <!-- =====================================================
@@ -228,7 +249,7 @@
         <div class="oic-active-match">
 
           <div class="oic-match-text">
-            <div class="oic-match-title">No match selected</div>
+            <div id="oic-selected-match" class="oic-match-title">No match selected</div>
             <div class="oic-match-sub">
               Select a match from the left panel.
             </div>
@@ -236,7 +257,7 @@
 
           <!-- MARKET SELECTOR (ΑΝΗΚΕΙ ΣΤΟ OIC) -->
           <div class="oic-market-control">
-            <select class="oic-market-select">
+            <select id="oic-market" class="oic-market-select">
               <option value="1X2">1X2</option>
               <option value="DC">Double Chance</option>
               <option value="BTTS">BTTS</option>

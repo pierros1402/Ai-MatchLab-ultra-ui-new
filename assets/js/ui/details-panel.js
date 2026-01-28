@@ -254,21 +254,3 @@
     loadAndRender
   };
 })();
-// =====================================================
-// DETAILS OPEN HOOK (GLOBAL)
-// =====================================================
-if (window.on) {
-  window.on("details-open", (match) => {
-    const modal = document.getElementById("match-details-modal");
-    const body = document.getElementById("panel-details");
-    if (!modal || !body || !match) return;
-
-    modal.classList.remove("hidden");
-
-    if (window.DetailsPanel?.loadAndRender) {
-      window.DetailsPanel.loadAndRender(match, body, { forceReload: false });
-    } else {
-      body.innerHTML = "<div class='muted'>Details loader unavailable.</div>";
-    }
-  });
-}

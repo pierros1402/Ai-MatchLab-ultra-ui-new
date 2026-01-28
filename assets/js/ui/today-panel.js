@@ -1,5 +1,5 @@
 /* =========================================================
-   TODAY PANEL – FINAL, SAFE, WORKING — LOCKED (NO AUTO-REFRESH)
+   TODAY PANEL – SAFE + LIVE REFRESH (NO SPAM)
 ========================================================= */
 
 (function () {
@@ -10,6 +10,9 @@
   let LAST_MATCHES = [];
   let SAVED_IDS = new Set();
   let LOADING = false;
+
+  let REFRESH_MS = 60000; // ✅ 60s safe refresh
+  let timer = null;
 
   function todayISO() {
     return new Date().toISOString().slice(0, 10);
@@ -38,6 +41,27 @@
   function isSaved(m) {
     if (!m || m.id == null) return false;
     return SAVED_IDS.has(String(m.id));
+  }
+
+  function shouldKeepRefreshing(matches) {
+    const arr = Array.isArray(matches) ? matches : [];
+    if (!arr.length) return false;
+
+    // refresh if any match is LIVE or about to start
+    const now = Date.now();
+
+    return arr.some(m => {
+      const st = String(m.status || "").toUpperCase();
+
+      if (st === "LIVE") return true;
+
+      // refresh around kickoffs: within 2 hours window
+      const ko = Number(m.kickoff_ms || 0);
+      if (!ko) return false;
+
+      const diff = Math.abs(ko - now);
+      return diff <= 2 * 60 * 60 * 1000;
+    });
   }
 
   function render(matches) {
@@ -100,9 +124,9 @@
           m.scoreHome != null && m.scoreAway != null
             ? `${m.scoreHome}-${m.scoreAway}`
             : "";
-        info.textContent = `${min} ${sc}`.trim();
+        info.textContent = `${min} ${sc}`.trim() || "LIVE";
       } else {
-        info.textContent = time; // PRE: ώρα δεξιά
+        info.textContent = time;
       }
 
       const save = document.createElement("span");
@@ -111,7 +135,6 @@
       save.onclick = e => {
         e.stopPropagation();
         safeEmit("save-toggle", m);
-        // no local flip; repaint comes from saved:updated
       };
 
       const details = document.createElement("span");
@@ -119,7 +142,8 @@
       details.textContent = "ⓘ";
       details.onclick = e => {
         e.stopPropagation();
-        safeEmit("details-open", { match: m });
+        safeEmit("match-selected", m);
+        safeEmit("active-match:set", m);
       };
 
       right.appendChild(info);
@@ -143,15 +167,29 @@
     LOADING = true;
 
     try {
-      panel.innerHTML = "Φόρτωση…";
       const res = await fetch(`${BASE}/fixtures?date=${todayISO()}`, { cache: "no-store" });
       if (!res.ok) throw new Error("fetch failed");
 
       const data = await res.json();
       const matches = Array.isArray(data.matches) ? data.matches : [];
 
+      // ✅ make fixtures available globally for Live panel league fallback
+      window.AIML_FIXTURES_TODAY = { matches };
+
       render(matches);
       safeEmit("today-matches:loaded", { source: "fixtures", matches });
+
+      // ✅ refresh only when needed
+      if (shouldKeepRefreshing(matches)) {
+        if (!timer) {
+          timer = setInterval(load, REFRESH_MS);
+        }
+      } else {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
     } catch (e) {
       panel.innerHTML = "<div class='error'>Σφάλμα φόρτωσης</div>";
       console.error("[TODAY]", e);
@@ -177,6 +215,45 @@
     syncSavedSet(window.getSavedMatches ? window.getSavedMatches() : []);
   } catch {}
 
-  // ✅ LOAD ONCE (NO AUTO-REFRESH)
+  // ✅ LIVE overlay from live-engine (sticky to avoid flicker)
+  const LIVE_STICKY_MS = 90000; // 90s
+
+  if (window.on) {
+    window.on("live:update", payload => {
+      const live = (payload && Array.isArray(payload.matches)) ? payload.matches : [];
+      if (!LAST_MATCHES.length) return;
+
+      const now = Date.now();
+      const liveMap = new Map(live.map(m => [String(m.id), m]));
+      
+      LAST_MATCHES = LAST_MATCHES.map(m => {
+        const id = String(m.id);
+
+        // if we got live data for this match -> mark live + timestamp
+        const lm = liveMap.get(id);
+        if (lm) {
+          return {
+            ...m,
+            status: "LIVE",
+            minute: lm.minute ?? m.minute,
+            scoreHome: lm.scoreHome ?? lm.homeScore ?? m.scoreHome,
+            scoreAway: lm.scoreAway ?? lm.awayScore ?? m.scoreAway,
+            __liveTs: now
+          };
+        }
+
+        // ✅ sticky: if it was live recently, keep it live
+        if (m.status === "LIVE" && m.__liveTs && (now - m.__liveTs) < LIVE_STICKY_MS) {
+          return m;
+        }
+
+        // otherwise keep original fixture state (PRE)
+        return m;
+      });
+
+      render(LAST_MATCHES);
+    });
+  }
+
   load();
 })();

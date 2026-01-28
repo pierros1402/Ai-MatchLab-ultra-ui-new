@@ -1,115 +1,56 @@
 /* =========================================================
-   AI MatchLab Ultra — MOBILE LAYOUT (CLEAN)
-   File: assets/css/mobile.css
-
-   Goals (mobile only):
-   - Full topbar always visible
-   - Single-column view switching: LEFT / ODDS / RIGHT
-   - No horizontal overflow / no panel drifting
-   - Keep tap-friendly headers
-   - IMPORTANT: Accordion open/close is handled ONLY in style.css
+   MOBILE LAYOUT – CLEAN SINGLE BLOCK (92px topbar)
+   - 1 panel visible at a time (LEFT / ODDS / RIGHT)
+   - No duplicate @media blocks
 ========================================================= */
 
 @media (max-width: 900px){
 
-  /* =========================================================
-     GLOBAL MOBILE BASE
-  ========================================================= */
+  :root{
+    --topbar-h-mobile: 92px;
+  }
+
   html, body{
     height: 100%;
-    overflow: hidden; /* scrolling happens inside active view only */
+    overflow: hidden;
   }
 
-  /* Topbar must stay fixed */
+  /* Topbar fixed 2 rows */
   #topbar{
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 56px;
-    z-index: 1000;
+    height: var(--topbar-h-mobile) !important;
   }
 
-  /* Disable any overlay that could block taps */
-  #drawer-overlay{
-    display: none !important;
-  }
-
-  /* Main app surface */
+  /* App root – allow panels to control their own scroll */
   .app{
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+    height: 100vh !important;
     overflow: hidden !important;
   }
 
-  /* =========================================================
-     MOBILE VIEW SURFACES (LEFT / ODDS / RIGHT)
-  ========================================================= */
+  /* Panel surfaces (ONLY ONE visible) */
   .left-column,
   #odds-intelligence-center,
   aside.right-column{
     width: 100% !important;
     min-width: 0 !important;
 
-    height: calc(100vh - 56px) !important;
-    margin-top: 56px !important;
+    margin-top: var(--topbar-h-mobile) !important;
+    height: calc(100vh - var(--topbar-h-mobile)) !important;
 
     overflow: auto !important;
-    overflow-x: hidden !important; /* critical */
+    overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch;
 
     display: none !important;
   }
 
-  body.mobile-view-left .left-column{
-    display: block !important;
-  }
+  /* JS-driven view switching */
+  body.mobile-view-left .left-column{ display: block !important; }
+  body.mobile-view-odds #odds-intelligence-center{ display: block !important; }
+  body.mobile-view-right aside.right-column{ display: block !important; }
 
-  body.mobile-view-odds #odds-intelligence-center{
-    display: block !important;
-  }
-
-  body.mobile-view-right aside.right-column{
-    display: block !important;
-  }
-
-  /* =========================================================
-     TAP-FRIENDLY HEADERS (NO ACCORDION LOGIC HERE)
-     Accordion open/close is in style.css
-  ========================================================= */
-  .left-column .panel > .panel-header,
-  #right-panel .intelligence-panel .panel-header{
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  /* =========================================================
-     RIGHT COLUMN CARD LOOK (safe visual only)
-  ========================================================= */
-  #right-panel .intelligence-panel{
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 14px;
-    margin: 10px 12px;
-    overflow: hidden;
-  }
-
-  #right-panel .intelligence-panel .panel-header{
-    padding: 12px 12px;
-  }
-
-  #right-panel .intelligence-panel .panel-body{
-    padding: 10px 12px 14px 12px;
-  }
-
-  aside.right-column{
-    padding-bottom: 18px;
-  }
-
-  /* =========================================================
-     ODDS MOBILE — prevent horizontal overflow
-  ========================================================= */
+  /* Safety */
   #odds-intelligence-center{
     max-width: 100% !important;
     overflow-x: hidden !important;
@@ -123,95 +64,4 @@
     width: 100% !important;
     max-width: 220px !important;
   }
-
-  #odds-intelligence-center .oic-header,
-  #odds-intelligence-center .oic-top,
-  #odds-intelligence-center header{
-    flex-wrap: wrap !important;
-  }
-
-  /* =========================================================
-     TOPBAR MOBILE (DETERMINISTIC / NO OVERLAP)
-     - Right stays FIXED on the right (install always clickable)
-     - Left reserves space for the right using padding-right
-  ========================================================= */
-  .topbar{
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    height: 56px !important;
-  }
-
-  .topbar-right{
-    position: absolute !important;
-    right: 8px !important;
-    top: 0 !important;
-
-    height: 56px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-
-    z-index: 60 !important;
-    max-width: 55% !important;
-
-    overflow-x: auto !important;
-    overflow-y: hidden !important;
-    white-space: nowrap !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
-
-  .topbar-right::-webkit-scrollbar{
-    display: none !important;
-  }
-
-  .topbar-left{
-    padding-right: 56% !important; /* reserve space for right area */
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-
-    min-width: 0 !important;
-    overflow: hidden !important; /* critical: prevents bleed into right */
-  }
-
-  /* Ensure install is always on top */
-  #btn-install{
-    position: relative !important;
-    z-index: 70 !important;
-  }
-
-  /* =========================================================
-     CUSTOM MOBILE VIEW DROPDOWN (LEFT / ODDS / RIGHT)
-  ========================================================= */
-  
-
-  .mobile-view-menu.hidden{
-    display: none !important;
-  }
-
-  .mobile-view-item{
-    width: 100%;
-    height: 36px;
-
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-
-    padding: 0 10px;
-    border-radius: 12px;
-    border: 0;
-
-    background: transparent;
-    color: rgba(255,255,255,0.92);
-
-    font-weight: 800;
-    cursor: pointer;
-  }
-
-  .mobile-view-item:hover{
-    background: rgba(255, 140, 0, 0.18);
-  }
-
-} /* ✅ CLOSE @media */
-  
+}

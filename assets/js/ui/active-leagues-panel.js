@@ -1,5 +1,5 @@
 /* =========================================================
-   ACTIVE LEAGUES TODAY – FINAL (SAVE + DETAILS) — LOCKED
+   ACTIVE LEAGUES TODAY – FIXED (Details -> open like Matches)
 ========================================================= */
 
 (function () {
@@ -9,7 +9,7 @@
   const TZ = "Europe/Athens";
 
   let LAST_MATCHES = [];
-  let SAVED_IDS = new Set(); // local snapshot for fast + stable isSaved
+  let SAVED_IDS = new Set();
 
   function pad2(n) { return String(n).padStart(2, "0"); }
 
@@ -42,6 +42,12 @@
     return SAVED_IDS.has(String(m.id));
   }
 
+  function openMatch(m) {
+    // ✅ guaranteed working flow
+    emit("match-selected", m);
+    emit("active-match:set", m);
+  }
+
   function render(matches) {
     const root = document.getElementById(LIST_ID);
     if (!root) return;
@@ -50,7 +56,6 @@
     root.innerHTML = "";
 
     const arr = LAST_MATCHES.filter(m => isPRE(m) || isFT(m));
-
 
     if (!arr.length) {
       root.innerHTML = "<div class='empty'>No active leagues</div>";
@@ -71,7 +76,7 @@
 
       byLeague[lg].forEach(m => {
         const row = document.createElement("div");
-        row.className = "today-row";
+        row.className = "match-row";
 
         const left = document.createElement("div");
         left.className = "today-match";
@@ -91,7 +96,6 @@
         save.onclick = e => {
           e.stopPropagation();
           emit("save-toggle", m);
-          // no local text flip here; repaint comes from saved:updated
         };
 
         const details = document.createElement("span");
@@ -99,7 +103,7 @@
         details.textContent = "ⓘ";
         details.onclick = e => {
           e.stopPropagation();
-          emit("details-open", { match: m });
+          emit("details-open", m);
         };
 
         right.appendChild(info);
@@ -109,35 +113,27 @@
         row.appendChild(left);
         row.appendChild(right);
 
-        // normal click → center panels / odds
-        row.onclick = () => {
-          emit("match-selected", m);
-          emit("active-match:set", m);
-        };
+        row.onclick = () => openMatch(m);
 
         root.appendChild(row);
       });
     });
   }
 
-  // data from Today (source of truth feed)
   on("today-matches:loaded", payload => {
     render(payload && payload.matches ? payload.matches : []);
   });
 
-  // canonical saved sync
   on("saved:updated", payload => {
     syncSavedSet(payload && Array.isArray(payload.items) ? payload.items : []);
     if (LAST_MATCHES.length) render(LAST_MATCHES);
   });
 
-  // legacy saved sync (optional)
   on("saved:changed", arr => {
     syncSavedSet(Array.isArray(arr) ? arr : []);
     if (LAST_MATCHES.length) render(LAST_MATCHES);
   });
 
-  // initial paint snapshot (if store already loaded)
   try {
     syncSavedSet(window.getSavedMatches ? window.getSavedMatches() : []);
   } catch {}

@@ -1,10 +1,11 @@
 /* =========================================================
-   LIVE MATCHES PANEL (v3.1 FINAL FIX)
+   LIVE MATCHES PANEL (v3.2 FIXED LEAGUE NAME)
    - LIVE grouped by league
    - FT only for 120s
    - Saved / All dropdown inside header
-   - HARD FIX: remove any stale placeholders ("Waiting...") always
-   - Pretty league names (remove season/english)
+   - HARD FIX: remove stale placeholders ("Waiting...")
+   - Pretty league names
+   - ✅ NEW: If live payload has league:"regular-season", use Today fixtures leagueName by id
 ========================================================= */
 
 (function () {
@@ -33,13 +34,43 @@
     return String(m?.status ?? "").toUpperCase();
   }
 
+  function getLeagueFromTodayById(matchId) {
+    try {
+      const obj = window.AIML_FIXTURES_TODAY;
+      const arr = obj && Array.isArray(obj.matches) ? obj.matches : [];
+      const hit = arr.find(x => String(x?.id ?? "") === String(matchId));
+      return hit?.leagueName || hit?.leagueSlug || "";
+    } catch {
+      return "";
+    }
+  }
+
   function rawLeague(m) {
-    return m?.leagueName || m?.league || "SOCCER";
+    // ✅ BEST: real league name from Today fixtures (if available)
+    const id = String(m?.id ?? "");
+    const fromToday = id ? getLeagueFromTodayById(id) : "";
+    if (fromToday) return fromToday;
+
+    // fallback keys (if live worker ever starts sending them)
+    return (
+      m?.leagueName ||
+      m?.league ||
+      m?.competitionName ||
+      m?.competition ||
+      m?.tournament ||
+      m?.stageName ||
+      "SOCCER"
+    );
   }
 
   function prettyLeagueName(raw) {
     const s = String(raw || "").trim();
     if (!s) return "SOCCER";
+
+    // if live payload gives stage only, avoid showing it as league
+    if (s.toLowerCase() === "regular-season" || s.toLowerCase() === "regular season") {
+      return "LIVE";
+    }
 
     // remove leading season like "2025-26-"
     const noSeason = s.replace(/^\d{4}-\d{2}-/g, "");
@@ -224,17 +255,12 @@
   // Render
   // -------------------------------------------------------
   function hardClearPlaceholders() {
-    // If ANY "Waiting..." placeholder exists anywhere inside this panel, kill it.
     panel.querySelectorAll(".panel-placeholder").forEach((el) => el.remove());
   }
 
   function render(allMatches) {
     ensureHeaderDropdown();
-
-    // HARD cleanup every time (prevents the stuck "Waiting..." issue)
     hardClearPlaceholders();
-
-    // Fully control body list
     body.innerHTML = "";
 
     if (!allMatches || !Array.isArray(allMatches)) {
@@ -362,7 +388,6 @@
   ensureHeaderDropdown();
   render(null);
 
-  // FT retention expiry repaint ticker
   setInterval(() => {
     if (lastPayload && Array.isArray(lastPayload.matches)) paint(false);
   }, 3000);

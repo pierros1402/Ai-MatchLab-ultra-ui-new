@@ -61,7 +61,7 @@ const RETRY_DELAY_MS = 350;
  *
  * NOTE: do NOT set this too high because some days are low volume.
  */
-const MIN_TOTAL_MATCHES_FINAL = 30;
+const MIN_TOTAL_MATCHES_FINAL = 20;
 
 /* =========================
    Helpers

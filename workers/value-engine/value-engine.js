@@ -128,19 +128,142 @@ async function loadFixturesForDay(env, day) {
 }
 
 function mapEspnLeagueToFD(leagueSlug) {
+  // Football-Data league codes (TEAM_STATS.leagues keys)
+  // Keep this small + explicit; anything else can fall back to cross-league lookup.
+  if (!leagueSlug) return null;
+
+  // England
   if (leagueSlug === "eng.1") return "E0";
   if (leagueSlug === "eng.2") return "E1";
   if (leagueSlug === "eng.3") return "E2";
   if (leagueSlug === "eng.4") return "E3";
 
+  // Scotland
+  if (leagueSlug === "sco.1") return "SC0";
+  if (leagueSlug === "sco.2") return "SC1";
+
+  // Greece
   if (leagueSlug === "gre.1") return "G1";
+
+  // Spain
   if (leagueSlug === "esp.1") return "SP1";
+  if (leagueSlug === "esp.2") return "SP2";
+
+  // Italy
   if (leagueSlug === "ita.1") return "I1";
+  if (leagueSlug === "ita.2") return "I2";
+
+  // Germany
   if (leagueSlug === "ger.1") return "D1";
+  if (leagueSlug === "ger.2") return "D2";
+
+  // France
   if (leagueSlug === "fra.1") return "F1";
+  if (leagueSlug === "fra.2") return "F2";
+
+  // Netherlands
+  if (leagueSlug === "ned.1") return "N1";
+
+  // Portugal
+  if (leagueSlug === "por.1") return "P1";
+
+  // Belgium
+  if (leagueSlug === "bel.1") return "B1";
+
+  // Turkey
+  if (leagueSlug === "tur.1") return "T1";
 
   return null;
 }
+
+// Domestic cups / super cups / trophies / friendlies to exclude (per your LEAGUE_SEEDS)
+const EXCLUDED_LEAGUE_SLUGS = new Set([
+  "eng.fa",
+  "eng.league_cup",
+  "eng.trophy",
+  "esp.copa_del_rey",
+  "esp.super_cup",
+  "ita.coppa_italia",
+  "fra.coupe_de_france",
+  "fra.super_cup",
+  "sco.challenge",
+  "ned.cup",
+  "por.taca.portugal",
+  "club.friendly",
+]);
+
+function isExcludedLeague(leagueSlug) {
+  if (!leagueSlug) return false;
+  if (EXCLUDED_LEAGUE_SLUGS.has(leagueSlug)) return true;
+  // safety: friendlies often appear with "friendly"
+  if (String(leagueSlug).includes("friendly")) return true;
+  return false;
+}
+
+function normTeamName(s) {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+// cache: fdCode -> Map(normalizedName -> originalKey)
+const _normLeagueKeyCache = new Map();
+function getNormMapForLeague(leagueTeams) {
+  if (!leagueTeams || typeof leagueTeams !== "object") return null;
+  // leagueTeams is object keyed by teamName, values stats
+  const cacheKey = leagueTeams; // object identity
+  if (_normLeagueKeyCache.has(cacheKey)) return _normLeagueKeyCache.get(cacheKey);
+
+  const m = new Map();
+  for (const k of Object.keys(leagueTeams)) {
+    m.set(normTeamName(k), k);
+  }
+  _normLeagueKeyCache.set(cacheKey, m);
+  return m;
+}
+
+function findTeamStatsInLeague(leagueTeams, homeName, awayName) {
+  if (!leagueTeams) return null;
+
+  // exact first
+  const h0 = leagueTeams[homeName] || null;
+  const a0 = leagueTeams[awayName] || null;
+  if (h0 && a0) return { homeStats: h0, awayStats: a0 };
+
+  const nm = getNormMapForLeague(leagueTeams);
+  if (!nm) return null;
+
+  const hk = nm.get(normTeamName(homeName));
+  const ak = nm.get(normTeamName(awayName));
+  if (!hk || !ak) return null;
+
+  const hs = leagueTeams[hk] || null;
+  const as = leagueTeams[ak] || null;
+  if (!hs || !as) return null;
+  return { homeStats: hs, awayStats: as };
+}
+
+function findStatsForMatch(leagues, leagueSlug, homeName, awayName) {
+  // 1) try mapped league first
+  const fd = mapEspnLeagueToFD(leagueSlug);
+  if (fd && leagues?.[fd]) {
+    const found = findTeamStatsInLeague(leagues[fd], homeName, awayName);
+    if (found) return { fdCode: fd, ...found };
+  }
+
+  // 2) fallback: search across all leagues blocks (useful when slug isn't mapped but stats exist)
+  for (const fdCode of Object.keys(leagues || {})) {
+    const leagueTeams = leagues[fdCode];
+    const found = findTeamStatsInLeague(leagueTeams, homeName, awayName);
+    if (found) return { fdCode, ...found };
+  }
+
+  return null;
+}
+
 
 function clamp01(x) {
   const n = Number(x);
@@ -195,25 +318,40 @@ async function runEngine(env, day) {
   }
 
   const leagues = ts.stats.leagues || {};
-  let produced = 0;
+
+  let producedPicks = 0;       // number of written pick records (BTTS + O25 per match)
+  let producedMatches = 0;     // number of matches that produced at least one pick-set
+  let totalPRE = 0;
+
+  let skippedExcludedLeague = 0;
+  let skippedNoTeams = 0;
+  let skippedNoStats = 0;
 
   for (const m of fixtures) {
-    if (!m || m.status !== "PRE") continue;
+    if (!m) continue;
+    if (m.status !== "PRE") continue;
+    totalPRE++;
 
     const leagueSlug = m.leagueSlug || m.league || null;
-    const fdCode = mapEspnLeagueToFD(leagueSlug);
-    if (!fdCode) continue;
-
-    const leagueTeams = leagues[fdCode];
-    if (!leagueTeams) continue;
+    if (isExcludedLeague(leagueSlug)) {
+      skippedExcludedLeague++;
+      continue;
+    }
 
     const homeName = m.home;
     const awayName = m.away;
-    if (!homeName || !awayName) continue;
+    if (!homeName || !awayName) {
+      skippedNoTeams++;
+      continue;
+    }
 
-    const homeStats = leagueTeams[homeName] || null;
-    const awayStats = leagueTeams[awayName] || null;
-    if (!homeStats || !awayStats) continue;
+    const found = findStatsForMatch(leagues, leagueSlug, homeName, awayName);
+    if (!found) {
+      skippedNoStats++;
+      continue;
+    }
+
+    const { homeStats, awayStats, fdCode } = found;
 
     const bttsScore = calcBTTSScore(homeStats, awayStats);
     const over25Score = calcOver25Score(homeStats, awayStats);
@@ -225,6 +363,7 @@ async function runEngine(env, day) {
       date: day,
       matchId: String(m.id),
       leagueSlug,
+      fdCode,
       home: homeName,
       away: awayName,
       market: "BTTS",
@@ -235,7 +374,7 @@ async function runEngine(env, day) {
       status: "PRE",
     };
     await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "BTTS", "YES"), recBTTS);
-    produced++;
+    producedPicks++;
 
     const recO25 = {
       type: "value-pick",
@@ -244,6 +383,7 @@ async function runEngine(env, day) {
       date: day,
       matchId: String(m.id),
       leagueSlug,
+      fdCode,
       home: homeName,
       away: awayName,
       market: "Over 2.5",
@@ -254,19 +394,31 @@ async function runEngine(env, day) {
       status: "PRE",
     };
     await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "O25", "YES"), recO25);
-    produced++;
+    producedPicks++;
+
+    producedMatches++;
   }
 
-  await kvPutJson(env.AIMATCHLAB_KV_CORE, `VALUE:SUMMARY:${day}`, {
+  const summary = {
     ok: true,
     date: day,
-    produced,
-    latestTeamStatsSeason: ts.latest,
     build: BUILD_TAG,
     updatedAtMs: Date.now(),
-  });
+    latestTeamStatsSeason: ts.latest,
 
-  return { ok: true, day, latest: ts.latest, produced, build: BUILD_TAG };
+    // debug / transparency (so we know why it becomes 0)
+    totalMatchesInFixtures: Array.isArray(fixtures) ? fixtures.length : 0,
+    totalPRE,
+    producedMatches,
+    producedPicks,
+    skippedExcludedLeague,
+    skippedNoTeams,
+    skippedNoStats,
+  };
+
+  await kvPutJson(env.AIMATCHLAB_KV_CORE, `VALUE:SUMMARY:${day}`, summary);
+
+  return { ok: true, day, latest: ts.latest, ...summary };
 }
 
 // ========= ROUTES =========
