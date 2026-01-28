@@ -326,6 +326,9 @@ async function runEngine(env, day) {
   let skippedExcludedLeague = 0;
   let skippedNoTeams = 0;
   let skippedNoStats = 0;
+  let debugNoStatsSample = [];
+  let debugNoStatsByLeague = {};
+
 
   for (const m of fixtures) {
     if (!m) continue;
@@ -348,6 +351,8 @@ async function runEngine(env, day) {
     const found = findStatsForMatch(leagues, leagueSlug, homeName, awayName);
     if (!found) {
       skippedNoStats++;
+      debugNoStatsByLeague[m.leagueSlug || 'unknown'] = (debugNoStatsByLeague[m.leagueSlug || 'unknown'] || 0) + 1;
+      if (debugNoStatsSample.length < 15) debugNoStatsSample.push({ leagueSlug: m.leagueSlug, leagueName: m.leagueName, home: m.home, away: m.away, homeTeamId: m.homeTeamId, awayTeamId: m.awayTeamId });
       continue;
     }
 
