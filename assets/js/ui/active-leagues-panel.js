@@ -29,6 +29,17 @@
 
   function leagueName(m) { return m.leagueName || m.leagueSlug || "—"; }
 
+  // ✅ NEW: local day window helpers (00:00–23:59 local)
+  function startOfTodayLocalMs() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+  }
+
+  function endOfTodayLocalMs() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+  }
+
   function syncSavedSet(items) {
     const set = new Set();
     (Array.isArray(items) ? items : []).forEach(x => {
@@ -55,7 +66,17 @@
     LAST_MATCHES = Array.isArray(matches) ? matches : [];
     root.innerHTML = "";
 
-    const arr = LAST_MATCHES.filter(m => isPRE(m) || isFT(m));
+    const startDay = startOfTodayLocalMs();
+    const endDay = endOfTodayLocalMs();
+
+    // ACTIVE rules:
+    // - PRE + FT only
+    // - Only matches of today (00:00–23:59 local)
+    const arr = LAST_MATCHES.filter(m => {
+      if (!(isPRE(m) || isFT(m))) return false;
+      const ko = Number(m.kickoff_ms || 0);
+      return ko >= startDay && ko <= endDay;
+    });
 
     if (!arr.length) {
       root.innerHTML = "<div class='empty'>No active leagues</div>";

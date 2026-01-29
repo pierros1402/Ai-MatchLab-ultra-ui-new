@@ -13,7 +13,7 @@
  * This worker is ONLY correct if it can read TEAM_STATS keys from AIMATCHLAB_STATS.
  */
 
-const BUILD_TAG = "VALUE_ENGINE_BUILD_2026-01-24_HARD_RESET_V1";
+const BUILD_TAG = "VALUE_ENGINE_BUILD_2026-01-29_PRE_FIX_A";
 const TZ = "Europe/Athens";
 
 function json(data, status = 200) {
@@ -295,6 +295,33 @@ function calcOver25Score(home, away) {
   return clamp01((a + b) / 2);
 }
 
+function calcOver15Score(home, away) {
+  // If we don't have explicit over15_rate, approximate from goal averages + over25_rate
+  const a = Number(home?.over15_rate ?? NaN);
+  const b = Number(away?.over15_rate ?? NaN);
+  if (!Number.isNaN(a) && !Number.isNaN(b)) return clamp01((a + b) / 2);
+
+  const gf = Number(home?.goals_for_avg ?? 0) + Number(away?.goals_for_avg ?? 0);
+  const ga = Number(home?.goals_against_avg ?? 0) + Number(away?.goals_against_avg ?? 0);
+  const base = clamp01((gf + ga) / 4); // rough scaling
+  const over25 = calcOver25Score(home, away);
+  // Over1.5 should be higher than Over2.5
+  return clamp01(Math.max(base, over25 + 0.18));
+}
+
+function calcOver35Score(home, away) {
+  const a = Number(home?.over35_rate ?? NaN);
+  const b = Number(away?.over35_rate ?? NaN);
+  if (!Number.isNaN(a) && !Number.isNaN(b)) return clamp01((a + b) / 2);
+
+  const gf = Number(home?.goals_for_avg ?? 0) + Number(away?.goals_for_avg ?? 0);
+  const ga = Number(home?.goals_against_avg ?? 0) + Number(away?.goals_against_avg ?? 0);
+  const base = clamp01((gf + ga) / 5); // stricter for 3.5
+  const over25 = calcOver25Score(home, away);
+  // Over3.5 should be lower than Over2.5
+  return clamp01(Math.min(base, Math.max(0, over25 - 0.18)));
+}
+
 function pickKey(day, matchId, market, side) {
   return `VALUE:STAT:${day}:${matchId}:${market}:${side}`;
 }
@@ -319,7 +346,7 @@ async function runEngine(env, day) {
 
   const leagues = ts.stats.leagues || {};
 
-  let producedPicks = 0;       // number of written pick records (BTTS + O25 per match)
+  let producedPicks = 0; // number of written pick records (BTTS + O15 + O25 + O35 per match)
   let producedMatches = 0;     // number of matches that produced at least one pick-set
   let totalPRE = 0;
 
@@ -332,7 +359,9 @@ async function runEngine(env, day) {
 
   for (const m of fixtures) {
     if (!m) continue;
-    if (m.status !== "PRE") continue;
+    const st = String(m.status || "").toUpperCase().trim();
+    const isPRE = (st === "PRE" || st === "NS" || st === "SCHEDULED" || st === "STATUS_SCHEDULED");
+    if (!isPRE) continue;
     totalPRE++;
 
     const leagueSlug = m.leagueSlug || m.league || null;
@@ -347,6 +376,11 @@ async function runEngine(env, day) {
       skippedNoTeams++;
       continue;
     }
+    // ✅ NEW: fast coverage check (no KV writes, no hard excludes)
+    if (!leagues || Object.keys(leagues).length === 0) {
+      skippedNoStats++;
+      continue;
+   }
 
     const found = findStatsForMatch(leagues, leagueSlug, homeName, awayName);
     if (!found) {
@@ -359,7 +393,9 @@ async function runEngine(env, day) {
     const { homeStats, awayStats, fdCode } = found;
 
     const bttsScore = calcBTTSScore(homeStats, awayStats);
+    const over15Score = calcOver15Score(homeStats, awayStats);
     const over25Score = calcOver25Score(homeStats, awayStats);
+    const over35Score = calcOver35Score(homeStats, awayStats);
 
     const recBTTS = {
       type: "value-pick",
@@ -379,7 +415,26 @@ async function runEngine(env, day) {
       status: "PRE",
     };
     await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "BTTS", "YES"), recBTTS);
-    producedPicks++;
+    producedPicks += 1;
+
+    const recO15 = {
+      type: "value-pick",
+      engine: "stats-only-v1",
+      build: BUILD_TAG,
+      date: day,
+      matchId: String(m.id),
+      leagueSlug,
+      fdCode,
+      home: homeName,
+      away: awayName,
+      market: "Over 1.5",
+      side: "YES",
+      score: round2(over15Score),
+      confidence: confidenceLabel(over15Score),
+      createdAtMs: Date.now(),
+      status: "PRE",
+    };
+    await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "O15", "YES"), recO15);
 
     const recO25 = {
       type: "value-pick",
@@ -399,7 +454,27 @@ async function runEngine(env, day) {
       status: "PRE",
     };
     await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "O25", "YES"), recO25);
-    producedPicks++;
+
+    const recO35 = {
+      type: "value-pick",
+      engine: "stats-only-v1",
+      build: BUILD_TAG,
+      date: day,
+      matchId: String(m.id),
+      leagueSlug,
+      fdCode,
+      home: homeName,
+      away: awayName,
+      market: "Over 3.5",
+      side: "YES",
+      score: round2(over35Score),
+      confidence: confidenceLabel(over35Score),
+      createdAtMs: Date.now(),
+      status: "PRE",
+    };
+    await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "O35", "YES"), recO35);
+
+    producedPicks += 3;
 
     producedMatches++;
   }
@@ -419,9 +494,12 @@ async function runEngine(env, day) {
     skippedExcludedLeague,
     skippedNoTeams,
     skippedNoStats,
+    
+    debugNoStatsSample,
+    debugNoStatsByLeague,
   };
 
-  await kvPutJson(env.AIMATCHLAB_KV_CORE, `VALUE:SUMMARY:${day}`, summary);
+  await kvPutJson(env.AIMATCHLAB_KV_CORE, `VALUE:ENGINE:SUMMARY:${day}`, summary);
 
   return { ok: true, day, latest: ts.latest, ...summary };
 }
@@ -490,9 +568,52 @@ export default {
       }
     }
 
+    // ✅ include coverage info
     if (url.pathname === "/internal/team-stats") {
       const ts = await loadTeamStatsLatest(env);
-      return json({ ...ts, build: BUILD_TAG });
+
+      const leaguesObj = ts?.stats?.leagues || {};
+      const leagueCodes = Object.keys(leaguesObj);
+
+      return json({
+        ok: true,
+        latest: ts.latest,
+        season: ts.stats?.season,
+        build: BUILD_TAG,
+        leaguesCount: leagueCodes.length,
+        leagueCodes: leagueCodes.sort(),
+     });
+   }
+
+    // ✅ status counts sample (debug)
+    if (url.pathname === "/internal/debug/statuses") {
+      const day = url.searchParams.get("date") || dayKeyGR();
+      const fixturesKey = `FIXTURES:DATE:${day}`;
+
+      const data = await env.AIMATCHLAB_KV_CORE.get(fixturesKey, { type: "json" });
+      const matches = Array.isArray(data?.matches) ? data.matches : [];
+
+      const counts = {};
+      const sample = [];
+
+      for (const m of matches) {
+        const stRaw = m?.status;
+        const st = String(stRaw || "").trim();
+        counts[st] = (counts[st] || 0) + 1;
+
+        if (sample.length < 15) {
+          sample.push({ id: m?.id, status: stRaw });
+        }
+      }
+
+      return json({
+        ok: true,
+        day,
+        fixturesKey,
+        total: matches.length,
+        counts,
+        sample,
+      });
     }
 
     if (url.pathname === "/internal/run") {

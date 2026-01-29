@@ -26,6 +26,17 @@
     });
   }
 
+  // ✅ NEW: local day window helpers (00:00–23:59 local)
+  function startOfTodayLocalMs() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+  }
+
+  function endOfTodayLocalMs() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+  }
+
   function safeEmit(name, payload) {
     if (typeof window.emit === "function") window.emit(name, payload);
   }
@@ -74,9 +85,22 @@
       return;
     }
 
-    // TODAY: χωρίς FT
+    // ✅ day window for "today only"
+    const startDay = startOfTodayLocalMs();
+    const endDay = endOfTodayLocalMs();
+
+    // TODAY rules:
+    // - NO FT
+    // - Only matches of today (00:00–23:59 local)
+    // - EXCEPTION: if match is LIVE, keep it even if it started previous day (2-day LIVE)
     const arr = LAST_MATCHES
       .filter(m => String(m.status).toUpperCase() !== "FT")
+      .filter(m => {
+        const st = String(m.status || "").toUpperCase();
+        if (st === "LIVE") return true; // ✅ keep LIVE always
+        const ko = Number(m.kickoff_ms || 0);
+        return ko >= startDay && ko <= endDay;
+      })
       .slice()
       .sort((a, b) => (a.kickoff_ms || 0) - (b.kickoff_ms || 0));
 
@@ -225,7 +249,7 @@
 
       const now = Date.now();
       const liveMap = new Map(live.map(m => [String(m.id), m]));
-      
+
       LAST_MATCHES = LAST_MATCHES.map(m => {
         const id = String(m.id);
 
