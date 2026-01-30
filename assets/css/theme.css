@@ -137,3 +137,130 @@ html.light, html[data-theme="light"]{
 :root{
   --accent: #ff8c00;
 }
+
+
+/* =========================================================
+   ACCENT ALIASES (UI PILL NAMES -> CORE ACCENTS)
+   This keeps your UI labels while reusing the 5 core accents.
+========================================================= */
+
+html[data-accent="blue-orange"]{ 
+  --accent: #ff8c00;
+  --accent-soft: rgba(255,140,0,0.25);
+}
+
+html[data-accent="green-gold"]{
+  --accent: #2ecc71;
+  --accent-soft: rgba(46,204,113,0.25);
+}
+
+html[data-accent="crimson-silver"]{
+  --accent: #e74c3c;
+  --accent-soft: rgba(231,76,60,0.25);
+}
+
+html[data-accent="purple-aqua"]{
+  --accent: #9b59b6;
+  --accent-soft: rgba(155,89,182,0.25);
+}
+
+html[data-accent="neon-spectrum"]{
+  --accent: #3498db;
+  --accent-soft: rgba(52,152,219,0.25);
+}
+
+html[data-accent="minimal-classic"]{
+  --accent: #ff8c00;
+  --accent-soft: rgba(255,140,0,0.20);
+}
+
+/* =========================================================
+   OPTIONAL: ACCENT-BASED BACKGROUND VARIANTS
+   Subtle background tint per accent (safe + premium)
+========================================================= */
+
+html[data-accent="blue-orange"]{
+  --bg-elevated: #1a1d25;
+}
+
+html[data-accent="green-gold"]{
+  --bg-elevated: #18221b;
+}
+
+html[data-accent="crimson-silver"]{
+  --bg-elevated: #241a1a;
+}
+
+html[data-accent="purple-aqua"]{
+  --bg-elevated: #1f1a25;
+}
+
+html[data-accent="neon-spectrum"]{
+  --bg-elevated: #1a1f25;
+}
+
+html[data-accent="minimal-classic"]{
+  --bg-elevated: #191b20;
+}
+
+
+/* =========================================================
+   GLOBAL BACKGROUND WIRING
+   Make sure theme changes affect the whole UI consistently.
+========================================================= */
+
+/* Default (Dark) */
+:root{
+  --bg-main: #0b1220;
+  --bg-panel: #101a2e;
+  --bg-elevated: #121c33;
+  --text-primary: #e9f0ff;
+  --line-soft: rgba(255,255,255,.10);
+}
+
+/* Light */
+html[data-theme="light"]{
+  --bg-main: #f6f8fc;
+  --bg-panel: #ffffff;
+  --bg-elevated: #ffffff;
+  --text-primary: #0b1220;
+  --line-soft: rgba(0,0,0,.10);
+}
+
+/* Accent-specific background variants (Dark mode only) */
+html[data-theme="dark"][data-accent="blue-orange"]{
+  --bg-main: #071A2F;
+  --bg-panel: #0B2340;
+  --bg-elevated: #0E2A4B;
+}
+
+html[data-theme="dark"][data-accent="green-gold"]{
+  --bg-main: #0f2418;
+  --bg-panel: #14301f;
+  --bg-elevated: #183825;
+}
+
+html[data-theme="dark"][data-accent="crimson-silver"]{
+  --bg-main: #241317;
+  --bg-panel: #2e1a20;
+  --bg-elevated: #362028;
+}
+
+html[data-theme="dark"][data-accent="purple-aqua"]{
+  --bg-main: #171227;
+  --bg-panel: #1f1732;
+  --bg-elevated: #261d3d;
+}
+
+html[data-theme="dark"][data-accent="neon-spectrum"]{
+  --bg-main: #0c1722;
+  --bg-panel: #101e2c;
+  --bg-elevated: #142638;
+}
+
+html[data-theme="dark"][data-accent="minimal-classic"]{
+  --bg-main: #111317;
+  --bg-panel: #171a20;
+  --bg-elevated: #1b1f26;
+}
+

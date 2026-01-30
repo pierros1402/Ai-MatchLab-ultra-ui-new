@@ -18,7 +18,7 @@
 #topbar{
   position: fixed;
   top: 0; left: 0; right: 0;
-  z-index: 100000; /* ✅ always above content */
+  z-index: 9999999; /* ✅ always above content */
 
   height: var(--topbar-h);
 
@@ -123,6 +123,8 @@ body.aiml-admin #btn-export{ display: inline-flex; }
   position: absolute;
   z-index: 999999; /* ✅ above topbar */
 }
+.topbar-menu{ display: block; }
+.topbar-menu.hidden{ display: none !important; }
 
 .hidden{
   display: none !important;
@@ -135,6 +137,13 @@ body.aiml-admin #btn-export{ display: inline-flex; }
 
   width: 360px;
   max-width: calc(100vw - 24px);
+}
+#export-menu{
+  background: rgba(20,22,30,0.98);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.65);
 }
 
 /* ===============================

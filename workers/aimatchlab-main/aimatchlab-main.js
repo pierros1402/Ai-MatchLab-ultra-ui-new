@@ -25,7 +25,13 @@ export default {
       return handleFixtures(url, env);
     }
 
-    /* ================= VALUE PICKS ================= */
+    
+    /* ================= FIXTURES EXPORT (ADMIN) ================= */
+    if (url.pathname === "/fixtures-export/range") {
+      return handleFixturesExportRange(url, env);
+    }
+
+/* ================= VALUE PICKS ================= */
     if (url.pathname === "/value-picks") {
       return handleValuePicks(url, env);
     }
@@ -110,6 +116,89 @@ async function handleFixtures(url, env) {
     date: dayKey,
     total: raw.matches.length,
     matches: raw.matches
+  });
+}
+
+
+/* =====================================================
+   FIXTURES EXPORT (ADMIN ONLY)
+   - /fixtures-export/range?from=YYYY-MM-DD&to=YYYY-MM-DD&format=csv&token=1234
+===================================================== */
+
+async function handleFixturesExportRange(url, env) {
+  if (!requireAdmin(url, env)) {
+    return json({ ok: false, error: "unauthorized" }, 401);
+  }
+
+  const from = String(url.searchParams.get("from") || "").trim();
+  const to = String(url.searchParams.get("to") || "").trim();
+  const format = (url.searchParams.get("format") || "csv").toLowerCase();
+
+  const days = buildDayRange(from, to, 31);
+  if (!days.length) {
+    return json({ ok: false, error: "bad_range", from, to }, 400);
+  }
+
+  const all = [];
+
+  for (const dayKey of days) {
+    const key = `FIXTURES:DATE:${dayKey}`;
+    const raw = await env.AIMATCHLAB_KV_CORE.get(key, { type: "json" });
+    const matches = raw?.matches;
+
+    if (Array.isArray(matches) && matches.length) {
+      for (const m of matches) {
+        all.push({ dayKey, ...m });
+      }
+    }
+  }
+
+  if (format !== "csv") {
+    return json({
+      ok: true,
+      from,
+      to,
+      days: days.length,
+      total: all.length,
+      matches: all
+    });
+  }
+
+  const headers = [
+    "dayKey",
+    "id",
+    "leagueSlug",
+    "leagueName",
+    "home",
+    "away",
+    "kickoff",
+    "kickoff_ms",
+    "status",
+    "minute",
+    "scoreHome",
+    "scoreAway"
+  ];
+
+  const esc = (v) => {
+    const s = String(v ?? "");
+    if (s.includes('"') || s.includes(",") || s.includes("\n") || s.includes("\r")) {
+      return `"${s.replaceAll('"', '""')}"`;
+    }
+    return s;
+  };
+
+  let out = headers.join(",") + "\n";
+  for (const m of all) {
+    out += headers.map((h) => esc(m[h])).join(",") + "\n";
+  }
+
+  return new Response(out, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="fixtures_export_${from}_to_${to}.csv"`,
+      "Access-Control-Allow-Origin": "*"
+    }
   });
 }
 
