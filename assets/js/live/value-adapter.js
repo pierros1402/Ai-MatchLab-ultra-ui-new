@@ -1,118 +1,121 @@
-/* ==========================================================================
-   VALUE ADAPTER (Worker -> UI Event Bus)
-   Path: assets/js/live/value-adapter.js
-
-   - Fetches /value-picks from aimatchlab-main-worker
-   - Worker returns: { ok, date, total, items: [...] }
-   - UI expects:     { ok, date, total, picks: [...] }
-   - Emits: value:update
-   ========================================================================== */
+/* =========================================================
+   VALUE ADAPTER (anti-429 patch)
+========================================================= */
 
 (function () {
-  "use strict";
+  if (!window.on || !window.emit) return;
 
-  const log = (...a) => console.log("[value-adapter]", ...a);
-  const warn = (...a) => console.warn("[value-adapter]", ...a);
+  const TZ = "Europe/Athens";
+  const BASE = "https://aimatchlab-main-worker.pierros1402.workers.dev";
 
-  // --------------------------------------------------------------------------
-  // CONFIG
-  // --------------------------------------------------------------------------
-  // Priority:
-  // 1) window.AIML_VALUE_CFG.valueBase
-  // 2) window.AIML_API_BASE
-  // 3) same-origin relative
-  const CFG = window.AIML_VALUE_CFG || {};
-  const API_BASE = CFG.valueBase || window.AIML_API_BASE || "";
+  const ENDPOINT = (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valuePicksPath) || "/value-picks";
 
-  function getTodayYYYYMMDD() {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  }
+  // ✅ Anti-429 guard (cooldown + backoff)
+  let __AIML_VALUE_LAST_FETCH_MS = 0;
+  let __AIML_VALUE_INFLIGHT = false;
+  let __AIML_VALUE_BACKOFF_UNTIL = 0;
 
-  function endpoint(date) {
-    if (!date) return `${API_BASE}/value-picks`;
-    return `${API_BASE}/value-picks?date=${encodeURIComponent(date)}`;
-  }
+  const __AIML_VALUE_COOLDOWN_MS = 30_000;   // 30s cooldown (prevents spam)
+  const __AIML_VALUE_BACKOFF_429_MS = 60_000; // 60s backoff on 429
 
-  function normalize(raw) {
-    const ok = !!(raw && raw.ok);
-    const date = raw?.date || getTodayYYYYMMDD();
+  function pad2(n) { return String(n).padStart(2, "0"); }
 
-    // ✅ Worker returns items[]
-    // UI renderer should work with picks[]
-    const picks = Array.isArray(raw?.items)
-      ? raw.items
-      : Array.isArray(raw?.picks)
-        ? raw.picks
-        : [];
-
-    return {
-      ok,
-      date,
-      total: typeof raw?.total === "number" ? raw.total : picks.length,
-      source: raw?.source || "VALUE",
-      engine: raw?.items?.[0]?.engine || raw?.engine || null,
-      build: raw?.items?.[0]?.build || raw?.build || null,
-      picks
-    };
-  }
-
-  async function fetchValue(date) {
-    const url = endpoint(date);
-    const res = await fetch(url, { method: "GET" });
-    const data = await res.json();
-    return normalize(data);
-  }
-
-  async function refresh(date) {
-    const targetDate = date || getTodayYYYYMMDD();
-
+  function ymdTodayAthens() {
     try {
-      const payload = await fetchValue(targetDate);
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: TZ,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(new Date());
 
-      if (typeof window.emit === "function") {
-        window.emit("value:update", payload);
-      } else {
-        warn("window.emit not found (app.js not loaded?)");
-      }
+      const y = parts.find(p => p.type === "year")?.value;
+      const m = parts.find(p => p.type === "month")?.value;
+      const d = parts.find(p => p.type === "day")?.value;
 
-      log("update", payload.date, "picks=", payload.picks.length);
-    } catch (err) {
-      warn("fetch error", err);
-
-      const payload = {
-        ok: false,
-        date: targetDate,
-        total: 0,
-        source: "VALUE",
-        picks: []
-      };
-
-      if (typeof window.emit === "function") {
-        window.emit("value:update", payload);
-      }
+      return `${y}-${m}-${d}`;
+    } catch {
+      const d = new Date();
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
   }
 
-  // --------------------------------------------------------------------------
-  // LIFECYCLE
-  // --------------------------------------------------------------------------
+  async function fetchValue(dateYmd) {
+    const now = Date.now();
 
-  // 1) Run once on startup
-  setTimeout(() => refresh(getTodayYYYYMMDD()), 0);
+    // ✅ prevent parallel requests
+    if (__AIML_VALUE_INFLIGHT) return null;
 
-  // 2) Refresh after Today matches load (same day)
-  if (typeof window.on === "function") {
-    window.on("today-matches:loaded", (p) => {
-      const d = p?.date || getTodayYYYYMMDD();
-      refresh(d);
+    // ✅ if we are rate limited, wait
+    if (now < __AIML_VALUE_BACKOFF_UNTIL) return null;
+
+    // ✅ cooldown: do not hammer endpoint
+    if (now - __AIML_VALUE_LAST_FETCH_MS < __AIML_VALUE_COOLDOWN_MS) return null;
+
+    const url =
+      (BASE ? BASE.replace(/\/$/, "") : "https://aimatchlab-main-worker.pierros1402.workers.dev") +
+      ENDPOINT +
+      `?date=${encodeURIComponent(dateYmd)}`;
+
+    __AIML_VALUE_INFLIGHT = true;
+
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+
+      if (r.status === 429) {
+        __AIML_VALUE_BACKOFF_UNTIL = Date.now() + __AIML_VALUE_BACKOFF_429_MS;
+        console.warn("[value-adapter] 429 rate-limited -> backoff 60s");
+        return null;
+      }
+
+      if (!r.ok) {
+        console.warn("[value-adapter] fetch failed", r.status);
+        return null;
+      }
+
+      const data = await r.json();
+      __AIML_VALUE_LAST_FETCH_MS = Date.now();
+      return data;
+    } catch (err) {
+      console.warn("[value-adapter] fetch error", err);
+      return null;
+    } finally {
+      __AIML_VALUE_INFLIGHT = false;
+    }
+  }
+
+  async function refresh(dateYmd) {
+    const date = dateYmd || ymdTodayAthens();
+    const data = await fetchValue(date);
+
+    // if blocked by cooldown/backoff -> keep last UI state (no spam)
+    if (!data) return;
+
+    const items = Array.isArray(data.items) ? data.items : [];
+    console.log(`[value-adapter] update ${date} picks= ${items.length}`);
+
+    emit("value-picks:loaded", {
+      source: "value",
+      date,
+      items
     });
   }
 
-  // 3) Debug helper (manual refresh from console)
-  window.AIML_REFRESH_VALUE = (date) => refresh(date);
+  // ✅ Run once on load (safe)
+  setTimeout(() => {
+    refresh();
+  }, 250);
+
+  // ✅ If Today panel fires often, cooldown will protect us
+  on("today-matches:loaded", (payload) => {
+    const date = (payload && payload.date) ? payload.date : ymdTodayAthens();
+    refresh(date);
+  });
+
+  // Optional: allow manual force refresh without spam
+  on("value:refresh", (dateYmd) => {
+    // bypass cooldown only if you want, but for safety we keep it respecting cooldown
+    refresh(dateYmd);
+  });
 
 })();

@@ -1,627 +1,485 @@
-/**
- * AIMATCHLAB – VALUE ENGINE (compute-only)
- *
- * Inputs:
- * - FIXTURES:DATE:<YYYY-MM-DD> from AIMATCHLAB_KV_CORE
- * - TEAM_STATS:INDEX + TEAM_STATS:SEASON:<latest> from AIMATCHLAB_STATS
- *
- * Outputs:
- * - VALUE:STAT:<YYYY-MM-DD>:<matchId>:<market>:<side> -> JSON
- * - VALUE:ENGINE:SUMMARY:<YYYY-MM-DD>
- *
- * NOTE:
- * This worker is ONLY correct if it can read TEAM_STATS keys from AIMATCHLAB_STATS.
- */
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-const BUILD_TAG = "VALUE_ENGINE_BUILD_2026-01-29_PRE_FIX_A";
-const TZ = "Europe/Athens";
+  <title>AI MatchLab Ultra</title>
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data, null, 2), {
-    status,
-    headers: { "Content-Type": "application/json;charset=UTF-8" },
-  });
-}
+  <!-- =====================================================
+       PWA / INSTALL (ONLINE ONLY - NO SW)
+  ====================================================== -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#050711">
 
-async function kvGetRaw(kv, key) {
-  try {
-    return await kv.get(key);
-  } catch (e) {
-    return null;
-  }
-}
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512.png">
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
 
-async function kvGetJsonSafe(kv, key) {
-  try {
-    const obj = await kv.get(key, { type: "json" });
-    return obj ?? null;
-  } catch (e) {
-    const raw = await kvGetRaw(kv, key);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  }
-}
+  <!-- =====================================================
+       CORE LAYOUT
+  ====================================================== -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/accordion.css">
 
-async function kvPutJson(kv, key, obj) {
-  await kv.put(key, JSON.stringify(obj));
-}
+  <link rel="stylesheet" href="assets/css/odds.css">
+  <link rel="stylesheet" href="assets/css/right-panels.css">
 
-function dayKeyGR() {
-  return new Date(new Date().toLocaleString("en-US", { timeZone: TZ }))
-    .toISOString()
-    .slice(0, 10);
-}
+  <!-- =====================================================
+       THEME
+  ====================================================== -->
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <link rel="stylesheet" href="assets/css/skin-premium.css">
 
-// ========= ENGINE CORE =========
+  <!-- =====================================================
+       TOPBAR (ISOLATED – ΠΡΕΠΕΙ ΝΑ ΕΙΝΑΙ ΤΕΛΕΥΤΑΙΟ)
+  ====================================================== -->
+  <link rel="stylesheet" href="assets/css/topbar.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
+</head>
 
-async function loadTeamStatsLatest(env) {
-  if (!env.AIMATCHLAB_STATS) {
-    return { ok: false, reason: "missing_binding_AIMATCHLAB_STATS", latest: null, stats: null };
-  }
+<body>
+  <div id="DEBUG_MARKER" style="display:none">LOCAL_INDEX_DROPDOWN_2026_01_26</div>
 
-  // Try multiple possible index key variants (fixes whitespace/newline poison)
-  const INDEX_KEYS = [
-    "TEAM_STATS:INDEX",
-    "TEAM_STATS:INDEX\n",
-    "TEAM_STATS:INDEX\r",
-    "TEAM_STATS:INDEX\r\n",
-    "TEAM_STATS:INDEX ",
-    "TEAM_STATS:INDEX\t",
+<!-- =====================================================
+       TOPBAR (GLOBAL / FIXED)
+       Theme handled by assets/js/theme.js
+       Legal handled by assets/js/legal-menu.js
+  ===================================================== -->
+<header id="topbar" class="topbar">
+
+  <!-- LEFT -->
+  <div class="topbar-left">
+    <button id="btn-home" class="topbar-btn" title="Home">⌂</button>
+    <button id="btn-refresh" class="topbar-btn" title="Refresh">⟳</button>
+  </div>
+
+  <!-- CENTER -->
+  <div class="topbar-center">
+    <img src="assets/icons/logo-header.png" class="topbar-logo" alt="AI MatchLab" />
+    <div class="topbar-brand">
+      <div class="brand-title">AI MatchLab ULTRA</div>
+      <div class="brand-version" id="app-version">v2.15.5</div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="topbar-right">
+
+    <!-- UPDATE (ONLINE ONLY) -->
+    <button id="btn-update" class="topbar-btn" title="Update">⟳</button>
+
+    <button id="btn-theme" class="topbar-btn" title="Theme">🎨</button>
+    <button id="btn-lang" class="topbar-btn" title="Language">🌐</button>
+
+    <button id="btn-user" class="topbar-btn" title="User">👤</button>
+      <button id="btn-legal-desktop" class="topbar-btn" title="Info">ⓘ</button>
+      <button id="btn-install-desktop" class="topbar-btn" title="Install">⬇</button>
+      <button id="btn-export-desktop" class="topbar-btn glow" title="Export (Value)">⤓</button>
+  </div>
+
+  <!-- =====================================================
+       MOBILE ROW 2
+       Dropdown centered + tools right
+  ===================================================== -->
+  <div class="topbar-row2" id="topbar-row2">
+
+    <!-- CENTER (Dropdown) -->
+    <div class="topbar-row2-center">
+
+      <!-- MOBILE VIEW DROPDOWN (LEFT / ODDS / RIGHT) -->
+      <div class="mobile-view-dd" id="mobile-view-dd" aria-label="Mobile view">
+        <button id="mobile-view-btn" class="mobile-view-btn" type="button">
+          <span id="mobile-view-label">LEFT</span>
+          <span class="mobile-view-caret">▾</span>
+        </button>
+
+        <div id="mobile-view-menu" class="mobile-view-menu hidden">
+          <button class="mobile-view-item" type="button" data-view="left">LEFT</button>
+          <button class="mobile-view-item" type="button" data-view="odds">ODDS</button>
+          <button class="mobile-view-item" type="button" data-view="right">RIGHT</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT (Legal / Install / Export) -->
+    <div class="topbar-row2-right">
+
+      <button id="btn-legal" class="topbar-btn" title="Info">ⓘ</button>
+
+      <!-- INSTALL (ONLINE ONLY) -->
+      <button id="btn-install" class="topbar-btn" title="Install">⬇</button>
+
+      <!-- EXPORT (ADMIN TOOL) -->
+      <button id="btn-export" class="topbar-btn glow" title="Export (Value)">⤓</button>
+
+    </div>
+
+  </div>
+
+  <!-- EXPORT MENU (ADMIN ONLY TOOL) -->
+  <div id="export-menu" class="topbar-menu hidden" aria-hidden="true"></div>
+
+</header>
+
+  <!-- =====================================================
+       THEME MENU (CONTAINER + CONTENT)
+       Required by assets/js/theme.js
+  ===================================================== -->
+  <div id="theme-menu" class="theme-menu hidden" aria-hidden="true">
+    <div class="aiml-theme-head">
+      <div class="aiml-theme-title">Theme</div>
+      <button id="btn-theme-close" class="aiml-theme-close" type="button" aria-label="Close">×</button>
+    </div>
+
+    <div class="aiml-theme-section">
+      <div class="aiml-theme-label">Mode</div>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-theme="dark">
+        Dark
+      </button>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-theme="light">
+        Light
+      </button>
+    </div>
+
+    <div class="aiml-theme-section">
+      <div class="aiml-theme-label">Accents</div>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-accent="default">
+        Blue / Orange (Default)
+      </button>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-accent="green-gold">
+        Green / Gold
+      </button>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-accent="crimson-silver">
+        Crimson / Silver
+      </button>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-accent="purple-aqua">
+        Purple / Aqua
+      </button>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-accent="neon-spectrum">
+        Neon / Spectrum
+      </button>
+
+      <button class="aiml-theme-pill popover-link" type="button" data-accent="minimal">
+        Minimal (Classic)
+      </button>
+    </div>
+  </div>
+
+<!-- =====================================================
+       LEGAL MENU (CONTAINER)
+       Required by assets/js/legal-menu.js
+===================================================== -->
+  <div id="legal-menu" class="legal-menu hidden" aria-hidden="true"></div>
+
+  <!-- =====================================================
+       APP ROOT
+  ===================================================== -->
+  <div class="app">
+
+    <!-- ======================================================================
+         LEFT COLUMN — NEW (TODAY / ACTIVE / MATCHES / SAVED)
+    ====================================================================== -->
+    <aside class="left-column">
+
+      <!-- LEFT COLUMN TITLE (ΣΤΑΘΕΡΟΣ) -->
+      <div class="panel-header">
+        <div class="panel-title">Navigation</div>
+      </div>
+
+      <div id="left-accordion" class="accordion">
+
+        <div class="panel open" id="panel-today">
+          <div class="panel-header">
+            <div class="panel-title">Today</div>
+          </div>
+          <div class="panel-body" id="today-list"></div>
+        </div>
+
+        <div class="panel" id="panel-active-leagues">
+          <div class="panel-header">
+            <div class="panel-title">Active Leagues Today</div>
+          </div>
+          <div class="panel-body">
+            <div id="active-leagues-list"></div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-matches">
+          <div class="panel-header">
+            <div class="panel-title">Matches</div>
+          </div>
+          <div class="panel-body">
+            <div id="matches-list"></div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-saved">
+          <div class="panel-header">
+            <div class="panel-title">Saved</div>
+          </div>
+          <div class="panel-body">
+            <div id="saved-list"></div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ======================================================
+         ODDS INTELLIGENCE CENTER (DIV-BASED – FINAL)
+    ====================================================== -->
+    <section id="odds-intelligence-center">
+
+      <!-- ===== STICKY HEADER (ΔΕΝ SCROLLΑΡΕΙ) ===== -->
+      <header class="oic-header">
+
+        <!-- TITLE -->
+        <div class="oic-title">
+          Odds Intelligence Center
+        </div>
+
+        <!-- ACTIVE MATCH BAR -->
+        <div class="oic-active-match">
+
+          <div class="oic-match-text">
+            <div id="oic-selected-match" class="oic-match-title">No match selected</div>
+            <div class="oic-match-sub">
+              Select a match from the left panel.
+            </div>
+          </div>
+
+          <!-- MARKET SELECTOR (ΑΝΗΚΕΙ ΣΤΟ OIC) -->
+          <div class="oic-market-control">
+            <select id="oic-market" class="oic-market-select">
+              <option value="1X2">1X2</option>
+              <option value="DC">Double Chance</option>
+              <option value="BTTS">BTTS</option>
+              <option value="OU15">Over / Under 1.5</option>
+              <option value="OU25">Over / Under 2.5</option>
+              <option value="OU35">Over / Under 3.5</option>
+            </select>
+          </div>
+
+        </div>
+      </header>
+
+      <!-- ===== SCROLLABLE CONTENT ===== -->
+      <div class="oic-scroll">
+
+        <!-- GREEK -->
+        <section class="oic-card greek" id="oic-greek">
+          <div class="oic-card-header">Greek</div>
+          <div class="oic-card-body" id="greek-odds-body"></div>
+        </section>
+
+        <!-- EUROPEAN -->
+        <section class="oic-card european" id="oic-eu">
+          <div class="oic-card-header">European</div>
+          <div class="oic-card-body" id="eu-odds-body"></div>
+        </section>
+
+        <!-- ASIAN -->
+        <section class="oic-card asian" id="oic-asian">
+          <div class="oic-card-header">Asian</div>
+          <div class="oic-card-body" id="asian-odds-body"></div>
+        </section>
+
+        <!-- BETFAIR -->
+        <section class="oic-card betfair" id="oic-betfair">
+          <div class="oic-card-header">Betfair</div>
+          <div class="oic-card-body" id="betfair-odds-body"></div>
+        </section>
+
+        <!-- MATCH DETAILS -->
+        <section class="oic-card match-details" id="oic-details">
+          <div class="oic-card-header oic-details-header">
+            <span>Match Details</span>
+            <button class="oic-details-open">Open</button>
+          </div>
+          <div class="oic-card-body">
+            Select a match to view details.
+          </div>
+        </section>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         RIGHT COLUMN — INTELLIGENCE PANELS
+    ====================================================================== -->
+    <aside class="right-column no-accordion" id="right-panel">
+
+      <!-- HEADER -->
+      <div class="panel-header">
+        <div class="panel-title">Intelligence Panels</div>
+      </div>
+
+      <!-- RADAR -->
+      <section class="intelligence-panel radar-panel">
+        <div class="panel-header">
+          <span>AI Radar</span>
+          <span class="panel-subtitle">Line Moves</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-placeholder">Radar ready.</div>
+          <div id="radar-list"></div>
+        </div>
+      </section>
+
+      <!-- TOP PICKS -->
+      <section class="intelligence-panel top-picks-panel">
+        <div class="panel-header">
+          <span>AI Smart Money</span>
+          <span class="panel-subtitle">Top Picks</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-placeholder">No picks yet.</div>
+          <div id="picks-list"></div>
+        </div>
+      </section>
+
+      <!-- VALUE PICKS -->
+      <section class="intelligence-panel value-panel">
+        <div class="panel-header">
+          <span>AI Value Picks</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-placeholder">Analyzing...</div>
+          <div id="value-picks-list"></div>
+        </div>
+      </section>
+
+      <!-- LIVE -->
+      <section class="intelligence-panel live-panel">
+        <div class="panel-header">
+          <span>Live Matches</span>
+        </div>
+        <div class="panel-body">
+          <div class="panel-placeholder">Waiting for live data...</div>
+          <div id="live-list"></div>
+        </div>
+      </section>
+
+    </aside>
+
+  </div>
+
+<!-- =====================================================
+       CORE EVENT BUS (ΠΡΕΠΕΙ ΝΑ ΕΚΤΕΛΕΣΤΕΙ ΠΡΩΤΟ)
+  ===================================================== -->
+  <script src="assets/js/ui/app.js"></script>
+
+  <!-- =====================================================
+       GLOBAL STATE / THEME / LANGUAGE / LEGAL / INSTALL
+       (FOUNDATION – ΠΡΙΝ ΟΠΟΙΟΔΗΠΟΤΕ UI)
+  ===================================================== -->
+  <script src="assets/js/state.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/language.js"></script>
+  <script src="assets/js/legal-menu.js"></script>
+  <script src="assets/js/install.js"></script>
+
+  <!-- =====================================================
+       MOBILE UI (LEFT / ODDS / RIGHT) ✅ ΜΟΝΟ 1 ΦΟΡΑ
+  ===================================================== -->
+  <script src="assets/js/mobile-ui.js"></script>
+
+  <!-- =====================================================
+       ODDS KV DEBUG LOGGER (ΠΡΟΣΩΡΙΝΟ – ΜΟΝΟ LOG)
+  ===================================================== -->
+  <script src="assets/js/odds/odds-kv-log.js"></script>
+
+  <!-- =====================================================
+       GLOBAL CONFIG (LIVE – ΟΠΩΣ ΕΙΝΑΙ)
+  ===================================================== -->
+  <script>
+    window.AIML_LIVE_CFG = {
+      liveBase: "https://live-matches-worker.pierros1402.workers.dev",
+      livePath: "/api/unified-live"
+    };
+  </script>
+
+  <script>
+    window.AIML_VALUE_CFG = {
+      valueBase: "https://aimatchlab-main-worker.pierros1402.workers.dev"
+    };
+  </script>
+
+  <!-- =====================================================
+       LEFT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
+  ===================================================== -->
+  <script src="assets/js/ui/today-panel.js"></script>
+  <script src="assets/js/ui/active-leagues-panel.js"></script>
+  <script src="assets/js/ui/matches-panel.js"></script>
+  <script src="assets/js/ui/saved-store.js"></script>
+  <script src="assets/js/ui/saved-panel.js"></script>
+
+  <!-- =====================================================
+       TOPBAR ORCHESTRATOR (ΜΕΤΑ THEME / STATE)
+  ===================================================== -->
+  <script defer src="assets/js/ui/topbar.js"></script>
+
+  <!-- =====================================================
+       LIVE ENGINE (ΔΕΝ ΑΛΛΑΖΕΙ)
+  ===================================================== -->
+  <script src="assets/js/live/live-engine.js"></script>
+
+  <!-- =====================================================
+       VALUE ENGINE ADAPTER (Worker -> UI)
+  ===================================================== -->
+  <script src="assets/js/live/value-adapter.js"></script>
+
+  <!-- =====================================================
+       ODDS DATA PIPELINE
+  ===================================================== -->
+  <script src="assets/js/odds/odds-canonical-batch-to-core.js"></script>
+
+  <!-- =====================================================
+       ODDS INTELLIGENCE CENTER
+  ===================================================== -->
+  <script src="assets/js/ui/oic-engine.js"></script>
+  <script src="assets/js/ui/oic-renderer.js"></script>
+
+  <!-- =====================================================
+       RIGHT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
+  ===================================================== -->
+  <script src="assets/js/ui/odds-radar.js"></script>
+  <script src="assets/js/ui/top-picks.js"></script>
+  <script src="assets/js/ui/value-picks.js"></script>
+  <script src="assets/js/ui/live-panel.js"></script>
+  <script src="assets/js/ui/accordion.js"></script>
+  <script>
+(() => {
+  const map = [
+    ["btn-legal-desktop", "btn-legal"],
+    ["btn-install-desktop", "btn-install"],
+    ["btn-export-desktop", "btn-export"],
   ];
 
-  let idx = null;
-  let usedKey = null;
+  for (const [srcId, targetId] of map) {
+    const src = document.getElementById(srcId);
+    const target = document.getElementById(targetId);
 
-  for (const k of INDEX_KEYS) {
-    const v = await kvGetJsonSafe(env.AIMATCHLAB_STATS, k);
-    if (v && v.latest) {
-      idx = v;
-      usedKey = k;
-      break;
-    }
+    if (!src || !target) continue;
+
+    src.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      target.click();
+    });
   }
-
-  if (!idx || !idx.latest) {
-    return {
-      ok: false,
-      reason: "missing_index",
-      latest: null,
-      stats: null,
-      debug: {
-        tried: INDEX_KEYS,
-        found: null,
-      },
-    };
-  }
-
-  const latest = String(idx.latest).trim();
-  const seasonKey = `TEAM_STATS:SEASON:${latest}`;
-
-  const payload = await kvGetJsonSafe(env.AIMATCHLAB_STATS, seasonKey);
-  if (!payload || !payload.leagues) {
-    return {
-      ok: false,
-      reason: "missing_season_payload",
-      latest,
-      stats: null,
-      debug: { usedIndexKey: usedKey, seasonKey },
-    };
-  }
-
-  return {
-    ok: true,
-    reason: "ok",
-    latest,
-    stats: payload,
-    debug: { usedIndexKey: usedKey, seasonKey },
-  };
-}
-
-async function loadFixturesForDay(env, day) {
-  if (!env.AIMATCHLAB_KV_CORE) return [];
-  const data = await env.AIMATCHLAB_KV_CORE.get(`FIXTURES:DATE:${day}`, { type: "json" });
-  return data?.matches || [];
-}
-
-function mapEspnLeagueToFD(leagueSlug) {
-  // Football-Data league codes (TEAM_STATS.leagues keys)
-  // Keep this small + explicit; anything else can fall back to cross-league lookup.
-  if (!leagueSlug) return null;
-
-  // England
-  if (leagueSlug === "eng.1") return "E0";
-  if (leagueSlug === "eng.2") return "E1";
-  if (leagueSlug === "eng.3") return "E2";
-  if (leagueSlug === "eng.4") return "E3";
-
-  // Scotland
-  if (leagueSlug === "sco.1") return "SC0";
-  if (leagueSlug === "sco.2") return "SC1";
-
-  // Greece
-  if (leagueSlug === "gre.1") return "G1";
-
-  // Spain
-  if (leagueSlug === "esp.1") return "SP1";
-  if (leagueSlug === "esp.2") return "SP2";
-
-  // Italy
-  if (leagueSlug === "ita.1") return "I1";
-  if (leagueSlug === "ita.2") return "I2";
-
-  // Germany
-  if (leagueSlug === "ger.1") return "D1";
-  if (leagueSlug === "ger.2") return "D2";
-
-  // France
-  if (leagueSlug === "fra.1") return "F1";
-  if (leagueSlug === "fra.2") return "F2";
-
-  // Netherlands
-  if (leagueSlug === "ned.1") return "N1";
-
-  // Portugal
-  if (leagueSlug === "por.1") return "P1";
-
-  // Belgium
-  if (leagueSlug === "bel.1") return "B1";
-
-  // Turkey
-  if (leagueSlug === "tur.1") return "T1";
-
-  return null;
-}
-
-// Domestic cups / super cups / trophies / friendlies to exclude (per your LEAGUE_SEEDS)
-const EXCLUDED_LEAGUE_SLUGS = new Set([
-  "eng.fa",
-  "eng.league_cup",
-  "eng.trophy",
-  "esp.copa_del_rey",
-  "esp.super_cup",
-  "ita.coppa_italia",
-  "fra.coupe_de_france",
-  "fra.super_cup",
-  "sco.challenge",
-  "ned.cup",
-  "por.taca.portugal",
-  "club.friendly",
-]);
-
-function isExcludedLeague(leagueSlug) {
-  if (!leagueSlug) return false;
-  if (EXCLUDED_LEAGUE_SLUGS.has(leagueSlug)) return true;
-  // safety: friendlies often appear with "friendly"
-  if (String(leagueSlug).includes("friendly")) return true;
-  return false;
-}
-
-function normTeamName(s) {
-  return String(s || "")
-    .toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-// cache: fdCode -> Map(normalizedName -> originalKey)
-const _normLeagueKeyCache = new Map();
-function getNormMapForLeague(leagueTeams) {
-  if (!leagueTeams || typeof leagueTeams !== "object") return null;
-  // leagueTeams is object keyed by teamName, values stats
-  const cacheKey = leagueTeams; // object identity
-  if (_normLeagueKeyCache.has(cacheKey)) return _normLeagueKeyCache.get(cacheKey);
-
-  const m = new Map();
-  for (const k of Object.keys(leagueTeams)) {
-    m.set(normTeamName(k), k);
-  }
-  _normLeagueKeyCache.set(cacheKey, m);
-  return m;
-}
-
-function findTeamStatsInLeague(leagueTeams, homeName, awayName) {
-  if (!leagueTeams) return null;
-
-  // exact first
-  const h0 = leagueTeams[homeName] || null;
-  const a0 = leagueTeams[awayName] || null;
-  if (h0 && a0) return { homeStats: h0, awayStats: a0 };
-
-  const nm = getNormMapForLeague(leagueTeams);
-  if (!nm) return null;
-
-  const hk = nm.get(normTeamName(homeName));
-  const ak = nm.get(normTeamName(awayName));
-  if (!hk || !ak) return null;
-
-  const hs = leagueTeams[hk] || null;
-  const as = leagueTeams[ak] || null;
-  if (!hs || !as) return null;
-  return { homeStats: hs, awayStats: as };
-}
-
-function findStatsForMatch(leagues, leagueSlug, homeName, awayName) {
-  // 1) try mapped league first
-  const fd = mapEspnLeagueToFD(leagueSlug);
-  if (fd && leagues?.[fd]) {
-    const found = findTeamStatsInLeague(leagues[fd], homeName, awayName);
-    if (found) return { fdCode: fd, ...found };
-  }
-
-  // 2) fallback: search across all leagues blocks (useful when slug isn't mapped but stats exist)
-  for (const fdCode of Object.keys(leagues || {})) {
-    const leagueTeams = leagues[fdCode];
-    const found = findTeamStatsInLeague(leagueTeams, homeName, awayName);
-    if (found) return { fdCode, ...found };
-  }
-
-  return null;
-}
-
-
-function clamp01(x) {
-  const n = Number(x);
-  if (!Number.isFinite(n)) return 0;
-  if (n < 0) return 0;
-  if (n > 1) return 1;
-  return n;
-}
-
-function confidenceLabel(score01) {
-  if (score01 >= 0.72) return "HIGH";
-  if (score01 >= 0.62) return "MEDIUM";
-  return "LOW";
-}
-
-function round2(x) {
-  return Math.round(Number(x) * 100) / 100;
-}
-
-function calcBTTSScore(home, away) {
-  const a = Number(home?.btts_rate ?? 0);
-  const b = Number(away?.btts_rate ?? 0);
-  return clamp01((a + b) / 2);
-}
-
-function calcOver25Score(home, away) {
-  const a = Number(home?.over25_rate ?? 0);
-  const b = Number(away?.over25_rate ?? 0);
-  return clamp01((a + b) / 2);
-}
-
-function calcOver15Score(home, away) {
-  // If we don't have explicit over15_rate, approximate from goal averages + over25_rate
-  const a = Number(home?.over15_rate ?? NaN);
-  const b = Number(away?.over15_rate ?? NaN);
-  if (!Number.isNaN(a) && !Number.isNaN(b)) return clamp01((a + b) / 2);
-
-  const gf = Number(home?.goals_for_avg ?? 0) + Number(away?.goals_for_avg ?? 0);
-  const ga = Number(home?.goals_against_avg ?? 0) + Number(away?.goals_against_avg ?? 0);
-  const base = clamp01((gf + ga) / 4); // rough scaling
-  const over25 = calcOver25Score(home, away);
-  // Over1.5 should be higher than Over2.5
-  return clamp01(Math.max(base, over25 + 0.18));
-}
-
-function calcOver35Score(home, away) {
-  const a = Number(home?.over35_rate ?? NaN);
-  const b = Number(away?.over35_rate ?? NaN);
-  if (!Number.isNaN(a) && !Number.isNaN(b)) return clamp01((a + b) / 2);
-
-  const gf = Number(home?.goals_for_avg ?? 0) + Number(away?.goals_for_avg ?? 0);
-  const ga = Number(home?.goals_against_avg ?? 0) + Number(away?.goals_against_avg ?? 0);
-  const base = clamp01((gf + ga) / 5); // stricter for 3.5
-  const over25 = calcOver25Score(home, away);
-  // Over3.5 should be lower than Over2.5
-  return clamp01(Math.min(base, Math.max(0, over25 - 0.18)));
-}
-
-function pickKey(day, matchId, market, side) {
-  return `VALUE:STAT:${day}:${matchId}:${market}:${side}`;
-}
-
-async function runEngine(env, day) {
-  const ts = await loadTeamStatsLatest(env);
-  if (!ts.ok) {
-    return {
-      ok: false,
-      reason: ts.reason,
-      latest: ts.latest,
-      produced: 0,
-      note: "TEAM_STATS not ready. Ensure TEAM_STATS:INDEX + TEAM_STATS:SEASON:<latest> exist in AIMATCHLAB_STATS.",
-      build: BUILD_TAG,
-    };
-  }
-
-  const fixtures = await loadFixturesForDay(env, day);
-  if (!fixtures.length) {
-    return { ok: true, day, latest: ts.latest, produced: 0, reason: "no_fixtures", build: BUILD_TAG };
-  }
-
-  const leagues = ts.stats.leagues || {};
-
-  let producedPicks = 0; // number of written pick records (BTTS + O15 + O25 + O35 per match)
-  let producedMatches = 0;     // number of matches that produced at least one pick-set
-  let totalPRE = 0;
-
-  let skippedExcludedLeague = 0;
-  let skippedNoTeams = 0;
-  let skippedNoStats = 0;
-  let debugNoStatsSample = [];
-  let debugNoStatsByLeague = {};
-
-
-  for (const m of fixtures) {
-    if (!m) continue;
-    const st = String(m.status || "").toUpperCase().trim();
-    const isPRE = (st === "PRE" || st === "NS" || st === "SCHEDULED" || st === "STATUS_SCHEDULED");
-    if (!isPRE) continue;
-    totalPRE++;
-
-    const leagueSlug = m.leagueSlug || m.league || null;
-    if (isExcludedLeague(leagueSlug)) {
-      skippedExcludedLeague++;
-      continue;
-    }
-
-    const homeName = m.home;
-    const awayName = m.away;
-    if (!homeName || !awayName) {
-      skippedNoTeams++;
-      continue;
-    }
-    // ✅ NEW: fast coverage check (no KV writes, no hard excludes)
-    if (!leagues || Object.keys(leagues).length === 0) {
-      skippedNoStats++;
-      continue;
-   }
-
-    const found = findStatsForMatch(leagues, leagueSlug, homeName, awayName);
-    if (!found) {
-      skippedNoStats++;
-      debugNoStatsByLeague[m.leagueSlug || 'unknown'] = (debugNoStatsByLeague[m.leagueSlug || 'unknown'] || 0) + 1;
-      if (debugNoStatsSample.length < 15) debugNoStatsSample.push({ leagueSlug: m.leagueSlug, leagueName: m.leagueName, home: m.home, away: m.away, homeTeamId: m.homeTeamId, awayTeamId: m.awayTeamId });
-      continue;
-    }
-
-    const { homeStats, awayStats, fdCode } = found;
-
-    const bttsScore = calcBTTSScore(homeStats, awayStats);
-    const over15Score = calcOver15Score(homeStats, awayStats);
-    const over25Score = calcOver25Score(homeStats, awayStats);
-    const over35Score = calcOver35Score(homeStats, awayStats);
-
-    const recBTTS = {
-      type: "value-pick",
-      engine: "stats-only-v1",
-      build: BUILD_TAG,
-      date: day,
-      matchId: String(m.id),
-      leagueSlug,
-      fdCode,
-      home: homeName,
-      away: awayName,
-      market: "BTTS",
-      side: "YES",
-      score: round2(bttsScore),
-      confidence: confidenceLabel(bttsScore),
-      createdAtMs: Date.now(),
-      status: "PRE",
-    };
-    await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "BTTS", "YES"), recBTTS);
-    producedPicks += 1;
-
-    const recO15 = {
-      type: "value-pick",
-      engine: "stats-only-v1",
-      build: BUILD_TAG,
-      date: day,
-      matchId: String(m.id),
-      leagueSlug,
-      fdCode,
-      home: homeName,
-      away: awayName,
-      market: "Over 1.5",
-      side: "YES",
-      score: round2(over15Score),
-      confidence: confidenceLabel(over15Score),
-      createdAtMs: Date.now(),
-      status: "PRE",
-    };
-    await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "O15", "YES"), recO15);
-
-    const recO25 = {
-      type: "value-pick",
-      engine: "stats-only-v1",
-      build: BUILD_TAG,
-      date: day,
-      matchId: String(m.id),
-      leagueSlug,
-      fdCode,
-      home: homeName,
-      away: awayName,
-      market: "Over 2.5",
-      side: "YES",
-      score: round2(over25Score),
-      confidence: confidenceLabel(over25Score),
-      createdAtMs: Date.now(),
-      status: "PRE",
-    };
-    await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "O25", "YES"), recO25);
-
-    const recO35 = {
-      type: "value-pick",
-      engine: "stats-only-v1",
-      build: BUILD_TAG,
-      date: day,
-      matchId: String(m.id),
-      leagueSlug,
-      fdCode,
-      home: homeName,
-      away: awayName,
-      market: "Over 3.5",
-      side: "YES",
-      score: round2(over35Score),
-      confidence: confidenceLabel(over35Score),
-      createdAtMs: Date.now(),
-      status: "PRE",
-    };
-    await kvPutJson(env.AIMATCHLAB_KV_CORE, pickKey(day, m.id, "O35", "YES"), recO35);
-
-    producedPicks += 3;
-
-    producedMatches++;
-  }
-
-  const summary = {
-    ok: true,
-    date: day,
-    build: BUILD_TAG,
-    updatedAtMs: Date.now(),
-    latestTeamStatsSeason: ts.latest,
-
-    // debug / transparency (so we know why it becomes 0)
-    totalMatchesInFixtures: Array.isArray(fixtures) ? fixtures.length : 0,
-    totalPRE,
-    producedMatches,
-    producedPicks,
-    skippedExcludedLeague,
-    skippedNoTeams,
-    skippedNoStats,
-    
-    debugNoStatsSample,
-    debugNoStatsByLeague,
-  };
-
-  await kvPutJson(env.AIMATCHLAB_KV_CORE, `VALUE:ENGINE:SUMMARY:${day}`, summary);
-
-  return { ok: true, day, latest: ts.latest, ...summary };
-}
-
-// ========= ROUTES =========
-
-export default {
-  async fetch(req, env) {
-    const url = new URL(req.url);
-
-    if (url.pathname === "/" || url.pathname === "") {
-      return json({
-        ok: true,
-        service: "aimatchlab-value-engine",
-        build: BUILD_TAG,
-        hasStatsBinding: !!env.AIMATCHLAB_STATS,
-        hasCoreBinding: !!env.AIMATCHLAB_KV_CORE,
-      });
-    }
-
-    // ---- HARD DEBUG: list keys from stats binding ----
-    if (url.pathname === "/internal/debug/kv-sanity") {
-      try {
-        const listTeam = await env.AIMATCHLAB_STATS.list({ prefix: "TEAM_STATS:" });
-        const rawIndex = await kvGetRaw(env.AIMATCHLAB_STATS, "TEAM_STATS:INDEX");
-        const jsonIndex = await kvGetJsonSafe(env.AIMATCHLAB_STATS, "TEAM_STATS:INDEX");
-
-        return json({
-          ok: true,
-          build: BUILD_TAG,
-          envHasStats: !!env.AIMATCHLAB_STATS,
-          teamKeysCount: listTeam.keys?.length || 0,
-          teamKeys: (listTeam.keys || []).map((k) => k.name),
-          rawIndex,
-          rawIndexType: typeof rawIndex,
-          jsonIndex,
-        });
-      } catch (err) {
-        return json({ ok: false, build: BUILD_TAG, error: String(err?.message || err) }, 500);
-      }
-    }
-
-    if (url.pathname === "/internal/debug/kv-index") {
-      try {
-        const rawText = await env.AIMATCHLAB_STATS.get("TEAM_STATS:INDEX");
-        let jsonParsed = null;
-        let jsonErr = null;
-
-        try {
-          jsonParsed = await env.AIMATCHLAB_STATS.get("TEAM_STATS:INDEX", { type: "json" });
-        } catch (e) {
-          jsonErr = String(e?.message || e);
-        }
-
-        return json({
-          ok: true,
-          build: BUILD_TAG,
-          key: "TEAM_STATS:INDEX",
-          rawText,
-          rawTextType: typeof rawText,
-          jsonParsed,
-          jsonErr,
-        });
-      } catch (err) {
-        return json({ ok: false, build: BUILD_TAG, error: String(err?.message || err) }, 500);
-      }
-    }
-
-    // ✅ include coverage info
-    if (url.pathname === "/internal/team-stats") {
-      const ts = await loadTeamStatsLatest(env);
-
-      const leaguesObj = ts?.stats?.leagues || {};
-      const leagueCodes = Object.keys(leaguesObj);
-
-      return json({
-        ok: true,
-        latest: ts.latest,
-        season: ts.stats?.season,
-        build: BUILD_TAG,
-        leaguesCount: leagueCodes.length,
-        leagueCodes: leagueCodes.sort(),
-     });
-   }
-
-    // ✅ status counts sample (debug)
-    if (url.pathname === "/internal/debug/statuses") {
-      const day = url.searchParams.get("date") || dayKeyGR();
-      const fixturesKey = `FIXTURES:DATE:${day}`;
-
-      const data = await env.AIMATCHLAB_KV_CORE.get(fixturesKey, { type: "json" });
-      const matches = Array.isArray(data?.matches) ? data.matches : [];
-
-      const counts = {};
-      const sample = [];
-
-      for (const m of matches) {
-        const stRaw = m?.status;
-        const st = String(stRaw || "").trim();
-        counts[st] = (counts[st] || 0) + 1;
-
-        if (sample.length < 15) {
-          sample.push({ id: m?.id, status: stRaw });
-        }
-      }
-
-      return json({
-        ok: true,
-        day,
-        fixturesKey,
-        total: matches.length,
-        counts,
-        sample,
-      });
-    }
-
-    if (url.pathname === "/internal/run") {
-      const day = url.searchParams.get("date") || dayKeyGR();
-      const out = await runEngine(env, day);
-      return json(out);
-    }
-
-    return json({ ok: false, error: "not_found", build: BUILD_TAG }, 404);
-  },
-};
+})();
+</script>
+
+</body>
+</html>

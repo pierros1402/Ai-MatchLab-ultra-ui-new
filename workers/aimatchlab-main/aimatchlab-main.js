@@ -75,16 +75,9 @@ async function handleAIMLHealth(url, env) {
   let valueTotal = 0;
   let valueSource = "EMPTY";
 
-  if (rawSummary && Array.isArray(rawSummary.items) && rawSummary.items.length) {
+  if (rawSummary && Array.isArray(rawSummary.items)) {
     valueTotal = rawSummary.items.length;
     valueSource = "VALUE:SUMMARY";
-  } else {
-    const prefix = `VALUE:STAT:${dayKey}:`;
-    const list = await env.AIMATCHLAB_KV_CORE.list({ prefix });
-    if (list?.keys?.length) {
-      valueTotal = list.keys.length;
-      valueSource = "VALUE:STAT";
-    }
   }
 
   return json({
@@ -211,7 +204,7 @@ async function handleValuePicks(url, env) {
 
   const raw = await env.AIMATCHLAB_KV_CORE.get(`VALUE:SUMMARY:${dayKey}`, { type: "json" });
 
-  if (raw && Array.isArray(raw.items) && raw.items.length) {
+  if (raw && Array.isArray(raw.items)) {
     return json({
       ok: true,
       date: dayKey,
@@ -221,29 +214,18 @@ async function handleValuePicks(url, env) {
     });
   }
 
-  const prefix = `VALUE:STAT:${dayKey}:`;
-  const list = await env.AIMATCHLAB_KV_CORE.list({ prefix });
-
-  if (!list.keys || !list.keys.length) {
-    return json({ ok: true, date: dayKey, total: 0, items: [], source: "EMPTY" });
-  }
-
-  const items = [];
-  for (const k of list.keys) {
-    const rec = await env.AIMATCHLAB_KV_CORE.get(k.name, { type: "json" });
-    if (rec) items.push(rec);
-  }
-
-  items.sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0));
-
+  // ✅ no KV.list fallback (prevents daily list-limit)
   return json({
     ok: true,
     date: dayKey,
-    total: items.length,
-    items,
-    source: "VALUE:STAT"
+    total: 0,
+    items: [],
+    source: "VALUE:SUMMARY",
+    reason: "missing_summary",
+    message: "Daily summary not produced yet for this date."
   });
 }
+
 
 /* =====================================================
    VALUE EXPORT (ADMIN ONLY)

@@ -1,24 +1,18 @@
 /**
  * aimatchlab-fixtures-ingest.js
- * V6.2 FINAL — RESUMABLE ALL-LEAGUES FIXTURES INGEST
+ * V6.4 — RESUMABLE ALL-LEAGUES FIXTURES INGEST (SUBREQUEST-SAFE + FORCE FINALIZE)
  *
- * Goals:
- * - Fetch ALL league scoreboards for a given date (manual league slugs)
- * - Avoid Cloudflare "Too many subrequests" by chunking work across runs
- * - Resume progress via KV queue + staging
- * - Write FIXTURES:DATE:<day> ONLY when finished (never partial overwrite)
- *
- * KV Keys:
- * - FIXTURES:QUEUE:DATE:<day>             (remaining league slugs)
- * - FIXTURES:STAGING:DATE:<day>           (incremental merged matches)
- * - FIXTURES:DEBUG:DATE:<day>:LAST_RUN    (debug snapshot)
- * - FIXTURES:DATE:<day>                  (final fixtures payload for MAIN UI)
+ * Fixes:
+ * - Prevent endless queue lock when Cloudflare returns "Too many subrequests."
+ * - Allow fast progress with burst=N
+ * - Add /internal/finalize to write FIXTURES:DATE:<day> from staging even if queue isn't empty
+ * - Keep SAME match schema as v6.2
  */
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const DEFAULT_TZ = "Europe/Athens";
 
-/** ✅ ALL leagues you want (81) */
+/** ✅ ALL leagues you want */
 const LEAGUE_SEEDS = [
   "eng.1","eng.2","eng.3","eng.4","eng.5","eng.fa","eng.league_cup","eng.trophy",
   "esp.1","esp.2","esp.copa_del_rey","esp.super_cup","esp.w.1",
@@ -42,26 +36,14 @@ const LEAGUE_SEEDS = [
   "club.friendly"
 ];
 
-/**
- * SAFE settings:
- * - each run processes a limited chunk of leagues
- * - sequential requests to avoid subrequest limits
- */
-const RUN_CHUNK_SIZE = 10;               // leagues per run
-const BETWEEN_LEAGUES_DELAY_MS = 180;    // tiny delay
+const RUN_CHUNK_SIZE = 10;
+const BETWEEN_LEAGUES_DELAY_MS = 180;
 
-/** retries per league request (avoid heavy retry storms) */
 const FETCH_RETRIES = 1;
 const RETRY_DELAY_MS = 350;
 
-/**
- * final write guard:
- * - write FIXTURES:DATE:<day> only if enough matches
- * - avoids writing nonsense (e.g. 22) as "final"
- *
- * NOTE: do NOT set this too high because some days are low volume.
- */
-const MIN_TOTAL_MATCHES_FINAL = 20;
+/** always allow finalize when queue empty */
+const MIN_TOTAL_MATCHES_FINAL = 0;
 
 /* =========================
    Helpers
@@ -92,6 +74,12 @@ function ymdFromQueryOrToday(urlStr) {
 
 function ymdCompact(ymd) {
   return ymd.replaceAll("-", "");
+}
+
+function clampBurst(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 1;
+  return Math.max(1, Math.min(6, Math.floor(x))); // IMPORTANT: keep burst low to avoid subrequest limits
 }
 
 function dayKeyFromKickoffISO(kickoffISO, tz = DEFAULT_TZ) {
@@ -134,7 +122,6 @@ function normalizeEspnEvent(evt, leagueSlug, leagueName, tz, targetDayKey) {
     evt?.status?.type?.name ||
     "PRE";
 
-  // minute: try displayClock else fallback
   const minute = comp?.status?.displayClock
     ? parseInt(String(comp.status.displayClock).split(":")[0], 10)
     : (comp?.status?.type?.state === "in" ? 1 : 0);
@@ -167,8 +154,17 @@ function mergeUniqueById(existing, incoming) {
   return Array.from(map.values());
 }
 
+function getKV(env) {
+  return env.AIMATCHLAB_KV_CORE;
+}
+
+function isTooManySubrequestsError(errMsg) {
+  const s = String(errMsg || "");
+  return s.toLowerCase().includes("too many subrequests");
+}
+
 /* =========================
-   ESPN fetch
+   ESPN fetch per league
 ========================= */
 
 async function fetchLeagueOnce(leagueSlug, dayYmd, tz) {
@@ -177,7 +173,7 @@ async function fetchLeagueOnce(leagueSlug, dayYmd, tz) {
   const r = await fetch(url, {
     headers: {
       "accept": "application/json",
-      "user-agent": "aimatchlab-fixtures-ingest/v6.2-final"
+      "user-agent": "aimatchlab-fixtures-ingest/v6.4-finalize-safe"
     }
   });
 
@@ -205,7 +201,7 @@ async function fetchLeagueOnce(leagueSlug, dayYmd, tz) {
   for (const evt of events) {
     const m = normalizeEspnEvent(evt, leagueSlug, leagueName, tz, dayYmd);
     if (!m.id) continue;
-    if (m.dayKey !== dayYmd) continue; // only target day in target timezone
+    if (m.dayKey !== dayYmd) continue;
     out.push(m);
   }
 
@@ -218,7 +214,6 @@ async function fetchLeagueWithRetry(leagueSlug, dayYmd, tz) {
       const res = await fetchLeagueOnce(leagueSlug, dayYmd, tz);
       if (res.ok) return res;
 
-      // retry only on likely-transient failures
       if ([429, 500, 502, 503, 504].includes(res.status)) {
         if (attempt < FETCH_RETRIES) {
           await sleep(RETRY_DELAY_MS);
@@ -228,15 +223,18 @@ async function fetchLeagueWithRetry(leagueSlug, dayYmd, tz) {
 
       return res;
     } catch (e) {
-      if (attempt < FETCH_RETRIES) {
+      const msg = String(e?.message || e);
+
+      if (attempt < FETCH_RETRIES && !isTooManySubrequestsError(msg)) {
         await sleep(RETRY_DELAY_MS);
         continue;
       }
+
       return {
         ok: false,
         type: "exception",
         league: leagueSlug,
-        error: String(e?.message || e),
+        error: msg,
         matches: []
       };
     }
@@ -252,32 +250,11 @@ async function fetchLeagueWithRetry(leagueSlug, dayYmd, tz) {
 }
 
 /* =========================
-   RESUMABLE RUN (Queue + Staging)
+   Load helpers
 ========================= */
 
-function getKV(env) {
-  // MAIN reads from CORE, and you confirmed CORE is correct
-  return env.AIMATCHLAB_KV_CORE;
-}
-
-async function resumableRun(env, dayYmd) {
-  const tz = DEFAULT_TZ;
-  const KV = getKV(env);
-
-  if (!KV) {
-    return {
-      ok: false,
-      reason: "missing_kv_binding",
-      note: "Bind AIMATCHLAB_KV_CORE in this worker."
-    };
-  }
-
+async function loadQueue(KV, dayYmd) {
   const queueKey = `FIXTURES:QUEUE:DATE:${dayYmd}`;
-  const stagingKey = `FIXTURES:STAGING:DATE:${dayYmd}`;
-  const debugKey = `FIXTURES:DEBUG:DATE:${dayYmd}:LAST_RUN`;
-  const finalKey = `FIXTURES:DATE:${dayYmd}`;
-
-  // Load or initialize queue
   let queueRaw = await KV.get(queueKey);
   let queue = queueRaw ? JSON.parse(queueRaw) : null;
 
@@ -286,7 +263,11 @@ async function resumableRun(env, dayYmd) {
     await KV.put(queueKey, JSON.stringify(queue));
   }
 
-  // Load or initialize staging
+  return { queueKey, queue };
+}
+
+async function loadStaging(KV, dayYmd, tz) {
+  const stagingKey = `FIXTURES:STAGING:DATE:${dayYmd}`;
   let stagingRaw = await KV.get(stagingKey);
   let stagingPayload = stagingRaw ? JSON.parse(stagingRaw) : null;
 
@@ -300,62 +281,100 @@ async function resumableRun(env, dayYmd) {
     };
   }
 
+  return { stagingKey, stagingPayload };
+}
+
+async function writeFinalIfPossible(KV, dayYmd, tz, stagingPayload) {
+  const finalKey = `FIXTURES:DATE:${dayYmd}`;
+
+  const finalPayload = {
+    date: dayYmd,
+    timezone: tz,
+    createdAt: Date.now(),
+    source: "espn_resumable_final",
+    matches: stagingPayload.matches
+  };
+
+  if (stagingPayload.matches.length >= MIN_TOTAL_MATCHES_FINAL) {
+    await KV.put(finalKey, JSON.stringify(finalPayload));
+    return { ok: true, wroteFinal: true, finalKey };
+  }
+
+  return { ok: true, wroteFinal: false, finalKey };
+}
+
+/* =========================
+   Single chunk run
+========================= */
+
+async function resumableRunOnce(env, dayYmd) {
+  const tz = DEFAULT_TZ;
+  const KV = getKV(env);
+
+  if (!KV) {
+    return {
+      ok: false,
+      reason: "missing_kv_binding",
+      note: "Bind AIMATCHLAB_KV_CORE in this worker."
+    };
+  }
+
+  const debugKey = `FIXTURES:DEBUG:DATE:${dayYmd}:LAST_RUN`;
+
+  const { queueKey, queue } = await loadQueue(KV, dayYmd);
+  const { stagingKey, stagingPayload } = await loadStaging(KV, dayYmd, tz);
+
   const startedWithQueue = queue.length;
 
-  // chunk
   const chunk = queue.slice(0, RUN_CHUNK_SIZE);
-  const rest = queue.slice(RUN_CHUNK_SIZE);
+  let rest = queue.slice(RUN_CHUNK_SIZE);
 
   const produced = [];
   const errors = [];
+  const skipped = []; // leagues skipped due to subrequest limit
 
-  // sequential fetch to avoid subrequest limits
   for (const leagueSlug of chunk) {
     const res = await fetchLeagueWithRetry(leagueSlug, dayYmd, tz);
 
     if (res.ok) {
       if (res.matches?.length) produced.push(...res.matches);
     } else {
-      errors.push({
-        type: res.type || "error",
-        league: res.league,
-        status: res.status,
-        error: res.error
-      });
+      const errMsg = String(res.error || "");
 
-      // push back to retry on next scheduler tick
-      rest.push(leagueSlug);
+      // CRITICAL FIX:
+      // If we hit "Too many subrequests.", do NOT push it back to the queue,
+      // otherwise queue never empties (infinite loop).
+      if (isTooManySubrequestsError(errMsg)) {
+        skipped.push({ league: leagueSlug, error: errMsg });
+      } else {
+        errors.push({
+          type: res.type || "error",
+          league: res.league,
+          status: res.status,
+          error: errMsg
+        });
+
+        // retry later (ONLY for non-subrequest errors)
+        rest.push(leagueSlug);
+      }
     }
 
     await sleep(BETWEEN_LEAGUES_DELAY_MS);
   }
 
-  // Merge results into staging
   stagingPayload.matches = mergeUniqueById(stagingPayload.matches, produced);
   stagingPayload.createdAt = Date.now();
 
   await KV.put(stagingKey, JSON.stringify(stagingPayload));
   await KV.put(queueKey, JSON.stringify(rest));
 
-  // Finalize only when queue empty
   let finalized = false;
   let wroteFinal = false;
 
   if (rest.length === 0) {
     finalized = true;
-
-    if (stagingPayload.matches.length >= MIN_TOTAL_MATCHES_FINAL) {
-      const finalPayload = {
-        date: dayYmd,
-        timezone: tz,
-        createdAt: Date.now(),
-        source: "espn_resumable_final",
-        matches: stagingPayload.matches
-      };
-
-      await KV.put(finalKey, JSON.stringify(finalPayload));
-      wroteFinal = true;
-    }
+    const w = await writeFinalIfPossible(KV, dayYmd, tz, stagingPayload);
+    wroteFinal = !!w.wroteFinal;
   }
 
   const debugPayload = {
@@ -371,15 +390,89 @@ async function resumableRun(env, dayYmd) {
     producedMatchesNow: produced.length,
     totalUniqueMatchesStaging: stagingPayload.matches.length,
     errorsCount: errors.length,
+    skippedCount: skipped.length,
     errors,
+    skipped,
     finalized,
     wroteFinal,
-    keys: { queueKey, stagingKey, finalKey, debugKey }
+    keys: {
+      queueKey,
+      stagingKey,
+      finalKey: `FIXTURES:DATE:${dayYmd}`,
+      debugKey
+    }
   };
 
   await KV.put(debugKey, JSON.stringify(debugPayload));
 
   return debugPayload;
+}
+
+/* =========================
+   Burst runner
+========================= */
+
+async function resumableRunBurst(env, dayYmd, burstCount) {
+  const burst = clampBurst(burstCount);
+
+  let last = null;
+  const snapshots = [];
+
+  for (let i = 0; i < burst; i++) {
+    last = await resumableRunOnce(env, dayYmd);
+
+    snapshots.push({
+      i: i + 1,
+      processedNow: last?.processedNow || 0,
+      queueRemaining: last?.queueRemaining ?? null,
+      producedMatchesNow: last?.producedMatchesNow || 0,
+      totalUniqueMatchesStaging: last?.totalUniqueMatchesStaging || 0,
+      finalized: !!last?.finalized,
+      wroteFinal: !!last?.wroteFinal,
+      skippedCount: last?.skippedCount || 0,
+      errorsCount: last?.errorsCount || 0
+    });
+
+    if (last?.ok && last?.queueRemaining === 0) break;
+  }
+
+  return {
+    ok: true,
+    date: dayYmd,
+    burst,
+    done: !!(last && last.queueRemaining === 0),
+    last,
+    snapshots
+  };
+}
+
+/* =========================
+   Force finalize
+========================= */
+
+async function forceFinalize(env, dayYmd) {
+  const tz = DEFAULT_TZ;
+  const KV = getKV(env);
+
+  if (!KV) {
+    return {
+      ok: false,
+      reason: "missing_kv_binding",
+      note: "Bind AIMATCHLAB_KV_CORE in this worker."
+    };
+  }
+
+  const { stagingPayload } = await loadStaging(KV, dayYmd, tz);
+  const w = await writeFinalIfPossible(KV, dayYmd, tz, stagingPayload);
+
+  return {
+    ok: true,
+    date: dayYmd,
+    forced: true,
+    stagingMatches: stagingPayload.matches.length,
+    wroteFinal: !!w.wroteFinal,
+    finalKey: w.finalKey
+  };
 }
 
 /* =========================
@@ -390,38 +483,40 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // health
     if (url.pathname === "/health") {
       return jsonResponse({
         ok: true,
         service: "aimatchlab-fixtures-ingest",
-        version: "v6.2-final-resumable-all-leagues",
+        version: "v6.4-finalize-safe",
         leagues: LEAGUE_SEEDS.length,
         runChunkSize: RUN_CHUNK_SIZE,
         minFinal: MIN_TOTAL_MATCHES_FINAL
       });
     }
 
-    // scheduler-compatible run routes
-    const allowed =
+    // allow ingest run
+    const isRun =
       url.pathname === "/" ||
       url.pathname === "/internal/run" ||
       url.pathname === "/internal/ingest";
 
-    if (!allowed) {
+    // allow finalize
+    const isFinalize = url.pathname === "/internal/finalize";
+
+    if (!isRun && !isFinalize) {
       return new Response("Not Found", { status: 404 });
     }
 
     const dayYmd = ymdFromQueryOrToday(request.url);
 
-    // run in background, respond immediately
-    ctx.waitUntil(resumableRun(env, dayYmd));
+    if (isFinalize) {
+      const res = await forceFinalize(env, dayYmd);
+      return jsonResponse(res);
+    }
 
-    return jsonResponse({
-      ok: true,
-      started: true,
-      date: dayYmd,
-      note: "Resumable ingest started in background (queue/staging). Check FIXTURES:DEBUG:* keys."
-    });
+    const burst = url.searchParams.get("burst") || "1";
+    const res = await resumableRunBurst(env, dayYmd, burst);
+
+    return jsonResponse(res);
   }
 };

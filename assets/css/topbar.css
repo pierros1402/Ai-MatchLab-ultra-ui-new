@@ -104,6 +104,9 @@
   transform: translateY(1px);
 }
 
+/* UPDATE button not used (duplicate refresh) */
+#btn-update{ display: none !important; }
+
 /* make icons distinct */
 #btn-install{ border-color: rgba(46,230,214,0.35); }
 #btn-update{  border-color: rgba(42,168,255,0.35); }
@@ -302,6 +305,52 @@ body.aiml-admin #btn-export{ display: inline-flex; }
     width: auto;
     max-width: none;
   }
+
+  /* ✅ Mobile: keep right-side icons visible (2-row topbar, NO tab dropdown) */
+#btn-theme,
+#btn-lang,
+#btn-legal{
+  display: inline-flex !important;
+}
+
+/* ❌ disable mobile tab menu (Ξ) */
+#btn-mobile-tab{
+  display: none !important;
+}
+
+#mobile-tab-menu{
+  display: none !important;
+}
+
+  #mobile-tab-menu.hidden{
+    display: none !important;
+  }
+
+  #mobile-tab-menu button{
+    width: 100% !important;
+    height: 36px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+
+    gap: 10px !important;
+    padding: 0 12px !important;
+
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    background: rgba(255,255,255,0.05) !important;
+
+    color: rgba(255,255,255,0.92) !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+  }
+
+  #mobile-tab-menu button:hover{
+    background: rgba(255,140,0,0.18) !important;
+    border-color: rgba(255,140,0,0.24) !important;
+  }
+
 }
 
 /* ===============================

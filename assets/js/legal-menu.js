@@ -1,178 +1,178 @@
-(function () {
-  "use strict";
 
-  const BTN_ID = "btn-legal";
+/* =====================================================
+   LEGAL MENU (SELF-CONTAINED)
+   - Builds internal legal content (Terms / Privacy / etc)
+   - Opens as a premium popup
+   - No external navigation required
+===================================================== */
+
+(() => {
   const MENU_ID = "legal-menu";
 
-  function $(id) {
-    return document.getElementById(id);
-  }
-
-  function isOpen(menuEl) {
-    return menuEl && !menuEl.classList.contains("hidden");
-  }
-
-  function setOpen(menuEl, v) {
-    if (!menuEl) return;
-    if (v) {
-      menuEl.classList.remove("hidden");
-      menuEl.setAttribute("aria-hidden", "false");
-    } else {
-      menuEl.classList.add("hidden");
-      menuEl.setAttribute("aria-hidden", "true");
+  const DEFAULT_DOCS = {
+    terms: {
+      title: "Terms",
+      body: `
+        <p><b>AI MatchLab ULTRA</b> provides football analytics and informational content.</p>
+        <p>Use at your own risk. No guarantees are made about predictions, odds, or results.</p>
+        <p>Bet responsibly. If you are underage or gambling is restricted in your region, do not use betting features.</p>
+      `
+    },
+    privacy: {
+      title: "Privacy",
+      body: `
+        <p>We respect your privacy.</p>
+        <p>The app may store non-sensitive preferences locally (theme/language/UI state) to improve usability.</p>
+        <p>No personal data is intentionally sold or shared.</p>
+      `
+    },
+    impressum: {
+      title: "Impressum",
+      body: `
+        <p>Project: <b>AI MatchLab ULTRA</b></p>
+        <p>Contact: <span class="legal-muted">Add your email / company info here</span></p>
+      `
+    },
+    disclaimer: {
+      title: "Disclaimer",
+      body: `
+        <p>This application is for informational purposes only.</p>
+        <p>We do not provide financial advice. Odds and analytics may be inaccurate or delayed.</p>
+      `
+    },
+    cookies: {
+      title: "Cookies",
+      body: `
+        <p>This app may use local storage for UI preferences (theme/accent/language).</p>
+        <p>No tracking cookies are required for core functionality.</p>
+      `
     }
-  }
+  };
 
-  function buildLegalMenuHTML() {
-    const items = [
-      { label: "Terms", href: "/legal/terms.html" },
-      { label: "Privacy", href: "/legal/privacy.html" },
-      { label: "Impressum", href: "/legal/impressum.html" },
-      { label: "Disclaimer", href: "/legal/disclaimer.html" },
-      { label: "Cookies", href: "/legal/cookies.html" }
-    ];
+  const qs = (sel, root = document) => root.querySelector(sel);
 
-    const rows = items
-      .map(
-        (it) => `
-          <a class="aiml-legal-item"
-             href="${it.href}"
-             target="_blank"
-             rel="noopener noreferrer">
-            ${it.label}
-          </a>
-        `
-      )
-      .join("");
+  const ensureMenu = () => {
+    let menu = document.getElementById(MENU_ID);
+    if (!menu) {
+      menu = document.createElement("div");
+      menu.id = MENU_ID;
+      menu.className = "legal-menu hidden";
+      menu.setAttribute("aria-hidden", "true");
+      document.body.appendChild(menu);
+    }
+    return menu;
+  };
 
+  const buildMenuHTML = () => {
     return `
-      <div class="aiml-legal-head">
-        <div class="aiml-legal-title">Legal</div>
-        <button class="aiml-legal-close" type="button" aria-label="Close">×</button>
-      </div>
-      <div class="aiml-legal-list">
-        ${rows}
+      <div class="legal-shell">
+        <div class="legal-head">
+          <div class="legal-title">Legal</div>
+          <button class="aiml-legal-close" type="button" aria-label="Close">×</button>
+        </div>
+
+        <div class="legal-tabs">
+          <button class="legal-tab active" data-doc="terms" type="button">Terms</button>
+          <button class="legal-tab" data-doc="privacy" type="button">Privacy</button>
+          <button class="legal-tab" data-doc="impressum" type="button">Impressum</button>
+          <button class="legal-tab" data-doc="disclaimer" type="button">Disclaimer</button>
+          <button class="legal-tab" data-doc="cookies" type="button">Cookies</button>
+        </div>
+
+        <div class="legal-body">
+          <div class="legal-doc-title"></div>
+          <div class="legal-doc-content"></div>
+        </div>
       </div>
     `;
-  }
+  };
 
-  function ensureInjected(menuEl) {
-    if (!menuEl) return;
+  const applyDoc = (menu, key) => {
+    const doc = DEFAULT_DOCS[key] || DEFAULT_DOCS.terms;
 
-    const hasSignature = !!menuEl.querySelector(".aiml-legal-list");
-    if (!hasSignature) {
-      menuEl.innerHTML = buildLegalMenuHTML();
-    }
+    const titleEl = qs(".legal-doc-title", menu);
+    const contentEl = qs(".legal-doc-content", menu);
 
-    // bind close once
-    const closeBtn = menuEl.querySelector(".aiml-legal-close");
-    if (closeBtn && !closeBtn.__aimlBound) {
-      closeBtn.__aimlBound = true;
-      closeBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation(); 
-        setOpen(menuEl, false);
+    if (titleEl) titleEl.textContent = doc.title;
+    if (contentEl) contentEl.innerHTML = doc.body;
+
+    // set active tab
+    const tabs = [...menu.querySelectorAll(".legal-tab")];
+    tabs.forEach(t => {
+      const isActive = t.getAttribute("data-doc") === key;
+      t.classList.toggle("active", isActive);
+    });
+  };
+
+  const openMenu = () => {
+    const menu = ensureMenu();
+    if (!menu.dataset.built) {
+      menu.innerHTML = buildMenuHTML();
+      menu.dataset.built = "1";
+
+      // default doc
+      applyDoc(menu, "terms");
+
+      // bind close
+      const btnClose = qs(".aiml-legal-close", menu);
+      if (btnClose) {
+        btnClose.addEventListener("click", (e) => {
+          e.preventDefault();
+          closeMenu();
+        });
+      }
+
+      // bind tab clicks
+      menu.addEventListener("click", (e) => {
+        const tab = e.target.closest(".legal-tab");
+        if (!tab) return;
+        const key = tab.getAttribute("data-doc");
+        applyDoc(menu, key);
       });
     }
 
-    // close on item click once
-    if (!menuEl.__aimlItemsBound) {
-      menuEl.__aimlItemsBound = true;
-      menuEl.addEventListener(
-        "click",
-        (e) => {
-          const a = e.target && e.target.closest ? e.target.closest("a") : null;
-          if (!a) return;
-          setOpen(menuEl, false);
-        },
-        true
-      );
+    menu.classList.remove("hidden");
+    menu.setAttribute("aria-hidden", "false");
+  };
+
+  const closeMenu = () => {
+    const menu = document.getElementById(MENU_ID);
+    if (!menu) return;
+    menu.classList.add("hidden");
+    menu.setAttribute("aria-hidden", "true");
+  };
+
+  // expose minimal API
+  window.AIML_LEGAL = {
+    open: openMenu,
+    close: closeMenu
+  };
+
+  // bind topbar button (desktop)
+  const bindTopbar = () => {
+    const btn = document.getElementById("btn-legal");
+    if (!btn) return;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openMenu();
+    });
+  };
+
+  // outside click closes only when clicking backdrop area
+  document.addEventListener("click", (e) => {
+    const menu = document.getElementById(MENU_ID);
+    if (!menu) return;
+    if (menu.classList.contains("hidden")) return;
+
+    const shell = qs(".legal-shell", menu);
+    if (!shell) return;
+
+    // click outside shell closes
+    if (!shell.contains(e.target)) {
+      closeMenu();
     }
-  }
+  });
 
-  function positionMenu(btnEl, menuEl) {
-    if (!btnEl || !menuEl) return;
-    const r = btnEl.getBoundingClientRect();
-
-    const top = Math.round(r.bottom + 14);
-    const right = Math.round(window.innerWidth - r.right);
-
-    menuEl.style.position = "fixed";
-    menuEl.style.top = `${top}px`;
-    menuEl.style.right = `${right}px`;
-    menuEl.style.left = "auto";
-    menuEl.style.zIndex = "99999";
-    menuEl.style.pointerEvents = "auto";
-  }
-
-  function openMenu() {
-    const btn = $(BTN_ID);
-    const menu = $(MENU_ID);
-    if (!btn || !menu) return;
-
-    ensureInjected(menu);
-    setOpen(menu, true);
-    positionMenu(btn, menu);
-  }
-
-  function closeMenu() {
-    const menu = $(MENU_ID);
-    if (!menu) return;
-    setOpen(menu, false);
-  }
-
-  function toggleMenu() {
-    const menu = $(MENU_ID);
-    if (!menu) return;
-    if (isOpen(menu)) closeMenu();
-    else openMenu();
-  }
-
-  function onOutsidePointerDown(e) {
-    const btn = $(BTN_ID);
-    const menu = $(MENU_ID);
-    if (!btn || !menu) return;
-
-    const t = e.target;
-    if (btn.contains(t)) return;
-    if (menu.contains(t)) return;
-
-    if (isOpen(menu)) closeMenu();
-  }
-
-  function onKeyDown(e) {
-    if (e.key !== "Escape") return;
-    const menu = $(MENU_ID);
-    if (menu && isOpen(menu)) closeMenu();
-  }
-
-  function init() {
-    const btn = $(BTN_ID);
-    const menu = $(MENU_ID);
-    if (!btn || !menu) return;
-
-    setOpen(menu, false);
-
-    btn.addEventListener(
-      "pointerdown",
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleMenu();
-      },
-      true
-    );
-
-    document.addEventListener("pointerdown", onOutsidePointerDown, true);
-    window.addEventListener("keydown", onKeyDown, true);
-
-    console.log("[legal] ready");
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  bindTopbar();
 })();

@@ -24,8 +24,16 @@
     }
   }
 
-  function isPRE(m) { return String(m.status).toUpperCase() === "PRE"; }
-  function isFT(m)  { return String(m.status).toUpperCase() === "FT"; }
+  function isPRE(m) {
+    const s = String(m?.status || "").toUpperCase();
+    return s === "PRE" || s === "STATUS_SCHEDULED";
+  }
+
+  function isFT(m) {
+    const s = String(m?.status || "").toUpperCase();
+    return s === "FT" || s === "STATUS_FULL_TIME";
+  }
+
 
   function leagueName(m) { return m.leagueName || m.leagueSlug || "—"; }
 
