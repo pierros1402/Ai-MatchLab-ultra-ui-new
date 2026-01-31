@@ -131,16 +131,16 @@ for (const it of flat) {
       const p = typeof it.probability === "number" ? it.probability : (typeof it.prob === "number" ? it.prob : null);
 
       const LOW_MIN_BY_MARKET = {
-        // Over/Under borderline-low windows
-        "OVER_15": 0.58,
-        "UNDER_15": 0.58,
-        "OVER_25": 0.54,
-        "UNDER_25": 0.54,
-        "OVER_35": 0.46,
-        "UNDER_35": 0.46,
+        BTTS: MARKET_THRESHOLDS.BTTS.lowMin,
 
-        // BTTS borderline-low
-        "BTTS": 0.54
+        OVER_15: MARKET_THRESHOLDS.OVER_15.lowMin,
+        UNDER_15: MARKET_THRESHOLDS.UNDER_15.lowMin,
+
+        OVER_25: MARKET_THRESHOLDS.OVER_25.lowMin,
+        UNDER_25: MARKET_THRESHOLDS.UNDER_25.lowMin,
+
+        OVER_35: MARKET_THRESHOLDS.OVER_35.lowMin,
+        UNDER_35: MARKET_THRESHOLDS.UNDER_35.lowMin,
       };
 
       if (confidence === "LOW") {
@@ -401,15 +401,27 @@ function normalizePickLabel(market, prediction) {
 ====================================================== */
 
 
-function pickOverUnder(labelOver, labelUnder, pOver, hi, med) {
+function pickOverUnder(labelOver, labelUnder, pOver, marketOver, marketUnder) {
+  const tOver = MARKET_THRESHOLDS[marketOver] || null;
+  const tUnder = MARKET_THRESHOLDS[marketUnder] || null;
+
+  // fallback defaults (should rarely be needed)
+  const hiOver = tOver?.hi ?? 0.65;
+  const medOver = tOver?.med ?? 0.56;
+
+  const hiUnder = tUnder?.hi ?? 0.65;
+  const medUnder = tUnder?.med ?? 0.56;
+
   if (typeof pOver !== "number" || !isFinite(pOver)) {
     return { label: labelOver, confidence: "LOW", prob: 0.5, side: "OVER" };
   }
+
   if (pOver >= 0.5) {
-    return { label: labelOver, confidence: tier(pOver, hi, med), prob: pOver, side: "OVER" };
+    return { label: labelOver, confidence: tier(pOver, hiOver, medOver), prob: pOver, side: "OVER" };
   }
+
   const pUnder = 1 - pOver;
-  return { label: labelUnder, confidence: tier(pUnder, hi, med), prob: pUnder, side: "UNDER" };
+  return { label: labelUnder, confidence: tier(pUnder, hiUnder, medUnder), prob: pUnder, side: "UNDER" };
 }
 
 function buildMarkets_AllForTesting(home, away) {
@@ -426,7 +438,7 @@ function buildMarkets_AllForTesting(home, away) {
       market: "BTTS",
       prediction: "YES",
       prob: round(bttsProb),
-      confidence: tier(bttsProb, 0.62, 0.56)
+      confidence: tier(bttsProb, MARKET_THRESHOLDS.BTTS.hi, MARKET_THRESHOLDS.BTTS.med)
     };
   }
 
@@ -439,9 +451,9 @@ function buildMarkets_AllForTesting(home, away) {
   const pOver25 = clamp01(0.50 + (xG - 2.5) * 0.20);
   const pOver35 = clamp01(0.50 + (xG - 3.5) * 0.18);
   // ✅ ONE pick per line (either OVER or UNDER) to avoid duplicate entries in UI
-  const ou15 = pickOverUnder("O/U 1.5", "U/O 1.5", pOver15, 0.70, 0.60);
-  const ou25 = pickOverUnder("O/U 2.5", "U/O 2.5", pOver25, 0.65, 0.56);
-  const ou35 = pickOverUnder("O/U 3.5", "U/O 3.5", pOver35, 0.55, 0.48);
+  const ou15 = pickOverUnder("O/U 1.5", "U/O 1.5", pOver15, "OVER_15", "UNDER_15");
+  const ou25 = pickOverUnder("O/U 2.5", "U/O 2.5", pOver25, "OVER_25", "UNDER_25");
+  const ou35 = pickOverUnder("O/U 3.5", "U/O 3.5", pOver35, "OVER_35", "UNDER_35");
 
   markets.ou15 = {
     market: ou15.side === "OVER" ? "OVER_15" : "UNDER_15",
@@ -689,6 +701,26 @@ function tier(p, hi, med) {
   if (p >= med) return "MEDIUM";
   return "LOW";
 }
+
+// =====================================================================
+// ✅ MARKET THRESHOLDS (single source of truth)
+// - hi: HIGH threshold
+// - med: MEDIUM threshold
+// - lowMin: minimum probability to keep LOW (borderline LOW window)
+// =====================================================================
+const MARKET_THRESHOLDS = {
+  BTTS:     { hi: 0.62, med: 0.56, lowMin: 0.54 },
+
+  OVER_15:  { hi: 0.70, med: 0.60, lowMin: 0.58 },
+  UNDER_15: { hi: 0.70, med: 0.60, lowMin: 0.58 },
+
+  OVER_25:  { hi: 0.65, med: 0.56, lowMin: 0.54 },
+  UNDER_25: { hi: 0.65, med: 0.56, lowMin: 0.54 },
+
+  OVER_35:  { hi: 0.55, med: 0.48, lowMin: 0.46 },
+  UNDER_35: { hi: 0.55, med: 0.48, lowMin: 0.46 },
+};
+
 
 function clamp01(n) {
   if (n < 0) return 0;
