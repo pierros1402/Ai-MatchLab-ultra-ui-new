@@ -202,10 +202,16 @@
 
   function scoreToPct(score) {
     if (typeof score !== "number" || !Number.isFinite(score)) return "—";
-    // Score is 0..1 (today). Show as percent.
-    const pct = Math.round(score * 100);
-    return `${pct}%`;
+
+    // Accept both 0..1 and 0..100 inputs
+    let pct = score <= 1 ? score * 100 : score;
+
+    // safety clamp
+    pct = Math.max(0, Math.min(100, pct));
+
+    return `${Math.round(pct)}%`;
   }
+
 
   function kickoffHHMM(ms) {
     if (!ms || typeof ms !== "number") return "";
