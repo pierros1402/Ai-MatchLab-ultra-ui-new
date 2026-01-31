@@ -34,9 +34,11 @@
   }
 
   const bodyEl =
+    root.querySelector("#value-picks-list") ||
     root.querySelector(".panel-body") ||
     root.querySelector(".panel-content") ||
     root;
+
 
   // --------------------------------------------------------------------------
   // League map (FULL set, aligned with leagues.txt)
@@ -434,7 +436,10 @@
   // EVENTS
   // --------------------------------------------------------------------------
   if (typeof window.on === "function") {
-    window.on("value:update", (payload) => render(payload));
+    window.on("value-picks:loaded", (payload) => {
+      render({ date: payload?.date, picks: payload?.items || [], total: (payload?.items || []).length });
+    });
+
   } else {
     warn("window.on not found (app.js not loaded first?)");
   }

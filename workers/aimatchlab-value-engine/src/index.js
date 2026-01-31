@@ -1,485 +1,671 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>AI MatchLab Ultra</title>
-
-  <!-- =====================================================
-       PWA / INSTALL (ONLINE ONLY - NO SW)
-  ====================================================== -->
-  <link rel="manifest" href="/manifest.webmanifest">
-  <meta name="theme-color" content="#050711">
-
-  <!-- Icons -->
-  <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512.png">
-  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
-
-  <!-- =====================================================
-       CORE LAYOUT
-  ====================================================== -->
-  <link rel="stylesheet" href="assets/css/style.css">
-  <link rel="stylesheet" href="assets/css/accordion.css">
-
-  <link rel="stylesheet" href="assets/css/odds.css">
-  <link rel="stylesheet" href="assets/css/right-panels.css">
-
-  <!-- =====================================================
-       THEME
-  ====================================================== -->
-  <link rel="stylesheet" href="assets/css/theme.css">
-  <link rel="stylesheet" href="assets/css/skin-premium.css">
-
-  <!-- =====================================================
-       TOPBAR (ISOLATED – ΠΡΕΠΕΙ ΝΑ ΕΙΝΑΙ ΤΕΛΕΥΤΑΙΟ)
-  ====================================================== -->
-  <link rel="stylesheet" href="assets/css/topbar.css">
-  <link rel="stylesheet" href="assets/css/mobile.css">
-</head>
-
-<body>
-  <div id="DEBUG_MARKER" style="display:none">LOCAL_INDEX_DROPDOWN_2026_01_26</div>
-
-<!-- =====================================================
-       TOPBAR (GLOBAL / FIXED)
-       Theme handled by assets/js/theme.js
-       Legal handled by assets/js/legal-menu.js
-  ===================================================== -->
-<header id="topbar" class="topbar">
-
-  <!-- LEFT -->
-  <div class="topbar-left">
-    <button id="btn-home" class="topbar-btn" title="Home">⌂</button>
-    <button id="btn-refresh" class="topbar-btn" title="Refresh">⟳</button>
-  </div>
-
-  <!-- CENTER -->
-  <div class="topbar-center">
-    <img src="assets/icons/logo-header.png" class="topbar-logo" alt="AI MatchLab" />
-    <div class="topbar-brand">
-      <div class="brand-title">AI MatchLab ULTRA</div>
-      <div class="brand-version" id="app-version">v2.15.5</div>
-    </div>
-  </div>
-
-  <!-- RIGHT -->
-  <div class="topbar-right">
-
-    <!-- UPDATE (ONLINE ONLY) -->
-    <button id="btn-update" class="topbar-btn" title="Update">⟳</button>
-
-    <button id="btn-theme" class="topbar-btn" title="Theme">🎨</button>
-    <button id="btn-lang" class="topbar-btn" title="Language">🌐</button>
-
-    <button id="btn-user" class="topbar-btn" title="User">👤</button>
-      <button id="btn-legal-desktop" class="topbar-btn" title="Info">ⓘ</button>
-      <button id="btn-install-desktop" class="topbar-btn" title="Install">⬇</button>
-      <button id="btn-export-desktop" class="topbar-btn glow" title="Export (Value)">⤓</button>
-  </div>
-
-  <!-- =====================================================
-       MOBILE ROW 2
-       Dropdown centered + tools right
-  ===================================================== -->
-  <div class="topbar-row2" id="topbar-row2">
-
-    <!-- CENTER (Dropdown) -->
-    <div class="topbar-row2-center">
-
-      <!-- MOBILE VIEW DROPDOWN (LEFT / ODDS / RIGHT) -->
-      <div class="mobile-view-dd" id="mobile-view-dd" aria-label="Mobile view">
-        <button id="mobile-view-btn" class="mobile-view-btn" type="button">
-          <span id="mobile-view-label">LEFT</span>
-          <span class="mobile-view-caret">▾</span>
-        </button>
-
-        <div id="mobile-view-menu" class="mobile-view-menu hidden">
-          <button class="mobile-view-item" type="button" data-view="left">LEFT</button>
-          <button class="mobile-view-item" type="button" data-view="odds">ODDS</button>
-          <button class="mobile-view-item" type="button" data-view="right">RIGHT</button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RIGHT (Legal / Install / Export) -->
-    <div class="topbar-row2-right">
-
-      <button id="btn-legal" class="topbar-btn" title="Info">ⓘ</button>
-
-      <!-- INSTALL (ONLINE ONLY) -->
-      <button id="btn-install" class="topbar-btn" title="Install">⬇</button>
-
-      <!-- EXPORT (ADMIN TOOL) -->
-      <button id="btn-export" class="topbar-btn glow" title="Export (Value)">⤓</button>
-
-    </div>
-
-  </div>
-
-  <!-- EXPORT MENU (ADMIN ONLY TOOL) -->
-  <div id="export-menu" class="topbar-menu hidden" aria-hidden="true"></div>
-
-</header>
-
-  <!-- =====================================================
-       THEME MENU (CONTAINER + CONTENT)
-       Required by assets/js/theme.js
-  ===================================================== -->
-  <div id="theme-menu" class="theme-menu hidden" aria-hidden="true">
-    <div class="aiml-theme-head">
-      <div class="aiml-theme-title">Theme</div>
-      <button id="btn-theme-close" class="aiml-theme-close" type="button" aria-label="Close">×</button>
-    </div>
-
-    <div class="aiml-theme-section">
-      <div class="aiml-theme-label">Mode</div>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-theme="dark">
-        Dark
-      </button>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-theme="light">
-        Light
-      </button>
-    </div>
-
-    <div class="aiml-theme-section">
-      <div class="aiml-theme-label">Accents</div>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-accent="default">
-        Blue / Orange (Default)
-      </button>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-accent="green-gold">
-        Green / Gold
-      </button>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-accent="crimson-silver">
-        Crimson / Silver
-      </button>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-accent="purple-aqua">
-        Purple / Aqua
-      </button>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-accent="neon-spectrum">
-        Neon / Spectrum
-      </button>
-
-      <button class="aiml-theme-pill popover-link" type="button" data-accent="minimal">
-        Minimal (Classic)
-      </button>
-    </div>
-  </div>
-
-<!-- =====================================================
-       LEGAL MENU (CONTAINER)
-       Required by assets/js/legal-menu.js
-===================================================== -->
-  <div id="legal-menu" class="legal-menu hidden" aria-hidden="true"></div>
-
-  <!-- =====================================================
-       APP ROOT
-  ===================================================== -->
-  <div class="app">
-
-    <!-- ======================================================================
-         LEFT COLUMN — NEW (TODAY / ACTIVE / MATCHES / SAVED)
-    ====================================================================== -->
-    <aside class="left-column">
-
-      <!-- LEFT COLUMN TITLE (ΣΤΑΘΕΡΟΣ) -->
-      <div class="panel-header">
-        <div class="panel-title">Navigation</div>
-      </div>
-
-      <div id="left-accordion" class="accordion">
-
-        <div class="panel open" id="panel-today">
-          <div class="panel-header">
-            <div class="panel-title">Today</div>
-          </div>
-          <div class="panel-body" id="today-list"></div>
-        </div>
-
-        <div class="panel" id="panel-active-leagues">
-          <div class="panel-header">
-            <div class="panel-title">Active Leagues Today</div>
-          </div>
-          <div class="panel-body">
-            <div id="active-leagues-list"></div>
-          </div>
-        </div>
-
-        <div class="panel" id="panel-matches">
-          <div class="panel-header">
-            <div class="panel-title">Matches</div>
-          </div>
-          <div class="panel-body">
-            <div id="matches-list"></div>
-          </div>
-        </div>
-
-        <div class="panel" id="panel-saved">
-          <div class="panel-header">
-            <div class="panel-title">Saved</div>
-          </div>
-          <div class="panel-body">
-            <div id="saved-list"></div>
-          </div>
-        </div>
-
-      </div>
-    </aside>
-
-    <!-- ======================================================
-         ODDS INTELLIGENCE CENTER (DIV-BASED – FINAL)
-    ====================================================== -->
-    <section id="odds-intelligence-center">
-
-      <!-- ===== STICKY HEADER (ΔΕΝ SCROLLΑΡΕΙ) ===== -->
-      <header class="oic-header">
-
-        <!-- TITLE -->
-        <div class="oic-title">
-          Odds Intelligence Center
-        </div>
-
-        <!-- ACTIVE MATCH BAR -->
-        <div class="oic-active-match">
-
-          <div class="oic-match-text">
-            <div id="oic-selected-match" class="oic-match-title">No match selected</div>
-            <div class="oic-match-sub">
-              Select a match from the left panel.
-            </div>
-          </div>
-
-          <!-- MARKET SELECTOR (ΑΝΗΚΕΙ ΣΤΟ OIC) -->
-          <div class="oic-market-control">
-            <select id="oic-market" class="oic-market-select">
-              <option value="1X2">1X2</option>
-              <option value="DC">Double Chance</option>
-              <option value="BTTS">BTTS</option>
-              <option value="OU15">Over / Under 1.5</option>
-              <option value="OU25">Over / Under 2.5</option>
-              <option value="OU35">Over / Under 3.5</option>
-            </select>
-          </div>
-
-        </div>
-      </header>
-
-      <!-- ===== SCROLLABLE CONTENT ===== -->
-      <div class="oic-scroll">
-
-        <!-- GREEK -->
-        <section class="oic-card greek" id="oic-greek">
-          <div class="oic-card-header">Greek</div>
-          <div class="oic-card-body" id="greek-odds-body"></div>
-        </section>
-
-        <!-- EUROPEAN -->
-        <section class="oic-card european" id="oic-eu">
-          <div class="oic-card-header">European</div>
-          <div class="oic-card-body" id="eu-odds-body"></div>
-        </section>
-
-        <!-- ASIAN -->
-        <section class="oic-card asian" id="oic-asian">
-          <div class="oic-card-header">Asian</div>
-          <div class="oic-card-body" id="asian-odds-body"></div>
-        </section>
-
-        <!-- BETFAIR -->
-        <section class="oic-card betfair" id="oic-betfair">
-          <div class="oic-card-header">Betfair</div>
-          <div class="oic-card-body" id="betfair-odds-body"></div>
-        </section>
-
-        <!-- MATCH DETAILS -->
-        <section class="oic-card match-details" id="oic-details">
-          <div class="oic-card-header oic-details-header">
-            <span>Match Details</span>
-            <button class="oic-details-open">Open</button>
-          </div>
-          <div class="oic-card-body">
-            Select a match to view details.
-          </div>
-        </section>
-
-      </div>
-    </section>
-
-    <!-- ======================================================================
-         RIGHT COLUMN — INTELLIGENCE PANELS
-    ====================================================================== -->
-    <aside class="right-column no-accordion" id="right-panel">
-
-      <!-- HEADER -->
-      <div class="panel-header">
-        <div class="panel-title">Intelligence Panels</div>
-      </div>
-
-      <!-- RADAR -->
-      <section class="intelligence-panel radar-panel">
-        <div class="panel-header">
-          <span>AI Radar</span>
-          <span class="panel-subtitle">Line Moves</span>
-        </div>
-        <div class="panel-body">
-          <div class="panel-placeholder">Radar ready.</div>
-          <div id="radar-list"></div>
-        </div>
-      </section>
-
-      <!-- TOP PICKS -->
-      <section class="intelligence-panel top-picks-panel">
-        <div class="panel-header">
-          <span>AI Smart Money</span>
-          <span class="panel-subtitle">Top Picks</span>
-        </div>
-        <div class="panel-body">
-          <div class="panel-placeholder">No picks yet.</div>
-          <div id="picks-list"></div>
-        </div>
-      </section>
-
-      <!-- VALUE PICKS -->
-      <section class="intelligence-panel value-panel">
-        <div class="panel-header">
-          <span>AI Value Picks</span>
-        </div>
-        <div class="panel-body">
-          <div class="panel-placeholder">Analyzing...</div>
-          <div id="value-picks-list"></div>
-        </div>
-      </section>
-
-      <!-- LIVE -->
-      <section class="intelligence-panel live-panel">
-        <div class="panel-header">
-          <span>Live Matches</span>
-        </div>
-        <div class="panel-body">
-          <div class="panel-placeholder">Waiting for live data...</div>
-          <div id="live-list"></div>
-        </div>
-      </section>
-
-    </aside>
-
-  </div>
-
-<!-- =====================================================
-       CORE EVENT BUS (ΠΡΕΠΕΙ ΝΑ ΕΚΤΕΛΕΣΤΕΙ ΠΡΩΤΟ)
-  ===================================================== -->
-  <script src="assets/js/ui/app.js"></script>
-
-  <!-- =====================================================
-       GLOBAL STATE / THEME / LANGUAGE / LEGAL / INSTALL
-       (FOUNDATION – ΠΡΙΝ ΟΠΟΙΟΔΗΠΟΤΕ UI)
-  ===================================================== -->
-  <script src="assets/js/state.js"></script>
-  <script src="assets/js/theme.js"></script>
-  <script src="assets/js/language.js"></script>
-  <script src="assets/js/legal-menu.js"></script>
-  <script src="assets/js/install.js"></script>
-
-  <!-- =====================================================
-       MOBILE UI (LEFT / ODDS / RIGHT) ✅ ΜΟΝΟ 1 ΦΟΡΑ
-  ===================================================== -->
-  <script src="assets/js/mobile-ui.js"></script>
-
-  <!-- =====================================================
-       ODDS KV DEBUG LOGGER (ΠΡΟΣΩΡΙΝΟ – ΜΟΝΟ LOG)
-  ===================================================== -->
-  <script src="assets/js/odds/odds-kv-log.js"></script>
-
-  <!-- =====================================================
-       GLOBAL CONFIG (LIVE – ΟΠΩΣ ΕΙΝΑΙ)
-  ===================================================== -->
-  <script>
-    window.AIML_LIVE_CFG = {
-      liveBase: "https://live-matches-worker.pierros1402.workers.dev",
-      livePath: "/api/unified-live"
-    };
-  </script>
-
-  <script>
-    window.AIML_VALUE_CFG = {
-      valueBase: "https://aimatchlab-main-worker.pierros1402.workers.dev"
-    };
-  </script>
-
-  <!-- =====================================================
-       LEFT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
-  ===================================================== -->
-  <script src="assets/js/ui/today-panel.js"></script>
-  <script src="assets/js/ui/active-leagues-panel.js"></script>
-  <script src="assets/js/ui/matches-panel.js"></script>
-  <script src="assets/js/ui/saved-store.js"></script>
-  <script src="assets/js/ui/saved-panel.js"></script>
-
-  <!-- =====================================================
-       TOPBAR ORCHESTRATOR (ΜΕΤΑ THEME / STATE)
-  ===================================================== -->
-  <script defer src="assets/js/ui/topbar.js"></script>
-
-  <!-- =====================================================
-       LIVE ENGINE (ΔΕΝ ΑΛΛΑΖΕΙ)
-  ===================================================== -->
-  <script src="assets/js/live/live-engine.js"></script>
-
-  <!-- =====================================================
-       VALUE ENGINE ADAPTER (Worker -> UI)
-  ===================================================== -->
-  <script src="assets/js/live/value-adapter.js"></script>
-
-  <!-- =====================================================
-       ODDS DATA PIPELINE
-  ===================================================== -->
-  <script src="assets/js/odds/odds-canonical-batch-to-core.js"></script>
-
-  <!-- =====================================================
-       ODDS INTELLIGENCE CENTER
-  ===================================================== -->
-  <script src="assets/js/ui/oic-engine.js"></script>
-  <script src="assets/js/ui/oic-renderer.js"></script>
-
-  <!-- =====================================================
-       RIGHT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
-  ===================================================== -->
-  <script src="assets/js/ui/odds-radar.js"></script>
-  <script src="assets/js/ui/top-picks.js"></script>
-  <script src="assets/js/ui/value-picks.js"></script>
-  <script src="assets/js/ui/live-panel.js"></script>
-  <script src="assets/js/ui/accordion.js"></script>
-  <script>
-(() => {
-  const map = [
-    ["btn-legal-desktop", "btn-legal"],
-    ["btn-install-desktop", "btn-install"],
-    ["btn-export-desktop", "btn-export"],
+/**
+ * AIMATCHLAB – VALUE ENGINE WORKER (PATCHED)
+ * Responsibilities:
+ * - Produce daily value picks summary for UI:
+ *     Writes: VALUE:SUMMARY:<YYYY-MM-DD>
+ * - Keep legacy/stat payload for evaluation:
+ *     Writes: VALUE:STAT:DATE:<YYYY-MM-DD>
+ * - FT evaluation CSV:
+ *     Writes: VALUE:EVAL:CSV:DATE:<YYYY-MM-DD>
+ *
+ * Notes:
+ * - This patch fixes `totalPRE` ReferenceError.
+ * - Produces 1 row per market (BTTS, DC, 1X2, OVER/UNDER 1.5/2.5/3.5).
+ * - Score is written as % based on confidence (LOW/MEDIUM/HIGH).
+ */
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/internal/run") {
+      return runValueEngine(env, url);
+    }
+
+    if (url.pathname === "/internal/eval") {
+      return runEvaluation(env, url);
+    }
+
+    return new Response("Not Found", { status: 404 });
+  }
+};
+
+/* ======================================================
+   PRE VALUE ENGINE – STATISTICS ONLY (NO ODDS)
+   Writes:
+     - VALUE:STAT:DATE:YYYY-MM-DD (JSON)  (legacy/eval)
+     - VALUE:SUMMARY:YYYY-MM-DD   (JSON)  (UI)
+====================================================== */
+
+async function runValueEngine(env, url) {
+  const date = url.searchParams.get("date") || isoToday();
+
+  // --- Fixtures (PRE)
+  const fixturesKey = `FIXTURES:DATE:${date}`;
+  const fixturesRaw = await env.AIMATCHLAB_KV_CORE.get(fixturesKey);
+  if (!fixturesRaw) return json({ ok: false, reason: "no_fixtures", date });
+
+  let fixtures;
+  try {
+    fixtures = JSON.parse(fixturesRaw);
+  } catch {
+    return json({ ok: false, reason: "fixtures_invalid_json", date });
+  }
+
+  const matches = Array.isArray(fixtures.matches) ? fixtures.matches : [];
+  const totalPRE = matches.filter(m => String(m?.status).toUpperCase() === "PRE").length;
+
+  // --- TEAM_STATS index (with newline fallback)
+  let indexRaw = await env.AIMATCHLAB_STATS.get("TEAM_STATS:INDEX");
+  if (!indexRaw) indexRaw = await env.AIMATCHLAB_STATS.get("TEAM_STATS:INDEX\n");
+  if (!indexRaw) return json({ ok: false, reason: "missing_team_stats_index" });
+
+  let latest;
+  try {
+    latest = JSON.parse(indexRaw).latest;
+  } catch {
+    return json({ ok: false, reason: "invalid_team_stats_index" });
+  }
+  if (!latest) return json({ ok: false, reason: "team_stats_index_no_latest" });
+
+  const statsRaw = await env.AIMATCHLAB_STATS.get(`TEAM_STATS:SEASON:${latest}`);
+  if (!statsRaw) {
+    return json({ ok: false, reason: "missing_team_stats_season", season: latest });
+  }
+
+  let leagues;
+  try {
+    leagues = JSON.parse(statsRaw).leagues || {};
+  } catch {
+    return json({ ok: false, reason: "invalid_team_stats_season", season: latest });
+  }
+
+  const results = [];
+  const summaryItems = [];
+
+  let skippedCups = 0;
+  let skippedNoStats = 0;
+
+  for (const m of matches) {
+    if (!m) continue;
+    const st = String(m.status || "").toUpperCase();
+    const isPRE = (st === "PRE" || st === "STATUS_SCHEDULED");
+    if (!isPRE) continue;
+
+
+
+    if (isDomesticCup(m.leagueSlug)) {
+      skippedCups++;
+      continue;
+    }
+
+    const found = findStatsForTeams(leagues, m.home, m.away);
+    if (!found) {
+      skippedNoStats++;
+      continue;
+    }
+
+    const markets = buildMarkets_AllForTesting(found.homeStats, found.awayStats);
+    if (!markets || Object.keys(markets).length === 0) continue;
+
+    // legacy per-match blob (kept for eval/backtest)
+    results.push({
+      matchId: m.id,
+      league: found.leagueCode,
+      leagueSlug: m.leagueSlug,
+      leagueName: m.leagueName || m.leagueSlug || found.leagueCode,
+      kickoff: m.kickoff,
+      home: m.home,
+      away: m.away,
+      markets
+    });
+
+    // UI summary: 1 row per market
+    const flat = flattenMarkets(markets);
+    for (const it of flat) {
+      const confidence = String(it.confidence || "LOW").toUpperCase();
+      const scorePct = confidenceScorePercent(confidence);
+
+      summaryItems.push({
+        matchId: String(m.id || ""),
+        leagueSlug: m.leagueSlug || "",
+        leagueName: m.leagueName || m.leagueSlug || "",
+        kickoff: m.kickoff || "",
+        home: m.home || "",
+        away: m.away || "",
+
+        market: normalizeMarketLabel(it.market),
+        pick: normalizePickLabel(it.market, it.prediction),
+        confidence,
+        score: scorePct
+      });
+    }
+  }
+
+  // --- Write legacy STAT key (kept)
+  const outKey = `VALUE:STAT:DATE:${date}`;
+  await env.AIMATCHLAB_KV_CORE.put(
+    outKey,
+    JSON.stringify(
+      {
+        date,
+        season: latest,
+        totalMatches: matches.length,
+            produced: results.length,
+        skippedCups,
+        skippedNoStats,
+        results
+      },
+      null,
+      2
+    )
+  );
+
+  // --- Write UI SUMMARY key (required by main/UI)
+  const summaryKey = `VALUE:SUMMARY:${date}`;
+  const summaryPayload = {
+    date,
+    createdAt: Date.now(),
+    season: latest,
+    totalMatches: matches.length,
+    producedItems: summaryItems.length,
+    producedMatches: results.length,
+    skippedCups,
+    skippedNoStats,
+    items: summaryItems
+  };
+
+  await env.AIMATCHLAB_KV_CORE.put(summaryKey, JSON.stringify(summaryPayload));
+
+  return json({
+    ok: true,
+    date,
+    season: latest,
+    totalMatches: matches.length,
+    producedMatches: results.length,
+    producedItems: summaryItems.length,
+    skippedCups,
+    skippedNoStats,
+    writtenKey: outKey,
+    writtenSummaryKey: summaryKey
+  });
+}
+
+/* ======================================================
+   FT EVALUATION – CSV (EXCEL FRIENDLY)
+   Reads:
+     - VALUE:STAT:DATE:<date>
+     - FIXTURES:DATE:<date> (FT scores)
+   Writes:
+     - VALUE:EVAL:CSV:DATE:<date>
+====================================================== */
+
+async function runEvaluation(env, url) {
+  const date = url.searchParams.get("date") || isoYesterday();
+
+  const valueKey = `VALUE:STAT:DATE:${date}`;
+  const fixturesKey = `FIXTURES:DATE:${date}`;
+  const outCsvKey = `VALUE:EVAL:CSV:DATE:${date}`;
+
+  const [valueRaw, fixturesRaw] = await Promise.all([
+    env.AIMATCHLAB_KV_CORE.get(valueKey),
+    env.AIMATCHLAB_KV_CORE.get(fixturesKey)
+  ]);
+
+  if (!valueRaw) return json({ ok: false, reason: "missing_value_predictions", date, key: valueKey });
+  if (!fixturesRaw) return json({ ok: false, reason: "missing_fixtures", date, key: fixturesKey });
+
+  let valueDoc, fixturesDoc;
+  try {
+    valueDoc = JSON.parse(valueRaw);
+  } catch {
+    return json({ ok: false, reason: "value_invalid_json", date });
+  }
+  try {
+    fixturesDoc = JSON.parse(fixturesRaw);
+  } catch {
+    return json({ ok: false, reason: "fixtures_invalid_json", date });
+  }
+
+  const preds = Array.isArray(valueDoc.results) ? valueDoc.results : [];
+  const matches = Array.isArray(fixturesDoc.matches) ? fixturesDoc.matches : [];
+
+  // Map FT by matchId
+  const ftById = new Map();
+  for (const m of matches) {
+    if (!m || !m.id) continue;
+    if (String(m.status).toUpperCase() === "FT" && isFiniteNum(m.scoreHome) && isFiniteNum(m.scoreAway)) {
+      ftById.set(String(m.id), m);
+    }
+  }
+
+  // CSV header (fixed, readable)
+  const header = [
+    "Date",
+    "League",
+    "Match",
+    "Market",
+    "Prediction",
+    "Probability",
+    "Confidence",
+    "FT_Score",
+    "FT_Result",
+    "Success"
   ];
 
-  for (const [srcId, targetId] of map) {
-    const src = document.getElementById(srcId);
-    const target = document.getElementById(targetId);
+  const rows = [header];
 
-    if (!src || !target) continue;
+  let totalMarkets = 0;
+  let settled = 0;
+  let win = 0;
+  let loss = 0;
+  let voided = 0;
+  let missingFT = 0;
 
-    src.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      target.click();
-    });
+  for (const p of preds) {
+    const matchId = String(p.matchId || "");
+    if (!matchId) continue;
+
+    const ft = ftById.get(matchId);
+    if (!ft) {
+      missingFT++;
+      continue;
+    }
+
+    const home = p.home || "";
+    const away = p.away || "";
+    const league = p.league || p.leagueSlug || "";
+
+    const ftHome = Number(ft.scoreHome);
+    const ftAway = Number(ft.scoreAway);
+
+    const markets = p.markets || {};
+    const flat = flattenMarkets(markets);
+
+    for (const item of flat) {
+      totalMarkets++;
+
+      const settlement = settleMarket(item, ftHome, ftAway);
+      if (settlement.success === "VOID") voided++;
+      else if (settlement.success === "WIN") win++;
+      else if (settlement.success === "LOSS") loss++;
+
+      if (settlement.success !== "PENDING") settled++;
+
+      rows.push([
+        date,
+        league,
+        `${home} - ${away}`,
+        item.market,
+        item.prediction || "",
+        item.probability ?? "",
+        item.confidence || "",
+        `${ftHome}-${ftAway}`,
+        settlement.ftResult,
+        settlement.success
+      ]);
+    }
   }
-})();
-</script>
 
-</body>
-</html>
+  const csv = toCsv(rows);
+
+  await env.AIMATCHLAB_KV_CORE.put(outCsvKey, csv);
+
+  return json({
+    ok: true,
+    date,
+    wrote: outCsvKey,
+    totalMarkets,
+    settled,
+    win,
+    loss,
+    voided,
+    missingFT_matches: missingFT
+  });
+}
+
+/* ======================================================
+   SCORE MAPPING (Confidence -> %)
+====================================================== */
+
+function confidenceScorePercent(confidence) {
+  const c = String(confidence || "").toUpperCase();
+  if (c === "HIGH") return 75;
+  if (c === "MEDIUM") return 62;
+  return 52; // LOW / default
+}
+
+/* ======================================================
+   LABEL NORMALIZERS (for UI)
+====================================================== */
+
+function normalizeMarketLabel(market) {
+  const m = String(market || "").toUpperCase().replaceAll(" ", "");
+  if (m === "BTTS") return "BTTS";
+  if (m === "DC" || m === "DOUBLECHANCE") return "DC";
+  if (m === "1X2") return "1X2";
+
+  if (m.includes("OVER_15")) return "O/U 1.5";
+  if (m.includes("UNDER_15")) return "O/U 1.5";
+  if (m.includes("OVER_25")) return "O/U 2.5";
+  if (m.includes("UNDER_25")) return "O/U 2.5";
+  if (m.includes("OVER_35")) return "O/U 3.5";
+  if (m.includes("UNDER_35")) return "O/U 3.5";
+
+  return market || "";
+}
+
+function normalizePickLabel(market, prediction) {
+  const m = String(market || "").toUpperCase().replaceAll(" ", "");
+  const p = String(prediction || "").toUpperCase().replaceAll(" ", "");
+
+  if (m === "BTTS") return p || "YES";
+  if (m === "DC") return p;
+  if (m === "1X2") return p;
+
+  if (m.includes("OVER_")) return "OVER";
+  if (m.includes("UNDER_")) return "UNDER";
+
+  return p;
+}
+
+/* ======================================================
+   MARKET BUILD (TESTING MODE – keep all)
+====================================================== */
+
+function buildMarkets_AllForTesting(home, away) {
+  if (!home || !away) return {};
+
+  const markets = {};
+
+  const muOk = (home.matches_used || 0) >= 5 && (away.matches_used || 0) >= 5;
+
+  // --- BTTS prob (if available)
+  if (typeof home.btts_rate === "number" && typeof away.btts_rate === "number") {
+    const bttsProb = (home.btts_rate + away.btts_rate) / 2;
+    markets.btts = {
+      market: "BTTS",
+      prediction: "YES",
+      prob: round(bttsProb),
+      confidence: tier(bttsProb, 0.62, 0.56)
+    };
+  }
+
+  // --- Over/Under heuristic
+  const gfH = safeNum(home.goals_for_avg);
+  const gfA = safeNum(away.goals_for_avg);
+  const xG = gfH + gfA;
+
+  const pOver15 = clamp01(0.50 + (xG - 1.5) * 0.25);
+  const pOver25 = clamp01(0.50 + (xG - 2.5) * 0.20);
+  const pOver35 = clamp01(0.50 + (xG - 3.5) * 0.18);
+
+  markets.over15 = { market: "OVER_15", prediction: "OVER", prob: round(pOver15), confidence: tier(pOver15, 0.70, 0.60) };
+  markets.under15 = { market: "UNDER_15", prediction: "UNDER", prob: round(1 - pOver15), confidence: tier(1 - pOver15, 0.70, 0.60) };
+
+  markets.over25 = { market: "OVER_25", prediction: "OVER", prob: round(pOver25), confidence: tier(pOver25, 0.65, 0.56) };
+  markets.under25 = { market: "UNDER_25", prediction: "UNDER", prob: round(1 - pOver25), confidence: tier(1 - pOver25, 0.65, 0.56) };
+
+  markets.over35 = { market: "OVER_35", prediction: "OVER", prob: round(pOver35), confidence: tier(pOver35, 0.55, 0.48) };
+  markets.under35 = { market: "UNDER_35", prediction: "UNDER", prob: round(1 - pOver35), confidence: tier(1 - pOver35, 0.70, 0.60) };
+
+  // --- DC / 1X2 from goals_for_avg diff (simple)
+  const delta = gfH - gfA;
+
+  if (muOk) {
+    if (delta >= 0.20) markets.dc = { market: "DC", prediction: "1X", confidence: delta >= 0.35 ? "HIGH" : "MEDIUM" };
+    else if (delta <= -0.20) markets.dc = { market: "DC", prediction: "X2", confidence: delta <= -0.35 ? "HIGH" : "MEDIUM" };
+    else markets.dc = { market: "DC", prediction: "12", confidence: "LOW" };
+  }
+
+  if (muOk) {
+    if (delta >= 0.40) markets["1x2"] = { market: "1X2", prediction: "1", confidence: delta >= 0.55 ? "HIGH" : "MEDIUM" };
+    else if (delta <= -0.40) markets["1x2"] = { market: "1X2", prediction: "2", confidence: delta <= -0.55 ? "HIGH" : "MEDIUM" };
+  }
+
+  return markets;
+}
+
+/* ======================================================
+   SETTLEMENT
+====================================================== */
+
+function settleMarket(item, ftHome, ftAway) {
+  const total = ftHome + ftAway;
+  const bttsYes = ftHome > 0 && ftAway > 0;
+
+  const pred = (item.prediction || "").toUpperCase();
+  const mkt = (item.market || "").toUpperCase();
+
+  let ftResult = "";
+  let success = "VOID";
+
+  if (mkt === "BTTS") {
+    ftResult = bttsYes ? "BTTS_YES" : "BTTS_NO";
+    success = (pred === "YES" && bttsYes) || (pred === "NO" && !bttsYes) ? "WIN" : "LOSS";
+    return { ftResult, success };
+  }
+
+  if (mkt === "OVER_15" || mkt === "UNDER_15") {
+    const over = total >= 2;
+    ftResult = over ? "OVER_15" : "UNDER_15";
+    success = (pred === "OVER" && over) || (pred === "UNDER" && !over) ? "WIN" : "LOSS";
+    return { ftResult, success };
+  }
+
+  if (mkt === "OVER_25" || mkt === "UNDER_25") {
+    const over = total >= 3;
+    ftResult = over ? "OVER_25" : "UNDER_25";
+    success = (pred === "OVER" && over) || (pred === "UNDER" && !over) ? "WIN" : "LOSS";
+    return { ftResult, success };
+  }
+
+  if (mkt === "OVER_35" || mkt === "UNDER_35") {
+    const over = total >= 4;
+    ftResult = over ? "OVER_35" : "UNDER_35";
+    success = (pred === "OVER" && over) || (pred === "UNDER" && !over) ? "WIN" : "LOSS";
+    return { ftResult, success };
+  }
+
+  if (mkt === "DC") {
+    const res = ftHome > ftAway ? "1" : ftHome < ftAway ? "2" : "X";
+    ftResult = res;
+
+    if (pred === "1X") success = (res === "1" || res === "X") ? "WIN" : "LOSS";
+    else if (pred === "X2") success = (res === "2" || res === "X") ? "WIN" : "LOSS";
+    else if (pred === "12") success = (res === "1" || res === "2") ? "WIN" : "LOSS";
+    else success = "VOID";
+
+    return { ftResult: `DC_${ftResult}`, success };
+  }
+
+  if (mkt === "1X2") {
+    const res = ftHome > ftAway ? "1" : ftHome < ftAway ? "2" : "X";
+    ftResult = `1X2_${res}`;
+    if (pred === "1") success = res === "1" ? "WIN" : "LOSS";
+    else if (pred === "2") success = res === "2" ? "WIN" : "LOSS";
+    else success = "VOID";
+    return { ftResult, success };
+  }
+
+  return { ftResult: "", success: "VOID" };
+}
+
+/* ======================================================
+   MARKET FLATTEN (supports different shapes)
+====================================================== */
+
+function flattenMarkets(marketsObj) {
+  const out = [];
+
+  for (const [k, v] of Object.entries(marketsObj || {})) {
+    if (!v) continue;
+
+    if (typeof v === "object" && v.market) {
+      out.push({
+        market: String(v.market),
+        prediction: v.prediction || "",
+        probability: typeof v.prob === "number" ? v.prob : (typeof v.probability === "number" ? v.probability : null),
+        confidence: v.confidence || ""
+      });
+      continue;
+    }
+
+    if (k === "btts") {
+      out.push({
+        market: "BTTS",
+        prediction: "YES",
+        probability: typeof v.prob === "number" ? v.prob : null,
+        confidence: v.confidence || ""
+      });
+      continue;
+    }
+
+    if (k === "dc") {
+      out.push({
+        market: "DC",
+        prediction: v.pick || v.prediction || "",
+        probability: null,
+        confidence: v.confidence || ""
+      });
+      continue;
+    }
+
+    if (k === "1x2" || k === "1X2") {
+      out.push({
+        market: "1X2",
+        prediction: v.pick || v.prediction || "",
+        probability: null,
+        confidence: v.confidence || ""
+      });
+      continue;
+    }
+
+    const kk = String(k).toLowerCase();
+    const map = {
+      over15: { market: "OVER_15", prediction: "OVER" },
+      under15: { market: "UNDER_15", prediction: "UNDER" },
+      over25: { market: "OVER_25", prediction: "OVER" },
+      under25: { market: "UNDER_25", prediction: "UNDER" },
+      over35: { market: "OVER_35", prediction: "OVER" },
+      under35: { market: "UNDER_35", prediction: "UNDER" }
+    };
+    if (map[kk]) {
+      out.push({
+        market: map[kk].market,
+        prediction: map[kk].prediction,
+        probability: typeof v.prob === "number" ? v.prob : null,
+        confidence: v.confidence || ""
+      });
+    }
+  }
+
+  return out;
+}
+
+/* ======================================================
+   CSV
+====================================================== */
+
+function toCsv(rows) {
+  return rows
+    .map((r) => r.map(csvCell).join(","))
+    .join("\n");
+}
+
+function csvCell(x) {
+  const s = x === null || x === undefined ? "" : String(x);
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+/* ======================================================
+   UTIL
+====================================================== */
+
+function isDomesticCup(slug) {
+  if (!slug) return false;
+  const s = slug.toLowerCase();
+  if (s.startsWith("uefa.") || s.startsWith("caf.") || s.startsWith("afc.")) return false;
+  return s.includes("cup") || s.includes("copa") || s.includes("coppa") || s.includes("trophy");
+}
+
+function normTeamName(s) {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function findStatsForTeams(leagues, home, away) {
+  const h = normTeamName(home);
+  const a = normTeamName(away);
+
+  for (const leagueCode of Object.keys(leagues || {})) {
+    const league = leagues[leagueCode];
+    if (!league) continue;
+
+    if (league?.[home] && league?.[away]) {
+      return { leagueCode, homeStats: league[home], awayStats: league[away] };
+    }
+
+    const keys = Object.keys(league);
+    const map = new Map();
+    for (const k of keys) map.set(normTeamName(k), k);
+
+    const hk = map.get(h);
+    const ak = map.get(a);
+
+    if (hk && ak) {
+      return {
+        leagueCode,
+        homeStats: league[hk],
+        awayStats: league[ak]
+      };
+    }
+  }
+  return null;
+}
+
+function tier(p, hi, med) {
+  if (typeof p !== "number") return "LOW";
+  if (p >= hi) return "HIGH";
+  if (p >= med) return "MEDIUM";
+  return "LOW";
+}
+
+function clamp01(n) {
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
+
+function safeNum(n) {
+  return typeof n === "number" && isFinite(n) ? n : 0;
+}
+
+function isFiniteNum(n) {
+  return typeof n === "number" && isFinite(n);
+}
+
+function round(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
+function isoToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoYesterday() {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function json(obj) {
+  return new Response(JSON.stringify(obj, null, 2), {
+    headers: { "content-type": "application/json" }
+  });
+}
