@@ -708,6 +708,19 @@ function tier(p, hi, med) {
 // - med: MEDIUM threshold
 // - lowMin: minimum probability to keep LOW (borderline LOW window)
 // =====================================================================
+
+/* ======================================================================
+   ✅ LOW WINDOW FILTER (Borderline LOW only)
+   - We only show LOW picks that are close to the market's LOW threshold.
+   - Prevents spam like 50-53% LOW everywhere.
+====================================================================== */
+function isBorderlineLowPick(item, lowMin, window = 0.02) {
+  // allow LOW only in [lowMin, lowMin + window)
+  const p = (item && (item.probability ?? item.prob ?? item.p ?? item.score ?? null));
+  if (typeof p !== "number") return true; // if unknown, don't hard drop
+  return p >= lowMin && p < (lowMin + window);
+}
+
 const MARKET_THRESHOLDS = {
   BTTS:     { hi: 0.62, med: 0.56, lowMin: 0.54 },
 
@@ -751,7 +764,26 @@ function isoYesterday() {
 }
 
 function json(obj) {
-  return new Response(JSON.stringify(obj, null, 2), {
+  
+    /* ✅ APPLY BORDERLINE LOW FILTER */
+    try {
+      const LOW_WINDOW = (MARKET_THRESHOLDS && MARKET_THRESHOLDS.__LOW_WINDOW) || 0.02;
+
+      items = (items || []).filter((it) => {
+        const conf = String(it.confidence || "").toUpperCase();
+        if (conf !== "LOW") return true;
+
+        const mkt = String(it.market || it.marketKey || it.type || "").toUpperCase();
+        const cfg = MARKET_THRESHOLDS[mkt] || MARKET_THRESHOLDS[(it.market||"")] || null;
+        const lowMin = (cfg && typeof cfg.lowMin === "number") ? cfg.lowMin : 0.50;
+
+        return isBorderlineLowPick(it, lowMin, LOW_WINDOW);
+      });
+    } catch (e) {
+      // fail-open
+    }
+
+return new Response(JSON.stringify(obj, null, 2), {
     headers: { "content-type": "application/json" }
   });
 }

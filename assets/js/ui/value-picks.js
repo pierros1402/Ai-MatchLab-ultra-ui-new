@@ -289,7 +289,35 @@
     }
   }
 
-  function applyFilters(picks) {
+  
+// ✅ Borderline LOW window per market (UI filter)
+const LOW_MIN_BY_MARKET = {
+  "BTTS": 0.54,
+  "Over / Under 1.5": 0.58,
+  "Over / Under 2.5": 0.54,
+  "Over / Under 3.5": 0.46,
+  "1X2": 0.55
+};
+
+// πόσο “οριακά” LOW κρατάμε (2%)
+const LOW_WINDOW = 0.02;
+
+function uiLowAllowed(p) {
+  const conf = confidenceKey(p?.confidence);
+  if (conf !== "LOW") return true;
+
+  const m = normalizeMarket(p?.market);
+  const lowMin = LOW_MIN_BY_MARKET[m];
+
+  if (typeof lowMin !== "number") return false;
+
+  const s = Number(p?.score);
+  if (!Number.isFinite(s)) return false;
+
+  return s >= lowMin && s < (lowMin + LOW_WINDOW);
+}
+
+function applyFilters(picks) {
     return picks.filter((p) => {
       const m = normalizeMarket(p?.market);
       const l = leagueLabel(p);
@@ -297,7 +325,8 @@
       if (selectedMarket !== "ALL" && m !== selectedMarket) return false;
       if (selectedLeague !== "ALL" && l !== selectedLeague) return false;
 
-      return true;
+      if (!uiLowAllowed(p)) return false;
+    return true;
     });
   }
 
