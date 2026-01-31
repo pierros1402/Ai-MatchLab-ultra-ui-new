@@ -373,6 +373,18 @@ function normalizePickLabel(market, prediction) {
    MARKET BUILD (TESTING MODE – keep all)
 ====================================================== */
 
+
+function pickOverUnder(labelOver, labelUnder, pOver, hi, med) {
+  if (typeof pOver !== "number" || !isFinite(pOver)) {
+    return { label: labelOver, confidence: "LOW", prob: 0.5, side: "OVER" };
+  }
+  if (pOver >= 0.5) {
+    return { label: labelOver, confidence: tier(pOver, hi, med), prob: pOver, side: "OVER" };
+  }
+  const pUnder = 1 - pOver;
+  return { label: labelUnder, confidence: tier(pUnder, hi, med), prob: pUnder, side: "UNDER" };
+}
+
 function buildMarkets_AllForTesting(home, away) {
   if (!home || !away) return {};
 
@@ -399,17 +411,32 @@ function buildMarkets_AllForTesting(home, away) {
   const pOver15 = clamp01(0.50 + (xG - 1.5) * 0.25);
   const pOver25 = clamp01(0.50 + (xG - 2.5) * 0.20);
   const pOver35 = clamp01(0.50 + (xG - 3.5) * 0.18);
+  // ✅ ONE pick per line (either OVER or UNDER) to avoid duplicate entries in UI
+  const ou15 = pickOverUnder("O/U 1.5", "U/O 1.5", pOver15, 0.70, 0.60);
+  const ou25 = pickOverUnder("O/U 2.5", "U/O 2.5", pOver25, 0.65, 0.56);
+  const ou35 = pickOverUnder("O/U 3.5", "U/O 3.5", pOver35, 0.55, 0.48);
 
-  markets.over15 = { market: "OVER_15", prediction: "OVER", prob: round(pOver15), confidence: tier(pOver15, 0.70, 0.60) };
-  markets.under15 = { market: "UNDER_15", prediction: "UNDER", prob: round(1 - pOver15), confidence: tier(1 - pOver15, 0.70, 0.60) };
+  markets.ou15 = {
+    market: ou15.side === "OVER" ? "OVER_15" : "UNDER_15",
+    prediction: ou15.side,
+    prob: round(ou15.prob),
+    confidence: ou15.confidence
+  };
 
-  markets.over25 = { market: "OVER_25", prediction: "OVER", prob: round(pOver25), confidence: tier(pOver25, 0.65, 0.56) };
-  markets.under25 = { market: "UNDER_25", prediction: "UNDER", prob: round(1 - pOver25), confidence: tier(1 - pOver25, 0.65, 0.56) };
+  markets.ou25 = {
+    market: ou25.side === "OVER" ? "OVER_25" : "UNDER_25",
+    prediction: ou25.side,
+    prob: round(ou25.prob),
+    confidence: ou25.confidence
+  };
 
-  markets.over35 = { market: "OVER_35", prediction: "OVER", prob: round(pOver35), confidence: tier(pOver35, 0.55, 0.48) };
-  markets.under35 = { market: "UNDER_35", prediction: "UNDER", prob: round(1 - pOver35), confidence: tier(1 - pOver35, 0.70, 0.60) };
-
-  // --- DC / 1X2 from goals_for_avg diff (simple)
+  markets.ou35 = {
+    market: ou35.side === "OVER" ? "OVER_35" : "UNDER_35",
+    prediction: ou35.side,
+    prob: round(ou35.prob),
+    confidence: ou35.confidence
+  };
+// --- DC / 1X2 from goals_for_avg diff (simple)
   const delta = gfH - gfA;
 
   if (muOk) {
