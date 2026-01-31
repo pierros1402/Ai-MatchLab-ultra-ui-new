@@ -1,3 +1,93 @@
+
+
+// ✅ Keep ONLY one side (OVER or UNDER) per matchId + O/U line market (1.5/2.5/3.5)
+function chooseOneSidePerOuLine(items){
+  const byKey = new Map(); // key = matchId|market (market includes line)
+  for (const it of (items||[])){
+    const market = String(it.market||"");
+    if (!market.startsWith("O/U")) continue;
+
+    const key = `${it.matchId}|${market}`;
+    const prev = byKey.get(key);
+    if (!prev){ byKey.set(key, it); continue; }
+
+    const sPrev = Number(prev.score);
+    const sNew  = Number(it.score);
+    const rPrev = confRank(prev.confidence);
+    const rNew  = confRank(it.confidence);
+
+    if (Number.isFinite(sNew) && (!Number.isFinite(sPrev) || sNew > sPrev)) { byKey.set(key, it); continue; }
+    if (Number.isFinite(sPrev) && Number.isFinite(sNew) && sNew === sPrev && rNew > rPrev) { byKey.set(key, it); continue; }
+  }
+  return Array.from(byKey.values());
+}
+
+function dedupMatchMarketPick(items){
+  const seen = new Set();
+  const out = [];
+  for (const it of (items||[])){
+    const key = `${it.matchId}|${it.market}|${it.pick}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(it);
+  }
+  return out;
+}
+
+
+function confRank(c){
+  const x = String(c||"").toUpperCase();
+  if (x === "HIGH") return 3;
+  if (x === "MEDIUM") return 2;
+  if (x === "LOW") return 1;
+  return 0;
+}
+
+function dedupOnePickPerMarket(items){
+  const best = new Map(); // key = matchId|market
+  for (const it of (items || [])) {
+    const key = `${it.matchId}|${it.market}`;
+    const prev = best.get(key);
+    if (!prev) { best.set(key, it); continue; }
+
+    const s1 = Number(prev.score), s2 = Number(it.score);
+    const r1 = confRank(prev.confidence), r2 = confRank(it.confidence);
+
+    // Prefer higher score
+    if (Number.isFinite(s2) && (!Number.isFinite(s1) || s2 > s1)) {
+      best.set(key, it); continue;
+    }
+    // Tie-breaker by confidence rank
+    if (Number.isFinite(s1) && Number.isFinite(s2) && s2 === s1 && r2 > r1) {
+      best.set(key, it); continue;
+    }
+  }
+  return Array.from(best.values());
+}
+
+// ✅ Freeze existing picks (do not overwrite) by matchId|market
+// Used to keep daily snapshot stable if scheduler re-runs later during LIVE/FT.
+function freezeByExistingSummary(finalItems, existingItems){
+  const existingMap = new Map(); // key = matchId|market -> item
+  for (const it of (existingItems || [])){
+    if (!it) continue;
+    const key = `${String(it.matchId||"")}|${String(it.market||"")}`;
+    if (!existingMap.has(key)) existingMap.set(key, it);
+  }
+
+  const outMap = new Map();
+  // first, take new items
+  for (const it of (finalItems || [])){
+    const key = `${String(it.matchId||"")}|${String(it.market||"")}`;
+    outMap.set(key, it);
+  }
+  // then, overwrite with existing (freeze)
+  for (const [key, it] of existingMap.entries()){
+    outMap.set(key, it);
+  }
+  return Array.from(outMap.values());
+}
+
 /**
  * AIMATCHLAB – VALUE ENGINE WORKER (PATCHED)
  * Responsibilities:
@@ -13,6 +103,8 @@
  * - Produces 1 row per market (BTTS, DC, 1X2, OVER/UNDER 1.5/2.5/3.5).
  * - Score is written as % based on confidence (LOW/MEDIUM/HIGH).
  */
+
+console.log("VALUE_ENGINE_BUILD = CHOICE+DEDUP+LOWWINDOW_0.02");
 
 export default {
   async fetch(request, env) {
@@ -122,39 +214,12 @@ async function runValueEngine(env, url) {
 
     // UI summary: 1 row per market
     const flat = flattenMarkets(markets);
-    
-for (const it of flat) {
+    for (const it of flat) {
       const confidence = String(it.confidence || "LOW").toUpperCase();
       const scorePct = confidenceScorePercent(confidence);
 
-      // ✅ Keep LOW, but only if it's "borderline" (near MEDIUM threshold) per market.
-      const p = typeof it.probability === "number" ? it.probability : (typeof it.prob === "number" ? it.prob : null);
-
-      const LOW_MIN_BY_MARKET = {
-        BTTS: MARKET_THRESHOLDS.BTTS.lowMin,
-
-        OVER_15: MARKET_THRESHOLDS.OVER_15.lowMin,
-        UNDER_15: MARKET_THRESHOLDS.UNDER_15.lowMin,
-
-        OVER_25: MARKET_THRESHOLDS.OVER_25.lowMin,
-        UNDER_25: MARKET_THRESHOLDS.UNDER_25.lowMin,
-
-        OVER_35: MARKET_THRESHOLDS.OVER_35.lowMin,
-        UNDER_35: MARKET_THRESHOLDS.UNDER_35.lowMin,
-      };
-
-      if (confidence === "LOW") {
-        const lowMin = LOW_MIN_BY_MARKET[it.market] ?? null;
-        if (lowMin != null) {
-          if (p == null || p < lowMin) continue; // skip weak LOW
-        } else {
-          // unknown market: don't keep LOW
-          continue;
-        }
-      }
-
       summaryItems.push({
-matchId: String(m.id || ""),
+        matchId: String(m.id || ""),
         leagueSlug: m.leagueSlug || "",
         leagueName: m.leagueName || m.leagueSlug || "",
         kickoff: m.kickoff || "",
@@ -190,17 +255,39 @@ matchId: String(m.id || ""),
 
   // --- Write UI SUMMARY key (required by main/UI)
   const summaryKey = `VALUE:SUMMARY:${date}`;
-  const summaryPayload = {
-    date,
-    createdAt: Date.now(),
-    season: latest,
-    totalMatches: matches.length,
-    producedItems: summaryItems.length,
-    producedMatches: results.length,
-    skippedCups,
-    skippedNoStats,
-    items: summaryItems
-  };
+
+// ✅ Load existing SUMMARY (if any) to freeze picks and keep daily snapshot stable
+let existingSummaryItems = [];
+try {
+  const prevRaw = await env.AIMATCHLAB_KV_CORE.get(summaryKey);
+  if (prevRaw) {
+    const prev = JSON.parse(prevRaw);
+    if (prev && Array.isArray(prev.items)) existingSummaryItems = prev.items;
+  }
+} catch (e) {
+  // ignore
+}  // ✅ FINALIZE SUMMARY ITEMS:
+// 1) Keep only best side (OVER or UNDER) per O/U line (1.5 / 2.5 / 3.5)
+// 2) Dedup exact duplicates
+// 3) Ensure 1 pick per market per match
+let finalItems = summaryItems;
+finalItems = chooseOneSidePerOuLine(finalItems);
+finalItems = dedupMatchMarketPick(finalItems);
+finalItems = dedupOnePickPerMarket(finalItems);
+  // ✅ Freeze: keep existing picks if already written earlier today
+  finalItems = freezeByExistingSummary(finalItems, existingSummaryItems);
+
+const summaryPayload = {
+  date,
+  createdAt: Date.now(),
+  season: latest,
+  totalMatches: matches.length,
+  producedItems: finalItems.length,
+  producedMatches: results.length,
+  skippedCups,
+  skippedNoStats,
+  items: finalItems
+};
 
   await env.AIMATCHLAB_KV_CORE.put(summaryKey, JSON.stringify(summaryPayload));
 
@@ -400,30 +487,6 @@ function normalizePickLabel(market, prediction) {
    MARKET BUILD (TESTING MODE – keep all)
 ====================================================== */
 
-
-function pickOverUnder(labelOver, labelUnder, pOver, marketOver, marketUnder) {
-  const tOver = MARKET_THRESHOLDS[marketOver] || null;
-  const tUnder = MARKET_THRESHOLDS[marketUnder] || null;
-
-  // fallback defaults (should rarely be needed)
-  const hiOver = tOver?.hi ?? 0.65;
-  const medOver = tOver?.med ?? 0.56;
-
-  const hiUnder = tUnder?.hi ?? 0.65;
-  const medUnder = tUnder?.med ?? 0.56;
-
-  if (typeof pOver !== "number" || !isFinite(pOver)) {
-    return { label: labelOver, confidence: "LOW", prob: 0.5, side: "OVER" };
-  }
-
-  if (pOver >= 0.5) {
-    return { label: labelOver, confidence: tier(pOver, hiOver, medOver), prob: pOver, side: "OVER" };
-  }
-
-  const pUnder = 1 - pOver;
-  return { label: labelUnder, confidence: tier(pUnder, hiUnder, medUnder), prob: pUnder, side: "UNDER" };
-}
-
 function buildMarkets_AllForTesting(home, away) {
   if (!home || !away) return {};
 
@@ -438,7 +501,7 @@ function buildMarkets_AllForTesting(home, away) {
       market: "BTTS",
       prediction: "YES",
       prob: round(bttsProb),
-      confidence: tier(bttsProb, MARKET_THRESHOLDS.BTTS.hi, MARKET_THRESHOLDS.BTTS.med)
+      confidence: tier(bttsProb, 0.62, 0.56)
     };
   }
 
@@ -450,32 +513,17 @@ function buildMarkets_AllForTesting(home, away) {
   const pOver15 = clamp01(0.50 + (xG - 1.5) * 0.25);
   const pOver25 = clamp01(0.50 + (xG - 2.5) * 0.20);
   const pOver35 = clamp01(0.50 + (xG - 3.5) * 0.18);
-  // ✅ ONE pick per line (either OVER or UNDER) to avoid duplicate entries in UI
-  const ou15 = pickOverUnder("O/U 1.5", "U/O 1.5", pOver15, "OVER_15", "UNDER_15");
-  const ou25 = pickOverUnder("O/U 2.5", "U/O 2.5", pOver25, "OVER_25", "UNDER_25");
-  const ou35 = pickOverUnder("O/U 3.5", "U/O 3.5", pOver35, "OVER_35", "UNDER_35");
 
-  markets.ou15 = {
-    market: ou15.side === "OVER" ? "OVER_15" : "UNDER_15",
-    prediction: ou15.side,
-    prob: round(ou15.prob),
-    confidence: ou15.confidence
-  };
+  markets.over15 = { market: "OVER_15", prediction: "OVER", prob: round(pOver15), confidence: tier(pOver15, 0.70, 0.60) };
+  markets.under15 = { market: "UNDER_15", prediction: "UNDER", prob: round(1 - pOver15), confidence: tier(1 - pOver15, 0.70, 0.60) };
 
-  markets.ou25 = {
-    market: ou25.side === "OVER" ? "OVER_25" : "UNDER_25",
-    prediction: ou25.side,
-    prob: round(ou25.prob),
-    confidence: ou25.confidence
-  };
+  markets.over25 = { market: "OVER_25", prediction: "OVER", prob: round(pOver25), confidence: tier(pOver25, 0.65, 0.56) };
+  markets.under25 = { market: "UNDER_25", prediction: "UNDER", prob: round(1 - pOver25), confidence: tier(1 - pOver25, 0.65, 0.56) };
 
-  markets.ou35 = {
-    market: ou35.side === "OVER" ? "OVER_35" : "UNDER_35",
-    prediction: ou35.side,
-    prob: round(ou35.prob),
-    confidence: ou35.confidence
-  };
-// --- DC / 1X2 from goals_for_avg diff (simple)
+  markets.over35 = { market: "OVER_35", prediction: "OVER", prob: round(pOver35), confidence: tier(pOver35, 0.55, 0.48) };
+  markets.under35 = { market: "UNDER_35", prediction: "UNDER", prob: round(1 - pOver35), confidence: tier(1 - pOver35, 0.70, 0.60) };
+
+  // --- DC / 1X2 from goals_for_avg diff (simple)
   const delta = gfH - gfA;
 
   if (muOk) {
@@ -702,39 +750,6 @@ function tier(p, hi, med) {
   return "LOW";
 }
 
-// =====================================================================
-// ✅ MARKET THRESHOLDS (single source of truth)
-// - hi: HIGH threshold
-// - med: MEDIUM threshold
-// - lowMin: minimum probability to keep LOW (borderline LOW window)
-// =====================================================================
-
-/* ======================================================================
-   ✅ LOW WINDOW FILTER (Borderline LOW only)
-   - We only show LOW picks that are close to the market's LOW threshold.
-   - Prevents spam like 50-53% LOW everywhere.
-====================================================================== */
-function isBorderlineLowPick(item, lowMin, window = 0.02) {
-  // allow LOW only in [lowMin, lowMin + window)
-  const p = (item && (item.probability ?? item.prob ?? item.p ?? item.score ?? null));
-  if (typeof p !== "number") return true; // if unknown, don't hard drop
-  return p >= lowMin && p < (lowMin + window);
-}
-
-const MARKET_THRESHOLDS = {
-  BTTS:     { hi: 0.62, med: 0.56, lowMin: 0.54 },
-
-  OVER_15:  { hi: 0.70, med: 0.60, lowMin: 0.58 },
-  UNDER_15: { hi: 0.70, med: 0.60, lowMin: 0.58 },
-
-  OVER_25:  { hi: 0.65, med: 0.56, lowMin: 0.54 },
-  UNDER_25: { hi: 0.65, med: 0.56, lowMin: 0.54 },
-
-  OVER_35:  { hi: 0.55, med: 0.48, lowMin: 0.46 },
-  UNDER_35: { hi: 0.55, med: 0.48, lowMin: 0.46 },
-};
-
-
 function clamp01(n) {
   if (n < 0) return 0;
   if (n > 1) return 1;
@@ -764,26 +779,7 @@ function isoYesterday() {
 }
 
 function json(obj) {
-  
-    /* ✅ APPLY BORDERLINE LOW FILTER */
-    try {
-      const LOW_WINDOW = (MARKET_THRESHOLDS && MARKET_THRESHOLDS.__LOW_WINDOW) || 0.02;
-
-      items = (items || []).filter((it) => {
-        const conf = String(it.confidence || "").toUpperCase();
-        if (conf !== "LOW") return true;
-
-        const mkt = String(it.market || it.marketKey || it.type || "").toUpperCase();
-        const cfg = MARKET_THRESHOLDS[mkt] || MARKET_THRESHOLDS[(it.market||"")] || null;
-        const lowMin = (cfg && typeof cfg.lowMin === "number") ? cfg.lowMin : 0.50;
-
-        return isBorderlineLowPick(it, lowMin, LOW_WINDOW);
-      });
-    } catch (e) {
-      // fail-open
-    }
-
-return new Response(JSON.stringify(obj, null, 2), {
+  return new Response(JSON.stringify(obj, null, 2), {
     headers: { "content-type": "application/json" }
   });
 }
