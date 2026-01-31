@@ -99,6 +99,9 @@
       date,
       items
     });
+
+    emit("value:update", { date, items });
+
   }
 
   // ✅ Run once on load (safe)
