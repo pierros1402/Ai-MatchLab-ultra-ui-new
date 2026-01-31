@@ -122,12 +122,39 @@ async function runValueEngine(env, url) {
 
     // UI summary: 1 row per market
     const flat = flattenMarkets(markets);
-    for (const it of flat) {
+    
+for (const it of flat) {
       const confidence = String(it.confidence || "LOW").toUpperCase();
       const scorePct = confidenceScorePercent(confidence);
 
+      // ✅ Keep LOW, but only if it's "borderline" (near MEDIUM threshold) per market.
+      const p = typeof it.probability === "number" ? it.probability : (typeof it.prob === "number" ? it.prob : null);
+
+      const LOW_MIN_BY_MARKET = {
+        // Over/Under borderline-low windows
+        "OVER_15": 0.58,
+        "UNDER_15": 0.58,
+        "OVER_25": 0.54,
+        "UNDER_25": 0.54,
+        "OVER_35": 0.46,
+        "UNDER_35": 0.46,
+
+        // BTTS borderline-low
+        "BTTS": 0.54
+      };
+
+      if (confidence === "LOW") {
+        const lowMin = LOW_MIN_BY_MARKET[it.market] ?? null;
+        if (lowMin != null) {
+          if (p == null || p < lowMin) continue; // skip weak LOW
+        } else {
+          // unknown market: don't keep LOW
+          continue;
+        }
+      }
+
       summaryItems.push({
-        matchId: String(m.id || ""),
+matchId: String(m.id || ""),
         leagueSlug: m.leagueSlug || "",
         leagueName: m.leagueName || m.leagueSlug || "",
         kickoff: m.kickoff || "",
