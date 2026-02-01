@@ -43,6 +43,12 @@ function confRank(c){
   return 0;
 }
 
+function clamp01(x){
+  const n = Number(x);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
 function dedupOnePickPerMarket(items){
   const best = new Map(); // key = matchId|market
   for (const it of (items || [])) {
@@ -215,7 +221,9 @@ async function runValueEngine(env, url) {
     // UI summary: 1 row per market
     const flat = flattenMarkets(markets);
     for (const it of flat) {
-      const confidence = String(it.confidence || "LOW").toUpperCase();
+      const confidenceRaw = it.confidence;
+      if (!confidenceRaw) continue;
+      const confidence = String(confidenceRaw).toUpperCase();
       const scorePct = confidenceScorePercent(confidence);
 
       summaryItems.push({
@@ -501,7 +509,7 @@ function buildMarkets_AllForTesting(home, away) {
       market: "BTTS",
       prediction: "YES",
       prob: round(bttsProb),
-      confidence: tier(bttsProb, 0.62, 0.56)
+      confidence: tierWithLowWindow(bttsProb, 0.62, 0.56, 0.02)
     };
   }
 
@@ -514,14 +522,14 @@ function buildMarkets_AllForTesting(home, away) {
   const pOver25 = clamp01(0.50 + (xG - 2.5) * 0.20);
   const pOver35 = clamp01(0.50 + (xG - 3.5) * 0.18);
 
-  markets.over15 = { market: "OVER_15", prediction: "OVER", prob: round(pOver15), confidence: tier(pOver15, 0.70, 0.60) };
-  markets.under15 = { market: "UNDER_15", prediction: "UNDER", prob: round(1 - pOver15), confidence: tier(1 - pOver15, 0.70, 0.60) };
+  markets.over15 = { market: "OVER_15", prediction: "OVER", prob: round(pOver15), confidence: tierWithLowWindow(pOver15, 0.70, 0.60, 0.02) };
+  markets.under15 = { market: "UNDER_15", prediction: "UNDER", prob: round(1 - pOver15), confidence: tierHighOnly(1 - pOver15, 0.74) };
 
-  markets.over25 = { market: "OVER_25", prediction: "OVER", prob: round(pOver25), confidence: tier(pOver25, 0.65, 0.56) };
-  markets.under25 = { market: "UNDER_25", prediction: "UNDER", prob: round(1 - pOver25), confidence: tier(1 - pOver25, 0.65, 0.56) };
+  markets.over25 = { market: "OVER_25", prediction: "OVER", prob: round(pOver25), confidence: tierWithLowWindow(pOver25, 0.65, 0.56, 0.02) };
+  markets.under25 = { market: "UNDER_25", prediction: "UNDER", prob: round(1 - pOver25), confidence: tierHighOnly(1 - pOver25, 0.70) };
 
-  markets.over35 = { market: "OVER_35", prediction: "OVER", prob: round(pOver35), confidence: tier(pOver35, 0.55, 0.48) };
-  markets.under35 = { market: "UNDER_35", prediction: "UNDER", prob: round(1 - pOver35), confidence: tier(1 - pOver35, 0.70, 0.60) };
+  markets.over35 = { market: "OVER_35", prediction: "OVER", prob: round(pOver35), confidence: tierWithLowWindow(pOver35, 0.55, 0.48, 0.02) };
+  markets.under35 = { market: "UNDER_35", prediction: "UNDER", prob: round(1 - pOver35), confidence: tierHighOnly(1 - pOver35, 0.74) };
 
   // --- DC / 1X2 from goals_for_avg diff (simple)
   const delta = gfH - gfA;
@@ -743,18 +751,64 @@ function findStatsForTeams(leagues, home, away) {
   return null;
 }
 
-function tier(p, hi, med) {
-  if (typeof p !== "number") return "LOW";
+function tierWithLowWindow(p, hi, med, lowWindow = 0.02) {
+  if (typeof p !== "number") return null;
   if (p >= hi) return "HIGH";
   if (p >= med) return "MEDIUM";
-  return "LOW";
+  if (p >= (med - lowWindow)) return "LOW";
+  return null; // too low -> do not emit pick
 }
 
-function clamp01(n) {
-  if (n < 0) return 0;
-  if (n > 1) return 1;
-  return n;
+function tierHighOnly(p, hi) {
+  if (typeof p !== "number") return null;
+  return (p >= hi) ? "HIGH" : null;
 }
+
+
+
+
+
+function decideOuSide(matchId, items){
+  const ou = items.filter(x => x.matchId===matchId && String(x.market||"").startsWith("O/U "));
+  let bestOver=null, bestUnder=null;
+  for(const it of ou){
+    const side = String(it.pick||"").toUpperCase();
+    if(side==="OVER"){
+      if(!bestOver || confRank(it.confidence)>confRank(bestOver.confidence) || (confRank(it.confidence)===confRank(bestOver.confidence) && it.score>bestOver.score)){
+        bestOver=it;
+      }
+    } else if(side==="UNDER"){
+      if(!bestUnder || confRank(it.confidence)>confRank(bestUnder.confidence) || (confRank(it.confidence)===confRank(bestUnder.confidence) && it.score>bestUnder.score)){
+        bestUnder=it;
+      }
+    }
+  }
+  if(bestOver && !bestUnder) return "OVER";
+  if(bestUnder && !bestOver) return "UNDER";
+  if(!bestOver && !bestUnder) return null;
+  const rO=confRank(bestOver.confidence), rU=confRank(bestUnder.confidence);
+  if(rO!==rU) return (rO>rU)?"OVER":"UNDER";
+  if(bestOver.score!==bestUnder.score) return (bestOver.score>bestUnder.score)?"OVER":"UNDER";
+  return "OVER";
+}
+
+function enforceOuFamilyNoOpposites(items){
+  const matchIds = Array.from(new Set(items.map(x => x.matchId)));
+  const out=[];
+  for(const mid of matchIds){
+    const side = decideOuSide(mid, items);
+    for(const it of items){
+      if(it.matchId!==mid) continue;
+      if(String(it.market||"").startsWith("O/U ")){
+        if(side && String(it.pick||"").toUpperCase()!==side) continue;
+      }
+      out.push(it);
+    }
+  }
+  return out;
+}
+
+
 
 function safeNum(n) {
   return typeof n === "number" && isFinite(n) ? n : 0;

@@ -66,6 +66,22 @@ export default {
         return;
       }
 
+      
+// =====================================================
+// ODDS SNAPSHOT (1X2 Opening/Current)
+// - 06:00 Europe/Athens: first snapshot (opening)
+// - 15:00 Europe/Athens: second snapshot (current)
+// =====================================================
+if ((hh === 6 && mm < 10) || (hh === 15 && mm < 10)) {
+  try {
+    const oddsURL = "https://aimatchlab-odds-worker.pierros1402.workers.dev/internal/run?days=2";
+    const r = await fetch(oddsURL, { method: "GET" });
+    const txt = await r.text();
+    console.log("[scheduler] odds-worker run:", r.status, txt.slice(0, 250));
+  } catch (e) {
+    console.warn("[scheduler] odds-worker run failed:", e);
+  }
+}
       // Otherwise: do nothing (lightweight mode)
       return;
     } catch (e) {
