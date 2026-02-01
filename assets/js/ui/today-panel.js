@@ -37,6 +37,26 @@
     return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
   }
 
+
+  // ✅ NEW: FT grace window (keep FT only for X minutes)
+  function isFTWithinGrace(m, graceMs) {
+    if (!m) return false;
+
+    // priority: server timestamps if they exist
+    const ts =
+      Number(m.endedAt || 0) ||
+      Number(m.finishedAt || 0) ||
+      Number(m.updatedAt || 0) ||
+      Number(m.lastUpdate || 0) ||
+      Number(m.__ftTs || 0);
+
+    // if we don't know when it ended, keep it temporarily
+    if (!ts) return true;
+
+    return (Date.now() - ts) <= graceMs;
+  }
+
+
   function safeEmit(name, payload) {
     if (typeof window.emit === "function") window.emit(name, payload);
   }
@@ -66,6 +86,8 @@
 
       if (st === "LIVE") return true;
 
+      if (st === "FT") return true; // ✅ keep refreshing so FT can disappear after 10'
+
       // refresh around kickoffs: within 2 hours window
       const ko = Number(m.kickoff_ms || 0);
       if (!ko) return false;
@@ -88,13 +110,22 @@
     // ✅ day window for "today only"
     const startDay = startOfTodayLocalMs();
     const endDay = endOfTodayLocalMs();
-
     // TODAY rules:
-    // - NO FT
+    // - FT only for 10 minutes
     // - Only matches of today (00:00–23:59 local)
     // - EXCEPTION: if match is LIVE, keep it even if it started previous day (2-day LIVE)
+
+    const FT_GRACE_MS = 10 * 60 * 1000; // ✅ 10 minutes
+
     const arr = LAST_MATCHES
-      .filter(m => String(m.status).toUpperCase() !== "FT")
+      .filter(m => {
+        const st = String(m.status || "").toUpperCase();
+
+        // ✅ keep FT only for 10 minutes
+        if (st === "FT") return isFTWithinGrace(m, FT_GRACE_MS);
+
+        return true;
+      })
       .filter(m => {
         const st = String(m.status || "").toUpperCase();
         if (st === "LIVE") return true; // ✅ keep LIVE always
@@ -142,6 +173,7 @@
       const info = document.createElement("span");
       const st = String(m.status).toUpperCase();
 
+      
       if (st === "LIVE") {
         const min = m.minute ? `${m.minute}'` : "";
         const sc =
@@ -149,6 +181,14 @@
             ? `${m.scoreHome}-${m.scoreAway}`
             : "";
         info.textContent = `${min} ${sc}`.trim() || "LIVE";
+
+      } else if (st === "FT") {
+        const sc =
+          m.scoreHome != null && m.scoreAway != null
+            ? `${m.scoreHome}-${m.scoreAway}`
+            : "FT";
+        info.textContent = sc;
+
       } else {
         info.textContent = time;
       }

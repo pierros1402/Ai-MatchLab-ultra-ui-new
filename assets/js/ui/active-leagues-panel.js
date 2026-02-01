@@ -35,6 +35,12 @@
   }
 
 
+  function isLIVE(m) {
+    const s = String(m?.status || "").toUpperCase();
+    return s === "LIVE" || s === "IN" || s === "STATUS_IN_PROGRESS";
+  }
+
+
   function leagueName(m) { return m.leagueName || m.leagueSlug || "—"; }
 
   // ✅ NEW: local day window helpers (00:00–23:59 local)
@@ -78,10 +84,10 @@
     const endDay = endOfTodayLocalMs();
 
     // ACTIVE rules:
-    // - PRE + FT only
+    // - PRE + LIVE + FT
     // - Only matches of today (00:00–23:59 local)
     const arr = LAST_MATCHES.filter(m => {
-      if (!(isPRE(m) || isFT(m))) return false;
+      if (!(isPRE(m) || isLIVE(m) || isFT(m))) return false;
       const ko = Number(m.kickoff_ms || 0);
       return ko >= startDay && ko <= endDay;
     });
@@ -115,7 +121,9 @@
         right.className = "today-right";
 
         const info = document.createElement("span");
-        info.textContent = isFT(m)
+        info.textContent = isLIVE(m)
+          ? `${m.minute ? `${m.minute}'` : "LIVE"} ${m.scoreHome ?? ""}-${m.scoreAway ?? ""}`.trim()
+          : isFT(m)
           ? `${m.scoreHome ?? ""}-${m.scoreAway ?? ""}`
           : timeHHMM(m.kickoff_ms);
 

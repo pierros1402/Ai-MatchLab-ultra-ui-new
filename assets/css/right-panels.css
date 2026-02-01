@@ -243,7 +243,7 @@
 #right-panel #value-picks-panel .panel-body,
 #right-panel .intelligence-panel.value-panel .panel-body,
 #right-panel .intelligence-panel[data-panel="value"] .panel-body {
-  max-height: 300px;
+  height: 300px;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -365,3 +365,141 @@
   font-weight: 900 !important;
 }
 
+
+
+/* =========================================================
+   VALUE PICKS — FINAL UI FIXES
+   - Fixed body height (scroll inside)
+   - Sticky toolbar/header
+   - Market title emphasis
+   - Pick label "flash" (OVER/UNDER)
+========================================================= */
+
+/* Fixed body height + internal scroll */
+#right-panel .intelligence-panel.value-panel .panel-body,
+#right-panel #value-picks-panel .panel-body,
+#right-panel .intelligence-panel[data-panel="value"] .panel-body{
+  height: 300px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Sticky header (date + picks + dropdowns) */
+#right-panel .intelligence-panel.value-panel .value-head{
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 90 !important;
+  background: rgba(14,16,22,0.96) !important;
+  backdrop-filter: blur(6px);
+  padding-bottom: 8px;
+  margin-bottom: 10px !important;
+}
+
+/* Inline header row (title left, filters right) */
+#right-panel .intelligence-panel.value-panel .value-head-row{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+/* If old toolbar layout exists, keep it clean */
+#right-panel .intelligence-panel.value-panel .value-toolbar{
+  display: flex !important;
+  gap: 10px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+}
+
+/* Market title emphasis (section label) */
+#right-panel .intelligence-panel.value-panel .value-section-title{
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 3px 10px !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.4px !important;
+}
+
+/* Score % + pick label side by side */
+#right-panel .intelligence-panel.value-panel .value-score{
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 10px !important;
+}
+
+/* Pick "flash" */
+#right-panel .intelligence-panel.value-panel .value-score-pick{
+  padding: 2px 8px !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,0.10) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.3px !important;
+}
+
+/* Stronger flash per pick (subtle) */
+#right-panel .intelligence-panel.value-panel .value-row[data-pick="OVER"] .value-score-pick{
+  background: rgba(40, 227, 162, 0.14) !important;
+  border-color: rgba(40, 227, 162, 0.18) !important;
+}
+#right-panel .intelligence-panel.value-panel .value-row[data-pick="UNDER"] .value-score-pick{
+  background: rgba(255, 176, 32, 0.14) !important;
+  border-color: rgba(255, 176, 32, 0.18) !important;
+}
+
+/* =========================================================
+   VALUE PICKS — STICKY HEADER (CLEAN FINAL)
+   This block is intentionally strong (specificity + !important)
+   so it cannot be overridden by earlier rules.
+========================================================= */
+
+#right-panel .intelligence-panel.value-panel > .panel-body{
+  padding-top: 52px !important;
+}
+
+#right-panel .intelligence-panel.value-panel > .panel-body > .value-head{
+  position: sticky !important;
+  top: 0px !important;
+  z-index: 9999 !important;
+  background: #0f1218 !important;
+}
+
+/* =========================================================
+   VALUE PICKS — HEADER OUTSIDE SCROLL (FINAL)
+   - value-head rendered in .value-head-wrap (outside .panel-body)
+   - ensure no sticky/padding hacks apply
+========================================================= */
+
+#right-panel .intelligence-panel.value-panel .value-head{
+  position: relative !important;
+  top: auto !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+#right-panel .intelligence-panel.value-panel .panel-body{
+  padding-top: 0 !important;
+}
+
+
+/* VALUE head wrap selects: inherit dark theme styling */
+#right-panel .intelligence-panel.value-panel .value-head-wrap select{
+  background: rgba(20,22,30,0.9) !important;
+  color: rgba(255,255,255,0.92) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  appearance: none;
+}
+
+#right-panel .intelligence-panel.value-panel .value-head-wrap option{
+  background: #0f1218 !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+
+#right-panel .intelligence-panel.value-panel .value-head-wrap .value-toolbar{
+  gap: 12px !important;
+}

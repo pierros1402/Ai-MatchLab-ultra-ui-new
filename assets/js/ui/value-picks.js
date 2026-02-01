@@ -33,11 +33,22 @@
     return;
   }
 
-  const bodyEl =
+  const listEl =
     root.querySelector("#value-picks-list") ||
+    root.querySelector(".value-picks-list") ||
+    null;
+
+  const headWrapEl =
+    root.querySelector(".value-head-wrap") ||
+    null;
+
+  // Fallback: if listEl missing, render into panel-body (legacy)
+  const bodyEl =
+    listEl ||
     root.querySelector(".panel-body") ||
     root.querySelector(".panel-content") ||
     root;
+
 
 
   // --------------------------------------------------------------------------
@@ -163,6 +174,24 @@
     });
   }
 
+
+  function hideAnalyzingIfHasPicks(total) {
+  try {
+    const panel = document.querySelector('#right-panel .intelligence-panel.value-panel') || document.querySelector('.intelligence-panel.value-panel');
+    if (!panel) return;
+
+    const ph = panel.querySelector('.panel-placeholder');
+    if (!ph) return;
+
+    if (total && total > 0) {
+      ph.style.display = "none";
+    } else {
+      ph.style.display = "";
+    }
+  } catch (_) {}
+}
+
+
   function normalizeMarket(m) {
     // We keep markets aligned with your global list.
     // Current worker outputs: "BTTS", "Over 2.5"
@@ -232,47 +261,47 @@
   // Rendering
   // --------------------------------------------------------------------------
   function buildHeader(date, total, picks) {
-  const markets = Array.from(
-    new Set(picks.map((p) => normalizeMarket(p?.market)).filter(Boolean))
-  ).sort();
+    const markets = Array.from(
+      new Set(picks.map((p) => normalizeMarket(p?.market)).filter(Boolean))
+    ).sort();
 
-  const leagues = Array.from(
-    new Set(picks.map((p) => leagueLabel(p)).filter(Boolean))
-  ).sort();
+    const leagues = Array.from(
+      new Set(picks.map((p) => leagueLabel(p)).filter(Boolean))
+    ).sort();
 
-  const marketOptions = ["ALL", ...markets];
-  const leagueOptions = ["ALL", ...leagues];
+    const marketOptions = ["ALL", ...markets];
+    const leagueOptions = ["ALL", ...leagues];
 
-  const marketHtml = marketOptions.map((m) => {
-    const sel = m === selectedMarket ? "selected" : "";
-    const label = m === "ALL" ? "All Markets" : marketShortLabel(m);
-    return `<option value="${esc(m)}" ${sel}>${esc(label)}</option>`;
-  }).join("");
+    const marketHtml = marketOptions.map((m) => {
+      const sel = m === selectedMarket ? "selected" : "";
+      const label = m === "ALL" ? "All Markets" : marketShortLabel(m);
+      return `<option value="${esc(m)}" ${sel}>${esc(label)}</option>`;
+    }).join("");
 
-  const leagueHtml = leagueOptions.map((l) => {
-    const sel = l === selectedLeague ? "selected" : "";
-    const label = l === "ALL" ? "All Leagues" : l;
-    return `<option value="${esc(l)}" ${sel}>${esc(label)}</option>`;
-  }).join("");
+    const leagueHtml = leagueOptions.map((l) => {
+      const sel = l === selectedLeague ? "selected" : "";
+      const label = l === "ALL" ? "All Leagues" : l;
+      return `<option value="${esc(l)}" ${sel}>${esc(label)}</option>`;
+    }).join("");
 
-  return `
-    <div class="value-head">
-      <div class="value-head-top">
-        <div class="value-head-title">${esc(date)} • ${total} picks</div>
+    return `
+      <div class="value-head">
+        <div class="value-head-row">
+          <div class="value-head-title">${esc(date)} • ${total} picks</div>
+          <div class="value-toolbar">
+            <select class="value-filter-market">${marketHtml}</select>
+            <select class="value-filter-league">${leagueHtml}</select>
+          </div>
+        </div>
       </div>
-
-      <div class="value-toolbar value-toolbar-compact">
-        <select class="value-filter-market">${marketHtml}</select>
-        <select class="value-filter-league">${leagueHtml}</select>
-      </div>
-    </div>
-  `;
-}
+    `;
+  }
 
 
   function wireToolbar() {
-    const marketSel = bodyEl.querySelector(".value-filter-market");
-    const leagueSel = bodyEl.querySelector(".value-filter-league");
+    const scope = headWrapEl || bodyEl;
+    const marketSel = scope.querySelector(".value-filter-market");
+    const leagueSel = scope.querySelector(".value-filter-league");
 
     if (marketSel) {
       marketSel.addEventListener("change", () => {
@@ -289,34 +318,6 @@
     }
   }
 
-  
-// ✅ Borderline LOW window per market (UI filter)
-const LOW_MIN_BY_MARKET = {
-  "BTTS": 0.54,
-  "Over / Under 1.5": 0.58,
-  "Over / Under 2.5": 0.54,
-  "Over / Under 3.5": 0.46,
-  "1X2": 0.55
-};
-
-// πόσο “οριακά” LOW κρατάμε (2%)
-const LOW_WINDOW = 0.02;
-
-function uiLowAllowed(p) {
-  const conf = confidenceKey(p?.confidence);
-  if (conf !== "LOW") return true;
-
-  const m = normalizeMarket(p?.market);
-  const lowMin = LOW_MIN_BY_MARKET[m];
-
-  if (typeof lowMin !== "number") return false;
-
-  const s = Number(p?.score);
-  if (!Number.isFinite(s)) return false;
-
-  return s >= lowMin && s < (lowMin + LOW_WINDOW);
-}
-
 function applyFilters(picks) {
     return picks.filter((p) => {
       const m = normalizeMarket(p?.market);
@@ -325,8 +326,7 @@ function applyFilters(picks) {
       if (selectedMarket !== "ALL" && m !== selectedMarket) return false;
       if (selectedLeague !== "ALL" && l !== selectedLeague) return false;
 
-      if (!uiLowAllowed(p)) return false;
-    return true;
+      return true;
     });
   }
 
@@ -372,7 +372,7 @@ function applyFilters(picks) {
     const timeHtml = time ? `<span class="value-time">${esc(time)}</span>` : "";
 
     return `
-      <div class="value-row conf-${esc(conf.toLowerCase())}" data-match-id="${esc(p?.matchId || "")}">
+      <div class="value-row conf-${esc(conf.toLowerCase())}" data-match-id="${esc(p?.matchId || "")}" data-pick="${esc(String(p?.pick || "").toUpperCase())}">
         <div class="value-row-top">
           <div class="value-league">${esc(league)}</div>
           <div class="value-meta">
@@ -390,7 +390,7 @@ function applyFilters(picks) {
         </div>
 
         <div class="value-row-bot">
-          <div class="value-score">${esc(scorePct)}</div>
+          <div class="value-score"><span class="value-score-pct">${esc(scorePct)}</span><span class="value-score-pick">${esc(String(p?.pick || "").toUpperCase())}</span></div>
           <div class="value-conf">${esc(conf)}</div>
         </div>
       </div>
@@ -405,15 +405,18 @@ function applyFilters(picks) {
     const total = typeof payload?.total === "number" ? payload.total : allPicks.length;
 
     if (!allPicks.length) {
-      bodyEl.innerHTML = `
-        <div class="value-head">
-          <div class="value-head-top">
-            <div class="value-head-title">Value Picks</div>
-            <div class="value-head-sub">${esc(date)} • 0 picks</div>
+      if (headWrapEl) {
+        headWrapEl.innerHTML = `
+          <div class="value-head">
+            <div class="value-head-top">
+              <div class="value-head-title">Value Picks</div>
+              <div class="value-head-sub">${esc(date)} • 0 picks</div>
+            </div>
           </div>
-        </div>
-        <div class="panel-empty">No value picks available.</div>
-      `;
+        `;
+      }
+      bodyEl.innerHTML = `<div class="panel-empty">No value picks available.</div>`;
+      hideAnalyzingIfHasPicks(0);
       return;
     }
 
@@ -421,10 +424,9 @@ function applyFilters(picks) {
 
     const filtered = applyFilters(allPicks);
     if (!filtered.length) {
-      bodyEl.innerHTML = `
-        ${headerHtml}
-        <div class="panel-empty">No picks for selected filters.</div>
-      `;
+      if (headWrapEl) headWrapEl.innerHTML = headerHtml;
+      bodyEl.innerHTML = `<div class="panel-empty">No picks for selected filters.</div>`;
+      hideAnalyzingIfHasPicks(total);
       wireToolbar();
       return;
     }
@@ -448,7 +450,6 @@ function applyFilters(picks) {
 
       return `
         <div class="value-section">
-          <div class="value-section-title">${esc(marketShortLabel(m))}</div>
           <div class="value-list-inner">
             ${rows}
           </div>
@@ -456,13 +457,14 @@ function applyFilters(picks) {
       `;
     }).join("");
 
+    if (headWrapEl) headWrapEl.innerHTML = headerHtml;
     bodyEl.innerHTML = `
-      ${headerHtml}
       <div class="value-sections">
         ${sectionsHtml}
       </div>
     `;
 
+    hideAnalyzingIfHasPicks(total);
     wireToolbar();
     log("render", date, "picks=", filtered.length);
   }
