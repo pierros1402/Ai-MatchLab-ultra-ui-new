@@ -1,54 +1,62 @@
 export default {
   async scheduled(event, env, ctx) {
     const now = new Date();
+    const iso = now.toISOString();
+
+    // ---------- KV debug keys ----------
+    const TICK_KEY = "SCHEDULER:LAST_TICK";
+    const ERR_KEY = "SCHEDULER:LAST_ERROR";
+
+    // helper: safe kv put (never crash scheduler for kv issues)
+    async function safeKvPut(key, value, ttlSeconds) {
+      try {
+        if (!env?.AIMATCHLAB_KV_CORE) return;
+        await env.AIMATCHLAB_KV_CORE.put(
+          key,
+          typeof value === "string" ? value : JSON.stringify(value),
+          ttlSeconds ? { expirationTtl: ttlSeconds } : undefined
+        );
+      } catch (_) {}
+    }
+
+    // write tick at start (TTL 6 hours)
+    await safeKvPut(
+      TICK_KEY,
+      { ok: true, iso, ts: Date.now() },
+      6 * 60 * 60
+    );
 
     try {
-      // =====================================================
-      // FIXTURES INGEST — AUTO (TODAY ONLY)
-      //
-      // Strategy:
-      // - 00:00–03:00 Europe/Athens: aggressive runs (burst=2) to fill the day fast
-      // - 12:00 Europe/Athens: one refresh run + finalize (FT / updates)
-      //
-      // Notes:
-      // - We DO NOT run "tomorrow" anymore
-      // - We ALWAYS call /internal/finalize after runs, so MAIN UI always has FIXTURES:DATE:<day>
-      // =====================================================
-
       const tz = "Europe/Athens";
       const today = dayKeyTZ(tz, now);
 
-      const athens = athensParts(now);
-      const hh = athens.h;
-      const mm = athens.m;
+      const { h: hh, m: mm } = athensParts(now);
 
-      // Your fixtures-ingest worker base URL
-      const FIXTURES_INGEST_BASE = "https://aimatchlab-fixtures-ingest.pierros1402.workers.dev";
+      const FIXTURES_INGEST_BASE =
+        "https://aimatchlab-fixtures-ingest.pierros1402.workers.dev";
 
-      // Helper: call ingest run (blocking in ingest worker)
-      async function runIngestBurst(burst = 2) {
+      async function runIngestBurst(burst = 1) {
         const url = `${FIXTURES_INGEST_BASE}/internal/run?date=${today}&burst=${burst}`;
         const r = await fetch(url, { method: "GET" });
         const t = await r.text();
-        if (!r.ok) throw new Error(`fixtures-ingest run failed: HTTP ${r.status} :: ${t}`);
+        if (!r.ok) throw new Error(`fixtures run failed: HTTP ${r.status} :: ${t}`);
         console.log("[scheduler] fixtures run ok", today, "burst", burst);
       }
 
-      // Helper: finalize to FIXTURES:DATE:<day>
       async function finalizeFixtures() {
         const url = `${FIXTURES_INGEST_BASE}/internal/finalize?date=${today}`;
         const r = await fetch(url, { method: "GET" });
         const t = await r.text();
-        if (!r.ok) throw new Error(`fixtures-ingest finalize failed: HTTP ${r.status} :: ${t}`);
+        if (!r.ok) throw new Error(`fixtures finalize failed: HTTP ${r.status} :: ${t}`);
         console.log("[scheduler] fixtures finalize ok", today);
       }
 
-      // =====================================================
-      // Window A: 00:00–03:00 (Athens) — strong fill
-      // =====================================================
+      // ---------------------------
+      // FIXTURES INGEST WINDOWS
+      // ---------------------------
+
+      // Window A: 00:00–03:00 aggressive fill
       if (hh >= 0 && hh < 3) {
-        // do 3 cycles of (burst=2 + finalize)
-        // => ~60 leagues worth of progress per scheduler tick without subrequest storms
         for (let i = 0; i < 3; i++) {
           await runIngestBurst(2);
           await finalizeFixtures();
@@ -57,35 +65,45 @@ export default {
         return;
       }
 
-      // =====================================================
-      // Window B: exactly 12:00 (Athens) — one refresh
-      // =====================================================
+      // Window B: 12:00 refresh (first 10 minutes)
       if (hh === 12 && mm < 10) {
         await runIngestBurst(1);
         await finalizeFixtures();
         return;
       }
 
-      
-// =====================================================
-// ODDS SNAPSHOT (1X2 Opening/Current)
-// - 06:00 Europe/Athens: first snapshot (opening)
-// - 15:00 Europe/Athens: second snapshot (current)
-// =====================================================
-if ((hh === 6 && mm < 10) || (hh === 15 && mm < 10)) {
-  try {
-    const oddsURL = "https://aimatchlab-odds-worker.pierros1402.workers.dev/internal/run?days=2";
-    const r = await fetch(oddsURL, { method: "GET" });
-    const txt = await r.text();
-    console.log("[scheduler] odds-worker run:", r.status, txt.slice(0, 250));
-  } catch (e) {
-    console.warn("[scheduler] odds-worker run failed:", e);
-  }
-}
-      // Otherwise: do nothing (lightweight mode)
+      // ODDS SNAPSHOT windows
+      if ((hh === 6 && mm < 10) || (hh === 15 && mm < 10)) {
+        try {
+          const oddsURL =
+            "https://aimatchlab-odds-worker.pierros1402.workers.dev/internal/run?days=2";
+          const r = await fetch(oddsURL, { method: "GET" });
+          const txt = await r.text();
+          console.log("[scheduler] odds-worker run:", r.status, txt.slice(0, 250));
+        } catch (e) {
+          console.warn("[scheduler] odds-worker run failed:", e);
+        }
+      }
+
+      // Window C: maintenance mode (always drain queue)
+      await runIngestBurst(1);
+      await finalizeFixtures();
       return;
+
     } catch (e) {
       console.error("[scheduler] error", e);
+
+      // store last error (TTL 24 hours)
+      await safeKvPut(
+        "SCHEDULER:LAST_ERROR",
+        {
+          ok: false,
+          iso: new Date().toISOString(),
+          ts: Date.now(),
+          message: String(e?.message || e),
+        },
+        24 * 60 * 60
+      );
     }
   }
 };
@@ -99,7 +117,6 @@ function dayKeyTZ(tz, d) {
   }).format(d);
 }
 
-// Get Athens hour/minute from current UTC date
 function athensParts(d) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Athens",
