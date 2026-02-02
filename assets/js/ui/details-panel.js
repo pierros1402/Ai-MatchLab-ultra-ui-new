@@ -155,6 +155,242 @@
       </div>`;
   }
 
+  // =====================================================
+  // HYBRID V1 (AIML Match Details)
+  // - Deterministic, no AI required yet
+  // - Adds: Match DNA, Win Paths, Risk Meter
+  // =====================================================
+  function findTeamInTable(table, teamName) {
+    if (!Array.isArray(table) || !teamName) return null;
+    const tn = String(teamName).toLowerCase().trim();
+    return (
+      table.find(r => String(r.teamName || pickTeamName(r.team) || r.name || r.abbr || "").toLowerCase().trim() === tn) ||
+      table.find(r => String(r.teamName || pickTeamName(r.team) || r.name || r.abbr || "").toLowerCase().includes(tn)) ||
+      null
+    );
+  }
+
+  function normalizeFormSeq(arr) {
+    const seq = Array.isArray(arr) ? arr : [];
+    return seq
+      .map(x => String(x).toUpperCase().trim())
+      .filter(x => x === "W" || x === "D" || x === "L")
+      .slice(0, 5);
+  }
+
+  function computeDNA(homeRow, awayRow) {
+    // Very safe v1 heuristics based mostly on table position gap
+    const hp = Number(homeRow?.rank ?? homeRow?.position ?? NaN);
+    const ap = Number(awayRow?.rank ?? awayRow?.position ?? NaN);
+
+    let control = "neutral";
+    if (Number.isFinite(hp) && Number.isFinite(ap)) {
+      const gap = hp - ap; // positive => away higher
+      if (gap >= 6) control = "away";
+      else if (gap <= -6) control = "home";
+    }
+
+    let volatility = "medium";
+    if (Number.isFinite(hp) && Number.isFinite(ap)) {
+      const diff = Math.abs(hp - ap);
+      volatility = diff >= 10 ? "medium" : "high";
+    }
+
+    const tempo = "medium"; // keep conservative until we have stats/form
+    return { tempo, control, volatility };
+  }
+
+  function computeRisk(homeRow, awayRow) {
+    const hp = Number(homeRow?.rank ?? homeRow?.position ?? NaN);
+    const ap = Number(awayRow?.rank ?? awayRow?.position ?? NaN);
+
+    // Base risks
+    let upset = 45;
+    let draw = 40;
+
+    if (Number.isFinite(hp) && Number.isFinite(ap)) {
+      const diff = Math.abs(hp - ap);
+      // Big difference: upset lower, draw lower
+      if (diff >= 12) { upset = 25; draw = 30; }
+      else if (diff >= 8) { upset = 32; draw = 34; }
+      else if (diff >= 4) { upset = 42; draw = 40; }
+      else { upset = 55; draw = 52; }
+    }
+
+    // clamp
+    upset = Math.max(0, Math.min(100, upset));
+    draw = Math.max(0, Math.min(100, draw));
+    return { upsetRisk: upset, drawRisk: draw };
+  }
+
+  function labelControl(v) {
+    if (v === "home") return "HOME CONTROL";
+    if (v === "away") return "AWAY CONTROL";
+    return "NEUTRAL";
+  }
+
+  function renderChip(label, value) {
+    return `<span class="aiml-chip"><span class="aiml-chip-label">${esc(label)}</span><span class="aiml-chip-value">${esc(value)}</span></span>`;
+  }
+
+  function renderBar(label, value) {
+    const v = Math.max(0, Math.min(100, Number(value) || 0));
+    return `
+      <div class="aiml-risk-row">
+        <div class="aiml-risk-label">${esc(label)}</div>
+        <div class="aiml-risk-bar"><div class="aiml-risk-fill" style="width:${v}%;"></div></div>
+        <div class="aiml-risk-val">${esc(v)}</div>
+      </div>`;
+  }
+
+  function renderHybridBlock(summary, standingsTable) {
+    const homeRow = findTeamInTable(standingsTable, summary.home);
+    const awayRow = findTeamInTable(standingsTable, summary.away);
+
+    const dna = computeDNA(homeRow, awayRow);
+    const risks = computeRisk(homeRow, awayRow);
+
+    const winPaths = {
+      home: [
+        "Fast start + early lead",
+        "Set-pieces impact",
+        "Opponent underperforms finishing"
+      ],
+      draw: [
+        "0-0 / 1-1 game script",
+        "Low conversion rate on chances"
+      ],
+      away: [
+        "Sustained control in midfield",
+        "Higher shot volume + better finishing",
+        "Breakthrough before 60'"
+      ]
+    };
+
+    const insights = [
+      "Primary edge likely comes from overall team quality + game control.",
+      "If the match stays level deep into the first half, draw risk rises.",
+      "Key swing factors: first goal timing and set-pieces."
+    ];
+
+    return `
+      <div class="aiml-hybrid">
+        <div class="aiml-hybrid-head">AIML Hybrid Match Intel</div>
+
+        <div class="aiml-dna">
+          ${renderChip("TEMPO", dna.tempo.toUpperCase())}
+          ${renderChip("CONTROL", labelControl(dna.control))}
+          ${renderChip("VOLATILITY", dna.volatility.toUpperCase())}
+        </div>
+
+        <div class="aiml-winpaths">
+          <div class="aiml-wincol">
+            <div class="aiml-win-title">HOME WIN PATH</div>
+            <ul class="aiml-win-list">${winPaths.home.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+          </div>
+          <div class="aiml-wincol">
+            <div class="aiml-win-title">DRAW PATH</div>
+            <ul class="aiml-win-list">${winPaths.draw.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+          </div>
+          <div class="aiml-wincol">
+            <div class="aiml-win-title">AWAY WIN PATH</div>
+            <ul class="aiml-win-list">${winPaths.away.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+          </div>
+        </div>
+
+        <div class="aiml-risk">
+          <div class="aiml-subtitle">Risk Meter (0–100)</div>
+          ${renderBar("Upset Risk", risks.upsetRisk)}
+          ${renderBar("Draw Risk", risks.drawRisk)}
+        </div>
+
+        <div class="aiml-insights">
+          <div class="aiml-subtitle">Key Insights</div>
+          <ul class="aiml-insights-list">${insights.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+
+  
+
+  // =====================================================
+  // LOCAL-ONLY DETAILS (NO WORKER, NO FETCH)
+  // Used by ⓘ to avoid any network dependency.
+  // =====================================================
+  function fmtKickoffLocal(m) {
+    const iso = m?.kickoff || m?.utcDate || null;
+    const ms = m?.kickoff_ms != null ? Number(m.kickoff_ms) : null;
+    let d = null;
+    if (ms && Number.isFinite(ms)) d = new Date(ms);
+    else if (iso) {
+      const t = Date.parse(iso);
+      if (!Number.isNaN(t)) d = new Date(t);
+    }
+    if (!d) return "";
+    try {
+      return d.toLocaleString("el-GR", {
+        timeZone: "Europe/Athens",
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    } catch (_) {
+      return d.toLocaleString();
+    }
+  }
+
+  function normalizeScore(m) {
+    const sh = (m?.scoreHome != null) ? Number(m.scoreHome) : null;
+    const sa = (m?.scoreAway != null) ? Number(m.scoreAway) : null;
+    if (Number.isFinite(sh) && Number.isFinite(sa)) return `${sh}-${sa}`;
+    return "";
+  }
+
+  function normalizeStatus(m) {
+    return String(m?.status || "").replace("STATUS_", "") || "";
+  }
+
+  function renderLocal(match, mountEl) {
+    const el = mountEl;
+    if (!el) return;
+
+    const m = match || {};
+    const home = esc(m.home || "");
+    const away = esc(m.away || "");
+    const league = esc(m.leagueName || m.leagueSlug || "");
+    const status = esc(normalizeStatus(m));
+    const score = esc(normalizeScore(m));
+    const minute = (m.minute != null && Number(m.minute) > 0) ? ` • ${esc(String(m.minute))}'` : "";
+    const kickoffLocal = esc(fmtKickoffLocal(m));
+
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="font-weight:900;font-size:18px;">${home} <span style="opacity:.6;">vs</span> ${away}</div>
+        <div style="opacity:.85;font-weight:800;">${status}${minute}</div>
+      </div>
+
+      <div style="margin-top:6px;opacity:.85;">
+        ${score ? `<span style="font-weight:900;">${score}</span>` : ``}
+        ${kickoffLocal ? `<span style="margin-left:10px;">${kickoffLocal}</span>` : ``}
+      </div>
+
+      <div style="margin-top:6px;opacity:.75;font-size:12px;">
+        League: <b>${league}</b>
+        ${m.matchId || m.id ? `<span style="margin-left:10px;opacity:.7;">ID: ${esc(String(m.matchId || m.id))}</span>` : ``}
+      </div>
+
+      ${renderHybridBlock(
+        normalizeSummary({}, m),
+        []
+      )}
+    `;
+  }
+
+
   async function loadAndRender(match, mountEl, opts) {
     const el = mountEl;
     if (!el) return;
@@ -230,6 +466,9 @@
 
     const standingsBlock = section("Standings", renderStandingsTable(standingsTable));
 
+    // Hybrid V1 block (only in Matches panel)
+    const hybridBlock = renderHybridBlock(summary, standingsTable);
+
     // Small diagnostics if things are missing (collapsed)
     const diag = (!sOk || !Array.isArray(standingsTable)) ? `
       <details style="margin-top:12px;opacity:.85;">
@@ -245,12 +484,14 @@
       ${header}
       ${summaryBlock}
       ${standingsBlock}
+      ${hybridBlock}
       ${diag}
     `;
   }
 
   window.DetailsPanel = {
     __ver: VER,
-    loadAndRender
+    loadAndRender,
+    renderLocal
   };
 })();

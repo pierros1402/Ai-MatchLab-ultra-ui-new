@@ -206,8 +206,9 @@
       details.textContent = "ⓘ";
       details.onclick = e => {
         e.stopPropagation();
-        safeEmit("match-selected", m);
-        safeEmit("active-match:set", m);
+        // ⓘ goes to Matches (details)
+        safeEmit("details-open", m);
+        safeEmit("nav:matches", { focus: "details" });
       };
 
       right.appendChild(info);
@@ -220,6 +221,8 @@
       row.onclick = () => {
         safeEmit("match-selected", m);
         safeEmit("active-match:set", m);
+        // row click goes to Odds (center)
+        safeEmit("nav:oic", { tab: "odds" });
       };
 
       panel.appendChild(row);

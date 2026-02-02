@@ -106,4 +106,62 @@
   }
 
   document.addEventListener('click', syncMobilePanelTitles, true);
+
+  // =====================================================
+  // NAVIGATION (MATCHES vs OIC)
+  // =====================================================
+  function scrollToEl(el) {
+    try {
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (_) {}
+  }
+
+  function isMobileView() {
+    // Align with existing UI logic: treat <= 700px as mobile
+    try { return window.matchMedia && window.matchMedia('(max-width: 700px)').matches; }
+    catch (_) { return false; }
+  }
+
+  // Focus Odds Intelligence Center (center) - keep existing desktop/mobile behavior:
+  // We only force-scroll on mobile. Desktop stays as-is.
+  window.on('nav:oic', function (payload) {
+    if (isMobileView()) {
+      const oic = document.getElementById('odds-intelligence-center');
+      if (oic) scrollToEl(oic);
+    }
+    // Optional: allow OIC internals to react (tab focus, etc.)
+    window.emit('oic:focus', payload || { tab: 'odds' });
+  });
+
+  // Focus Matches (details area)
+  window.on('nav:matches', function () {
+    const matches =
+      document.getElementById('panel-matches') ||
+      document.getElementById('matches-list') ||
+      document.getElementById('matches-panel');
+    if (matches) scrollToEl(matches);
+    window.emit('matches:focus', { section: 'details' });
+  });
+
+
+  // ⓘ details button -> MUST go to Matches (local-only, no odds/worker)
+  window.on('details-open', function (m) {
+    if (!m) return;
+
+    // do NOT emit match-selected here (it triggers OIC/odds listeners)
+    window.emit('nav:matches', { focus: 'details' });
+
+    try {
+      if (window.DetailsPanel && typeof window.DetailsPanel.renderLocal === 'function') {
+        const host =
+          document.getElementById('matches-list') ||
+          document.getElementById('matches-panel');
+        if (host) window.DetailsPanel.renderLocal(m, host);
+      }
+    } catch (err) {
+      console.error('[details-open] local render failed', err);
+    }
+  });
+
 })();

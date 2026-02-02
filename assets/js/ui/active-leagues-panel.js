@@ -132,7 +132,9 @@
         details.textContent = "ⓘ";
         details.onclick = e => {
           e.stopPropagation();
+          // ⓘ goes to Matches (details)
           emit("details-open", m);
+          emit("nav:matches", { focus: "details" });
         };
 
         right.appendChild(info);
@@ -142,7 +144,11 @@
         row.appendChild(left);
         row.appendChild(right);
 
-        row.onclick = () => openMatch(m);
+        row.onclick = () => {
+          openMatch(m);
+          // row click goes to Odds (center)
+          emit("nav:oic", { tab: "odds" });
+        };
 
         root.appendChild(row);
       });
