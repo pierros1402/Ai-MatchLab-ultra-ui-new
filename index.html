@@ -381,187 +381,197 @@
   </div>
 
 <!-- =====================================================
-       CORE EVENT BUS (ΠΡΕΠΕΙ ΝΑ ΕΚΤΕΛΕΣΤΕΙ ΠΡΩΤΟ)
-  ===================================================== -->
-  <script src="assets/js/ui/app.js"></script>
+     CORE EVENT BUS (ΠΡΕΠΕΙ ΝΑ ΕΚΤΕΛΕΣΤΕΙ ΠΡΩΤΟ)
+===================================================== -->
+<script src="assets/js/ui/app.js"></script>
 
-  <!-- =====================================================
-       GLOBAL STATE / THEME / LANGUAGE / LEGAL / INSTALL
-       (FOUNDATION – ΠΡΙΝ ΟΠΟΙΟΔΗΠΟΤΕ UI)
-  ===================================================== -->
-  <script src="assets/js/state.js"></script>
-  <script src="assets/js/theme.js"></script>
-  <script src="assets/js/language.js"></script>
-  <script src="assets/js/legal-menu.js"></script>
-  <script src="assets/js/install.js"></script>
+<!-- =====================================================
+     GLOBAL STATE / THEME / LANGUAGE / LEGAL / INSTALL
+     (FOUNDATION – ΠΡΙΝ ΟΠΟΙΟΔΗΠΟΤΕ UI)
+===================================================== -->
+<script src="assets/js/state.js"></script>
+<script src="assets/js/theme.js"></script>
+<script src="assets/js/language.js"></script>
+<script src="assets/js/legal-menu.js"></script>
+<script src="assets/js/install.js"></script>
 
-  <!-- =====================================================
-       MOBILE UI (LEFT / ODDS / RIGHT) ✅ ΜΟΝΟ 1 ΦΟΡΑ
-  ===================================================== -->
-  <script src="assets/js/mobile-ui.js"></script>
+<!-- =====================================================
+     MOBILE UI (LEFT / ODDS / RIGHT) ✅ ΜΟΝΟ 1 ΦΟΡΑ
+===================================================== -->
+<script src="assets/js/mobile-ui.js"></script>
 
-  <!-- =====================================================
-       ODDS KV DEBUG LOGGER (ΠΡΟΣΩΡΙΝΟ – ΜΟΝΟ LOG)
-  ===================================================== -->
-  <script src="assets/js/odds/odds-kv-log.js"></script>
+<!-- =====================================================
+     ODDS KV DEBUG LOGGER (ΠΡΟΣΩΡΙΝΟ – ΜΟΝΟ LOG)
+===================================================== -->
+<script src="assets/js/odds/odds-kv-log.js"></script>
 
-  <!-- =====================================================
-       GLOBAL CONFIG (LIVE – ΟΠΩΣ ΕΙΝΑΙ)
-  ===================================================== -->
-  <script>
-    window.AIML_LIVE_CFG = {
-      liveBase: "https://live-matches-worker.pierros1402.workers.dev",
-      livePath: "/api/unified-live"
+<!-- =====================================================
+     GLOBAL CONFIG (LIVE – ΟΠΩΣ ΕΙΝΑΙ, + DETAILS BASE)
+===================================================== -->
+<script>
+  window.AIML_LIVE_CFG = {
+    liveBase: "https://live-matches-worker.pierros1402.workers.dev",
+    livePath: "/api/unified-live",
+
+    // ✅ Details Worker (Canonical)
+    detailsBase: "https://aimatchlab-details-worker.pierros1402.workers.dev",
+
+    // ✅ optional but recommended
+    season: "2025-2026"
+  };
+</script>
+
+<script>
+  window.AIML_VALUE_CFG = {
+    valueBase: "https://aimatchlab-main-worker.pierros1402.workers.dev"
+  };
+</script>
+
+<!-- =====================================================
+     LEFT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
+===================================================== -->
+<!-- ✅ cache-bust για να πάρεις σίγουρα το νέο αρχείο -->
+<script src="assets/js/ui/details-panel.js?v=182"></script>
+
+<script defer src="assets/js/ui/details-i18n-patch.js"></script>
+<script defer src="assets/js/ui/details-i18n-panel-patch.js"></script>
+
+<script src="assets/js/ui/today-panel.js"></script>
+<script src="assets/js/ui/active-leagues-panel.js"></script>
+<script src="assets/js/ui/matches-panel.js"></script>
+<script src="assets/js/ui/saved-store.js"></script>
+<script src="assets/js/ui/saved-panel.js"></script>
+
+<!-- =====================================================
+     TOPBAR ORCHESTRATOR (ΜΕΤΑ THEME / STATE)
+===================================================== -->
+<script defer src="assets/js/ui/topbar.js"></script>
+
+<!-- =====================================================
+     LIVE ENGINE (ΔΕΝ ΑΛΛΑΖΕΙ)
+===================================================== -->
+<script src="assets/js/live/live-engine.js"></script>
+
+<!-- =====================================================
+     VALUE ENGINE ADAPTER (Worker -> UI)
+===================================================== -->
+<script src="assets/js/live/value-adapter.js"></script>
+
+<!-- =====================================================
+     ODDS DATA PIPELINE
+===================================================== -->
+<script src="assets/js/odds/odds-canonical-batch-to-core.js"></script>
+
+<!-- =====================================================
+     ODDS INTELLIGENCE CENTER
+===================================================== -->
+<script src="assets/js/ui/oic-engine.js"></script>
+<script src="assets/js/ui/oic-renderer.js"></script>
+
+<!-- =====================================================
+     RIGHT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
+===================================================== -->
+<script src="assets/js/ui/odds-radar.js"></script>
+<script src="assets/js/ui/top-picks.js"></script>
+<script src="assets/js/ui/value-picks.js"></script>
+<script src="assets/js/ui/live-panel.js"></script>
+<script src="assets/js/ui/accordion.js"></script>
+
+<!-- =====================================================
+     MOBILE TAB MENU (Theme / Language / Legal)
+     ✅ Opens REAL menus directly (theme-menu / legal-menu)
+===================================================== -->
+<script>
+  (() => {
+    const btn = document.getElementById("btn-mobile-tab");
+    const menu = document.getElementById("mobile-tab-menu");
+    if (!btn || !menu) return;
+
+    const isInside = (root, node) => {
+      try { return root && node && (root === node || root.contains(node)); } catch { return false; }
     };
-  </script>
 
-  <script>
-    window.AIML_VALUE_CFG = {
-      valueBase: "https://aimatchlab-main-worker.pierros1402.workers.dev"
+    const safeBlurInside = (root) => {
+      const ae = document.activeElement;
+      if (isInside(root, ae) && ae && typeof ae.blur === "function") {
+        ae.blur();
+      }
     };
-  </script>
 
-  <!-- =====================================================
-       LEFT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
-  ===================================================== -->
-  <script src="assets/js/ui/details-panel.js"></script>
-  <script src="assets/js/ui/today-panel.js"></script>
-  <script src="assets/js/ui/active-leagues-panel.js"></script>
-  <script src="assets/js/ui/matches-panel.js"></script>
-  <script src="assets/js/ui/saved-store.js"></script>
-  <script src="assets/js/ui/saved-panel.js"></script>
+    const openTab = () => {
+      menu.classList.remove("hidden");
+      menu.setAttribute("aria-hidden", "false");
+    };
 
-  <!-- =====================================================
-       TOPBAR ORCHESTRATOR (ΜΕΤΑ THEME / STATE)
-  ===================================================== -->
-  <script defer src="assets/js/ui/topbar.js"></script>
+    const closeTab = () => {
+      // avoid aria-hidden + focused descendant warning
+      safeBlurInside(menu);
+      menu.classList.add("hidden");
+      menu.setAttribute("aria-hidden", "true");
+    };
 
-  <!-- =====================================================
-       LIVE ENGINE (ΔΕΝ ΑΛΛΑΖΕΙ)
-  ===================================================== -->
-  <script src="assets/js/live/live-engine.js"></script>
+    const toggleTab = () => {
+      const isHidden = menu.classList.contains("hidden");
+      if (isHidden) openTab();
+      else closeTab();
+    };
 
-  <!-- =====================================================
-       VALUE ENGINE ADAPTER (Worker -> UI)
-  ===================================================== -->
-  <script src="assets/js/live/value-adapter.js"></script>
+    const openMenuById = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.remove("hidden");
+      el.setAttribute("aria-hidden", "false");
+    };
 
-  <!-- =====================================================
-       ODDS DATA PIPELINE
-  ===================================================== -->
-  <script src="assets/js/odds/odds-canonical-batch-to-core.js"></script>
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleTab();
+    });
 
-  <!-- =====================================================
-       ODDS INTELLIGENCE CENTER
-  ===================================================== -->
-  <script src="assets/js/ui/oic-engine.js"></script>
-  <script src="assets/js/ui/oic-renderer.js"></script>
+    // Keep clicks inside from being treated as "outside"
+    menu.addEventListener("click", (e) => e.stopPropagation());
 
-  <!-- =====================================================
-       RIGHT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
-  ===================================================== -->
-  <script src="assets/js/ui/odds-radar.js"></script>
-  <script src="assets/js/ui/top-picks.js"></script>
-  <script src="assets/js/ui/value-picks.js"></script>
-  <script src="assets/js/ui/live-panel.js"></script>
-  <script src="assets/js/ui/accordion.js"></script>
+    // Use pointerdown capture so we don't get "open then immediately close" races
+    document.addEventListener("pointerdown", (e) => {
+      const t = e.target;
+      if (isInside(menu, t) || isInside(btn, t)) return;
+      closeTab();
+    }, true);
 
-
-  <!-- =====================================================
-       MOBILE TAB MENU (Theme / Language / Legal)
-       ✅ Opens REAL menus directly (theme-menu / legal-menu)
-  ===================================================== -->
-  <script>
-    (() => {
-      const btn = document.getElementById("btn-mobile-tab");
-      const menu = document.getElementById("mobile-tab-menu");
-      if (!btn || !menu) return;
-
-      const isInside = (root, node) => {
-        try { return root && node && (root === node || root.contains(node)); } catch { return false; }
-      };
-
-      const safeBlurInside = (root) => {
-        const ae = document.activeElement;
-        if (isInside(root, ae) && ae && typeof ae.blur === "function") {
-          ae.blur();
-        }
-      };
-
-      const openTab = () => {
-        menu.classList.remove("hidden");
-        menu.setAttribute("aria-hidden", "false");
-      };
-
-      const closeTab = () => {
-        // avoid aria-hidden + focused descendant warning
-        safeBlurInside(menu);
-        menu.classList.add("hidden");
-        menu.setAttribute("aria-hidden", "true");
-      };
-
-      const toggleTab = () => {
-        const isHidden = menu.classList.contains("hidden");
-        if (isHidden) openTab();
-        else closeTab();
-      };
-
-      const openMenuById = (id) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.remove("hidden");
-        el.setAttribute("aria-hidden", "false");
-      };
-
-      btn.addEventListener("click", (e) => {
+    const bind = (tabId, onClick) => {
+      const tab = document.getElementById(tabId);
+      if (!tab) return;
+      tab.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleTab();
-      });
-
-      // Keep clicks inside from being treated as "outside"
-      menu.addEventListener("click", (e) => e.stopPropagation());
-
-      // Use pointerdown capture so we don't get "open then immediately close" races
-      document.addEventListener("pointerdown", (e) => {
-        const t = e.target;
-        if (isInside(menu, t) || isInside(btn, t)) return;
         closeTab();
-      }, true);
-
-      const bind = (tabId, onClick) => {
-        const tab = document.getElementById(tabId);
-        if (!tab) return;
-        tab.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          closeTab();
-          onClick();
-        });
-      };
-
-      bind("tab-theme", () => {
-        if (window.AIML_THEME && typeof window.AIML_THEME.open === "function") {
-          window.AIML_THEME.open();
-          return;
-        }
-        openMenuById("theme-menu");
+        onClick();
       });
+    };
 
-      bind("tab-legal", () => {
-        if (window.AIML_LEGAL && typeof window.AIML_LEGAL.open === "function") {
-          window.AIML_LEGAL.open();
-          return;
-        }
-        openMenuById("legal-menu");
-      });
+    bind("tab-theme", () => {
+      if (window.AIML_THEME && typeof window.AIML_THEME.open === "function") {
+        window.AIML_THEME.open();
+        return;
+      }
+      openMenuById("theme-menu");
+    });
 
-      bind("tab-lang", () => {
-        const btnLang = document.getElementById("btn-lang");
-        if (btnLang) btnLang.click();
-      });
-    })();
-  </script>
+    bind("tab-legal", () => {
+      if (window.AIML_LEGAL && typeof window.AIML_LEGAL.open === "function") {
+        window.AIML_LEGAL.open();
+        return;
+      }
+      openMenuById("legal-menu");
+    });
+
+    bind("tab-lang", () => {
+      const btnLang = document.getElementById("btn-lang");
+      if (btnLang) btnLang.click();
+    });
+  })();
+</script>
 
 </body>
 </html>

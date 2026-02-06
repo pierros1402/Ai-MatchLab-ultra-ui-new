@@ -51,7 +51,7 @@
       Number(m.__ftTs || 0);
 
     // if we don't know when it ended, keep it temporarily
-    if (!ts) return true;
+    if (!ts) return false;
 
     return (Date.now() - ts) <= graceMs;
   }

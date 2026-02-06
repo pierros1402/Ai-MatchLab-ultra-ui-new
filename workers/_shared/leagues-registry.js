@@ -1,14 +1,6 @@
-/* =========================================================
-   AIMatchLab — Leagues Registry (Shared)
-   Source: leagues.txt (LEAGUE_SEEDS + LEAGUE_NAME_MAP)
-   Purpose:
-   - Single source of truth for all workers
-   - Controls which leagues are supported
-   - Provides stable naming for UI / storage paths
-========================================================= */
+/* ================= LEAGUES ================= */
 
-/** @type {string[]} */
-export const LEAGUE_SEEDS = [
+const LEAGUE_SEEDS = [
   "eng.1","eng.2","eng.3","eng.4","eng.5","eng.fa","eng.league_cup","eng.trophy",
 
   "esp.1","esp.2","esp.copa_del_rey","esp.super_cup","esp.w.1",
@@ -17,7 +9,7 @@ export const LEAGUE_SEEDS = [
 
   "fra.1","fra.2","fra.coupe_de_france","fra.super_cup","fra.w.1",
 
-  "ger.1","ger.2",
+  "ger.1","ger.2","ger.dfb_pokal",
 
   "sco.1","sco.2","sco.challenge","sco.tennents",
 
@@ -65,6 +57,7 @@ export const LEAGUE_SEEDS = [
   "hon.1",
   "jam.1",
   "col.1",
+  "col.2",
 
   /* EUROPE – EXTRA */
   "tur.1",
@@ -88,11 +81,13 @@ export const LEAGUE_SEEDS = [
   "bra.camp.gaucho",
   "bra.camp.mineiro",
 
+  
+  "concacaf.champions",
+  "conmebol.libertadores",
   "club.friendly"
 ];
 
-/** @type {Record<string,string>} */
-export const LEAGUE_NAME_MAP = {
+const LEAGUE_NAME_MAP = {
   "eng.1":"Premier League",
   "eng.2":"Championship",
   "eng.3":"League One",
@@ -120,6 +115,7 @@ export const LEAGUE_NAME_MAP = {
 
   "ger.1":"Bundesliga",
   "ger.2":"2. Bundesliga",
+  "ger.dfb_pokal":"DFB Pokal",
 
   "sco.1":"Scottish Premiership",
   "sco.2":"Scottish Championship",
@@ -182,6 +178,7 @@ export const LEAGUE_NAME_MAP = {
   "hon.1":"HondurasLigaNac",
   "jam.1":"JamaicaPL",
   "col.1":"ColombiaPrimeraA",
+  "col.2": "ColombiaPrimeraB",
 
   /* EUROPE – EXTRA */
   "tur.1":"TurkeySuperLig",
@@ -207,59 +204,30 @@ export const LEAGUE_NAME_MAP = {
   "bra.camp.gaucho":"BrazilGaucho",
   "bra.camp.mineiro":"BrazilMineiro",
 
+  "concacaf.champions": "CONCACAFChampionsCup",
+  "conmebol.libertadores": "CopaLibertadores",
   "club.friendly":"ClubFriendly"
 };
 
+
 /* =========================================================
-   HELPERS
+   HELPERS (Shared)
 ========================================================= */
 
+export { LEAGUE_SEEDS, LEAGUE_NAME_MAP };
+
 export function leagueName(slug) {
-  return LEAGUE_NAME_MAP[slug] || slug || "unknown";
+  return (LEAGUE_NAME_MAP && LEAGUE_NAME_MAP[slug]) ? LEAGUE_NAME_MAP[slug] : (slug || "unknown");
 }
 
 export function isKnownLeague(slug) {
-  return !!slug && LEAGUE_SEEDS.includes(slug);
+  return !!slug && Array.isArray(LEAGUE_SEEDS) && LEAGUE_SEEDS.includes(slug);
 }
 
-/**
- * Only UEFA international competitions, not domestic leagues.
- */
 export function isUEFACompetition(slug) {
   return slug === "uefa.champions" || slug === "uefa.europa" || slug === "uefa.europa.conf";
 }
 
-/**
- * Domestic top divisions (UEFA focus) — minimal filter
- * NOTE: this list can expand, but this keeps it deterministic.
- */
-export function isUEFADomesticTopDivision(slug) {
-  return [
-    "eng.1","esp.1","ita.1","fra.1","ger.1",
-    "ned.1","por.1","bel.1","gre.1",
-    "tur.1","sui.1","aut.1","den.1","swe.1","nor.1","sco.1"
-  ].includes(slug);
-}
-
-/**
- * Returns a safe stable folder-ish key for storage paths.
- * Example: "Super League Greece" -> "super-league-greece"
- */
-export function slugifyName(name) {
-  return String(name || "")
-    .trim()
-    .toLowerCase()
-    .replaceAll("&", "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
-/**
- * Canonical season format.
- * If you pass "2025-2026" returns "2025-2026".
- * If you pass "2025" returns "2025-2026" (assumes UEFA season span).
- */
 export function normalizeSeason(season) {
   const s = String(season || "").trim();
   if (!s) return "unknown-season";

@@ -25,7 +25,12 @@ export default {
       return handleFixtures(url, env);
     }
 
-    
+
+    /* ================= FIXTURES INGEST PROXY ================= */
+    if (url.pathname === "/internal/fixtures-run") {
+      return handleFixturesIngestProxy(url, env);
+    }
+
     /* ================= FIXTURES EXPORT (ADMIN) ================= */
     if (url.pathname === "/fixtures-export/range") {
       return handleFixturesExportRange(url, env);
@@ -398,6 +403,39 @@ async function collectRowsForDay(dayKey, env) {
 
   return out;
 }
+
+
+/* =====================================================
+   FIXTURES INGEST PROXY (INTERNAL)
+   - /internal/fixtures-run?date=YYYY-MM-DD
+   - This is used by scheduler to avoid workers.dev routing glitches (1042)
+===================================================== */
+async function handleFixturesIngestProxy(url, env) {
+  const date = String(url.searchParams.get("date") || "").trim();
+  const dayKey = date || dayKeyGR();
+
+  const base =
+    env.FIXTURES_INGEST_BASE ||
+    "https://aimatchlab-fixtures-ingest.pierros1402.workers.dev";
+
+  const target = `${base}/internal/run?date=${encodeURIComponent(dayKey)}`;
+
+  const res = await fetch(target, {
+    method: "GET",
+    headers: { Accept: "application/json" }
+  });
+
+  const txt = await res.text();
+
+  return new Response(txt, {
+    status: res.status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+}
+
 
 /* =====================================================
    HELPERS
