@@ -1,6 +1,13 @@
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
 
 /* ============================================================
+   AIMATCHLAB — SCHEDULER + FIXTURES INGEST (ALL-IN-ONE)
+   - Eliminates worker->worker HTTP calls (avoids workers.dev 1042)
+   - Writes SAME KV keys as fixtures-ingest
+============================================================ */
+
+
+/* ============================================================
    AIMATCHLAB — FIXTURES INGEST (RESUMABLE, AUTO + CLEANUP)
    Folder: workers/fixtures-ingest/aimatchlab-fixtures-ingest.js
 
@@ -33,11 +40,35 @@ function keysForDay(dayYmd) {
   };
 }
 
+
+function getR2(env) {
+  if (!env?.AIML_ARCHIVE) return null;
+  return env.AIML_ARCHIVE;
+}
+
+function r2PutJson(r2, key, obj) {
+  if (!r2) return Promise.resolve(false);
+  const body = JSON.stringify(obj, null, 2);
+  return r2.put(key, body, { httpMetadata: { contentType: "application/json; charset=utf-8" } })
+    .then(() => true)
+    .catch(() => false);
+}
+
+function r2KeyStandingsLatest(leagueSlug, season) {
+  return `standings/${leagueSlug}/${season}/latest.json`;
+}
+function r2KeyStandingsByDate(leagueSlug, season, dayYmd) {
+  return `standings/${leagueSlug}/${season}/date=${dayYmd}.json`;
+}
+function r2KeyRefereeIndex() {
+  return `referees/index.json`;
+}
+
 function getKV(env) {
-  if (!env?.AIMATCHLAB_KV_CORE) {
-    throw new Error("Missing KV binding AIMATCHLAB_KV_CORE");
+  if (!env?.AIML_INGESTION_KV) {
+    throw new Error("Missing KV binding AIML_INGESTION_KV");
   }
-  return env.AIMATCHLAB_KV_CORE;
+  return env.AIML_INGESTION_KV;
 }
 
 function sleep(ms) {
@@ -170,7 +201,7 @@ async function ensureQueueInitialized(env, dayYmd) {
   await kv.put(queueKey, JSON.stringify(queue));
 }
 
-async function resumableRun(env, dayYmd) {
+async function resumableRun(env, dayYmd, chunkOverride) {
   const kv = getKV(env);
   const tz = DEFAULT_TZ;
   const { queueKey, stagingKey, debugKey } = keysForDay(dayYmd);
@@ -270,6 +301,43 @@ async function finalizeDay(env, dayYmd) {
   }
 
   await kv.put(finalKey, JSON.stringify(finalPayload));
+
+  // =====================================================
+  // R2 SNAPSHOTS (MVP placeholders) - Standings/Referees DB
+  // =====================================================
+  try {
+    const r2 = getR2(env);
+    const season = String(env.SEASON || "2025-2026");
+    const matchesArr = Array.isArray(finalPayload.matches) ? finalPayload.matches : [];
+    const leaguesToday = Array.from(new Set(matchesArr.map(m => String(m.leagueSlug || "").trim()).filter(Boolean)));
+
+    // Standings placeholders per league (we will enrich later)
+    for (const lg of leaguesToday) {
+      const stub = {
+        ok: true,
+        leagueSlug: lg,
+        season,
+        date: dayYmd,
+        type: "standings_snapshot",
+        status: "PLACEHOLDER",
+        table: [],
+        note: "Snapshot placeholder (to be enriched by trusted sources).",
+        createdAt: Date.now(),
+      };
+      await r2PutJson(r2, r2KeyStandingsByDate(lg, season, dayYmd), stub);
+      await r2PutJson(r2, r2KeyStandingsLatest(lg, season), stub);
+    }
+
+    // Referee index placeholder (global)
+    const refIndex = {
+      ok: true,
+      type: "referee_index",
+      status: "PLACEHOLDER",
+      updatedAt: Date.now(),
+      referees: []
+    };
+    await r2PutJson(r2, r2KeyRefereeIndex(), refIndex);
+  } catch (_) {}
   // =====================================================
   // DETAILS SEED (baseline record per match) - best effort
   // =====================================================
@@ -330,7 +398,98 @@ async function finalizeDay(env, dayYmd) {
   return debug;
 }
 
+
+// ------------------------------
+// SCHEDULER + FETCH (single export)
+// ------------------------------
+// =====================================================
+// INTERNAL: ENRICH (manual trigger) -> writes R2 placeholders SAFELY
+// GET /internal/enrich?date=YYYY-MM-DD
+// =====================================================
+async function handleInternalEnrich(request, env) {
+  const date = ymdFromQueryOrToday(request.url, DEFAULT_TZ);
+  const kv = getKV(env);
+
+  const fixturesKey = `FIXTURES:DATE:${date}`;
+  let fixtures = null;
+
+  try {
+    const raw = await kv.get(fixturesKey);
+    fixtures = raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return jsonResponse(
+      { ok: false, error: "fixtures_parse_failed", fixturesKey, message: String(e?.message || e) },
+      500
+    );
+  }
+
+  if (!fixtures || !Array.isArray(fixtures.matches)) {
+    return jsonResponse({ ok: false, error: "missing_fixtures_final", fixturesKey }, 404);
+  }
+
+  const matches = fixtures.matches;
+  const leagues = Array.from(
+    new Set(matches.map((m) => String(m?.leagueSlug || "").trim()).filter(Boolean))
+  );
+
+  const r2 = getR2(env);
+  if (!r2) {
+    return jsonResponse({ ok: false, error: "missing_r2_binding", need: "AIML_ARCHIVE" }, 500);
+  }
+
+  const season = String(env.SEASON || "2025-2026");
+  const nowMs = Date.now();
+  const wrote = [];
+
+  // Referee index placeholder (global)
+  await r2PutJson(r2, r2KeyRefereeIndex(), {
+    ok: true,
+    type: "referee_index",
+    status: "PLACEHOLDER",
+    updatedAt: nowMs,
+    referees: []
+  }).then((ok) => {
+    if (ok) wrote.push(r2KeyRefereeIndex());
+  });
+
+  // Standings placeholders per league
+  for (const lg of leagues) {
+    const stub = {
+      ok: true,
+      leagueSlug: lg,
+      season,
+      date,
+      type: "standings_snapshot",
+      status: "PLACEHOLDER",
+      table: [],
+      note: "Snapshot placeholder (to be enriched by trusted sources).",
+      createdAt: nowMs
+    };
+
+    await r2PutJson(r2, r2KeyStandingsByDate(lg, season, date), stub).then((ok) => {
+      if (ok) wrote.push(r2KeyStandingsByDate(lg, season, date));
+    });
+
+    await r2PutJson(r2, r2KeyStandingsLatest(lg, season), stub).then((ok) => {
+      if (ok) wrote.push(r2KeyStandingsLatest(lg, season));
+    });
+  }
+
+  return jsonResponse({
+    ok: true,
+    service: "aimatchlab-scheduler",
+    version: "v1.5-enrich-safe",
+    date,
+    fixturesKey,
+    matchesCount: matches.length,
+    leagues,
+    wrote
+  });
+}
+
+
 export default {
+
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
@@ -338,18 +497,17 @@ export default {
     if (url.pathname === "/") {
       return jsonResponse({
         ok: true,
-        service: "aimatchlab-fixtures-ingest",
-        version: "v3-clean-shared",
-        note: "Use /internal/run or /internal/finalize. Scheduler calls these."
+        service: "aimatchlab-scheduler-allinone",
+        version: "v1-allinone",
+        note: "This worker runs scheduled fixtures ingest without worker->worker HTTP."
       });
     }
 
-    // Run: process one chunk
+    // Optional manual debug endpoints (same as fixtures-ingest)
     if (url.pathname === "/internal/run") {
       const dayYmd = ymdFromQueryOrToday(request.url, DEFAULT_TZ);
       const burst = Math.max(1, Math.min(5, parseInt(url.searchParams.get("burst") || "1", 10)));
 
-      // do N runs in one request
       let last = null;
       for (let i = 0; i < burst; i++) {
         last = await resumableRun(env, dayYmd);
@@ -357,19 +515,20 @@ export default {
       return jsonResponse(last);
     }
 
-    // Finalize: write FIXTURES:DATE:<day> and cleanup
     if (url.pathname === "/internal/finalize") {
       const dayYmd = ymdFromQueryOrToday(request.url, DEFAULT_TZ);
       const out = await finalizeDay(env, dayYmd);
       return jsonResponse(out, out.ok ? 200 : 409);
     }
 
-    // Start: background ingest (Durable Object-free)
-    // NOTE: This endpoint starts it "fire and forget" via waitUntil
+    if (url.pathname === "/internal/enrich") {
+      return handleInternalEnrich(request, env);
+    }
+
     if (url.pathname === "/internal/start") {
       const dayYmd = ymdFromQueryOrToday(request.url, DEFAULT_TZ);
+
       ctx.waitUntil((async () => {
-        // drain until empty-ish; safety cap 40 loops
         for (let i = 0; i < 40; i++) {
           const d = await resumableRun(env, dayYmd);
           if (d.queueRemaining <= 0) break;
@@ -382,10 +541,47 @@ export default {
         ok: true,
         started: true,
         date: dayYmd,
-        note: "Resumable ingest started in background (queue/staging). Check FIXTURES:DEBUG:* keys."
+        note: "Ingest started in background. Check FIXTURES:DEBUG:* keys."
       });
     }
 
     return jsonResponse({ ok: false, error: "not_found" }, 404);
   }
 };
+
+// =====================================================
+// STANDINGS ENRICHMENT (SEASON-LEVEL, INDEPENDENT OF DAY)
+// =====================================================
+// Uses the SAME cron as this scheduler.
+// Safe: if provider returns no data, nothing is written.
+
+
+async function runSeasonStandings(env) {
+  const season = String(env.SEASON || "2025-2026");
+
+  // Use canonical registry (single source of truth)
+  const STANDINGS_LEAGUES = Array.isArray(LEAGUE_SEEDS)
+    ? LEAGUE_SEEDS.filter(slug =>
+        typeof slug === "string" &&
+        (slug.endsWith(".1") || slug.endsWith(".2"))
+      )
+    : [];
+
+  for (const lg of STANDINGS_LEAGUES) {
+    try {
+      
+      await fetch(env.STANDINGS_WORKER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Internal-Token": env.INTERNAL_ENRICH_TOKEN
+        },
+        body: JSON.stringify({
+          league: lg,
+          season
+        })
+      });
+    } catch (_) {}
+  }
+}
+

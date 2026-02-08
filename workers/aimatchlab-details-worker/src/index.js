@@ -1,9 +1,10 @@
 /**
- * AIMatchLab Details Worker — Canonical Source (ESM)
- * Stable rebuild: clean scopes, no compiled artifacts.
+ * AIMatchLab Details Worker
+ * Version: 3.1.0
+ * Created: 2026-02-07
+ * Phase: DETAILS-LIVE-INTEGRATED
  */
 
-// ---------- utils ----------
 const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data, null, 2), {
     status,
@@ -36,11 +37,10 @@ const stableHash = (obj) => {
 const computeCooldownSeconds = ({ status }) => {
   const st = String(status || "").toUpperCase();
   if (["FT","FINAL","FINISHED"].includes(st)) return 24 * 60 * 60;
-  if (["LIVE","IN_PLAY","STATUS_IN_PROGRESS"].includes(st)) return 90;
+  if (["LIVE","IN_PLAY","STATUS_IN_PROGRESS","POST"].includes(st)) return 90;
   return 15 * 60;
 };
 
-// ---------- builders ----------
 const buildStandardQuestions = () => ([
   { id:"context", title:"Context Snapshot", q:"What is the match context?", a:{ bullets:["Baseline intel record.","Awaiting enrichment."] } },
   { id:"paths", title:"Market Paths (1/X/2)", q:"Plausible paths", a:{ home:["Early goal"], draw:["Low-event"], away:["Transitions"] } },
@@ -79,26 +79,20 @@ const buildDetailsPayload = (id, ctx = {}) => {
     standardQuestions: buildStandardQuestions(),
     extras:{ venue:null, referee:null, absences:[], lineups:null, weather:null },
     facts:{ standings:null, referees:null, absences:null, sources:{} },
+    live:{ stats:null, intel:null, source:null },
     meta:{ lastCheckedAt:null, nextCheckAt:null, checkCooldownSec:null, changed:false, diff:[], payloadHash:null },
   };
 };
 
-// ---------- R2 helpers ----------
 const r2GetJsonSafe = async (env, key) => {
   try {
-    if (!env?.AIMATCHLAB_INTEL) return { ok:false, error:"no_r2_binding", key };
+    if (!env?.AIMATCHLAB_INTEL) return { ok:false };
     const obj = await env.AIMATCHLAB_INTEL.get(key);
-    if (!obj) return { ok:false, error:"not_found", key };
-    return { ok:true, key, data: JSON.parse(await obj.text()) };
-  } catch (e) {
-    return { ok:false, error:"r2_read_failed", key, message:String(e) };
+    if (!obj) return { ok:false };
+    return { ok:true, data: JSON.parse(await obj.text()) };
+  } catch {
+    return { ok:false };
   }
-};
-
-const buildUiHintForPlaceholder = (type) => {
-  if (type==="standings") return "Standings pending enrichment.";
-  if (type==="referees") return "Referee intel pending enrichment.";
-  return "Data pending enrichment.";
 };
 
 const enrichFactsFromR2 = async ({ env, league, season, matchId }) => {
@@ -112,69 +106,55 @@ const enrichFactsFromR2 = async ({ env, league, season, matchId }) => {
     r2GetJsonSafe(env, absKey),
   ]);
 
-  const facts = { sources:{}, standings:null, referees:null, absences:null };
-
-  facts.sources.standings = st.ok ? {from:"r2", key:standingsKey} : {from:"r2", key:standingsKey, error:st.error};
-  facts.standings = st.ok ? { ok:true, status:st.data?.status||"OK", snapshot:st.data } :
-                            { ok:false, status:"MISSING", uiHint:buildUiHintForPlaceholder("standings") };
-
-  facts.sources.referees = rf.ok ? {from:"r2", key:refereesKey} : {from:"r2", key:refereesKey, error:rf.error};
-  facts.referees = rf.ok ? { ok:true, status:rf.data?.status||"OK", index:rf.data } :
-                           { ok:false, status:"MISSING", uiHint:buildUiHintForPlaceholder("referees") };
-
-  facts.sources.absences = ab.ok ? {from:"r2", key:absKey} : {from:"r2", key:absKey, error:ab.error};
-  facts.absences = ab.ok ? { ok:true, status:ab.data?.status||"OK", snapshot:ab.data } :
-                           { ok:false, status:"MISSING", uiHint:buildUiHintForPlaceholder("absences") };
-
-  return facts;
+  return {
+    standings: st.ok ? st.data : null,
+    referees: rf.ok ? rf.data : null,
+    absences: ab.ok ? ab.data : null,
+  };
 };
 
-// ---------- handlers ----------
+async function fetchLiveLayer(id) {
+  try {
+    const res = await fetch(`https://aiml-live-match-worker.pierros1402.workers.dev/api/match-live?id=${id}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data?.ok) return null;
+    return {
+      stats: data.stats || null,
+      intel: data.live_intel || null,
+      source: "aiml-live-match-worker"
+    };
+  } catch {
+    return null;
+  }
+}
+
 const handleMatchDetails = async (req, url, env) => {
   const id = url.searchParams.get("id");
   if (!id) return json({ok:false,error:"missing_query_param"},400,corsHeaders(req));
 
   const league = url.searchParams.get("league") || "_unknown";
   const season = url.searchParams.get("season") || "2025-2026";
-  const refresh = url.searchParams.get("refresh")==="1";
-  const check = url.searchParams.get("check")==="1";
   const key = kvKeyForMatch(id);
 
   let cached = null;
   try { cached = await env.AIMATCHLAB_DETAILS.get(key, "json"); } catch {}
 
-  // ===== Fully self-healing flow =====
-
-  // 1️⃣ If cached exists but corrupted (no match shell) → auto-delete
-  if (cached?.ok && !cached?.basic?.home) {
-    await env.AIMATCHLAB_DETAILS.delete(key);
-    cached = null;
-  }
-
-  // 2️⃣ If valid cached exists → start from it
   if (cached?.ok) {
-    const base = { ...cached };
-    base.cache = refresh || check ? "REFRESH" : "HIT";
-
-    base.facts = await enrichFactsFromR2({ env, league, season, matchId:id });
-
-    base.meta = base.meta || {};
-    base.meta.lastCheckedAt = nowIso();
-    base.meta.checkCooldownSec = computeCooldownSeconds({ status: base.basic?.status });
-
-    await env.AIMATCHLAB_DETAILS.put(key, JSON.stringify(base), { expirationTtl: 60*60*24*30 });
-    return json(base,200,corsHeaders(req));
+    cached.cache = "HIT";
+    cached.facts = await enrichFactsFromR2({ env, league, season, matchId:id });
+    cached.live = await fetchLiveLayer(id) || { stats:null, intel:null, source:null };
+    cached.meta.lastCheckedAt = nowIso();
+    return json(cached,200,corsHeaders(req));
   }
 
-  // 3️⃣ No cached record → build transient payload
   const base = buildDetailsPayload(id,{ league, season });
-
   base.meta.payloadHash = stableHash(base);
   base.meta.checkCooldownSec = computeCooldownSeconds({ status: base.basic.status });
 
   base.facts = await enrichFactsFromR2({ env, league, season, matchId:id });
+  base.live = await fetchLiveLayer(id) || { stats:null, intel:null, source:null };
 
-  // ❗ Do NOT persist if match shell is empty
   if (base.basic?.home) {
     await env.AIMATCHLAB_DETAILS.put(key, JSON.stringify(base), { expirationTtl: 60*60*24*30 });
   }
@@ -196,12 +176,11 @@ const handleSeed = async (req, env) => {
   return json(payload,200,corsHeaders(req));
 };
 
-// ---------- fetch ----------
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (req.method==="OPTIONS") return new Response(null,{status:204,headers:corsHeaders(req)});
-    if (url.pathname==="/" || url.pathname==="/health") return json({ok:true,service:"aimatchlab-details-worker"},200,corsHeaders(req));
+    if (url.pathname==="/" || url.pathname==="/health") return json({ok:true,service:"aimatchlab-details-worker",version:"3.1.0"},200,corsHeaders(req));
     if (req.method==="POST" && url.pathname==="/v1/match/details/seed") return handleSeed(req, env);
     if (req.method==="GET" && url.pathname==="/v1/match/details") return handleMatchDetails(req, url, env);
     return json({ok:false,error:"not_found"},404,corsHeaders(req));

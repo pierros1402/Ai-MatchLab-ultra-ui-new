@@ -1,5 +1,17 @@
 
 
+// =============================
+// UNDER PENALTY SAFETY CLAMP
+// =============================
+function clampProb(x){
+  if (x < 0) return 0;
+  if (x > 1) return 1;
+  return x;
+}
+
+
+
+
 // ✅ Keep ONLY one side (OVER or UNDER) per matchId + O/U line market (1.5/2.5/3.5)
 function chooseOneSidePerOuLine(items){
   const byKey = new Map(); // key = matchId|market (market includes line)
@@ -135,12 +147,30 @@ export default {
      - VALUE:SUMMARY:YYYY-MM-DD   (JSON)  (UI)
 ====================================================== */
 
+
 async function runValueEngine(env, url) {
+
   const date = url.searchParams.get("date") || isoToday();
+  const force = url.searchParams.get("force") === "1";
+
+  const summaryKey = `VALUE:SUMMARY:${date}`;
+  const statKey = `VALUE:STAT:DATE:${date}`;
+
+  // 🔒 Daily lock (write once per day unless force=1)
+  if (!force) {
+    const summaryExists = await env.AIML_INGESTION_KV.get(summaryKey);
+    if (summaryExists) {
+      return json({
+        ok: true,
+        skipped: "already_generated",
+        date
+      });
+    }
+  }
 
   // --- Fixtures (PRE)
   const fixturesKey = `FIXTURES:DATE:${date}`;
-  const fixturesRaw = await env.AIMATCHLAB_KV_CORE.get(fixturesKey);
+  const fixturesRaw = await env.AIML_INGESTION_KV.get(fixturesKey);
   if (!fixturesRaw) return json({ ok: false, reason: "no_fixtures", date });
 
   let fixtures;
@@ -151,11 +181,10 @@ async function runValueEngine(env, url) {
   }
 
   const matches = Array.isArray(fixtures.matches) ? fixtures.matches : [];
-  const totalPRE = matches.filter(m => String(m?.status).toUpperCase() === "PRE").length;
 
-  // --- TEAM_STATS index (with newline fallback)
+  // --- TEAM_STATS
   let indexRaw = await env.AIMATCHLAB_STATS.get("TEAM_STATS:INDEX");
-  if (!indexRaw) indexRaw = await env.AIMATCHLAB_STATS.get("TEAM_STATS:INDEX\n");
+  if (!indexRaw) indexRaw = await env.AIML_INGESTION_KV.get("TEAM_STATS:INDEX\n");
   if (!indexRaw) return json({ ok: false, reason: "missing_team_stats_index" });
 
   let latest;
@@ -164,7 +193,6 @@ async function runValueEngine(env, url) {
   } catch {
     return json({ ok: false, reason: "invalid_team_stats_index" });
   }
-  if (!latest) return json({ ok: false, reason: "team_stats_index_no_latest" });
 
   const statsRaw = await env.AIMATCHLAB_STATS.get(`TEAM_STATS:SEASON:${latest}`);
   if (!statsRaw) {
@@ -186,11 +214,10 @@ async function runValueEngine(env, url) {
 
   for (const m of matches) {
     if (!m) continue;
+
     const st = String(m.status || "").toUpperCase();
     const isPRE = (st === "PRE" || st === "STATUS_SCHEDULED");
     if (!isPRE) continue;
-
-
 
     if (isDomesticCup(m.leagueSlug)) {
       skippedCups++;
@@ -204,9 +231,8 @@ async function runValueEngine(env, url) {
     }
 
     const markets = buildMarkets_AllForTesting(found.homeStats, found.awayStats);
-    if (!markets || Object.keys(markets).length === 0) continue;
+    if (!markets) continue;
 
-    // legacy per-match blob (kept for eval/backtest)
     results.push({
       matchId: m.id,
       league: found.leagueCode,
@@ -218,13 +244,10 @@ async function runValueEngine(env, url) {
       markets
     });
 
-    // UI summary: 1 row per market
     const flat = flattenMarkets(markets);
+
     for (const it of flat) {
-      const confidenceRaw = it.confidence;
-      if (!confidenceRaw) continue;
-      const confidence = String(confidenceRaw).toUpperCase();
-      const scorePct = confidenceScorePercent(confidence);
+      if (!it.confidence) continue;
 
       summaryItems.push({
         matchId: String(m.id || ""),
@@ -233,71 +256,42 @@ async function runValueEngine(env, url) {
         kickoff: m.kickoff || "",
         home: m.home || "",
         away: m.away || "",
-
         market: normalizeMarketLabel(it.market),
         pick: normalizePickLabel(it.market, it.prediction),
-        confidence,
-        score: scorePct
+        confidence: String(it.confidence).toUpperCase(),
+        score: confidenceScorePercent(it.confidence)
       });
     }
   }
 
-  // --- Write legacy STAT key (kept)
-  const outKey = `VALUE:STAT:DATE:${date}`;
-  await env.AIMATCHLAB_KV_CORE.put(
-    outKey,
-    JSON.stringify(
-      {
-        date,
-        season: latest,
-        totalMatches: matches.length,
-            produced: results.length,
-        skippedCups,
-        skippedNoStats,
-        results
-      },
-      null,
-      2
-    )
-  );
+  let finalItems = summaryItems;
+  finalItems = chooseOneSidePerOuLine(finalItems);
+  finalItems = dedupMatchMarketPick(finalItems);
+  finalItems = dedupOnePickPerMarket(finalItems);
 
-  // --- Write UI SUMMARY key (required by main/UI)
-  const summaryKey = `VALUE:SUMMARY:${date}`;
+  const summaryPayload = {
+    date,
+    createdAt: Date.now(),
+    season: latest,
+    totalMatches: matches.length,
+    producedItems: finalItems.length,
+    producedMatches: results.length,
+    skippedCups,
+    skippedNoStats,
+    items: finalItems
+  };
 
-// ✅ Load existing SUMMARY (if any) to freeze picks and keep daily snapshot stable
-let existingSummaryItems = [];
-try {
-  const prevRaw = await env.AIMATCHLAB_KV_CORE.get(summaryKey);
-  if (prevRaw) {
-    const prev = JSON.parse(prevRaw);
-    if (prev && Array.isArray(prev.items)) existingSummaryItems = prev.items;
-  }
-} catch (e) {
-  // ignore
-}  // ✅ FINALIZE SUMMARY ITEMS:
-// 1) Keep only best side (OVER or UNDER) per O/U line (1.5 / 2.5 / 3.5)
-// 2) Dedup exact duplicates
-// 3) Ensure 1 pick per market per match
-let finalItems = summaryItems;
-finalItems = chooseOneSidePerOuLine(finalItems);
-finalItems = dedupMatchMarketPick(finalItems);
-finalItems = dedupOnePickPerMarket(finalItems);
-  // ✅ Freeze: keep existing picks if already written earlier today
-  finalItems = freezeByExistingSummary(finalItems, existingSummaryItems);
+  await env.AIML_INGESTION_KV.put(statKey, JSON.stringify({
+    date,
+    season: latest,
+    totalMatches: matches.length,
+    produced: results.length,
+    skippedCups,
+    skippedNoStats,
+    results
+  }, null, 2));
 
-const summaryPayload = {
-  date,
-  createdAt: Date.now(),
-  season: latest,
-  totalMatches: matches.length,
-  producedItems: finalItems.length,
-  producedMatches: results.length,
-  skippedCups,
-  skippedNoStats,
-  items: finalItems
-};
-
-  await env.AIMATCHLAB_KV_CORE.put(summaryKey, JSON.stringify(summaryPayload));
+  await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(summaryPayload));
 
   return json({
     ok: true,
@@ -305,11 +299,7 @@ const summaryPayload = {
     season: latest,
     totalMatches: matches.length,
     producedMatches: results.length,
-    producedItems: summaryItems.length,
-    skippedCups,
-    skippedNoStats,
-    writtenKey: outKey,
-    writtenSummaryKey: summaryKey
+    producedItems: finalItems.length
   });
 }
 
@@ -330,8 +320,8 @@ async function runEvaluation(env, url) {
   const outCsvKey = `VALUE:EVAL:CSV:DATE:${date}`;
 
   const [valueRaw, fixturesRaw] = await Promise.all([
-    env.AIMATCHLAB_KV_CORE.get(valueKey),
-    env.AIMATCHLAB_KV_CORE.get(fixturesKey)
+    env.AIML_INGESTION_KV.get(valueKey),
+    env.AIML_INGESTION_KV.get(fixturesKey)
   ]);
 
   if (!valueRaw) return json({ ok: false, reason: "missing_value_predictions", date, key: valueKey });
@@ -431,7 +421,9 @@ async function runEvaluation(env, url) {
 
   const csv = toCsv(rows);
 
-  await env.AIMATCHLAB_KV_CORE.put(outCsvKey, csv);
+  if (url.searchParams.get("force") === "1" || !(await env.AIML_INGESTION_KV.get(outCsvKey))) {
+    await env.AIML_INGESTION_KV.put(outCsvKey, csv);
+  }
 
   return json({
     ok: true,
@@ -523,13 +515,13 @@ function buildMarkets_AllForTesting(home, away) {
   const pOver35 = clamp01(0.50 + (xG - 3.5) * 0.18);
 
   markets.over15 = { market: "OVER_15", prediction: "OVER", prob: round(pOver15), confidence: tierWithLowWindow(pOver15, 0.70, 0.60, 0.02) };
-  markets.under15 = { market: "UNDER_15", prediction: "UNDER", prob: round(1 - pOver15), confidence: tierHighOnly(1 - pOver15, 0.74) };
+  markets.under15 = { market: "UNDER_15", prediction: "UNDER", prob: round(clampProb(1 - pOver15 - 0.04)), confidence: tierHighOnly((1 - pOver15 - 0.04), 0.74) };
 
   markets.over25 = { market: "OVER_25", prediction: "OVER", prob: round(pOver25), confidence: tierWithLowWindow(pOver25, 0.65, 0.56, 0.02) };
-  markets.under25 = { market: "UNDER_25", prediction: "UNDER", prob: round(1 - pOver25), confidence: tierHighOnly(1 - pOver25, 0.70) };
+  markets.under25 = { market: "UNDER_25", prediction: "UNDER", prob: round(clampProb(1 - pOver25 - 0.03)), confidence: tierHighOnly((1 - pOver25 - 0.03), 0.70) };
 
   markets.over35 = { market: "OVER_35", prediction: "OVER", prob: round(pOver35), confidence: tierWithLowWindow(pOver35, 0.55, 0.48, 0.02) };
-  markets.under35 = { market: "UNDER_35", prediction: "UNDER", prob: round(1 - pOver35), confidence: tierHighOnly(1 - pOver35, 0.74) };
+  markets.under35 = { market: "UNDER_35", prediction: "UNDER", prob: round(clampProb(1 - pOver35 - 0.02)), confidence: tierHighOnly((1 - pOver35 - 0.02), 0.74) };
 
   // --- DC / 1X2 from goals_for_avg diff (simple)
   const delta = gfH - gfA;

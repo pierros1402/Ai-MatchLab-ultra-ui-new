@@ -21,6 +21,12 @@ export default {
     }
 
     /* ================= FIXTURES ================= */
+    
+
+    if (url.pathname === "/fixtures-runtime") {
+      return handleFixturesRuntime(url, env);
+    }
+
     if (url.pathname === "/fixtures") {
       return handleFixtures(url, env);
     }
@@ -71,11 +77,11 @@ async function handleAIMLHealth(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
   const fxKey = `FIXTURES:DATE:${dayKey}`;
-  const fx = await env.AIMATCHLAB_KV_CORE.get(fxKey, { type: "json" });
+  const fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
   const fixturesTotal = fx?.matches?.length ?? 0;
 
   const summaryKey = `VALUE:SUMMARY:${dayKey}`;
-  const rawSummary = await env.AIMATCHLAB_KV_CORE.get(summaryKey, { type: "json" });
+  const rawSummary = await env.AIML_INGESTION_KV.get(summaryKey, { type: "json" });
 
   let valueTotal = 0;
   let valueSource = "EMPTY";
@@ -103,7 +109,7 @@ async function handleFixtures(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
   const key = `FIXTURES:DATE:${dayKey}`;
 
-  const raw = await env.AIMATCHLAB_KV_CORE.get(key, { type: "json" });
+  const raw = await env.AIML_INGESTION_KV.get(key, { type: "json" });
 
   if (!raw || !Array.isArray(raw.matches)) {
     return json({ ok: true, date: dayKey, total: 0, matches: [] });
@@ -141,7 +147,7 @@ async function handleFixturesExportRange(url, env) {
 
   for (const dayKey of days) {
     const key = `FIXTURES:DATE:${dayKey}`;
-    const raw = await env.AIMATCHLAB_KV_CORE.get(key, { type: "json" });
+    const raw = await env.AIML_INGESTION_KV.get(key, { type: "json" });
     const matches = raw?.matches;
 
     if (Array.isArray(matches) && matches.length) {
@@ -207,7 +213,7 @@ async function handleFixturesExportRange(url, env) {
 async function handleValuePicks(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
-  const raw = await env.AIMATCHLAB_KV_CORE.get(`VALUE:SUMMARY:${dayKey}`, { type: "json" });
+  const raw = await env.AIML_INGESTION_KV.get(`VALUE:SUMMARY:${dayKey}`, { type: "json" });
 
   if (raw && Array.isArray(raw.items)) {
     return json({
@@ -359,12 +365,12 @@ function mergeFTIntoItem(item, fxMatch) {
 async function collectRowsForDay(dayKey, env) {
   // Load fixtures for FT verification
   const fxKey = `FIXTURES:DATE:${dayKey}`;
-  const fx = await env.AIMATCHLAB_KV_CORE.get(fxKey, { type: "json" });
+  const fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
   const fxIndex = buildFixturesIndex(fx);
 
   // Prefer VALUE:SUMMARY
   const summaryKey = `VALUE:SUMMARY:${dayKey}`;
-  const summary = await env.AIMATCHLAB_KV_CORE.get(summaryKey, { type: "json" });
+  const summary = await env.AIML_INGESTION_KV.get(summaryKey, { type: "json" });
 
   if (summary && Array.isArray(summary.items) && summary.items.length) {
     return summary.items.map((it) => {
@@ -382,12 +388,12 @@ async function collectRowsForDay(dayKey, env) {
 
   // fallback to VALUE:STAT keys
   const prefix = `VALUE:STAT:${dayKey}:`;
-  const list = await env.AIMATCHLAB_KV_CORE.list({ prefix });
+  const list = await env.AIML_INGESTION_KV.list({ prefix });
   if (!list?.keys?.length) return [];
 
   const out = [];
   for (const k of list.keys) {
-    const rec = await env.AIMATCHLAB_KV_CORE.get(k.name, { type: "json" });
+    const rec = await env.AIML_INGESTION_KV.get(k.name, { type: "json" });
     if (!rec) continue;
 
     const league = String(rec.leagueSlug || "").trim();
@@ -593,6 +599,82 @@ function toCSV(rows) {
     out += headers.map((h) => esc(r[h])).join(",") + "\n";
   }
   return out;
+}
+
+
+
+/* =====================================================
+   FIXTURES RUNTIME (STATE-AWARE ENGINE)
+   - /fixtures-runtime?mode=today|active|live
+===================================================== */
+
+async function handleFixturesRuntime(url, env) {
+  const mode = (url.searchParams.get("mode") || "today").toLowerCase();
+  const dayKey = url.searchParams.get("date") || dayKeyGR();
+
+  const raw = await env.AIML_INGESTION_KV.get(`FIXTURES:DATE:${dayKey}`, { type: "json" });
+  if (!raw || !Array.isArray(raw.matches)) {
+    return json({ ok: true, date: dayKey, total: 0, matches: [] });
+  }
+
+  const now = Date.now();
+  const matches = [];
+
+  for (const m of raw.matches) {
+    let match = { ...m };
+
+    // LIVE OVERLAY
+    const liveState = await env.AIML_INGESTION_KV.get(`LIVE:STATE:${m.id}`, { type: "json" });
+    const liveIntel = await env.AIML_INGESTION_KV.get(`LIVE:INTEL:${m.id}`, { type: "json" });
+
+    if (liveState) {
+      match.status = liveState.status || match.status;
+      match.minute = liveState.minute ?? match.minute;
+      match.scoreHome = liveState.scoreHome ?? match.scoreHome;
+      match.scoreAway = liveState.scoreAway ?? match.scoreAway;
+    }
+
+    const status = String(match.status || "").toUpperCase();
+    const kickoff = Number(match.kickoff_ms || 0);
+
+    if (mode === "live") {
+      if (status.includes("IN")) matches.push(match);
+      continue;
+    }
+
+    if (mode === "active") {
+      if (status.includes("PRE")) matches.push(match);
+      continue;
+    }
+
+    // TODAY MODE
+    if (status.includes("PRE")) {
+      matches.push(match);
+      continue;
+    }
+
+    if (status.includes("IN")) {
+      matches.push(match);
+      continue;
+    }
+
+    if (status.includes("FT")) {
+      // keep FT for 10 minutes
+      const endedAgo = now - (kickoff || now);
+      if (endedAgo < 10 * 60 * 1000) {
+        matches.push(match);
+      }
+      continue;
+    }
+  }
+
+  return json({
+    ok: true,
+    mode,
+    date: dayKey,
+    total: matches.length,
+    matches
+  });
 }
 
 function json(obj, status = 200) {

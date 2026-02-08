@@ -1,29 +1,39 @@
 {
   "name": "aimatchlab-scheduler",
   "main": "aimatchlab-scheduler.js",
-  "compatibility_date": "2024-01-01",
-
+  "compatibility_date": "2026-02-06",
   "triggers": {
     "crons": [
-      "*/5 * * * *"
+      "*/2 * * * *"
     ]
   },
-
-  "vars": {
-    "STANDINGS_WORKER_URL": "https://aimatchlab-standings-worker.pierros1402.workers.dev"
-  },
-
   "kv_namespaces": [
     {
-      "binding": "AIMATCHLAB_KV_CORE",
-      "id": "3c7930b5401a4434bc7ecf28f677dee5"
+      "binding": "AIML_INGESTION_KV",
+      "id": "a4173ef1d949403f9f1217e55ba275c3"
     }
   ],
-
   "r2_buckets": [
     {
       "binding": "AIMATCHLAB_INTEL",
       "bucket_name": "aimatchlab-intel"
+    },
+    {
+      "binding": "AIML_ARCHIVE",
+      "bucket_name": "aimatchlab-leagues-archive"
+    }
+  ],
+  "vars": {
+    "VALUE_ENGINE_URL": "https://aimatchlab-value-engine.pierros1402.workers.dev"
+  },
+  "services": [
+    {
+      "binding": "LIVE_INDEX",
+      "service": "aiml-live-index-worker"
+    },
+    {
+      "binding": "LIVE_MATCH",
+      "service": "aiml-live-match-worker"
     }
   ]
 }

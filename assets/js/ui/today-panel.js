@@ -3,7 +3,7 @@
 ========================================================= */
 
 (function () {
-  const BASE = "https://aimatchlab-main-worker.pierros1402.workers.dev";
+  const BASE = "https://aiml-serve.pierros1402.workers.dev";
   const panel = document.querySelector("#panel-today .panel-body");
   if (!panel) return;
 

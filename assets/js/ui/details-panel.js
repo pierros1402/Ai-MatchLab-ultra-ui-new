@@ -1,5 +1,5 @@
 /* ============================================================
-   assets/js/ui/details-panel.js (FULL LINKED v1.8.2)
+   assets/js/ui/details-panel.js (FULL LINKED v1.8.4)
    - Matches Details panel:
        ⓘ click opens DetailsPanel.renderLocal(matchObj, mountEl)
    - Hybrid + Standard Questions from Details Worker:
@@ -13,7 +13,7 @@
 (function () {
   "use strict";
 
-  const VER = "1.8.3";
+  const VER = "1.8.4";
   if (window.__AIML_DETAILS_PANEL_VER__ === VER) return;
   window.__AIML_DETAILS_PANEL_VER__ = VER;
 
@@ -854,38 +854,6 @@
       }
 
       const res = await fetchJson(url, 9000);
-
-
-      // ===== Orchestrator enrichment (Facts + Context + Referee) =====
-      try {
-        const orchUrl =
-          "https://aimatchlab-details-orchestrator.pierros1402.workers.dev/?matchId=" +
-          encodeURIComponent(matchId);
-
-        const orchRes = await fetch(orchUrl, { cache: "no-store" });
-        if (orchRes.ok) {
-          const orchJson = await orchRes.json();
-          if (orchJson && orchJson.details) {
-            const d = orchJson.details;
-
-            // Merge without breaking legacy structure
-            if (d.facts) {
-              res.json.facts = d.facts;
-            }
-            if (d.context) {
-              res.json.context = d.context;
-            }
-            if (d.referee) {
-              res.json.referee = d.referee;
-            }
-            if (Array.isArray(d.narrative)) {
-              res.json.narrative = d.narrative;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("[details] orchestrator merge failed", e);
-      }
 
 
       if (!res.ok || !res.json || res.json.ok === false) {
