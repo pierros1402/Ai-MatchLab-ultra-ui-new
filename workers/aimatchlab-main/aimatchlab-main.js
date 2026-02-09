@@ -61,7 +61,7 @@ export default {
       return json({
         ok: true,
         service: "aimatchlab-main",
-        version: "v1.3.0+value-export"
+        version: "v1.3.2+safe-kv"
       });
     }
 
@@ -77,11 +77,11 @@ async function handleAIMLHealth(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
   const fxKey = `FIXTURES:DATE:${dayKey}`;
-  const fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
+  const fx = await safeKVGet(env, fxKey);
   const fixturesTotal = fx?.matches?.length ?? 0;
 
   const summaryKey = `VALUE:SUMMARY:${dayKey}`;
-  const rawSummary = await env.AIML_INGESTION_KV.get(summaryKey, { type: "json" });
+  const rawSummary = await safeKVGet(env, summaryKey);
 
   let valueTotal = 0;
   let valueSource = "EMPTY";
@@ -94,7 +94,7 @@ async function handleAIMLHealth(url, env) {
   return json({
     ok: true,
     service: "aimatchlab-main",
-    version: "v1.3.0+value-export",
+    version: "v1.3.2+safe-kv",
     date: dayKey,
     fixtures: { key: fxKey, total: fixturesTotal },
     valuePicks: { date: dayKey, total: valueTotal, source: valueSource }
@@ -109,7 +109,7 @@ async function handleFixtures(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
   const key = `FIXTURES:DATE:${dayKey}`;
 
-  const raw = await env.AIML_INGESTION_KV.get(key, { type: "json" });
+  const raw = await safeKVGet(env, key);
 
   if (!raw || !Array.isArray(raw.matches)) {
     return json({ ok: true, date: dayKey, total: 0, matches: [] });
@@ -147,7 +147,7 @@ async function handleFixturesExportRange(url, env) {
 
   for (const dayKey of days) {
     const key = `FIXTURES:DATE:${dayKey}`;
-    const raw = await env.AIML_INGESTION_KV.get(key, { type: "json" });
+    const raw = await safeKVGet(env, key);
     const matches = raw?.matches;
 
     if (Array.isArray(matches) && matches.length) {
@@ -213,7 +213,7 @@ async function handleFixturesExportRange(url, env) {
 async function handleValuePicks(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
-  const raw = await env.AIML_INGESTION_KV.get(`VALUE:SUMMARY:${dayKey}`, { type: "json" });
+  const raw = await safeKVGet(env, `VALUE:SUMMARY:${dayKey}`);
 
   if (raw && Array.isArray(raw.items)) {
     return json({
@@ -365,12 +365,12 @@ function mergeFTIntoItem(item, fxMatch) {
 async function collectRowsForDay(dayKey, env) {
   // Load fixtures for FT verification
   const fxKey = `FIXTURES:DATE:${dayKey}`;
-  const fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
+  const fx = await safeKVGet(env, fxKey);
   const fxIndex = buildFixturesIndex(fx);
 
   // Prefer VALUE:SUMMARY
   const summaryKey = `VALUE:SUMMARY:${dayKey}`;
-  const summary = await env.AIML_INGESTION_KV.get(summaryKey, { type: "json" });
+  const summary = await safeKVGet(env, summaryKey);
 
   if (summary && Array.isArray(summary.items) && summary.items.length) {
     return summary.items.map((it) => {
@@ -393,7 +393,7 @@ async function collectRowsForDay(dayKey, env) {
 
   const out = [];
   for (const k of list.keys) {
-    const rec = await env.AIML_INGESTION_KV.get(k.name, { type: "json" });
+    const rec = await safeKVGet(env, k.name);
     if (!rec) continue;
 
     const league = String(rec.leagueSlug || "").trim();
@@ -612,7 +612,7 @@ async function handleFixturesRuntime(url, env) {
   const mode = (url.searchParams.get("mode") || "today").toLowerCase();
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
-  const raw = await env.AIML_INGESTION_KV.get(`FIXTURES:DATE:${dayKey}`, { type: "json" });
+  const raw = await safeKVGet(env, `FIXTURES:DATE:${dayKey}`);
   if (!raw || !Array.isArray(raw.matches)) {
     return json({ ok: true, date: dayKey, total: 0, matches: [] });
   }
@@ -624,8 +624,11 @@ async function handleFixturesRuntime(url, env) {
     let match = { ...m };
 
     // LIVE OVERLAY
-    const liveState = await env.AIML_INGESTION_KV.get(`LIVE:STATE:${m.id}`, { type: "json" });
-    const liveIntel = await env.AIML_INGESTION_KV.get(`LIVE:INTEL:${m.id}`, { type: "json" });
+    let liveState = null;
+    if (m && m.id) {
+      liveState = await safeKVGet(env, `LIVE:STATE:${m.id}`);
+    }
+    const liveIntel = await safeKVGet(env, `LIVE:INTEL:${m.id}`);
 
     if (liveState) {
       match.status = liveState.status || match.status;
@@ -675,6 +678,23 @@ async function handleFixturesRuntime(url, env) {
     total: matches.length,
     matches
   });
+}
+
+
+/* ================= SAFE KV WRAPPER ================= */
+
+async function safeKVGet(env, key) {
+  try {
+    const str = await env.AIML_INGESTION_KV.get(key);
+    if (!str) return null;
+    try {
+      return JSON.parse(str);
+    } catch {
+      return null;
+    }
+  } catch {
+    return null;
+  }
 }
 
 function json(obj, status = 200) {

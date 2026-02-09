@@ -8,6 +8,7 @@
     betfair: document.getElementById("betfair-odds-body")
   };
 
+  // Greek stays curated
   var GREEK_PROVIDERS = ["Stoiximan", "Pamestoixima", "Novibet", "Betsson"];
 
   var MARKET_LEGS = {
@@ -16,22 +17,18 @@
     "BTTS": ["GG", "NG"],
     "OU15": ["O1.5", "U1.5"],
     "OU25": ["O2.5", "U2.5"],
-    "OU35": ["O3.5", "U3.5"],
-    "DNB": ["1", "2"]
+    "OU35": ["O3.5", "U3.5"]
   };
 
   function normalizeMarket(m) {
     if (!m) return "1X2";
     m = String(m).trim();
-
     if (MARKET_LEGS[m]) return m;
     if (m === "Double Chance") return "DC";
-    if (m === "Draw No Bet") return "DNB";
     if (m === "Over / Under 1.5") return "OU15";
     if (m === "Over / Under 2.5") return "OU25";
     if (m === "Over / Under 3.5") return "OU35";
     if (m.toUpperCase() === "GG") return "BTTS";
-
     return "1X2";
   }
 
@@ -156,9 +153,11 @@
 
     var grouped = groupBooks(snapshot || {});
 
+    // Greek stays static
     buildTable(TARGETS.greek, GREEK_PROVIDERS, marketKey);
     fillSection(TARGETS.greek, GREEK_PROVIDERS, marketKey, snapshot);
 
+    // Dynamic panels
     buildTable(TARGETS.european, grouped.european, marketKey);
     fillSection(TARGETS.european, grouped.european, marketKey, snapshot);
 

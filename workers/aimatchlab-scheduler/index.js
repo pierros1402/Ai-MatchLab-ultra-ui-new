@@ -1,6 +1,6 @@
 
 // ============================================================
-// AIMATCHLAB — CLEAN SCHEDULER (INGEST ONLY)
+// AIMATCHLAB — STABLE SCHEDULER v2 (INGEST ONCE, NO DUPES)
 // ============================================================
 
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
@@ -10,8 +10,6 @@ const DEFAULT_TZ = "Europe/Athens";
 
 const RUN_CHUNK_SIZE = 10;
 const BETWEEN_LEAGUES_DELAY_MS = 180;
-const FETCH_RETRIES = 1;
-const RETRY_DELAY_MS = 350;
 const MIN_TOTAL_MATCHES_FINAL = 1;
 
 function keysForDay(dayYmd) {
@@ -19,7 +17,7 @@ function keysForDay(dayYmd) {
     queueKey:   `FIXTURES:QUEUE:DATE:${dayYmd}`,
     stagingKey: `FIXTURES:STAGING:DATE:${dayYmd}`,
     finalKey:   `FIXTURES:DATE:${dayYmd}`,
-    debugKey:   `FIXTURES:DEBUG:DATE:${dayYmd}:LAST_RUN`,
+    lockKey:    `FIXTURES:LOCK:DATE:${dayYmd}`
   };
 }
 
@@ -39,19 +37,16 @@ function jsonResponse(obj,status=200){
   });
 }
 
-function ymdFromQueryOrToday(urlStr,tz=DEFAULT_TZ){
-  const u=new URL(urlStr);
-  const q=u.searchParams.get("date");
-  if(q&&/^\d{4}-\d{2}-\d{2}$/.test(q)) return q;
-
+function todayYMD(){
   return new Intl.DateTimeFormat("en-CA",{
-    timeZone:tz,year:"numeric",month:"2-digit",day:"2-digit"
+    timeZone:DEFAULT_TZ,
+    year:"numeric",month:"2-digit",day:"2-digit"
   }).format(new Date());
 }
 
 function ymdCompact(ymd){ return String(ymd).replaceAll("-",""); }
 
-function normalizeEspnEvent(evt,leagueSlug,leagueName,tz,targetDayYmd){
+function normalizeEspnEvent(evt,leagueSlug,leagueName,dayYmd){
   const id=String(evt?.id||evt?.uid||"");
   if(!id) return null;
 
@@ -62,24 +57,21 @@ function normalizeEspnEvent(evt,leagueSlug,leagueName,tz,targetDayYmd){
   const kickoff=evt?.date||null;
   const kickoff_ms=kickoff?Date.parse(kickoff):null;
 
-  const scoreHome=Number(home?.score??0)||0;
-  const scoreAway=Number(away?.score??0)||0;
-
   return {
     id,
     home:home?.team?.displayName||"Home",
     away:away?.team?.displayName||"Away",
     kickoff,
     kickoff_ms,
-    scoreHome,
-    scoreAway,
+    scoreHome:Number(home?.score??0)||0,
+    scoreAway:Number(away?.score??0)||0,
     leagueSlug,
     leagueName,
-    dayKey:targetDayYmd
+    dayKey:dayYmd
   };
 }
 
-async function fetchLeague(leagueSlug,dayYmd,tz){
+async function fetchLeague(leagueSlug,dayYmd){
   const compact=ymdCompact(dayYmd);
   const url=`${ESPN_BASE}/${leagueSlug}/scoreboard?dates=${compact}`;
 
@@ -91,7 +83,7 @@ async function fetchLeague(leagueSlug,dayYmd,tz){
   const leagueName=LEAGUE_NAME_MAP?.[leagueSlug]||leagueSlug;
 
   return events
-    .map(e=>normalizeEspnEvent(e,leagueSlug,leagueName,tz,dayYmd))
+    .map(e=>normalizeEspnEvent(e,leagueSlug,leagueName,dayYmd))
     .filter(Boolean);
 }
 
@@ -105,7 +97,6 @@ async function ensureQueueInitialized(env,dayYmd){
 
 async function resumableRun(env,dayYmd){
   const kv=getKV(env);
-  const tz=DEFAULT_TZ;
   const {queueKey,stagingKey}=keysForDay(dayYmd);
 
   await ensureQueueInitialized(env,dayYmd);
@@ -113,27 +104,35 @@ async function resumableRun(env,dayYmd){
   const queueRaw=await kv.get(queueKey);
   const queue=queueRaw?JSON.parse(queueRaw):[];
 
+  if(!queue.length) return { done:true };
+
   const chunk=queue.slice(0,RUN_CHUNK_SIZE);
   const remaining=queue.slice(RUN_CHUNK_SIZE);
 
   const stagingRaw=await kv.get(stagingKey);
   const staging=stagingRaw?JSON.parse(stagingRaw):{date:dayYmd,matches:[]};
 
+  const map=new Map(staging.matches.map(m=>[m.id,m]));
+
   for(const league of chunk){
-    const matches=await fetchLeague(league,dayYmd,tz);
-    staging.matches=[...staging.matches,...matches];
+    const matches=await fetchLeague(league,dayYmd);
+    for(const m of matches){
+      map.set(m.id,m); // dedupe by id
+    }
     await sleep(BETWEEN_LEAGUES_DELAY_MS);
   }
+
+  staging.matches=[...map.values()];
 
   await kv.put(queueKey,JSON.stringify(remaining));
   await kv.put(stagingKey,JSON.stringify(staging));
 
-  return { ok:true,date:dayYmd,queueRemaining:remaining.length };
+  return { done:false,remaining:remaining.length };
 }
 
 async function finalizeDay(env,dayYmd){
   const kv=getKV(env);
-  const {queueKey,stagingKey,finalKey}=keysForDay(dayYmd);
+  const {stagingKey,finalKey}=keysForDay(dayYmd);
 
   const stagingRaw=await kv.get(stagingKey);
   const staging=stagingRaw?JSON.parse(stagingRaw):{matches:[]};
@@ -149,7 +148,6 @@ async function finalizeDay(env,dayYmd){
     matches:staging.matches
   }));
 
-  await kv.delete(queueKey);
   await kv.delete(stagingKey);
 
   return { ok:true,finalized:true,total:staging.matches.length };
@@ -157,22 +155,24 @@ async function finalizeDay(env,dayYmd){
 
 export default {
   async scheduled(event,env,ctx){
-    const now=new Date();
-    const dayYmd=new Intl.DateTimeFormat("en-CA",{
-      timeZone:DEFAULT_TZ,
-      year:"numeric",month:"2-digit",day:"2-digit"
-    }).format(now);
+    const kv=getKV(env);
+    const dayYmd=todayYMD();
+    const {finalKey,lockKey}=keysForDay(dayYmd);
 
-    const LOCK_KEY=`FIXTURES:LOCK:DATE:${dayYmd}`;
-    const lock=await env.AIML_INGESTION_KV.get(LOCK_KEY);
-    if(lock) return;
+    // STOP if already finalized
+    const alreadyFinal=await kv.get(finalKey);
+    if(alreadyFinal) return;
 
-    const last=await resumableRun(env,dayYmd);
+    // STOP if locked
+    const locked=await kv.get(lockKey);
+    if(locked) return;
 
-    if(last.queueRemaining<=0){
+    const run=await resumableRun(env,dayYmd);
+
+    if(run.done){
       const fin=await finalizeDay(env,dayYmd);
       if(fin?.finalized){
-        await env.AIML_INGESTION_KV.put(LOCK_KEY,"1",{expirationTtl:12*60*60});
+        await kv.put(lockKey,"1"); // permanent lock
       }
     }
   },
@@ -180,24 +180,12 @@ export default {
   async fetch(request,env,ctx){
     const url=new URL(request.url);
 
-    if(url.pathname==="/") {
+    if(url.pathname==="/"){
       return jsonResponse({
         ok:true,
-        service:"aimatchlab-scheduler-clean",
-        mode:"INGEST_ONLY"
+        service:"aimatchlab-scheduler-stable",
+        mode:"INGEST_ONCE"
       });
-    }
-
-    if(url.pathname==="/internal/run"){
-      const day=ymdFromQueryOrToday(request.url);
-      const out=await resumableRun(env,day);
-      return jsonResponse(out);
-    }
-
-    if(url.pathname==="/internal/finalize"){
-      const day=ymdFromQueryOrToday(request.url);
-      const out=await finalizeDay(env,day);
-      return jsonResponse(out);
     }
 
     return jsonResponse({ok:false,error:"not_found"},404);

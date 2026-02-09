@@ -1,15 +1,26 @@
 /**
- * AIMATCHLAB – ODDS ENGINE (API MODULE, UNIFIED) v4
- * Multi-market (1X2, DNB, OU25, BTTS)
- * Single request per league
+ * AIMATCHLAB – ODDS ENGINE (API MODULE, UNIFIED)
+ * FREE 4 LEAGUES – UI COMPATIBLE SNAPSHOT
+ *
+ * WRITE:
+ *   GET /api/odds/internal/run?date=YYYY-MM-DD&days=2
+ *
+ * READ (OIC compatible):
+ *   GET /api/odds?matchId=737014&date=YYYY-MM-DD&market=1X2
+ *
+ * Reads:
+ *   FIXTURES:DATE:<YYYY-MM-DD>  (AIML_INGESTION_KV)
+ *
+ * Writes:
+ *   ODDS:CORE:DATE:<YYYY-MM-DD> (AIML_INGESTION_KV)
  */
 
-const VERSION = "odds-engine_api_v4.0.0";
+const VERSION = "odds-engine_api_v3.0.0";
 const TZ = "Europe/Athens";
 
 const ALLOWED_LEAGUES = ["eng.1", "esp.1", "ita.1", "ger.1"];
-
-const ODDS_API_MARKETS = ["h2h", "draw_no_bet", "totals", "btts"];
+const MARKET_KEY = "1X2";
+const ODDS_API_MARKET = "h2h";
 
 const SPORT_KEY_BY_LEAGUE = {
   "eng.1": "soccer_epl",
@@ -28,15 +39,25 @@ function json(obj, status = 200) {
   });
 }
 
+/* ============================================================
+   MAIN ENTRY
+============================================================ */
+
 export async function handleOdds(req, env) {
   const url = new URL(req.url);
 
+  // WRITE SNAPSHOT
   if (url.pathname.includes("/internal/run")) {
     return runWriter(url, env);
   }
 
+  // READ FOR OIC
   return runReader(url, env);
 }
+
+/* ============================================================
+   READER (OIC COMPATIBLE)
+============================================================ */
 
 async function runReader(url, env) {
   const date = url.searchParams.get("date") || dayKeyGR();
@@ -50,7 +71,11 @@ async function runReader(url, env) {
   const snap = await env.AIML_INGESTION_KV.get(snapKey, { type: "json" });
 
   if (!snap?.matchIndex?.[matchId])
-    return json({ ok: true, market, snapshot: null });
+    return json({
+      ok: true,
+      market,
+      snapshot: null
+    });
 
   const block = snap.matchIndex[matchId]?.markets?.[market] || null;
 
@@ -60,6 +85,10 @@ async function runReader(url, env) {
     snapshot: block
   });
 }
+
+/* ============================================================
+   WRITER
+============================================================ */
 
 async function runWriter(url, env) {
   const date = url.searchParams.get("date") || dayKeyGR();
@@ -121,7 +150,11 @@ async function processOneDate(env, apiKey, region, date) {
     const payload = oddsByLeague[m.leagueSlug];
     const ev = findMatch(payload, m);
 
-    const markets = buildMarkets(ev, prevSnap?.matchIndex?.[matchId]?.markets);
+    const providers = ev ? extractProviders(ev) : [];
+    const prevBlock =
+      prevSnap?.matchIndex?.[matchId]?.markets?.[MARKET_KEY] || null;
+
+    const merged = mergeBlock(prevBlock, providers);
 
     matchIndex[matchId] = {
       matchId,
@@ -131,7 +164,9 @@ async function processOneDate(env, apiKey, region, date) {
       leagueSlug: m.leagueSlug,
       leagueName: m.leagueName,
       kickoff_ms: m.kickoff_ms ?? null,
-      markets
+      markets: {
+        [MARKET_KEY]: merged
+      }
     };
   }
 
@@ -141,6 +176,7 @@ async function processOneDate(env, apiKey, region, date) {
       ok: true,
       date,
       createdAtMs: Date.now(),
+      market: MARKET_KEY,
       matchIndex
     })
   );
@@ -154,10 +190,14 @@ async function processOneDate(env, apiKey, region, date) {
   };
 }
 
+/* ============================================================
+   ODDS API
+============================================================ */
+
 async function fetchOddsForSport(apiKey, region, sportKey) {
   const url =
     `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/` +
-    `?regions=${region}&markets=${ODDS_API_MARKETS.join(",")}` +
+    `?regions=${region}&markets=${ODDS_API_MARKET}` +
     `&oddsFormat=decimal&dateFormat=iso&apiKey=${apiKey}`;
 
   try {
@@ -169,71 +209,73 @@ async function fetchOddsForSport(apiKey, region, sportKey) {
   }
 }
 
-function buildMarkets(ev, prevMarkets = {}) {
-  if (!ev) return {};
+function findMatch(payload, fixture) {
+  if (!Array.isArray(payload)) return null;
 
-  const markets = {
-    "1X2": {},
-    "DNB": {},
-    "OU25": {},
-    "BTTS": {}
-  };
+  const home = norm(fixture.home);
+  const away = norm(fixture.away);
+
+  return payload.find(ev =>
+    norm(ev.home_team) === home &&
+    norm(ev.away_team) === away
+  ) || null;
+}
+
+function extractProviders(ev) {
+  const out = [];
 
   for (const bm of ev.bookmakers || []) {
-    for (const market of bm.markets || []) {
+    const m = (bm.markets || []).find(x => x.key === ODDS_API_MARKET);
+    if (!m) continue;
 
-      if (market.key === "h2h") {
-        const home = findOutcome(market, ev.home_team);
-        const draw = findOutcome(market, "Draw");
-        const away = findOutcome(market, ev.away_team);
-        markets["1X2"][bm.title] =
-          mergeLegs(prevMarkets?.["1X2"]?.[bm.title], [home, draw, away]);
-      }
+    const outcomes = m.outcomes || [];
 
-      if (market.key === "draw_no_bet") {
-        const home = findOutcome(market, ev.home_team);
-        const away = findOutcome(market, ev.away_team);
-        markets["DNB"][bm.title] =
-          mergeLegs(prevMarkets?.["DNB"]?.[bm.title], [home, away]);
-      }
+    const home = outcomes.find(o => o.name === ev.home_team)?.price ?? null;
+    const away = outcomes.find(o => o.name === ev.away_team)?.price ?? null;
+    const draw = outcomes.find(o =>
+      o.name.toLowerCase() === "draw"
+    )?.price ?? null;
 
-      if (market.key === "totals") {
-        const over = market.outcomes.find(o => o.name === "Over" && o.point == 2.5)?.price ?? null;
-        const under = market.outcomes.find(o => o.name === "Under" && o.point == 2.5)?.price ?? null;
-        markets["OU25"][bm.title] =
-          mergeLegs(prevMarkets?.["OU25"]?.[bm.title], [over, under]);
-      }
-
-      if (market.key === "btts") {
-        const yes = findOutcome(market, "Yes");
-        const no = findOutcome(market, "No");
-        markets["BTTS"][bm.title] =
-          mergeLegs(prevMarkets?.["BTTS"]?.[bm.title], [yes, no]);
-      }
-    }
-  }
-
-  return markets;
-}
-
-function findOutcome(market, name) {
-  return market.outcomes.find(o =>
-    o.name.toLowerCase() === name.toLowerCase()
-  )?.price ?? null;
-}
-
-function mergeLegs(prev, legs) {
-  const out = [];
-  const old = prev || [];
-
-  for (let i = 0; i < legs.length; i++) {
-    const cur = num(legs[i]);
-    const open = old[i]?.open ?? cur;
-    const delta = open != null && cur != null ? cur - open : null;
-    out.push({ open, current: cur, delta });
+    out.push({
+      book: bm.title,
+      legs: [home, draw, away]
+    });
   }
 
   return out;
+}
+
+function mergeBlock(prev, providers) {
+  const out = {};
+  const old = prev || {};
+
+  for (const p of providers) {
+    const prevLegs = old[p.book] || [];
+    const merged = [];
+
+    for (let i = 0; i < 3; i++) {
+      const cur = num(p.legs[i]);
+      const open = prevLegs[i]?.open ?? cur;
+      const delta = open != null && cur != null ? cur - open : null;
+      merged.push({ open, current: cur, delta });
+    }
+
+    out[p.book] = merged;
+  }
+
+  return out;
+}
+
+/* ============================================================
+   UTILS
+============================================================ */
+
+function norm(s) {
+  return String(s || "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[\.\-'"`]/g, "")
+    .trim();
 }
 
 function num(x) {
