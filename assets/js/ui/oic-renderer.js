@@ -1,18 +1,3 @@
-/* ============================================================
-   OIC RENDERER — LOCKED (odds.css compatible) ✅ FINAL
-   Targets:
-   - #greek-odds-body
-   - #eu-odds-body
-   - #asian-odds-body
-   - #betfair-odds-body
-
-   Behavior:
-   - Always renders skeleton tables (bookmakers + cells) with —.
-   - Accepts dropdown keys (1X2, DC, BTTS, OU15, OU25, OU35)
-     AND also accepts legacy labels ("Over / Under 2.5") safely.
-   - Renders correct header legs per market.
-   - If snapshot has data for the current market, fills cells (best-effort).
-============================================================ */
 (function () {
   "use strict";
 
@@ -23,51 +8,29 @@
     betfair: document.getElementById("betfair-odds-body")
   };
 
-  var PROVIDERS = {
-    greek: ["Stoiximan", "Pamestoixima", "Novibet", "Betsson"],
-    european: ["Unibet", "Bet365", "Bwin"],
-    asian: ["Pinnacle", "SBOBET", "188Bet"],
-    betfair: ["Betfair"]
-  };
+  var GREEK_PROVIDERS = ["Stoiximan", "Pamestoixima", "Novibet", "Betsson"];
 
-  // ✅ legs per market (BTTS key, NOT GG)
   var MARKET_LEGS = {
     "1X2": ["1", "X", "2"],
     "DC": ["1X", "12", "X2"],
     "BTTS": ["GG", "NG"],
     "OU15": ["O1.5", "U1.5"],
     "OU25": ["O2.5", "U2.5"],
-    "OU35": ["O3.5", "U3.5"]
+    "OU35": ["O3.5", "U3.5"],
+    "DNB": ["1", "2"]
   };
 
-  function normalizeMarket(marketInput) {
-    if (!marketInput) return "1X2";
+  function normalizeMarket(m) {
+    if (!m) return "1X2";
+    m = String(m).trim();
 
-    var m = String(marketInput).trim();
-
-    // ✅ dropdown keys
-    if (m === "1X2") return "1X2";
-    if (m === "DC") return "DC";
-    if (m === "BTTS") return "BTTS";
-    if (m === "OU15") return "OU15";
-    if (m === "OU25") return "OU25";
-    if (m === "OU35") return "OU35";
-
-    // ✅ legacy labels (if any code still sends labels)
+    if (MARKET_LEGS[m]) return m;
     if (m === "Double Chance") return "DC";
-    if (m === "BTTS") return "BTTS";
+    if (m === "Draw No Bet") return "DNB";
     if (m === "Over / Under 1.5") return "OU15";
     if (m === "Over / Under 2.5") return "OU25";
     if (m === "Over / Under 3.5") return "OU35";
-
-    // ✅ tolerate GG legacy
-    var up = m.toUpperCase();
-    if (up === "GG") return "BTTS";
-
-    // ✅ tolerate OU variants
-    if (up === "OU1.5" || up === "OU_15") return "OU15";
-    if (up === "OU2.5" || up === "OU_25") return "OU25";
-    if (up === "OU3.5" || up === "OU_35") return "OU35";
+    if (m.toUpperCase() === "GG") return "BTTS";
 
     return "1X2";
   }
@@ -83,8 +46,12 @@
     return d;
   }
 
-  function buildTable(sectionKey, marketKey) {
-    var container = TARGETS[sectionKey];
+  function format2(x) {
+    if (typeof x !== "number" || !isFinite(x)) return "—";
+    return x.toFixed(2);
+  }
+
+  function buildTable(container, books, marketKey) {
     if (!container) return;
 
     clear(container);
@@ -93,79 +60,53 @@
     var table = el("div", "oic-odds-table");
     table.setAttribute("data-cols", String(legs.length));
 
-    // header row
     var head = el("div", "oic-odds-header");
     head.appendChild(el("div", "oic-book", ""));
-    for (var i = 0; i < legs.length; i++) {
-      head.appendChild(el("div", "oic-head", legs[i]));
-    }
+    legs.forEach(function (l) {
+      head.appendChild(el("div", "oic-head", l));
+    });
     table.appendChild(head);
 
-    // bookmaker rows
-    var books = PROVIDERS[sectionKey] || [];
-    for (var b = 0; b < books.length; b++) {
+    books.forEach(function (book) {
       var row = el("div", "oic-odds-row");
-      row.setAttribute("data-book", books[b]);
+      row.setAttribute("data-book", book);
 
-      row.appendChild(el("div", "oic-book", books[b]));
+      row.appendChild(el("div", "oic-book", book));
 
-      for (var c = 0; c < legs.length; c++) {
+      legs.forEach(function () {
         var cellWrap = el("div", "oic-odd-cell");
-        var cur = el("div", "oic-odd-current", "—");
-        var del = el("div", "oic-odd-delta", "—");
-        cellWrap.appendChild(cur);
-        cellWrap.appendChild(del);
+        cellWrap.appendChild(el("div", "oic-odd-current", "—"));
+        cellWrap.appendChild(el("div", "oic-odd-delta", "—"));
         row.appendChild(cellWrap);
-      }
+      });
 
       table.appendChild(row);
-    }
+    });
 
     container.appendChild(table);
   }
 
-  function readMarketBlock(snapshot, marketKey) {
-    if (!snapshot) return null;
+  function fillSection(container, books, marketKey, snapshot) {
+    if (!container || !snapshot) return;
 
-    // allow: snapshot.markets[marketKey] or snapshot[marketKey]
-    if (snapshot.markets && snapshot.markets[marketKey]) return snapshot.markets[marketKey];
-    if (snapshot[marketKey]) return snapshot[marketKey];
-
-    // tolerate legacy GG storage
-    if (marketKey === "BTTS") {
-      if (snapshot.markets && snapshot.markets.GG) return snapshot.markets.GG;
-      if (snapshot.GG) return snapshot.GG;
-    }
-
-    return null;
-  }
-
-  function format2(x) {
-    if (typeof x !== "number" || !isFinite(x)) return "—";
-    return x.toFixed(2);
-  }
-
-  function fillSection(sectionKey, marketKey, snapshot) {
-    var container = TARGETS[sectionKey];
-    if (!container) return;
-
-    var block = readMarketBlock(snapshot, marketKey);
+    var block = snapshot[marketKey] || snapshot;
     if (!block) return;
 
-    var rows = container.querySelectorAll(".oic-odds-row");
-    for (var r = 0; r < rows.length; r++) {
-      var book = rows[r].getAttribute("data-book") || "";
+    books.forEach(function (book) {
       var oddsArr = block[book];
-      if (!oddsArr || !oddsArr.length) continue;
+      if (!oddsArr) return;
 
-      var cells = rows[r].querySelectorAll(".oic-odd-cell");
-      for (var i = 0; i < cells.length; i++) {
-        var leg = oddsArr[i];
-        if (!leg) continue;
+      var row = container.querySelector('.oic-odds-row[data-book="' + book + '"]');
+      if (!row) return;
 
-        var cur = (leg.current != null) ? Number(leg.current) : (leg.c != null ? Number(leg.c) : NaN);
-        var opn = (leg.open != null) ? Number(leg.open) : (leg.o != null ? Number(leg.o) : NaN);
-        var dlt = (leg.delta != null) ? Number(leg.delta) : (isFinite(cur) && isFinite(opn) ? (cur - opn) : NaN);
+      var cells = row.querySelectorAll(".oic-odd-cell");
+
+      oddsArr.forEach(function (leg, i) {
+        if (!cells[i]) return;
+
+        var cur = Number(leg.current);
+        var opn = Number(leg.open);
+        var dlt = Number(leg.delta);
 
         var curEl = cells[i].querySelector(".oic-odd-current");
         var delEl = cells[i].querySelector(".oic-odd-delta");
@@ -176,14 +117,36 @@
           if (isFinite(opn) && isFinite(dlt)) {
             var sign = dlt > 0 ? "+" : "";
             delEl.textContent = format2(opn) + " (" + sign + format2(dlt) + ")";
-          } else if (isFinite(opn)) {
-            delEl.textContent = format2(opn);
           } else {
             delEl.textContent = "—";
           }
         }
+      });
+    });
+  }
+
+  function groupBooks(snapshot) {
+    var allBooks = Object.keys(snapshot || {});
+
+    var european = [];
+    var asian = [];
+    var betfair = [];
+
+    allBooks.forEach(function (b) {
+      if (/betfair/i.test(b)) {
+        betfair.push(b);
+      } else if (/pinnacle|sbobet|188bet/i.test(b)) {
+        asian.push(b);
+      } else {
+        european.push(b);
       }
-    }
+    });
+
+    return {
+      european: european,
+      asian: asian,
+      betfair: betfair
+    };
   }
 
   function renderAll(payload) {
@@ -191,20 +154,21 @@
     var marketKey = normalizeMarket(payload.market || "1X2");
     var snapshot = payload.snapshot || null;
 
-    buildTable("greek", marketKey);
-    buildTable("european", marketKey);
-    buildTable("asian", marketKey);
-    buildTable("betfair", marketKey);
+    var grouped = groupBooks(snapshot || {});
 
-    fillSection("greek", marketKey, snapshot);
-    fillSection("european", marketKey, snapshot);
-    fillSection("asian", marketKey, snapshot);
-    fillSection("betfair", marketKey, snapshot);
+    buildTable(TARGETS.greek, GREEK_PROVIDERS, marketKey);
+    fillSection(TARGETS.greek, GREEK_PROVIDERS, marketKey, snapshot);
+
+    buildTable(TARGETS.european, grouped.european, marketKey);
+    fillSection(TARGETS.european, grouped.european, marketKey, snapshot);
+
+    buildTable(TARGETS.asian, grouped.asian, marketKey);
+    fillSection(TARGETS.asian, grouped.asian, marketKey, snapshot);
+
+    buildTable(TARGETS.betfair, grouped.betfair, marketKey);
+    fillSection(TARGETS.betfair, grouped.betfair, marketKey, snapshot);
   }
 
   window.OICRenderer = { renderAll: renderAll };
 
-  document.addEventListener("DOMContentLoaded", function () {
-    try { renderAll({ market: "1X2", snapshot: null }); } catch (_) {}
-  });
 })();

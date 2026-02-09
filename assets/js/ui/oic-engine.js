@@ -9,9 +9,6 @@
     snapshotByMatchId: Object.create(null)
   };
 
-  // ---------------------------
-  // Event bus bridge
-  // ---------------------------
   function on(ev, fn) {
     if (window.on) return window.on(ev, fn);
     window.addEventListener(ev, function (e) {
@@ -24,27 +21,23 @@
     window.dispatchEvent(new CustomEvent(ev, { detail: payload }));
   }
 
-  // ---------------------------
-  // Market normalization
-  // ---------------------------
   function normalizeMarket(v) {
     var raw = (v || "").trim();
 
-    // dropdown VALUES (keys)
     if (raw === "1X2") return "1X2";
     if (raw === "DC") return "DC";
     if (raw === "BTTS") return "BTTS";
     if (raw === "OU15") return "OU15";
     if (raw === "OU25") return "OU25";
     if (raw === "OU35") return "OU35";
+    if (raw === "DNB") return "DNB";
 
-    // dropdown LABELS (fallback safe)
     if (raw === "Double Chance") return "DC";
+    if (raw === "Draw No Bet") return "DNB";
     if (raw === "Over / Under 1.5") return "OU15";
     if (raw === "Over / Under 2.5") return "OU25";
     if (raw === "Over / Under 3.5") return "OU35";
 
-    // tolerate old values
     var up = raw.toUpperCase().trim();
     if (up === "GG") return "BTTS";
 
@@ -53,13 +46,18 @@
 
   function clampMarket(m) {
     m = normalizeMarket(m);
-    var ok = { "1X2": 1, "DC": 1, "BTTS": 1, "OU15": 1, "OU25": 1, "OU35": 1 };
+    var ok = { 
+      "1X2": 1, 
+      "DC": 1, 
+      "BTTS": 1, 
+      "OU15": 1, 
+      "OU25": 1, 
+      "OU35": 1, 
+      "DNB": 1 
+    };
     return ok[m] ? m : DEFAULT_MARKET;
   }
 
-  // ---------------------------
-  // UI
-  // ---------------------------
   function updateActiveMatchUI(m) {
     var titleEl = document.querySelector(".oic-match-title");
     var subEl = document.querySelector(".oic-match-sub");
@@ -76,9 +74,6 @@
     subEl.textContent = m.league ? m.league : ("ID: " + m.id);
   }
 
-  // ---------------------------
-  // Renderer bridge
-  // ---------------------------
   function currentSnapshot() {
     if (!state.match) return null;
     return state.snapshotByMatchId[state.match.id] || null;
@@ -88,22 +83,18 @@
     if (!window.OICRenderer || typeof window.OICRenderer.renderAll !== "function") return;
 
     window.OICRenderer.renderAll({
-      market: state.market,   // ✅ always one of: 1X2, DC, BTTS, OU15, OU25, OU35
+      market: state.market,
       match: state.match,
       snapshot: currentSnapshot()
     });
   }
 
-  // ---------------------------
-  // State updates
-  // ---------------------------
   function setMarket(m, source) {
     var next = clampMarket(m);
     if (next === state.market) return;
 
     state.market = next;
 
-    // ✅ dropdown values are KEYS (1X2, DC, BTTS, OU25...)
     var sel = document.querySelector(".oic-market-select");
     if (sel) sel.value = next;
 
@@ -142,14 +133,10 @@
     if (state.match && String(matchId) === state.match.id) render();
   }
 
-  // ---------------------------
-  // Bind UI select
-  // ---------------------------
   function bindUI() {
     var sel = document.querySelector(".oic-market-select");
     if (!sel) return;
 
-    // ✅ ensure select always has a valid option selected
     if (!sel.value || sel.selectedIndex === -1) sel.value = state.market || "1X2";
 
     state.market = clampMarket(sel.value);
@@ -159,15 +146,10 @@
     });
   }
 
-  // ---------------------------
-  // Init
-  // ---------------------------
   function init() {
     bindUI();
 
     on("match-selected", setMatch);
-
-    // optional snapshot events
     on("odds-snapshot:core", upsertSnapshot);
     on("odds-snapshot:canonical", upsertSnapshot);
 

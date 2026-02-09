@@ -474,7 +474,7 @@ function applyFilters(picks) {
   // --------------------------------------------------------------------------
   if (typeof window.on === "function") {
     window.on("value-picks:loaded", (payload) => {
-      render({ date: payload?.date, picks: payload?.items || [], total: (payload?.items || []).length });
+      render({ date: payload?.date, picks: payload?.picks || payload?.items || [], total: (payload?.items || []).length });
     });
 
   } else {

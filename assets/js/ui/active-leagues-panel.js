@@ -155,9 +155,28 @@
     });
   }
 
-  on("today-matches:loaded", payload => {
-    render(payload && payload.matches ? payload.matches : []);
-  });
+  
+async function loadActive() {
+  try {
+    const BASE =
+      (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
+        ? window.AIML_CONFIG.BASE_URL
+        : "https://aiml-serve.pierros1402.workers.dev";
+
+    const today = new Date().toISOString().slice(0, 10);
+    const res = await fetch(`${BASE}/fixtures-runtime?date=${today}`, { cache: "no-store" });
+    if (!res.ok) return;
+
+    const data = await res.json();
+    const matches = Array.isArray(data.matches) ? data.matches : [];
+    render(matches);
+  } catch (e) {
+    console.error("[ACTIVE]", e);
+  }
+}
+
+loadActive();
+
 
   on("saved:updated", payload => {
     syncSavedSet(payload && Array.isArray(payload.items) ? payload.items : []);

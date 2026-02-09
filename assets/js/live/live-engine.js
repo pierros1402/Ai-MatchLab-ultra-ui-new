@@ -4,12 +4,16 @@
   window.__AIML_LIVE_ENGINE__ = true;
 
   const cfg = window.AIML_LIVE_CFG;
-  if (!cfg || !cfg.liveBase || !cfg.livePath) {
+  if (!cfg || !cfg.livePath) {
     console.error("[live-engine] missing AIML_LIVE_CFG");
     return;
   }
 
-  const LIVE_URL = cfg.liveBase + cfg.livePath;
+  const LIVE_URL =
+    (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL
+      ? window.AIML_CONFIG.BASE_URL
+      : cfg.liveBase) + cfg.livePath;
+
   const POLL_MS = 15000;
 
   async function fetchLive() {

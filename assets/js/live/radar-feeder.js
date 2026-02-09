@@ -8,18 +8,21 @@
 ========================================================= */
 
 (function () {
-  const ENDPOINT = "/api/odds-events";
-  // Expected response:
-  // { items: [{ matchId, home, away, market, book, delta, ts }] }
+
+  const ENDPOINT_PATH = "/api/odds-events";
+
+  const BASE =
+    (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
+      ? window.AIML_CONFIG.BASE_URL
+      : "";
+
+  const ENDPOINT = BASE + ENDPOINT_PATH;
 
   let lastMarket = null;
   let inFlight = false;
 
   if (!window.on || !window.emit) return;
 
-  // -------------------------------------------------------
-  // Main listener
-  // -------------------------------------------------------
   window.on("market-selected", async function (payload) {
     const market = payload && payload.market;
     if (!market || market === lastMarket || inFlight) return;
@@ -38,8 +41,8 @@
       const data = await res.json();
       const items = Array.isArray(data.items) ? data.items : [];
 
-      // Keep 1 strongest |delta| per match
       const byMatch = new Map();
+
       for (let i = 0; i < items.length; i++) {
         const it = items[i];
         if (!it || !it.matchId || typeof it.delta !== "number") continue;
@@ -74,9 +77,6 @@
     }
   });
 
-  // -------------------------------------------------------
-  // Catch-up for late subscriber (IMPORTANT)
-  // -------------------------------------------------------
   if (window.AIML_LAST_MARKET) {
     window.emit("market-selected", {
       market: window.AIML_LAST_MARKET,

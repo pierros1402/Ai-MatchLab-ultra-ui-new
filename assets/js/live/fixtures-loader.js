@@ -14,7 +14,9 @@
   }
 
   const cfg = window.AIML_LIVE_CFG || {};
-  const base = cfg.fixturesBase;
+  const base = window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL
+    ? window.AIML_CONFIG.BASE_URL
+    : cfg.fixturesBase;
 
   if (!base) {
     console.warn("[fixtures-loader] missing AIML_LIVE_CFG.fixturesBase");
@@ -81,14 +83,14 @@
 
     const payload = {
       source: "fixtures-runtime",
-      date,              // ✅ CRITICAL for value-adapter
+      date,
       matches
     };
 
     window.__AIML_LAST_TODAY__ = payload;
 
-    window.emit("today-matches:loaded", payload); // value listens here
-    window.emit("today:updated", matches);        // state bridge
+    window.emit("today-matches:loaded", payload);
+    window.emit("today:updated", matches);
   }
 
   function emitActiveCompat(leagues) {

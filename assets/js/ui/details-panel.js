@@ -22,8 +22,9 @@
     String(cfg().fixturesBase || cfg().liveUltraBase || "").replace(/\/+$/, "");
   const detailsBase = () =>
     String(
-      cfg().detailsBase ||
-        "https://aimatchlab-details-worker.pierros1402.workers.dev"
+      (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL) ||
+        cfg().detailsBase ||
+        ""
     ).replace(/\/+$/, "");
 
   const esc = (s) =>

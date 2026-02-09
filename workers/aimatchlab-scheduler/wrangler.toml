@@ -1,0 +1,33 @@
+name = "aimatchlab-scheduler"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "AIML_INGESTION_KV"
+id = "a4173ef1d949403f9f1217e55ba275c3"
+
+[[r2_buckets]]
+binding = "AIML_ARCHIVE"
+bucket_name = "aimatchlab-leagues-archive"
+
+[[r2_buckets]]
+binding = "AIMATCHLAB_INTEL"
+bucket_name = "aimatchlab-intel"
+
+[vars]
+API_BASE_URL = "https://aimatchlab-api.pierros1402.workers.dev"
+
+# =====================================================
+# CRON CONFIG
+# - */2  -> Fixtures ingest (unchanged)
+# - 06:00 & 15:00 Greece time (WINTER UTC+2)
+#   06:00 GR = 04:00 UTC
+#   15:00 GR = 13:00 UTC
+# =====================================================
+
+[triggers]
+crons = [
+  "*/2 * * * *",
+  "0 4 * * *",
+  "0 13 * * *"
+]

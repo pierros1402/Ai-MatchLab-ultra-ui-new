@@ -4,14 +4,8 @@
   if (window.__AIML_ODDS_CORE_BRIDGE__) return;
   window.__AIML_ODDS_CORE_BRIDGE__ = true;
 
-  const WORKER_BASE = "https://aimatchlab-main.pierros1402.workers.dev";
-
-  /* =========================================================
-     OPENING CACHE (in-memory, per session)
-     ---------------------------------------------------------
-     structure:
-     OPENING_CACHE[matchId][market][book] = openingOdd
-  ========================================================= */
+  // ✅ ΣΩΣΤΟΣ WORKER
+  const WORKER_BASE = "https://aimatchlab-api.pierros1402.workers.dev";
 
   const OPENING_CACHE = Object.create(null);
 
@@ -36,39 +30,34 @@
     return OPENING_CACHE[matchId][market][book];
   }
 
-  function enrichMarkets(matchId, markets) {
-    if (!markets) return markets;
+  function enrichSnapshot(matchId, market, snapshot) {
+    if (!snapshot) return snapshot;
 
-    Object.keys(markets).forEach(marketKey => {
-      const groups = markets[marketKey];
-      if (!groups) return;
+    Object.keys(snapshot).forEach(book => {
+      const rows = snapshot[book];
+      if (!Array.isArray(rows)) return;
 
-      Object.keys(groups).forEach(groupKey => {
-        const rows = groups[groupKey];
-        if (!Array.isArray(rows)) return;
+      rows.forEach(row => {
+        const current = Number(row.current);
+        if (!isFinite(current)) return;
 
-        rows.forEach(row => {
-          const book = row.book;
-          const current = Number(row.current);
+        const opening = ensureOpening(matchId, market, book, current);
 
-          if (!book || !isFinite(current)) return;
-
-          const opening = ensureOpening(matchId, marketKey, book, current);
-
-          row.open = opening;
-          row.current = current;
-          row.delta = Number((current - opening).toFixed(3));
-        });
+        row.open = opening;
+        row.current = current;
+        row.delta = Number((current - opening).toFixed(3));
       });
     });
 
-    return markets;
+    return snapshot;
   }
 
   async function fetchCoreOdds(matchId) {
     try {
+      const today = new Date().toISOString().slice(0, 10);
+
       const res = await fetch(
-        `${WORKER_BASE}/odds/core?matchId=${encodeURIComponent(matchId)}`,
+        `${WORKER_BASE}/api/odds?matchId=${encodeURIComponent(matchId)}&date=${today}&market=1X2`,
         { cache: "no-store" }
       );
 
@@ -78,23 +67,28 @@
       }
 
       const data = await res.json();
-      if (!data || !data.matchId || !data.markets) {
+      if (!data || !data.ok) {
         console.warn("[CORE] invalid odds payload", data);
         return;
       }
 
-      // 🔒 ENRICH WITH OPENING / CURRENT / DELTA
-      data.markets = enrichMarkets(data.matchId, data.markets);
+      const enriched = enrichSnapshot(
+        matchId,
+        data.market,
+        data.snapshot
+      );
 
-      emitSafe("odds-snapshot:core", data);
+      emitSafe("odds-snapshot:core", {
+        matchId: matchId,
+        market: data.market,
+        snapshot: enriched
+      });
+
     } catch (err) {
       console.error("[CORE] odds fetch failed", err);
     }
   }
 
-  // =========================================================
-  // SINGLE SOURCE OF TRUTH
-  // =========================================================
   onSafe("match-selected", match => {
     if (!match || !match.id) return;
     fetchCoreOdds(match.id);

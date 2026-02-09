@@ -6,16 +6,41 @@
     window.addEventListener(ev, e => fn(e.detail));
   }
 
-  const BASE = "https://aimatchlab-main-worker.pierros1402.workers.dev";
+  function emit(ev, payload) {
+    if (window.emit) return window.emit(ev, payload);
+    window.dispatchEvent(new CustomEvent(ev, { detail: payload }));
+  }
+
+  // ✅ ΣΩΣΤΟΣ WORKER
+  const BASE = "https://aimatchlab-api.pierros1402.workers.dev";
 
   on("match-selected", async (match) => {
     if (!match || !match.id) return;
+
     try {
-      const r = await fetch(`${BASE}/odds/core?matchId=${encodeURIComponent(match.id)}`);
+      const today = new Date().toISOString().slice(0, 10);
+
+      const r = await fetch(
+        `${BASE}/api/odds?matchId=${encodeURIComponent(match.id)}&date=${today}&market=1X2`
+      );
+
+      if (!r.ok) {
+        console.error("[ODDS] HTTP error", r.status);
+        return;
+      }
+
       const j = await r.json();
-      console.log("[ODDS-LOG]", j);
+
+      if (!j || !j.ok) return;
+
+      emit("odds-snapshot:core", {
+        matchId: match.id,
+        market: j.market,
+        snapshot: j.snapshot
+      });
+
     } catch (e) {
-      console.error("[ODDS-LOG] error", e);
+      console.error("[ODDS] error", e);
     }
   });
 })();

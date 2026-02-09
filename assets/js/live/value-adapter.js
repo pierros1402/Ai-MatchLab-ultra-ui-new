@@ -6,7 +6,13 @@
   if (!window.on || !window.emit) return;
 
   const TZ = "Europe/Athens";
-  const BASE = "https://aimatchlab-main-worker.pierros1402.workers.dev";
+  const BASE =
+    (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
+      ? window.AIML_CONFIG.BASE_URL
+      : (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
+        ? window.AIML_LIVE_CFG.fixturesBase
+        : "";
+
 
   const ENDPOINT = (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valuePicksPath) || "/value-picks";
 
@@ -91,7 +97,11 @@
     // if blocked by cooldown/backoff -> keep last UI state (no spam)
     if (!data) return;
 
-    const items = Array.isArray(data.items) ? data.items : [];
+    const items = Array.isArray(data.picks)
+      ? data.picks
+      : Array.isArray(data.items)
+        ? data.items
+        : [];
     console.log(`[value-adapter] update ${date} picks= ${items.length}`);
 
     emit("value-picks:loaded", {
