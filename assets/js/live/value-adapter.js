@@ -3,6 +3,7 @@
 ========================================================= */
 
 (function () {
+  let __AIML_VALUE_LAST_HASH = null;
   if (!window.on || !window.emit) return;
 
   const TZ = "Europe/Athens";
