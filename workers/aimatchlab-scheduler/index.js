@@ -1,6 +1,6 @@
 
 // ============================================================
-// AIMATCHLAB — STABLE SCHEDULER v2 (INGEST ONCE, NO DUPES)
+// AIMATCHLAB — STABLE SCHEDULER v4 (CLEAN + TRACKING + SAFE)
 // ============================================================
 
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
@@ -17,7 +17,8 @@ function keysForDay(dayYmd) {
     queueKey:   `FIXTURES:QUEUE:DATE:${dayYmd}`,
     stagingKey: `FIXTURES:STAGING:DATE:${dayYmd}`,
     finalKey:   `FIXTURES:DATE:${dayYmd}`,
-    lockKey:    `FIXTURES:LOCK:DATE:${dayYmd}`
+    lockKey:    `FIXTURES:LOCK:DATE:${dayYmd}`,
+    progressKey:`SCHEDULER:PROGRESS:${dayYmd}`
   };
 }
 
@@ -57,6 +58,26 @@ function normalizeEspnEvent(evt,leagueSlug,leagueName,dayYmd){
   const kickoff=evt?.date||null;
   const kickoff_ms=kickoff?Date.parse(kickoff):null;
 
+  // --- Athens day guard: skip matches that belong to next/prev day in Europe/Athens ---
+  if (kickoff) {
+    const kickoffDayGR = new Intl.DateTimeFormat("en-CA", {
+      timeZone: DEFAULT_TZ,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date(kickoff));
+
+    if (kickoffDayGR !== dayYmd) return null;
+  }
+
+
+  const espnStatus = evt?.status?.type?.name || "";
+  let status = "STATUS_SCHEDULED";
+
+  if (espnStatus === "STATUS_FINAL") status = "STATUS_FINAL";
+  else if (espnStatus === "STATUS_IN_PROGRESS") status = "STATUS_IN_PROGRESS";
+  else if (espnStatus === "STATUS_POSTPONED") status = "STATUS_POSTPONED";
+
   return {
     id,
     home:home?.team?.displayName||"Home",
@@ -65,6 +86,7 @@ function normalizeEspnEvent(evt,leagueSlug,leagueName,dayYmd){
     kickoff_ms,
     scoreHome:Number(home?.score??0)||0,
     scoreAway:Number(away?.score??0)||0,
+    status,
     leagueSlug,
     leagueName,
     dayKey:dayYmd
@@ -97,7 +119,7 @@ async function ensureQueueInitialized(env,dayYmd){
 
 async function resumableRun(env,dayYmd){
   const kv=getKV(env);
-  const {queueKey,stagingKey}=keysForDay(dayYmd);
+  const {queueKey,stagingKey,progressKey}=keysForDay(dayYmd);
 
   await ensureQueueInitialized(env,dayYmd);
 
@@ -117,7 +139,7 @@ async function resumableRun(env,dayYmd){
   for(const league of chunk){
     const matches=await fetchLeague(league,dayYmd);
     for(const m of matches){
-      map.set(m.id,m); // dedupe by id
+      map.set(m.id,m);
     }
     await sleep(BETWEEN_LEAGUES_DELAY_MS);
   }
@@ -127,12 +149,19 @@ async function resumableRun(env,dayYmd){
   await kv.put(queueKey,JSON.stringify(remaining));
   await kv.put(stagingKey,JSON.stringify(staging));
 
+  await kv.put(progressKey, JSON.stringify({
+    phase:"ingest",
+    remainingLeagues: remaining.length,
+    totalMatches: staging.matches.length,
+    ts: Date.now()
+  }));
+
   return { done:false,remaining:remaining.length };
 }
 
 async function finalizeDay(env,dayYmd){
   const kv=getKV(env);
-  const {stagingKey,finalKey}=keysForDay(dayYmd);
+  const {stagingKey,finalKey,progressKey,queueKey}=keysForDay(dayYmd);
 
   const stagingRaw=await kv.get(stagingKey);
   const staging=stagingRaw?JSON.parse(stagingRaw):{matches:[]};
@@ -149,6 +178,13 @@ async function finalizeDay(env,dayYmd){
   }));
 
   await kv.delete(stagingKey);
+  await kv.delete(queueKey);
+
+  await kv.put(progressKey, JSON.stringify({
+    phase:"finalized",
+    totalMatches: staging.matches.length,
+    ts: Date.now()
+  }));
 
   return { ok:true,finalized:true,total:staging.matches.length };
 }
@@ -159,11 +195,14 @@ export default {
     const dayYmd=todayYMD();
     const {finalKey,lockKey}=keysForDay(dayYmd);
 
-    // STOP if already finalized
+    await kv.put("SCHEDULER:LAST_RUN", JSON.stringify({
+      ts: Date.now(),
+      iso: new Date().toISOString()
+    }));
+
     const alreadyFinal=await kv.get(finalKey);
     if(alreadyFinal) return;
 
-    // STOP if locked
     const locked=await kv.get(lockKey);
     if(locked) return;
 
@@ -171,20 +210,56 @@ export default {
 
     if(run.done){
       const fin=await finalizeDay(env,dayYmd);
-      if(fin?.finalized){
-        await kv.put(lockKey,"1"); // permanent lock
+      if (fin?.finalized) {
+
+        const API_BASE = env.API_BASE_URL;
+
+        try {
+          await fetch(`${API_BASE}/api/odds/internal/run?date=${dayYmd}&days=0`);
+        } catch {}
+
+        try {
+          await fetch(`${API_BASE}/api/value/run?date=${dayYmd}`);
+        } catch {}
+
+        await kv.put(lockKey,"1");
       }
     }
   },
 
   async fetch(request,env,ctx){
     const url=new URL(request.url);
+    const dayYmd=todayYMD();
+    const kv=getKV(env);
+    const {progressKey,finalKey,lockKey}=keysForDay(dayYmd);
+
+    if(url.pathname==="/run-now"){
+      await kv.delete(lockKey);
+      await kv.delete(finalKey);
+      await this.scheduled(null,env,ctx);
+      return jsonResponse({ ok:true, message:"Manual run executed" });
+    }
+
+    if(url.pathname==="/finalize-now"){
+      const fin = await finalizeDay(env,dayYmd);
+      return jsonResponse(fin);
+    }
+
+    if(url.pathname==="/status"){
+      const progress = await kv.get(progressKey);
+      const lastRun = await kv.get("SCHEDULER:LAST_RUN");
+      return jsonResponse({
+        ok:true,
+        progress: progress ? JSON.parse(progress) : null,
+        lastRun: lastRun ? JSON.parse(lastRun) : null
+      });
+    }
 
     if(url.pathname==="/"){
       return jsonResponse({
         ok:true,
-        service:"aimatchlab-scheduler-stable",
-        mode:"INGEST_ONCE"
+        service:"aimatchlab-scheduler-v4",
+        mode:"CLEAN_TRACKED"
       });
     }
 

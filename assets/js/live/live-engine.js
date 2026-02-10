@@ -3,16 +3,8 @@
   if (window.__AIML_LIVE_ENGINE__) return;
   window.__AIML_LIVE_ENGINE__ = true;
 
-  const cfg = window.AIML_LIVE_CFG;
-  if (!cfg || !cfg.livePath) {
-    console.error("[live-engine] missing AIML_LIVE_CFG");
-    return;
-  }
-
   const LIVE_URL =
-    (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL
-      ? window.AIML_CONFIG.BASE_URL
-      : cfg.liveBase) + cfg.livePath;
+    "https://aimatchlab-api.pierros1402.workers.dev/api/live";
 
   const POLL_MS = 15000;
 
@@ -24,7 +16,7 @@
       const json = await res.json();
       const all = Array.isArray(json.matches) ? json.matches : [];
 
-      // ΜΟΝΟ LIVE
+      // μόνο LIVE (όχι FT)
       const liveMatches = all.filter(
         m => m.status === "LIVE" || m.completed === false
       );

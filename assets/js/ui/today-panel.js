@@ -1,5 +1,10 @@
 /* =========================================================
-   TODAY PANEL – SAFE + LIVE REFRESH (NO SPAM)
+   TODAY PANEL – UNIFIED SOURCE (CLOUDFLARE SAFE)
+   - Single fetch
+   - PRE + LIVE shown
+   - FT removed from Today
+   - Emits to Live panel
+   - Local date (no UTC bug)
 ========================================================= */
 
 (function () {
@@ -12,15 +17,16 @@
   const panel = document.querySelector("#panel-today .panel-body");
   if (!panel) return;
 
-  let LAST_MATCHES = [];
-  let SAVED_IDS = new Set();
   let LOADING = false;
-
   let REFRESH_MS = 60000;
   let timer = null;
 
   function todayISO() {
-    return new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   }
 
   function fmtTime(ms) {
@@ -29,6 +35,15 @@
       minute: "2-digit",
       hour12: false
     });
+  }
+
+  function isLiveStatus(st) {
+    const s = String(st || "").toUpperCase();
+    return (
+      s === "LIVE" ||
+      s.includes("LIVE") ||
+      s.includes("IN_PROGRESS")
+    );
   }
 
   function startOfTodayLocalMs() {
@@ -41,85 +56,28 @@
     return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
   }
 
-  function isFTWithinGrace(m, graceMs) {
-    if (!m) return false;
-
-    const ts =
-      Number(m.endedAt || 0) ||
-      Number(m.finishedAt || 0) ||
-      Number(m.updatedAt || 0) ||
-      Number(m.lastUpdate || 0) ||
-      Number(m.__ftTs || 0);
-
-    if (!ts) return false;
-
-    return (Date.now() - ts) <= graceMs;
-  }
-
   function safeEmit(name, payload) {
     if (typeof window.emit === "function") window.emit(name, payload);
-  }
-
-  function syncSavedSet(items) {
-    const set = new Set();
-    (Array.isArray(items) ? items : []).forEach(x => {
-      if (x && x.id != null) set.add(String(x.id));
-    });
-    SAVED_IDS = set;
-  }
-
-  function isSaved(m) {
-    if (!m || m.id == null) return false;
-    return SAVED_IDS.has(String(m.id));
-  }
-
-  function shouldKeepRefreshing(matches) {
-    const arr = Array.isArray(matches) ? matches : [];
-    if (!arr.length) return false;
-
-    const now = Date.now();
-
-    return arr.some(m => {
-      const st = String(m.status || "").toUpperCase();
-
-      if (st === "LIVE") return true;
-      if (st === "FT") return true;
-
-      const ko = Number(m.kickoff_ms || 0);
-      if (!ko) return false;
-
-      const diff = Math.abs(ko - now);
-      return diff <= 2 * 60 * 60 * 1000;
-    });
   }
 
   function render(matches) {
     panel.innerHTML = "";
 
-    LAST_MATCHES = Array.isArray(matches) ? matches : [];
-
-    if (!LAST_MATCHES.length) {
-      panel.innerHTML = "<div class='empty'>Δεν υπάρχουν αγώνες σήμερα</div>";
-      return;
-    }
-
     const startDay = startOfTodayLocalMs();
     const endDay = endOfTodayLocalMs();
-    const FT_GRACE_MS = 10 * 60 * 1000;
 
-    const arr = LAST_MATCHES
+    const arr = (Array.isArray(matches) ? matches : [])
       .filter(m => {
         const st = String(m.status || "").toUpperCase();
-        if (st === "FT") return isFTWithinGrace(m, FT_GRACE_MS);
-        return true;
+        return (
+          st.includes("SCHEDULED") ||
+          isLiveStatus(st)
+        );
       })
       .filter(m => {
-        const st = String(m.status || "").toUpperCase();
-        if (st === "LIVE") return true;
         const ko = Number(m.kickoff_ms || 0);
         return ko >= startDay && ko <= endDay;
       })
-      .slice()
       .sort((a, b) => (a.kickoff_ms || 0) - (b.kickoff_ms || 0));
 
     if (!arr.length) {
@@ -131,6 +89,7 @@
     let lastLeague = null;
 
     arr.forEach(m => {
+
       const time = fmtTime(m.kickoff_ms);
 
       if (time !== lastTime) {
@@ -158,55 +117,22 @@
       right.className = "today-right";
 
       const info = document.createElement("span");
-      const st = String(m.status).toUpperCase();
+      const st = String(m.status || "").toUpperCase();
 
-      if (st === "LIVE") {
+      if (isLiveStatus(st)) {
         const min = m.minute ? `${m.minute}'` : "";
         const sc =
           m.scoreHome != null && m.scoreAway != null
             ? `${m.scoreHome}-${m.scoreAway}`
             : "";
         info.textContent = `${min} ${sc}`.trim() || "LIVE";
-      } else if (st === "FT") {
-        const sc =
-          m.scoreHome != null && m.scoreAway != null
-            ? `${m.scoreHome}-${m.scoreAway}`
-            : "FT";
-        info.textContent = sc;
       } else {
         info.textContent = time;
       }
 
-      const save = document.createElement("span");
-      save.className = "match-save";
-      save.textContent = isSaved(m) ? "★" : "☆";
-      save.onclick = e => {
-        e.stopPropagation();
-        safeEmit("save-toggle", m);
-      };
-
-      const details = document.createElement("span");
-      details.className = "match-details";
-      details.textContent = "ⓘ";
-      details.onclick = e => {
-        e.stopPropagation();
-        safeEmit("details-open", m);
-        safeEmit("nav:matches", { focus: "details" });
-      };
-
       right.appendChild(info);
-      right.appendChild(save);
-      right.appendChild(details);
-
       row.appendChild(left);
       row.appendChild(right);
-
-      row.onclick = () => {
-        safeEmit("match-selected", m);
-        safeEmit("active-match:set", m);
-        safeEmit("nav:oic", { tab: "odds" });
-      };
-
       panel.appendChild(row);
     });
   }
@@ -225,18 +151,21 @@
       window.AIML_FIXTURES_TODAY = { matches };
 
       render(matches);
-      safeEmit("today-matches:loaded", { source: "fixtures", matches });
 
-      if (shouldKeepRefreshing(matches)) {
-        if (!timer) {
-          timer = setInterval(load, REFRESH_MS);
-        }
+      // 🔥 Single source → feed Live panel too
+      safeEmit("live:update", { matches });
+      safeEmit("today-matches:loaded", { matches });
+
+      const hasLive = matches.some(m => isLiveStatus(m.status));
+      if (hasLive) {
+        if (!timer) timer = setInterval(load, REFRESH_MS);
       } else {
         if (timer) {
           clearInterval(timer);
           timer = null;
         }
       }
+
     } catch (e) {
       panel.innerHTML = "<div class='error'>Σφάλμα φόρτωσης</div>";
       console.error("[TODAY]", e);

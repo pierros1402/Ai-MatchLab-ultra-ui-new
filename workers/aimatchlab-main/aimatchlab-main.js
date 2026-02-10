@@ -1,5 +1,5 @@
 /**
- * AIMATCHLAB – MAIN API WORKER
+ * AIMATCHLAB – MAIN WORKER
  * Responsibilities:
  * - Serve fixtures (READ)            ✅ /fixtures
  * - Serve value picks (READ)         ✅ /value-picks
@@ -30,6 +30,21 @@ export default {
     if (url.pathname === "/fixtures") {
       return handleFixtures(url, env);
     }
+
+    /* ================= FIXTURES (v1 alias) ================= */
+    if (url.pathname === "/v1/fixtures") {
+      return handleFixtures(url, env);
+    }
+
+    if (url.pathname === "/v1/fixtures-runtime") {
+      return handleFixturesRuntime(url, env);
+    }
+
+    /* ================= VALUE PICKS (v1 alias) ================= */
+    if (url.pathname === "/v1/value-picks") {
+      return handleValuePicks(url, env);
+    }
+
 
 
     /* ================= FIXTURES INGEST PROXY ================= */
@@ -64,6 +79,7 @@ export default {
         version: "v1.3.2+safe-kv"
       });
     }
+
 
     return new Response("Not Found", { status: 404 });
   }
@@ -608,66 +624,74 @@ function toCSV(rows) {
    - /fixtures-runtime?mode=today|active|live
 ===================================================== */
 
+
 async function handleFixturesRuntime(url, env) {
   const mode = (url.searchParams.get("mode") || "today").toLowerCase();
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
   const raw = await safeKVGet(env, `FIXTURES:DATE:${dayKey}`);
   if (!raw || !Array.isArray(raw.matches)) {
-    return json({ ok: true, date: dayKey, total: 0, matches: [] });
+    return json({ ok: true, mode, date: dayKey, total: 0, matches: [] });
   }
 
   const now = Date.now();
   const matches = [];
 
   for (const m of raw.matches) {
-    let match = { ...m };
-
-    // LIVE OVERLAY
-    let liveState = null;
-    if (m && m.id) {
-      liveState = await safeKVGet(env, `LIVE:STATE:${m.id}`);
-    }
-    const liveIntel = await safeKVGet(env, `LIVE:INTEL:${m.id}`);
-
-    if (liveState) {
-      match.status = liveState.status || match.status;
-      match.minute = liveState.minute ?? match.minute;
-      match.scoreHome = liveState.scoreHome ?? match.scoreHome;
-      match.scoreAway = liveState.scoreAway ?? match.scoreAway;
-    }
+    const match = { ...m };
 
     const status = String(match.status || "").toUpperCase();
     const kickoff = Number(match.kickoff_ms || 0);
 
+    const isScheduled = status.includes("SCHEDULED");
+    const isLive =
+      status.includes("IN_PROGRESS") ||
+      status === "LIVE" ||
+      status === "ET";
+
+    const isFinal =
+      status === "FT" ||
+      status.includes("FINAL") ||
+      status === "AET" ||
+      status === "PEN";
+
+    const isPostponed =
+      status.includes("POSTPONED") ||
+      status === "PP";
+
+    // ================= LIVE MODE =================
     if (mode === "live") {
-      if (status.includes("IN")) matches.push(match);
+      if (isLive) matches.push(match);
       continue;
     }
 
+    // ================= ACTIVE MODE =================
     if (mode === "active") {
-      if (status.includes("PRE")) matches.push(match);
+
+      // PRE + FINAL + PP
+      if (isScheduled || isFinal || isPostponed) {
+        matches.push(match);
+      }
+
       continue;
     }
 
-    // TODAY MODE
-    if (status.includes("PRE")) {
+    // ================= TODAY MODE =================
+
+    if (isPostponed) continue;
+
+    if (isScheduled || isLive) {
       matches.push(match);
       continue;
     }
 
-    if (status.includes("IN")) {
-      matches.push(match);
-      continue;
-    }
-
-    if (status.includes("FT")) {
-      // keep FT for 10 minutes
+    if (isFinal) {
       const endedAgo = now - (kickoff || now);
+
+      // FT retention 10 minutes
       if (endedAgo < 10 * 60 * 1000) {
         matches.push(match);
       }
-      continue;
     }
   }
 
@@ -679,6 +703,7 @@ async function handleFixturesRuntime(url, env) {
     matches
   });
 }
+
 
 
 /* ================= SAFE KV WRAPPER ================= */

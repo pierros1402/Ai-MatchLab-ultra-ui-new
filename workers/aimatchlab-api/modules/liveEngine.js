@@ -1,15 +1,13 @@
 /**
  * AIMATCHLAB – LIVE ENGINE (API MODULE)
- * Migrated from standalone LIVE worker v1.4.1
+ * KV MERGE – FIXED SCHEMA VERSION
  *
- * Route:
- *   GET /api/live
- *
- * Source:
- *   ESPN all scoreboard (no API key required)
+ * - Fetch ESPN LIVE/FT
+ * - Merge into FIXTURES:DATE schema { ok, date, total, matches: [] }
+ * - Single source of truth
  */
 
-const VERSION = "2.0.0-api";
+const VERSION = "2.2.0-api-kv-merge-fixed-schema";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
@@ -44,17 +42,6 @@ function pickTeam(competitors, side) {
   return bySide || arr[side === "home" ? 0 : 1] || null;
 }
 
-function leagueFromUid(uid) {
-  const m = typeof uid === "string" ? uid.match(/~l:(\d+)/) : null;
-  return m ? `L:${m[1]}` : "";
-}
-
-function leagueNameGuess(ev, comp) {
-  const lid = leagueFromUid(comp?.uid || ev?.uid);
-  const slug = ev?.season?.slug || comp?.season?.slug || "";
-  return slug || lid || "SOCCER";
-}
-
 async function fetchEspnAllScoreboard() {
   const api = "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard";
 
@@ -68,7 +55,6 @@ async function fetchEspnAllScoreboard() {
   return {
     ok: res.ok,
     status: res.status,
-    url: api,
     json: j
   };
 }
@@ -88,9 +74,8 @@ function extractLiveMatches(scoreboardJson) {
     if (!comp) continue;
 
     const st = comp?.status?.type || {};
-    const state = String(st?.state || "").toLowerCase(); // pre | in | post
+    const state = String(st?.state || "").toLowerCase();
 
-    // Keep LIVE + FT
     if (state !== "in" && state !== "post") continue;
 
     const isLive = state === "in";
@@ -103,77 +88,123 @@ function extractLiveMatches(scoreboardJson) {
     const homeObj = pickTeam(competitors, "home");
     const awayObj = pickTeam(competitors, "away");
 
-    const home = homeObj?.team?.displayName || homeObj?.team?.name || "";
-    const away = awayObj?.team?.displayName || awayObj?.team?.name || "";
-
+    const home = homeObj?.team?.displayName || "";
+    const away = awayObj?.team?.displayName || "";
     if (!home || !away) continue;
 
-    const scoreHome = homeObj?.score ?? "";
-    const scoreAway = awayObj?.score ?? "";
-
-    const kickoff = comp?.startDate || comp?.date || ev?.date || "";
-    const minute = isFT ? null : normalizeMinute(comp);
-
-    const leagueName = leagueNameGuess(ev, comp);
-    const leagueId = leagueFromUid(comp?.uid || ev?.uid);
-
     out.push({
-      id: String(ev?.id || comp?.id || `${leagueId}:${home}-${away}:${kickoff}`),
+      id: String(ev?.id || comp?.id),
       home,
       away,
-      title: `${home} - ${away}`,
-      league: leagueName,
-      leagueName,
-      leagueId,
-      kickoff,
+      kickoff: comp?.startDate || "",
       status: isLive ? "LIVE" : "FT",
-      completed: isFT,
-      minute,
-      scoreHome,
-      scoreAway,
-      provider: "ESPN",
-      source: "espn-all"
+      minute: isFT ? null : normalizeMinute(comp),
+      scoreHome: Number(homeObj?.score ?? 0),
+      scoreAway: Number(awayObj?.score ?? 0)
     });
   }
 
   return out;
 }
 
+/* =========================================================
+   🔥 KV MERGE – FIXED FOR OBJECT SCHEMA
+========================================================= */
+
+async function mergeLiveIntoFixtures(env, liveMatches) {
+
+  if (!env?.AIML_INGESTION_KV) return;
+  if (!Array.isArray(liveMatches) || !liveMatches.length) return;
+
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+
+  const dayKey = `FIXTURES:DATE:${y}-${m}-${d}`;
+
+  try {
+
+    const raw = await env.AIML_INGESTION_KV.get(dayKey);
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed?.matches)) return;
+
+    const fixtures = parsed.matches;
+
+    let changed = false;
+
+    for (const live of liveMatches) {
+
+      const id = String(live.id);
+      const f = fixtures.find(x => String(x.id) === id);
+      if (!f) continue;
+
+      if (
+        f.status !== live.status ||
+        Number(f.scoreHome) !== Number(live.scoreHome) ||
+        Number(f.scoreAway) !== Number(live.scoreAway) ||
+        f.minute !== live.minute
+      ) {
+        f.status = live.status;
+        f.scoreHome = live.scoreHome;
+        f.scoreAway = live.scoreAway;
+        f.minute = live.minute;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      parsed.matches = fixtures;
+      await env.AIML_INGESTION_KV.put(
+        dayKey,
+        JSON.stringify(parsed)
+      );
+    }
+
+  } catch (e) {
+    console.error("[LIVE MERGE ERROR]", e);
+  }
+}
+
+/* =========================================================
+   MAIN HANDLER
+========================================================= */
+
 export async function handleLive(req, env) {
-  const url = new URL(req.url);
 
   if (req.method !== "GET") {
     return json({ ok: false, error: "method_not_allowed" }, 405);
   }
 
   const t0 = Date.now();
-  let debug = {};
   let matches = [];
 
   try {
+
     const r = await fetchEspnAllScoreboard();
-    debug = { ok: r.ok, status: r.status, url: r.url };
 
     if (r.ok && r.json) {
       matches = extractLiveMatches(r.json);
-    } else {
-      debug.error = "scoreboard_fetch_failed";
+
+      // 🔥 Correct merge
+      await mergeLiveIntoFixtures(env, matches);
     }
+
   } catch (e) {
-    debug = { ok: false, error: e?.message || String(e) };
+    console.error("[LIVE ENGINE ERROR]", e);
   }
 
   return json({
     ok: true,
     version: VERSION,
     ts: new Date().toISOString(),
-    source: "espn-all",
     matches,
     meta: {
       took_ms: Date.now() - t0,
       live_count: matches.filter(m => m.status === "LIVE").length,
       ft_count: matches.filter(m => m.status === "FT").length
-    },
-    debug
+    }
   });
 }

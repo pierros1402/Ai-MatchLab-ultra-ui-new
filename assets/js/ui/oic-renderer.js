@@ -91,7 +91,7 @@
 
     books.forEach(function (book) {
       var oddsArr = block[book];
-      if (!oddsArr) return;
+      if (!Array.isArray(oddsArr)) return;
 
       var row = container.querySelector('.oic-odds-row[data-book="' + book + '"]');
       if (!row) return;

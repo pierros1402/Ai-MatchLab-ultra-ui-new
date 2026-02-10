@@ -66,10 +66,15 @@
   }
 
   async function fetchRuntime(mode) {
+    const selectedDate =
+      window.__AIML_SELECTED_DATE__ ||
+      new Date().toISOString().slice(0, 10);
+
     const url =
       base +
       "/fixtures-runtime" +
       `?mode=${encodeURIComponent(mode)}` +
+      `&date=${encodeURIComponent(selectedDate)}` +
       `&_t=${Date.now()}`;
 
     const res = await fetch(url, { cache: "no-store" });

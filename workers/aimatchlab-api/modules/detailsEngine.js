@@ -1,5 +1,7 @@
 // DETAILS ENGINE MODULE (AIML_DETAILS_CACHE + R2_INTEL)
-// Place in: modules/detailsEngine.js
+// Integrated LIVE via internal liveEngine (no external worker)
+
+import { handleLive } from "./liveEngine.js";
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data, null, 2), {
@@ -92,15 +94,23 @@ const enrichFactsFromR2 = async ({ env, league, season, matchId }) => {
   };
 };
 
-async function fetchLiveLayer(id) {
+// 🔥 INTERNAL LIVE CALL (no external worker)
+async function fetchLiveLayer(id, env) {
   try {
-    const res = await fetch(`https://aiml-live-match-worker.pierros1402.workers.dev/api/match-live?id=${id}`);
-    if (!res.ok) return null;
-    const data = await res.json();
+    const fakeReq = new Request("https://internal/api/live");
+    const res = await handleLive(fakeReq, env);
+    const data = await res.json().catch(()=>null);
     if (!data?.ok) return null;
+
+    const match = (data.matches || []).find(
+      (m) => String(m.id) === String(id)
+    );
+
+    if (!match) return null;
+
     return {
-      stats: data.stats || null,
-      intel: data.live_intel || null
+      stats: match.stats || null,
+      intel: match.intel || null
     };
   } catch {
     return null;
@@ -121,7 +131,7 @@ async function handleMatchDetails(req, url, env) {
   if (cached?.ok) {
     cached.cache = "HIT";
     cached.facts = await enrichFactsFromR2({ env, league, season, matchId:id });
-    cached.live = await fetchLiveLayer(id) || { stats:null, intel:null };
+    cached.live = await fetchLiveLayer(id, env) || { stats:null, intel:null };
     cached.meta.lastCheckedAt = nowIso();
     return json(cached);
   }
@@ -131,10 +141,12 @@ async function handleMatchDetails(req, url, env) {
   base.meta.checkCooldownSec = computeCooldownSeconds({ status: base.basic.status });
 
   base.facts = await enrichFactsFromR2({ env, league, season, matchId:id });
-  base.live = await fetchLiveLayer(id) || { stats:null, intel:null };
+  base.live = await fetchLiveLayer(id, env) || { stats:null, intel:null };
 
   if (base.basic?.home) {
-    await env.AIML_DETAILS_CACHE.put(key, JSON.stringify(base), { expirationTtl: 60*60*24*30 });
+    await env.AIML_DETAILS_CACHE.put(key, JSON.stringify(base), {
+      expirationTtl: 60*60*24*30
+    });
   }
 
   return json(base);
@@ -153,7 +165,9 @@ async function handleSeed(req, env) {
   payload.cache="SEED";
   payload.ts=Date.now();
 
-  await env.AIML_DETAILS_CACHE.put(key, JSON.stringify(payload), { expirationTtl: 60*60*24*30 });
+  await env.AIML_DETAILS_CACHE.put(key, JSON.stringify(payload), {
+    expirationTtl: 60*60*24*30
+  });
 
   return json(payload);
 }
