@@ -3,6 +3,7 @@
 ========================================================= */
 
 (function () {
+  let __AIML_VALUE_BOUND_DATE = null;
   let __AIML_VALUE_LAST_HASH = null;
   if (!window.on || !window.emit) return;
 
@@ -122,9 +123,17 @@
 
   // ✅ If Today panel fires often, cooldown will protect us
   on("today-matches:loaded", (payload) => {
-    const date = (payload && payload.date) ? payload.date : ymdTodayAthens();
-    refresh(date);
-  });
+  const date = (payload && payload.date)
+    ? payload.date
+    : ymdTodayAthens();
+
+  // run only once per Athens day
+  if (__AIML_VALUE_BOUND_DATE === date) return;
+
+  __AIML_VALUE_BOUND_DATE = date;
+
+  refresh(date);
+});
 
   // Optional: allow manual force refresh without spam
   on("value:refresh", (dateYmd) => {
