@@ -1,6 +1,6 @@
 
 // ============================================================
-// AIMATCHLAB — STABLE SCHEDULER v4 (CLEAN + TRACKING + SAFE)
+// AIMATCHLAB — STABLE SCHEDULER v4.3 (SAFE + TIME-CONTROLLED)
 // ============================================================
 
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
@@ -45,6 +45,14 @@ function todayYMD(){
   }).format(new Date());
 }
 
+function hourGR(){
+  return new Intl.DateTimeFormat("en-GB",{
+    timeZone:DEFAULT_TZ,
+    hour:"2-digit",
+    hour12:false
+  }).format(new Date());
+}
+
 function ymdCompact(ymd){ return String(ymd).replaceAll("-",""); }
 
 function normalizeEspnEvent(evt,leagueSlug,leagueName,dayYmd){
@@ -58,7 +66,6 @@ function normalizeEspnEvent(evt,leagueSlug,leagueName,dayYmd){
   const kickoff=evt?.date||null;
   const kickoff_ms=kickoff?Date.parse(kickoff):null;
 
-  // --- Athens day guard: skip matches that belong to next/prev day in Europe/Athens ---
   if (kickoff) {
     const kickoffDayGR = new Intl.DateTimeFormat("en-CA", {
       timeZone: DEFAULT_TZ,
@@ -66,10 +73,8 @@ function normalizeEspnEvent(evt,leagueSlug,leagueName,dayYmd){
       month: "2-digit",
       day: "2-digit"
     }).format(new Date(kickoff));
-
     if (kickoffDayGR !== dayYmd) return null;
   }
-
 
   const espnStatus = evt?.status?.type?.name || "";
   let status = "STATUS_SCHEDULED";
@@ -166,8 +171,24 @@ async function finalizeDay(env,dayYmd){
   const stagingRaw=await kv.get(stagingKey);
   const staging=stagingRaw?JSON.parse(stagingRaw):{matches:[]};
 
-  if(staging.matches.length<MIN_TOTAL_MATCHES_FINAL){
-    return { ok:false,message:"Not enough matches" };
+  if(staging.matches.length < MIN_TOTAL_MATCHES_FINAL){
+    await kv.put(finalKey, JSON.stringify({
+      ok: true,
+      date: dayYmd,
+      total: 0,
+      matches: []
+    }));
+
+    await kv.delete(stagingKey);
+    await kv.delete(queueKey);
+
+    await kv.put(progressKey, JSON.stringify({
+      phase: "finalized",
+      totalMatches: 0,
+      ts: Date.now()
+    }));
+
+    return { ok:true, finalized:true, total:0 };
   }
 
   await kv.put(finalKey,JSON.stringify({
@@ -200,29 +221,48 @@ export default {
       iso: new Date().toISOString()
     }));
 
+    // ---------------- INGEST FLOW (IDENTICAL) ----------------
+
     const alreadyFinal=await kv.get(finalKey);
-    if(alreadyFinal) return;
-
     const locked=await kv.get(lockKey);
-    if(locked) return;
 
-    const run=await resumableRun(env,dayYmd);
+    if(!alreadyFinal && !locked){
+      const run=await resumableRun(env,dayYmd);
 
-    if(run.done){
-      const fin=await finalizeDay(env,dayYmd);
-      if (fin?.finalized) {
+      if(run.done){
+        const fin = await finalizeDay(env, dayYmd);
+        if (fin?.finalized) {
+          await kv.put(lockKey,"1");
+        }
+      }
+    }
 
-        const API_BASE = env.API_BASE_URL;
+    // ---------------- TIME-DRIVEN ODDS ----------------
 
+    const hour = hourGR();
+    const API_BASE = env.API_BASE_URL;
+
+    if (hour === "04" || hour === "13") {
+      const oddsFlag = `ODDS:RUN:${dayYmd}:${hour}`;
+      const ran = await kv.get(oddsFlag);
+      if (!ran) {
         try {
           await fetch(`${API_BASE}/api/odds/internal/run?date=${dayYmd}&days=0`);
         } catch {}
+        await kv.put(oddsFlag, "1", { expirationTtl: 86400 });
+      }
+    }
 
+    // ---------------- TIME-DRIVEN VALUE ----------------
+
+    if (hour === "05") {
+      const valueFlag = `VALUE:RUN:${dayYmd}`;
+      const ran = await kv.get(valueFlag);
+      if (!ran) {
         try {
           await fetch(`${API_BASE}/api/value/run?date=${dayYmd}`);
         } catch {}
-
-        await kv.put(lockKey,"1");
+        await kv.put(valueFlag, "1", { expirationTtl: 86400 });
       }
     }
   },
@@ -258,8 +298,8 @@ export default {
     if(url.pathname==="/"){
       return jsonResponse({
         ok:true,
-        service:"aimatchlab-scheduler-v4",
-        mode:"CLEAN_TRACKED"
+        service:"aimatchlab-scheduler-v4.3",
+        mode:"CLEAN_TRACKED_TIME_DRIVEN"
       });
     }
 
