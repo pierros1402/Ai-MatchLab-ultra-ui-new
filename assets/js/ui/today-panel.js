@@ -1,10 +1,19 @@
 /* =========================================================
-   TODAY PANEL – UNIFIED SOURCE (CLOUDFLARE SAFE)
-   - Single fetch
-   - PRE + LIVE shown
-   - FT removed from Today
-   - Emits to Live panel
-   - Local date (no UTC bug)
+   TODAY PANEL – UNIFIED SOURCE (CLOUDFLARE SAFE) + ACTIONS RESTORED
+   - Preserves original:
+       * Single fetch
+       * PRE + LIVE shown
+       * FT removed from Today
+       * Emits to Live panel
+       * Local date filter (no UTC bug)
+       * AIML_FIXTURES_TODAY cache
+       * today-matches:loaded emit
+       * Auto refresh only when LIVE exists
+   - Restores from Active panel:
+       * Save (★/☆) with saved sync
+       * Details (ⓘ) with nav:matches focus details
+   - Keeps:
+       * Row click -> match-selected + nav:oic odds
 ========================================================= */
 
 (function () {
@@ -20,6 +29,9 @@
   let LOADING = false;
   let REFRESH_MS = 60000;
   let timer = null;
+
+  let LAST_MATCHES = [];
+  let SAVED_IDS = new Set();
 
   function todayISO() {
     const now = new Date();
@@ -60,19 +72,30 @@
     if (typeof window.emit === "function") window.emit(name, payload);
   }
 
+  function syncSaved(items) {
+    const s = new Set();
+    (Array.isArray(items) ? items : []).forEach(x => {
+      if (x && x.id != null) s.add(String(x.id));
+    });
+    SAVED_IDS = s;
+  }
+
+  function isSaved(m) {
+    return m && m.id != null && SAVED_IDS.has(String(m.id));
+  }
+
   function render(matches) {
     panel.innerHTML = "";
+
+    LAST_MATCHES = Array.isArray(matches) ? matches : [];
 
     const startDay = startOfTodayLocalMs();
     const endDay = endOfTodayLocalMs();
 
-    const arr = (Array.isArray(matches) ? matches : [])
+    const arr = LAST_MATCHES
       .filter(m => {
         const st = String(m.status || "").toUpperCase();
-        return (
-          st.includes("SCHEDULED") ||
-          isLiveStatus(st)
-        );
+        return (st.includes("SCHEDULED") || isLiveStatus(st));
       })
       .filter(m => {
         const ko = Number(m.kickoff_ms || 0);
@@ -130,9 +153,46 @@
         info.textContent = time;
       }
 
+      // ⭐ Save (same behavior as Active)
+      const save = document.createElement("span");
+      save.className = "match-save";
+      save.textContent = isSaved(m) ? "★" : "☆";
+      save.onclick = (e) => {
+        e.stopPropagation();
+        if (window.emit) emit("save-toggle", m);
+      };
+
+      // ⓘ Details (same behavior as Active)
+      const details = document.createElement("span");
+      details.className = "match-details";
+      details.textContent = "ⓘ";
+      details.onclick = (e) => {
+        e.stopPropagation();
+        if (window.emit) {
+          emit("details-open", m);
+          emit("nav:matches", { focus: "details" });
+        }
+      };
+
       right.appendChild(info);
+      right.appendChild(save);
+      right.appendChild(details);
+
       row.appendChild(left);
       row.appendChild(right);
+
+      // Row click -> send to OIC odds (same as Active)
+      row.onclick = () => {
+        if (window.emit) {
+          emit("match-selected", m);
+          emit("active-match:set", m);
+          emit("nav:oic", { tab: "odds" });
+                    if (window.AIML_MOBILE_SET_VIEW) {
+              window.AIML_MOBILE_SET_VIEW("odds");
+            }
+}
+      };
+
       panel.appendChild(row);
     });
   }
@@ -152,7 +212,6 @@
 
       render(matches);
 
-      // 🔥 Single source → feed Live panel too
       safeEmit("live:update", { matches });
       safeEmit("today-matches:loaded", { matches });
 
@@ -173,6 +232,18 @@
       LOADING = false;
     }
   }
+
+  // saved sync hooks (same as Active)
+  if (window.on) {
+    on("saved:updated", payload => {
+      syncSaved(payload?.items || []);
+      render(LAST_MATCHES);
+    });
+  }
+
+  try {
+    syncSaved(window.getSavedMatches ? window.getSavedMatches() : []);
+  } catch {}
 
   load();
 

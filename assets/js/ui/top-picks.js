@@ -2,6 +2,11 @@
   const root = document.getElementById("top-picks-body");
   if (!root || !window.on) return;
 
+  function format2(x) {
+    if (typeof x !== "number" || !isFinite(x)) return "—";
+    return x.toFixed(2);
+  }
+
   function render(items) {
     root.innerHTML = "";
 
@@ -13,7 +18,14 @@
     items.forEach(it => {
       const row = document.createElement("div");
       row.className = "pick-row";
-      row.textContent = `${it.match} • ${it.market} • ${it.score}`;
+
+      const sign = it.delta > 0 ? "+" : "";
+
+      row.textContent =
+        `${it.match} | ${it.book} | ` +
+        `${format2(it.open)} → ${format2(it.current)} | ` +
+        `Δ ${sign}${format2(it.delta)}`;
+
       root.appendChild(row);
     });
   }

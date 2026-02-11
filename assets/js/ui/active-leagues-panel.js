@@ -60,9 +60,13 @@
   function isPostponed(status){
     return (
       status.includes("POSTPONED") ||
-      status === "PP"
+      status.includes("PP") ||
+      status.includes("SUSPENDED") ||
+      status.includes("ABANDONED") ||
+      status.includes("CANCEL")
     );
   }
+
 
   function render(matches){
     const root=document.getElementById(LIST_ID);
@@ -161,7 +165,10 @@
             emit("match-selected",m);
             emit("active-match:set",m);
             emit("nav:oic",{tab:"odds"});
-          }
+                      if (window.AIML_MOBILE_SET_VIEW) {
+              window.AIML_MOBILE_SET_VIEW("odds");
+            }
+}
         };
 
         root.appendChild(row);
@@ -169,13 +176,10 @@
     });
   }
 
-  on("today-matches:loaded", payload=>{
-    render(payload?.matches||[]);
+  on("active-leagues:updated", matches=>{
+    render(matches || []);
   });
 
-  on("today:updated", matches=>{
-    render(matches||[]);
-  });
 
   on("saved:updated", payload=>{
     syncSaved(payload?.items||[]);

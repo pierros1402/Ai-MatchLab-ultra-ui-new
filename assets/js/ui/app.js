@@ -14,6 +14,56 @@
   window.__AIML_APP_INIT__ = true;
 
   // =====================================================
+  // GLOBAL FETCH RESILIENCE LAYER (HARDENED)
+  // =====================================================
+
+  if (!window.__AIML_FETCH_PATCHED__) {
+    window.__AIML_FETCH_PATCHED__ = true;
+
+    const originalFetch = window.fetch;
+
+    async function fetchWithRetry(resource, options = {}, retries = 3) {
+      const delay = 400;
+
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+
+
+          const mergedOptions = { ...options };
+
+          if (!mergedOptions.signal) {
+            mergedOptions.signal = controller.signal;
+          }
+
+          const response = await originalFetch(resource, mergedOptions);
+          clearTimeout(timeout);
+
+          if (!response.ok) {
+            if (response.status >= 500) {
+              throw new Error('Server ' + response.status);
+            }
+            return response;
+          }
+
+          return response;
+
+        } catch (err) {
+          if (attempt === retries - 1) {
+            console.error('[FETCH FAILED]', resource, err);
+            throw err;
+          }
+
+          await new Promise(r => setTimeout(r, delay));
+        }
+      }
+    }
+
+    window.fetch = fetchWithRetry;
+  }
+
+  // =====================================================
   // EVENT BUS (SINGLE SOURCE OF TRUTH)
   // =====================================================
   const bus = new Map();
@@ -37,12 +87,6 @@
       }
     }
 
-    // --------------------------------------------------
-    // ODDS CANONICAL BRIDGE (AUTO-DETECT)
-    // --------------------------------------------------
-    // If ANY event emits odds-like rows, normalize them
-    // into odds-snapshot:canonical for the UI
-    // --------------------------------------------------
     if (
       payload &&
       !eventName.startsWith('odds-snapshot:canonical') &&
@@ -64,15 +108,9 @@
     }
   }
 
-  // =====================================================
-  // GLOBAL COMPATIBILITY LAYER (DO NOT REMOVE)
-  // =====================================================
   window.on = busOn;
   window.emit = busEmit;
 
-  // =====================================================
-  // SPLASH HANDLER
-  // =====================================================
   function hideSplash() {
     const splash = document.getElementById('splash-screen');
     if (splash) {
@@ -88,9 +126,6 @@
     setTimeout(hideSplash, 1500);
   });
 
-  // =====================================================
-  // MOBILE TITLE SYNC
-  // =====================================================
   function syncMobilePanelTitles() {
     const isRightOpen = document.body.classList.contains('drawer-right-open');
     if (!isRightOpen) return;
@@ -107,9 +142,6 @@
 
   document.addEventListener('click', syncMobilePanelTitles, true);
 
-  // =====================================================
-  // NAVIGATION (MATCHES vs OIC)
-  // =====================================================
   function scrollToEl(el) {
     try {
       if (!el) return;
@@ -118,23 +150,18 @@
   }
 
   function isMobileView() {
-    // Align with existing UI logic: treat <= 700px as mobile
     try { return window.matchMedia && window.matchMedia('(max-width: 700px)').matches; }
     catch (_) { return false; }
   }
 
-  // Focus Odds Intelligence Center (center) - keep existing desktop/mobile behavior:
-  // We only force-scroll on mobile. Desktop stays as-is.
   window.on('nav:oic', function (payload) {
     if (isMobileView()) {
       const oic = document.getElementById('odds-intelligence-center');
       if (oic) scrollToEl(oic);
     }
-    // Optional: allow OIC internals to react (tab focus, etc.)
     window.emit('oic:focus', payload || { tab: 'odds' });
   });
 
-  // Focus Matches (details area)
   window.on('nav:matches', function () {
     const matches =
       document.getElementById('panel-matches') ||
@@ -144,12 +171,9 @@
     window.emit('matches:focus', { section: 'details' });
   });
 
-
-  // ⓘ details button -> MUST go to Matches (local-only, no odds/worker)
   window.on('details-open', function (m) {
     if (!m) return;
 
-    // do NOT emit match-selected here (it triggers OIC/odds listeners)
     window.emit('nav:matches', { focus: 'details' });
 
     try {

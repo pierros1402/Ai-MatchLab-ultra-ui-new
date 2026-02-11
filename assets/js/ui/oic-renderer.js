@@ -8,9 +8,6 @@
     betfair: document.getElementById("betfair-odds-body")
   };
 
-  // Greek stays curated
-  var GREEK_PROVIDERS = ["Stoiximan", "Pamestoixima", "Novibet", "Betsson"];
-
   var MARKET_LEGS = {
     "1X2": ["1", "X", "2"],
     "DC": ["1X", "12", "X2"],
@@ -19,6 +16,10 @@
     "OU25": ["O2.5", "U2.5"],
     "OU35": ["O3.5", "U3.5"]
   };
+
+  var LAST_VALUES = {};
+  var CHANGE_LOG = [];
+  var MAX_LOG = 50;
 
   function normalizeMarket(m) {
     if (!m) return "1X2";
@@ -83,13 +84,16 @@
     container.appendChild(table);
   }
 
-  function fillSection(container, books, marketKey, snapshot) {
+  function fillSection(container, books, marketKey, snapshot, payload) {
     if (!container || !snapshot) return;
 
     var block = snapshot[marketKey] || snapshot;
     if (!block) return;
 
+    var latestChronological = null;
+
     books.forEach(function (book) {
+
       var oddsArr = block[book];
       if (!Array.isArray(oddsArr)) return;
 
@@ -105,44 +109,111 @@
         var opn = Number(leg.open);
         var dlt = Number(leg.delta);
 
+        var key = (payload.matchId || "") + "_" + book + "_" + i;
+
         var curEl = cells[i].querySelector(".oic-odd-current");
         var delEl = cells[i].querySelector(".oic-odd-delta");
 
-        if (curEl) curEl.textContent = format2(cur);
+        if (curEl) {
+          if (isFinite(opn) && isFinite(cur)) {
+            curEl.textContent = format2(opn) + "   " + format2(cur);
+          } else {
+            curEl.textContent = "—";
+          }
+        }
 
         if (delEl) {
-          if (isFinite(opn) && isFinite(dlt)) {
+          if (isFinite(dlt)) {
             var sign = dlt > 0 ? "+" : "";
-            delEl.textContent = format2(opn) + " (" + sign + format2(dlt) + ")";
+            delEl.textContent = sign + format2(dlt);
+
+            if (LAST_VALUES[key] !== cur) {
+              LAST_VALUES[key] = cur;
+
+              var change = {
+                match: (payload.home || "") + " – " + (payload.away || ""),
+                book: book,
+                open: opn,
+                current: cur,
+                delta: dlt,
+                ts: Date.now()
+              };
+
+              CHANGE_LOG.unshift(change);
+              if (CHANGE_LOG.length > MAX_LOG) CHANGE_LOG.pop();
+
+              latestChronological = change;
+            }
+
           } else {
             delEl.textContent = "—";
           }
         }
       });
     });
+
+    if (latestChronological && window.emit) {
+      window.emit("radar:update", [latestChronological]);
+
+      var sorted = CHANGE_LOG.slice().sort(function (a, b) {
+        return Math.abs(b.delta) - Math.abs(a.delta);
+      });
+
+      window.emit("top-picks:update", sorted);
+    }
   }
 
   function groupBooks(snapshot) {
-    var allBooks = Object.keys(snapshot || {});
+    var marketKey = normalizeMarket("1X2");
+    var block = snapshot && (snapshot[marketKey] || snapshot) || {};
 
+    var greek = [];
     var european = [];
     var asian = [];
     var betfair = [];
+    var unibetAdded = false;
 
-    allBooks.forEach(function (b) {
-      if (/betfair/i.test(b)) {
-        betfair.push(b);
-      } else if (/pinnacle|sbobet|188bet/i.test(b)) {
-        asian.push(b);
-      } else {
-        european.push(b);
+    Object.keys(block).forEach(function (book) {
+      if (!Array.isArray(block[book])) return;
+
+      var b = book.toLowerCase();
+
+      if (
+        b.includes("betsson") ||
+        b.includes("bet365") ||
+        b.includes("bwin") ||
+        b.includes("sportingbet")
+      ) {
+        greek.push(book);
+        return;
       }
+
+      if (b.includes("unibet")) {
+        if (!unibetAdded) {
+          greek.push("Unibet");
+          unibetAdded = true;
+        }
+        return;
+      }
+
+      if (b.includes("pinnacle")) {
+        asian.push(book);
+        return;
+      }
+
+      if (b.includes("betfair")) {
+        betfair.push(book);
+        return;
+      }
+
+      european.push(book);
     });
 
     return {
-      european: european,
-      asian: asian,
-      betfair: betfair
+      greek: greek.sort(),
+      european: european.sort(),
+      asian: asian.sort(),
+      betfair: betfair.sort()
     };
   }
 
@@ -153,19 +224,17 @@
 
     var grouped = groupBooks(snapshot || {});
 
-    // Greek stays static
-    buildTable(TARGETS.greek, GREEK_PROVIDERS, marketKey);
-    fillSection(TARGETS.greek, GREEK_PROVIDERS, marketKey, snapshot);
+    buildTable(TARGETS.greek, grouped.greek, marketKey);
+    fillSection(TARGETS.greek, grouped.greek, marketKey, snapshot, payload);
 
-    // Dynamic panels
     buildTable(TARGETS.european, grouped.european, marketKey);
-    fillSection(TARGETS.european, grouped.european, marketKey, snapshot);
+    fillSection(TARGETS.european, grouped.european, marketKey, snapshot, payload);
 
     buildTable(TARGETS.asian, grouped.asian, marketKey);
-    fillSection(TARGETS.asian, grouped.asian, marketKey, snapshot);
+    fillSection(TARGETS.asian, grouped.asian, marketKey, snapshot, payload);
 
     buildTable(TARGETS.betfair, grouped.betfair, marketKey);
-    fillSection(TARGETS.betfair, grouped.betfair, marketKey, snapshot);
+    fillSection(TARGETS.betfair, grouped.betfair, marketKey, snapshot, payload);
   }
 
   window.OICRenderer = { renderAll: renderAll };

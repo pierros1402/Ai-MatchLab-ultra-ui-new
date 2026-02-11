@@ -1,8 +1,7 @@
 /* =========================================================
-   AIML – FIXTURES LOADER (RUNTIME – VALUE FIX)
-   - Uses /fixtures-runtime
-   - Keeps backward compatibility
-   - FIX: sends correct date to value-adapter
+   AIML – FIXTURES LOADER (RUNTIME – SPLIT TODAY / ACTIVE)
+   - TODAY: time-based dataset
+   - ACTIVE: full-day dataset (no FT expiry)
 ========================================================= */
 
 (function () {
@@ -30,41 +29,6 @@
     return Array.isArray(x) ? x : [];
   }
 
-  function isPRE(m) {
-    const s = String(m?.status || "").toUpperCase();
-    return s === "PRE" || s.includes("SCHED") || s.includes("STATUS_SCHEDULED");
-  }
-
-  function isLIVE(m) {
-    const s = String(m?.status || "").toUpperCase();
-    return s === "LIVE" || s === "IN" || s.includes("IN_PROGRESS") || s === "STATUS_IN_PROGRESS";
-  }
-
-  function buildActiveLeagues(matches) {
-    const pre = matches.filter(isPRE);
-    const map = new Map();
-
-    for (const m of pre) {
-      const leagueSlug = String(m.leagueSlug || "").trim();
-      const leagueName = String(m.leagueName || m.league || leagueSlug || "UNKNOWN").trim();
-      const key = leagueSlug || leagueName;
-      if (!key) continue;
-
-      const cur = map.get(key) || {
-        leagueSlug,
-        leagueName,
-        count: 0,
-        matches: []
-      };
-
-      cur.count += 1;
-      cur.matches.push(m);
-      map.set(key, cur);
-    }
-
-    return Array.from(map.values()).sort((a, b) => (b.count - a.count));
-  }
-
   async function fetchRuntime(mode) {
     const selectedDate =
       window.__AIML_SELECTED_DATE__ ||
@@ -82,7 +46,7 @@
     return res.json();
   }
 
-  function emitTodayCompat(data) {
+  function emitToday(data) {
     const matches = safeArr(data?.matches);
     const date = data?.date;
 
@@ -98,14 +62,9 @@
     window.emit("today:updated", matches);
   }
 
-  function emitActiveCompat(leagues) {
-    window.emit("active-leagues:updated", leagues);
-  }
-
-  function emitLiveCompat(matches) {
-    const payload = { source: "fixtures-runtime", matches };
-    window.emit("live-matches:updated", payload);
-    window.emit("live:updated", matches);
+  function emitActive(data) {
+    const matches = safeArr(data?.matches);
+    window.emit("active-leagues:updated", matches);
   }
 
   async function loadAll() {
@@ -113,17 +72,14 @@
     busy = true;
 
     try {
+
+      // TODAY (time-based view)
       const today = await fetchRuntime("today");
-      const todayMatches = safeArr(today?.matches);
+      emitToday(today);
 
-      emitTodayCompat(today);
-
-      const activeLeagues = buildActiveLeagues(todayMatches);
-      emitActiveCompat(activeLeagues);
-
-      const live = await fetchRuntime("live");
-      const liveMatches = safeArr(live?.matches).filter(isLIVE);
-      emitLiveCompat(liveMatches);
+      // ACTIVE (full-day view)
+      const active = await fetchRuntime("active");
+      emitActive(active);
 
     } catch (err) {
       console.warn("[fixtures-loader] runtime error", err);

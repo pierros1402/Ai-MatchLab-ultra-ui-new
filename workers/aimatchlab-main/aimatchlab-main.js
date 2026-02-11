@@ -650,8 +650,8 @@ async function handleFixturesRuntime(url, env) {
       status === "ET";
 
     const isFinal =
-      status === "FT" ||
       status.includes("FINAL") ||
+      status === "FT" ||
       status === "AET" ||
       status === "PEN";
 

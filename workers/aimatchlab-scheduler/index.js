@@ -1,6 +1,10 @@
 
 // ============================================================
-// AIMATCHLAB — STABLE SCHEDULER v4.3 (SAFE + TIME-CONTROLLED)
+// AIMATCHLAB — STABLE SCHEDULER v4.6 (FINAL PRODUCTION)
+// - Per-Kickoff Day Buckets
+// - Safe Finalize (only when all matches FINAL/POSTPONED)
+// - Full v4.3 Endpoints Preserved
+// - Odds / Value Time-Controlled
 // ============================================================
 
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
@@ -10,7 +14,6 @@ const DEFAULT_TZ = "Europe/Athens";
 
 const RUN_CHUNK_SIZE = 10;
 const BETWEEN_LEAGUES_DELAY_MS = 180;
-const MIN_TOTAL_MATCHES_FINAL = 1;
 
 function keysForDay(dayYmd) {
   return {
@@ -55,46 +58,63 @@ function hourGR(){
 
 function ymdCompact(ymd){ return String(ymd).replaceAll("-",""); }
 
-function normalizeEspnEvent(evt,leagueSlug,leagueName,dayYmd){
-  const id=String(evt?.id||evt?.uid||"");
-  if(!id) return null;
+function kickoffDayGR(kickoff){
+  return new Intl.DateTimeFormat("en-CA",{
+    timeZone:DEFAULT_TZ,
+    year:"numeric",month:"2-digit",day:"2-digit"
+  }).format(new Date(kickoff));
+}
 
-  const competitors=evt?.competitions?.[0]?.competitors||[];
-  const home=competitors.find(c=>c?.homeAway==="home")||{};
-  const away=competitors.find(c=>c?.homeAway==="away")||{};
+function normalizeEspnEvent(evt, leagueSlug, leagueName){
+  const id = String(evt?.id || evt?.uid || "");
+  if (!id) return null;
 
-  const kickoff=evt?.date||null;
-  const kickoff_ms=kickoff?Date.parse(kickoff):null;
+  const competitors = evt?.competitions?.[0]?.competitors || [];
+  const home = competitors.find(c => c?.homeAway === "home") || {};
+  const away = competitors.find(c => c?.homeAway === "away") || {};
 
-  if (kickoff) {
-    const kickoffDayGR = new Intl.DateTimeFormat("en-CA", {
-      timeZone: DEFAULT_TZ,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(new Date(kickoff));
-    if (kickoffDayGR !== dayYmd) return null;
-  }
+  const kickoff = evt?.date || null;
+  const kickoff_ms = kickoff ? Date.parse(kickoff) : null;
 
-  const espnStatus = evt?.status?.type?.name || "";
+  const espnStatusRaw = String(evt?.status?.type?.name || "").toUpperCase();
   let status = "STATUS_SCHEDULED";
 
-  if (espnStatus === "STATUS_FINAL") status = "STATUS_FINAL";
-  else if (espnStatus === "STATUS_IN_PROGRESS") status = "STATUS_IN_PROGRESS";
-  else if (espnStatus === "STATUS_POSTPONED") status = "STATUS_POSTPONED";
+  if (espnStatusRaw.includes("FINAL")) {
+    status = "STATUS_FINAL";
+  }
+  else if (espnStatusRaw.includes("IN_PROGRESS")) {
+    status = "STATUS_IN_PROGRESS";
+  }
+  else if (
+    espnStatusRaw.includes("POSTPONED") ||
+    espnStatusRaw.includes("CANCEL") ||
+    espnStatusRaw.includes("ABANDON") ||
+    espnStatusRaw.includes("SUSPENDED")
+  ) {
+    status = "STATUS_POSTPONED";
+  }
+
+  let scoreHome = Number(home?.score ?? 0) || 0;
+  let scoreAway = Number(away?.score ?? 0) || 0;
+
+  // IMPORTANT: Postponed must NOT carry 0-0
+  if (status === "STATUS_POSTPONED") {
+    scoreHome = null;
+    scoreAway = null;
+  }
 
   return {
     id,
-    home:home?.team?.displayName||"Home",
-    away:away?.team?.displayName||"Away",
+    home: home?.team?.displayName || "Home",
+    away: away?.team?.displayName || "Away",
     kickoff,
     kickoff_ms,
-    scoreHome:Number(home?.score??0)||0,
-    scoreAway:Number(away?.score??0)||0,
+    scoreHome,
+    scoreAway,
     status,
     leagueSlug,
     leagueName,
-    dayKey:dayYmd
+    dayKey: kickoff ? kickoffDayGR(kickoff) : null
   };
 }
 
@@ -110,7 +130,7 @@ async function fetchLeague(leagueSlug,dayYmd){
   const leagueName=LEAGUE_NAME_MAP?.[leagueSlug]||leagueSlug;
 
   return events
-    .map(e=>normalizeEspnEvent(e,leagueSlug,leagueName,dayYmd))
+    .map(e=>normalizeEspnEvent(e,leagueSlug,leagueName))
     .filter(Boolean);
 }
 
@@ -124,72 +144,64 @@ async function ensureQueueInitialized(env,dayYmd){
 
 async function resumableRun(env,dayYmd){
   const kv=getKV(env);
-  const {queueKey,stagingKey,progressKey}=keysForDay(dayYmd);
+  const {queueKey,progressKey}=keysForDay(dayYmd);
 
   await ensureQueueInitialized(env,dayYmd);
 
   const queueRaw=await kv.get(queueKey);
   const queue=queueRaw?JSON.parse(queueRaw):[];
-
   if(!queue.length) return { done:true };
 
   const chunk=queue.slice(0,RUN_CHUNK_SIZE);
   const remaining=queue.slice(RUN_CHUNK_SIZE);
 
-  const stagingRaw=await kv.get(stagingKey);
-  const staging=stagingRaw?JSON.parse(stagingRaw):{date:dayYmd,matches:[]};
-
-  const map=new Map(staging.matches.map(m=>[m.id,m]));
-
   for(const league of chunk){
     const matches=await fetchLeague(league,dayYmd);
+
     for(const m of matches){
+      if(!m.dayKey) continue;
+
+      const {stagingKey} = keysForDay(m.dayKey);
+      const existingRaw = await kv.get(stagingKey);
+      const staging = existingRaw ? JSON.parse(existingRaw) : {date:m.dayKey,matches:[]};
+
+      const map = new Map(staging.matches.map(x=>[x.id,x]));
       map.set(m.id,m);
+
+      staging.matches = [...map.values()];
+      await kv.put(stagingKey,JSON.stringify(staging));
     }
+
     await sleep(BETWEEN_LEAGUES_DELAY_MS);
   }
 
-  staging.matches=[...map.values()];
-
   await kv.put(queueKey,JSON.stringify(remaining));
-  await kv.put(stagingKey,JSON.stringify(staging));
 
   await kv.put(progressKey, JSON.stringify({
     phase:"ingest",
     remainingLeagues: remaining.length,
-    totalMatches: staging.matches.length,
     ts: Date.now()
   }));
 
-  return { done:false,remaining:remaining.length };
+  return { done:false };
 }
 
-async function finalizeDay(env,dayYmd){
+async function finalizeDayIfSafe(env,dayYmd){
   const kv=getKV(env);
-  const {stagingKey,finalKey,progressKey,queueKey}=keysForDay(dayYmd);
+  const {stagingKey,finalKey,progressKey,queueKey,lockKey}=keysForDay(dayYmd);
 
   const stagingRaw=await kv.get(stagingKey);
-  const staging=stagingRaw?JSON.parse(stagingRaw):{matches:[]};
+  if(!stagingRaw) return false;
 
-  if(staging.matches.length < MIN_TOTAL_MATCHES_FINAL){
-    await kv.put(finalKey, JSON.stringify({
-      ok: true,
-      date: dayYmd,
-      total: 0,
-      matches: []
-    }));
+  const staging=JSON.parse(stagingRaw);
 
-    await kv.delete(stagingKey);
-    await kv.delete(queueKey);
+  const allFinal = staging.matches.length > 0 &&
+    staging.matches.every(m =>
+      m.status === "STATUS_FINAL" ||
+      m.status === "STATUS_POSTPONED"
+    );
 
-    await kv.put(progressKey, JSON.stringify({
-      phase: "finalized",
-      totalMatches: 0,
-      ts: Date.now()
-    }));
-
-    return { ok:true, finalized:true, total:0 };
-  }
+  if(!allFinal) return false;
 
   await kv.put(finalKey,JSON.stringify({
     ok:true,
@@ -200,6 +212,7 @@ async function finalizeDay(env,dayYmd){
 
   await kv.delete(stagingKey);
   await kv.delete(queueKey);
+  await kv.put(lockKey,"1");
 
   await kv.put(progressKey, JSON.stringify({
     phase:"finalized",
@@ -207,53 +220,53 @@ async function finalizeDay(env,dayYmd){
     ts: Date.now()
   }));
 
-  return { ok:true,finalized:true,total:staging.matches.length };
+  return true;
 }
 
 export default {
   async scheduled(event,env,ctx){
     const kv=getKV(env);
     const dayYmd=todayYMD();
-    const {finalKey,lockKey}=keysForDay(dayYmd);
+    const {lockKey}=keysForDay(dayYmd);
 
     await kv.put("SCHEDULER:LAST_RUN", JSON.stringify({
       ts: Date.now(),
       iso: new Date().toISOString()
     }));
 
-    // ---------------- INGEST FLOW (IDENTICAL) ----------------
-
-    const alreadyFinal=await kv.get(finalKey);
     const locked=await kv.get(lockKey);
 
-    if(!alreadyFinal && !locked){
-      const run=await resumableRun(env,dayYmd);
-
-      if(run.done){
-        const fin = await finalizeDay(env, dayYmd);
-        if (fin?.finalized) {
-          await kv.put(lockKey,"1");
-        }
-      }
+    if(!locked){
+      await resumableRun(env,dayYmd);
+      await finalizeDayIfSafe(env,dayYmd);
     }
 
-    // ---------------- TIME-DRIVEN ODDS ----------------
+    const d = new Date(event.scheduledTime);
+const hourUTC = d.getUTCHours();
 
-    const hour = hourGR();
-    const API_BASE = env.API_BASE_URL;
+if (hourUTC === 4 || hourUTC === 13) {
 
-    if (hour === "04" || hour === "13") {
-      const oddsFlag = `ODDS:RUN:${dayYmd}:${hour}`;
-      const ran = await kv.get(oddsFlag);
-      if (!ran) {
-        try {
-          await fetch(`${API_BASE}/api/odds/internal/run?date=${dayYmd}&days=0`);
-        } catch {}
+  const oddsFlag = `ODDS:RUN:${dayYmd}:${hourUTC}`;
+  const ran = await kv.get(oddsFlag);
+
+  if (!ran) {
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/odds/internal/run?date=${dayYmd}&days=0`
+      );
+
+      if (res.ok) {
         await kv.put(oddsFlag, "1", { expirationTtl: 86400 });
+      } else {
+        console.error("Odds run failed", res.status);
       }
-    }
 
-    // ---------------- TIME-DRIVEN VALUE ----------------
+    } catch (e) {
+      console.error("Odds fetch error", e);
+    }
+  }
+}
+
 
     if (hour === "05") {
       const valueFlag = `VALUE:RUN:${dayYmd}`;
@@ -281,8 +294,8 @@ export default {
     }
 
     if(url.pathname==="/finalize-now"){
-      const fin = await finalizeDay(env,dayYmd);
-      return jsonResponse(fin);
+      const result = await finalizeDayIfSafe(env,dayYmd);
+      return jsonResponse({ ok:true, finalized: result });
     }
 
     if(url.pathname==="/status"){
@@ -298,8 +311,8 @@ export default {
     if(url.pathname==="/"){
       return jsonResponse({
         ok:true,
-        service:"aimatchlab-scheduler-v4.3",
-        mode:"CLEAN_TRACKED_TIME_DRIVEN"
+        service:"aimatchlab-scheduler-v4.6",
+        mode:"FINAL_PRODUCTION"
       });
     }
 

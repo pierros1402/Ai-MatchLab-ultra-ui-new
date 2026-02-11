@@ -1,13 +1,13 @@
 /**
  * AIMATCHLAB – LIVE ENGINE (API MODULE)
- * KV MERGE – FIXED SCHEMA VERSION
+ * KV MERGE – UNIFIED STATUS SCHEMA
  *
  * - Fetch ESPN LIVE/FT
  * - Merge into FIXTURES:DATE schema { ok, date, total, matches: [] }
- * - Single source of truth
+ * - Single source of truth (STATUS_* only)
  */
 
-const VERSION = "2.2.0-api-kv-merge-fixed-schema";
+const VERSION = "2.3.0-api-kv-merge-unified-status";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
@@ -97,7 +97,7 @@ function extractLiveMatches(scoreboardJson) {
       home,
       away,
       kickoff: comp?.startDate || "",
-      status: isLive ? "LIVE" : "FT",
+      status: isLive ? "STATUS_IN_PROGRESS" : "STATUS_FINAL",
       minute: isFT ? null : normalizeMinute(comp),
       scoreHome: Number(homeObj?.score ?? 0),
       scoreAway: Number(awayObj?.score ?? 0)
@@ -106,10 +106,6 @@ function extractLiveMatches(scoreboardJson) {
 
   return out;
 }
-
-/* =========================================================
-   🔥 KV MERGE – FIXED FOR OBJECT SCHEMA
-========================================================= */
 
 async function mergeLiveIntoFixtures(env, liveMatches) {
 
@@ -168,10 +164,6 @@ async function mergeLiveIntoFixtures(env, liveMatches) {
   }
 }
 
-/* =========================================================
-   MAIN HANDLER
-========================================================= */
-
 export async function handleLive(req, env) {
 
   if (req.method !== "GET") {
@@ -187,8 +179,6 @@ export async function handleLive(req, env) {
 
     if (r.ok && r.json) {
       matches = extractLiveMatches(r.json);
-
-      // 🔥 Correct merge
       await mergeLiveIntoFixtures(env, matches);
     }
 
@@ -203,8 +193,8 @@ export async function handleLive(req, env) {
     matches,
     meta: {
       took_ms: Date.now() - t0,
-      live_count: matches.filter(m => m.status === "LIVE").length,
-      ft_count: matches.filter(m => m.status === "FT").length
+      live_count: matches.filter(m => m.status === "STATUS_IN_PROGRESS").length,
+      ft_count: matches.filter(m => m.status === "STATUS_FINAL").length
     }
   });
 }
