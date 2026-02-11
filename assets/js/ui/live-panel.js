@@ -11,8 +11,8 @@
   if (!panel) return;
 
   const header = panel.querySelector(".panel-header");
-  const body = panel.querySelector("#live-list");
-  if (!header || !body) return;
+  const body = panel.querySelector("#live-list") || panel.querySelector(".panel-body") || panel.querySelector(".panel-content") || panel;
+if (!header || !body) return;
 
   function esc(s) {
     return String(s ?? "")
@@ -114,13 +114,13 @@
     for (const m of matches) {
       const st = normalizeStatus(m);
 
-      if (st === "LIVE") {
+      if (st.includes("IN_PROGRESS")) {
         live.push(m);
         ftSeenAt.delete(String(m?.id ?? ""));
         continue;
       }
 
-      if (st === "FT") {
+      if (st.includes("FINAL")) {
         const id = String(m?.id ?? "");
         if (!ftSeenAt.has(id)) ftSeenAt.set(id, now);
 
@@ -147,7 +147,7 @@
     body.innerHTML = "";
 
     if (!Array.isArray(allMatches)) {
-      body.innerHTML = "<div class='panel-placeholder'>Waiting...</div>";
+      body.innerHTML = "";
       return;
     }
 
@@ -196,7 +196,17 @@
 
   window.on("live:update", payload => {
     render(payload?.matches || []);
+  
+  // Also accept Today feed directly (same source of truth, zero extra calls)
+  window.on("today-matches:loaded", payload => {
+    render(payload?.matches || []);
   });
+
+  // First paint from Today cache if available
+  try {
+    render(window.AIML_FIXTURES_TODAY?.matches || []);
+  } catch (_) {}
+});
 
   render(null);
 })();
