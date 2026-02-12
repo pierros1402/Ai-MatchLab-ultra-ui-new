@@ -4,7 +4,8 @@
   window.__AIML_LIVE_ENGINE__ = true;
 
   const LIVE_URL =
-    "https://aimatchlab-api.pierros1402.workers.dev/api/live";
+    "https://aimatchlab-api.pierros1402.workers.dev/fixtures-runtime?mode=live";
+
 
   const POLL_MS = 15000;
 

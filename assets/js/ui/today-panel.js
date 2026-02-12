@@ -21,7 +21,7 @@
   const BASE =
     (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
       ? window.AIML_CONFIG.BASE_URL
-      : "https://aimatchlab-main-worker.pierros1402.workers.dev";
+      : "https://aimatchlab-api.pierros1402.workers.dev";
 
   const panel = document.querySelector("#panel-today .panel-body");
   if (!panel) return;

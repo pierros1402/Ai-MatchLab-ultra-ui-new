@@ -24,11 +24,11 @@
 
   function log(...args) {
     // Keep logs compact but useful
-    console.log("[install]", ...args);
+    // console.log("[install]", ...args);
   }
 
   function warn(...args) {
-    console.warn("[install]", ...args);
+    // console.warn("[install]", ...args);
   }
 
   function show(btn) {

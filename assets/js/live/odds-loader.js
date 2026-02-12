@@ -1,106 +1,79 @@
 // =====================================================
- // ODDS LOADER — FINAL (binds UI to aimatchlab-main)
- // Source: GET /odds/core?matchId=XXX
- // Emits: odds-snapshot:canonical
- // =====================================================
+// ODDS LOADER — FINAL (API v2 compatible)
+// Source: GET /odds?matchId=XXX&date=YYYY-MM-DD&market=1X2
+// Emits: odds-snapshot:canonical
+// =====================================================
 
- (function () {
-   if (typeof window.on !== "function" || typeof window.emit !== "function") {
-     console.warn("[odds-loader] event bus not ready");
-     return;
-   }
+(function () {
+  if (typeof window.on !== "function" || typeof window.emit !== "function") {
+    console.warn("[odds-loader] event bus not ready");
+    return;
+  }
 
-   const CFG = window.AIML_LIVE_CFG || {};
-   const BASE =
-     (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
-       ? window.AIML_CONFIG.BASE_URL
-       : CFG.fixturesBase;
+  const CFG = window.AIML_LIVE_CFG || {};
+  const BASE =
+    (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
+      ? window.AIML_CONFIG.BASE_URL
+      : CFG.fixturesBase;
 
-   const PATH = "/odds/core";
+  const PATH = "/odds";   // ✅ ΧΩΡΙΣ trailing slash
 
-   if (!BASE) {
-     console.warn("[odds-loader] missing fixturesBase");
-     return;
-   }
+  if (!BASE) {
+    console.warn("[odds-loader] missing BASE_URL");
+    return;
+  }
 
-   let ACTIVE_MATCH_ID = null;
-   let IN_FLIGHT = false;
+  let IN_FLIGHT = false;
 
-   // ---------------------------------------------
-   // Listen for active match
-   // ---------------------------------------------
-   window.on("match-selected", m => {
-     const id = m && m.id != null ? String(m.id) : null;
-     if (!id) return;
+  // --------------------------------------------------
+  // Listen for active match
+  // --------------------------------------------------
+  window.on("match-selected", m => {
+    const id = m && m.id != null ? String(m.id) : null;
+    if (!id) return;
+    fetchOddsForMatch(id);
+  });
 
-     ACTIVE_MATCH_ID = id;
-     fetchOddsForMatch(id);
-   });
+  // --------------------------------------------------
+  // Fetch odds for selected match
+  // --------------------------------------------------
+  async function fetchOddsForMatch(matchId) {
+    if (IN_FLIGHT) return;
+    IN_FLIGHT = true;
 
-   // ---------------------------------------------
-   // Fetch odds for selected match
-   // ---------------------------------------------
-   async function fetchOddsForMatch(matchId) {
-     if (IN_FLIGHT) return;
-     IN_FLIGHT = true;
+    try {
+      const today = new Date().toISOString().slice(0, 10);
 
-     try {
-       const url = `${BASE}${PATH}?matchId=${encodeURIComponent(matchId)}`;
-       const res = await fetch(url, { cache: "no-store" });
+      const url =
+        `${BASE}${PATH}` +
+        `?matchId=${encodeURIComponent(matchId)}` +
+        `&date=${today}` +
+        `&market=1X2`;
 
-       if (!res.ok) {
-         console.warn("[odds-loader] fetch failed", res.status);
-         return;
-       }
+      const res = await fetch(url, { cache: "no-store" });
 
-       const json = await res.json();
-       if (!json || json.disabled || !json.markets) {
-         console.warn("[odds-loader] empty odds payload");
-         return;
-       }
+      if (!res.ok) {
+        console.warn("[odds-loader] fetch failed", res.status);
+        return;
+      }
 
-       window.emit("odds-snapshot:canonical", {
-         ts: Date.now(),
-         market: "1X2",
-         rows: flattenMarkets(matchId, json.markets)
-       });
+      const json = await res.json();
 
-     } catch (err) {
-       console.error("[odds-loader] error", err);
-     } finally {
-       IN_FLIGHT = false;
-     }
-   }
+      if (!json || !json.snapshot) {
+        console.warn("[odds-loader] empty odds snapshot");
+        return;
+      }
 
-   // ---------------------------------------------
-   // Normalize markets -> rows[]
-   // ---------------------------------------------
-   function flattenMarkets(matchId, markets) {
-     const rows = [];
+      window.emit("odds-snapshot:core", {
+        matchId,
+        snapshot: json.snapshot
+      });
 
-     Object.keys(markets || {}).forEach(market => {
-       const groups = markets[market];
-       if (!groups) return;
+    } catch (err) {
+      console.error("[odds-loader] error", err);
+    } finally {
+      IN_FLIGHT = false;
+    }
+  }
 
-       Object.keys(groups).forEach(group => {
-         const list = groups[group];
-         if (!Array.isArray(list)) return;
-
-         list.forEach(r => {
-           rows.push({
-             matchId,
-             market,
-             bookGroup: group,
-             book: r.book,
-             open: r.open ?? null,
-             current: r.current ?? null,
-             delta: r.delta ?? null
-           });
-         });
-       });
-     });
-
-     return rows;
-   }
-
- })();
+})();

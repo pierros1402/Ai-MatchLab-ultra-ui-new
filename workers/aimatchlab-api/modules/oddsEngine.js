@@ -125,7 +125,14 @@ async function runWriter(url, env) {
 
 async function processOneDate(env, apiKey, region, date) {
   const fxKey = `FIXTURES:DATE:${date}`;
-  const fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
+  let fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
+
+  if (!fx) {
+    fx = await env.AIML_INGESTION_KV.get(
+      `FIXTURES:STAGING:DATE:${date}`,
+      { type: "json" }
+    );
+  }
 
   const matches = Array.isArray(fx?.matches) ? fx.matches : [];
   const eligible = matches.filter(m =>
