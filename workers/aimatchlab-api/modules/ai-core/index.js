@@ -1,38 +1,45 @@
-import { normalizeInput } from "./normalize.js";
-import { computeCoverage } from "./coverage.js";
-import { identityModel } from "./identity.model.js";
-import { strengthModel } from "./strength.model.js";
-import { stateModel } from "./state.model.js";
-import { pressureModel } from "./pressure.model.js";
-import { riskModel } from "./risk.model.js";
-import { scenarioModel } from "./scenario.model.js";
-import { consistencyModel } from "./consistency.model.js";
-import { confidenceModel } from "./confidence.model.js";
 
-export function runAiEngine(rawInput) {
-  const normalized = normalizeInput(rawInput);
-  const coverage = computeCoverage(normalized);
+import { buildSignature } from "./state/signature.js";
+import { shouldRebuild } from "./state/change-detector.js";
+import { loadSnapshot, persistSnapshot, cleanupSnapshots } from "./lifecycle/snapshots.js";
+import { loadStructuralData } from "./structural/loader.js";
+import { buildModel } from "./modeling/model.js";
 
-  const identity = identityModel(normalized, coverage);
-  const strength = strengthModel(normalized, coverage);
-  const state = stateModel(normalized, coverage);
-  const pressure = pressureModel(normalized, identity, state);
-  const consistency = consistencyModel(normalized);
-  const risk = riskModel(normalized, strength, state, consistency);
-  const scenario = scenarioModel(strength, state, risk, consistency);
-  const confidence = confidenceModel(coverage, risk);
+export async function runAiEngine(payload, env){
 
-  return {
-    ok: true,
-    ts: Date.now(),
-    coverage,
-    identity,
-    strength,
-    state,
-    pressure,
-    risk,
-    scenario,
-    consistency,
-    confidence
+  const signature = buildSignature(payload);
+
+  const existing = await loadSnapshot(env, payload.id);
+
+  const decision = shouldRebuild(existing, signature, payload);
+
+  if(!decision.rebuild && existing){
+    return { ...existing, cache: "HIT" };
+  }
+
+  const structural = await loadStructuralData(env, payload);
+
+  const modeling = buildModel(structural, payload);
+
+  const snapshot = {
+    id: payload.id,
+    state: {
+      signature,
+      status: payload.status,
+      scoreHome: payload.scoreHome,
+      scoreAway: payload.scoreAway,
+      minute: payload.minute || 0
+    },
+    structural,
+    modeling,
+    meta: {
+      builtAt: new Date().toISOString(),
+      reason: decision.reason
+    }
   };
+
+  await persistSnapshot(env, payload.id, snapshot);
+  await cleanupSnapshots(env, payload.id, payload.status);
+
+  return { ...snapshot, cache: "REBUILT" };
 }

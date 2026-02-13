@@ -370,44 +370,57 @@
   }
 
   function renderFactsBlock(payload) {
-    // BROKEN SEED GUARD (legacy KV seed without match shell)
-    const brokenSeed =
-      payload?.basic && (payload.basic.home == null || payload.basic.away == null);
 
-    if (brokenSeed) {
-      return `
-        <div style="margin-top:14px;">
-          <div style="font-weight:900;margin-bottom:8px;">Facts (R2 Intel)</div>
-          ${renderPendingBox(
-            "Legacy seed detected",
-            "Match shell missing (home/away null). Waiting for reseed from fixtures-ingest.",
-            ""
-          )}
-        </div>
-      `;
-    }
+    const ai = payload?.fullAiProfile;
+if (!ai) {
+  return `
+    <div style="margin-top:14px;">
+      <div style="font-weight:900;margin-bottom:8px;">AI Analysis</div>
+      <div class="muted">AI profile unavailable.</div>
+    </div>
+  `;
+}
 
-    const facts = payload?.facts || {};
-    const haveSt = !!facts.standings && !isPlaceholderObj(facts.standings);
-    const haveRf = !!facts.referees && !isPlaceholderObj(facts.referees);
-    const haveAb = !!facts.absences && !isPlaceholderObj(facts.absences);
+const dna = ai.modeling?.dna || {};
+const winPaths = ai.modeling?.winPaths || {};
+const risk = ai.modeling?.risk || {};
 
-    const stBadge = haveSt ? "ready" : "pending";
-    const rfBadge = haveRf ? "ready" : "pending";
-    const abBadge = haveAb ? "ready" : "pending";
+return `
+  <div style="margin-top:14px;">
+    <div style="font-weight:900;margin-bottom:8px;">AI Analysis</div>
 
-    const stBody = renderFactsStandingsInner(payload);
-    const rfBody = renderFactsRefereesInner(payload);
-    const abBody = renderFactsAbsencesInner(payload);
+    ${collapsibleSection(
+      "ai-dna",
+      "DNA Profile",
+      `
+        <div>Tempo: <b>${dna.tempo || "-"}</b></div>
+        <div>Volatility: <b>${dna.volatility || "-"}</b></div>
+      `,
+      { open: false, badge: "ready" }
+    )}
 
-    return `
-      <div style="margin-top:14px;">
-        <div style="font-weight:900;margin-bottom:8px;">Facts (R2 Intel)</div>
-        ${collapsibleSection("facts-standings", "Standings", stBody, { open: false, badge: stBadge })}
-        ${collapsibleSection("facts-referee", "Referee", rfBody, { open: false, badge: rfBadge })}
-        ${collapsibleSection("facts-absences", "Absences", abBody, { open: false, badge: abBadge })}
-      </div>
-    `;
+    ${collapsibleSection(
+      "ai-paths",
+      "Win Paths",
+      `
+        <div><b>Home:</b> ${(winPaths.home || []).join(", ") || "-"}</div>
+        <div><b>Draw:</b> ${(winPaths.draw || []).join(", ") || "-"}</div>
+        <div><b>Away:</b> ${(winPaths.away || []).join(", ") || "-"}</div>
+      `,
+      { open: false, badge: "ready" }
+    )}
+
+    ${collapsibleSection(
+      "ai-risk",
+      "Risk Model",
+      `
+        <div>Upset Index: <b>${risk.upsetIndex ?? "-"}</b></div>
+        <div>Draw Index: <b>${risk.drawIndex ?? "-"}</b></div>
+      `,
+      { open: false, badge: "ready" }
+    )}
+  </div>
+`;
   }
 
   function renderAIDivider() {
@@ -425,7 +438,11 @@
   // =====================================================
 
   function renderHybridFromDetailsAPI(payload) {
-    const hybrid = payload?.hybrid || null;
+    const ai = payload?.fullAiProfile || null;
+    if (!ai) return `<div class="muted">Hybrid unavailable.</div>`;
+
+    const hybrid = ai.modeling || {};
+
     if (!hybrid) return `<div class="muted">Hybrid unavailable.</div>`;
 
     const dnaArr = Array.isArray(hybrid.dna) ? hybrid.dna : [];

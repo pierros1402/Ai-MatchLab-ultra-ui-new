@@ -89,16 +89,23 @@ export default {
       let aiProfile = null;
       try {
         if (typeof runAiEngine === "function") {
-          aiProfile = runAiEngine({
-            id: match.id,
+          console.log("AI INPUT", {
             league: match.leagueSlug,
-            home: match.home,
-            away: match.away,
-            status: match.status,
-            minute: match.minute || null,
-            scoreHome: match.scoreHome,
-            scoreAway: match.scoreAway
-          });
+            season: "2025-2026"
+        });
+
+           aiProfile = await runAiEngine({
+             id: match.id,
+             league: match.leagueSlug,
+             home: match.home,
+             away: match.away,
+             status: match.status,
+             minute: match.minute || null,
+             scoreHome: match.scoreHome,
+             scoreAway: match.scoreAway,
+             season: "2025-2026"
+           }, env);
+
         }
       } catch (e) {}
 
