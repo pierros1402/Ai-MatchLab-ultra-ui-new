@@ -6,6 +6,7 @@ import { stateModel } from "./state.model.js";
 import { pressureModel } from "./pressure.model.js";
 import { riskModel } from "./risk.model.js";
 import { scenarioModel } from "./scenario.model.js";
+import { consistencyModel } from "./consistency.model.js";
 import { confidenceModel } from "./confidence.model.js";
 
 export function runAiEngine(rawInput) {
@@ -16,8 +17,9 @@ export function runAiEngine(rawInput) {
   const strength = strengthModel(normalized, coverage);
   const state = stateModel(normalized, coverage);
   const pressure = pressureModel(normalized, identity, state);
-  const risk = riskModel(normalized, strength, state);
-  const scenario = scenarioModel(strength, state, risk);
+  const consistency = consistencyModel(normalized);
+  const risk = riskModel(normalized, strength, state, consistency);
+  const scenario = scenarioModel(strength, state, risk, consistency);
   const confidence = confidenceModel(coverage, risk);
 
   return {
@@ -30,6 +32,7 @@ export function runAiEngine(rawInput) {
     pressure,
     risk,
     scenario,
+    consistency,
     confidence
   };
 }

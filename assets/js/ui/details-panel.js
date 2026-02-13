@@ -1044,7 +1044,50 @@
     } catch (e) {
       console.warn("[details] bind details-open failed", e);
     }
-  })();
+  
+  function renderAIStructuralBlock(payload) {
+    const ai = payload?.fullAiProfile || payload?.aiProfile || null;
+    if (!ai) return "";
+
+    const state = ai.state || {};
+    const consistency = ai.consistency || {};
+    const risk = ai.risk || {};
+
+    function pct(v) {
+      if (v == null || isNaN(v)) return "–";
+      return (Math.max(0, Math.min(1, v)) * 100).toFixed(0) + "%";
+    }
+
+    function bar(label, value) {
+      const w = Math.max(0, Math.min(100, (value || 0) * 100));
+      return `
+        <div style="margin-top:6px;">
+          <div style="font-size:12px;opacity:.8;">${label}</div>
+          <div style="height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
+            <div style="width:${w}%;height:100%;background:rgba(0,200,255,.6);"></div>
+          </div>
+          <div style="font-size:11px;opacity:.7;margin-top:2px;">${pct(value)}</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div style="margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+        <div style="font-weight:900;margin-bottom:8px;">AI Structural Metrics</div>
+
+        ${bar("Tempo Index", (state.tempoIndex || 0) / 100)}
+        ${bar("Defensive Stability", consistency.defensiveStabilityIndex)}
+        ${bar("Scoring Reliability", consistency.scoringReliabilityIndex)}
+        ${bar("Form Momentum", consistency.formMomentumIndex)}
+        ${bar("Regime Shift Risk", risk.regimeShiftRisk)}
+        ${bar("Comeback Probability", risk.comebackProbability)}
+        ${bar("Volatility Index", risk.volatilityIndex)}
+        ${bar("Confidence", ai.confidence)}
+      </div>
+    `;
+  }
+
+})();
 
 
   window.DetailsPanel = {
