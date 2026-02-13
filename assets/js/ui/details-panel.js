@@ -445,7 +445,15 @@ return `
 
     if (!hybrid) return `<div class="muted">Hybrid unavailable.</div>`;
 
-    const dnaArr = Array.isArray(hybrid.dna) ? hybrid.dna : [];
+    let dnaArr = [];
+
+    if (Array.isArray(hybrid.dna)) {
+      dnaArr = hybrid.dna;
+    } else if (hybrid.dna && typeof hybrid.dna === "object") {
+      dnaArr = Object.entries(hybrid.dna)
+        .map(([k,v]) => `${k}: ${v}`);
+    }
+
     const winPaths = hybrid.winPaths || {};
     const risk = hybrid.risk || {};
     const insights = Array.isArray(hybrid.insights) ? hybrid.insights : [];
@@ -458,7 +466,7 @@ return `
                 x
               )}</span></span>`
           )
-          .join("")
+          .join(" ")
       : `<div class="muted">No DNA.</div>`;
 
     const list = (arr) =>
@@ -508,8 +516,8 @@ return `
 
         <div class="aiml-risk">
           <div class="aiml-subtitle">Risk Meter (0–100)</div>
-          ${bar("Upset Risk", risk.upset ?? risk.upsetRisk)}
-          ${bar("Draw Risk", risk.draw ?? risk.drawRisk)}
+          ${bar("Upset Risk", risk.upset ?? risk.upsetRisk ?? risk.upsetIndex)}
+          ${bar("Draw Risk", risk.draw ?? risk.drawRisk ?? risk.drawIndex)}
         </div>
 
         <div class="aiml-insights">
@@ -533,9 +541,12 @@ return `
     if (uiHint.toLowerCase().includes("pending")) return true;
     if (uiHint.toLowerCase().includes("enrich")) return true;
 
-    const qs = Array.isArray(payload?.standardQuestions)
-      ? payload.standardQuestions
-      : [];
+    const qs =
+      Array.isArray(payload?.standardQuestions)
+        ? payload.standardQuestions
+        : Array.isArray(payload?.fullAiProfile?.modeling?.standardQuestions)
+        ? payload.fullAiProfile.modeling.standardQuestions
+        : [];
 
     // Heuristic: if any answer contains "awaiting enrichment" / "baseline" wording, treat as pending.
     for (const q of qs) {
@@ -575,9 +586,12 @@ return `
       `;
     }
 
-    const qs = Array.isArray(payload?.standardQuestions)
-      ? payload.standardQuestions
-      : [];
+    const qs =
+      Array.isArray(payload?.standardQuestions)
+        ? payload.standardQuestions
+        : Array.isArray(payload?.fullAiProfile?.modeling?.standardQuestions)
+        ? payload.fullAiProfile.modeling.standardQuestions
+        : [];
     if (!qs.length) return `<div class="muted">No standard questions yet.</div>`;
 
     const renderAnswer = (a) => {

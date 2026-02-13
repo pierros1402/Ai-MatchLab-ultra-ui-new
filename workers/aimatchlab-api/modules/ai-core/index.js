@@ -7,7 +7,7 @@ import { buildModel } from "./modeling/model.js";
 
 export async function runAiEngine(payload, env){
 
-  const signature = buildSignature(payload);
+  const signature = buildSignature(payload) + "|ai-core-v2.1";
 
   const existing = await loadSnapshot(env, payload.id);
 

@@ -1,8 +1,13 @@
-
 async function getJson(bucket, key){
-  const obj = await bucket.get(key);
-  if(!obj) return null;
-  return await obj.json();
+  if(!bucket || typeof bucket.get !== "function") return null;
+
+  try{
+    const obj = await bucket.get(key);
+    if(!obj) return null;
+    return await obj.json();
+  }catch(e){
+    return null;
+  }
 }
 
 export async function loadStructuralData(env, payload){

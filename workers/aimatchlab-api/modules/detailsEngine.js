@@ -61,7 +61,7 @@ export async function handleDetails(req, env) {
     live: match.liveStats || null
   };
 
-  const aiProfile = runAiEngine(input);
+  const aiProfile = await runAiEngine(input, env);
 
   if (!debug) {
     return json({
@@ -72,11 +72,11 @@ export async function handleDetails(req, env) {
   }
 
   return json({
-    ok:true,
+    ok: true,
     matchId: match.id,
-    debugMode:true,
-    rawInput: input,
-    fullAiProfile: aiProfile
+    fullAiProfile: aiProfile,
+    cache: aiProfile.cache,
+    meta: aiProfile.meta
   });
 }
 

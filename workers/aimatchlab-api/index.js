@@ -107,8 +107,10 @@ export default {
            }, env);
 
         }
-      } catch (e) {}
-
+      } catch (e) {
+        console.error("AI ENGINE ERROR:", e);
+        return json({ ok:false, error:"ai_engine_failed", message:String(e) }, 500);
+      }  
       return json({
         ok: true,
         basic: match,
