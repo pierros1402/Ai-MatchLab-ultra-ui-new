@@ -2,22 +2,26 @@
 import { buildSignature } from "./state/signature.js";
 import { shouldRebuild } from "./state/change-detector.js";
 import { loadSnapshot, persistSnapshot, cleanupSnapshots } from "./lifecycle/snapshots.js";
-import { loadStructuralData } from "./structural/loader.js";
+import { loadStructuralData, buildStructuralFingerprint } from "./structural/loader.js";
 import { buildModel } from "./modeling/model.js";
 
 export async function runAiEngine(payload, env){
 
-  const signature = buildSignature(payload) + "|ai-core-v2.1";
+  const structural = await loadStructuralData(env, payload);
+  const structuralFingerprint = buildStructuralFingerprint(structural);
+
+  const signature =
+    buildSignature(payload) +
+    "|" +
+    structuralFingerprint +
+    "|ai-core-v2.2";
 
   const existing = await loadSnapshot(env, payload.id);
-
   const decision = shouldRebuild(existing, signature, payload);
 
   if(!decision.rebuild && existing){
     return { ...existing, cache: "HIT" };
   }
-
-  const structural = await loadStructuralData(env, payload);
 
   const modeling = buildModel(structural, payload);
 

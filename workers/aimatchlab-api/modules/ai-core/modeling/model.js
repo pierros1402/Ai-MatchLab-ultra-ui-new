@@ -1,5 +1,13 @@
 
+// ============================================================
+// AIMATCHLAB – AI MODELING ENGINE (TIER-AWARE INTEGRATION)
+// ============================================================
+
+import { getLeagueTier } from "../ai-tier-config.js";
+
 export function buildModel(structural, payload){
+
+  const tier = getLeagueTier(payload?.leagueSlug);
 
   let standingsRaw = structural.standings;
 
@@ -31,7 +39,31 @@ export function buildModel(structural, payload){
     pressureFactor = home.position <= 4 || away.position <= 4 ? 1.2 : 1;
   }
 
-  // ===== DNA =====
+  const tableData = Array.isArray(structural.table)
+    ? structural.table
+    : [];
+
+  const homeTable = tableData.find(t => t.team === payload.home);
+  const awayTable = tableData.find(t => t.team === payload.away);
+
+  let ppgDiff = 0;
+  let scoringBias = 0;
+  let defensiveBias = 0;
+
+  if (homeTable && awayTable) {
+    ppgDiff =
+      (homeTable.points_per_game || 0) -
+      (awayTable.points_per_game || 0);
+
+    scoringBias =
+      (homeTable.goals_for || 0) -
+      (awayTable.goals_for || 0);
+
+    defensiveBias =
+      (awayTable.goals_against || 0) -
+      (homeTable.goals_against || 0);
+  }
+
   const tempoBaseline = leagueProfile.avgGoals > 3 ? "high" : "balanced";
   const volatilityIndex = leagueProfile.volatilityIndex || 0.5;
 
@@ -45,18 +77,51 @@ export function buildModel(structural, payload){
       positionGap >= 8 ? "low" : "medium"
   };
 
-  // ===== RISK =====
-  const upsetIndex =
-    positionGap >= 6 ? Math.round(15 * pressureFactor) :
-    Math.round(30 * pressureFactor);
+  let upsetIndex =
+    positionGap >= 6 ? Math.round(15 * pressureFactor)
+    : Math.round(30 * pressureFactor);
 
-  const drawIndex =
-    positionGap <= 2 ? 45 :
-    positionGap >= 8 ? 20 : 30;
+  if (ppgDiff > 0.6) upsetIndex -= 8;
+  if (ppgDiff < -0.6) upsetIndex += 8;
 
-  const goalRisk =
-    Math.abs(gdDelta) >= 15 ? "asymmetric" :
-    volatilityIndex > 0.7 ? "open" : "controlled";
+  upsetIndex = Math.max(5, Math.min(60, upsetIndex));
+
+  let drawIndex =
+    positionGap <= 2 ? 45
+    : positionGap >= 8 ? 20 : 30;
+
+  if (Math.abs(ppgDiff) < 0.3) drawIndex += 8;
+  if (Math.abs(ppgDiff) > 0.8) drawIndex -= 10;
+
+  drawIndex = Math.max(10, Math.min(70, drawIndex));
+
+  let goalRisk =
+    Math.abs(gdDelta) >= 15 ? "asymmetric"
+    : volatilityIndex > 0.7 ? "open"
+    : "controlled";
+
+  if (scoringBias > 15) goalRisk = "high-scoring-tilt";
+  if (defensiveBias > 15) goalRisk = "defensive-fragility";
+
+  // -----------------------------
+  // TIER MODIFIERS (SAFE LAYER)
+  // -----------------------------
+
+  const TIER_RULES = {
+    1: { upsetMul: 1.0, drawMul: 1.0 },
+    2: { upsetMul: 1.05, drawMul: 1.05 },
+    3: { upsetMul: 1.1, drawMul: 1.1 },
+    4: { upsetMul: 1.15, drawMul: 1.15 },
+    5: { upsetMul: 1.2, drawMul: 1.2 }
+  };
+
+  const tierRule = TIER_RULES[tier] || TIER_RULES[3];
+
+  upsetIndex = Math.round(upsetIndex * tierRule.upsetMul);
+  drawIndex = Math.round(drawIndex * tierRule.drawMul);
+
+  upsetIndex = Math.max(5, Math.min(70, upsetIndex));
+  drawIndex = Math.max(10, Math.min(75, drawIndex));
 
   const risk = {
     upsetIndex,
@@ -64,7 +129,6 @@ export function buildModel(structural, payload){
     goalRisk
   };
 
-  // ===== MOMENTUM =====
   const minute = payload.minute || 0;
   const isLive = payload.status === "LIVE";
 
@@ -78,15 +142,17 @@ export function buildModel(structural, payload){
     }
   }
 
-  // ===== INSIGHTS =====
   const insights = [
+    `League tier: ${tier}`,
     `Tempo baseline: ${dna.tempo}`,
     `Volatility regime: ${dna.volatility}`,
     `Pressure context: ${dna.pressure}`,
-    `Goal risk profile: ${goalRisk}`
+    `Goal risk profile: ${goalRisk}`,
+    ...(ppgDiff !== 0
+      ? [`Form delta (PPG): ${ppgDiff.toFixed(2)}`]
+      : [])
   ];
 
-  // ===== STANDARD QUESTIONS (STRUCTURED) =====
   const standardQuestions = [
     {
       id: "tempo-control",
@@ -108,46 +174,14 @@ export function buildModel(structural, payload){
         bullets: [
           `Position gap: ${positionGap}`,
           `Pressure level: ${dna.pressure}`,
-          `Upset index: ${upsetIndex}`
-        ]
-      }
-    },
-    {
-      id: "goal-dynamics",
-      title: "Goal Dynamics",
-      q: "Is goal differential skewing tactical balance?",
-      a: {
-        bullets: [
-          `Goal diff delta: ${gdDelta}`,
-          `Goal risk regime: ${goalRisk}`
-        ]
-      }
-    },
-    {
-      id: "draw-probability",
-      title: "Draw Probability",
-      q: "Is match equilibrium statistically supported?",
-      a: {
-        bullets: [
-          `Draw index: ${drawIndex}`,
-          `Pressure alignment: ${dna.pressure}`
-        ]
-      }
-    },
-    {
-      id: "late-volatility",
-      title: "Late Volatility",
-      q: "Will late-stage escalation alter risk balance?",
-      a: {
-        bullets: [
-          `Minute: ${minute}`,
-          `Momentum escalation: ${momentum.escalation}`
+          `Upset index (tier-adjusted): ${upsetIndex}`
         ]
       }
     }
   ];
 
   return {
+    tier,
     dna,
     winPaths:{
       home:["Structured build-up advantage","Set-piece leverage scenario"],

@@ -1,169 +1,302 @@
 import { runAiEngine } from "./modules/ai-core/index.js";
-
-// AIMATCHLAB – UNIFIED API WORKER (FULL PRODUCTION)
-
 import { handleValue } from "./modules/valueEngine.js";
 import { handleOdds } from "./modules/oddsEngine.js";
+
+const ENGINE_VERSION = "2.5.0";
+const MAX_LIVE_VERSIONS = 5;
+
+// ============================================================
+// DETERMINISTIC HELPERS
+// ============================================================
+
+function buildSignature(match) {
+  return [
+    match.status || "UNKNOWN",
+    match.scoreHome ?? 0,
+    match.scoreAway ?? 0,
+    match.minute ?? 0
+  ].join("|");
+}
+
+function currentMonthKey() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function aiBasePath(match) {
+  return `ai/context/${currentMonthKey()}/${match.leagueSlug}/${match.id}/`;
+}
+
+async function listObjects(env, prefix) {
+  const list = await env.R2_INTEL.list({ prefix });
+  return list.objects || [];
+}
+
+async function deleteObjects(env, keys) {
+  for (const k of keys) {
+    await env.R2_INTEL.delete(k);
+  }
+}
+
+// ============================================================
+// PERFORMANCE LOGGING
+// ============================================================
+
+async function logAiPerformance(match, stage, signature, env) {
+  const month = currentMonthKey();
+  const key = `ai/performance/${month}/${match.id}-${stage}.json`;
+
+  const payload = {
+    matchId: match.id,
+    league: match.leagueSlug,
+    stage,
+    stateSignature: signature,
+    engineVersion: ENGINE_VERSION,
+    createdAt: Date.now()
+  };
+
+  await env.R2_INTEL.put(key, JSON.stringify(payload));
+}
+
+// ============================================================
+// EVALUATION
+// ============================================================
+
+async function evaluateMatch(match, env) {
+  const month = currentMonthKey();
+  const base = aiBasePath(match);
+
+  const preObj = await env.R2_INTEL.get(base + "pre.json");
+  const finalObj = await env.R2_INTEL.get(base + "final.json");
+
+  if (!preObj || !finalObj) return;
+
+  const preData = await preObj.json();
+  const finalData = await finalObj.json();
+
+  const home = Number(match.scoreHome || 0);
+  const away = Number(match.scoreAway || 0);
+
+  let outcome = "DRAW";
+  if (home > away) outcome = "HOME";
+  if (away > home) outcome = "AWAY";
+
+  const totalGoals = home + away;
+  const over25 = totalGoals > 2.5;
+
+  const evaluation = {
+    matchId: match.id,
+    league: match.leagueSlug,
+    engineVersion: ENGINE_VERSION,
+    createdAt: Date.now(),
+    realOutcome: outcome,
+    realOver25: over25,
+    aiPreMeta: preData.meta,
+    aiFinalMeta: finalData.meta
+  };
+
+  const key = `ai/evaluation/${month}/${match.id}.json`;
+  await env.R2_INTEL.put(key, JSON.stringify(evaluation));
+}
+
+// ============================================================
+// CORE ENGINE
+// ============================================================
+
+async function getDeterministicProfile(match, env) {
+
+  const signature = buildSignature(match);
+  const base = aiBasePath(match);
+
+  const preKey = base + "pre.json";
+  const finalKey = base + "final.json";
+  const livePrefix = base + "live/";
+
+  // FINAL CACHE
+  if (match.status?.includes("FINAL")) {
+    const existing = await env.R2_INTEL.get(finalKey);
+    if (existing) {
+      const data = await existing.json();
+      if (data.meta.engineVersion === ENGINE_VERSION)
+        return data;
+    }
+  }
+
+  // PRE CACHE
+  if (match.status?.includes("SCHEDULED")) {
+    const existing = await env.R2_INTEL.get(preKey);
+    if (existing) {
+      const data = await existing.json();
+      if (data.meta.engineVersion === ENGINE_VERSION)
+        return data;
+    }
+  }
+
+  // LIVE CACHE
+  if (match.status?.includes("IN_PROGRESS")) {
+    const liveObjects = await listObjects(env, livePrefix);
+
+    for (const obj of liveObjects) {
+      const data = await (await env.R2_INTEL.get(obj.key)).json();
+      if (
+        data.meta.stateSignature === signature &&
+        data.meta.engineVersion === ENGINE_VERSION
+      ) {
+        return data;
+      }
+    }
+  }
+
+  // GENERATE NEW
+  const profile = await runAiEngine({
+    id: match.id,
+    league: match.leagueSlug,
+    home: match.home,
+    away: match.away,
+    status: match.status,
+    minute: match.minute || null,
+    scoreHome: match.scoreHome,
+    scoreAway: match.scoreAway,
+    season: "2025-2026"
+  }, env);
+
+  const payload = {
+    meta: {
+      createdAt: Date.now(),
+      stateSignature: signature,
+      status: match.status,
+      engineVersion: ENGINE_VERSION
+    },
+    profile
+  };
+
+  // WRITE LOGIC
+
+  if (match.status?.includes("SCHEDULED")) {
+    await env.R2_INTEL.put(preKey, JSON.stringify(payload));
+    await logAiPerformance(match, "pre", signature, env);
+    return payload;
+  }
+
+  if (match.status?.includes("IN_PROGRESS")) {
+
+    const liveKey = livePrefix + Date.now() + ".json";
+    await env.R2_INTEL.put(liveKey, JSON.stringify(payload));
+
+    const liveObjects = await listObjects(env, livePrefix);
+
+    if (liveObjects.length > MAX_LIVE_VERSIONS) {
+      const sorted = liveObjects.sort(
+        (a, b) => new Date(a.uploaded) - new Date(b.uploaded)
+      );
+
+      const toDelete = sorted
+        .slice(0, liveObjects.length - MAX_LIVE_VERSIONS)
+        .map(o => o.key);
+
+      await deleteObjects(env, toDelete);
+    }
+
+    return payload;
+  }
+
+  if (match.status?.includes("FINAL")) {
+
+    await env.R2_INTEL.put(finalKey, JSON.stringify(payload));
+    await logAiPerformance(match, "final", signature, env);
+
+    await evaluateMatch(match, env);
+
+    const liveObjects = await listObjects(env, livePrefix);
+    await deleteObjects(env, liveObjects.map(o => o.key));
+
+    return payload;
+  }
+
+  return payload;
+}
+
+// ============================================================
+// WORKER
+// ============================================================
 
 export default {
   async fetch(request, env) {
 
-    // UNIVERSAL CORS HANDLER (LOCAL + PROD SAFE)
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Max-Age": "86400"
-        }
-      });
-    }
+    if (request.method === "OPTIONS")
+      return new Response(null, { headers: corsHeaders() });
+
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // VERSION
-    if (pathname === "/version.json") {
-      return json({
-        ok: true,
-        service: "aimatchlab-api",
-        version: "v2.3.8-production"
-      });
-    }
+    if (pathname === "/version.json")
+      return json({ ok: true, version: ENGINE_VERSION });
 
-    // FIXTURES
-    if (pathname === "/fixtures") {
-      return handleFixtures(url, env);
-    }
+    if (pathname === "/fixtures") return handleFixtures(url, env);
+    if (pathname === "/fixtures-runtime") return handleFixturesRuntime(url, env);
+    if (pathname === "/value-picks") return handleValuePicks(url, env);
+    if (pathname.startsWith("/value/")) return handleValue(request, env);
+    if (pathname === "/odds" || pathname.startsWith("/odds/")) return handleOdds(request, env);
 
-    if (pathname === "/fixtures-runtime") {
-      return handleFixturesRuntime(url, env);
-    }
-
-    // VALUE READ
-    if (pathname === "/value-picks") {
-      return handleValuePicks(url, env);
-    }
-
-    // VALUE ENGINE
-    if (pathname.startsWith("/value/")) {
-      return handleValue(request, env);
-    }
-
-    // ODDS ENGINE
-    if (pathname === "/odds" || pathname.startsWith("/odds/")) {
-      return handleOdds(request, env);
-    }
-
-    // HEALTH
-    if (pathname === "/aiml-health.json") {
-      return handleHealth(url, env);
-    }
-
-    
-
-    // =====================================================
-    // AI-FIRST MATCH DETAILS
-    // =====================================================
-    if (url.pathname === "/v1/match/details" && request.method === "GET") {
+    if (pathname === "/v1/match/details") {
 
       const id = url.searchParams.get("id");
+      const dateParam = url.searchParams.get("date");
+
       if (!id) return json({ ok:false, error:"missing_id" }, 400);
 
-      const list = await env.AIML_INGESTION_KV.list({ prefix: "FIXTURES:" });
+      const today = dayKeyGR();
+      const yesterday = dayKeyGR(new Date(Date.now() - 86400000));
+      const days = dateParam ? [dateParam] : [today, yesterday];
+
       let match = null;
 
-      for (const k of list.keys) {
-        const bucket = await env.AIML_INGESTION_KV.get(k.name, "json");
-        if (!bucket || !bucket.matches) continue;
+      for (const dayKey of days) {
+        const bucket =
+          await safeKVGet(env, `FIXTURES:DATE:${dayKey}`) ||
+          await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`);
+
+        if (!bucket?.matches) continue;
 
         const found = bucket.matches.find(m => String(m.id) === String(id));
-        if (found) {
-          match = found;
-          break;
-        }
+        if (found) { match = found; break; }
       }
 
       if (!match) return json({ ok:false, error:"match_not_found" }, 404);
 
       let aiProfile = null;
+
       try {
-        if (typeof runAiEngine === "function") {
-          console.log("AI INPUT", {
-            league: match.leagueSlug,
-            season: "2025-2026"
-        });
-
-           aiProfile = await runAiEngine({
-             id: match.id,
-             league: match.leagueSlug,
-             home: match.home,
-             away: match.away,
-             status: match.status,
-             minute: match.minute || null,
-             scoreHome: match.scoreHome,
-             scoreAway: match.scoreAway,
-             season: "2025-2026"
-           }, env);
-
-        }
+        aiProfile = await getDeterministicProfile(match, env);
       } catch (e) {
-        console.error("AI ENGINE ERROR:", e);
-        return json({ ok:false, error:"ai_engine_failed", message:String(e) }, 500);
-      }  
+        console.error("AI ERROR:", e);
+      }
+
       return json({
         ok: true,
         basic: match,
-        fullAiProfile: aiProfile
+        fullAiProfile: aiProfile?.profile
+          ? {
+              ...aiProfile.profile,
+              meta: aiProfile.meta
+            }
+          : null
       });
-    }
 
-    if (url.pathname === "/v1/match/details/seed" && request.method === "POST") {
-      return json({ ok:true, seeded:true });
-    }
+    } // <-- CLOSED CORRECTLY
 
-    // =====================================================
-    // AI PERFORMANCE EXPORT (R2)
-    // =====================================================
-    if (url.pathname === "/v1/ai/performance/export/range" && request.method === "GET") {
-
-      const from = url.searchParams.get("from");
-      const to = url.searchParams.get("to");
-      if (!from || !to) return json({ ok:false, error:"missing_range" }, 400);
-
-      const rows = ["date,matchId"];
-      const list = await env.AIMATCHLAB_INTEL.list({ prefix:"evaluation/" });
-
-      for (const obj of (list.objects || [])) {
-        const parts = obj.key.split("/");
-        if (parts.length < 3) continue;
-
-        const date = parts[1];
-        if (date < from || date > to) continue;
-
-        rows.push(`${date},${parts[2].replace(".json","")}`);
-      }
-
-      return new Response(rows.join("\n"), {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "text/csv",
-          "Content-Disposition": "attachment; filename=ai-performance.csv"
-        }
-      });
-    }
-
-
-    return json({ ok: false, error: "Not found" }, 404);
+    return json({ ok:false, error:"Not found" }, 404);
   }
 };
+// ============================================================
+// FIXTURES
+// ============================================================
 
 async function handleFixtures(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
   const raw =
-    await safeKVGet(env, `FIXTURES:DATE:${dayKey}`) ||
-    await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`);
+    await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`) ||
+    await safeKVGet(env, `FIXTURES:DATE:${dayKey}`);
 
   if (!raw || !Array.isArray(raw.matches)) {
     return json({ ok: true, date: dayKey, total: 0, matches: [] });
@@ -211,6 +344,10 @@ async function handleFixturesRuntime(url, env) {
   return json({ ok: true, mode, date: dayKey, total: out.length, matches: out });
 }
 
+// ============================================================
+// VALUE PICKS
+// ============================================================
+
 async function handleValuePicks(url, env) {
   const dayKey = url.searchParams.get("date") || dayKeyGR();
   const raw = await safeKVGet(env, `VALUE:SUMMARY:${dayKey}`);
@@ -227,56 +364,38 @@ async function handleValuePicks(url, env) {
   return json({ ok: true, date: dayKey, total: 0, items: [] });
 }
 
-async function handleHealth(url, env) {
-  const dayKey = url.searchParams.get("date") || dayKeyGR();
-  const raw =
-    await safeKVGet(env, `FIXTURES:DATE:${dayKey}`) ||
-    await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`);
-
-  return json({
-    ok: true,
-    date: dayKey,
-    fixtures: raw?.matches?.length || 0
-  });
-}
+// ============================================================
+// HELPERS
+// ============================================================
 
 async function safeKVGet(env, key) {
   try {
     const str = await env.AIML_INGESTION_KV.get(key);
     if (!str) return null;
     return JSON.parse(str);
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 function dayKeyGR(date = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Athens",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
+    timeZone:"Europe/Athens",
+    year:"numeric",
+    month:"2-digit",
+    day:"2-digit"
   }).format(date);
 }
 
-
 function corsHeaders() {
   return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Max-Age": "86400"
+    "Access-Control-Allow-Origin":"*",
+    "Access-Control-Allow-Methods":"GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers":"Content-Type"
   };
 }
 
-function json(obj, status = 200) {
+function json(obj, status=200) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    }
+    headers:{ "Content-Type":"application/json", ...corsHeaders() }
   });
 }
