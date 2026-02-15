@@ -94,6 +94,7 @@ function normalize(evt, slug, name, dayYmd) {
     kickoff_ms: evt?.date ? Date.parse(evt.date) : null,
     scoreHome: Number(home?.score ?? 0),
     scoreAway: Number(away?.score ?? 0),
+    minute: evt?.status?.type?.shortDetail ?? evt?.status?.displayClock ?? null,
     status,
     leagueSlug: slug,
     leagueName: name,
