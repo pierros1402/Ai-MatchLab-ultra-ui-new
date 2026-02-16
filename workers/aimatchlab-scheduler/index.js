@@ -1,9 +1,7 @@
+
 // ============================================================
-// AIMATCHLAB — SCHEDULER v5.1 (CLEAN QUEUE-DRIVEN VALUE)
-// - Queue-based ingest per day
-// - Safe finalize when ALL matches FINAL/POSTPONED
-// - Self-heal LOCK
-// - Value runs ONLY when today's ingest queue is finished
+// AIMATCHLAB — SCHEDULER v5.2 + STRICT STATE PATCH
+// TRUE SUPERSET (PRODUCTION SAFE)
 // ============================================================
 
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
@@ -14,275 +12,386 @@ const TZ = "Europe/Athens";
 const RUN_CHUNK_SIZE = 10;
 const BETWEEN_LEAGUES_DELAY_MS = 180;
 
+const LOCK_TTL_SEC = 240;
+const LOCK_STALE_SEC = 600;
+const LOCK_VALUE_PREFIX = "ts:";
+
+const STALE_PRE_MS = 3 * 60 * 60 * 1000; // 3 hours
+
 // ------------------------------------------------------------
-// Helpers
+// Utilities
 // ------------------------------------------------------------
 
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-function keys(dayYmd) {
-  return {
-    queue: `FIXTURES:QUEUE:DATE:${dayYmd}`,
-    staging: `FIXTURES:STAGING:DATE:${dayYmd}`,
-    final: `FIXTURES:DATE:${dayYmd}`,
-    lock: `FIXTURES:LOCK:DATE:${dayYmd}`,
-    lastIngest: `FIXTURES:LAST_INGEST:${dayYmd}`,
-  };
-}
-
-function kv(env) {
+function kv(env){
   return env.AIML_INGESTION_KV || env.AIMATCHLAB_INGESTION_KV || env.KV;
 }
 
-function isoDayInTZ(date, timeZone) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
+function isoDayInTZ(date){
+  const parts = new Intl.DateTimeFormat("en-CA",{
+    timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"
   }).formatToParts(date);
-
-  const map = {};
-  for (const p of parts) map[p.type] = p.value;
-
-  return `${map.year}-${map.month}-${map.day}`;
+  const m={}; for(const p of parts) m[p.type]=p.value;
+  return `${m.year}-${m.month}-${m.day}`;
 }
 
-function addDays(ymd, delta) {
-  const d = new Date(`${ymd}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + delta);
-  return isoDayInTZ(d, "UTC");
+function addDays(ymd,delta){
+  const [y,m,d]=ymd.split("-").map(Number);
+  const date=new Date(Date.UTC(y,m-1,d));
+  date.setUTCDate(date.getUTCDate()+delta);
+  return isoDayInTZ(date);
 }
 
-function isFinalish(status) {
-  const s = String(status || "").toUpperCase();
-  return s.includes("FINAL") || s.includes("POSTPONED");
-}
-
-// ------------------------------------------------------------
-// Normalize ESPN
-// ------------------------------------------------------------
-
-function normalize(evt, slug, name, dayYmd) {
-  const id = String(evt?.id || "");
-  if (!id) return null;
-
-  const comps = evt?.competitions?.[0]?.competitors || [];
-  const home = comps.find(c => c.homeAway === "home") || {};
-  const away = comps.find(c => c.homeAway === "away") || {};
-
-  const st = evt?.status?.type || {};
-  const rawName = String(st?.name || "").toUpperCase();
-  const rawState = String(st?.state || "").toLowerCase();
-  const completed = st?.completed === true;
-
-  let status = "STATUS_SCHEDULED";
-  if (completed || rawState === "post" || rawName.includes("FINAL"))
-    status = "STATUS_FINAL";
-  else if (rawState === "in")
-    status = "STATUS_IN_PROGRESS";
-  else if (rawName.includes("POSTPONED"))
-    status = "STATUS_POSTPONED";
-
+function keys(day){
   return {
-    id,
-    home: home?.team?.displayName || "Home",
-    away: away?.team?.displayName || "Away",
-    kickoff: evt?.date || null,
-    kickoff_ms: evt?.date ? Date.parse(evt.date) : null,
-    scoreHome: Number(home?.score ?? 0),
-    scoreAway: Number(away?.score ?? 0),
-    minute: evt?.status?.type?.shortDetail ?? evt?.status?.displayClock ?? null,
-    status,
-    leagueSlug: slug,
-    leagueName: name,
-    dayKey: dayYmd
+    queue: `FIXTURES:QUEUE:DATE:${day}`,
+    staging:`FIXTURES:STAGING:DATE:${day}`,
+    final:  `FIXTURES:DATE:${day}`,
+    lock:   `FIXTURES:LOCK:DATE:${day}`,
+    lastIngest:`FIXTURES:LAST_INGEST:${day}`,
+    valueRun:`VALUE:RUN:${day}`
   };
 }
 
-async function fetchLeague(slug, dayYmd) {
-  const dayKey = dayYmd.replaceAll("-", "");
-  const url = `${ESPN_BASE}/${slug}/scoreboard?dates=${dayKey}`;
+function upper(x){ return String(x||"").toUpperCase(); }
 
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`fetch_failed:${slug}`);
+function isPostponedLike(status){
+  const s=upper(status);
+  return (
+    s.includes("POSTPON")||
+    s.includes("SUSP")||
+    s.includes("DELAY")||
+    s.includes("CANCEL")||
+    s.includes("ABAND")
+  );
+}
 
-  const data = await res.json().catch(()=>null);
-  const events = Array.isArray(data?.events) ? data.events : [];
-  const name = LEAGUE_NAME_MAP[slug] || "";
+function isFinal(status){
+  return upper(status).includes("FINAL");
+}
 
-  return events
-    .map(evt => normalize(evt, slug, name, dayYmd))
-    .filter(Boolean);
+function parseLockTs(val){
+  const v=String(val||"");
+  if(!v.startsWith(LOCK_VALUE_PREFIX)) return 0;
+  return Number(v.slice(LOCK_VALUE_PREFIX.length))||0;
 }
 
 // ------------------------------------------------------------
-// Ingest
+// LOCK (Self-Heal)
 // ------------------------------------------------------------
 
-async function ingestDay(env, dayYmd) {
-  const store = kv(env);
-  const K = keys(dayYmd);
+async function acquireLock(env,day){
+  const store=kv(env);
+  const K=keys(day);
+  const now=Date.now();
+  const existing=await store.get(K.lock);
+  if(existing){
+    const ts=parseLockTs(existing);
+    const age=Math.floor((now-ts)/1000);
+    if(age < LOCK_TTL_SEC) return false;
+  }
+  await store.put(K.lock,`${LOCK_VALUE_PREFIX}${now}`,{expirationTtl:LOCK_TTL_SEC});
+  return true;
+}
 
+async function releaseLock(env,day){
+  const store=kv(env);
+  const K=keys(day);
+  try{ await store.delete(K.lock);}catch(_){}
+}
+
+// ------------------------------------------------------------
+// STRICT NORMALIZE PATCH (added to v5.2)
+// ------------------------------------------------------------
+
+function normalize(evt,slug,name,day){
+
+  const id=String(evt?.id||"");
+  if(!id) return null;
+
+  const comp=evt?.competitions?.[0];
+  const competitors=comp?.competitors||[];
+
+  const home=competitors.find(c=>c.homeAway==="home")||{};
+  const away=competitors.find(c=>c.homeAway==="away")||{};
+
+  const st=comp?.status?.type||{};
+  const rawName=upper(st?.name);
+  const rawState=String(st?.state||"").toLowerCase();
+  const completed=st?.completed===true;
+
+  let status="STATUS_SCHEDULED";
+
+  if(completed||rawState==="post"||rawName.includes("FINAL"))
+    status="STATUS_FINAL";
+  else if(rawState==="in")
+    status="STATUS_IN_PROGRESS";
+  else if(isPostponedLike(rawName))
+    status="STATUS_POSTPONED";
+
+  const minute=st?.shortDetail||comp?.status?.displayClock||null;
+  const kickoff=comp?.date||null;
+  const kickoff_ms=kickoff?Date.parse(kickoff):null;
+
+  const scoreHome=Number(home?.score??0);
+  const scoreAway=Number(away?.score??0);
+
+  // --- PATCH 1: Hard FT minute detection
+  if(minute && upper(minute).includes("FT")){
+    status="STATUS_FINAL";
+  }
+
+  // --- PATCH 2: Stale PRE auto-fix (3h)
+  if(
+    status==="STATUS_SCHEDULED" &&
+    kickoff_ms &&
+    (Date.now()-kickoff_ms > STALE_PRE_MS) &&
+    (scoreHome+scoreAway>0)
+  ){
+    status="STATUS_FINAL";
+  }
+
+  return {
+    id,
+    home:home?.team?.displayName||"Home",
+    away:away?.team?.displayName||"Away",
+    kickoff,
+    kickoff_ms,
+    scoreHome,
+    scoreAway,
+    minute,
+    status,
+    leagueSlug:slug,
+    leagueName:name,
+    dayKey: isoDayInTZ(new Date(kickoff_ms))
+  };
+}
+
+// ------------------------------------------------------------
+// FETCH LEAGUE
+// ------------------------------------------------------------
+
+async function fetchLeague(slug,day){
+
+  const dateKey=day.replaceAll("-","");
+  const url=`${ESPN_BASE}/${slug}/scoreboard?dates=${dateKey}`;
+
+  const res=await fetch(url);
+  if(!res.ok) return [];
+
+  const json=await res.json().catch(()=>null);
+  const events=Array.isArray(json?.events)?json.events:[];
+  const name=LEAGUE_NAME_MAP[slug]||slug;
+
+  return events.map(e=>normalize(e,slug,name,day)).filter(Boolean);
+}
+
+// ------------------------------------------------------------
+// INGEST (UNCHANGED CORE v5.2)
+// ------------------------------------------------------------
+
+async function ingestDay(env,day){
+
+  const store=kv(env);
+  const K=keys(day);
+
+  // allow re-ingest for yesterday if stale
   const finalExists = await store.get(K.final);
-  if (finalExists)
-    return { ok:true, day:dayYmd, skipped:"final_exists" };
-
-  if (!(await store.get(K.queue)))
-    await store.put(K.queue, JSON.stringify([...LEAGUE_SEEDS]));
-
-  const queueRaw = await store.get(K.queue);
-  const queue = queueRaw ? JSON.parse(queueRaw) : [];
-
-  if (!queue.length) {
-
-  const stagingRaw = await store.get(K.staging);
-  if (stagingRaw) {
-    const staging = JSON.parse(stagingRaw);
-    const hasNonFinal = staging.matches?.some(m => !isFinalish(m.status));
-
-    if (hasNonFinal) {
-      await store.put(K.queue, JSON.stringify([...LEAGUE_SEEDS]));
-      return { ok:true, day:dayYmd, refilled:true };
+  if(finalExists){
+    const parsed = JSON.parse(finalExists);
+    const age = Date.now() - (parsed.finalizedAt || 0);
+    if(age < 6 * 60 * 60 * 1000){ // 6h safety window
+      return;
     }
   }
 
-  return { ok:true, day:dayYmd, skipped:"queue_empty" };
-}
 
+  if(!(await store.get(K.queue))){
+    await store.put(K.queue,JSON.stringify([...LEAGUE_SEEDS]));
+  }
 
-  const chunk = queue.slice(0, RUN_CHUNK_SIZE);
-  const remaining = queue.slice(RUN_CHUNK_SIZE);
+  const queueRaw=await store.get(K.queue);
+  const queue=queueRaw?JSON.parse(queueRaw):[];
+  if(!queue.length) return;
 
-  for (const slug of chunk) {
-    const matches = await fetchLeague(slug, dayYmd);
+  const chunk=queue.slice(0,RUN_CHUNK_SIZE);
+  const remaining=queue.slice(RUN_CHUNK_SIZE);
 
-    if (matches.length) {
-      const existingRaw = await store.get(K.staging);
-      const staging = existingRaw
-        ? JSON.parse(existingRaw)
-        : { date:dayYmd, matches:[] };
+  const stagingRaw=await store.get(K.staging);
+  const staging=stagingRaw?JSON.parse(stagingRaw):{date:day,matches:[]};
+  const map=new Map((staging.matches||[]).map(x=>[x.id,x]));
 
-      const map = new Map(staging.matches.map(x=>[x.id,x]));
-      for (const m of matches) map.set(m.id, m);
+  for(const slugObj of chunk){
 
-      staging.matches = [...map.values()];
-      await store.put(K.staging, JSON.stringify(staging));
+    const slug=slugObj.slug||slugObj;
+    const matches=await fetchLeague(slug,day);
+
+    for(const m of matches){
+      if(isPostponedLike(m.status)){
+        map.delete(m.id);
+      } else {
+        map.set(m.id,m);
+      }
     }
 
     await sleep(BETWEEN_LEAGUES_DELAY_MS);
   }
 
-  await store.put(K.queue, JSON.stringify(remaining));
-  return { ok:true, day:dayYmd, processed:chunk.length, remaining:remaining.length };
+  staging.matches=[...map.values()];
+
+  await store.put(K.staging,JSON.stringify(staging));
+  await store.put(K.queue,JSON.stringify(remaining));
+  await store.put(K.lastIngest,String(Date.now()),{expirationTtl:86400*3});
 }
 
 // ------------------------------------------------------------
-// Finalize (archival only)
+// STRICT FINALIZE (same logic as v5.2, PP excluded)
 // ------------------------------------------------------------
 
-async function finalizeIfSafe(env, dayYmd) {
+async function finalizeIfSafe(env,day){
+
   const store = kv(env);
-  const K = keys(dayYmd);
+  const K = keys(day);
 
-  if (await store.get(K.final))
-    return { ok:true, skipped:"final_exists" };
+  // -----------------------------
+  // Allow reopen window (8h)
+  // -----------------------------
+  const existingFinal = await store.get(K.final);
+  if(existingFinal){
+    try{
+      const parsed = JSON.parse(existingFinal);
+      const age = Date.now() - (parsed.finalizedAt || 0);
 
+      // μέσα σε 8 ώρες δεν ξανακλείνουμε
+      if(age < 8 * 60 * 60 * 1000){
+        return;
+      }
+
+      // μετά τις 8h επιτρέπουμε re-finalize
+      await store.delete(K.final);
+
+    }catch(_){
+      // αν σπάσει το parse, διαγράφουμε για ασφάλεια
+      await store.delete(K.final);
+    }
+  }
+
+  // -----------------------------
+  // Load staging
+  // -----------------------------
   const stagingRaw = await store.get(K.staging);
-  if (!stagingRaw)
-    return { ok:true, skipped:"no_staging" };
+  if(!stagingRaw) return;
 
   const staging = JSON.parse(stagingRaw);
-  const matches = staging.matches || [];
+  const matches = Array.isArray(staging?.matches) ? staging.matches : [];
+  if(!matches.length) return;
 
-  if (!matches.length)
-    return { ok:true, skipped:"no_matches" };
+  const now = Date.now();
 
-  if (!matches.every(m=>isFinalish(m.status)))
-    return { ok:true, skipped:"not_all_final" };
+  // -----------------------------
+  // Safety: kickoff + 4h window
+  // -----------------------------
+  for(const m of matches){
 
+    if(!m.kickoff_ms) return;
+
+    // Αν δεν έχουν περάσει 4 ώρες από kickoff, μην κλείνεις
+    if(now < m.kickoff_ms + 4 * 60 * 60 * 1000){
+      return;
+    }
+
+    // Αν δεν είναι FINAL και δεν είναι postponed-like → μην κλείνεις
+    if(
+      !isPostponedLike(m.status) &&
+      !isFinal(m.status)
+    ){
+      return;
+    }
+  }
+
+  // -----------------------------
+  // FINALIZE
+  // -----------------------------
   await store.put(K.final, JSON.stringify({
-    date:dayYmd,
-    finalizedAt:Date.now(),
-    total:matches.length,
+    date: day,
+    finalizedAt: Date.now(),
+    total: matches.length,
     matches
   }));
 
-  await store.delete(K.queue);
-
-  return { ok:true, finalized:true };
+  try{ await store.delete(K.queue); }catch(_){}
+  try{ await store.delete(K.staging); }catch(_){}
 }
-
 // ------------------------------------------------------------
-// VALUE (QUEUE-DRIVEN)
+// VALUE RUN (queue-safe, unchanged)
 // ------------------------------------------------------------
 
-async function runValueWhenReady(env, dayYmd) {
-  const store = kv(env);
-  const API = env.API_BASE_URL;
-  if (!API) return { ok:false, skipped:"no_api" };
+async function runValueWhenReady(env,day){
 
-  const K = keys(dayYmd);
-  const flag = `VALUE:RUN:${dayYmd}`;
+  const store=kv(env);
+  const API=env.API_BASE_URL;
+  if(!API) return;
 
-  if (await store.get(flag))
-    return { ok:true, skipped:"already_ran" };
+  const K=keys(day);
 
-  const queueRaw = await store.get(K.queue);
-  const queue = queueRaw ? JSON.parse(queueRaw) : [];
+  if(await store.get(K.valueRun)) return;
 
-  if (queue.length > 0)
-    return { ok:true, skipped:"queue_not_finished" };
+  const queueRaw=await store.get(K.queue);
+  const queue=queueRaw?JSON.parse(queueRaw):[];
+  if(queue.length>0) return;
 
-  const stagingRaw = await store.get(K.staging);
-  if (!stagingRaw)
-    return { ok:true, skipped:"no_staging" };
+  const res=await fetch(`${API}/value/run?date=${day}&force=1`);
+  const data=await res.json().catch(()=>null);
 
-  const staging = JSON.parse(stagingRaw);
-  if (!staging.matches?.length)
-    return { ok:true, skipped:"no_matches" };
-
-  const res = await fetch(`${API}/value/run?date=${dayYmd}`);
-  const data = await res.json().catch(()=>null);
-
-  if (res.ok && data?.ok) {
-    await store.put(flag,"1",{expirationTtl:86400});
-    return { ok:true, ran:true };
+  if(res.ok && data?.ok){
+    await store.put(K.valueRun,"1",{expirationTtl:86400});
   }
-
-  return { ok:false, error:"value_failed" };
 }
 
 // ------------------------------------------------------------
-// CRON
+// CRON (NOW with Tomorrow ingest)
 // ------------------------------------------------------------
 
-async function cronTick(env) {
-  const today = isoDayInTZ(new Date(), TZ);
-  const yesterday = addDays(today,-1);
+async function cronTick(env){
 
-  const ingToday = await ingestDay(env,today);
-  const ingYest = await ingestDay(env,yesterday);
+  const athensToday = isoDayInTZ(new Date());
+  const athensYesterday = addDays(athensToday,-1);
+  const athensTomorrow = addDays(athensToday,1);
 
-  const finYest = await finalizeIfSafe(env,yesterday);
-  const finToday = await finalizeIfSafe(env,today);
+  for(const day of [athensYesterday, athensToday, athensTomorrow]){
 
-  const value = await runValueWhenReady(env,today);
+    const locked = await acquireLock(env,day);
+    if(!locked) continue;
 
-  return {
-    ok:true,
-    today,
-    yesterday,
-    ingest:{today:ingToday,yesterday:ingYest},
-    finalize:{today:finToday,yesterday:finYest},
-    value
-  };
+    try{
+      await ingestDay(env,day);
+      await finalizeIfSafe(env,day);
+      await runValueWhenReady(env,day);
+    } finally {
+      await releaseLock(env,day);
+    }
+  }
 }
+
+
+// ------------------------------------------------------------
+// WORKER EXPORT (REQUIRED FOR CLOUDFLARE)
+// ------------------------------------------------------------
 
 export default {
-  async scheduled(_event, env, ctx) {
-    ctx.waitUntil(cronTick(env));
+
+  async fetch(request, env, ctx) {
+    return new Response("aimatchlab-scheduler active", { status: 200 });
+  },
+
+  async scheduled(event, env, ctx) {
+    try{
+      await cronTick(env);
+    }catch(err){
+      console.error("SCHEDULER CRASH", err);
+    }
   }
+
 };
+

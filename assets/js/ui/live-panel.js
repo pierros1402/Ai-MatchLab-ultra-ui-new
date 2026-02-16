@@ -107,31 +107,18 @@ if (!header || !body) return;
   const ftSeenAt = new Map();
 
   function filterWithFTRetention(matches) {
-    const now = Date.now();
     const live = [];
-    const ft = [];
 
     for (const m of matches) {
       const st = normalizeStatus(m);
-
-      if (st.includes("IN_PROGRESS")) {
+      if (st === "STATUS_IN_PROGRESS") {
         live.push(m);
-        ftSeenAt.delete(String(m?.id ?? ""));
-        continue;
-      }
-
-      if (st.includes("FINAL")) {
-        const id = String(m?.id ?? "");
-        if (!ftSeenAt.has(id)) ftSeenAt.set(id, now);
-
-        if ((now - ftSeenAt.get(id)) <= FT_KEEP_MS) {
-          ft.push(m);
-        }
       }
     }
 
-    return { live, ft };
+    return { live, ft: [] };
   }
+
 
   function groupByLeague(list) {
     const map = new Map();

@@ -45,7 +45,7 @@
   }
 
   function isScheduled(status){
-    return status.includes("SCHEDULED");
+    return status === "STATUS_SCHEDULED";
   }
 
   function isFinal(status){
@@ -57,14 +57,16 @@
     );
   }
 
-  function isPostponed(status){
-    return (
-      status.includes("POSTPONED") ||
-      status.includes("PP") ||
-      status.includes("SUSPENDED") ||
-      status.includes("ABANDONED") ||
-      status.includes("CANCEL")
-    );
+  function isPostponedMatch(m){
+    const s = String(m && m.status || "").toUpperCase();
+    const min = String(m && m.minute || "").trim().toUpperCase();
+
+    // ESPN sometimes sets minute to "Postponed" while status can be FINAL/SCHEDULED/etc.
+    if (s === "STATUS_POSTPONED") return true;
+    if (min === "POSTPONED" || min === "PP" || min === "P-P") return true;
+    if (min.includes("POSTPONED")) return true;
+
+    return false;
   }
 
 
@@ -79,7 +81,7 @@
       const s = String(m.status || "").toUpperCase();
 
       // ACTIVE: PRE + FINAL + PP
-      return isScheduled(s) || isFinal(s) || isPostponed(s);
+      return isScheduled(s) || isFinal(s) || isPostponedMatch(m);
     });
 
     if(!arr.length){
@@ -113,7 +115,11 @@
         const info=document.createElement("span");
         const status = String(m.status || "").toUpperCase();
 
-        if (isFinal(status)) {
+        if (isPostponedMatch(m)) {
+
+          info.textContent = "PP";
+
+        } else if (isFinal(status)) {
 
           const sh = m.scoreHome ?? 0;
           const sa = m.scoreAway ?? 0;
@@ -123,10 +129,6 @@
           } else {
             info.textContent = sh + " - " + sa;
           }
-
-        } else if (isPostponed(status)) {
-
-          info.textContent = "PP";
 
         } else {
 
