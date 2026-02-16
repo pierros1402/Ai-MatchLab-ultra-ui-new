@@ -1,5 +1,6 @@
 // ============================================================
-// AIMATCHLAB — VALUE ENGINE v6.8 (R2 CORRECT PATH)
+// AIMATCHLAB — VALUE ENGINE v7.0 (AI CORE 2.5 COMPATIBLE)
+// Month-based R2 schema + Tier/Risk modeling
 // ============================================================
 
 export async function handleValue(req, env) {
@@ -18,13 +19,15 @@ export async function handleValue(req, env) {
   return json({ ok: false, error: "invalid_value_route" }, 404);
 }
 
+// ------------------------------------------------------------
+
 async function runValueEngine(env, url) {
 
   const date = url.searchParams.get("date") || isoToday();
   const force = url.searchParams.get("force") === "1";
 
   const summaryKey = `VALUE:SUMMARY:${date}`;
-  const statKey = `VALUE:STAT:DATE:${date}`;
+  const statKey    = `VALUE:STAT:DATE:${date}`;
 
   if (!force) {
     const exists = await env.AIML_INGESTION_KV.get(summaryKey);
@@ -49,42 +52,61 @@ async function runValueEngine(env, url) {
   }
 
   const matches = Array.isArray(fixtures.matches) ? fixtures.matches : [];
+
   const items = [];
+  const counters = {
+    total: matches.length,
+    noR2: 0,
+    noModeling: 0,
+    skippedFinal: 0,
+    produced: 0
+  };
+
+  const month = date.slice(0, 7); // YYYY-MM
 
   for (const m of matches) {
 
-    if (!m) continue;
+    if (!m || !m.id || !m.leagueSlug) continue;
 
-    const st = String(m.status || "").toUpperCase();
-    if (st.includes("FINAL")) continue;
+    const status = String(m.status || "").toUpperCase();
 
-    let aiData = null;
+    if (status.includes("FINAL")) {
+      counters.skippedFinal++;
+      continue;
+    }
 
+    const base = `ai/context/${month}/${m.leagueSlug}/${m.id}/`;
+
+    let aiRaw =
+      await env.R2_INTEL.get(base + "pre.json")
+      || await env.R2_INTEL.get(base + "final.json");
+
+    if (!aiRaw) {
+      counters.noR2++;
+      continue;
+    }
+
+    let aiData;
     try {
-      const aiRaw = await env.R2_INTEL.get(
-        `intel/context/${m.id}/latest.json`
-      );
-
-      if (!aiRaw) continue;
-
-      const txt = await aiRaw.text();
-      if (!txt) continue;
-
-      aiData = JSON.parse(txt);
-
+      aiData = JSON.parse(await aiRaw.text());
     } catch {
+      counters.noModeling++;
       continue;
     }
 
     const modeling = aiData?.profile?.modeling;
-    if (!modeling) continue;
 
-    const picks = buildDeterministicPicks(modeling);
+    if (!modeling) {
+      counters.noModeling++;
+      continue;
+    }
+
+    const picks = buildPicksFromTier(modeling);
 
     for (const p of picks) {
       items.push({
         matchId: String(m.id),
-        leagueSlug: m.leagueSlug || "",
+        leagueSlug: m.leagueSlug,
         leagueName: m.leagueName || "",
         kickoff: m.kickoff || "",
         home: m.home,
@@ -95,68 +117,67 @@ async function runValueEngine(env, url) {
         score: p.percent
       });
     }
+
+    counters.produced += picks.length;
   }
 
   const payload = {
     date,
     createdAt: Date.now(),
-    totalMatches: matches.length,
-    producedItems: items.length,
+    totalMatches: counters.total,
+    producedItems: counters.produced,
+    debug: counters,
     items
   };
 
-  let kvWritten = true;
-
-  try {
-    await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(payload));
-    await env.AIML_INGESTION_KV.put(statKey, JSON.stringify(payload));
-  } catch (e) {
-    kvWritten = false;
-    console.log("KV write skipped:", String(e));
-  }
+  await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(payload));
+  await env.AIML_INGESTION_KV.put(statKey, JSON.stringify(payload));
 
   return json({
     ok: true,
     date,
-    produced: items.length,
-    kvWritten
+    produced: counters.produced,
+    debug: counters
   });
 }
 
-function buildDeterministicPicks(modeling) {
+// ------------------------------------------------------------
+// AI CORE 2.5 Modeling Logic
+// ------------------------------------------------------------
+
+function buildPicksFromTier(modeling) {
 
   const picks = [];
 
-  const ppgDiff = modeling.ppgDiff || 0;
-  const scoringBias = modeling.scoringBias || 0;
-  const defensiveBias = modeling.defensiveBias || 0;
-  const gdDelta = modeling.gdDelta || 0;
-  const positionGap = modeling.positionGap || 0;
+  const tier = modeling.tier || 0;
+  const upset = modeling?.risk?.upsetIndex ?? 50;
+  const draw  = modeling?.risk?.drawIndex ?? 50;
 
-  const msi =
-      (ppgDiff * 2)
-    + (gdDelta * 0.5)
-    + (positionGap * 0.3)
-    + (scoringBias * 0.2)
-    + (defensiveBias * 0.2);
-
-  const absMsi = Math.abs(msi);
-
-  if (absMsi >= 3.5) {
+  // Strong structural edge
+  if (tier >= 4 && upset < 45) {
     picks.push({
       market: "1X2",
-      side: msi > 0 ? "HOME" : "AWAY",
-      tier: absMsi >= 5.5 ? "HIGH" : absMsi >= 3.8 ? "MEDIUM" : "LOW",
-      percent: calibrate(absMsi)
+      side: "AWAY",
+      tier: tier >= 5 ? "HIGH" : "MEDIUM",
+      percent: calibrate(tier)
+    });
+  }
+
+  // High draw probability scenario
+  if (draw >= 60) {
+    picks.push({
+      market: "DRAW",
+      side: "DRAW",
+      tier: draw >= 70 ? "HIGH" : "MEDIUM",
+      percent: 72
     });
   }
 
   return picks;
 }
 
-function calibrate(edge) {
-  const normalized = Math.min(edge / 6, 1);
-  return Math.round(70 + normalized * 20);
+function calibrate(tier) {
+  return Math.min(75 + tier * 3, 90);
 }
 
 function isoToday() {
