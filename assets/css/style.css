@@ -337,15 +337,15 @@ body{
 }
 
 /* Active/Saved: each item becomes a 2-column row */
-#active-leagues-list > *,
-#saved-list > *{
+/* apply row layout ONLY to match rows */
+#active-leagues-list > .today-row,
+#saved-list > .today-row{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   width: 100%;
 }
-
 /* League headers must NOT behave like rows */
 #active-leagues-list > .today-league,
 #saved-list > .today-league{
@@ -354,22 +354,7 @@ body{
   gap: 0;
 }
 
-/* Left text area wraps */
-#active-leagues-list > * > :first-child,
-#saved-list > * > :first-child{
-  flex: 1 1 auto;
-  min-width: 0;
-}
 
-/* Right meta stays aligned right */
-#active-leagues-list > * > :last-child,
-#saved-list > * > :last-child{
-  flex: 0 0 auto;
-  margin-left: auto;
-  text-align: right;
-  white-space: nowrap;
-  opacity: 0.95;
-}
 
 /* If spans exist, keep readable */
 #active-leagues-list span,
@@ -532,16 +517,19 @@ body{
    .match-row + .today-match + .today-right
 ===================================================== */
 
-#today-list .match-row{
+#today-list .match-row,
+#active-leagues-list .today-row,
+#saved-list .today-row{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-
   padding: 7px 12px;
 }
 
-#today-list .match-row .today-match{
+#today-list .match-row .today-match,
+#active-leagues-list .today-row .today-match,
+#saved-list .today-row .today-match{
   flex: 1 1 auto;
   min-width: 0;
 
@@ -550,7 +538,9 @@ body{
   text-overflow: ellipsis;
 }
 
-#today-list .match-row .today-right{
+#today-list .match-row .today-right,
+#active-leagues-list .today-row .today-right,
+#saved-list .today-row .today-right{
   flex: 0 0 auto;
   margin-left: auto;
 

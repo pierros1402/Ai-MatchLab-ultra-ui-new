@@ -187,5 +187,33 @@
       console.error('[details-open] local render failed', err);
     }
   });
+// =====================================================
+// INITIAL DATA BOOTSTRAP (TODAY / ACTIVE / LIVE)
+// =====================================================
+window.on('app:ready', function () {
+  try {
+    if (!window.AIML_FixturesLoader) return;
 
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    const ymd = `${y}-${m}-${d}`;
+
+    window.AIML_FixturesLoader.loadToday(ymd);
+    window.AIML_FixturesLoader.loadActive(ymd);
+    window.AIML_FixturesLoader.loadLive();
+
+  } catch (err) {
+    console.error('[APP BOOTSTRAP FAILED]', err);
+  }
+});
+// =====================================================
+// SAFETY BOOTSTRAP (independent of splash lifecycle)
+// =====================================================
+window.addEventListener("DOMContentLoaded", function () {
+  setTimeout(function () {
+    window.emit("app:ready");
+  }, 100);
+});
 })();

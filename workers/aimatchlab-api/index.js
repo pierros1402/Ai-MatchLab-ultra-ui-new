@@ -1,5 +1,5 @@
-import { runAiEngine } from "./modules/ai-core/index.js";
-import { handleValue } from "./modules/valueEngine.js";
+import { runAiEngine } from "../_shared/ai-core/index.js";
+import { runValueEngineCore } from "../_shared/value-engine-core.js";
 import { handleOdds } from "./modules/oddsEngine.js";
 
 const ENGINE_VERSION = "2.5.0";
@@ -228,21 +228,69 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
+    // ------------------------------------------------------------
+    // VERSION
+    // ------------------------------------------------------------
+
     if (pathname === "/version.json")
       return json({ ok: true, version: ENGINE_VERSION });
 
-    if (pathname === "/fixtures") return handleFixtures(url, env);
-    if (pathname === "/fixtures-runtime") return handleFixturesRuntime(url, env);
-    if (pathname === "/value-picks") return handleValuePicks(url, env);
-    if (pathname.startsWith("/value/")) return handleValue(request, env);
-    if (pathname === "/odds" || pathname.startsWith("/odds/")) return handleOdds(request, env);
+    // ------------------------------------------------------------
+    // FIXTURES
+    // ------------------------------------------------------------
+
+    if (pathname === "/fixtures")
+      return handleFixtures(url, env);
+
+    if (pathname === "/fixtures-runtime")
+      return handleFixturesRuntime(url, env);
+
+    // ------------------------------------------------------------
+    // VALUE PICKS (READ)
+    // ------------------------------------------------------------
+
+    if (pathname === "/value-picks")
+      return handleValuePicks(url, env);
+
+    // ------------------------------------------------------------
+    // VALUE ENGINE (RUN)
+    // ------------------------------------------------------------
+
+    if (pathname === "/value/run") {
+
+      const date = url.searchParams.get("date");
+      const force = url.searchParams.get("force") === "1";
+
+      if (!date)
+        return json({ ok:false, error:"missing_date" }, 400);
+
+      try {
+        const result = await runValueEngineCore(env, date, { force });
+        return json(result);
+      } catch (e) {
+        console.error("VALUE RUN ERROR:", e);
+        return json({ ok:false, error:"value_engine_failed" }, 500);
+      }
+    }
+
+    // ------------------------------------------------------------
+    // ODDS
+    // ------------------------------------------------------------
+
+    if (pathname === "/odds" || pathname.startsWith("/odds/"))
+      return handleOdds(request, env);
+
+    // ------------------------------------------------------------
+    // DETAILS (AI PROFILE)
+    // ------------------------------------------------------------
 
     if (pathname === "/v1/match/details") {
 
       const id = url.searchParams.get("id");
       const dateParam = url.searchParams.get("date");
 
-      if (!id) return json({ ok:false, error:"missing_id" }, 400);
+      if (!id)
+        return json({ ok:false, error:"missing_id" }, 400);
 
       const today = dayKeyGR();
       const yesterday = dayKeyGR(new Date(Date.now() - 86400000));
@@ -251,6 +299,7 @@ export default {
       let match = null;
 
       for (const dayKey of days) {
+
         const bucket =
           await safeKVGet(env, `FIXTURES:DATE:${dayKey}`) ||
           await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`);
@@ -258,10 +307,15 @@ export default {
         if (!bucket?.matches) continue;
 
         const found = bucket.matches.find(m => String(m.id) === String(id));
-        if (found) { match = found; break; }
+
+        if (found) {
+          match = found;
+          break;
+        }
       }
 
-      if (!match) return json({ ok:false, error:"match_not_found" }, 404);
+      if (!match)
+        return json({ ok:false, error:"match_not_found" }, 404);
 
       let aiProfile = null;
 
@@ -281,12 +335,16 @@ export default {
             }
           : null
       });
+    }
 
-    } // <-- CLOSED CORRECTLY
+    // ------------------------------------------------------------
+    // FALLBACK
+    // ------------------------------------------------------------
 
     return json({ ok:false, error:"Not found" }, 404);
   }
 };
+
 // ============================================================
 // FIXTURES
 // ============================================================
@@ -329,9 +387,16 @@ async function handleFixturesRuntime(url, env) {
     const status = String(m.status || "").toUpperCase();
     const kickoff = Number(m.kickoff_ms || 0);
 
-    const isLive = status.includes("IN_PROGRESS");
-    const isFinal = status.includes("FINAL");
-    const isScheduled = status.includes("SCHEDULED");
+    const isLive =
+      status.includes("IN_PROGRESS");
+
+    const isFinal =
+      status.includes("FULL_TIME") ||
+      status.includes("FINAL") ||
+      status.includes("POST");
+
+    const isScheduled =
+      status.includes("SCHEDULED");
 
     if (mode === "live" && isLive) out.push(m);
     else if (mode === "active" && (isScheduled || isFinal)) out.push(m);

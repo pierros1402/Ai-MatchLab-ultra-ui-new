@@ -7,7 +7,7 @@ const LEAGUE_SEEDS = [
 
   "ita.1","ita.2","ita.coppa_italia",
 
-  "fra.1","fra.2","fra.coupe_de_france","fra.super_cup","fra.w.1",
+  "fra.1","fra.2","fra.coupe_de_france","fra.super_cup",
 
   "ger.1","ger.2","ger.dfb_pokal",
 
@@ -66,6 +66,7 @@ const LEAGUE_SEEDS = [
   "den.1",
   "swe.1",
   "nor.1",
+  "irl.1",
 
   /* ASIA / OCEANIA (HARD ORIGIN) */
   "sgp.1","slv.1",
@@ -101,7 +102,7 @@ const LEAGUE_NAME_MAP = {
   "esp.2":"LaLiga 2",
   "esp.copa_del_rey":"Copa del Rey",
   "esp.super_cup":"Supercopa de España",
-  "esp.w.1":"Liga F",
+
 
   "ita.1":"Serie A",
   "ita.2":"Serie B",
@@ -111,7 +112,6 @@ const LEAGUE_NAME_MAP = {
   "fra.2":"Ligue 2",
   "fra.coupe_de_france":"Coupe de France",
   "fra.super_cup":"Trophée des Champions",
-  "fra.w.1":"Première Ligue",
 
   "ger.1":"Bundesliga",
   "ger.2":"2. Bundesliga",
@@ -187,6 +187,7 @@ const LEAGUE_NAME_MAP = {
   "den.1":"DenmarkSuperliga",
   "swe.1":"SwedenAllsvenskan",
   "nor.1":"NorwayEliteserien",
+  "irl.1":"IrelandPremierDivision",
 
   /* ASIA / OCEANIA (HARD ORIGIN) */
   "sgp.1":"SingaporePL",

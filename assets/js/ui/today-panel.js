@@ -214,6 +214,7 @@
 
       safeEmit("live:update", { matches });
       safeEmit("today-matches:loaded", { matches });
+      safeEmit("active-leagues:updated", matches);
 
       const hasLive = matches.some(m => isLiveStatus(m.status));
       if (hasLive) {
