@@ -1,5 +1,5 @@
 /* =========================================================
-   LIVE MATCHES PANEL (v3.2 FIXED LEAGUE NAME)
+   LIVE MATCHES PANEL (v4.0 FIXED EVENTS + STATUS SAFE)
 ========================================================= */
 
 (function () {
@@ -11,8 +11,13 @@
   if (!panel) return;
 
   const header = panel.querySelector(".panel-header");
-  const body = panel.querySelector("#live-list") || panel.querySelector(".panel-body") || panel.querySelector(".panel-content") || panel;
-if (!header || !body) return;
+  const body =
+    panel.querySelector("#live-list") ||
+    panel.querySelector(".panel-body") ||
+    panel.querySelector(".panel-content") ||
+    panel;
+
+  if (!header || !body) return;
 
   function esc(s) {
     return String(s ?? "")
@@ -25,54 +30,15 @@ if (!header || !body) return;
     return String(m?.status ?? "").toUpperCase();
   }
 
-  function getLeagueFromTodayById(matchId) {
-    try {
-      const obj = window.AIML_FIXTURES_TODAY;
-      const arr = obj && Array.isArray(obj.matches) ? obj.matches : [];
-      const hit = arr.find(x => String(x?.id ?? "") === String(matchId));
-      return hit?.leagueName || hit?.leagueSlug || "";
-    } catch {
-      return "";
-    }
-  }
-
-  function rawLeague(m) {
-    const id = String(m?.id ?? "");
-    const fromToday = id ? getLeagueFromTodayById(id) : "";
-    if (fromToday) return fromToday;
-
+  function isLiveStatus(st) {
+    const s = String(st || "").toUpperCase();
     return (
-      m?.leagueName ||
-      m?.league ||
-      m?.competitionName ||
-      m?.competition ||
-      m?.tournament ||
-      m?.stageName ||
-      "SOCCER"
+      s === "LIVE" ||
+      s.includes("LIVE") ||
+      s.includes("IN_PROGRESS") ||
+      s.includes("IN-PROGRESS") ||
+      s.includes("STATUS_IN_PROGRESS")
     );
-  }
-
-  function prettyLeagueName(raw) {
-    const s = String(raw || "").trim();
-    if (!s) return "SOCCER";
-
-    if (s.toLowerCase() === "regular-season") return "LIVE";
-
-    const noSeason = s.replace(/^\d{4}-\d{2}-/g, "");
-    const t = noSeason.replace(/-/g, " ").toLowerCase().trim();
-
-    const map = {
-      "english premier league": "Premier League",
-      "laliga": "LaLiga",
-      "german bundesliga": "Bundesliga",
-      "italian serie a": "Serie A",
-      "french ligue 1": "Ligue 1",
-      "uefa champions league": "UEFA Champions League",
-      "greek super league": "Super League Greece"
-    };
-
-    if (map[t]) return map[t];
-    return t.replace(/\b\w/g, c => c.toUpperCase());
   }
 
   function formatMinute(m) {
@@ -90,40 +56,20 @@ if (!header || !body) return;
     return h + "-" + a;
   }
 
-  function getSavedIds() {
-    try {
-      if (!window.getSavedMatches) return new Set();
-      return new Set(
-        (window.getSavedMatches() || [])
-          .map(x => String(x?.id ?? ""))
-          .filter(Boolean)
-      );
-    } catch {
-      return new Set();
-    }
+  function getLeagueName(m) {
+    return (
+      m?.leagueName ||
+      m?.leagueSlug ||
+      m?.league ||
+      m?.competitionName ||
+      "SOCCER"
+    );
   }
-
-  const FT_KEEP_MS = 120000;
-  const ftSeenAt = new Map();
-
-  function filterWithFTRetention(matches) {
-    const live = [];
-
-    for (const m of matches) {
-      const st = normalizeStatus(m);
-      if (st === "STATUS_IN_PROGRESS") {
-        live.push(m);
-      }
-    }
-
-    return { live, ft: [] };
-  }
-
 
   function groupByLeague(list) {
     const map = new Map();
     for (const m of list) {
-      const league = prettyLeagueName(rawLeague(m));
+      const league = getLeagueName(m);
       if (!map.has(league)) map.set(league, []);
       map.get(league).push(m);
     }
@@ -134,20 +80,20 @@ if (!header || !body) return;
     body.innerHTML = "";
 
     if (!Array.isArray(allMatches)) {
-      body.innerHTML = "";
-      return;
-    }
-
-    const { live, ft } = filterWithFTRetention(allMatches);
-    const combined = live.concat(ft);
-
-    if (!combined.length) {
       body.innerHTML = "<div class='panel-placeholder'>No live matches.</div>";
       return;
     }
 
-    const savedIds = getSavedIds();
-    const grouped = groupByLeague(combined);
+    const liveMatches = allMatches.filter(m =>
+      isLiveStatus(normalizeStatus(m))
+    );
+
+    if (!liveMatches.length) {
+      body.innerHTML = "<div class='panel-placeholder'>No live matches.</div>";
+      return;
+    }
+
+    const grouped = groupByLeague(liveMatches);
 
     for (const [league, list] of grouped.entries()) {
       const block = document.createElement("div");
@@ -163,7 +109,9 @@ if (!header || !body) return;
         row.className = "match-row live-row";
 
         const teams = esc((m.home || "") + " – " + (m.away || ""));
-        const meta = esc((formatMinute(m) + " " + formatScore(m)).trim());
+        const meta = esc(
+          (formatMinute(m) + " " + formatScore(m)).trim()
+        );
 
         row.innerHTML =
           "<div class='teams'>" + teams + "</div>" +
@@ -181,19 +129,21 @@ if (!header || !body) return;
     }
   }
 
+  // ---------------------------
+  // CORRECT EVENT REGISTRATION
+  // ---------------------------
+
   window.on("live:update", payload => {
     render(payload?.matches || []);
-  
-  // Also accept Today feed directly (same source of truth, zero extra calls)
+  });
+
   window.on("today-matches:loaded", payload => {
     render(payload?.matches || []);
   });
 
-  // First paint from Today cache if available
+  // Initial paint from cache if exists
   try {
     render(window.AIML_FIXTURES_TODAY?.matches || []);
   } catch (_) {}
-});
 
-  render(null);
 })();

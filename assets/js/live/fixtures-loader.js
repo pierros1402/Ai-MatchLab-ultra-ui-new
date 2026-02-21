@@ -1,11 +1,11 @@
 /* ============================================================
-   js/live/fixtures-loader.js (STABLE v2.2)
-   - Fetches /fixtures-runtime from AIMATCHLAB API Worker
+   js/live/fixtures-loader.js (STABLE v3.0 UNIFIED EVENTS)
+   - Unified event model
    - Emits:
-       "today-matches:loaded"   { date, matches, total }
-       "active-leagues:updated" { date, matches, total }
-       "live:updated"           { matches, total }
-   - Also stores last payloads for debugging/UI reuse:
+       "today-matches:loaded"
+       "active-leagues:updated"
+       "live:update"              (UNIFIED)
+   - Stores debug payloads:
        window.__AIML_LAST_TODAY
        window.__AIML_LAST_ACTIVE
        window.__AIML_LAST_LIVE
@@ -17,20 +17,17 @@
   function nowTs() { return Date.now(); }
 
   function getBaseUrl() {
-    // Preferred: global config (set by app.js)
     if (window.AIML_CONFIG && typeof window.AIML_CONFIG.BASE_URL === "string") {
       return window.AIML_CONFIG.BASE_URL.replace(/\/+$/, "");
     }
-    // Fallback: UI live cfg (some builds use this)
     if (window.AIML_LIVE_CFG && typeof window.AIML_LIVE_CFG.fixturesBase === "string") {
       return window.AIML_LIVE_CFG.fixturesBase.replace(/\/+$/, "");
     }
-    // Hard fallback
     return "https://aimatchlab-api.pierros1402.workers.dev";
   }
 
   async function fetchJson(url) {
-    const r = await fetch(url, { method: "GET" });
+    const r = await fetch(url, { method: "GET", cache: "no-store" });
     if (!r.ok) {
       const t = await r.text().catch(() => "");
       throw new Error(`HTTP ${r.status} ${r.statusText} :: ${t.slice(0, 200)}`);
@@ -39,33 +36,38 @@
   }
 
   // -----------------------------
-  // Public: load today / active / live
+  // TODAY
   // -----------------------------
   async function loadToday(dateYmd) {
     const base = getBaseUrl();
     const url = `${base}/fixtures-runtime?mode=today&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}`;
     const data = await fetchJson(url);
 
-    // Normalize shape defensively
     const payload = {
       date: data.date || dateYmd,
       matches: Array.isArray(data.matches) ? data.matches : [],
-      total: Number.isFinite(data.total) ? data.total : (Array.isArray(data.matches) ? data.matches.length : 0)
+      total: Number.isFinite(data.total)
+        ? data.total
+        : (Array.isArray(data.matches) ? data.matches.length : 0)
     };
 
     window.__AIML_LAST_TODAY = payload;
 
     if (typeof window.emit === "function") {
       window.emit("today-matches:loaded", payload);
+      window.emit("live:update", payload); // UNIFIED
     }
+
     document.dispatchEvent(
-      new CustomEvent("today-matches:loaded", {
-        detail: payload
-      })
+      new CustomEvent("today-matches:loaded", { detail: payload })
     );
 
     return payload;
   }
+
+  // -----------------------------
+  // ACTIVE
+  // -----------------------------
   async function loadActive(dateYmd) {
     const base = getBaseUrl();
     const url = `${base}/fixtures-runtime?mode=active&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}`;
@@ -81,21 +83,20 @@
 
     window.__AIML_LAST_ACTIVE = payload;
 
-  // 1️⃣ Bus system (κρατάμε για συμβατότητα)
     if (typeof window.emit === "function") {
       window.emit("active-leagues:updated", payload);
     }
 
-  // 2️⃣ DOM CustomEvent (ΑΥΤΟ χρειάζεται το panel)
     document.dispatchEvent(
-      new CustomEvent("active-leagues:updated", {
-        detail: payload
-      })
+      new CustomEvent("active-leagues:updated", { detail: payload })
     );
 
     return payload;
   }
 
+  // -----------------------------
+  // LIVE (DEDICATED ENDPOINT)
+  // -----------------------------
   async function loadLive() {
     const base = getBaseUrl();
     const url = `${base}/fixtures-runtime?mode=live&_t=${nowTs()}`;
@@ -103,26 +104,29 @@
 
     const payload = {
       matches: Array.isArray(data.matches) ? data.matches : [],
-      total: Number.isFinite(data.total) ? data.total : (Array.isArray(data.matches) ? data.matches.length : 0)
+      total: Number.isFinite(data.total)
+        ? data.total
+        : (Array.isArray(data.matches) ? data.matches.length : 0)
     };
 
     window.__AIML_LAST_LIVE = payload;
 
     if (typeof window.emit === "function") {
-      window.emit("live:updated", payload);
+      window.emit("live:update", payload); // UNIFIED EVENT
     }
+
     return payload;
   }
 
   // -----------------------------
-  // Backward-compat wrapper names
+  // PUBLIC API
   // -----------------------------
   window.AIML_FixturesLoader = window.AIML_FixturesLoader || {};
   window.AIML_FixturesLoader.loadToday = loadToday;
   window.AIML_FixturesLoader.loadActive = loadActive;
   window.AIML_FixturesLoader.loadLive = loadLive;
 
-  // Some older panels call these:
+  // Backward compatibility
   window.loadTodayFixtures = loadToday;
   window.loadActiveFixtures = loadActive;
   window.loadLiveFixtures = loadLive;
