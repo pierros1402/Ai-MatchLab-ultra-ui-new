@@ -117,10 +117,28 @@ if (pathname === "/ai/matchup-context") {
   const result = await buildMatchupContext(env, league, season, home, away);
   return json(result);
 }
-    // ------------------------------------------------------------
+        // ------------------------------------------------------------
     // DEFAULT
     // ------------------------------------------------------------
     return json({ ok: false, error: "invalid_route" }, 404);
+  },
+
+  async scheduled(event, env, ctx) {
+    const leagues = [
+      "eng.1",
+      "esp.1",
+      "ita.1",
+      "ger.1",
+      "fra.1"
+    ];
+
+    for (const league of leagues) {
+      try {
+        await buildSeason(env, league, "2025-2026");
+      } catch (_) {
+        // fail silently – cron must never crash
+      }
+    }
   }
 };
 
