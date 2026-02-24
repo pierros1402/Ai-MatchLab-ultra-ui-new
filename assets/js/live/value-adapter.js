@@ -5,6 +5,7 @@
 (function () {
   let __AIML_VALUE_BOUND_DATE = null;
   let __AIML_VALUE_LAST_HASH = null;
+  let __AIML_VALUE_DATASET_VERSION = null;
   if (!window.on || !window.emit) return;
 
   const TZ = "Europe/Athens";
@@ -92,6 +93,20 @@
     }
   }
 
+  
+  function datasetVersionFromPayload(payload) {
+    const arr = Array.isArray(payload?.matches)
+      ? payload.matches
+      : [];
+
+    if (!arr.length) return null;
+
+    return arr
+      .map(m => String(m.id))
+      .sort()
+      .join("|");
+  }
+
   async function refresh(dateYmd) {
     const date = dateYmd || ymdTodayAthens();
     const data = await fetchValue(date);
@@ -106,13 +121,17 @@
         : [];
     console.log(`[value-adapter] update ${date} picks= ${items.length}`);
 
-    emit("value-picks:loaded", {
+    const payload = {
+      ok: true,
       source: "value",
       date,
-      items
-    });
+      total: items.length,
+      picks: items,
+      items // keep backward compatibility for older listeners
+    };
 
-    emit("value:update", { date, items });
+    emit("value-picks:loaded", payload);
+    emit("value:update", payload);
 
   }
 
@@ -121,16 +140,20 @@
     refresh();
   }, 250);
 
-  // ✅ If Today panel fires often, cooldown will protect us
-  on("today-matches:loaded", (payload) => {
+  // ✅ Trigger VALUE when STAGING fixtures DATASET changes
+on("today-matches:loaded", (payload) => {
+
+  const version = datasetVersionFromPayload(payload);
+  if (!version) return;
+
+  // run only when fixtures dataset actually changes
+  if (__AIML_VALUE_DATASET_VERSION === version) return;
+
+  __AIML_VALUE_DATASET_VERSION = version;
+
   const date = (payload && payload.date)
     ? payload.date
     : ymdTodayAthens();
-
-  // run only once per Athens day
-  if (__AIML_VALUE_BOUND_DATE === date) return;
-
-  __AIML_VALUE_BOUND_DATE = date;
 
   refresh(date);
 });

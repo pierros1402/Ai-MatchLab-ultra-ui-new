@@ -51,10 +51,14 @@
 
   function isLiveStatus(st) {
     const s = String(st || "").toUpperCase();
+
     return (
-      s === "LIVE" ||
       s.includes("LIVE") ||
-      s.includes("IN_PROGRESS")
+      s.includes("IN_PROGRESS") ||
+      s.includes("FIRST_HALF") ||
+      s.includes("SECOND_HALF") ||
+      s.includes("HALF_TIME") ||
+      s.includes("EXTRA_TIME")
     );
   }
 
@@ -202,7 +206,29 @@
     LOADING = true;
 
     try {
-      const res = await fetch(`${BASE}/fixtures-runtime?date=${todayISO()}`, { cache: "no-store" });
+
+    // 👇 ΝΕΟ BLOCK ΕΔΩ
+      if (window.__AIML_SNAPSHOT?.live?.matches?.length) {
+
+        const matches = window.__AIML_SNAPSHOT.live.matches;
+
+        window.AIML_FIXTURES_TODAY = { matches };
+
+        render(matches);
+
+        safeEmit("today-matches:loaded", { matches });
+
+        safeEmit("active-leagues:updated", { matches });
+
+        LOADING = false;
+        return;
+      }
+
+    // 👇 παλιό fetch συνεχίζει κανονικά
+      const res = await fetch(
+        `${BASE}/fixtures-runtime?mode=today&date=${todayISO()}`,
+        { cache: "no-store" }
+      );
       if (!res.ok) throw new Error("fetch failed");
 
       const data = await res.json();
@@ -212,9 +238,14 @@
 
       render(matches);
 
-      safeEmit("live:update", { matches });
       safeEmit("today-matches:loaded", { matches });
-      safeEmit("active-leagues:updated", matches);
+
+// ----------------------------------
+// SYNC WITH LIVE SNAPSHOT
+// ----------------------------------
+      if (!window.__AIML_LAST_LIVE?.matches?.length) {
+      safeEmit("active-leagues:updated", { matches });
+    }
 
       const hasLive = matches.some(m => isLiveStatus(m.status));
       if (hasLive) {

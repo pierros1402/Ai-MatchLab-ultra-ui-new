@@ -280,7 +280,7 @@ export default {
     if (pathname === "/odds" || pathname.startsWith("/odds/"))
       return handleOdds(request, env);
 
-    // ------------------------------------------------------------
+        // ------------------------------------------------------------
     // DETAILS (AI PROFILE)
     // ------------------------------------------------------------
 
@@ -300,13 +300,13 @@ export default {
 
       for (const dayKey of days) {
 
-        const bucket =
-          await safeKVGet(env, `FIXTURES:DATE:${dayKey}`) ||
-          await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`);
+        const raw =
+          await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`) ||
+          await safeKVGet(env, `FIXTURES:DATE:${dayKey}`);
 
-        if (!bucket?.matches) continue;
+        if (!raw?.matches) continue;
 
-        const found = bucket.matches.find(m => String(m.id) === String(id));
+        const found = raw.matches.find(m => String(m.id) === String(id));
 
         if (found) {
           match = found;
@@ -316,6 +316,32 @@ export default {
 
       if (!match)
         return json({ ok:false, error:"match_not_found" }, 404);
+
+      // ===============================
+      // INTEL CACHE FIRST (AI ENGINE)
+      // ===============================
+      try {
+
+        const intelKey = `intel/context/${match.id}/latest.json`;
+        const intelObj = await env.AI_STATE.get(intelKey);
+
+        if (intelObj) {
+          const intel = await intelObj.json();
+
+          return json({
+            ok: true,
+            basic: match,
+            fullAiProfile: {
+              ...intel,
+              cache: undefined   // αφαιρεί το εσωτερικό cache field
+            },
+            cache: "HIT_INTEL"
+          });
+        }
+
+      } catch(e) {
+        console.log("INTEL READ FAIL:", e);
+      }
 
       let aiProfile = null;
 
@@ -369,26 +395,40 @@ async function handleFixtures(url, env) {
 }
 
 async function handleFixturesRuntime(url, env) {
+
   const mode = (url.searchParams.get("mode") || "today").toLowerCase();
   const dayKey = url.searchParams.get("date") || dayKeyGR();
 
+  // ACTIVE DAY FIRST
   const raw =
-    await safeKVGet(env, `FIXTURES:DATE:${dayKey}`) ||
-    await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`);
+    await safeKVGet(env, `FIXTURES:STAGING:DATE:${dayKey}`) ||
+    await safeKVGet(env, `FIXTURES:DATE:${dayKey}`);
 
   if (!raw || !Array.isArray(raw.matches)) {
     return json({ ok: true, mode, date: dayKey, total: 0, matches: [] });
+  }
+
+  function isLiveStatus(status) {
+    const s = String(status || "").toUpperCase();
+
+    return (
+      s.includes("IN_PROGRESS") ||
+      s.includes("FIRST_HALF") ||
+      s.includes("SECOND_HALF") ||
+      s.includes("HALF_TIME") ||
+      s.includes("EXTRA_TIME")
+    );
   }
 
   const now = Date.now();
   const out = [];
 
   for (const m of raw.matches) {
+
     const status = String(m.status || "").toUpperCase();
     const kickoff = Number(m.kickoff_ms || 0);
 
-    const isLive =
-      status.includes("IN_PROGRESS");
+    const isLive = isLiveStatus(status);
 
     const isFinal =
       status.includes("FULL_TIME") ||
@@ -398,17 +438,37 @@ async function handleFixturesRuntime(url, env) {
     const isScheduled =
       status.includes("SCHEDULED");
 
-    if (mode === "live" && isLive) out.push(m);
-    else if (mode === "active" && (isScheduled || isFinal)) out.push(m);
-    else if (mode === "today") {
-      if (isScheduled || isLive) out.push(m);
-      if (isFinal && now - kickoff < 10 * 60 * 1000) out.push(m);
+    if (mode === "live" && isLive) {
+      out.push(m);
+      continue;
+    }
+
+    if (mode === "active" && (isScheduled || isLive)) {
+      out.push(m);
+      continue;
+    }
+
+    if (mode === "today") {
+      if (isScheduled || isLive) {
+        out.push(m);
+        continue;
+      }
+
+      // keep very recent FT
+      if (isFinal && now - kickoff < 10 * 60 * 1000) {
+        out.push(m);
+      }
     }
   }
 
-  return json({ ok: true, mode, date: dayKey, total: out.length, matches: out });
+  return json({
+    ok: true,
+    mode,
+    date: dayKey,
+    total: out.length,
+    matches: out
+  });
 }
-
 // ============================================================
 // VALUE PICKS
 // ============================================================

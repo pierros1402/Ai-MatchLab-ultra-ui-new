@@ -11,6 +11,16 @@ import { buildSeason } from "./engine/season-builder.js";
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          "access-control-allow-origin": "*",
+          "access-control-allow-methods": "GET,OPTIONS",
+          "access-control-allow-headers": "content-type"
+        }
+      });
+    }
     const pathname = url.pathname;
 
     // ------------------------------------------------------------
@@ -31,7 +41,8 @@ export default {
         return json({ ok: false, error: "missing_league_or_season" }, 400);
       }
 
-      return buildSeason(env, league, season);
+      const result = await buildSeason(env, league, season);
+      return json(result);
     }
 
     // ------------------------------------------------------------
@@ -68,7 +79,44 @@ export default {
 
       return json({ ok: true, season, results });
     }
+// ------------------------------------------------------------
+// LEAGUE STATE DEBUG
+// ------------------------------------------------------------
+if (pathname === "/ai/league-state") {
 
+  const league = url.searchParams.get("league");
+  const season = url.searchParams.get("season");
+
+  if (!league || !season) {
+    return json({ ok:false, error:"missing_params" }, 400);
+  }
+
+  const key = `league/${league}/${season}/meta.json`;
+
+  const obj = await env.AI_STATE.get(key);
+
+  if (!obj) {
+    return json({ ok:false, error:"no_meta" }, 404);
+  }
+
+  let meta;
+
+  try {
+    const text = await obj.text();
+    meta = JSON.parse(text);
+  } catch (e) {
+    console.log("meta read failed", e);
+    return json({ ok:false, error:"meta_read_failed" }, 500);
+  }
+
+  return json({
+    ok: true,
+    league,
+    season,
+    leagueVersion: meta.leagueVersion ?? 0,
+    rankingHash: meta.rankingHash ?? null
+  });
+}
     // ------------------------------------------------------------
     // TEAM CONTEXT
     // ------------------------------------------------------------
@@ -117,13 +165,49 @@ if (pathname === "/ai/matchup-context") {
   const result = await buildMatchupContext(env, league, season, home, away);
   return json(result);
 }
-        // ------------------------------------------------------------
+
+    // ------------------------------------------------------------
+    // MATCH INTEL
+    // ------------------------------------------------------------
+    if (pathname === "/ai/match-intel") {
+      const id = url.searchParams.get("id");
+      if (!id) return json({ ok: false, error: "missing_id" }, 400);
+      const { buildMatchIntel } = await import("./engine/intel/match-intel.js");
+      const result = await buildMatchIntel(env, id.trim());
+      return json(result);
+    }
+// ------------------------------------------------------------
+// CLEAN INVALID LEAGUES (ONE-TIME TOOL)
+// ------------------------------------------------------------
+if (url.pathname === "/__cleanup-invalid-leagues") {
+
+  const list = await env.AI_STATE.list({ prefix: "league/" });
+
+  for (const obj of list.objects) {
+    const key = obj.key;
+
+    const match = key.match(/^league\/([0-9]+)\//);
+    if (!match) continue;
+
+    // delete numeric league folder
+    await env.AI_STATE.delete(key);
+  }
+
+  return json({ ok: true, cleaned: true });
+}
+    // ------------------------------------------------------------
     // DEFAULT
     // ------------------------------------------------------------
     return json({ ok: false, error: "invalid_route" }, 404);
   },
 
   async scheduled(event, env, ctx) {
+
+  // run AI build safely in background
+  ctx.waitUntil((async () => {
+
+    const season = "2025-2026";
+
     const leagues = [
       "eng.1",
       "esp.1",
@@ -132,19 +216,38 @@ if (pathname === "/ai/matchup-context") {
       "fra.1"
     ];
 
-    for (const league of leagues) {
-      try {
-        await buildSeason(env, league, "2025-2026");
-      } catch (_) {
-        // fail silently – cron must never crash
-      }
+    // rotation index (quota-safe progression)
+    const idx =
+      Number(await env.AIML_INGESTION_KV.get("AI_BUILD_IDX")) || 0;
+
+    const league = leagues[idx % leagues.length];
+
+    try {
+      await buildSeason(env, league, season);
+      console.log("AI build ok:", league);
+    } catch (e) {
+      // cron must NEVER crash
+      console.log("AI build failed:", league, e);
     }
-  }
+
+    // advance rotation pointer
+    await env.AIML_INGESTION_KV.put(
+      "AI_BUILD_IDX",
+      String((idx + 1) % leagues.length)
+    );
+
+  })());
+}
 };
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "content-type": "application/json" }
+    headers: {
+      "content-type": "application/json",
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "GET,OPTIONS",
+      "access-control-allow-headers": "content-type"
+    }
   });
 }

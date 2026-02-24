@@ -104,15 +104,10 @@
   }
 
   function findLikelyDetailsRoot() {
-    // avoid whole-document translation
-    const candidates = Array.from(document.querySelectorAll("div, section, article, aside"));
-    for (const el of candidates) {
-      const t = el.textContent || "";
-      if (t.includes("AIML Hybrid Match Intel") && t.includes("Standard Questions")) {
-        return el;
-      }
-    }
-    return null;
+    // NEW: stable selector (details always inside OIC details card)
+    return document.querySelector("#oic-details")
+        || document.querySelector(".match-details")
+        || document.body;
   }
 
   function apply() {

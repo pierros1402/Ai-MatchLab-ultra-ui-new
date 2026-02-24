@@ -1,4 +1,8 @@
 (function () {
+
+  const panel =
+    document.querySelector(".top-picks-panel");
+
   const root = document.getElementById("top-picks-body");
   if (!root || !window.on) return;
 
@@ -8,12 +12,21 @@
   }
 
   function render(items) {
-    root.innerHTML = "";
 
-    if (!items || items.length === 0) {
-      root.innerHTML = `<div class="panel-empty">No top picks</div>`;
+    if (!Array.isArray(items)) {
+      window.AIML_PANEL?.set(panel, "error", "Top picks feed error.");
       return;
     }
+
+    if (!items.length) {
+      root.innerHTML = "";
+      window.AIML_PANEL?.set(panel, "empty", "No top picks");
+      return;
+    }
+
+    window.AIML_PANEL?.set(panel, "data");
+
+    root.innerHTML = "";
 
     items.forEach(it => {
       const row = document.createElement("div");
@@ -30,5 +43,7 @@
     });
   }
 
+  window.AIML_PANEL?.set(panel, "loading", "Loading picks...");
   on("top-picks:update", render);
+
 })();

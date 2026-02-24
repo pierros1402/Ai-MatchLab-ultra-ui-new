@@ -1,8 +1,26 @@
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
 
+
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
+const AI_ENGINE_URL =
+  "https://aimatchlab-ai-engine.pierros1402.workers.dev";
 const ATHENS_TZ = "Europe/Athens";
 const FORCE_CLOSE_AFTER_HOURS = 6;
+
+function dayKeyTZ(tz, date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(date);
+
+  const y = parts.find(p => p.type === "year").value;
+  const m = parts.find(p => p.type === "month").value;
+  const d = parts.find(p => p.type === "day").value;
+
+  return `${y}-${m}-${d}`;
+}
 
 /* ================= CORS ================= */
 
@@ -148,15 +166,23 @@ async function ingestUTCWindow(env) {
             prev.scoreAway !== m.scoreAway
           ) {
             bucketMaps[staging].set(m.id, { ...m, dayKey: day });
+
+            // ==============================
+            // AUTO REFRESH MATCH INTEL
+            // ==============================
+            try {
+              fetch(`${AI_ENGINE_URL}/ai/match-intel?id=${m.id}`)
+                .then(r => r.body?.cancel())
+                .catch(() => {});
+            } catch (_) {}
           }
-        }
+        } 
+               } catch (_) {
+                 continue;
+               }
 
-      } catch (_) {
-        continue;
-      }
-    }
-  }
-
+              }
+            }
   let nextIndex = endIndex;
   if (nextIndex >= totalLeagues) nextIndex = 0;
 
@@ -241,11 +267,12 @@ async function handleFixturesRuntime(req, env) {
   const filtered = (data.matches || []).filter(m => {
     const s = String(m.status || "").toUpperCase();
 
-    // keep scheduled future + live
-    if (s === "STATUS_SCHEDULED" && m.kickoff_ms >= now - 4*60*60*1000)
-      return true;
+    // LIVE matches ALWAYS visible
+    if (s.includes("IN_PROGRESS")) return true;
 
-    if (!s.includes("FULL_TIME"))
+    // upcoming matches (μέχρι 4h πριν kickoff)
+    if (s === "STATUS_SCHEDULED" &&
+        m.kickoff_ms >= now - 4 * 60 * 60 * 1000)
       return true;
 
     return false;
@@ -275,26 +302,40 @@ async function runScheduler(env) {
 /* ================= EXPORT ================= */
 
 export default {
-  async scheduled(event, env, ctx) {
-    await runScheduler(env);
-  },
 
   async fetch(req, env) {
     const url = new URL(req.url);
 
-    if (req.method === "OPTIONS") {
-      return new Response(null, { status:204, headers:corsHeaders() });
-    }
+    // CORS preflight
+    if (req.method === "OPTIONS")
+      return new Response(null, { headers: corsHeaders() });
 
-    if (url.pathname === "/__manual") {
-      await runScheduler(env);
-      return new Response("OK", { headers:corsHeaders() });
-    }
-
+    // ---------------------------
+    // FIXTURES RUNTIME ENDPOINT
+    // ---------------------------
     if (url.pathname === "/fixtures-runtime") {
-      return await handleFixturesRuntime(req, env);
+      return handleFixturesRuntime(req, env);
     }
 
-    return new Response("Scheduler active", { headers:corsHeaders() });
+    return jsonResponse({ ok:false, error:"invalid_route" }, 404);
+  },
+
+  async scheduled(event, env, ctx) {
+    console.log("[scheduler] cron tick");
+
+    ctx.waitUntil((async () => {
+      try {
+        await ingestUTCWindow(env);
+        console.log("[scheduler] ingest done");
+
+        const day = dayKeyTZ(ATHENS_TZ, new Date());
+        await finalizeDay(env, day);
+
+        console.log("[scheduler] finalize checked");
+      } catch (err) {
+        console.error("[scheduler] cron error", err);
+      }
+    })());
   }
+
 };

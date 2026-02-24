@@ -94,7 +94,7 @@ async function mergeLiveIntoFixtures(env, liveMatches) {
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
-  const dayKey = `FIXTURES:DATE:${y}-${m}-${d}`;
+  const dayKey = `FIXTURES:STAGING:DATE:${y}-${m}-${d}`;
 
   const raw = await env.AIML_INGESTION_KV.get(dayKey);
   if (!raw) return;

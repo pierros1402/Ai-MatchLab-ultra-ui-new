@@ -1,149 +1,430 @@
 /* =========================================================
-   LIVE MATCHES PANEL (v4.0 FIXED EVENTS + STATUS SAFE)
+   AIMATCHLAB ULTRA — LIVE PANEL FINAL (PRODUCTION STABLE)
 ========================================================= */
 
-(function () {
-  if (!window.on || !window.emit) return;
+/* ================= LIVE PANEL BOOT ================= */
 
-  const panel =
-    document.querySelector(".right-column .intelligence-panel.live-panel") ||
-    document.querySelector(".intelligence-panel.live-panel");
-  if (!panel) return;
+(function(){
 
-  const header = panel.querySelector(".panel-header");
+  function waitUntilReady(){
+
+    const busReady =
+      typeof window.on === "function" &&
+      typeof window.emit === "function";
+
+    const panel =
+      document.querySelector(".intelligence-panel.live-panel");
+
+    if(!busReady || !panel){
+      setTimeout(waitUntilReady,100);
+      return;
+    }
+
+    console.log("[LIVE PANEL] BOOT OK");
+
+    initLivePanel(panel);
+  }
+
+  waitUntilReady();
+
+})();
+
+function initLivePanel(panel){
+
+  console.log("[LIVE PANEL] ready");
+
+  window.__AIML_LIVE_READY = true;
+
+  if(!panel){
+    console.warn("[LIVE PANEL] panel missing");
+    return;
+  }
+
   const body =
     panel.querySelector("#live-list") ||
     panel.querySelector(".panel-body") ||
-    panel.querySelector(".panel-content") ||
     panel;
 
-  if (!header || !body) return;
+  if(!body){
+    console.warn("[LIVE PANEL] body not found");
+    return;
+  }  
 
-  function esc(s) {
-    return String(s ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+/* ================= STATE ================= */
+
+  const MEMORY   = new Map();
+  const PRIORITY = new Map();
+  const DANGER   = new Map();
+  const ROWS     = new Map();
+  const LEAGUES  = new Map();
+
+  const BOOST_LIFETIME = 90000;
+
+  // ✅ SAFE UNIQUE KEY
+  const keyOf = m =>
+    String(m.id ?? `${m.home}|${m.away}|${m.kickoff_ms||0}`);
+
+  /* ================= HELPERS ================= */
+
+  const esc = s =>
+    String(s ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;");
+
+  function normalizeStatus(m){
+    return String(
+      m?.status ??
+      m?.status?.type?.state ??
+      m?.status?.type?.name ??
+      ""
+    ).toUpperCase();
   }
 
-  function normalizeStatus(m) {
-    return String(m?.status ?? "").toUpperCase();
-  }
+  function isLiveStatus(st){
 
-  function isLiveStatus(st) {
-    const s = String(st || "").toUpperCase();
+    if(!st) return false;
+
+    st = String(st).toUpperCase();
+
     return (
-      s === "LIVE" ||
-      s.includes("LIVE") ||
-      s.includes("IN_PROGRESS") ||
-      s.includes("IN-PROGRESS") ||
-      s.includes("STATUS_IN_PROGRESS")
+      st.includes("LIVE") ||
+      st.includes("IN_PROGRESS") ||
+      st.includes("FIRST_HALF") ||
+      st.includes("SECOND_HALF") ||
+      st.includes("HALF_TIME") ||
+      st.includes("EXTRA_TIME")
     );
   }
 
-  function formatMinute(m) {
-    const raw = m?.minute ?? "";
-    if (!raw) return "";
-    const n = Number(raw);
-    if (!Number.isNaN(n)) return n + "'";
-    return raw + "'";
+  const formatScore = m =>
+    (m.scoreHome==null||m.scoreAway==null)
+      ? ""
+      : `${m.scoreHome}-${m.scoreAway}`;
+
+  const getLeagueName = m =>
+    m.leagueName||m.leagueSlug||m.league||"SOCCER";
+
+  /* ================= CLOCK ================= */
+
+  function parseMinute(raw){
+    const n=parseInt(String(raw||"").replace(/[^\d]/g,""),10);
+    return Number.isFinite(n)?n:null;
   }
 
-  function formatScore(m) {
-    const h = m?.scoreHome ?? "";
-    const a = m?.scoreAway ?? "";
-    if (h === "" || a === "") return "";
-    return h + "-" + a;
+  function minuteValue(m){
+
+    const key = keyOf(m);
+    const mem = MEMORY.get(key);
+
+    const base = parseMinute(m.minute ?? m?.status?.displayClock);
+    if(base == null) return 0;
+
+    if(!mem?.live_ts) return base;
+
+    return base + Math.floor((Date.now() - mem.live_ts)/60000);
   }
 
-  function getLeagueName(m) {
-    return (
-      m?.leagueName ||
-      m?.leagueSlug ||
-      m?.league ||
-      m?.competitionName ||
-      "SOCCER"
-    );
+  /* ================= INTELLIGENCE ================= */
+
+  function detectDanger(m){
+    const minute=minuteValue(m);
+    const diff=Math.abs((+m.scoreHome||0)-(+m.scoreAway||0));
+
+    if(minute>=70 && diff===0) return 35;
+    if(minute>=75 && diff===1) return 25;
+    if(minute>=85) return 20;
+
+    return 0;
   }
 
-  function groupByLeague(list) {
-    const map = new Map();
-    for (const m of list) {
-      const league = getLeagueName(m);
-      if (!map.has(league)) map.set(league, []);
-      map.get(league).push(m);
+  function priorityScore(m){
+
+    const key=keyOf(m);
+    let score=minuteValue(m);
+    const now=Date.now();
+
+    const apply=(map)=>{
+      const e=map.get(key);
+      if(!e) return;
+
+      const age=now-e.ts;
+      if(age>BOOST_LIFETIME){
+        map.delete(key);
+        return;
+      }
+
+      score+=e.boost*(1-age/BOOST_LIFETIME);
+    };
+
+    apply(PRIORITY);
+    apply(DANGER);
+
+    return score;
+  }
+
+  function snapshot(m){
+    return {
+      score: formatScore(m),
+      minute: parseMinute(
+        m.minute ?? m?.status?.displayClock
+      )
+    };
+  }
+
+  function visualClass(m){
+    const minute=minuteValue(m);
+    const diff=Math.abs((+m.scoreHome||0)-(+m.scoreAway||0));
+
+    if(minute>=85) return "live-critical";
+    if(minute>=70 && diff===0) return "live-danger";
+    if(diff===1 && minute>=60) return "live-pressure";
+    return "";
+  }
+
+  /* ================= DOM HELPERS ================= */
+
+  function getLeagueBlock(name){
+
+    let block = LEAGUES.get(name);
+    if(block) return block;
+
+    block=document.createElement("div");
+    block.className="league-block";
+
+    const title=document.createElement("div");
+    title.className="league-title";
+    title.textContent=name;
+
+    block.appendChild(title);
+    body.appendChild(block);
+
+    LEAGUES.set(name,block);
+
+    return block;
+  }
+
+  // ✅ FIXED CLOCK (NO RESET)
+  function patchRow(row,m){
+
+    const key = keyOf(m);
+
+    const base = parseMinute(m.minute ?? m?.status?.displayClock) ?? "";
+
+  // keep persistent clock start
+    let mem = MEMORY.get(key);
+
+    if(!mem){
+      mem = {};
+      MEMORY.set(key, mem);
     }
-    return map;
+
+    const newBase = base;
+    const prevBase = mem.base_minute;
+
+    if(prevBase !== newBase){
+      mem.live_ts = Date.now();
+      mem.base_minute = newBase;
+    }
+
+    row.className = `match-row live-row ${visualClass(m)}`;
+
+    const minuteNow = minuteValue(m);
+
+    row.innerHTML = `
+      <div class="teams">${esc(m.home)} – ${esc(m.away)}</div>
+      <div class="meta">
+        <span class="live-minute"
+              data-base="${base}"
+              data-start="${mem.live_ts}">${minuteNow ? `${minuteNow}'` :       ""}</span>
+        ${formatScore(m)}
+      </div>
+    `;
+    }
+function render(matches){
+
+  if(!Array.isArray(matches)) return;
+
+  // RESET VIEW
+  body.innerHTML = "";
+  ROWS.clear();
+  LEAGUES.clear();
+
+  const placeholder = panel.querySelector(".panel-placeholder");
+  if (placeholder) placeholder.style.display = "none";
+
+  const live = matches
+    .filter(m => isLiveStatus(normalizeStatus(m)))
+    .sort((a,b)=>priorityScore(b)-priorityScore(a));
+
+  /* ================= EMPTY STATE ================= */
+
+  if (live.length === 0) {
+
+    body.innerHTML = `
+      <div class="live-empty">
+        <div class="live-empty-title">
+          No matches live right now
+        </div>
+        <div class="live-empty-sub">
+          Next kickoff monitoring active
+        </div>
+        <div class="live-empty-meta">
+          AI tracking today's fixtures
+        </div>
+      </div>
+    `;
+
+    ROWS.clear();
+    LEAGUES.clear();
+    return;
   }
 
-  function render(allMatches) {
-    body.innerHTML = "";
+  const nextKeys = new Set(live.map(keyOf));
 
-    if (!Array.isArray(allMatches)) {
-      body.innerHTML = "<div class='panel-placeholder'>No live matches.</div>";
-      return;
+    // remove old rows
+    for(const [k,row] of ROWS){
+      if(!nextKeys.has(k)){
+        row.remove();
+        ROWS.delete(k);
+        MEMORY.delete(k);
+        PRIORITY.delete(k);
+        DANGER.delete(k);
+      }
     }
 
-    const liveMatches = allMatches.filter(m =>
-      isLiveStatus(normalizeStatus(m))
-    );
-
-    if (!liveMatches.length) {
-      body.innerHTML = "<div class='panel-placeholder'>No live matches.</div>";
-      return;
+    // ✅ CLEAN EMPTY LEAGUES
+    for (const [name, block] of LEAGUES) {
+      if (block.children.length <= 1) {
+        block.remove();
+        LEAGUES.delete(name);
+      }
     }
 
-    const grouped = groupByLeague(liveMatches);
+    for(const m of live){
 
-    for (const [league, list] of grouped.entries()) {
-      const block = document.createElement("div");
-      block.className = "league-block";
+      const key=keyOf(m);
 
-      const title = document.createElement("div");
-      title.className = "league-title";
-      title.textContent = league;
-      block.appendChild(title);
+      const mem = MEMORY.get(key) || {};
 
-      list.forEach(m => {
-        const row = document.createElement("div");
-        row.className = "match-row live-row";
+      const now = snapshot(m);
 
-        const teams = esc((m.home || "") + " – " + (m.away || ""));
-        const meta = esc(
-          (formatMinute(m) + " " + formatScore(m)).trim()
-        );
+// ================= GOAL DETECT =================
+      const goalChanged = mem.score && mem.score !== now.score;
 
-        row.innerHTML =
-          "<div class='teams'>" + teams + "</div>" +
-          "<div class='meta'>" + meta + "</div>";
+      if(goalChanged){
+        PRIORITY.set(key,{ ts:Date.now(), boost:50 });
+      }
 
-        row.addEventListener("click", () => {
-          window.emit("match-selected", m);
-          window.emit("active-match:set", m);
-        });
+// danger boost
+     const d = detectDanger(m);
+     if(d>0)
+       DANGER.set(key,{ ts:Date.now(), boost:d });
 
+// ✅ MERGE instead of overwrite
+      mem.score  = now.score;
+      mem.minute = now.minute;
+
+      MEMORY.set(key, mem);
+
+      const league=getLeagueName(m);
+      const block=getLeagueBlock(league);
+
+      let row=ROWS.get(key);
+
+      if(!row){
+        row=document.createElement("div");
+
+        row.onclick=()=>{
+          window.emit("match-selected",m);
+          window.emit("active-match:set",m);
+        };
+
+        ROWS.set(key,row);
         block.appendChild(row);
-      });
+      }
 
-      body.appendChild(block);
-    }
+      patchRow(row,m);
+
+// ================= VISUAL UPDATE FLASH =================
+      if(goalChanged){
+        row.classList.add("updated");
+
+        setTimeout(()=>{
+          row.classList.remove("updated");
+        },1200);
+       }
+     }
+   }
+  /* ================= EVENTS ================= */
+
+  let LAST_HASH=null;
+
+  console.log("[LIVE PANEL] binding live:update listener");
+  window.__AIML_LIVE_READY = true;  
+ 
+  window.__LIVE_RENDER = render;
+
+  window.on("live:update",(payload)=>{
+    console.log("[LIVE PANEL] event received", payload);
+
+    if (!payload) return;
+
+    const matches = Array.isArray(payload.matches) ? payload.matches : [];
+
+  // ✅ ignore “empty/undefined” noise events
+    if (!payload.date && matches.length === 0) return;
+
+    if (payload.hash && payload.hash === LAST_HASH) return;
+    LAST_HASH = payload.hash || null;
+    
+    render(matches);
+  });
+
+
+  /* ================= INSTANT BOOT ================= */
+
+  function bootFromSnapshot(){
+    const cached = window.__AIML_LAST_LIVE;
+    if(!cached) return;
+
+    LAST_HASH = cached.hash || null;
+    render(cached.matches || []);
   }
 
-  // ---------------------------
-  // CORRECT EVENT REGISTRATION
-  // ---------------------------
+  setTimeout(()=>{
+    bootFromSnapshot();
 
-  window.on("live:update", payload => {
-    render(payload?.matches || []);
-  });
+  // retry once more after full UI mount
+    setTimeout(bootFromSnapshot,300);
 
-  window.on("today-matches:loaded", payload => {
-    render(payload?.matches || []);
-  });
+  },0);
 
-  // Initial paint from cache if exists
-  try {
-    render(window.AIML_FIXTURES_TODAY?.matches || []);
-  } catch (_) {}
 
-})();
+  /* ================= LIVE CLOCK ENGINE ================= */
+
+  function updateLiveClocks(){
+    const now = Date.now();
+
+    document.querySelectorAll(".live-minute").forEach(el=>{
+      const base  = Number(el.dataset.base);
+      const start = Number(el.dataset.start);
+      if(!Number.isFinite(base)||!Number.isFinite(start)) return;
+
+      const elapsed=Math.floor((now-start)/60000);
+      el.textContent=`${base+elapsed}'`;
+    });
+  }
+
+  setInterval(updateLiveClocks,15000);
+  updateLiveClocks();
+// ----------------------------------
+// replay last live snapshot
+// ----------------------------------
+  setTimeout(()=>{
+    if(window.__AIML_LAST_LIVE){
+      console.log("[LIVE PANEL] replay snapshot");
+      window.emit("live:update", window.__AIML_LAST_LIVE);
+    }
+  },50);
+  }

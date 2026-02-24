@@ -163,6 +163,10 @@
   }
 
   document.addEventListener("active-leagues:updated", function (e) {
+
+    // ignore legacy event if snapshot system is active
+    if (window.__AIML_SNAPSHOT?.live) return;
+
     try {
       render(e?.detail || null);
     } catch (err) {
@@ -181,7 +185,28 @@
   try {
     syncSaved(window.getSavedMatches ? window.getSavedMatches() : []);
   } catch {}
+// --------------------------------------------------
+// GLOBAL SNAPSHOT SYNC (LIVE MASTER SOURCE)
+// --------------------------------------------------
+if (window.on) {
+  on("snapshot:update", snap => {
 
+    if (!snap?.live?.matches) return;
+
+    try {
+
+      const payload = { matches: snap.live.matches };
+
+      // cache locally (same pattern as TODAY)
+      window.__AIML_LAST_ACTIVE = payload;
+
+      render(payload);
+
+    } catch (err) {
+      console.error("[active snapshot sync]", err);
+    }
+  });
+}
   if (window.__AIML_LAST_ACTIVE) {
     render(window.__AIML_LAST_ACTIVE);
   }

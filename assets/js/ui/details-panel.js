@@ -13,6 +13,17 @@
 (function () {
   "use strict";
 
+  // --- i18n helper ---
+  const T = (k) => {
+    try {
+      const lang = localStorage.getItem("aiml-lang") || "en";
+      const dict = window.AIML_I18N?.[lang];
+      return dict?.[k] || k;
+    } catch {
+      return k;
+    }
+  };
+
   const VER = "1.8.4";
   if (window.__AIML_DETAILS_PANEL_VER__ === VER) return;
   window.__AIML_DETAILS_PANEL_VER__ = VER;
@@ -375,7 +386,7 @@
 if (!ai) {
   return `
     <div style="margin-top:14px;">
-      <div style="font-weight:900;margin-bottom:8px;">AI Analysis</div>
+      <div style="font-weight:900;margin-bottom:8px;">${T("AI Analysis")}</div>
       <div class="muted">AI profile unavailable.</div>
     </div>
   `;
@@ -387,7 +398,7 @@ const risk = ai.modeling?.risk || {};
 
 return `
   <div style="margin-top:14px;">
-    <div style="font-weight:900;margin-bottom:8px;">AI Analysis</div>
+    <div style="font-weight:900;margin-bottom:8px;">${T("AI Analysis")}</div>
 
     ${collapsibleSection(
       "ai-dna",
@@ -837,53 +848,7 @@ return `
 
       // ===== AUTO-SEED (one-time per match, production-safe) =====
 
-      try {
 
-        if (!window.__AIML_SEEDED__) window.__AIML_SEEDED__ = {};
-
-        if (!window.__AIML_SEEDED__[matchId]) {
-
-          await fetch(detailsBase() + "/v1/match/details/seed", {
-
-            method: "POST",
-
-            headers: { "Content-Type": "application/json" },
-
-            body: JSON.stringify({
-
-              id: matchId,
-
-              home: m.home,
-
-              away: m.away,
-
-              leagueSlug: leagueSlug,
-
-              leagueName: m.leagueName,
-
-              kickoff_ms: m.kickoff_ms,
-
-              status: m.status,
-
-              scoreHome: m.scoreHome,
-
-              scoreAway: m.scoreAway,
-
-              season: season
-
-            })
-
-          });
-
-          window.__AIML_SEEDED__[matchId] = true;
-
-        }
-
-      } catch (e) {
-
-        console.warn("[details] auto-seed failed", e);
-
-      }
 
       const res = await fetchJson(url, 9000);
 

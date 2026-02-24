@@ -1,6 +1,28 @@
 import { evaluateMatch } from "./ai-core/evaluation.model.js";
 import { runAiEngine } from "../../_shared/ai-core/index.js";
 
+async function readIntelCache(env, matchId) {
+  const key = `intel/context/${matchId}/latest.json`;
+
+  console.log("INTEL READ TRY:", key);
+
+  try {
+    const obj = await env.AI_STATE.get(key);
+
+    console.log("INTEL EXISTS:", !!obj);
+
+    if (!obj) return null;
+
+    const text = await obj.text();
+    console.log("INTEL SIZE:", text.length);
+
+    return JSON.parse(text);
+
+  } catch (e) {
+    console.log("INTEL ERROR:", e);
+    return null;
+  }
+}
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
@@ -9,13 +31,48 @@ function json(data, status = 200) {
 }
 
 async function findMatchById(env, id) {
+
+  // =====================================================
+  // FAST MATCH INDEX LOOKUP (O(1))
+  // =====================================================
+  try {
+    const idxRaw = await env.AIML_INGESTION_KV.get(`MATCH_INDEX:${id}`);
+
+    if (idxRaw) {
+      const idx = JSON.parse(idxRaw);
+
+      const dayDataRaw = await env.AIML_INGESTION_KV.get(
+        `FIXTURES:DATE:${idx.dayKey}`,
+        "json"
+      );
+
+      if (dayDataRaw && dayDataRaw.matches) {
+        const match = dayDataRaw.matches.find(
+          m => String(m.id) === String(id)
+        );
+        if (match) return match;
+      }
+    }
+  } catch (e) {
+    console.log("MATCH_INDEX lookup failed:", e);
+  }
+
+  // =====================================================
+  // FALLBACK — LEGACY KV SCAN (safety)
+  // =====================================================
   const list = await env.AIML_INGESTION_KV.list({ prefix: "FIXTURES:" });
+
   for (const key of list.keys) {
     const bucket = await env.AIML_INGESTION_KV.get(key.name, "json");
     if (!bucket || !bucket.matches) continue;
-    const match = bucket.matches.find(m => String(m.id) === String(id));
+
+    const match = bucket.matches.find(
+      m => String(m.id) === String(id)
+    );
+
     if (match) return match;
   }
+
   return null;
 }
 
@@ -77,7 +134,24 @@ export async function handleDetails(req, env) {
 
   const match = await findMatchById(env, id);
   if (!match) return json({ ok:false, error:"match_not_found" }, 404);
+// =====================================================
+// ALWAYS USE INTEL CACHE IF EXISTS (DEBUG SAFE)
+// =====================================================
+const cachedIntel = await readIntelCache(env, match.id);
 
+if (cachedIntel) {
+  return json({
+    ok: true,
+    basic: match,
+    fullAiProfile: cachedIntel,
+    cache: "HIT_INTEL",
+    meta: {
+      generatedAt: cachedIntel.generatedAt,
+      source: "intel-cache"
+    },
+    debug: !!debug
+  });
+}
   const standings = await getStandings(
     env,
     match.leagueSlug,
@@ -99,6 +173,7 @@ export async function handleDetails(req, env) {
     live: match.liveStats || null
   };
 
+  // try AI memory first
   const aiProfile = await runAiEngine(input, env);
 
   // 🔵 NEW — ALWAYS PERSIST (refresh or check or normal call)

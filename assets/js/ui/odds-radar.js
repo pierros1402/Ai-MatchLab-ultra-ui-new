@@ -1,4 +1,8 @@
 (function () {
+  const panel =
+    document.querySelector(".radar-panel") ||
+    document.querySelector("#oic-radar");
+
   const root = document.getElementById("radar-panel-body");
   if (!root || !window.on) return;
 
@@ -8,12 +12,21 @@
   }
 
   function render(items) {
-    root.innerHTML = "";
 
-    if (!items || items.length === 0) {
-      root.innerHTML = `<div class="panel-empty">No radar signals</div>`;
+    if (!Array.isArray(items)) {
+      window.AIML_PANEL?.set(panel, "error", "Radar feed error.");
       return;
     }
+
+    if (!items.length) {
+      root.innerHTML = "";
+      window.AIML_PANEL?.set(panel, "empty", "No radar signals");
+      return;
+    }
+
+    window.AIML_PANEL?.set(panel, "data");
+
+    root.innerHTML = "";
 
     items.forEach(it => {
       const row = document.createElement("div");
@@ -30,5 +43,7 @@
     });
   }
 
+  window.AIML_PANEL?.set(panel, "loading", "Loading radar...");
   on("radar:update", render);
+
 })();

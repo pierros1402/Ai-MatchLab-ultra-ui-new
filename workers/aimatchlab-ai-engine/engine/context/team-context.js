@@ -24,7 +24,8 @@ export async function buildTeamContext(env, league, season, team) {
 
       let match;
       try {
-        match = typeof raw === "string" ? JSON.parse(raw) : raw;
+        const text = await raw.text();
+        match = JSON.parse(text);
       } catch {
         continue;
       }

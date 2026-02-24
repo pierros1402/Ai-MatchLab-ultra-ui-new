@@ -503,3 +503,115 @@
 #right-panel .intelligence-panel.value-panel .value-head-wrap .value-toolbar{
   gap: 12px !important;
 }
+/* ======================================================
+   LIVE UPDATE ANIMATION
+====================================================== */
+
+.live-row.updated {
+  animation: livePulse 1.2s ease-out;
+}
+
+@keyframes livePulse {
+  0% {
+    background: rgba(255,140,0,0.35);
+    transform: scale(1.01);
+  }
+  60% {
+    background: rgba(255,140,0,0.15);
+  }
+  100% {
+    background: transparent;
+    transform: scale(1);
+  }
+}
+/* ======================================================
+   AIML MOMENTUM INDICATOR
+====================================================== */
+
+.live-momentum {
+  height: 4px;
+  border-radius: 3px;
+  margin-top: 4px;
+  background: #222;
+  overflow: hidden;
+}
+
+.live-momentum-bar {
+  height: 100%;
+  transition: width 400ms ease, background 400ms ease;
+}
+
+.mom-home { background:#2ecc71; }
+.mom-away { background:#e74c3c; }
+.mom-neutral { background:#888; }
+.mom-volatile { background:#f1c40f; }
+/* ======================================================
+   LIVE PANEL — HARD FINAL OVERRIDE
+   (matches real DOM structure)
+====================================================== */
+
+.intelligence-panel.live-panel .panel-body .league-block{
+  margin:0 0 8px 0 !important;
+  padding:0 !important;
+  border-radius:10px !important;
+  background:transparent !important;
+  border:none !important;
+}
+
+.intelligence-panel.live-panel .panel-body .league-title{
+  margin:0 0 4px 0 !important;
+  padding:6px 10px !important;
+  font-size:13px !important;
+  font-weight:900 !important;
+}
+
+.intelligence-panel.live-panel .panel-body .match-row.live-row{
+  padding:8px 10px !important;
+  margin:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+}
+
+.intelligence-panel.live-panel
+.panel-body
+.match-row.live-row + .match-row.live-row{
+  border-top:1px solid rgba(255,255,255,0.06) !important;
+}
+
+.intelligence-panel.live-panel .panel-body .teams{
+  font-size:14px !important;
+  font-weight:700 !important;
+}
+
+.intelligence-panel.live-panel .panel-body .meta{
+  font-size:13px !important;
+  font-weight:900 !important;
+  opacity:.9 !important;
+}
+/* ======================================================
+   LIVE EMPTY STATE
+====================================================== */
+
+.live-empty{
+  padding:14px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.live-empty-title{
+  font-weight:900;
+  font-size:14px;
+  color:#fff;
+  opacity:.95;
+}
+
+.live-empty-sub{
+  font-size:13px;
+  opacity:.75;
+}
+
+.live-empty-meta{
+  font-size:12px;
+  opacity:.55;
+}

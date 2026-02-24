@@ -216,4 +216,70 @@ window.addEventListener("DOMContentLoaded", function () {
     window.emit("app:ready");
   }, 100);
 });
+// ============================================================
+// TODAY RELOAD HOOK (used by league watcher)
+// ============================================================
+window.reloadTodayPanel = function () {
+  try {
+    if (!window.AIML_FixturesLoader) return;
+
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const d = String(today.getDate()).padStart(2, "0");
+    const ymd = `${y}-${m}-${d}`;
+
+    // refresh ONLY today fixtures (safe)
+    window.AIML_FixturesLoader.loadToday(ymd);
+  } catch (err) {
+    console.error("[reloadTodayPanel] failed", err);
+  }
+};
+// ============================================================
+// AI LEAGUE VERSION WATCHER (refresh Today on change)
+// ============================================================
+const AI_ENGINE_BASE = "https://aimatchlab-ai-engine.pierros1402.workers.dev";
+
+// TODO: αργότερα το κάνουμε dynamic από UI selection
+const WATCH_LEAGUE = "eng.1";
+const WATCH_SEASON = "2025-2026";
+
+let __leagueVersionCache = null;
+
+async function __checkLeagueState() {
+  try {
+    const res = await fetch(
+      `${AI_ENGINE_BASE}/ai/league-state?league=${encodeURIComponent(WATCH_LEAGUE)}&season=${encodeURIComponent(WATCH_SEASON)}`
+    );
+
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || !data.ok) return;
+
+    // first sync
+    if (__leagueVersionCache === null) {
+      __leagueVersionCache = data.leagueVersion ?? 0;
+      return;
+    }
+
+    // change detected
+    const lv = data.leagueVersion ?? 0;
+    if (lv !== __leagueVersionCache) {
+      console.log("[AI] League update detected:", __leagueVersionCache, "→", lv);
+      __leagueVersionCache = lv;
+
+      if (typeof window.reloadTodayPanel === "function") {
+        window.reloadTodayPanel();
+      }
+    }
+  } catch (e) {
+    console.log("[AI] league watcher error", e);
+  }
+}
+
+// start after app ready (avoid early noise)
+window.on("app:ready", function () {
+  __checkLeagueState();                 // immediate sync
+  setInterval(__checkLeagueState, 60000); // every 60s
+});
 })();
