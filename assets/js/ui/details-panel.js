@@ -402,31 +402,31 @@ return `
 
     ${collapsibleSection(
       "ai-dna",
-      "DNA Profile",
+      T("DNA Profile"),
       `
-        <div>Tempo: <b>${dna.tempo || "-"}</b></div>
-        <div>Volatility: <b>${dna.volatility || "-"}</b></div>
+        <div>${T("Tempo")}: <b>${T(dna.tempo || "-")}</b></div>
+        <div>${T("Volatility")}: <b>${T(dna.volatility || "-")}</b></div>>
       `,
       { open: false, badge: "ready" }
     )}
 
     ${collapsibleSection(
       "ai-paths",
-      "Win Paths",
+      T("Win Paths"),
       `
-        <div><b>Home:</b> ${(winPaths.home || []).join(", ") || "-"}</div>
-        <div><b>Draw:</b> ${(winPaths.draw || []).join(", ") || "-"}</div>
-        <div><b>Away:</b> ${(winPaths.away || []).join(", ") || "-"}</div>
+        <div><b>${T("Home")}:</b> ${(winPaths.home || []).join(", ") || "-"}</div>
+        <div><b>${T("Draw")}:</b> ${(winPaths.draw || []).join(", ") || "-"}</div>
+        <div><b>${T("Away")}:</b> ${(winPaths.away || []).join(", ") || "-"}</div>
       `,
       { open: false, badge: "ready" }
     )}
 
     ${collapsibleSection(
       "ai-risk",
-      "Risk Model",
+      T("Risk Model"),
       `
-        <div>Upset Index: <b>${risk.upsetIndex ?? "-"}</b></div>
-        <div>Draw Index: <b>${risk.drawIndex ?? "-"}</b></div>
+        <div>${T("Upset Index")}: <b>${risk.upsetIndex ?? "-"}</b></div>
+        <div>${T("Draw Index")}: <b>${risk.drawIndex ?? "-"}</b></div>
       `,
       { open: false, badge: "ready" }
     )}
@@ -462,7 +462,7 @@ return `
       dnaArr = hybrid.dna;
     } else if (hybrid.dna && typeof hybrid.dna === "object") {
       dnaArr = Object.entries(hybrid.dna)
-        .map(([k,v]) => `${k}: ${v}`);
+        .map(([k,v]) => `${tr(k)}: ${tr(v)}`);
     }
 
     const winPaths = hybrid.winPaths || {};

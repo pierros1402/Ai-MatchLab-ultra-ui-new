@@ -236,6 +236,37 @@ export default {
       return json({ ok: true, version: ENGINE_VERSION });
 
     // ------------------------------------------------------------
+    // SYSTEM STATUS (ops)
+    // ------------------------------------------------------------
+    if (pathname === "/system/status") {
+      const now = Date.now();
+
+      let sched = null;
+      try {
+        const raw = await env.AIML_INGESTION_KV.get("SCHEDULER:LAST_TICK");
+        sched = raw ? JSON.parse(raw) : null;
+      } catch (_) {}
+
+      // lightweight KV counts (single page)
+      let kvCounts = {};
+      try {
+        const a = await env.AIML_INGESTION_KV.list({ prefix: "FIXTURES:STAGING:DATE:" });
+        const b = await env.AIML_INGESTION_KV.list({ prefix: "FIXTURES:DATE:" });
+        kvCounts = {
+          stagingDays: a?.keys?.length ?? 0,
+          finalDays: b?.keys?.length ?? 0
+        };
+      } catch (_) {}
+
+      return json({
+        ok: true,
+        ts: now,
+        scheduler: sched,
+        kv: kvCounts
+      });
+    }
+
+    // ------------------------------------------------------------
     // FIXTURES
     // ------------------------------------------------------------
 

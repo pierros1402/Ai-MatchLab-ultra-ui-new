@@ -31,24 +31,18 @@
 
 function initLivePanel(panel){
 
-  console.log("[LIVE PANEL] ready");
-
-  window.__AIML_LIVE_READY = true;
-
-  if(!panel){
-    console.warn("[LIVE PANEL] panel missing");
+  // ✅ PREVENT MULTIPLE INIT (MUST BE FIRST)
+  if (window.__LIVE_PANEL_LOADED__) {
+    console.warn("[LIVE PANEL] already initialized");
     return;
   }
+  window.__LIVE_PANEL_LOADED__ = true;
 
+  console.log("[LIVE PANEL] ready");
   const body =
     panel.querySelector("#live-list") ||
     panel.querySelector(".panel-body") ||
-    panel;
-
-  if(!body){
-    console.warn("[LIVE PANEL] body not found");
-    return;
-  }  
+    panel;  
 
 /* ================= STATE ================= */
 
@@ -366,7 +360,7 @@ function render(matches){
   window.__LIVE_RENDER = render;
 
   window.on("live:update",(payload)=>{
-    console.log("[LIVE PANEL] event received", payload);
+    
 
     if (!payload) return;
 
@@ -402,6 +396,7 @@ function render(matches){
 
 
   /* ================= LIVE CLOCK ENGINE ================= */
+ // prevent multiple executions
 
   function updateLiveClocks(){
     const now = Date.now();
@@ -422,9 +417,14 @@ function render(matches){
 // replay last live snapshot
 // ----------------------------------
   setTimeout(()=>{
+
+    if (window.__LIVE_REPLAY_DONE__) return;
+    window.__LIVE_REPLAY_DONE__ = true;
+
     if(window.__AIML_LAST_LIVE){
       console.log("[LIVE PANEL] replay snapshot");
       window.emit("live:update", window.__AIML_LAST_LIVE);
     }
+
   },50);
   }

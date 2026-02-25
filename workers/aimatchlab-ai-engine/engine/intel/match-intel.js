@@ -41,7 +41,14 @@ function deriveIntelPhase(status) {
   return "PRE";
 }
 
-
+function buildStateSignature(match) {
+  return [
+    match.status || "UNKNOWN",
+    match.scoreHome ?? 0,
+    match.scoreAway ?? 0,
+    (match.minute ?? match.clock ?? 0)
+  ].join("|");
+}
 export async function buildMatchIntel(env, matchId) {
   if (!matchId) {
     return { ok: false, error: "missing_id" };
@@ -83,7 +90,13 @@ export async function buildMatchIntel(env, matchId) {
   const cacheKey = `intel/context/${matchId}/latest.json`;
   const cached = await readJsonR2(env, cacheKey);
 
-  if (cached && cached.leagueVersion === leagueVersion) {
+  const currentSignature = buildStateSignature(match);
+
+  if (
+    cached &&
+    cached.leagueVersion === leagueVersion &&
+    cached.meta?.stateSignature === currentSignature
+  ) {
     return { ...cached, cache: "HIT" };
   }
 
@@ -143,6 +156,10 @@ export async function buildMatchIntel(env, matchId) {
     season,
     leagueVersion,
     rankingHash: meta.rankingHash ?? null,
+
+    meta: {
+      stateSignature: currentSignature
+    },
 
     phase,
 

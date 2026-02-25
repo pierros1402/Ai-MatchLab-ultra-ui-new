@@ -1,5 +1,5 @@
 /* ============================================================
-   js/live/fixtures-loader.js (STABLE v3.1 UNIFIED EVENTS)
+   js/live/fixtures-loader.js (STABLE v3.2 UNIFIED EVENTS)
    - Unified event model
    - Emits:
        "today-matches:loaded"
@@ -10,6 +10,14 @@
        window.__AIML_LAST_ACTIVE
        window.__AIML_LAST_LIVE
 ============================================================ */
+
+// --------------------------------------------------
+// DEBUG SWITCH (set true only when debugging)
+// --------------------------------------------------
+const LIVE_DEBUG = false;
+
+function liveLog(...args)  { if (LIVE_DEBUG) console.log(...args); }
+function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
 
 (function () {
   "use strict";
@@ -36,6 +44,16 @@
   }
 
   function safeArray(x) { return Array.isArray(x) ? x : []; }
+
+  function todayISO() {
+    const d = new Date();
+    return d.toISOString().slice(0, 10);
+  }
+
+  // wrap so external callers can’t break date
+  const loadTodaySafe  = (d) => loadToday(d || todayISO());
+  const loadActiveSafe = (d) => loadActive(d || todayISO());
+  const loadLiveSafe   = (d) => loadLive(d || todayISO());
 
   // -----------------------------
   // TODAY (SNAPSHOT)
@@ -102,9 +120,9 @@
     const ymd =
       (typeof dateYmd === "string" && dateYmd.length >= 10)
         ? dateYmd.slice(0, 10)
-        : new Date().toISOString().slice(0, 10);
+        : todayISO();
 
-    if (!dateYmd) console.warn("[LIVE] loadLive called with empty dateYmd -> using", ymd);
+    if (!dateYmd) liveWarn("[LIVE] loadLive called with empty dateYmd -> using", ymd);
 
     // 1) REALTIME WORKER FIRST (no KV, edge cached)
     try {
@@ -127,12 +145,12 @@
             window.emit("live:update", payload);
           }
 
-          console.log("[LIVE] realtime source", liveMatches.length);
+          liveLog("[LIVE] realtime source", liveMatches.length);
           return payload;
         }
       }
     } catch (err) {
-      console.warn("[LIVE] realtime worker failed", err);
+      liveWarn("[LIVE] realtime worker failed", err);
     }
 
     // 2) FALLBACK → SNAPSHOT (KV pipeline)
@@ -145,22 +163,18 @@
       const data = await fetchJson(url);
       const matches = safeArray(data.matches);
 
-      // keep only live-ish statuses if your snapshot includes scheduled too
+      // keep only live-ish statuses (schema-agnostic)
       const liveMatches = matches.filter(m => {
-        const s = String(
-          m?.status ??
-          m?.status?.type?.state ??
-          m?.status?.type?.name ??
-          ""
-        ).toUpperCase();
+        const raw = JSON.stringify(m?.status || "").toUpperCase();
 
         return (
-          s.includes("LIVE") ||
-          s.includes("IN_PROGRESS") ||
-          s.includes("FIRST_HALF") ||
-          s.includes("SECOND_HALF") ||
-          s.includes("HALF_TIME") ||
-          s.includes("EXTRA_TIME")
+          raw.includes("LIVE") ||
+          raw.includes("IN_PROGRESS") ||
+          raw.includes("PROGRESS") ||
+          raw.includes("FIRST") ||
+          raw.includes("SECOND") ||
+          raw.includes("HALF") ||
+          raw.includes("EXTRA")
         );
       });
 
@@ -172,10 +186,11 @@
         window.emit("live:update", payload);
       }
 
-      console.log("[LIVE] fallback snapshot", liveMatches.length);
+      liveLog("[LIVE] fallback snapshot", liveMatches.length);
       return payload;
 
     } catch (err) {
+      // keep this as real warning (rare + important)
       console.warn("[LIVE] snapshot fallback failed", err);
 
       const payload = { date: ymd, matches: [], total: 0 };
@@ -188,15 +203,7 @@
       return payload;
     }
   }
-     function todayISO() {
-       const d = new Date();
-       return d.toISOString().slice(0, 10);
-     }
 
-// wrap so external callers can’t break date
-      const loadTodaySafe  = (d) => loadToday(d || todayISO());
-      const loadActiveSafe = (d) => loadActive(d || todayISO());
-      const loadLiveSafe   = (d) => loadLive(d || todayISO());
   // -----------------------------
   // PUBLIC API
   // -----------------------------
@@ -213,16 +220,17 @@
   // LIVE AUTO POLLER (required for live panel)
   // --------------------------------------------------
   (function startLiveLoop() {
-     async function tick() {
-       try {
-         await loadLive(todayISO());
-       } catch (e) {
-         console.warn("[live-loop]", e);
-       }
-     }
+    async function tick() {
+      try {
+        await loadLive(todayISO());
+      } catch (e) {
+        // rare + important
+        console.warn("[live-loop]", e);
+      }
+    }
 
-     tick();
-     setInterval(tick, 15000);
-   })();
+    tick();
+    setInterval(tick, 15000);
+  })();
 
 })();
