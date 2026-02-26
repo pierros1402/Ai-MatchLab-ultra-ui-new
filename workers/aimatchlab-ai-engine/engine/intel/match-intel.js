@@ -6,11 +6,14 @@
 // - Intelligent cache invalidation
 // - LIVE state evolution support
 // ============================================================
-
+import { computeConfidence } from "./intel-confidence.js";
 import { buildTeamContext } from "../context/team-context.js";
 import { buildMatchupContext } from "../context/matchup-context.js";
 import { applyLiveEvolution } from "./live-evolution.js";
-
+import { computeIntelDelta } from "./intel-delta.js";
+import { buildNarrative } from "./intel-narrator.js";
+import { generateSignals } from "./intel-signals.js";
+import { filterAndPersistSignals } from "./intel-signal-store.js";
 /* ============================================================
    PHASE DETECTION
 ============================================================ */
@@ -260,8 +263,69 @@ export async function buildMatchIntel(env, matchId) {
 // ------------------------------------------------------------
 // LIVE EVOLUTION HOOK
 // ------------------------------------------------------------
+// defensive guards (future-safe)
+out.context = out.context || {};
+out.meta = out.meta || {};
+
 const evolvedOut = applyLiveEvolution(out);
+
 // ------------------------------------------------------------
+// DELTA COMPUTATION
+// ------------------------------------------------------------
+let previousIntel = null;
+
+try {
+  const prevObj =
+    await env.AI_STATE.get(`intel/context/${matchId}/latest.json`);
+
+  if (prevObj) {
+    previousIntel = JSON.parse(await prevObj.text());
+  }
+} catch (_) {}
+
+const delta = computeIntelDelta(previousIntel, evolvedOut);
+
+if (delta) {
+  evolvedOut.delta = delta;
+
+  const narrative = buildNarrative(delta);
+  if (narrative) {
+    evolvedOut.narrative = narrative;
+  }
+}
+
+// ------------------------------------------------------------
+// CONFIDENCE SCORE
+// ------------------------------------------------------------
+const confidence = computeConfidence(evolvedOut);
+
+if (confidence) {
+  evolvedOut.confidence = confidence;
+}
+
+// ------------------------------------------------------------
+// LIVE SIGNALS (COOLDOWN + PERSIST)
+// ------------------------------------------------------------
+let rawSignals = [];
+
+try {
+  rawSignals = generateSignals(previousIntel, evolvedOut);
+} catch (_) {}
+
+let emittedSignals = [];
+try {
+  emittedSignals = await filterAndPersistSignals(
+    env,
+    matchId,
+    evolvedOut,
+    rawSignals
+  );
+} catch (_) {}
+
+if (emittedSignals.length) {
+  // only signals that passed cooldown
+  evolvedOut.signals = emittedSignals;
+}// ------------------------------------------------------------
 // PHASE MEMORY PERSIST
 // ------------------------------------------------------------
 const finalPhase = (evolvedOut?.meta?.phase || phase || "PRE").toUpperCase();
