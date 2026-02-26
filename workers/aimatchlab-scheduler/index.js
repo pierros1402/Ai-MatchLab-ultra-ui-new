@@ -129,22 +129,11 @@ function normalize(event, slug) {
   };
 }
 
-/* ================= INGESTION ================= */
-
-async function fetchLeagueUTC(slug, utcDate) {
-  const url = `${ESPN_BASE}/${slug}/scoreboard?dates=${utcDate.replace(/-/g, "")}`;
-  const r = await fetch(url);
-  if (!r.ok) return null;
-  return await r.json();
-}
-
+// ================= INTEL REFRESH =================
 async function queueIntelRefresh(env, ctx, matchId, match = null) {
   try {
-    // ------------------------------------------------
-    // Ensure AI match index exists (NEW)
-    // ------------------------------------------------
     if (match?.leagueSlug) {
-      const season = "2025-2026"; // current active season
+      const season = "2025-2026";
 
       await env.AI_STATE.put(
         `match-index/${matchId}.json`,
@@ -157,9 +146,6 @@ async function queueIntelRefresh(env, ctx, matchId, match = null) {
     }
   } catch (_) {}
 
-  // ------------------------------------------------
-  // trigger intel refresh (non-blocking)
-  // ------------------------------------------------
   const p = fetch(`${AI_ENGINE_URL}/ai/match-intel?id=${matchId}`)
     .then(r => r.body?.cancel?.())
     .catch(() => {});
@@ -167,6 +153,49 @@ async function queueIntelRefresh(env, ctx, matchId, match = null) {
   if (ctx?.waitUntil) ctx.waitUntil(p);
 }
 
+// ================= INTEL THROTTLE =================
+async function shouldTriggerIntel(env, match, prev) {
+  const now = Date.now();
+
+  if (!prev) return true;
+
+  const status = String(match.status || "").toUpperCase();
+
+  if (
+    status.includes("FINAL") ||
+    status.includes("FULL_TIME") ||
+    status.includes("AET") ||
+    status.includes("PEN")
+  ) {
+    return true;
+  }
+
+  if (
+    prev.scoreHome !== match.scoreHome ||
+    prev.scoreAway !== match.scoreAway
+  ) {
+    return true;
+  }
+
+  const tickKey = `INTEL:TICK:${match.id}`;
+  const last = await env.AIML_INGESTION_KV.get(tickKey);
+
+  if (!last) {
+    await env.AIML_INGESTION_KV.put(tickKey, String(now), { expirationTtl: 7200 });
+    return true;
+  }
+
+  const elapsed = now - Number(last);
+
+  if (elapsed > 10 * 60 * 1000) {
+    await env.AIML_INGESTION_KV.put(tickKey, String(now), { expirationTtl: 7200 });
+    return true;
+  }
+
+  return false;
+}
+
+    
 async function ingestUTCWindow(env, ctx) {
   let startIndex = 0;
   const now = new Date();
@@ -223,22 +252,44 @@ async function ingestUTCWindow(env, ctx) {
             !prev ||
             prev.status !== m.status ||
             prev.scoreHome !== m.scoreHome ||
-            prev.scoreAway !== m.scoreAway
+            prev.scoreAway !== m.scoreAway ||
+            prev.minute !== m.minute
           ) {
             bucketMaps[staging].set(m.id, { ...m, dayKey: day });
 
-            // ==============================
-            // AUTO REFRESH MATCH INTEL (non-blocking)
-            // ==============================
-            try { await queueIntelRefresh(env, ctx, m.id, m); } catch (_) {}
+            // =================================================
+            // PRE BASELINE SNAPSHOT (T-60 window)
+            // =================================================
+            const nowTs = Date.now();
+            const minutesToKickoff = (m.kickoff_ms - nowTs) / 60000;
+
+            if (
+              m.status === "STATUS_SCHEDULED" &&
+              minutesToKickoff <= 60 &&
+              minutesToKickoff > 0
+            ) {
+              queueIntelRefresh(env, ctx, m.id, m);
+              continue;
+            }
+
+// =================================================
+// NORMAL INTEL EVOLUTION (throttled)
+// =================================================
+             try {
+               const shouldRun = await shouldTriggerIntel(env, m, prev);
+
+               if (shouldRun) {
+                 queueIntelRefresh(env, ctx, m.id, m);
+               }
+             } catch (_) {}
           }
-        }
+        } // end events loop
+
       } catch (_) {
         continue;
       }
-    }
-  }
-
+    } // end utcDate loop
+  } // end league loop
   let nextIndex = endIndex;
   if (nextIndex >= totalLeagues) nextIndex = 0;
   await env.AIML_INGESTION_KV.put("INGEST:IDX", String(nextIndex));

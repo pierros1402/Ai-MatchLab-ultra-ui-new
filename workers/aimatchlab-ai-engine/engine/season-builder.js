@@ -13,6 +13,7 @@ export async function buildSeason(env, league, season) {
 
   const statePrefix = `league/${league}/${season}/`;
   const metaKey = `${statePrefix}meta.json`;
+  // force meta refresh even when season already built
 
   // ------------------------------------------------------------
   // LOAD EXISTING META
@@ -44,7 +45,10 @@ export async function buildSeason(env, league, season) {
 
   while (windowsRun < MAX_WINDOWS_PER_RUN) {
 
-    if (meta.nextFrom > seasonEndDate) break;
+    if (meta.nextFrom > seasonEndDate) {
+      console.log("[AI BUILD] season complete — meta refresh only");
+      break;
+    }
 
     // ------------------------------------------------------------
     // AUTO SAFETY REWIND (15 DAYS)
@@ -132,35 +136,56 @@ export async function buildSeason(env, league, season) {
   }
 
   if (!result) {
-    return {
-      ok: true,
-      league,
-      season,
-      windowsRun,
-      totalMatchesProcessed,
-      nextFrom: meta.nextFrom,
-      leagueVersion: meta.leagueVersion || 0
-    };
-  }
+    console.log("standings missing, continuing meta save");
+}
 
   let rankingHash = null;
   if (result && typeof result === "object" && result.rankingHash) {
     rankingHash = result.rankingHash;
   }
 
-  // ------------------------------------------------------------
-  // SAVE META
-  // ------------------------------------------------------------
-  meta.leagueVersion = (meta.leagueVersion || 0) + 1;
+// ------------------------------------------------------------
+// WRITE SEASON META (WITH COMPLETION DATA)
+// ------------------------------------------------------------
 
-  if (rankingHash) {
-    meta.rankingHash = rankingHash;
+
+
+let previousMeta = {};
+
+try {
+  const existing = await env.AI_STATE.get(metaKey);
+  if (existing) {
+    previousMeta = JSON.parse(await existing.text());
   }
+} catch (_) {}
 
-  await env.AI_STATE.put(
-    metaKey,
-    JSON.stringify(meta, null, 2)
-  );
+// count stored season matches
+let storedCount = 0;
+let cursor;
+
+do {
+  const list = await env.AI_STATE.list({
+    prefix: `${statePrefix}matches/`,
+    cursor
+  });
+
+  storedCount += list.objects.length;
+  cursor = list.truncated ? list.cursor : undefined;
+
+} while (cursor);
+
+previousMeta.totalMatches = storedCount;
+previousMeta.updatedAt = Date.now();
+
+const newMeta = previousMeta;
+
+await env.AI_STATE.put(
+  metaKey,
+  JSON.stringify(newMeta),
+  {
+    httpMetadata: { contentType: "application/json" }
+  }
+);
 
   return {
     ok: true,
@@ -216,4 +241,75 @@ function seasonStart(season) {
 
 function seasonEnd(season) {
   return season.split("-")[1] + "0630";
+}
+// ============================================================
+// SEASON COMPLETION ANALYZER
+// ============================================================
+
+export async function analyzeSeasonCompletion(env, league, season) {
+
+  const prefix = `league/${league}/${season}/matches/`;
+
+  let cursor;
+  let stored = 0;
+
+  // count stored matches in R2
+  do {
+    const list = await env.AI_STATE.list({
+      prefix,
+      cursor
+    });
+
+    stored += list.objects.length;
+    cursor = list.truncated ? list.cursor : undefined;
+
+  } while (cursor);
+
+  // expected matches (from meta if exists)
+  let expected = null;
+  let lastUpdate = null;
+
+  try {
+    const metaObj = await env.AI_STATE.get(
+      `league/${league}/${season}/meta.json`
+    );
+
+    if (metaObj) {
+      const meta = JSON.parse(await metaObj.text());
+      expected = meta.totalMatches ?? null;
+      lastUpdate = meta.updatedAt ?? null;
+    }
+  } catch (_) {}
+
+  let state = "BUILDING";
+  let coverage = null;
+
+  // season finished detector
+  try {
+    const metaObj = await env.AI_STATE.get(
+      `league/${league}/${season}/meta.json`
+    );
+
+    if (metaObj) {
+      const meta = JSON.parse(await metaObj.text());
+
+      const seasonEnd = season.split("-")[1] + "0630";
+
+      if (meta.nextFrom && meta.nextFrom > seasonEnd) {
+        state = "COMPLETE";
+        coverage = 100;
+        expected = stored; // deterministic expectation
+      }
+    }
+  } catch (_) {}
+
+  return {
+    league,
+    season,
+    state,
+    storedMatches: stored,
+    expectedMatches: expected,
+    coverage,
+    lastUpdate
+  };
 }

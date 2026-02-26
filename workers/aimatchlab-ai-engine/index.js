@@ -9,7 +9,7 @@
 // ============================================================
 
 import { buildSeason } from "./engine/season-builder.js";
-
+import { LEAGUE_SEEDS } from "./_shared/leagues-registry.js";
 const ENGINE_VERSION = "v4.3-ops";
 
 // -----------------------------
@@ -146,16 +146,22 @@ export default {
           return json({ ok: false, error: "missing_season" }, 400);
         }
 
-        const leagues = [
-          "eng.1",
-          "esp.1",
-          "ita.1",
-          "ger.1",
-          "fra.1",
-          "uefa.champions",
-          "uefa.europa",
-          "uefa.europa.conf"
-        ];
+        // discover leagues dynamically from AI_STATE
+        const listed = await env.AI_STATE.list({
+          prefix: "league/"
+        });
+
+        const leaguesSet = new Set();
+
+        for (const obj of listed.objects || []) {
+         const parts = obj.key.split("/");
+         // league/<league>/<season>/...
+         if (parts.length >= 3) {
+           leaguesSet.add(parts[1]);
+         }
+        }
+
+        const leagues = [...leaguesSet];
 
         const results = [];
 
@@ -257,18 +263,144 @@ export default {
         return scanIntegrity(env, league, season);
       }
 
-      // ------------------------------------------------------------
-      // MATCH INTEL (public)
-      // ------------------------------------------------------------
-      if (pathname === "/ai/match-intel") {
-        const id = url.searchParams.get("id");
-        if (!id) return json({ ok: false, error: "missing_id" }, 400);
+// ------------------------------------------------------------
+// INTEL TIMELINE (PHASE MEMORY)
+// ------------------------------------------------------------
+if (pathname === "/ai/intel-timeline") {
+  const id = url.searchParams.get("id");
+  if (!id) return json({ ok: false, error: "missing_id" }, 400);
 
-        const { buildMatchIntel } = await import("./engine/intel/match-intel.js");
-        const result = await buildMatchIntel(env, id.trim());
-        return json(result);
+  // (optional) keep same protection policy as /ai/match-intel
+  // If your /ai/match-intel requires internal auth, copy the same check here.
+  // Example:
+  // const secret = req.headers.get("x-internal-secret");
+  // if (secret !== env.INTERNAL_SECRET) return json({ ok:false, error:"unauthorized" }, 401);
+
+  const key = `intel/context/${id}/timeline.json`;
+
+  try {
+    const obj = await env.AI_STATE.get(key);
+    if (!obj) return json({ ok: true, id, timeline: [], cache: "MISS" });
+
+    const text = await obj.text();
+    let timeline = [];
+    try {
+      const parsed = JSON.parse(text);
+      timeline = Array.isArray(parsed) ? parsed : [];
+    } catch (_) {}
+
+    return json({ ok: true, id, timeline, cache: "HIT" });
+  } catch (e) {
+    return json({ ok: false, error: "read_failed", id }, 500);
+  }
+}
+
+// ------------------------------------------------------------
+// MATCH INTEL (public) — PERSISTENT CACHE ENABLED
+// ------------------------------------------------------------
+if (pathname === "/ai/match-intel") {
+
+  const id = url.searchParams.get("id");
+  if (!id) return json({ ok:false, error:"missing_id" }, 400);
+
+  const matchId = id.trim();
+  const cacheKey = `intel/context/${matchId}/latest.json`;
+
+
+// ==============================
+// CACHE READ (POINTER RESOLVE)
+// ==============================
+try {
+  const cached = await env.AI_STATE.get(cacheKey);
+
+  if (cached) {
+    const pointer = await cached.json();
+
+    if (pointer?.latest) {
+      const latestObj =
+        await env.AI_STATE.get(pointer.latest);
+
+      if (latestObj) {
+        const data = await latestObj.json();
+        data.cache = "HIT";
+        return json(data);
       }
+    }
+  }
+} catch (e) {
+  console.log("[INTEL CACHE READ FAIL]", e);
+}
+  // ==============================
+  // COMPUTE INTEL
+  // ==============================
+  const { buildMatchIntel } =
+    await import("./engine/intel/match-intel.js");
 
+  const result = await buildMatchIntel(env, matchId);
+
+// ==============================
+// VERSIONED INTEL WRITE
+// ==============================
+try {
+
+  const versionTs = Date.now();
+
+  const versionKey =
+    `intel/context/${matchId}/versions/${versionTs}.json`;
+
+  // ---------------------------------
+  // WRITE VERSION SNAPSHOT
+  // ---------------------------------
+  await env.AI_STATE.put(
+    versionKey,
+    JSON.stringify(result),
+    {
+      httpMetadata: {
+        contentType: "application/json"
+      }
+    }
+  );
+
+  // ---------------------------------
+  // WRITE POINTER (latest.json)
+  // ---------------------------------
+  await env.AI_STATE.put(
+    cacheKey,
+    JSON.stringify({
+      latest: versionKey,
+      ts: versionTs,
+      phase: result?.meta?.phase || "UNKNOWN"
+    }),
+    {
+      httpMetadata: {
+        contentType: "application/json"
+      }
+    }
+  );
+
+  result.cache = "MISS";
+
+} catch (e) {
+  console.log("[INTEL VERSION WRITE FAIL]", e);
+}
+
+
+// =====================================
+// CLEANUP AFTER FINAL PHASE
+// =====================================
+try {
+  if (result?.meta?.phase === "FINAL") {
+    await env.AIML_INGESTION_KV.delete(`INTEL:TICK:${matchId}`);
+    await env.AIML_INGESTION_KV.delete(`INTEL:PRELOCK:${matchId}`);
+    console.log("[INTEL CLEANUP]", matchId);
+  }
+} catch (e) {
+  console.log("[INTEL CLEANUP FAIL]", e);
+}
+
+return json(result);
+}
+      
       // ------------------------------------------------------------
       // CLEAN INVALID LEAGUES (INTERNAL ONE-TIME TOOL)
       // ------------------------------------------------------------
@@ -337,7 +469,35 @@ if (pathname === "/ai/build-all-auto") {
     total: leagues.size,
     results
   });
-}      
+}    
+
+// ------------------------------------------------------------
+// SEASON COMPLETION
+// ------------------------------------------------------------
+if (pathname === "/ai/season-completion") {
+
+  const league = url.searchParams.get("league");
+  const season = url.searchParams.get("season");
+
+  if (!league || !season) {
+    return json({
+      ok: false,
+      error: "missing_params"
+    }, 400);
+  }
+
+  const { analyzeSeasonCompletion } =
+    await import("./engine/season-builder.js");
+
+  const result =
+    await analyzeSeasonCompletion(env, league, season);
+
+  return json({
+    ok: true,
+    ...result
+  });
+}
+  
 // ------------------------------------------------------------
 // DEFAULT
 // ------------------------------------------------------------
@@ -345,26 +505,48 @@ if (pathname === "/ai/build-all-auto") {
     });
   },
 
-  async scheduled(event, env, ctx) {
-    // run AI build safely in background
-    ctx.waitUntil((async () => {
-      const season = "2025-2026";
-      const leagues = ["eng.1", "esp.1", "ita.1", "ger.1", "fra.1"];
+async scheduled(event, env, ctx) {
 
-      const idx = Number(await env.AIML_INGESTION_KV.get("AI_BUILD_IDX")) || 0;
-      const league = leagues[idx % leagues.length];
+  ctx.waitUntil((async () => {
+
+    const season = "2025-2026";
+
+    const leagues = LEAGUE_SEEDS || [];
+
+    if (!leagues.length) {
+      console.log("[AI BUILD] no leagues found");
+      return;
+    }
+
+    let idx =
+      Number(await env.AIML_INGESTION_KV.get("AI_BUILD_IDX")) || 0;
+
+    const MAX_PER_CRON = 3;
+    const end = Math.min(idx + MAX_PER_CRON, leagues.length);
+
+    console.log("[AI BUILD] start", idx, "→", end);
+
+    for (let i = idx; i < end; i++) {
+      const league = leagues[i];
 
       try {
         await buildSeason(env, league, season);
-        console.log("AI build ok:", league);
+        console.log("[AI BUILD OK]", league);
       } catch (e) {
-        // cron must NEVER crash
-        console.log("AI build failed:", league, e);
+        console.log("[AI BUILD FAIL]", league, e);
       }
+    }
 
-      await env.AIML_INGESTION_KV.put("AI_BUILD_IDX", String((idx + 1) % leagues.length));
-    })());
-  }
+    let next = end;
+    if (next >= leagues.length) {
+      next = 0;
+      console.log("[AI BUILD] FULL CYCLE COMPLETED");
+    }
+
+    await env.AIML_INGESTION_KV.put("AI_BUILD_IDX", String(next));
+
+  })());
+}
 };
 
 function json(obj, status = 200) {
