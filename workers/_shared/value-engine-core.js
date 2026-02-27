@@ -1,7 +1,7 @@
-
 // ============================================================
 // AIMATCHLAB — VALUE ENGINE CORE v3 (Full AI Qualitative)
-// No numeric rates • No market caps • Deterministic inference
+// + INTEL STABILITY FUSION (v3.1)
+// Deterministic inference with uncertainty weighting
 // ============================================================
 
 export async function runValueEngineCore(env, date, options = {}) {
@@ -23,7 +23,10 @@ export async function runValueEngineCore(env, date, options = {}) {
 
   if (!fixtures) {
     fixtures =
-      await env.AIML_INGESTION_KV.get(`FIXTURES:STAGING:DATE:${date}`, { type: "json" });
+      await env.AIML_INGESTION_KV.get(
+        `FIXTURES:STAGING:DATE:${date}`,
+        { type: "json" }
+      );
   }
 
   if (!fixtures?.matches?.length) {
@@ -40,6 +43,10 @@ export async function runValueEngineCore(env, date, options = {}) {
     produced: 0
   };
 
+  // ============================================================
+  // MAIN LOOP
+  // ============================================================
+
   for (const m of matches) {
 
     if (!m || m.status !== "STATUS_SCHEDULED") continue;
@@ -49,12 +56,25 @@ export async function runValueEngineCore(env, date, options = {}) {
 
     const aiRaw = await env.R2_INTEL.get(r2Key);
 
-    if (!aiRaw) {
+    if (!aiRaw || !aiRaw.body) {
       counters.noR2++;
       continue;
     }
 
-    const aiData = await aiRaw.json();
+    let aiData;
+
+    try {
+      const text = await aiRaw.text();
+      if (!text) {
+        counters.noR2++;
+        continue;
+      }
+      aiData = JSON.parse(text);
+    } catch {
+      counters.noR2++;
+      continue;
+    }
+
     const modeling = aiData?.modeling;
 
     if (!modeling) {
@@ -62,6 +82,41 @@ export async function runValueEngineCore(env, date, options = {}) {
       continue;
     }
 
+    // ------------------------------------------------------------
+    // REQUIRE MODELING
+    // ------------------------------------------------------------
+    if (!modeling) {
+      counters.noModeling++;
+      continue;
+    }
+
+// ------------------------------------------------------------
+// LOAD MATCH INTEL (stability fusion - SAFE)
+// ------------------------------------------------------------
+let stability = 1;
+
+try {
+  const intelKey = `intel/context/${m.id}/latest.json`;
+  const intelObj = await env.R2_INTEL.get(intelKey);
+
+  if (intelObj && intelObj.body) {
+    const text = await intelObj.text();
+
+    if (text) {
+      const intel = JSON.parse(text);
+      const s = Number(intel?.model?.stability);
+
+      if (!isNaN(s)) {
+        stability = Math.max(0, Math.min(1, s));
+      }
+    }
+  }
+} catch (err) {
+  // silent fallback → stability stays 1
+}
+    // ------------------------------------------------------------
+    // BUILD PICKS (AI QUALITATIVE POLICY)
+    // ------------------------------------------------------------
     const picks = buildPicksPolicyV3(modeling);
 
     if (!picks.length) continue;
@@ -75,7 +130,8 @@ export async function runValueEngineCore(env, date, options = {}) {
         market: p.market,
         pick: p.side,
         confidence: p.tier,
-        score: p.percent
+        score: Math.round(p.percent * stability),
+        stability
       });
     }
 
@@ -90,8 +146,12 @@ export async function runValueEngineCore(env, date, options = {}) {
     items
   };
 
-  await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(payload));
-  await env.AIML_INGESTION_KV.put(statKey, JSON.stringify(payload));
+  try {
+    await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(payload));
+    await env.AIML_INGESTION_KV.put(statKey, JSON.stringify(payload));
+  } catch (err) {
+    console.warn("KV quota reached — skipping persist");
+  }
 
   return {
     ok: true,
@@ -130,8 +190,6 @@ function buildPicksPolicyV3(modeling) {
   const upsetIndex = risk.upsetIndex || 0;
   const drawIndex = risk.drawIndex || 0;
 
-  const momentumState = momentum.state || "neutral";
-
   // =========================
   // TOTALS INFERENCE
   // =========================
@@ -167,7 +225,7 @@ function buildPicksPolicyV3(modeling) {
   }
 
   // =========================
-  // BTTS INFERENCE
+  // BTTS
   // =========================
 
   if (goalRisk === "aggressive" || goalRisk === "chaotic") {
@@ -180,7 +238,7 @@ function buildPicksPolicyV3(modeling) {
   }
 
   // =========================
-  // 1X2 INFERENCE
+  // 1X2
   // =========================
 
   if (winPaths?.home && upsetIndex < 45 && pressure === "high") {
@@ -224,12 +282,10 @@ function resolveQualitativeConflicts(picks) {
   const hasBtts =
     filtered.find(p => p.market === "BTTS");
 
-  // UNDER + BTTS remove BTTS
   if (hasUnder && hasBtts) {
     filtered = filtered.filter(p => p.market !== "BTTS");
   }
 
-  // Over medium + BTTS medium remove BTTS
   if (hasOver && hasOver.tier === "MEDIUM" && hasBtts?.tier === "MEDIUM") {
     filtered = filtered.filter(p => p.market !== "BTTS");
   }

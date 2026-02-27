@@ -14,6 +14,7 @@ import { computeIntelDelta } from "./intel-delta.js";
 import { buildNarrative } from "./intel-narrator.js";
 import { generateSignals } from "./intel-signals.js";
 import { filterAndPersistSignals } from "./intel-signal-store.js";
+import { computeDrift } from "./compute-drift.js";
 /* ============================================================
    PHASE DETECTION
 ============================================================ */
@@ -388,6 +389,183 @@ try {
 } catch (e) {
   console.log("[REACTIVE REFRESH FAIL]", e);
 }
+
+// ------------------------------------------------------------
+// FINAL DRIFT ATTACH (after all mutations)
+// baseline = previousIntel snapshot (PRE expectation)
+// live     = evolvedOut current state (LIVE reality)
+// ------------------------------------------------------------
+try {
+  const baselineMetrics = {
+    tempo: Number(previousIntel?.metrics?.tempo ?? 0),
+    volatility: Number(previousIntel?.metrics?.volatility ?? 0),
+    control: Number(previousIntel?.metrics?.control ?? 0)
+  };
+
+  const liveMetrics = {
+    tempo: Number(evolvedOut?.metrics?.tempo ?? 0),
+    volatility: Number(evolvedOut?.metrics?.volatility ?? 0),
+    control: Number(evolvedOut?.metrics?.control ?? 0)
+  };
+
+  const drift = computeDrift(baselineMetrics, liveMetrics);
+
+  // ΠΑΝΤΑ γράφουμε drift για να το “δει” το UI (ακόμα και μηδενικό)
+  evolvedOut.drift = drift || {
+    ok: true,
+    magnitude: 0,
+    direction: "NEUTRAL",
+    components: { tempo: 0, volatility: 0, control: 0 }
+  };
+
+} catch (e) {
+  console.log("[DRIFT FINAL FAIL]", e);
+}
+
+// ==============================
+// DRIFT → DELTA METRICS (Phase 3)
+// ==============================
+try {
+  const drift = evolvedOut?.drift || {};
+
+  const tempo = Number(drift.tempo || 0);
+  const volatility = Number(drift.volatility || 0);
+  const control = Number(drift.control || 0);
+
+  // normalize into percentage-style deviations
+  const tempoPct = Math.round(tempo * 100);
+  const volatilityPct = Math.round(volatility * 100);
+  const controlPct = Math.round(control * 100);
+
+  evolvedOut.delta = {
+    tempoDeviationPct: tempoPct,
+    volatilityDeviationPct: volatilityPct,
+    controlDeviationPct: controlPct,
+    driftScore: Math.round((tempo + volatility + control) * 33.3)
+  };
+
+} catch (_) {}
+
+// ==============================
+// MODEL STABILITY (Phase 3.1)
+// ==============================
+try {
+  const confVal = Number(evolvedOut?.confidence?.value ?? 50);
+  const confNorm = Math.max(0, Math.min(1, confVal / 100));
+
+  const driftScore = Number(evolvedOut?.delta?.driftScore ?? 0);
+  const driftNorm = Math.max(0, Math.min(1, driftScore / 100));
+
+  const stability = Math.max(0, Math.min(1, confNorm * (1 - driftNorm)));
+  const risk = Math.max(0, Math.min(1, 1 - stability));
+
+  evolvedOut.model = {
+    stability: Number(stability.toFixed(3)),
+    risk: Number(risk.toFixed(3)),
+    method: "stability_conf_x_drift_v1"
+  };
+} catch (_) {}
+
+// ------------------------------------------------------------
+// DRIFT → SIGNAL AMPLIFICATION
+// ------------------------------------------------------------
+try {
+
+  const driftMag = evolvedOut?.drift?.magnitude ?? 0;
+
+  if (driftMag > 0.6) {
+    for (const s of evolvedOut.signals || []) {
+      if (s.severity === "LOW") s.severity = "MEDIUM";
+      else if (s.severity === "MEDIUM") s.severity = "HIGH";
+    }
+  }
+
+} catch (e) {
+  console.log("[DRIFT SIGNAL BOOST FAIL]", e);
+}
+
+// ------------------------------------------------------------
+// DRIFT → CONFIDENCE MODULATION (post-adjust)
+// Purpose: when drift grows, confidence should drop (model uncertainty).
+// Notes: we keep computeConfidence() deterministic, and apply a drift penalty here,
+// after FINAL DRIFT ATTACH so drift is available.
+// ------------------------------------------------------------
+try {
+  const driftMag = Number(evolvedOut?.drift?.magnitude ?? 0);
+
+  if (!evolvedOut.confidence) {
+    evolvedOut.confidence = { value: 50, level: "NEUTRAL" };
+  }
+
+  const pre = Number(evolvedOut.confidence?.value ?? 50);
+
+  let penalty = 0;
+
+  // 0.60–1.20 => up to 10 points penalty
+  if (driftMag > 0.6) {
+    const t = Math.min(1, Math.max(0, (driftMag - 0.6) / 0.6));
+    penalty += 10 * t;
+  }
+
+  // >1.20 => up to +15 points penalty (total cap 25)
+  if (driftMag > 1.2) {
+    const t2 = Math.min(1, Math.max(0, (driftMag - 1.2) / 1.2));
+    penalty += 15 * t2;
+  }
+
+  penalty = Math.min(25, Math.round(penalty));
+
+  const post = Math.max(0, Math.min(100, Math.round(pre - penalty)));
+
+  function levelFromScore(v) {
+    if (v >= 80) return "STRONG";
+    if (v >= 65) return "STABLE";
+    if (v >= 45) return "NEUTRAL";
+    if (v >= 30) return "UNSTABLE";
+    return "CHAOTIC";
+  }
+
+  evolvedOut.confidence = {
+    ...evolvedOut.confidence,
+    preDriftValue: pre,
+    driftMagnitude: driftMag,
+    driftPenalty: penalty,
+    value: post,
+    level: levelFromScore(post),
+    method: "drift_post_adjust_v1"
+  };
+} catch (e) {
+  console.log("[DRIFT CONFIDENCE MOD FAIL]", e);
+}
+
+
+// ==============================
+// DRIFT → TYPED SIGNALS
+// ==============================
+// Adds explicit drift signals for UI/Value Engine attention model.
+// Thresholds:
+//  - >0.6  => MODEL_DRIFT_MED
+//  - >1.2  => MODEL_DRIFT_HIGH
+try {
+  const mag = Number(evolvedOut?.drift?.magnitude ?? 0);
+
+  if (!Array.isArray(evolvedOut.signals)) evolvedOut.signals = [];
+
+  // avoid duplicates
+  const hasMed  = evolvedOut.signals.includes("MODEL_DRIFT_MED");
+  const hasHigh = evolvedOut.signals.includes("MODEL_DRIFT_HIGH");
+
+  if (mag > 1.2) {
+    if (!hasHigh) evolvedOut.signals.push("MODEL_DRIFT_HIGH");
+    // if HIGH, drop MED if present (keep it clean)
+    if (hasMed) evolvedOut.signals = evolvedOut.signals.filter(s => s !== "MODEL_DRIFT_MED");
+  } else if (mag > 0.6) {
+    if (!hasMed && !hasHigh) evolvedOut.signals.push("MODEL_DRIFT_MED");
+  }
+} catch (_) {}
+
+
+
 // ------------------------------------------------------------
 // PHASE MEMORY PERSIST
 // ------------------------------------------------------------
@@ -400,11 +578,17 @@ evolvedOut.meta = evolvedOut.meta || {};
 evolvedOut.meta.phase = finalPhase;
 
 try {
-  // 1) write latest (current behavior)
-  await env.AI_STATE.put(latestKey, JSON.stringify(evolvedOut));
-
-  // 2) write phase snapshot
-  await env.AI_STATE.put(phaseKey, JSON.stringify(evolvedOut));
+  await env.AI_STATE.put(
+    latestKey,
+    JSON.stringify(evolvedOut),
+    { httpMetadata: { contentType: "application/json" } }
+  );
+  console.log("[DRIFT]", matchId, JSON.stringify(evolvedOut.drift));
+  await env.AI_STATE.put(
+    phaseKey,
+    JSON.stringify(evolvedOut),
+    { httpMetadata: { contentType: "application/json" } }
+  );
 
   // 3) write timeline entry
   await writeTimeline(env, matchId, {

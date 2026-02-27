@@ -353,27 +353,31 @@ if (pathname === "/ai/match-intel") {
 // ==============================
 // CACHE READ (POINTER RESOLVE)
 // ==============================
-try {
-  const cached = await env.AI_STATE.get(cacheKey);
+const force = typeof matchId === "string" && matchId.includes("|force");
 
-  if (cached) {
-    const pointer = await cached.json();
+if (!force) {
+  try {
+    const cached = await env.AI_STATE.get(cacheKey);
 
-    if (pointer?.latest) {
-      const latestObj =
-        await env.AI_STATE.get(pointer.latest);
+    if (cached) {
+      const pointer = await cached.json();
 
-      if (latestObj) {
-        const data = await latestObj.json();
-        data.cache = "HIT";
-        return json(data);
+      if (pointer?.latest) {
+        const latestObj = await env.AI_STATE.get(pointer.latest);
+
+        if (latestObj) {
+          const data = await latestObj.json();
+          data.cache = "HIT";
+          return json(data);
+        }
       }
     }
+  } catch (e) {
+    console.log("[INTEL CACHE READ FAIL]", e);
   }
-} catch (e) {
-  console.log("[INTEL CACHE READ FAIL]", e);
-}
-  // ==============================
+} else {
+  console.log("[INTEL FORCE] bypass pointer cache", matchId);
+}  // ==============================
   // COMPUTE INTEL
   // ==============================
   const { buildMatchIntel } =

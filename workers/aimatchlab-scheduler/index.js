@@ -130,11 +130,13 @@ function normalize(event, slug) {
 }
 
 // ================= INTEL REFRESH =================
+// NOTE: Disabled remote recompute from scheduler to prevent invocation explosion.
+// Intel will be computed lazily by API/UI when requested.
 async function queueIntelRefresh(env, ctx, matchId, match = null) {
+  // keep match-index warm (cheap + useful)
   try {
     if (match?.leagueSlug) {
       const season = "2025-2026";
-
       await env.AI_STATE.put(
         `match-index/${matchId}.json`,
         JSON.stringify({
@@ -146,13 +148,10 @@ async function queueIntelRefresh(env, ctx, matchId, match = null) {
     }
   } catch (_) {}
 
-  const p = fetch(`${AI_ENGINE_URL}/ai/match-intel?id=${matchId}`)
-    .then(r => r.body?.cancel?.())
-    .catch(() => {});
-
-  if (ctx?.waitUntil) ctx.waitUntil(p);
+  // IMPORTANT: do NOT fetch AI engine from cron
+  // (prevents N invocations per tick)
+  return;
 }
-
 // ================= INTEL THROTTLE =================
 async function shouldTriggerIntel(env, match, prev) {
   const now = Date.now();
@@ -541,7 +540,9 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
 
-    if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders() });
+    if (req.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders() });
+    }
 
     if (url.pathname === "/fixtures-runtime") {
       return handleFixturesRuntime(req, env);
@@ -555,33 +556,17 @@ export default {
     console.log("[scheduler] cron tick");
 
     ctx.waitUntil((async () => {
-      
 
-  // ================================
-  // KV RUNTIME PROBE (TEMP DEBUG)
-  // ================================
-  try {
-    const probeKey = "DEBUG:KV_PROBE";
-
-    await env.AIML_INGESTION_KV.put(
-      probeKey,
-      JSON.stringify({
-        ts: Date.now(),
-        iso: new Date().toISOString()
-      })
-    );
-
-    const verify = await env.AIML_INGESTION_KV.get(probeKey);
-
-    console.log("[KV PROBE]", verify ? "WRITE_OK" : "WRITE_FAILED");
-  } catch (e) {
-    console.log("[KV PROBE ERROR]", e?.message || e);
-  }
-
-  // ---- συνεχίζει ο υπάρχων κώδικας ----
-      // heartbeat start
+      // -------------------
+      // HEARTBEAT START
+      // -------------------
       try {
-        await writeHeartbeat(env, { ts: started, iso: new Date(started).toISOString(), ok: true, stage: "start" });
+        await writeHeartbeat(env, {
+          ts: started,
+          iso: new Date(started).toISOString(),
+          ok: true,
+          stage: "start"
+        });
       } catch (_) {}
 
       try {
@@ -590,9 +575,9 @@ export default {
         // -------------------
         await ingestUTCWindow(env, ctx);
         console.log("[scheduler] ingest done");
-        
+
         // -------------------
-        // SAFE FINALIZE WINDOW (Athens day keys)
+        // SAFE FINALIZE WINDOW
         // -------------------
         const now = new Date();
 
@@ -612,12 +597,13 @@ export default {
         }
 
         // -------------------
-        // SELF CLEANUP (non-blocking, cheap)
+        // CLEANUP
         // -------------------
         await cleanupKV(env);
         await cleanupR2(env);
 
         const finished = Date.now();
+
         await writeHeartbeat(env, {
           ts: finished,
           iso: new Date(finished).toISOString(),
@@ -627,9 +613,12 @@ export default {
         });
 
         console.log("[scheduler] done");
+
       } catch (err) {
         console.error("[scheduler] cron error", err);
+
         const finished = Date.now();
+
         try {
           await writeHeartbeat(env, {
             ts: finished,
@@ -641,6 +630,7 @@ export default {
           });
         } catch (_) {}
       }
+
     })());
   }
 };
