@@ -28,6 +28,36 @@
   if (window.__AIML_DETAILS_PANEL_VER__ === VER) return;
   window.__AIML_DETAILS_PANEL_VER__ = VER;
 
+// ------------------------------------------------------------
+// AI BAR ANIMATION STYLE (inject once)
+// ------------------------------------------------------------
+(function ensureAIMLBarStyle(){
+
+  if (document.getElementById("aiml-bar-style")) return;
+
+  const style = document.createElement("style");
+  style.id = "aiml-bar-style";
+
+  style.textContent = `
+    .aiml-bar-fill {
+      transition: width 650ms cubic-bezier(.22,.61,.36,1);
+    }
+
+    .aiml-bar-flash {
+      animation: aimlFlash 900ms ease;
+    }
+
+    @keyframes aimlFlash {
+      0%   { box-shadow:0 0 0 rgba(0,200,255,0); }
+      30%  { box-shadow:0 0 12px rgba(0,200,255,.65); }
+      100% { box-shadow:0 0 0 rgba(0,200,255,0); }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+})();
+
   const cfg = () => window.AIML_LIVE_CFG || {};
   const base = () =>
     String(cfg().fixturesBase || cfg().liveUltraBase || "").replace(/\/+$/, "");
@@ -200,7 +230,7 @@ async function fetchIntelHealth(matchId) {
 
   function section(title, bodyHtml) {
     return `
-      <div style="margin-top:14px;">
+      <div class="aiml-runtime-box" style="margin-top:14px;">
         <div style="font-weight:900;margin-bottom:8px;">${esc(title)}</div>
         ${bodyHtml}
       </div>`;
@@ -464,6 +494,31 @@ return `
     `;
   }
 
+// ------------------------------------------------------------
+// MATCH REGIME DETECTOR
+// ------------------------------------------------------------
+function detectMatchRegime(signals) {
+
+  if (!Array.isArray(signals) || !signals.length)
+    return { label:"CALM", color:"#6aa6ff" };
+
+  let volatility = 0;
+  let control = 0;
+
+  signals.slice(-6).forEach(s => {
+    if (s.type === "VOLATILITY_SPIKE") volatility++;
+    if (s.type === "CONTROL_CHANGE") control++;
+  });
+
+  if (volatility >= 2)
+    return { label:"CHAOTIC", color:"#ff5252" };
+
+  if (control >= 2)
+    return { label:"TRANSITION", color:"#ffc857" };
+
+  return { label:"STABLE", color:"#6aa6ff" };
+}
+
 // =====================================================
 // AI RUNTIME INTELLIGENCE (LIVE ENGINE FEED)
 // =====================================================
@@ -481,7 +536,19 @@ function renderRuntimeIntel(aiIntel, aiSignals) {
   const narrative = aiIntel.narrative || "";
   const confidence = aiIntel.confidence || {};
   const phase = aiIntel.meta?.phase || "-";
+  const regime = detectMatchRegime(aiSignals);
+    setTimeout(() => {
+      const box = document.querySelector(".aiml-runtime-box");
+      if (!box) return;
 
+      if (regime.label === "CHAOTIC") {
+        box.style.boxShadow = "0 0 22px rgba(255,80,80,.25)";
+      } else if (regime.label === "TRANSITION") {
+        box.style.boxShadow = "0 0 18px rgba(255,200,80,.25)";
+      } else {
+        box.style.boxShadow = "0 0 14px rgba(100,160,255,.18)";
+      }
+     }, 0);
   const signalsHtml =
     Array.isArray(aiSignals) && aiSignals.length
       ? aiSignals.slice(-5).map(s => `
@@ -502,6 +569,21 @@ function renderRuntimeIntel(aiIntel, aiSignals) {
 
       <div style="opacity:.85;margin-bottom:8px;">
         Phase: <b>${esc(phase)}</b>
+
+        <div style="margin-top:6px;">
+          Match Regime:
+          <span style="
+            padding:3px 8px;
+            border-radius:10px;
+            background:${regime.color}22;
+            color:${regime.color};
+            font-weight:900;
+            margin-left:6px;
+            letter-spacing:.4px;
+          ">
+            ${regime.label}
+          </span>
+        </div>
       </div>
 
       ${
@@ -704,7 +786,7 @@ function startIntelWatcher(matchId, rerenderFn) {
 
     if (isPending) {
       return `
-        <div style="margin-top:14px;">
+        <div class="aiml-runtime-box" style="margin-top:14px;">
           <div style="font-weight:900;margin-bottom:8px;">AIML Standard Questions (AI-generated)</div>
           ${renderPendingBox(
             "Data pending",
@@ -1017,6 +1099,7 @@ try {
       const stdqHtml = renderStandardQuestionsFromDetailsAPI(res.json);
 
       const runtimeHtml = renderRuntimeIntel(aiIntel, aiSignals);
+        applySignalBarMutation(aiSignals);
 
       if (mountBelow)
         mountBelow.innerHTML =
@@ -1026,7 +1109,34 @@ try {
           stdqHtml;
 // start snapshot watcher (LIVE intel updates)
 startIntelWatcher(matchId, () => {
-  run("read").catch(()=>{});
+
+  run("read").then(() => {
+
+    requestAnimationFrame(() => {
+
+      document
+        .querySelectorAll(".aiml-bar-fill")
+        .forEach(el => {
+
+          const newWidth = el.style.width;
+          const prevWidth = el.dataset.prevWidth;
+
+          // animate width change
+          el.style.willChange = "width";
+
+          // flash ONLY if value changed
+          if (prevWidth && prevWidth !== newWidth) {
+            el.classList.remove("aiml-bar-flash");
+            void el.offsetWidth; // force reflow
+            el.classList.add("aiml-bar-flash");
+          }
+
+          el.dataset.prevWidth = newWidth;
+        });
+
+    });
+
+  }).catch(()=>{});
 });
       if (mountHybrid) mountHybrid.innerHTML = renderHybridFromDetailsAPI(res.json);
 
@@ -1225,14 +1335,21 @@ function renderAIStructuralBlock(payload) {
     const w = Math.max(0, Math.min(100, (value || 0) * 100));
 
     return `
-      <div style="margin-top:6px;">
+      <div style="margin-top:6px;position:relative;">
         <div style="font-size:12px;opacity:.8;">${label}</div>
+
         <div style="height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
-          <div style="width:${w}%;height:100%;background:rgba(0,200,255,.6);"></div>
-        </div>
-        <div style="font-size:11px;opacity:.7;margin-top:2px;">${pct(value)}</div>
-      </div>
-    `;
+      <div class="aiml-bar-fill"
+           data-metric="${label}"
+           style="width:${w}%;height:100%;background:rgba(0,200,255,.6);">
+       </div>
+     </div>
+
+     <div style="font-size:11px;opacity:.7;margin-top:2px;">
+       ${pct(value)}
+     </div>
+   </div>
+ `;
   }
 
   return `
@@ -1251,6 +1368,121 @@ function renderAIStructuralBlock(payload) {
   `;
 }
 
+// ------------------------------------------------------------
+// SIGNAL PRIORITY MODEL
+// ------------------------------------------------------------
+const __aimlSignalPriority = {
+  VOLATILITY_SPIKE: 4,
+  CONFIDENCE_DROP: 3,
+  CONTROL_CHANGE: 2,
+  MOMENTUM_SHIFT: 1
+};
+
+const __aimlSignalStack = {};
+
+function pickDominantSignal(signals) {
+
+  if (!Array.isArray(signals) || !signals.length) return null;
+
+  let best = null;
+  let bestScore = -1;
+
+  signals.slice(-5).forEach(sig => {
+
+    const score = __aimlSignalPriority[sig.type] || 0;
+
+    if (score > bestScore) {
+      bestScore = score;
+      best = sig;
+    }
+
+  });
+
+  return best;
+}
+
+// ------------------------------------------------------------
+// SIGNAL → BAR COLOR MUTATION
+// ------------------------------------------------------------
+function applySignalBarMutation(signals) {
+
+  if (!Array.isArray(signals) || !signals.length) return;
+
+  const map = {
+    MOMENTUM_SHIFT: "Form Momentum",
+    CONTROL_CHANGE: "Tempo Index",
+    VOLATILITY_SPIKE: "Volatility Index",
+    CONFIDENCE_DROP: "Confidence"
+  };
+
+  const colorMap = {
+    MOMENTUM_SHIFT: "rgba(255,140,0,.8)",
+    CONTROL_CHANGE: "rgba(160,120,255,.8)",
+    VOLATILITY_SPIKE: "rgba(255,70,70,.85)",
+    CONFIDENCE_DROP: "rgba(255,220,0,.85)"
+  };
+const dominant = pickDominantSignal(signals);
+  signals.slice(-3).forEach(sig => {
+
+    const metric = map[sig.type];
+    if (!metric) return;
+
+  const bar = document.querySelector(
+    `.aiml-bar-fill[data-metric="${metric}"]`
+  );
+
+  if (!bar) return;
+
+  // ---------------------------
+  // STACK COUNT
+  // ---------------------------
+  __aimlSignalStack[metric] =
+    (__aimlSignalStack[metric] || 0) + 1;
+
+  const count = __aimlSignalStack[metric];
+
+  // color mutation
+  const originalColor = "rgba(0,200,255,.6)";
+  bar.style.background = colorMap[sig.type];
+
+  clearTimeout(bar.__aimlDecayTimer);
+
+  bar.__aimlDecayTimer = setTimeout(() => {
+    bar.style.background = originalColor;
+    __aimlSignalStack[metric] = 0;
+
+    const badge = bar.parentElement.querySelector(".aiml-bar-stack");
+    if (badge) badge.remove();
+  }, 2500);
+
+  // ---------------------------
+  // STACK BADGE
+  // ---------------------------
+  let badge =
+    bar.parentElement.querySelector(".aiml-bar-stack");
+
+  if (!badge) {
+    badge = document.createElement("div");
+    badge.className = "aiml-bar-stack";
+    bar.parentElement.appendChild(badge);
+  }
+
+  badge.textContent = "×" + count;
+
+  // flash
+  bar.classList.remove("aiml-bar-flash");
+  void bar.offsetWidth;
+  bar.classList.add("aiml-bar-flash");
+// ---------------------------
+// PRIORITY GLOW
+// ---------------------------
+if (dominant && dominant.type === sig.type) {
+  bar.style.boxShadow = "0 0 14px rgba(255,255,255,.55)";
+} else {
+  bar.style.boxShadow = "none";
+}
+});
+}
 
 // -----------------------------------------------------
 // DETAILS PANEL EXPORT
