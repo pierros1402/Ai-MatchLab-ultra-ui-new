@@ -105,7 +105,13 @@ async function writeTimeline(env, matchId, entry) {
 ============================================================ */
 
 export async function buildMatchIntel(env, matchId) {
+  const forceIntel =
+    typeof matchId === "string" &&
+    matchId.includes("|force");
 
+  if (forceIntel) {
+    matchId = matchId.replace("|force", "");
+  }
   if (!matchId) {
     return { ok:false, error:"missing_id" };
   }
@@ -126,6 +132,10 @@ export async function buildMatchIntel(env, matchId) {
   const base = `league/${league}/${season}/`;
 
   const match = await readJsonR2(env, `${base}matches/${matchId}.json`);
+  // attach force flag (non-persistent runtime only)
+  if (match && forceIntel) {
+    match.__forceIntel = true;
+  }
   if (!match) {
     return { ok:false, error:"match_not_found", matchId, league, season };
   }
@@ -144,7 +154,10 @@ export async function buildMatchIntel(env, matchId) {
 
   const signature = buildStateSignature(match);
 
+  const force = match?.__forceIntel === true;
+
   if (
+    !force &&
     cached &&
     cached.leagueVersion === leagueVersion &&
     cached.meta?.stateSignature === signature
@@ -323,9 +336,59 @@ try {
 } catch (_) {}
 
 if (emittedSignals.length) {
-  // only signals that passed cooldown
   evolvedOut.signals = emittedSignals;
-}// ------------------------------------------------------------
+}
+
+// ------------------------------------------------------------
+// SIGNAL REACTIVE REFRESH (ASYNC SELF-TRIGGER + LOOP GUARD)
+// ------------------------------------------------------------
+try {
+
+  const REACTIVE_SIGNAL_TYPES = new Set([
+    "GOAL_EVENT",
+    "VOLATILITY_SPIKE"
+  ]);
+
+  const shouldReact = emittedSignals.some(
+    s =>
+      REACTIVE_SIGNAL_TYPES.has(s.type) &&
+      evolvedOut.meta?.phase === "LIVE"
+  );
+
+  if (shouldReact) {
+
+    const guardKey = `INTEL:REACTIVE:${matchId}`;
+
+    let locked = null;
+    try {
+      locked = await env.AIML_INGESTION_KV.get(guardKey);
+    } catch (_) {}
+
+    // prevent rapid self-trigger loops
+    if (!locked) {
+
+      try {
+        await env.AIML_INGESTION_KV.put(
+          guardKey,
+          String(Date.now()),
+          { expirationTtl: 30 } // 30s guard window
+        );
+      } catch (_) {}
+
+      const url =
+        `https://aimatchlab-ai-engine.pierros1402.workers.dev` +
+        `/ai/match-intel?id=${matchId}|force`;
+
+      fetch(url).catch(()=>{});
+
+      console.log("[REACTIVE REFRESH TRIGGERED]", matchId);
+    }
+  }
+
+} catch (e) {
+  console.log("[REACTIVE REFRESH FAIL]", e);
+}
+// ------------------------------------------------------------
 // PHASE MEMORY PERSIST
 // ------------------------------------------------------------
 const finalPhase = (evolvedOut?.meta?.phase || phase || "PRE").toUpperCase();

@@ -44,7 +44,14 @@
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;");
-
+// ------------------------------------------------------------
+// AI SNAPSHOT WATCHER STATE
+// ------------------------------------------------------------
+let __aimlIntelWatcher = {
+  timer: null,
+  matchId: null,
+  lastVersion: null
+};
   function toYMD(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -88,7 +95,20 @@
       clearTimeout(t);
     }
   }
+async function fetchIntelHealth(matchId) {
+  try {
+    const url =
+      `${detailsBase()}/ai/intel-health?id=${encodeURIComponent(matchId)}`;
 
+    const res = await fetchJson(url, 5000);
+
+    if (!res.ok || !res.json?.ok) return null;
+
+    return res.json;
+  } catch (_) {
+    return null;
+  }
+}
   function pickTeamName(t) {
     if (!t) return "";
     return (
@@ -405,7 +425,7 @@ return `
       T("DNA Profile"),
       `
         <div>${T("Tempo")}: <b>${T(dna.tempo || "-")}</b></div>
-        <div>${T("Volatility")}: <b>${T(dna.volatility || "-")}</b></div>>
+        <div>${T("Volatility")}: <b>${T(dna.volatility || "-")}</b></div>
       `,
       { open: false, badge: "ready" }
     )}
@@ -444,6 +464,104 @@ return `
     `;
   }
 
+// =====================================================
+// AI RUNTIME INTELLIGENCE (LIVE ENGINE FEED)
+// =====================================================
+function renderRuntimeIntel(aiIntel, aiSignals) {
+
+  if (!aiIntel) {
+    return `
+      <div style="margin-top:14px;">
+        <div style="font-weight:900;margin-bottom:8px;">AI Match Intelligence</div>
+        <div class="muted">Runtime intel unavailable.</div>
+      </div>
+    `;
+  }
+
+  const narrative = aiIntel.narrative || "";
+  const confidence = aiIntel.confidence || {};
+  const phase = aiIntel.meta?.phase || "-";
+
+  const signalsHtml =
+    Array.isArray(aiSignals) && aiSignals.length
+      ? aiSignals.slice(-5).map(s => `
+          <span style="
+            padding:4px 8px;
+            border-radius:10px;
+            background:rgba(0,200,255,.12);
+            margin-right:6px;
+            font-size:12px;">
+            ${esc(s.type)}
+          </span>
+        `).join("")
+      : `<span class="muted">No active signals</span>`;
+
+  return `
+    <div style="margin-top:14px;">
+      <div style="font-weight:900;margin-bottom:8px;">AI Match Intelligence</div>
+
+      <div style="opacity:.85;margin-bottom:8px;">
+        Phase: <b>${esc(phase)}</b>
+      </div>
+
+      ${
+        narrative
+          ? `<div style="margin-bottom:10px;">${esc(narrative)}</div>`
+          : `<div class="muted">No narrative yet.</div>`
+      }
+
+      <div style="margin-bottom:10px;">
+        Confidence:
+        <b>${esc(String(confidence.value ?? "-"))}</b>
+        (${esc(confidence.level || "-")})
+      </div>
+
+      <div>${signalsHtml}</div>
+    </div>
+  `;
+}
+
+// ------------------------------------------------------------
+// SNAPSHOT WATCHER
+// ------------------------------------------------------------
+function startIntelWatcher(matchId, rerenderFn) {
+
+  if (!matchId) return;
+
+  // stop previous watcher
+  if (__aimlIntelWatcher.timer) {
+    clearInterval(__aimlIntelWatcher.timer);
+    __aimlIntelWatcher.timer = null;
+  }
+
+  __aimlIntelWatcher.matchId = matchId;
+
+  __aimlIntelWatcher.timer = setInterval(async () => {
+
+    const health = await fetchIntelHealth(matchId);
+    if (!health) return;
+
+    const version = health.version || health.latest || null;
+    if (!version) return;
+
+    // first capture
+    if (!__aimlIntelWatcher.lastVersion) {
+      __aimlIntelWatcher.lastVersion = version;
+      return;
+    }
+
+    // version changed → rerender
+    if (version !== __aimlIntelWatcher.lastVersion) {
+      __aimlIntelWatcher.lastVersion = version;
+
+      console.log("[AIML] Intel snapshot changed → refresh panel");
+
+      rerenderFn?.();
+    }
+
+  }, 15000); // 15s lightweight check
+}
+
   // =====================================================
   // DETAILS WORKER (API) → HYBRID RENDER (AI-GENERATED)
   // =====================================================
@@ -462,7 +580,7 @@ return `
       dnaArr = hybrid.dna;
     } else if (hybrid.dna && typeof hybrid.dna === "object") {
       dnaArr = Object.entries(hybrid.dna)
-        .map(([k,v]) => `${tr(k)}: ${tr(v)}`);
+        .map(([k,v]) => `${T(k)}: ${T(v)}`);
     }
 
     const winPaths = hybrid.winPaths || {};
@@ -740,6 +858,13 @@ return `
     const el = mountEl;
     if (!el) return;
 
+  // cleanup previous intel watcher
+    if (__aimlIntelWatcher.timer) {
+      clearInterval(__aimlIntelWatcher.timer);
+      __aimlIntelWatcher.timer = null;
+      __aimlIntelWatcher.lastVersion = null;
+    }
+
     const m = match || {};
     const home = esc(m.home || "");
     const away = esc(m.away || "");
@@ -852,6 +977,33 @@ return `
 
       const res = await fetchJson(url, 9000);
 
+// ------------------------------------------------------------
+// AI RUNTIME FETCH
+// ------------------------------------------------------------
+let aiIntel = null;
+let aiSignals = [];
+
+try {
+
+  const intelUrl =
+    `${detailsBase()}/ai/match-intel?id=${encodeURIComponent(matchId)}`;
+
+  const intelRes = await fetchJson(intelUrl, 7000);
+
+  if (intelRes.ok && intelRes.json?.ok) {
+    aiIntel = intelRes.json;
+  }
+
+  const sigUrl =
+    `${detailsBase()}/ai/intel-signals?id=${encodeURIComponent(matchId)}`;
+
+  const sigRes = await fetchJson(sigUrl, 7000);
+
+  if (sigRes.ok && Array.isArray(sigRes.json?.signals)) {
+    aiSignals = sigRes.json.signals;
+  }
+
+} catch (_) {}
 
       if (!res.ok || !res.json || res.json.ok === false) {
         if (mountBelow) mountBelow.innerHTML = `<div class="muted">Facts unavailable.</div>`;
@@ -864,7 +1016,18 @@ return `
       const factsHtml = renderFactsBlock(res.json);
       const stdqHtml = renderStandardQuestionsFromDetailsAPI(res.json);
 
-      if (mountBelow) mountBelow.innerHTML = factsHtml + renderAIDivider() + stdqHtml;
+      const runtimeHtml = renderRuntimeIntel(aiIntel, aiSignals);
+
+      if (mountBelow)
+        mountBelow.innerHTML =
+          factsHtml +
+          runtimeHtml +
+          renderAIDivider() +
+          stdqHtml;
+// start snapshot watcher (LIVE intel updates)
+startIntelWatcher(matchId, () => {
+  run("read").catch(()=>{});
+});
       if (mountHybrid) mountHybrid.innerHTML = renderHybridFromDetailsAPI(res.json);
 
       const meta = res.json.meta || {};
@@ -967,9 +1130,7 @@ return `
       ${standingsBlock}
     `;
   }
-
-  
-  // =====================================================
+// =====================================================
   // EVENT BINDING: Today/Active panels emit("details-open", matchObj)
   // This connects that event to DetailsPanel.renderLocal(...)
   // =====================================================
@@ -1040,55 +1201,64 @@ return `
     } catch (e) {
       console.warn("[details] bind details-open failed", e);
     }
+    })(); 
   
-  function renderAIStructuralBlock(payload) {
-    const ai = payload?.fullAiProfile || payload?.aiProfile || null;
-    if (!ai) return "";
 
-    const state = ai.state || {};
-    const consistency = ai.consistency || {};
-    const risk = ai.risk || {};
+    // =====================================================
+// AI STRUCTURAL METRICS BLOCK
+// =====================================================
+function renderAIStructuralBlock(payload) {
 
-    function pct(v) {
-      if (v == null || isNaN(v)) return "–";
-      return (Math.max(0, Math.min(1, v)) * 100).toFixed(0) + "%";
-    }
+  const ai = payload?.fullAiProfile || payload?.aiProfile || null;
+  if (!ai) return "";
 
-    function bar(label, value) {
-      const w = Math.max(0, Math.min(100, (value || 0) * 100));
-      return `
-        <div style="margin-top:6px;">
-          <div style="font-size:12px;opacity:.8;">${label}</div>
-          <div style="height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
-            <div style="width:${w}%;height:100%;background:rgba(0,200,255,.6);"></div>
-          </div>
-          <div style="font-size:11px;opacity:.7;margin-top:2px;">${pct(value)}</div>
-        </div>
-      `;
-    }
+  const state = ai.state || {};
+  const consistency = ai.consistency || {};
+  const risk = ai.risk || {};
+
+  function pct(v) {
+    if (v == null || isNaN(v)) return "–";
+    return (Math.max(0, Math.min(1, v)) * 100).toFixed(0) + "%";
+  }
+
+  function bar(label, value) {
+    const w = Math.max(0, Math.min(100, (value || 0) * 100));
 
     return `
-      <div style="margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
-        <div style="font-weight:900;margin-bottom:8px;">AI Structural Metrics</div>
-
-        ${bar("Tempo Index", (state.tempoIndex || 0) / 100)}
-        ${bar("Defensive Stability", consistency.defensiveStabilityIndex)}
-        ${bar("Scoring Reliability", consistency.scoringReliabilityIndex)}
-        ${bar("Form Momentum", consistency.formMomentumIndex)}
-        ${bar("Regime Shift Risk", risk.regimeShiftRisk)}
-        ${bar("Comeback Probability", risk.comebackProbability)}
-        ${bar("Volatility Index", risk.volatilityIndex)}
-        ${bar("Confidence", ai.confidence)}
+      <div style="margin-top:6px;">
+        <div style="font-size:12px;opacity:.8;">${label}</div>
+        <div style="height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
+          <div style="width:${w}%;height:100%;background:rgba(0,200,255,.6);"></div>
+        </div>
+        <div style="font-size:11px;opacity:.7;margin-top:2px;">${pct(value)}</div>
       </div>
     `;
   }
 
-})();
+  return `
+    <div style="margin-top:18px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+      <div style="font-weight:900;margin-bottom:8px;">AI Structural Metrics</div>
+
+      ${bar("Tempo Index", (state.tempoIndex || 0) / 100)}
+      ${bar("Defensive Stability", consistency.defensiveStabilityIndex)}
+      ${bar("Scoring Reliability", consistency.scoringReliabilityIndex)}
+      ${bar("Form Momentum", consistency.formMomentumIndex)}
+      ${bar("Regime Shift Risk", risk.regimeShiftRisk)}
+      ${bar("Comeback Probability", risk.comebackProbability)}
+      ${bar("Volatility Index", risk.volatilityIndex)}
+      ${bar("Confidence", ai.confidence)}
+    </div>
+  `;
+}
 
 
-  window.DetailsPanel = {
-    __ver: VER,
-    loadAndRender,
-    renderLocal,
-  };
+// -----------------------------------------------------
+// DETAILS PANEL EXPORT
+// -----------------------------------------------------
+window.DetailsPanel = {
+  __ver: VER,
+  loadAndRender,
+  renderLocal,
+};
+
 })();

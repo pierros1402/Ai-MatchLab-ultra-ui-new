@@ -296,6 +296,48 @@ if (pathname === "/ai/intel-timeline") {
 }
 
 // ------------------------------------------------------------
+// INTEL SIGNALS (READ LOG)
+// ------------------------------------------------------------
+if (pathname === "/ai/intel-signals") {
+
+  const matchId = url.searchParams.get("id");
+
+  if (!matchId) {
+    return json({ ok: false, error: "missing_id" }, 400);
+  }
+
+  const key = `intel/context/${matchId}/signal-log.json`;
+
+  try {
+    const obj = await env.AI_STATE.get(key);
+
+    if (!obj) {
+      return json({
+        ok: true,
+        matchId,
+        signals: []
+      });
+    }
+
+    const signals = JSON.parse(await obj.text());
+
+    return json({
+      ok: true,
+      matchId,
+      signals
+    });
+
+  } catch (e) {
+    console.log("[INTEL SIGNAL READ FAIL]", e);
+
+    return json({
+      ok: false,
+      error: "read_failed"
+    }, 500);
+  }
+}
+
+// ------------------------------------------------------------
 // MATCH INTEL (public) — PERSISTENT CACHE ENABLED
 // ------------------------------------------------------------
 if (pathname === "/ai/match-intel") {
@@ -305,6 +347,7 @@ if (pathname === "/ai/match-intel") {
 
   const matchId = id.trim();
   const cacheKey = `intel/context/${matchId}/latest.json`;
+
 
 
 // ==============================
@@ -497,7 +540,84 @@ if (pathname === "/ai/season-completion") {
     ...result
   });
 }
-  
+
+// ------------------------------------------------------------
+// INTEL HEALTH CHECK (FULL SYSTEM DIAGNOSTIC)
+// ------------------------------------------------------------
+if (pathname === "/ai/intel-health") {
+
+  const matchId = url.searchParams.get("id");
+
+  if (!matchId) {
+    return json({ ok:false, error:"missing_id" },400);
+  }
+
+  try {
+
+    const key = `intel/context/${matchId}/latest.json`;
+    const obj = await env.AI_STATE.get(key);
+
+    if (!obj) {
+      return json({
+        ok:false,
+        error:"no_intel_snapshot"
+      },404);
+    }
+
+    const pointer = JSON.parse(await obj.text());
+
+    let intel = pointer;
+
+    if (pointer?.latest) {
+      const latestObj = await env.AI_STATE.get(pointer.latest);
+      if (latestObj) {
+        intel = JSON.parse(await latestObj.text());
+      }
+    }
+    // ---------------------------------
+    // LOAD TIMELINE
+    // ---------------------------------
+    let timeline = [];
+
+    try {
+      const timelineObj =
+        await env.AI_STATE.get(`intel/context/${matchId}/timeline.json`);
+
+      if (timelineObj) {
+        const parsed = JSON.parse(await timelineObj.text());
+        if (Array.isArray(parsed)) {
+          timeline = parsed;
+        }
+      }
+    } catch (_) {}    
+
+    const health = {
+      ok:true,
+
+      intel: !!intel,
+      delta: !!intel.delta,
+      narrative: !!intel.narrative,
+      confidence: !!intel.confidence,
+      signals: Array.isArray(intel.signals) && intel.signals.length > 0,
+      timeline: Array.isArray(timeline) && timeline.length > 0,
+
+      reactiveReady:
+        Array.isArray(intel.signals) &&
+        intel.signals.some(s =>
+          ["GOAL_EVENT","VOLATILITY_SPIKE"].includes(s.type)
+        )
+    };
+
+    return json(health);
+
+  } catch (e) {
+    return json({
+      ok:false,
+      error:"health_check_failed"
+    },500);
+  }
+}
+ 
 // ------------------------------------------------------------
 // DEFAULT
 // ------------------------------------------------------------

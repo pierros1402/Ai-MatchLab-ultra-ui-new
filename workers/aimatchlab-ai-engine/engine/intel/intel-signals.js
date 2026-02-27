@@ -41,6 +41,10 @@ export function generateSignals(prev, curr) {
       severity: "HIGH"
     });
   }
-
+  signals.push({
+    type: "DEBUG_SIGNAL",
+    importance: "HIGH",
+    ts: Date.now()
+  });
   return signals;
 }
