@@ -1,6 +1,7 @@
 import { buildStandingsFromR2 } from "./standings-builder.js";
+import { updateStandingsCache } from "./standings-cache.js";
 
-const WINDOW_DAYS = 5;
+const WINDOW_DAYS = 40;
 const MAX_WINDOWS_PER_RUN = 3;
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 
@@ -46,7 +47,23 @@ export async function buildSeason(env, league, season) {
   while (windowsRun < MAX_WINDOWS_PER_RUN) {
 
     if (meta.nextFrom > seasonEndDate) {
-      console.log("[AI BUILD] season complete — meta refresh only");
+      console.log("[AI BUILD] season complete — rebuilding standings cache");
+
+      try {
+        const result = await buildStandingsFromR2(env, league, season);
+
+        if (result && Array.isArray(result.standings)) {
+          await env.AI_STATE.put(
+            `league/${league}/${season}/table.json`,
+            JSON.stringify(result.standings),
+            { httpMetadata: { contentType: "application/json" } }
+          );
+        }
+
+      } catch (e) {
+        console.log("[AI BUILD] standings rebuild failed", e);
+      }
+
       break;
     }
 
@@ -78,11 +95,71 @@ export async function buildSeason(env, league, season) {
 
     const matches = fetchResult.matches || [];
 
-    for (const match of matches) {
+    for (const event of matches) {
+
+      const comp = event.competitions?.[0];
+      if (!comp) continue;
+
+      const competitors = comp.competitors || [];
+
+      let home = competitors.find(c => c.homeAway === "home");
+      let away = competitors.find(c => c.homeAway === "away");
+
+      if (!home && competitors.length >= 2) home = competitors[0];
+      if (!away && competitors.length >= 2) away = competitors[1];
+
+      if (!home || !away) continue;
+
+      const match = {
+        id: event.id,
+        league,
+        season,
+
+        date: event.date,
+
+        home: home.team?.displayName || home.team?.name,
+        away: away.team?.displayName || away.team?.name,
+
+        scoreHome: Number(home.score || 0),
+        scoreAway: Number(away.score || 0),
+
+        status:
+          comp.status?.type?.name ||
+          event.status?.type?.name ||
+          "UNKNOWN",
+
+        minute:
+          comp.status?.displayClock ||
+          event.status?.displayClock ||
+          null
+      };
 
       const key = `${statePrefix}matches/${match.id}.json`;
       const serialized = JSON.stringify(match);
+      const statusName =
+        match?.competitions?.[0]?.status?.type?.name ||
+        match?.status?.type?.name ||
+        match?.status;
+      const isPostponed =
+        typeof statusName === "string" &&
+        (
+          statusName.includes("POSTPONED") ||
+          statusName.includes("CANCELED") ||
+          statusName.includes("SUSPENDED")
+        );
 
+      if (isPostponed) {
+        continue;
+      }
+      const isFinal =
+        typeof statusName === "string" &&
+        (
+          statusName.includes("FINAL") ||
+          statusName.includes("FULL_TIME") ||
+          statusName.includes("COMPLETE") ||
+          statusName.includes("AET") ||
+          statusName.includes("PEN")
+        );
       // ------------------------------------------------------------
       // R2 READ CACHE
       // ------------------------------------------------------------
@@ -97,14 +174,20 @@ export async function buildSeason(env, league, season) {
       }
 
       // write only if changed
-      if (!existing || existing !== serialized) {
+      if (!existing || existing !== serialized || !isFinal) {
+
         await env.AI_STATE.put(key, serialized);
         __matchReadCache.set(key, serialized);
+
+      try {
+        await updateStandingsCache(env, league, season, match);
+      } catch (e) {
+        console.log("standings cache fail", e);
       }
 
-      // ------------------------------------------------------------
-      // MATCH INDEX (required for Match Intel)
-      // ------------------------------------------------------------
+  // ------------------------------------------------------------
+  // MATCH INDEX (write only when match updated)
+  // ------------------------------------------------------------
       const indexKey = `match-index/${match.id}.json`;
 
       const indexObj = {
@@ -114,7 +197,13 @@ export async function buildSeason(env, league, season) {
       };
 
       await env.AI_STATE.put(indexKey, JSON.stringify(indexObj));
-    }
+      }
+
+      }   // <-- ΚΛΕΙΝΕΙ το for (const event of matches)     
+
+      // ------------------------------------------------------------
+      // MATCH INDEX (required for Match Intel)
+      // ------------------------------------------------------------
 
     totalMatchesProcessed += matches.length;
 
@@ -124,60 +213,62 @@ export async function buildSeason(env, league, season) {
     windowsRun++;
   }
 
-  // ------------------------------------------------------------
-  // BUILD STANDINGS
-  // ------------------------------------------------------------
-  let result = null;
+// ------------------------------------------------------------
+// BUILD STANDINGS (WRITE TABLE + VERSION SAFE)
+// ------------------------------------------------------------
+let result = null;
 
-  try {
-    result = await buildStandingsFromR2(env, league, season);
-  } catch (e) {
-    console.log("standings build failed", e);
-  }
-
-  if (!result) {
-    console.log("standings missing, continuing meta save");
+try {
+  result = await buildStandingsFromR2(env, league, season);
+} catch (e) {
+  console.log("standings build failed", e);
 }
 
-  let rankingHash = null;
-  if (result && typeof result === "object" && result.rankingHash) {
-    rankingHash = result.rankingHash;
+if (result && typeof result === "object" && Array.isArray(result.standings)) {
+
+  try {
+    // 1️⃣ WRITE TABLE
+    await env.AI_STATE.put(
+      `${statePrefix}table.json`,
+      JSON.stringify(result.standings),
+      {
+        httpMetadata: { contentType: "application/json" }
+      }
+    );
+
+    // 2️⃣ UPDATE rankingHash (if exists)
+    const oldHash = meta.rankingHash;
+
+  if (result.rankingHash) {
+    meta.rankingHash = result.rankingHash;
   }
+
+  if (result.rankingHash && result.rankingHash !== oldHash) {
+    meta.leagueVersion = (meta.leagueVersion || 0) + 1;
+  }
+
+  } catch (e) {
+    console.log("standings write failed", e);
+  }
+
+} else {
+  console.log("standings missing or invalid — table not updated");
+}
 
 // ------------------------------------------------------------
 // WRITE SEASON META (WITH COMPLETION DATA)
 // ------------------------------------------------------------
 
 
-
-let previousMeta = {};
-
-try {
-  const existing = await env.AI_STATE.get(metaKey);
-  if (existing) {
-    previousMeta = JSON.parse(await existing.text());
-  }
-} catch (_) {}
-
-// count stored season matches
-let storedCount = 0;
-let cursor;
-
-do {
-  const list = await env.AI_STATE.list({
-    prefix: `${statePrefix}matches/`,
-    cursor
-  });
-
-  storedCount += list.objects.length;
-  cursor = list.truncated ? list.cursor : undefined;
-
-} while (cursor);
-
-previousMeta.totalMatches = storedCount;
-previousMeta.updatedAt = Date.now();
-
-const newMeta = previousMeta;
+const newMeta = {
+  season,
+  league,
+  nextFrom: meta.nextFrom,
+  leagueVersion: meta.leagueVersion || 0,
+  rankingHash: meta.rankingHash || null,
+  totalMatches: (meta.totalMatches || 0) + totalMatchesProcessed,
+  updatedAt: Date.now()
+};
 
 await env.AI_STATE.put(
   metaKey,
@@ -243,7 +334,7 @@ function seasonEnd(season) {
   return season.split("-")[1] + "0630";
 }
 // ============================================================
-// SEASON COMPLETION ANALYZER
+// SEASON COMPLETION ANALYZER (STABLE v2)
 // ============================================================
 
 export async function analyzeSeasonCompletion(env, league, season) {
@@ -253,19 +344,21 @@ export async function analyzeSeasonCompletion(env, league, season) {
   let cursor;
   let stored = 0;
 
-  // count stored matches in R2
+  // ------------------------------------------------------------
+  // COUNT STORED MATCHES
+  // ------------------------------------------------------------
   do {
-    const list = await env.AI_STATE.list({
-      prefix,
-      cursor
-    });
+    const list = await env.AI_STATE.list({ prefix, cursor });
 
     stored += list.objects.length;
     cursor = list.truncated ? list.cursor : undefined;
 
   } while (cursor);
 
-  // expected matches (from meta if exists)
+  // ------------------------------------------------------------
+  // LOAD META (ONCE)
+  // ------------------------------------------------------------
+  let meta = null;
   let expected = null;
   let lastUpdate = null;
 
@@ -275,33 +368,27 @@ export async function analyzeSeasonCompletion(env, league, season) {
     );
 
     if (metaObj) {
-      const meta = JSON.parse(await metaObj.text());
+      meta = JSON.parse(await metaObj.text());
       expected = meta.totalMatches ?? null;
       lastUpdate = meta.updatedAt ?? null;
     }
   } catch (_) {}
 
+  // ------------------------------------------------------------
+  // STATE + COVERAGE
+  // ------------------------------------------------------------
   let state = "BUILDING";
   let coverage = null;
 
-  // season finished detector
-  try {
-    const metaObj = await env.AI_STATE.get(
-      `league/${league}/${season}/meta.json`
-    );
+  const seasonEnd = season.split("-")[1] + "0630";
 
-    if (metaObj) {
-      const meta = JSON.parse(await metaObj.text());
-
-      const seasonEnd = season.split("-")[1] + "0630";
-
-      if (meta.nextFrom && meta.nextFrom > seasonEnd) {
-        state = "COMPLETE";
-        coverage = 100;
-        expected = stored; // deterministic expectation
-      }
-    }
-  } catch (_) {}
+  if (meta?.nextFrom && meta.nextFrom > seasonEnd) {
+    state = "COMPLETE";
+    coverage = 100;
+    expected = stored; // deterministic
+  } else if (expected && expected > 0) {
+    coverage = Math.round((stored / expected) * 100);
+  }
 
   return {
     league,

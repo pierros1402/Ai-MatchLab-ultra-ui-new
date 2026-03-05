@@ -15,6 +15,11 @@ import { buildNarrative } from "./intel-narrator.js";
 import { generateSignals } from "./intel-signals.js";
 import { filterAndPersistSignals } from "./intel-signal-store.js";
 import { computeDrift } from "./compute-drift.js";
+import { computeValueBias } from "./intel-value-core.js";
+import { computeStructuralValue } from "../value/value-structural.js";
+import { detectMatchRegime } from "./match-regime.js";
+import { detectGamePressure } from "./game-pressure.js";
+import { predictNextPhase } from "./phase-predictor.js";
 /* ============================================================
    PHASE DETECTION
 ============================================================ */
@@ -47,11 +52,27 @@ function deriveIntelPhase(status) {
 ============================================================ */
 
 function buildStateSignature(match) {
+
+  let statusStr = "UNKNOWN";
+
+  if (typeof match.status === "string") {
+    statusStr = match.status;
+  } else if (typeof match.status === "object" && match.status) {
+    statusStr =
+      match.status.type?.name ||
+      match.status.type?.state ||
+      match.status.description ||
+      "UNKNOWN";
+  }
+
   return [
-    match.status || "UNKNOWN",
+    statusStr,
     match.scoreHome ?? 0,
     match.scoreAway ?? 0,
-    match.minute ?? match.clock ?? 0
+    match.minute ??
+    match.clock ??
+    match.clock?.displayValue ??
+    0
   ].join("|");
 }
 
@@ -81,11 +102,13 @@ async function writeTimeline(env, matchId, entry) {
 
     const last = timeline[timeline.length - 1];
 
-    // append only if phase/signature changed
+    // append only if real state change happened
     if (
       !last ||
       last.phase !== entry.phase ||
-      last.stateSignature !== entry.stateSignature
+      last.stateSignature !== entry.stateSignature ||
+      last.scoreHome !== entry.scoreHome ||
+      last.scoreAway !== entry.scoreAway
     ) {
       timeline.push(entry);
 
@@ -132,19 +155,30 @@ export async function buildMatchIntel(env, matchId) {
 
   const base = `league/${league}/${season}/`;
 
-  const match = await readJsonR2(env, `${base}matches/${matchId}.json`);
-  // attach force flag (non-persistent runtime only)
-  if (match && forceIntel) {
-    match.__forceIntel = true;
-  }
-  if (!match) {
-    return { ok:false, error:"match_not_found", matchId, league, season };
-  }
+// ------------------------------------------------------------
+// PARALLEL R2 LOAD (performance optimization)
+// ------------------------------------------------------------
+const [matchRaw, metaRaw, tableRaw] = await Promise.all([
+  readJsonR2(env, `${base}matches/${matchId}.json`),
+  readJsonR2(env, `${base}meta.json`),
+  readJsonR2(env, `${base}table.json`)
+]);
 
-  const meta  = await readJsonR2(env, `${base}meta.json`)  || {};
-  const table = await readJsonR2(env, `${base}table.json`) || [];
+const match = matchRaw;
 
-  const leagueVersion = meta.leagueVersion ?? 0;
+// attach force flag (non-persistent runtime only)
+if (match && forceIntel) {
+  match.__forceIntel = true;
+}
+
+if (!match) {
+  return { ok:false, error:"match_not_found", matchId, league, season };
+}
+
+const meta  = metaRaw  || {};
+const table = tableRaw || [];
+
+const leagueVersion = meta.leagueVersion ?? 0;
 
   /* ============================================================
      CACHE CHECK
@@ -253,7 +287,11 @@ export async function buildMatchIntel(env, matchId) {
       overLean: matchup?.overLean ?? "NEUTRAL",
       bttsLean: matchup?.bttsLean ?? "NEUTRAL"
     },
-
+    metrics:{
+      tempo: matchup?.tempoIndex ?? 0,
+      volatility: matchup?.riskIndex ?? 0,
+      control: matchup?.stabilityDelta ?? 0
+    },
     teams:{
       home: simplifyTeam(homeCtx),
       away: simplifyTeam(awayCtx)
@@ -297,12 +335,18 @@ try {
   }
 } catch (_) {}
 
-const delta = computeIntelDelta(previousIntel, evolvedOut);
+const minute = Number(match.minute ?? match.clock ?? 0);
+
+const delta = computeIntelDelta(
+  previousIntel,
+  evolvedOut,
+  minute
+);
 
 if (delta) {
   evolvedOut.delta = delta;
 
-  const narrative = buildNarrative(delta);
+  const narrative = buildNarrative(delta, evolvedOut.meta?.phase);
   if (narrative) {
     evolvedOut.narrative = narrative;
   }
@@ -337,7 +381,61 @@ try {
 } catch (_) {}
 
 if (emittedSignals.length) {
-  evolvedOut.signals = emittedSignals;
+
+  const baseSignals =
+    Array.isArray(evolvedOut.signals)
+      ? evolvedOut.signals
+      : [];
+
+  evolvedOut.signals = [
+    ...baseSignals,
+    ...emittedSignals
+  ];
+
+}
+
+// ------------------------------------------------------------
+// BASELINE RESOLUTION (PRE SNAPSHOT LOCK)
+// ------------------------------------------------------------
+let baselineIntel = null;
+
+try {
+
+  const baselineKey =
+    `intel/context/${matchId}/baseline.json`;
+
+  const baselineObj =
+    await env.AI_STATE.get(baselineKey);
+
+  if (baselineObj) {
+    baselineIntel =
+      JSON.parse(await baselineObj.text());
+  }
+
+  const currentPhase =
+    (evolvedOut?.meta?.phase || "PRE").toUpperCase();
+
+  // If entering LIVE and no baseline yet → lock PRE
+  if (!baselineIntel && currentPhase === "LIVE") {
+
+    const latestPre =
+      previousIntel?.meta?.phase === "PRE"
+        ? previousIntel
+        : evolvedOut;
+
+    if (latestPre) {
+      await env.AI_STATE.put(
+        baselineKey,
+        JSON.stringify(latestPre),
+        { httpMetadata: { contentType: "application/json" } }
+      );
+
+      baselineIntel = latestPre;
+    }
+  }
+
+} catch (e) {
+  console.log("[BASELINE RESOLVE FAIL]", e);
 }
 
 // ------------------------------------------------------------
@@ -350,11 +448,13 @@ try {
     "VOLATILITY_SPIKE"
   ]);
 
-  const shouldReact = emittedSignals.some(
-    s =>
-      REACTIVE_SIGNAL_TYPES.has(s.type) &&
-      evolvedOut.meta?.phase === "LIVE"
-  );
+  const shouldReact =
+    !forceIntel &&  // <---- LOOP GUARD
+    emittedSignals.some(
+      s =>
+        REACTIVE_SIGNAL_TYPES.has(s.type) &&
+        evolvedOut.meta?.phase === "LIVE"
+    );
 
   if (shouldReact) {
 
@@ -396,11 +496,13 @@ try {
 // live     = evolvedOut current state (LIVE reality)
 // ------------------------------------------------------------
 try {
+  const baselineSource = baselineIntel || previousIntel;
+
   const baselineMetrics = {
-    tempo: Number(previousIntel?.metrics?.tempo ?? 0),
-    volatility: Number(previousIntel?.metrics?.volatility ?? 0),
-    control: Number(previousIntel?.metrics?.control ?? 0)
-  };
+    tempo: Number(baselineSource?.metrics?.tempo ?? 0),
+    volatility: Number(baselineSource?.metrics?.volatility ?? 0),
+    control: Number(baselineSource?.metrics?.control ?? 0)
+  };;
 
   const liveMetrics = {
     tempo: Number(evolvedOut?.metrics?.tempo ?? 0),
@@ -423,7 +525,7 @@ try {
 }
 
 // ==============================
-// DRIFT → DELTA METRICS (Phase 3)
+// DRIFT → HYBRID DELTA (Unified)
 // ==============================
 try {
   const drift = evolvedOut?.drift || {};
@@ -432,17 +534,68 @@ try {
   const volatility = Number(drift.volatility || 0);
   const control = Number(drift.control || 0);
 
-  // normalize into percentage-style deviations
   const tempoPct = Math.round(tempo * 100);
   const volatilityPct = Math.round(volatility * 100);
   const controlPct = Math.round(control * 100);
 
+  const driftScore =
+    Math.round((Math.abs(tempo) + Math.abs(volatility) + Math.abs(control)) * 33.3);
+
+  const prevDelta = evolvedOut?.delta || {};
+
   evolvedOut.delta = {
+    // existing deviation metrics (signals depend on these)
     tempoDeviationPct: tempoPct,
     volatilityDeviationPct: volatilityPct,
     controlDeviationPct: controlPct,
-    driftScore: Math.round((tempo + volatility + control) * 33.3)
+    driftScore,
+
+    // hybrid extension (new intelligence layer)
+    structuralShift: prevDelta.structuralShift ?? 0,
+    strength: prevDelta.strength ?? 0,
+    phase: evolvedOut?.meta?.phase ?? "PRE",
+    goalShock: prevDelta.goalShock ?? false
   };
+
+} catch (_) {}
+
+// ------------------------------------------------------------
+// MATCH REGIME DETECTION
+// ------------------------------------------------------------
+try {
+
+  const regime = detectMatchRegime(evolvedOut);
+
+  if (regime) {
+    evolvedOut.regime = regime;
+  }
+
+} catch (_) {}
+
+// ------------------------------------------------------------
+// GAME PRESSURE ENGINE
+// ------------------------------------------------------------
+try {
+
+  const pressure = detectGamePressure(evolvedOut);
+
+  if (pressure) {
+    evolvedOut.pressure = pressure;
+  }
+
+} catch (_) {}
+
+// ------------------------------------------------------------
+// PHASE PREDICTOR
+// ------------------------------------------------------------
+try {
+
+  const phasePrediction =
+    predictNextPhase(evolvedOut);
+
+  if (phasePrediction) {
+    evolvedOut.phasePrediction = phasePrediction;
+  }
 
 } catch (_) {}
 
@@ -465,6 +618,31 @@ try {
     method: "stability_conf_x_drift_v1"
   };
 } catch (_) {}
+
+// ------------------------------------------------------------
+// VALUE BIAS LAYER (v1)
+// ------------------------------------------------------------
+try {
+  const valueBias = computeValueBias(evolvedOut);
+  if (valueBias) {
+    evolvedOut.value = valueBias;
+  }
+} catch (e) {
+  console.log("[VALUE CORE FAIL]", e);
+}
+
+// ------------------------------------------------------------
+// STRUCTURAL VALUE ENGINE (v1)
+// ------------------------------------------------------------
+try {
+  const structural = computeStructuralValue(evolvedOut);
+  if (structural) {
+    evolvedOut.valueStructural = structural;
+  }
+} catch (e) {
+  console.log("[STRUCTURAL VALUE FAIL]", e);
+}
+
 
 // ------------------------------------------------------------
 // DRIFT → SIGNAL AMPLIFICATION
@@ -573,6 +751,29 @@ const finalPhase = (evolvedOut?.meta?.phase || phase || "PRE").toUpperCase();
 const phaseKey = phaseKeyFor(matchId, finalPhase);
 const latestKey = cacheKey; // intel/context/<matchId>/latest.json
 
+// ------------------------------------------------------------
+// INTEL WRITE GUARD (reduce R2 writes)
+// ------------------------------------------------------------
+const intelSignature = [
+  evolvedOut.basic?.scoreHome ?? 0,
+  evolvedOut.basic?.scoreAway ?? 0,
+  evolvedOut.meta?.phase ?? "PRE",
+  evolvedOut.context?.momentum ?? "UNKNOWN",
+  evolvedOut.context?.volatility ?? "UNKNOWN"
+].join("|");
+
+const sigKey = `intel/context/${matchId}/last-sig.txt`;
+
+let prevSig = null;
+
+try {
+  prevSig = await env.AI_STATE.get(sigKey);
+} catch (_) {}
+
+if (prevSig === intelSignature) {
+  return evolvedOut;
+}
+
 // ensure meta.phase is consistent
 evolvedOut.meta = evolvedOut.meta || {};
 evolvedOut.meta.phase = finalPhase;
@@ -583,6 +784,9 @@ try {
     JSON.stringify(evolvedOut),
     { httpMetadata: { contentType: "application/json" } }
   );
+try {
+  await env.AI_STATE.put(sigKey, intelSignature);
+} catch (_) {}
   console.log("[DRIFT]", matchId, JSON.stringify(evolvedOut.drift));
   await env.AI_STATE.put(
     phaseKey,
@@ -600,6 +804,20 @@ try {
     scoreAway: evolvedOut.basic?.scoreAway ?? null,
     status: evolvedOut.basic?.status ?? null
   });
+
+// ------------------------------------------------------------
+// BASELINE CLEANUP ON FINAL
+// ------------------------------------------------------------
+if (finalPhase === "FINAL") {
+  try {
+    await env.AI_STATE.delete(
+      `intel/context/${matchId}/baseline.json`
+    );
+    console.log("[BASELINE CLEARED]", matchId);
+  } catch (e) {
+    console.log("[BASELINE CLEAR FAIL]", e);
+  }
+}
 
 } catch (_) {}
   // persist cache

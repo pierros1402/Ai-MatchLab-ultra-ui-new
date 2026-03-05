@@ -14,14 +14,29 @@ export async function buildMatchupContext(env, league, season, home, away) {
   const awayCtx = await buildTeamContext(env, league, season, away);
 
   if (!homeCtx.matches || !awayCtx.matches) {
+
     return {
       ok: true,
       league,
       season,
       home,
       away,
-      dataReady: false
+      dataReady: false,
+
+      attackDelta: 0,
+      defenseDelta: 0,
+      momentumDelta: 0,
+      stabilityDelta: 0,
+      volatilityDelta: 0,
+
+      paceIndex: 0,
+      riskIndex: 1,
+
+      overLean: "NEUTRAL",
+      bttsLean: "NEUTRAL",
+      gameProfile: "INSUFFICIENT_DATA"
     };
+
   }
 
   // ------------------------------------------------------------
@@ -50,7 +65,7 @@ export async function buildMatchupContext(env, league, season, home, away) {
   const paceIndex =
     +(
       (homeCtx.goalsForRate + homeCtx.goalsAgainstRate +
-       awayCtx.goalsForRate + awayCtx.goalsAgainstRate) / 2
+       awayCtx.goalsForRate + awayCtx.goalsAgainstRate) / 4
     ).toFixed(2);
 
   const riskIndex =

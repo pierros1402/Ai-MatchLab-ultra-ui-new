@@ -1,8 +1,5 @@
 //============================================================
-// STANDINGS BUILDER – STABLE v5.0 (Ranking Engine Integrated)
-// - Fully guarded R2 pagination
-// - Deterministic aggregation
-// - Ranking handled by ranking-engine (AI core)
+// STANDINGS BUILDER – STABLE v5.2 (Final Safe)
 //============================================================
 
 import { computeStandings } from "../../_shared/ranking-engine.js";
@@ -17,46 +14,95 @@ export async function buildStandingsFromR2(env, league, season, opts = {}) {
   let cursor = undefined;
 
   // ============================================================
-  // 1. READ MATCHES FROM R2 (UNCHANGED SAFE LOGIC)
+  // 1. READ MATCHES FROM R2
   // ============================================================
 
   while (true) {
-    const options = cursor ? { prefix, cursor } : { prefix };
 
+    const options = cursor ? { prefix, cursor } : { prefix };
     const list = await env.AI_STATE.list(options);
+
     if (!list || !Array.isArray(list.objects)) break;
 
     for (const obj of list.objects) {
+
       const raw = await env.AI_STATE.get(obj.key);
       if (!raw) continue;
 
       let match;
+
       try {
-        match = typeof raw === "string" ? JSON.parse(raw) : raw;
+        const text = await raw.text();
+        match = JSON.parse(text);
       } catch {
-        continue; // corrupted entry
+        continue;
       }
 
       if (!match || typeof match !== "object") continue;
 
-      const FINAL_STATUSES = new Set([
-        "STATUS_FINAL",
-        "FINAL",
-        "STATUS_FULL_TIME",
-        "STATUS_COMPLETE",
-        "STATUS_AET",
-        "STATUS_PEN"
-      ]);
+      let home, away, gf, ga;
+      let statusName;
 
-      if (!FINAL_STATUSES.has(match.status)) {
-        continue;
+      // ------------------------------------------------------------
+      // STATUS RESOLUTION
+      // ------------------------------------------------------------
+
+      if (match.competitions?.[0]?.competitors) {
+
+        const comp = match.competitions[0];
+
+        statusName =
+          comp.status?.type?.name ||
+          match.status?.type?.name ||
+          match.status;
+
+        const isFinal =
+          typeof statusName === "string" &&
+          (
+            statusName.includes("FINAL") ||
+            statusName.includes("FULL_TIME") ||
+            statusName.includes("COMPLETE") ||
+            statusName.includes("AET") ||
+            statusName.includes("PEN")
+          );
+
+        if (!isFinal) continue;
+
+        const homeObj = comp.competitors.find(c => c.homeAway === "home");
+        const awayObj = comp.competitors.find(c => c.homeAway === "away");
+
+        if (!homeObj || !awayObj) continue;
+
+        home = homeObj.team?.displayName;
+        away = awayObj.team?.displayName;
+
+        gf = Number(homeObj.score);
+        ga = Number(awayObj.score);
+
+      } else {
+
+        statusName =
+          match.status?.type?.name ||
+          match.status;
+
+        const isFinal =
+          typeof statusName === "string" &&
+          (
+            statusName.includes("FINAL") ||
+            statusName.includes("FULL_TIME") ||
+            statusName.includes("COMPLETE") ||
+            statusName.includes("AET") ||
+            statusName.includes("PEN")
+          );
+
+        if (!isFinal) continue;
+
+        home = match.home;
+        away = match.away;
+
+        gf = Number(match.scoreHome);
+        ga = Number(match.scoreAway);
       }
-
-      const home = match.home;
-      const away = match.away;
-
-      const gf = Number(match.scoreHome);
-      const ga = Number(match.scoreAway);
 
       if (!home || !away) continue;
       if (!Number.isFinite(gf) || !Number.isFinite(ga)) continue;
@@ -90,21 +136,10 @@ export async function buildStandingsFromR2(env, league, season, opts = {}) {
     };
   }
 
-  // fallback league rules (until registry wired)
   const leagueRules = opts.leagueRules || {
-    tieBreakOrder: [
-      "points",
-      "goalDifference",
-      "goalsFor"
-    ],
-    phases: {
-      regular: { type: "table" }
-    }
+    tieBreakOrder: ["points", "goalDifference", "goalsFor"],
+    phases: { regular: { type: "table" } }
   };
-
-  // ============================================================
-  // 3. COMPUTE STANDINGS (NEW CORE)
-  // ============================================================
 
   const ranking = computeStandings({
     teams,
@@ -113,10 +148,6 @@ export async function buildStandingsFromR2(env, league, season, opts = {}) {
     phase: "regular",
     previousStandings: opts.previousStandings || null
   });
-
-  // ============================================================
-  // 4. RETURN COMPATIBLE OUTPUT (NO BREAKING CHANGES)
-  // ============================================================
 
   return {
     standings: ranking.standings.map(row => ({
@@ -133,12 +164,14 @@ export async function buildStandingsFromR2(env, league, season, opts = {}) {
     })),
     rankingHash: ranking.rankingHash
   };
- } 
+}
+
 // ============================================================
-// TEAM UPDATE (UNCHANGED)
+// TEAM UPDATE
 // ============================================================
 
 function update(table, team, gf, ga) {
+
   if (!table[team]) {
     table[team] = {
       team,
@@ -169,9 +202,8 @@ function update(table, team, gf, ga) {
   }
 }
 
-
 // ============================================================
-// H2H MATRIX BUILDER (NEW)
+// H2H MATRIX BUILDER
 // ============================================================
 
 function updateH2H(matrix, home, away, gf, ga) {
@@ -191,13 +223,8 @@ function updateH2H(matrix, home, away, gf, ga) {
 
   const homeIsA = home < away;
 
-  const pointsHome =
-    gf > ga ? 3 :
-    gf === ga ? 1 : 0;
-
-  const pointsAway =
-    ga > gf ? 3 :
-    ga === gf ? 1 : 0;
+  const pointsHome = gf > ga ? 3 : gf === ga ? 1 : 0;
+  const pointsAway = ga > gf ? 3 : ga === gf ? 1 : 0;
 
   if (homeIsA) {
     record.pointsA += pointsHome;

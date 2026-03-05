@@ -2,6 +2,7 @@ import { runAiEngine } from "../_shared/ai-core/index.js";
 import { runValueEngineCore } from "../_shared/value-engine-core.js";
 import { handleOdds } from "./modules/oddsEngine.js";
 
+
 const ENGINE_VERSION = "2.5.0";
 const MAX_LIVE_VERSIONS = 5;
 
@@ -287,32 +288,107 @@ export default {
     // VALUE ENGINE (RUN)
     // ------------------------------------------------------------
 
-    if (pathname === "/value/run") {
+if (pathname === "/value/run") {
 
-      const date = url.searchParams.get("date");
-      const force = url.searchParams.get("force") === "1";
+  const date = url.searchParams.get("date");
+  const force = url.searchParams.get("force") === "1";
 
-      if (!date)
-        return json({ ok:false, error:"missing_date" }, 400);
+  if (!date)
+    return json({ ok:false, error:"missing_date" }, 400);
 
-      try {
-        const result = await runValueEngineCore(env, date, { force });
-        return json(result);
-      } catch (e) {
-        console.error("VALUE RUN ERROR:", e);
-        return json({ ok:false, error:"value_engine_failed" }, 500);
-      }
+  try {
+
+    // ---------------------------------
+    // VALUE EXECUTION LOCK (ANTI DOUBLE RUN)
+    // ---------------------------------
+    const lockKey = `VALUE:RUNNING:${date}`;
+
+    const running =
+      await env.AIML_INGESTION_KV.get(lockKey);
+
+    if (running && !force) {
+      console.log("[value] already running — skip", date);
+      return json({ ok:true, skipped:"already_running" });
     }
 
+    // 15 minute execution lock
+    await env.AIML_INGESTION_KV.put(
+      lockKey,
+      Date.now().toString(),
+      { expirationTtl: 900 }
+    );
+
+    console.log("[value] build start", date);
+
+    // ---------------------------------
+    // RUN VALUE ENGINE
+    // ---------------------------------
+    const result =
+      await runValueEngineCore(env, date, { force });
+
+    console.log("[value] build completed", date);
+
+    return json(result);
+
+  } catch (e) {
+    console.error("VALUE RUN ERROR:", e);
+    return json({ ok:false, error:"value_engine_failed" }, 500);
+  }
+}
     // ------------------------------------------------------------
     // ODDS
     // ------------------------------------------------------------
 
-    if (pathname === "/odds" || pathname.startsWith("/odds/"))
+    if (
+      pathname === "/odds" ||
+      pathname.startsWith("/odds/") ||
+      pathname === "/api/odds" ||
+      pathname.startsWith("/api/odds/")
+    ) {
       return handleOdds(request, env);
+    }
 
-        // ------------------------------------------------------------
-    // DETAILS (AI PROFILE)
+// ------------------------------------------------------------
+// AI MATCH INTEL (PROXY → AI ENGINE)
+// ------------------------------------------------------------
+if (pathname === "/ai/match-intel") {
+
+  const id = url.searchParams.get("id");
+
+  if (!id)
+    return json({ ok:false, error:"missing_id" }, 400);
+
+  try {
+
+    const aiUrl =
+      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(id)}`;
+
+    const res = await fetch(aiUrl);
+
+    const text = await res.text();
+
+    return new Response(text, {
+      status: res.status,
+      headers:{
+        "Content-Type":"application/json",
+        ...corsHeaders()
+      }
+    });
+
+  } catch(e) {
+
+    console.log("[AI PROXY FAIL]", e);
+
+    return json({
+      ok:false,
+      error:"ai_engine_unreachable"
+    },500);
+
+  }
+}
+
+// ------------------------------------------------------------
+// DETAILS (AI PROFILE)
     // ------------------------------------------------------------
 
     if (pathname === "/v1/match/details") {
@@ -393,6 +469,98 @@ export default {
           : null
       });
     }
+
+// ------------------------------------------------------------
+// LEAGUE API LAYER (FULL)
+// ------------------------------------------------------------
+if (pathname.startsWith("/league/")) {
+
+  const parts = pathname.split("/").filter(Boolean);
+  // league / eng.1 / 2025-2026 / resource / optional
+
+  if (parts.length < 4) {
+    return json({ ok:false, error:"invalid_league_route" }, 400);
+  }
+
+  const league = parts[1];
+  const season = parts[2];
+  const resource = parts[3];
+
+  const basePrefix = `league/${league}/${season}/`;
+
+  // --------------------------------------------------
+  // META
+  // --------------------------------------------------
+  if (resource === "meta") {
+
+    const obj = await env.AI_STATE.get(basePrefix + "meta.json");
+    if (!obj)
+      return json({ ok:false, error:"meta_not_found" }, 404);
+
+    return new Response(await obj.text(), {
+      headers:{ "Content-Type":"application/json", ...corsHeaders() }
+    });
+  }
+
+  // --------------------------------------------------
+  // TABLE
+  // --------------------------------------------------
+  if (resource === "table") {
+
+    const obj = await env.AI_STATE.get(basePrefix + "table.json");
+    if (!obj)
+      return json({ ok:false, error:"table_not_found" }, 404);
+
+    return new Response(await obj.text(), {
+      headers:{ "Content-Type":"application/json", ...corsHeaders() }
+    });
+  }
+
+  // --------------------------------------------------
+  // COMPLETION
+  // --------------------------------------------------
+if (resource === "completion") {
+
+  try {
+
+    const engineUrl =
+      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/season-completion` +
+      `?league=${league}&season=${season}`;
+
+    const res = await fetch(engineUrl);
+
+    if (!res.ok) {
+      return json({ ok:false, error:"engine_error" }, 500);
+    }
+
+    const data = await res.json();
+    return json(data);
+
+  } catch (e) {
+    console.error("completion proxy error", e);
+    return json({ ok:false, error:"completion_failed" }, 500);
+  }
+}
+
+  // --------------------------------------------------
+  // SINGLE MATCH (R2 STATE)
+  // --------------------------------------------------
+  if (resource === "match" && parts.length === 5) {
+
+    const matchId = parts[4];
+    const key = basePrefix + `matches/${matchId}.json`;
+
+    const obj = await env.AI_STATE.get(key);
+    if (!obj)
+      return json({ ok:false, error:"match_not_found" }, 404);
+
+    return new Response(await obj.text(), {
+      headers:{ "Content-Type":"application/json", ...corsHeaders() }
+    });
+  }
+
+  return json({ ok:false, error:"resource_not_supported" }, 404);
+}
 
     // ------------------------------------------------------------
     // FALLBACK

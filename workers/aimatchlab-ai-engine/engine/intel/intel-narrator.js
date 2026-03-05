@@ -1,36 +1,44 @@
 // ============================================================
-// INTEL NARRATOR (deterministic explanation layer)
+// INTEL NARRATOR (v2 drift-based deterministic)
 // ============================================================
 
-export function buildNarrative(delta) {
+export function buildNarrative(delta, phase = "PRE") {
   if (!delta) return null;
 
   const lines = [];
 
-  // momentum
-  if (delta.momentumChange) {
-    lines.push("Match momentum has shifted.");
+  const tempo = Number(delta.tempoDeviationPct || 0);
+  const volatility = Number(delta.volatilityDeviationPct || 0);
+  const control = Number(delta.controlDeviationPct || 0);
+  const driftScore = Number(delta.driftScore || 0);
+
+  const p = String(phase || "PRE").toUpperCase();
+
+  // No narrative for PRE unless extreme (safety)
+  if (p !== "LIVE") return null;
+
+  // ---------------- MOMENTUM ----------------
+  if (Math.abs(tempo) >= 15) {
+    lines.push("Match tempo has shifted.");
   }
 
-  // control
-  if (delta.controlChange) {
-    if (delta.controlChange.includes("HOME")) {
-      lines.push("Home side appears to be managing the match.");
-    } else if (delta.controlChange.includes("AWAY")) {
-      lines.push("Away side has taken control of the game.");
+  // ---------------- CONTROL ----------------
+  if (Math.abs(control) >= 15) {
+    if (control > 0) {
+      lines.push("Home side is gaining control.");
     } else {
-      lines.push("Game has become more open.");
+      lines.push("Away side is gaining control.");
     }
   }
 
-  // volatility
-  if (delta.volatilityChange) {
+  // ---------------- VOLATILITY ----------------
+  if (volatility >= 25) {
     lines.push("Match volatility is increasing.");
   }
 
-  // score
-  if (delta.scoreChange) {
-    lines.push("The scoreline has changed, altering match dynamics.");
+  // ---------------- STRONG DRIFT ----------------
+  if (driftScore >= 60) {
+    lines.push("Match dynamics are shifting significantly.");
   }
 
   if (!lines.length) return null;

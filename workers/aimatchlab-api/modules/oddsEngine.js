@@ -12,7 +12,7 @@
  *   FIXTURES:DATE:<YYYY-MM-DD>  (AIML_INGESTION_KV)
  *
  * Writes:
- *   ODDS:CORE:DATE:<YYYY-MM-DD> (AIML_INGESTION_KV)
+ *   odds/core/<YYYY-MM-DD>.json (R2_ODDS bucket)
  */
 
 const VERSION = "odds-engine_api_v3.0.0";
@@ -56,10 +56,11 @@ export async function handleOdds(req, env) {
 }
 
 /* ============================================================
-   READER (OIC COMPATIBLE)
+   READER (R2 VERSION – NO KV READS)
 ============================================================ */
 
 async function runReader(url, env) {
+
   const date = url.searchParams.get("date") || dayKeyGR();
   const matchId = String(url.searchParams.get("matchId") || "").trim();
   const market = url.searchParams.get("market") || "1X2";
@@ -67,17 +68,31 @@ async function runReader(url, env) {
   if (!matchId)
     return json({ ok: false, reason: "missing_matchId" }, 400);
 
-  const snapKey = `ODDS:CORE:DATE:${date}`;
-  const snap = await env.AIML_INGESTION_KV.get(snapKey, { type: "json" });
+  if (!env?.R2_ODDS)
+    return json({ ok:false, reason:"missing_R2_ODDS_binding" }, 500);
 
-  if (!snap?.matchIndex?.[matchId])
+  const snapKey = `odds/core/${date}.json`;
+
+  let snap = null;
+
+  try {
+    const obj = await env.R2_ODDS.get(snapKey);
+    if (obj) snap = await obj.json();
+  } catch (e) {
+    console.log("R2 SNAP READ FAIL:", snapKey);
+    snap = null;
+  }
+
+  if (!snap?.matchIndex?.[matchId]) {
     return json({
       ok: true,
       market,
       snapshot: null
     });
+  }
 
-  const block = snap.matchIndex[matchId]?.markets?.[market] || null;
+  const block =
+    snap.matchIndex[matchId]?.markets?.[market] || null;
 
   return json({
     ok: true,
@@ -85,45 +100,73 @@ async function runReader(url, env) {
     snapshot: block
   });
 }
-
 /* ============================================================
-   WRITER
+   WRITER (R2 VERSION – NO KV WRITES)
 ============================================================ */
 
 async function runWriter(url, env) {
   const date = url.searchParams.get("date") || dayKeyGR();
   const days = clampInt(url.searchParams.get("days"), 2, 0, 7);
 
-  if (!env?.AIML_INGESTION_KV)
-    return json({ ok: false, reason: "missing_AIML_INGESTION_KV" });
+  if (!env?.R2_ODDS) {
+    return json({ ok: false, reason: "missing_R2_ODDS_binding" });
+  }
 
-  const apiKey = (env.ODDS_API_KEY || "").trim();
-  if (!apiKey)
+  const apiKey =
+    typeof env.ODDS_API_KEY === "string"
+      ? env.ODDS_API_KEY.trim()
+      : "";
+
+  if (!apiKey) {
+    console.log("ODDS_API_KEY missing or invalid type");
     return json({ ok: false, reason: "missing_ODDS_API_KEY" });
+  }
 
-  const region = String(env.ODDS_REGION || "eu");
+  const region =
+    typeof env.ODDS_REGION === "string"
+      ? env.ODDS_REGION
+      : "eu";
 
   const results = [];
   let totalWritten = 0;
 
   for (let i = 0; i <= days; i++) {
     const d = addDays(date, i);
-    const r = await processOneDate(env, apiKey, region, d);
-    results.push(r);
-    totalWritten += r.matchesWritten || 0;
+
+    try {
+      const r = await processOneDateR2(env, apiKey, region, d);
+      results.push(r);
+      totalWritten += r.matchesWritten || 0;
+    } catch (err) {
+      console.log("PROCESS ERROR:", d, err);
+      results.push({
+        ok: false,
+        date: d,
+        error: "process_failed"
+      });
+    }
   }
 
   return json({
     ok: true,
     version: VERSION,
-    dateFrom: date,
+    baseDate: date,
     days,
-    totalWrittenMatches: totalWritten,
-    perDate: results
+    totalWritten,
+    results
   });
 }
 
-async function processOneDate(env, apiKey, region, date) {
+/* ============================================================
+   PROCESS ONE DATE (R2 SNAPSHOT)
+============================================================ */
+
+async function processOneDateR2(env, apiKey, region, date) {
+
+  // ------------------------------------------------------------
+  // LOAD FIXTURES (READ ONLY FROM KV)
+  // ------------------------------------------------------------
+
   const fxKey = `FIXTURES:DATE:${date}`;
   let fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
 
@@ -139,8 +182,25 @@ async function processOneDate(env, apiKey, region, date) {
     ALLOWED_LEAGUES.includes(m?.leagueSlug)
   );
 
-  const snapKey = `ODDS:CORE:DATE:${date}`;
-  const prevSnap = await env.AIML_INGESTION_KV.get(snapKey, { type: "json" });
+  // ------------------------------------------------------------
+  // PREVIOUS SNAPSHOT FROM R2
+  // ------------------------------------------------------------
+
+  const snapKey = `odds/core/${date}.json`;
+
+  let prevSnap = null;
+
+  try {
+    const obj = await env.R2_ODDS.get(snapKey);
+    if (obj) prevSnap = await obj.json();
+  } catch (e) {
+    console.log("R2 SNAP READ FAIL:", snapKey);
+    prevSnap = null;
+  }
+
+  // ------------------------------------------------------------
+  // FETCH ODDS PER LEAGUE
+  // ------------------------------------------------------------
 
   const oddsByLeague = {};
 
@@ -150,14 +210,20 @@ async function processOneDate(env, apiKey, region, date) {
     oddsByLeague[lg] = await fetchOddsForSport(apiKey, region, sportKey);
   }
 
+  // ------------------------------------------------------------
+  // BUILD MATCH INDEX
+  // ------------------------------------------------------------
+
   const matchIndex = {};
 
   for (const m of eligible) {
+
     const matchId = String(m.id || "");
     const payload = oddsByLeague[m.leagueSlug];
     const ev = findMatch(payload, m);
 
     const providers = ev ? extractProviders(ev) : [];
+
     const prevBlock =
       prevSnap?.matchIndex?.[matchId]?.markets?.[MARKET_KEY] || null;
 
@@ -177,15 +243,43 @@ async function processOneDate(env, apiKey, region, date) {
     };
   }
 
-  await env.AIML_INGESTION_KV.put(
-    snapKey,
-    JSON.stringify({
+  const newPayload = {
+    ok: true,
+    date,
+    createdAtMs: Date.now(),
+    market: MARKET_KEY,
+    matchIndex
+  };
+
+  // ------------------------------------------------------------
+  // CHANGE DETECTION (NO USELESS WRITES)
+  // ------------------------------------------------------------
+
+  if (
+    prevSnap &&
+    JSON.stringify(prevSnap.matchIndex) === JSON.stringify(matchIndex)
+  ) {
+    return {
       ok: true,
       date,
-      createdAtMs: Date.now(),
-      market: MARKET_KEY,
-      matchIndex
-    })
+      skipped: "no_changes",
+      matchesWritten: 0,
+      writtenKey: snapKey
+    };
+  }
+
+  // ------------------------------------------------------------
+  // WRITE TO R2
+  // ------------------------------------------------------------
+
+  await env.R2_ODDS.put(
+    snapKey,
+    JSON.stringify(newPayload),
+    {
+      httpMetadata: {
+        contentType: "application/json"
+      }
+    }
   );
 
   return {
@@ -196,7 +290,6 @@ async function processOneDate(env, apiKey, region, date) {
     writtenKey: snapKey
   };
 }
-
 /* ============================================================
    ODDS API
 ============================================================ */

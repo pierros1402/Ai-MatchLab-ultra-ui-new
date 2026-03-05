@@ -82,83 +82,131 @@ export async function runValueEngineCore(env, date, options = {}) {
       continue;
     }
 
-    // ------------------------------------------------------------
-    // REQUIRE MODELING
-    // ------------------------------------------------------------
-    if (!modeling) {
-      counters.noModeling++;
-      continue;
-    }
-
 // ------------------------------------------------------------
-// LOAD MATCH INTEL (stability fusion - SAFE)
+// LOAD MATCH INTEL (stability + drift fusion - SAFE)
 // ------------------------------------------------------------
 let stability = 1;
+let driftMag = 0;
+let modelEdgeScore = 25;
 
 try {
   const intelKey = `intel/context/${m.id}/latest.json`;
-  const intelObj = await env.R2_INTEL.get(intelKey);
+  const intelObj = await env.AI_STATE.get(intelKey);
 
-  if (intelObj && intelObj.body) {
-    const text = await intelObj.text();
+  if (intelObj) {
+    const intel = await intelObj.json();
 
-    if (text) {
-      const intel = JSON.parse(text);
-      const s = Number(intel?.model?.stability);
+    const s = Number(intel?.model?.stability);
+    if (!isNaN(s)) {
+      stability = Math.max(0, Math.min(1, s));
+    }
 
-      if (!isNaN(s)) {
-        stability = Math.max(0, Math.min(1, s));
-      }
+    const d = Number(intel?.drift?.magnitude);
+    if (!isNaN(d)) {
+      driftMag = d;
+    }
+
+    const edge = Number(intel?.valueStructural?.modelEdgeScore);
+    if (!isNaN(edge)) {
+      modelEdgeScore = edge;
     }
   }
-} catch (err) {
-  // silent fallback → stability stays 1
-}
-    // ------------------------------------------------------------
-    // BUILD PICKS (AI QUALITATIVE POLICY)
-    // ------------------------------------------------------------
+} catch (_) {}
+
+ // ------------------------------------------------------------
+ // BUILD PICKS (AI QUALITATIVE POLICY)
+ // ------------------------------------------------------------
     const picks = buildPicksPolicyV3(modeling);
 
     if (!picks.length) continue;
 
     for (const p of picks) {
-      items.push({
-        matchId: m.id,
-        leagueSlug: m.leagueSlug,
-        home: m.home,
-        away: m.away,
-        market: p.market,
-        pick: p.side,
-        confidence: p.tier,
-        score: Math.round(p.percent * stability),
-        stability
-      });
+      let finalTier = p.tier;
+
+// -------------------------------
+  // BASE SCORE
+  // -------------------------------
+  let baseScore = p.percent;
+
+  // -------------------------------
+  // STRUCTURAL EDGE MODULATION
+  // -------------------------------
+  if (modelEdgeScore < 20) {
+    continue; // weak structural edge
+  }
+
+  if (modelEdgeScore > 60) {
+    baseScore = baseScore * 1.10;
+  } else if (modelEdgeScore > 35) {
+    baseScore = baseScore * 1.05;
+  }
+
+  // -------------------------------
+  // DRIFT GATE (REGIME CONTROL)
+  // -------------------------------
+  if (driftMag > 1.2) {
+    continue;
+  }
+
+  if (driftMag > 0.8) {
+    if (finalTier === "HIGH") {
+      finalTier = "MEDIUM";
+    } else if (finalTier === "MEDIUM") {
+      continue;
     }
-
-    counters.produced += picks.length;
   }
 
-  const payload = {
-    date,
-    totalMatches: counters.total,
-    producedItems: counters.produced,
-    debug: counters,
-    items
-  };
-
-  try {
-    await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(payload));
-    await env.AIML_INGESTION_KV.put(statKey, JSON.stringify(payload));
-  } catch (err) {
-    console.warn("KV quota reached — skipping persist");
+  // -------------------------------
+  // STABILITY GATE
+  // -------------------------------
+  if (stability < 0.55) {
+    continue;
   }
 
-  return {
-    ok: true,
-    date,
-    produced: counters.produced,
-    debug: counters
-  };
+  if (stability < 0.75 && finalTier === "HIGH") {
+    finalTier = "MEDIUM";
+  }
+
+  let finalScore = Math.round(baseScore * stability);
+
+  items.push({
+    matchId: m.id,
+    leagueSlug: m.leagueSlug,
+    home: m.home,
+    away: m.away,
+    market: p.market,
+    pick: p.side,
+    confidence: finalTier,
+    score: finalScore,
+    stability,
+    driftMagnitude: driftMag,
+    modelEdgeScore
+  });
+}
+counters.produced = items.length;
+}
+
+const payload = {
+  date,
+  totalMatches: counters.total,
+  producedItems: counters.produced,
+  debug: counters,
+  items
+};
+
+try {
+  await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(payload));
+  await env.AIML_INGESTION_KV.put(statKey, JSON.stringify(payload));
+} catch (err) {
+  console.warn("KV quota reached — skipping persist");
+}
+
+return {
+  ok: true,
+  date,
+  produced: counters.produced,
+  debug: counters
+};
 }
 
 
@@ -292,3 +340,4 @@ function resolveQualitativeConflicts(picks) {
 
   return filtered;
 }
+

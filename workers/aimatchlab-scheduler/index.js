@@ -1,7 +1,7 @@
 import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../_shared/leagues-registry.js";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
-const AI_ENGINE_URL = "https://aimatchlab-ai-engine.pierros1402.workers.dev";
+
 const ATHENS_TZ = "Europe/Athens";
 
 // ops retention (tuned for KV quota + UI usefulness)
@@ -9,7 +9,10 @@ const KV_KEEP_STAGING_DAYS = 7;   // staging buckets
 const KV_KEEP_FINAL_DAYS = 14;    // finalized buckets
 const KV_KEEP_VALUE_DAYS = 30;    // value summaries
 const R2_KEEP_MONTHS = 3;         // intel/performance/evaluation months
-
+// --------------------------------------------------
+// INDEX SIGNATURE CACHE (per execution)
+// --------------------------------------------------
+const __indexSigCache = new Map();
 function dayKeyTZ(tz, date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: tz,
@@ -46,7 +49,15 @@ function jsonResponse(data, status = 200) {
 }
 
 /* ================= DATE HELPERS ================= */
-
+function getAthensHour() {
+  return Number(
+    new Date().toLocaleString("en-US", {
+      timeZone: ATHENS_TZ,
+      hour: "2-digit",
+      hour12: false
+    })
+  );
+}
 function shiftUTC(date, days) {
   const d = new Date(date);
   d.setUTCDate(d.getUTCDate() + days);
@@ -106,20 +117,31 @@ function keysForDay(day) {
 /* ================= NORMALIZE ================= */
 
 function normalize(event, slug) {
+
   const comp = event.competitions?.[0];
+
   if (!comp) return null;
 
-  const home = comp.competitors?.find(c => c.homeAway === "home");
-  const away = comp.competitors?.find(c => c.homeAway === "away");
+  const home = comp.competitors?.find(
+    c => c.homeAway === "home"
+  );
 
-  if (!home || !away) return null;
+  const away = comp.competitors?.find(
+    c => c.homeAway === "away"
+  );
+
+  const kickoff =
+    event.date ||
+    comp.date ||
+    null;
+  if (!kickoff) return null;
 
   return {
     id: event.id,
     home: home.team?.displayName,
     away: away.team?.displayName,
-    kickoff: event.date,
-    kickoff_ms: new Date(event.date).getTime(),
+    kickoff,
+    kickoff_ms: new Date(kickoff).getTime(),
     scoreHome: Number(home.score ?? 0),
     scoreAway: Number(away.score ?? 0),
     status: comp.status?.type?.name || "UNKNOWN",
@@ -129,181 +151,323 @@ function normalize(event, slug) {
   };
 }
 
-// ================= INTEL REFRESH =================
-// NOTE: Disabled remote recompute from scheduler to prevent invocation explosion.
-// Intel will be computed lazily by API/UI when requested.
-async function queueIntelRefresh(env, ctx, matchId, match = null) {
-  // keep match-index warm (cheap + useful)
-  try {
-    if (match?.leagueSlug) {
-      const season = "2025-2026";
-      await env.AI_STATE.put(
-        `match-index/${matchId}.json`,
-        JSON.stringify({
-          league: match.leagueSlug,
-          season,
-          updatedAt: Date.now()
-        })
-      );
-    }
-  } catch (_) {}
+// ================= ACTIVE LEAGUE FILTER =================
+async function shouldQueryLeague(env, slug, date) {
 
-  // IMPORTANT: do NOT fetch AI engine from cron
-  // (prevents N invocations per tick)
-  return;
-}
-// ================= INTEL THROTTLE =================
-async function shouldTriggerIntel(env, match, prev) {
+  const key = `LEAGUE:ACTIVE:${slug}`;
+  const last = await env.AIML_INGESTION_KV.get(key);
+
+  if (!last) return true; // πρώτη φορά πάντα δοκιμάζουμε
+
+  const lastTs = Number(last);
   const now = Date.now();
 
-  if (!prev) return true;
-
-  const status = String(match.status || "").toUpperCase();
-
-  if (
-    status.includes("FINAL") ||
-    status.includes("FULL_TIME") ||
-    status.includes("AET") ||
-    status.includes("PEN")
-  ) {
-    return true;
+  // allow query only every 6 hours if inactive
+  if (now - lastTs < 2 * 60 * 60 * 1000) {
+    return false;
   }
 
-  if (
-    prev.scoreHome !== match.scoreHome ||
-    prev.scoreAway !== match.scoreAway
-  ) {
-    return true;
-  }
+  return true;
+}
+// ================= 404 COOLDOWN =================
+async function shouldRetryAfter404(env, slug) {
+  const key = `LEAGUE:404:${slug}`;
+  const last = await env.AIML_INGESTION_KV.get(key);
+  if (!last) return true;
 
-  const tickKey = `INTEL:TICK:${match.id}`;
-  const last = await env.AIML_INGESTION_KV.get(tickKey);
-
-  if (!last) {
-    await env.AIML_INGESTION_KV.put(tickKey, String(now), { expirationTtl: 7200 });
-    return true;
-  }
-
-  const elapsed = now - Number(last);
-
-  if (elapsed > 10 * 60 * 1000) {
-    await env.AIML_INGESTION_KV.put(tickKey, String(now), { expirationTtl: 7200 });
-    return true;
-  }
-
-  return false;
+  const diff = Date.now() - Number(last);
+  return diff > 6 * 60 * 60 * 1000; // 6 hours
 }
 
-    
-async function ingestUTCWindow(env, ctx) {
-  let startIndex = 0;
+async function mark404(env, slug) {
+  await env.AIML_INGESTION_KV.put(
+    `LEAGUE:404:${slug}`,
+    Date.now().toString(),
+    { expirationTtl: 21600 } // 6h
+  );
+}
+// ================= FETCH LEAGUE UTC =================
+async function fetchLeagueUTC(slug, date) {
+
+  try {
+
+    const espnDate = date.replaceAll("-", "");
+
+    // ---------- PRIMARY ----------
+    const url =
+      `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`;
+
+    let res = await fetch(url);
+
+    if (!res.ok) {
+      await res.body?.cancel();
+      console.log("[fetchLeagueUTC] error", slug, date, res.status);
+      return null;
+    }
+
+    let data = await res.json();
+
+    // ---------- FALLBACK ----------
+    if (!data?.events?.length) {
+
+      const fallbackUrl =
+        `${ESPN_BASE}/${slug}/scoreboard?limit=300`;
+
+      const fallbackRes = await fetch(fallbackUrl);
+
+      if (!fallbackRes.ok) {
+        await fallbackRes.body?.cancel();
+        return { events: [] };
+      }
+
+      data = await fallbackRes.json();
+    }
+
+    return data;
+
+  } catch (e) {
+    console.log("[fetchLeagueUTC] error", slug, date);
+    return null;
+  }
+}async function ingestUTCWindow(env, ctx) {
+  
   const now = new Date();
   const utcDays = [
+    formatUTC(shiftUTC(now, -2)),
     formatUTC(shiftUTC(now, -1)),
     formatUTC(now),
     formatUTC(shiftUTC(now, 1))
   ];
 
   const bucketMaps = {};
+// PRIORITY EU PASS (always try first)
+const PRIORITY = [
+  "eng.1",
+  "esp.1",
+  "ita.1",
+  "ger.1",
+  "fra.1",
+  "uefa.champions",
+  "uefa.europa",
+  "uefa.europa.conf"
+];
 
-  const CHUNK_SIZE = 12;
-  const totalLeagues = LEAGUE_SEEDS.length;
+for (const slug of PRIORITY) {
+  for (const utcDate of utcDays) {
+    // skip leagues recently returning 404
+    if (!(await shouldRetryAfter404(env, slug))) {
+      continue;
+    }
+    const data = await fetchLeagueUTC(slug, utcDate);
 
-  startIndex = Number(
-  await env.AIML_INGESTION_KV.get("INGEST:IDX") || 0
-);
-  if (startIndex >= totalLeagues) startIndex = 0;
+    console.log("[priority ingest]", slug, utcDate, !!data?.events?.length);
 
-  const endIndex = Math.min(startIndex + CHUNK_SIZE, totalLeagues);
-  const slice = LEAGUE_SEEDS.slice(startIndex, endIndex);
-
-  for (const slug of slice) {
-    for (const utcDate of utcDays) {
+    // mark reachable league
+    if (data !== null) {
       try {
-        const data = await fetchLeagueUTC(slug, utcDate);
-        if (!data?.events?.length) continue;
+        await env.AIML_INGESTION_KV.put(
+          `LEAGUE:ACTIVE:${slug}`,
+          Date.now().toString(),
+          { expirationTtl: 86400 }
+        );
+      } catch (_) {}
+    }
 
-        for (const event of data.events) {
-          const m = normalize(event, slug);
-          if (!m || !m.kickoff) continue;
+    if (data === null) {
+      await mark404(env, slug);
+      continue;
+    }
 
-          const day = athensDayFromKickoff(m.kickoff);
-          const { staging } = keysForDay(day);
+    if (!data.events?.length) continue;
 
-          if (!bucketMaps[staging]) bucketMaps[staging] = new Map();
+    for (const event of data.events) {
+      const m = normalize(event, slug);
+      if (!m) continue;
 
-          const prev = bucketMaps[staging].get(m.id);
+      const day = athensDayFromKickoff(m.kickoff);
+      const { staging } = keysForDay(day);
 
-          // ALWAYS create index
-          try {
-            await env.AI_STATE.put(
-              `match-index/${m.id}.json`,
-              JSON.stringify({
-               league: m.leagueSlug,
-               season: "2025-2026",
-               updatedAt: Date.now()
-             })
-            );
-          } catch (_) {}
+      bucketMaps[staging] ??= new Map();
+      bucketMaps[staging].set(m.id, { ...m, dayKey: day });
+    }
+  }
+}
+// ---------------------------
+// ROTATION INGEST (ACCELERATED AFTER 00:00 ATHENS)
+// ---------------------------
 
+const CHUNK_SIZE = 12;
+const totalLeagues = LEAGUE_SEEDS.length;
 
-          if (
-            !prev ||
-            prev.status !== m.status ||
-            prev.scoreHome !== m.scoreHome ||
-            prev.scoreAway !== m.scoreAway ||
-            prev.minute !== m.minute
-          ) {
-            bucketMaps[staging].set(m.id, { ...m, dayKey: day });
+// time window: 00:00–01:00 Athens
 
-            // =================================================
-            // PRE BASELINE SNAPSHOT (T-60 window)
-            // =================================================
-            const nowTs = Date.now();
-            const minutesToKickoff = (m.kickoff_ms - nowTs) / 60000;
+const athHour = getAthensHour();
 
-            if (
-              m.status === "STATUS_SCHEDULED" &&
-              minutesToKickoff <= 60 &&
-              minutesToKickoff > 0
-            ) {
-              queueIntelRefresh(env, ctx, m.id, m);
-              continue;
-            }
+const isMidnightWindow = (athHour === 0); // 00:xx
 
-// =================================================
-// NORMAL INTEL EVOLUTION (throttled)
-// =================================================
-             try {
-               const shouldRun = await shouldTriggerIntel(env, m, prev);
+// In midnight window we want ~10 slices per cron
+// resume rotation pointer
+let idx = Number(await env.AIML_INGESTION_KV.get("INGEST:IDX") || 0);
+if (idx >= totalLeagues) idx = 0;
+// =====================================================
+// ROTATION INGEST (12 leagues per cron)
+// =====================================================
 
-               if (shouldRun) {
-                 queueIntelRefresh(env, ctx, m.id, m);
-               }
-             } catch (_) {}
-          }
-        } // end events loop
+const slice = [];
 
-      } catch (_) {
-        continue;
-      }
-    } // end utcDate loop
-  } // end league loop
-  let nextIndex = endIndex;
-  if (nextIndex >= totalLeagues) nextIndex = 0;
-  await env.AIML_INGESTION_KV.put("INGEST:IDX", String(nextIndex));
+for (let i = 0; i < totalLeagues && slice.length < CHUNK_SIZE; i++) {
 
+  const slug = LEAGUE_SEEDS[(idx + i) % totalLeagues];
+
+  // skip priority leagues (already ingested)
+  if (PRIORITY.includes(slug)) continue;
+
+  slice.push(slug);
+}
+
+console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
+
+for (const slug of slice) {
+
+  for (const utcDate of utcDays) {
+
+    // skip inactive leagues (query window)
+    if (!(await shouldQueryLeague(env, slug, utcDate))) {
+      continue;
+    }
+
+    // skip leagues recently returning 404
+    if (!(await shouldRetryAfter404(env, slug))) {
+      continue;
+    }
+
+    const data = await fetchLeagueUTC(slug, utcDate);
+
+    if (data === null) {
+      await mark404(env, slug);
+      continue;
+    }
+
+    const activeKey = `LEAGUE:ACTIVE:${slug}`;
+
+    if (!(await env.AIML_INGESTION_KV.get(activeKey))) {
+      await env.AIML_INGESTION_KV.put(
+        activeKey,
+        Date.now().toString(),
+        { expirationTtl: 86400 }
+      );
+    }
+
+    if (!data.events?.length) continue;
+
+    for (const event of data.events) {
+
+      const m = normalize(event, slug);
+      if (!m) continue;
+
+      const day = athensDayFromKickoff(m.kickoff);
+      const { staging } = keysForDay(day);
+
+      bucketMaps[staging] ??= new Map();
+      bucketMaps[staging].set(m.id, { ...m, dayKey: day });
+    }
+  }
+}
+
+// advance rotation pointer
+idx = (idx + CHUNK_SIZE) % totalLeagues;
+
+await env.AIML_INGESTION_KV.put(
+  "INGEST:IDX",
+  String(idx)
+);
+
+console.log(
+  "[ingest:health]",
+  "nextIdx:", idx,
+  "slice:", slice.length,
+  "priority:", PRIORITY.length,
+  "utcDays:", utcDays.length
+);
+
+if (!isMidnightWindow && idx === 0) {
+  console.log("[ingest] FULL ROTATION COMPLETE");
+}
   for (const stagingKey in bucketMaps) {
-  const existing = (await getJson(env, stagingKey)) || { matches: [] };
-  const merged = new Map((existing.matches || []).map(m => [m.id, m]));
+ 
 
-  for (const m of bucketMaps[stagingKey].values()) {
-    merged.set(m.id, m);
+
+
+// --------------------------------------------------
+// STAGING MERGE WRITE (SAFE SNAPSHOT)
+// --------------------------------------------------
+
+let existingStage = { matches: [] };
+
+try {
+  const raw = await env.AIML_INGESTION_KV.get(stagingKey);
+  if (raw) existingStage = JSON.parse(raw);
+} catch (_) {}
+
+const stageMap = new Map();
+
+// ----------------------------------
+// keep previous matches
+// ----------------------------------
+for (const m of existingStage.matches || []) {
+
+  // keep only matches that still belong to this day
+  const matchDay = athensDayFromKickoff(m.kickoff);
+
+  if (matchDay !== stagingKey.split(":").pop()) {
+    continue;
   }
 
-  // ✅ SAFE PLACE (after merge, before KV write)
-  for (const m of merged.values()) {
-    try {
+  if (!bucketMaps[stagingKey].has(m.id)) {
+    stageMap.set(m.id, m);
+  }
+
+}
+
+// ----------------------------------
+// apply fresh ingest updates
+// ----------------------------------
+for (const m of bucketMaps[stagingKey].values()) {
+  stageMap.set(m.id, m);
+}
+
+// ----------------------------------
+// write merged snapshot
+// ----------------------------------
+await putJson(env, stagingKey, {
+  date: stagingKey.split(":").pop(),
+  matches: Array.from(stageMap.values())
+});// ✅ SAFE PLACE (after merge, before KV write)
+for (const m of bucketMaps[stagingKey].values()) {
+  try {
+
+    // ------------------------------------
+    // INDEX CHANGE GUARD (ANTI KV SPAM)
+    // ------------------------------------
+    const INDEX_SIG_KEY = `IDX:SIG:${m.id}`;
+
+    const newSig = [
+      m.status,
+      m.scoreHome,
+      m.scoreAway,
+      m.kickoff
+    ].join("|");
+
+    let prevSig = __indexSigCache.get(INDEX_SIG_KEY);
+
+    if (prevSig === undefined) {
+      prevSig = await env.AIML_INGESTION_KV.get(INDEX_SIG_KEY);
+      __indexSigCache.set(INDEX_SIG_KEY, prevSig);
+    }
+
+    // write index ONLY if match changed
+    if (prevSig !== newSig) {
+
       await env.AI_STATE.put(
         `match-index/${m.id}.json`,
         JSON.stringify({
@@ -312,16 +476,99 @@ async function ingestUTCWindow(env, ctx) {
           updatedAt: Date.now()
         })
       );
-    } catch (_) {}
-  }
 
-  await putJson(env, stagingKey, {
-    date: stagingKey.split(":").pop(),
-    matches: Array.from(merged.values())
-  });
- }
+    }
+
+// ------------------------------------
+// INTEL MEMORY — EVOLUTION DETECTION
+// ------------------------------------
+const memoryKey = `intel-memory/${m.id}/last.json`;
+
+let prevState = null;
+
+try {
+  const raw = await env.AI_STATE.get(memoryKey);
+  if (raw) prevState = JSON.parse(raw);
+} catch (_) {}
+
+const classifyPhase = (status) => {
+  const s = String(status || "").toUpperCase();
+
+  if (
+    s.includes("FINAL") ||
+    s.includes("FULL_TIME") ||
+    s.includes("AET") ||
+    s.includes("PEN")
+  ) return "FINAL";
+
+  if (
+    s.includes("LIVE") ||
+    s.includes("HALF") ||
+    s.includes("IN_PROGRESS") ||
+    s.includes("SECOND_HALF")
+  ) return "LIVE";
+
+  return "PRE";
+};
+
+const prevPhase = prevState ? classifyPhase(prevState.status) : null;
+const newPhase = classifyPhase(m.status);
+
+// write evolution ONLY on phase change
+if (prevPhase && prevPhase !== newPhase) {
+
+  await env.AI_STATE.put(
+    `intel-memory/${m.id}/evolution.json`,
+    JSON.stringify({
+      id: m.id,
+      from: prevPhase,
+      to: newPhase,
+      ts: Date.now()
+    })
+  );
+
+  console.log("[intel] phase evolution", m.id, prevPhase, "→", newPhase);
+}
+// ------------------------------------
+// LIVE HEARTBEAT MEMORY
+// ------------------------------------
+if (newPhase === "LIVE") {
+  await env.AI_STATE.put(
+    `intel-memory/${m.id}/live.json`,
+    JSON.stringify({
+      id: m.id,
+      minute: m.minute || null,
+      ts: Date.now()
+    })
+  );
 }
 
+// always update last state
+await env.AI_STATE.put(
+  memoryKey,
+  JSON.stringify({
+    id: m.id,
+    status: m.status,
+    scoreHome: m.scoreHome,
+    scoreAway: m.scoreAway,
+    minute: m.minute || null,
+    ts: Date.now()
+  })
+);
+
+// remember last signature (auto cleanup)
+await env.AIML_INGESTION_KV.put(
+  INDEX_SIG_KEY,
+  newSig,
+  { expirationTtl: 172800 } // 48h
+);
+__indexSigCache.set(INDEX_SIG_KEY, newSig);
+    
+
+  } catch (_) {}
+}
+}
+}
 /* ================= FINALIZE ================= */
 
 function isTerminal(status) {
@@ -332,40 +579,314 @@ function isTerminal(status) {
     s.includes("AET") ||
     s.includes("PEN") ||
     s.includes("POSTPONED") ||
-    s.includes("CANCELED")
+    s.includes("CANCELED") ||
+    s.includes("ABANDONED") ||
+    s.includes("SUSPENDED") ||
+    s.includes("INTERRUPTED")
   );
 }
 
-async function finalizeDay(env, day) {
-  const { staging, final } = keysForDay(day);
-  const data = await getJson(env, staging);
-  if (!data?.matches?.length) return;
+async function recoverMissingFT(env, day, data) {
 
-  const now = Date.now();
-  let allClosed = true;
+  let changed = false;
 
-  for (const m of data.matches) {
-    if (isTerminal(m.status)) continue;
+  // -----------------------------------
+  // GROUP MATCHES BY LEAGUE
+  // -----------------------------------
+  const leagues = new Map();
 
-    const hoursSinceKickoff = (now - m.kickoff_ms) / (1000 * 60 * 60);
+  for (const match of data.matches) {
 
-    // safety close for stuck scheduled matches (ESPN ghost fixtures)
-    if (m.status === "STATUS_SCHEDULED" && hoursSinceKickoff > 8) {
+    if (isTerminal(match.status)) continue;
+
+    if (!leagues.has(match.leagueSlug)) {
+      leagues.set(match.leagueSlug, []);
+    }
+
+    leagues.get(match.leagueSlug).push(match);
+  }
+
+  // nothing to recover
+  if (!leagues.size) return false;
+
+  // -----------------------------------
+  // FETCH ONCE PER LEAGUE
+  // -----------------------------------
+  for (const [slug, matches] of leagues.entries()) {
+
+    // check if recovery is actually needed
+    const needsRecovery = matches.some(m => {
+
+      const kickoff = m.kickoff ? Date.parse(m.kickoff) : 0;
+
+      if (!kickoff) return false;
+
+      if (kickoff > Date.now()) return false;
+
+      const status = String(m.status || "").toUpperCase();
+
+      return !isTerminal(status);
+
+    });
+
+    if (!needsRecovery) {
       continue;
     }
 
-    allClosed = false;
-    break;
+    try {
+
+      const res = await fetch(
+        `${ESPN_BASE}/${slug}/scoreboard`
+      );
+
+      const json = await res.json();
+      const events = json.events || [];
+
+      // build fast lookup
+      const index = new Map(
+        events.map(e => [e.id, e])
+      );
+
+      for (const match of matches) {
+
+        const event = index.get(match.id);
+        if (!event) continue;
+
+        const normalized = normalize(event, slug);
+        if (!normalized) continue;
+
+        if (
+          normalized.scoreHome !== match.scoreHome ||
+          normalized.scoreAway !== match.scoreAway ||
+          normalized.status !== match.status
+        ) {
+          Object.assign(match, normalized);
+          changed = true;
+        }
+      }
+
+    } catch (_) {}
+
   }
 
-  if (!allClosed) return;
+  return changed;
+  }
+async function finalizeDay(env, day) {
 
-  console.log("[finalize] closing day", day);
+  const { staging, final } = keysForDay(day);
 
-  await putJson(env, final, data);
+  // ---------------------------------
+  // LOAD STAGING
+  // ---------------------------------
+  const stagingData = await getJson(env, staging);
 
-  // cleanup staging once finalized (prevents KV trash)
-  try { await env.AIML_INGESTION_KV.delete(staging); } catch (_) {}
+  if (!stagingData || !stagingData.matches?.length) {
+    console.log("[finalize] no staging yet", day);
+    return;
+  }
+
+  const data = stagingData;
+  const matches = data.matches || [];
+
+  if (!matches.length) {
+    console.log("[finalize] empty dataset", day);
+    return;
+  }
+
+  // ---------------------------------
+  // FT RECOVERY (SAFE)
+  // ---------------------------------
+  try {
+    const recovered = await recoverMissingFT(env, day, data);
+    if (recovered) {
+      await putJson(env, staging, data);
+    }
+  } catch (_) {}
+
+  // ---------------------------------
+  // FINALIZE VALIDATION
+  // ---------------------------------
+
+  let terminalFound = false;
+  const filtered = [];
+
+  for (const m of matches) {
+
+    const status = String(m.status || "").toUpperCase();
+
+    // ---------------------------------
+    // LIVE MATCH → BLOCK FINALIZE
+    // ---------------------------------
+    if (
+      status.includes("LIVE") ||
+      status.includes("HALF") ||
+      status.includes("IN_PROGRESS") ||
+      status.includes("SECOND_HALF")
+    ) {
+      console.log(
+        "[finalize] blocked — live match",
+        day,
+        "match:",
+        m.id,
+        "status:",
+        status
+      );
+      return;
+    }
+
+    // ---------------------------------
+    // INTERRUPTED MATCHES
+    // (ignore until they appear again)
+    // ---------------------------------
+    if (
+      status.includes("INTERRUPTED") ||
+      status.includes("SUSPENDED") ||
+      status.includes("ABANDONED")
+    ) {
+      console.log(
+        "[finalize] ignoring interrupted match",
+        day,
+        m.id
+      );
+      continue;
+    }
+
+    // ---------------------------------
+    // TERMINAL MATCHES
+    // ---------------------------------
+    if (
+      status.includes("FINAL") ||
+      status.includes("FULL_TIME") ||
+      status.includes("AET") ||
+      status.includes("PEN") ||
+      status.includes("POSTPONED") ||
+      status.includes("CANCEL")
+    ) {
+      terminalFound = true;
+      filtered.push(m);
+      continue;
+    }
+
+    // ---------------------------------
+    // FUTURE MATCHES → IGNORE
+    // ---------------------------------
+    const kickoff = m.kickoff ? Date.parse(m.kickoff) : 0;
+
+    if (kickoff && kickoff > Date.now()) {
+      filtered.push(m);
+      continue;
+    }
+
+    // ---------------------------------
+    // UNKNOWN / BAD STATUS
+    // ignore for safety
+    // ---------------------------------
+    console.log(
+      "[finalize] skipping unresolved match",
+      day,
+      m.id,
+      status
+    );
+  }
+
+  // ---------------------------------
+  // REQUIRE AT LEAST ONE TERMINAL
+  // ---------------------------------
+  if (!terminalFound) {
+    console.log("[finalize] no terminal matches yet", day);
+    return;
+  }
+
+  // ---------------------------------
+  // WRITE FINAL SNAPSHOT
+  // ---------------------------------
+  await putJson(env, final, {
+    date: day,
+    matches: filtered
+  });
+
+  console.log(
+    "[finalize] closing day",
+    day,
+    "| matches:",
+    filtered.length
+  );
+}
+/* ================= RECONCILIATION ================= */
+
+async function reconcileRecentFinalized(env, ctx) {
+
+  const now = Date.now();
+  
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  const list = await kvListAll(env, "FIXTURES:DATE:");
+
+  for (const k of list) {
+
+    const day = k.name.split(":").pop();
+    const ts = Date.parse(day + "T00:00:00Z");
+    if (!ts) continue;
+
+    // only last 24h finalized days
+    if (now - ts > DAY_MS) continue;
+
+    const finalized = await getJson(env, k.name);
+    if (!finalized?.matches?.length) continue;
+
+    console.log("[reconcile] checking", day);
+
+    const leagues = new Map();
+
+    for (const m of finalized.matches) {
+      if (!leagues.has(m.leagueSlug)) {
+        leagues.set(m.leagueSlug, []);
+      }
+      leagues.get(m.leagueSlug).push(m);
+    }
+
+    for (const [slug, matches] of leagues.entries()) {
+
+      try {
+
+        const res = await fetch(
+          `${ESPN_BASE}/${slug}/scoreboard`
+        );
+
+        const data = await res.json();
+
+        const index = new Map(
+          (data.events || []).map(e => [e.id, e])
+        );
+
+        for (const match of matches) {
+
+          const event = index.get(match.id);
+          if (!event) continue;
+
+          const normalized = normalize(event, slug);
+          if (!normalized) continue;
+
+          if (
+            normalized.scoreHome !== match.scoreHome ||
+            normalized.scoreAway !== match.scoreAway ||
+            normalized.status !== match.status
+          ) {
+            console.log("[reconcile] correction", match.id);
+
+            Object.assign(match, normalized);
+
+            await queueIntelRefresh(env, ctx, match.id, match);
+          }
+
+        }
+
+      } catch (_) {}
+
+    }
+
+    await putJson(env, k.name, finalized);
+  }
 }
 
 /* ================= CLEANUP (KV + R2) ================= */
@@ -489,7 +1010,7 @@ async function cleanupR2(env) {
 
 async function writeHeartbeat(env, payload) {
   // keep it short-lived; dashboards / health endpoints consume this.
-  await env.AIML_INGESTION_KV.put(
+  if (false) await env.AIML_INGESTION_KV.put(
     "SCHEDULER:LAST_TICK",
     JSON.stringify(payload),
     { expirationTtl: 6 * 60 * 60 } // 6h
@@ -534,6 +1055,137 @@ async function handleFixturesRuntime(req, env) {
   return jsonResponse({ date, matches: filtered });
 }
 
+// ======================================================
+// SCHEDULER HEALTH ENDPOINT
+// ======================================================
+
+async function schedulerHealth(env) {
+
+  const out = {
+    ok: true,
+    days: []
+  };
+
+  try {
+
+    const list = await env.AIML_INGESTION_KV.list({
+      prefix: "FIXTURES:STAGING:DATE:"
+    });
+
+    for (const k of list.keys || []) {
+
+      const day = k.name.replace("FIXTURES:STAGING:DATE:", "");
+
+      const raw = await env.AIML_INGESTION_KV.get(k.name);
+
+      if (!raw) {
+        out.days.push({
+          day,
+          matches: 0,
+          leagues: []
+        });
+        continue;
+      }
+
+      const parsed = JSON.parse(raw);
+      const matches = parsed.matches || [];
+
+      const leagues = new Set();
+
+      for (const m of matches) {
+        if (m.leagueSlug) {
+          leagues.add(m.leagueSlug);
+        }
+      }
+
+      out.days.push({
+        day,
+        matches: matches.length,
+        leagues: Array.from(leagues).sort()
+      });
+
+    }
+
+    out.days.sort((a,b)=>Date.parse(a.day)-Date.parse(b.day));
+
+  } catch (e) {
+
+    return {
+      ok:false,
+      error:String(e)
+    };
+
+  }
+
+  return out;
+}
+
+// ======================================================
+// LEAGUE INGEST STATUS
+// ======================================================
+
+async function leagueIngestStatus(env) {
+
+  const result = {
+    ok: true,
+    leagues: {}
+  };
+
+  try {
+
+    const list = await env.AIML_INGESTION_KV.list({
+      prefix: "FIXTURES:STAGING:DATE:"
+    });
+
+    for (const k of list.keys || []) {
+
+      const day = k.name.replace("FIXTURES:STAGING:DATE:", "");
+
+      const raw = await env.AIML_INGESTION_KV.get(k.name);
+      if (!raw) continue;
+
+      const parsed = JSON.parse(raw);
+      const matches = parsed.matches || [];
+
+      for (const m of matches) {
+
+        const slug = m.leagueSlug;
+        if (!slug) continue;
+
+        const kickoff = Date.parse(m.kickoff || "");
+
+        if (!result.leagues[slug]) {
+          result.leagues[slug] = {
+            lastMatch: m.id,
+            kickoff,
+            updatedAt: Date.now()
+          };
+        }
+
+        if (kickoff > result.leagues[slug].kickoff) {
+          result.leagues[slug] = {
+            lastMatch: m.id,
+            kickoff,
+            updatedAt: Date.now()
+          };
+        }
+
+      }
+
+    }
+
+  } catch (e) {
+
+    return {
+      ok:false,
+      error:String(e)
+    };
+
+  }
+
+  return result;
+}
+
 /* ================= EXPORT ================= */
 
 export default {
@@ -548,14 +1200,58 @@ export default {
       return handleFixturesRuntime(req, env);
     }
 
+    if (url.pathname === "/scheduler-health") {
+      const data = await schedulerHealth(env);
+      return jsonResponse(data);
+    }
+
+    if (url.pathname === "/league-ingest-status") {
+      const data = await leagueIngestStatus(env);
+      return jsonResponse(data);
+    }
+
     return jsonResponse({ ok: false, error: "invalid_route" }, 404);
   },
 
+  // -----------------------------
+  // CRON SCHEDULED
+  // -----------------------------
   async scheduled(event, env, ctx) {
-    const started = Date.now();
-    console.log("[scheduler] cron tick");
+// ---------------------------------
+// EXECUTION LOCK (RACE-SAFE)
+// ---------------------------------
+const LOCK_KEY = "SCHEDULER:RUNNING";
+const RUN_ID = crypto.randomUUID();
 
-    ctx.waitUntil((async () => {
+// check existing lock
+const existing = await env.AIML_INGESTION_KV.get(LOCK_KEY);
+
+if (existing) {
+  console.log("[scheduler] skipped (already running)");
+  return;
+}
+
+// claim lock ownership
+await env.AIML_INGESTION_KV.put(
+  LOCK_KEY,
+  RUN_ID,
+  { expirationTtl: 300 }
+);
+
+// verify ownership (Cloudflare cron race protection)
+const confirm = await env.AIML_INGESTION_KV.get(LOCK_KEY);
+
+if (confirm !== RUN_ID) {
+  console.log("[scheduler] lost lock race — abort");
+  return;
+}
+
+  const started = Date.now();
+  console.log("[scheduler] cron tick");
+
+  ctx.waitUntil((async () => {
+
+    try {
 
       // -------------------
       // HEARTBEAT START
@@ -569,68 +1265,425 @@ export default {
         });
       } catch (_) {}
 
+      // -------------------
+      // INGEST WINDOW
+      // -------------------
+      await ingestUTCWindow(env, ctx);
+
+      console.log("[scheduler] ingest done");
+
+      // -------------------
+      // STAGING STATUS PROBE (TODAY)
+      // -------------------
       try {
-        // -------------------
-        // INGEST WINDOW
-        // -------------------
-        await ingestUTCWindow(env, ctx);
-        console.log("[scheduler] ingest done");
+        const todayAthens = dayKeyTZ(ATHENS_TZ);
+        const todayKey = `FIXTURES:STAGING:DATE:${todayAthens}`;
 
-        // -------------------
-        // SAFE FINALIZE WINDOW
-        // -------------------
-        const now = new Date();
+        const todayData = await env.AIML_INGESTION_KV.get(todayKey);
 
-        const daysToCheck = [
-          dayKeyTZ(ATHENS_TZ, shiftUTC(now, -2)),
-          dayKeyTZ(ATHENS_TZ, shiftUTC(now, -1)),
-          dayKeyTZ(ATHENS_TZ, now)
-        ];
+        if (!todayData) {
+          console.log("[staging status]", todayAthens, "empty");
+        } else {
+          const parsed = JSON.parse(todayData);
 
-        for (const day of daysToCheck) {
-          try {
-            console.log("[scheduler] finalize check", day);
-            await finalizeDay(env, day);
-          } catch (e) {
-            console.error("[scheduler] finalize failed", day, e);
-          }
+          console.log(
+            "[staging status]",
+            todayAthens,
+            "matches:",
+            parsed.matches?.length || 0
+          );
         }
-
-        // -------------------
-        // CLEANUP
-        // -------------------
-        await cleanupKV(env);
-        await cleanupR2(env);
-
-        const finished = Date.now();
-
-        await writeHeartbeat(env, {
-          ts: finished,
-          iso: new Date(finished).toISOString(),
-          ok: true,
-          stage: "done",
-          ms: finished - started
-        });
-
-        console.log("[scheduler] done");
-
-      } catch (err) {
-        console.error("[scheduler] cron error", err);
-
-        const finished = Date.now();
-
-        try {
-          await writeHeartbeat(env, {
-            ts: finished,
-            iso: new Date(finished).toISOString(),
-            ok: false,
-            stage: "error",
-            ms: finished - started,
-            error: String(err?.message || err)
-          });
-        } catch (_) {}
+      } catch (_) {
+        console.log("[staging status] probe failed");
       }
 
-    })());
+      // -------------------
+      // AUTO DISCOVER STAGING DAYS
+      // -------------------
+      const daysToCheck = [];
+
+      const list = await kvListAll(env, "FIXTURES:STAGING:DATE:");
+
+      for (const key of list) {
+        const day = key.name.replace("FIXTURES:STAGING:DATE:", "");
+        daysToCheck.push(day);
+      }
+
+       // oldest → newest
+      daysToCheck.sort((a, b) => Date.parse(a) - Date.parse(b));
+
+      for (const day of daysToCheck) {
+
+        // skip future days
+        if (day > todayKey) {
+          console.log("[finalize] skip future day", day);
+          continue;
+        }
+
+        try {
+          console.log("[scheduler] finalize check", day);
+          await finalizeDay(env, day);
+        } catch (e) {
+          console.error("[scheduler] finalize failed", day, e);
+        }
+      }
+
+      // -------------------
+      // RECONCILE
+      // -------------------
+      await reconcileRecentFinalized(env, ctx);
+
+// ------------------------------------------------------------
+// CLEAN OLD LIVE INTEL SNAPSHOTS
+// ------------------------------------------------------------
+try {
+
+  const list = await env.AI_STATE.list({
+    prefix: "intel/live/"
+  });
+
+  const now = Date.now();
+  const MAX_AGE = 24 * 60 * 60 * 1000; // 24h
+
+  for (const obj of list.objects || []) {
+
+    const uploaded =
+      obj.uploaded ? new Date(obj.uploaded).getTime() : 0;
+
+    if (!uploaded) continue;
+
+    const age = now - uploaded;
+
+    if (age > MAX_AGE) {
+
+      await env.AI_STATE.delete(obj.key);
+
+      console.log("[cleanup] removed stale live intel", obj.key);
+
+    }
+
   }
+
+} catch (e) {
+
+  console.log("[cleanup] live intel cleanup failed", e);
+
+}
+
+// =====================================================
+// VALUE DAILY ORCHESTRATION (FINAL PRODUCTION VERSION)
+// =====================================================
+try {
+
+  const today = dayKeyTZ(ATHENS_TZ);
+  const yesterday = dayKeyTZ(
+    ATHENS_TZ,
+    new Date(Date.now() - 86400000)
+  );
+
+  const DAILY_FLAG = `VALUE:BUILT:${today}`;
+  const COOLDOWN_KEY = "VALUE:COOLDOWN";
+
+  // already executed today → silent exit
+  const alreadyBuilt =
+    await env.AIML_INGESTION_KV.get(DAILY_FLAG);
+
+  if (!alreadyBuilt) {
+
+    // cooldown guard
+    const cooldown =
+      await env.AIML_INGESTION_KV.get(COOLDOWN_KEY);
+
+    if (cooldown) {
+      console.log("[value] cooldown active");
+    } else {
+
+      const todayStagingKey =
+        `FIXTURES:STAGING:DATE:${today}`;
+
+      const yesterdayFinalKey =
+        `FIXTURES:DATE:${yesterday}`;
+
+      const todayStagingRaw =
+        await env.AIML_INGESTION_KV.get(todayStagingKey);
+
+      const yesterdayFinal =
+        await env.AIML_INGESTION_KV.get(yesterdayFinalKey);
+
+      // ---------------------------
+      // CONDITIONS CHECK
+      // ---------------------------
+      if (todayStagingRaw && yesterdayFinal) {
+
+        const parsed = JSON.parse(todayStagingRaw);
+        const matches = parsed.matches || [];
+
+        if (matches.length === 0) {
+          console.log("[value] staging empty");
+        } else {
+
+          // ---------------------------------
+          // GLOBAL FOOTBALL DAY COMPLETION
+          // (NO LIVE MATCHES ANYWHERE)
+          // ---------------------------------
+          const liveExists = matches.some(m => {
+            const s = String(m.status || "");
+            return (
+              s.includes("HALF") ||
+              s.includes("LIVE") ||
+              s.includes("IN_PROGRESS") ||
+              s.includes("SECOND_HALF")
+            );
+          });
+
+          if (liveExists) {
+            console.log("[value] waiting — live matches detected");
+          } else {
+
+            // ---------------------------------
+            // READY WINDOW DETECTED
+            // ---------------------------------
+            console.log(
+              "[value] READY WINDOW DETECTED ✔",
+              "| today:", today,
+              "| yesterday finalized:", yesterday,
+              "| matches:", matches.length
+            );
+
+            // async trigger (API VALUE RUN)
+            fetch(
+              `https://aimatchlab-api.pierros1402.workers.dev/value/run?date=${today}`,
+              { method: "POST" }
+            ).catch(()=>{});
+
+            console.log("[value] FIRST BUILD TRIGGER SENT");
+
+            // daily lock
+            await env.AIML_INGESTION_KV.put(
+              DAILY_FLAG,
+              Date.now().toString()
+            );
+
+            // cooldown (5 minutes)
+            await env.AIML_INGESTION_KV.put(
+              COOLDOWN_KEY,
+              "1",
+              { expirationTtl: 300 }
+            );
+
+            console.log("[value] pipeline synchronized ✔");
+          }
+        }
+      } else {
+        console.log("[value] waiting conditions...");
+      }
+    }
+  }
+
+} catch (e) {
+  console.log("[value] orchestration failed");
+}
+// -------------------
+// CLEANUP (hourly window)
+// -------------------
+const now = new Date();
+const hour = now.getUTCHours();
+const day = now.toISOString().slice(0,10);
+
+const CLEANUP_FLAG = `CLEANUP:RAN:${day}:${hour}`;
+
+// run cleanup twice per day (once per window only)
+if (hour === 3 || hour === 15) {
+
+  const alreadyRan =
+    await env.AIML_INGESTION_KV.get(CLEANUP_FLAG);
+
+  if (alreadyRan) {
+    console.log("[scheduler] cleanup already executed");
+  } else {
+
+    await env.AIML_INGESTION_KV.put(
+      CLEANUP_FLAG,
+      "1",
+      { expirationTtl: 7200 } // 2h safety
+    );
+  }
+
+  // =====================================================
+  // FIXTURES MONTH ARCHIVE (FOOTBALL SAFE)
+  // =====================================================
+  try {
+
+    const list = await env.AIML_INGESTION_KV.list({
+      prefix: "FIXTURES:DATE:"
+    });
+
+    const months = {};
+    const today = dayKeyTZ(ATHENS_TZ);
+
+    for (const k of list.keys || []) {
+
+      const day = k.name.split(":").pop();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+      if (day >= today) continue;
+
+      const month = day.slice(0, 7);
+      const data = await getJson(env, k.name);
+      if (!data?.matches?.length) continue;
+
+      const notClosed = data.matches.some(m => {
+        const s = String(m.status || "").toUpperCase();
+        return !(
+          s.includes("FINAL") ||
+          s.includes("FT") ||
+          s.includes("POSTPONED") ||
+          s.includes("CANCELLED")
+        );
+      });
+
+      if (notClosed) continue;
+
+      months[month] ??= {};
+      months[month][day] = data;
+    }
+
+    for (const month of Object.keys(months)) {
+
+      const monthKey = `FIXTURES:MONTH:${month}`;
+
+// -----------------------------------
+// SKIP IF MONTH ALREADY ARCHIVED
+// -----------------------------------
+      const existingMonth =
+        await env.AIML_INGESTION_KV.get(monthKey);
+
+      if (existingMonth) {
+        console.log("[archive] fixtures month exists — skip", month);
+        continue;
+      }
+
+      await putJson(env, monthKey, {
+        month,
+        days: months[month]
+      });
+
+      console.log("[archive] fixtures month built", month);
+
+      for (const day of Object.keys(months[month])) {
+        await env.AIML_INGESTION_KV.delete(
+          `FIXTURES:DATE:${day}`
+        );
+      }
+    }
+    } catch (_) {
+      console.log("[archive] fixtures failed");
+    }
+  // =====================================================
+  // VALUE MONTH ARCHIVE
+  // =====================================================
+  try {
+
+    const prefixes = [
+      "VALUE:DATE:",
+      "VALUE:STAT:DATE:",
+      "VALUE:SUMMARY:",
+      "VALUE:PICK:"
+    ];
+
+    const today = dayKeyTZ(ATHENS_TZ);
+    const months = {};
+
+    for (const prefix of prefixes) {
+
+      const list =
+        await env.AIML_INGESTION_KV.list({ prefix });
+
+      for (const k of list.keys || []) {
+
+        const parts = k.name.split(":");
+        const date =
+          parts.find(p => /^\d{4}-\d{2}-\d{2}$/.test(p));
+
+        if (!date || date >= today) continue;
+
+        const raw =
+          await env.AIML_INGESTION_KV.get(k.name);
+        if (!raw) continue;
+
+        const month = date.slice(0,7);
+
+        months[month] ??= [];
+        months[month].push({
+          key: k.name,
+          value: JSON.parse(raw)
+        });
+      }
+    }
+
+    for (const month of Object.keys(months)) {
+
+      const monthKey = `VALUE:MONTH:${month}`;
+
+      await env.AIML_INGESTION_KV.put(
+        monthKey,
+        JSON.stringify({
+          ok: true,
+          month,
+          createdAt: Date.now(),
+          items: months[month]
+        })
+      );
+
+      console.log("[archive] value month built", month);
+
+      for (const item of months[month]) {
+        await env.AIML_INGESTION_KV.delete(item.key);
+      }
+    }
+
+  } catch (_) {
+    console.log("[archive] value failed");
+  }
+
+  await cleanupR2(env);
+}
+
+const finished = Date.now();
+
+await writeHeartbeat(env, {
+  ts: finished,
+  iso: new Date(finished).toISOString(),
+  ok: true,
+  stage: "done",
+  ms: finished - started
+});
+
+console.log("[scheduler] done");
+
+// ✅ RELEASE LOCK (SUCCESS)
+await env.AIML_INGESTION_KV.delete(LOCK_KEY);
+
+} catch (err) {
+
+  console.error("[scheduler] cron error", err);
+
+  const finished = Date.now();
+
+  try {
+    await writeHeartbeat(env, {
+      ts: finished,
+      iso: new Date(finished).toISOString(),
+      ok: false,
+      stage: "error",
+      ms: finished - started,
+      error: String(err?.message || err)
+    });
+  } catch (_) {}
+
+  // ✅ RELEASE LOCK (ERROR SAFE)
+  await env.AIML_INGESTION_KV.delete(LOCK_KEY);
+}
+
+})());
+}
 };

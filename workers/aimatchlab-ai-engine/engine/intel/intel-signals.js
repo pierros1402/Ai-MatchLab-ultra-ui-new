@@ -1,5 +1,5 @@
 // ============================================================
-// INTEL SIGNAL ENGINE (v1 deterministic)
+// INTEL SIGNAL ENGINE (v2 drift-based deterministic)
 // ============================================================
 
 export function generateSignals(prev, curr) {
@@ -10,41 +10,38 @@ export function generateSignals(prev, curr) {
   const d = curr.delta;
   if (!d) return signals;
 
+  const tempo = Number(d.tempoDeviationPct || 0);
+  const volatility = Number(d.volatilityDeviationPct || 0);
+  const control = Number(d.controlDeviationPct || 0);
+
+  const phase = String(curr?.meta?.phase || "PRE").toUpperCase();
+
+  // Signals only during LIVE phase
+  if (phase !== "LIVE") return signals;
+
   // ---------------- MOMENTUM SHIFT ----------------
-  if (d.momentumChange) {
+  if (Math.abs(tempo) >= 15) {
     signals.push({
       type: "MOMENTUM_SHIFT",
-      severity: "MEDIUM"
+      severity: Math.abs(tempo) >= 30 ? "HIGH" : "MEDIUM"
     });
   }
 
   // ---------------- CONTROL CHANGE ----------------
-  if (d.controlChange) {
+  if (Math.abs(control) >= 15) {
     signals.push({
       type: "CONTROL_CHANGE",
-      severity: "MEDIUM"
+      severity: Math.abs(control) >= 30 ? "HIGH" : "MEDIUM"
     });
   }
 
   // ---------------- VOLATILITY SPIKE ----------------
-  if (d.volatilityChange?.includes("HIGH")) {
+  if (volatility >= 25) {
     signals.push({
       type: "VOLATILITY_SPIKE",
-      severity: "HIGH"
+      severity: volatility >= 40 ? "HIGH" : "MEDIUM"
     });
   }
 
-  // ---------------- GOAL EVENT ----------------
-  if (d.scoreChange) {
-    signals.push({
-      type: "GOAL_EVENT",
-      severity: "HIGH"
-    });
-  }
-  signals.push({
-    type: "DEBUG_SIGNAL",
-    importance: "HIGH",
-    ts: Date.now()
-  });
   return signals;
 }

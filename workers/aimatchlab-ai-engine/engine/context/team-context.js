@@ -7,6 +7,27 @@
 // ============================================================
 
 export async function buildTeamContext(env, league, season, team) {
+// ------------------------------------------------------------
+// TEAM CONTEXT CACHE
+// ------------------------------------------------------------
+const cacheKey =
+  `team-context/${league}/${season}/${team}.json`;
+
+try {
+
+  const cached = await env.AI_STATE.get(cacheKey);
+
+  if (cached) {
+    const data = JSON.parse(await cached.text());
+
+    // cache valid for 6 hours
+    if (Date.now() - (data.generatedAt || 0) < 21600000) {
+      return data;
+    }
+
+  }
+
+} catch (_) {}
   const prefix = `league/${league}/${season}/matches/`;
 
   let cursor = undefined;
@@ -31,7 +52,13 @@ export async function buildTeamContext(env, league, season, team) {
       }
 
       if (!match) continue;
-      if (match.status !== "STATUS_FINAL" && match.status !== "FINAL") continue;
+      const status = String(match.status || "").toUpperCase();
+
+      if (
+        !status.includes("FINAL") &&
+        !status.includes("FULL_TIME") &&
+        !status.includes("AET")
+      ) continue;
 
       if (match.home === team || match.away === team) {
         matches.push(match);
@@ -107,7 +134,8 @@ export async function buildTeamContext(env, league, season, team) {
     weight++;
   }
 
-  const maxMomentum = 3 * 5 * 5 / 2; // weighted max
+  const n = last5.length || 1;
+  const maxMomentum = 3 * n * (n + 1) / 2;
   const momentumIndex = +(momentumScore / maxMomentum).toFixed(2);
 
   // ------------------------------------------------------------
@@ -118,7 +146,7 @@ export async function buildTeamContext(env, league, season, team) {
 
   const variance =
     goalTotals.reduce((sum, val) => sum + Math.pow(val - avgGoals, 2), 0) /
-    total;
+    (total || 1);
 
   const volatilityIndex = +Math.sqrt(variance).toFixed(2);
 
@@ -159,27 +187,39 @@ export async function buildTeamContext(env, league, season, team) {
   if (recentPoints > previousPoints) formTrend = "IMPROVING";
   if (recentPoints < previousPoints) formTrend = "DECLINING";
 
-  return {
-    ok: true,
-    league,
-    season,
-    team,
-    matches: total,
+  const result = {
+  ok: true,
+  league,
+  season,
+  team,
+  matches: total,
 
-    goalsForRate: +(gf / total).toFixed(2),
-    goalsAgainstRate: +(ga / total).toFixed(2),
-    winRate: +(wins / total).toFixed(2),
-    drawRate: +(draws / total).toFixed(2),
-    lossRate: +(losses / total).toFixed(2),
-    over25Rate: +(over25 / total).toFixed(2),
-    bttsRate: +(btts / total).toFixed(2),
+  goalsForRate: +(gf / total).toFixed(2),
+  goalsAgainstRate: +(ga / total).toFixed(2),
+  winRate: +(wins / total).toFixed(2),
+  drawRate: +(draws / total).toFixed(2),
+  lossRate: +(losses / total).toFixed(2),
+  over25Rate: +(over25 / total).toFixed(2),
+  bttsRate: +(btts / total).toFixed(2),
 
-    cleanSheetRate: +(cleanSheets / total).toFixed(2),
-    failToScoreRate: +(failToScore / total).toFixed(2),
+  cleanSheetRate: +(cleanSheets / total).toFixed(2),
+  failToScoreRate: +(failToScore / total).toFixed(2),
 
-    momentumIndex,
-    volatilityIndex,
-    consistencyScore,
-    formTrend
-  };
+  momentumIndex,
+  volatilityIndex,
+  consistencyScore,
+  formTrend
+};
+
+result.generatedAt = Date.now();
+
+try {
+  await env.AI_STATE.put(
+    cacheKey,
+    JSON.stringify(result),
+    { httpMetadata:{ contentType:"application/json" } }
+  );
+} catch (_) {}
+
+return result;
 }

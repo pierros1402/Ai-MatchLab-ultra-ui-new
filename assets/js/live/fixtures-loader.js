@@ -16,6 +16,13 @@
 // --------------------------------------------------
 const LIVE_DEBUG = false;
 
+// -------------------------------------
+// SIGNAL DEDUPE CACHE (in-memory)
+// -------------------------------------
+const __AIML_SIGNAL_CACHE = new Map();
+// key: matchId
+// value: lastSignalSignature
+
 function liveLog(...args)  { if (LIVE_DEBUG) console.log(...args); }
 function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
 
@@ -144,7 +151,41 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
           if (typeof window.emit === "function") {
             window.emit("live:update", payload);
           }
+// -------------------------------------
+// INTEL SIGNAL FETCH (LIGHTWEIGHT)
+// -------------------------------------
+try {
 
+  for (const m of liveMatches) {
+
+    fetch(
+      `${getBaseUrl()}/ai/match-intel?id=${encodeURIComponent(m.id)}`,
+      { cache: "no-store" }
+    )
+    .then(r => r.json())
+    .then(data => {
+
+      if (data?.signals?.length) {
+         const signature = JSON.stringify(data.signals);
+         const prev = __AIML_SIGNAL_CACHE.get(m.id);
+         // only emit if changed
+         if (prev !== signature) {
+          __AIML_SIGNAL_CACHE.set(m.id, signature);
+           window.dispatchEvent(
+             new CustomEvent("intel:signal", {
+               detail: { 
+                 matchId: m.id,
+                 signals: data.signals
+               }  
+             })
+           );
+         }
+       }
+    })
+    .catch(()=>{});
+  }
+
+} catch (_) {}
           liveLog("[LIVE] realtime source", liveMatches.length);
           return payload;
         }
@@ -185,7 +226,45 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
       if (typeof window.emit === "function") {
         window.emit("live:update", payload);
       }
+// -------------------------------------
+// INTEL SIGNAL FETCH (LIGHTWEIGHT)
+// -------------------------------------
+try {
 
+  for (const m of liveMatches) {
+
+    fetch(
+      `${getBaseUrl()}/ai/match-intel?id=${encodeURIComponent(m.id)}`,
+      { cache: "no-store" }
+    )
+    .then(r => r.json())
+    .then(data => {
+
+      if (data?.signals?.length) {
+
+        const signature = JSON.stringify(data.signals);
+        const prev = __AIML_SIGNAL_CACHE.get(m.id);
+
+        if (prev !== signature) {
+
+          __AIML_SIGNAL_CACHE.set(m.id, signature);
+
+          window.dispatchEvent(
+            new CustomEvent("intel:signal", {
+              detail: {
+                matchId: m.id,
+                signals: data.signals
+              }
+            })
+          );
+        }
+      }
+
+    })
+    .catch(()=>{});
+  }
+
+} catch (_) {}
       liveLog("[LIVE] fallback snapshot", liveMatches.length);
       return payload;
 

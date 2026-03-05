@@ -164,9 +164,6 @@
 
   document.addEventListener("active-leagues:updated", function (e) {
 
-    // ignore legacy event if snapshot system is active
-    if (window.__AIML_SNAPSHOT?.live) return;
-
     try {
       render(e?.detail || null);
     } catch (err) {
