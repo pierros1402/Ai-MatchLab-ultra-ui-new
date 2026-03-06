@@ -37,10 +37,21 @@
   }
 
   function sortMatches(a, b) {
+
+    const aFinal = isFinalStatus(a.status);
+    const bFinal = isFinalStatus(b.status);
+
+  // PRE first, FT last
+    if (aFinal !== bFinal) {
+      return aFinal ? 1 : -1;
+    }
+
     const ta = Number(a.kickoff_ms || 0);
     const tb = Number(b.kickoff_ms || 0);
+
     if (ta !== tb) return ta - tb;
-    return String(a.home || "").localeCompare(String(b.home || ""));
+
+    return 0;
   }
 
   function syncSaved(items) {
@@ -183,18 +194,27 @@
     syncSaved(window.getSavedMatches ? window.getSavedMatches() : []);
   } catch {}
 // --------------------------------------------------
-// GLOBAL SNAPSHOT SYNC (LIVE MASTER SOURCE)
+// GLOBAL SNAPSHOT SYNC (LIVE + TODAY DATASET)
 // --------------------------------------------------
 if (window.on) {
   on("snapshot:update", snap => {
 
-    if (!snap?.live?.matches) return;
-
     try {
 
-      const payload = { matches: snap.live.matches };
+      let matches = [];
 
-      // cache locally (same pattern as TODAY)
+      if (window.AIML_FIXTURES_TODAY?.matches?.length) {
+        matches = window.AIML_FIXTURES_TODAY.matches;
+      } else if (snap?.live?.matches?.length) {
+        matches = snap.live.matches;
+      }
+
+      if (!matches.length) {
+        matches = LAST_MATCHES || [];
+      }
+
+      const payload = { matches };
+
       window.__AIML_LAST_ACTIVE = payload;
 
       render(payload);
@@ -202,10 +222,22 @@ if (window.on) {
     } catch (err) {
       console.error("[active snapshot sync]", err);
     }
+
   });
 }
   if (window.__AIML_LAST_ACTIVE) {
     render(window.__AIML_LAST_ACTIVE);
   }
+// ----------------------------------
+// INITIAL DATASET FROM TODAY PANEL
+// ----------------------------------
+if (window.AIML_FIXTURES_TODAY?.matches?.length) {
 
+  const payload = { matches: window.AIML_FIXTURES_TODAY.matches };
+
+  window.__AIML_LAST_ACTIVE = payload;
+
+  render(payload);
+
+}
 })();

@@ -220,7 +220,24 @@ async function fetchLeagueUTC(slug, date) {
         return { events: [] };
       }
 
-      data = await fallbackRes.json();
+      const fallbackData = await fallbackRes.json();
+
+      const targetDay = date;
+
+      const filtered = (fallbackData.events || []).filter(e => {
+
+        const kickoff =
+          e.date ||
+          e.competitions?.[0]?.date;
+
+        if (!kickoff) return false;
+
+        const d = kickoff.slice(0,10);
+
+        return d === targetDay;
+      });
+
+      data = { events: filtered };
     }
 
     return data;
@@ -285,6 +302,16 @@ for (const slug of PRIORITY) {
       if (!m) continue;
 
       const day = athensDayFromKickoff(m.kickoff);
+
+      const today = dayKeyTZ(ATHENS_TZ);
+
+      const diff =
+        (Date.parse(day) - Date.parse(today)) / 86400000;
+
+      // keep only -3 to +3 days
+      if (diff < - 7|| diff > 7) {
+        continue;
+      }
       const { staging } = keysForDay(day);
 
       bucketMaps[staging] ??= new Map();
@@ -315,14 +342,17 @@ if (idx >= totalLeagues) idx = 0;
 
 const slice = [];
 
-for (let i = 0; i < totalLeagues && slice.length < CHUNK_SIZE; i++) {
+let i = 0;
+
+while (slice.length < CHUNK_SIZE && i < totalLeagues * 2) {
 
   const slug = LEAGUE_SEEDS[(idx + i) % totalLeagues];
 
-  // skip priority leagues (already ingested)
-  if (PRIORITY.includes(slug)) continue;
+  if (!PRIORITY.includes(slug)) {
+    slice.push(slug);
+  }
 
-  slice.push(slug);
+  i++;
 }
 
 console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
@@ -412,11 +442,11 @@ try {
 const stageMap = new Map();
 
 // ----------------------------------
+// ----------------------------------
 // keep previous matches
 // ----------------------------------
 for (const m of existingStage.matches || []) {
 
-  // keep only matches that still belong to this day
   const matchDay = athensDayFromKickoff(m.kickoff);
 
   if (matchDay !== stagingKey.split(":").pop()) {
@@ -424,7 +454,13 @@ for (const m of existingStage.matches || []) {
   }
 
   if (!bucketMaps[stagingKey].has(m.id)) {
-    stageMap.set(m.id, m);
+
+    const kickoff = Date.parse(m.kickoff || "");
+
+    if (kickoff && kickoff > Date.now() - 48 * 60 * 60 * 1000) {
+      stageMap.set(m.id, m);
+    }
+
   }
 
 }
@@ -621,7 +657,7 @@ async function recoverMissingFT(env, day, data) {
 
       if (!kickoff) return false;
 
-      if (kickoff > Date.now()) return false;
+      if (kickoff > Date.now() + 3 * 60 * 60 * 1000) return false;
 
       const status = String(m.status || "").toUpperCase();
 
@@ -792,10 +828,23 @@ async function finalizeDay(env, day) {
   // ---------------------------------
   // REQUIRE AT LEAST ONE TERMINAL
   // ---------------------------------
-  if (!terminalFound) {
+if (!terminalFound) {
+
+  const allFinished = matches.every(m => {
+    const s = String(m.status || "").toUpperCase();
+    return (
+      s.includes("POSTPONED") ||
+      s.includes("CANCEL") ||
+      s.includes("ABANDONED") ||
+      s.includes("SUSPENDED")
+    );
+  });
+
+  if (!allFinished) {
     console.log("[finalize] no terminal matches yet", day);
     return;
   }
+}
 
   // ---------------------------------
   // WRITE FINAL SNAPSHOT
@@ -1277,6 +1326,7 @@ if (confirm !== RUN_ID) {
       // -------------------
       try {
         const todayAthens = dayKeyTZ(ATHENS_TZ);
+
         const todayKey = `FIXTURES:STAGING:DATE:${todayAthens}`;
 
         const todayData = await env.AIML_INGESTION_KV.get(todayKey);
@@ -1315,7 +1365,7 @@ if (confirm !== RUN_ID) {
       for (const day of daysToCheck) {
 
         // skip future days
-        if (day > todayKey) {
+        if (day > todayAthens) {
           console.log("[finalize] skip future day", day);
           continue;
         }
@@ -1535,9 +1585,14 @@ if (hour === 3 || hour === 15) {
         const s = String(m.status || "").toUpperCase();
         return !(
           s.includes("FINAL") ||
+          s.includes("FULL_TIME") ||
           s.includes("FT") ||
+          s.includes("AET") ||
+          s.includes("PEN") ||
           s.includes("POSTPONED") ||
-          s.includes("CANCELLED")
+          s.includes("CANCEL") ||
+          s.includes("ABANDONED") ||
+          s.includes("SUSPENDED")
         );
       });
 

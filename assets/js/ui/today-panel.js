@@ -93,19 +93,46 @@
 
     LAST_MATCHES = Array.isArray(matches) ? matches : [];
 
+
     const startDay = startOfTodayLocalMs();
     const endDay = endOfTodayLocalMs();
 
+    const now = Date.now();
+
     const arr = LAST_MATCHES
       .filter(m => {
+
         const st = String(m.status || "").toUpperCase();
-        return (st.includes("SCHEDULED") || isLiveStatus(st));
+        const ko = Number(m.kickoff_ms || 0);
+
+        const isPre = st.includes("SCHEDULED");
+        const isLive = isLiveStatus(st);
+
+        // hide scheduled matches that should have started already
+        if (isPre && ko && ko < now) {
+          return false;
+        }
+
+        return isPre || isLive;
+
       })
       .filter(m => {
         const ko = Number(m.kickoff_ms || 0);
         return ko >= startDay && ko <= endDay;
       })
-      .sort((a, b) => (a.kickoff_ms || 0) - (b.kickoff_ms || 0));
+      .sort((a, b) => {
+
+        const ka = a.kickoff_ms || 0;
+        const kb = b.kickoff_ms || 0;
+
+        if (ka !== kb) return ka - kb;
+
+        const la = (a.leagueName || a.leagueSlug || "").toLowerCase();
+        const lb = (b.leagueName || b.leagueSlug || "").toLowerCase();
+
+        return la.localeCompare(lb);
+
+      });
 
     if (!arr.length) {
       panel.innerHTML = "<div class='empty'>Δεν υπάρχουν αγώνες σήμερα</div>";
@@ -120,7 +147,6 @@
       const time = fmtTime(m.kickoff_ms);
 
       if (time !== lastTime) {
-        lastLeague = null;
         lastTime = time;
       }
 
@@ -248,13 +274,30 @@
     }
 
       const hasLive = matches.some(m => isLiveStatus(m.status));
+
       if (hasLive) {
-        if (!timer) timer = setInterval(load, REFRESH_MS);
+
+        // If live snapshot exists, rely on event updates
+        if (window.__AIML_SNAPSHOT?.live?.matches?.length) {
+
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
+
+        } else {
+
+          if (!timer) timer = setInterval(load, REFRESH_MS);
+
+        }
+
       } else {
+
         if (timer) {
           clearInterval(timer);
           timer = null;
         }
+
       }
 
     } catch (e) {
