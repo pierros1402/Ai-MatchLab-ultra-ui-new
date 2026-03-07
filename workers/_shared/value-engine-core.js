@@ -18,21 +18,6 @@ export async function runValueEngineCore(env, date, options = {}) {
     }
   }
 
-  let fixtures =
-    await env.AIML_INGESTION_KV.get(`FIXTURES:DATE:${date}`, { type: "json" });
-
-  if (!fixtures) {
-    fixtures =
-      await env.AIML_INGESTION_KV.get(
-        `FIXTURES:STAGING:DATE:${date}`,
-        { type: "json" }
-      );
-  }
-
-  if (!fixtures?.matches?.length) {
-    return { ok: false, error: "no_fixtures", date };
-  }
-
   const matches = fixtures.matches;
 
   const items = [];
@@ -47,11 +32,11 @@ export async function runValueEngineCore(env, date, options = {}) {
   // MAIN LOOP
   // ============================================================
 
+  const month = date.slice(0, 7);
+
   for (const m of matches) {
 
     if (!m || m.status !== "STATUS_SCHEDULED") continue;
-
-    const month = date.slice(0, 7);
     const r2Key = `ai/context/${month}/${m.leagueSlug}/${m.id}/pre.json`;
 
     const aiRaw = await env.R2_INTEL.get(r2Key);
@@ -81,7 +66,12 @@ export async function runValueEngineCore(env, date, options = {}) {
       counters.noModeling++;
       continue;
     }
-
+    
+    // Skip weak modeling tiers early
+    if (modeling?.tier && modeling.tier < 4) {
+      counters.noModeling++;
+      continue;
+    }
 // ------------------------------------------------------------
 // LOAD MATCH INTEL (stability + drift fusion - SAFE)
 // ------------------------------------------------------------
@@ -120,8 +110,10 @@ try {
 
     if (!picks.length) continue;
 
-    for (const p of picks) {
-      let finalTier = p.tier;
+    // limit picks per match
+    const limitedPicks = picks.slice(0, 3);
+
+    for (const p of limitedPicks) {
 
 // -------------------------------
   // BASE SCORE
@@ -131,7 +123,7 @@ try {
   // -------------------------------
   // STRUCTURAL EDGE MODULATION
   // -------------------------------
-  if (modelEdgeScore < 20) {
+  if (modelEdgeScore < 18) {
     continue; // weak structural edge
   }
 
@@ -169,6 +161,11 @@ try {
 
   let finalScore = Math.round(baseScore * stability);
 
+  // reject weak borderline edges
+  if (finalScore < 72 && modelEdgeScore < 25) {
+    continue;
+  }
+
   items.push({
     matchId: m.id,
     leagueSlug: m.leagueSlug,
@@ -182,9 +179,10 @@ try {
     driftMagnitude: driftMag,
     modelEdgeScore
   });
+  }
+
 }
 counters.produced = items.length;
-}
 
 const payload = {
   date,
@@ -253,7 +251,18 @@ function buildPicksPolicyV3(modeling) {
   if (goalRisk === "chaotic") overSignals += 2;
   if (tempo === "fast") overSignals++;
   if (volatility === "high") overSignals++;
+  // =========================
+  // O1.5
+  // =========================
 
+  if (overSignals >= 2 && underSignals === 0) {
+    picks.push({
+      market: "O1.5",
+      side: "OVER",
+      percent: 78 + overSignals * 3,
+      tier: overSignals >= 3 ? "HIGH" : "MEDIUM"
+    });
+  }
   if (underSignals >= 2 && overSignals === 0) {
     picks.push({
       market: "O2.5",
@@ -271,19 +280,45 @@ function buildPicksPolicyV3(modeling) {
       tier: overSignals >= 3 ? "HIGH" : "MEDIUM"
     });
   }
-
   // =========================
-  // BTTS
+  // O3.5
   // =========================
 
-  if (goalRisk === "aggressive" || goalRisk === "chaotic") {
+  if (overSignals >= 3) {
     picks.push({
-      market: "BTTS",
-      side: "YES",
-      percent: volatility === "high" ? 86 : 80,
-      tier: volatility === "high" ? "HIGH" : "MEDIUM"
+      market: "O3.5",
+      side: "OVER",
+      percent: Math.min(88, 82 + overSignals * 3),
+      tier: overSignals >= 4 ? "HIGH" : "MEDIUM"
     });
   }
+
+  if (underSignals >= 3 && overSignals === 0) {
+    picks.push({
+      market: "O3.5",
+      side: "UNDER",
+      percent: 78 + underSignals * 3,
+      tier: underSignals >= 4 ? "HIGH" : "MEDIUM"
+    });
+  }
+// =========================
+// BTTS
+// =========================
+
+let bttsSignals = 0;
+
+if (goalRisk === "aggressive") bttsSignals++;
+if (goalRisk === "chaotic") bttsSignals += 2;
+if (volatility === "high") bttsSignals++;
+
+if (bttsSignals >= 2) {
+  picks.push({
+    market: "BTTS",
+    side: "YES",
+    percent: volatility === "high" ? 86 : 80,
+    tier: volatility === "high" ? "HIGH" : "MEDIUM"
+  });
+}
 
   // =========================
   // 1X2
@@ -298,7 +333,7 @@ function buildPicksPolicyV3(modeling) {
     });
   }
 
-  if (drawIndex >= 70 && volatility !== "high") {
+  if (drawIndex >= 80 && volatility === "low" && pressure !== "high") {
     picks.push({
       market: "1X2",
       side: "DRAW",
@@ -319,7 +354,17 @@ function resolveQualitativeConflicts(picks) {
 
   if (!picks.length) return picks;
 
-  let filtered = [...picks];
+  // remove duplicate picks (same market + side)
+  const unique = new Map();
+
+  for (const p of picks) {
+    const key = `${p.market}:${p.side}`;
+    if (!unique.has(key)) {
+      unique.set(key, p);
+    }
+  }
+
+  let filtered = Array.from(unique.values());;
 
   const hasUnder =
     filtered.find(p => p.market === "O2.5" && p.side === "UNDER");
@@ -338,6 +383,27 @@ function resolveQualitativeConflicts(picks) {
     filtered = filtered.filter(p => p.market !== "BTTS");
   }
 
-  return filtered;
+  // ------------------------------------------------------------
+  // KEEP STRONGEST PICK PER MARKET
+  // ------------------------------------------------------------
+  const bestByMarket = new Map();
+
+  for (const p of filtered) {
+
+    const prev = bestByMarket.get(p.market);
+
+    if (!prev) {
+      bestByMarket.set(p.market, p);
+      continue;
+    }
+
+    // choose stronger inference
+    if ((p.score ?? p.percent ?? 0) > (prev.score ?? prev.percent ?? 0)) {
+      bestByMarket.set(p.market, p);
+    }
+
+  }
+
+  return Array.from(bestByMarket.values());
 }
 

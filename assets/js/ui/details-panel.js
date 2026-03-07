@@ -128,7 +128,7 @@ let __aimlIntelWatcher = {
 async function fetchIntelHealth(matchId) {
   try {
     const url =
-      `${detailsBase()}/ai/intel-health?id=${encodeURIComponent(matchId)}`;
+      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/intel-health?id=${encodeURIComponent(matchId)}`;
 
     const res = await fetchJson(url, 5000);
 
@@ -1068,7 +1068,7 @@ let aiSignals = [];
 try {
 
   const intelUrl =
-    `${detailsBase()}/ai/match-intel?id=${encodeURIComponent(matchId)}`;
+    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(matchId)}`;
 
   const intelRes = await fetchJson(intelUrl, 7000);
 
@@ -1077,7 +1077,7 @@ try {
   }
 
   const sigUrl =
-    `${detailsBase()}/ai/intel-signals?id=${encodeURIComponent(matchId)}`;
+    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/intel-signals?id=${encodeURIComponent(matchId)}`;
 
   const sigRes = await fetchJson(sigUrl, 7000);
 

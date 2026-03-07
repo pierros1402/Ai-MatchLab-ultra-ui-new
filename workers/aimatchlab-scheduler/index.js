@@ -154,15 +154,6 @@ function normalize(event, slug) {
 
 // ================= ACTIVE LEAGUE FILTER =================
 async function shouldQueryLeague(env, slug, date) {
-
-  const key = `LEAGUE:ACTIVE:${slug}`;
-
-  const last = await env.AIML_INGESTION_KV.get(key);
-
-  if (!last) return true;
-
-  const diff = Date.now() - Number(last);
-
   return true;
 }
 // ================= 404 COOLDOWN =================
@@ -187,7 +178,7 @@ async function fetchLeagueUTC(slug, date = null) {
 
   try {
 
-    const espnDate = date.replaceAll("-", "");
+    const espnDate = date ? date.replaceAll("-", "") : null;
 
     // ---------- PRIMARY ----------
     const url =
@@ -206,7 +197,7 @@ async function fetchLeagueUTC(slug, date = null) {
     let data = await res.json();
 
     // ---------- FALLBACK ----------
-    if (!data?.events?.length) {
+    if (!data?.events?.length && date) {
 
       const fallbackUrl =
         `${ESPN_BASE}/${slug}/scoreboard?limit=300`;
@@ -246,15 +237,7 @@ async function fetchLeagueUTC(slug, date = null) {
   }
 }async function ingestUTCWindow(env, ctx) {
   
-  const now = new Date();
-  const utcDays = [
-    formatUTC(shiftUTC(now, -5)),
-    formatUTC(shiftUTC(now, -4)),
-    formatUTC(shiftUTC(now, -3)),
-    formatUTC(shiftUTC(now, -2)),
-    formatUTC(shiftUTC(now, -1)),
-    formatUTC(now)
-  ];
+  const now = new Date();   
 
    const bucketMaps = {};
    const processedLeagues = new Set();
@@ -272,28 +255,42 @@ const PRIORITY = [
 
 for (const slug of PRIORITY) {
 
-  processedLeagues.add(slug);
-
   if (!(await shouldRetryAfter404(env, slug))) {
     continue;
   }
 
-  const data = await fetchLeagueUTC(slug, formatUTC(new Date()));
+  let data = await fetchLeagueUTC(slug);
 
-  console.log("[priority ingest]", slug, !!data?.events?.length);
-
+  // fetch failed
   if (data === null) {
     await mark404(env, slug);
     continue;
   }
 
-  if (!data.events?.length) continue;
+  // invalid response
+  if (!data || !Array.isArray(data.events)) {
+    continue;
+  }
 
-  await env.AIML_INGESTION_KV.put(
-    `LEAGUE:ACTIVE:${slug}`,
-    Date.now().toString(),
-    { expirationTtl: 86400 }
-  );
+  if (!data.events.length) {
+    await new Promise(r => setTimeout(r, 120));
+    const retry = await fetchLeagueUTC(slug);
+
+    if (retry === null) {
+      await mark404(env, slug);
+      continue;
+    }
+
+    if (retry && Array.isArray(retry.events) && retry.events.length) {
+      data = retry;
+    }
+  }
+
+processedLeagues.add(slug);
+
+if (!data.events.length) {
+  continue;
+}  
 
   for (const event of data.events) {
 
@@ -301,7 +298,6 @@ for (const slug of PRIORITY) {
     if (!m) continue;
 
     const day = athensDayFromKickoff(m.kickoff);
-
     const today = dayKeyTZ(ATHENS_TZ);
 
     const diff =
@@ -310,11 +306,12 @@ for (const slug of PRIORITY) {
          Date.parse(today + "T00:00:00Z")) / 86400000
       );
 
-    if (diff < -7 || diff > 1) continue;
+    if (diff < -2 || diff > 3) continue;
 
     const { staging } = keysForDay(day);
 
     bucketMaps[staging] ??= new Map();
+    if (bucketMaps[staging].has(m.id)) continue;
     bucketMaps[staging].set(m.id, { ...m, dayKey: day });
 
   }
@@ -344,19 +341,22 @@ if (idx >= totalLeagues) idx = 0;
 
 const slice = [];
 
-let i = 0;
+let scanned = 0;
 
-while (slice.length < CHUNK_SIZE && i < totalLeagues) {
+while (slice.length < CHUNK_SIZE && scanned < totalLeagues) {
 
-  const slug = LEAGUE_SEEDS[(idx + i) % totalLeagues];
+  const slug = LEAGUE_SEEDS[(idx + scanned) % totalLeagues];
 
-  // skip priority leagues (handled separately)
   if (!PRIORITY.includes(slug)) {
     slice.push(slug);
   }
 
-  i++;
+  scanned++;
+
 }
+
+// advance pointer correctly
+idx = (idx + scanned) % totalLeagues;
 
 console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
 
@@ -369,49 +369,81 @@ for (const slug of slice) {
 
   if (processedLeagues.has(slug)) continue;
 
-  processedLeagues.add(slug);
-
   try {
+
     if (!(await shouldRetryAfter404(env, slug))) continue;
 
-    const data = await fetchLeagueUTC(slug, formatUTC(new Date()));
-    if (!data?.events?.length) {
-      await env.AIML_INGESTION_KV.put(
-        `LEAGUE:ACTIVE:${slug}`,
-        Date.now().toString(),
-        { expirationTtl: 86400 }
-      );
-    }
+    let data = await fetchLeagueUTC(slug);
 
     if (data === null) {
       await mark404(env, slug);
       continue;
     }
 
-    if (!data.events?.length) continue;
+    if (!data || !Array.isArray(data.events)) {
+      continue;
+    }
 
-    for (const event of data.events) {
+    // -----------------------------
+    // mark league as processed
+    // ONLY after valid response
+    // -----------------------------
+    processedLeagues.add(slug);
+
+    if (!data.events.length) {
+
+      await new Promise(r => setTimeout(r, 120));
+
+      const retry = await fetchLeagueUTC(slug);
+
+      if (retry === null) {
+        await mark404(env, slug);
+        continue;
+      }
+
+      if (retry && Array.isArray(retry.events) && retry.events.length) {
+        data = retry;
+      }
+
+    }
+
+    for (const event of data.events || []) {
 
       const m = normalize(event, slug);
       if (!m) continue;
 
       const day = athensDayFromKickoff(m.kickoff);
+      const today = dayKeyTZ(ATHENS_TZ);
+
+      const diff =
+        Math.floor(
+          (Date.parse(day + "T00:00:00Z") -
+           Date.parse(today + "T00:00:00Z")) / 86400000
+        );
+
+  // -----------------------------
+  // INGEST WINDOW GUARD
+  // -----------------------------
+      if (diff < -2 || diff > 3) continue;
+
       const { staging } = keysForDay(day);
 
       bucketMaps[staging] ??= new Map();
-      bucketMaps[staging].set(m.id, { ...m, dayKey: day });
+
+      if (bucketMaps[staging].has(m.id)) continue;
+
+      bucketMaps[staging].set(m.id, {
+        ...m,
+        dayKey: day
+      });
 
     }
 
   } catch (e) {
-
     console.log("[ingest] job failed", slug);
-
   }
 
 }
-// advance rotation pointer
-idx = (idx + slice.length) % totalLeagues;
 
 await env.AIML_INGESTION_KV.put(
   "INGEST:IDX",
@@ -422,8 +454,7 @@ console.log(
   "[ingest:health]",
   "nextIdx:", idx,
   "slice:", slice.length,
-  "priority:", PRIORITY.length,
-  "utcDays:", utcDays.length
+  "priority:", PRIORITY.length
 );
 
 if (!isMidnightWindow && idx === 0) {
@@ -463,7 +494,7 @@ for (const m of existingStage.matches || []) {
     bucketMaps[stagingKey].has(m.id);;
 
   // keep only if NOT replaced by new ingest
-  if (!replaced) {
+  if (!replaced && !stageMap.has(m.id)) {
     stageMap.set(m.id, m);
   }
 
@@ -504,11 +535,6 @@ if (writeNeeded) {
 
   await putJson(env, stagingKey, newSnapshot);
 
-  await env.AIML_INGESTION_KV.put(
-    SIG_KEY,
-    sig,
-    { expirationTtl: 86400 }
-  );
   __stagingSigCache.set(SIG_KEY, sig);
   console.log("[staging] updated", stagingKey);
 
@@ -517,14 +543,22 @@ if (writeNeeded) {
   console.log("[staging] unchanged", stagingKey);
 
 }
+
 // ✅ SAFE PLACE (after merge, before KV write)
+// --------------------------------------------------
+// MATCH CHANGE DETECTION (NO KV WRITES)
+// --------------------------------------------------
+
+let writeCount = 0;
+
 for (const m of bucketMaps[stagingKey].values()) {
+
+  if (writeCount >= 50) break;
+  writeCount++;
+
   try {
 
-    // ------------------------------------
-    // INDEX CHANGE GUARD (ANTI KV SPAM)
-    // ------------------------------------
-    const INDEX_SIG_KEY = `IDX:SIG:${m.id}`;
+    const sigKey = `SIG:${m.id}`;
 
     const newSig = [
       m.status,
@@ -533,34 +567,30 @@ for (const m of bucketMaps[stagingKey].values()) {
       m.minute
     ].join("|");
 
-    let prevSig = __indexSigCache.get(INDEX_SIG_KEY);
+    const prevSig = __indexSigCache.get(sigKey);
 
-    if (prevSig === undefined) {
-      prevSig = await env.AIML_INGESTION_KV.get(INDEX_SIG_KEY);
-      __indexSigCache.set(INDEX_SIG_KEY, prevSig);
-    }
-
-    // NOTHING CHANGED → skip ALL writes
+    // skip if no change
     if (prevSig === newSig) {
       continue;
     }
 
-// write index ONLY if match changed
-if (prevSig !== newSig) {
+    __indexSigCache.set(sigKey, newSig);
 
-  await env.AI_STATE.put(
-    `match-index/${m.id}.json`,
-    JSON.stringify({
-      league: m.leagueSlug,
-      season: "2025-2026",
-      updatedAt: Date.now()
-    })
-  );
-// ------------------------------------
-// TRIGGER AI INTEL REFRESH
-// ------------------------------------
-  try {
+    const memoryKey = `intel-memory/${m.id}/last.json`;
 
+    await env.AI_STATE.put(
+      memoryKey,
+      JSON.stringify({
+        id: m.id,
+        status: m.status,
+        scoreHome: m.scoreHome,
+        scoreAway: m.scoreAway,
+        minute: m.minute || null,
+        ts: Date.now()
+      })
+    );
+
+    // trigger AI refresh
     const phase = String(m.status || "").toUpperCase();
 
     const isLive =
@@ -582,102 +612,14 @@ if (prevSig !== newSig) {
 
     }
 
-  } catch (_) {}
+  } catch (e) {
+    console.log("[intel] update failed", m.id);
+  }
 
 }
 
-// ------------------------------------
-// INTEL MEMORY — EVOLUTION DETECTION
-// ------------------------------------
-const memoryKey = `intel-memory/${m.id}/last.json`;
+} 
 
-let prevState = null;
-
-try {
-  const raw = await env.AI_STATE.get(memoryKey);
-  if (raw) prevState = JSON.parse(raw);
-} catch (_) {}
-
-const classifyPhase = (status) => {
-  const s = String(status || "").toUpperCase();
-
-  if (
-    s.includes("FINAL") ||
-    s.includes("FULL_TIME") ||
-    s.includes("AET") ||
-    s.includes("PEN")
-  ) return "FINAL";
-
-  if (
-    s.includes("LIVE") ||
-    s.includes("HALF") ||
-    s.includes("IN_PROGRESS") ||
-    s.includes("SECOND_HALF")
-  ) return "LIVE";
-
-  return "PRE";
-};
-
-const prevPhase = prevState ? classifyPhase(prevState.status) : null;
-const newPhase = classifyPhase(m.status);
-
-// write evolution ONLY on phase change
-if (prevPhase && prevPhase !== newPhase) {
-
-  await env.AI_STATE.put(
-    `intel-memory/${m.id}/evolution.json`,
-    JSON.stringify({
-      id: m.id,
-      from: prevPhase,
-      to: newPhase,
-      ts: Date.now()
-    })
-  );
-
-  console.log("[intel] phase evolution", m.id, prevPhase, "→", newPhase);
-}
-// ------------------------------------
-// LIVE HEARTBEAT MEMORY
-// ------------------------------------
-if (newPhase === "LIVE" && prevSig !== newSig) {
-
-  await env.AI_STATE.put(
-    `intel-memory/${m.id}/live.json`,
-    JSON.stringify({
-      id: m.id,
-      minute: m.minute || null,
-      ts: Date.now()
-    })
-  );
-
-}
-// write state ONLY if match changed
-if (prevSig !== newSig) {
-
-  await env.AI_STATE.put(
-    memoryKey,
-    JSON.stringify({
-      id: m.id,
-      status: m.status,
-      scoreHome: m.scoreHome,
-      scoreAway: m.scoreAway,
-      minute: m.minute || null,
-      ts: Date.now()
-    })
-  );
-
-  await env.AIML_INGESTION_KV.put(
-    INDEX_SIG_KEY,
-    newSig,
-    { expirationTtl: 172800 }
-  );
-
-  __indexSigCache.set(INDEX_SIG_KEY, newSig);
-  }  
-
-  } catch (_) {}
-}
-}
 }
 /* ================= FINALIZE ================= */
 
@@ -920,10 +862,11 @@ async function finalizeDay(env, day) {
       status.includes("ABANDONED")
     ) {
       console.log(
-        "[finalize] ignoring interrupted match",
+        "[finalize] interrupted match kept",
         day,
         m.id
       );
+      filtered.push(m);
       continue;
     }
 
@@ -961,7 +904,7 @@ async function finalizeDay(env, day) {
 // =============================
 // ADD THIS BLOCK EXACTLY HERE
 // =============================
-if (!terminalFound) {
+if (!terminalFound && matches.length > 0) {
   console.log("[finalize] no terminal matches yet", day);
   return;
 }
@@ -1019,7 +962,9 @@ async function reconcileRecentFinalized(env, ctx) {
     if (!ts) continue;
 
     // only last 24h finalized days
-    if (now - ts > DAY_MS) continue;
+    const WINDOW = 7 * DAY_MS;
+
+    if (now - ts > WINDOW) continue;
 
     const finalized = await getJson(env, k.name);
     if (!finalized?.matches?.length) continue;
@@ -1577,6 +1522,19 @@ if (url.pathname === "/repair-day") {
   });
 }
 
+// ---------------------------------
+// FORCE INGEST (STAGING BUILD)
+// ---------------------------------
+if (url.pathname === "/ingest-now") {
+
+  await ingestUTCWindow(env, {});
+
+  return jsonResponse({
+    ok: true,
+    message: "ingest completed"
+  });
+}
+
     return jsonResponse({ ok:false, error:"invalid_route" }, 404);
 
   },
@@ -1598,12 +1556,10 @@ if (existing) {
   console.log("[scheduler] skipped (already running)");
   return;
 }
-
-// claim lock ownership
 await env.AIML_INGESTION_KV.put(
   LOCK_KEY,
   RUN_ID,
-  { expirationTtl: 300 }
+  { expirationTtl: 600 }
 );
 
 // verify ownership (Cloudflare cron race protection)
@@ -1684,7 +1640,14 @@ if (confirm !== RUN_ID) {
        // oldest → newest
       daysToCheck.sort((a, b) => Date.parse(a) - Date.parse(b));
 
-      for (const day of daysToCheck) {
+      
+for (const day of daysToCheck) {
+
+        if (day === todayAthens) {
+          console.log("[finalize] skip today", day);
+          continue;
+        }
+
 
         if (day > todayAthens) {
           console.log("[finalize] skip future day", day);
@@ -1936,44 +1899,75 @@ if (hour === 3 || hour === 15) {
       months[month][day] = data;
     }
 
-    for (const month of Object.keys(months)) {
+for (const month of Object.keys(months)) {
 
-       const currentMonth = today.slice(0,7);
+  const today = dayKeyTZ(ATHENS_TZ);
 
-       if (month === currentMonth) {
-         console.log("[archive] skip current month", month);
-         continue;
-        }
+  const currentMonth = today.slice(0,7);
+
+  const previousMonthDate = new Date(today + "T00:00:00Z");
+  previousMonthDate.setUTCMonth(previousMonthDate.getUTCMonth() - 1);
+
+  const previousMonth =
+    previousMonthDate.toISOString().slice(0,7);
+
+  // -----------------------------------
+  // DO NOT ARCHIVE CURRENT OR PREVIOUS MONTH
+  // -----------------------------------
+  if (month >= previousMonth) {
+    console.log("[archive] month still active", month);
+    continue;
+  }
 
   const monthKey = `FIXTURES:MONTH:${month}`;
 
-// -----------------------------------
-// SKIP IF MONTH ALREADY ARCHIVED
-// -----------------------------------
-      const existingMonth =
-        await env.AIML_INGESTION_KV.get(monthKey);
+  // -----------------------------------
+  // SKIP IF MONTH ALREADY ARCHIVED
+  // -----------------------------------
+  const existingMonth =
+    await env.AIML_INGESTION_KV.get(monthKey);
 
-      if (existingMonth) {
-        console.log("[archive] fixtures month exists — skip", month);
-        continue;
-      }
+  if (existingMonth) {
+    console.log("[archive] fixtures month exists — skip", month);
+    continue;
+  }
 
-      await putJson(env, monthKey, {
-        month,
-        days: months[month]
-      });
+  await putJson(env, monthKey, {
+    month,
+    days: months[month]
+  });
 
-      console.log("[archive] fixtures month built", month);
+  console.log("[archive] fixtures month built", month);
 
-      for (const day of Object.keys(months[month])) {
-        await env.AIML_INGESTION_KV.delete(
-          `FIXTURES:DATE:${day}`
-        );
-      }
+  // -----------------------------------
+  // DELETE DAILY KEYS AFTER ARCHIVE
+  // -----------------------------------
+  for (const day of Object.keys(months[month])) {
+
+    try {
+
+      await env.AIML_INGESTION_KV.delete(
+        `FIXTURES:DATE:${day}`
+      );
+
+    } catch (e) {
+
+      console.log(
+        "[archive] delete failed",
+        `FIXTURES:DATE:${day}`
+      );
+
     }
-    } catch (_) {
-      console.log("[archive] fixtures failed");
-    }
+
+  }
+
+}
+
+} catch (_) {
+
+  console.log("[archive] fixtures failed");
+
+}
   // =====================================================
   // VALUE MONTH ARCHIVE
   // =====================================================
@@ -2041,6 +2035,7 @@ if (hour === 3 || hour === 15) {
     console.log("[archive] value failed");
   }
 
+  await cleanupKV(env);
   await cleanupR2(env);
 }
 

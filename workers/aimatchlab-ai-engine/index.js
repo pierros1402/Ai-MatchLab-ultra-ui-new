@@ -408,6 +408,7 @@ if (pathname === "/ai/match-intel") {
     `intel/context/${matchId}/latest.json`;
 
   let pointerCache = null;
+  let pointerParsed = null;
 
 // ---------------- CACHE READ ----------------
 if (!force) {
@@ -442,7 +443,8 @@ try {
 
     if (pointerCache) {
 
-      const pointer = await pointerCache.json();
+      pointerParsed = await pointerCache.json();
+      const pointer = pointerParsed;
 
       // pointer sanity check
       if (pointer?.latest && typeof pointer.latest === "string") {
@@ -481,12 +483,12 @@ try {
 try {
 
   const pointerObj =
-    pointerCache || await env.AI_STATE.get(cacheKey);
+    pointerParsed || pointerCache || await env.AI_STATE.get(cacheKey);
 
   if (pointerObj) {
 
     const pointer =
-      JSON.parse(await pointerObj.text());
+      pointerParsed || JSON.parse(await pointerObj.text());
 
     if (pointer?.latest) {
 
@@ -816,7 +818,7 @@ try {
 try {
 
   const prevPointer =
-    await env.AI_STATE.get(cacheKey);
+    pointerCache || await env.AI_STATE.get(cacheKey);
 
   if (prevPointer) {
 
@@ -1512,7 +1514,7 @@ let skipVersionWrite = false;
 try {
 
   const prevPointer =
-    await env.AI_STATE.get(cacheKey);
+    pointerCache || await env.AI_STATE.get(cacheKey);
 
   if (prevPointer) {
 
@@ -1863,6 +1865,24 @@ return json(health);
     ok: false,
     error: "health_check_failed"
   }, 500);
+}
+
+// ------------------------------------------------------------
+// VALUE ENGINE RUN
+// ------------------------------------------------------------
+if (pathname === "/value-run") {
+
+  const date =
+    url.searchParams.get("date") ||
+    new Date().toISOString().slice(0,10);
+
+  const { runValueEngineCore } =
+    await import("../_shared/value-engine-core.js");
+
+  const result =
+    await runValueEngineCore(env, date);
+
+  return json(result);
 }
 
 // ------------------------------------------------------------

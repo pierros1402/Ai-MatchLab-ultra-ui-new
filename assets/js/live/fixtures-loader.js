@@ -20,6 +20,7 @@ const LIVE_DEBUG = false;
 // SIGNAL DEDUPE CACHE (in-memory)
 // -------------------------------------
 const __AIML_SIGNAL_CACHE = new Map();
+const __AIML_INTEL_FETCH_TS = new Map();
 // key: matchId
 // value: lastSignalSignature
 
@@ -158,9 +159,17 @@ try {
 
   for (const m of liveMatches) {
 
+    const last = __AIML_INTEL_FETCH_TS.get(m.id) || 0;
+    const now = Date.now();
+
+    if (now - last < 30000) continue;
+
+    __AIML_INTEL_FETCH_TS.set(m.id, now);
+
     fetch(
-      `${getBaseUrl()}/ai/match-intel?id=${encodeURIComponent(m.id)}`,
-      { cache: "no-store" }
+      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(m.id)}`,
+  { cache: "no-store" }
+      
     )
     .then(r => r.json())
     .then(data => {
@@ -234,8 +243,9 @@ try {
   for (const m of liveMatches) {
 
     fetch(
-      `${getBaseUrl()}/ai/match-intel?id=${encodeURIComponent(m.id)}`,
-      { cache: "no-store" }
+      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(m.id)}`,
+  { cache: "no-store" }
+      
     )
     .then(r => r.json())
     .then(data => {
