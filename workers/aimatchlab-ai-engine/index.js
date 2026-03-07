@@ -11,6 +11,7 @@
 import { buildSeason } from "./engine/season-builder.js";
 import { LEAGUE_SEEDS } from "./_shared/leagues-registry.js";
 import { computeIntelDelta } from "./engine/intel/intel-delta.js";
+import { buildMatchIntel } from "./engine/intel/match-intel.js";
 const ENGINE_VERSION = "v4.3-ops";
 
 // ------------------------------------------------------------
@@ -406,6 +407,8 @@ if (pathname === "/ai/match-intel") {
   const cacheKey =
     `intel/context/${matchId}/latest.json`;
 
+  let pointerCache = null;
+
 // ---------------- CACHE READ ----------------
 if (!force) {
 // ------------------------------------------------------------
@@ -435,11 +438,11 @@ try {
 }
   try {
 
-    const cached = await env.AI_STATE.get(cacheKey);
+    pointerCache = await env.AI_STATE.get(cacheKey);
 
-    if (cached) {
+    if (pointerCache) {
 
-      const pointer = await cached.json();
+      const pointer = await pointerCache.json();
 
       // pointer sanity check
       if (pointer?.latest && typeof pointer.latest === "string") {
@@ -478,7 +481,7 @@ try {
 try {
 
   const pointerObj =
-    await env.AI_STATE.get(cacheKey);
+    pointerCache || await env.AI_STATE.get(cacheKey);
 
   if (pointerObj) {
 
@@ -506,13 +509,19 @@ try {
             [
               latestData?.basic?.status,
               latestData?.basic?.scoreHome,
-              latestData?.basic?.scoreAway
+              latestData?.basic?.scoreAway,
+              latestData?.basic?.status?.displayClock
             ].join("|");
 
           if (prevSig === currentSig) {
 
-            latestData.cache = "FAST_HIT";
-            return json(latestData);
+            // avoid FAST_HIT during LIVE phase
+            if (latestData?.meta?.phase !== "LIVE") {
+
+              latestData.cache = "FAST_HIT";
+              return json(latestData);
+
+            }
 
           }
 
@@ -529,8 +538,6 @@ try {
 }
 
   // ---------------- COMPUTE ----------------
-const { buildMatchIntel } =
-  await import("./engine/intel/match-intel.js");
 
 let result;
 
@@ -643,6 +650,29 @@ if (result && typeof result === "object") {
 }
 
 }
+
+// ------------------------------------------------------------
+// ENSURE SEASON MEMORY (needed for PRE intel accuracy)
+// ------------------------------------------------------------
+try {
+
+  const indexObj =
+    await env.AI_STATE.get(`match-index/${matchId}.json`);
+
+  if (indexObj) {
+
+    const idx = JSON.parse(await indexObj.text());
+
+    if (idx?.league && idx?.season) {
+      await buildSeason(env, idx.league, idx.season);
+    }
+
+  }
+
+} catch (e) {
+  console.log("[SEASON ENSURE FAIL]", matchId, e);
+}
+
 // ---------------- SCORE MEMORY ----------------
 try {
 
@@ -1201,6 +1231,91 @@ try {
 }
 
 // ------------------------------------------------------------
+// LIVE EVOLUTION LAYER (momentum / volatility / control)
+// ------------------------------------------------------------
+try {
+
+  const phase =
+    result?.meta?.phase || "UNKNOWN";
+
+  const minuteRaw =
+    result?.basic?.status?.displayClock || "";
+
+  const minute =
+    parseInt(
+      String(minuteRaw).replace(/[^0-9]/g,""),
+      10
+    ) || 0;
+
+  const home =
+    Number(result?.basic?.scoreHome || 0);
+
+  const away =
+    Number(result?.basic?.scoreAway || 0);
+
+  const signals =
+    Array.isArray(result?.signals)
+      ? result.signals
+      : [];
+
+  let momentum = 0.5;
+  let volatility = 0.2;
+  let control = "BALANCED";
+
+  if (phase === "LIVE") {
+
+    const diff = home - away;
+
+    // momentum based on score pressure
+    if (diff > 0) momentum += 0.15;
+    if (diff < 0) momentum -= 0.15;
+
+    // signals influence
+    const volatilitySignal =
+      signals.find(s => s?.type === "VOLATILITY_SPIKE");
+
+    const goalSignal =
+      signals.find(s => s?.type === "GOAL_EVENT");
+
+    if (goalSignal) {
+      volatility += 0.2;
+    }
+
+    if (volatilitySignal) {
+      volatility += 0.25;
+    }
+
+    // time pressure
+    const timeFactor =
+      Math.min(minute / 90, 1);
+
+    momentum += timeFactor * 0.1;
+
+    // clamp
+    momentum = Math.max(0, Math.min(momentum, 1));
+    volatility = Math.max(0, Math.min(volatility, 1));
+
+    // control estimation
+    if (diff > 0) control = "HOME";
+    else if (diff < 0) control = "AWAY";
+
+  }
+
+  if (!result.meta) result.meta = {};
+
+  result.meta.momentum =
+    Number(momentum.toFixed(3));
+
+  result.meta.volatility =
+    Number(volatility.toFixed(3));
+
+  result.meta.control = control;
+
+} catch (e) {
+  console.log("[LIVE EVOLUTION FAIL]", e);
+}
+
+// ------------------------------------------------------------
 // AI MATCH NARRATIVE ENGINE
 // ------------------------------------------------------------
 try {
@@ -1352,6 +1467,43 @@ try {
 
 } catch (e) {
   console.log("[NARRATIVE ENGINE FAIL]", e);
+}
+
+// ------------------------------------------------------------
+// STATE SIGNATURE BUILD
+// ------------------------------------------------------------
+try {
+
+  const status =
+    result?.basic?.status || "";
+
+  const home =
+    Number(result?.basic?.scoreHome || 0);
+
+  const away =
+    Number(result?.basic?.scoreAway || 0);
+
+  const minuteRaw =
+    result?.basic?.status?.displayClock || "";
+
+  const minute =
+    parseInt(
+      String(minuteRaw).replace(/[^0-9]/g,""),
+      10
+    ) || 0;
+
+  if (!result.meta) result.meta = {};
+
+  result.meta.stateSignature =
+    [
+      status,
+      home,
+      away,
+      minute
+    ].join("|");
+
+} catch (e) {
+  console.log("[STATE SIGNATURE BUILD FAIL]", e);
 }
 
 // ---------------- STATE CHANGE CHECK ----------------

@@ -115,10 +115,10 @@ try {
   // Momentum (last 5 weighted)
   // ------------------------------------------------------------
 
-  const last5 = matches.slice(-5);
+  const last5 = matches.slice(-6);
 
   let momentumScore = 0;
-  let weight = 1;
+  let weight = 1.2;
 
   for (let i = last5.length - 1; i >= 0; i--) {
     const m = last5[i];
@@ -131,7 +131,7 @@ try {
     else if (scored === conceded) points = 1;
 
     momentumScore += points * weight;
-    weight++;
+    weight += 0.8;
   }
 
   const n = last5.length || 1;
@@ -146,16 +146,19 @@ try {
 
   const variance =
     goalTotals.reduce((sum, val) => sum + Math.pow(val - avgGoals, 2), 0) /
-    (total || 1);
+    (total > 1 ? total - 1 : 1);
 
-  const volatilityIndex = +Math.sqrt(variance).toFixed(2);
+  const volatilityIndex =
+    +(Math.sqrt(variance) / 2.4).toFixed(2);
 
   // ------------------------------------------------------------
   // Consistency (inverse volatility normalized)
   // ------------------------------------------------------------
 
   const consistencyScore =
-    volatilityIndex === 0 ? 1 : +(1 / (1 + volatilityIndex)).toFixed(2);
+    volatilityIndex === 0
+      ? 1
+      : +(1 / (1 + volatilityIndex * 1.4)).toFixed(2);
 
   // ------------------------------------------------------------
   // Form Trend
@@ -171,7 +174,10 @@ try {
     return sum;
   }, 0);
 
-  const previous5 = matches.slice(-10, -5);
+  const previous5 =
+    matches.length >= 10
+      ? matches.slice(-10, -5)
+      : [];
 
   const previousPoints = previous5.reduce((sum, m) => {
     const isHome = m.home === team;

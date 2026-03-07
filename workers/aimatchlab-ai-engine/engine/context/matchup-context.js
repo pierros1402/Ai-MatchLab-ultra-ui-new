@@ -64,13 +64,17 @@ export async function buildMatchupContext(env, league, season, home, away) {
 
   const paceIndex =
     +(
-      (homeCtx.goalsForRate + homeCtx.goalsAgainstRate +
-       awayCtx.goalsForRate + awayCtx.goalsAgainstRate) / 4
+      (
+        (homeCtx.goalsForRate + awayCtx.goalsAgainstRate) +
+        (awayCtx.goalsForRate + homeCtx.goalsAgainstRate)
+      ) / 2
     ).toFixed(2);
 
   const riskIndex =
     +(
-      (homeCtx.volatilityIndex + awayCtx.volatilityIndex) / 2
+      (
+        (homeCtx.volatilityIndex + awayCtx.volatilityIndex) / 2
+      ) * (paceIndex / 2.4)
     ).toFixed(2);
 
   // ------------------------------------------------------------
@@ -78,9 +82,12 @@ export async function buildMatchupContext(env, league, season, home, away) {
   // ------------------------------------------------------------
 
   let overLean = "NEUTRAL";
-  if (paceIndex > 2.8 && riskIndex > 1.2) overLean = "STRONG_OVER_PROFILE";
-  else if (paceIndex > 2.5) overLean = "OVER_PROFILE";
-  else if (paceIndex < 2.1) overLean = "UNDER_PROFILE";
+  if (paceIndex > 2.8 && riskIndex > 1.25)
+    overLean = "STRONG_OVER_PROFILE";
+  else if (paceIndex > 2.55 && riskIndex > 1.05)
+    overLean = "OVER_PROFILE";
+  else if (paceIndex < 2.05 && riskIndex < 0.95)
+    overLean = "UNDER_PROFILE";
 
   let bttsLean = "NEUTRAL";
   if (homeCtx.bttsRate > 0.6 && awayCtx.bttsRate > 0.6)

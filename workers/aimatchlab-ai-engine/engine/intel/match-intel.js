@@ -13,6 +13,7 @@ import { applyLiveEvolution } from "./live-evolution.js";
 import { computeIntelDelta } from "./intel-delta.js";
 import { buildNarrative } from "./intel-narrator.js";
 import { generateSignals } from "./intel-signals.js";
+import { detectRegime } from "./regime-detector.js";
 import { filterAndPersistSignals } from "./intel-signal-store.js";
 import { computeDrift } from "./compute-drift.js";
 import { computeValueBias } from "./intel-value-core.js";
@@ -65,14 +66,26 @@ function buildStateSignature(match) {
       "UNKNOWN";
   }
 
+  let minuteRaw =
+    match.minute ??
+    match.clock ??
+    match.clock?.displayValue ??
+    0;
+
+  let minute = 0;
+
+  if (typeof minuteRaw === "number") {
+    minute = minuteRaw;
+  } else if (typeof minuteRaw === "string") {
+    const m = minuteRaw.match(/\d+/);
+    if (m) minute = Number(m[0]);
+  }
+
   return [
     statusStr,
     match.scoreHome ?? 0,
     match.scoreAway ?? 0,
-    match.minute ??
-    match.clock ??
-    match.clock?.displayValue ??
-    0
+    minute
   ].join("|");
 }
 
@@ -211,8 +224,35 @@ const leagueVersion = meta.leagueVersion ?? 0;
 
   const matchup = await buildMatchupContext(env, league, season, home, away);
 
-  const homeCtx = matchup?.homeContext || null;
-  const awayCtx = matchup?.awayContext || null;
+  let homeCtx = matchup?.homeContext || null;
+  let awayCtx = matchup?.awayContext || null;
+
+// ------------------------------------------------------------
+// PRE CONTEXT FALLBACK
+// If matchup-context has no history yet (early season),
+// load team-context directly so PRE intel is not empty.
+// ------------------------------------------------------------
+  if (!homeCtx || !awayCtx) {
+
+    try {
+
+      const homeFallback =
+        await buildTeamContext(env, league, season, home);
+
+      const awayFallback =
+        await buildTeamContext(env, league, season, away);
+
+      if (!homeCtx && homeFallback?.ok) {
+        homeCtx = homeFallback;
+      }
+
+      if (!awayCtx && awayFallback?.ok) {
+        awayCtx = awayFallback;
+      }
+
+    } catch (_) {}
+
+  }
 
   /* ============================================================
      TABLE POSITIONS
@@ -335,7 +375,20 @@ try {
   }
 } catch (_) {}
 
-const minute = Number(match.minute ?? match.clock ?? 0);
+let minuteRaw =
+  match.minute ??
+  match.clock ??
+  match.clock?.displayValue ??
+  0;
+
+let minute = 0;
+
+if (typeof minuteRaw === "number") {
+  minute = minuteRaw;
+} else if (typeof minuteRaw === "string") {
+  const m = minuteRaw.match(/\d+/);
+  if (m) minute = Number(m[0]);
+}
 
 const delta = computeIntelDelta(
   previousIntel,
@@ -449,16 +502,17 @@ try {
   ]);
 
   const shouldReact =
-    !forceIntel &&  // <---- LOOP GUARD
+    !forceIntel &&
+    evolvedOut.meta?.phase === "LIVE" &&
+    Array.isArray(emittedSignals) &&
+    emittedSignals.length > 0 &&
     emittedSignals.some(
-      s =>
-        REACTIVE_SIGNAL_TYPES.has(s.type) &&
-        evolvedOut.meta?.phase === "LIVE"
+      s => REACTIVE_SIGNAL_TYPES.has(s.type)
     );
 
   if (shouldReact) {
 
-    const guardKey = `INTEL:REACTIVE:${matchId}`;
+    const guardKey = `INTEL:REACTIVE:${matchId}:${evolvedOut.meta?.stateSignature}`;
 
     let locked = null;
     try {
@@ -480,7 +534,7 @@ try {
         `https://aimatchlab-ai-engine.pierros1402.workers.dev` +
         `/ai/match-intel?id=${matchId}|force`;
 
-      fetch(url).catch(()=>{});
+      fetch(url, { method:"GET" }).catch(()=>{});
 
       console.log("[REACTIVE REFRESH TRIGGERED]", matchId);
     }
@@ -603,7 +657,9 @@ try {
 // MODEL STABILITY (Phase 3.1)
 // ==============================
 try {
-  const confVal = Number(evolvedOut?.confidence?.value ?? 50);
+  const confVal = Number.isFinite(evolvedOut?.confidence?.value)
+    ? evolvedOut.confidence.value
+    : 50;
   const confNorm = Math.max(0, Math.min(1, confVal / 100));
 
   const driftScore = Number(evolvedOut?.delta?.driftScore ?? 0);
@@ -653,6 +709,8 @@ try {
 
   if (driftMag > 0.6) {
     for (const s of evolvedOut.signals || []) {
+      if (!s || typeof s !== "object") continue;
+
       if (s.severity === "LOW") s.severity = "MEDIUM";
       else if (s.severity === "MEDIUM") s.severity = "HIGH";
     }
@@ -752,14 +810,24 @@ const phaseKey = phaseKeyFor(matchId, finalPhase);
 const latestKey = cacheKey; // intel/context/<matchId>/latest.json
 
 // ------------------------------------------------------------
-// INTEL WRITE GUARD (reduce R2 writes)
+// INTEL WRITE GUARD (coherent with state signature)
+// IMPORTANT:
+// We must include the live state signature/minute-related state,
+// otherwise latest.json can stay stale while match state changes.
 // ------------------------------------------------------------
 const intelSignature = [
+  evolvedOut.leagueVersion ?? 0,
+  evolvedOut.meta?.phase ?? "PRE",
+  evolvedOut.meta?.stateSignature ?? "NO_STATE",
+  evolvedOut.basic?.status ?? "UNKNOWN",
   evolvedOut.basic?.scoreHome ?? 0,
   evolvedOut.basic?.scoreAway ?? 0,
-  evolvedOut.meta?.phase ?? "PRE",
   evolvedOut.context?.momentum ?? "UNKNOWN",
-  evolvedOut.context?.volatility ?? "UNKNOWN"
+  evolvedOut.context?.volatility ?? "UNKNOWN",
+  evolvedOut.context?.control ?? "UNKNOWN",
+  evolvedOut.metrics?.tempo ?? 0,
+  evolvedOut.metrics?.volatility ?? 0,
+  evolvedOut.metrics?.control ?? 0
 ].join("|");
 
 const sigKey = `intel/context/${matchId}/last-sig.txt`;
@@ -770,31 +838,42 @@ try {
   prevSig = await env.AI_STATE.get(sigKey);
 } catch (_) {}
 
-if (prevSig === intelSignature) {
-  return evolvedOut;
-}
-
-// ensure meta.phase is consistent
+// ensure meta.phase is consistent before any persistence
 evolvedOut.meta = evolvedOut.meta || {};
 evolvedOut.meta.phase = finalPhase;
 
+// If nothing materially changed, do not rewrite R2.
+// But return cache-marked object so caller knows it was a write-skip.
+if (prevSig === intelSignature) {
+  evolvedOut.cache = "WRITE_SKIP";
+  return evolvedOut;
+}
+
 try {
+  // 1) latest pointer
   await env.AI_STATE.put(
     latestKey,
     JSON.stringify(evolvedOut),
     { httpMetadata: { contentType: "application/json" } }
   );
-try {
-  await env.AI_STATE.put(sigKey, intelSignature);
-} catch (_) {}
-  console.log("[DRIFT]", matchId, JSON.stringify(evolvedOut.drift));
+
+  // 2) phase snapshot
   await env.AI_STATE.put(
     phaseKey,
     JSON.stringify(evolvedOut),
     { httpMetadata: { contentType: "application/json" } }
   );
 
-  // 3) write timeline entry
+  // 3) write state signature guard
+  await env.AI_STATE.put(
+    sigKey,
+    intelSignature,
+    { httpMetadata: { contentType: "text/plain" } }
+  );
+
+  console.log("[INTEL WRITE]", matchId, finalPhase, evolvedOut.meta?.stateSignature || "NO_STATE");
+
+  // 4) timeline entry
   await writeTimeline(env, matchId, {
     ts: Date.now(),
     phase: finalPhase,
@@ -805,25 +884,22 @@ try {
     status: evolvedOut.basic?.status ?? null
   });
 
-// ------------------------------------------------------------
-// BASELINE CLEANUP ON FINAL
-// ------------------------------------------------------------
-if (finalPhase === "FINAL") {
-  try {
-    await env.AI_STATE.delete(
-      `intel/context/${matchId}/baseline.json`
-    );
-    console.log("[BASELINE CLEARED]", matchId);
-  } catch (e) {
-    console.log("[BASELINE CLEAR FAIL]", e);
+  // 5) baseline cleanup on final
+  if (finalPhase === "FINAL") {
+    try {
+      await env.AI_STATE.delete(`intel/context/${matchId}/baseline.json`);
+      console.log("[BASELINE CLEARED]", matchId);
+    } catch (e) {
+      console.log("[BASELINE CLEAR FAIL]", e);
+    }
   }
+
+} catch (e) {
+  console.log("[INTEL PERSIST FAIL]", matchId, e);
 }
 
-} catch (_) {}
-  // persist cache
+return evolvedOut;
 
-  return evolvedOut;
-}
 
 /* ============================================================
    HELPERS
@@ -956,4 +1032,6 @@ function buildSignals({
     s.push(`TABLE_SWING_${impact.swingPotential}`);
 
   return s;
+}
+
 }

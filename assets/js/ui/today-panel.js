@@ -122,15 +122,20 @@
       })
       .sort((a, b) => {
 
-        const ka = a.kickoff_ms || 0;
-        const kb = b.kickoff_ms || 0;
+        const ka = Number(a.kickoff_ms || 0);
+        const kb = Number(b.kickoff_ms || 0);
 
         if (ka !== kb) return ka - kb;
 
-        const la = (a.leagueName || a.leagueSlug || "").toLowerCase();
-        const lb = (b.leagueName || b.leagueSlug || "").toLowerCase();
+        const la = (a.leagueSlug || "").toLowerCase();
+        const lb = (b.leagueSlug || "").toLowerCase();
 
-        return la.localeCompare(lb);
+        if (la !== lb) return la.localeCompare(lb);
+
+        const ha = (a.home || "").toLowerCase();
+        const hb = (b.home || "").toLowerCase();
+
+        return ha.localeCompare(hb);
 
       });
 

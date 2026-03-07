@@ -13,6 +13,7 @@ const R2_KEEP_MONTHS = 3;         // intel/performance/evaluation months
 // INDEX SIGNATURE CACHE (per execution)
 // --------------------------------------------------
 const __indexSigCache = new Map();
+const __stagingSigCache = new Map();
 function dayKeyTZ(tz, date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: tz,
@@ -155,17 +156,12 @@ function normalize(event, slug) {
 async function shouldQueryLeague(env, slug, date) {
 
   const key = `LEAGUE:ACTIVE:${slug}`;
+
   const last = await env.AIML_INGESTION_KV.get(key);
 
-  if (!last) return true; // πρώτη φορά πάντα δοκιμάζουμε
+  if (!last) return true;
 
-  const lastTs = Number(last);
-  const now = Date.now();
-
-  // allow query only every 6 hours if inactive
-  if (now - lastTs < 2 * 60 * 60 * 1000) {
-    return false;
-  }
+  const diff = Date.now() - Number(last);
 
   return true;
 }
@@ -187,7 +183,7 @@ async function mark404(env, slug) {
   );
 }
 // ================= FETCH LEAGUE UTC =================
-async function fetchLeagueUTC(slug, date) {
+async function fetchLeagueUTC(slug, date = null) {
 
   try {
 
@@ -195,7 +191,9 @@ async function fetchLeagueUTC(slug, date) {
 
     // ---------- PRIMARY ----------
     const url =
-      `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`;
+      date
+        ? `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`
+        : `${ESPN_BASE}/${slug}/scoreboard?limit=300`;
 
     let res = await fetch(url);
 
@@ -232,7 +230,7 @@ async function fetchLeagueUTC(slug, date) {
 
         if (!kickoff) return false;
 
-        const d = kickoff.slice(0,10);
+        const d = athensDayFromKickoff(kickoff);
 
         return d === targetDay;
       });
@@ -250,13 +248,16 @@ async function fetchLeagueUTC(slug, date) {
   
   const now = new Date();
   const utcDays = [
+    formatUTC(shiftUTC(now, -5)),
+    formatUTC(shiftUTC(now, -4)),
+    formatUTC(shiftUTC(now, -3)),
     formatUTC(shiftUTC(now, -2)),
     formatUTC(shiftUTC(now, -1)),
-    formatUTC(now),
-    formatUTC(shiftUTC(now, 1))
+    formatUTC(now)
   ];
 
-  const bucketMaps = {};
+   const bucketMaps = {};
+   const processedLeagues = new Set();
 // PRIORITY EU PASS (always try first)
 const PRIORITY = [
   "eng.1",
@@ -270,55 +271,56 @@ const PRIORITY = [
 ];
 
 for (const slug of PRIORITY) {
-  for (const utcDate of utcDays) {
-    // skip leagues recently returning 404
-    if (!(await shouldRetryAfter404(env, slug))) {
-      continue;
-    }
-    const data = await fetchLeagueUTC(slug, utcDate);
 
-    console.log("[priority ingest]", slug, utcDate, !!data?.events?.length);
+  processedLeagues.add(slug);
 
-    // mark reachable league
-    if (data !== null) {
-      try {
-        await env.AIML_INGESTION_KV.put(
-          `LEAGUE:ACTIVE:${slug}`,
-          Date.now().toString(),
-          { expirationTtl: 86400 }
-        );
-      } catch (_) {}
-    }
-
-    if (data === null) {
-      await mark404(env, slug);
-      continue;
-    }
-
-    if (!data.events?.length) continue;
-
-    for (const event of data.events) {
-      const m = normalize(event, slug);
-      if (!m) continue;
-
-      const day = athensDayFromKickoff(m.kickoff);
-
-      const today = dayKeyTZ(ATHENS_TZ);
-
-      const diff =
-        (Date.parse(day) - Date.parse(today)) / 86400000;
-
-      // keep only -3 to +3 days
-      if (diff < - 7|| diff > 7) {
-        continue;
-      }
-      const { staging } = keysForDay(day);
-
-      bucketMaps[staging] ??= new Map();
-      bucketMaps[staging].set(m.id, { ...m, dayKey: day });
-    }
+  if (!(await shouldRetryAfter404(env, slug))) {
+    continue;
   }
+
+  const data = await fetchLeagueUTC(slug, formatUTC(new Date()));
+
+  console.log("[priority ingest]", slug, !!data?.events?.length);
+
+  if (data === null) {
+    await mark404(env, slug);
+    continue;
+  }
+
+  if (!data.events?.length) continue;
+
+  await env.AIML_INGESTION_KV.put(
+    `LEAGUE:ACTIVE:${slug}`,
+    Date.now().toString(),
+    { expirationTtl: 86400 }
+  );
+
+  for (const event of data.events) {
+
+    const m = normalize(event, slug);
+    if (!m) continue;
+
+    const day = athensDayFromKickoff(m.kickoff);
+
+    const today = dayKeyTZ(ATHENS_TZ);
+
+    const diff =
+      Math.floor(
+        (Date.parse(day + "T00:00:00Z") -
+         Date.parse(today + "T00:00:00Z")) / 86400000
+      );
+
+    if (diff < -7 || diff > 1) continue;
+
+    const { staging } = keysForDay(day);
+
+    bucketMaps[staging] ??= new Map();
+    bucketMaps[staging].set(m.id, { ...m, dayKey: day });
+
+  }
+
 }
+    
 // ---------------------------
 // ROTATION INGEST (ACCELERATED AFTER 00:00 ATHENS)
 // ---------------------------
@@ -344,10 +346,11 @@ const slice = [];
 
 let i = 0;
 
-while (slice.length < CHUNK_SIZE && i < totalLeagues * 2) {
+while (slice.length < CHUNK_SIZE && i < totalLeagues) {
 
   const slug = LEAGUE_SEEDS[(idx + i) % totalLeagues];
 
+  // skip priority leagues (handled separately)
   if (!PRIORITY.includes(slug)) {
     slice.push(slug);
   }
@@ -357,35 +360,32 @@ while (slice.length < CHUNK_SIZE && i < totalLeagues * 2) {
 
 console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
 
+
+
+
 for (const slug of slice) {
 
-  for (const utcDate of utcDays) {
+  if (!(await shouldQueryLeague(env, slug))) continue;
 
-    // skip inactive leagues (query window)
-    if (!(await shouldQueryLeague(env, slug, utcDate))) {
-      continue;
+  if (processedLeagues.has(slug)) continue;
+
+  processedLeagues.add(slug);
+
+  try {
+    if (!(await shouldRetryAfter404(env, slug))) continue;
+
+    const data = await fetchLeagueUTC(slug, formatUTC(new Date()));
+    if (!data?.events?.length) {
+      await env.AIML_INGESTION_KV.put(
+        `LEAGUE:ACTIVE:${slug}`,
+        Date.now().toString(),
+        { expirationTtl: 86400 }
+      );
     }
-
-    // skip leagues recently returning 404
-    if (!(await shouldRetryAfter404(env, slug))) {
-      continue;
-    }
-
-    const data = await fetchLeagueUTC(slug, utcDate);
 
     if (data === null) {
       await mark404(env, slug);
       continue;
-    }
-
-    const activeKey = `LEAGUE:ACTIVE:${slug}`;
-
-    if (!(await env.AIML_INGESTION_KV.get(activeKey))) {
-      await env.AIML_INGESTION_KV.put(
-        activeKey,
-        Date.now().toString(),
-        { expirationTtl: 86400 }
-      );
     }
 
     if (!data.events?.length) continue;
@@ -400,12 +400,18 @@ for (const slug of slice) {
 
       bucketMaps[staging] ??= new Map();
       bucketMaps[staging].set(m.id, { ...m, dayKey: day });
-    }
-  }
-}
 
+    }
+
+  } catch (e) {
+
+    console.log("[ingest] job failed", slug);
+
+  }
+
+}
 // advance rotation pointer
-idx = (idx + CHUNK_SIZE) % totalLeagues;
+idx = (idx + slice.length) % totalLeagues;
 
 await env.AIML_INGESTION_KV.put(
   "INGEST:IDX",
@@ -453,14 +459,12 @@ for (const m of existingStage.matches || []) {
     continue;
   }
 
-  if (!bucketMaps[stagingKey].has(m.id)) {
+  const replaced =
+    bucketMaps[stagingKey].has(m.id);;
 
-    const kickoff = Date.parse(m.kickoff || "");
-
-    if (kickoff && kickoff > Date.now() - 48 * 60 * 60 * 1000) {
-      stageMap.set(m.id, m);
-    }
-
+  // keep only if NOT replaced by new ingest
+  if (!replaced) {
+    stageMap.set(m.id, m);
   }
 
 }
@@ -473,12 +477,47 @@ for (const m of bucketMaps[stagingKey].values()) {
 }
 
 // ----------------------------------
-// write merged snapshot
+// write merged snapshot (ONLY IF CHANGED)
 // ----------------------------------
-await putJson(env, stagingKey, {
+const newSnapshot = {
   date: stagingKey.split(":").pop(),
   matches: Array.from(stageMap.values())
-});// ✅ SAFE PLACE (after merge, before KV write)
+};
+
+// lightweight signature
+const sig = newSnapshot.matches
+  .map(m => `${m.id}|${m.status}|${m.scoreHome}|${m.scoreAway}`)
+  .join(",");
+
+const SIG_KEY = `STAGING:SIG:${stagingKey}`;
+
+let prevSig = __stagingSigCache.get(SIG_KEY);
+
+if (prevSig === undefined) {
+  prevSig = await env.AIML_INGESTION_KV.get(SIG_KEY);
+  __stagingSigCache.set(SIG_KEY, prevSig);
+}
+
+const writeNeeded = (prevSig !== sig);
+
+if (writeNeeded) {
+
+  await putJson(env, stagingKey, newSnapshot);
+
+  await env.AIML_INGESTION_KV.put(
+    SIG_KEY,
+    sig,
+    { expirationTtl: 86400 }
+  );
+  __stagingSigCache.set(SIG_KEY, sig);
+  console.log("[staging] updated", stagingKey);
+
+} else {
+
+  console.log("[staging] unchanged", stagingKey);
+
+}
+// ✅ SAFE PLACE (after merge, before KV write)
 for (const m of bucketMaps[stagingKey].values()) {
   try {
 
@@ -491,7 +530,7 @@ for (const m of bucketMaps[stagingKey].values()) {
       m.status,
       m.scoreHome,
       m.scoreAway,
-      m.kickoff
+      m.minute
     ].join("|");
 
     let prevSig = __indexSigCache.get(INDEX_SIG_KEY);
@@ -501,19 +540,51 @@ for (const m of bucketMaps[stagingKey].values()) {
       __indexSigCache.set(INDEX_SIG_KEY, prevSig);
     }
 
-    // write index ONLY if match changed
-    if (prevSig !== newSig) {
+    // NOTHING CHANGED → skip ALL writes
+    if (prevSig === newSig) {
+      continue;
+    }
 
-      await env.AI_STATE.put(
-        `match-index/${m.id}.json`,
-        JSON.stringify({
-          league: m.leagueSlug,
-          season: "2025-2026",
-          updatedAt: Date.now()
-        })
-      );
+// write index ONLY if match changed
+if (prevSig !== newSig) {
+
+  await env.AI_STATE.put(
+    `match-index/${m.id}.json`,
+    JSON.stringify({
+      league: m.leagueSlug,
+      season: "2025-2026",
+      updatedAt: Date.now()
+    })
+  );
+// ------------------------------------
+// TRIGGER AI INTEL REFRESH
+// ------------------------------------
+  try {
+
+    const phase = String(m.status || "").toUpperCase();
+
+    const isLive =
+      phase.includes("LIVE") ||
+      phase.includes("HALF") ||
+      phase.includes("IN_PROGRESS") ||
+      phase.includes("SECOND_HALF");
+
+    const isPre =
+      phase.includes("SCHEDULED") ||
+      phase.includes("PRE");
+
+    if (isLive || isPre) {
+
+      fetch(
+        `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${m.id}`,
+        { method: "GET" }
+      ).catch(()=>{});
 
     }
+
+  } catch (_) {}
+
+}
 
 // ------------------------------------
 // INTEL MEMORY — EVOLUTION DETECTION
@@ -568,7 +639,8 @@ if (prevPhase && prevPhase !== newPhase) {
 // ------------------------------------
 // LIVE HEARTBEAT MEMORY
 // ------------------------------------
-if (newPhase === "LIVE") {
+if (newPhase === "LIVE" && prevSig !== newSig) {
+
   await env.AI_STATE.put(
     `intel-memory/${m.id}/live.json`,
     JSON.stringify({
@@ -577,29 +649,31 @@ if (newPhase === "LIVE") {
       ts: Date.now()
     })
   );
+
 }
+// write state ONLY if match changed
+if (prevSig !== newSig) {
 
-// always update last state
-await env.AI_STATE.put(
-  memoryKey,
-  JSON.stringify({
-    id: m.id,
-    status: m.status,
-    scoreHome: m.scoreHome,
-    scoreAway: m.scoreAway,
-    minute: m.minute || null,
-    ts: Date.now()
-  })
-);
+  await env.AI_STATE.put(
+    memoryKey,
+    JSON.stringify({
+      id: m.id,
+      status: m.status,
+      scoreHome: m.scoreHome,
+      scoreAway: m.scoreAway,
+      minute: m.minute || null,
+      ts: Date.now()
+    })
+  );
 
-// remember last signature (auto cleanup)
-await env.AIML_INGESTION_KV.put(
-  INDEX_SIG_KEY,
-  newSig,
-  { expirationTtl: 172800 } // 48h
-);
-__indexSigCache.set(INDEX_SIG_KEY, newSig);
-    
+  await env.AIML_INGESTION_KV.put(
+    INDEX_SIG_KEY,
+    newSig,
+    { expirationTtl: 172800 }
+  );
+
+  __indexSigCache.set(INDEX_SIG_KEY, newSig);
+  }  
 
   } catch (_) {}
 }
@@ -707,6 +781,72 @@ async function recoverMissingFT(env, day, data) {
 
   return changed;
   }
+
+// =====================================================
+// FORCE REBUILD MISSING DAY
+// =====================================================
+async function rebuildMissingDay(env, day) {
+
+  const { final } = keysForDay(day);
+
+  const exists = await env.AIML_INGESTION_KV.get(final);
+  if (exists) return;
+
+  console.log("[rebuild] rebuilding", day);
+
+  const matches = [];
+  const espnDate = day.replaceAll("-", "");
+
+  for (const slug of LEAGUE_SEEDS) {
+
+    
+
+    
+
+    try {
+
+      const res = await fetch(
+        `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`
+      );
+
+      if (!res.ok) continue;
+
+      const json = await res.json();
+
+      for (const event of json.events || []) {
+
+        const m = normalize(event, slug);
+        if (!m) continue;
+
+        const matchDay = athensDayFromKickoff(m.kickoff);
+
+        if (matchDay !== day) continue;
+
+        matches.push({
+          ...m,
+          dayKey: day
+        });
+
+      }
+
+    } catch (_) {}
+
+  }
+
+  if (!matches.length) {
+    console.log("[rebuild] no matches found", day);
+    return;
+  }
+
+  await putJson(env, final, {
+    date: day,
+    matches
+  });
+
+  console.log("[rebuild] rebuilt", day, "| matches:", matches.length);
+
+}
+
 async function finalizeDay(env, day) {
 
   const { staging, final } = keysForDay(day);
@@ -790,14 +930,7 @@ async function finalizeDay(env, day) {
     // ---------------------------------
     // TERMINAL MATCHES
     // ---------------------------------
-    if (
-      status.includes("FINAL") ||
-      status.includes("FULL_TIME") ||
-      status.includes("AET") ||
-      status.includes("PEN") ||
-      status.includes("POSTPONED") ||
-      status.includes("CANCEL")
-    ) {
+    if (isTerminal(status)) {
       terminalFound = true;
       filtered.push(m);
       continue;
@@ -825,25 +958,33 @@ async function finalizeDay(env, day) {
     );
   }
 
-  // ---------------------------------
-  // REQUIRE AT LEAST ONE TERMINAL
-  // ---------------------------------
+// =============================
+// ADD THIS BLOCK EXACTLY HERE
+// =============================
 if (!terminalFound) {
+  console.log("[finalize] no terminal matches yet", day);
+  return;
+}
 
-  const allFinished = matches.every(m => {
-    const s = String(m.status || "").toUpperCase();
-    return (
-      s.includes("POSTPONED") ||
-      s.includes("CANCEL") ||
-      s.includes("ABANDONED") ||
-      s.includes("SUSPENDED")
-    );
-  });
+// ------------------------------------------------
+// REQUIRE NO NON-TERMINAL MATCHES
+// ------------------------------------------------
+const liveExists = matches.some(m => {
 
-  if (!allFinished) {
-    console.log("[finalize] no terminal matches yet", day);
-    return;
-  }
+  const s = String(m.status || "").toUpperCase();
+
+  return (
+    s.includes("LIVE") ||
+    s.includes("HALF") ||
+    s.includes("IN_PROGRESS") ||
+    s.includes("SECOND_HALF")
+  );
+
+});
+
+if (liveExists) {
+  console.log("[finalize] live matches remain", day);
+  return;
 }
 
   // ---------------------------------
@@ -925,7 +1066,10 @@ async function reconcileRecentFinalized(env, ctx) {
 
             Object.assign(match, normalized);
 
-            await queueIntelRefresh(env, ctx, match.id, match);
+            fetch(
+              `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${match.id}`,
+              { method: "GET" }
+            ).catch(()=>{});
           }
 
         }
@@ -1090,17 +1234,54 @@ async function handleFixturesRuntime(req, env) {
   const now = Date.now();
 
   const filtered = (data.matches || []).filter(m => {
+
     const s = String(m.status || "").toUpperCase();
 
-    if (s.includes("IN_PROGRESS")) return true;
-
-    if (s === "STATUS_SCHEDULED" && m.kickoff_ms >= now - 4 * 60 * 60 * 1000) {
+  // LIVE matches
+    if (
+      s.includes("LIVE") ||
+      s.includes("IN_PROGRESS") ||
+      s.includes("HALF") ||
+      s.includes("SECOND_HALF")
+    ) {
       return true;
     }
 
-    return false;
-  });
+  // PRE / DELAYED / SCHEDULED
+    if (
+      s.includes("SCHEDULED") ||
+      s.includes("PRE") ||
+      s.includes("DELAY")
+    ) {
+      return m.kickoff_ms >= now - 8 * 60 * 60 * 1000;
+    }
 
+    return false;
+
+  });
+filtered.sort((a, b) => {
+
+  const sa = String(a.status || "").toUpperCase();
+  const sb = String(b.status || "").toUpperCase();
+
+  const liveA =
+    sa.includes("LIVE") ||
+    sa.includes("IN_PROGRESS") ||
+    sa.includes("HALF");
+
+  const liveB =
+    sb.includes("LIVE") ||
+    sb.includes("IN_PROGRESS") ||
+    sb.includes("HALF");
+
+  // LIVE first
+  if (liveA && !liveB) return -1;
+  if (!liveA && liveB) return 1;
+
+  // then kickoff time
+  return (a.kickoff_ms || 0) - (b.kickoff_ms || 0);
+
+});
   return jsonResponse({ date, matches: filtered });
 }
 
@@ -1238,7 +1419,9 @@ async function leagueIngestStatus(env) {
 /* ================= EXPORT ================= */
 
 export default {
+
   async fetch(req, env) {
+
     const url = new URL(req.url);
 
     if (req.method === "OPTIONS") {
@@ -1259,13 +1442,149 @@ export default {
       return jsonResponse(data);
     }
 
-    return jsonResponse({ ok: false, error: "invalid_route" }, 404);
+    // ---------------------------------
+    // MANUAL RUN
+    // ---------------------------------
+    if (url.pathname === "/scheduler-run") {
+
+      const started = Date.now();
+
+      const fakeCtx = {
+        waitUntil: (p) => p
+      };
+
+      const today = dayKeyTZ(ATHENS_TZ);
+
+      const days = [];
+
+      for (let i = 6; i >= 0; i--) {
+        const d = dayKeyTZ(
+          ATHENS_TZ,
+          new Date(Date.now() - i * 86400000)
+        );
+        days.push(d);
+      }
+
+      for (const day of days) {
+        await rebuildMissingDay(env, day);
+        await finalizeDay(env, day);
+      }
+
+      return jsonResponse({
+        ok: true,
+        daysProcessed: days.length,
+        ms: Date.now() - started
+      });
+    }
+
+// ---------------------------------
+// MANUAL REBUILD SINGLE DAY
+// ---------------------------------
+if (url.pathname === "/scheduler-run-day") {
+
+  const day = url.searchParams.get("day");
+
+  if (!day) {
+    return jsonResponse({ ok:false, error:"missing_day" }, 400);
+  }
+
+  const started = Date.now();
+
+  await rebuildMissingDay(env, day);
+  await finalizeDay(env, day);
+
+  return jsonResponse({
+    ok: true,
+    rebuilt: day,
+    ms: Date.now() - started
+  });
+}
+
+//---------------------------------
+// REPAIR DAY (ADD MISSING MATCHES ONLY)
+// ---------------------------------
+if (url.pathname === "/repair-day") {
+
+  const day = url.searchParams.get("day");
+
+  if (!day) {
+    return jsonResponse({ ok:false, error:"missing_day" }, 400);
+  }
+
+  const { final } = keysForDay(day);
+
+  const existing = await getJson(env, final);
+
+  if (!existing?.matches) {
+    return jsonResponse({ ok:false, error:"day_not_finalized" });
+  }
+
+  const existingIds = new Set(
+    existing.matches.map(m => m.id)
+  );
+
+  const espnDate = day.replaceAll("-", "");
+
+  let added = 0;
+
+  for (const slug of LEAGUE_SEEDS) {
+
+    try {
+
+      const res = await fetch(
+        `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`
+      );
+
+      if (!res.ok) continue;
+
+      const json = await res.json();
+
+      for (const event of json.events || []) {
+
+        const m = normalize(event, slug);
+        if (!m) continue;
+
+        const matchDay = athensDayFromKickoff(m.kickoff);
+
+        if (matchDay !== day) continue;
+
+        if (!existingIds.has(m.id)) {
+
+          existing.matches.push({
+            ...m,
+            dayKey: day
+          });
+
+          existingIds.add(m.id);
+          added++;
+
+        }
+
+      }
+
+    } catch (_) {}
+
+  }
+
+  if (added > 0) {
+    await putJson(env, final, existing);
+  }
+
+  return jsonResponse({
+    ok: true,
+    day,
+    added
+  });
+}
+
+    return jsonResponse({ ok:false, error:"invalid_route" }, 404);
+
   },
 
   // -----------------------------
   // CRON SCHEDULED
   // -----------------------------
-  async scheduled(event, env, ctx) {
+  scheduled: async (event, env, ctx) => {
 // ---------------------------------
 // EXECUTION LOCK (RACE-SAFE)
 // ---------------------------------
@@ -1297,7 +1616,7 @@ if (confirm !== RUN_ID) {
 
   const started = Date.now();
   console.log("[scheduler] cron tick");
-
+  const todayAthens = dayKeyTZ(ATHENS_TZ);
   ctx.waitUntil((async () => {
 
     try {
@@ -1325,7 +1644,7 @@ if (confirm !== RUN_ID) {
       // STAGING STATUS PROBE (TODAY)
       // -------------------
       try {
-        const todayAthens = dayKeyTZ(ATHENS_TZ);
+        
 
         const todayKey = `FIXTURES:STAGING:DATE:${todayAthens}`;
 
@@ -1352,32 +1671,47 @@ if (confirm !== RUN_ID) {
       // -------------------
       const daysToCheck = [];
 
-      const list = await kvListAll(env, "FIXTURES:STAGING:DATE:");
+      for (let i = KV_KEEP_STAGING_DAYS; i >= 0; i--) {
 
-      for (const key of list) {
-        const day = key.name.replace("FIXTURES:STAGING:DATE:", "");
-        daysToCheck.push(day);
-      }
+         const d = dayKeyTZ(
+           ATHENS_TZ,
+           new Date(Date.now() - i * 86400000)
+         );
+
+         daysToCheck.push(d);
+       }
 
        // oldest → newest
       daysToCheck.sort((a, b) => Date.parse(a) - Date.parse(b));
 
       for (const day of daysToCheck) {
 
-        // skip future days
         if (day > todayAthens) {
           console.log("[finalize] skip future day", day);
           continue;
         }
 
+        const { final } = keysForDay(day);
+
+        const finalExists = await env.AIML_INGESTION_KV.get(final);
+
+        if (!finalExists) {
+          console.log("[auto-recovery] missing final snapshot", day);
+        }
+
         try {
+
+          await rebuildMissingDay(env, day);
+
           console.log("[scheduler] finalize check", day);
+
           await finalizeDay(env, day);
+
         } catch (e) {
           console.error("[scheduler] finalize failed", day, e);
         }
-      }
 
+      }
       // -------------------
       // RECONCILE
       // -------------------
@@ -1604,7 +1938,14 @@ if (hour === 3 || hour === 15) {
 
     for (const month of Object.keys(months)) {
 
-      const monthKey = `FIXTURES:MONTH:${month}`;
+       const currentMonth = today.slice(0,7);
+
+       if (month === currentMonth) {
+         console.log("[archive] skip current month", month);
+         continue;
+        }
+
+  const monthKey = `FIXTURES:MONTH:${month}`;
 
 // -----------------------------------
 // SKIP IF MONTH ALREADY ARCHIVED

@@ -16,8 +16,16 @@ export function generateSignals(prev, curr) {
 
   const phase = String(curr?.meta?.phase || "PRE").toUpperCase();
 
-  // Signals only during LIVE phase
+// Signals only during LIVE phase
   if (phase !== "LIVE") return signals;
+
+// prevent duplicate emission when state did not change
+  const prevSig = prev?.meta?.stateSignature;
+  const currSig = curr?.meta?.stateSignature;
+
+  if (prevSig && currSig && prevSig === currSig) {
+    return signals;
+  }
 
   // ---------------- MOMENTUM SHIFT ----------------
   if (Math.abs(tempo) >= 15) {
