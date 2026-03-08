@@ -10,7 +10,19 @@ export async function runValueEngineCore(env, date, options = {}) {
 
   const summaryKey = `VALUE:SUMMARY:${date}`;
   const statKey = `VALUE:STAT:DATE:${date}`;
+// ------------------------------------------------------------
+// LOAD FIXTURES FROM KV
+// ------------------------------------------------------------
+const raw =
+  await env.AIML_INGESTION_KV.get(`FIXTURES:STAGING:DATE:${date}`)
+  || await env.AIML_INGESTION_KV.get(`FIXTURES:DATE:${date}`);
 
+if (!raw) {
+  return { ok:false, error:"fixtures_missing", date };
+}
+
+const fixtures = JSON.parse(raw);
+const matches = fixtures.matches || [];
   if (!force) {
     const exists = await env.AIML_INGESTION_KV.get(summaryKey);
     if (exists) {
@@ -18,7 +30,7 @@ export async function runValueEngineCore(env, date, options = {}) {
     }
   }
 
-  const matches = fixtures.matches;
+  
 
   const items = [];
   const counters = {
@@ -37,9 +49,9 @@ export async function runValueEngineCore(env, date, options = {}) {
   for (const m of matches) {
 
     if (!m || m.status !== "STATUS_SCHEDULED") continue;
-    const r2Key = `ai/context/${month}/${m.leagueSlug}/${m.id}/pre.json`;
+    const r2Key = `intel/context/${m.id}/latest.json`;
 
-    const aiRaw = await env.R2_INTEL.get(r2Key);
+    const aiRaw = await env.AI_STATE.get(r2Key);
 
     if (!aiRaw || !aiRaw.body) {
       counters.noR2++;
@@ -119,11 +131,11 @@ try {
   // BASE SCORE
   // -------------------------------
   let baseScore = p.percent;
-
+  let finalTier = p.tier || "MEDIUM";
   // -------------------------------
   // STRUCTURAL EDGE MODULATION
   // -------------------------------
-  if (modelEdgeScore < 18) {
+  if (modelEdgeScore < 15) {
     continue; // weak structural edge
   }
 

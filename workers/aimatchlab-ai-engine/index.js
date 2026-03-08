@@ -1897,7 +1897,43 @@ return json({ ok: false, error: "invalid_route" }, 404);
 async scheduled(event, env, ctx) {
 
   ctx.waitUntil((async () => {
+// ------------------------------------------------------------
+// INTEL QUEUE PROCESSOR
+// ------------------------------------------------------------
+try {
 
+  const queue = await env.AIML_INGESTION_KV.list({
+    prefix: "INTEL:QUEUE:",
+    limit: 20
+  });
+
+  for (const key of queue.keys || []) {
+
+    const matchId = key.name.split(":").pop();
+
+    try {
+
+      await fetch(
+        `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${matchId}`
+      );
+
+      await env.AIML_INGESTION_KV.delete(key.name);
+
+      console.log("[INTEL QUEUE OK]", matchId);
+
+    } catch (e) {
+
+      console.log("[INTEL QUEUE FAIL]", matchId);
+
+    }
+
+  }
+
+} catch (e) {
+
+  console.log("[INTEL QUEUE ERROR]", e);
+
+}
     const season = "2025-2026";
 
     const leagues = LEAGUE_SEEDS || [];

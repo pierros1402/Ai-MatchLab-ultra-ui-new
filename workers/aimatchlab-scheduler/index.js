@@ -259,7 +259,8 @@ for (const slug of PRIORITY) {
     continue;
   }
 
-  let data = await fetchLeagueUTC(slug);
+  const today = dayKeyTZ(ATHENS_TZ);
+  let data = await fetchLeagueUTC(slug, today);
 
   // fetch failed
   if (data === null) {
@@ -362,7 +363,7 @@ console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
 
 
 
-
+const today = dayKeyTZ(ATHENS_TZ);
 for (const slug of slice) {
 
   if (!(await shouldQueryLeague(env, slug))) continue;
@@ -373,7 +374,7 @@ for (const slug of slice) {
 
     if (!(await shouldRetryAfter404(env, slug))) continue;
 
-    let data = await fetchLeagueUTC(slug);
+    let data = await fetchLeagueUTC(slug, today);
 
     if (data === null) {
       await mark404(env, slug);
@@ -388,7 +389,7 @@ for (const slug of slice) {
     // mark league as processed
     // ONLY after valid response
     // -----------------------------
-    processedLeagues.add(slug);
+    
 
     if (!data.events.length) {
 
@@ -407,41 +408,62 @@ for (const slug of slice) {
 
     }
 
-    for (const event of data.events || []) {
+// -----------------------------
+// EVENT LOOP
+// -----------------------------
+for (const event of (data.events || [])) {
 
-      const m = normalize(event, slug);
-      if (!m) continue;
+  const m = normalize(event, slug);
+  if (!m) continue;
 
-      const day = athensDayFromKickoff(m.kickoff);
-      const today = dayKeyTZ(ATHENS_TZ);
+  const day = athensDayFromKickoff(m.kickoff);
+  const today = dayKeyTZ(ATHENS_TZ);
 
-      const diff =
-        Math.floor(
-          (Date.parse(day + "T00:00:00Z") -
-           Date.parse(today + "T00:00:00Z")) / 86400000
-        );
+  const diff =
+    Math.floor(
+      (Date.parse(day + "T00:00:00Z") -
+       Date.parse(today + "T00:00:00Z")) / 86400000
+    );
 
   // -----------------------------
   // INGEST WINDOW GUARD
   // -----------------------------
-      if (diff < -2 || diff > 3) continue;
-
-      const { staging } = keysForDay(day);
-
-      bucketMaps[staging] ??= new Map();
-
-      if (bucketMaps[staging].has(m.id)) continue;
-
-      bucketMaps[staging].set(m.id, {
-        ...m,
-        dayKey: day
-      });
-
-    }
-
-  } catch (e) {
-    console.log("[ingest] job failed", slug);
+  if (diff < -2 || diff > 3) {
+    continue;
   }
+
+  const { staging } = keysForDay(day);
+
+  if (!bucketMaps[staging]) {
+    bucketMaps[staging] = new Map();
+  }
+
+  // skip duplicates
+  if (bucketMaps[staging].has(m.id)) {
+    continue;
+  }
+
+  bucketMaps[staging].set(m.id, {
+    ...m,
+    dayKey: day
+  });
+
+}
+
+// -----------------------------
+// mark league processed
+// -----------------------------
+processedLeagues.add(slug);
+
+} catch (e) {
+
+  console.error(
+    "[ingest] job failed",
+    slug,
+    e?.message || e
+  );
+
+}
 
 }
 
@@ -457,14 +479,24 @@ console.log(
   "priority:", PRIORITY.length
 );
 
+// -----------------------------
+// ROTATION COMPLETE
+// -----------------------------
 if (!isMidnightWindow && idx === 0) {
+
   console.log("[ingest] FULL ROTATION COMPLETE");
+
+  await env.AIML_INGESTION_KV.put(
+    "INGEST:ROTATION_DONE",
+    "1"
+  );
+
 }
-  for (const stagingKey in bucketMaps) {
- 
 
-
-
+for (const stagingKey in bucketMaps) {
+if (!bucketMaps[stagingKey] || bucketMaps[stagingKey].size === 0) {
+  continue;
+}
 // --------------------------------------------------
 // STAGING MERGE WRITE (SAFE SNAPSHOT)
 // --------------------------------------------------
@@ -491,7 +523,7 @@ for (const m of existingStage.matches || []) {
   }
 
   const replaced =
-    bucketMaps[stagingKey].has(m.id);;
+    bucketMaps[stagingKey].has(m.id);
 
   // keep only if NOT replaced by new ingest
   if (!replaced && !stageMap.has(m.id)) {
@@ -503,7 +535,7 @@ for (const m of existingStage.matches || []) {
 // ----------------------------------
 // apply fresh ingest updates
 // ----------------------------------
-for (const m of bucketMaps[stagingKey].values()) {
+for (const m of (bucketMaps[stagingKey]?.values() || [])) {
   stageMap.set(m.id, m);
 }
 
@@ -553,7 +585,7 @@ let writeCount = 0;
 
 for (const m of bucketMaps[stagingKey].values()) {
 
-  if (writeCount >= 50) break;
+  if (writeCount >= 150) break;
   writeCount++;
 
   try {
@@ -564,7 +596,7 @@ for (const m of bucketMaps[stagingKey].values()) {
       m.status,
       m.scoreHome,
       m.scoreAway,
-      m.minute
+      
     ].join("|");
 
     const prevSig = __indexSigCache.get(sigKey);
@@ -605,10 +637,25 @@ for (const m of bucketMaps[stagingKey].values()) {
 
     if (isLive || isPre) {
 
-      fetch(
-        `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${m.id}`,
-        { method: "GET" }
-      ).catch(()=>{});
+      const COOLDOWN_KEY = `INTEL:COOLDOWN:${m.id}`;
+
+      const cooldown =
+        await env.AIML_INGESTION_KV.get(COOLDOWN_KEY);
+
+      if (!cooldown) {
+
+        fetch(
+      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${m.id}`,
+          { method: "GET" }
+        ).catch(()=>{});
+
+        await env.AIML_INGESTION_KV.put(
+          COOLDOWN_KEY,
+          "1",
+          { expirationTtl: 600 } // 10 minutes
+        );
+
+      }
 
     }
 
@@ -927,7 +974,6 @@ const liveExists = matches.some(m => {
 
 if (liveExists) {
   console.log("[finalize] live matches remain", day);
-  return;
 }
 
   // ---------------------------------
@@ -962,7 +1008,7 @@ async function reconcileRecentFinalized(env, ctx) {
     if (!ts) continue;
 
     // only last 24h finalized days
-    const WINDOW = 7 * DAY_MS;
+    const WINDOW = 2 * DAY_MS;
 
     if (now - ts > WINDOW) continue;
 
@@ -1643,38 +1689,44 @@ if (confirm !== RUN_ID) {
       
 for (const day of daysToCheck) {
 
-        if (day === todayAthens) {
-          console.log("[finalize] skip today", day);
-          continue;
-        }
+  try {
 
+    if (day === todayAthens) {
+      console.log("[finalize] skip today", day);
+      continue;
+    }
 
-        if (day > todayAthens) {
-          console.log("[finalize] skip future day", day);
-          continue;
-        }
+    if (day > todayAthens) {
+      console.log("[finalize] skip future day", day);
+      continue;
+    }
 
-        const { final } = keysForDay(day);
+    const { final } = keysForDay(day);
 
-        const finalExists = await env.AIML_INGESTION_KV.get(final);
+    const finalExists =
+      await env.AIML_INGESTION_KV.get(final);
 
-        if (!finalExists) {
-          console.log("[auto-recovery] missing final snapshot", day);
-        }
+    if (finalExists) {
+      console.log("[finalize] already finalized", day);
+      break;
+    }
 
-        try {
+    console.log("[auto-recovery] missing final snapshot", day);
 
-          await rebuildMissingDay(env, day);
+    await rebuildMissingDay(env, day);
+    await finalizeDay(env, day);
 
-          console.log("[scheduler] finalize check", day);
+  } catch (e) {
 
-          await finalizeDay(env, day);
+    console.error(
+      "[scheduler] finalize failed",
+      day,
+      e
+    );
 
-        } catch (e) {
-          console.error("[scheduler] finalize failed", day, e);
-        }
+  }
 
-      }
+}
       // -------------------
       // RECONCILE
       // -------------------
@@ -1784,8 +1836,8 @@ try {
           });
 
           if (liveExists) {
-            console.log("[value] waiting — live matches detected");
-          } else {
+            console.log("[value] live matches ignored");
+          } 
 
             // ---------------------------------
             // READY WINDOW DETECTED
@@ -1819,7 +1871,7 @@ try {
             );
 
             console.log("[value] pipeline synchronized ✔");
-          }
+          
         }
       } else {
         console.log("[value] waiting conditions...");
