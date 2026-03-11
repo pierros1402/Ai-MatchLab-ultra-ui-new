@@ -8,6 +8,7 @@
 
   let SAVED_IDS = new Set();
   let LAST_MATCHES = [];
+  let LAST_SIG = "";
 
   function pad2(n) { return String(n).padStart(2, "0"); }
 
@@ -23,7 +24,14 @@
 
   function isFinalStatus(status) {
     const s = normStatus(status);
-    return s.includes("FULL_TIME") || s.includes("FINAL") || s === "FT";
+    return (
+      s.includes("FULL_TIME") ||
+      s.includes("FINAL") ||
+      s.includes("AET") ||
+      s.includes("PEN") ||
+      s.includes("POST") ||
+      s.includes("COMPLETE")
+    );
   }
 
   function isPostponedOrCanceled(status) {
@@ -75,6 +83,11 @@
     if (!mount) return;
 
     const matches = Array.isArray(payload?.matches) ? payload.matches : [];
+
+    const sig = matches.map(m => m.id + ":" + m.status).join("|");
+    if (sig === LAST_SIG) return;
+
+    LAST_SIG = sig;
     LAST_MATCHES = matches;
 
     mount.innerHTML = "";
@@ -122,11 +135,20 @@
         const status = normStatus(m.status);
 
         if (isPostponedOrCanceled(status)) {
+
           info.textContent = "PP";
+
         } else if (isFinalStatus(status)) {
-          info.textContent = `${m.scoreHome ?? 0} - ${m.scoreAway ?? 0}`;
+
+          const h = m.scoreHome ?? 0;
+          const a = m.scoreAway ?? 0;
+
+          info.textContent = `FT ${h}-${a}`;
+
         } else {
+
           info.textContent = timeHHMM(m.kickoff_ms);
+
         }
 
         // ⭐ SAVE (synced)
@@ -203,12 +225,12 @@ if (window.on) {
 
       let matches = [];
 
-      if (window.AIML_FIXTURES_TODAY?.matches?.length) {
-        matches = window.AIML_FIXTURES_TODAY.matches;
-      } else if (snap?.live?.matches?.length) {
-        matches = snap.live.matches;
+      // PRIORITY → active snapshot
+      if (snap?.active?.matches?.length) {
+        matches = snap.active.matches;
       }
 
+      // fallback → last active
       if (!matches.length) {
         matches = LAST_MATCHES || [];
       }

@@ -28,17 +28,19 @@
       for (let attempt = 0; attempt < retries; attempt++) {
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 20000);
-
-
           const mergedOptions = { ...options };
 
           if (!mergedOptions.signal) {
             mergedOptions.signal = controller.signal;
           }
 
+          const timeout = setTimeout(() => {
+            try { controller.abort(); } catch(_) {}
+          }, 20000);
+
           const response = await originalFetch(resource, mergedOptions);
           clearTimeout(timeout);
+          
 
           if (!response.ok) {
             if (response.status >= 500) {

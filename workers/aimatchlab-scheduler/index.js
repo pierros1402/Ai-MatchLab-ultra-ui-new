@@ -275,7 +275,7 @@ for (const slug of PRIORITY) {
 
   if (!data.events.length) {
     await new Promise(r => setTimeout(r, 120));
-    const retry = await fetchLeagueUTC(slug);
+    const retry = await fetchLeagueUTC(slug, today);
 
     if (retry === null) {
       await mark404(env, slug);
@@ -576,16 +576,19 @@ if (writeNeeded) {
 
 }
 
+}
 // ✅ SAFE PLACE (after merge, before KV write)
 // --------------------------------------------------
 // MATCH CHANGE DETECTION (NO KV WRITES)
 // --------------------------------------------------
 
 let writeCount = 0;
+let indexWrites = 0;
 
 for (const m of bucketMaps[stagingKey].values()) {
 
-  if (writeCount >= 150) break;
+  if (writeCount >= 150) continue;
+  
   writeCount++;
 
   try {
@@ -593,20 +596,33 @@ for (const m of bucketMaps[stagingKey].values()) {
     const sigKey = `SIG:${m.id}`;
 
     const newSig = [
-      m.status,
-      m.scoreHome,
-      m.scoreAway,
-      
+      m.status || "",
+      m.scoreHome ?? "",
+      m.scoreAway ?? ""
     ].join("|");
 
-    const prevSig = __indexSigCache.get(sigKey);
+    const prevSig = await env.AIML_INGESTION_KV.get(sigKey);
 
-    // skip if no change
-    if (prevSig === newSig) {
+    // check if index exists in R2
+    let indexExists = false;
+
+    try {
+      const head = await env.AI_STATE.head(`match-index/${m.id}.json`);
+      indexExists = !!head;
+    } catch (_) {}
+
+    // skip only if nothing changed AND index already exists
+    if (prevSig === newSig && indexExists) {
       continue;
     }
 
     __indexSigCache.set(sigKey, newSig);
+
+    await env.AIML_INGESTION_KV.put(
+      sigKey,
+      newSig,
+      { expirationTtl: 86400 }
+    );
 
     const memoryKey = `intel-memory/${m.id}/last.json`;
 
@@ -621,6 +637,121 @@ for (const m of bucketMaps[stagingKey].values()) {
         ts: Date.now()
       })
     );
+   
+// ------------------------------------
+// MATCH INDEX (AI lookup pointer)
+// ------------------------------------
+console.log("[R2 index write]", m.id);
+indexWrites++;
+
+await env.AI_STATE.put(
+  `match-index/${m.id}.json`,
+  JSON.stringify({
+    league: m.leagueSlug,
+    season: "2025-2026",
+    updatedAt: Date.now()
+  })
+);
+
+  } catch (err) {
+
+    console.log("[index write error]", m.id, err?.message || err);
+
+  }
+
+}
+
+console.log("[index writes this run]", indexWrites);  
+
+// --------------------------------------------------
+// AUTO VALUE TRIGGER (RUN ONCE WHEN INDEX COMPLETE)
+// --------------------------------------------------
+
+try {
+
+  const todayKey = dayKeyGR();
+  if (stagingKey !== `FIXTURES:STAGING:DATE:${todayKey}`) {
+    return;
+  }
+  const raw =
+    await env.AIML_INGESTION_KV.get(`FIXTURES:STAGING:DATE:${todayKey}`);
+
+  if (raw) {
+
+    const fixtures = JSON.parse(raw);
+    const matches = fixtures.matches || [];
+
+    let indexed = 0;
+
+    for (const m of matches) {
+      if (!m || !m.id) continue;
+      if (__indexSigCache.has(`SIG:${m.id}`)) {
+
+        indexed++;
+
+      } else {
+
+        const head =
+          await env.AI_STATE.head(`match-index/${m.id}.json`);
+
+        if (head) indexed++;
+
+      }
+      }
+    if (indexed === matches.length) {
+
+      const doneKey = `VALUE:DONE:${todayKey}`;
+
+      const done =
+        await env.AIML_INGESTION_KV.get(doneKey);
+
+      if (!done) {
+
+        console.log("[value] indexes complete — running value", todayKey);
+
+        fetch(
+          `https://aimatchlab-api.pierros1402.workers.dev/value/run?date=${todayKey}`
+        ).catch(()=>{});
+
+        await env.AIML_INGESTION_KV.put(
+          doneKey,
+          "1",
+          { expirationTtl: 86400 }
+        );
+
+      }
+
+    }
+
+  }
+
+} catch (e) {
+
+  console.log("[value trigger error]", e?.message || e);
+
+}
+
+// ------------------------------------
+// MATCH INDEX (AI lookup pointer)
+// ------------------------------------
+try {
+
+  const indexKey = `match-index/${m.id}.json`;
+
+  await env.AI_STATE.put(
+    indexKey,
+    JSON.stringify({
+      league: m.leagueSlug,
+      season: "2025-2026",
+      updatedAt: Date.now()
+    })
+  );
+
+} catch (err) {
+
+  console.log("[index] write failed", m.id);
+
+}
 
     // trigger AI refresh
     const phase = String(m.status || "").toUpperCase();
@@ -657,21 +788,18 @@ for (const m of bucketMaps[stagingKey].values()) {
 
       }
 
-    }
-
-  } catch (e) {
-    console.log("[intel] update failed", m.id);
-  }
-
 }
 
 } 
 
-}
+
 /* ================= FINALIZE ================= */
 
 function isTerminal(status) {
-  const s = String(status || "").toUpperCase();
+  const s = String(status || "")
+    .replace(/^STATUS_/, "")
+    .toUpperCase();
+
   return (
     s.includes("FINAL") ||
     s.includes("FULL_TIME") ||
@@ -1708,7 +1836,7 @@ for (const day of daysToCheck) {
 
     if (finalExists) {
       console.log("[finalize] already finalized", day);
-      break;
+      continue;
     }
 
     console.log("[auto-recovery] missing final snapshot", day);

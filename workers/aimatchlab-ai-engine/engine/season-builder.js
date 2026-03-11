@@ -1,7 +1,7 @@
 import { buildStandingsFromR2 } from "./standings-builder.js";
 import { updateStandingsCache } from "./standings-cache.js";
 
-const WINDOW_DAYS = 40;
+const WINDOW_DAYS = 30;
 const MAX_WINDOWS_PER_RUN = 3;
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 
@@ -46,26 +46,35 @@ export async function buildSeason(env, league, season) {
 
   while (windowsRun < MAX_WINDOWS_PER_RUN) {
 
-    if (meta.nextFrom > seasonEndDate) {
-      console.log("[AI BUILD] season complete — rebuilding standings cache");
+if (meta.nextFrom > seasonEndDate) {
 
-      try {
-        const result = await buildStandingsFromR2(env, league, season);
+  const tableKey = `${statePrefix}table.json`;
+  const exists = await env.AI_STATE.get(tableKey);
 
-        if (result && Array.isArray(result.standings)) {
-          await env.AI_STATE.put(
-            `league/${league}/${season}/table.json`,
-            JSON.stringify(result.standings),
-            { httpMetadata: { contentType: "application/json" } }
-          );
-        }
+  if (!exists) {
 
-      } catch (e) {
-        console.log("[AI BUILD] standings rebuild failed", e);
+    console.log("[AI BUILD] season complete — building standings cache");
+
+    try {
+
+      const result = await buildStandingsFromR2(env, league, season);
+
+      if (result && Array.isArray(result.standings)) {
+        await env.AI_STATE.put(
+          tableKey,
+          JSON.stringify(result.standings),
+          { httpMetadata: { contentType: "application/json" } }
+        );
       }
 
-      break;
+    } catch (e) {
+      console.log("[AI BUILD] standings rebuild failed", e);
     }
+
+  }
+
+  break;
+}
 
     // ------------------------------------------------------------
     // AUTO SAFETY REWIND (15 DAYS)
@@ -180,7 +189,7 @@ export async function buildSeason(env, league, season) {
         __matchReadCache.set(key, serialized);
 
       try {
-        await updateStandingsCache(env, league, season, match);
+        //await updateStandingsCache(env, league, season, match);
       } catch (e) {
         console.log("standings cache fail", e);
       }
@@ -213,47 +222,6 @@ export async function buildSeason(env, league, season) {
     windowsRun++;
   }
 
-// ------------------------------------------------------------
-// BUILD STANDINGS (WRITE TABLE + VERSION SAFE)
-// ------------------------------------------------------------
-let result = null;
-
-try {
-  result = await buildStandingsFromR2(env, league, season);
-} catch (e) {
-  console.log("standings build failed", e);
-}
-
-if (result && typeof result === "object" && Array.isArray(result.standings)) {
-
-  try {
-    // 1️⃣ WRITE TABLE
-    await env.AI_STATE.put(
-      `${statePrefix}table.json`,
-      JSON.stringify(result.standings),
-      {
-        httpMetadata: { contentType: "application/json" }
-      }
-    );
-
-    // 2️⃣ UPDATE rankingHash (if exists)
-    const oldHash = meta.rankingHash;
-
-  if (result.rankingHash) {
-    meta.rankingHash = result.rankingHash;
-  }
-
-  if (result.rankingHash && result.rankingHash !== oldHash) {
-    meta.leagueVersion = (meta.leagueVersion || 0) + 1;
-  }
-
-  } catch (e) {
-    console.log("standings write failed", e);
-  }
-
-} else {
-  console.log("standings missing or invalid — table not updated");
-}
 
 // ------------------------------------------------------------
 // WRITE SEASON META (WITH COMPLETION DATA)

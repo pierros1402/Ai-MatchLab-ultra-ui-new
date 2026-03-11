@@ -21,6 +21,13 @@ const LIVE_DEBUG = false;
 // -------------------------------------
 const __AIML_SIGNAL_CACHE = new Map();
 const __AIML_INTEL_FETCH_TS = new Map();
+
+const __AIML_INTEL_REQUESTS = new Map();
+const __AIML_INTEL_CACHE = new Map();
+
+const AIML_INTEL_CACHE_TTL = 60000;
+let __AIML_INTEL_CURSOR = 0;
+const AIML_INTEL_BATCH = 4;
 // key: matchId
 // value: lastSignalSignature
 
@@ -120,6 +127,49 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     return payload;
   }
 
+async function fetchMatchIntelSafe(matchId) {
+
+  const id = String(matchId || "").trim();
+  if (!id) return null;
+
+  const now = Date.now();
+
+  const cached = __AIML_INTEL_CACHE.get(id);
+  if (cached && (now - cached.ts) < AIML_INTEL_CACHE_TTL) {
+    return cached.data;
+  }
+
+  if (__AIML_INTEL_REQUESTS.has(id)) {
+    return __AIML_INTEL_REQUESTS.get(id);
+  }
+
+  const p = fetch(
+    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(id)}`,
+    { cache: "no-store" }
+  )
+  .then(r => {
+    if (!r.ok) throw new Error("intel " + r.status);
+    return r.json();
+  })
+  .then(data => {
+    __AIML_INTEL_CACHE.set(id, {
+      ts: Date.now(),
+      data
+    });
+    return data;
+  })
+  .catch(e => {
+    if (e?.name === "AbortError") return null;
+    return null;
+  })
+  .finally(() => {
+    __AIML_INTEL_REQUESTS.delete(id);
+  });
+
+  __AIML_INTEL_REQUESTS.set(id, p);
+  return p;
+}
+
   // -----------------------------
   // LIVE (REALTIME + FALLBACK)
   // -----------------------------
@@ -143,7 +193,7 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
         const liveData = await liveRes.json();
         const liveMatches = safeArray(liveData.matches);
 
-        if (liveMatches.length > 0) {
+        if (liveMatches.length) {
           const payload = { date: ymd, matches: liveMatches, total: liveMatches.length };
 
           window.__AIML_LAST_LIVE = payload;
@@ -153,50 +203,59 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
             window.emit("live:update", payload);
           }
 // -------------------------------------
-// INTEL SIGNAL FETCH (LIGHTWEIGHT)
+// INTEL SIGNAL FETCH
 // -------------------------------------
-try {
+if (liveMatches.length) {
 
-  for (const m of liveMatches) {
+  const batch = liveMatches.slice(__AIML_INTEL_CURSOR, __AIML_INTEL_CURSOR + AIML_INTEL_BATCH);
+
+  __AIML_INTEL_CURSOR += AIML_INTEL_BATCH;
+  if (__AIML_INTEL_CURSOR >= liveMatches.length) {
+    __AIML_INTEL_CURSOR = 0;
+  }
+
+  for (const m of batch) {
 
     const last = __AIML_INTEL_FETCH_TS.get(m.id) || 0;
     const now = Date.now();
 
-    if (now - last < 30000) continue;
+    if (now - last < 60000) continue;
 
     __AIML_INTEL_FETCH_TS.set(m.id, now);
 
-    fetch(
-      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(m.id)}`,
-  { cache: "no-store" }
-      
-    )
-    .then(r => r.json())
-    .then(data => {
+    fetchMatchIntelSafe(m.id)
+      .then((data) => {
 
-      if (data?.signals?.length) {
-         const signature = JSON.stringify(data.signals);
-         const prev = __AIML_SIGNAL_CACHE.get(m.id);
-         // only emit if changed
-         if (prev !== signature) {
+        if (!data || !data.signals || !data.signals.length) return;
+
+        const signature = JSON.stringify(data.signals);
+        const prev = __AIML_SIGNAL_CACHE.get(m.id);
+
+        if (prev !== signature) {
+
           __AIML_SIGNAL_CACHE.set(m.id, signature);
-           window.dispatchEvent(
-             new CustomEvent("intel:signal", {
-               detail: { 
-                 matchId: m.id,
-                 signals: data.signals
-               }  
-             })
-           );
-         }
-       }
-    })
-    .catch(()=>{});
+
+          window.dispatchEvent(
+            new CustomEvent("intel:signal", {
+              detail: {
+                matchId: m.id,
+                signals: data.signals
+              }
+            })
+          );
+
+        }
+
+      })
+      .catch(()=>{});
+
   }
 
-} catch (_) {}
-          liveLog("[LIVE] realtime source", liveMatches.length);
-          return payload;
+}
+
+liveLog("[LIVE] realtime source", liveMatches.length);
+return payload;
+          
         }
       }
     } catch (err) {
@@ -215,18 +274,23 @@ try {
 
       // keep only live-ish statuses (schema-agnostic)
       const liveMatches = matches.filter(m => {
-        const raw = JSON.stringify(m?.status || "").toUpperCase();
+
+        const s =
+          String(
+            m?.status?.type?.name ||
+            m?.status ||
+            ""
+          ).toUpperCase();
 
         return (
-          raw.includes("LIVE") ||
-          raw.includes("IN_PROGRESS") ||
-          raw.includes("PROGRESS") ||
-          raw.includes("FIRST") ||
-          raw.includes("SECOND") ||
-          raw.includes("HALF") ||
-          raw.includes("EXTRA")
+          s.includes("LIVE") ||
+          s.includes("IN_PROGRESS") ||
+          s.includes("FIRST_HALF") ||
+          s.includes("SECOND_HALF") ||
+          s.includes("HALF") ||
+          s.includes("EXTRA")
         );
-      });
+     });
 
       const payload = { date: ymd, matches: liveMatches, total: liveMatches.length };
 
@@ -242,15 +306,10 @@ try {
 
   for (const m of liveMatches) {
 
-    fetch(
-      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(m.id)}`,
-  { cache: "no-store" }
-      
-    )
-    .then(r => r.json())
-    .then(data => {
+    fetchMatchIntelSafe(m.id)
+      .then(data => {
 
-      if (data?.signals?.length) {
+        if (!data?.signals?.length) return;
 
         const signature = JSON.stringify(data.signals);
         const prev = __AIML_SIGNAL_CACHE.get(m.id);
@@ -267,11 +326,11 @@ try {
               }
             })
           );
-        }
-      }
 
-    })
-    .catch(()=>{});
+        }
+
+      })
+      .catch(()=>{});
   }
 
 } catch (_) {}

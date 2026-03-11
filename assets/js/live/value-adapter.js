@@ -95,9 +95,12 @@
 
   
   function datasetVersionFromPayload(payload) {
-    const arr = Array.isArray(payload?.matches)
-      ? payload.matches
-      : [];
+    const arr =
+      Array.isArray(payload?.matches)
+        ? payload.matches
+        : Array.isArray(payload?.items)
+          ? payload.items
+          : [];
 
     if (!arr.length) return null;
 

@@ -10,6 +10,7 @@ export async function runValueEngineCore(env, date, options = {}) {
 
   const summaryKey = `VALUE:SUMMARY:${date}`;
   const statKey = `VALUE:STAT:DATE:${date}`;
+  const doneKey = `VALUE:DONE:${date}`;
 // ------------------------------------------------------------
 // LOAD FIXTURES FROM KV
 // ------------------------------------------------------------
@@ -30,7 +31,12 @@ const matches = fixtures.matches || [];
     }
   }
 
-  
+   if (!force) {
+     const done = await env.AIML_INGESTION_KV.get(doneKey);
+     if (done) {
+       return { ok:true, skipped:"already_ran", date };
+     }
+   } 
 
   const items = [];
   const counters = {
@@ -45,15 +51,29 @@ const matches = fixtures.matches || [];
   // ============================================================
 
   const month = date.slice(0, 7);
-
+  const seenMatches = new Set();
   for (const m of matches) {
 
-    if (!m || m.status !== "STATUS_SCHEDULED") continue;
+    if (!m) continue;
+
+  // prevent duplicate match processing
+    if (seenMatches.has(m.id)) continue;
+    seenMatches.add(m.id);
+
+    const s = String(m.status || "").toUpperCase();
+
+    if (
+      !(
+        s.includes("SCHEDULED") ||
+        s.includes("PRE") ||
+        s.includes("NOT_STARTED")
+      )
+    ) continue;
     const r2Key = `intel/context/${m.id}/latest.json`;
 
     const aiRaw = await env.AI_STATE.get(r2Key);
 
-    if (!aiRaw || !aiRaw.body) {
+    if (!aiRaw) {
       counters.noR2++;
       continue;
     }
@@ -80,7 +100,7 @@ const matches = fixtures.matches || [];
     }
     
     // Skip weak modeling tiers early
-    if (modeling?.tier && modeling.tier < 4) {
+    if (modeling?.tier && modeling.tier < 3) {
       counters.noModeling++;
       continue;
     }
@@ -135,7 +155,7 @@ try {
   // -------------------------------
   // STRUCTURAL EDGE MODULATION
   // -------------------------------
-  if (modelEdgeScore < 15) {
+  if (modelEdgeScore < 8) {
     continue; // weak structural edge
   }
 
@@ -205,11 +225,67 @@ const payload = {
 };
 
 try {
-  await env.AIML_INGESTION_KV.put(summaryKey, JSON.stringify(payload));
-  await env.AIML_INGESTION_KV.put(statKey, JSON.stringify(payload));
+  await env.AIML_INGESTION_KV.put(
+    summaryKey,
+    JSON.stringify(payload),
+    { expirationTtl: 60 * 60 * 24 * 14 } // 14 days
+  );
+
+  await env.AIML_INGESTION_KV.put(
+    statKey,
+    JSON.stringify(payload),
+    { expirationTtl: 60 * 60 * 24 * 30 } // 30 days
+  );
+  await env.AIML_INGESTION_KV.put(
+    "VALUE:SUMMARY:LATEST",
+    JSON.stringify(payload),
+    { expirationTtl: 60 * 60 * 24 * 2 }
+  );
+
+
 } catch (err) {
   console.warn("KV quota reached — skipping persist");
 }
+// ------------------------------------------------------------
+// MONTHLY VALUE SUMMARY
+// ------------------------------------------------------------
+try {
+
+  const monthKey = `VALUE:MONTH:${month}`;
+
+  let monthObj = {
+    month,
+    days: {}
+  };
+
+  const existing = await env.AIML_INGESTION_KV.get(monthKey);
+
+  if (existing) {
+    try {
+      monthObj = JSON.parse(existing);
+    } catch (_) {}
+  }
+
+  monthObj.days[date] = {
+    produced: counters.produced,
+    matches: counters.total
+  };
+
+  await env.AIML_INGESTION_KV.put(
+    monthKey,
+    JSON.stringify(monthObj),
+    { expirationTtl: 60 * 60 * 24 * 180 } // 6 months
+  );
+
+} catch (err) {
+  console.warn("VALUE monthly summary failed", err);
+}
+
+await env.AIML_INGESTION_KV.put(
+  doneKey,
+  "1",
+  { expirationTtl: 86400 }
+);
 
 return {
   ok: true,
@@ -238,7 +314,7 @@ function buildPicksPolicyV3(modeling) {
     winPaths = {}
   } = modeling;
 
-  if (tier < 4) return [];
+  if (tier < 3) return [];
 
   const tempo = dna.tempo || "balanced";
   const volatility = dna.volatility || "medium";

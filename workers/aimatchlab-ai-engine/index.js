@@ -390,6 +390,62 @@ if (pathname === "/ai/intel-signals") {
 }
 
 // ------------------------------------------------------------
+// MATCH INTEL BATCH
+// ------------------------------------------------------------
+if (pathname === "/ai/match-intel-batch") {
+
+  let body = null;
+
+  try {
+    body = await request.json();
+  } catch (_) {}
+
+  const ids = Array.isArray(body?.ids) ? body.ids : [];
+
+  const results = [];
+
+  for (const matchId of ids.slice(0, 20)) {
+
+    try {
+
+      const inflight = __intelInflight.get(matchId);
+
+      if (inflight) {
+        await inflight;
+        results.push({ id: matchId, ok: true, cache: "INFLIGHT" });
+        continue;
+      }
+
+      const promise =
+        buildMatchIntel(env, matchId)
+          .finally(() => {
+            __intelInflight.delete(matchId);
+          });
+
+      __intelInflight.set(matchId, promise);
+
+      await promise;
+
+      results.push({ id: matchId, ok: true });
+
+    } catch (e) {
+
+      console.log("[INTEL BATCH FAIL]", matchId);
+
+      results.push({ id: matchId, ok: false });
+
+    }
+
+  }
+
+  return json({
+    ok: true,
+    processed: results.length
+  });
+
+}
+
+// ------------------------------------------------------------
 // MATCH INTEL (public) — PERSISTENT CACHE ENABLED
 // ------------------------------------------------------------
 if (pathname === "/ai/match-intel") {
@@ -539,6 +595,28 @@ try {
   console.log("[FAST STATE CHECK FAIL]", e);
 }
 
+// ------------------------------------------------------------
+// ENSURE SEASON MEMORY BEFORE INTEL BUILD
+// (DISABLED – handled by scheduler)
+// ------------------------------------------------------------
+try {
+
+  const indexObj =
+    await env.AI_STATE.get(`match-index/${matchId}.json`);
+
+  if (indexObj) {
+
+    const idx = JSON.parse(await indexObj.text());
+
+    if (idx?.league && idx?.season) {
+      // await buildSeason(env, idx.league, idx.season);
+    }
+
+  }
+
+} catch (e) {
+  console.log("[SEASON ENSURE FAIL]", matchId, e);
+}
   // ---------------- COMPUTE ----------------
 
 let result;
@@ -563,6 +641,40 @@ if (inflight) {
   result = await promise;
 }
 
+// ------------------------------------------------------------
+// AUTO SEASON BUILD + RETRY (DISABLED – handled by scheduler)
+// ------------------------------------------------------------
+if (result?.error === "match_not_found") {
+
+  try {
+
+    const indexObj =
+      await env.AI_STATE.get(`match-index/${matchId}.json`);
+
+    if (indexObj) {
+
+      const idx =
+        JSON.parse(await indexObj.text());
+
+      if (idx?.league && idx?.season) {
+
+        console.log("[AUTO BUILD DISABLED – waiting for scheduler]", idx.league);
+
+        return json({
+          ok:false,
+          error:"season_not_ready",
+          league: idx.league
+        },503);
+
+      }
+
+    }
+
+  } catch (e) {
+    console.log("[AUTO BUILD RETRY FAIL]", e);
+  }
+
+}
 // ------------------------------------------------------------
 // AUTO BACKFILL IF MATCH MISSING
 // ------------------------------------------------------------
@@ -653,27 +765,6 @@ if (result && typeof result === "object") {
 
 }
 
-// ------------------------------------------------------------
-// ENSURE SEASON MEMORY (needed for PRE intel accuracy)
-// ------------------------------------------------------------
-try {
-
-  const indexObj =
-    await env.AI_STATE.get(`match-index/${matchId}.json`);
-
-  if (indexObj) {
-
-    const idx = JSON.parse(await indexObj.text());
-
-    if (idx?.league && idx?.season) {
-      await buildSeason(env, idx.league, idx.season);
-    }
-
-  }
-
-} catch (e) {
-  console.log("[SEASON ENSURE FAIL]", matchId, e);
-}
 
 // ---------------- SCORE MEMORY ----------------
 try {
@@ -1897,6 +1988,8 @@ return json({ ok: false, error: "invalid_route" }, 404);
 async scheduled(event, env, ctx) {
 
   ctx.waitUntil((async () => {
+
+    try {
 // ------------------------------------------------------------
 // INTEL QUEUE PROCESSOR
 // ------------------------------------------------------------
@@ -1907,23 +2000,53 @@ try {
     limit: 20
   });
 
-  for (const key of queue.keys || []) {
+  const matchIds = [];
+  if (!queue.keys || !queue.keys.length) return;
 
-    const matchId = key.name.split(":").pop();
+  for (const key of queue.keys || []) {
+    matchIds.push(key.name.split(":").pop());
+  }
+
+  if (matchIds.length) {
 
     try {
 
-      await fetch(
-        `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${matchId}`
+      ctx.waitUntil(
+        fetch(
+          `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel-batch`,
+          {
+            method: "POST",
+            headers: {
+              "content-type": "application/json"
+            },
+            body: JSON.stringify({
+              ids: matchIds
+            })
+          }
+        )
       );
 
-      await env.AIML_INGESTION_KV.delete(key.name);
+      
 
-      console.log("[INTEL QUEUE OK]", matchId);
+      for (const key of queue.keys || []) {
+        await env.AIML_INGESTION_KV.delete(key.name);
+      }
+
+      console.log(
+        "[INTEL QUEUE BATCH OK]",
+        matchIds.length,
+        data?.processed ?? null
+      );
 
     } catch (e) {
 
-      console.log("[INTEL QUEUE FAIL]", matchId);
+      for (const key of queue.keys || []) {
+        try {
+          await env.AIML_INGESTION_KV.delete(key.name);
+        } catch (_) {}
+      }
+
+      console.log("[INTEL QUEUE BATCH FAIL]", e);
 
     }
 
@@ -1944,14 +2067,14 @@ try {
     }
 
     let idx =
-      Number(await env.AIML_INGESTION_KV.get("AI_BUILD_IDX")) || 0;
+      Number(await env.AIML_INGESTION_KV.get("AI_BUILD_IDX") || 0);
 
-    const MAX_PER_CRON = 3;
+    const MAX_PER_CRON = 1;
     const end = Math.min(idx + MAX_PER_CRON, leagues.length);
 
     console.log("[AI BUILD] start", idx, "→", end);
 
-    for (let i = idx; i < end; i++) {
+    for (let i = idx; i < end && i < leagues.length; i++) {
       const league = leagues[i];
 
       try {
@@ -1971,8 +2094,14 @@ try {
 
     await env.AIML_INGESTION_KV.put("AI_BUILD_IDX", String(next));
 
-  })());
-}
+        } catch (err) {
+
+          console.log("[SCHEDULER ERROR]", err);
+
+        }
+
+      })());
+    }
 
 };
 

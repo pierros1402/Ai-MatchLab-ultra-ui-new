@@ -3,7 +3,7 @@
 const LEAGUE_SEEDS = [
   "eng.1","eng.2","eng.3","eng.4","eng.5","eng.fa","eng.league_cup","eng.trophy",
 
-  "esp.1","esp.2","esp.copa_del_rey","esp.super_cup","esp.w.1",
+  "esp.1","esp.2","esp.copa_del_rey","esp.super_cup",
 
   "ita.1","ita.2","ita.coppa_italia",
 
@@ -29,7 +29,7 @@ const LEAGUE_SEEDS = [
   /* CAF */
   "caf.nations","caf.champions","caf.confed",
 
-  /* AFRICA – DOMESTIC (ADDED) */
+  /* AFRICA – DOMESTIC */
   "nga.1",
   "ken.1",
   "rsa.1",
@@ -41,17 +41,19 @@ const LEAGUE_SEEDS = [
 
   /* AMERICAS */
   "mex.1","mex.2",
-  "usa.1","usa.w.1",
+  "usa.1",
 
   "arg.1",
-  "bra.1","bra.2",
+  "bra.1",
   "chi.1",
   "uru.1",
   "par.1",
   "per.1",
   "ecu.1",
+  "bol.1",
+  "ven.1",
 
-  /* CENTRAL / CARIBBEAN (HARD ORIGIN) */
+  /* CENTRAL / CARIBBEAN */
   "crc.1",
   "gua.1",
   "hon.1",
@@ -67,14 +69,15 @@ const LEAGUE_SEEDS = [
   "swe.1",
   "nor.1",
   "irl.1",
+  "rus.1",
 
-  /* ASIA / OCEANIA (HARD ORIGIN) */
+  /* ASIA / OCEANIA */
   "sgp.1","slv.1",
   "jpn.1",
   "chn.1",
   "tha.1",
   "ind.1",
-  "aus.1","aus.w.1",
+  "aus.1",
 
   /* BRAZIL STATE */
   "bra.camp.carioca",
@@ -82,13 +85,13 @@ const LEAGUE_SEEDS = [
   "bra.camp.gaucho",
   "bra.camp.mineiro",
 
-  
   "concacaf.champions",
   "conmebol.libertadores",
   "club.friendly"
 ];
 
 const LEAGUE_NAME_MAP = {
+
   "eng.1":"Premier League",
   "eng.2":"Championship",
   "eng.3":"League One",
@@ -102,7 +105,6 @@ const LEAGUE_NAME_MAP = {
   "esp.2":"LaLiga 2",
   "esp.copa_del_rey":"Copa del Rey",
   "esp.super_cup":"Supercopa de España",
-
 
   "ita.1":"Serie A",
   "ita.2":"Serie B",
@@ -146,7 +148,7 @@ const LEAGUE_NAME_MAP = {
   "caf.champions":"CAFCL",
   "caf.confed":"CAFCC",
 
-  /* AFRICA – DOMESTIC (ADDED) */
+  /* AFRICA */
   "nga.1":"NigeriaPFL",
   "ken.1":"KenyaPL",
   "rsa.1":"SouthAfricaPL",
@@ -161,26 +163,26 @@ const LEAGUE_NAME_MAP = {
   "mex.1":"MexicoLigaMX",
   "mex.2":"MexicoExpansion",
   "usa.1":"MLS",
-  "usa.w.1":"NWSL",
 
   "arg.1":"ArgentinaLPF",
   "bra.1":"BrazilSerieA",
-  "bra.2":"BrazilSerieB",
   "chi.1":"ChilePrimera",
   "uru.1":"UruguayPrimera",
   "par.1":"ParaguayPrimera",
   "per.1":"PeruPrimera",
   "ecu.1":"EcuadorSerieA",
+  "bol.1":"BoliviaPrimera",
+  "ven.1":"VenezuelaPrimera",
 
-  /* CENTRAL / CARIBBEAN (HARD ORIGIN) */
+  /* CENTRAL AMERICA */
   "crc.1":"CostaRicaPrimera",
   "gua.1":"GuatemalaLigaNac",
   "hon.1":"HondurasLigaNac",
   "jam.1":"JamaicaPL",
   "col.1":"ColombiaPrimeraA",
-  "col.2": "ColombiaPrimeraB",
+  "col.2":"ColombiaPrimeraB",
 
-  /* EUROPE – EXTRA */
+  /* EUROPE EXTRA */
   "tur.1":"TurkeySuperLig",
   "sui.1":"SwitzerlandSL",
   "aut.1":"AustriaBL",
@@ -188,8 +190,9 @@ const LEAGUE_NAME_MAP = {
   "swe.1":"SwedenAllsvenskan",
   "nor.1":"NorwayEliteserien",
   "irl.1":"IrelandPremierDivision",
+  "rus.1":"RussianPremierLeague",
 
-  /* ASIA / OCEANIA (HARD ORIGIN) */
+  /* ASIA */
   "sgp.1":"SingaporePL",
   "slv.1":"ElSalvadorPrimera",
   "jpn.1":"JapanJ1",
@@ -197,7 +200,6 @@ const LEAGUE_NAME_MAP = {
   "tha.1":"ThailandT1",
   "ind.1":"IndiaISL",
   "aus.1":"AustraliaALeague",
-  "aus.w.1":"AustraliaALeagueW",
 
   /* BRAZIL STATE */
   "bra.camp.carioca":"BrazilCarioca",
@@ -205,11 +207,10 @@ const LEAGUE_NAME_MAP = {
   "bra.camp.gaucho":"BrazilGaucho",
   "bra.camp.mineiro":"BrazilMineiro",
 
-  "concacaf.champions": "CONCACAFChampionsCup",
-  "conmebol.libertadores": "CopaLibertadores",
+  "concacaf.champions":"CONCACAFChampionsCup",
+  "conmebol.libertadores":"CopaLibertadores",
   "club.friendly":"ClubFriendly"
 };
-
 
 /* =========================================================
    HELPERS (Shared)

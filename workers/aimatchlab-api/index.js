@@ -642,7 +642,7 @@ async function handleFixturesRuntime(url, env) {
       continue;
     }
 
-    if (mode === "active" && (isScheduled || isLive)) {
+    if (mode === "active" && (isScheduled || isFinal || isLive)) {
       out.push(m);
       continue;
     }

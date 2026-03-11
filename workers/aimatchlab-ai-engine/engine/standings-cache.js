@@ -27,16 +27,6 @@ export async function updateStandingsCache(env, league, season, match) {
     }
   } catch (_) {}
 
-  // ------------------------------------------------------------
-  // SKIP IF MATCH ALREADY PROCESSED
-  // ------------------------------------------------------------
-  const matchId = match.id;
-
-  const scoreSig = `${gf}-${ga}`;
-
-  if (state.processed[matchId] === scoreSig) {
-    return { skipped: true };
-  }
 
   // ------------------------------------------------------------
   // EXTRACT MATCH DATA
@@ -107,7 +97,18 @@ export async function updateStandingsCache(env, league, season, match) {
   if (!Number.isFinite(gf) || !Number.isFinite(ga)) return { skipped: true };
   if (gf < 0 || ga < 0) {
     return { skipped: true };
-  }  
+  } 
+
+// ------------------------------------------------------------
+// SKIP IF MATCH ALREADY PROCESSED
+// ------------------------------------------------------------
+const matchId = match.id;
+const scoreSig = `${gf}-${ga}`;
+
+if (state.processed[matchId] === scoreSig) {
+  return { skipped: true };
+}
+ 
   // ------------------------------------------------------------
   // TEAM INIT
   // ------------------------------------------------------------
