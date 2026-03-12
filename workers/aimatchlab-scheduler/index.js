@@ -14,6 +14,8 @@ const R2_KEEP_MONTHS = 3;         // intel/performance/evaluation months
 // --------------------------------------------------
 const __indexSigCache = new Map();
 const __stagingSigCache = new Map();
+const __indexExistCache = new Map();
+
 function dayKeyTZ(tz, date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: tz,
@@ -180,13 +182,19 @@ async function fetchLeagueUTC(slug, date = null) {
 
     const espnDate = date ? date.replaceAll("-", "") : null;
 
-    // ---------- PRIMARY ----------
+// ---------- PRIMARY ----------
     const url =
       date
         ? `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`
         : `${ESPN_BASE}/${slug}/scoreboard?limit=300`;
 
     let res = await fetch(url);
+
+// 404 σημαίνει απλά ότι δεν υπάρχει αγώνας για τη λίγκα εκείνη τη μέρα
+    if (res.status === 404) {
+      await res.body?.cancel();
+      return null;
+    }
 
     if (!res.ok) {
       await res.body?.cancel();
@@ -264,29 +272,28 @@ for (const slug of PRIORITY) {
   const today = dayKeyTZ(ATHENS_TZ);
   let data = await fetchLeagueUTC(slug, today);
 
-  // fetch failed
-  if (data === null) {
-    await mark404(env, slug);
-    continue;
-  }
-
-  // invalid response
   if (!data || !Array.isArray(data.events)) {
-    continue;
+  continue;
   }
 
+// retry μόνο αν υπάρχει πιθανότητα αγώνα
   if (!data.events.length) {
-    await new Promise(r => setTimeout(r, 120));
-    const retry = await fetchLeagueUTC(slug, today);
 
-    if (retry === null) {
-      await mark404(env, slug);
+    const hasRecentMatch =
+      await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+
+    if (!hasRecentMatch) {
       continue;
     }
+
+    await new Promise(r => setTimeout(r, 120));
+
+    const retry = await fetchLeagueUTC(slug, today);
 
     if (retry && Array.isArray(retry.events) && retry.events.length) {
       data = retry;
     }
+
   }
 
 processedLeagues.add(slug);
@@ -360,7 +367,6 @@ while (slice.length < CHUNK_SIZE && scanned < totalLeagues) {
 
 // advance pointer correctly
 idx = (idx + slice.length) % totalLeagues;
-
 console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
 
 
@@ -572,6 +578,11 @@ for (const m of (bucketMaps[stagingKey]?.values() || [])) {
 // ----------------------------------
 // write merged snapshot (ONLY IF CHANGED)
 // ----------------------------------
+if (!bucketMaps[stagingKey] || bucketMaps[stagingKey].size === 0) {
+  console.log("[staging] skip empty bucket", stagingKey);
+  continue;
+}
+
 const newSnapshot = {
   date: stagingKey.split(":").pop(),
   matches: Array.from(stageMap.values())
@@ -607,6 +618,33 @@ if (writeNeeded) {
 }
 
 }
+
+// --------------------------------------------------
+// FALLBACK: LOAD MATCHES FROM STAGING IF BUCKET EMPTY
+// --------------------------------------------------
+
+if (Object.keys(bucketMaps).length === 0) {
+
+  const today = dayKeyTZ(ATHENS_TZ);
+  const { staging } = keysForDay(today);
+
+  const raw = await env.AIML_INGESTION_KV.get(staging);
+
+  if (raw) {
+
+    const parsed = JSON.parse(raw);
+
+    bucketMaps[staging] = new Map();
+
+    for (const m of parsed.matches || []) {
+      bucketMaps[staging].set(m.id, m);
+    }
+
+    console.log("[index rebuild fallback] loaded matches from staging:", parsed.matches.length);
+  }
+
+}
+
 // ✅ SAFE PLACE (after merge, before KV write)
 // --------------------------------------------------
 // MATCH CHANGE DETECTION (NO KV WRITES)
@@ -614,6 +652,8 @@ if (writeNeeded) {
 
 let writeCount = 0;
 let indexWrites = 0;
+
+const aiQueue = [];
 
 for (const stagingKey in bucketMaps) {
 
@@ -637,31 +677,67 @@ for (const stagingKey in bucketMaps) {
       let prevSig = __indexSigCache.get(sigKey);
 
       if (prevSig === undefined) {
-        prevSig = await env.AIML_INGESTION_KV.get(sigKey);
+
+        const stored = await env.AIML_INGESTION_KV.get(sigKey);
+
+        prevSig = stored ? stored : null;
+
         __indexSigCache.set(sigKey, prevSig);
+
       }
 
-      // check if index exists in R2
-      let indexExists = false;
+// ------------------------------------------------
+// CHECK IF INDEX EXISTS
+// ------------------------------------------------
+let indexExists = __indexExistCache.get(m.id);
 
-      try {
-        const head = await env.AI_STATE.head(`match-index/${m.id}.json`);
-        indexExists = !!head;
-      } catch (_) {}
+if (indexExists === undefined) {
 
-      // skip only if nothing changed AND index already exists
-      if (prevSig === newSig && indexExists) {
-        continue;
+  try {
+
+    const obj = await env.AI_STATE.head(`match-index/${m.id}.json`);
+
+    indexExists = !!obj;
+
+  } catch (_) {
+
+    indexExists = false;
+
+  }
+
+  __indexExistCache.set(m.id, indexExists);
+
+}
+
+      // ------------------------------------------------
+      // NOTHING CHANGED → SKIP
+      // ------------------------------------------------
+      console.log("[index debug]", m.id, "prevSig:", prevSig, "newSig:", newSig);
+      console.log("[index debug]", m.id, "indexExists:", indexExists);
+      if (prevSig === newSig) {
+        if (indexExists) {
+          continue;
+         }
       }
 
+      // ------------------------------------------------
+      // SIGNATURE CHANGED → UPDATE CACHE
+      // ------------------------------------------------
       __indexSigCache.set(sigKey, newSig);
 
-      await env.AIML_INGESTION_KV.put(
-        sigKey,
-        newSig,
-        { expirationTtl: 86400 }
-      );
+      if (prevSig !== newSig) {
 
+        await env.AIML_INGESTION_KV.put(
+          sigKey,
+          newSig,
+          { expirationTtl: 86400 }
+        );
+
+      }
+
+      // ------------------------------------------------
+      // WRITE MEMORY SNAPSHOT
+      // ------------------------------------------------
       const memoryKey = `intel-memory/${m.id}/last.json`;
 
       await env.AI_STATE.put(
@@ -675,35 +751,42 @@ for (const stagingKey in bucketMaps) {
           ts: Date.now()
         })
       );
-
 // ------------------------------------
 // MATCH INDEX (AI lookup pointer)
 // ------------------------------------
-console.log("[R2 index write]", m.id);
-indexWrites++;
+const s = String(m.status || "").toUpperCase();
 
-await env.AI_STATE.put(
-  `match-index/${m.id}.json`,
-  JSON.stringify({
-    league: m.leagueSlug,
-    season: "2025-2026",
-    updatedAt: Date.now()
-  })
-);
+if (
+  s.includes("FIRST_HALF") ||
+  s.includes("SECOND_HALF") ||
+  s.includes("FULL_TIME")
+) {
 
-// ------------------------------------------------
-// TRIGGER AI ENGINE (ONLY FIRST TIME)
-// ------------------------------------------------
-if (!indexExists) {
+  console.log("[R2 index write]", m.id);
+  indexWrites++;
 
-  try {
+  await env.AI_STATE.put(
+    `match-index/${m.id}.json`,
+    JSON.stringify({
+      league: m.leagueSlug,
+      season: "2025-2026",
+      updatedAt: Date.now()
+    })
+  );
 
-    fetch(
-      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${m.id}`,
-      { method: "GET" }
-    ).catch(()=>{});
+}
 
-  } catch (_) {}
+__indexExistCache.set(m.id, true);
+indexExists = true;
+// ------------------------------------
+// TRIGGER AI ENGINE ONLY IF MATCH CHANGED
+// ------------------------------------
+if (prevSig !== newSig) {
+
+  fetch(
+    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${m.id}`,
+    { method: "GET" }
+  ).catch(() => {});
 
 }
 
@@ -720,19 +803,6 @@ if (!indexExists) {
 }   // closes: for (const m of bucket.values())
 
 }   // closes: for (const stagingKey in bucketMaps)
-
-console.log("[index writes this run]", indexWrites);
-
-if (indexWrites > 0) {
-
-  console.log("[value trigger] R2 ready — running value");
-
-  fetch(
-    `https://aimatchlab-api.pierros1402.workers.dev/value/run?date=${todayAthens}`,
-    { method: "POST" }
-  ).catch(()=>{});
-
-}
 
 }
 /* ================= FINALIZE ================= */
@@ -879,7 +949,12 @@ async function rebuildMissingDay(env, day) {
 
         const matchDay = athensDayFromKickoff(m.kickoff);
 
-        if (matchDay !== day) continue;
+        const prevDay = formatUTC(shiftUTC(new Date(day + "T00:00:00Z"), -1));
+        const nextDay = formatUTC(shiftUTC(new Date(day + "T00:00:00Z"), 1));
+
+        if (matchDay !== day && matchDay !== prevDay && matchDay !== nextDay) {
+          continue;
+        }
 
         matches.push({
           ...m,
@@ -1673,7 +1748,10 @@ if (existing) {
 }
 await env.AIML_INGESTION_KV.put(
   LOCK_KEY,
-  RUN_ID,
+  JSON.stringify({
+    id: RUN_ID,
+    ts: Date.now()
+  }),
   { expirationTtl: 600 }
 );
 
@@ -1839,93 +1917,72 @@ try {
 }
 
 /// =====================================================
-// VALUE DAILY ORCHESTRATION (FINAL PRODUCTION VERSION)
-// =====================================================
-try {
+// VALUE DAILY ORCHESTRATION
+/// =====================================================
 
-  const today = dayKeyTZ(ATHENS_TZ);
-  const yesterday = dayKeyTZ(
-    ATHENS_TZ,
-    new Date(Date.now() - 86400000)
-  );
+const today = dayKeyTZ(ATHENS_TZ);
+const yesterday = dayKeyTZ(
+  ATHENS_TZ,
+  new Date(Date.now() - 86400000)
+);
 
-  const DAILY_FLAG = `VALUE:BUILT:${today}`;
-  const COOLDOWN_KEY = "VALUE:COOLDOWN";
+const DAILY_FLAG = `VALUE:BUILT:${today}`;
+const COOLDOWN_KEY = "VALUE:COOLDOWN";
 
-  const alreadyBuilt =
-    await env.AIML_INGESTION_KV.get(DAILY_FLAG);
+const alreadyBuilt =
+  await env.AIML_INGESTION_KV.get(DAILY_FLAG);
 
-  if (!alreadyBuilt) {
+if (!alreadyBuilt) {
 
-    const cooldown =
-      await env.AIML_INGESTION_KV.get(COOLDOWN_KEY);
+  const cooldown =
+    await env.AIML_INGESTION_KV.get(COOLDOWN_KEY);
 
-    if (cooldown) {
+  if (cooldown) {
 
-      console.log("[value] cooldown active");
+    console.log("[value] cooldown active");
 
-    } else {
+  } else {
 
-      const todayStagingKey =
-        `FIXTURES:STAGING:DATE:${today}`;
+    const todayStagingKey =
+      `FIXTURES:STAGING:DATE:${today}`;
 
-      const yesterdayFinalKey =
-        `FIXTURES:DATE:${yesterday}`;
+    const yesterdayFinalKey =
+      `FIXTURES:DATE:${yesterday}`;
 
-      const todayStagingRaw =
-        await env.AIML_INGESTION_KV.get(todayStagingKey);
+    const todayStagingRaw =
+      await env.AIML_INGESTION_KV.get(todayStagingKey);
 
-      const yesterdayFinal =
-        await env.AIML_INGESTION_KV.get(yesterdayFinalKey);
+    const yesterdayFinal =
+      await env.AIML_INGESTION_KV.get(yesterdayFinalKey);
 
-      if (todayStagingRaw && yesterdayFinal) {
+    if (todayStagingRaw && yesterdayFinal) {
 
-        const parsed = JSON.parse(todayStagingRaw);
-        const matches = parsed.matches || [];
+      const parsed = JSON.parse(todayStagingRaw);
+      const matches = parsed.matches || [];
 
-        if (matches.length === 0) {
+      if (matches.length === 0) {
 
-          console.log("[value] staging empty");
+        console.log("[value] staging empty");
+
+      } else {
+
+        const res = await fetch(
+          `https://aimatchlab-api.pierros1402.workers.dev/value/run?date=${today}`,
+          { method: "POST" }
+        );
+
+        if (res && res.ok) {
+
+          console.log("[value] build completed ✔");
+
+          await env.AIML_INGESTION_KV.put(
+            DAILY_FLAG,
+            Date.now().toString()
+          );
 
         } else {
 
-          const liveExists = matches.some(m => {
-            const s = String(m.status || "");
-            return (
-              s.includes("HALF") ||
-              s.includes("LIVE") ||
-              s.includes("IN_PROGRESS") ||
-              s.includes("SECOND_HALF")
-            );
-          });
-
-          if (liveExists) {
-
-            console.log("[value] live matches present — wait next cron");
-
-          } else {
-
-            const res = await fetch(
-              `https://aimatchlab-api.pierros1402.workers.dev/value/run?date=${today}`,
-              { method: "POST" }
-            );
-
-            if (res && res.ok) {
-
-              console.log("[value] build completed ✔");
-
-              await env.AIML_INGESTION_KV.put(
-                DAILY_FLAG,
-                Date.now().toString()
-              );
-
-            } else {
-
-              console.log("[value] engine returned error — retry next cron");
-
-            }
-
-          }
+          console.log("[value] engine returned error — retry next cron");
 
         }
 
@@ -1935,11 +1992,8 @@ try {
 
   }
 
-} catch (e) {
-
-  console.log("[value] engine unreachable — retry next cron");
-
 }
+
 // -------------------
 // CLEANUP (hourly window)
 // -------------------
