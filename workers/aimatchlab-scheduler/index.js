@@ -689,17 +689,25 @@ for (const stagingKey in bucketMaps) {
 // ------------------------------------------------
 // CHECK IF INDEX EXISTS
 // ------------------------------------------------
+const statusName = String(m.status || "").toUpperCase();
+
 let indexExists = __indexExistCache.get(m.id);
 
-if (indexExists === undefined) {
+if (
+  indexExists == null &&
+  (
+    statusName.includes("FIRST_HALF") ||
+    statusName.includes("SECOND_HALF") ||
+    statusName.includes("FULL_TIME")
+  )
+) {
 
   try {
 
     const obj = await env.AI_STATE.head(`match-index/${m.id}.json`);
-
     indexExists = !!obj;
 
-  } catch (_) {
+  } catch {
 
     indexExists = false;
 
@@ -754,12 +762,11 @@ if (indexExists === undefined) {
 // ------------------------------------
 // MATCH INDEX (AI lookup pointer)
 // ------------------------------------
-const s = String(m.status || "").toUpperCase();
 
 if (
-  s.includes("FIRST_HALF") ||
-  s.includes("SECOND_HALF") ||
-  s.includes("FULL_TIME")
+  statusName.includes("FIRST_HALF") ||
+  statusName.includes("SECOND_HALF") ||
+  statusName.includes("FULL_TIME")
 ) {
 
   console.log("[R2 index write]", m.id);
@@ -968,8 +975,20 @@ async function rebuildMissingDay(env, day) {
   }
 
   if (!matches.length) {
-    console.log("[rebuild] no matches found", day);
-    return;
+
+    console.log("[rebuild] no matches found from ESPN — using staging");
+
+    const { staging } = keysForDay(day);
+    const raw = await env.AIML_INGESTION_KV.get(staging);
+
+    if (!raw) {
+      console.log("[rebuild] staging missing", day);
+      return;
+    }
+
+    const parsed = JSON.parse(raw);
+
+    matches.push(...(parsed.matches || []));
   }
 
   await putJson(env, final, {
@@ -1023,25 +1042,62 @@ async function finalizeDay(env, day) {
 
     const status = String(m.status || "").toUpperCase();
 
-    // ---------------------------------
-    // LIVE MATCH → BLOCK FINALIZE
-    // ---------------------------------
-    if (
-      status.includes("LIVE") ||
-      status.includes("HALF") ||
-      status.includes("IN_PROGRESS") ||
-      status.includes("SECOND_HALF")
-    ) {
-      console.log(
-        "[finalize] blocked — live match",
-        day,
-        "match:",
-        m.id,
-        "status:",
-        status
-      );
-      return;
+// ---------------------------------
+// LIVE MATCH → BLOCK FINALIZE
+// ---------------------------------
+if (
+  status.includes("LIVE") ||
+  status.includes("HALF") ||
+  status.includes("IN_PROGRESS") ||
+  status.includes("SECOND_HALF")
+) {
+
+  console.log("[finalize] attempting recovery", m.id);
+
+  try {
+
+    const res = await fetch(
+      `${ESPN_BASE}/${m.leagueSlug}/scoreboard`
+    );
+
+    const json = await res.json();
+
+    const event = (json.events || []).find(e => e.id === m.id);
+
+    if (event) {
+
+      const normalized = normalize(event, m.leagueSlug);
+
+      if (normalized) {
+
+        Object.assign(m, normalized);
+
+        const newStatus = String(m.status || "").toUpperCase();
+
+        if (isTerminal(newStatus)) {
+          console.log("[finalize] recovered FT", m.id);
+          terminalFound = true;
+          filtered.push(m);
+          continue;
+        }
+
+      }
+
     }
+
+  } catch (_) {}
+
+  console.log(
+    "[finalize] blocked — live match",
+    day,
+    "match:",
+    m.id,
+    "status:",
+    status
+  );
+
+  return;
+}
 
     // ---------------------------------
     // INTERRUPTED MATCHES
@@ -1139,11 +1195,15 @@ if (!preExists) {
 
 async function reconcileRecentFinalized(env, ctx) {
 
+  if (Math.random() > 0.25) {
+    return;
+  }
+
   const now = Date.now();
   
   const DAY_MS = 24 * 60 * 60 * 1000;
 
-  const list = await kvListAll(env, "FIXTURES:DATE:");
+  const list = (await kvListAll(env, "FIXTURES:DATE:")).slice(-3);
 
   for (const k of list) {
 
@@ -1171,6 +1231,13 @@ async function reconcileRecentFinalized(env, ctx) {
     }
 
     for (const [slug, matches] of leagues.entries()) {
+
+  // skip leagues with no unresolved matches
+        const needsCheck = matches.some(m => !isTerminal(m.status));
+
+        if (!needsCheck) {
+          continue;
+        }
 
       try {
 
@@ -1200,7 +1267,7 @@ async function reconcileRecentFinalized(env, ctx) {
             console.log("[reconcile] correction", match.id);
 
             Object.assign(match, normalized);
-
+            changed = true;
             fetch(
               `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${match.id}`,
               { method: "GET" }
@@ -1213,7 +1280,9 @@ async function reconcileRecentFinalized(env, ctx) {
 
     }
 
-    await putJson(env, k.name, finalized);
+    if (changed) {
+      await putJson(env, k.name, finalized);
+    }
   }
 }
 
@@ -1739,13 +1808,33 @@ if (url.pathname === "/ingest-now") {
 const LOCK_KEY = "SCHEDULER:RUNNING";
 const RUN_ID = crypto.randomUUID();
 
-// check existing lock
 const existing = await env.AIML_INGESTION_KV.get(LOCK_KEY);
 
 if (existing) {
-  console.log("[scheduler] skipped (already running)");
-  return;
+
+  let age = 0;
+
+  try {
+
+    const parsed = JSON.parse(existing);
+    age = Date.now() - (parsed.ts || 0);
+
+  } catch {
+
+    // παλιό lock format → θεώρησε το stale
+    age = 999999999;
+
+  }
+
+  if (age < 10 * 60 * 1000) {
+    console.log("[scheduler] skipped (already running)");
+    return;
+  }
+
+  console.log("[scheduler] stale lock detected — overriding");
 }
+
+// γράψε νέο lock
 await env.AIML_INGESTION_KV.put(
   LOCK_KEY,
   JSON.stringify({
@@ -1755,10 +1844,17 @@ await env.AIML_INGESTION_KV.put(
   { expirationTtl: 600 }
 );
 
-// verify ownership (Cloudflare cron race protection)
-const confirm = await env.AIML_INGESTION_KV.get(LOCK_KEY);
+// verify ownership
+const confirmRaw = await env.AIML_INGESTION_KV.get(LOCK_KEY);
 
-if (confirm !== RUN_ID) {
+let confirmId = null;
+
+try {
+  const parsed = JSON.parse(confirmRaw);
+  confirmId = parsed.id;
+} catch {}
+
+if (confirmId !== RUN_ID) {
   console.log("[scheduler] lost lock race — abort");
   return;
 }
