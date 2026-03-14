@@ -1628,15 +1628,18 @@ try {
         const newSig =
           result?.meta?.stateSignature;
 
-        if (prevSig && newSig && prevSig === newSig) {
+        if (
+          prevSig &&
+          newSig &&
+          prevSig === newSig &&
+          result?.meta?.phase === "LIVE"
+         ) {
 
           skipVersionWrite = true;
 
           result.cache = "HIT";
 
-          return json(result);
-
-        }
+         }
 
       }
 
@@ -1670,35 +1673,38 @@ if (!skipVersionWrite) {
     );
 
     // ------------------------------------------------------------
-    // VERSION LIMITER (KEEP LAST 40)
-    // ------------------------------------------------------------
-    try {
+// ------------------------------------------------------------
+// VERSION LIMITER (DISABLED – exceeds subrequest limits)
+// ------------------------------------------------------------
+/*
+try {
 
-      const prefix =
-        `intel/context/${matchId}/versions/`;
+  const prefix =
+    `intel/context/${matchId}/versions/`;
 
-      const list =
-        await env.AI_STATE.list({ prefix });
+  const list =
+    await env.AI_STATE.list({ prefix });
 
-      if (list.objects && list.objects.length > 40) {
+  if (list.objects && list.objects.length > 40) {
 
-        const sorted =
-          list.objects
-            .map(o => o.key)
-            .sort();
+    const sorted =
+      list.objects
+        .map(o => o.key)
+        .sort();
 
-        const toDelete =
-          sorted.slice(0, sorted.length - 40);
+    const toDelete =
+      sorted.slice(0, sorted.length - 40);
 
-        for (const key of toDelete) {
-          await env.AI_STATE.delete(key);
-        }
-
-      }
-
-    } catch (e) {
-      console.log("[VERSION LIMIT FAIL]", e);
+    for (const key of toDelete) {
+      await env.AI_STATE.delete(key);
     }
+
+  }
+
+} catch (e) {
+  console.log("[VERSION LIMIT FAIL]", e);
+}
+*/
 
     // ------------------------------------------------------------
     // UPDATE POINTER (latest snapshot)
@@ -2011,22 +2017,25 @@ try {
 
     try {
 
-      ctx.waitUntil(
-        fetch(
-          `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel-batch`,
-          {
-            method: "POST",
-            headers: {
-              "content-type": "application/json"
-            },
-            body: JSON.stringify({
-              ids: matchIds
-            })
-          }
-        )
+      const resp = await fetch(
+        `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel-batch`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify({
+            ids: matchIds
+          })
+        }
       );
 
-      
+      let processed = null;
+
+      try {
+        const j = await resp.json();
+        processed = j?.processed ?? null;
+      } catch (_) {}
 
       for (const key of queue.keys || []) {
         await env.AIML_INGESTION_KV.delete(key.name);
@@ -2035,7 +2044,7 @@ try {
       console.log(
         "[INTEL QUEUE BATCH OK]",
         matchIds.length,
-        data?.processed ?? null
+        processed
       );
 
     } catch (e) {

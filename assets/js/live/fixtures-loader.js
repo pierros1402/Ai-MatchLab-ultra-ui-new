@@ -27,7 +27,7 @@ const __AIML_INTEL_CACHE = new Map();
 
 const AIML_INTEL_CACHE_TTL = 60000;
 let __AIML_INTEL_CURSOR = 0;
-const AIML_INTEL_BATCH = 4;
+const AIML_INTEL_BATCH = 2;
 // key: matchId
 // value: lastSignalSignature
 
@@ -148,22 +148,31 @@ async function fetchMatchIntelSafe(matchId) {
     { cache: "no-store" }
   )
   .then(r => {
-    if (!r.ok) throw new Error("intel " + r.status);
+    if (!r.ok) return null;
     return r.json();
   })
   .then(data => {
+
+    if (!data) return null;
+
     __AIML_INTEL_CACHE.set(id, {
       ts: Date.now(),
       data
     });
+
     return data;
+
   })
   .catch(e => {
+
     if (e?.name === "AbortError") return null;
     return null;
+
   })
   .finally(() => {
+
     __AIML_INTEL_REQUESTS.delete(id);
+
   });
 
   __AIML_INTEL_REQUESTS.set(id, p);
@@ -202,14 +211,19 @@ async function fetchMatchIntelSafe(matchId) {
           if (typeof window.emit === "function") {
             window.emit("live:update", payload);
           }
+
 // -------------------------------------
 // INTEL SIGNAL FETCH
 // -------------------------------------
 if (liveMatches.length) {
 
-  const batch = liveMatches.slice(__AIML_INTEL_CURSOR, __AIML_INTEL_CURSOR + AIML_INTEL_BATCH);
+  const batch = liveMatches.slice(
+    __AIML_INTEL_CURSOR,
+    __AIML_INTEL_CURSOR + AIML_INTEL_BATCH
+  );
 
   __AIML_INTEL_CURSOR += AIML_INTEL_BATCH;
+
   if (__AIML_INTEL_CURSOR >= liveMatches.length) {
     __AIML_INTEL_CURSOR = 0;
   }
@@ -219,12 +233,12 @@ if (liveMatches.length) {
     const last = __AIML_INTEL_FETCH_TS.get(m.id) || 0;
     const now = Date.now();
 
-    if (now - last < 60000) continue;
+    if (now - last < 120000) continue;
 
     __AIML_INTEL_FETCH_TS.set(m.id, now);
 
     fetchMatchIntelSafe(m.id)
-      .then((data) => {
+      .then(data => {
 
         if (!data || !data.signals || !data.signals.length) return;
 
@@ -247,12 +261,11 @@ if (liveMatches.length) {
         }
 
       })
-      .catch(()=>{});
+      .catch(() => {});
 
   }
 
 }
-
 liveLog("[LIVE] realtime source", liveMatches.length);
 return payload;
           
@@ -284,11 +297,11 @@ return payload;
 
         return (
           s.includes("LIVE") ||
-          s.includes("IN_PROGRESS") ||
-          s.includes("FIRST_HALF") ||
-          s.includes("SECOND_HALF") ||
+          s.includes("PROGRESS") ||
+          s.includes("FIRST") ||
+          s.includes("SECOND") ||
           s.includes("HALF") ||
-          s.includes("EXTRA")
+          s.includes("EXTRA") 
         );
      });
 

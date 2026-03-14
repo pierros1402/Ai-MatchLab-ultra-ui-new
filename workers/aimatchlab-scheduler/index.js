@@ -156,7 +156,34 @@ function normalize(event, slug) {
 
 // ================= ACTIVE LEAGUE FILTER =================
 async function shouldQueryLeague(env, slug, date) {
-  return true;
+
+  const today = dayKeyTZ(ATHENS_TZ);
+  const stagingKey = `FIXTURES:STAGING:DATE:${today}`;
+
+  const raw = await env.AIML_INGESTION_KV.get(stagingKey);
+
+  // αν δεν υπάρχει staging → κανονικό ingest
+  if (!raw) {
+    return true;
+  }
+
+  try {
+
+    const parsed = JSON.parse(raw);
+    const matches = parsed.matches || [];
+
+    for (const m of matches) {
+
+      if (m.leagueSlug === slug) {
+        return true;
+      }
+
+    }
+
+  } catch (_) {}
+
+  // league δεν έχει αγώνα σήμερα
+  return false;
 }
 // ================= 404 COOLDOWN =================
 async function shouldRetryAfter404(env, slug) {
@@ -257,10 +284,6 @@ const PRIORITY = [
   "esp.1",
   "ita.1",
   "ger.1",
-  "fra.1",
-  "uefa.champions",
-  "uefa.europa",
-  "uefa.europa.conf"
 ];
 
 for (const slug of PRIORITY) {
@@ -270,61 +293,71 @@ for (const slug of PRIORITY) {
   }
 
   const today = dayKeyTZ(ATHENS_TZ);
-  let data = await fetchLeagueUTC(slug, today);
 
-  if (!data || !Array.isArray(data.events)) {
-  continue;
-  }
+ let data = await fetchLeagueUTC(slug, today);
+
+ if (!data || !Array.isArray(data.events)) {
+   continue;
+ }
 
 // retry μόνο αν υπάρχει πιθανότητα αγώνα
-  if (!data.events.length) {
+if (!data.events.length) {
 
-    const hasRecentMatch =
-      await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+  const hasRecentMatch =
+    await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
 
-    if (!hasRecentMatch) {
-      continue;
-    }
-
-    await new Promise(r => setTimeout(r, 120));
-
-    const retry = await fetchLeagueUTC(slug, today);
-
-    if (retry && Array.isArray(retry.events) && retry.events.length) {
-      data = retry;
-    }
-
+  if (!hasRecentMatch) {
+    continue;
   }
+
+}
 
 processedLeagues.add(slug);
 
 if (!data.events.length) {
   continue;
-}  
+}
 
-  for (const event of data.events) {
+// ---------------------------------
+// mark league active (once)
+// ---------------------------------
+await env.AIML_INGESTION_KV.put(
+  `LEAGUE:ACTIVE:${slug}`,
+  "1",
+  { expirationTtl: 86400 }
+);
 
-    const m = normalize(event, slug);
-    if (!m) continue;
+// ---------------------------------
+// EVENT LOOP
+// ---------------------------------
+for (const event of data.events) {
 
-    const day = athensDayFromKickoff(m.kickoff);
-    const todayAth = dayKeyTZ(ATHENS_TZ);
+  const m = normalize(event, slug);
+  if (!m) continue;
 
-    const diff =
-      Math.floor(
-        (Date.parse(day + "T00:00:00Z") -
-         Date.parse(todayAth + "T00:00:00Z")) / 86400000
-      );
+  const day = athensDayFromKickoff(m.kickoff);
+  const todayAth = dayKeyTZ(ATHENS_TZ);
 
-    if (diff < -2 || diff > 3) continue;
+  const diff =
+    Math.floor(
+      (Date.parse(day + "T00:00:00Z") -
+       Date.parse(todayAth + "T00:00:00Z")) / 86400000
+    );
 
-    const { staging } = keysForDay(day);
+  if (diff < -2 || diff > 3) continue;
 
-    bucketMaps[staging] ??= new Map();
-    if (bucketMaps[staging].has(m.id)) continue;
-    bucketMaps[staging].set(m.id, { ...m, dayKey: day });
+  const { staging } = keysForDay(day);
 
-  }
+  bucketMaps[staging] ??= new Map();
+
+  if (bucketMaps[staging].has(m.id)) continue;
+
+  bucketMaps[staging].set(m.id, {
+    ...m,
+    dayKey: day
+  });
+
+}
 
 }
     
@@ -332,7 +365,7 @@ if (!data.events.length) {
 // ROTATION INGEST (ACCELERATED AFTER 00:00 ATHENS)
 // ---------------------------
 
-const CHUNK_SIZE = 12;
+const CHUNK_SIZE = 5;
 const totalLeagues = LEAGUE_SEEDS.length;
 
 // time window: 00:00–01:00 Athens
@@ -350,23 +383,24 @@ if (idx >= totalLeagues) idx = 0;
 // =====================================================
 
 const slice = [];
-
 let scanned = 0;
 
 while (slice.length < CHUNK_SIZE && scanned < totalLeagues) {
 
   const slug = LEAGUE_SEEDS[(idx + scanned) % totalLeagues];
 
-  if (!PRIORITY.includes(slug)) {
-    slice.push(slug);
+  scanned++;
+
+  if (PRIORITY.includes(slug)) {
+    continue;
   }
 
-  scanned++;
+  slice.push(slug);
 
 }
 
 // advance pointer correctly
-idx = (idx + slice.length) % totalLeagues;
+idx = (idx + scanned) % totalLeagues;
 console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
 
 
@@ -384,6 +418,8 @@ for (const slug of slice) {
 
     let data = await fetchLeagueUTC(slug, today);
 
+    let leagueHasLive = false;
+
     if (data === null) {
       await mark404(env, slug);
       continue;
@@ -393,28 +429,22 @@ for (const slug of slice) {
       continue;
     }
 
-    // -----------------------------
-    // mark league as processed
-    // ONLY after valid response
-    // -----------------------------
-    
+// -----------------------------
+// mark league as processed
+// ONLY after valid response
+// -----------------------------
 
-    if (!data.events.length) {
+if (!data.events.length) {
 
-      await new Promise(r => setTimeout(r, 120));
+  const hasRecentMatch =
+    await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
 
-      const retry = await fetchLeagueUTC(slug, today);
+  if (!hasRecentMatch) {
+    await mark404(env, slug);
+    continue;
+  }
 
-      if (retry === null) {
-        await mark404(env, slug);
-        continue;
-      }
-
-      if (retry && Array.isArray(retry.events) && retry.events.length) {
-        data = retry;
-      }
-
-    }
+}
 
 // -----------------------------
 // EVENT LOOP
@@ -423,6 +453,27 @@ for (const event of (data.events || [])) {
 
   const m = normalize(event, slug);
   if (!m) continue;
+
+  const s = String(m.status || "").toUpperCase();
+
+  if (
+    s.includes("LIVE") ||
+    s.includes("IN_PROGRESS") ||
+    s.includes("HALF") ||
+    s.includes("SECOND_HALF") ||
+    s.includes("PRE") ||
+    s.includes("SCHEDULED") ||
+    s.includes("NOT_STARTED")
+  ) {
+    leagueHasLive = true;
+
+    // mark league active
+    await env.AIML_INGESTION_KV.put(
+      `LEAGUE:ACTIVE:${slug}`,
+      Date.now().toString(),
+      { expirationTtl: 86400 }
+    );
+  }
 
   const day = athensDayFromKickoff(m.kickoff);
   const today = dayKeyTZ(ATHENS_TZ);
@@ -456,6 +507,13 @@ for (const event of (data.events || [])) {
     dayKey: day
   });
 
+}
+
+// ---------------------------------
+// league finished → stop polling
+// ---------------------------------
+if (!leagueHasLive) {
+  await env.AIML_INGESTION_KV.delete(`LEAGUE:ACTIVE:${slug}`);
 }
 
 // -----------------------------
@@ -519,40 +577,20 @@ try {
 const stageMap = new Map();
 
 // ----------------------------------
-// ----------------------------------
 // keep previous matches
 // ----------------------------------
 for (const m of existingStage.matches || []) {
 
-  const matchDay = athensDayFromKickoff(m.kickoff);
-
-  if (matchDay !== stagingKey.split(":").pop()) {
-    continue;
-  }
-
   const replaced =
+    bucketMaps[stagingKey] &&
     bucketMaps[stagingKey].has(m.id);
 
-  // keep only if NOT replaced by new ingest
-if (!replaced && !stageMap.has(m.id)) {
-
-  const s = String(m.status || "").toUpperCase();
-
-  const wasLive =
-    s.includes("LIVE") ||
-    s.includes("HALF") ||
-    s.includes("IN_PROGRESS") ||
-    s.includes("SECOND_HALF");
-
-  // do not keep stale live matches
-  if (!wasLive) {
+  // keep previous snapshot unless fresh ingest replaced it
+  if (!replaced) {
     stageMap.set(m.id, m);
   }
 
 }
-
-}
-
 // ----------------------------------
 // apply fresh ingest updates
 // ----------------------------------
@@ -583,9 +621,13 @@ if (!bucketMaps[stagingKey] || bucketMaps[stagingKey].size === 0) {
   continue;
 }
 
+const sortedMatches = Array
+  .from(stageMap.values())
+  .sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+
 const newSnapshot = {
   date: stagingKey.split(":").pop(),
-  matches: Array.from(stageMap.values())
+  matches: sortedMatches
 };
 
 // lightweight signature
@@ -608,6 +650,12 @@ if (writeNeeded) {
 
   await putJson(env, stagingKey, newSnapshot);
 
+  await env.AIML_INGESTION_KV.put(
+    SIG_KEY,
+    sig,
+    { expirationTtl: 86400 }
+  );
+
   __stagingSigCache.set(SIG_KEY, sig);
   console.log("[staging] updated", stagingKey);
 
@@ -623,21 +671,20 @@ if (writeNeeded) {
 // FALLBACK: LOAD MATCHES FROM STAGING IF BUCKET EMPTY
 // --------------------------------------------------
 
-if (Object.keys(bucketMaps).length === 0) {
+const todayKey = keysForDay(dayKeyTZ(ATHENS_TZ)).staging;
 
-  const today = dayKeyTZ(ATHENS_TZ);
-  const { staging } = keysForDay(today);
+if (!bucketMaps[todayKey] || bucketMaps[todayKey].size === 0) {
 
-  const raw = await env.AIML_INGESTION_KV.get(staging);
+  const raw = await env.AIML_INGESTION_KV.get(todayKey);
 
   if (raw) {
 
     const parsed = JSON.parse(raw);
 
-    bucketMaps[staging] = new Map();
+    bucketMaps[todayKey] = new Map();
 
     for (const m of parsed.matches || []) {
-      bucketMaps[staging].set(m.id, m);
+      bucketMaps[todayKey].set(m.id, m);
     }
 
     console.log("[index rebuild fallback] loaded matches from staging:", parsed.matches.length);
@@ -655,14 +702,63 @@ let indexWrites = 0;
 
 const aiQueue = [];
 
+
+
 for (const stagingKey in bucketMaps) {
+
+  if (stagingKey !== todayKey) {
+    continue;
+  }
 
   const bucket = bucketMaps[stagingKey];
   if (!bucket) continue;
 
-  for (const m of bucket.values()) {
+  const matches = Array.from(bucket.values());
 
-    writeCount++;
+// ------------------------------------
+// AI ROTATION POINTER
+// ------------------------------------
+
+let aiIdx =
+  Number(await env.AIML_INGESTION_KV.get("AI:IDX") || 0);
+
+if (aiIdx >= matches.length) {
+  aiIdx = 0;
+}
+
+// ------------------------------------
+// PRIORITIZE MATCHES WITHOUT INTEL
+// ------------------------------------
+
+const noIntel = matches.filter(
+  m => !__indexExistCache.get(m.id)
+);
+
+const queueSource =
+  noIntel.length ? noIntel : matches;
+
+const slice = queueSource.slice(aiIdx, aiIdx + 5);
+
+// ------------------------------------
+// AI BUILD PROGRESS (LOG)
+// ------------------------------------
+
+const built =
+  Math.min(matches.length, aiIdx + slice.length);
+
+const remaining =
+  Math.max(0, matches.length - built);
+
+console.log(
+  "[AI progress]",
+  "built:", built,
+  "remaining:", remaining,
+  "total:", matches.length
+);
+
+for (const m of slice) {
+
+  writeCount++;
 
     try {
 
@@ -671,67 +767,59 @@ for (const stagingKey in bucketMaps) {
       const newSig = [
         m.status || "",
         m.scoreHome ?? "",
-        m.scoreAway ?? ""
+        m.scoreAway ?? "",
+        m.minute || ""
       ].join("|");
+
+      const statusName = String(m.status || "").toUpperCase();
 
       let prevSig = __indexSigCache.get(sigKey);
 
       if (prevSig === undefined) {
 
-        const stored = await env.AIML_INGESTION_KV.get(sigKey);
+        const stored =
+          await env.AIML_INGESTION_KV.get(sigKey);
 
         prevSig = stored ? stored : null;
 
         __indexSigCache.set(sigKey, prevSig);
 
-      }
+       }
 
-// ------------------------------------------------
-// CHECK IF INDEX EXISTS
-// ------------------------------------------------
-const statusName = String(m.status || "").toUpperCase();
+// ------------------------------------
+// AI BUILD PROGRESS LOG
+// ------------------------------------
 
-let indexExists = __indexExistCache.get(m.id);
+const remaining =
+  Math.max(0, matches.length - (aiIdx + slice.length));
 
-if (
-  indexExists == null &&
-  (
-    statusName.includes("FIRST_HALF") ||
-    statusName.includes("SECOND_HALF") ||
-    statusName.includes("FULL_TIME")
-  )
-) {
-
-  try {
-
-    const obj = await env.AI_STATE.head(`match-index/${m.id}.json`);
-    indexExists = !!obj;
-
-  } catch {
-
-    indexExists = false;
-
-  }
-
-  __indexExistCache.set(m.id, indexExists);
-
-}
+console.log(
+  "[AI progress]",
+  "built:", aiIdx + slice.length,
+  "remaining:", remaining,
+  "total:", matches.length
+);
 
       // ------------------------------------------------
-      // NOTHING CHANGED → SKIP
+      // CHECK IF INDEX EXISTS
       // ------------------------------------------------
-      console.log("[index debug]", m.id, "prevSig:", prevSig, "newSig:", newSig);
-      console.log("[index debug]", m.id, "indexExists:", indexExists);
-      if (prevSig === newSig) {
-        if (indexExists) {
-          continue;
-         }
+
+      let indexExists = __indexExistCache.get(m.id);
+
+      if (indexExists === undefined) {
+
+        const existing =
+          await env.AI_STATE.get(`match-index/${m.id}.json`);
+
+        indexExists = !!existing;
+
+        __indexExistCache.set(m.id, indexExists);
+
       }
 
       // ------------------------------------------------
       // SIGNATURE CHANGED → UPDATE CACHE
       // ------------------------------------------------
-      __indexSigCache.set(sigKey, newSig);
 
       if (prevSig !== newSig) {
 
@@ -741,75 +829,148 @@ if (
           { expirationTtl: 86400 }
         );
 
+        __indexSigCache.set(sigKey, newSig);
+
+      }
+
+      // ------------------------------------
+      // MATCH INDEX (AI lookup pointer)
+      // ------------------------------------
+
+      if (
+        !indexExists &&
+        (
+          statusName.includes("PRE") ||
+          statusName.includes("SCHEDULED") ||
+          statusName.includes("NOT_STARTED") ||
+          statusName.includes("FIRST_HALF") ||
+          statusName.includes("SECOND_HALF") ||
+          statusName.includes("FULL_TIME")
+        )
+      ) {
+
+        console.log("[R2 index write]", m.id);
+        indexWrites++;
+
+        await env.AI_STATE.put(
+          `match-index/${m.id}.json`,
+          JSON.stringify({
+            league: m.leagueSlug,
+            season: "2025-2026",
+            updatedAt: Date.now()
+          })
+        );
+
+        __indexExistCache.set(m.id, true);
+        indexExists = true;
+
       }
 
       // ------------------------------------------------
-      // WRITE MEMORY SNAPSHOT
+      // CHECK IF INTEL EXISTS (FIXED BUG)
       // ------------------------------------------------
-      const memoryKey = `intel-memory/${m.id}/last.json`;
 
-      await env.AI_STATE.put(
-        memoryKey,
-        JSON.stringify({
-          id: m.id,
-          status: m.status,
-          scoreHome: m.scoreHome,
-          scoreAway: m.scoreAway,
-          minute: m.minute || null,
-          ts: Date.now()
-        })
+      const intelExists = indexExists;
+
+      // ------------------------------------------------
+      // NOTHING CHANGED AND INTEL EXISTS → SKIP
+      // ------------------------------------------------
+
+      if (prevSig === newSig && intelExists) {
+        continue;
+      }
+
+      if (prevSig !== newSig) {
+        console.log("[index change]", m.id, prevSig, "→", newSig);
+      }
+
+// ------------------------------------
+// TRIGGER AI ENGINE
+// ------------------------------------
+
+const RUN_KEY = `AI:RUNNING:${m.id}`;
+
+const running =
+  await env.AIML_INGESTION_KV.get(RUN_KEY);
+
+if (!running) {
+
+  await env.AIML_INGESTION_KV.put(
+    RUN_KEY,
+    "1",
+    { expirationTtl: 90 }
+  );
+
+  if (!aiQueue.includes(m.id)) {
+    aiQueue.push(m.id);
+  }
+
+}
+
+    } catch (err) {
+
+      console.log(
+        "[index write error]",
+        m.id,
+        err?.message || err
       );
-// ------------------------------------
-// MATCH INDEX (AI lookup pointer)
-// ------------------------------------
 
-if (
-  statusName.includes("FIRST_HALF") ||
-  statusName.includes("SECOND_HALF") ||
-  statusName.includes("FULL_TIME")
-) {
+    }
 
-  console.log("[R2 index write]", m.id);
-  indexWrites++;
+  }
 
-  await env.AI_STATE.put(
-    `match-index/${m.id}.json`,
-    JSON.stringify({
-      league: m.leagueSlug,
-      season: "2025-2026",
-      updatedAt: Date.now()
-    })
+  // ------------------------------------
+  // ADVANCE AI ROTATION POINTER
+  // ------------------------------------
+
+  aiIdx += 5;
+
+  if (aiIdx >= matches.length) {
+    aiIdx = 0;
+  }
+
+  await env.AIML_INGESTION_KV.put(
+    "AI:IDX",
+    String(aiIdx)
   );
 
 }
 
-__indexExistCache.set(m.id, true);
-indexExists = true;
-// ------------------------------------
-// TRIGGER AI ENGINE ONLY IF MATCH CHANGED
-// ------------------------------------
-if (prevSig !== newSig) {
 
-  fetch(
-    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${m.id}`,
-    { method: "GET" }
-  ).catch(() => {});
+// ------------------------------------------------
+// RUN AI ENGINE QUEUE (LIMITED)
+// ------------------------------------------------
+
+const ids = aiQueue.slice(0,5);
+
+if (ids.length) {
+
+  try {
+
+    await fetch(
+      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel-batch`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({ ids })
+      }
+    );
+
+  } catch (e) {
+
+    console.log("[AI BATCH CALL FAIL]", e);
+
+  }
 
 }
 
-} catch (err) {
 
-  console.log(
-    "[index write error]",
-    m.id,
-    err?.message || err
-  );
+console.log("[scheduler] AI queue triggered:", aiQueue.length);
 
-}
-
-}   // closes: for (const m of bucket.values())
-
-}   // closes: for (const stagingKey in bucketMaps)
+// return queue size to scheduler
+return aiQueue.length;
 
 }
 /* ================= FINALIZE ================= */
@@ -1168,7 +1329,10 @@ const preExists = matches.some(m => {
   return (
     s.includes("SCHEDULED") ||
     s.includes("PRE") ||
-    s.includes("NOT_STARTED")
+    s.includes("NOT_STARTED") ||
+    s.includes("DELAY") ||
+    s.includes("POSTPONED") ||
+    s.includes("TIME_TBD")
   );
 
 });
@@ -1176,9 +1340,9 @@ const preExists = matches.some(m => {
 if (!preExists) {
   console.log("[value] no PRE matches yet");
 }
-  // ---------------------------------
-  // WRITE FINAL SNAPSHOT
-  // ---------------------------------
+// ---------------------------------
+// WRITE FINAL SNAPSHOT
+// ---------------------------------
   await putJson(env, final, {
     date: day,
     matches: filtered
@@ -1194,7 +1358,7 @@ if (!preExists) {
 /* ================= RECONCILIATION ================= */
 
 async function reconcileRecentFinalized(env, ctx) {
-
+  let changed = false;
   if (Math.random() > 0.25) {
     return;
   }
@@ -1471,12 +1635,14 @@ filtered.sort((a, b) => {
   const liveA =
     sa.includes("LIVE") ||
     sa.includes("IN_PROGRESS") ||
-    sa.includes("HALF");
+    sa.includes("HALF") ||
+    sa.includes("SECOND_HALF");
 
   const liveB =
     sb.includes("LIVE") ||
     sb.includes("IN_PROGRESS") ||
-    sb.includes("HALF");
+    sb.includes("HALF") ||
+    sb.includes("SECOND_HALF");
 
   // LIVE first
   if (liveA && !liveB) return -1;
@@ -1826,7 +1992,7 @@ if (existing) {
 
   }
 
-  if (age < 10 * 60 * 1000) {
+  if (age < 90 * 1000) {
     console.log("[scheduler] skipped (already running)");
     return;
   }
@@ -1841,7 +2007,7 @@ await env.AIML_INGESTION_KV.put(
     id: RUN_ID,
     ts: Date.now()
   }),
-  { expirationTtl: 600 }
+  { expirationTtl: 120 }
 );
 
 // verify ownership
@@ -1881,39 +2047,180 @@ if (confirmId !== RUN_ID) {
       // -------------------
       // INGEST WINDOW
       // -------------------
-      await ingestUTCWindow(env, ctx);
+      const aiTriggered = await ingestUTCWindow(env, ctx);
 
       console.log("[scheduler] ingest done");
 
-      // -------------------
-      // STAGING STATUS PROBE (TODAY)
-      // -------------------
-      try {
-        
+// -------------------
+// STAGING STATUS PROBE (TODAY)
+// -------------------
+try {
 
-        const todayKey = `FIXTURES:STAGING:DATE:${todayAthens}`;
+  const todayKey = `FIXTURES:STAGING:DATE:${todayAthens}`;
+  const todayData = await env.AIML_INGESTION_KV.get(todayKey);
 
-        const todayData = await env.AIML_INGESTION_KV.get(todayKey);
+  if (!todayData) {
 
-        if (!todayData) {
-          console.log("[staging status]", todayAthens, "empty");
-        } else {
-          const parsed = JSON.parse(todayData);
+    console.log("[staging status]", todayAthens, "empty");
 
-          console.log(
-            "[staging status]",
-            todayAthens,
-            "matches:",
-            parsed.matches?.length || 0
+  } else {
+
+    const parsed = JSON.parse(todayData);
+
+    console.log(
+      "[staging status]",
+      todayAthens,
+      "matches:",
+      parsed.matches?.length || 0
+    );
+
+  }
+
+} catch (_) {
+
+  console.log("[staging status] probe failed");
+
+}
+
+
+
+let missing = 0;
+
+// skip coverage check if we just triggered AI
+if (aiTriggered > 0) {
+
+  console.log("[intel coverage] skipped (AI build in progress)");
+  missing = 999;
+
+}
+
+// =====================================================
+// INTEL COVERAGE CHECK (TODAY)
+// =====================================================
+if (missing !== 999) {
+
+try {
+
+  const todayKey = `FIXTURES:STAGING:DATE:${todayAthens}`;
+  const todayRaw = await env.AIML_INGESTION_KV.get(todayKey);
+
+  if (todayRaw) {
+
+    const parsed = JSON.parse(todayRaw);
+    const matches = parsed.matches || [];
+
+    let intelBuilt = 0;
+    missing = 0;
+
+    const SAMPLE_SIZE = 10;
+
+    const sample = matches.slice(0, SAMPLE_SIZE);
+
+    for (const m of sample) {
+
+       const obj =
+         await env.AI_STATE.get(`intel/context/${m.id}/latest.json`);
+
+       if (obj) {
+         intelBuilt++;
+       } else {
+         missing++;
+       }
+
+     }
+
+     const estimatedMissing =
+       Math.round((missing / SAMPLE_SIZE) * matches.length);
+
+     console.log(
+       "[intel coverage]",
+       "staging:", matches.length,
+       "sample:", SAMPLE_SIZE,
+       "intel(sample):", intelBuilt,
+       "missing(sample):", missing,
+       "est.missing:", estimatedMissing
+     );
+
+  }
+
+} catch (e) {
+
+  console.log("[intel coverage] failed");
+
+}
+
+}
+
+/// =====================================================
+// VALUE DAILY ORCHESTRATION
+/// =====================================================
+
+const today = dayKeyTZ(ATHENS_TZ);
+const yesterday = dayKeyTZ(
+  ATHENS_TZ,
+  new Date(Date.now() - 86400000)
+);
+
+const DAILY_FLAG = `VALUE:BUILT:${today}`;
+const COOLDOWN_KEY = "VALUE:COOLDOWN";
+
+const alreadyBuilt =
+  await env.AIML_INGESTION_KV.get(DAILY_FLAG);
+
+if (!alreadyBuilt) {
+
+    const todayStagingKey =
+      `FIXTURES:STAGING:DATE:${today}`;
+
+    const yesterdayFinalKey =
+      `FIXTURES:DATE:${yesterday}`;
+
+    const todayStagingRaw =
+      await env.AIML_INGESTION_KV.get(todayStagingKey);
+
+    const yesterdayFinal =
+      await env.AIML_INGESTION_KV.get(yesterdayFinalKey);
+
+    if (todayStagingRaw && yesterdayFinal && missing === 0) {
+
+      const parsed = JSON.parse(todayStagingRaw);
+      const matches = parsed.matches || [];
+
+      if (matches.length === 0) {
+
+        console.log("[value] staging empty");
+
+      } else {
+
+        const res = await fetch(
+          `https://aimatchlab-api.pierros1402.workers.dev/value/run?date=${today}`,
+          { method: "POST" }
+        );
+
+        if (res && res.ok) {
+
+          console.log("[value] build completed ✔");
+
+          await env.AIML_INGESTION_KV.put(
+            DAILY_FLAG,
+            Date.now().toString()
           );
+
+        } else {
+
+          console.log("[value] engine returned error — retry next cron");
+
         }
-      } catch (_) {
-        console.log("[staging status] probe failed");
+
       }
 
-      // -------------------
-      // AUTO DISCOVER STAGING DAYS
-      // -------------------
+    }
+
+  }
+
+// -------------------
+// AUTO DISCOVER STAGING DAYS
+// -------------------
       const daysToCheck = [];
 
       for (let i = KV_KEEP_STAGING_DAYS; i >= 0; i--) {
@@ -1990,7 +2297,9 @@ try {
   for (const obj of list.objects || []) {
 
     const uploaded =
-      obj.uploaded ? new Date(obj.uploaded).getTime() : 0;
+      obj.lastModified
+        ? new Date(obj.lastModified).getTime()
+        : 0;
 
     if (!uploaded) continue;
 
@@ -2012,83 +2321,9 @@ try {
 
 }
 
-/// =====================================================
-// VALUE DAILY ORCHESTRATION
-/// =====================================================
 
-const today = dayKeyTZ(ATHENS_TZ);
-const yesterday = dayKeyTZ(
-  ATHENS_TZ,
-  new Date(Date.now() - 86400000)
-);
 
-const DAILY_FLAG = `VALUE:BUILT:${today}`;
-const COOLDOWN_KEY = "VALUE:COOLDOWN";
 
-const alreadyBuilt =
-  await env.AIML_INGESTION_KV.get(DAILY_FLAG);
-
-if (!alreadyBuilt) {
-
-  const cooldown =
-    await env.AIML_INGESTION_KV.get(COOLDOWN_KEY);
-
-  if (cooldown) {
-
-    console.log("[value] cooldown active");
-
-  } else {
-
-    const todayStagingKey =
-      `FIXTURES:STAGING:DATE:${today}`;
-
-    const yesterdayFinalKey =
-      `FIXTURES:DATE:${yesterday}`;
-
-    const todayStagingRaw =
-      await env.AIML_INGESTION_KV.get(todayStagingKey);
-
-    const yesterdayFinal =
-      await env.AIML_INGESTION_KV.get(yesterdayFinalKey);
-
-    if (todayStagingRaw && yesterdayFinal) {
-
-      const parsed = JSON.parse(todayStagingRaw);
-      const matches = parsed.matches || [];
-
-      if (matches.length === 0) {
-
-        console.log("[value] staging empty");
-
-      } else {
-
-        const res = await fetch(
-          `https://aimatchlab-api.pierros1402.workers.dev/value/run?date=${today}`,
-          { method: "POST" }
-        );
-
-        if (res && res.ok) {
-
-          console.log("[value] build completed ✔");
-
-          await env.AIML_INGESTION_KV.put(
-            DAILY_FLAG,
-            Date.now().toString()
-          );
-
-        } else {
-
-          console.log("[value] engine returned error — retry next cron");
-
-        }
-
-      }
-
-    }
-
-  }
-
-}
 
 // -------------------
 // CLEANUP (hourly window)
