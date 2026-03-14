@@ -15,6 +15,8 @@ const R2_KEEP_MONTHS = 3;         // intel/performance/evaluation months
 const __indexSigCache = new Map();
 const __stagingSigCache = new Map();
 const __indexExistCache = new Map();
+const __stagingDayCache = new Map();
+const __intelExistCache = new Map();
 
 function dayKeyTZ(tz, date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -160,7 +162,15 @@ async function shouldQueryLeague(env, slug, date) {
   const today = dayKeyTZ(ATHENS_TZ);
   const stagingKey = `FIXTURES:STAGING:DATE:${today}`;
 
-  const raw = await env.AIML_INGESTION_KV.get(stagingKey);
+  let raw = __stagingDayCache.get(stagingKey);
+
+  if (raw === undefined) {
+
+    raw = await env.AIML_INGESTION_KV.get(stagingKey);
+
+    __stagingDayCache.set(stagingKey, raw);
+ 
+  }
 
   // αν δεν υπάρχει staging → κανονικό ingest
   if (!raw) {
@@ -384,6 +394,7 @@ if (idx >= totalLeagues) idx = 0;
 
 const slice = [];
 let scanned = 0;
+let advanced = 0;
 
 while (slice.length < CHUNK_SIZE && scanned < totalLeagues) {
 
@@ -396,12 +407,12 @@ while (slice.length < CHUNK_SIZE && scanned < totalLeagues) {
   }
 
   slice.push(slug);
+  advanced++;
 
 }
 
-// advance pointer correctly
-idx = (idx + scanned) % totalLeagues;
-console.log("[ingest] rotation slice start:", idx, "count:", slice.length);
+// advance pointer ONLY for processed leagues
+idx = (idx + advanced) % totalLeagues;
 
 
 
@@ -716,223 +727,318 @@ for (const stagingKey in bucketMaps) {
   const matches = Array.from(bucket.values());
 
 // ------------------------------------
+// PREFETCH INTEL EXISTENCE (ONLY FOR PRE)
+// ------------------------------------
+
+for (const m of matches) {
+
+  if (__intelExistCache.has(m.id)) {
+    continue;
+  }
+
+  const status = String(m.status || "").toUpperCase();
+
+  const isPre =
+    status.includes("PRE") ||
+    status.includes("SCHEDULED") ||
+    status.includes("NOT_STARTED");
+
+  if (!isPre) {
+    __intelExistCache.set(m.id, false);
+    continue;
+  }
+
+  try {
+
+    const intelObj =
+      await env.AI_STATE.get(
+        `intel/context/${m.id}/latest.json`
+      );
+
+    __intelExistCache.set(
+      m.id,
+      !!intelObj
+    );
+
+  } catch {
+
+    __intelExistCache.set(m.id, false);
+
+  }
+
+}
+// ------------------------------------
+// PRIORITIZE MATCHES WITHOUT INTEL
+// ------------------------------------
+
+const preNoIntel = matches.filter(m => {
+
+  const status = String(m.status || "").toUpperCase();
+
+  const isPre =
+    status.includes("PRE") ||
+    status.includes("SCHEDULED") ||
+    status.includes("NOT_STARTED");
+
+  return isPre && !__intelExistCache.get(m.id);
+
+});
+
+const noIntel = matches.filter(m => {
+
+  const status = String(m.status || "").toUpperCase();
+
+  const eligible =
+    status.includes("PRE") ||
+    status.includes("SCHEDULED") ||
+    status.includes("NOT_STARTED");
+
+  return eligible && !__intelExistCache.get(m.id);
+
+});
+
+let queueSource;
+
+if (preNoIntel.length) {
+
+  queueSource = preNoIntel;
+
+} else if (noIntel.length) {
+
+  queueSource = noIntel;
+
+} else {
+
+  queueSource = matches;
+
+}
+
+// ------------------------------------
 // AI ROTATION POINTER
 // ------------------------------------
 
 let aiIdx =
   Number(await env.AIML_INGESTION_KV.get("AI:IDX") || 0);
 
-if (aiIdx >= matches.length) {
+if (aiIdx >= queueSource.length) {
   aiIdx = 0;
 }
 
 // ------------------------------------
-// PRIORITIZE MATCHES WITHOUT INTEL
+// BUILD SLICE
 // ------------------------------------
 
-const noIntel = matches.filter(
-  m => !__indexExistCache.get(m.id)
-);
+let slice =
+  queueSource.slice(aiIdx, aiIdx + 10);
 
-const queueSource =
-  noIntel.length ? noIntel : matches;
+// αν το slice είναι άδειο για build,
+// ψάξε λίγο παρακάτω στο rotation
+if (!slice.length && queueSource.length > 10) {
 
-const slice = queueSource.slice(aiIdx, aiIdx + 5);
+  const nextIdx = (aiIdx + 10) % queueSource.length;
 
+  slice =
+    queueSource.slice(nextIdx, nextIdx + 10);
+
+}
 // ------------------------------------
 // AI BUILD PROGRESS (LOG)
 // ------------------------------------
 
 const built =
-  Math.min(matches.length, aiIdx + slice.length);
+  Math.min(queueSource.length, aiIdx + slice.length);
 
 const remaining =
-  Math.max(0, matches.length - built);
+  Math.max(0, queueSource.length - built);
 
 console.log(
   "[AI progress]",
   "built:", built,
   "remaining:", remaining,
-  "total:", matches.length
+  "total:", queueSource.length
 );
+
+// ------------------------------------
+// PROCESS SLICE
+// ------------------------------------
 
 for (const m of slice) {
 
   writeCount++;
 
-    try {
+  try {
 
-      const sigKey = `SIG:${m.id}`;
+    const sigKey = `SIG:${m.id}`;
 
-      const newSig = [
-        m.status || "",
-        m.scoreHome ?? "",
-        m.scoreAway ?? "",
-        m.minute || ""
-      ].join("|");
+    const newSig = [
+      m.status || "",
+      m.scoreHome ?? "",
+      m.scoreAway ?? "",
+      m.minute || ""
+    ].join("|");
 
-      const statusName = String(m.status || "").toUpperCase();
+    const statusName = String(m.status || "").toUpperCase();
 
-      let prevSig = __indexSigCache.get(sigKey);
+    let prevSig = __indexSigCache.get(sigKey);
 
-      if (prevSig === undefined) {
+    if (prevSig === undefined) {
 
-        const stored =
-          await env.AIML_INGESTION_KV.get(sigKey);
+      const stored =
+        await env.AIML_INGESTION_KV.get(sigKey);
 
-        prevSig = stored ? stored : null;
+      prevSig = stored ? stored : null;
 
-        __indexSigCache.set(sigKey, prevSig);
+      __indexSigCache.set(sigKey, prevSig);
+    }
 
-       }
+    // ------------------------------------
+    // CHECK IF INDEX EXISTS
+    // ------------------------------------
 
-// ------------------------------------
-// AI BUILD PROGRESS LOG
-// ------------------------------------
+    let indexExists = __indexExistCache.get(m.id);
 
-const remaining =
-  Math.max(0, matches.length - (aiIdx + slice.length));
+    if (indexExists === undefined) {
 
-console.log(
-  "[AI progress]",
-  "built:", aiIdx + slice.length,
-  "remaining:", remaining,
-  "total:", matches.length
-);
+      const existing =
+        await env.AI_STATE.get(`match-index/${m.id}.json`);
 
-      // ------------------------------------------------
-      // CHECK IF INDEX EXISTS
-      // ------------------------------------------------
+      indexExists = !!existing;
 
-      let indexExists = __indexExistCache.get(m.id);
-
-      if (indexExists === undefined) {
-
-        const existing =
-          await env.AI_STATE.get(`match-index/${m.id}.json`);
-
-        indexExists = !!existing;
-
-        __indexExistCache.set(m.id, indexExists);
-
-      }
-
-      // ------------------------------------------------
-      // SIGNATURE CHANGED → UPDATE CACHE
-      // ------------------------------------------------
-
-      if (prevSig !== newSig) {
-
-        await env.AIML_INGESTION_KV.put(
-          sigKey,
-          newSig,
-          { expirationTtl: 86400 }
-        );
-
-        __indexSigCache.set(sigKey, newSig);
-
-      }
-
-      // ------------------------------------
-      // MATCH INDEX (AI lookup pointer)
-      // ------------------------------------
-
-      if (
-        !indexExists &&
-        (
-          statusName.includes("PRE") ||
-          statusName.includes("SCHEDULED") ||
-          statusName.includes("NOT_STARTED") ||
-          statusName.includes("FIRST_HALF") ||
-          statusName.includes("SECOND_HALF") ||
-          statusName.includes("FULL_TIME")
-        )
-      ) {
-
-        console.log("[R2 index write]", m.id);
-        indexWrites++;
-
-        await env.AI_STATE.put(
-          `match-index/${m.id}.json`,
-          JSON.stringify({
-            league: m.leagueSlug,
-            season: "2025-2026",
-            updatedAt: Date.now()
-          })
-        );
-
-        __indexExistCache.set(m.id, true);
-        indexExists = true;
-
-      }
-
-      // ------------------------------------------------
-      // CHECK IF INTEL EXISTS (FIXED BUG)
-      // ------------------------------------------------
-
-      const intelExists = indexExists;
-
-      // ------------------------------------------------
-      // NOTHING CHANGED AND INTEL EXISTS → SKIP
-      // ------------------------------------------------
-
-      if (prevSig === newSig && intelExists) {
-        continue;
-      }
-
-      if (prevSig !== newSig) {
-        console.log("[index change]", m.id, prevSig, "→", newSig);
-      }
+      __indexExistCache.set(m.id, indexExists);
+    }
 
 // ------------------------------------
-// TRIGGER AI ENGINE
+// SIGNATURE CHANGED → UPDATE CACHE
 // ------------------------------------
 
-const RUN_KEY = `AI:RUNNING:${m.id}`;
+if (prevSig !== newSig) {
 
-const running =
-  await env.AIML_INGESTION_KV.get(RUN_KEY);
+  const putPromise =
+    env.AIML_INGESTION_KV.put(
+      sigKey,
+      newSig,
+      { expirationTtl: 86400 }
+    );
 
-if (!running) {
+  __indexSigCache.set(sigKey, newSig);
 
-  await env.AIML_INGESTION_KV.put(
-    RUN_KEY,
-    "1",
-    { expirationTtl: 90 }
-  );
+  await putPromise;
+}
 
-  if (!aiQueue.includes(m.id)) {
-    aiQueue.push(m.id);
+    // ------------------------------------
+    // MATCH INDEX (AI lookup pointer)
+    // ------------------------------------
+
+    if (
+      !indexExists &&
+      (
+        statusName.includes("PRE") ||
+        statusName.includes("SCHEDULED") ||
+        statusName.includes("NOT_STARTED") ||
+        statusName.includes("FIRST_HALF") ||
+        statusName.includes("SECOND_HALF") ||
+        statusName.includes("FULL_TIME")
+      )
+    ) {
+
+      console.log("[R2 index write]", m.id);
+      indexWrites++;
+
+      await env.AI_STATE.put(
+        `match-index/${m.id}.json`,
+        JSON.stringify({
+          league: m.leagueSlug,
+          season: "2025-2026",
+          updatedAt: Date.now()
+        })
+      );
+
+      __indexExistCache.set(m.id, true);
+      indexExists = true;
+    }
+
+// ------------------------------------
+// CHECK IF INTEL EXISTS
+// ------------------------------------
+
+let intelExists = __intelExistCache.get(m.id);
+
+if (intelExists === undefined) {
+
+  try {
+
+    const intelObj =
+      await env.AI_STATE.get(
+        `intel/context/${m.id}/latest.json`
+      );
+
+    intelExists = !!intelObj;
+
+    __intelExistCache.set(m.id, intelExists);
+
+  } catch (_) {
+    intelExists = false;
   }
 
 }
 
-    } catch (err) {
+    // ------------------------------------
+    // TRIGGER AI ENGINE
+    // ------------------------------------
+    if (__intelExistCache.get(m.id)) {
+      continue;
+    }
 
-      console.log(
-        "[index write error]",
-        m.id,
-        err?.message || err
+    const RUN_KEY = `AI:RUNNING:${m.id}`;
+
+    const running =
+      await env.AIML_INGESTION_KV.get(RUN_KEY);
+
+    if (!running) {
+
+      await env.AIML_INGESTION_KV.put(
+        RUN_KEY,
+        "1",
+        { expirationTtl: 90 }
       );
+
+      if (!aiQueue.includes(m.id)) {
+        aiQueue.push(m.id);
+      }
 
     }
 
+  } catch (err) {
+
+    console.log(
+      "[index write error]",
+      m.id,
+      err?.message || err
+    );
+
   }
 
-  // ------------------------------------
-  // ADVANCE AI ROTATION POINTER
-  // ------------------------------------
+}
 
-  aiIdx += 5;
+// ------------------------------------
+// AI QUEUE SIZE (DEBUG)
+// ------------------------------------
 
-  if (aiIdx >= matches.length) {
-    aiIdx = 0;
-  }
+console.log(
+  "[AI queue size]",
+  aiQueue.length
+);
 
-  await env.AIML_INGESTION_KV.put(
-    "AI:IDX",
-    String(aiIdx)
-  );
+// ------------------------------------
+// ADVANCE AI ROTATION POINTER
+// ------------------------------------
+
+aiIdx = (aiIdx + slice.length) % queueSource.length;
+
+await env.AIML_INGESTION_KV.put(
+  "AI:IDX",
+  String(aiIdx)
+);
 
 }
 
@@ -941,7 +1047,7 @@ if (!running) {
 // RUN AI ENGINE QUEUE (LIMITED)
 // ------------------------------------------------
 
-const ids = aiQueue.slice(0,5);
+const ids = aiQueue.slice(0,10);
 
 if (ids.length) {
 
@@ -2007,11 +2113,12 @@ await env.AIML_INGESTION_KV.put(
     id: RUN_ID,
     ts: Date.now()
   }),
-  { expirationTtl: 120 }
+  { expirationTtl: 110 }
 );
 
 // verify ownership
-const confirmRaw = await env.AIML_INGESTION_KV.get(LOCK_KEY);
+const confirmRaw =
+  await env.AIML_INGESTION_KV.get(LOCK_KEY);
 
 let confirmId = null;
 
@@ -2025,10 +2132,12 @@ if (confirmId !== RUN_ID) {
   return;
 }
 
-  const started = Date.now();
-  console.log("[scheduler] cron tick");
-  const todayAthens = dayKeyTZ(ATHENS_TZ);
-  ctx.waitUntil((async () => {
+const started = Date.now();
+console.log("[scheduler] cron tick");
+
+const todayAthens = dayKeyTZ(ATHENS_TZ);
+
+ctx.waitUntil((async () => {
 
     try {
 
@@ -2114,7 +2223,11 @@ try {
 
     const SAMPLE_SIZE = 10;
 
-    const sample = matches.slice(0, SAMPLE_SIZE);
+    const start =
+      Math.floor(Math.random() * Math.max(1, matches.length - SAMPLE_SIZE));
+
+    const sample =
+      matches.slice(start, start + SAMPLE_SIZE);
 
     for (const m of sample) {
 
@@ -2129,17 +2242,25 @@ try {
 
      }
 
-     const estimatedMissing =
-       Math.round((missing / SAMPLE_SIZE) * matches.length);
+// ------------------------------------
+// INTEL PROGRESS
+// ------------------------------------
 
-     console.log(
-       "[intel coverage]",
-       "staging:", matches.length,
-       "sample:", SAMPLE_SIZE,
-       "intel(sample):", intelBuilt,
-       "missing(sample):", missing,
-       "est.missing:", estimatedMissing
-     );
+const stagingCount = matches.length;
+
+const estimatedMissing =
+  Math.round((missing / SAMPLE_SIZE) * stagingCount);
+
+const estimatedBuilt =
+  Math.max(0, stagingCount - estimatedMissing);
+
+console.log(
+  "[intel progress]",
+  "built:", estimatedBuilt,
+  "/",
+  stagingCount,
+  "remaining:", estimatedMissing
+);
 
   }
 
