@@ -9,6 +9,14 @@ const KV_KEEP_STAGING_DAYS = 7;   // staging buckets
 const KV_KEEP_FINAL_DAYS = 14;    // finalized buckets
 const KV_KEEP_VALUE_DAYS = 30;    // value summaries
 const R2_KEEP_MONTHS = 3;         // intel/performance/evaluation months
+
+// --------------------------------------------------
+// RECONCILE CONFIG
+// --------------------------------------------------
+
+const RECON_DAYS = 5;
+const RECON_INTERVAL_MS = 8 * 60 * 60 * 1000; // 8h
+
 // --------------------------------------------------
 // INDEX SIGNATURE CACHE (per execution)
 // --------------------------------------------------
@@ -18,6 +26,9 @@ const __indexExistCache = new Map();
 const __stagingDayCache = new Map();
 const __intelExistCache = new Map();
 const __league404Cache = new Map();
+const __leagueActiveCache = new Map();
+
+let __aiIdxCache = null;
 
 function dayKeyTZ(tz, date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -98,6 +109,18 @@ function monthKeyToInt(m) {
   return yi * 12 + mi;
 }
 
+function dayKeyOffset(days) {
+
+  const now = new Date();
+
+  const shifted = new Date(
+    now.getTime() + days * 86400000
+  );
+
+  return dayKeyTZ(ATHENS_TZ, shifted);
+
+}
+
 /* ================= KV HELPERS ================= */
 
 async function getJson(env, key) {
@@ -118,6 +141,35 @@ function keysForDay(day) {
     staging: `FIXTURES:STAGING:DATE:${day}`,
     final: `FIXTURES:DATE:${day}`
   };
+}
+
+async function shouldRunReconcile(env) {
+
+  const now = Date.now();
+
+  const last =
+    Number(
+      await env.AIML_INGESTION_KV.get("RECON:LAST_RUN") || 0
+    );
+
+  if (now - last < RECON_INTERVAL_MS) {
+    return false;
+  }
+
+  const lock =
+    await env.AIML_INGESTION_KV.get("RECON:LOCK");
+
+  if (lock) {
+    return false;
+  }
+
+  await env.AIML_INGESTION_KV.put(
+    "RECON:LOCK",
+    "1",
+    { expirationTtl: 120 }
+  );
+
+  return true;
 }
 
 /* ================= NORMALIZE ================= */
@@ -320,8 +372,15 @@ for (const slug of PRIORITY) {
 // retry μόνο αν υπάρχει πιθανότητα αγώνα
 if (!data.events.length) {
 
-  const hasRecentMatch =
-    await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+  let hasRecentMatch = __leagueActiveCache.get(slug);
+
+  if (hasRecentMatch === undefined) {
+
+    hasRecentMatch =
+      await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+
+    __leagueActiveCache.set(slug, hasRecentMatch);
+  }
 
   if (!hasRecentMatch) {
     continue;
@@ -357,8 +416,7 @@ for (const event of data.events) {
 
   const diff =
     Math.floor(
-      (Date.parse(day + "T00:00:00Z") -
-       Date.parse(todayAth + "T00:00:00Z")) / 86400000
+      (Date.parse(day) - Date.parse(todayAth)) / 86400000
     );
 
   if (diff < -2 || diff > 3) continue;
@@ -369,7 +427,7 @@ for (const event of data.events) {
 
   if (bucketMaps[staging].has(m.id)) continue;
 
-  bucketMaps[staging].set(m.id, {
+  bucketMaps[staging].set(String(m.id), {
     ...m,
     dayKey: day
   });
@@ -419,7 +477,7 @@ while (slice.length < CHUNK_SIZE && scanned < totalLeagues) {
 }
 
 // advance pointer ONLY for processed leagues
-idx = (idx + advanced) % totalLeagues;
+idx = (idx + scanned) % totalLeagues;
 
 
 
@@ -454,8 +512,15 @@ for (const slug of slice) {
 
 if (!data.events.length) {
 
-  const hasRecentMatch =
-    await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+  let hasRecentMatch = __leagueActiveCache.get(slug);
+
+  if (hasRecentMatch === undefined) {
+
+    hasRecentMatch =
+      await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+
+    __leagueActiveCache.set(slug, hasRecentMatch);
+  }
 
   if (!hasRecentMatch) {
     await mark404(env, slug);
@@ -522,7 +587,7 @@ for (const event of (data.events || [])) {
     continue;
   }
 
-  bucketMaps[staging].set(m.id, {
+  bucketMaps[staging].set(String(m.id), {
     ...m,
     dayKey: day
   });
@@ -603,7 +668,7 @@ for (const m of existingStage.matches || []) {
 
   if (!m || !m.id) continue;
 
-  stageMap.set(m.id, m);
+  stageMap.set(String(m.id), m);
 
 }
 
@@ -614,7 +679,7 @@ for (const m of (bucketMaps[stagingKey]?.values() || [])) {
 
   if (!m || !m.id) continue;
 
-  stageMap.set(m.id, m);
+  stageMap.set(String(m.id), m);
 
 }
 
@@ -787,13 +852,6 @@ const aiQueue = [];
 
 
 
-const raw = await env.AIML_INGESTION_KV.get(todayKey);
-
-if (!raw) {
-  return 0;
-}
-
-const parsed = JSON.parse(raw);
 const matches = parsed.matches || [];
 
 // ------------------------------------------------
@@ -934,8 +992,16 @@ if (!queueSource.length) {
 // AI ROTATION POINTER
 // ------------------------------------
 
-let aiIdx =
-  Number(await env.AIML_INGESTION_KV.get("AI:IDX") || 0);
+let aiIdx = __aiIdxCache;
+
+if (aiIdx === null) {
+
+  aiIdx =
+    Number(await env.AIML_INGESTION_KV.get("AI:IDX") || 0);
+
+  __aiIdxCache = aiIdx;
+
+}
 
 if (aiIdx >= queueSource.length) {
   aiIdx = 0;
@@ -1131,18 +1197,18 @@ console.log(
 
 if (queueSource.length > 0) {
 
-  aiIdx = (aiIdx + aiSlice.length) % queueSource.length;
+  const nextIdx =
+    (aiIdx + aiSlice.length) % queueSource.length;
 
   await env.AIML_INGESTION_KV.put(
     "AI:IDX",
-    String(aiIdx)
+    String(nextIdx)
   );
 
+  aiIdx = nextIdx;
+  __aiIdxCache = nextIdx;
+
 }
-
-
-
-
 // ------------------------------------------------
 // RUN AI ENGINE QUEUE (LIMITED)
 // ------------------------------------------------
@@ -1633,7 +1699,36 @@ if (
 }
 
 // ---------------------------------
-// FALLBACK SUMMARY RECOVERY
+// SCOREBOARD FIRST (CHEAP)
+// ---------------------------------
+
+if (!isTerminal(updated.status)) {
+
+  try {
+
+    const board =
+      await getLeagueBoard(updated.leagueSlug);
+
+    const event =
+      board?.get(updated.id);
+
+    if (event) {
+
+      const normalized =
+        normalize(event, updated.leagueSlug);
+
+      if (normalized) {
+        updated = { ...updated, ...normalized };
+      }
+
+    }
+
+  } catch {}
+
+}
+
+// ---------------------------------
+// SUMMARY ONLY IF STILL NOT TERMINAL
 // ---------------------------------
 
 if (!isTerminal(updated.status)) {
@@ -1641,7 +1736,7 @@ if (!isTerminal(updated.status)) {
   try {
 
     const summary =
-      await fetchMatchSummary(m.id);
+      await fetchMatchSummary(updated.id);
 
     if (summary) {
 
@@ -1650,32 +1745,29 @@ if (!isTerminal(updated.status)) {
 
       if (isTerminal(sumStatus)) {
 
-        const comp = summary.competitors || [];
+        const comp =
+          summary.competitors || [];
 
-        const homeComp =
-          comp.find(c => c.homeAway === "home") || comp[0] || {};
+        const home =
+          comp.find(c => c.homeAway === "home") ||
+          comp[0] || {};
 
-        const awayComp =
-          comp.find(c => c.homeAway === "away") || comp[1] || {};
+        const away =
+          comp.find(c => c.homeAway === "away") ||
+          comp[1] || {};
 
         updated.status = "STATUS_FULL_TIME";
-
-        updated.scoreHome =
-          Number(homeComp?.score || 0);
-
-        updated.scoreAway =
-          Number(awayComp?.score || 0);
-
+        updated.scoreHome = Number(home?.score || 0);
+        updated.scoreAway = Number(away?.score || 0);
         updated.minute = "FT";
 
       }
 
     }
 
-  } catch (_) {}
+  } catch {}
 
 }
-
 // ---------------------------------
 // TERMINAL CHECK
 // ---------------------------------
@@ -1784,6 +1876,22 @@ for (const m of updatedMatches) {
   }
 
 }
+
+// ---------------------------------
+// ABORT FINALIZE IF MATCHES ACTIVE
+// ---------------------------------
+if (blocking.length > 0) {
+
+  console.log(
+    "[finalize] active matches remain — skip finalize",
+    day,
+    "| active:",
+    blocking.length
+  );
+
+  return;
+}
+
 // ---------------------------------
 // WRITE FINAL SNAPSHOT
 // ---------------------------------
@@ -1801,128 +1909,101 @@ await putJson(env, final, {
   );
 }
 
-/* ================= RECONCILIATION ================= */
 
-async function reconcileRecentFinalized(env, ctx) {
-  let changed = false;
-  if (Math.random() > 0.25) {
+async function reconcileDay(env, day) {
+
+  const key = `FIXTURES:DATE:${day}`;
+
+  const raw = await env.AIML_INGESTION_KV.get(key);
+  if (!raw) return;
+
+  let snap;
+
+  try {
+    snap = JSON.parse(raw);
+  } catch {
     return;
   }
 
-  const now = Date.now();
-  
-  const DAY_MS = 24 * 60 * 60 * 1000;
+  if (!snap?.matches?.length) return;
 
-  const list = (await kvListAll(env, "FIXTURES:DATE:")).slice(-3);
+  let changed = false;
 
-  for (const k of list) {
+  for (const m of snap.matches) {
 
-    const day = k.name.split(":").pop();
-    const ts = Date.parse(day + "T00:00:00Z");
-    if (!ts) continue;
+    try {
 
-    // only last 24h finalized days
-    const WINDOW = 2 * DAY_MS;
+      const summary = await fetchMatchSummary(m.id);
 
-    if (now - ts > WINDOW) continue;
+      const st =
+        summary?.status?.type?.name || "";
 
-    const finalized = await getJson(env, k.name);
-    if (!finalized?.matches?.length) continue;
+      const comp =
+        summary?.competitors || [];
 
-    console.log("[reconcile] checking", day);
+      const home =
+        comp.find(c => c.homeAway === "home") ||
+        comp[0] || {};
 
-    const leagues = new Map();
+      const away =
+        comp.find(c => c.homeAway === "away") ||
+        comp[1] || {};
 
-    for (const m of finalized.matches) {
-      if (!leagues.has(m.leagueSlug)) {
-        leagues.set(m.leagueSlug, []);
+      const scoreHome = Number(home?.score || 0);
+      const scoreAway = Number(away?.score || 0);
+
+      if (
+        m.status !== st ||
+        m.scoreHome !== scoreHome ||
+        m.scoreAway !== scoreAway
+      ) {
+
+        m.status = st;
+        m.scoreHome = scoreHome;
+        m.scoreAway = scoreAway;
+
+        changed = true;
+
       }
-      leagues.get(m.leagueSlug).push(m);
-    }
 
-    for (const [slug, matches] of leagues.entries()) {
+    } catch {}
 
-  // skip leagues with no unresolved matches
-        const needsCheck = matches.some(m => !isTerminal(m.status));
-
-        if (!needsCheck) {
-          continue;
-        }
-
-      try {
-
-        const res = await fetch(
-          `${ESPN_BASE}/${slug}/scoreboard`
-        );
-
-        if (!res.ok) {
-          await res.body?.cancel();
-          continue;
-        }
-
-        const data = await res.json();
-
-        const index = new Map(
-          (data.events || []).map(e => [e.id, e])
-        );
-
-        for (const match of matches) {
-
-          const event = index.get(match.id);
-
-          if (!event) {
-
-            const summary = await fetchMatchSummary(match.id);
-
-            if (summary) {
-
-              const sumStatus = summary.status?.type?.name;
-
-              if (sumStatus === "STATUS_FINAL") {
-
-                const comp = summary.competitors || [];
-
-                match.status = "STATUS_FULL_TIME";
-                match.scoreHome = Number(comp[0]?.score || 0);
-                match.scoreAway = Number(comp[1]?.score || 0);
-
-                changed = true;
-              }
-
-            }
-
-            continue;
-          }
-
-          const normalized = normalize(event, slug);
-          if (!normalized) continue;
-
-          if (
-            normalized.scoreHome !== match.scoreHome ||
-            normalized.scoreAway !== match.scoreAway ||
-            normalized.status !== match.status
-          ) {
-            console.log("[reconcile] correction", match.id);
-
-            Object.assign(match, normalized);
-            changed = true;
-            fetch(
-              `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${match.id}`,
-              { method: "GET" }
-            ).catch(()=>{});
-          }
-
-        }
-
-      } catch (_) {}
-
-    }
-
-    if (changed) {
-      await putJson(env, k.name, finalized);
-    }
   }
+
+  if (!changed) return;
+
+  await env.AIML_INGESTION_KV.put(
+    key,
+    JSON.stringify(snap)
+  );
+
+  console.log("[reconcile] snapshot updated", day);
+
 }
+
+async function reconcileRecentDays(env) {
+
+  const run = await shouldRunReconcile(env);
+
+  if (!run) return;
+
+  for (let i = 1; i <= RECON_DAYS; i++) {
+
+    const day = dayKeyOffset(-i);
+
+    try {
+      await reconcileDay(env, day);
+    } catch {}
+
+  }
+
+  await env.AIML_INGESTION_KV.put(
+    "RECON:LAST_RUN",
+    String(Date.now())
+  );
+
+}
+
 
 /* ================= CLEANUP (KV + R2) ================= */
 
@@ -2456,7 +2537,8 @@ if (url.pathname === "/ingest-now") {
 const LOCK_KEY = "SCHEDULER:RUNNING";
 const RUN_ID = crypto.randomUUID();
 
-const existing = await env.AIML_INGESTION_KV.get(LOCK_KEY);
+const existing =
+  await env.AIML_INGESTION_KV.get(LOCK_KEY, { cacheTtl: 0 });
 
 if (existing) {
 
@@ -2494,7 +2576,7 @@ await env.AIML_INGESTION_KV.put(
 
 // verify ownership
 const confirmRaw =
-  await env.AIML_INGESTION_KV.get(LOCK_KEY);
+  await env.AIML_INGESTION_KV.get(LOCK_KEY, { cacheTtl: 0 });
 
 let confirmId = null;
 
@@ -2936,9 +3018,7 @@ for (const slug of leagues) {
 // -------------------
 // RECONCILE
 // -------------------
-if (typeof reconcileRecentFinalized === "function") {
-  await reconcileRecentFinalized(env, ctx);
-}
+await reconcileRecentDays(env);
 
 // ------------------------------------------------------------
 // CLEAN OLD LIVE INTEL SNAPSHOTS
