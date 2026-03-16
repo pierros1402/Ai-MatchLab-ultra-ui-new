@@ -17,6 +17,7 @@ const __stagingSigCache = new Map();
 const __indexExistCache = new Map();
 const __stagingDayCache = new Map();
 const __intelExistCache = new Map();
+const __league404Cache = new Map();
 
 function dayKeyTZ(tz, date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -157,52 +158,58 @@ function normalize(event, slug) {
 }
 
 // ================= ACTIVE LEAGUE FILTER =================
-async function shouldQueryLeague(env, slug, date) {
-
-  const today = dayKeyTZ(ATHENS_TZ);
-  const stagingKey = `FIXTURES:STAGING:DATE:${today}`;
-
-  let raw = __stagingDayCache.get(stagingKey);
-
-  if (raw === undefined) {
-
-    raw = await env.AIML_INGESTION_KV.get(stagingKey);
-
-    __stagingDayCache.set(stagingKey, raw);
- 
-  }
-
-  // αν δεν υπάρχει staging → κανονικό ingest
-  if (!raw) {
-    return true;
-  }
+async function shouldQueryLeague(env, slug) {
 
   try {
 
-    const parsed = JSON.parse(raw);
-    const matches = parsed.matches || [];
+    // ---------------------------------
+    // 404 COOLDOWN CHECK
+    // ---------------------------------
+    const retryAllowed =
+      await shouldRetryAfter404(env, slug);
 
-    for (const m of matches) {
-
-      if (m.leagueSlug === slug) {
-        return true;
-      }
-
+    if (!retryAllowed) {
+      return false;
     }
 
-  } catch (_) {}
+    // ---------------------------------
+    // DEFAULT: ALLOW INGEST
+    // ---------------------------------
+    return true;
 
-  // league δεν έχει αγώνα σήμερα
-  return false;
+  } catch (e) {
+
+    console.log("[shouldQueryLeague] error", slug);
+
+    // fail-safe: μην μπλοκάρεις ingest
+    return true;
+
+  }
+
 }
+
 // ================= 404 COOLDOWN =================
 async function shouldRetryAfter404(env, slug) {
-  const key = `LEAGUE:404:${slug}`;
-  const last = await env.AIML_INGESTION_KV.get(key);
-  if (!last) return true;
 
-  const diff = Date.now() - Number(last);
-  return diff > 6 * 60 * 60 * 1000; // 6 hours
+  if (__league404Cache.has(slug)) {
+    return __league404Cache.get(slug);
+  }
+
+  const key = `LEAGUE:404:${slug}`;
+
+  const last =
+    await env.AIML_INGESTION_KV.get(key);
+
+  let allow = true;
+
+  if (last) {
+    const diff = Date.now() - Number(last);
+    allow = diff > 6 * 60 * 60 * 1000;
+  }
+
+  __league404Cache.set(slug, allow);
+
+  return allow;
 }
 
 async function mark404(env, slug) {
@@ -375,7 +382,7 @@ for (const event of data.events) {
 // ROTATION INGEST (ACCELERATED AFTER 00:00 ATHENS)
 // ---------------------------
 
-const CHUNK_SIZE = 5;
+const CHUNK_SIZE = 12;
 const totalLeagues = LEAGUE_SEEDS.length;
 
 // time window: 00:00–01:00 Athens
@@ -494,6 +501,8 @@ for (const event of (data.events || [])) {
       (Date.parse(day + "T00:00:00Z") -
        Date.parse(today + "T00:00:00Z")) / 86400000
     );
+  
+   
 
   // -----------------------------
   // INGEST WINDOW GUARD
@@ -588,49 +597,31 @@ try {
 const stageMap = new Map();
 
 // ----------------------------------
-// keep previous matches
+// KEEP ALL PREVIOUS MATCHES
 // ----------------------------------
 for (const m of existingStage.matches || []) {
 
-  const replaced =
-    bucketMaps[stagingKey] &&
-    bucketMaps[stagingKey].has(m.id);
+  if (!m || !m.id) continue;
 
-  // keep previous snapshot unless fresh ingest replaced it
-  if (!replaced) {
-    stageMap.set(m.id, m);
-  }
+  stageMap.set(m.id, m);
 
 }
+
 // ----------------------------------
-// apply fresh ingest updates
+// APPLY FRESH INGEST (overwrite same id)
 // ----------------------------------
 for (const m of (bucketMaps[stagingKey]?.values() || [])) {
 
-  const prev = stageMap.get(m.id);
+  if (!m || !m.id) continue;
 
-  if (!prev) {
-    stageMap.set(m.id, m);
-    continue;
-  }
-
-  // keep the freshest snapshot
-  const prevTs = Number(prev.kickoff_ms || 0);
-  const newTs  = Number(m.kickoff_ms || 0);
-
-  if (newTs >= prevTs) {
-    stageMap.set(m.id, m);
-  }
+  stageMap.set(m.id, m);
 
 }
 
 // ----------------------------------
 // write merged snapshot (ONLY IF CHANGED)
 // ----------------------------------
-if (!bucketMaps[stagingKey] || bucketMaps[stagingKey].size === 0) {
-  console.log("[staging] skip empty bucket", stagingKey);
-  continue;
-}
+
 
 const sortedMatches = Array
   .from(stageMap.values())
@@ -638,12 +629,29 @@ const sortedMatches = Array
 
 const newSnapshot = {
   date: stagingKey.split(":").pop(),
+  count: sortedMatches.length,
   matches: sortedMatches
 };
 
-// lightweight signature
+// --------------------------------------------------
+// SAFE MATCH ARRAY
+// --------------------------------------------------
+
+if (!newSnapshot.matches || !Array.isArray(newSnapshot.matches)) {
+  newSnapshot.matches = [];
+}
+
+// --------------------------------------------------
+// STAGING SIGNATURE + CONDITIONAL WRITE
+// --------------------------------------------------
+if (!newSnapshot.matches || !newSnapshot.matches.length) {
+  console.log("[staging] empty snapshot skip", stagingKey);
+  continue;
+}
+// lightweight deterministic signature
 const sig = newSnapshot.matches
   .map(m => `${m.id}|${m.status}|${m.scoreHome}|${m.scoreAway}`)
+  .sort()
   .join(",");
 
 const SIG_KEY = `STAGING:SIG:${stagingKey}`;
@@ -651,24 +659,52 @@ const SIG_KEY = `STAGING:SIG:${stagingKey}`;
 let prevSig = __stagingSigCache.get(SIG_KEY);
 
 if (prevSig === undefined) {
-  prevSig = await env.AIML_INGESTION_KV.get(SIG_KEY);
+
+  try {
+
+    prevSig =
+      await env.AIML_INGESTION_KV.get(SIG_KEY);
+
+  } catch {
+
+    prevSig = null;
+
+  }
+
   __stagingSigCache.set(SIG_KEY, prevSig);
+
 }
 
 const writeNeeded = (prevSig !== sig);
 
+// --------------------------------------------------
+// WRITE ONLY IF CHANGED
+// --------------------------------------------------
 if (writeNeeded) {
 
-  await putJson(env, stagingKey, newSnapshot);
+  try {
 
-  await env.AIML_INGESTION_KV.put(
-    SIG_KEY,
-    sig,
-    { expirationTtl: 86400 }
-  );
+    await putJson(env, stagingKey, newSnapshot);
 
-  __stagingSigCache.set(SIG_KEY, sig);
-  console.log("[staging] updated", stagingKey);
+    await env.AIML_INGESTION_KV.put(
+      SIG_KEY,
+      sig,
+      { expirationTtl: 86400 }
+    );
+
+    __stagingSigCache.set(SIG_KEY, sig);
+
+    console.log("[staging] updated", stagingKey);
+
+  } catch (e) {
+
+    console.log(
+      "[staging] write failed",
+      stagingKey,
+      e?.message || e
+    );
+
+  }
 
 } else {
 
@@ -676,9 +712,7 @@ if (writeNeeded) {
 
 }
 
-}
-
-// --------------------------------------------------
+}// --------------------------------------------------
 // FALLBACK: LOAD MATCHES FROM STAGING IF BUCKET EMPTY
 // --------------------------------------------------
 
@@ -691,14 +725,53 @@ if (!bucketMaps[todayKey] || bucketMaps[todayKey].size === 0) {
   if (raw) {
 
     const parsed = JSON.parse(raw);
+    const matches = parsed.matches || [];
 
     bucketMaps[todayKey] = new Map();
 
-    for (const m of parsed.matches || []) {
-      bucketMaps[todayKey].set(m.id, m);
+
+    // ---------------------------------------
+    // ROTATION SCAN (ANTI CPU SPIKE)
+    // ---------------------------------------
+
+    const MAX_SCAN = 25;
+
+    let scanIdx =
+      Number(await env.AIML_INGESTION_KV.get("SCAN:IDX") || 0);
+
+    if (scanIdx >= matches.length) {
+      scanIdx = 0;
     }
 
-    console.log("[index rebuild fallback] loaded matches from staging:", parsed.matches.length);
+    const scanSlice =
+      matches.slice(scanIdx, scanIdx + MAX_SCAN);
+
+    scanIdx = (scanIdx + MAX_SCAN) % Math.max(matches.length, 1);
+
+    await env.AIML_INGESTION_KV.put(
+      "SCAN:IDX",
+      String(scanIdx)
+    );
+
+    // ---------------------------------------
+    // BUILD LOCAL BUCKET (ONLY SCAN SLICE)
+    // ---------------------------------------
+
+    for (const m of scanSlice) {
+
+      if (!m || !m.id) continue;
+
+      bucketMaps[todayKey].set(m.id, m);
+
+    }
+
+    console.log(
+      "[index rebuild fallback] loaded matches from staging:",
+      matches.length,
+      "| scanned:",
+      scanSlice.length
+    );
+
   }
 
 }
@@ -708,35 +781,50 @@ if (!bucketMaps[todayKey] || bucketMaps[todayKey].size === 0) {
 // MATCH CHANGE DETECTION (NO KV WRITES)
 // --------------------------------------------------
 
-let writeCount = 0;
 let indexWrites = 0;
 
 const aiQueue = [];
 
 
 
-for (const stagingKey in bucketMaps) {
+const raw = await env.AIML_INGESTION_KV.get(todayKey);
 
-  if (stagingKey !== todayKey) {
-    continue;
+if (!raw) {
+  return 0;
+}
+
+const parsed = JSON.parse(raw);
+const matches = parsed.matches || [];
+
+// ------------------------------------------------
+// BUILD MATCH INDEX BY LEAGUE (CPU OPTIMIZATION)
+// ------------------------------------------------
+const matchesByLeague = new Map();
+
+for (const m of matches) {
+
+  if (!m?.leagueSlug) continue;
+
+  if (!matchesByLeague.has(m.leagueSlug)) {
+    matchesByLeague.set(m.leagueSlug, []);
   }
 
-  const bucket = bucketMaps[stagingKey];
-  if (!bucket) continue;
+  matchesByLeague.get(m.leagueSlug).push(m);
 
-  const matches = Array.from(bucket.values());
+}
 
 // ------------------------------------
 // PREFETCH INTEL EXISTENCE (ONLY FOR PRE)
 // ------------------------------------
 
-for (const m of matches) {
+for (const m of matches.slice(0, 25)) {
+
 
   if (__intelExistCache.has(m.id)) {
     continue;
   }
 
-  const status = String(m.status || "").toUpperCase();
+  const status = (m.status || "").toUpperCase();
 
   const isPre =
     status.includes("PRE") ||
@@ -744,7 +832,6 @@ for (const m of matches) {
     status.includes("NOT_STARTED");
 
   if (!isPre) {
-    __intelExistCache.set(m.id, false);
     continue;
   }
 
@@ -755,47 +842,63 @@ for (const m of matches) {
         `intel/context/${m.id}/latest.json`
       );
 
-    __intelExistCache.set(
-      m.id,
-      !!intelObj
-    );
+    if (intelObj) {
+      __intelExistCache.set(m.id, true);
+    }
 
   } catch {
-
-    __intelExistCache.set(m.id, false);
 
   }
 
 }
 // ------------------------------------
+// INTEL COVERAGE (STABLE COUNT)
+// ------------------------------------
+
+let built = 0;
+
+for (const m of matches) {
+
+  if (__intelExistCache.get(m.id) === true) {
+    built++;
+  }
+
+}
+
+console.log(`[PRE intel] ${built}/${matches.length}`);
+
+// ------------------------------------
 // PRIORITIZE MATCHES WITHOUT INTEL
 // ------------------------------------
 
-const preNoIntel = matches.filter(m => {
+const preNoIntel = [];
+const noIntel = [];
 
-  const status = String(m.status || "").toUpperCase();
+for (const m of matches) {
+
+  const status = (m.status || "").toUpperCase();
 
   const isPre =
     status.includes("PRE") ||
     status.includes("SCHEDULED") ||
     status.includes("NOT_STARTED");
 
-  return isPre && !__intelExistCache.get(m.id);
+  const ptr = __intelExistCache.get(m.id) === true;
 
-});
+  if (isPre && !ptr) {
 
-const noIntel = matches.filter(m => {
+    preNoIntel.push(m);
+    continue;
 
-  const status = String(m.status || "").toUpperCase();
+  }
 
-  const eligible =
-    status.includes("PRE") ||
-    status.includes("SCHEDULED") ||
-    status.includes("NOT_STARTED");
+  if (!ptr) {
 
-  return eligible && !__intelExistCache.get(m.id);
+    noIntel.push(m);
 
-});
+  }
+
+}
 
 let queueSource;
 
@@ -803,13 +906,27 @@ if (preNoIntel.length) {
 
   queueSource = preNoIntel;
 
-} else if (noIntel.length) {
+}
+else if (noIntel.length) {
 
   queueSource = noIntel;
 
-} else {
+}
+else {
 
-  queueSource = matches;
+  queueSource = [];
+
+}// ------------------------------------
+// ALL MATCHES ALREADY HAVE INTEL
+// ------------------------------------
+if (!queueSource.length) {
+
+  console.log(
+    "[intel coverage]",
+    "all matches have intel"
+  );
+
+  queueSource = [];
 
 }
 
@@ -828,43 +945,35 @@ if (aiIdx >= queueSource.length) {
 // BUILD SLICE
 // ------------------------------------
 
-let slice =
-  queueSource.slice(aiIdx, aiIdx + 10);
+const BUILD_BATCH = Math.min(queueSource.length, 8);
+
+let aiSlice =
+  queueSource.slice(aiIdx, aiIdx + BUILD_BATCH);
 
 // αν το slice είναι άδειο για build,
 // ψάξε λίγο παρακάτω στο rotation
-if (!slice.length && queueSource.length > 10) {
+if (!aiSlice.length && queueSource.length > 10) {
 
   const nextIdx = (aiIdx + 10) % queueSource.length;
 
-  slice =
+  aiSlice =
     queueSource.slice(nextIdx, nextIdx + 10);
 
 }
+
 // ------------------------------------
 // AI BUILD PROGRESS (LOG)
 // ------------------------------------
 
-const built =
-  Math.min(queueSource.length, aiIdx + slice.length);
-
-const remaining =
-  Math.max(0, queueSource.length - built);
-
-console.log(
-  "[AI progress]",
-  "built:", built,
-  "remaining:", remaining,
-  "total:", queueSource.length
-);
+console.log("[intel progress] slice:", aiSlice.length);
 
 // ------------------------------------
 // PROCESS SLICE
 // ------------------------------------
 
-for (const m of slice) {
+for (const m of aiSlice.slice(0, 8)) {
 
-  writeCount++;
+  
 
   try {
 
@@ -907,23 +1016,23 @@ for (const m of slice) {
       __indexExistCache.set(m.id, indexExists);
     }
 
-// ------------------------------------
-// SIGNATURE CHANGED → UPDATE CACHE
-// ------------------------------------
+    // ------------------------------------
+    // SIGNATURE CHANGED → UPDATE CACHE
+    // ------------------------------------
 
-if (prevSig !== newSig) {
+    if (prevSig !== newSig) {
 
-  const putPromise =
-    env.AIML_INGESTION_KV.put(
-      sigKey,
-      newSig,
-      { expirationTtl: 86400 }
-    );
+      __indexSigCache.set(sigKey, newSig);
 
-  __indexSigCache.set(sigKey, newSig);
+      ctx.waitUntil(
+        env.AIML_INGESTION_KV.put(
+          sigKey,
+          newSig,
+          { expirationTtl: 86400 }
+        )
+      );
 
-  await putPromise;
-}
+    }
 
     // ------------------------------------
     // MATCH INDEX (AI lookup pointer)
@@ -955,71 +1064,57 @@ if (prevSig !== newSig) {
 
       __indexExistCache.set(m.id, true);
       indexExists = true;
+
     }
 
 // ------------------------------------
-// CHECK IF INTEL EXISTS
+// FAST INTEL EXISTENCE CHECK
 // ------------------------------------
 
-let intelExists = __intelExistCache.get(m.id);
+const intelExists =
+  __intelExistCache.get(m.id) === true;
 
-if (intelExists === undefined) {
 
-  try {
+if (intelExists) {
+  continue;
+}
 
-    const intelObj =
-      await env.AI_STATE.get(
-        `intel/context/${m.id}/latest.json`
-      );
+// skip if nothing changed
+if (prevSig === newSig) {
+  continue;
+}
 
-    intelExists = !!intelObj;
+const RUN_KEY = `AI:RUNNING:${m.id}`;
 
-    __intelExistCache.set(m.id, intelExists);
+const running =
+  await env.AIML_INGESTION_KV.get(RUN_KEY);
 
-  } catch (_) {
-    intelExists = false;
+if (!running) {
+
+  await env.AIML_INGESTION_KV.put(
+    RUN_KEY,
+    "1",
+    { expirationTtl: 300 }
+  );
+
+  if (!aiQueue.includes(m.id)) {
+    aiQueue.push(m.id);
   }
 
 }
 
-    // ------------------------------------
-    // TRIGGER AI ENGINE
-    // ------------------------------------
-    if (__intelExistCache.get(m.id)) {
-      continue;
-    }
+} catch (e) {
 
-    const RUN_KEY = `AI:RUNNING:${m.id}`;
-
-    const running =
-      await env.AIML_INGESTION_KV.get(RUN_KEY);
-
-    if (!running) {
-
-      await env.AIML_INGESTION_KV.put(
-        RUN_KEY,
-        "1",
-        { expirationTtl: 90 }
-      );
-
-      if (!aiQueue.includes(m.id)) {
-        aiQueue.push(m.id);
-      }
-
-    }
-
-  } catch (err) {
-
-    console.log(
-      "[index write error]",
-      m.id,
-      err?.message || err
-    );
-
-  }
+  console.log(
+    "[index process error]",
+    m?.id,
+    e?.message || e
+  );
 
 }
 
+
+}
 // ------------------------------------
 // AI QUEUE SIZE (DEBUG)
 // ------------------------------------
@@ -1029,40 +1124,112 @@ console.log(
   aiQueue.length
 );
 
+
 // ------------------------------------
 // ADVANCE AI ROTATION POINTER
 // ------------------------------------
 
-aiIdx = (aiIdx + slice.length) % queueSource.length;
+if (queueSource.length > 0) {
 
-await env.AIML_INGESTION_KV.put(
-  "AI:IDX",
-  String(aiIdx)
-);
+  aiIdx = (aiIdx + aiSlice.length) % queueSource.length;
+
+  await env.AIML_INGESTION_KV.put(
+    "AI:IDX",
+    String(aiIdx)
+  );
 
 }
+
+
 
 
 // ------------------------------------------------
 // RUN AI ENGINE QUEUE (LIMITED)
 // ------------------------------------------------
 
-const ids = aiQueue.slice(0,10);
+const ids = aiQueue.slice(0, 4);
 
 if (ids.length) {
 
   try {
 
-    await fetch(
-      `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel-batch`,
-      {
-        method: "POST",
-        headers: {
-          "content-type": "application/json"
-        },
-        body: JSON.stringify({ ids })
+    const CHUNK = 10;
+
+    for (let i = 0; i < ids.length; i += CHUNK) {
+
+      const batch = ids.slice(i, i + CHUNK);
+
+      const results = await Promise.allSettled(
+        batch.map(async id => {
+
+          const res = await fetch(
+            `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${id}`,
+            { method: "GET" }
+          );
+
+          try {
+            await res.arrayBuffer();
+          } catch {}
+
+          return res;
+
+        })
+      );
+
+
+      for (let j = 0; j < batch.length; j++) {
+
+        const id = batch[j];
+        const r = results[j];
+
+        if (r.status === "fulfilled") {
+
+          const res = r.value;
+
+          if (!res.ok) {
+            console.log("[AI CALL ERROR]", id, res.status);
+          } else {
+            
+            try {
+              await env.AIML_INGESTION_KV.put(
+                `INTEL:${id}`,
+                "1",
+                { expirationTtl: 86400 * 7 }   // 7 days
+              );
+            } catch (e) {
+              console.log("[INTEL PTR WRITE FAIL]", id, e?.message || e);
+            }
+
+          }
+
+          try {
+            await res.body?.cancel();
+          } catch {}
+
+        } else {
+
+          console.log("[AI CALL FAIL]", id, r.reason);
+
+        }
+
       }
-    );
+
+    }
+
+    // cleanup running flags
+    for (const id of ids) {
+
+      try {
+
+        await env.AIML_INGESTION_KV.delete(`AI:RUNNING:${id}`);
+
+      } catch (e) {
+
+        console.log("[AI RUNNING CLEAN FAIL]", id, e);
+
+      }
+
+    }
 
   } catch (e) {
 
@@ -1072,13 +1239,13 @@ if (ids.length) {
 
 }
 
-
 console.log("[scheduler] AI queue triggered:", aiQueue.length);
 
 // return queue size to scheduler
 return aiQueue.length;
 
 }
+
 /* ================= FINALIZE ================= */
 
 function isTerminal(status) {
@@ -1087,15 +1254,11 @@ function isTerminal(status) {
     .toUpperCase();
 
   return (
-    s.includes("FINAL") ||
-    s.includes("FULL_TIME") ||
-    s.includes("AET") ||
-    s.includes("PEN") ||
-    s.includes("POSTPONED") ||
-    s.includes("CANCELED") ||
-    s.includes("ABANDONED") ||
-    s.includes("SUSPENDED") ||
-    s.includes("INTERRUPTED")
+     s.includes("FINAL") ||
+     s.includes("FULL_TIME") ||
+     s.includes("COMPLETE") ||
+     s.includes("AET") ||
+     s.includes("PEN")
   );
 }
 
@@ -1125,32 +1288,56 @@ async function recoverMissingFT(env, day, data) {
   // -----------------------------------
   // FETCH ONCE PER LEAGUE
   // -----------------------------------
-  for (const [slug, matches] of leagues.entries()) {
+for (const [slug, matches] of leagues.entries()) {
 
-    // check if recovery is actually needed
-    const needsRecovery = matches.some(m => {
+  // check if recovery is actually needed
+  const needsRecovery = matches.some(m => {
 
-      const kickoff = m.kickoff ? Date.parse(m.kickoff) : 0;
+    const kickoff = m.kickoff ? Date.parse(m.kickoff) : 0;
 
-      if (!kickoff) return false;
+    if (!kickoff) return false;
 
-      if (kickoff > Date.now() + 3 * 60 * 60 * 1000) return false;
+    if (kickoff > Date.now() + 3 * 60 * 60 * 1000) return false;
 
-      const status = String(m.status || "").toUpperCase();
+    const status = (m.status || "").toUpperCase();
 
-      return !isTerminal(status);
+    return !isTerminal(status);
 
-    });
+  });
 
-    if (!needsRecovery) {
+  if (!needsRecovery) {
+    continue;
+  }
+
+  // -----------------------------------
+  // OPTIMIZATION: SKIP LEAGUES FAR FROM KICKOFF
+  // -----------------------------------
+  const now = Date.now();
+
+  const hasNearKickoff = matches.some(m => {
+
+    const k = m.kickoff ? Date.parse(m.kickoff) : 0;
+
+    if (!k) return false;
+
+    return Math.abs(now - k) < 6 * 60 * 60 * 1000;
+
+  });
+
+  if (!hasNearKickoff) {
+    continue;
+  }
+
+  try {
+
+    const res = await fetch(
+      `${ESPN_BASE}/${slug}/scoreboard`
+    );
+
+    if (!res.ok) {
+      await res.body?.cancel();
       continue;
     }
-
-    try {
-
-      const res = await fetch(
-        `${ESPN_BASE}/${slug}/scoreboard`
-      );
 
       const json = await res.json();
       const events = json.events || [];
@@ -1190,10 +1377,11 @@ async function recoverMissingFT(env, day, data) {
 // =====================================================
 async function rebuildMissingDay(env, day) {
 
-  const { final } = keysForDay(day);
+  const { staging, final } = keysForDay(day);
 
   const exists = await env.AIML_INGESTION_KV.get(final);
   if (exists) return;
+
 
   console.log("[rebuild] rebuilding", day);
 
@@ -1219,7 +1407,7 @@ async function rebuildMissingDay(env, day) {
       for (const event of json.events || []) {
 
         const m = normalize(event, slug);
-        if (!m) continue;
+        if (!m || !m.id) continue;
 
         const matchDay = athensDayFromKickoff(m.kickoff);
 
@@ -1241,29 +1429,125 @@ async function rebuildMissingDay(env, day) {
 
   }
 
-  if (!matches.length) {
 
-    console.log("[rebuild] no matches found from ESPN — using staging");
+let existing = { date: day, matches: [] };
 
-    const { staging } = keysForDay(day);
-    const raw = await env.AIML_INGESTION_KV.get(staging);
+try {
+  const raw = await env.AIML_INGESTION_KV.get(staging);
+  if (raw) existing = JSON.parse(raw);
+} catch (_) {}
 
-    if (!raw) {
-      console.log("[rebuild] staging missing", day);
-      return;
-    }
+const merged = new Map();
 
-    const parsed = JSON.parse(raw);
+// κράτα ό,τι υπήρχε ήδη
+for (const m of existing.matches || []) {
+  if (!m || !m.id) continue;
+  merged.set(String(m.id), m);
+}
 
-    matches.push(...(parsed.matches || []));
+// πέρασε από πάνω ό,τι γύρισε το rebuild
+for (const m of matches) {
+  if (!m || !m.id) continue;
+  merged.set(String(m.id), m);
+}
+
+const mergedMatches = Array.from(merged.values());
+
+if (!mergedMatches.length) {
+  console.log("[rebuild] no matches after merge", day);
+  return;
+}
+
+await putJson(env, staging, {
+  date: day,
+  count: mergedMatches.length,
+  matches: mergedMatches
+});
+
+console.log(
+  "[rebuild] staging rebuilt",
+  day,
+  "| rebuilt:",
+  matches.length,
+  "| merged:",
+  mergedMatches.length
+);
+
+
+}
+
+// ---------------------------------
+// SCOREBOARD FETCH CACHE (FINALIZE)
+// ---------------------------------
+
+const __leagueBoardCache = new Map();
+
+async function getLeagueBoard(slug) {
+
+  if (!slug) return null;
+
+  if (__leagueBoardCache.has(slug)) {
+    return __leagueBoardCache.get(slug);
   }
 
-  await putJson(env, final, {
-    date: day,
-    matches
-  });
+  try {
 
-  console.log("[rebuild] rebuilt", day, "| matches:", matches.length);
+    const res =
+      await fetch(`${ESPN_BASE}/${slug}/scoreboard`);
+
+    if (!res.ok) {
+      await res.body?.cancel();
+      __leagueBoardCache.set(slug, null);
+      return null;
+    }
+
+    const json = await res.json();
+
+    const board = new Map(
+      (json.events || []).map(e => [e.id, e])
+    );
+
+    __leagueBoardCache.set(slug, board);
+
+    return board;
+
+  } catch (e) {
+
+    console.log("[scoreboard fetch failed]", slug);
+
+    __leagueBoardCache.set(slug, null);
+
+    return null;
+
+  }
+
+}
+
+// ---------------------------------
+// FALLBACK MATCH SUMMARY (FINALIZE)
+// ---------------------------------
+
+async function fetchMatchSummary(id) {
+
+  try {
+
+    const res =
+      await fetch(`${ESPN_BASE}/summary?event=${id}`);
+
+    if (!res.ok) {
+      await res.body?.cancel();
+      return null;
+    }
+
+    const json = await res.json();
+
+    return json.header?.competitions?.[0] || null;
+
+  } catch {
+
+    return null;
+
+  }
 
 }
 
@@ -1298,19 +1582,24 @@ async function finalizeDay(env, day) {
     }
   } catch (_) {}
   const matches = data.matches || [];
-  // ---------------------------------
-  // FINALIZE VALIDATION
-  // ---------------------------------
+// ---------------------------------
+// FINALIZE VALIDATION
+// ---------------------------------
 
-  let terminalFound = false;
-  const filtered = [];
+let terminalFound = false;
 
-  for (const m of matches) {
+const updatedMatches = [];
 
-    const status = String(m.status || "").toUpperCase();
+const filtered = [];
+
+for (const m of matches) {
+
+  let updated = { ...m };
+
+  const status = (m.status || "").toUpperCase();
 
 // ---------------------------------
-// LIVE MATCH → BLOCK FINALIZE
+// LIVE MATCH → TRY RECOVERY
 // ---------------------------------
 if (
   status.includes("LIVE") ||
@@ -1319,33 +1608,20 @@ if (
   status.includes("SECOND_HALF")
 ) {
 
-  console.log("[finalize] attempting recovery", m.id);
-
   try {
 
-    const res = await fetch(
-      `${ESPN_BASE}/${m.leagueSlug}/scoreboard`
-    );
+    const board = await getLeagueBoard(m.leagueSlug);
 
-    const json = await res.json();
+    if (board) {
 
-    const event = (json.events || []).find(e => e.id === m.id);
+      const event = board.get(m.id);
 
-    if (event) {
+      if (event) {
 
-      const normalized = normalize(event, m.leagueSlug);
+        const normalized = normalize(event, m.leagueSlug);
 
-      if (normalized) {
-
-        Object.assign(m, normalized);
-
-        const newStatus = String(m.status || "").toUpperCase();
-
-        if (isTerminal(newStatus)) {
-          console.log("[finalize] recovered FT", m.id);
-          terminalFound = true;
-          filtered.push(m);
-          continue;
+        if (normalized) {
+          updated = { ...m, ...normalized };
         }
 
       }
@@ -1354,113 +1630,177 @@ if (
 
   } catch (_) {}
 
-  console.log(
-    "[finalize] blocked — live match",
-    day,
-    "match:",
-    m.id,
-    "status:",
-    status
-  );
-
-  return;
 }
 
-    // ---------------------------------
-    // INTERRUPTED MATCHES
-    // (ignore until they appear again)
-    // ---------------------------------
-    if (
-      status.includes("INTERRUPTED") ||
-      status.includes("SUSPENDED") ||
-      status.includes("ABANDONED")
-    ) {
-      console.log(
-        "[finalize] interrupted match kept",
-        day,
-        m.id
-      );
-      filtered.push(m);
-      continue;
+// ---------------------------------
+// FALLBACK SUMMARY RECOVERY
+// ---------------------------------
+
+if (!isTerminal(updated.status)) {
+
+  try {
+
+    const summary =
+      await fetchMatchSummary(m.id);
+
+    if (summary) {
+
+      const sumStatus =
+        summary.status?.type?.name || "";
+
+      if (isTerminal(sumStatus)) {
+
+        const comp = summary.competitors || [];
+
+        const homeComp =
+          comp.find(c => c.homeAway === "home") || comp[0] || {};
+
+        const awayComp =
+          comp.find(c => c.homeAway === "away") || comp[1] || {};
+
+        updated.status = "STATUS_FULL_TIME";
+
+        updated.scoreHome =
+          Number(homeComp?.score || 0);
+
+        updated.scoreAway =
+          Number(awayComp?.score || 0);
+
+        updated.minute = "FT";
+
+      }
+
     }
 
-    // ---------------------------------
-    // TERMINAL MATCHES
-    // ---------------------------------
-    if (isTerminal(status)) {
-      terminalFound = true;
-      filtered.push(m);
-      continue;
-    }
+  } catch (_) {}
 
-    // ---------------------------------
-    // FUTURE MATCHES → IGNORE
-    // ---------------------------------
-    // FUTURE MATCHES → IGNORE
-    const kickoff =
-      m && m.kickoff ? Date.parse(m.kickoff) : 0;
+}
 
-    if (kickoff && !Number.isNaN(kickoff) && kickoff > Date.now()) {
-      filtered.push(m);
-      continue;
-    }
+// ---------------------------------
+// TERMINAL CHECK
+// ---------------------------------
 
-    // ---------------------------------
-    // UNKNOWN / BAD STATUS
-    // ignore for safety
-    // ---------------------------------
-    console.log(
-      "[finalize] skipping unresolved match",
-      day,
-      m.id,
-      status
+if (isTerminal(updated.status)) {
+  terminalFound = true;
+}
+
+updatedMatches.push(updated); 
+}
+
+
+// ---------------------------------
+// TERMINAL CHECK (SAFE)
+// ---------------------------------
+
+if (!terminalFound) {
+  const anyTerminal = matches.some(m => isTerminal(m.status));
+  if (anyTerminal) {
+    terminalFound = true;
+  } else {
+    console.log("[finalize] no terminal matches yet — writing snapshot anyway", day);
+  }
+}
+
+  // ------------------------------------------------
+  // REQUIRE NO NON-TERMINAL MATCHES
+  // ------------------------------------------------
+  const preExists = updatedMatches.some(m => {
+
+    const s = String(m.status || "").toUpperCase();
+
+    return (
+      s.includes("SCHEDULED") ||
+      s.includes("PRE") ||
+      s.includes("NOT_STARTED") ||
+      s.includes("DELAY") ||
+      s.includes("TIME_TBD")
     );
+
+  });
+
+  if (!preExists) {
+    console.log("[value] no PRE matches yet");
   }
 
-// =============================
-// ADD THIS BLOCK EXACTLY HERE
-// =============================
-if (!terminalFound && matches.length > 0) {
-  console.log("[finalize] no terminal matches yet", day);
-  return;
-}
-
-// ------------------------------------------------
-// REQUIRE NO NON-TERMINAL MATCHES
-// ------------------------------------------------
-const preExists = matches.some(m => {
+const hasActive = updatedMatches.some(m => {
 
   const s = String(m.status || "").toUpperCase();
 
   return (
-    s.includes("SCHEDULED") ||
-    s.includes("PRE") ||
-    s.includes("NOT_STARTED") ||
-    s.includes("DELAY") ||
-    s.includes("POSTPONED") ||
-    s.includes("TIME_TBD")
+    s === "STATUS_FIRST_HALF" ||
+    s === "STATUS_SECOND_HALF" ||
+    s === "STATUS_HALFTIME" ||
+    s === "STATUS_IN_PROGRESS"
   );
 
 });
 
-if (!preExists) {
-  console.log("[value] no PRE matches yet");
+const blocking = [];
+
+for (const m of updatedMatches) {
+
+  const s = String(m.status || "").toUpperCase();
+
+  if (
+    s === "STATUS_FIRST_HALF" ||
+    s === "STATUS_SECOND_HALF" ||
+    s === "STATUS_HALFTIME" ||
+    s === "STATUS_IN_PROGRESS"
+  ) {
+
+    let terminal = false;
+
+    try {
+
+      const summary = await fetchMatchSummary(m.id);
+
+      const sumStatus = summary?.status?.type?.name || "";
+
+      if (isTerminal(sumStatus)) {
+
+        const comp = summary.competitors || [];
+
+        const home =
+          comp.find(c => c.homeAway === "home") || comp[0] || {};
+
+        const away =
+          comp.find(c => c.homeAway === "away") || comp[1] || {};
+
+        m.status = "STATUS_FULL_TIME";
+        m.scoreHome = Number(home?.score || 0);
+        m.scoreAway = Number(away?.score || 0);
+        m.minute = "FT";
+
+        terminal = true;
+
+      }
+
+    } catch (_) {}
+
+    if (!terminal) {
+      blocking.push(m);
+    }
+
+  }
+
 }
 // ---------------------------------
 // WRITE FINAL SNAPSHOT
 // ---------------------------------
-  await putJson(env, final, {
-    date: day,
-    matches: filtered
-  });
+await putJson(env, final, {
+  date: day,
+  count: updatedMatches.length,
+  matches: updatedMatches
+});
 
   console.log(
     "[finalize] closing day",
     day,
     "| matches:",
-    filtered.length
+    updatedMatches.length
   );
 }
+
 /* ================= RECONCILIATION ================= */
 
 async function reconcileRecentFinalized(env, ctx) {
@@ -1515,6 +1855,11 @@ async function reconcileRecentFinalized(env, ctx) {
           `${ESPN_BASE}/${slug}/scoreboard`
         );
 
+        if (!res.ok) {
+          await res.body?.cancel();
+          continue;
+        }
+
         const data = await res.json();
 
         const index = new Map(
@@ -1524,7 +1869,30 @@ async function reconcileRecentFinalized(env, ctx) {
         for (const match of matches) {
 
           const event = index.get(match.id);
-          if (!event) continue;
+
+          if (!event) {
+
+            const summary = await fetchMatchSummary(match.id);
+
+            if (summary) {
+
+              const sumStatus = summary.status?.type?.name;
+
+              if (sumStatus === "STATUS_FINAL") {
+
+                const comp = summary.competitors || [];
+
+                match.status = "STATUS_FULL_TIME";
+                match.scoreHome = Number(comp[0]?.score || 0);
+                match.scoreAway = Number(comp[1]?.score || 0);
+
+                changed = true;
+              }
+
+            }
+
+            continue;
+          }
 
           const normalized = normalize(event, slug);
           if (!normalized) continue;
@@ -1890,11 +2258,14 @@ async function leagueIngestStatus(env) {
   }
 
   return result;
-}
+  }
 
+
+  
 /* ================= EXPORT ================= */
 
 export default {
+
 
   async fetch(req, env) {
 
@@ -1966,8 +2337,12 @@ if (url.pathname === "/scheduler-run-day") {
 
   const started = Date.now();
 
-  await rebuildMissingDay(env, day);
+  if (typeof rebuildMissingDay === "function") {
+    await rebuildMissingDay(env, day);
+  }
+
   await finalizeDay(env, day);
+
 
   return jsonResponse({
     ok: true,
@@ -2058,7 +2433,7 @@ if (url.pathname === "/repair-day") {
 // ---------------------------------
 if (url.pathname === "/ingest-now") {
 
-  await ingestUTCWindow(env, {});
+  await ingestUTCWindow(env, { waitUntil: () => {} });
 
   return jsonResponse({
     ok: true,
@@ -2074,6 +2449,7 @@ if (url.pathname === "/ingest-now") {
   // CRON SCHEDULED
   // -----------------------------
   scheduled: async (event, env, ctx) => {
+
 // ---------------------------------
 // EXECUTION LOCK (RACE-SAFE)
 // ---------------------------------
@@ -2137,7 +2513,8 @@ console.log("[scheduler] cron tick");
 
 const todayAthens = dayKeyTZ(ATHENS_TZ);
 
-ctx.waitUntil((async () => {
+await (async function () {
+
 
     try {
 
@@ -2221,7 +2598,7 @@ try {
     let intelBuilt = 0;
     missing = 0;
 
-    const SAMPLE_SIZE = 10;
+    const SAMPLE_SIZE = 5;
 
     const start =
       Math.floor(Math.random() * Math.max(1, matches.length - SAMPLE_SIZE));
@@ -2302,7 +2679,8 @@ if (!alreadyBuilt) {
     const yesterdayFinal =
       await env.AIML_INGESTION_KV.get(yesterdayFinalKey);
 
-    if (todayStagingRaw && yesterdayFinal && missing === 0) {
+    if (todayStagingRaw && yesterdayFinal) {
+
 
       const parsed = JSON.parse(todayStagingRaw);
       const matches = parsed.matches || [];
@@ -2342,22 +2720,21 @@ if (!alreadyBuilt) {
 // -------------------
 // AUTO DISCOVER STAGING DAYS
 // -------------------
-      const daysToCheck = [];
+const daysToCheck = [];
 
-      for (let i = KV_KEEP_STAGING_DAYS; i >= 0; i--) {
+for (let i = KV_KEEP_STAGING_DAYS; i >= 0; i--) {
 
-         const d = dayKeyTZ(
-           ATHENS_TZ,
-           new Date(Date.now() - i * 86400000)
-         );
+  const d = dayKeyTZ(
+    ATHENS_TZ,
+    new Date(Date.now() - i * 86400000)
+  );
 
-         daysToCheck.push(d);
-       }
+  daysToCheck.push(d);
+}
 
-       // oldest → newest
-      daysToCheck.sort((a, b) => Date.parse(a) - Date.parse(b));
+// oldest → newest
+daysToCheck.sort((a, b) => Date.parse(a) - Date.parse(b));
 
-      
 for (const day of daysToCheck) {
 
   try {
@@ -2372,7 +2749,7 @@ for (const day of daysToCheck) {
       continue;
     }
 
-    const { final } = keysForDay(day);
+    const { staging, final } = keysForDay(day);
 
     const finalExists =
       await env.AIML_INGESTION_KV.get(final);
@@ -2382,9 +2759,167 @@ for (const day of daysToCheck) {
       continue;
     }
 
-    console.log("[auto-recovery] missing final snapshot", day);
+    console.log("[auto-recovery] checking", day);
 
-    await rebuildMissingDay(env, day);
+    // ------------------------------------------------
+    // LOAD STAGING
+    // ------------------------------------------------
+    const stagingRaw =
+      await env.AIML_INGESTION_KV.get(staging);
+
+    // ------------------------------------------------
+    // STAGING MISSING → FULL REBUILD
+    // ------------------------------------------------
+    if (!stagingRaw) {
+
+      console.log("[rebuild] staging missing", day);
+
+      await rebuildMissingDay(env, day);
+
+      await finalizeDay(env, day);
+
+      continue;
+    }
+
+    // ------------------------------------------------
+    // STAGING EXISTS → PARTIAL RECOVERY
+    // ------------------------------------------------
+    let parsed;
+
+    try {
+
+      parsed = JSON.parse(stagingRaw);
+
+    } catch {
+
+      console.log("[rebuild] staging corrupted", day);
+
+      await rebuildMissingDay(env, day);
+
+      await finalizeDay(env, day);
+
+      continue;
+    }
+
+    const matches = parsed.matches || [];
+
+    if (!matches.length) {
+
+      console.log("[rebuild] empty staging", day);
+
+      await rebuildMissingDay(env, day);
+
+      await finalizeDay(env, day);
+
+      continue;
+    }
+
+    // ------------------------------------------------
+    // GROUP MATCHES BY LEAGUE
+    // ------------------------------------------------
+    const leagues = new Set();
+
+    for (const m of matches) {
+
+      if (!m?.leagueSlug) continue;
+
+      leagues.add(m.leagueSlug);
+
+    }
+
+    console.log(
+      "[recovery] leagues check",
+      day,
+      leagues.size
+    );
+
+    let changed = false;
+
+// ------------------------------------------------
+// FETCH SCOREBOARD PER LEAGUE
+// ------------------------------------------------
+for (const slug of leagues) {
+
+  try {
+
+    const board = await getLeagueBoard(slug);
+
+    if (!board) continue;
+
+    const leagueMatches =
+       matches.filter(m => m.leagueSlug === slug);
+
+    for (const match of leagueMatches) {
+
+      const status = (match.status || "").toUpperCase();
+
+      if (
+        status.includes("POSTPONED") ||
+        status.includes("CANCELLED") ||
+        status.includes("ABANDONED") ||
+        status.includes("SUSPENDED") ||
+        status.includes("DELAYED")
+      ) {
+        continue;
+      }
+
+      if (isTerminal(status)) continue;
+
+      const event = board.get(match.id);
+
+      if (!event) continue;
+
+      const normalized = normalize(event, slug);
+
+      if (!normalized) continue;
+
+      if (
+        normalized.scoreHome !== match.scoreHome ||
+        normalized.scoreAway !== match.scoreAway ||
+        normalized.status !== match.status
+      ) {
+
+        Object.assign(match, normalized);
+        changed = true;
+
+      }
+
+    }
+
+  } catch (e) {
+
+    console.log(
+      "[recovery] scoreboard failed",
+      slug
+    );
+
+  }
+
+}
+    // ------------------------------------------------
+    // WRITE STAGING ONLY IF CHANGED
+    // ------------------------------------------------
+    if (changed) {
+
+      console.log(
+        "[recovery] staging updated",
+        day
+      );
+
+      await putJson(env, staging, parsed);
+
+    } else {
+
+      console.log(
+        "[recovery] no changes",
+        day
+      );
+
+    }
+
+    // ------------------------------------------------
+    // FINALIZE DAY
+    // ------------------------------------------------
     await finalizeDay(env, day);
 
   } catch (e) {
@@ -2398,10 +2933,12 @@ for (const day of daysToCheck) {
   }
 
 }
-      // -------------------
-      // RECONCILE
-      // -------------------
-      await reconcileRecentFinalized(env, ctx);
+// -------------------
+// RECONCILE
+// -------------------
+if (typeof reconcileRecentFinalized === "function") {
+  await reconcileRecentFinalized(env, ctx);
+}
 
 // ------------------------------------------------------------
 // CLEAN OLD LIVE INTEL SNAPSHOTS
@@ -2451,9 +2988,10 @@ try {
 // -------------------
 const now = new Date();
 const hour = now.getUTCHours();
-const day = now.toISOString().slice(0,10);
+const todayISO = now.toISOString().slice(0,10);
 
-const CLEANUP_FLAG = `CLEANUP:RAN:${day}:${hour}`;
+const CLEANUP_FLAG = `CLEANUP:RAN:${todayISO}:${hour}`;
+
 
 // run cleanup twice per day (once per window only)
 if (hour === 3 || hour === 15) {
@@ -2584,76 +3122,79 @@ for (const month of Object.keys(months)) {
   console.log("[archive] fixtures failed");
 
 }
-  // =====================================================
-  // VALUE MONTH ARCHIVE
-  // =====================================================
-  try {
 
-    const prefixes = [
-      "VALUE:DATE:",
-      "VALUE:STAT:DATE:",
-      "VALUE:SUMMARY:",
-      "VALUE:PICK:"
-    ];
+// =====================================================
+// VALUE MONTH ARCHIVE
+// =====================================================
+try {
 
-    const today = dayKeyTZ(ATHENS_TZ);
-    const months = {};
+  const prefixes = [
+    "VALUE:DATE:",
+    "VALUE:STAT:DATE:",
+    "VALUE:SUMMARY:",
+    "VALUE:PICK:"
+  ];
 
-    for (const prefix of prefixes) {
+  const today = dayKeyTZ(ATHENS_TZ);
+  const months = {};
 
-      const list =
-        await env.AIML_INGESTION_KV.list({ prefix });
+  for (const prefix of prefixes) {
 
-      for (const k of list.keys || []) {
+    const list =
+      await env.AIML_INGESTION_KV.list({ prefix });
 
-        const parts = k.name.split(":");
-        const date =
-          parts.find(p => /^\d{4}-\d{2}-\d{2}$/.test(p));
+    for (const k of list.keys || []) {
 
-        if (!date || date >= today) continue;
+      const parts = k.name.split(":");
+      const date =
+        parts.find(p => /^\d{4}-\d{2}-\d{2}$/.test(p));
 
-        const raw =
-          await env.AIML_INGESTION_KV.get(k.name);
-        if (!raw) continue;
+      if (!date || date >= today) continue;
 
-        const month = date.slice(0,7);
+      const raw =
+        await env.AIML_INGESTION_KV.get(k.name);
+      if (!raw) continue;
 
-        months[month] ??= [];
-        months[month].push({
-          key: k.name,
-          value: JSON.parse(raw)
-        });
-      }
+      const month = date.slice(0,7);
+
+      months[month] ??= [];
+      months[month].push({
+        key: k.name,
+        value: JSON.parse(raw)
+      });
     }
-
-    for (const month of Object.keys(months)) {
-
-      const monthKey = `VALUE:MONTH:${month}`;
-
-      await env.AIML_INGESTION_KV.put(
-        monthKey,
-        JSON.stringify({
-          ok: true,
-          month,
-          createdAt: Date.now(),
-          items: months[month]
-        })
-      );
-
-      console.log("[archive] value month built", month);
-
-      for (const item of months[month]) {
-        await env.AIML_INGESTION_KV.delete(item.key);
-      }
-    }
-
-  } catch (_) {
-    console.log("[archive] value failed");
   }
 
-  await cleanupKV(env);
-  await cleanupR2(env);
+  for (const month of Object.keys(months)) {
+
+    const monthKey = `VALUE:MONTH:${month}`;
+
+    await env.AIML_INGESTION_KV.put(
+      monthKey,
+      JSON.stringify({
+        ok: true,
+        month,
+        createdAt: Date.now(),
+        items: months[month]
+      })
+    );
+
+    console.log("[archive] value month built", month);
+
+    for (const item of months[month]) {
+      await env.AIML_INGESTION_KV.delete(item.key);
+    }
+  }
+
+} catch (_) {
+  console.log("[archive] value failed");
 }
+
+// -----------------------------------------------------
+}
+
+await cleanupKV(env);
+await cleanupR2(env);
 
 const finished = Date.now();
 
@@ -2667,7 +3208,7 @@ await writeHeartbeat(env, {
 
 console.log("[scheduler] done");
 
-// ✅ RELEASE LOCK (SUCCESS)
+// RELEASE LOCK (SUCCESS)
 await env.AIML_INGESTION_KV.delete(LOCK_KEY);
 
 } catch (err) {
@@ -2687,10 +3228,11 @@ await env.AIML_INGESTION_KV.delete(LOCK_KEY);
     });
   } catch (_) {}
 
-  // ✅ RELEASE LOCK (ERROR SAFE)
   await env.AIML_INGESTION_KV.delete(LOCK_KEY);
+
 }
 
-})());
-}
+})();
+
+},   // close scheduled()
 };

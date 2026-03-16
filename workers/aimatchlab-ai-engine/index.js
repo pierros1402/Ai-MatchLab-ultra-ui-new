@@ -54,11 +54,12 @@ export default {
           status: 204,
           headers: {
             "access-control-allow-origin": "*",
-            "access-control-allow-methods": "GET,OPTIONS",
+            "access-control-allow-methods": "GET,POST,OPTIONS",
             "access-control-allow-headers": "content-type,x-aiml-secret,x-internal-secret"
           }
         });
       }
+
 
       const pathname = url.pathname;
 
@@ -392,7 +393,8 @@ if (pathname === "/ai/intel-signals") {
 // ------------------------------------------------------------
 // MATCH INTEL BATCH
 // ------------------------------------------------------------
-if (pathname === "/ai/match-intel-batch") {
+if (pathname.startsWith("/ai/match-intel-batch")) {
+
 
   let body = null;
 
@@ -404,7 +406,8 @@ if (pathname === "/ai/match-intel-batch") {
 
   const results = [];
 
-  for (const matchId of ids.slice(0, 20)) {
+  for (const matchId of ids.slice(0, 80)) {
+
 
     try {
 
