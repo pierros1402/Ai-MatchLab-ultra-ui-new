@@ -36,9 +36,58 @@ function writeDb(data) {
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), "utf8");
 }
 
+function safeNum(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normStr(v) {
+  return typeof v === "string" ? v.trim() : "";
+}
+
+function buildSignature(row) {
+  return [
+    normStr(row?.matchId),
+    normStr(row?.source),
+    normStr(row?.status),
+    normStr(row?.minute),
+    safeNum(row?.scoreHome),
+    safeNum(row?.scoreAway),
+    normStr(row?.kickoffUtc)
+  ].join("|");
+}
+
 export function appendObservation(row) {
   const db = readDb();
-  db.observations.push(row);
+
+  const observations = Array.isArray(db.observations)
+    ? db.observations
+    : [];
+
+  const sig = buildSignature(row);
+
+  // ------------------------------------------------------------
+  // DEDUPE: check latest observation per same source + match
+  // ------------------------------------------------------------
+  const lastSame = [...observations]
+    .reverse()
+    .find(
+      x =>
+        x.matchId === row.matchId &&
+        x.source === row.source
+    );
+
+  if (lastSame) {
+    const lastSig = buildSignature(lastSame);
+
+    if (lastSig === sig) {
+      return; // skip identical observation
+    }
+  }
+
+  observations.push(row);
+
+  db.observations = observations;
   writeDb(db);
 }
 

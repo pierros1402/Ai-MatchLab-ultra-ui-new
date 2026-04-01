@@ -127,10 +127,20 @@ export function upsertFixtureWithMeta(row) {
   } else {
     const existing = db.fixtures[idx];
 
-    const prevSig = existing.signature;
-    const nextSig = row.signature;
+    function buildComparable(row) {
+      return JSON.stringify({
+        status: row.status,
+        minute: row.minute,
+        scoreHome: row.scoreHome,
+        scoreAway: row.scoreAway,
+        kickoffUtc: row.kickoffUtc
+      });
+    }
 
-    if (prevSig === nextSig) {
+    const prevComparable = buildComparable(existing);
+    const nextComparable = buildComparable(row);
+
+    if (prevComparable === nextComparable) {
       db.fixtures[idx] = row;
       action = "unchanged";
     } else {

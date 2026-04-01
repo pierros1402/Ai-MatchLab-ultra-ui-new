@@ -1,6 +1,10 @@
 import { LEAGUE_NAME_MAP } from "../config.js";
 import { athensDayFromKickoff } from "./daykey.js";
 
+// ============================================================
+// HELPERS
+// ============================================================
+
 function parseScore(value) {
   if (value === undefined || value === null || value === "") {
     return null;
@@ -10,7 +14,10 @@ function parseScore(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function mapSource2Status(rawStatus) {
+// ------------------------------------------------------------
+// STATUS → CANONICAL (PRE / LIVE / FT)
+// ------------------------------------------------------------
+function mapStatus(rawStatus) {
   const s = String(rawStatus || "").toUpperCase();
 
   if (
@@ -20,32 +27,48 @@ function mapSource2Status(rawStatus) {
     s.includes("AET") ||
     s.includes("PEN")
   ) {
-    return "STATUS_FINAL";
+    return "FT";
   }
 
   if (
-    s.includes("IN_PROGRESS") ||
     s.includes("LIVE") ||
+    s.includes("IN_PROGRESS") ||
     s.includes("FIRST_HALF") ||
-    s.includes("SECOND_HALF")
+    s.includes("SECOND_HALF") ||
+    s.includes("HT")
   ) {
-    return "STATUS_IN_PROGRESS";
+    return "LIVE";
   }
 
-  if (s.includes("HALF_TIME") || s === "HT") {
-    return "STATUS_HALF_TIME";
-  }
-
-  return "STATUS_SCHEDULED";
+  return "PRE";
 }
+
+// ------------------------------------------------------------
+// MINUTE NORMALIZATION
+// ------------------------------------------------------------
+function normalizeMinute(v) {
+  if (!v) return "0'";
+
+  const s = String(v).trim();
+
+  // ήδη σωστό
+  if (/^\d+\+?\d*'$/.test(s)) return s;
+
+  // 45:23 → 45'
+  const match = s.match(/^(\d{1,3})/);
+  if (match) return `${match[1]}'`;
+
+  // fallback
+  return "0'";
+}
+
+// ============================================================
+// MAIN NORMALIZER
+// ============================================================
 
 export function normalizeFixtureSource2(event, slug) {
   if (!event || typeof event !== "object") return null;
 
-  // ------------------------------------------------------------
-  // Expected flexible source2 shape
-  // Adjust field names later when real provider is chosen
-  // ------------------------------------------------------------
   const matchId =
     event.matchId ||
     event.id ||
@@ -79,7 +102,7 @@ export function normalizeFixtureSource2(event, slug) {
     event.status ||
     "UNKNOWN";
 
-  const status = mapSource2Status(rawStatus);
+  const status = mapStatus(rawStatus);
 
   let scoreHome = parseScore(
     event.scoreHome ?? event.homeScore
@@ -89,10 +112,15 @@ export function normalizeFixtureSource2(event, slug) {
     event.scoreAway ?? event.awayScore
   );
 
-  if (status === "STATUS_SCHEDULED") {
+  // PRE → no scores
+  if (status === "PRE") {
     scoreHome = null;
     scoreAway = null;
   }
+
+  const minute = normalizeMinute(
+    event.minute ?? event.clock
+  );
 
   return {
     matchId: String(matchId),
@@ -113,7 +141,7 @@ export function normalizeFixtureSource2(event, slug) {
 
     rawStatus: String(rawStatus),
     status,
-    minute: event.minute ?? event.clock ?? null,
+    minute,
 
     venue: event.venue || null,
 

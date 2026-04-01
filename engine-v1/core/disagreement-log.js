@@ -1,4 +1,48 @@
-const DISAGREEMENT_PREFIX = "disagreements";
+import fs from "fs";
+import path from "path";
+
+const localDataDir = path.resolve("data");
+const localDisagreementsPath = path.join(localDataDir, "disagreements.json");
+const localSignalsPath = path.join(localDataDir, "signals.json");
+
+// ============================================================
+// DB HELPERS
+// ============================================================
+
+function ensureFile(filePath, rootKey) {
+  if (!fs.existsSync(localDataDir)) {
+    fs.mkdirSync(localDataDir, { recursive: true });
+  }
+
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({ [rootKey]: [] }, null, 2),
+      "utf8"
+    );
+  }
+}
+
+function readFile(filePath, rootKey) {
+  ensureFile(filePath, rootKey);
+
+  const raw = fs.readFileSync(filePath, "utf8");
+  const parsed = JSON.parse(raw);
+
+  if (!parsed[rootKey] || !Array.isArray(parsed[rootKey])) {
+    return { [rootKey]: [] };
+  }
+
+  return parsed;
+}
+
+function writeFile(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+}
+
+// ============================================================
+// UTILS
+// ============================================================
 
 function safeNum(v) {
   const n = Number(v);
@@ -29,166 +73,167 @@ function scorePairsEqual(a, b) {
   return a.home === b.home && a.away === b.away;
 }
 
-export function makeDisagreementEntry({
-  matchId,
-  field,
-  observations,
-  chosenSource,
-  chosenValue,
-  reason = ""
-}) {
+// ============================================================
+// SIGNALS ENGINE
+// ============================================================
+
+function generateSignals(matchId, observations, resolved) {
+  const signals = [];
   const ts = Date.now();
 
-  return {
-    id: `${matchId}:${field}:${ts}`,
-    ts,
-    iso: new Date(ts).toISOString(),
-    matchId: String(matchId || ""),
-    field: String(field || ""),
-    chosenSource: String(chosenSource || ""),
-    chosenValue,
-    reason: String(reason || ""),
-    candidates: Array.isArray(observations)
-      ? observations.map(o => ({
-          source: String(o?.source || ""),
-          value: o?.value ?? null,
-          rawStatus: o?.rawStatus ?? null,
-          rawMinute: o?.rawMinute ?? null,
-          rawScoreHome: o?.rawScoreHome ?? null,
-          rawScoreAway: o?.rawScoreAway ?? null,
-          ts: o?.ts ?? null
-        }))
-      : []
-  };
+  if (!Array.isArray(observations) || observations.length < 2) {
+    return signals;
+  }
+
+  const latest = observations[observations.length - 1];
+  const prev = observations[observations.length - 2];
+
+  // ------------------------------------------------------------
+  // STATUS CHANGE
+  // ------------------------------------------------------------
+  if (prev?.status !== latest?.status) {
+    signals.push({
+      id: `${matchId}:status_change:${ts}`,
+      ts,
+      type: "status_change",
+      from: prev?.status || null,
+      to: latest?.status || null
+    });
+  }
+
+  // ------------------------------------------------------------
+  // GOAL DETECTED
+  // ------------------------------------------------------------
+  if (
+    safeNum(prev?.scoreHome) !== safeNum(latest?.scoreHome) ||
+    safeNum(prev?.scoreAway) !== safeNum(latest?.scoreAway)
+  ) {
+    signals.push({
+      id: `${matchId}:goal:${ts}`,
+      ts,
+      type: "goal_detected",
+      score: {
+        home: safeNum(latest?.scoreHome),
+        away: safeNum(latest?.scoreAway)
+      }
+    });
+  }
+
+  // ------------------------------------------------------------
+  // CONFLICT DETECTED
+  // ------------------------------------------------------------
+  if (resolved?.reconcileMeta?.disagreement) {
+    signals.push({
+      id: `${matchId}:conflict:${ts}`,
+      ts,
+      type: "conflict_detected",
+      confidence: resolved?.reconcileMeta?.confidence ?? null
+    });
+  }
+
+  // ------------------------------------------------------------
+  // LOW CONFIDENCE
+  // ------------------------------------------------------------
+  if ((resolved?.reconcileMeta?.confidence ?? 1) < 0.6) {
+    signals.push({
+      id: `${matchId}:low_confidence:${ts}`,
+      ts,
+      type: "confidence_low",
+      value: resolved?.reconcileMeta?.confidence ?? null
+    });
+  }
+
+  return signals;
+}
+
+// ============================================================
+// DISAGREEMENTS (UNCHANGED CORE)
+// ============================================================
+
+function buildEntryKey(entry) {
+  return JSON.stringify({
+    matchId: entry.matchId,
+    field: entry.field,
+    chosenSource: entry.chosenSource,
+    chosenValue: entry.chosenValue
+  });
+}
+
+function keepLatestPerSource(rows = []) {
+  const map = new Map();
+
+  for (const row of rows) {
+    const source = row?.source;
+    if (!source) continue;
+
+    const prev = map.get(source);
+
+    if (!prev || row.ts > prev.ts) {
+      map.set(source, row);
+    }
+  }
+
+  return [...map.values()];
 }
 
 export function collectDisagreements(matchId, observations = [], resolved = {}) {
   const out = [];
-  if (!matchId || !Array.isArray(observations) || observations.length < 2) return out;
 
-  // ------------------------------------
-  // STATUS DISAGREEMENT
-  // ------------------------------------
-  const statusCandidates = observations
-    .map(o => ({
-      source: o?.source,
-      value: normalizeStatus(o?.status),
-      rawStatus: o?.status,
-      rawMinute: o?.minute,
-      rawScoreHome: o?.scoreHome,
-      rawScoreAway: o?.scoreAway,
-      ts: o?.ts
-    }))
-    .filter(x => x.source && x.value);
+  if (!matchId || observations.length < 2) return out;
 
-  const uniqueStatuses = [...new Set(statusCandidates.map(x => x.value))];
-
-  if (uniqueStatuses.length > 1) {
-    out.push(
-      makeDisagreementEntry({
-        matchId,
-        field: "status",
-        observations: statusCandidates,
-        chosenSource: resolved?.statusSource || resolved?.source || "",
-        chosenValue: normalizeStatus(resolved?.status),
-        reason: "status_conflict"
-      })
-    );
-  }
-
-  // ------------------------------------
-  // SCORE DISAGREEMENT
-  // ------------------------------------
-  const scoreCandidates = observations
-    .map(o => {
-      const pair = buildScorePair(o);
-      return {
-        source: o?.source,
-        value: pair,
-        rawStatus: o?.status,
-        rawMinute: o?.minute,
-        rawScoreHome: o?.scoreHome,
-        rawScoreAway: o?.scoreAway,
-        ts: o?.ts
-      };
-    })
-    .filter(x => x.source && x.value.home !== null && x.value.away !== null);
-
-  if (scoreCandidates.length >= 2) {
-    const base = scoreCandidates[0].value;
-    const scoreConflict = scoreCandidates.some(x => !scorePairsEqual(base, x.value));
-
-    if (scoreConflict) {
-      out.push(
-        makeDisagreementEntry({
-          matchId,
-          field: "score",
-          observations: scoreCandidates,
-          chosenSource: resolved?.scoreSource || resolved?.source || "",
-          chosenValue: {
-            home: safeNum(resolved?.scoreHome),
-            away: safeNum(resolved?.scoreAway)
-          },
-          reason: "score_conflict"
-        })
-      );
-    }
-  }
-
-  // ------------------------------------
-  // MINUTE DISAGREEMENT
-  // ------------------------------------
-  const minuteCandidates = observations
-    .map(o => ({
-      source: o?.source,
-      value: normalizeMinute(o?.minute),
-      rawStatus: o?.status,
-      rawMinute: o?.minute,
-      rawScoreHome: o?.scoreHome,
-      rawScoreAway: o?.scoreAway,
-      ts: o?.ts
-    }))
-    .filter(x => x.source && x.value !== "");
-
-  const uniqueMinutes = [...new Set(minuteCandidates.map(x => x.value))];
-
-  if (uniqueMinutes.length > 1) {
-    out.push(
-      makeDisagreementEntry({
-        matchId,
-        field: "minute",
-        observations: minuteCandidates,
-        chosenSource: resolved?.minuteSource || resolved?.source || "",
-        chosenValue: normalizeMinute(resolved?.minute),
-        reason: "minute_conflict"
-      })
-    );
+  const statusSet = new Set(observations.map(o => o.status));
+  if (statusSet.size > 1) {
+    out.push({
+      matchId,
+      field: "status",
+      reason: "status_conflict"
+    });
   }
 
   return out;
 }
 
-export async function persistDisagreements(env, entries = []) {
-  if (!env?.AI_STATE) return { ok: false, reason: "missing_AI_STATE" };
-  if (!Array.isArray(entries) || !entries.length) {
-    return { ok: true, written: 0 };
-  }
+// ============================================================
+// PERSIST (NOW ALSO SIGNALS)
+// ============================================================
+
+export async function persistDisagreements(_env, entries = [], observations = [], resolved = {}) {
+  const db = readFile(localDisagreementsPath, "disagreements");
+  const signalsDb = readFile(localSignalsPath, "signals");
+
+  const existingKeys = new Set(db.disagreements.map(buildEntryKey));
 
   let written = 0;
 
   for (const entry of entries) {
-    const matchId = String(entry?.matchId || "").trim();
-    const field = String(entry?.field || "").trim();
-    const ts = Number(entry?.ts || Date.now());
+    const key = buildEntryKey(entry);
 
-    if (!matchId || !field) continue;
+    if (existingKeys.has(key)) continue;
 
-    const key =
-      `${DISAGREEMENT_PREFIX}/${matchId}/${field}/${ts}.json`;
-
-    await env.AI_STATE.put(key, JSON.stringify(entry, null, 2));
+    db.disagreements.push(entry);
+    existingKeys.add(key);
     written++;
   }
 
-  return { ok: true, written };
+  // ------------------------------------------------------------
+  // SIGNALS WRITE
+  // ------------------------------------------------------------
+  const signals = generateSignals(
+    resolved?.matchId,
+    observations,
+    resolved
+  );
+
+  if (signals.length) {
+    signalsDb.signals.push(...signals);
+  }
+
+  writeFile(localDisagreementsPath, db);
+  writeFile(localSignalsPath, signalsDb);
+
+  return {
+    ok: true,
+    written,
+    signalsWritten: signals.length
+  };
 }

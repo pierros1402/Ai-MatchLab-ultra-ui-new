@@ -4,6 +4,7 @@
 // - Deterministic reconciliation
 // - Canonical fixture output
 // - Disagreement logging
+// - Confidence scoring
 // ============================================================
 
 import {
@@ -20,6 +21,14 @@ const SOURCE_PROFILE = {
     scoreReliability: 0.90
   },
 
+  source2: {
+    priority: 90,
+    kickoffReliability: 0.88,
+    teamsReliability: 0.88,
+    statusReliability: 0.86,
+    scoreReliability: 0.86
+  },
+
   unknown: {
     priority: 10,
     kickoffReliability: 0.50,
@@ -30,17 +39,10 @@ const SOURCE_PROFILE = {
 };
 
 const TERMINAL_STATUSES = [
-  "STATUS_FINAL",
-  "STATUS_FULL_TIME",
-  "STATUS_AET",
-  "STATUS_PEN"
+  "FT"
 ];
 
 const LIVE_STATUSES = [
-  "STATUS_IN_PROGRESS",
-  "STATUS_FIRST_HALF",
-  "STATUS_SECOND_HALF",
-  "STATUS_HALF_TIME",
   "LIVE"
 ];
 
@@ -94,6 +96,17 @@ function parseMinute(v) {
   return m ? Number(m[0]) : 0;
 }
 
+function clamp01(n) {
+  if (!Number.isFinite(n)) return 0;
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
+
+function round3(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
 function pickBest(observations, field, reliabilityField) {
   const ranked = [...observations].sort((a, b) => {
     const pa = sourceProfile(a.source);
@@ -141,7 +154,7 @@ function pickStatus(observations, existing) {
 
   const best = ranked[0];
 
-  let value = best?.status ?? existing?.status ?? "STATUS_SCHEDULED";
+  let value = best?.status ?? existing?.status ?? "PRE";
   let source = best?.source || null;
 
   if (existing?.status && isTerminal(existing.status)) {
@@ -186,11 +199,6 @@ function pickScore(observations, existing, chosenStatus) {
 
   let source = top?.source || null;
 
-  // ------------------------------------------------------------
-  // TERMINAL SCORE PROTECTION
-  // If existing is already terminal and chosen status is terminal,
-  // do not allow rollback to a different terminal score.
-  // ------------------------------------------------------------
   if (existing && isTerminal(existing.status) && isTerminal(chosenStatus)) {
     const prevHome = safeNum(existing.scoreHome, 0);
     const prevAway = safeNum(existing.scoreAway, 0);
@@ -270,6 +278,88 @@ function buildSourcesMap(observations) {
   return out;
 }
 
+function computeConfidence({
+  rows,
+  statusPick,
+  scorePick,
+  minutePick,
+  disagreement,
+  chosenStatus
+}) {
+  const uniqueSources = [...new Set(rows.map(x => String(x?.source || "").trim()).filter(Boolean))];
+  const sourceCount = uniqueSources.length;
+
+  let score = 0.35;
+
+  score += Math.min(sourceCount, 3) * 0.08;
+
+  const statusReliability =
+    sourceProfile(statusPick?.source).statusReliability ??
+    sourceProfile(statusPick?.source).priority / 100 ??
+    0.5;
+
+  score += statusReliability * 0.20;
+
+  if (scorePick?.source) {
+    const scoreReliability =
+      sourceProfile(scorePick.source).scoreReliability ??
+      sourceProfile(scorePick.source).priority / 100 ??
+      0.5;
+
+    score += scoreReliability * 0.12;
+  }
+
+  if (minutePick?.source) {
+    const minuteReliability =
+      sourceProfile(minutePick.source).statusReliability ??
+      sourceProfile(minutePick.source).priority / 100 ??
+      0.5;
+
+    score += minuteReliability * 0.10;
+  }
+
+  if (isLive(chosenStatus)) {
+    if (minutePick?.value != null && String(minutePick.value).trim() !== "") {
+      score += 0.06;
+    }
+
+    if (safeNum(scorePick?.scoreHome, null) !== null && safeNum(scorePick?.scoreAway, null) !== null) {
+      score += 0.06;
+    }
+  }
+
+  if (isTerminal(chosenStatus)) {
+    score += 0.08;
+  }
+
+  if (disagreement) {
+    score -= 0.15;
+  } else {
+    score += 0.08;
+  }
+
+  const latestTs = Math.max(...rows.map(x => Number(x?.ts || 0)), 0);
+  const ageMs = latestTs ? Date.now() - latestTs : Number.POSITIVE_INFINITY;
+
+  if (Number.isFinite(ageMs)) {
+    if (ageMs <= 5 * 60 * 1000) {
+      score += 0.05;
+    } else if (ageMs <= 30 * 60 * 1000) {
+      score += 0.02;
+    } else if (ageMs > 6 * 60 * 60 * 1000) {
+      score -= 0.05;
+    }
+  }
+
+  const chosenSourceCount = rows.filter(x => x?.source === statusPick?.source).length;
+
+  if (chosenSourceCount >= 2) {
+    score += 0.03;
+  }
+
+  return round3(clamp01(score));
+}
+
 export async function reconcileObservations({
   env,
   observations,
@@ -298,6 +388,15 @@ export async function reconcileObservations({
     rows.length > 1 &&
     new Set(rows.map(x => `${x.status}|${x.scoreHome}|${x.scoreAway}|${x.minute}`)).size > 1;
 
+  const confidence = computeConfidence({
+    rows,
+    statusPick,
+    scorePick,
+    minutePick,
+    disagreement,
+    chosenStatus: statusPick.value
+  });
+
   const resolved = {
     matchId,
     source: "reconciled",
@@ -311,7 +410,7 @@ export async function reconcileObservations({
 
     kickoffUtc: kickoff.value || newest.kickoffUtc || existing?.kickoffUtc || null,
 
-    status: statusPick.value || newest.status || existing?.status || "STATUS_SCHEDULED",
+    status: statusPick.value || newest.status || existing?.status || "PRE",
     rawStatus: newest.rawStatus || existing?.rawStatus || null,
     minute: minutePick.value,
 
@@ -330,6 +429,7 @@ export async function reconcileObservations({
       chosenScoreSource: scorePick.source,
       chosenMinuteSource: minutePick.source,
       disagreement,
+      confidence,
       observationsCount: rows.length,
       updatedAt: Date.now()
     }
@@ -338,7 +438,7 @@ export async function reconcileObservations({
   const disagreementEntries = collectDisagreements(matchId, rows, resolved);
 
   if (disagreementEntries.length) {
-    await persistDisagreements(env, disagreementEntries);
+    await persistDisagreements(env, disagreementEntries, rows, resolved);
   }
 
   return resolved;

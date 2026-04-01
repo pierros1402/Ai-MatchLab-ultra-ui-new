@@ -1,73 +1,50 @@
 // ============================================================
-// SOURCE 2 ADAPTER – PHASE 2A STUB
-// Replace endpoint/headers/parser when real provider is chosen
+// SOURCE 2 ADAPTER – LOCAL MODE (REAL INGEST ENABLED)
 // ============================================================
 
+import fs from "fs";
+import path from "path";
+
+const localPath = path.resolve("data/source2-fixtures.json");
+
 export async function fetchLeagueFixturesSource2(slug, dayKey) {
-  const base = process.env.SOURCE2_BASE || "";
-  const apiKey = process.env.SOURCE2_API_KEY || "";
 
   // ------------------------------------------------------------
-  // SAFE STUB MODE
-  // If not configured yet, return empty events and do not break ingest
+  // LOCAL MODE (PRIMARY)
   // ------------------------------------------------------------
-  if (!base) {
-    return {
-      ok: true,
-      source: "source2",
-      stub: true,
-      events: []
-    };
-  }
-
   try {
-    const url =
-      `${base}/fixtures` +
-      `?league=${encodeURIComponent(slug)}` +
-      `&date=${encodeURIComponent(dayKey)}`;
 
-    const res = await fetch(url, {
-      headers: {
-        "accept": "application/json",
-        ...(apiKey ? { "x-api-key": apiKey } : {})
-      }
-    });
-
-    if (res.status === 404) {
+    if (!fs.existsSync(localPath)) {
       return {
         ok: true,
         source: "source2",
+        local: true,
         events: []
       };
     }
 
-    if (!res.ok) {
-      return {
-        ok: false,
-        source: "source2",
-        error: `http_${res.status}`,
-        events: []
-      };
-    }
+    const raw = fs.readFileSync(localPath, "utf8");
+    const data = JSON.parse(raw);
 
-    const data = await res.json();
+    const events = Array.isArray(data?.events)
+      ? data.events.filter(e =>
+          e?.leagueSlug === slug &&
+          e?.dayKey === dayKey
+        )
+      : [];
 
-    // ------------------------------------------------------------
-    // EXPECTED SHAPE:
-    // { events: [...] }
-    // Keep adapter simple; parser stays in normalize-source2.js
-    // ------------------------------------------------------------
     return {
       ok: true,
       source: "source2",
-      events: Array.isArray(data?.events) ? data.events : []
+      local: true,
+      events
     };
 
   } catch (e) {
     return {
       ok: false,
       source: "source2",
-      error: String(e?.message || e),
+      error: "local_read_failed",
       events: []
     };
   }
