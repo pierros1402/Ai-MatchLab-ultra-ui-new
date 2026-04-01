@@ -1,8 +1,21 @@
 //============================================================
-// STANDINGS BUILDER – STABLE v5.2 (Final Safe)
+// STANDINGS BUILDER – CLEAN v6.0 (Canonical Only)
 //============================================================
 
 import { computeStandings } from "../../_shared/ranking-engine.js";
+
+function isFinal(status) {
+  const s = String(status || "").toUpperCase();
+
+  return (
+    s.includes("FINAL") ||
+    s.includes("FULL_TIME") ||
+    s.includes("FT") ||
+    s.includes("COMPLETE") ||
+    s.includes("AET") ||
+    s.includes("PEN")
+  );
+}
 
 export async function buildStandingsFromR2(env, league, season, opts = {}) {
 
@@ -14,7 +27,7 @@ export async function buildStandingsFromR2(env, league, season, opts = {}) {
   let cursor = undefined;
 
   // ============================================================
-  // 1. READ MATCHES FROM R2
+  // READ CANONICAL MATCHES
   // ============================================================
 
   while (true) {
@@ -40,69 +53,15 @@ export async function buildStandingsFromR2(env, league, season, opts = {}) {
 
       if (!match || typeof match !== "object") continue;
 
-      let home, away, gf, ga;
-      let statusName;
+      const status = match.status;
 
-      // ------------------------------------------------------------
-      // STATUS RESOLUTION
-      // ------------------------------------------------------------
+      if (!isFinal(status)) continue;
 
-      if (match.competitions?.[0]?.competitors) {
+      const home = match.home;
+      const away = match.away;
 
-        const comp = match.competitions[0];
-
-        statusName =
-          comp.status?.type?.name ||
-          match.status?.type?.name ||
-          match.status;
-
-        const isFinal =
-          typeof statusName === "string" &&
-          (
-            statusName.includes("FINAL") ||
-            statusName.includes("FULL_TIME") ||
-            statusName.includes("COMPLETE") ||
-            statusName.includes("AET") ||
-            statusName.includes("PEN")
-          );
-
-        if (!isFinal) continue;
-
-        const homeObj = comp.competitors.find(c => c.homeAway === "home");
-        const awayObj = comp.competitors.find(c => c.homeAway === "away");
-
-        if (!homeObj || !awayObj) continue;
-
-        home = homeObj.team?.displayName;
-        away = awayObj.team?.displayName;
-
-        gf = Number(homeObj.score);
-        ga = Number(awayObj.score);
-
-      } else {
-
-        statusName =
-          match.status?.type?.name ||
-          match.status;
-
-        const isFinal =
-          typeof statusName === "string" &&
-          (
-            statusName.includes("FINAL") ||
-            statusName.includes("FULL_TIME") ||
-            statusName.includes("COMPLETE") ||
-            statusName.includes("AET") ||
-            statusName.includes("PEN")
-          );
-
-        if (!isFinal) continue;
-
-        home = match.home;
-        away = match.away;
-
-        gf = Number(match.scoreHome);
-        ga = Number(match.scoreAway);
-      }
+      const gf = Number(match.scoreHome);
+      const ga = Number(match.scoreAway);
 
       if (!home || !away) continue;
       if (!Number.isFinite(gf) || !Number.isFinite(ga)) continue;
@@ -118,7 +77,7 @@ export async function buildStandingsFromR2(env, league, season, opts = {}) {
   }
 
   // ============================================================
-  // 2. PREPARE INPUT FOR RANKING ENGINE
+  // PREPARE RANKING INPUT
   // ============================================================
 
   const teams = {};
@@ -203,7 +162,7 @@ function update(table, team, gf, ga) {
 }
 
 // ============================================================
-// H2H MATRIX BUILDER
+// H2H MATRIX
 // ============================================================
 
 function updateH2H(matrix, home, away, gf, ga) {

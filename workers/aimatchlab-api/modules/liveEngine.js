@@ -1,9 +1,10 @@
 /**
- * AIMATCHLAB – LIVE ENGINE (EXTENDED STATS)
- * Adds basic live statistics into FIXTURES bucket
+ * AIMATCHLAB – LIVE ENGINE (PURE LIVE FEED)
+ * Reads live data from ESPN and returns normalized live overlay
+ * Does NOT write into KV or mutate fixture buckets
  */
 
-const VERSION = "3.0.0-live-stats-extended";
+const VERSION = "4.0.0-live-feed-pure";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
@@ -16,8 +17,11 @@ function json(data, status = 200) {
 }
 
 function safeJsonParse(str) {
-  try { return JSON.parse(str); }
-  catch { return null; }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return null;
+  }
 }
 
 function pickTeam(competitors, side) {
@@ -31,14 +35,31 @@ function extractStat(stats, name) {
 }
 
 async function fetchEspnAllScoreboard() {
-  const api = "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard";
-  const res = await fetch(api, { cf: { cacheTtl: 20, cacheEverything: true }});
+  const api =
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard";
+
+  const res = await fetch(api, {
+    cf: { cacheTtl: 20, cacheEverything: true }
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
   const txt = await res.text();
   return safeJsonParse(txt);
 }
 
-function extractLiveMatches(scoreboardJson) {
+function mapLiveStatus(state) {
+  const s = String(state || "").toLowerCase();
 
+  if (s === "in") return "STATUS_IN_PROGRESS";
+  if (s === "post") return "STATUS_FINAL";
+
+  return "STATUS_UNKNOWN";
+}
+
+function extractLiveMatches(scoreboardJson) {
   const events = Array.isArray(scoreboardJson?.events)
     ? scoreboardJson.events
     : [];
@@ -46,11 +67,14 @@ function extractLiveMatches(scoreboardJson) {
   const out = [];
 
   for (const ev of events) {
+    const comp = Array.isArray(ev?.competitions)
+      ? ev.competitions[0]
+      : null;
 
-    const comp = Array.isArray(ev?.competitions) ? ev.competitions[0] : null;
     if (!comp) continue;
 
     const state = String(comp?.status?.type?.state || "").toLowerCase();
+
     if (state !== "in" && state !== "post") continue;
 
     const competitors = comp?.competitors || [];
@@ -64,7 +88,8 @@ function extractLiveMatches(scoreboardJson) {
 
     out.push({
       id: String(ev?.id),
-      status: state === "in" ? "STATUS_IN_PROGRESS" : "STATUS_FINAL",
+      status: mapLiveStatus(state),
+      rawState: state,
       scoreHome: Number(homeObj.score || 0),
       scoreAway: Number(awayObj.score || 0),
       minute: comp?.status?.displayClock || null,
@@ -86,58 +111,23 @@ function extractLiveMatches(scoreboardJson) {
   return out;
 }
 
-async function mergeLiveIntoFixtures(env, liveMatches) {
-
-  if (!env?.AIML_INGESTION_KV) return;
-
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  const dayKey = `FIXTURES:STAGING:DATE:${y}-${m}-${d}`;
-
-  const raw = await env.AIML_INGESTION_KV.get(dayKey);
-  if (!raw) return;
-
-  const parsed = JSON.parse(raw);
-  if (!Array.isArray(parsed?.matches)) return;
-
-  let changed = false;
-
-  for (const live of liveMatches) {
-
-    const f = parsed.matches.find(x => String(x.id) === String(live.id));
-    if (!f) continue;
-
-    f.status = live.status;
-    f.scoreHome = live.scoreHome;
-    f.scoreAway = live.scoreAway;
-    f.minute = live.minute;
-    f.liveStats = live.liveStats;
-
-    changed = true;
-  }
-
-  if (changed) {
-    await env.AIML_INGESTION_KV.put(dayKey, JSON.stringify(parsed));
-  }
-}
-
 export async function handleLive(req, env) {
-
   if (req.method !== "GET") {
-    return json({ ok:false, error:"method_not_allowed" }, 405);
+    return json({ ok: false, error: "method_not_allowed" }, 405);
   }
 
   const scoreboard = await fetchEspnAllScoreboard();
-  if (!scoreboard) return json({ ok:false, error:"fetch_failed" }, 500);
+
+  if (!scoreboard) {
+    return json({ ok: false, error: "fetch_failed" }, 500);
+  }
 
   const matches = extractLiveMatches(scoreboard);
-  await mergeLiveIntoFixtures(env, matches);
 
   return json({
-    ok:true,
+    ok: true,
     version: VERSION,
+    count: matches.length,
     matches
   });
 }

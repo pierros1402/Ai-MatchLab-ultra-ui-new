@@ -45,6 +45,14 @@ function dayKeyTZ(tz, date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
+function shiftDay(day, offset) {
+
+  const d = new Date(day + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + offset);
+
+  return d.toISOString().slice(0, 10);
+
+}
 /* ================= CORS ================= */
 
 function corsHeaders() {
@@ -289,13 +297,18 @@ async function fetchLeagueUTC(slug, date = null) {
 // 404 σημαίνει απλά ότι δεν υπάρχει αγώνας για τη λίγκα εκείνη τη μέρα
     if (res.status === 404) {
       await res.body?.cancel();
-      return null;
+
+  // ⚠️ DO NOT HARD FAIL — fallback will handle
+      return { events: [] };
     }
 
     if (!res.ok) {
       await res.body?.cancel();
+
       console.log("[fetchLeagueUTC] error", slug, date, res.status);
-      return null;
+
+  // ⚠️ fallback instead of killing ingest
+      return { events: [] };
     }
 
     let data = await res.json();
@@ -325,10 +338,22 @@ async function fetchLeagueUTC(slug, date = null) {
 
         if (!kickoff) return false;
 
-        const d = athensDayFromKickoff(kickoff);
+        const d = kickoff.slice(0, 10);
 
-        return d === targetDay;
+        return (
+          d === targetDay ||
+          d === shiftDay(targetDay, -1) ||
+          d === shiftDay(targetDay, 1)
+        );
       });
+
+      console.log(
+        "[fallback raw]",
+        slug,
+        "target:", targetDay,
+        "total:", fallbackData?.events?.length || 0,
+        "filtered:", filtered.length
+      );
 
       data = { events: filtered };
     }
@@ -342,11 +367,13 @@ async function fetchLeagueUTC(slug, date = null) {
 }
 
 async function ingestUTCWindow(env, ctx) {
-  
+  let fetchCount = 0;
+  const MAX_FETCH = 40;
   const now = new Date();   
 
    const bucketMaps = {};
    const processedLeagues = new Set();
+   const __debugMissing = [];
 // PRIORITY EU PASS (always try first)
 const PRIORITY = [
   "eng.1",
@@ -357,90 +384,120 @@ const PRIORITY = [
 
 for (const slug of PRIORITY) {
 
-  if (!(await shouldRetryAfter404(env, slug))) {
-    continue;
-  }
+  let leagueHadEvents = false;
 
-  const today = dayKeyTZ(ATHENS_TZ);
+  try {
 
- let data = await fetchLeagueUTC(slug, today);
+    const today = dayKeyTZ(ATHENS_TZ);
 
- if (!data || !Array.isArray(data.events)) {
-   continue;
- }
+    const days = [
+      shiftDay(today, -1),
+      today,
+      shiftDay(today, 1)
+    ];
 
-// retry μόνο αν υπάρχει πιθανότητα αγώνα
-if (!data.events.length) {
+    let data = { events: [] };
 
-  let hasRecentMatch = __leagueActiveCache.get(slug);
+    for (const d of days) {
 
-  if (hasRecentMatch === undefined) {
+      if (fetchCount >= MAX_FETCH) {
+        console.log("[ingest] fetch limit reached");
+      continue;
+      }
 
-    hasRecentMatch =
-      await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+      const res = await fetchLeagueUTC(slug, d);
+      fetchCount++;
 
-    __leagueActiveCache.set(slug, hasRecentMatch);
-  }
+      if (res?.events?.length) {
+        data.events.push(...res.events);
+      }
 
-  if (!hasRecentMatch) {
-    continue;
-  }
+    }
 
-}
+    if (data === null) {
+      await mark404(env, slug);
+      __debugMissing.push(slug);
+      continue;
+    }
 
-processedLeagues.add(slug);
+    if (!data || !Array.isArray(data.events)) {
+      __debugMissing.push(slug);
+      continue;
+    }
 
-if (!data.events.length) {
-  continue;
-}
+    const events = data.events || [];
 
-// ---------------------------------
-// mark league active (once)
-// ---------------------------------
-await env.AIML_INGESTION_KV.put(
-  `LEAGUE:ACTIVE:${slug}`,
-  "1",
-  { expirationTtl: 86400 }
-);
+    processedLeagues.add(slug);
 
-// ---------------------------------
-// EVENT LOOP
-// ---------------------------------
-for (const event of data.events) {
-
-  const m = normalize(event, slug);
-  if (!m) continue;
-
-  const day = athensDayFromKickoff(m.kickoff);
-  const todayAth = dayKeyTZ(ATHENS_TZ);
-
-  const diff =
-    Math.floor(
-      (Date.parse(day) - Date.parse(todayAth)) / 86400000
+    await env.AIML_INGESTION_KV.put(
+      `LEAGUE:ACTIVE:${slug}`,
+      "1",
+      { expirationTtl: 86400 }
     );
 
-  if (diff < -2 || diff > 3) continue;
+    // ---------------------------------
+    // EVENT LOOP (FIXED)
+    // ---------------------------------
+    for (const d of days) {
 
-  const { staging } = keysForDay(day);
+      for (const event of events) {
 
-  bucketMaps[staging] ??= new Map();
+        const m = normalize(event, slug);
+        if (!m) continue;
 
-  if (bucketMaps[staging].has(m.id)) continue;
+        const matchDay = athensDayFromKickoff(m.kickoff);
 
-  bucketMaps[staging].set(String(m.id), {
-    ...m,
-    dayKey: day
-  });
+        const diffMatch =
+          Math.floor(
+            (Date.parse(matchDay) - Date.parse(d)) / 86400000
+          );
 
-}
+         if (diffMatch < -1 || diffMatch > 1) continue;
 
-}
-    
+         leagueHadEvents = true;
+
+         const todayAth = dayKeyTZ(ATHENS_TZ);
+
+         const diffWindow =
+           Math.floor(
+             (Date.parse(matchDay) - Date.parse(todayAth)) / 86400000
+           );
+
+         if (diffWindow < -7 || diffWindow > 5) continue;
+
+         const { staging } = keysForDay(matchDay);
+
+        bucketMaps[staging] ??= new Map();
+
+        if (bucketMaps[staging].has(m.id)) continue;
+
+        bucketMaps[staging].set(String(m.id), {
+          ...m,
+          dayKey: matchDay
+        });
+
+      }
+
+    }
+
+    if (!leagueHadEvents) {
+      __debugMissing.push(slug);
+    }
+
+  } catch (e) {
+
+    console.log("[priority ingest failed]", slug);
+
+    __debugMissing.push(slug);
+
+  }
+
+} 
 // ---------------------------
 // ROTATION INGEST (ACCELERATED AFTER 00:00 ATHENS)
 // ---------------------------
 
-const CHUNK_SIZE = 12;
+const CHUNK_SIZE = 5;
 const totalLeagues = LEAGUE_SEEDS.length;
 
 // time window: 00:00–01:00 Athens
@@ -482,152 +539,171 @@ idx = (idx + scanned) % totalLeagues;
 
 
 const today = dayKeyTZ(ATHENS_TZ);
+
 for (const slug of slice) {
+
 
   if (!(await shouldQueryLeague(env, slug))) continue;
 
   if (processedLeagues.has(slug)) continue;
 
+  let leagueHadEvents = false;
+
   try {
 
     if (!(await shouldRetryAfter404(env, slug))) continue;
 
-    let data = await fetchLeagueUTC(slug, today);
+    const days = [
+      shiftDay(today, -1),
+      today,
+      shiftDay(today, 1)
+    ];
+
+    let data = { events: [] };
+
+    for (const d of days) {
+
+      if (fetchCount >= MAX_FETCH) {
+        console.log("[ingest] fetch limit reached");
+        continue;
+      }
+
+      const res = await fetchLeagueUTC(slug, d);
+      fetchCount++;
+
+      console.log(
+        "[ingest raw]",
+        "slug:", slug,
+        "date:", d,
+        "events:", Array.isArray(res?.events) ? res.events.length : "null"
+      );
+
+      if (res?.events?.length) {
+        data.events.push(...res.events);
+      }
+
+    }
 
     let leagueHasLive = false;
 
     if (data === null) {
       await mark404(env, slug);
+      __debugMissing.push(slug);
       continue;
     }
 
     if (!data || !Array.isArray(data.events)) {
+      __debugMissing.push(slug);
       continue;
     }
 
+    if (!data.events.length) {
+
+  // DO NOT SKIP — allow fallback + future events
+  // just log for visibility
+
+  // console.log("[no events]", slug);
+
+    }
+
 // -----------------------------
-// mark league as processed
-// ONLY after valid response
+// EVENT LOOP (FIXED)
 // -----------------------------
+for (const d of days) {
 
-if (!data.events.length) {
+  for (const event of (data.events || [])) {
 
-  let hasRecentMatch = __leagueActiveCache.get(slug);
+    const m = normalize(event, slug);
+    if (!m) continue;
 
-  if (hasRecentMatch === undefined) {
+    const matchDay = athensDayFromKickoff(m.kickoff);
 
-    hasRecentMatch =
-      await env.AIML_INGESTION_KV.get(`LEAGUE:ACTIVE:${slug}`);
+    const diffMatch =
+      Math.floor(
+        (Date.parse(matchDay) - Date.parse(d)) / 86400000
+      );
 
-    __leagueActiveCache.set(slug, hasRecentMatch);
-  }
+    if (diffMatch < -1 || diffMatch > 1) continue;
 
-  if (!hasRecentMatch) {
-    await mark404(env, slug);
-    continue;
+    leagueHadEvents = true;
+
+    const s = String(m.status || "").toUpperCase();
+
+    if (
+      s.includes("LIVE") ||
+      s.includes("IN_PROGRESS") ||
+      s.includes("HALF") ||
+      s.includes("SECOND_HALF") ||
+      s.includes("PRE") ||
+      s.includes("SCHEDULED") ||
+      s.includes("NOT_STARTED")
+    ) {
+      leagueHasLive = true;
+
+      await env.AIML_INGESTION_KV.put(
+        `LEAGUE:ACTIVE:${slug}`,
+        Date.now().toString(),
+        { expirationTtl: 86400 }
+      );
+    }
+
+    const todayAth = dayKeyTZ(ATHENS_TZ);
+
+    const diffWindow =
+      Math.floor(
+        (Date.parse(matchDay) - Date.parse(todayAth)) / 86400000
+      );
+
+    if (diffWindow < -3 || diffWindow > 5) continue;
+
+    const { staging } = keysForDay(matchDay);
+
+    if (!bucketMaps[staging]) {
+      bucketMaps[staging] = new Map();
+    }
+
+    if (bucketMaps[staging].has(m.id)) continue;
+
+    bucketMaps[staging].set(String(m.id), {
+      ...m,
+      dayKey: matchDay
+    });
+
   }
 
 }
 
-// -----------------------------
-// EVENT LOOP
-// -----------------------------
-for (const event of (data.events || [])) {
+    if (!leagueHadEvents) {
+      __debugMissing.push(slug);
+    }
 
-  const m = normalize(event, slug);
-  if (!m) continue;
+    if (!leagueHasLive) {
+      await env.AIML_INGESTION_KV.delete(`LEAGUE:ACTIVE:${slug}`);
+    }
 
-  const s = String(m.status || "").toUpperCase();
+    processedLeagues.add(slug);
 
-  if (
-    s.includes("LIVE") ||
-    s.includes("IN_PROGRESS") ||
-    s.includes("HALF") ||
-    s.includes("SECOND_HALF") ||
-    s.includes("PRE") ||
-    s.includes("SCHEDULED") ||
-    s.includes("NOT_STARTED")
-  ) {
-    leagueHasLive = true;
+  } catch (e) {
 
-    // mark league active
-    await env.AIML_INGESTION_KV.put(
-      `LEAGUE:ACTIVE:${slug}`,
-      Date.now().toString(),
-      { expirationTtl: 86400 }
+    console.error(
+      "[ingest] job failed",
+      slug,
+      e?.message || e
     );
+
+    __debugMissing.push(slug);
   }
-
-  const day = athensDayFromKickoff(m.kickoff);
-  const today = dayKeyTZ(ATHENS_TZ);
-
-  const diff =
-    Math.floor(
-      (Date.parse(day + "T00:00:00Z") -
-       Date.parse(today + "T00:00:00Z")) / 86400000
-    );
-  
-   
-
-  // -----------------------------
-  // INGEST WINDOW GUARD
-  // -----------------------------
-  if (diff < -2 || diff > 3) {
-    continue;
-  }
-
-  const { staging } = keysForDay(day);
-
-  if (!bucketMaps[staging]) {
-    bucketMaps[staging] = new Map();
-  }
-
-  // skip duplicates
-  if (bucketMaps[staging].has(m.id)) {
-    continue;
-  }
-
-  bucketMaps[staging].set(String(m.id), {
-    ...m,
-    dayKey: day
-  });
 
 }
 
-// ---------------------------------
-// league finished → stop polling
-// ---------------------------------
-if (!leagueHasLive) {
-  await env.AIML_INGESTION_KV.delete(`LEAGUE:ACTIVE:${slug}`);
-}
-
-// -----------------------------
-// mark league processed
-// -----------------------------
-processedLeagues.add(slug);
-
-} catch (e) {
-
-  console.error(
-    "[ingest] job failed",
-    slug,
-    e?.message || e
-  );
-
-}
-
-}
-
-await env.AIML_INGESTION_KV.put(
-  "INGEST:IDX",
-  String(idx)
-);
 
 console.log(
-  "[ingest:health]",
-  "nextIdx:", idx,
-  "slice:", slice.length,
-  "priority:", PRIORITY.length
+  "[ingest coverage]",
+  "missing:",
+  __debugMissing.length,
+  "/",
+  PRIORITY.length + slice.length,
+  __debugMissing.join(", ")
 );
 
 // -----------------------------
@@ -645,7 +721,7 @@ if (!isMidnightWindow && idx === 0) {
 }
 
 for (const stagingKey in bucketMaps) {
-if (!bucketMaps[stagingKey] || bucketMaps[stagingKey].size === 0) {
+if (!bucketMaps[stagingKey]) {
   continue;
 }
 // --------------------------------------------------
@@ -659,30 +735,58 @@ try {
   if (raw) existingStage = JSON.parse(raw);
 } catch (_) {}
 
-const stageMap = new Map();
+let stageMap = new Map();
 
-// ----------------------------------
-// KEEP ALL PREVIOUS MATCHES
-// ----------------------------------
-for (const m of existingStage.matches || []) {
+// ---------------------------------
+// SMART REBUILD GUARD (FIXED)
+// ---------------------------------
 
-  if (!m || !m.id) continue;
+const existingCount = existingStage?.matches?.length || 0;
+const incomingCount = bucketMaps[stagingKey]?.size || 0;
 
-  stageMap.set(String(m.id), m);
+// ---------------------------------
+// REBUILD CONDITIONS
+// ---------------------------------
+
+const shouldRebuild =
+  incomingCount > existingCount ||
+  incomingCount < existingCount * 0.7;
+
+if (shouldRebuild) {
+
+  console.log(
+    "[staging] rebuild",
+    stagingKey,
+    "existing:",
+    existingCount,
+    "incoming:",
+    incomingCount
+  );
+
+  stageMap = new Map();
+
+  // ----------------------------------
+  // CRITICAL: LOAD INCOMING MATCHES
+  // ----------------------------------
+  for (const m of bucketMaps[stagingKey].values()) {
+
+    if (!m || !m.id) continue;
+
+    stageMap.set(String(m.id), m);
+
+  }
+
+} else {
+
+  for (const m of existingStage.matches || []) {
+
+    if (!m || !m.id) continue;
+
+    stageMap.set(String(m.id), m);
+
+  }
 
 }
-
-// ----------------------------------
-// APPLY FRESH INGEST (overwrite same id)
-// ----------------------------------
-for (const m of (bucketMaps[stagingKey]?.values() || [])) {
-
-  if (!m || !m.id) continue;
-
-  stageMap.set(String(m.id), m);
-
-}
-
 // ----------------------------------
 // write merged snapshot (ONLY IF CHANGED)
 // ----------------------------------
@@ -777,69 +881,78 @@ if (writeNeeded) {
 
 }
 
-}// --------------------------------------------------
-// FALLBACK: LOAD MATCHES FROM STAGING IF BUCKET EMPTY
+}
+// --------------------------------------------------
+// FALLBACK: LOAD MATCHES FROM STAGING IF BUCKET EMPTY (FIXED)
 // --------------------------------------------------
 
 const todayKey = keysForDay(dayKeyTZ(ATHENS_TZ)).staging;
 
-if (!bucketMaps[todayKey] || bucketMaps[todayKey].size === 0) {
+let matches = [];
 
-  const raw = await env.AIML_INGESTION_KV.get(todayKey);
+if (bucketMaps[todayKey] && bucketMaps[todayKey].size > 0) {
 
-  if (raw) {
+  matches = Array.from(bucketMaps[todayKey].values());
 
-    const parsed = JSON.parse(raw);
-    const matches = parsed.matches || [];
+} else {
 
-    bucketMaps[todayKey] = new Map();
+  try {
 
+    const raw = await env.AIML_INGESTION_KV.get(todayKey);
 
-    // ---------------------------------------
-    // ROTATION SCAN (ANTI CPU SPIKE)
-    // ---------------------------------------
+    if (raw) {
 
-    const MAX_SCAN = 25;
-
-    let scanIdx =
-      Number(await env.AIML_INGESTION_KV.get("SCAN:IDX") || 0);
-
-    if (scanIdx >= matches.length) {
-      scanIdx = 0;
-    }
-
-    const scanSlice =
-      matches.slice(scanIdx, scanIdx + MAX_SCAN);
-
-    scanIdx = (scanIdx + MAX_SCAN) % Math.max(matches.length, 1);
-
-    await env.AIML_INGESTION_KV.put(
-      "SCAN:IDX",
-      String(scanIdx)
-    );
-
-    // ---------------------------------------
-    // BUILD LOCAL BUCKET (ONLY SCAN SLICE)
-    // ---------------------------------------
-
-    for (const m of scanSlice) {
-
-      if (!m || !m.id) continue;
-
-      bucketMaps[todayKey].set(m.id, m);
+      const parsed = JSON.parse(raw);
+      matches = parsed.matches || [];
 
     }
 
-    console.log(
-      "[index rebuild fallback] loaded matches from staging:",
-      matches.length,
-      "| scanned:",
-      scanSlice.length
-    );
-
-  }
+  } catch (_) {}
 
 }
+
+// ---------------------------------------
+// ROTATION SCAN (SAFE)
+// ---------------------------------------
+
+const MAX_SCAN = 25;
+
+let scanIdx =
+  Number(await env.AIML_INGESTION_KV.get("SCAN:IDX") || 0);
+
+if (scanIdx >= matches.length) {
+  scanIdx = 0;
+}
+
+const scanSlice =
+  matches.slice(scanIdx, scanIdx + MAX_SCAN);
+
+scanIdx = (scanIdx + MAX_SCAN) % Math.max(matches.length, 1);
+
+await env.AIML_INGESTION_KV.put(
+  "SCAN:IDX",
+  String(scanIdx)
+);
+
+// ---------------------------------------
+// BUILD LOCAL BUCKET
+// ---------------------------------------
+
+bucketMaps[todayKey] ??= new Map();
+
+for (const m of scanSlice) {
+
+  if (!m || !m.id) continue;
+
+  bucketMaps[todayKey].set(m.id, m);
+
+}
+
+console.log(
+  "[index rebuild fallback]",
+  "total:", matches.length,
+  "scanned:", scanSlice.length
+);
 
 // ✅ SAFE PLACE (after merge, before KV write)
 // --------------------------------------------------
@@ -850,10 +963,34 @@ let indexWrites = 0;
 
 const aiQueue = [];
 
+// ----------------------------------
+// SAFE MATCH SOURCE
+// ----------------------------------
 
 
-const matches = parsed.matches || [];
 
+const todayKeySafe = keysForDay(dayKeyTZ(ATHENS_TZ)).staging;
+
+if (bucketMaps[todayKeySafe] && bucketMaps[todayKeySafe].size > 0) {
+
+  matches = Array.from(bucketMaps[todayKeySafe].values());
+
+} else {
+
+  try {
+
+    const raw = await env.AIML_INGESTION_KV.get(todayKeySafe);
+
+    if (raw) {
+
+      const parsed = JSON.parse(raw);
+      matches = parsed.matches || [];
+
+    }
+
+  } catch {}
+
+}
 // ------------------------------------------------
 // BUILD MATCH INDEX BY LEAGUE (CPU OPTIMIZATION)
 // ------------------------------------------------
@@ -1439,109 +1576,115 @@ for (const [slug, matches] of leagues.entries()) {
   }
 
 // =====================================================
-// FORCE REBUILD MISSING DAY
+// FORCE REBUILD MISSING DAY (STABLE)
 // =====================================================
 async function rebuildMissingDay(env, day) {
 
-  const { staging, final } = keysForDay(day);
-
-  const exists = await env.AIML_INGESTION_KV.get(final);
-  if (exists) return;
-
+  const { staging } = keysForDay(day);
 
   console.log("[rebuild] rebuilding", day);
 
-  const matches = [];
   const espnDate = day.replaceAll("-", "");
+  const merged = new Map();
 
   for (const slug of LEAGUE_SEEDS) {
-
-    
-
-    
 
     try {
 
       const res = await fetch(
-        `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`
+         `${ESPN_BASE}/scoreboard?limit=500&dates=${espnDate}`
+);
+
+      // ----------------------------------
+      // SAFE STATUS HANDLING
+      // ----------------------------------
+      if (res.status === 404) {
+        continue; // no matches για αυτή τη λίγκα
+      }
+
+      if (!res.ok) {
+        console.log("[rebuild] fetch error", slug, res.status);
+        continue;
+      }
+
+      // ----------------------------------
+      // SAFE JSON
+      // ----------------------------------
+      let json;
+
+      try {
+        json = await res.json();
+      } catch (e) {
+        console.log("[rebuild] json failed", slug);
+        continue;
+      }
+
+      // ----------------------------------
+      // DEBUG (να βλέπεις τι έρχεται)
+      // ----------------------------------
+      console.log(
+        "[rebuild] league",
+        slug,
+        "events:",
+        json?.events?.length || 0
       );
 
-      if (!res.ok) continue;
-
-      const json = await res.json();
-
-      for (const event of json.events || []) {
+      // ----------------------------------
+      // LOOP EVENTS (NO DAY FILTER)
+      // ----------------------------------
+      for (const event of (json.events || [])) {
 
         const m = normalize(event, slug);
-        if (!m || !m.id) continue;
+        if (!m) continue;
 
-        const matchDay = athensDayFromKickoff(m.kickoff);
-
-        const prevDay = formatUTC(shiftUTC(new Date(day + "T00:00:00Z"), -1));
-        const nextDay = formatUTC(shiftUTC(new Date(day + "T00:00:00Z"), 1));
-
-        if (matchDay !== day && matchDay !== prevDay && matchDay !== nextDay) {
-          continue;
-        }
-
-        matches.push({
+        // ❗ overwrite-safe μέσω Map
+        merged.set(String(m.id), {
           ...m,
           dayKey: day
         });
 
       }
 
-    } catch (_) {}
+    } catch (e) {
+      console.log("[rebuild] league failed", slug);
+    }
 
   }
 
+  const mergedMatches = Array
+    .from(merged.values())
+    .sort((a, b) =>
+      (a.kickoff_ms || 0) - (b.kickoff_ms || 0)
+    );
 
-let existing = { date: day, matches: [] };
-
-try {
-  const raw = await env.AIML_INGESTION_KV.get(staging);
-  if (raw) existing = JSON.parse(raw);
-} catch (_) {}
-
-const merged = new Map();
-
-// κράτα ό,τι υπήρχε ήδη
-for (const m of existing.matches || []) {
-  if (!m || !m.id) continue;
-  merged.set(String(m.id), m);
-}
-
-// πέρασε από πάνω ό,τι γύρισε το rebuild
-for (const m of matches) {
-  if (!m || !m.id) continue;
-  merged.set(String(m.id), m);
-}
-
-const mergedMatches = Array.from(merged.values());
-
+// ----------------------------------
+// SAFETY: μην γράψεις corrupted staging
+// ----------------------------------
 if (!mergedMatches.length) {
-  console.log("[rebuild] no matches after merge", day);
+  console.log("[rebuild] no matches found", day);
   return;
 }
 
-await putJson(env, staging, {
-  date: day,
-  count: mergedMatches.length,
-  matches: mergedMatches
-});
-
-console.log(
-  "[rebuild] staging rebuilt",
-  day,
-  "| rebuilt:",
-  matches.length,
-  "| merged:",
-  mergedMatches.length
-);
-
-
+if (mergedMatches.length < 5) {
+  console.log("[rebuild] suspicious low result — skip", day);
+  return;
 }
+  // ----------------------------------
+  // WRITE STAGING
+  // ----------------------------------
+  await putJson(env, staging, {
+    date: day,
+    count: mergedMatches.length,
+    matches: mergedMatches
+  });
 
+  console.log(
+    "[rebuild] staging rebuilt",
+    day,
+    "| total:",
+    mergedMatches.length
+  );
+}  
 // ---------------------------------
 // SCOREBOARD FETCH CACHE (FINALIZE)
 // ---------------------------------
@@ -1600,8 +1743,10 @@ async function fetchMatchSummary(id) {
     const res =
       await fetch(`${ESPN_BASE}/summary?event=${id}`);
 
-    if (!res.ok) {
-      await res.body?.cancel();
+    if (
+      !res.ok ||
+      !res.headers.get("content-type")?.includes("json")
+    ) {
       return null;
     }
 
@@ -1756,10 +1901,14 @@ if (!isTerminal(updated.status)) {
           comp.find(c => c.homeAway === "away") ||
           comp[1] || {};
 
-        updated.status = "STATUS_FULL_TIME";
-        updated.scoreHome = Number(home?.score || 0);
-        updated.scoreAway = Number(away?.score || 0);
-        updated.minute = "FT";
+        // ---------------------------------
+        // ❗ DO NOT SET FT HERE
+        // ---------------------------------
+
+        updated.__summaryFT = {
+          scoreHome: Number(home?.score || 0),
+          scoreAway: Number(away?.score || 0)
+        };
 
       }
 
@@ -1814,38 +1963,65 @@ if (!terminalFound) {
     console.log("[value] no PRE matches yet");
   }
 
-const hasActive = updatedMatches.some(m => {
 
-  const s = String(m.status || "").toUpperCase();
-
-  return (
-    s === "STATUS_FIRST_HALF" ||
-    s === "STATUS_SECOND_HALF" ||
-    s === "STATUS_HALFTIME" ||
-    s === "STATUS_IN_PROGRESS"
-  );
-
-});
 
 const blocking = [];
 
 for (const m of updatedMatches) {
 
   const s = String(m.status || "").toUpperCase();
+  const kickoff = m.kickoff ? Date.parse(m.kickoff) : 0;
 
+  // skip clearly future matches
+  if (kickoff && kickoff > Date.now() + 2 * 60 * 60 * 1000) {
+    blocking.push(m);
+    continue;
+  }
+
+  // skip non-playable states
   if (
-    s === "STATUS_FIRST_HALF" ||
-    s === "STATUS_SECOND_HALF" ||
-    s === "STATUS_HALFTIME" ||
-    s === "STATUS_IN_PROGRESS"
+    s.includes("POSTPONED") ||
+    s.includes("CANCELLED") ||
+    s.includes("ABANDONED")
   ) {
+    continue;
+  }
 
-    let terminal = false;
+  // already terminal
+  if (isTerminal(s)) {
+    continue;
+  }
 
+  let confirmedTerminal = false;
+
+  // scoreboard may already have fresher status
+  try {
+
+    const board = await getLeagueBoard(m.leagueSlug);
+    const event = board?.get(m.id);
+
+    if (event) {
+      const normalized = normalize(event, m.leagueSlug);
+
+      if (normalized) {
+        m.status = normalized.status;
+        m.scoreHome = normalized.scoreHome;
+        m.scoreAway = normalized.scoreAway;
+        m.minute = normalized.minute;
+      }
+    }
+
+    if (isTerminal(m.status)) {
+      confirmedTerminal = true;
+    }
+
+  } catch (_) {}
+
+  // summary as strongest confirmation
+  if (!confirmedTerminal) {
     try {
 
       const summary = await fetchMatchSummary(m.id);
-
       const sumStatus = summary?.status?.type?.name || "";
 
       if (isTerminal(sumStatus)) {
@@ -1863,34 +2039,28 @@ for (const m of updatedMatches) {
         m.scoreAway = Number(away?.score || 0);
         m.minute = "FT";
 
-        terminal = true;
-
+        confirmedTerminal = true;
       }
 
     } catch (_) {}
-
-    if (!terminal) {
-      blocking.push(m);
-    }
-
   }
 
+  if (!confirmedTerminal) {
+    blocking.push(m);
+  }
 }
 
-// ---------------------------------
-// ABORT FINALIZE IF MATCHES ACTIVE
-// ---------------------------------
 if (blocking.length > 0) {
 
   console.log(
-    "[finalize] active matches remain — skip finalize",
+    "[finalize] waiting matches",
     day,
-    "| active:",
     blocking.length
   );
 
   return;
 }
+
 
 // ---------------------------------
 // WRITE FINAL SNAPSHOT
@@ -2328,7 +2498,7 @@ async function leagueIngestStatus(env) {
       }
 
     }
-
+  
   } catch (e) {
 
     return {
@@ -2340,9 +2510,7 @@ async function leagueIngestStatus(env) {
 
   return result;
   }
-
-
-  
+ 
 /* ================= EXPORT ================= */
 
 export default {
@@ -2467,7 +2635,14 @@ if (url.pathname === "/repair-day") {
         `${ESPN_BASE}/${slug}/scoreboard?limit=300&dates=${espnDate}`
       );
 
-      if (!res.ok) continue;
+      if (res.status === 404) {
+        continue; // no matches for this league
+      }
+
+      if (!res.ok) {
+        console.log("[rebuild] fetch error", slug, res.status);
+        continue;
+      }
 
       const json = await res.json();
 
@@ -2478,7 +2653,13 @@ if (url.pathname === "/repair-day") {
 
         const matchDay = athensDayFromKickoff(m.kickoff);
 
-        if (matchDay !== day) continue;
+        // allow ±1 day λόγω timezone drift
+        const diff =
+          Math.floor(
+            (Date.parse(matchDay) - Date.parse(day)) / 86400000
+          );
+
+        if (diff < -1 || diff > 1) continue;
 
         if (!existingIds.has(m.id)) {
 
@@ -2538,7 +2719,7 @@ const LOCK_KEY = "SCHEDULER:RUNNING";
 const RUN_ID = crypto.randomUUID();
 
 const existing =
-  await env.AIML_INGESTION_KV.get(LOCK_KEY, { cacheTtl: 0 });
+  await env.AIML_INGESTION_KV.get(LOCK_KEY, { cacheTtl: 60 });
 
 if (existing) {
 
@@ -2576,7 +2757,7 @@ await env.AIML_INGESTION_KV.put(
 
 // verify ownership
 const confirmRaw =
-  await env.AIML_INGESTION_KV.get(LOCK_KEY, { cacheTtl: 0 });
+  await env.AIML_INGESTION_KV.get(LOCK_KEY, { cacheTtl: 60 });
 
 let confirmId = null;
 
@@ -2595,10 +2776,7 @@ console.log("[scheduler] cron tick");
 
 const todayAthens = dayKeyTZ(ATHENS_TZ);
 
-await (async function () {
-
-
-    try {
+try {
 
       // -------------------
       // HEARTBEAT START
@@ -2729,7 +2907,7 @@ console.log(
 
 }
 
-}
+} 
 
 /// =====================================================
 // VALUE DAILY ORCHESTRATION
@@ -3269,27 +3447,29 @@ try {
 } catch (_) {
   console.log("[archive] value failed");
 }
-
-// -----------------------------------------------------
 }
+// -----------------------------------------------------
+} catch (err) {
+  console.error("[scheduler] main block error", err);
+}
+try {
 
-await cleanupKV(env);
-await cleanupR2(env);
+  await cleanupKV(env);
+  await cleanupR2(env);
 
-const finished = Date.now();
+  const finished = Date.now();
 
-await writeHeartbeat(env, {
-  ts: finished,
-  iso: new Date(finished).toISOString(),
-  ok: true,
-  stage: "done",
-  ms: finished - started
-});
+  await writeHeartbeat(env, {
+    ts: finished,
+    iso: new Date(finished).toISOString(),
+    ok: true,
+    stage: "done",
+    ms: finished - started
+  });
 
-console.log("[scheduler] done");
+  console.log("[scheduler] done");
 
-// RELEASE LOCK (SUCCESS)
-await env.AIML_INGESTION_KV.delete(LOCK_KEY);
+  await env.AIML_INGESTION_KV.delete(LOCK_KEY);
 
 } catch (err) {
 
@@ -3310,9 +3490,9 @@ await env.AIML_INGESTION_KV.delete(LOCK_KEY);
 
   await env.AIML_INGESTION_KV.delete(LOCK_KEY);
 
+  return;
 }
 
-})();
+}  // closes scheduled
 
-},   // close scheduled()
-};
+}; // closes export default

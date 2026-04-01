@@ -164,20 +164,28 @@ async function runWriter(url, env) {
 async function processOneDateR2(env, apiKey, region, date) {
 
   // ------------------------------------------------------------
-  // LOAD FIXTURES (READ ONLY FROM KV)
+  // LOAD FIXTURES (FROM ENGINE-V1 BACKBONE)
   // ------------------------------------------------------------
 
-  const fxKey = `FIXTURES:DATE:${date}`;
-  let fx = await env.AIML_INGESTION_KV.get(fxKey, { type: "json" });
+async function fetchFixturesFromEngine(env, date) {
+  const base = String(env.ENGINE_V1_BASE || "").trim();
 
-  if (!fx) {
-    fx = await env.AIML_INGESTION_KV.get(
-      `FIXTURES:STAGING:DATE:${date}`,
-      { type: "json" }
-    );
+  if (!base) {
+    throw new Error("missing_ENGINE_V1_BASE");
   }
 
-  const matches = Array.isArray(fx?.matches) ? fx.matches : [];
+  const res = await fetch(`${base}/fixtures-runtime?mode=active&date=${date}`);
+
+  if (!res.ok) {
+    throw new Error(`engine_fetch_failed_${res.status}`);
+  }
+
+  const data = await res.json();
+
+  return data?.matches || [];
+}
+
+  const matches = await fetchFixturesFromEngine(env, date);
   const eligible = matches.filter(m =>
     ALLOWED_LEAGUES.includes(m?.leagueSlug)
   );

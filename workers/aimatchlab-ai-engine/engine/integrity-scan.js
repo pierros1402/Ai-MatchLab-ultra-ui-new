@@ -1,7 +1,8 @@
 // ============================================================
-// R2 INTEGRITY SCAN – SAFE MODE
+// R2 INTEGRITY SCAN – SAFE MODE v2.0
 // - Finds corrupted JSON entries
 // - No deletions
+// - Proper R2 read handling
 // ============================================================
 
 export async function scanIntegrity(env, league, season) {
@@ -20,14 +21,20 @@ export async function scanIntegrity(env, league, season) {
     for (const obj of list.objects) {
       scanned++;
 
-      const raw = await env.AI_STATE.get(obj.key);
-      if (!raw) continue;
-
-      if (typeof raw !== "string") continue;
-
       try {
-        JSON.parse(raw);
-      } catch {
+        const raw = await env.AI_STATE.get(obj.key);
+        if (!raw) continue;
+
+        const txt = await raw.text();
+
+        try {
+          JSON.parse(txt);
+        } catch {
+          corrupted.push(obj.key);
+        }
+
+      } catch (e) {
+        // treat read errors as corrupted
         corrupted.push(obj.key);
       }
     }

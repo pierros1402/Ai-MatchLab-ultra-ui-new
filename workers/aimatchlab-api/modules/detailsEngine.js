@@ -1,223 +1,190 @@
 import { evaluateMatch } from "./ai-core/evaluation.model.js";
 import { runAiEngine } from "../../_shared/ai-core/index.js";
 
-async function readIntelCache(env, matchId) {
-  const key = `intel/context/${matchId}/latest.json`;
+const VERSION = "4.0.0-details-engine-backbone";
 
-  console.log("INTEL READ TRY:", key);
-
-  try {
-    const obj = await env.AI_STATE.get(key);
-
-    console.log("INTEL EXISTS:", !!obj);
-
-    if (!obj) return null;
-
-    const text = await obj.text();
-    console.log("INTEL SIZE:", text.length);
-
-    return JSON.parse(text);
-
-  } catch (e) {
-    console.log("INTEL ERROR:", e);
-    return null;
-  }
-}
 function json(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: { "content-type": "application/json" }
+    headers: {
+      "content-type": "application/json",
+      "access-control-allow-origin": "*"
+    }
   });
 }
 
-async function findMatchById(env, id) {
+async function readIntelCache(env, matchId) {
+  const key = `intel/context/${matchId}/latest.json`;
 
-  // =====================================================
-  // FAST MATCH INDEX LOOKUP (O(1))
-  // =====================================================
   try {
-    const idxRaw = await env.AIML_INGESTION_KV.get(`MATCH_INDEX:${id}`);
+    const obj = await env.AI_STATE.get(key);
+    if (!obj) return null;
+    return JSON.parse(await obj.text());
+  } catch {
+    return null;
+  }
+}
 
-    if (idxRaw) {
-      const idx = JSON.parse(idxRaw);
+async function fetchFromEngine(env, path) {
+  const base = String(env.ENGINE_V1_BASE || "").trim();
 
-      const dayDataRaw = await env.AIML_INGESTION_KV.get(
-        `FIXTURES:DATE:${idx.dayKey}`,
-        "json"
-      );
+  if (!base) {
+    throw new Error("missing_ENGINE_V1_BASE");
+  }
 
-      if (dayDataRaw && dayDataRaw.matches) {
-        const match = dayDataRaw.matches.find(
-          m => String(m.id) === String(id)
-        );
-        if (match) return match;
-      }
+  const url = `${base}${path}`;
+  const res = await fetch(url, {
+    headers: {
+      "accept": "application/json"
     }
+  });
+
+  if (!res.ok) {
+    throw new Error(`engine_fetch_failed_${res.status}`);
+  }
+
+  return res.json();
+}
+
+async function findMatchById(env, id) {
+  try {
+    const data = await fetchFromEngine(env, `/match?id=${encodeURIComponent(id)}`);
+    if (!data?.ok || !data?.match) return null;
+    return data.match;
   } catch (e) {
-    console.log("MATCH_INDEX lookup failed:", e);
+    console.log("ENGINE match lookup failed:", e?.message || e);
+    return null;
   }
-
-  // =====================================================
-  // FALLBACK — LEGACY KV SCAN (safety)
-  // =====================================================
-  const list = await env.AIML_INGESTION_KV.list({ prefix: "FIXTURES:" });
-
-  for (const key of list.keys) {
-    const bucket = await env.AIML_INGESTION_KV.get(key.name, "json");
-    if (!bucket || !bucket.matches) continue;
-
-    const match = bucket.matches.find(
-      m => String(m.id) === String(id)
-    );
-
-    if (match) return match;
-  }
-
-  return null;
 }
 
-async function getStandings(env, leagueSlug, home, away) {
-  const key = `STANDINGS:CURRENT:${leagueSlug}`;
-  const data = await env.AIML_INGESTION_KV.get(key, "json");
-  if (!data || !data.teams) return null;
-
-  return {
-    home: data.teams.find(t => t.team === home),
-    away: data.teams.find(t => t.team === away)
-  };
-}
-
-function getMonthFromKickoff(match){
-  if (match?.kickoff) {
-    const d = new Date(match.kickoff);
+function getMonthFromKickoff(match) {
+  if (match?.kickoffUtc) {
+    const d = new Date(match.kickoffUtc);
     if (!isNaN(d.getTime())) {
-      return d.toISOString().slice(0,7);
+      return d.toISOString().slice(0, 7);
     }
   }
-  return new Date().toISOString().slice(0,7);
+
+  return new Date().toISOString().slice(0, 7);
 }
 
-async function persistToR2(env, match, aiProfile){
-
+async function persistToR2(env, match, aiProfile) {
   if (!env.R2_INTEL) return;
 
   const month = getMonthFromKickoff(match);
 
   const fileName =
-    match.status === "STATUS_FINAL"
+    match.status === "FT" || match.rawStatus === "STATUS_FINAL"
       ? "final.json"
       : "pre.json";
 
   const key =
-    `ai/context/${month}/${match.leagueSlug}/${match.id}/${fileName}`;
+    `ai/context/${month}/${match.leagueSlug}/${match.matchId}/${fileName}`;
 
-  try{
+  try {
     await env.R2_INTEL.put(
       key,
       JSON.stringify(aiProfile),
       { httpMetadata: { contentType: "application/json" } }
     );
-  }catch(e){
+  } catch (e) {
     console.error("R2 WRITE FAILED:", e);
   }
 }
 
-export async function handleDetails(req, env) {
-
-  const url = new URL(req.url);
-  const id = url.searchParams.get("id");
-  const debug = url.searchParams.get("debug") === "1";
-  const refresh = url.searchParams.get("refresh") === "1";
-  const check = url.searchParams.get("check") === "1";
-
-  if (!id) return json({ ok:false, error:"missing_id" }, 400);
-
-  const match = await findMatchById(env, id);
-  if (!match) return json({ ok:false, error:"match_not_found" }, 404);
-// =====================================================
-// ALWAYS USE INTEL CACHE IF EXISTS (DEBUG SAFE)
-// =====================================================
-const cachedIntel = await readIntelCache(env, match.id);
-
-if (cachedIntel) {
-  return json({
-    ok: true,
-    basic: match,
-    fullAiProfile: cachedIntel,
-    cache: "HIT_INTEL",
-    meta: {
-      generatedAt: cachedIntel.generatedAt,
-      source: "intel-cache"
-    },
-    debug: !!debug
-  });
-}
-  const standings = await getStandings(
-    env,
-    match.leagueSlug,
-    match.home,
-    match.away
-  );
-
-  const input = {
-    id: match.id,
+function mapMatchForAi(match) {
+  return {
+    id: match.matchId,
     league: match.leagueSlug,
     season: "auto",
-    home: match.home,
-    away: match.away,
-    status: match.status,
+    home: match.homeTeam,
+    away: match.awayTeam,
+    status: match.rawStatus || match.status,
     minute: match.minute || null,
     scoreHome: match.scoreHome,
     scoreAway: match.scoreAway,
-    standings,
+    standings: null,
     live: match.liveStats || null
   };
+}
 
-  // try AI memory first
+export async function handleDetails(req, env) {
+  const url = new URL(req.url);
+  const id = url.searchParams.get("id");
+  const debug = url.searchParams.get("debug") === "1";
+
+  if (!id) {
+    return json({ ok: false, error: "missing_id" }, 400);
+  }
+
+  const match = await findMatchById(env, id);
+
+  if (!match) {
+    return json({ ok: false, error: "match_not_found" }, 404);
+  }
+
+  const cachedIntel = await readIntelCache(env, match.matchId);
+
+  if (cachedIntel) {
+    return json({
+      ok: true,
+      basic: match,
+      fullAiProfile: cachedIntel,
+      cache: "HIT_INTEL",
+      meta: {
+        generatedAt: cachedIntel.generatedAt || null,
+        source: "intel-cache",
+        version: VERSION
+      },
+      debug: !!debug
+    });
+  }
+
+  const input = mapMatchForAi(match);
   const aiProfile = await runAiEngine(input, env);
 
-  // 🔵 NEW — ALWAYS PERSIST (refresh or check or normal call)
-  if (refresh || check || true) {
-    await persistToR2(env, match, aiProfile);
-  }
+  await persistToR2(env, match, aiProfile);
 
   if (!debug) {
     return json({
-      ok:true,
-      matchId: match.id,
+      ok: true,
+      matchId: match.matchId,
       ...aiProfile
     });
   }
 
   return json({
     ok: true,
-    matchId: match.id,
+    matchId: match.matchId,
+    basic: match,
     fullAiProfile: aiProfile,
-    cache: aiProfile.cache,
-    meta: aiProfile.meta
+    meta: aiProfile.meta || null,
+    version: VERSION
   });
 }
 
 export async function handleEvaluation(req, env) {
-
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ ok:false, error:"method_not_allowed" }), { status:405 });
+    return new Response(
+      JSON.stringify({ ok: false, error: "method_not_allowed" }),
+      { status: 405 }
+    );
   }
 
   const body = await req.json();
-
   const { aiProfile, finalScoreHome, finalScoreAway } = body;
 
   if (!aiProfile || finalScoreHome == null || finalScoreAway == null) {
-    return new Response(JSON.stringify({ ok:false, error:"missing_data" }), { status:400 });
+    return new Response(
+      JSON.stringify({ ok: false, error: "missing_data" }),
+      { status: 400 }
+    );
   }
 
   const evaluation = evaluateMatch(aiProfile, finalScoreHome, finalScoreAway);
 
-  return new Response(JSON.stringify({
-    ok:true,
-    evaluation
-  }, null, 2), {
-    headers:{ "content-type":"application/json" }
-  });
+  return new Response(
+    JSON.stringify({ ok: true, evaluation }, null, 2),
+    { headers: { "content-type": "application/json" } }
+  );
 }

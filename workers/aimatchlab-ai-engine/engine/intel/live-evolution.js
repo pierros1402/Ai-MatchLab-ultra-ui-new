@@ -1,85 +1,118 @@
 // ============================================================
-// LIVE EVOLUTION LAYER v1.0
-// Mutates PRE intel using LIVE match state
+// LIVE EVOLUTION LAYER v2.0
+// - Non-destructive overlay
+// - Structured signals
+// - Stable phase handling
 // ============================================================
 
 function isLive(status) {
   const s = String(status || "").toUpperCase();
+
   return (
     s.includes("IN_PROGRESS") ||
     s.includes("LIVE") ||
-    s.includes("HALF")
+    s.includes("FIRST_HALF") ||
+    s.includes("SECOND_HALF")
   );
 }
 
-function goalDiff(meta) {
-  if (
-    meta?.basic?.scoreHome == null ||
-    meta?.basic?.scoreAway == null
-  ) return 0;
+function goalDiff(intel) {
+  const h = Number(intel?.basic?.scoreHome);
+  const a = Number(intel?.basic?.scoreAway);
 
-  return meta.basic.scoreHome - meta.basic.scoreAway;
+  if (!Number.isFinite(h) || !Number.isFinite(a)) return 0;
+
+  return h - a;
+}
+
+function ensureArray(v) {
+  return Array.isArray(v) ? v : [];
+}
+
+function pushSignal(list, signal) {
+  const exists = list.find(
+    s =>
+      s.type === signal.type &&
+      s.minute === signal.minute &&
+      s.phase === signal.phase
+  );
+
+  if (!exists) {
+    list.push(signal);
+  }
 }
 
 export function applyLiveEvolution(intel) {
-
   if (!intel?.basic) return intel;
 
   const status = intel.basic?.status;
 
   if (!isLive(status)) return intel;
 
-const evolved = structuredClone(intel);
+  const evolved = structuredClone(intel);
 
-const minute = Number(intel.basic?.minute ?? 0);
+  const minute = Number(intel.basic?.minute ?? 0);
+  const phase = "LIVE";
 
-// =====================================
-// LIVE BOOTSTRAP SAFEGUARD
-// =====================================
-if (minute <= 5) {
-  evolved.signals = evolved.signals || [];
-  evolved.signals.push("LIVE_BOOTSTRAP");
+  evolved.meta = evolved.meta || {};
+  evolved.context = evolved.context || {};
+  evolved.signals = ensureArray(evolved.signals);
 
-  evolved.meta.phase = "LIVE";
+  const diff = goalDiff(intel);
 
-  return evolved;
-}
+  // ------------------------------------------------------------
+  // LIVE BOOTSTRAP
+  // ------------------------------------------------------------
+  if (minute <= 5) {
+    pushSignal(evolved.signals, {
+      type: "LIVE_BOOTSTRAP",
+      severity: "LOW",
+      minute,
+      phase,
+      ts: Date.now()
+    });
 
-const diff = goalDiff(intel);
+    evolved.meta.phase = phase;
+    return evolved;
+  }
 
-  // --------------------------------------------------
-  // TEMPO SHIFT
-  // --------------------------------------------------
+  // ------------------------------------------------------------
+  // MOMENTUM OVERLAY (NOT REPLACE)
+  // ------------------------------------------------------------
   if (minute > 70) {
-    evolved.context.momentum = "HIGH";
+    evolved.context.liveMomentum = "HIGH";
   }
 
-  // --------------------------------------------------
-  // CONTROL MODEL
-  // --------------------------------------------------
+  // ------------------------------------------------------------
+  // CONTROL OVERLAY
+  // ------------------------------------------------------------
   if (diff > 0) {
-    evolved.context.control = "HOME_MANAGING";
+    evolved.context.liveControl = "HOME_MANAGING";
   } else if (diff < 0) {
-    evolved.context.control = "AWAY_MANAGING";
+    evolved.context.liveControl = "AWAY_MANAGING";
   } else {
-    evolved.context.control = "OPEN_GAME";
+    evolved.context.liveControl = "OPEN_GAME";
   }
 
-  // --------------------------------------------------
-  // VOLATILITY SPIKE
-  // --------------------------------------------------
+  // ------------------------------------------------------------
+  // VOLATILITY OVERLAY
+  // ------------------------------------------------------------
   if (minute > 80 && Math.abs(diff) <= 1) {
-    evolved.context.volatility = "HIGH";
+    evolved.context.liveVolatility = "HIGH";
   }
 
-  // --------------------------------------------------
-  // SIGNALS
-  // --------------------------------------------------
-  evolved.signals = evolved.signals || [];
+  // ------------------------------------------------------------
+  // SIGNAL
+  // ------------------------------------------------------------
+  pushSignal(evolved.signals, {
+    type: "LIVE_EVOLUTION_APPLIED",
+    severity: "LOW",
+    minute,
+    phase,
+    ts: Date.now()
+  });
 
-  evolved.signals.push("LIVE_EVOLUTION_APPLIED");
-
-  evolved.meta.phase = "LIVE";
+  evolved.meta.phase = phase;
 
   return evolved;
 }

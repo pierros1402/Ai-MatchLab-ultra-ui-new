@@ -1,24 +1,36 @@
 // ============================================================
 // SIGNAL STORE + COOLDOWN (KV) + PERSISTENCE (R2)
+// v2.1 – dedupe + stable signal identity
 // ============================================================
 
 function parseMinute(m) {
   if (m == null) return 0;
   if (typeof m === "number") return m;
+
   const s = String(m);
   const n = parseInt(s.replace("'", ""), 10);
+
   return Number.isFinite(n) ? n : 0;
 }
 
 function cooldownSecondsFor(signalType) {
-  // Goal events: allow frequent but still prevent spam bursts
-  if (signalType === "GOAL_EVENT") return 120; // 2 min
-  if (signalType === "VOLATILITY_SPIKE") return 600; // 10 min
-  if (signalType === "MOMENTUM_SHIFT") return 600; // 10 min
-  if (signalType === "CONTROL_CHANGE") return 600; // 10 min
+  if (signalType === "GOAL_EVENT") return 120;
+  if (signalType === "VOLATILITY_SPIKE") return 600;
+  if (signalType === "MOMENTUM_SHIFT") return 600;
+  if (signalType === "CONTROL_CHANGE") return 600;
   return 600;
 }
 
+// ------------------------------------------------------------
+// SIGNAL IDENTITY
+// ------------------------------------------------------------
+function buildSignalKey(matchId, type, minute, phase) {
+  return `${matchId}:${type}:${minute}:${phase}`;
+}
+
+// ------------------------------------------------------------
+// MAIN
+// ------------------------------------------------------------
 export async function filterAndPersistSignals(env, matchId, intel, signals) {
   if (!signals?.length) return [];
 
@@ -27,22 +39,34 @@ export async function filterAndPersistSignals(env, matchId, intel, signals) {
   const phase = intel?.meta?.phase || "UNKNOWN";
 
   const emitted = [];
+  const seen = new Set(); // dedupe μέσα στο ίδιο run
 
   for (const s of signals) {
     const type = s?.type || "UNKNOWN";
+    const severity = s?.severity || "MEDIUM";
+
+    const sigKey = buildSignalKey(matchId, type, minute, phase);
+
+    // ------------------------------------------------------------
+    // IN-RUN DEDUPE
+    // ------------------------------------------------------------
+    if (seen.has(sigKey)) continue;
+    seen.add(sigKey);
+
     const cooldown = cooldownSecondsFor(type);
 
     // KV cooldown key (ephemeral)
-    const cdKey = `INTEL:SIGNAL:${matchId}:${type}`;
+    const cdKey = `INTEL:SIGNAL:${sigKey}`;
 
     let already = null;
+
     try {
       already = await env.AIML_INGESTION_KV.get(cdKey);
     } catch (_) {}
 
     if (already) continue;
 
-    // acquire cooldown "lock"
+    // acquire cooldown lock
     try {
       await env.AIML_INGESTION_KV.put(
         cdKey,
@@ -50,42 +74,59 @@ export async function filterAndPersistSignals(env, matchId, intel, signals) {
         { expirationTtl: cooldown }
       );
     } catch (_) {
-      // If KV fails, still allow emitting (better to show signals than go silent)
+      // fail-open (important)
     }
 
     emitted.push({
       type,
-      severity: s?.severity || "MEDIUM",
+      severity,
       minute,
       phase,
       ts: now
     });
   }
 
-  // Persist emitted signals to R2 as bounded log
+  // ------------------------------------------------------------
+  // R2 PERSISTENCE (bounded log)
+  // ------------------------------------------------------------
   if (emitted.length) {
     const logKey = `intel/context/${matchId}/signal-log.json`;
 
     try {
       const existingObj = await env.AI_STATE.get(logKey);
+
       let log = [];
 
       if (existingObj) {
-        const txt = await existingObj.text();
-        log = JSON.parse(txt);
-        if (!Array.isArray(log)) log = [];
+        try {
+          const txt = await existingObj.text();
+          log = JSON.parse(txt);
+          if (!Array.isArray(log)) log = [];
+        } catch {
+          log = [];
+        }
       }
 
-      // append + cap
+      // append
       log.push(...emitted);
-      if (log.length > 200) log = log.slice(log.length - 200);
+
+      // cap
+      if (log.length > 200) {
+        log = log.slice(log.length - 200);
+      }
 
       await env.AI_STATE.put(
         logKey,
         JSON.stringify(log),
-        { httpMetadata: { contentType: "application/json" } }
+        {
+          httpMetadata: {
+            contentType: "application/json"
+          }
+        }
       );
-    } catch (_) {}
+    } catch (e) {
+      console.log("[SIGNAL STORE WRITE FAIL]", e);
+    }
   }
 
   return emitted;

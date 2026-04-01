@@ -1,33 +1,49 @@
 // ============================================================
-// TEAM CONTEXT ENGINE – Deterministic v2.0
+// TEAM CONTEXT ENGINE – Deterministic v2.1
 // - Momentum
 // - Volatility
 // - Consistency
 // - Clean Sheet / Fail To Score
 // ============================================================
 
+function isFinalStatus(status) {
+  const s = String(status || "").toUpperCase();
+
+  return (
+    s.includes("FINAL") ||
+    s.includes("FULL_TIME") ||
+    s.includes("FT") ||
+    s.includes("AET") ||
+    s.includes("PEN") ||
+    s.includes("STATUS_FINAL") ||
+    s.includes("COMPLETE")
+  );
+}
+
+function safeKeyPart(value) {
+  return encodeURIComponent(String(value || "").trim());
+}
+
 export async function buildTeamContext(env, league, season, team) {
-// ------------------------------------------------------------
-// TEAM CONTEXT CACHE
-// ------------------------------------------------------------
-const cacheKey =
-  `team-context/${league}/${season}/${team}.json`;
+  // ------------------------------------------------------------
+  // TEAM CONTEXT CACHE
+  // ------------------------------------------------------------
+  const cacheKey =
+    `team-context/${safeKeyPart(league)}/${safeKeyPart(season)}/${safeKeyPart(team)}.json`;
 
-try {
+  try {
+    const cached = await env.AI_STATE.get(cacheKey);
 
-  const cached = await env.AI_STATE.get(cacheKey);
+    if (cached) {
+      const data = JSON.parse(await cached.text());
 
-  if (cached) {
-    const data = JSON.parse(await cached.text());
-
-    // cache valid for 6 hours
-    if (Date.now() - (data.generatedAt || 0) < 21600000) {
-      return data;
+      // cache valid for 6 hours
+      if (Date.now() - (data.generatedAt || 0) < 21600000) {
+        return data;
+      }
     }
+  } catch (_) {}
 
-  }
-
-} catch (_) {}
   const prefix = `league/${league}/${season}/matches/`;
 
   let cursor = undefined;
@@ -45,20 +61,16 @@ try {
 
       let match;
       try {
-        const text = await raw.text();
-        match = JSON.parse(text);
+        match = JSON.parse(await raw.text());
       } catch {
         continue;
       }
 
       if (!match) continue;
+
       const status = String(match.status || "").toUpperCase();
 
-      if (
-        !status.includes("FINAL") &&
-        !status.includes("FULL_TIME") &&
-        !status.includes("AET")
-      ) continue;
+      if (!isFinalStatus(status)) continue;
 
       if (match.home === team || match.away === team) {
         matches.push(match);
@@ -74,7 +86,14 @@ try {
   const total = matches.length;
 
   if (!total) {
-    return { ok: true, league, season, team, matches: 0 };
+    return {
+      ok: true,
+      league,
+      season,
+      team,
+      matches: 0,
+      generatedAt: Date.now()
+    };
   }
 
   let gf = 0;
@@ -114,10 +133,10 @@ try {
   // ------------------------------------------------------------
   // Momentum (last 5 weighted)
   // ------------------------------------------------------------
-
-  const last5 = matches.slice(-6);
+  const last5 = matches.slice(-5);
 
   let momentumScore = 0;
+  let maxMomentum = 0;
   let weight = 1.2;
 
   for (let i = last5.length - 1; i >= 0; i--) {
@@ -131,22 +150,27 @@ try {
     else if (scored === conceded) points = 1;
 
     momentumScore += points * weight;
+    maxMomentum += 3 * weight;
+
     weight += 0.8;
   }
 
-  const n = last5.length || 1;
-  const maxMomentum = 3 * n * (n + 1) / 2;
-  const momentumIndex = +(momentumScore / maxMomentum).toFixed(2);
+  const momentumIndex =
+    maxMomentum > 0
+      ? +(momentumScore / maxMomentum).toFixed(2)
+      : 0;
 
   // ------------------------------------------------------------
   // Volatility (goal variance)
   // ------------------------------------------------------------
-
-  const avgGoals = goalTotals.reduce((a, b) => a + b, 0) / total;
+  const avgGoals =
+    goalTotals.reduce((a, b) => a + b, 0) / total;
 
   const variance =
-    goalTotals.reduce((sum, val) => sum + Math.pow(val - avgGoals, 2), 0) /
-    (total > 1 ? total - 1 : 1);
+    goalTotals.reduce(
+      (sum, val) => sum + Math.pow(val - avgGoals, 2),
+      0
+    ) / (total > 1 ? total - 1 : 1);
 
   const volatilityIndex =
     +(Math.sqrt(variance) / 2.4).toFixed(2);
@@ -154,7 +178,6 @@ try {
   // ------------------------------------------------------------
   // Consistency (inverse volatility normalized)
   // ------------------------------------------------------------
-
   const consistencyScore =
     volatilityIndex === 0
       ? 1
@@ -163,7 +186,6 @@ try {
   // ------------------------------------------------------------
   // Form Trend
   // ------------------------------------------------------------
-
   const recentPoints = last5.reduce((sum, m) => {
     const isHome = m.home === team;
     const scored = isHome ? Number(m.scoreHome) : Number(m.scoreAway);
@@ -194,38 +216,37 @@ try {
   if (recentPoints < previousPoints) formTrend = "DECLINING";
 
   const result = {
-  ok: true,
-  league,
-  season,
-  team,
-  matches: total,
+    ok: true,
+    league,
+    season,
+    team,
+    matches: total,
 
-  goalsForRate: +(gf / total).toFixed(2),
-  goalsAgainstRate: +(ga / total).toFixed(2),
-  winRate: +(wins / total).toFixed(2),
-  drawRate: +(draws / total).toFixed(2),
-  lossRate: +(losses / total).toFixed(2),
-  over25Rate: +(over25 / total).toFixed(2),
-  bttsRate: +(btts / total).toFixed(2),
+    goalsForRate: +(gf / total).toFixed(2),
+    goalsAgainstRate: +(ga / total).toFixed(2),
+    winRate: +(wins / total).toFixed(2),
+    drawRate: +(draws / total).toFixed(2),
+    lossRate: +(losses / total).toFixed(2),
+    over25Rate: +(over25 / total).toFixed(2),
+    bttsRate: +(btts / total).toFixed(2),
 
-  cleanSheetRate: +(cleanSheets / total).toFixed(2),
-  failToScoreRate: +(failToScore / total).toFixed(2),
+    cleanSheetRate: +(cleanSheets / total).toFixed(2),
+    failToScoreRate: +(failToScore / total).toFixed(2),
 
-  momentumIndex,
-  volatilityIndex,
-  consistencyScore,
-  formTrend
-};
+    momentumIndex,
+    volatilityIndex,
+    consistencyScore,
+    formTrend,
+    generatedAt: Date.now()
+  };
 
-result.generatedAt = Date.now();
+  try {
+    await env.AI_STATE.put(
+      cacheKey,
+      JSON.stringify(result),
+      { httpMetadata: { contentType: "application/json" } }
+    );
+  } catch (_) {}
 
-try {
-  await env.AI_STATE.put(
-    cacheKey,
-    JSON.stringify(result),
-    { httpMetadata:{ contentType:"application/json" } }
-  );
-} catch (_) {}
-
-return result;
+  return result;
 }
