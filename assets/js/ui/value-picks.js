@@ -46,11 +46,12 @@
     root.querySelector(".value-head-wrap") ||
     null;
 
-  // Fallback: if listEl missing, render into panel-body (legacy)
+
+
+  // render content into the dedicated list container
   const bodyEl =
-    listEl ||
+    root.querySelector(".panel-body #value-picks-list") ||
     root.querySelector(".panel-body") ||
-    root.querySelector(".panel-content") ||
     root;
 
 
@@ -422,12 +423,14 @@ function renderRow(p) {
 
   function render(payload) {
     console.log("[value-picks] render:start", payload);
-    window.AIML_PANEL?.set(root, "loading", "Loading value picks...");
+  //window.AIML_PANEL?.set(root, "loading", "Loading value picks...");
     lastPayload = payload;
 
     const allPicks = Array.isArray(payload?.picks) ? payload.picks : [];
     const date = payload?.date || "";
     const total = typeof payload?.total === "number" ? payload.total : allPicks.length;
+
+    
 
     if (!allPicks.length) {
       if (headWrapEl) {
@@ -449,17 +452,16 @@ function renderRow(p) {
     const headerHtml = buildHeader(date, total, allPicks);
 
     const filtered = applyFilters(allPicks);
-    if (!filtered.length) {
-      if (headWrapEl) headWrapEl.innerHTML = headerHtml;
-      bodyEl.innerHTML = `<div class="panel-empty">No picks for selected filters.</div>`;
+if (!filtered.length) {
+  if (headWrapEl) headWrapEl.innerHTML = headerHtml;
+  bodyEl.innerHTML = `<div class="panel-empty">No picks for selected filters.</div>`;
 
-      window.AIML_PANEL?.set(root, "data");
-
-      hideAnalyzingIfHasPicks(total);
-      wireToolbar();
-      log("render", date, "picks=", filtered.length);
-      return;
-     } 
+  window.AIML_PANEL?.set(root, "data");
+  hideAnalyzingIfHasPicks(total);
+  wireToolbar();
+  log("render", date, "picks=", filtered.length);
+  return;
+} 
 
     // Group by market
     const groups = groupByMarket(filtered);
@@ -493,112 +495,21 @@ function renderRow(p) {
         ${sectionsHtml}
       </div>
     `;
-
+    if (bodyEl) {
+      bodyEl.style.minHeight = "200px";
+    }
     console.log("[value-picks] render:html-written", {
       total,
       filtered: filtered.length,
-      bodyEl,
+      bodyTag: bodyEl?.tagName,
+      bodyClass: bodyEl?.className || "",
+      bodyId: bodyEl?.id || "",
       htmlLength: bodyEl.innerHTML.length
     });
 
-    window.AIML_PANEL?.set(root, "data");
-
-    try {
-      root.removeAttribute("hidden");
-      root.style.display = "";
-      root.style.visibility = "visible";
-      root.style.opacity = "1";
-
-      if (headWrapEl) {
-        headWrapEl.removeAttribute("hidden");
-        headWrapEl.style.display = "block";
-        headWrapEl.style.visibility = "visible";
-        headWrapEl.style.opacity = "1";
-      }
-
-      const panelBody =
-        root.querySelector(".panel-body") ||
-        root.querySelector(".panel-content");
-
-      if (panelBody) {
-        panelBody.removeAttribute("hidden");
-        panelBody.style.display = "block";
-        panelBody.style.visibility = "visible";
-        panelBody.style.opacity = "1";
-        panelBody.style.minHeight = "200px";
-        panelBody.style.height = "auto";
-        panelBody.style.maxHeight = "none";
-        panelBody.style.overflowY = "auto";
-      }
-
-      if (bodyEl) {
-        bodyEl.removeAttribute("hidden");
-        bodyEl.style.display = "block";
-        bodyEl.style.visibility = "visible";
-        bodyEl.style.opacity = "1";
-        bodyEl.style.position = "relative";
-        bodyEl.style.minHeight = "200px";
-        bodyEl.style.height = "auto";
-        bodyEl.style.maxHeight = "none";
-        bodyEl.style.overflow = "visible";
-        bodyEl.style.background = "rgba(255,0,0,0.06)";
-        bodyEl.style.border = "1px solid rgba(255,0,0,0.35)";
-      }
-
-      const sections = bodyEl.querySelector(".value-sections");
-      if (sections) {
-        sections.style.display = "block";
-        sections.style.visibility = "visible";
-        sections.style.opacity = "1";
-        sections.style.minHeight = "200px";
-        sections.style.height = "auto";
-        sections.style.maxHeight = "none";
-        sections.style.overflow = "visible";
-      }
-
-      bodyEl.querySelectorAll(".value-section").forEach((el) => {
-        el.style.display = "block";
-        el.style.visibility = "visible";
-        el.style.opacity = "1";
-        el.style.minHeight = "40px";
-        el.style.height = "auto";
-        el.style.maxHeight = "none";
-        el.style.overflow = "visible";
-        el.style.marginBottom = "8px";
-      });
-
-      bodyEl.querySelectorAll(".value-list-inner").forEach((el) => {
-        el.style.display = "block";
-        el.style.visibility = "visible";
-        el.style.opacity = "1";
-        el.style.height = "auto";
-        el.style.maxHeight = "none";
-        el.style.overflow = "visible";
-      });
-
-      bodyEl.querySelectorAll(".value-row").forEach((el) => {
-        el.style.display = "block";
-        el.style.visibility = "visible";
-        el.style.opacity = "1";
-        el.style.minHeight = "56px";
-        el.style.height = "auto";
-        el.style.maxHeight = "none";
-        el.style.overflow = "visible";
-        el.style.margin = "6px 0";
-        el.style.padding = "10px";
-        el.style.border = "1px solid rgba(255,255,255,0.15)";
-      });
-
-      const ph = root.querySelector(".panel-placeholder");
-      if (ph) ph.style.display = "none";
-
-      console.log("[value-picks] visibility patch applied", {
-        sections: bodyEl.querySelectorAll(".value-section").length,
-        rows: bodyEl.querySelectorAll(".value-row").length
-      });
-    } catch (err) {
-      console.warn("[value-picks] visibility patch failed", err);
-    }
+    setTimeout(() => {
+      window.AIML_PANEL?.set(root, "data");
+    }, 0);
    }
   // --------------------------------------------------------------------------
   // EVENTS

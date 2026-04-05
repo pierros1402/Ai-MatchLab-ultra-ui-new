@@ -23,11 +23,11 @@
 
   const TZ = "Europe/Athens";
   const BASE =
-    (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
-      ? window.AIML_CONFIG.BASE_URL
-      : (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
-        ? window.AIML_LIVE_CFG.fixturesBase
-        : "";
+    (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
+      ? window.AIML_LIVE_CFG.fixturesBase
+      : (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
+        ? window.AIML_CONFIG.BASE_URL
+        : "http://localhost:3010";
 
 
   const ENDPOINT = (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valuePicksPath) || "/value-picks";
