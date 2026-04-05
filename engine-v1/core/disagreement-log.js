@@ -1,9 +1,9 @@
 import fs from "fs";
-import path from "path";
+import { getDataRoot, resolveDataPath } from "../storage/data-root.js";
 
-const localDataDir = path.resolve("data");
-const localDisagreementsPath = path.join(localDataDir, "disagreements.json");
-const localSignalsPath = path.join(localDataDir, "signals.json");
+const localDataDir = getDataRoot();
+const localDisagreementsPath = resolveDataPath("disagreements.json");
+const localSignalsPath = resolveDataPath("signals.json");
 
 // ============================================================
 // DB HELPERS

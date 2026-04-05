@@ -1,12 +1,12 @@
 import fs from "fs";
-import path from "path";
+import { getDataRoot, resolveDataPath } from "../storage/data-root.js";
 import { LEAGUE_SEEDS, leagueName } from "../config.js";
 import { fetchLeagueFixtures } from "../adapters/espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { athensDayKey } from "../core/daykey.js";
 
-const dataDir = path.resolve("data");
-const outPath = path.join(dataDir, "active-leagues.json");
+const dataDir = getDataRoot();
+const outPath = resolveDataPath("active-leagues.json");
 
 function ensureDir() {
   if (!fs.existsSync(dataDir)) {

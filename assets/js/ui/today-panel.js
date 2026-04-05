@@ -19,9 +19,9 @@
 (function () {
 
   const BASE =
-    (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
-      ? window.AIML_CONFIG.BASE_URL
-      : "https://aimatchlab-api.pierros1402.workers.dev";
+    (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
+      ? window.AIML_LIVE_CFG.fixturesBase
+      : "http://localhost:3010";
 
   const panel = document.querySelector("#panel-today .panel-body");
   if (!panel) return;
@@ -105,7 +105,7 @@
         const st = String(m.status || "").toUpperCase();
         const ko = Number(m.kickoff_ms || 0);
 
-        const isPre = st.includes("SCHEDULED");
+        const isPre = st === "PRE" || st.includes("SCHEDULED");
         const isLive = isLiveStatus(st);
 
         // hide scheduled matches that should have started already
@@ -249,8 +249,6 @@
 
         safeEmit("today-matches:loaded", { matches });
 
-        safeEmit("active-leagues:updated", { matches });
-
         LOADING = false;
         return;
       }
@@ -263,7 +261,26 @@
       if (!res.ok) throw new Error("fetch failed");
 
       const data = await res.json();
-      const matches = Array.isArray(data.matches) ? data.matches : [];
+      const raw = Array.isArray(data.matches) ? data.matches : [];
+
+      const matches = raw.map(m => ({
+        id: m.id ?? m.matchId,
+        home: m.home ?? m.homeTeam,
+        away: m.away ?? m.awayTeam,
+        leagueName: m.leagueName,
+        leagueSlug: m.leagueSlug,
+        status: m.status,
+        scoreHome: m.scoreHome,
+        scoreAway: m.scoreAway,
+        minute: m.minute,
+
+        kickoff_ms:
+          m.kickoff_ms != null
+            ? Number(m.kickoff_ms)
+            : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0),
+
+        __raw: m
+      }));
 
       window.AIML_FIXTURES_TODAY = { matches };
 
@@ -274,9 +291,7 @@
 // ----------------------------------
 // SYNC WITH LIVE SNAPSHOT
 // ----------------------------------
-      if (!window.__AIML_LAST_LIVE?.matches?.length) {
-      safeEmit("active-leagues:updated", { matches });
-    }
+ 
 
       const hasLive = matches.some(m => isLiveStatus(m.status));
 
@@ -326,5 +341,34 @@
   } catch {}
 
   load();
+
+// ----------------------------------
+// LIVE SYNC (CRITICAL)
+// ----------------------------------
+if (window.on) {
+  on("live:update", payload => {
+
+    if (!payload?.matches?.length) return;
+
+    // merge live into current list
+    const map = new Map(
+      LAST_MATCHES.map(m => [String(m.id), m])
+    );
+
+    for (const m of payload.matches) {
+      const id = String(m.id || m.matchId);
+      const existing = map.get(id);
+
+      if (!existing) continue;
+
+      existing.status = m.status;
+      existing.minute = m.minute;
+      existing.scoreHome = m.scoreHome;
+      existing.scoreAway = m.scoreAway;
+    }
+
+    render(Array.from(map.values()));
+  });
+}
 
 })();

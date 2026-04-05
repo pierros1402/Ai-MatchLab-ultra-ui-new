@@ -3,9 +3,9 @@
 // ============================================================
 
 import fs from "fs";
-import path from "path";
+import { resolveDataPath } from "../storage/data-root.js";
 
-const localPath = path.resolve("data/source2-fixtures.json");
+const localPath = resolveDataPath("source2-fixtures.json");
 
 export async function fetchLeagueFixturesSource2(slug, dayKey) {
 

@@ -1,7 +1,12 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "node:url";
 
-const dataDir = path.resolve("data");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ROOT PROJECT /data
+const dataDir = path.resolve(__dirname, "..", "..", "data");
 const dbPath = path.join(dataDir, "fixtures.json");
 
 function ensureDb() {

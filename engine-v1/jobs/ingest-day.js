@@ -48,14 +48,105 @@ export async function ingestDay(dayKey, env) {
     byLeague: {}
   };
 
+const ESPN_SUPPORTED = new Set([
+  // ENGLAND
+  "eng.1",
+  "eng.2",
+  "eng.3",
+  "eng.4",
+  "eng.5",
+  "eng.fa",
+  "eng.league_cup",
+  "eng.trophy",
+
+  // GERMANY
+  "ger.1",
+  "ger.2",
+  "ger.dfb_pokal",
+
+  // SPAIN
+  "esp.1",
+  "esp.2",
+  "esp.copa_del_rey",
+  "esp.super_cup",
+
+  // ITALY
+  "ita.1",
+  "ita.2",
+  "ita.coppa_italia",
+
+  // FRANCE
+  "fra.1",
+  "fra.2",
+  "fra.coupe_de_france",
+  "fra.super_cup",
+
+  // NETHERLANDS
+  "ned.1",
+  "ned.2",
+  "ned.cup",
+
+  // PORTUGAL / BELGIUM
+  "por.1",
+  "bel.1",
+
+  // SCOTLAND
+  "sco.1",
+  "sco.2",
+  "sco.challenge",
+  "sco.tennents",
+
+  // GREECE / CYPRUS / TURKEY / SWITZERLAND / AUSTRIA / DENMARK / SWEDEN / NORWAY
+  "gre.1",
+  "cyp.1",
+  "tur.1",
+  "sui.1",
+  "aut.1",
+  "den.1",
+  "swe.1",
+  "nor.1",
+
+  // UEFA
+  "uefa.champions",
+  "uefa.europa",
+  "uefa.europa.conf",
+
+  // AFC / CAF / CONMEBOL
+  "afc.champions",
+  "afc.cup",
+  "caf.champions",
+  "caf.confed",
+  "caf.nations",
+  "conmebol.libertadores",
+
+  // AMERICAS
+  "usa.1",
+  "arg.1",
+  "bra.1",
+  "mex.1",
+  "uru.1",
+  "col.1",
+  "chi.1",
+  "per.1",
+
+  // ASIA / AFRICA (μόνο όσα ήδη φαίνονται να δουλεύουν)
+  "jpn.1",
+  "ksa.1",
+  "rsa.1"
+]);
   for (const slug of LEAGUE_SEEDS) {
     results.leagues++;
 
-    const espnData = await fetchLeagueFixtures(slug, dayKey);
-    const source2Data = await fetchLeagueFixturesSource2(slug, dayKey);
+    let espnEvents = [];
+    let source2Events = [];
 
-    const espnEvents = Array.isArray(espnData?.events) ? espnData.events : [];
-    const source2Events = Array.isArray(source2Data?.events) ? source2Data.events : [];
+    if (ESPN_SUPPORTED.has(slug)) {
+      const espnData = await fetchLeagueFixtures(slug, dayKey);
+      espnEvents = Array.isArray(espnData?.events) ? espnData.events : [];
+    }
+
+    const source2Data = await fetchLeagueFixturesSource2(slug, dayKey);
+    source2Events = Array.isArray(source2Data?.events) ? source2Data.events : [];
 
     results.rawEventsEspn += espnEvents.length;
     results.rawEventsSource2 += source2Events.length;
@@ -64,7 +155,6 @@ export async function ingestDay(dayKey, env) {
     results.byLeague[slug] = emptyLeagueStats();
     results.byLeague[slug].rawEventsEspn = espnEvents.length;
     results.byLeague[slug].rawEventsSource2 = source2Events.length;
-
     // ------------------------------------------------------------
     // PROCESS BOTH SOURCES THROUGH SAME PIPELINE
     // ------------------------------------------------------------

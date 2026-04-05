@@ -1,7 +1,16 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { LEAGUE_SEEDS, LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
+
+import {
+  LEAGUE_SEEDS,
+  getLeagueTier,
+  getLeagueTrust,
+  isCupCompetition,
+  isContinentalCompetition
+} from "../../workers/_shared/leagues-coverage.js";
+
+import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -140,7 +149,6 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
 
   const athensDay = dayKeyTZ(kickoff, ATHENS_TZ);
 
-  // κρατάμε μόνο αγώνες που ανήκουν στη ζητούμενη Athens day
   if (athensDay !== targetDay) return null;
 
   const { home, away } = getHomeAway(ev);
@@ -184,6 +192,13 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
 
   if (!homeTeam || !awayTeam) return null;
 
+  const competitionType =
+    isCupCompetition(leagueSlug)
+      ? "cup"
+      : isContinentalCompetition(leagueSlug)
+        ? "continental"
+        : "league";
+
   return {
     id,
     season: SEASON,
@@ -200,7 +215,12 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
     minute,
     outcome,
     source: "espn",
-    rebuiltAt: new Date().toISOString()
+    rebuiltAt: new Date().toISOString(),
+
+    competitionType,
+    leagueTier: getLeagueTier(leagueSlug),
+    leagueTrust: getLeagueTrust(leagueSlug),
+    phase: "regular"
   };
 }
 
@@ -447,14 +467,12 @@ async function rebuildCurrentSeason() {
         const row = normalizeEvent(ev, slug, dayKey);
         if (!row) continue;
 
-        // dedupe πρώτα εντός μέρας
         if (daySeen.has(row.id)) {
           report.duplicatesDropped += 1;
           report.byDay[dayKey].duplicatesDropped += 1;
           continue;
         }
 
-        // dedupe global για ασφάλεια
         if (globalSeen.has(row.id)) {
           report.duplicatesDropped += 1;
           report.byDay[dayKey].duplicatesDropped += 1;

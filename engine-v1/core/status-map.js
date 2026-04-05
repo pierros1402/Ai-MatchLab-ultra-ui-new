@@ -1,6 +1,7 @@
 export function mapStatus(rawStatus = "") {
   const s = String(rawStatus).toUpperCase();
 
+  // PRE
   if (
     s.includes("STATUS_SCHEDULED") ||
     s.includes("SCHEDULED") ||
@@ -9,16 +10,40 @@ export function mapStatus(rawStatus = "") {
     return "PRE";
   }
 
+  // FIRST HALF
+  if (
+    s.includes("FIRST_HALF") ||
+    s.includes("1ST_HALF")
+  ) {
+    return "FIRST_HALF";
+  }
+
+  // SECOND HALF
+  if (
+    s.includes("SECOND_HALF") ||
+    s.includes("2ND_HALF")
+  ) {
+    return "SECOND_HALF";
+  }
+
+  // HALFTIME
+  if (
+    s.includes("HALFTIME") ||
+    s.includes("HALF_TIME")
+  ) {
+    return "HALF_TIME";
+  }
+
+  // GENERIC LIVE
   if (
     s.includes("STATUS_IN_PROGRESS") ||
     s.includes("IN_PROGRESS") ||
-    s.includes("HALFTIME") ||
-    s.includes("HALF_TIME") ||
     s.includes("DELAYED")
   ) {
     return "LIVE";
   }
 
+  // FINAL
   if (
     s.includes("STATUS_FULL_TIME") ||
     s.includes("FINAL") ||
@@ -30,6 +55,7 @@ export function mapStatus(rawStatus = "") {
     return "FT";
   }
 
+  // SPECIAL
   if (
     s.includes("POSTPONED") ||
     s.includes("CANCELLED") ||
@@ -43,7 +69,13 @@ export function mapStatus(rawStatus = "") {
 }
 
 export function isLive(rawStatus = "") {
-  return mapStatus(rawStatus) === "LIVE";
+  const s = mapStatus(rawStatus);
+  return (
+    s === "LIVE" ||
+    s === "FIRST_HALF" ||
+    s === "SECOND_HALF" ||
+    s === "HALF_TIME"
+  );
 }
 
 export function isFinal(rawStatus = "") {

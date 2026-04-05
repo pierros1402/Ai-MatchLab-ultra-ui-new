@@ -89,11 +89,19 @@ function safeNum(v, fallback = null) {
 }
 
 function parseMinute(v) {
-  if (v == null) return 0;
-  if (typeof v === "number") return v;
+  if (v == null) return null;
+  if (typeof v === "number") return { base: v, extra: 0 };
 
-  const m = String(v).match(/\d+/);
-  return m ? Number(m[0]) : 0;
+  const s = String(v).trim();
+  const m = s.match(/^(\d+)(?:\+(\d+))?/);
+  if (!m) return null;
+
+  const base = Number(m[1] || 0);
+  const extra = Number(m[2] || 0);
+
+  if (!Number.isFinite(base) || !Number.isFinite(extra)) return null;
+
+  return { base, extra };
 }
 
 function clamp01(n) {
@@ -224,12 +232,59 @@ function pickMinute(observations, existing, chosenStatus) {
     };
   }
 
+  function isSecondHalfStatus(status) {
+    const s = String(status || "").toUpperCase();
+    return (
+      s.includes("SECOND_HALF") ||
+      s.includes("SECOND") ||
+      s.includes("2ND")
+    );
+  }
+
+  function isHalfTimeStatus(status) {
+    const s = String(status || "").toUpperCase();
+    return (
+      s.includes("HALF_TIME") ||
+      s.includes("HALFTIME") ||
+      s === "HT"
+    );
+  }
+
+  function comparableMinute(parsed, status) {
+    if (!parsed) return null;
+
+    const second = isSecondHalfStatus(status);
+    const half = isHalfTimeStatus(status);
+
+    // SECOND HALF πρέπει να ξεκινά από 46 και πάνω
+    if (second) {
+      if (parsed.base >= 46) return parsed.base;
+      if (parsed.base === 45 && parsed.extra > 0) return 46;
+      return Math.max(46, parsed.base);
+    }
+
+    // HT: κρατάμε το 45 σαν όριο ημιχρόνου
+    if (half) {
+      return 45.999;
+    }
+
+    // FIRST HALF / generic live:
+    // 45+X να είναι λίγο πάνω από 45 αλλά κάτω από 46
+    return parsed.base + (parsed.extra / 1000);
+  }
+
   const ranked = observations
     .filter(x => isLive(x.status))
     .sort((a, b) => {
-      const am = parseMinute(a.minute);
-      const bm = parseMinute(b.minute);
-      if (bm !== am) return bm - am;
+      const aParsed = parseMinute(a.minute);
+      const bParsed = parseMinute(b.minute);
+
+      const aCmp = comparableMinute(aParsed, a.status);
+      const bCmp = comparableMinute(bParsed, b.status);
+
+      if (aCmp != null && bCmp != null && bCmp !== aCmp) {
+        return bCmp - aCmp;
+      }
 
       const pa = sourceProfile(a.source);
       const pb = sourceProfile(b.source);
@@ -242,16 +297,71 @@ function pickMinute(observations, existing, chosenStatus) {
     });
 
   const best = ranked[0];
-  const existingMinute = parseMinute(existing?.minute);
 
-  let value = best?.minute ?? existing?.minute ?? null;
-  let source = best?.source || null;
+  const bestParsed = parseMinute(best?.minute);
+  const existingParsed = parseMinute(existing?.minute);
 
-  const bestMinute = parseMinute(value);
+  const bestCmp = comparableMinute(bestParsed, best?.status);
+  const existingCmp = comparableMinute(existingParsed, existing?.status);
 
-  if (existingMinute > bestMinute) {
-    value = existing?.minute ?? null;
-    source = "existing";
+  let value = existing?.minute ?? null;
+  let source = existing?.source ?? null;
+
+  // αν δεν έχουμε καθόλου existing minute, πάρε το καλύτερο available
+  if (value == null || value === "") {
+    if (best?.minute != null && best?.minute !== "") {
+      return {
+        value: best.minute,
+        source: best.source || null
+      };
+    }
+
+    // fallback για SECOND_HALF χωρίς minute
+    if (isSecondHalfStatus(best?.status)) {
+      return {
+        value: "46",
+        source: best?.source || null
+      };
+    }
+
+    return { value, source };
+  }
+
+  // αν το best observation είναι καθαρά πιο μπροστά, προχώρα
+  if (
+    bestCmp != null &&
+    (existingCmp == null || bestCmp > existingCmp)
+  ) {
+    if (best?.minute != null && best?.minute !== "") {
+      return {
+        value: best.minute,
+        source: best.source || null
+      };
+    }
+
+    if (isSecondHalfStatus(best?.status)) {
+      return {
+        value: "46",
+        source: best?.source || null
+      };
+    }
+  }
+
+  // ειδικός κανόνας:
+  // αν existing είναι 45+X / HT και best λέει SECOND_HALF αλλά δεν έχει minute,
+  // τότε μην μένεις κολλημένος για πάντα -> πήγαινε στο 46
+  if (
+    isSecondHalfStatus(best?.status) &&
+    (
+      isHalfTimeStatus(existing?.status) ||
+      (existingParsed && existingParsed.base === 45)
+    ) &&
+    (!best?.minute || String(best.minute).trim() === "")
+  ) {
+    return {
+      value: "46",
+      source: best?.source || source
+    };
   }
 
   return { value, source };
@@ -418,6 +528,15 @@ export async function reconcileObservations({
     scoreAway: scorePick.scoreAway,
 
     venue: newest.venue || existing?.venue || null,
+
+    // ------------------------------------------------------------
+    // RUNTIME VISIBILITY
+    // today/active panels read ONLY staging rows
+    // finalized days are switched later by finalizeDayIfSafe()
+    // ------------------------------------------------------------
+    state: existing?.state === "final" ? "final" : "staging",
+    finalized: existing?.state === "final" ? 1 : 0,
+    updatedAt: Date.now(),
 
     sources: buildSourcesMap(rows),
 

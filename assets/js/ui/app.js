@@ -21,6 +21,7 @@
     window.__AIML_FETCH_PATCHED__ = true;
 
     const originalFetch = window.fetch;
+    window.__AIML_RAW_FETCH__ = originalFetch;
 
     async function fetchWithRetry(resource, options = {}, retries = 3) {
       const delay = 400;
@@ -279,9 +280,11 @@ async function __checkLeagueState() {
   }
 }
 
-// start after app ready (avoid early noise)
+// TEMP DISABLED AI LEAGUE WATCHER
+/*
 window.on("app:ready", function () {
-  __checkLeagueState();                 // immediate sync
-  setInterval(__checkLeagueState, 60000); // every 60s
+  __checkLeagueState();
+  setInterval(__checkLeagueState, 60000);
 });
+*/
 })();

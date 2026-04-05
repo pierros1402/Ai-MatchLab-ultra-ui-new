@@ -1,35 +1,55 @@
 import fs from "fs";
-import path from "path";
+import { resolveDataPath } from "./data-root.js";
 
-const dataDir = path.resolve("data");
-const logPath = path.join(dataDir, "skipped.json");
+const filePath = resolveDataPath("skipped.json");
 
 function ensureFile() {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  if (!fs.existsSync(logPath)) {
+  if (!fs.existsSync(filePath)) {
     fs.writeFileSync(
-      logPath,
+      filePath,
       JSON.stringify({ skipped: [] }, null, 2),
       "utf8"
     );
   }
 }
 
-function readLog() {
+export function readSkipped() {
   ensureFile();
-  return JSON.parse(fs.readFileSync(logPath, "utf8"));
+
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(raw || "{}");
+    return Array.isArray(parsed.skipped) ? parsed.skipped : [];
+  } catch {
+    return [];
+  }
 }
 
-function writeLog(data) {
+export function writeSkipped(skipped = []) {
   ensureFile();
-  fs.writeFileSync(logPath, JSON.stringify(data, null, 2), "utf8");
+
+  fs.writeFileSync(
+    filePath,
+    JSON.stringify(
+      {
+        skipped: Array.isArray(skipped) ? skipped : []
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
 }
 
-export function appendSkipped(entry) {
-  const db = readLog();
-  db.skipped.push(entry);
-  writeLog(db);
+export function appendSkipped(items = []) {
+  if (!Array.isArray(items) || !items.length) return 0;
+
+  const current = readSkipped();
+  current.push(...items);
+  writeSkipped(current);
+  return items.length;
+}
+
+export function getSkippedFilePath() {
+  return filePath;
 }

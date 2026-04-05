@@ -8,10 +8,23 @@ import { monitorActiveLeagues } from "./jobs/monitor-active-leagues.js";
 import { runDailyCycle } from "./jobs/run-daily-cycle.js";
 import { discoverWindow } from "./jobs/discover-window.js";
 import { buildFixturesRuntime } from "./api/fixtures-runtime.js";
-import { getFixtureById } from "./storage/json-db.js";
+import { getFixtureById, getActiveByDay } from "./storage/json-db.js";
+import { evaluateMatchValue } from "./core/value-engine-v1.js";
 
 const app = express();
 const PORT = 3010;
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+
+  next();
+});
 
 function intParam(value, fallback) {
   const n = Number(value);
@@ -22,6 +35,19 @@ function boolParam(value, fallback = false) {
   if (value === undefined || value === null || value === "") return fallback;
   const s = String(value).toLowerCase();
   return s === "1" || s === "true" || s === "yes";
+}
+
+function isPlayable(match) {
+  if (!match) return false;
+  if (!match.homeTeam || !match.awayTeam) return false;
+  if (!match.kickoffUtc) return false;
+
+  const s = String(match.status || "").toUpperCase();
+
+  if (s.includes("POSTPONED")) return false;
+  if (s.includes("CANCELLED")) return false;
+
+  return true;
 }
 
 app.get("/health", (_req, res) => {
@@ -40,6 +66,51 @@ app.get("/fixtures-runtime", (req, res) => {
     date: dayKey,
     count: rows.length,
     matches: rows
+  });
+});
+
+app.get("/value-picks", async (req, res) => {
+  const date = String(req.query.date || athensDayKey());
+  const matches = getActiveByDay(date);
+  const picks = [];
+
+  for (const match of matches) {
+    if (!isPlayable(match)) continue;
+
+    try {
+      const value = await evaluateMatchValue(match);
+      if (!value) continue;
+
+      picks.push({
+        matchId: match.matchId,
+        leagueSlug: match.leagueSlug,
+        homeTeam: match.homeTeam,
+        awayTeam: match.awayTeam,
+        kickoff: match.kickoffUtc,
+
+        homeWinScore: value.homeWinScore ?? null,
+        drawScore: value.drawScore ?? null,
+        awayWinScore: value.awayWinScore ?? null,
+
+        over25Score: value.over25Score ?? null,
+        bttsScore: value.bttsScore ?? null,
+
+        confidence: value.confidence ?? null,
+        signals: value.signals ?? [],
+        modifiers: value.modifiers ?? {},
+        context: value.context ?? {},
+        meta: value.meta ?? {}
+      });
+    } catch (err) {
+      console.warn("[value-picks] failed", match.matchId, err?.message || err);
+    }
+  }
+
+  res.json({
+    ok: true,
+    date,
+    count: picks.length,
+    picks
   });
 });
 
@@ -106,11 +177,13 @@ app.get("/monitor-active-leagues", async (req, res) => {
 
 app.get("/run-daily-cycle", async (req, res) => {
   const dayKey = String(req.query.date || athensDayKey());
-  const doFinalize = boolParam(req.query.finalize, false);
+  const doFinalize = boolParam(req.query.finalize, true);
+  const daysForward = intParam(req.query.daysForward, 2);
 
   const result = await runDailyCycle({
     dayKey,
-    doFinalize
+    doFinalize,
+    daysForward
   });
 
   res.json(result);

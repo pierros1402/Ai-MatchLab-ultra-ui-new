@@ -82,7 +82,18 @@
     const mount = getMount();
     if (!mount) return;
 
-    const matches = Array.isArray(payload?.matches) ? payload.matches : [];
+    const rawMatches = Array.isArray(payload?.matches) ? payload.matches : [];
+
+    const matches = rawMatches.map(m => ({
+      ...m,
+      id: m.id ?? m.matchId,
+      home: m.home ?? m.homeTeam,
+      away: m.away ?? m.awayTeam,
+      kickoff_ms:
+        m.kickoff_ms != null
+          ? Number(m.kickoff_ms)
+          : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0)
+    }));
 
     const sig = matches.map(m => m.id + ":" + m.status).join("|");
     if (sig === LAST_SIG) return;
@@ -250,16 +261,5 @@ if (window.on) {
   if (window.__AIML_LAST_ACTIVE) {
     render(window.__AIML_LAST_ACTIVE);
   }
-// ----------------------------------
-// INITIAL DATASET FROM TODAY PANEL
-// ----------------------------------
-if (window.AIML_FIXTURES_TODAY?.matches?.length) {
 
-  const payload = { matches: window.AIML_FIXTURES_TODAY.matches };
-
-  window.__AIML_LAST_ACTIVE = payload;
-
-  render(payload);
-
-}
 })();

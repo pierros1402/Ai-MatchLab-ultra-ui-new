@@ -1,97 +1,65 @@
 import fs from "fs";
-import path from "path";
+import { resolveDataPath } from "./data-root.js";
 
-const dataDir = path.resolve("data");
-const dbPath = path.join(dataDir, "observations.json");
+const filePath = resolveDataPath("observations.json");
 
-function ensureDb() {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  if (!fs.existsSync(dbPath)) {
+function ensureFile() {
+  if (!fs.existsSync(filePath)) {
     fs.writeFileSync(
-      dbPath,
+      filePath,
       JSON.stringify({ observations: [] }, null, 2),
       "utf8"
     );
   }
 }
 
-function readDb() {
-  ensureDb();
+export function readObservations() {
+  ensureFile();
 
-  const raw = fs.readFileSync(dbPath, "utf8");
-  const parsed = JSON.parse(raw);
-
-  if (!parsed.observations || !Array.isArray(parsed.observations)) {
-    return { observations: [] };
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(raw || "{}");
+    return Array.isArray(parsed.observations) ? parsed.observations : [];
+  } catch {
+    return [];
   }
-
-  return parsed;
 }
 
-function writeDb(data) {
-  ensureDb();
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), "utf8");
+export function writeObservations(observations = []) {
+  ensureFile();
+
+  fs.writeFileSync(
+    filePath,
+    JSON.stringify(
+      {
+        observations: Array.isArray(observations) ? observations : []
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
 }
 
-function safeNum(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+export function appendObservations(items = []) {
+  if (!Array.isArray(items) || !items.length) return 0;
+
+  const current = readObservations();
+  current.push(...items);
+  writeObservations(current);
+  return items.length;
 }
 
-function normStr(v) {
-  return typeof v === "string" ? v.trim() : "";
-}
-
-function buildSignature(row) {
-  return [
-    normStr(row?.matchId),
-    normStr(row?.source),
-    normStr(row?.status),
-    normStr(row?.minute),
-    safeNum(row?.scoreHome),
-    safeNum(row?.scoreAway),
-    normStr(row?.kickoffUtc)
-  ].join("|");
-}
-
-export function appendObservation(row) {
-  const db = readDb();
-
-  const observations = Array.isArray(db.observations)
-    ? db.observations
-    : [];
-
-  const sig = buildSignature(row);
-
-  // ------------------------------------------------------------
-  // DEDUPE: check latest observation per same source + match
-  // ------------------------------------------------------------
-  const lastSame = [...observations]
-    .reverse()
-    .find(
-      x =>
-        x.matchId === row.matchId &&
-        x.source === row.source
-    );
-
-  if (lastSame) {
-    const lastSig = buildSignature(lastSame);
-
-    if (lastSig === sig) {
-      return; // skip identical observation
-    }
-  }
-
-  observations.push(row);
-
-  db.observations = observations;
-  writeDb(db);
+export function appendObservation(item) {
+  if (!item) return 0;
+  return appendObservations([item]);
 }
 
 export function getObservationsByMatchId(matchId) {
-  const db = readDb();
-  return db.observations.filter(x => x.matchId === matchId);
+  if (!matchId) return [];
+  return readObservations().filter(x => String(x?.matchId || "") === String(matchId));
+}
+
+export function getObservationsFilePath() {
+  return filePath;
 }

@@ -1,12 +1,12 @@
 import fs from "fs";
-import path from "path";
+import { getDataRoot, resolveDataPath } from "../storage/data-root.js";
 import { ALL_LEAGUE_SEEDS } from "../config.js";
 import { fetchLeagueFixtures } from "../adapters/espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 
-const dataDir = path.resolve("data");
-const auditPath = path.join(dataDir, "audit-window.json");
+const dataDir = getDataRoot();
+const auditPath = resolveDataPath("audit-window.json");
 
 function ensureDir() {
   if (!fs.existsSync(dataDir)) {

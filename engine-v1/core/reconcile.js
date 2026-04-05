@@ -6,6 +6,7 @@ function buildSignature(row) {
   return [
     row.kickoffUtc ?? "",
     row.status ?? "",
+    row.minute ?? "",
     row.scoreHome ?? "",
     row.scoreAway ?? "",
     row.venue ?? ""

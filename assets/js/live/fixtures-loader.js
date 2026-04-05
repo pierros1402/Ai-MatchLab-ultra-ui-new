@@ -1,35 +1,21 @@
 /* ============================================================
-   js/live/fixtures-loader.js (STABLE v3.2 UNIFIED EVENTS)
-   - Unified event model
+   js/live/fixtures-loader.js (STABLE v3.3 UNIFIED EVENTS)
+   - Fixes:
+       * active panel now auto-refreshes
+       * live panel no longer regresses minutes easily
+       * live payload merged against previous live snapshot
+       * today / active / live snapshots kept in sync
    - Emits:
        "today-matches:loaded"
        "active-leagues:updated"
-       "live:update"              (UNIFIED)
-   - Stores debug payloads:
+       "live:update"
+   - Stores:
        window.__AIML_LAST_TODAY
        window.__AIML_LAST_ACTIVE
        window.__AIML_LAST_LIVE
 ============================================================ */
 
-// --------------------------------------------------
-// DEBUG SWITCH (set true only when debugging)
-// --------------------------------------------------
 const LIVE_DEBUG = false;
-
-// -------------------------------------
-// SIGNAL DEDUPE CACHE (in-memory)
-// -------------------------------------
-const __AIML_SIGNAL_CACHE = new Map();
-const __AIML_INTEL_FETCH_TS = new Map();
-
-const __AIML_INTEL_REQUESTS = new Map();
-const __AIML_INTEL_CACHE = new Map();
-
-const AIML_INTEL_CACHE_TTL = 60000;
-let __AIML_INTEL_CURSOR = 0;
-const AIML_INTEL_BATCH = 2;
-// key: matchId
-// value: lastSignalSignature
 
 function liveLog(...args)  { if (LIVE_DEBUG) console.log(...args); }
 function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
@@ -37,16 +23,18 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
 (function () {
   "use strict";
 
-  function nowTs() { return Date.now(); }
+  function nowTs() {
+    return Date.now();
+  }
 
   function getBaseUrl() {
-    if (window.AIML_CONFIG && typeof window.AIML_CONFIG.BASE_URL === "string") {
-      return window.AIML_CONFIG.BASE_URL.replace(/\/+$/, "");
-    }
-    if (window.AIML_LIVE_CFG && typeof window.AIML_LIVE_CFG.fixturesBase === "string") {
+    if (
+      window.AIML_LIVE_CFG &&
+      typeof window.AIML_LIVE_CFG.fixturesBase === "string"
+    ) {
       return window.AIML_LIVE_CFG.fixturesBase.replace(/\/+$/, "");
     }
-    return "https://aimatchlab-api.pierros1402.workers.dev";
+    return "http://localhost:3010";
   }
 
   async function fetchJson(url) {
@@ -58,21 +46,154 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     return await r.json();
   }
 
-  function safeArray(x) { return Array.isArray(x) ? x : []; }
-
-  function todayISO() {
-    const d = new Date();
-    return d.toISOString().slice(0, 10);
+  function safeArray(x) {
+    return Array.isArray(x) ? x : [];
   }
 
-  // wrap so external callers can’t break date
-  const loadTodaySafe  = (d) => loadToday(d || todayISO());
-  const loadActiveSafe = (d) => loadActive(d || todayISO());
-  const loadLiveSafe   = (d) => loadLive(d || todayISO());
+  function todayISO() {
+    try {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Athens",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(new Date());
 
-  // -----------------------------
-  // TODAY (SNAPSHOT)
-  // -----------------------------
+      const y = parts.find(p => p.type === "year")?.value;
+      const m = parts.find(p => p.type === "month")?.value;
+      const d = parts.find(p => p.type === "day")?.value;
+
+      return `${y}-${m}-${d}`;
+    } catch {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  function normalizeStatus(m) {
+    return String(
+      m?.status?.type?.name ??
+      m?.status?.type?.state ??
+      m?.status ??
+      ""
+    ).toUpperCase();
+  }
+
+  function isLiveStatus(m) {
+    const s = normalizeStatus(m);
+
+    return (
+      s.includes("LIVE") ||
+      s.includes("IN_PROGRESS") ||
+      s.includes("FIRST_HALF") ||
+      s.includes("SECOND_HALF") ||
+      s.includes("HALF_TIME") ||
+      s.includes("EXTRA_TIME") ||
+      s.includes("FIRST") ||
+      s.includes("SECOND") ||
+      s.includes("HALF") ||
+      s.includes("EXTRA") ||
+      s.includes("PROGRESS")
+    );
+  }
+
+  function parseMinute(raw) {
+    const s = String(raw || "").trim();
+    const m = s.match(/^(\d+)(?:\+(\d+))?/);
+    if (!m) return null;
+
+    const base = Number(m[1] || 0);
+    const extra = Number(m[2] || 0);
+
+    if (!Number.isFinite(base) || !Number.isFinite(extra)) return null;
+    return base + extra;
+  }
+
+  function matchKey(m) {
+    return String(
+      m?.id ??
+      m?.matchId ??
+      `${m?.home || m?.homeTeam || ""}|${m?.away || m?.awayTeam || ""}|${m?.kickoff_ms || 0}`
+    );
+  }
+
+  function mergeMatchStable(prev, next) {
+    if (!prev) return next;
+
+    const prevMinuteRaw = prev?.minute ?? prev?.status?.displayClock ?? "";
+    const nextMinuteRaw = next?.minute ?? next?.status?.displayClock ?? "";
+
+    const prevMinute = parseMinute(prevMinuteRaw);
+    const nextMinute = parseMinute(nextMinuteRaw);
+
+    const prevStatus = normalizeStatus(prev);
+    const nextStatus = normalizeStatus(next);
+
+    const prevIsLive = isLiveStatus(prev);
+    const nextIsLive = isLiveStatus(next);
+
+    const merged = { ...prev, ...next };
+
+    // protect against minute regression while still live
+    if (
+      prevIsLive &&
+      nextIsLive &&
+      prevMinute != null &&
+      nextMinute != null &&
+      nextMinute < prevMinute &&
+      !nextStatus.includes("HALF_TIME")
+    ) {
+      merged.minute = prev.minute;
+      if (prev.status?.displayClock && typeof merged.status === "object" && merged.status) {
+        merged.status = {
+          ...merged.status,
+          displayClock: prev.status.displayClock
+        };
+      }
+    }
+
+    // protect score if new payload is poorer/null
+    if (next.scoreHome == null && prev.scoreHome != null) {
+      merged.scoreHome = prev.scoreHome;
+    }
+    if (next.scoreAway == null && prev.scoreAway != null) {
+      merged.scoreAway = prev.scoreAway;
+    }
+
+    return merged;
+  }
+
+  function mergeStableMatches(prevMatches, nextMatches) {
+    const prevMap = new Map(
+      safeArray(prevMatches).map(m => [matchKey(m), m])
+    );
+
+    return safeArray(nextMatches).map(next => {
+      const key = matchKey(next);
+      const prev = prevMap.get(key);
+      return mergeMatchStable(prev, next);
+    });
+  }
+
+  function buildHash(matches) {
+    try {
+      return JSON.stringify(
+        safeArray(matches).map(m => ({
+          id: matchKey(m),
+          st: normalizeStatus(m),
+          min: m?.minute ?? m?.status?.displayClock ?? "",
+          sh: m?.scoreHome ?? null,
+          sa: m?.scoreAway ?? null
+        }))
+      );
+    } catch {
+      return String(Date.now());
+    }
+  }
+
+  const loadTodaySafe  = d => loadToday(d || todayISO());
+  const loadActiveSafe = d => loadActive(d || todayISO());
+  const loadLiveSafe   = d => loadLive(d || todayISO());
+
   async function loadToday(dateYmd) {
     const base = getBaseUrl();
 
@@ -80,294 +201,143 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
       `${base}/fixtures-runtime?mode=today&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}&nocache=${Math.random()}`;
 
     const data = await fetchJson(url);
-
     const matches = safeArray(data.matches);
+
+    const mergedMatches = mergeStableMatches(
+      window.__AIML_LAST_TODAY?.matches,
+      matches
+    );
 
     const payload = {
       date: data.date || dateYmd,
-      matches,
-      total: Number.isFinite(data.total) ? data.total : matches.length
+      matches: mergedMatches,
+      total: Number.isFinite(data.total) ? data.total : mergedMatches.length,
+      hash: buildHash(mergedMatches)
     };
 
     window.__AIML_LAST_TODAY = payload;
 
-    // UI panels listen with DOM events
     document.dispatchEvent(
       new CustomEvent("today-matches:loaded", { detail: payload })
     );
 
+    liveLog("[TODAY] loaded", payload.total);
     return payload;
   }
 
-  // -----------------------------
-  // ACTIVE (SNAPSHOT)
-  // -----------------------------
-  async function loadActive(dateYmd) {
+async function loadActive(dateYmd) {
+  const base = getBaseUrl();
+
+  const url =
+    `${base}/fixtures-runtime?mode=active&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}&nocache=${Math.random()}`;
+
+  const data = await fetchJson(url);
+  const matches = safeArray(data.matches);
+
+  const mergedMatches = mergeStableMatches(
+    window.__AIML_LAST_ACTIVE?.matches,
+    matches
+  );
+
+  const payload = {
+    date: data.date || dateYmd,
+    matches: mergedMatches,
+    total: Number.isFinite(data.total) ? data.total : mergedMatches.length,
+    hash: buildHash(mergedMatches)
+  };
+
+  window.__AIML_LAST_ACTIVE = payload;
+
+  document.dispatchEvent(
+    new CustomEvent("active-leagues:updated", { detail: payload })
+  );
+
+  liveLog("[ACTIVE] loaded", payload.total);
+  return payload;
+}
+
+async function loadLive(dateYmd) {
+  const ymd =
+    (typeof dateYmd === "string" && dateYmd.length >= 10)
+      ? dateYmd.slice(0, 10)
+      : todayISO();
+
+  if (!dateYmd) {
+    liveWarn("[LIVE] loadLive called with empty dateYmd -> using", ymd);
+  }
+
+  try {
     const base = getBaseUrl();
 
     const url =
-      `${base}/fixtures-runtime?mode=active&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}&nocache=${Math.random()}`;
+      `${base}/fixtures-runtime?mode=today&date=${encodeURIComponent(ymd)}&_t=${nowTs()}&nocache=${Math.random()}`;
 
     const data = await fetchJson(url);
-
     const matches = safeArray(data.matches);
 
+    const liveMatches = matches.filter(m => {
+      const s = String(
+        m?.status?.type?.name ||
+        m?.status?.type?.state ||
+        m?.status ||
+        ""
+      ).toUpperCase();
+
+      return (
+        s.includes("LIVE") ||
+        s.includes("IN_PROGRESS") ||
+        s.includes("FIRST_HALF") ||
+        s.includes("SECOND_HALF") ||
+        s.includes("HALF_TIME") ||
+        s.includes("EXTRA_TIME") ||
+        s.includes("FIRST") ||
+        s.includes("SECOND") ||
+        s.includes("HALF") ||
+        s.includes("EXTRA") ||
+        s.includes("PROGRESS")
+      );
+    });
+
+    const mergedLiveMatches = mergeStableMatches(
+      window.__AIML_LAST_LIVE?.matches,
+      liveMatches
+    );
+
     const payload = {
-      date: data.date || dateYmd,
-      matches,
-      total: Number.isFinite(data.total) ? data.total : matches.length
+      date: ymd,
+      matches: mergedLiveMatches,
+      total: mergedLiveMatches.length,
+      hash: buildHash(mergedLiveMatches)
     };
 
-    window.__AIML_LAST_ACTIVE = payload;
+    window.__AIML_LAST_LIVE = payload;
 
-    document.dispatchEvent(
-      new CustomEvent("active-leagues:updated", { detail: payload })
-    );
+    if (typeof window.emit === "function") {
+      window.emit("live:update", payload);
+    }
+
+    liveLog("[LIVE] today-derived snapshot", mergedLiveMatches.length);
+    return payload;
+
+  } catch (err) {
+    console.warn("[LIVE] today snapshot failed", err);
+
+    const payload = {
+      date: ymd,
+      matches: safeArray(window.__AIML_LAST_LIVE?.matches),
+      total: safeArray(window.__AIML_LAST_LIVE?.matches).length,
+      hash: buildHash(window.__AIML_LAST_LIVE?.matches || [])
+    };
+
+    window.__AIML_LAST_LIVE = payload;
+
+    if (typeof window.emit === "function") {
+      window.emit("live:update", payload);
+    }
 
     return payload;
   }
-
-async function fetchMatchIntelSafe(matchId) {
-
-  const id = String(matchId || "").trim();
-  if (!id) return null;
-
-  const now = Date.now();
-
-  const cached = __AIML_INTEL_CACHE.get(id);
-  if (cached && (now - cached.ts) < AIML_INTEL_CACHE_TTL) {
-    return cached.data;
-  }
-
-  if (__AIML_INTEL_REQUESTS.has(id)) {
-    return __AIML_INTEL_REQUESTS.get(id);
-  }
-
-  const p = fetch(
-    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(id)}`,
-    { cache: "no-store" }
-  )
-  .then(r => {
-    if (!r.ok) return null;
-    return r.json();
-  })
-  .then(data => {
-
-    if (!data) return null;
-
-    __AIML_INTEL_CACHE.set(id, {
-      ts: Date.now(),
-      data
-    });
-
-    return data;
-
-  })
-  .catch(e => {
-
-    if (e?.name === "AbortError") return null;
-    return null;
-
-  })
-  .finally(() => {
-
-    __AIML_INTEL_REQUESTS.delete(id);
-
-  });
-
-  __AIML_INTEL_REQUESTS.set(id, p);
-  return p;
 }
-
-  // -----------------------------
-  // LIVE (REALTIME + FALLBACK)
-  // -----------------------------
-  async function loadLive(dateYmd) {
-    // ✅ hard guarantee: never emit undefined date
-    const ymd =
-      (typeof dateYmd === "string" && dateYmd.length >= 10)
-        ? dateYmd.slice(0, 10)
-        : todayISO();
-
-    if (!dateYmd) liveWarn("[LIVE] loadLive called with empty dateYmd -> using", ymd);
-
-    // 1) REALTIME WORKER FIRST (no KV, edge cached)
-    try {
-      const liveRes = await fetch(
-        "https://aimatchlab-live-worker.pierros1402.workers.dev/live",
-        { cache: "no-store" }
-      );
-
-      if (liveRes.ok) {
-        const liveData = await liveRes.json();
-        const liveMatches = safeArray(liveData.matches);
-
-        if (liveMatches.length) {
-          const payload = { date: ymd, matches: liveMatches, total: liveMatches.length };
-
-          window.__AIML_LAST_LIVE = payload;
-
-          // Live panel listens via window.on/window.emit bus
-          if (typeof window.emit === "function") {
-            window.emit("live:update", payload);
-          }
-
-// -------------------------------------
-// INTEL SIGNAL FETCH
-// -------------------------------------
-if (liveMatches.length) {
-
-  const batch = liveMatches.slice(
-    __AIML_INTEL_CURSOR,
-    __AIML_INTEL_CURSOR + AIML_INTEL_BATCH
-  );
-
-  __AIML_INTEL_CURSOR += AIML_INTEL_BATCH;
-
-  if (__AIML_INTEL_CURSOR >= liveMatches.length) {
-    __AIML_INTEL_CURSOR = 0;
-  }
-
-  for (const m of batch) {
-
-    const last = __AIML_INTEL_FETCH_TS.get(m.id) || 0;
-    const now = Date.now();
-
-    if (now - last < 120000) continue;
-
-    __AIML_INTEL_FETCH_TS.set(m.id, now);
-
-    fetchMatchIntelSafe(m.id)
-      .then(data => {
-
-        if (!data || !data.signals || !data.signals.length) return;
-
-        const signature = JSON.stringify(data.signals);
-        const prev = __AIML_SIGNAL_CACHE.get(m.id);
-
-        if (prev !== signature) {
-
-          __AIML_SIGNAL_CACHE.set(m.id, signature);
-
-          window.dispatchEvent(
-            new CustomEvent("intel:signal", {
-              detail: {
-                matchId: m.id,
-                signals: data.signals
-              }
-            })
-          );
-
-        }
-
-      })
-      .catch(() => {});
-
-  }
-
-}
-liveLog("[LIVE] realtime source", liveMatches.length);
-return payload;
-          
-        }
-      }
-    } catch (err) {
-      liveWarn("[LIVE] realtime worker failed", err);
-    }
-
-    // 2) FALLBACK → SNAPSHOT (KV pipeline)
-    try {
-      const base = getBaseUrl();
-
-      const url =
-        `${base}/fixtures-runtime?mode=active&date=${encodeURIComponent(ymd)}&_t=${nowTs()}&nocache=${Math.random()}`;
-
-      const data = await fetchJson(url);
-      const matches = safeArray(data.matches);
-
-      // keep only live-ish statuses (schema-agnostic)
-      const liveMatches = matches.filter(m => {
-
-        const s =
-          String(
-            m?.status?.type?.name ||
-            m?.status ||
-            ""
-          ).toUpperCase();
-
-        return (
-          s.includes("LIVE") ||
-          s.includes("PROGRESS") ||
-          s.includes("FIRST") ||
-          s.includes("SECOND") ||
-          s.includes("HALF") ||
-          s.includes("EXTRA") 
-        );
-     });
-
-      const payload = { date: ymd, matches: liveMatches, total: liveMatches.length };
-
-      window.__AIML_LAST_LIVE = payload;
-
-      if (typeof window.emit === "function") {
-        window.emit("live:update", payload);
-      }
-// -------------------------------------
-// INTEL SIGNAL FETCH (LIGHTWEIGHT)
-// -------------------------------------
-try {
-
-  for (const m of liveMatches) {
-
-    fetchMatchIntelSafe(m.id)
-      .then(data => {
-
-        if (!data?.signals?.length) return;
-
-        const signature = JSON.stringify(data.signals);
-        const prev = __AIML_SIGNAL_CACHE.get(m.id);
-
-        if (prev !== signature) {
-
-          __AIML_SIGNAL_CACHE.set(m.id, signature);
-
-          window.dispatchEvent(
-            new CustomEvent("intel:signal", {
-              detail: {
-                matchId: m.id,
-                signals: data.signals
-              }
-            })
-          );
-
-        }
-
-      })
-      .catch(()=>{});
-  }
-
-} catch (_) {}
-      liveLog("[LIVE] fallback snapshot", liveMatches.length);
-      return payload;
-
-    } catch (err) {
-      // keep this as real warning (rare + important)
-      console.warn("[LIVE] snapshot fallback failed", err);
-
-      const payload = { date: ymd, matches: [], total: 0 };
-      window.__AIML_LAST_LIVE = payload;
-
-      if (typeof window.emit === "function") {
-        window.emit("live:update", payload);
-      }
-
-      return payload;
-    }
-  }
-
-  // -----------------------------
-  // PUBLIC API
-  // -----------------------------
   window.AIML_FixturesLoader = window.AIML_FixturesLoader || {};
   window.AIML_FixturesLoader.loadToday = loadTodaySafe;
   window.AIML_FixturesLoader.loadActive = loadActiveSafe;
@@ -377,21 +347,64 @@ try {
   window.loadActiveFixtures = loadActiveSafe;
   window.loadLiveFixtures = loadLiveSafe;
 
-  // --------------------------------------------------
-  // LIVE AUTO POLLER (required for live panel)
-  // --------------------------------------------------
+  (function startTodayLoop() {
+    async function tick() {
+      try {
+        await loadToday(todayISO());
+      } catch (e) {
+        console.warn("[today-loop]", e);
+      }
+    }
+
+    tick();
+    setInterval(tick, 60000);
+  })();
+
+  (function startActiveLoop() {
+    async function tick() {
+      try {
+        await loadActive(todayISO());
+      } catch (e) {
+        console.warn("[active-loop]", e);
+      }
+    }
+
+    tick();
+    setInterval(tick, 15000);
+  })();
+
   (function startLiveLoop() {
     async function tick() {
       try {
         await loadLive(todayISO());
       } catch (e) {
-        // rare + important
         console.warn("[live-loop]", e);
       }
     }
 
     tick();
     setInterval(tick, 15000);
+  })();
+
+  (function startDayWatcher() {
+    let currentDay = todayISO();
+
+    setInterval(async () => {
+      const nowDay = todayISO();
+
+      if (nowDay !== currentDay) {
+        console.log("[DAY CHANGE]", currentDay, "→", nowDay);
+        currentDay = nowDay;
+
+        try {
+          await loadToday(nowDay);
+          await loadActive(nowDay);
+          await loadLive(nowDay);
+        } catch (e) {
+          console.warn("[DAY CHANGE] reload failed", e);
+        }
+      }
+    }, 30000);
   })();
 
 })();

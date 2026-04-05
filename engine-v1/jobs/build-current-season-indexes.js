@@ -5,14 +5,22 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SEASON = "2025-2026";
+// ------------------------------
+// CANONICAL LOCAL ENGINE DATA ROOT
+// ------------------------------
+const DATA_ROOT = path.resolve(__dirname, "..", "..", "data");
 
-const HISTORY_FILE = path.resolve(__dirname, "../../data/history/2025-2026.json");
-const OUT_DIR = path.resolve(__dirname, "../../data/history-index");
+// ------------------------------
+// SEASON FROM CLI
+// ------------------------------
+const SEASON = process.argv[2] || "2025-2026";
 
-const TEAM_OUT = path.join(OUT_DIR, "team-form", SEASON + ".json");
-const LEAGUE_OUT = path.join(OUT_DIR, "league-form", SEASON + ".json");
-const MATCHUP_OUT = path.join(OUT_DIR, "matchups", SEASON + ".json");
+const HISTORY_FILE = path.join(DATA_ROOT, "history", `${SEASON}.json`);
+const OUT_DIR = path.join(DATA_ROOT, "history-index");
+
+const TEAM_OUT = path.join(OUT_DIR, "team-form", `${SEASON}.json`);
+const LEAGUE_OUT = path.join(OUT_DIR, "league-form", `${SEASON}.json`);
+const MATCHUP_OUT = path.join(OUT_DIR, "matchups", `${SEASON}.json`);
 
 function safeNum(v, d = 0) {
   const n = Number(v);
@@ -113,26 +121,16 @@ function buildTeamIndex(allMatches) {
   for (const [team, matches] of Object.entries(teams)) {
     matches.sort(sortByKickoff);
 
-    const homeMatches = matches.filter(function (m) {
-      return m.isHome;
-    });
-
-    const awayMatches = matches.filter(function (m) {
-      return !m.isHome;
-    });
-
-    const last5 = lastN(matches, 5);
-    const last10 = lastN(matches, 10);
-    const homeLast5 = lastN(homeMatches, 5);
-    const awayLast5 = lastN(awayMatches, 5);
+    const homeMatches = matches.filter(m => m.isHome);
+    const awayMatches = matches.filter(m => !m.isHome);
 
     result[team] = {
       team,
       total: computeStats(matches),
-      last5: computeStats(last5),
-      last10: computeStats(last10),
-      homeLast5: computeStats(homeLast5),
-      awayLast5: computeStats(awayLast5),
+      last5: computeStats(lastN(matches, 5)),
+      last10: computeStats(lastN(matches, 10)),
+      homeLast5: computeStats(lastN(homeMatches, 5)),
+      awayLast5: computeStats(lastN(awayMatches, 5)),
       matches
     };
   }
@@ -151,33 +149,29 @@ function buildLeagueIndex(allMatches) {
         matches: []
       };
     }
-
     leagues[m.leagueSlug].matches.push(m);
   }
 
   const result = {};
 
   for (const [slug, data] of Object.entries(leagues)) {
-    const matches = data.matches;
-
     let totalGoals = 0;
     let draws = 0;
     let btts = 0;
     let over25 = 0;
 
-    for (const m of matches) {
-      const scoreHome = safeNum(m.scoreHome);
-      const scoreAway = safeNum(m.scoreAway);
-      const goals = scoreHome + scoreAway;
+    for (const m of data.matches) {
+      const h = safeNum(m.scoreHome);
+      const a = safeNum(m.scoreAway);
+      const goals = h + a;
 
       totalGoals += goals;
-
-      if (scoreHome === scoreAway) draws += 1;
-      if (scoreHome > 0 && scoreAway > 0) btts += 1;
-      if (goals > 2.5) over25 += 1;
+      if (h === a) draws++;
+      if (h > 0 && a > 0) btts++;
+      if (goals > 2.5) over25++;
     }
 
-    const count = matches.length;
+    const count = data.matches.length;
 
     result[slug] = {
       leagueSlug: slug,
@@ -196,12 +190,12 @@ function buildLeagueIndex(allMatches) {
 function buildMatchupIndex(allMatches) {
   const map = {};
 
-  function matchupKey(a, b) {
-    return [String(a || ""), String(b || "")].sort().join("::");
+  function key(a, b) {
+    return [String(a), String(b)].sort().join("::");
   }
 
   for (const m of allMatches) {
-    const k = matchupKey(m.homeTeam, m.awayTeam);
+    const k = key(m.homeTeam, m.awayTeam);
 
     if (!map[k]) {
       map[k] = {
@@ -216,8 +210,8 @@ function buildMatchupIndex(allMatches) {
   const result = {};
 
   for (const [k, data] of Object.entries(map)) {
-    const matches = data.matches.slice().sort(sortByKickoff);
-    const last = matches.length ? matches[matches.length - 1] : null;
+    const matches = data.matches.sort(sortByKickoff);
+    const last = matches[matches.length - 1] || null;
 
     result[k] = {
       teams: data.teams,
@@ -231,28 +225,24 @@ function buildMatchupIndex(allMatches) {
 }
 
 async function run() {
-  console.log("[index] loading history...");
+  console.log("[index] season:", SEASON);
+  console.log("[index] history file:", HISTORY_FILE);
 
   const raw = await fs.readFile(HISTORY_FILE, "utf8");
   const history = JSON.parse(raw);
 
   const allMatches = [];
 
-  for (const bucket of Object.values(history.days || {})) {
-    for (const m of (bucket.matches || [])) {
+  for (const day of history.days || []) {
+    for (const m of (day.rows || day.matches || [])) {
       allMatches.push(m);
     }
   }
 
   console.log("[index] total matches:", allMatches.length);
 
-  console.log("[index] building team index...");
   const teamIndex = buildTeamIndex(allMatches);
-
-  console.log("[index] building league index...");
   const leagueIndex = buildLeagueIndex(allMatches);
-
-  console.log("[index] building matchup index...");
   const matchupIndex = buildMatchupIndex(allMatches);
 
   await writeJson(TEAM_OUT, teamIndex);
@@ -265,8 +255,7 @@ async function run() {
   console.log("[index] wrote:", MATCHUP_OUT);
 }
 
-run().catch(function (err) {
-  console.error("[index] failed");
-  console.error(err);
+run().catch(err => {
+  console.error("[index] failed", err);
   process.exit(1);
 });

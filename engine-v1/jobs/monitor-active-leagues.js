@@ -1,5 +1,5 @@
 import fs from "fs";
-import path from "path";
+import { getDataRoot, resolveDataPath } from "../storage/data-root.js";
 import { fetchLeagueFixtures } from "../adapters/espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { reconcileFixture } from "../core/reconcile.js";
@@ -11,8 +11,8 @@ import { appendObservation } from "../storage/observations-db.js";
 import { appendSkipped } from "../storage/skipped-log.js";
 import { athensDayKey } from "../core/daykey.js";
 
-const dataDir = path.resolve("data");
-const activePath = path.join(dataDir, "active-leagues.json");
+const dataDir = getDataRoot();
+const activePath = resolveDataPath("active-leagues.json");
 
 function readActiveLeagues() {
   if (!fs.existsSync(activePath)) {

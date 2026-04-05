@@ -5,8 +5,10 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import { resolveDataPath } from "../storage/data-root.js";
+import { applyValueContextModifiers } from "./value-context-modifiers.js";
 
-const DATA_DIR = path.resolve("data");
+const DATA_DIR = resolveDataPath();
 const HISTORY_INDEX_DIR = path.join(DATA_DIR, "history-index");
 
 const DEFAULT_SEASON = "2025-2026";
@@ -16,6 +18,7 @@ const DEFAULT_SEASON = "2025-2026";
 // ------------------------------------------------------------
 const FORM_WINDOW = 5;
 const FORM_MAX_AGE_DAYS = 35;
+const MIN_REQUIRED_RECENT_MATCHES = 3;
 const FORM_FULL_STRENGTH_DAYS = 7;
 const FORM_DECAY_START_DAYS = 8;
 const FORM_HEAVY_DECAY_DAYS = 14;
@@ -32,6 +35,48 @@ const BOUNDS = Object.freeze({
   minConfidence: 0.35,
   maxConfidence: 0.95
 });
+
+const GENERIC_CLUB_TOKENS = new Set([
+  "fc",
+  "cf",
+  "sc",
+  "afc",
+  "ac",
+  "bc",
+  "cd",
+  "fk",
+  "sk",
+  "nk",
+  "sv",
+  "if",
+  "bk",
+  "ik",
+  "jk",
+  "kc",
+  "rc",
+  "club",
+  "clube",
+  "deportivo",
+  "futbol",
+  "football",
+  "soccer",
+  "clubde",
+  "clubdeportivo"
+]);
+
+const TOKEN_ALIASES = new Map([
+  ["munchen", "munich"],
+  ["muenchen", "munich"],
+  ["koln", "cologne"],
+  ["koeln", "cologne"],
+  ["internazionale", "inter"],
+  ["atletico", "atletico"],
+  ["athletico", "atletico"],
+  ["utd", "united"],
+  ["st", "saint"],
+  ["sg", "saintgermain"],
+  ["psg", "parissaintgermain"]
+]);
 
 // ------------------------------------------------------------
 // FILE HELPERS
@@ -62,13 +107,6 @@ function round(value, digits = 3) {
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];
-}
-
-function normalizeName(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
 }
 
 function toNumber(value, fallback = 0) {
@@ -110,6 +148,137 @@ function daysBetween(later, earlier) {
 }
 
 // ------------------------------------------------------------
+// TEXT / NAME NORMALIZATION
+// ------------------------------------------------------------
+function stripDiacritics(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function basicNormalizeText(value) {
+  return stripDiacritics(String(value || ""))
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/\+/g, " ")
+    .replace(/[’'`]/g, "")
+    .replace(/[().,/\\-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeLeagueName(value) {
+  return basicNormalizeText(value)
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function normalizeTeamTokens(value) {
+  let s = basicNormalizeText(value)
+    .replace(/\bparis sg\b/g, " paris saint germain ")
+    .replace(/\bpsg\b/g, " paris saint germain ")
+    .replace(/\batl\b/g, " atletico ")
+    .replace(/\butd\b/g, " united ")
+    .replace(/\bfc bayern\b/g, " bayern ")
+    .replace(/\bborussia dortmund\b/g, " dortmund ")
+    .replace(/\bborussia monchengladbach\b/g, " monchengladbach ")
+    .replace(/\binter milan\b/g, " inter ");
+
+  const rawTokens = s.split(" ").filter(Boolean);
+  const out = [];
+
+  for (let token of rawTokens) {
+    token = TOKEN_ALIASES.get(token) || token;
+
+    if (GENERIC_CLUB_TOKENS.has(token)) continue;
+    if (/^\d+$/.test(token)) continue;
+
+    out.push(token);
+  }
+
+  return out;
+}
+
+function canonicalTeamKey(value) {
+  const tokens = normalizeTeamTokens(value);
+  const seen = new Set();
+  const filtered = [];
+
+  for (const token of tokens) {
+    if (seen.has(token)) continue;
+    seen.add(token);
+    filtered.push(token);
+  }
+
+  return filtered.join(" ");
+}
+
+function normalizeName(value) {
+  return canonicalTeamKey(value);
+}
+
+function tokenOverlapScore(aTokens, bTokens) {
+  if (!aTokens.length || !bTokens.length) return 0;
+
+  const aSet = new Set(aTokens);
+  const bSet = new Set(bTokens);
+
+  let overlap = 0;
+  for (const token of aSet) {
+    if (bSet.has(token)) overlap += 1;
+  }
+
+  return overlap / Math.max(aSet.size, bSet.size, 1);
+}
+
+function isSubsetTokenMatch(aTokens, bTokens) {
+  if (!aTokens.length || !bTokens.length) return false;
+
+  const aSet = new Set(aTokens);
+  const bSet = new Set(bTokens);
+
+  const aInB = [...aSet].every(t => bSet.has(t));
+  const bInA = [...bSet].every(t => aSet.has(t));
+
+  return aInB || bInA;
+}
+
+function scoreTeamNameMatch(inputName, candidateName) {
+  const inputKey = canonicalTeamKey(inputName);
+  const candKey = canonicalTeamKey(candidateName);
+
+  if (!inputKey || !candKey) return 0;
+  if (inputKey === candKey) return 1;
+
+  const inputTokens = inputKey.split(" ").filter(Boolean);
+  const candTokens = candKey.split(" ").filter(Boolean);
+
+  if (isSubsetTokenMatch(inputTokens, candTokens)) {
+    return 0.93;
+  }
+
+  const overlap = tokenOverlapScore(inputTokens, candTokens);
+
+  if (inputKey.includes(candKey) || candKey.includes(inputKey)) {
+    return Math.max(overlap, 0.88);
+  }
+
+  return overlap;
+}
+
+// ------------------------------------------------------------
+// PRIORS LOADING
+// ------------------------------------------------------------
+async function loadModelPriors(season) {
+  const file = path.join(DATA_DIR, "model-priors", `${season}.json`);
+  return await readJsonSafe(file, {
+    teamPriors: {},
+    leaguePriors: {},
+    matchupPriors: {}
+  });
+}
+
+// ------------------------------------------------------------
 // INDEX LOADING
 // ------------------------------------------------------------
 export async function loadValueIndexes(season = DEFAULT_SEASON) {
@@ -132,82 +301,7 @@ export async function loadValueIndexes(season = DEFAULT_SEASON) {
 }
 
 // ------------------------------------------------------------
-// KEY RESOLUTION
-// ------------------------------------------------------------
-function resolveTeamEntry(teamFormIndex, leagueSlug, teamName) {
-  const directLeague = teamFormIndex?.[leagueSlug];
-  const normalizedTeam = normalizeName(teamName);
-
-  if (directLeague && typeof directLeague === "object") {
-    for (const [key, value] of Object.entries(directLeague)) {
-      if (normalizeName(key) === normalizedTeam) {
-        return { key, value, leagueKey: leagueSlug };
-      }
-    }
-  }
-
-  for (const [leagueKey, teams] of Object.entries(teamFormIndex || {})) {
-    if (!teams || typeof teams !== "object") continue;
-    for (const [teamKey, value] of Object.entries(teams)) {
-      if (normalizeName(teamKey) === normalizedTeam) {
-        return { key: teamKey, value, leagueKey };
-      }
-    }
-  }
-
-  return { key: teamName, value: null, leagueKey: leagueSlug };
-}
-
-function resolveLeagueEntry(leagueFormIndex, leagueSlug) {
-  if (leagueFormIndex?.[leagueSlug]) {
-    return { key: leagueSlug, value: leagueFormIndex[leagueSlug] };
-  }
-
-  for (const [key, value] of Object.entries(leagueFormIndex || {})) {
-    if (normalizeName(key) === normalizeName(leagueSlug)) {
-      return { key, value };
-    }
-  }
-
-  return { key: leagueSlug, value: null };
-}
-
-function buildMatchupCandidateKeys(homeTeam, awayTeam, leagueSlug = "") {
-  const h = normalizeName(homeTeam);
-  const a = normalizeName(awayTeam);
-  const l = normalizeName(leagueSlug);
-
-  return [
-    `${l}|${h}|${a}`,
-    `${l}|${a}|${h}`,
-    `${h}|${a}`,
-    `${a}|${h}`
-  ];
-}
-
-function resolveMatchupEntry(matchupsIndex, homeTeam, awayTeam, leagueSlug = "") {
-  const candidates = buildMatchupCandidateKeys(homeTeam, awayTeam, leagueSlug);
-
-  for (const key of candidates) {
-    if (matchupsIndex?.[key]) {
-      return { key, value: matchupsIndex[key] };
-    }
-  }
-
-  for (const [key, value] of Object.entries(matchupsIndex || {})) {
-    const normalizedKey = normalizeName(key).replace(/\s+/g, "");
-    for (const candidate of candidates) {
-      if (normalizedKey === candidate.replace(/\s+/g, "")) {
-        return { key, value };
-      }
-    }
-  }
-
-  return { key: candidates[0], value: null };
-}
-
-// ------------------------------------------------------------
-// EXTRACTION HELPERS
+// ENTRY HELPERS
 // ------------------------------------------------------------
 function extractRecentMatches(teamEntry) {
   const entry = teamEntry || {};
@@ -239,9 +333,7 @@ function extractOutcomePoints(match, teamName) {
     pickFirstDefined(match?.result, match?.outcome, match?.teamResult, "")
   ).toUpperCase();
 
-  if (result === "W" || result === "WIN") return 3;
-  if (result === "D" || result === "DRAW") return 1;
-  if (result === "L" || result === "LOSS") return 0;
+  if (result === "D" || result === "DRAW" || result === "X") return 1;
 
   const team = normalizeName(teamName);
   const home = normalizeName(pickFirstDefined(match?.homeTeam, match?.home, ""));
@@ -250,9 +342,7 @@ function extractOutcomePoints(match, teamName) {
   const scoreAway = toNumber(match?.scoreAway, NaN);
 
   if (!Number.isFinite(scoreHome) || !Number.isFinite(scoreAway)) return 0;
-
   if (scoreHome === scoreAway) return 1;
-
   if (team && team === home) return scoreHome > scoreAway ? 3 : 0;
   if (team && team === away) return scoreAway > scoreHome ? 3 : 0;
 
@@ -298,12 +388,16 @@ function extractGoalsForAgainst(match, teamName) {
 }
 
 function isHomeMatch(match, teamName) {
+  if (typeof match?.isHome === "boolean") return match.isHome;
+
   const team = normalizeName(teamName);
   const home = normalizeName(pickFirstDefined(match?.homeTeam, match?.home, ""));
   return !!team && !!home && team === home;
 }
 
 function isAwayMatch(match, teamName) {
+  if (typeof match?.isHome === "boolean") return !match.isHome;
+
   const team = normalizeName(teamName);
   const away = normalizeName(pickFirstDefined(match?.awayTeam, match?.away, ""));
   return !!team && !!away && team === away;
@@ -340,6 +434,415 @@ function extractMatchDate(match) {
       match?.dayKey
     )
   );
+}
+
+function entryLeagueScore(entry, leagueSlug) {
+  const league = String(
+    pickFirstDefined(
+      entry?.leagueSlug,
+      entry?.league,
+      entry?.leagueKey,
+      entry?.matches?.[0]?.leagueSlug,
+      ""
+    )
+  ).trim();
+
+  if (!leagueSlug) return 0.5;
+  if (!league) return 0.35;
+  return league === leagueSlug ? 1 : 0;
+}
+
+// ------------------------------------------------------------
+// RESOLUTION HELPERS
+// ------------------------------------------------------------
+function resolveTeamEntry(teamFormIndex, leagueSlug, teamName) {
+  const entries = Object.entries(teamFormIndex || {});
+  if (!entries.length) {
+    return { key: teamName, value: null, leagueKey: leagueSlug, score: 0 };
+  }
+
+  let best = null;
+
+  for (const [teamKey, value] of entries) {
+    const nameScore = scoreTeamNameMatch(teamName, teamKey);
+    if (nameScore < 0.45) continue;
+
+    const leagueScore = entryLeagueScore(value, leagueSlug);
+    const totalScore = (nameScore * 0.82) + (leagueScore * 0.18);
+
+    if (!best || totalScore > best.totalScore) {
+      best = {
+        key: teamKey,
+        value,
+        leagueKey: leagueSlug,
+        totalScore
+      };
+    }
+  }
+
+  if (best && best.totalScore >= 0.7) {
+    return {
+      key: best.key,
+      value: best.value,
+      leagueKey: best.leagueKey,
+      score: best.totalScore
+    };
+  }
+
+  return {
+    key: teamName,
+    value: null,
+    leagueKey: leagueSlug,
+    score: 0
+  };
+}
+
+function resolveLeagueEntry(leagueFormIndex, leagueSlug) {
+  if (leagueFormIndex?.[leagueSlug]) {
+    return { key: leagueSlug, value: leagueFormIndex[leagueSlug] };
+  }
+
+  const target = normalizeLeagueName(leagueSlug);
+
+  for (const [key, value] of Object.entries(leagueFormIndex || {})) {
+    if (normalizeLeagueName(key) === target) {
+      return { key, value };
+    }
+  }
+
+  return { key: leagueSlug, value: null };
+}
+
+function parseMatchupTeamsFromKey(key) {
+  const raw = String(key || "").trim();
+
+  if (raw.includes("::")) {
+    const [a, b] = raw.split("::");
+    return { teamA: a?.trim() || "", teamB: b?.trim() || "", leagueKey: "" };
+  }
+
+  const parts = raw.split("|").map(x => x.trim()).filter(Boolean);
+
+  if (parts.length >= 3) {
+    return {
+      leagueKey: parts[0],
+      teamA: parts[1],
+      teamB: parts[2]
+    };
+  }
+
+  if (parts.length === 2) {
+    return {
+      leagueKey: "",
+      teamA: parts[0],
+      teamB: parts[1]
+    };
+  }
+
+  return { leagueKey: "", teamA: "", teamB: "" };
+}
+
+function matchupPairScore(inputHome, inputAway, candA, candB) {
+  const directA = scoreTeamNameMatch(inputHome, candA);
+  const directB = scoreTeamNameMatch(inputAway, candB);
+  const reverseA = scoreTeamNameMatch(inputHome, candB);
+  const reverseB = scoreTeamNameMatch(inputAway, candA);
+
+  const direct = (directA + directB) / 2;
+  const reverse = (reverseA + reverseB) / 2;
+
+  return Math.max(direct, reverse);
+}
+
+function resolveMatchupEntry(matchupsIndex, homeTeam, awayTeam, leagueSlug = "") {
+  const entries = Object.entries(matchupsIndex || {});
+  if (!entries.length) {
+    return {
+      key: `${homeTeam}::${awayTeam}`,
+      value: null,
+      score: 0
+    };
+  }
+
+  let best = null;
+
+  for (const [key, value] of entries) {
+    const parsed = parseMatchupTeamsFromKey(key);
+
+    const pairScore = matchupPairScore(
+      homeTeam,
+      awayTeam,
+      parsed.teamA || value?.teams?.[0] || "",
+      parsed.teamB || value?.teams?.[1] || ""
+    );
+
+    if (pairScore < 0.55) continue;
+
+    const candidateLeague = String(
+      pickFirstDefined(
+        parsed.leagueKey,
+        value?.leagueSlug,
+        value?.lastMatch?.leagueSlug,
+        value?.matches?.[0]?.leagueSlug,
+        ""
+      )
+    ).trim();
+
+    const leagueScore =
+      leagueSlug && candidateLeague
+        ? (candidateLeague === leagueSlug ? 1 : 0)
+        : 0.5;
+
+    const totalScore = (pairScore * 0.86) + (leagueScore * 0.14);
+
+    if (!best || totalScore > best.totalScore) {
+      best = { key, value, totalScore };
+    }
+  }
+
+  if (best && best.totalScore >= 0.75) {
+    return { key: best.key, value: best.value, score: best.totalScore };
+  }
+
+  return {
+    key: `${homeTeam}::${awayTeam}`,
+    value: null,
+    score: 0
+  };
+}
+
+function resolveTeamPrior(teamPriors, leagueSlug, teamName) {
+  const entries = Object.entries(teamPriors || {});
+  if (!entries.length) return null;
+
+  const targetLeague = String(leagueSlug || "").trim();
+  let best = null;
+
+  for (const [key, value] of entries) {
+    const parts = String(key).split("::");
+    const priorLeague = parts[0] || "";
+    const priorTeam = parts.slice(1).join("::") || key;
+
+    // HARD FILTER: avoid II / B teams mismatch
+    if (
+      teamName &&
+      priorTeam &&
+      (
+        (teamName.includes("II") && !priorTeam.includes("II")) ||
+        (!teamName.includes("II") && priorTeam.includes("II"))
+      )
+    ) {
+      continue;
+    }
+
+    const nameScore = scoreTeamNameMatch(teamName, priorTeam);
+    if (nameScore < 0.6) continue;
+
+    if (targetLeague && priorLeague && priorLeague !== targetLeague) {
+      continue;
+    }
+
+    const leagueScore =
+      targetLeague && priorLeague
+        ? 1
+        : 0.5;
+
+    const totalScore = (nameScore * 0.82) + (leagueScore * 0.18);
+
+    if (!best || totalScore > best.totalScore) {
+      best = {
+        key,
+        value,
+        totalScore
+      };
+    }
+  }
+
+  if (best && best.totalScore >= 0.75) {
+    return {
+      key: best.key,
+      value: best.value,
+      score: best.totalScore
+    };
+  }
+
+  return null;
+}
+function resolveLeaguePrior(leaguePriors, leagueSlug) {
+  return leaguePriors?.[leagueSlug] || null;
+}
+
+function resolveMatchupPrior(matchupPriors, leagueSlug, homeTeam, awayTeam) {
+  const entries = Object.entries(matchupPriors || {});
+  if (!entries.length) return null;
+
+  let best = null;
+
+  for (const [key, value] of entries) {
+    const parsed = parseMatchupTeamsFromKey(key);
+
+    const pairScore = matchupPairScore(
+      homeTeam,
+      awayTeam,
+      parsed.teamA || value?.teamA || "",
+      parsed.teamB || value?.teamB || ""
+    );
+
+    if (pairScore < 0.55) continue;
+
+    const priorLeague = String(
+      pickFirstDefined(parsed.leagueKey, value?.leagueSlug, "")
+    ).trim();
+
+    if (leagueSlug && priorLeague && priorLeague !== leagueSlug) {
+      continue;
+    }
+
+    const leagueScore =
+      leagueSlug && priorLeague
+        ? 1
+        : 0.5;
+
+    const totalScore = (pairScore * 0.86) + (leagueScore * 0.14);
+
+    if (!best || totalScore > best.totalScore) {
+      best = { key, value, totalScore };
+    }
+  }
+
+  if (best && best.totalScore >= 0.72) {
+    return {
+      key: best.key,
+      value: best.value,
+      score: best.totalScore
+    };
+  }
+
+  return null;
+}
+
+// ------------------------------------------------------------
+// PRIORS BLENDING HELPERS
+// ------------------------------------------------------------
+function cappedSample(sample, cap) {
+  const n = Number(sample);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, cap);
+}
+
+function blendMetric(currentValue, currentSample, priorValue, priorSample, fallback = 0) {
+  const cVal = Number.isFinite(Number(currentValue)) ? Number(currentValue) : null;
+  const pVal = Number.isFinite(Number(priorValue)) ? Number(priorValue) : null;
+
+  const cS = cappedSample(currentSample, 8);
+  const pS = cappedSample(priorSample, 20);
+
+  if (cVal === null && pVal === null) return fallback;
+  if (cVal !== null && pVal === null) return cVal;
+  if (cVal === null && pVal !== null) return pVal;
+
+  const total = cS + pS;
+  if (total <= 0) return fallback;
+
+  return ((cVal * cS) + (pVal * pS)) / total;
+}
+
+function effectiveSample(currentSample, priorSample) {
+  return Number(currentSample || 0) + Math.min(Number(priorSample || 0), 3);
+}
+
+function getPriorBucket(priorEntry, side) {
+  if (!priorEntry) return null;
+  if (side === "home") return priorEntry.home || null;
+  if (side === "away") return priorEntry.away || null;
+  return priorEntry.all || null;
+}
+
+function blendTeamMetrics(currentMetrics, priorEntry, side = "all") {
+  const priorBucket = getPriorBucket(priorEntry, side);
+  const currentSample = Number(currentMetrics?.sample || 0);
+  const priorSample = Number(priorBucket?.sample || priorEntry?.sample || 0);
+
+  return {
+    ...currentMetrics,
+    sample: effectiveSample(currentSample, priorSample),
+    ppg: blendMetric(currentMetrics?.ppg, currentSample, priorBucket?.ppg, priorSample, currentMetrics?.ppg || 0),
+    winRate: blendMetric(currentMetrics?.winRate, currentSample, priorBucket?.winRate, priorSample, currentMetrics?.winRate || 0),
+    drawRate: blendMetric(currentMetrics?.drawRate, currentSample, priorBucket?.drawRate, priorSample, currentMetrics?.drawRate || 0),
+    lossRate: blendMetric(currentMetrics?.lossRate, currentSample, priorBucket?.lossRate, priorSample, currentMetrics?.lossRate || 0),
+    gfAvg: blendMetric(currentMetrics?.gfAvg, currentSample, priorBucket?.gfAvg, priorSample, currentMetrics?.gfAvg || 0),
+    gaAvg: blendMetric(currentMetrics?.gaAvg, currentSample, priorBucket?.gaAvg, priorSample, currentMetrics?.gaAvg || 0),
+    over25Rate: blendMetric(currentMetrics?.over25Rate, currentSample, priorBucket?.over25Rate, priorSample, currentMetrics?.over25Rate || 0),
+    bttsRate: blendMetric(currentMetrics?.bttsRate, currentSample, priorBucket?.bttsRate, priorSample, currentMetrics?.bttsRate || 0)
+  };
+}
+
+function blendLeagueBaseline(currentBaseline, priorBaseline) {
+  const currentSample = Number(currentBaseline?.sample || 0);
+  const priorSample = Number(priorBaseline?.sample || 0);
+
+  return {
+    goalsAvg: blendMetric(currentBaseline?.goalsAvg, currentSample, priorBaseline?.goalsAvg, priorSample, currentBaseline?.goalsAvg || 2.4),
+    drawRate: blendMetric(currentBaseline?.drawRate, currentSample, priorBaseline?.drawRate, priorSample, currentBaseline?.drawRate || 0.28),
+    homeWinRate: blendMetric(currentBaseline?.homeWinRate, currentSample, priorBaseline?.homeWinRate, priorSample, currentBaseline?.homeWinRate || 0.45),
+    awayWinRate: blendMetric(currentBaseline?.awayWinRate, currentSample, priorBaseline?.awayWinRate, priorSample, currentBaseline?.awayWinRate || 0.27),
+    over25Rate: blendMetric(currentBaseline?.over25Rate, currentSample, priorBaseline?.over25Rate, priorSample, currentBaseline?.over25Rate || 0.5),
+    bttsRate: blendMetric(currentBaseline?.bttsRate, currentSample, priorBaseline?.bttsRate, priorSample, currentBaseline?.bttsRate || 0.48),
+    sample: Math.max(currentSample, priorSample)
+  };
+}
+
+function orientMatchupBiasToHomeAway(priorEntry, homeTeam, awayTeam) {
+  if (!priorEntry) {
+    return {
+      sample: 0,
+      homeBias: 0.5,
+      drawBias: 0.5,
+      awayBias: 0.5,
+      over25Bias: 0.5,
+      bttsBias: 0.5
+    };
+  }
+
+  const teamA = String(priorEntry.teamA || "").trim();
+  const teamB = String(priorEntry.teamB || "").trim();
+
+  const homeIsA = scoreTeamNameMatch(homeTeam, teamA) >= scoreTeamNameMatch(homeTeam, teamB);
+  const awayIsB = scoreTeamNameMatch(awayTeam, teamB) >= scoreTeamNameMatch(awayTeam, teamA);
+
+  if (homeIsA && awayIsB) {
+    return {
+      sample: Number(priorEntry.sample || 0),
+      homeBias: toNumber(priorEntry.teamABias, 0.5),
+      drawBias: toNumber(priorEntry.drawBias, 0.5),
+      awayBias: toNumber(priorEntry.teamBBias, 0.5),
+      over25Bias: toNumber(priorEntry.over25Bias, 0.5),
+      bttsBias: toNumber(priorEntry.bttsBias, 0.5)
+    };
+  }
+
+  return {
+    sample: Number(priorEntry.sample || 0),
+    homeBias: toNumber(priorEntry.teamBBias, 0.5),
+    drawBias: toNumber(priorEntry.drawBias, 0.5),
+    awayBias: toNumber(priorEntry.teamABias, 0.5),
+    over25Bias: toNumber(priorEntry.over25Bias, 0.5),
+    bttsBias: toNumber(priorEntry.bttsBias, 0.5)
+  };
+}
+
+function blendMatchupBias(currentBias, priorBiasOriented) {
+  const currentSample = Number(currentBias?.sample || 0);
+  const priorSample = Number(priorBiasOriented?.sample || 0);
+
+  return {
+    sample: effectiveSample(currentSample, priorSample),
+    homeBias: blendMetric(currentBias?.homeBias, currentSample, priorBiasOriented?.homeBias, priorSample, currentBias?.homeBias || 0.5),
+    drawBias: blendMetric(currentBias?.drawBias, currentSample, priorBiasOriented?.drawBias, priorSample, currentBias?.drawBias || 0.5),
+    awayBias: blendMetric(currentBias?.awayBias, currentSample, priorBiasOriented?.awayBias, priorSample, currentBias?.awayBias || 0.5),
+    over25Bias: blendMetric(currentBias?.over25Bias, currentSample, priorBiasOriented?.over25Bias, priorSample, currentBias?.over25Bias || 0.5),
+    bttsBias: blendMetric(currentBias?.bttsBias, currentSample, priorBiasOriented?.bttsBias, priorSample, currentBias?.bttsBias || 0.5)
+  };
 }
 
 // ------------------------------------------------------------
@@ -404,10 +907,16 @@ function computeContinuityScore(selectedMatches, fixtureDate) {
 }
 
 function computeEffectiveFormWeight(baseWeight, freshnessScore, continuityScore, sampleSize) {
-  const sampleFactor = clamp(sampleSize / FORM_WINDOW, 0.25, 1);
-  return clamp(baseWeight * freshnessScore * continuityScore * sampleFactor, 0.02, baseWeight);
-}
+  const safeBaseWeight = Number(baseWeight) || 0;
+  const safeFreshness = clamp(freshnessScore, 0.2, 1);
+  const safeContinuity = clamp(continuityScore, 0.2, 1);
+  const safeSample = Math.max(0, Number(sampleSize) || 0);
 
+  const sampleFactor = clamp(safeSample / FORM_WINDOW, 0.35, 1);
+  const rawWeight = safeBaseWeight * safeFreshness * safeContinuity * sampleFactor;
+
+  return clamp(rawWeight, Math.min(0.12, safeBaseWeight), safeBaseWeight);
+}
 function selectValidFormMatches(matches, teamName, side, season, fixtureDate, window = FORM_WINDOW) {
   let filtered = safeArray(matches);
 
@@ -613,26 +1122,40 @@ function computeGoalsProfile(homeMetrics, awayMetrics, leagueBaseline) {
     ]) || 0.35;
 
   const over25Core = clamp(
-    totalGoalsNorm * 0.45 +
-      avg([homeMetrics.over25Rate, awayMetrics.over25Rate]) * 0.35 +
-      leagueOver25Rate * 0.2,
+    (
+      totalGoalsNorm * 0.34 +
+      avg([homeMetrics.over25Rate, awayMetrics.over25Rate]) * 0.31 +
+      leagueOver25Rate * 0.20 +
+      clamp(expectedTotalGoals / 4.2, 0, 1) * 0.15
+    ),
     0,
     1
   );
 
   const bttsCore = clamp(
-    avg([homeMetrics.bttsRate, awayMetrics.bttsRate]) * 0.45 +
-      clamp((Math.min(homeMetrics.gfAvg, 3) / 3), 0, 1) * 0.15 +
-      clamp((Math.min(awayMetrics.gfAvg, 3) / 3), 0, 1) * 0.15 +
-      clamp(1 - (Math.abs(homeMetrics.gaAvg - awayMetrics.gaAvg) / 3), 0, 1) * 0.1 +
-      leagueBTTSRate * 0.15,
+    (
+      avg([homeMetrics.bttsRate, awayMetrics.bttsRate]) * 0.38 +
+      clamp(Math.min(expectedHomeGoals, 2.4) / 2.4, 0, 1) * 0.12 +
+      clamp(Math.min(expectedAwayGoals, 2.4) / 2.4, 0, 1) * 0.12 +
+      clamp(1 - (Math.abs(homeMetrics.gaAvg - awayMetrics.gaAvg) / 3.5), 0, 1) * 0.08 +
+      leagueBTTSRate * 0.18 +
+      clamp(Math.min(expectedTotalGoals, 4.5) / 4.5, 0, 1) * 0.12
+    ),
     0,
     1
   );
 
-  // goals profile κρατά μέρος του league baseline ακόμα και όταν το recent signal ξεφτίζει
-  const over25Score = clamp((over25Core * (0.65 + temporalBlend * 0.35)), 0, 1);
-  const bttsScore = clamp((bttsCore * (0.65 + temporalBlend * 0.35)), 0, 1);
+  const over25Score = clamp(
+    (over25Core * (0.72 + temporalBlend * 0.20)),
+    0,
+    1
+  );
+
+  const bttsScore = clamp(
+    (bttsCore * (0.72 + temporalBlend * 0.20)),
+    0,
+    1
+  );
 
   return {
     expectedHomeGoals: round(expectedHomeGoals, 3),
@@ -766,7 +1289,8 @@ function computeLeagueBaseline(leagueEntry) {
     homeWinRate,
     awayWinRate,
     over25Rate,
-    bttsRate
+    bttsRate,
+    sample: extractNumeric(entry, ["sample", "matches"], 0)
   };
 }
 
@@ -852,12 +1376,23 @@ function computeOutcomeScores({
 
   const closeness = clamp(1 - Math.abs(homeRaw - awayRaw), 0, 1);
 
+  const strengthGap = Math.abs(homeStrength - awayStrength);
+  const edgeGap = Math.abs(homeAwayEdge.homeBoost - (1 - homeAwayEdge.awayPenalty));
+
+  const drawSuppression = clamp(
+    1 - ((strengthGap * 0.55) + (edgeGap * 0.25)),
+    0.35,
+    1
+  );
+
   const drawRaw = clamp(
-    (leagueDrawBase * 0.5) +
-      (closeness * 0.35) +
-      (matchupBias.drawBias * 0.15),
-    0.05,
-    0.8
+    (
+      (leagueDrawBase * 0.18) +
+      (closeness * 0.10) +
+      (matchupBias.drawBias * 0.04)
+    ) * drawSuppression,
+    0.02,
+    0.18
   );
 
   const total = homeRaw + awayRaw + drawRaw;
@@ -871,6 +1406,19 @@ function computeOutcomeScores({
     homeWinScore /= sum;
     drawScore /= sum;
     awayWinScore /= sum;
+  }
+
+  const MAX_DRAW_SCORE = 0.14;
+
+  if (drawScore > MAX_DRAW_SCORE) {
+    const excess = drawScore - MAX_DRAW_SCORE;
+    drawScore = MAX_DRAW_SCORE;
+
+    const nonDraw = homeWinScore + awayWinScore;
+    if (nonDraw > 0) {
+      homeWinScore += excess * (homeWinScore / nonDraw);
+      awayWinScore += excess * (awayWinScore / nonDraw);
+    }
   }
 
   return {
@@ -918,7 +1466,8 @@ function buildSignals({
   homeMetrics,
   awayMetrics,
   matchupBias,
-  dynamicWeights
+  dynamicWeights,
+  priorsMeta
 }) {
   const signals = [];
 
@@ -951,6 +1500,7 @@ function buildSignals({
   if (confidence <= 0.5) {
     signals.push("confidence_moderate");
   }
+
   if (confidence <= 0.42) {
     signals.push("confidence_low_sample");
   }
@@ -988,6 +1538,10 @@ function buildSignals({
     signals.push("matchup_goals_history");
   }
 
+  if (priorsMeta?.used) {
+    signals.push("priors_applied");
+  }
+
   return signals;
 }
 
@@ -997,6 +1551,14 @@ function buildSignals({
 export async function evaluateMatchValue(input, opts = {}) {
   const season = String(opts.season || input?.season || DEFAULT_SEASON);
   const indexes = opts.indexes || await loadValueIndexes(season);
+  const priors = opts.priors || await loadModelPriors(season);
+
+  console.log("[value] indexes", {
+    season,
+    teamFormSize: Object.keys(indexes.teamForm || {}).length,
+    leagueFormSize: Object.keys(indexes.leagueForm || {}).length,
+    matchupsSize: Object.keys(indexes.matchups || {}).length
+  });
 
   const leagueSlug = String(input?.leagueSlug || input?.league || "").trim();
   const homeTeam = String(input?.homeTeam || input?.home || "").trim();
@@ -1005,6 +1567,7 @@ export async function evaluateMatchValue(input, opts = {}) {
   if (!leagueSlug) {
     throw new Error("evaluateMatchValue: missing leagueSlug");
   }
+
   if (!homeTeam || !awayTeam) {
     throw new Error("evaluateMatchValue: missing homeTeam/awayTeam");
   }
@@ -1022,11 +1585,17 @@ export async function evaluateMatchValue(input, opts = {}) {
   const leagueResolved = resolveLeagueEntry(indexes.leagueForm, leagueSlug);
   const matchupResolved = resolveMatchupEntry(indexes.matchups, homeTeam, awayTeam, leagueSlug);
 
-  const leagueBaseline = computeLeagueBaseline(leagueResolved.value);
+  const homePriorResolved = resolveTeamPrior(priors.teamPriors, leagueSlug, homeTeam);
+  const awayPriorResolved = resolveTeamPrior(priors.teamPriors, leagueSlug, awayTeam);
+  const leaguePrior = resolveLeaguePrior(priors.leaguePriors, leagueSlug);
+  const matchupPriorResolved = resolveMatchupPrior(priors.matchupPriors, leagueSlug, homeTeam, awayTeam);
+
+  const rawLeagueBaseline = computeLeagueBaseline(leagueResolved.value);
+  const leagueBaseline = blendLeagueBaseline(rawLeagueBaseline, leaguePrior);
 
   const homeAllSelection = selectValidFormMatches(
     extractRecentMatches(homeResolved.value),
-    homeTeam,
+    homeResolved.key,
     "all",
     season,
     fixtureDate,
@@ -1035,7 +1604,7 @@ export async function evaluateMatchValue(input, opts = {}) {
 
   const awayAllSelection = selectValidFormMatches(
     extractRecentMatches(awayResolved.value),
-    awayTeam,
+    awayResolved.key,
     "all",
     season,
     fixtureDate,
@@ -1044,7 +1613,7 @@ export async function evaluateMatchValue(input, opts = {}) {
 
   const homeSideSelection = selectValidFormMatches(
     extractRecentMatches(homeResolved.value),
-    homeTeam,
+    homeResolved.key,
     "home",
     season,
     fixtureDate,
@@ -1053,32 +1622,55 @@ export async function evaluateMatchValue(input, opts = {}) {
 
   const awaySideSelection = selectValidFormMatches(
     extractRecentMatches(awayResolved.value),
-    awayTeam,
+    awayResolved.key,
     "away",
     season,
     fixtureDate,
     FORM_WINDOW
   );
 
-  const homeMetrics = computeTeamMetricsFromSelection(homeTeam, homeAllSelection);
-  const awayMetrics = computeTeamMetricsFromSelection(awayTeam, awayAllSelection);
+  const rawHomeMetrics = computeTeamMetricsFromSelection(homeResolved.key, homeAllSelection);
+  const rawAwayMetrics = computeTeamMetricsFromSelection(awayResolved.key, awayAllSelection);
 
-  const homeSideMetrics = computeTeamMetricsFromSelection(homeTeam, homeSideSelection);
-  const awaySideMetrics = computeTeamMetricsFromSelection(awayTeam, awaySideSelection);
+  const rawHomeSideMetrics = computeTeamMetricsFromSelection(homeResolved.key, homeSideSelection);
+  const rawAwaySideMetrics = computeTeamMetricsFromSelection(awayResolved.key, awaySideSelection);
+
+  const homeMetrics = blendTeamMetrics(rawHomeMetrics, homePriorResolved?.value, "all");
+  const awayMetrics = blendTeamMetrics(rawAwayMetrics, awayPriorResolved?.value, "all");
+
+  const homeSideMetrics = blendTeamMetrics(rawHomeSideMetrics, homePriorResolved?.value, "home");
+  const awaySideMetrics = blendTeamMetrics(rawAwaySideMetrics, awayPriorResolved?.value, "away");
+
+  const hasMinimumRecentSample =
+    homeMetrics.sample >= MIN_REQUIRED_RECENT_MATCHES &&
+    awayMetrics.sample >= MIN_REQUIRED_RECENT_MATCHES;
+
+  if (!hasMinimumRecentSample) {
+    return null;
+  }
+
+  const rawMatchupBias = computeMatchupBias(
+    matchupResolved.value,
+    homeResolved.key,
+    awayResolved.key,
+    season,
+    fixtureDate
+  );
+
+  const matchupBias = blendMatchupBias(
+    rawMatchupBias,
+    orientMatchupBiasToHomeAway(
+      matchupPriorResolved?.value,
+      homeResolved.key,
+      awayResolved.key
+    )
+  );
 
   const homeStrength = computeTeamStrength(homeMetrics, leagueBaseline);
   const awayStrength = computeTeamStrength(awayMetrics, leagueBaseline);
 
   const homeAwayEdge = computeHomeAwayEdge(homeSideMetrics, awaySideMetrics, leagueBaseline);
   const goalsProfile = computeGoalsProfile(homeMetrics, awayMetrics, leagueBaseline);
-
-  const matchupBias = computeMatchupBias(
-    matchupResolved.value,
-    homeTeam,
-    awayTeam,
-    season,
-    fixtureDate
-  );
 
   const dynamicWeights = computeDynamicWeights({
     homeMetrics,
@@ -1104,6 +1696,14 @@ export async function evaluateMatchValue(input, opts = {}) {
     matchupBias
   });
 
+  const priorsMeta = {
+    used: !!(homePriorResolved || awayPriorResolved || leaguePrior || matchupPriorResolved),
+    homePriorSample: Number(homePriorResolved?.value?.sample || 0),
+    awayPriorSample: Number(awayPriorResolved?.value?.sample || 0),
+    leaguePriorSample: Number(leaguePrior?.sample || 0),
+    matchupPriorSample: Number(matchupPriorResolved?.value?.sample || 0)
+  };
+
   const signals = buildSignals({
     outcomeScores,
     goalsProfile,
@@ -1111,27 +1711,25 @@ export async function evaluateMatchValue(input, opts = {}) {
     homeMetrics,
     awayMetrics,
     matchupBias,
-    dynamicWeights
+    dynamicWeights,
+    priorsMeta
   });
 
-  return {
+  const baseValue = {
     season,
     leagueSlug,
     homeTeam,
     awayTeam,
-
     homeWinScore: round(outcomeScores.homeWinScore, 3),
     drawScore: round(outcomeScores.drawScore, 3),
     awayWinScore: round(outcomeScores.awayWinScore, 3),
     over25Score: round(goalsProfile.over25Score, 3),
     bttsScore: round(goalsProfile.bttsScore, 3),
     confidence: round(confidence, 3),
-
     signals,
-
     meta: {
       model: "value-engine-v1",
-      mode: "statistical_only",
+      mode: "statistical_plus_context",
       formWindow: FORM_WINDOW,
       formRules: {
         sameSeasonOnly: true,
@@ -1141,7 +1739,6 @@ export async function evaluateMatchValue(input, opts = {}) {
         heavyDecayDays: FORM_HEAVY_DECAY_DAYS,
         breakdownDays: FORM_BREAKDOWN_DAYS
       },
-
       baseWeights: BASE_WEIGHTS,
       effectiveWeights: {
         homeOverallFormWeight: round(dynamicWeights.homeOverallFormWeight, 3),
@@ -1149,19 +1746,18 @@ export async function evaluateMatchValue(input, opts = {}) {
         homeSideFormWeight: round(dynamicWeights.homeSideFormWeight, 3),
         awaySideFormWeight: round(dynamicWeights.awaySideFormWeight, 3)
       },
-
       expectedHomeGoals: goalsProfile.expectedHomeGoals,
       expectedAwayGoals: goalsProfile.expectedAwayGoals,
       expectedTotalGoals: goalsProfile.expectedTotalGoals,
-
       homeStrength: round(homeStrength, 3),
       awayStrength: round(awayStrength, 3),
       homeEdge: round(homeAwayEdge.homeBoost, 3),
       awayPenalty: round(homeAwayEdge.awayPenalty, 3),
-
       recency: {
         homeOverall: {
           sample: homeMetrics.sample,
+          rawSample: rawHomeMetrics.sample,
+          priorSample: priorsMeta.homePriorSample,
           daysSinceLastMatch: homeMetrics.daysSinceLastMatch,
           spanDays: homeMetrics.spanDays,
           freshnessScore: round(homeMetrics.freshnessScore, 3),
@@ -1169,6 +1765,8 @@ export async function evaluateMatchValue(input, opts = {}) {
         },
         awayOverall: {
           sample: awayMetrics.sample,
+          rawSample: rawAwayMetrics.sample,
+          priorSample: priorsMeta.awayPriorSample,
           daysSinceLastMatch: awayMetrics.daysSinceLastMatch,
           spanDays: awayMetrics.spanDays,
           freshnessScore: round(awayMetrics.freshnessScore, 3),
@@ -1176,6 +1774,8 @@ export async function evaluateMatchValue(input, opts = {}) {
         },
         homeSide: {
           sample: homeSideMetrics.sample,
+          rawSample: rawHomeSideMetrics.sample,
+          priorSample: priorsMeta.homePriorSample,
           daysSinceLastMatch: homeSideMetrics.daysSinceLastMatch,
           spanDays: homeSideMetrics.spanDays,
           freshnessScore: round(homeSideMetrics.freshnessScore, 3),
@@ -1183,20 +1783,89 @@ export async function evaluateMatchValue(input, opts = {}) {
         },
         awaySide: {
           sample: awaySideMetrics.sample,
+          rawSample: rawAwaySideMetrics.sample,
+          priorSample: priorsMeta.awayPriorSample,
           daysSinceLastMatch: awaySideMetrics.daysSinceLastMatch,
           spanDays: awaySideMetrics.spanDays,
           freshnessScore: round(awaySideMetrics.freshnessScore, 3),
           continuityScore: round(awaySideMetrics.continuityScore, 3)
         }
       },
-
       matchupSample: matchupBias.sample,
-
+      priorsUsed: priorsMeta.used,
+      priors: priorsMeta,
+      resolution: {
+        homeInput: homeTeam,
+        awayInput: awayTeam,
+        homeResolvedKey: homeResolved.key,
+        awayResolvedKey: awayResolved.key,
+        homeResolveScore: round(homeResolved.score || 0, 3),
+        awayResolveScore: round(awayResolved.score || 0, 3),
+        matchupResolvedKey: matchupResolved.key,
+        matchupResolveScore: round(matchupResolved.score || 0, 3),
+        homePriorKey: homePriorResolved?.key || null,
+        awayPriorKey: awayPriorResolved?.key || null,
+        matchupPriorKey: matchupPriorResolved?.key || null
+      },
       sourceKeys: {
         homeTeamKey: homeResolved.key,
         awayTeamKey: awayResolved.key,
         leagueKey: leagueResolved.key,
         matchupKey: matchupResolved.key
+      }
+    }
+  };
+
+  const contextApplied = await applyValueContextModifiers({
+    fixture: input,
+    baseValue,
+    opts: {
+      season
+    }
+  });
+
+  const modifierSignals = [
+    ...(contextApplied?.modifiers?.motivation?.reasons || []),
+    ...(contextApplied?.modifiers?.fatigue?.reasons || []),
+    ...(contextApplied?.modifiers?.congestion?.reasons || []),
+    ...(contextApplied?.modifiers?.lookAhead?.reasons || [])
+  ].filter(Boolean);
+
+  return {
+    ...baseValue,
+    homeWinScore: round(
+      contextApplied?.adjusted?.homeWinScore ?? baseValue.homeWinScore,
+      3
+    ),
+    drawScore: round(
+      contextApplied?.adjusted?.drawScore ?? baseValue.drawScore,
+      3
+    ),
+    awayWinScore: round(
+      contextApplied?.adjusted?.awayWinScore ?? baseValue.awayWinScore,
+      3
+    ),
+    over25Score: round(
+      contextApplied?.adjusted?.over25Score ?? baseValue.over25Score,
+      3
+    ),
+    bttsScore: round(
+      contextApplied?.adjusted?.bttsScore ?? baseValue.bttsScore,
+      3
+    ),
+    confidence: round(
+      contextApplied?.meta?.confidenceAdjusted ?? baseValue.confidence,
+      3
+    ),
+    signals: [...signals, ...modifierSignals],
+    modifiers: contextApplied?.modifiers || null,
+    context: contextApplied?.context || null,
+    meta: {
+      ...baseValue.meta,
+      mode: "statistical_plus_context",
+      contextModifiers: {
+        applied: true,
+        version: "value-context-modifiers-v1.0"
       }
     }
   };

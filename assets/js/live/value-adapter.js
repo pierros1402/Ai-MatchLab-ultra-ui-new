@@ -3,10 +3,23 @@
 ========================================================= */
 
 (function () {
+  console.log("[value-adapter] boot:start");
+
   let __AIML_VALUE_BOUND_DATE = null;
   let __AIML_VALUE_LAST_HASH = null;
   let __AIML_VALUE_DATASET_VERSION = null;
-  if (!window.on || !window.emit) return;
+
+  if (!window.on || !window.emit) {
+    console.warn("[value-adapter] boot:missing-bus", {
+      hasOn: !!window.on,
+      hasEmit: !!window.emit
+    });
+    return;
+  }
+
+  console.log("[value-adapter] boot:bus-ok");
+
+  const RAW_FETCH = window.__AIML_RAW_FETCH__ || window.fetch;
 
   const TZ = "Europe/Athens";
   const BASE =
@@ -62,14 +75,16 @@
     if (now - __AIML_VALUE_LAST_FETCH_MS < __AIML_VALUE_COOLDOWN_MS) return null;
 
     const url =
-      (BASE ? BASE.replace(/\/$/, "") : "https://aimatchlab-main-worker.pierros1402.workers.dev") +
+      (BASE ? BASE.replace(/\/$/, "") : "http://localhost:3010") +
       ENDPOINT +
       `?date=${encodeURIComponent(dateYmd)}`;
 
     __AIML_VALUE_INFLIGHT = true;
 
     try {
-      const r = await fetch(url, { cache: "no-store" });
+      const r = await RAW_FETCH(url, {
+        cache: "no-store",
+      });
 
       if (r.status === 429) {
         __AIML_VALUE_BACKOFF_UNTIL = Date.now() + __AIML_VALUE_BACKOFF_429_MS;
@@ -98,9 +113,7 @@
     const arr =
       Array.isArray(payload?.matches)
         ? payload.matches
-        : Array.isArray(payload?.items)
-          ? payload.items
-          : [];
+        : [];
 
     if (!arr.length) return null;
 
@@ -110,41 +123,110 @@
       .join("|");
   }
 
-  async function refresh(dateYmd) {
-    const date = dateYmd || ymdTodayAthens();
-    const data = await fetchValue(date);
+async function refresh(dateYmd) {
+  const date = dateYmd || ymdTodayAthens();
+  const data = await fetchValue(date);
 
-    // if blocked by cooldown/backoff -> keep last UI state (no spam)
-    if (!data) return;
+  // if blocked by cooldown/backoff -> keep last UI state (no spam)
+  if (!data) return;
 
-    const items = Array.isArray(data.picks)
-      ? data.picks
-      : Array.isArray(data.items)
-        ? data.items
-        : [];
-    console.log(`[value-adapter] update ${date} picks= ${items.length}`);
+  const rawItems = Array.isArray(data.picks)
+    ? data.picks
+    : Array.isArray(data.items)
+      ? data.items
+      : [];
 
-    const payload = {
-      ok: true,
-      source: "value",
-      date,
-      total: items.length,
-      picks: items,
-      items // keep backward compatibility for older listeners
-    };
+  const LOW_MAX = 0.57;
+  const MEDIUM_MAX = 0.72;
+  const LOW_NEAR_MEDIUM_MIN = 0.54;
 
-    emit("value-picks:loaded", payload);
-    emit("value:update", payload);
-
+  function toBand(x) {
+    const n = Number(x);
+    if (!Number.isFinite(n)) return "LOW";
+    if (n >= MEDIUM_MAX) return "HIGH";
+    if (n >= LOW_MAX) return "MEDIUM";
+    return "LOW";
   }
+
+  function normalizePick(p) {
+    const score =
+      typeof p?.score === "number"
+        ? p.score
+        : typeof p?.confidence === "number"
+          ? p.confidence
+          : 0;
+
+    const confidenceNum =
+      typeof p?.confidence === "number"
+        ? p.confidence
+        : score;
+
+    const confidenceBand = toBand(confidenceNum);
+
+    return {
+      ...p,
+
+      // UI canonical fields
+      home: p?.home ?? p?.homeTeam ?? "—",
+      away: p?.away ?? p?.awayTeam ?? "—",
+      kickoff_ms:
+        typeof p?.kickoff_ms === "number"
+          ? p.kickoff_ms
+          : (p?.kickoff ? Date.parse(p.kickoff) : null),
+
+      // keep original too
+      homeTeam: p?.homeTeam ?? p?.home ?? "—",
+      awayTeam: p?.awayTeam ?? p?.away ?? "—",
+
+      // UI expects score + confidence
+      score,
+      confidence: confidenceBand,
+      confidenceValue: confidenceNum,
+
+      // panel filtering policy
+      includeInPanel:
+        confidenceBand === "HIGH" ||
+        confidenceBand === "MEDIUM" ||
+        (confidenceBand === "LOW" && confidenceNum >= LOW_NEAR_MEDIUM_MIN)
+    };
+  }
+
+  const normalizedItems = rawItems
+    .map(normalizePick)
+    .filter(p => p.includeInPanel);
+
+  console.log(
+    `[value-adapter] update ${date} raw=${rawItems.length} panel=${normalizedItems.length}`
+  );
+
+  const payload = {
+    ok: true,
+    source: "value",
+    date,
+    total: normalizedItems.length,
+    picks: normalizedItems,
+    items: normalizedItems // keep backward compatibility for older listeners
+  };
+
+  console.log("[value-adapter] emit payload", {
+    date,
+    total: payload.total,
+    sample: payload.picks[0] || null
+  });
+
+  emit("value-picks:loaded", payload);
+  emit("value:update", payload);
+}
 
   // ✅ Run once on load (safe)
   setTimeout(() => {
+    console.log("[value-adapter] boot:initial-refresh");
     refresh();
   }, 250);
 
   // ✅ Trigger VALUE when STAGING fixtures DATASET changes
 on("today-matches:loaded", (payload) => {
+  console.log("[value-adapter] today-matches:loaded", payload);
 
   const version = datasetVersionFromPayload(payload);
   if (!version) return;

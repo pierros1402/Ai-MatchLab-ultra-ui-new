@@ -23,16 +23,20 @@
   // DOM
   // --------------------------------------------------------------------------
   const root =
+    document.querySelector("#right-panel .intelligence-panel.value-panel") ||
+    document.querySelector("aside#right-panel .intelligence-panel.value-panel") ||
     document.querySelector("#value-panel") ||
     document.querySelector("[data-panel='value']") ||
     document.querySelector(".value-panel") ||
     document.querySelector("#panel-value");
 
-  if (!root) {
-    warn("Value panel root not found");
-    return;
-  }
+    if (!root) {
+      warn("Value panel root not found");
+      return;
+    }
 
+    log("root found", root);
+  console.log("[value-picks] root rect", root.getBoundingClientRect());
   const listEl =
     root.querySelector("#value-picks-list") ||
     root.querySelector(".value-picks-list") ||
@@ -230,12 +234,10 @@
   }
 
   function scoreToPct(score) {
-    if (typeof score !== "number" || !Number.isFinite(score)) return "—";
+    const n = Number(score);
+    if (!Number.isFinite(n)) return "—";
 
-    // Accept both 0..1 and 0..100 inputs
-    let pct = score <= 1 ? score * 100 : score;
-
-    // safety clamp
+    let pct = n <= 1 ? n * 100 : n;
     pct = Math.max(0, Math.min(100, pct));
 
     return `${Math.round(pct)}%`;
@@ -340,64 +342,86 @@ function applyFilters(picks) {
     return g;
   }
 
-  function sortPicks(picks) {
-    const rank = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-    return picks.slice().sort((a, b) => {
-      const ca = rank[confidenceKey(a?.confidence)] || 0;
-      const cb = rank[confidenceKey(b?.confidence)] || 0;
-      if (cb !== ca) return cb - ca;
-      const sa = Number(a?.score ?? 0);
-      const sb = Number(b?.score ?? 0);
-      return sb - sa;
-    });
-  }
+function sortPicks(picks) {
+  const rank = { HIGH: 3, MEDIUM: 2, LOW: 1 };
 
-  function renderRow(p) {
-    const league = leagueLabel(p);
-    const home = p?.home || "—";
-    const away = p?.away || "—";
+  return picks.slice().sort((a, b) => {
+    const ca = rank[confidenceKey(a?.confidence)] || 0;
+    const cb = rank[confidenceKey(b?.confidence)] || 0;
+    if (cb !== ca) return cb - ca;
 
-    const conf = confidenceKey(p?.confidence);
-    const scorePct = scoreToPct(p?.score);
+    const sa = Number(a?.confidenceValue ?? a?.score ?? 0);
+    const sb = Number(b?.confidenceValue ?? b?.score ?? 0);
+    if (sb !== sa) return sb - sa;
 
-    const status = String(p?.status || "PRE").toUpperCase();
+    return String(a?.home || "").localeCompare(String(b?.home || ""));
+  });
+}
 
-    // Hide PRE (noise). Keep LIVE/FT when they appear in future.
-    let statusBadge = "";
-    if (status === "LIVE") statusBadge = `<span class="value-badge live">LIVE</span>`;
-    else if (status === "FT") statusBadge = `<span class="value-badge ft">FT</span>`;
+function renderRow(p) {
+  const league = leagueLabel(p);
+  const home = p?.home ?? p?.homeTeam ?? "—";
+  const away = p?.away ?? p?.awayTeam ?? "—";
 
-    // If PRE, show kickoff time only if we have kickoff_ms
-    const time = kickoffHHMM(p?.kickoff_ms);
-    const timeHtml = time ? `<span class="value-time">${esc(time)}</span>` : "";
+  const conf = confidenceKey(p?.confidence);
+  const scorePct = scoreToPct(
+    typeof p?.score === "number"
+      ? p.score
+      : p?.confidenceValue
+  );
 
-    return `
-      <div class="value-row conf-${esc(conf.toLowerCase())}" data-match-id="${esc(p?.matchId || "")}" data-pick="${esc(String(p?.pick || "").toUpperCase())}">
-        <div class="value-row-top">
-          <div class="value-league">${esc(league)}</div>
-          <div class="value-meta">
-            ${timeHtml}
-            ${statusBadge}
-          </div>
-        </div>
+  const status = String(p?.status || "PRE").toUpperCase();
 
-        <div class="value-row-mid">
-          <div class="value-fixture">
-            <span class="value-home">${esc(home)}</span>
-            <span class="value-vs">vs</span>
-            <span class="value-away">${esc(away)}</span>
-          </div>
-        </div>
+  let statusBadge = "";
+  if (status === "LIVE") statusBadge = `<span class="value-badge live">LIVE</span>`;
+  else if (status === "FT") statusBadge = `<span class="value-badge ft">FT</span>`;
 
-        <div class="value-row-bot">
-          <div class="value-score"><span class="value-score-pct">${esc(scorePct)}</span><span class="value-score-pick">${esc(String(p?.pick || "").toUpperCase())}</span></div>
-          <div class="value-conf">${esc(conf)}</div>
+  const kickoffMs =
+    typeof p?.kickoff_ms === "number"
+      ? p.kickoff_ms
+      : (p?.kickoff ? Date.parse(p.kickoff) : null);
+
+  const time = kickoffHHMM(kickoffMs);
+  const timeHtml = time ? `<span class="value-time">${esc(time)}</span>` : "";
+
+  const pickLabel =
+    String(
+      p?.pick ??
+      p?.market ??
+      ""
+    ).toUpperCase() || "—";
+
+  return `
+    <div class="value-row conf-${esc(conf.toLowerCase())}" data-match-id="${esc(p?.matchId || "")}" data-pick="${esc(pickLabel)}">
+      <div class="value-row-top">
+        <div class="value-league">${esc(league)}</div>
+        <div class="value-meta">
+          ${timeHtml}
+          ${statusBadge}
         </div>
       </div>
-    `;
-  }
+
+      <div class="value-row-mid">
+        <div class="value-fixture">
+          <span class="value-home">${esc(home)}</span>
+          <span class="value-vs">vs</span>
+          <span class="value-away">${esc(away)}</span>
+        </div>
+      </div>
+
+      <div class="value-row-bot">
+        <div class="value-score">
+          <span class="value-score-pct">${esc(scorePct)}</span>
+          <span class="value-score-pick">${esc(pickLabel)}</span>
+        </div>
+        <div class="value-conf">${esc(conf)}</div>
+      </div>
+    </div>
+  `;
+}
 
   function render(payload) {
+    console.log("[value-picks] render:start", payload);
     window.AIML_PANEL?.set(root, "loading", "Loading value picks...");
     lastPayload = payload;
 
@@ -470,11 +494,112 @@ function applyFilters(picks) {
       </div>
     `;
 
-    hideAnalyzingIfHasPicks(total);
-    wireToolbar();
-    log("render", date, "picks=", filtered.length);
-  }
+    console.log("[value-picks] render:html-written", {
+      total,
+      filtered: filtered.length,
+      bodyEl,
+      htmlLength: bodyEl.innerHTML.length
+    });
 
+    window.AIML_PANEL?.set(root, "data");
+
+    try {
+      root.removeAttribute("hidden");
+      root.style.display = "";
+      root.style.visibility = "visible";
+      root.style.opacity = "1";
+
+      if (headWrapEl) {
+        headWrapEl.removeAttribute("hidden");
+        headWrapEl.style.display = "block";
+        headWrapEl.style.visibility = "visible";
+        headWrapEl.style.opacity = "1";
+      }
+
+      const panelBody =
+        root.querySelector(".panel-body") ||
+        root.querySelector(".panel-content");
+
+      if (panelBody) {
+        panelBody.removeAttribute("hidden");
+        panelBody.style.display = "block";
+        panelBody.style.visibility = "visible";
+        panelBody.style.opacity = "1";
+        panelBody.style.minHeight = "200px";
+        panelBody.style.height = "auto";
+        panelBody.style.maxHeight = "none";
+        panelBody.style.overflowY = "auto";
+      }
+
+      if (bodyEl) {
+        bodyEl.removeAttribute("hidden");
+        bodyEl.style.display = "block";
+        bodyEl.style.visibility = "visible";
+        bodyEl.style.opacity = "1";
+        bodyEl.style.position = "relative";
+        bodyEl.style.minHeight = "200px";
+        bodyEl.style.height = "auto";
+        bodyEl.style.maxHeight = "none";
+        bodyEl.style.overflow = "visible";
+        bodyEl.style.background = "rgba(255,0,0,0.06)";
+        bodyEl.style.border = "1px solid rgba(255,0,0,0.35)";
+      }
+
+      const sections = bodyEl.querySelector(".value-sections");
+      if (sections) {
+        sections.style.display = "block";
+        sections.style.visibility = "visible";
+        sections.style.opacity = "1";
+        sections.style.minHeight = "200px";
+        sections.style.height = "auto";
+        sections.style.maxHeight = "none";
+        sections.style.overflow = "visible";
+      }
+
+      bodyEl.querySelectorAll(".value-section").forEach((el) => {
+        el.style.display = "block";
+        el.style.visibility = "visible";
+        el.style.opacity = "1";
+        el.style.minHeight = "40px";
+        el.style.height = "auto";
+        el.style.maxHeight = "none";
+        el.style.overflow = "visible";
+        el.style.marginBottom = "8px";
+      });
+
+      bodyEl.querySelectorAll(".value-list-inner").forEach((el) => {
+        el.style.display = "block";
+        el.style.visibility = "visible";
+        el.style.opacity = "1";
+        el.style.height = "auto";
+        el.style.maxHeight = "none";
+        el.style.overflow = "visible";
+      });
+
+      bodyEl.querySelectorAll(".value-row").forEach((el) => {
+        el.style.display = "block";
+        el.style.visibility = "visible";
+        el.style.opacity = "1";
+        el.style.minHeight = "56px";
+        el.style.height = "auto";
+        el.style.maxHeight = "none";
+        el.style.overflow = "visible";
+        el.style.margin = "6px 0";
+        el.style.padding = "10px";
+        el.style.border = "1px solid rgba(255,255,255,0.15)";
+      });
+
+      const ph = root.querySelector(".panel-placeholder");
+      if (ph) ph.style.display = "none";
+
+      console.log("[value-picks] visibility patch applied", {
+        sections: bodyEl.querySelectorAll(".value-section").length,
+        rows: bodyEl.querySelectorAll(".value-row").length
+      });
+    } catch (err) {
+      console.warn("[value-picks] visibility patch failed", err);
+    }
+   }
   // --------------------------------------------------------------------------
   // EVENTS
   // --------------------------------------------------------------------------
@@ -497,6 +622,7 @@ function applyFilters(picks) {
 
     // Primary (from value-adapter.js)
     window.on("value:update", (payload) => {
+      console.log("[value-picks] value:update received", payload);
       render(toRenderPayload(payload));
     });
 
