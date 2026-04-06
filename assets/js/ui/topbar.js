@@ -354,14 +354,14 @@ btnToday.addEventListener("click", () => setInputs(today, today));
     exportMenu.querySelector("#export-fixtures")?.addEventListener("click", () => {
       const r = getRange();
       const token = getAdminToken();
-      const url = `${MAIN_BASE}/fixtures-export/range?from=${encodeURIComponent(r.from)}&to=${encodeURIComponent(r.to)}&format=csv&token=${encodeURIComponent(token)}`;
+      const url = `${MAIN_BASE}/fixtures-export/range?from=${encodeURIComponent(r.from)}&to=${encodeURIComponent(r.to)}&format=xlsx&token= ${encodeURIComponent(token)}`;
       window.open(url, "_blank");
     });
 
     exportMenu.querySelector("#export-value")?.addEventListener("click", () => {
       const r = getRange();
       const token = getAdminToken();
-      const url = `${MAIN_BASE}/value-export/range?from=${encodeURIComponent(r.from)}&to=${encodeURIComponent(r.to)}&format=csv&token=${encodeURIComponent(token)}`;
+      const url = `${MAIN_BASE}/value-export/range?from=${encodeURIComponent(r.from)}&to=${encodeURIComponent(r.to)}&format=xlsx&token=${encodeURIComponent(token)}`;
       window.open(url, "_blank");
     });
   }

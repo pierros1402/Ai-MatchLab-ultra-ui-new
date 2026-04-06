@@ -1,4 +1,5 @@
 import express from "express";
+import ExcelJS from "exceljs";
 import { athensDayKey, shiftDay } from "./core/daykey.js";
 import { ingestDay } from "./jobs/ingest-day.js";
 import { finalizeDayIfSafe } from "./jobs/finalize-day.js";
@@ -405,15 +406,101 @@ app.get("/value-export/range", async (req, res) => {
     }
   }
 
-  if (format !== "csv") {
-    return res.json({
-      ok: true,
-      from,
-      to,
-      count: rows.length,
-      picks: rows
+if (format === "json") {
+  return res.json({
+    ok: true,
+    from,
+    to,
+    count: rows.length,
+    picks: rows
+  });
+}
+
+if (format === "xlsx") {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Value Picks");
+
+  sheet.columns = [
+    { header: "Date", key: "date", width: 14 },
+    { header: "Kickoff", key: "kickoff", width: 22 },
+    { header: "League", key: "league", width: 16 },
+    { header: "Home", key: "home", width: 24 },
+    { header: "Away", key: "away", width: 24 },
+    { header: "Market", key: "market", width: 20 },
+    { header: "Pick", key: "pick", width: 16 },
+    { header: "Score", key: "score", width: 10 },
+    { header: "Confidence", key: "confidence", width: 12 }
+  ];
+
+  for (const row of rows) {
+    sheet.addRow({
+      date: row.date,
+      kickoff: row.kickoff,
+      league: row.league,
+      home: row.home,
+      away: row.away,
+      market: row.market,
+      pick: row.pick,
+      score: Number(row.score),
+      confidence: Number(row.confidence)
     });
   }
+
+  // Header style
+  const headerRow = sheet.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.alignment = { vertical: "middle", horizontal: "center" };
+
+  // Alignment by column
+  ["A", "B", "C", "F", "G", "H", "I"].forEach((col) => {
+    sheet.getColumn(col).alignment = {
+      vertical: "middle",
+      horizontal: "center"
+    };
+  });
+
+  ["D", "E"].forEach((col) => {
+    sheet.getColumn(col).alignment = {
+      vertical: "middle",
+      horizontal: "left"
+    };
+  });
+
+  // Number formatting
+  sheet.getColumn("H").numFmt = "0.000";
+  sheet.getColumn("I").numFmt = "0.000";
+
+  // Freeze header
+  sheet.views = [{ state: "frozen", ySplit: 1 }];
+
+  // Auto filter
+  sheet.autoFilter = {
+    from: "A1",
+    to: "I1"
+  };
+
+  res.setHeader(
+    "Content-Type",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="value-picks-${from}_to_${to}.xlsx"`
+  );
+
+  await workbook.xlsx.write(res);
+  return res.end();
+}
+
+if (format !== "csv") {
+  return res.json({
+    ok: true,
+    from,
+    to,
+    count: rows.length,
+    picks: rows
+  });
+}
 
   const header = [
     "date",
