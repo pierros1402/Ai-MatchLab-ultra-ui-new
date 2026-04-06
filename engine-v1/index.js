@@ -9,7 +9,11 @@ import { runDailyCycle } from "./jobs/run-daily-cycle.js";
 import { discoverWindow } from "./jobs/discover-window.js";
 import { buildFixturesRuntime } from "./api/fixtures-runtime.js";
 import { getFixtureById, getActiveByDay } from "./storage/json-db.js";
-import { evaluateMatchValue } from "./core/value-engine-v1.js";
+import {
+  evaluateMatchValue,
+  loadValueIndexes,
+  loadModelPriors
+} from "./core/value-engine-v1.js";
 
 const app = express();
 const PORT = 3010;
@@ -50,6 +54,58 @@ function isPlayable(match) {
   return true;
 }
 
+function shouldIncludeValuePick(p) {
+  const market = String(p?.market ?? p?.marketName ?? "").trim();
+  const scoreNum = Number(p?.score);
+
+  if (!Number.isFinite(scoreNum)) return false;
+
+  if (market === "Over / Under 1.5") {
+    return scoreNum >= 0.70;
+  }
+
+  if (market === "Over / Under 3.5") {
+    return scoreNum >= 0.64;
+  }
+
+  if (market === "BTTS") {
+    return scoreNum >= 0.64;
+  }
+
+  if (market === "1X2") {
+    return scoreNum >= 0.64;
+  }
+
+  if (market === "Over / Under 2.5") {
+    return scoreNum >= 0.58;
+  }
+
+  return false;
+}
+
+function csvEscape(value) {
+  const s = String(value ?? "");
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+function dateRange(from, to) {
+  const out = [];
+  const [fy, fm, fd] = String(from).split("-").map(Number);
+  const [ty, tm, td] = String(to).split("-").map(Number);
+
+  const start = new Date(Date.UTC(fy, fm - 1, fd, 12, 0, 0));
+  const end = new Date(Date.UTC(ty, tm - 1, td, 12, 0, 0));
+
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    out.push(`${y}-${m}-${day}`);
+  }
+
+  return out;
+}
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "engine-v1" });
 });
@@ -69,40 +125,200 @@ app.get("/fixtures-runtime", (req, res) => {
   });
 });
 
-app.get("/value-picks", async (req, res) => {
-  const date = String(req.query.date || athensDayKey());
-  const matches = getActiveByDay(date);
-  const picks = [];
 
-  for (const match of matches) {
-    if (!isPlayable(match)) continue;
+function expandValueMarkets(match, value) {
+  const items = [];
 
-    try {
-      const value = await evaluateMatchValue(match);
-      if (!value) continue;
+  const home = Number(value?.homeWinScore ?? -1);
+  const draw = Number(value?.drawScore ?? -1);
+  const away = Number(value?.awayWinScore ?? -1);
 
-      picks.push({
+  const over15 = Number(value?.over15Score ?? -1);
+  const over25 = Number(value?.over25Score ?? -1);
+  const over35 = Number(value?.over35Score ?? -1);
+
+  const btts = Number(value?.bttsScore ?? -1);
+  const confidence = Number(value?.confidence ?? 0);
+
+  // =========================
+  // 1X2 (NO DRAW BIAS)
+  // =========================
+  if (Number.isFinite(home) && Number.isFinite(away)) {
+    const best = Math.max(home, away);
+    const second = Math.min(home, away);
+
+    const gap = best - second;
+
+    // strong directional only
+    if (best >= 0.58 && gap >= 0.08) {
+      const pick = home > away ? "HOME" : "AWAY";
+
+      items.push({
         matchId: match.matchId,
         leagueSlug: match.leagueSlug,
         homeTeam: match.homeTeam,
         awayTeam: match.awayTeam,
         kickoff: match.kickoffUtc,
 
-        homeWinScore: value.homeWinScore ?? null,
-        drawScore: value.drawScore ?? null,
-        awayWinScore: value.awayWinScore ?? null,
+        market: "1X2",
+        marketName: "1X2",
+        pick,
+        score: best,
 
-        over25Score: value.over25Score ?? null,
-        bttsScore: value.bttsScore ?? null,
-
-        confidence: value.confidence ?? null,
+        confidence,
         signals: value.signals ?? [],
         modifiers: value.modifiers ?? {},
         context: value.context ?? {},
         meta: value.meta ?? {}
       });
-    } catch (err) {
-      console.warn("[value-picks] failed", match.matchId, err?.message || err);
+    }
+  }
+
+  // =========================
+  // OVER ONLY (UNDER HARD FILTERED)
+  // =========================
+
+  if (Number.isFinite(over15) && over15 >= 0.62) {
+    items.push({
+      matchId: match.matchId,
+      leagueSlug: match.leagueSlug,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      kickoff: match.kickoffUtc,
+
+      market: "Over / Under 1.5",
+      marketName: "Over / Under 1.5",
+      pick: "Over 1.5",
+      score: over15,
+
+      confidence,
+      signals: value.signals ?? [],
+      modifiers: value.modifiers ?? {},
+      context: value.context ?? {},
+      meta: value.meta ?? {}
+    });
+  }
+
+  if (Number.isFinite(over25) && over25 >= 0.57) {
+    items.push({
+      matchId: match.matchId,
+      leagueSlug: match.leagueSlug,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      kickoff: match.kickoffUtc,
+
+      market: "Over / Under 2.5",
+      marketName: "Over / Under 2.5",
+      pick: "Over 2.5",
+      score: over25,
+
+      confidence,
+      signals: value.signals ?? [],
+      modifiers: value.modifiers ?? {},
+      context: value.context ?? {},
+      meta: value.meta ?? {}
+    });
+  }
+
+  if (Number.isFinite(over35) && over35 >= 0.60) {
+    items.push({
+      matchId: match.matchId,
+      leagueSlug: match.leagueSlug,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      kickoff: match.kickoffUtc,
+
+      market: "Over / Under 3.5",
+      marketName: "Over / Under 3.5",
+      pick: "Over 3.5",
+      score: over35,
+
+      confidence,
+      signals: value.signals ?? [],
+      modifiers: value.modifiers ?? {},
+      context: value.context ?? {},
+      meta: value.meta ?? {}
+    });
+  }
+
+  // =========================
+  // BTTS YES ONLY (NO VERY HARD)
+  // =========================
+  if (Number.isFinite(btts) && btts >= 0.57) {
+    items.push({
+      matchId: match.matchId,
+      leagueSlug: match.leagueSlug,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      kickoff: match.kickoffUtc,
+
+      market: "BTTS",
+      marketName: "BTTS",
+      pick: "BTTS YES",
+      score: btts,
+
+      confidence,
+      signals: value.signals ?? [],
+      modifiers: value.modifiers ?? {},
+      context: value.context ?? {},
+      meta: value.meta ?? {}
+    });
+  }
+
+  return items;
+}
+
+app.get("/value-picks", async (req, res) => {
+  const date = String(req.query.date || athensDayKey());
+  const now = Date.now();
+  const season = "2025-2026";
+
+  const matches = getActiveByDay(date).filter(m => {
+    if (!isPlayable(m)) return false;
+
+    const status = String(m?.status || "").toUpperCase();
+    if (status !== "PRE") return false;
+
+    const kickoffTs = new Date(m?.kickoffUtc || 0).getTime();
+    return kickoffTs > now;
+  });
+
+  // load once
+  const [indexes, priors] = await Promise.all([
+    loadValueIndexes(season),
+    loadModelPriors(season)
+  ]);
+
+  const picks = [];
+  const concurrency = 4;
+
+  for (let i = 0; i < matches.length; i += concurrency) {
+    const chunk = matches.slice(i, i + concurrency);
+
+    const settled = await Promise.allSettled(
+      chunk.map(async (match) => {
+        const value = await evaluateMatchValue(
+          {
+            ...match,
+            kickoff: match.kickoffUtc,
+            season
+          },
+          {
+            season,
+            indexes,
+            priors
+          }
+        );
+
+        if (!value) return [];
+        return expandValueMarkets(match, value);
+      })
+    );
+
+    for (const item of settled) {
+      if (item.status === "fulfilled" && Array.isArray(item.value)) {
+        picks.push(...item.value);
+      }
     }
   }
 
@@ -112,6 +328,128 @@ app.get("/value-picks", async (req, res) => {
     count: picks.length,
     picks
   });
+});
+
+app.get("/value-export/range", async (req, res) => {
+  const from = String(req.query.from || athensDayKey());
+  const to = String(req.query.to || from);
+  const format = String(req.query.format || "csv").toLowerCase();
+  const season = "2025-2026";
+
+  const days = dateRange(from, to);
+
+  const [indexes, priors] = await Promise.all([
+    loadValueIndexes(season),
+    loadModelPriors(season)
+  ]);
+
+  const rows = [];
+
+  for (const date of days) {
+    const matches = getActiveByDay(date).filter(m => {
+      if (!isPlayable(m)) return false;
+
+      const status = String(m?.status || "").toUpperCase();
+      if (status !== "PRE") return false;
+
+      return true;
+    });
+
+    const picks = [];
+    const concurrency = 4;
+
+    for (let i = 0; i < matches.length; i += concurrency) {
+      const chunk = matches.slice(i, i + concurrency);
+
+      const settled = await Promise.allSettled(
+        chunk.map(async (match) => {
+          const value = await evaluateMatchValue(
+            {
+              ...match,
+              kickoff: match.kickoffUtc,
+              season
+            },
+            {
+              season,
+              indexes,
+              priors
+            }
+          );
+
+          if (!value) return [];
+          return expandValueMarkets(match, value);
+        })
+      );
+
+      for (const item of settled) {
+        if (item.status === "fulfilled" && Array.isArray(item.value)) {
+          picks.push(...item.value);
+        }
+      }
+    }
+
+    const filtered = picks.filter(shouldIncludeValuePick);
+
+    for (const p of filtered) {
+      rows.push({
+        date,
+        kickoff: p.kickoff,
+        league: p.leagueSlug,
+        home: p.homeTeam,
+        away: p.awayTeam,
+        market: p.market,
+        pick: p.pick,
+        score: p.score,
+        confidence: p.confidence
+      });
+    }
+  }
+
+  if (format !== "csv") {
+    return res.json({
+      ok: true,
+      from,
+      to,
+      count: rows.length,
+      picks: rows
+    });
+  }
+
+  const header = [
+    "date",
+    "kickoff",
+    "league",
+    "home",
+    "away",
+    "market",
+    "pick",
+    "score",
+    "confidence"
+  ];
+
+  const lines = [header.join(",")];
+
+  for (const row of rows) {
+    lines.push([
+      row.date,
+      row.kickoff,
+      row.league,
+      csvEscape(row.home),
+      csvEscape(row.away),
+      csvEscape(row.market),
+      csvEscape(row.pick),
+      row.score,
+      row.confidence
+    ].join(","));
+  }
+
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="value-picks-${from}_to_${to}.csv"`
+  );
+
+  res.send(lines.join("\n"));
 });
 
 app.get("/ingest", async (req, res) => {

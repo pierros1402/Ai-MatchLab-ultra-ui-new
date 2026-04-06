@@ -1121,12 +1121,32 @@ function computeGoalsProfile(homeMetrics, awayMetrics, leagueBaseline) {
       awayMetrics.continuityScore
     ]) || 0.35;
 
+  const over15Core = clamp(
+    (
+      totalGoalsNorm * 0.45 +
+      avg([homeMetrics.over25Rate, awayMetrics.over25Rate]) * 0.25 +
+      clamp(expectedTotalGoals / 3.2, 0, 1) * 0.30
+    ),
+    0,
+    1
+  );
+
   const over25Core = clamp(
     (
       totalGoalsNorm * 0.34 +
       avg([homeMetrics.over25Rate, awayMetrics.over25Rate]) * 0.31 +
       leagueOver25Rate * 0.20 +
       clamp(expectedTotalGoals / 4.2, 0, 1) * 0.15
+    ),
+    0,
+    1
+  );
+
+  const over35Core = clamp(
+    (
+      totalGoalsNorm * 0.25 +
+      avg([homeMetrics.over25Rate, awayMetrics.over25Rate]) * 0.25 +
+      clamp(expectedTotalGoals / 5.5, 0, 1) * 0.50
     ),
     0,
     1
@@ -1145,8 +1165,20 @@ function computeGoalsProfile(homeMetrics, awayMetrics, leagueBaseline) {
     1
   );
 
+  const over15Score = clamp(
+    (over15Core * (0.72 + temporalBlend * 0.20)),
+    0,
+    1
+  );
+
   const over25Score = clamp(
     (over25Core * (0.72 + temporalBlend * 0.20)),
+    0,
+    1
+  );
+
+  const over35Score = clamp(
+    (over35Core * (0.72 + temporalBlend * 0.20)),
     0,
     1
   );
@@ -1161,11 +1193,12 @@ function computeGoalsProfile(homeMetrics, awayMetrics, leagueBaseline) {
     expectedHomeGoals: round(expectedHomeGoals, 3),
     expectedAwayGoals: round(expectedAwayGoals, 3),
     expectedTotalGoals: round(expectedTotalGoals, 3),
+    over15Score,
     over25Score,
+    over35Score,
     bttsScore
   };
 }
-
 function computeMatchupBias(matchupEntry, homeTeam, awayTeam, season, fixtureDate) {
   const entry = matchupEntry || {};
   const matches = safeArray(
@@ -1723,7 +1756,9 @@ export async function evaluateMatchValue(input, opts = {}) {
     homeWinScore: round(outcomeScores.homeWinScore, 3),
     drawScore: round(outcomeScores.drawScore, 3),
     awayWinScore: round(outcomeScores.awayWinScore, 3),
+    over15Score: round(goalsProfile.over15Score, 3),
     over25Score: round(goalsProfile.over25Score, 3),
+    over35Score: round(goalsProfile.over35Score, 3),
     bttsScore: round(goalsProfile.bttsScore, 3),
     confidence: round(confidence, 3),
     signals,
@@ -1845,8 +1880,16 @@ export async function evaluateMatchValue(input, opts = {}) {
       contextApplied?.adjusted?.awayWinScore ?? baseValue.awayWinScore,
       3
     ),
+    over15Score: round(
+      contextApplied?.adjusted?.over15Score ?? baseValue.over15Score,
+      3
+    ),
     over25Score: round(
       contextApplied?.adjusted?.over25Score ?? baseValue.over25Score,
+      3
+    ),
+    over35Score: round(
+      contextApplied?.adjusted?.over35Score ?? baseValue.over35Score,
       3
     ),
     bttsScore: round(
@@ -1871,7 +1914,10 @@ export async function evaluateMatchValue(input, opts = {}) {
   };
 }
 
+export { loadModelPriors };
+
 export default {
   loadValueIndexes,
+  loadModelPriors,
   evaluateMatchValue
 };

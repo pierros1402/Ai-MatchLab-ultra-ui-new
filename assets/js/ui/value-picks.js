@@ -212,6 +212,15 @@
     // fallback
     return (m || "").trim() || "—";
   }
+  function marketFromPick(p) {
+    const marketRaw =
+      p?.market ??
+      p?.marketName ??
+      p?.pick ??
+      "";
+
+    return normalizeMarket(marketRaw);
+  }
 
   function marketShortLabel(m) {
     // Display labels inside sections (compact)
@@ -265,7 +274,7 @@
   // --------------------------------------------------------------------------
   function buildHeader(date, total, picks) {
     const markets = Array.from(
-      new Set(picks.map((p) => normalizeMarket(p?.market)).filter(Boolean))
+      new Set(picks.map((p) => marketFromPick(p)).filter(Boolean))
     ).sort();
 
     const leagues = Array.from(
@@ -322,26 +331,51 @@
   }
 
 function applyFilters(picks) {
-    return picks.filter((p) => {
-      const m = normalizeMarket(p?.market);
-      const l = leagueLabel(p);
+  return picks.filter((p) => {
+    const m = marketFromPick(p);
+    const l = leagueLabel(p);
 
-      if (selectedMarket !== "ALL" && m !== selectedMarket) return false;
-      if (selectedLeague !== "ALL" && l !== selectedLeague) return false;
+    // ---------------------------
+    // MARKET FILTER (normalized)
+    // ---------------------------
+    if (selectedMarket !== "ALL") {
+      const mm = String(m).trim().toLowerCase();
+      const sm = String(selectedMarket).trim().toLowerCase();
 
-      return true;
-    });
-  }
+      const map = {
+        "over 1.5": "over / under 1.5",
+        "over 2.5": "over / under 2.5",
+        "over 3.5": "over / under 3.5"
+      };
 
-  function groupByMarket(picks) {
-    const g = {};
-    for (const p of picks) {
-      const m = normalizeMarket(p?.market);
-      if (!g[m]) g[m] = [];
-      g[m].push(p);
+      const smNorm = map[sm] || sm;
+
+      if (mm !== smNorm) return false;
     }
-    return g;
+
+    // ---------------------------
+    // LEAGUE FILTER (safe match)
+    // ---------------------------
+    if (
+      selectedLeague !== "ALL" &&
+      String(l).trim().toLowerCase() !== String(selectedLeague).trim().toLowerCase()
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function groupByMarket(picks) {
+  const g = {};
+  for (const p of picks) {
+    const m = marketFromPick(p);
+    if (!g[m]) g[m] = [];
+    g[m].push(p);
   }
+  return g;
+}
 
 function sortPicks(picks) {
   const rank = { HIGH: 3, MEDIUM: 2, LOW: 1 };
@@ -385,13 +419,11 @@ function renderRow(p) {
   const time = kickoffHHMM(kickoffMs);
   const timeHtml = time ? `<span class="value-time">${esc(time)}</span>` : "";
 
+  const marketLabel = marketShortLabel(marketFromPick(p));
   const pickLabel =
-    String(
-      p?.pick ??
-      p?.market ??
-      ""
-    ).toUpperCase() || "—";
-
+    String(p?.pick || "").trim() ||
+    marketLabel ||
+    "—";
   return `
     <div class="value-row conf-${esc(conf.toLowerCase())}" data-match-id="${esc(p?.matchId || "")}" data-pick="${esc(pickLabel)}">
       <div class="value-row-top">
@@ -453,8 +485,15 @@ function renderRow(p) {
 
     const filtered = applyFilters(allPicks);
 if (!filtered.length) {
-  if (headWrapEl) headWrapEl.innerHTML = headerHtml;
-  bodyEl.innerHTML = `<div class="panel-empty">No picks for selected filters.</div>`;
+  if (headWrapEl) {
+    headWrapEl.innerHTML = headerHtml;
+    bodyEl.innerHTML = `<div class="panel-empty">No picks for selected filters.</div>`;
+  } else {
+    bodyEl.innerHTML = `
+      ${headerHtml}
+      <div class="panel-empty">No picks for selected filters.</div>
+    `;
+  }
 
   window.AIML_PANEL?.set(root, "data");
   hideAnalyzingIfHasPicks(total);
@@ -482,6 +521,7 @@ if (!filtered.length) {
 
       return `
         <div class="value-section">
+          <div class="value-section-title">${esc(marketShortLabel(m))}</div>
           <div class="value-list-inner">
             ${rows}
           </div>
@@ -489,12 +529,23 @@ if (!filtered.length) {
       `;
     }).join("");
 
-    if (headWrapEl) headWrapEl.innerHTML = headerHtml;
-    bodyEl.innerHTML = `
-      <div class="value-sections">
-        ${sectionsHtml}
-      </div>
-    `;
+    if (headWrapEl) {
+      headWrapEl.innerHTML = headerHtml;
+      bodyEl.innerHTML = `
+        <div class="value-sections">
+          ${sectionsHtml}
+        </div>
+      `;
+    } else {
+      bodyEl.innerHTML = `
+        ${headerHtml}
+        <div class="value-sections">
+          ${sectionsHtml}
+        </div>
+      `;
+    }
+
+    wireToolbar();
     if (bodyEl) {
       bodyEl.style.minHeight = "200px";
     }

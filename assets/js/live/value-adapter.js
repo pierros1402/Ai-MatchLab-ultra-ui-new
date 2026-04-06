@@ -1,13 +1,9 @@
 /* =========================================================
-   VALUE ADAPTER (anti-429 patch)
+   VALUE ADAPTER (one-shot daily static value)
 ========================================================= */
 
 (function () {
   console.log("[value-adapter] boot:start");
-
-  let __AIML_VALUE_BOUND_DATE = null;
-  let __AIML_VALUE_LAST_HASH = null;
-  let __AIML_VALUE_DATASET_VERSION = null;
 
   if (!window.on || !window.emit) {
     console.warn("[value-adapter] boot:missing-bus", {
@@ -29,18 +25,13 @@
         ? window.AIML_CONFIG.BASE_URL
         : "http://localhost:3010";
 
+  const ENDPOINT =
+    (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valuePicksPath) ||
+    "/value-picks";
 
-  const ENDPOINT = (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valuePicksPath) || "/value-picks";
-
-  // ✅ Anti-429 guard (cooldown + backoff)
-  let __AIML_VALUE_LAST_FETCH_MS = 0;
-  let __AIML_VALUE_INFLIGHT = false;
-  let __AIML_VALUE_BACKOFF_UNTIL = 0;
-
-  const __AIML_VALUE_COOLDOWN_MS = 30_000;   // 30s cooldown (prevents spam)
-  const __AIML_VALUE_BACKOFF_429_MS = 60_000; // 60s backoff on 429
-
-  function pad2(n) { return String(n).padStart(2, "0"); }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
 
   function ymdTodayAthens() {
     try {
@@ -63,190 +54,150 @@
   }
 
   async function fetchValue(dateYmd) {
-    const now = Date.now();
-
-    // ✅ prevent parallel requests
-    if (__AIML_VALUE_INFLIGHT) return null;
-
-    // ✅ if we are rate limited, wait
-    if (now < __AIML_VALUE_BACKOFF_UNTIL) return null;
-
-    // ✅ cooldown: do not hammer endpoint
-    if (now - __AIML_VALUE_LAST_FETCH_MS < __AIML_VALUE_COOLDOWN_MS) return null;
-
     const url =
       (BASE ? BASE.replace(/\/$/, "") : "http://localhost:3010") +
       ENDPOINT +
       `?date=${encodeURIComponent(dateYmd)}`;
 
-    __AIML_VALUE_INFLIGHT = true;
-
     try {
+      console.log("[value-adapter] fetch:start", url);
+
       const r = await RAW_FETCH(url, {
-        cache: "no-store",
+        cache: "no-store"
       });
 
-      if (r.status === 429) {
-        __AIML_VALUE_BACKOFF_UNTIL = Date.now() + __AIML_VALUE_BACKOFF_429_MS;
-        console.warn("[value-adapter] 429 rate-limited -> backoff 60s");
-        return null;
-      }
+      console.log("[value-adapter] fetch:status", r.status, url);
 
       if (!r.ok) {
         console.warn("[value-adapter] fetch failed", r.status);
         return null;
       }
 
-      const data = await r.json();
-      __AIML_VALUE_LAST_FETCH_MS = Date.now();
-      return data;
+      return await r.json();
     } catch (err) {
       console.warn("[value-adapter] fetch error", err);
       return null;
-    } finally {
-      __AIML_VALUE_INFLIGHT = false;
     }
   }
 
   
-  function datasetVersionFromPayload(payload) {
-    const arr =
-      Array.isArray(payload?.matches)
-        ? payload.matches
-        : [];
-
-    if (!arr.length) return null;
-
-    return arr
-      .map(m => String(m.id))
-      .sort()
-      .join("|");
-  }
-
-async function refresh(dateYmd) {
-  const date = dateYmd || ymdTodayAthens();
-  const data = await fetchValue(date);
-
-  // if blocked by cooldown/backoff -> keep last UI state (no spam)
-  if (!data) return;
-
-  const rawItems = Array.isArray(data.picks)
-    ? data.picks
-    : Array.isArray(data.items)
-      ? data.items
-      : [];
-
-  const LOW_MAX = 0.57;
-  const MEDIUM_MAX = 0.72;
-  const LOW_NEAR_MEDIUM_MIN = 0.54;
-
   function toBand(x) {
     const n = Number(x);
     if (!Number.isFinite(n)) return "LOW";
-    if (n >= MEDIUM_MAX) return "HIGH";
-    if (n >= LOW_MAX) return "MEDIUM";
+    if (n >= 0.72) return "HIGH";
+    if (n >= 0.57) return "MEDIUM";
     return "LOW";
   }
 
-  function normalizePick(p) {
-    const score =
-      typeof p?.score === "number"
-        ? p.score
-        : typeof p?.confidence === "number"
-          ? p.confidence
-          : 0;
-
-    const confidenceNum =
-      typeof p?.confidence === "number"
+function normalizePick(p) {
+  const score =
+    typeof p?.score === "number" && Number.isFinite(p.score)
+      ? p.score
+      : typeof p?.confidence === "number" && Number.isFinite(p.confidence)
         ? p.confidence
-        : score;
+        : 0;
 
-    const confidenceBand = toBand(confidenceNum);
+  const confidenceNum =
+    typeof p?.confidence === "number" && Number.isFinite(p.confidence)
+      ? p.confidence
+      : score;
 
-    return {
-      ...p,
+  const confidenceBand = toBand(confidenceNum);
 
-      // UI canonical fields
-      home: p?.home ?? p?.homeTeam ?? "—",
-      away: p?.away ?? p?.awayTeam ?? "—",
-      kickoff_ms:
-        typeof p?.kickoff_ms === "number"
-          ? p.kickoff_ms
-          : (p?.kickoff ? Date.parse(p.kickoff) : null),
+  return {
+    ...p,
 
-      // keep original too
-      homeTeam: p?.homeTeam ?? p?.home ?? "—",
-      awayTeam: p?.awayTeam ?? p?.away ?? "—",
+    market: p?.market ?? p?.marketName ?? "—",
+    marketName: p?.marketName ?? p?.market ?? "—",
+    pick: p?.pick ?? "—",
 
-      // UI expects score + confidence
-      score,
-      confidence: confidenceBand,
-      confidenceValue: confidenceNum,
+    home: p?.home ?? p?.homeTeam ?? "—",
+    away: p?.away ?? p?.awayTeam ?? "—",
 
-      // panel filtering policy
-      includeInPanel:
-        confidenceBand === "HIGH" ||
-        confidenceBand === "MEDIUM" ||
-        (confidenceBand === "LOW" && confidenceNum >= LOW_NEAR_MEDIUM_MIN)
-    };
-  }
+    kickoff_ms:
+      typeof p?.kickoff_ms === "number"
+        ? p.kickoff_ms
+        : (p?.kickoff ? Date.parse(p.kickoff) : null),
 
-  const normalizedItems = rawItems
-    .map(normalizePick)
-    .filter(p => p.includeInPanel);
+    homeTeam: p?.homeTeam ?? p?.home ?? "—",
+    awayTeam: p?.awayTeam ?? p?.away ?? "—",
 
-  console.log(
-    `[value-adapter] update ${date} raw=${rawItems.length} panel=${normalizedItems.length}`
-  );
+    score,
+    confidence: confidenceBand,
+    confidenceValue: confidenceNum,
 
-  const payload = {
-    ok: true,
-    source: "value",
-    date,
-    total: normalizedItems.length,
-    picks: normalizedItems,
-    items: normalizedItems // keep backward compatibility for older listeners
+    includeInPanel: (() => {
+      const market = String(p?.market ?? p?.marketName ?? "").trim();
+      const scoreNum = Number(score);
+
+      if (!Number.isFinite(scoreNum)) return false;
+
+      if (market === "Over / Under 1.5") {
+        return scoreNum >= 0.70;
+      }
+
+      if (market === "Over / Under 3.5") {
+        return scoreNum >= 0.66;
+      }
+
+      if (market === "BTTS") {
+        return scoreNum >= 0.66;
+      }
+
+      if (market === "1X2") {
+        return scoreNum >= 0.64;
+      }
+
+      if (market === "Over / Under 2.5") {
+        return scoreNum >= 0.58;
+      }
+
+      return false;
+    })()
   };
-
-  console.log("[value-adapter] emit payload", {
-    date,
-    total: payload.total,
-    sample: payload.picks[0] || null
-  });
-
-  emit("value-picks:loaded", payload);
-  emit("value:update", payload);
 }
 
-  // ✅ Run once on load (safe)
+  async function refreshOnce(dateYmd) {
+    const date = dateYmd || ymdTodayAthens();
+    const data = await fetchValue(date);
+
+    if (!data) return;
+
+    const rawItems = Array.isArray(data?.picks)
+      ? data.picks
+      : Array.isArray(data?.items)
+        ? data.items
+        : [];
+
+    const normalizedItems = rawItems
+      .map(normalizePick)
+      .filter(p => p.includeInPanel);
+
+    console.log(
+      `[value-adapter] update ${date} raw=${rawItems.length} panel=${normalizedItems.length}`
+    );
+
+    const payload = {
+      ok: true,
+      source: "value",
+      date,
+      total: normalizedItems.length,
+      picks: normalizedItems,
+      items: normalizedItems
+    };
+
+    console.log("[value-adapter] emit payload", {
+      date,
+      total: payload.total,
+      sample: payload.picks[0] || null
+    });
+
+    emit("value-picks:loaded", payload);
+    emit("value:update", payload);
+  }
+
   setTimeout(() => {
     console.log("[value-adapter] boot:initial-refresh");
-    refresh();
-  }, 250);
-
-  // ✅ Trigger VALUE when STAGING fixtures DATASET changes
-on("today-matches:loaded", (payload) => {
-  console.log("[value-adapter] today-matches:loaded", payload);
-
-  const version = datasetVersionFromPayload(payload);
-  if (!version) return;
-
-  // run only when fixtures dataset actually changes
-  if (__AIML_VALUE_DATASET_VERSION === version) return;
-
-  __AIML_VALUE_DATASET_VERSION = version;
-
-  const date = (payload && payload.date)
-    ? payload.date
-    : ymdTodayAthens();
-
-  refresh(date);
-});
-
-  // Optional: allow manual force refresh without spam
-  on("value:refresh", (dateYmd) => {
-    // bypass cooldown only if you want, but for safety we keep it respecting cooldown
-    refresh(dateYmd);
-  });
-
+    refreshOnce();
+  }, 100);
 })();

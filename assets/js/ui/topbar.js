@@ -346,7 +346,10 @@ btnToday.addEventListener("click", () => setInputs(today, today));
       return localStorage.getItem("aiml_admin_token") || "1234";
     }
 
-    const MAIN_BASE = "https://aimatchlab-main-worker.pierros1402.workers.dev";
+    const MAIN_BASE =
+      (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
+        ? window.AIML_LIVE_CFG.fixturesBase
+        : "http://localhost:3010";
 
     exportMenu.querySelector("#export-fixtures")?.addEventListener("click", () => {
       const r = getRange();
@@ -393,8 +396,8 @@ btnToday.addEventListener("click", () => setInputs(today, today));
     localStorage.removeItem(ADMIN_KEY);
   }
 
-  // Restore on load
-  if (localStorage.getItem(ADMIN_KEY) === "1") enableAdmin();
+  // Always enable admin tools
+  enableAdmin();
 
   // Ctrl+Shift+E toggles admin (safe single handler)
   window.addEventListener("keydown", (e) => {
