@@ -31,7 +31,8 @@
   /* Panel surfaces (ONLY ONE visible) */
   .left-column,
   #odds-intelligence-center,
-  aside.right-column{
+  aside.right-column,
+  .right-column{
     width: 100% !important;
     min-width: 0 !important;
 
@@ -48,7 +49,8 @@
   /* JS-driven view switching */
   body.mobile-view-left .left-column{ display: flex !important; }
   body.mobile-view-odds #odds-intelligence-center{ display: flex !important; }
-  body.mobile-view-right aside.right-column{ display: flex !important; }
+  body.mobile-view-right aside.right-column,
+  body.mobile-view-right .right-column{ display: flex !important; }
 
   /* Safety */
   #odds-intelligence-center{
@@ -65,39 +67,7 @@
     max-width: 220px !important;
   }
 
-  /* =========================================================
-     FIX: OIC header (title + no-match + market select)
-  ========================================================= */
-  #odds-intelligence-center header.oic-header{
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 10px !important;
-  }
-
-  #odds-intelligence-center .oic-title{
-    width: 100% !important;
-    white-space: normal !important;
-    line-height: 1.15 !important;
-  }
-
-  #odds-intelligence-center .oic-active-match{
-    width: 100% !important;
-    min-width: 0 !important;
-
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 8px !important;
-  }
-
-  #odds-intelligence-center .oic-active-match select{
-    width: 140px !important;
-    max-width: 100% !important;
-  }
-
-}
-  /* =========================================================
+   /* =========================================================
      FIX: OIC header (title + no-match + market select)
   ========================================================= */
   #odds-intelligence-center header.oic-header{
