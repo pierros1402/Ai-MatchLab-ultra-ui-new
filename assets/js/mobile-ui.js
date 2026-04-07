@@ -24,13 +24,12 @@
 
   // ✅ helper: clear inline display so desktop CSS can take over
   function resetDesktopPanels() {
+    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile- view-right");
+
     const { left, odds, right } = getPanels();
-
-    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
-
-    if (left) left.style.display = "";
-    if (odds) odds.style.display = "";
-    if (right) right.style.display = "";
+    if (left) left.style.removeProperty("display");
+    if (odds) odds.style.removeProperty("display");
+    if (right) right.style.removeProperty("display");
   }
 
   function hideMenu() {
@@ -56,8 +55,6 @@
   }
 
 function setView(view) {
-  const { left, odds, right } = getPanels();
-
   if (!isMobile()) {
     resetDesktopPanels();
     hideMenu();
@@ -66,25 +63,14 @@ function setView(view) {
 
   document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
 
-  if (left) left.style.display = "none";
-  if (odds) odds.style.display = "none";
-  if (right) right.style.display = "none";
-
-  if (view === "left") {
-    document.body.classList.add("mobile-view-left");
-    if (left) left.style.display = "flex";
-    setLabel("LEFT");
-  } else if (view === "odds") {
+  if (view === "odds") {
     document.body.classList.add("mobile-view-odds");
-    if (odds) odds.style.display = "flex";
     setLabel("ODDS");
   } else if (view === "right") {
     document.body.classList.add("mobile-view-right");
-    if (right) right.style.display = "flex";
     setLabel("RIGHT");
   } else {
     document.body.classList.add("mobile-view-left");
-    if (left) left.style.display = "flex";
     setLabel("LEFT");
   }
 
