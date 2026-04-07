@@ -26,7 +26,7 @@
   function resetDesktopPanels() {
     const { left, odds, right } = getPanels();
 
-    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-  view-right");
+    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
 
     if (left) left.style.display = "";
     if (odds) odds.style.display = "";
