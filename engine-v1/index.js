@@ -14,7 +14,7 @@ import { buildValueDay } from "./core/build-value-day.js";
 
 
 const app = express();
-const PORT = 3010;
+const PORT = process.env.PORT || 3010;
 
 
 app.use((req, res, next) => {
@@ -438,6 +438,6 @@ if (command === "discover-window") {
   process.exit(0);
 }
 
-app.listen(PORT, () => {
-  console.log(`engine-v1 listening on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`engine-v1 listening on ${PORT}`);
 });
