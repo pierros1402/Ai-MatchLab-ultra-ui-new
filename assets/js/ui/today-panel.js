@@ -49,18 +49,21 @@
     });
   }
 
-  function isLiveStatus(st) {
-    const s = String(st || "").toUpperCase();
+ function isLiveStatus(st) {
+   if (!st) return false;
 
-    return (
-      s.includes("LIVE") ||
-      s.includes("IN_PROGRESS") ||
-      s.includes("FIRST_HALF") ||
-      s.includes("SECOND_HALF") ||
-      s.includes("HALF_TIME") ||
-      s.includes("EXTRA_TIME")
-    );
-  }
+   const s = String(st).toUpperCase();
+
+   return (
+     s === "LIVE" ||                 // 👈 ΠΡΟΣΘΗΚΗ
+     s.includes("IN_PROGRESS") ||
+     s.includes("LIVE") ||
+     s.includes("FIRST_HALF") ||
+     s.includes("SECOND_HALF") ||
+     s.includes("HALF_TIME") ||
+     s.includes("EXTRA_TIME")
+   );
+ }
 
   function startOfTodayLocalMs() {
     const now = new Date();

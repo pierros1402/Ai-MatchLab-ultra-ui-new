@@ -80,15 +80,16 @@ function initLivePanel(panel) {
   function isLiveStatus(st) {
     if (!st) return false;
 
-    st = String(st).toUpperCase();
+    const s = String(st).toUpperCase();
 
     return (
-      st.includes("LIVE") ||
-      st.includes("IN_PROGRESS") ||
-      st.includes("FIRST_HALF") ||
-      st.includes("SECOND_HALF") ||
-      st.includes("HALF_TIME") ||
-      st.includes("EXTRA_TIME")
+      s === "LIVE" ||                 // 👈 ΠΡΟΣΘΗΚΗ
+      s.includes("IN_PROGRESS") ||
+      s.includes("LIVE") ||
+      s.includes("FIRST_HALF") ||
+      s.includes("SECOND_HALF") ||
+      s.includes("HALF_TIME") ||
+      s.includes("EXTRA_TIME")
     );
   }
 

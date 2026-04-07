@@ -211,7 +211,9 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     const payload = {
       date: data.date || dateYmd,
       matches: mergedMatches,
-      total: Number.isFinite(data.total) ? data.total : mergedMatches.length,
+      total: Number.isFinite(data.count)
+        ? data.count
+        : mergedMatches.length,
       hash: buildHash(mergedMatches)
     };
 
@@ -242,7 +244,9 @@ async function loadActive(dateYmd) {
   const payload = {
     date: data.date || dateYmd,
     matches: mergedMatches,
-    total: Number.isFinite(data.total) ? data.total : mergedMatches.length,
+    total: Number.isFinite(data.count)
+      ? data.count
+      : mergedMatches.length,
     hash: buildHash(mergedMatches)
   };
 

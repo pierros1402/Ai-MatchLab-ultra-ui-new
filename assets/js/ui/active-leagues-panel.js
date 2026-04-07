@@ -25,6 +25,7 @@
   function isFinalStatus(status) {
     const s = normStatus(status);
     return (
+      s === "FT" ||  // 👈 ΑΥΤΟ ΛΕΙΠΕ
       s.includes("FULL_TIME") ||
       s.includes("FINAL") ||
       s.includes("AET") ||

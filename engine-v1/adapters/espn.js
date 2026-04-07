@@ -159,7 +159,7 @@ export async function fetchLeagueFixtures(slug, date = null) {
     }
 
     return {
-      events: normalizePayloadEvents(data, slug)
+      events: Array.isArray(data?.events) ? data.events : []
     };
   } catch (e) {
     console.log("[espn adapter] fatal", slug, date, e?.message || e);

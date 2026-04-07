@@ -4,6 +4,7 @@ import { fetchLeagueFixturesSource2 } from "../adapters/source2.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { normalizeFixtureSource2 } from "../core/normalize-source2.js";
 import { reconcileObservations } from "../core/reconcile-observations.js";
+import { buildValueDay } from "../core/build-value-day.js";
 import {
   getFixtureById,
   upsertFixtureWithMeta
@@ -266,6 +267,24 @@ const ESPN_SUPPORTED = new Set([
       }
     }
   }
+
+try {
+  const hasRealChanges =
+    results.inserted > 0 ||
+    results.updated > 0;
+
+  if (hasRealChanges) {
+    console.log("[ingest] auto value build:start", { dayKey });
+
+    await buildValueDay(dayKey, { rebuild: true, env });
+
+    console.log("[ingest] auto value build:done", { dayKey });
+  } else {
+    console.log("[ingest] auto value skipped:no changes", { dayKey });
+  }
+} catch (err) {
+  console.error("[ingest] auto value build FAILED", err);
+}
 
   return results;
 }

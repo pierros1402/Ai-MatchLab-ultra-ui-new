@@ -9,15 +9,13 @@ import { monitorActiveLeagues } from "./jobs/monitor-active-leagues.js";
 import { runDailyCycle } from "./jobs/run-daily-cycle.js";
 import { discoverWindow } from "./jobs/discover-window.js";
 import { buildFixturesRuntime } from "./api/fixtures-runtime.js";
-import { getFixtureById, getActiveByDay } from "./storage/json-db.js";
-import {
-  evaluateMatchValue,
-  loadValueIndexes,
-  loadModelPriors
-} from "./core/value-engine-v1.js";
+import { getFixtureById } from "./storage/json-db.js";
+import { buildValueDay } from "./core/build-value-day.js";
+
 
 const app = express();
 const PORT = 3010;
+
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -42,18 +40,6 @@ function boolParam(value, fallback = false) {
   return s === "1" || s === "true" || s === "yes";
 }
 
-function isPlayable(match) {
-  if (!match) return false;
-  if (!match.homeTeam || !match.awayTeam) return false;
-  if (!match.kickoffUtc) return false;
-
-  const s = String(match.status || "").toUpperCase();
-
-  if (s.includes("POSTPONED")) return false;
-  if (s.includes("CANCELLED")) return false;
-
-  return true;
-}
 
 function shouldIncludeValuePick(p) {
   const market = String(p?.market ?? p?.marketName ?? "").trim();
@@ -107,6 +93,7 @@ function dateRange(from, to) {
   return out;
 }
 
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "engine-v1" });
 });
@@ -127,269 +114,28 @@ app.get("/fixtures-runtime", (req, res) => {
 });
 
 
-function expandValueMarkets(match, value) {
-  const items = [];
-
-  const home = Number(value?.homeWinScore ?? -1);
-  const draw = Number(value?.drawScore ?? -1);
-  const away = Number(value?.awayWinScore ?? -1);
-
-  const over15 = Number(value?.over15Score ?? -1);
-  const over25 = Number(value?.over25Score ?? -1);
-  const over35 = Number(value?.over35Score ?? -1);
-
-  const btts = Number(value?.bttsScore ?? -1);
-  const confidence = Number(value?.confidence ?? 0);
-
-  // =========================
-  // 1X2 (NO DRAW BIAS)
-  // =========================
-  if (Number.isFinite(home) && Number.isFinite(away)) {
-    const best = Math.max(home, away);
-    const second = Math.min(home, away);
-
-    const gap = best - second;
-
-    // strong directional only
-    if (best >= 0.58 && gap >= 0.08) {
-      const pick = home > away ? "HOME" : "AWAY";
-
-      items.push({
-        matchId: match.matchId,
-        leagueSlug: match.leagueSlug,
-        homeTeam: match.homeTeam,
-        awayTeam: match.awayTeam,
-        kickoff: match.kickoffUtc,
-
-        market: "1X2",
-        marketName: "1X2",
-        pick,
-        score: best,
-
-        confidence,
-        signals: value.signals ?? [],
-        modifiers: value.modifiers ?? {},
-        context: value.context ?? {},
-        meta: value.meta ?? {}
-      });
-    }
-  }
-
-  // =========================
-  // OVER ONLY (UNDER HARD FILTERED)
-  // =========================
-
-  if (Number.isFinite(over15) && over15 >= 0.62) {
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
-
-      market: "Over / Under 1.5",
-      marketName: "Over / Under 1.5",
-      pick: "Over 1.5",
-      score: over15,
-
-      confidence,
-      signals: value.signals ?? [],
-      modifiers: value.modifiers ?? {},
-      context: value.context ?? {},
-      meta: value.meta ?? {}
-    });
-  }
-
-  if (Number.isFinite(over25) && over25 >= 0.57) {
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
-
-      market: "Over / Under 2.5",
-      marketName: "Over / Under 2.5",
-      pick: "Over 2.5",
-      score: over25,
-
-      confidence,
-      signals: value.signals ?? [],
-      modifiers: value.modifiers ?? {},
-      context: value.context ?? {},
-      meta: value.meta ?? {}
-    });
-  }
-
-  if (Number.isFinite(over35) && over35 >= 0.60) {
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
-
-      market: "Over / Under 3.5",
-      marketName: "Over / Under 3.5",
-      pick: "Over 3.5",
-      score: over35,
-
-      confidence,
-      signals: value.signals ?? [],
-      modifiers: value.modifiers ?? {},
-      context: value.context ?? {},
-      meta: value.meta ?? {}
-    });
-  }
-
-  // =========================
-  // BTTS YES ONLY (NO VERY HARD)
-  // =========================
-  if (Number.isFinite(btts) && btts >= 0.57) {
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
-
-      market: "BTTS",
-      marketName: "BTTS",
-      pick: "BTTS YES",
-      score: btts,
-
-      confidence,
-      signals: value.signals ?? [],
-      modifiers: value.modifiers ?? {},
-      context: value.context ?? {},
-      meta: value.meta ?? {}
-    });
-  }
-
-  return items;
-}
 
 app.get("/value-picks", async (req, res) => {
   const date = String(req.query.date || athensDayKey());
-  const now = Date.now();
-  const season = "2025-2026";
+  const rebuild = boolParam(req.query.rebuild, false);
 
-  const matches = getActiveByDay(date).filter(m => {
-    if (!isPlayable(m)) return false;
-
-    const status = String(m?.status || "").toUpperCase();
-    if (status !== "PRE") return false;
-
-    const kickoffTs = new Date(m?.kickoffUtc || 0).getTime();
-    return kickoffTs > now;
-  });
-
-  // load once
-  const [indexes, priors] = await Promise.all([
-    loadValueIndexes(season),
-    loadModelPriors(season)
-  ]);
-
-  const picks = [];
-  const concurrency = 4;
-
-  for (let i = 0; i < matches.length; i += concurrency) {
-    const chunk = matches.slice(i, i + concurrency);
-
-    const settled = await Promise.allSettled(
-      chunk.map(async (match) => {
-        const value = await evaluateMatchValue(
-          {
-            ...match,
-            kickoff: match.kickoffUtc,
-            season
-          },
-          {
-            season,
-            indexes,
-            priors
-          }
-        );
-
-        if (!value) return [];
-        return expandValueMarkets(match, value);
-      })
-    );
-
-    for (const item of settled) {
-      if (item.status === "fulfilled" && Array.isArray(item.value)) {
-        picks.push(...item.value);
-      }
-    }
-  }
-
-  res.json({
-    ok: true,
-    date,
-    count: picks.length,
-    picks
-  });
+  const result = await buildValueDay(date, { rebuild });
+  res.json(result);
 });
 
 app.get("/value-export/range", async (req, res) => {
   const from = String(req.query.from || athensDayKey());
   const to = String(req.query.to || from);
   const format = String(req.query.format || "csv").toLowerCase();
-  const season = "2025-2026";
-
   const days = dateRange(from, to);
-
-  const [indexes, priors] = await Promise.all([
-    loadValueIndexes(season),
-    loadModelPriors(season)
-  ]);
+  const rebuild = boolParam(req.query.rebuild, false);
 
   const rows = [];
 
   for (const date of days) {
-    const matches = getActiveByDay(date).filter(m => {
-      if (!isPlayable(m)) return false;
+    const result = await buildValueDay(date, { rebuild });
+    const filtered = result.picks.filter(shouldIncludeValuePick);
 
-      const status = String(m?.status || "").toUpperCase();
-      if (status !== "PRE") return false;
-
-      return true;
-    });
-
-    const picks = [];
-    const concurrency = 4;
-
-    for (let i = 0; i < matches.length; i += concurrency) {
-      const chunk = matches.slice(i, i + concurrency);
-
-      const settled = await Promise.allSettled(
-        chunk.map(async (match) => {
-          const value = await evaluateMatchValue(
-            {
-              ...match,
-              kickoff: match.kickoffUtc,
-              season
-            },
-            {
-              season,
-              indexes,
-              priors
-            }
-          );
-
-          if (!value) return [];
-          return expandValueMarkets(match, value);
-        })
-      );
-
-      for (const item of settled) {
-        if (item.status === "fulfilled" && Array.isArray(item.value)) {
-          picks.push(...item.value);
-        }
-      }
-    }
-
-    const filtered = picks.filter(shouldIncludeValuePick);
 
     for (const p of filtered) {
       rows.push({
