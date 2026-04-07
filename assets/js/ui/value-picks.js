@@ -406,10 +406,18 @@ function renderRow(p) {
   );
 
   const status = String(p?.status || "PRE").toUpperCase();
+  const result = String(p?.result || "").toUpperCase();
 
   let statusBadge = "";
   if (status === "LIVE") statusBadge = `<span class="value-badge live">LIVE</span>`;
   else if (status === "FT") statusBadge = `<span class="value-badge ft">FT</span>`;
+
+  let resultBadge = "";
+  if (result === "WIN") {
+    resultBadge = `<span class="value-badge win">WIN</span>`;
+  } else if (result === "LOSS") {
+    resultBadge = `<span class="value-badge loss">LOSS</span>`;
+  }
 
   const kickoffMs =
     typeof p?.kickoff_ms === "number"
@@ -431,6 +439,7 @@ function renderRow(p) {
         <div class="value-meta">
           ${timeHtml}
           ${statusBadge}
+          ${resultBadge}
         </div>
       </div>
 

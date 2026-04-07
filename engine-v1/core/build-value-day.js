@@ -37,29 +37,62 @@ function writeValueSnapshot(date, result) {
 
   const file = path.join(dir, `${date}.json`);
 
-  const payload = {
+  let existing = {
     date,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    count: result.picks.length,
-    picks: result.picks.map(p => ({
-      matchId: p.matchId,
-      leagueSlug: p.leagueSlug,
-      homeTeam: p.homeTeam,
-      awayTeam: p.awayTeam,
-      kickoff: p.kickoff,
-      market: p.market,
-      marketName: p.marketName,
-      pick: p.pick,
-      score: p.score,
-      confidence: p.confidence,
-      result: null
-    }))
+    picks: []
+  };
+
+  if (fs.existsSync(file)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(file, "utf-8"));
+    } catch {}
+  }
+
+  const existingMap = new Map();
+
+  for (const p of existing.picks || []) {
+    const key = `${p.matchId}|${p.market}`;
+    existingMap.set(key, p);
+  }
+
+  const newMap = new Map();
+
+  for (const p of result.picks || []) {
+    const key = `${p.matchId}|${p.market}`;
+    newMap.set(key, p);
+  }
+
+  // ------------------------------
+  // MERGE LOGIC
+  // ------------------------------
+
+  // 1. κρατάμε ό,τι ήδη υπάρχει (FT / LIVE / παλιά PRE)
+  const merged = new Map(existingMap);
+
+  // 2. overwrite μόνο τα νέα PRE picks
+  for (const [key, val] of newMap) {
+    const existingPick = existingMap.get(key);
+
+    merged.set(key, {
+      ...val,
+      result: existingPick?.result ?? null
+    });
+  }
+
+  const finalPicks = Array.from(merged.values());
+
+  const payload = {
+    date,
+    createdAt: existing.createdAt || Date.now(),
+    updatedAt: Date.now(),
+    count: finalPicks.length,
+    picks: finalPicks
   };
 
   fs.writeFileSync(file, JSON.stringify(payload, null, 2));
 }
-
 // ------------------------------
 async function getSeasonResources(season, force = false) {
   if (!force && __seasonResourceCache.has(season)) {
