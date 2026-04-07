@@ -1,14 +1,8 @@
 import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "node:url";
 import { getFixturesByDay } from "../storage/json-db.js";
+import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ROOT PROJECT /data
-const DATA_ROOT = path.resolve(__dirname, "..", "..", "data");
-const HISTORY_DIR = path.join(DATA_ROOT, "history");
+const HISTORY_DIR = ensureDir(resolveDataPath("history"));
 
 function resolveSeasonFromDay(dayKey) {
   const [year, month] = String(dayKey).split("-").map(Number);
@@ -95,7 +89,7 @@ export async function appendFinalizedDayToHistory(dayKey) {
 
   await fs.mkdir(HISTORY_DIR, { recursive: true });
 
-  const historyPath = path.join(HISTORY_DIR, `${season}.json`);
+  const historyPath = resolveDataPath("history", `${season}.json`);
 
   const history = await readJsonSafe(historyPath, {
     season,

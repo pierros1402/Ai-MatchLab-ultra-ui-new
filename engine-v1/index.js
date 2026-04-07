@@ -291,9 +291,9 @@ app.get("/ingest", async (req, res) => {
   res.json({ ok: true, ...result });
 });
 
-app.get("/finalize", (req, res) => {
+app.get("/finalize", async (req, res) => {
   const dayKey = String(req.query.date || shiftDay(athensDayKey(), -1));
-  const result = finalizeDayIfSafe(dayKey);
+  const result = await finalizeDayIfSafe(dayKey);
   res.json(result);
 });
 
@@ -387,7 +387,7 @@ if (command === "ingest-yesterday") {
 }
 
 if (command === "finalize-yesterday") {
-  const result = finalizeDayIfSafe(shiftDay(athensDayKey(), -1));
+  const result = await finalizeDayIfSafe(shiftDay(athensDayKey(), -1));
   console.log(result);
   process.exit(0);
 }

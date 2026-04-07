@@ -1,8 +1,8 @@
 import fs from "fs";
-import path from "path";
 import { getFixturesByDay, markDayFinal } from "../storage/json-db.js";
 import { getObservationsByMatchId } from "../storage/observations-db.js";
 import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
+import { resolveDataPath } from "../storage/data-root.js";
 
 function isLiveLike(status) {
   const s = String(status || "").toUpperCase();
@@ -89,66 +89,66 @@ function hasStableTerminalObservation(row, dayKey) {
   return true;
 }
 
-function updateValueResults(dayKey) {
-  const valueFile = path.join(process.cwd(), "data", "value", `${dayKey}.json`);
-  if (!fs.existsSync(valueFile)) return;
+function evaluatePickResult(pick, match) {
+  const home = Number(match?.scoreHome);
+  const away = Number(match?.scoreAway);
 
-  const historyFile = path.join(process.cwd(), "data", "history", `${dayKey}.json`);
-  if (!fs.existsSync(historyFile)) return;
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+
+  if (pick.market === "Over / Under 1.5") return (home + away) > 1;
+  if (pick.market === "Over / Under 2.5") return (home + away) > 2;
+  if (pick.market === "Over / Under 3.5") return (home + away) > 3;
+  if (pick.market === "BTTS") return home > 0 && away > 0;
+
+  if (pick.market === "1X2") {
+    const sel = String(pick.pick || "").toUpperCase();
+
+    if (sel === "HOME" || sel === "1") return home > away;
+    if (sel === "AWAY" || sel === "2") return away > home;
+    if (sel === "DRAW" || sel === "X") return home === away;
+  }
+
+  return null;
+}
+
+function updateValueResults(dayKey, rows = []) {
+  const valueFile = resolveDataPath("value", `${dayKey}.json`);
+  if (!fs.existsSync(valueFile)) return { ok: false, reason: "no_value_file", dayKey };
 
   const valueData = JSON.parse(fs.readFileSync(valueFile, "utf8"));
-  const history = JSON.parse(fs.readFileSync(historyFile, "utf8"));
-
-  const rows = Array.isArray(history?.matches)
-    ? history.matches
-    : Array.isArray(history)
-      ? history
-      : [];
-
   const matchMap = new Map();
 
-  for (const m of rows) {
-    matchMap.set(String(m.matchId), m);
+  for (const row of rows || []) {
+    const keys = [row?.matchId, row?.id]
+      .filter(Boolean)
+      .map(v => String(v));
+
+    for (const key of keys) {
+      matchMap.set(key, row);
+    }
   }
+
+  let updated = 0;
 
   for (const pick of valueData.picks || []) {
     const match = matchMap.get(String(pick.matchId));
     if (!match) continue;
 
-    const home = Number(match.scoreHome);
-    const away = Number(match.scoreAway);
-
-    if (!Number.isFinite(home) || !Number.isFinite(away)) continue;
-
-    let win = false;
-
-    if (pick.market === "Over / Under 1.5") {
-      win = (home + away) > 1;
-    } else if (pick.market === "Over / Under 2.5") {
-      win = (home + away) > 2;
-    } else if (pick.market === "Over / Under 3.5") {
-      win = (home + away) > 3;
-    } else if (pick.market === "BTTS") {
-      win = home > 0 && away > 0;
-    } else if (pick.market === "1X2") {
-      const sel = String(pick.pick || "").toUpperCase();
-
-      if (sel === "HOME" || sel === "1") win = home > away;
-      else if (sel === "AWAY" || sel === "2") win = away > home;
-      else if (sel === "DRAW" || sel === "X") win = home === away;
-      else continue;
-    } else {
-      continue;
-    }
+    const win = evaluatePickResult(pick, match);
+    if (win === null) continue;
 
     pick.result = win ? "WIN" : "LOSS";
+    updated += 1;
   }
 
   valueData.updatedAt = Date.now();
+  valueData.count = Array.isArray(valueData.picks) ? valueData.picks.length : 0;
   fs.writeFileSync(valueFile, JSON.stringify(valueData, null, 2));
+
+  return { ok: true, dayKey, updated };
 }
 
-export function finalizeDayIfSafe(dayKey) {
+export async function finalizeDayIfSafe(dayKey) {
   const rows = getFixturesByDay(dayKey);
 
   if (!rows.length) {
@@ -209,12 +209,13 @@ export function finalizeDayIfSafe(dayKey) {
   }
 
   markDayFinal(dayKey);
-  appendFinalizedDayToHistory(dayKey);
-  updateValueResults(dayKey);
+  await appendFinalizedDayToHistory(dayKey);
+  const valueResolution = updateValueResults(dayKey, rows);
 
   return {
     ok: true,
     dayKey,
-    finalized: rows.length
+    finalized: rows.length,
+    valueResolution
   };
 }

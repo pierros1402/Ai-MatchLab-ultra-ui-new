@@ -1,6 +1,6 @@
 import fs from "fs";
-import path from "path";
 import { getActiveByDay } from "../storage/json-db.js";
+import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import {
   evaluateMatchValue,
   loadValueIndexes,
@@ -29,13 +29,8 @@ function isPlayable(match) {
 
 // ------------------------------
 function writeValueSnapshot(date, result) {
-  const dir = path.join(process.cwd(), "data", "value");
-
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  const file = path.join(dir, `${date}.json`);
+  const dir = ensureDir(resolveDataPath("value"));
+  const file = resolveDataPath("value", `${date}.json`);
 
   let existing = {
     date,
@@ -222,7 +217,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
 // ------------------------------
 if (!rebuild) {
   try {
-    const file = path.join(process.cwd(), "data", "value", `${date}.json`);
+    const file = resolveDataPath("value", `${date}.json`);
 
     if (fs.existsSync(file)) {
       const raw = fs.readFileSync(file, "utf-8");
