@@ -381,15 +381,7 @@
 
   </div>
 
-<script>
-  window.AIML_LIVE_CFG = {
-    fixturesBase: window.location.origin
-  };
 
-  window.AIML_VALUE_CFG = {
-    valueBase: window.location.origin
-  };
-</script>
 <!-- =====================================================
      CORE EVENT BUS (ΠΡΕΠΕΙ ΝΑ ΕΚΤΕΛΕΣΤΕΙ ΠΡΩΤΟ)
 ===================================================== -->
@@ -420,18 +412,27 @@
 ===================================================== -->
 
 
+
 <!-- =====================================================
-     GLOBAL CONFIG (LIVE – ΟΠΩΣ ΕΙΝΑΙ, + DETAILS BASE)
-===================================================== --><script>
+     GLOBAL CONFIG
+===================================================== -->
 <script>
+  const isLocal =
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1";
+
+  const BASE = isLocal
+    ? "http://localhost:3010"
+    : "https://ai-matchlab-engine.onrender.com";
+
   window.AIML_LIVE_CFG = {
-    detailsBase: "https://ai-matchlab-engine.onrender.com",
-    fixturesBase: "https://ai-matchlab-engine.onrender.com",
+    detailsBase: BASE,
+    fixturesBase: BASE,
     season: "2025-2026"
   };
 
   window.AIML_VALUE_CFG = {
-    valueBase: "https://ai-matchlab-engine.onrender.com"
+    valueBase: BASE
   };
 </script>
 
