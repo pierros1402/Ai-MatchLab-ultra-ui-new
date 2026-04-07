@@ -5,9 +5,16 @@
   const btn = document.getElementById("mobile-view-btn");
   const menu = document.getElementById("mobile-view-menu");
 
-  const left = document.querySelector(".left-column");
-  const odds = document.getElementById("odds-intelligence-center");
-  const right = document.querySelector("aside.right-column");
+  function getPanels() {
+    return {
+      left: document.querySelector(".left-column"),
+      odds: document.getElementById("odds-intelligence-center"),
+      right:
+        document.querySelector("aside.right-column") ||
+        document.querySelector(".right-column") ||
+        document.getElementById("right-panel")
+    };
+  }
 
   // elements must exist
   if (!dd || !btn || !menu) return;
@@ -17,7 +24,9 @@
 
   // ✅ helper: clear inline display so desktop CSS can take over
   function resetDesktopPanels() {
-    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
+    const { left, odds, right } = getPanels();
+
+    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-  view-right");
 
     if (left) left.style.display = "";
     if (odds) odds.style.display = "";
@@ -46,42 +55,41 @@
     if (labelEl) labelEl.textContent = text;
   }
 
-  function setView(view) {
-    // ✅ NEVER apply mobile switching in desktop
-    if (!isMobile()) {
-      resetDesktopPanels();
-      hideMenu();
-      return;
-    }
+function setView(view) {
+  const { left, odds, right } = getPanels();
 
-    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
-
-    // hide all (mobile only)
-    if (left) left.style.display = "none";
-    if (odds) odds.style.display = "none";
-    if (right) right.style.display = "none";
-
-    if (view === "left") {
-      document.body.classList.add("mobile-view-left");
-      if (left) left.style.display = "block";
-      setLabel("LEFT");
-    } else if (view === "odds") {
-      document.body.classList.add("mobile-view-odds");
-      if (odds) odds.style.display = "block";
-      setLabel("ODDS");
-    } else if (view === "right") {
-      document.body.classList.add("mobile-view-right");
-      if (right) right.style.display = "block";
-      setLabel("RIGHT");
-    } else {
-      // fallback
-      document.body.classList.add("mobile-view-left");
-      if (left) left.style.display = "block";
-      setLabel("LEFT");
-    }
-
+  if (!isMobile()) {
+    resetDesktopPanels();
     hideMenu();
+    return;
   }
+
+  document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile-view-right");
+
+  if (left) left.style.display = "none";
+  if (odds) odds.style.display = "none";
+  if (right) right.style.display = "none";
+
+  if (view === "left") {
+    document.body.classList.add("mobile-view-left");
+    if (left) left.style.display = "flex";
+    setLabel("LEFT");
+  } else if (view === "odds") {
+    document.body.classList.add("mobile-view-odds");
+    if (odds) odds.style.display = "flex";
+    setLabel("ODDS");
+  } else if (view === "right") {
+    document.body.classList.add("mobile-view-right");
+    if (right) right.style.display = "flex";
+    setLabel("RIGHT");
+  } else {
+    document.body.classList.add("mobile-view-left");
+    if (left) left.style.display = "flex";
+    setLabel("LEFT");
+  }
+
+  hideMenu();
+}
 
   // ✅ public API used by matches-panel.js (keep it)
   window.AIML_MOBILE_SET_VIEW = setView;
