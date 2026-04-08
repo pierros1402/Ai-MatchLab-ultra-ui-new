@@ -360,15 +360,11 @@ async function loadLive(dateYmd) {
       // 1. LOAD ACTIVE FIRST (most complete)
       const active = await loadActive(day);
 
-      // 2. TODAY from ACTIVE (no second fetch)
-      document.dispatchEvent(
-        new CustomEvent("today-matches:loaded", {
-          detail: active
-        })
-      );
+      // 2. LOAD TODAY SEPARATELY (CORRECT)
+      const today = await loadToday(day);
 
-      // 3. LIVE from ACTIVE
-      const liveMatches = active.matches.filter(m => {
+      // 3. LIVE from TODAY
+      const liveMatches = today.matches.filter(m => {
         const s = String(
           m?.status?.type?.name ||
           m?.status?.type?.state ||
@@ -387,7 +383,7 @@ async function loadLive(dateYmd) {
       });
 
       const livePayload = {
-        date: active.date,
+        date: today.date,
         matches: liveMatches,
         total: liveMatches.length,
         hash: buildHash(liveMatches)
