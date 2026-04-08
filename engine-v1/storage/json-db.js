@@ -8,6 +8,13 @@ const __dirname = path.dirname(__filename);
 // ROOT PROJECT /data
 const dataDir = path.resolve(__dirname, "..", "..", "data");
 const dbPath = path.join(dataDir, "fixtures.json");
+const dbTmpPath = path.join(dataDir, "fixtures.json.tmp");
+const dbBakPath = path.join(dataDir, "fixtures.json.bak");
+const lockDir = path.join(dataDir, ".fixtures.lock");
+
+function sleepSync(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
 
 function ensureDb() {
   if (!fs.existsSync(dataDir)) {
@@ -21,13 +28,59 @@ function ensureDb() {
       "utf8"
     );
   }
+
+  if (!fs.existsSync(dbBakPath)) {
+    fs.writeFileSync(
+      dbBakPath,
+      JSON.stringify({ fixtures: [] }, null, 2),
+      "utf8"
+    );
+  }
 }
 
-function readDb() {
+function acquireLock(timeoutMs = 5000) {
   ensureDb();
+  const started = Date.now();
 
-  const raw = fs.readFileSync(dbPath, "utf8");
+  while (true) {
+    try {
+      fs.mkdirSync(lockDir);
+      return;
+    } catch (err) {
+      if (err?.code !== "EEXIST") throw err;
+      if (Date.now() - started > timeoutMs) {
+        throw new Error("db_lock_timeout");
+      }
+      sleepSync(25);
+    }
+  }
+}
+
+function releaseLock() {
+  try {
+    if (fs.existsSync(lockDir)) {
+      fs.rmdirSync(lockDir);
+    }
+  } catch (_) {}
+}
+
+function waitForUnlocked(timeoutMs = 3000) {
+  const started = Date.now();
+
+  while (fs.existsSync(lockDir)) {
+    if (Date.now() - started > timeoutMs) {
+      throw new Error("db_read_wait_timeout");
+    }
+    sleepSync(20);
+  }
+}
+
+function safeParseDb(raw, sourceLabel = dbPath) {
   const parsed = JSON.parse(raw);
+
+  if (!parsed || typeof parsed !== "object") {
+    return { fixtures: [] };
+  }
 
   if (!parsed.fixtures || !Array.isArray(parsed.fixtures)) {
     return { fixtures: [] };
@@ -36,25 +89,99 @@ function readDb() {
   return parsed;
 }
 
-function writeDb(data) {
+function readTextIfExists(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+  return fs.readFileSync(filePath, "utf8");
+}
+
+function readDb() {
   ensureDb();
 
-  fs.writeFileSync(
-    dbPath,
-    JSON.stringify(data, null, 2),
-    "utf8"
+  let lastErr = null;
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      waitForUnlocked();
+
+      const raw = fs.readFileSync(dbPath, "utf8");
+      return safeParseDb(raw, dbPath);
+    } catch (err) {
+      lastErr = err;
+
+      // πιθανό partial read πάνω σε write window
+      if (err instanceof SyntaxError) {
+        sleepSync(40);
+        continue;
+      }
+
+      throw err;
+    }
+  }
+
+  // fallback σε backup αν το κύριο file πετύχει λάθος στιγμή πολλές φορές
+  try {
+    const rawBak = readTextIfExists(dbBakPath);
+    if (rawBak) {
+      return safeParseDb(rawBak, dbBakPath);
+    }
+  } catch (_) {}
+
+  throw new Error(
+    `readDb_failed: ${String(lastErr?.message || lastErr)}`
   );
+}
+
+function writeDb(data) {
+  ensureDb();
+  acquireLock();
+
+  try {
+    const payload = JSON.stringify(
+      {
+        fixtures: Array.isArray(data?.fixtures) ? data.fixtures : []
+      },
+      null,
+      2
+    );
+
+    // γράψε temp
+    fs.writeFileSync(dbTmpPath, payload, "utf8");
+
+    // backup του προηγούμενου stable snapshot
+    if (fs.existsSync(dbPath)) {
+      fs.copyFileSync(dbPath, dbBakPath);
+    }
+
+    // replace
+    try {
+      if (fs.existsSync(dbPath)) {
+        fs.unlinkSync(dbPath);
+      }
+    } catch (_) {}
+
+    fs.renameSync(dbTmpPath, dbPath);
+  } finally {
+    try {
+      if (fs.existsSync(dbTmpPath)) {
+        fs.unlinkSync(dbTmpPath);
+      }
+    } catch (_) {}
+
+    releaseLock();
+  }
 }
 
 export function getFixtureById(matchId) {
   const db = readDb();
-  return db.fixtures.find(x => x.matchId === matchId) || null;
+  return db.fixtures.find(x => String(x.matchId) === String(matchId)) || null;
 }
 
 export function upsertFixture(row) {
   const db = readDb();
 
-  const idx = db.fixtures.findIndex(x => x.matchId === row.matchId);
+  const idx = db.fixtures.findIndex(
+    x => String(x.matchId) === String(row.matchId)
+  );
 
   if (idx === -1) {
     db.fixtures.push(row);
@@ -111,12 +238,15 @@ export function markDayFinal(dayKey) {
 
   writeDb(db);
 }
+
 // =====================================================
 // CHANGE DETECTION HELPERS
 // =====================================================
 
 export function findFixtureIndex(db, matchId) {
-  return db.fixtures.findIndex(x => x.matchId === matchId);
+  return db.fixtures.findIndex(
+    x => String(x.matchId) === String(matchId)
+  );
 }
 
 export function upsertFixtureWithMeta(row) {

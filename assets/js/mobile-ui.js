@@ -23,14 +23,18 @@
   const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
 
   // ✅ helper: clear inline display so desktop CSS can take over
-  function resetDesktopPanels() {
-    document.body.classList.remove("mobile-view-left", "mobile-view-odds", "mobile- view-right");
+function resetDesktopPanels() {
+  document.body.classList.remove(
+    "mobile-view-left",
+    "mobile-view-odds",
+    "mobile-view-right"
+  );
 
-    const { left, odds, right } = getPanels();
-    if (left) left.style.removeProperty("display");
-    if (odds) odds.style.removeProperty("display");
-    if (right) right.style.removeProperty("display");
-  }
+  const { left, odds, right } = getPanels();
+  if (left) left.style.removeProperty("display");
+  if (odds) odds.style.removeProperty("display");
+  if (right) right.style.removeProperty("display");
+}
 
   function hideMenu() {
     // ✅ Fix: do not hide a container while a focused element lives inside it

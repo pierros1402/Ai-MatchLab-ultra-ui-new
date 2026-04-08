@@ -100,18 +100,28 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/fixtures-runtime", (req, res) => {
-  const mode = String(req.query.mode || "today");
-  const dayKey = String(req.query.date || athensDayKey());
+  try {
+    const mode = String(req.query.mode || "today");
+    const dayKey = String(req.query.date || athensDayKey());
 
-  const rows = buildFixturesRuntime(mode, dayKey);
+    const rows = buildFixturesRuntime(mode, dayKey);
 
-  res.json({
-    ok: true,
-    mode,
-    date: dayKey,
-    count: rows.length,
-    matches: rows
-  });
+    res.json({
+      ok: true,
+      mode,
+      date: dayKey,
+      count: rows.length,
+      matches: rows
+    });
+  } catch (err) {
+    console.error("[fixtures-runtime] failed", err?.message || err);
+
+    res.status(503).json({
+      ok: false,
+      error: "fixtures_runtime_unavailable",
+      message: String(err?.message || err)
+    });
+  }
 });
 
 
