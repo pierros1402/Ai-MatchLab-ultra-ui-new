@@ -351,45 +351,63 @@ async function loadLive(dateYmd) {
   window.loadActiveFixtures = loadActiveSafe;
   window.loadLiveFixtures = loadLiveSafe;
 
-  (function startTodayLoop() {
-    async function tick() {
-      try {
-        await loadToday(todayISO());
-      } catch (e) {
-        console.warn("[today-loop]", e);
+(function startUnifiedLoop() {
+
+  async function tick() {
+    try {
+      const day = todayISO();
+
+      // 1. LOAD ACTIVE FIRST (most complete)
+      const active = await loadActive(day);
+
+      // 2. TODAY from ACTIVE (no second fetch)
+      document.dispatchEvent(
+        new CustomEvent("today-matches:loaded", {
+          detail: active
+        })
+      );
+
+      // 3. LIVE from ACTIVE
+      const liveMatches = active.matches.filter(m => {
+        const s = String(
+          m?.status?.type?.name ||
+          m?.status?.type?.state ||
+          m?.status ||
+          ""
+        ).toUpperCase();
+
+        return (
+          s.includes("LIVE") ||
+          s.includes("IN_PROGRESS") ||
+          s.includes("FIRST_HALF") ||
+          s.includes("SECOND_HALF") ||
+          s.includes("HALF_TIME") ||
+          s.includes("EXTRA_TIME")
+        );
+      });
+
+      const livePayload = {
+        date: active.date,
+        matches: liveMatches,
+        total: liveMatches.length,
+        hash: buildHash(liveMatches)
+      };
+
+      window.__AIML_LAST_LIVE = livePayload;
+
+      if (typeof window.emit === "function") {
+        window.emit("live:update", livePayload);
       }
+
+    } catch (e) {
+      console.warn("[unified-loop]", e);
     }
+  }
 
-    tick();
-    setInterval(tick, 60000);
-  })();
+  tick();
+  setInterval(tick, 15000);
 
-  (function startActiveLoop() {
-    async function tick() {
-      try {
-        await loadActive(todayISO());
-      } catch (e) {
-        console.warn("[active-loop]", e);
-      }
-    }
-
-    tick();
-    setInterval(tick, 15000);
-  })();
-
-  (function startLiveLoop() {
-    async function tick() {
-      try {
-        await loadLive(todayISO());
-      } catch (e) {
-        console.warn("[live-loop]", e);
-      }
-    }
-
-    tick();
-    setInterval(tick, 15000);
-  })();
-
+})();
   (function startDayWatcher() {
     let currentDay = todayISO();
 

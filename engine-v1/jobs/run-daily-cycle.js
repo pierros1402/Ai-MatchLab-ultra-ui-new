@@ -46,17 +46,27 @@ export async function runDailyCycle(options = {}) {
   const monitor = await monitorActiveLeagues(dayKey);
   console.log("[daily-cycle] monitor:done", monitor);
 
-  console.log("[daily-cycle] details-build:start", { dayKey });
-  const detailsBuild = buildDetailsDay(dayKey, { rebuild: false });
-  console.log("[daily-cycle] details-build:done", detailsBuild);
+// -------------------------------------
+// VALUE BUILD (FIRST)
+// -------------------------------------
+console.log("[daily-cycle] value-build:start", { dayKey });
 
-  console.log("[daily-cycle] value-build:start", { dayKey });
-  const valueBuild = await buildValueDay(dayKey, { rebuild: true });
-  console.log("[daily-cycle] value-build:done", {
-    ok: valueBuild?.ok,
-    date: valueBuild?.date,
-    count: valueBuild?.count ?? 0
-  });
+const valueBuild = await buildValueDay(dayKey, { rebuild: true });
+
+console.log("[daily-cycle] value-build:done", {
+  ok: valueBuild?.ok,
+  date: valueBuild?.date,
+  count: valueBuild?.count ?? 0
+});
+
+// -------------------------------------
+// DETAILS BUILD (AFTER VALUE)
+// -------------------------------------
+console.log("[daily-cycle] details-build:start", { dayKey });
+
+const detailsBuild = await buildDetailsDay(dayKey, { rebuild: false });
+
+console.log("[daily-cycle] details-build:done", detailsBuild);
 
   let finalizeValueBuild = null;
   let finalize = null;

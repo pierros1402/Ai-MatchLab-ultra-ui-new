@@ -5,6 +5,7 @@ import { normalizeFixture } from "../core/normalize.js";
 import { normalizeFixtureSource2 } from "../core/normalize-source2.js";
 import { reconcileObservations } from "../core/reconcile-observations.js";
 import { buildValueDay } from "../core/build-value-day.js";
+import { shiftDay } from "../core/daykey.js";
 import {
   getFixtureById,
   upsertFixtureWithMeta
@@ -212,27 +213,44 @@ const ESPN_SUPPORTED = new Set([
         results.byLeague[slug].observationsWritten++;
 
         // ---------------------------------
-        // WRONG DAY FILTER
-        // ---------------------------------
-        if (normalized.dayKey !== dayKey) {
-          results.skippedWrongDay++;
-          results.byLeague[slug].skippedWrongDay++;
+// WRONG DAY FILTER (FIXED)
+// ---------------------------------
+const allowedDays = new Set([
+  dayKey,
+  shiftDay(dayKey, -1),
+  shiftDay(dayKey, +1)
+]);
 
-          appendSkipped({
-            ts: Date.now(),
-            requestedDay: dayKey,
-            actualDay: normalized.dayKey,
-            league: slug,
-            source: normalized.source,
-            matchId: normalized.matchId,
-            homeTeam: normalized.homeTeam,
-            awayTeam: normalized.awayTeam,
-            kickoffUtc: normalized.kickoffUtc,
-            reason: "wrong_day"
-          });
+const status = String(normalized?.status || "").toUpperCase();
 
-          continue;
-        }
+const isLive =
+  status.includes("LIVE") ||
+  status.includes("IN_PROGRESS") ||
+  status.includes("FIRST_HALF") ||
+  status.includes("SECOND_HALF") ||
+  status.includes("HALF_TIME") ||
+  status.includes("EXTRA_TIME");
+
+// KEEP LIVE ALWAYS
+if (!isLive && !allowedDays.has(normalized.dayKey)) {
+  results.skippedWrongDay++;
+  results.byLeague[slug].skippedWrongDay++;
+
+  appendSkipped({
+    ts: Date.now(),
+    requestedDay: dayKey,
+    actualDay: normalized.dayKey,
+    league: slug,
+    source: normalized.source,
+    matchId: normalized.matchId,
+    homeTeam: normalized.homeTeam,
+    awayTeam: normalized.awayTeam,
+    kickoffUtc: normalized.kickoffUtc,
+    reason: "wrong_day"
+  });
+
+  continue;
+}
 
         // ---------------------------------
         // MULTI-SOURCE RECONCILE + UPSERT

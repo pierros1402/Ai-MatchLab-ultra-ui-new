@@ -21,21 +21,36 @@ function writeJson(filePath, data) {
 function classifyCompetitionType(match) {
   const slug = String(match?.leagueSlug || "").toLowerCase();
 
+  // -----------------------------
+  // INTERNATIONAL CLUB COMPETITIONS
+  // -----------------------------
+  if (
+    slug.includes("champions") ||
+    slug.includes("europa") ||
+    slug.includes("conference") ||
+    slug.includes("libertadores") ||
+    slug.includes("sudamericana") ||
+    slug.includes("afc.champions")
+  ) {
+    return "international_cup";
+  }
+
+  // -----------------------------
+  // DOMESTIC CUPS
+  // -----------------------------
   if (
     slug.includes(".cup") ||
     slug.includes("fa") ||
     slug.includes("super_cup") ||
     slug.includes("league_cup") ||
-    slug.includes("trophy") ||
-    slug.includes("champions") ||
-    slug.includes("europa") ||
-    slug.includes("confed") ||
-    slug.includes("libertadores") ||
-    slug.includes("sudamericana")
+    slug.includes("trophy")
   ) {
-    return "cup";
+    return "domestic_cup";
   }
 
+  // -----------------------------
+  // LEAGUE
+  // -----------------------------
   return "league";
 }
 
@@ -72,6 +87,41 @@ function readValuePicksForDay(dayKey) {
 function getValueForMatch(dayKey, matchId) {
   const all = readValuePicksForDay(dayKey);
   return all.filter(p => String(p?.matchId) === String(matchId));
+}
+
+function buildDetailsSignature(match, valuePicks, payload) {
+  const topPick = (valuePicks || [])
+    .slice()
+    .sort((a, b) => Number(b?.score || 0) - Number(a?.score || 0))[0] || null;
+
+  const signaturePayload = {
+    matchId: String(match?.matchId || ""),
+    dayKey: kickoffDay(match),
+    status: String(match?.status || ""),
+    rawStatus: String(match?.rawStatus || ""),
+    minute: String(match?.minute || ""),
+    scoreHome: Number.isFinite(Number(match?.scoreHome)) ? Number(match.scoreHome) : null,
+    scoreAway: Number.isFinite(Number(match?.scoreAway)) ? Number(match.scoreAway) : null,
+    referee: String(
+      match?.referee ||
+      match?.sources?.espn?.referee ||
+      ""
+    ),
+    competitionType: String(payload?.context?.competitionType || ""),
+    motivation: String(payload?.context?.motivation || ""),
+    valueCount: Array.isArray(valuePicks) ? valuePicks.length : 0,
+    topValue: topPick
+      ? {
+          market: String(topPick.market || ""),
+          pick: String(topPick.pick || ""),
+          score: Number.isFinite(Number(topPick.score)) ? Number(topPick.score) : null
+        }
+      : null,
+    schemaVersion: "details-snapshot-v2",
+    builderVersion: "2026-04-08-update-on-change"
+  };
+
+  return JSON.stringify(signaturePayload);
 }
 
 function buildRefereeBlock(match) {
@@ -140,16 +190,30 @@ function buildTravelBlock(match) {
 function buildMotivationBlock(match) {
   const competitionType = classifyCompetitionType(match);
 
-  if (competitionType !== "league") {
+  if (competitionType === "domestic_cup") {
     return {
       status: "not_applicable",
       competitionType,
-      motivation: "cup_context",
+      motivation: "domestic_cup",
       table: null,
       note: {
         code: "cup_context",
-        el: "Αγώνας κυπέλλου ή διοργάνωσης knockout — δεν χρησιμοποιείται βαθμολογικό κίνητρο πρωταθλήματος.",
-        en: "Cup or knockout competition — league table motivation is not applied."
+        el: "Αγώνας εγχώριου κυπέλλου — δεν χρησιμοποιείται βαθμολογικό κίνητρο.",
+        en: "Domestic cup match — league table motivation not applied."
+      }
+    };
+  }
+
+  if (competitionType === "international_cup") {
+    return {
+      status: "not_applicable",
+      competitionType,
+      motivation: "international_knockout",
+      table: null,
+      note: {
+        code: "intl_competition",
+        el: "Διεθνής διασυλλογική διοργάνωση — υψηλής σημασίας αγώνας knockout.",
+        en: "International club competition — high-importance knockout match."
       }
     };
   }
@@ -305,10 +369,12 @@ function buildDetailsPayload(match, valuePicks) {
     value: Array.isArray(valuePicks) ? valuePicks : [],
     analysis,
     meta: {
-      version: "details-snapshot-v1",
+      version: "details-snapshot-v2",
+      builderVersion: "2026-04-08-update-on-change",
       languageReady: ["el", "en"],
       source: "engine-v1",
-      snapshotMode: "write_once",
+      snapshotMode: "update_on_change",
+      signature: null,
       pendingSignals: {
         standings: motivation.status === "pending",
         refereeStats: referee.status !== "ready",
@@ -334,9 +400,13 @@ export function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   }
 
   const file = detailsFilePath(dayKey, match.matchId);
+  const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
-  if (!rebuild && fs.existsSync(file)) {
-    const existing = readJsonSafe(file, null);
+  const valuePicks = getValueForMatch(dayKey, match.matchId);
+  const payload = buildDetailsPayload(match, valuePicks);
+  const nextSignature = buildDetailsSignature(match, valuePicks, payload);
+
+  if (!rebuild && existing?.meta?.signature === nextSignature) {
     return {
       ok: true,
       dayKey,
@@ -347,9 +417,7 @@ export function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
     };
   }
 
-  const valuePicks = getValueForMatch(dayKey, match.matchId);
-  const payload = buildDetailsPayload(match, valuePicks);
-
+  payload.meta.signature = nextSignature;
   writeJson(file, payload);
 
   return {
@@ -384,16 +452,19 @@ export function buildDetailsDay(dayKey, { rebuild = false } = {}) {
 
   for (const match of rows) {
     const file = detailsFilePath(dayKey, match.matchId);
+    const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
-    if (!rebuild && fs.existsSync(file)) {
+    const valuePicks = getValueForMatch(dayKey, match.matchId);
+    const payload = buildDetailsPayload(match, valuePicks);
+    const nextSignature = buildDetailsSignature(match, valuePicks, payload);
+
+    if (!rebuild && existing?.meta?.signature === nextSignature) {
       skipped += 1;
       files.push(file);
       continue;
     }
 
-    const valuePicks = getValueForMatch(dayKey, match.matchId);
-    const payload = buildDetailsPayload(match, valuePicks);
-
+    payload.meta.signature = nextSignature;
     writeJson(file, payload);
     built += 1;
     files.push(file);
@@ -408,3 +479,4 @@ export function buildDetailsDay(dayKey, { rebuild = false } = {}) {
     files
   };
 }
+
