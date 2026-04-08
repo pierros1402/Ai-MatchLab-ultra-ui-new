@@ -28,16 +28,13 @@ function isSpecialLike(status) {
 }
 
 export function buildFixturesRuntime(mode, dayKey) {
-  const rows =
-    mode === "active"
-      ? getActiveByDay(dayKey)
-      : getStagingByDay(dayKey);
-
   if (mode === "today") {
+    const rows = getStagingByDay(dayKey);
     return rows.filter(r => isPreLike(r.status) || isLiveLike(r.status));
   }
 
   if (mode === "active") {
+    const rows = getActiveByDay(dayKey);
     return rows.filter(
       r =>
         isPreLike(r.status) ||
@@ -46,5 +43,5 @@ export function buildFixturesRuntime(mode, dayKey) {
     );
   }
 
-  return rows;
+  return getStagingByDay(dayKey);
 }

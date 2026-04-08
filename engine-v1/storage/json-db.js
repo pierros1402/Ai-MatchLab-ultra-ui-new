@@ -145,7 +145,17 @@ export function upsertFixtureWithMeta(row) {
     const prevComparable = buildComparable(existing);
     const nextComparable = buildComparable(row);
 
-    if (prevComparable === nextComparable) {
+    const isLive =
+      String(row.status || "").toUpperCase().includes("LIVE") ||
+      String(row.status || "").toUpperCase().includes("FIRST") ||
+      String(row.status || "").toUpperCase().includes("SECOND") ||
+      String(row.status || "").toUpperCase().includes("HALF") ||
+      String(row.status || "").toUpperCase().includes("PROGRESS");
+
+    if (isLive) {
+      db.fixtures[idx] = row;
+      action = "updated";
+    } else if (prevComparable === nextComparable) {
       db.fixtures[idx] = row;
       action = "unchanged";
     } else {
