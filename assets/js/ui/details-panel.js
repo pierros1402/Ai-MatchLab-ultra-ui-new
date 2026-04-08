@@ -125,6 +125,107 @@ let __aimlIntelWatcher = {
       clearTimeout(t);
     }
   }
+
+async function loadFromNewDetailsAPI(matchId) {
+  try {
+    const apiBase = base();
+    if (!apiBase) return null;
+
+    const res = await fetch(
+      `${apiBase}/details?id=${encodeURIComponent(matchId)}`
+    );
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (!data?.ok) return null;
+
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function getCurrentLang() {
+  try {
+    const v = localStorage.getItem("aiml-lang");
+    return v === "el" ? "el" : "en";
+  } catch (_) {
+    return "en";
+  }
+}
+
+const DETAILS_ENUM_I18N = {
+  en: {
+    competitionType: {
+      league: "League",
+      cup: "Cup",
+      unknown: "Unknown"
+    },
+    motivation: {
+      high: "High",
+      medium: "Medium",
+      low: "Low",
+      unknown: "Unknown",
+      cup_context: "Cup / knockout context"
+    },
+    travelImpact: {
+      high: "High",
+      medium: "Medium",
+      low: "Low",
+      unknown: "Unknown"
+    },
+    refereeStyle: {
+      low_intervention: "Low intervention",
+      medium_intervention: "Medium intervention",
+      high_intervention: "High intervention",
+      unknown: "Unknown"
+    },
+    pendingSignal: {
+      standings: "Standings enrichment pending",
+      refereeStats: "Referee stats pending",
+      travelGeo: "Travel geo pending"
+    }
+  },
+  el: {
+    competitionType: {
+      league: "Πρωτάθλημα",
+      cup: "Κύπελλο",
+      unknown: "Άγνωστο"
+    },
+    motivation: {
+      high: "Υψηλό",
+      medium: "Μέτριο",
+      low: "Χαμηλό",
+      unknown: "Άγνωστο",
+      cup_context: "Πλαίσιο κυπέλλου / νοκ άουτ"
+    },
+    travelImpact: {
+      high: "Υψηλή",
+      medium: "Μέτρια",
+      low: "Χαμηλή",
+      unknown: "Άγνωστη"
+    },
+    refereeStyle: {
+      low_intervention: "Χαμηλής παρέμβασης",
+      medium_intervention: "Μέσης παρέμβασης",
+      high_intervention: "Υψηλής παρέμβασης",
+      unknown: "Άγνωστο"
+    },
+    pendingSignal: {
+      standings: "Εκκρεμεί enrichment βαθμολογίας",
+      refereeStats: "Εκκρεμούν στατιστικά διαιτητή",
+      travelGeo: "Εκκρεμεί geo ταξιδιού"
+    }
+  }
+};
+
+function translateDetailsEnum(group, value) {
+  const lang = getCurrentLang();
+  const dict = DETAILS_ENUM_I18N[lang] || DETAILS_ENUM_I18N.en;
+  const key = String(value ?? "unknown");
+  return dict?.[group]?.[key] || key;
+}
+
 async function fetchIntelHealth(matchId) {
   try {
     const url =
@@ -936,32 +1037,132 @@ function startIntelWatcher(matchId, rerenderFn) {
     `;
   }
 
-  function renderLocal(match, mountEl) {
-    const el = mountEl;
-    if (!el) return;
+async function renderLocal(match, mountEl) {
+  const el = mountEl;
+  if (!el) return;
 
   // cleanup previous intel watcher
-    if (__aimlIntelWatcher.timer) {
-      clearInterval(__aimlIntelWatcher.timer);
-      __aimlIntelWatcher.timer = null;
-      __aimlIntelWatcher.lastVersion = null;
-    }
+  if (__aimlIntelWatcher.timer) {
+    clearInterval(__aimlIntelWatcher.timer);
+    __aimlIntelWatcher.timer = null;
+    __aimlIntelWatcher.lastVersion = null;
+  }
 
-    const m = match || {};
-    const home = esc(m.home || "");
-    const away = esc(m.away || "");
-    const league = esc(m.leagueName || m.leagueSlug || "");
-    const status = esc(normalizeStatus(m));
-    const score = esc(normalizeScore(m));
-    const minute =
-      m.minute != null && Number(m.minute) > 0
-        ? ` • ${esc(String(m.minute))}'`
-        : "";
-    const kickoffLocal = esc(fmtKickoffLocal(m));
+  const m = match || {};
+  const home = esc(m.home || m.homeTeam || "");
+  const away = esc(m.away || m.awayTeam || "");
+  const league = esc(m.leagueName || m.leagueSlug || "");
+  const status = esc(normalizeStatus(m));
+  const score = esc(normalizeScore(m));
+  const minute =
+    m.minute != null && Number(m.minute) > 0
+      ? ` • ${esc(String(m.minute))}'`
+      : "";
+  const kickoffLocal = esc(fmtKickoffLocal(m));
 
-    const matchId = String(m.matchId || m.id || "").trim();
-    const leagueSlug = String(m.leagueSlug || m.league || "_unknown");
-    const season = String(cfg().season || "2025-2026");
+  const matchId = String(m.matchId || m.id || "").trim();
+  const leagueSlug = String(m.leagueSlug || m.league || "_unknown");
+  const season = String(cfg().season || "2025-2026");
+
+  const newDetails = matchId
+    ? await loadFromNewDetailsAPI(matchId)
+    : null;
+
+  // ------------------------------------------------------------
+  // NEW ENGINE DETAILS API FIRST
+  // ------------------------------------------------------------
+  if (newDetails?.snapshot) {
+    const snap = newDetails.snapshot;
+    const valueRows = Array.isArray(newDetails.value)
+      ? newDetails.value
+      : Array.isArray(snap.value)
+      ? snap.value
+      : [];
+
+    const currentLang = (() => {
+      try {
+        const v = localStorage.getItem("aiml-lang");
+        return v === "el" ? "el" : "en";
+      } catch (_) {
+        return "en";
+      }
+    })();
+
+    const lang = getCurrentLang();
+
+    const summaryText =
+      currentLang === "el"
+        ? (snap.analysis?.summary?.el || snap.analysis?.summary?.en || "—")
+        : (snap.analysis?.summary?.en || snap.analysis?.summary?.el || "—");
+
+    const valueHtml = valueRows.length
+      ? `
+        <div style="margin-top:14px;">
+          <div style="font-weight:900;margin-bottom:8px;">Value Snapshot</div>
+          <div style="display:grid;gap:8px;">
+            ${valueRows
+              .map(
+                (v) => `
+                <div style="padding:10px 12px;border:1px solid rgba(255,255,255,0.10);border-radius:12px;background:rgba(255,255,255,0.03);">
+                  <div style="font-weight:800;">${esc(v.marketName || v.market || "Market")}</div>
+                  <div style="margin-top:4px;">
+                    Pick: <b>${esc(v.pick || "—")}</b>
+                    <span style="margin-left:10px;">Score: <b>${esc(
+                      v.score != null ? Number(v.score).toFixed(3) : "—"
+                    )}</b></span>
+                    <span style="margin-left:10px;">Confidence: <b>${esc(
+                      v.confidence != null ? Number(v.confidence).toFixed(3) : "—"
+                    )}</b></span>
+                  </div>
+                  <div style="margin-top:4px;">
+                    Result: <b>${esc(v.result || "PENDING")}</b>
+                  </div>
+                </div>
+              `
+              )
+              .join("")}
+          </div>
+        </div>
+      `
+      : `
+        <div style="margin-top:14px;">
+          <div style="font-weight:900;margin-bottom:8px;">Value Snapshot</div>
+          <div class="muted">No value snapshot available for this match.</div>
+        </div>
+      `;
+
+    const refereeName = snap.referee?.name || "—";
+    const refereeStyle = translateDetailsEnum(
+      "refereeStyle",
+      snap.referee?.style || "unknown"
+    );
+
+    const motivation = translateDetailsEnum(
+      "motivation",
+      snap.context?.motivation || "unknown"
+    );
+
+    const competitionType = translateDetailsEnum(
+      "competitionType",
+      snap.context?.competitionType || "unknown"
+    );
+
+    const travelImpact = translateDetailsEnum(
+      "travelImpact",
+      snap.context?.travelImpact || "unknown"
+    );
+    const distanceKm =
+      snap.travel?.distanceKm != null ? String(snap.travel.distanceKm) : "—";
+
+    const homePos = snap.context?.table?.homePosition ?? "—";
+    const awayPos = snap.context?.table?.awayPosition ?? "—";
+    const totalTeams = snap.context?.table?.totalTeams ?? "—";
+
+    const pending = snap.meta?.pendingSignals || {};
+    const pendingItems = [];
+    if (pending.standings) pendingItems.push(translateDetailsEnum("pendingSignal", "standings"));
+    if (pending.refereeStats) pendingItems.push(translateDetailsEnum("pendingSignal", "refereeStats"));
+    if (pending.travelGeo) pendingItems.push(translateDetailsEnum("pendingSignal", "travelGeo"));
 
     el.innerHTML = `
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-end;flex-wrap:wrap;">
@@ -989,32 +1190,66 @@ function startIntelWatcher(matchId, rerenderFn) {
       </div>
 
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="aiml-details-check" class="aiml-btn"
-          title="Checks for new factual intel (R2)."
-          style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:inherit;font-weight:900;cursor:pointer;">
-          Check Updates
-        </button>
-        <button id="aiml-details-refresh" class="aiml-btn"
-          title="Forces recheck of enrichment sources (intel only)."
-          style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:inherit;font-weight:800;cursor:pointer;">
-          Refresh Intel
-        </button>
-        <span id="aiml-details-meta" class="muted" style="align-self:center;font-size:12px;opacity:.8;"></span>
+        <span style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);font-weight:800;">
+          Snapshot Ready
+        </span>
+        <span class="muted" style="align-self:center;font-size:12px;opacity:.8;">
+          ${esc(snap.meta?.version || "details-snapshot")}
+        </span>
       </div>
 
-      <!-- FACTS + AI BELOW -->
-      <div id="aiml-below-mount">
-        <div class="muted" style="margin-top:12px;">Loading…</div>
+      <div style="margin-top:14px;">
+        <div style="font-weight:900;margin-bottom:8px;">Match Analysis</div>
+        <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);line-height:1.45;">
+          ${esc(summaryText)}
+        </div>
       </div>
 
-      <div id="aiml-hybrid-mount" data-match-id="${esc(matchId)}" style="margin-top:12px;">
-        ${hybridLoadingBlock()}
+      <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">
+        <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="font-weight:900;margin-bottom:8px;">Context Snapshot</div>
+          <div>Competition Type: <b>${esc(competitionType)}</b></div>
+          <div style="margin-top:6px;">Motivation: <b>${esc(motivation)}</b></div>
+          <div style="margin-top:6px;">Travel Impact: <b>${esc(travelImpact)}</b></div>
+          <div style="margin-top:6px;">Distance: <b>${esc(distanceKm)}</b></div>
+        </div>
+
+        <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="font-weight:900;margin-bottom:8px;">Referee</div>
+          <div>Name: <b>${esc(refereeName)}</b></div>
+          <div style="margin-top:6px;">Style: <b>${esc(refereeStyle)}</b></div>
+          <div style="margin-top:6px;">Avg Cards: <b>${esc(
+            snap.referee?.stats?.avgCards ?? "—"
+          )}</b></div>
+          <div style="margin-top:6px;">Avg Penalties: <b>${esc(
+            snap.referee?.stats?.avgPenalties ?? "—"
+          )}</b></div>
+        </div>
       </div>
+
+      <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+        <div style="font-weight:900;margin-bottom:8px;">Table Context</div>
+        <div>Home Position: <b>${esc(homePos)}</b></div>
+        <div style="margin-top:6px;">Away Position: <b>${esc(awayPos)}</b></div>
+        <div style="margin-top:6px;">Total Teams: <b>${esc(totalTeams)}</b></div>
+      </div>
+
+      ${valueHtml}
+
+      ${
+        pendingItems.length
+          ? `
+        <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="font-weight:900;margin-bottom:8px;">Pending Signals</div>
+          <div class="muted">${esc(pendingItems.join(", "))}</div>
+        </div>
+      `
+          : ``
+      }
     `;
 
     document.dispatchEvent(new CustomEvent("details-rendered"));
 
-    // Info tooltip toggle
     const infoBtn = el.querySelector("#aiml-details-info-btn");
     const infoBox = el.querySelector("#aiml-details-info-box");
     if (infoBtn && infoBox) {
@@ -1024,138 +1259,187 @@ function startIntelWatcher(matchId, rerenderFn) {
       };
     }
 
-    const metaEl = el.querySelector("#aiml-details-meta");
-    const mountHybrid = el.querySelector("#aiml-hybrid-mount");
-    const mountBelow = el.querySelector("#aiml-below-mount");
-    const btnCheck = el.querySelector("#aiml-details-check");
-    const btnRefresh = el.querySelector("#aiml-details-refresh");
+    return;
+  }
 
-    const buildUrl = (mode) => {
-      const p = new URLSearchParams();
-      p.set("id", matchId);
-      p.set("league", leagueSlug);
-      p.set("season", season);
-      if (mode === "check") p.set("check", "1");
-      if (mode === "refresh") p.set("refresh", "1");
-      p.set("v", String(Date.now()));
-      return `${detailsBase()}/v1/match/details?${p.toString()}`;
+  // ------------------------------------------------------------
+  // LEGACY FALLBACK
+  // ------------------------------------------------------------
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="font-weight:900;font-size:18px;">${home} <span style="opacity:.6;">vs</span> ${away}</div>
+        <button id="aiml-details-info-btn"
+          title="Info"
+          style="width:28px;height:28px;border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.04);color:inherit;font-weight:900;cursor:pointer;line-height:1;">
+          ⓘ
+        </button>
+      </div>
+      <div style="opacity:.85;font-weight:800;">${status}${minute}</div>
+    </div>
+
+    ${renderDetailsInfoBox()}
+
+    <div style="margin-top:6px;opacity:.85;">
+      ${score ? `<span style="font-weight:900;">${score}</span>` : ``}
+      ${kickoffLocal ? `<span style="margin-left:10px;">${kickoffLocal}</span>` : ``}
+    </div>
+
+    <div style="margin-top:6px;opacity:.75;font-size:12px;">
+      League: <b>${league}</b>
+      ${matchId ? `<span style="margin-left:10px;opacity:.7;">ID: ${esc(matchId)}</span>` : ``}
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button id="aiml-details-check" class="aiml-btn"
+        title="Checks for new factual intel (R2)."
+        style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:inherit;font-weight:900;cursor:pointer;">
+        Check Updates
+      </button>
+      <button id="aiml-details-refresh" class="aiml-btn"
+        title="Forces recheck of enrichment sources (intel only)."
+        style="padding:8px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:inherit;font-weight:800;cursor:pointer;">
+        Refresh Intel
+      </button>
+      <span id="aiml-details-meta" class="muted" style="align-self:center;font-size:12px;opacity:.8;"></span>
+    </div>
+
+    <!-- FACTS + AI BELOW -->
+    <div id="aiml-below-mount">
+      <div class="muted" style="margin-top:12px;">Loading…</div>
+    </div>
+
+    <div id="aiml-hybrid-mount" data-match-id="${esc(matchId)}" style="margin-top:12px;">
+      ${hybridLoadingBlock()}
+    </div>
+  `;
+
+  document.dispatchEvent(new CustomEvent("details-rendered"));
+
+  // Info tooltip toggle
+  const infoBtn = el.querySelector("#aiml-details-info-btn");
+  const infoBox = el.querySelector("#aiml-details-info-box");
+  if (infoBtn && infoBox) {
+    infoBtn.onclick = () => {
+      const isOpen = infoBox.style.display !== "none";
+      infoBox.style.display = isOpen ? "none" : "block";
     };
-
-    async function run(mode) {
-      if (!matchId) return;
-      if (metaEl)
-        metaEl.textContent =
-          mode === "read"
-            ? "Loading…"
-            : mode === "check"
-            ? "Checking updates…"
-            : "Refreshing…";
-
-      const url = buildUrl(mode);
-
-      // ===== AUTO-SEED (one-time per match, production-safe) =====
-
-
-
-      const res = await fetchJson(url, 9000);
-
-// ------------------------------------------------------------
-// AI RUNTIME FETCH
-// ------------------------------------------------------------
-let aiIntel = null;
-let aiSignals = [];
-
-try {
-
-  const intelUrl =
-    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(matchId)}`;
-
-  const intelRes = await fetchJson(intelUrl, 7000);
-
-  if (intelRes.ok && intelRes.json?.ok) {
-    aiIntel = intelRes.json;
   }
 
-  const sigUrl =
-    `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/intel-signals?id=${encodeURIComponent(matchId)}`;
+  const metaEl = el.querySelector("#aiml-details-meta");
+  const mountHybrid = el.querySelector("#aiml-hybrid-mount");
+  const mountBelow = el.querySelector("#aiml-below-mount");
+  const btnCheck = el.querySelector("#aiml-details-check");
+  const btnRefresh = el.querySelector("#aiml-details-refresh");
 
-  const sigRes = await fetchJson(sigUrl, 7000);
+  const buildUrl = (mode) => {
+    const p = new URLSearchParams();
+    p.set("id", matchId);
+    p.set("league", leagueSlug);
+    p.set("season", season);
+    if (mode === "check") p.set("check", "1");
+    if (mode === "refresh") p.set("refresh", "1");
+    p.set("v", String(Date.now()));
+    return `${detailsBase()}/v1/match/details?${p.toString()}`;
+  };
 
-  if (sigRes.ok && Array.isArray(sigRes.json?.signals)) {
-    aiSignals = sigRes.json.signals;
-  }
+  async function run(mode) {
+    if (!matchId) return;
+    if (metaEl)
+      metaEl.textContent =
+        mode === "read"
+          ? "Loading…"
+          : mode === "check"
+          ? "Checking updates…"
+          : "Refreshing…";
 
-} catch (_) {}
+    const url = buildUrl(mode);
+    const res = await fetchJson(url, 9000);
 
-      if (!res.ok || !res.json || res.json.ok === false) {
-        if (mountBelow) mountBelow.innerHTML = `<div class="muted">Facts unavailable.</div>`;
-        if (mountHybrid) mountHybrid.innerHTML = `<div class="muted">Hybrid unavailable.</div>`;
-        if (metaEl) metaEl.textContent = "Failed.";
-        return;
+    let aiIntel = null;
+    let aiSignals = [];
+
+    try {
+      const intelUrl =
+        `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/match-intel?id=${encodeURIComponent(matchId)}`;
+
+      const intelRes = await fetchJson(intelUrl, 7000);
+
+      if (intelRes.ok && intelRes.json?.ok) {
+        aiIntel = intelRes.json;
       }
 
-      // ORDER: Facts first → then AI blocks
-      const factsHtml = renderFactsBlock(res.json);
-      const stdqHtml = renderStandardQuestionsFromDetailsAPI(res.json);
+      const sigUrl =
+        `https://aimatchlab-ai-engine.pierros1402.workers.dev/ai/intel-signals?id=${encodeURIComponent(matchId)}`;
 
-      const runtimeHtml = renderRuntimeIntel(aiIntel, aiSignals);
-        applySignalBarMutation(aiSignals);
+      const sigRes = await fetchJson(sigUrl, 7000);
 
-      if (mountBelow)
-        mountBelow.innerHTML =
-          factsHtml +
-          runtimeHtml +
-          renderAIDivider() +
-          stdqHtml;
-// start snapshot watcher (LIVE intel updates)
-startIntelWatcher(matchId, () => {
+      if (sigRes.ok && Array.isArray(sigRes.json?.signals)) {
+        aiSignals = sigRes.json.signals;
+      }
+    } catch (_) {}
 
-  run("read").then(() => {
-
-    requestAnimationFrame(() => {
-
-      document
-        .querySelectorAll(".aiml-bar-fill")
-        .forEach(el => {
-
-          const newWidth = el.style.width;
-          const prevWidth = el.dataset.prevWidth;
-
-          // animate width change
-          el.style.willChange = "width";
-
-          // flash ONLY if value changed
-          if (prevWidth && prevWidth !== newWidth) {
-            el.classList.remove("aiml-bar-flash");
-            void el.offsetWidth; // force reflow
-            el.classList.add("aiml-bar-flash");
-          }
-
-          el.dataset.prevWidth = newWidth;
-        });
-
-    });
-
-  }).catch(()=>{});
-});
-      if (mountHybrid) mountHybrid.innerHTML = renderHybridFromDetailsAPI(res.json);
-
-      const meta = res.json.meta || {};
-      const cache = res.json.cache || "";
-      const changed = meta.changed ? "changed" : "no-change";
-      const nextAt = meta.nextCheckAt ? `next: ${meta.nextCheckAt}` : "";
-      const lastAt = meta.lastCheckedAt ? `last: ${meta.lastCheckedAt}` : "";
-      const skip = meta.checkStatus === "SKIPPED_COOLDOWN" ? " (cooldown)" : "";
-      if (metaEl)
-        metaEl.textContent = `${cache} • ${changed}${skip} • ${lastAt}${
-          nextAt ? " • " + nextAt : ""
-        }`;
+    if (!res.ok || !res.json || res.json.ok === false) {
+      if (mountBelow) mountBelow.innerHTML = `<div class="muted">Facts unavailable.</div>`;
+      if (mountHybrid) mountHybrid.innerHTML = `<div class="muted">Hybrid unavailable.</div>`;
+      if (metaEl) metaEl.textContent = "Failed.";
+      return;
     }
 
-    run("read").catch(() => {});
-    if (btnCheck) btnCheck.onclick = () => run("check").catch(() => {});
-    if (btnRefresh) btnRefresh.onclick = () => run("refresh").catch(() => {});
+    const factsHtml = renderFactsBlock(res.json);
+    const stdqHtml = renderStandardQuestionsFromDetailsAPI(res.json);
+
+    const runtimeHtml = renderRuntimeIntel(aiIntel, aiSignals);
+    applySignalBarMutation(aiSignals);
+
+    if (mountBelow)
+      mountBelow.innerHTML =
+        factsHtml +
+        runtimeHtml +
+        renderAIDivider() +
+        stdqHtml;
+
+    startIntelWatcher(matchId, () => {
+      run("read").then(() => {
+        requestAnimationFrame(() => {
+          document
+            .querySelectorAll(".aiml-bar-fill")
+            .forEach(el2 => {
+              const newWidth = el2.style.width;
+              const prevWidth = el2.dataset.prevWidth;
+
+              el2.style.willChange = "width";
+
+              if (prevWidth && prevWidth !== newWidth) {
+                el2.classList.remove("aiml-bar-flash");
+                void el2.offsetWidth;
+                el2.classList.add("aiml-bar-flash");
+              }
+
+              el2.dataset.prevWidth = newWidth;
+            });
+        });
+      }).catch(() => {});
+    });
+
+    if (mountHybrid) mountHybrid.innerHTML = renderHybridFromDetailsAPI(res.json);
+
+    const meta = res.json.meta || {};
+    const cache = res.json.cache || "";
+    const changed = meta.changed ? "changed" : "no-change";
+    const nextAt = meta.nextCheckAt ? `next: ${meta.nextCheckAt}` : "";
+    const lastAt = meta.lastCheckedAt ? `last: ${meta.lastCheckedAt}` : "";
+    const skip = meta.checkStatus === "SKIPPED_COOLDOWN" ? " (cooldown)" : "";
+    if (metaEl)
+      metaEl.textContent = `${cache} • ${changed}${skip} • ${lastAt}${
+        nextAt ? " • " + nextAt : ""
+      }`;
   }
+
+  run("read").catch(() => {});
+  if (btnCheck) btnCheck.onclick = () => run("check").catch(() => {});
+  if (btnRefresh) btnRefresh.onclick = () => run("refresh").catch(() => {});
+}
 
   async function loadAndRender(match, mountEl, opts) {
     const el = mountEl;

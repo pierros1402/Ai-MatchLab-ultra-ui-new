@@ -11,7 +11,8 @@ import { discoverWindow } from "./jobs/discover-window.js";
 import { buildFixturesRuntime } from "./api/fixtures-runtime.js";
 import { getFixtureById } from "./storage/json-db.js";
 import { buildValueDay } from "./core/build-value-day.js";
-
+import { buildDetailsDay } from "./jobs/build-details-day.js";
+import { getDetailsPayload } from "./api/details.js";
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -334,6 +335,34 @@ app.get("/match", (req, res) => {
   });
 });
 
+app.get("/details", (req, res) => {
+  const id = String(req.query.id || "");
+  const rebuild = boolParam(req.query.rebuild, false);
+
+  if (!id) {
+    res.status(400).json({ ok: false, error: "missing_id" });
+    return;
+  }
+
+  const result = getDetailsPayload(id, { rebuild });
+
+  if (!result?.ok) {
+    const status = result?.error === "match_not_found" ? 404 : 400;
+    res.status(status).json(result);
+    return;
+  }
+
+  res.json(result);
+});
+
+app.get("/build-details", (req, res) => {
+  const dayKey = String(req.query.date || athensDayKey());
+  const rebuild = boolParam(req.query.rebuild, false);
+
+  const result = buildDetailsDay(dayKey, { rebuild });
+  res.json(result);
+});
+
 app.get("/discover-active-leagues", async (req, res) => {
   const dayKey = String(req.query.date || athensDayKey());
   const result = await discoverActiveLeagues(dayKey);
@@ -377,6 +406,12 @@ const command = process.argv[2];
 if (command === "ingest-today") {
   const result = await ingestDay(athensDayKey());
   console.log(result);
+  process.exit(0);
+}
+
+if (command === "build-details") {
+  const result = buildDetailsDay(athensDayKey(), { rebuild: false });
+  console.log(JSON.stringify(result, null, 2));
   process.exit(0);
 }
 
