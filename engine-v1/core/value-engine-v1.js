@@ -12,7 +12,7 @@ const DATA_DIR = resolveDataPath();
 const HISTORY_INDEX_DIR = path.join(DATA_DIR, "history-index");
 
 const DEFAULT_SEASON = "2025-2026";
-
+const __indexesCache = new Map();
 // ------------------------------------------------------------
 // FORM RULES
 // ------------------------------------------------------------
@@ -282,6 +282,10 @@ async function loadModelPriors(season) {
 // INDEX LOADING
 // ------------------------------------------------------------
 export async function loadValueIndexes(season = DEFAULT_SEASON) {
+  if (__indexesCache.has(season)) {
+    return __indexesCache.get(season);
+  }
+
   const teamFormPath = path.join(HISTORY_INDEX_DIR, "team-form", `${season}.json`);
   const leagueFormPath = path.join(HISTORY_INDEX_DIR, "league-form", `${season}.json`);
   const matchupsPath = path.join(HISTORY_INDEX_DIR, "matchups", `${season}.json`);
@@ -292,12 +296,23 @@ export async function loadValueIndexes(season = DEFAULT_SEASON) {
     readJsonSafe(matchupsPath, {})
   ]);
 
-  return {
+  const result = {
     season,
     teamForm: teamForm || {},
     leagueForm: leagueForm || {},
     matchups: matchups || {}
   };
+
+  __indexesCache.set(season, result);
+
+  console.log("[value] indexes loaded", {
+    season,
+    teamFormSize: Object.keys(result.teamForm).length,
+    leagueFormSize: Object.keys(result.leagueForm).length,
+    matchupsSize: Object.keys(result.matchups).length
+  });
+
+  return result;
 }
 
 // ------------------------------------------------------------
@@ -1585,13 +1600,6 @@ export async function evaluateMatchValue(input, opts = {}) {
   const season = String(opts.season || input?.season || DEFAULT_SEASON);
   const indexes = opts.indexes || await loadValueIndexes(season);
   const priors = opts.priors || await loadModelPriors(season);
-
-  console.log("[value] indexes", {
-    season,
-    teamFormSize: Object.keys(indexes.teamForm || {}).length,
-    leagueFormSize: Object.keys(indexes.leagueForm || {}).length,
-    matchupsSize: Object.keys(indexes.matchups || {}).length
-  });
 
   const leagueSlug = String(input?.leagueSlug || input?.league || "").trim();
   const homeTeam = String(input?.homeTeam || input?.home || "").trim();
