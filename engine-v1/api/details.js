@@ -26,7 +26,7 @@ function readValueForMatch(dayKey, matchId) {
   return picks.filter(p => String(p?.matchId) === String(matchId));
 }
 
-export function getDetailsPayload(matchId, { rebuild = false } = {}) {
+export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
   const match = getFixtureById(String(matchId));
 
   if (!match) {
@@ -44,7 +44,7 @@ export function getDetailsPayload(matchId, { rebuild = false } = {}) {
   let snapshot = readJsonSafe(detailsFile, null);
 
   if (!snapshot || rebuild) {
-    const built = buildDetailsForMatch(match.matchId, { rebuild });
+    const built = await buildDetailsForMatch(match.matchId, { rebuild });
     snapshot = built?.details || null;
   }
 

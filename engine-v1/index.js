@@ -345,7 +345,7 @@ app.get("/match", (req, res) => {
   });
 });
 
-app.get("/details", (req, res) => {
+app.get("/details", async (req, res) => {
   const id = String(req.query.id || "");
   const rebuild = boolParam(req.query.rebuild, false);
 
@@ -354,22 +354,32 @@ app.get("/details", (req, res) => {
     return;
   }
 
-  const result = getDetailsPayload(id, { rebuild });
+  try {
+    const result = await getDetailsPayload(id, { rebuild });
 
-  if (!result?.ok) {
-    const status = result?.error === "match_not_found" ? 404 : 400;
-    res.status(status).json(result);
-    return;
+    if (!result?.ok) {
+      const status = result?.error === "match_not_found" ? 404 : 400;
+      res.status(status).json(result);
+      return;
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("[details] failed", err?.message || err);
+
+    res.status(500).json({
+      ok: false,
+      error: "details_failed",
+      message: String(err?.message || err)
+    });
   }
-
-  res.json(result);
 });
 
-app.get("/build-details", (req, res) => {
+app.get("/build-details", async (req, res) => {
   const dayKey = String(req.query.date || athensDayKey());
   const rebuild = boolParam(req.query.rebuild, false);
 
-  const result = buildDetailsDay(dayKey, { rebuild });
+  const result = await buildDetailsDay(dayKey, { rebuild });
   res.json(result);
 });
 
@@ -420,7 +430,7 @@ if (command === "ingest-today") {
 }
 
 if (command === "build-details") {
-  const result = buildDetailsDay(athensDayKey(), { rebuild: false });
+  const result = await buildDetailsDay(athensDayKey(), { rebuild: false });
   console.log(JSON.stringify(result, null, 2));
   process.exit(0);
 }

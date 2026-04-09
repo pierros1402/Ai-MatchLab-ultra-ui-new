@@ -3,6 +3,7 @@ import path from "path";
 import { getFixturesByDay, getFixtureById } from "../storage/json-db.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
+import { buildAiDetailsBlock } from "../ai-match-intelligence/build-ai-details-block.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -388,7 +389,7 @@ function detailsFilePath(dayKey, matchId) {
   return resolveDataPath("details", dayKey, `${matchId}.json`);
 }
 
-export function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
+export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   const match = getFixtureById(String(matchId));
   if (!match) {
     return { ok: false, error: "match_not_found", matchId: String(matchId) };
@@ -403,7 +404,21 @@ export function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
   const valuePicks = getValueForMatch(dayKey, match.matchId);
-  const payload = buildDetailsPayload(match, valuePicks);
+
+  const aiBlocks = await buildAiDetailsBlock(match, {
+    dayKey,
+    valuePicks,
+    allFixtures: getFixturesByDay(dayKey) || []
+  });
+
+  const payload = {
+    ...buildDetailsPayload(match, valuePicks),
+    researchedFacts: aiBlocks.researchedFacts,
+    aiContext: aiBlocks.aiContext,
+    sourceAudit: aiBlocks.sourceAudit,
+    learningMeta: aiBlocks.learningMeta
+  };
+
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);
 
   if (!rebuild && existing?.meta?.signature === nextSignature) {
@@ -430,7 +445,7 @@ export function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   };
 }
 
-export function buildDetailsDay(dayKey, { rebuild = false } = {}) {
+export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
   const rows = getFixturesByDay(dayKey) || [];
 
   if (!rows.length) {
@@ -455,7 +470,21 @@ export function buildDetailsDay(dayKey, { rebuild = false } = {}) {
     const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
     const valuePicks = getValueForMatch(dayKey, match.matchId);
-    const payload = buildDetailsPayload(match, valuePicks);
+
+    const aiBlocks = await buildAiDetailsBlock(match, {
+      dayKey,
+      valuePicks,
+      allFixtures: rows
+    });
+
+    const payload = {
+      ...buildDetailsPayload(match, valuePicks),
+      researchedFacts: aiBlocks.researchedFacts,
+      aiContext: aiBlocks.aiContext,
+      sourceAudit: aiBlocks.sourceAudit,
+      learningMeta: aiBlocks.learningMeta
+    };
+
     const nextSignature = buildDetailsSignature(match, valuePicks, payload);
 
     if (!rebuild && existing?.meta?.signature === nextSignature) {
