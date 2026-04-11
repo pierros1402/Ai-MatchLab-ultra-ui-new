@@ -19,12 +19,6 @@ const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const ATHENS_TZ = "Europe/Athens";
 
 const SEASON = "2025-2026";
-
-// ======================================================
-// TEMP TEST RANGE
-// Όταν επιβεβαιώσεις ότι όλα γράφουν σωστά,
-// γύρισέ το πάλι σε "2025-08-01"
-// ======================================================
 const SEASON_START = "2025-08-01";
 
 const OUT_DIR = path.resolve(__dirname, "../../data/history");
@@ -92,7 +86,8 @@ function isTerminalStatus(status) {
     s.includes("AET") ||
     s.includes("PEN") ||
     s === "STATUS_COMPLETE" ||
-    s === "COMPLETE"
+    s === "COMPLETE" ||
+    s === "FT"
   );
 }
 
@@ -148,7 +143,6 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
   if (!kickoff) return null;
 
   const athensDay = dayKeyTZ(kickoff, ATHENS_TZ);
-
   if (athensDay !== targetDay) return null;
 
   const { home, away } = getHomeAway(ev);
@@ -174,9 +168,9 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
     statusName
   );
 
-  let outcome = "X";
-  if (scoreHome > scoreAway) outcome = "1";
-  else if (scoreAway > scoreHome) outcome = "2";
+  let outcome = "DRAW";
+  if (scoreHome > scoreAway) outcome = "HOME";
+  else if (scoreAway > scoreHome) outcome = "AWAY";
 
   const homeTeam = safeText(
     home?.team?.displayName ||
@@ -211,12 +205,11 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
     awayTeam,
     scoreHome,
     scoreAway,
-    status: safeText(statusName),
+    status: safeText(statusName) || "FT",
     minute,
     outcome,
     source: "espn",
-    rebuiltAt: new Date().toISOString(),
-
+    rebuiltAt: Date.now(),
     competitionType,
     leagueTier: getLeagueTier(leagueSlug),
     leagueTrust: getLeagueTrust(leagueSlug),
@@ -231,9 +224,7 @@ async function fetchLeagueDay(slug, dayKey) {
   let res;
   try {
     res = await fetch(url, {
-      headers: {
-        accept: "application/json"
-      }
+      headers: { accept: "application/json" }
     });
   } catch (err) {
     return {
@@ -286,14 +277,13 @@ async function fetchLeagueDay(slug, dayKey) {
     };
   }
 
-  const events = Array.isArray(json?.events) ? json.events : [];
   return {
     ok: true,
     slug,
     dayKey,
     url,
     status: res.status,
-    events
+    events: Array.isArray(json?.events) ? json.events : []
   };
 }
 
@@ -311,19 +301,29 @@ async function flushProgress(history, report) {
   await writeJson(REPORT_FILE, report);
 }
 
-function emptyDayBucket(dayKey) {
-  return {
-    date: dayKey,
-    matches: []
-  };
+function normalizeExistingHistory(history) {
+  const rawDays = history?.days;
+
+  if (!Array.isArray(rawDays)) {
+    return [];
+  }
+
+  return rawDays
+    .map(day => ({
+      dayKey: day?.dayKey || "",
+      matchCount: Array.isArray(day?.rows) ? day.rows.length : 0,
+      rows: Array.isArray(day?.rows) ? day.rows : [],
+      updatedAt: day?.updatedAt || Date.now()
+    }))
+    .filter(day => !!day.dayKey)
+    .sort((a, b) => String(a.dayKey).localeCompare(String(b.dayKey)));
 }
 
 function rebuildGlobalSeenFromHistory(history) {
   const seen = new Set();
 
-  for (const bucket of Object.values(history?.days || {})) {
-    const matches = Array.isArray(bucket?.matches) ? bucket.matches : [];
-    for (const m of matches) {
+  for (const bucket of history?.days || []) {
+    for (const m of bucket?.rows || []) {
       if (m?.id) seen.add(String(m.id));
     }
   }
@@ -332,9 +332,8 @@ function rebuildGlobalSeenFromHistory(history) {
 }
 
 function recalcTotalMatches(history) {
-  return Object.values(history?.days || {}).reduce((sum, bucket) => {
-    const matches = Array.isArray(bucket?.matches) ? bucket.matches : [];
-    return sum + matches.length;
+  return (history?.days || []).reduce((sum, bucket) => {
+    return sum + (Array.isArray(bucket?.rows) ? bucket.rows.length : 0);
   }, 0);
 }
 
@@ -347,7 +346,7 @@ async function loadExistingProgress(start, end, totalDays) {
     createdAtIso: new Date().toISOString(),
     from: start,
     to: end,
-    days: {},
+    days: [],
     totalMatches: 0
   };
 
@@ -372,11 +371,14 @@ async function loadExistingProgress(start, end, totalDays) {
     const raw = await fs.readFile(OUT_FILE, "utf8");
     const parsed = JSON.parse(raw);
     if (parsed && parsed.season === SEASON) {
-      history = parsed;
-      history.ok = true;
-      history.source = "espn";
-      history.from = start;
-      history.to = end;
+      history = {
+        ...parsed,
+        ok: true,
+        source: "espn",
+        from: start,
+        to: end,
+        days: normalizeExistingHistory(parsed)
+      };
     }
   } catch (_) {}
 
@@ -384,18 +386,16 @@ async function loadExistingProgress(start, end, totalDays) {
     const raw = await fs.readFile(REPORT_FILE, "utf8");
     const parsed = JSON.parse(raw);
     if (parsed && parsed.season === SEASON) {
-      report = parsed;
-      report.ok = true;
-      report.from = start;
-      report.to = end;
-      report.totalDays = totalDays;
-      report.totalLeagues = LEAGUE_SEEDS.length;
-      if (!report.byDay || typeof report.byDay !== "object") {
-        report.byDay = {};
-      }
-      if (!Array.isArray(report.failures)) {
-        report.failures = [];
-      }
+      report = {
+        ...parsed,
+        ok: true,
+        from: start,
+        to: end,
+        totalDays,
+        totalLeagues: LEAGUE_SEEDS.length,
+        byDay: parsed.byDay && typeof parsed.byDay === "object" ? parsed.byDay : {},
+        failures: Array.isArray(parsed.failures) ? parsed.failures : []
+      };
     }
   } catch (_) {}
 
@@ -414,14 +414,15 @@ async function rebuildCurrentSeason() {
   const globalSeen = rebuildGlobalSeenFromHistory(history);
 
   console.log(
-    `[history rebuild] start season=${SEASON} days=${days.length} leagues=${LEAGUE_SEEDS.length} existingDays=${Object.keys(history.days || {}).length} existingMatches=${history.totalMatches}`
+    `[history rebuild] start season=${SEASON} days=${days.length} leagues=${LEAGUE_SEEDS.length} existingDays=${history.days.length} existingMatches=${history.totalMatches}`
   );
 
   for (const dayKey of days) {
-    const existingDay = history.days?.[dayKey];
-    if (existingDay && Array.isArray(existingDay.matches)) {
+    const existingDay = history.days.find(d => d?.dayKey === dayKey);
+
+    if (existingDay && Array.isArray(existingDay.rows) && existingDay.rows.length) {
       console.log(
-        `[history rebuild] skip existing ${dayKey} matches=${existingDay.matches.length}`
+        `[history rebuild] skip existing ${dayKey} matches=${existingDay.rows.length}`
       );
       continue;
     }
@@ -459,21 +460,11 @@ async function rebuildCurrentSeason() {
         continue;
       }
 
-      const events = Array.isArray(fetched.events) ? fetched.events : [];
-      report.totalRawEvents += events.length;
-      report.byDay[dayKey].rawEvents += events.length;
-
-      for (const ev of events) {
+      for (const ev of fetched.events || []) {
         const row = normalizeEvent(ev, slug, dayKey);
         if (!row) continue;
 
-        if (daySeen.has(row.id)) {
-          report.duplicatesDropped += 1;
-          report.byDay[dayKey].duplicatesDropped += 1;
-          continue;
-        }
-
-        if (globalSeen.has(row.id)) {
+        if (daySeen.has(row.id) || globalSeen.has(row.id)) {
           report.duplicatesDropped += 1;
           report.byDay[dayKey].duplicatesDropped += 1;
           continue;
@@ -481,33 +472,37 @@ async function rebuildCurrentSeason() {
 
         daySeen.add(row.id);
         globalSeen.add(row.id);
-        dayBucket.matches.push(row);
+        dayBucket.rows.push(row);
       }
     }
 
-    dayBucket.matches.sort((a, b) => {
-      const ak = Number(a.kickoff_ms || 0);
-      const bk = Number(b.kickoff_ms || 0);
-      return ak - bk;
-    });
+    dayBucket.rows.sort((a, b) => Number(a.kickoff_ms || 0) - Number(b.kickoff_ms || 0));
+    dayBucket.matchCount = dayBucket.rows.length;
+    dayBucket.updatedAt = Date.now();
 
-    history.days[dayKey] = dayBucket;
-    history.totalMatches += dayBucket.matches.length;
+    const existingIndex = history.days.findIndex(d => d?.dayKey === dayKey);
+    if (existingIndex >= 0) {
+      history.days[existingIndex] = dayBucket;
+    } else {
+      history.days.push(dayBucket);
+    }
+
+    history.days.sort((a, b) => String(a.dayKey).localeCompare(String(b.dayKey)));
+    history.totalMatches = recalcTotalMatches(history);
 
     report.totalTerminalMatches = history.totalMatches;
-    report.byDay[dayKey].terminalMatches = dayBucket.matches.length;
+    report.byDay[dayKey].terminalMatches = dayBucket.rows.length;
     report.lastCompletedDay = dayKey;
     report.lastCompletedAt = new Date().toISOString();
 
     await flushProgress(history, report);
 
     console.log(
-      `[history rebuild] done ${dayKey} matches=${dayBucket.matches.length} total=${history.totalMatches}`
+      `[history rebuild] done ${dayKey} matches=${dayBucket.rows.length} total=${history.totalMatches}`
     );
   }
 
   report.finishedAt = new Date().toISOString();
-
   await flushProgress(history, report);
 
   return {

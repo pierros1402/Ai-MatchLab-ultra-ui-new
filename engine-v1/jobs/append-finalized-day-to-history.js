@@ -60,10 +60,27 @@ function normalizeHistoryRow(row, season, dayKey) {
   };
 }
 
+function normalizeHistoryDays(history) {
+  const rawDays = history?.days;
+
+  if (!Array.isArray(rawDays)) {
+    return [];
+  }
+
+  return rawDays
+    .map(day => ({
+      dayKey: day?.dayKey || "",
+      matchCount: Array.isArray(day?.rows) ? day.rows.length : 0,
+      rows: Array.isArray(day?.rows) ? day.rows : [],
+      updatedAt: day?.updatedAt || Date.now()
+    }))
+    .filter(day => !!day.dayKey)
+    .sort((a, b) => String(a.dayKey).localeCompare(String(b.dayKey)));
+}
+
 export async function appendFinalizedDayToHistory(dayKey) {
   const rows = getFixturesByDay(dayKey);
 
-  // ---------------- DEBUG ----------------
   console.log("[history] day:", dayKey);
   console.log("[history] rows count:", rows.length);
 
@@ -75,7 +92,6 @@ export async function appendFinalizedDayToHistory(dayKey) {
       scoreAway: rows[0]?.scoreAway
     });
   }
-  // ---------------------------------------
 
   if (!rows.length) {
     return {
@@ -90,16 +106,12 @@ export async function appendFinalizedDayToHistory(dayKey) {
   await fs.mkdir(HISTORY_DIR, { recursive: true });
 
   const historyPath = resolveDataPath("history", `${season}.json`);
+  const existingHistory = await readJsonSafe(historyPath, { season, days: [] });
 
-  const history = await readJsonSafe(historyPath, {
-    season,
-    days: []
-  });
-
-  const days = Array.isArray(history.days) ? history.days : [];
+  const days = normalizeHistoryDays(existingHistory);
 
   const normalizedRows = rows.map(r => normalizeHistoryRow(r, season, dayKey));
-  
+
   console.log("[history] normalized rows:", normalizedRows.length);
 
   if (normalizedRows.length) {

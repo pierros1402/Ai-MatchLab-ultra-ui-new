@@ -5,14 +5,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ------------------------------
-// CANONICAL LOCAL ENGINE DATA ROOT
-// ------------------------------
 const DATA_ROOT = path.resolve(__dirname, "..", "..", "data");
-
-// ------------------------------
-// SEASON FROM CLI
-// ------------------------------
 const SEASON = process.argv[2] || "2025-2026";
 
 const HISTORY_FILE = path.join(DATA_ROOT, "history", `${SEASON}.json`);
@@ -166,9 +159,9 @@ function buildLeagueIndex(allMatches) {
       const goals = h + a;
 
       totalGoals += goals;
-      if (h === a) draws++;
-      if (h > 0 && a > 0) btts++;
-      if (goals > 2.5) over25++;
+      if (h === a) draws += 1;
+      if (h > 0 && a > 0) btts += 1;
+      if (goals > 2.5) over25 += 1;
     }
 
     const count = data.matches.length;
@@ -224,6 +217,21 @@ function buildMatchupIndex(allMatches) {
   return result;
 }
 
+function extractCanonicalMatches(history) {
+  if (!Array.isArray(history?.days)) return [];
+
+  const allMatches = [];
+
+  for (const day of history.days) {
+    if (!Array.isArray(day?.rows)) continue;
+    for (const m of day.rows) {
+      allMatches.push(m);
+    }
+  }
+
+  return allMatches;
+}
+
 async function run() {
   console.log("[index] season:", SEASON);
   console.log("[index] history file:", HISTORY_FILE);
@@ -231,13 +239,7 @@ async function run() {
   const raw = await fs.readFile(HISTORY_FILE, "utf8");
   const history = JSON.parse(raw);
 
-  const allMatches = [];
-
-  for (const day of history.days || []) {
-    for (const m of (day.rows || day.matches || [])) {
-      allMatches.push(m);
-    }
-  }
+  const allMatches = extractCanonicalMatches(history);
 
   console.log("[index] total matches:", allMatches.length);
 

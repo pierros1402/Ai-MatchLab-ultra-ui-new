@@ -110,7 +110,7 @@ function buildDetailsSignature(match, valuePicks, payload) {
       ""
     ),
     competitionType: String(payload?.context?.competitionType || ""),
-    motivation: String(payload?.context?.motivation || ""),
+    importance: String(payload?.context?.importance || ""),
     valueCount: Array.isArray(valuePicks) ? valuePicks.length : 0,
     topValue: topPick
       ? {
@@ -189,98 +189,17 @@ function buildTravelBlock(match) {
   };
 }
 
-function buildMotivationBlock(match) {
-  const competitionType = classifyCompetitionType(match);
-
-  if (competitionType === "domestic_cup") {
-    return {
-      status: "not_applicable",
-      competitionType,
-      motivation: "domestic_cup",
-      table: null,
-      note: {
-        code: "cup_context",
-        el: "Αγώνας εγχώριου κυπέλλου — δεν χρησιμοποιείται βαθμολογικό κίνητρο.",
-        en: "Domestic cup match — league table motivation not applied."
-      }
-    };
-  }
-
-  if (competitionType === "international_cup") {
-    return {
-      status: "not_applicable",
-      competitionType,
-      motivation: "international_knockout",
-      table: null,
-      note: {
-        code: "intl_competition",
-        el: "Διεθνής διασυλλογική διοργάνωση — υψηλής σημασίας αγώνας knockout.",
-        en: "International club competition — high-importance knockout match."
-      }
-    };
-  }
-
-  const standingsFile = resolveDataPath("standings", `${match.leagueSlug}.json`);
-  const standings = readJsonSafe(standingsFile, null);
-
-  if (!standings) {
-    return {
-      status: "pending",
-      competitionType,
-      motivation: "unknown",
-      table: null,
-      note: {
-        code: "standings_pending",
-        el: "Δεν υπάρχει ακόμη αποθηκευμένο standings snapshot για να υπολογιστεί το βαθμολογικό κίνητρο.",
-        en: "No stored standings snapshot is available yet to compute table motivation."
-      }
-    };
-  }
-
-  const rows = Array.isArray(standings?.table) ? standings.table : [];
-  const home = rows.find(r => String(r.team || r.teamName || r.name) === String(match.homeTeam));
-  const away = rows.find(r => String(r.team || r.teamName || r.name) === String(match.awayTeam));
-
-  const posHome = Number(home?.position ?? home?.rank ?? null);
-  const posAway = Number(away?.position ?? away?.rank ?? null);
-
-  function classifyPos(pos, total) {
-    if (!Number.isFinite(pos) || !Number.isFinite(total) || total <= 0) return "unknown";
-    if (pos <= 3) return "high";
-    if (pos >= Math.max(total - 2, 1)) return "high";
-    if (pos <= 6) return "medium";
-    return "medium";
-  }
-
-  const total = rows.length || null;
-  const homeMot = classifyPos(posHome, total);
-  const awayMot = classifyPos(posAway, total);
-
-  return {
-    status: "ready",
-    competitionType,
-    motivation:
-      homeMot === "high" || awayMot === "high"
-        ? "high"
-        : homeMot === "medium" || awayMot === "medium"
-          ? "medium"
-          : "unknown",
-    table: {
-      homePosition: Number.isFinite(posHome) ? posHome : null,
-      awayPosition: Number.isFinite(posAway) ? posAway : null,
-      totalTeams: total
-    },
-    note: null
-  };
-}
-
-function buildAnalysisBlock(match, valuePicks, motivation, referee, travel) {
+function buildAnalysisBlock(match, valuePicks, competitionContext, referee, travel) {
   const codes = [];
 
   if (isLiveLike(match?.status)) codes.push("live_match");
   if (isFinalLike(match?.status)) codes.push("final_match");
   if ((valuePicks || []).length) codes.push("value_present");
-  if (motivation?.motivation === "high") codes.push("high_motivation_context");
+
+  const importance = competitionContext?.data?.importance || null;
+  if (importance === "high") codes.push("high_competition_context");
+  if (importance === "medium") codes.push("medium_competition_context");
+
   if (referee?.style === "low_intervention") codes.push("low_ref_intervention");
   if (travel?.impact === "high") codes.push("high_travel_load");
 
@@ -303,14 +222,17 @@ function buildAnalysisBlock(match, valuePicks, motivation, referee, travel) {
     partsEn.push("No value snapshot is available yet for this match.");
   }
 
-  if (motivation?.competitionType === "league") {
-    if (motivation?.motivation === "high") {
-      partsEl.push("Υπάρχει ένδειξη αυξημένου βαθμολογικού κινήτρου από το league context.");
-      partsEn.push("There is an indication of elevated league-table motivation from the league context.");
-    } else if (motivation?.status === "pending") {
-      partsEl.push("Το βαθμολογικό κίνητρο δεν έχει ακόμη υπολογιστεί επειδή λείπει standings snapshot.");
-      partsEn.push("Table motivation has not been computed yet because the standings snapshot is missing.");
+  if (competitionContext?.data) {
+    if (importance === "high") {
+      partsEl.push("Υπάρχει ένδειξη αυξημένης σημασίας από το competition context.");
+      partsEn.push("There is an indication of elevated importance from the competition context.");
+    } else if (importance === "medium") {
+      partsEl.push("Υπάρχει ένδειξη μεσαίας σημασίας από το competition context.");
+      partsEn.push("There is an indication of medium importance from the competition context.");
     }
+  } else if (competitionContext?.status === "empty") {
+    partsEl.push("Δεν υπάρχει ακόμη επαρκές standings context για να εκτιμηθεί η βαθμολογική σημασία.");
+    partsEn.push("There is not yet enough standings context to assess competitive importance.");
   }
 
   if (referee?.status === "pending") {
@@ -335,11 +257,13 @@ function buildAnalysisBlock(match, valuePicks, motivation, referee, travel) {
   };
 }
 
-function buildDetailsPayload(match, valuePicks) {
-  const motivation = buildMotivationBlock(match);
+function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
+  const competitionContext = aiBlocks?.researchedFacts?.competitionContext || null;
+  const refereeProfile = aiBlocks?.researchedFacts?.refereeProfile || null;
+
   const referee = buildRefereeBlock(match);
   const travel = buildTravelBlock(match);
-  const analysis = buildAnalysisBlock(match, valuePicks, motivation, referee, travel);
+  const analysis = buildAnalysisBlock(match, valuePicks, competitionContext, referee, travel);
 
   return {
     matchId: String(match.matchId),
@@ -361,30 +285,39 @@ function buildDetailsPayload(match, valuePicks) {
       venue: match.venue || null
     },
     context: {
-      motivation: motivation.motivation,
-      competitionType: motivation.competitionType,
-      table: motivation.table,
+      competitionType: competitionContext?.data?.type || classifyCompetitionType(match),
+      importance: competitionContext?.data?.importance || "unknown",
+      positions: competitionContext?.data?.positions || null,
+      stakes: competitionContext?.data?.stakes || null,
+      pressure: competitionContext?.data?.pressure || null,
+      notes: Array.isArray(competitionContext?.data?.notes) ? competitionContext.data.notes : [],
       travelImpact: travel.impact
     },
-    referee,
+    referee: refereeProfile?.data
+      ? {
+          status: refereeProfile.status || "ready",
+          ...refereeProfile.data
+        }
+      : referee,
     travel,
     value: Array.isArray(valuePicks) ? valuePicks : [],
     analysis,
     meta: {
       version: "details-snapshot-v2",
-      builderVersion: "2026-04-08-update-on-change",
+      builderVersion: "2026-04-11-unified-competition-context",
       languageReady: ["el", "en"],
       source: "engine-v1",
       snapshotMode: "update_on_change",
       signature: null,
       pendingSignals: {
-        standings: motivation.status === "pending",
-        refereeStats: referee.status !== "ready",
+        standings: !competitionContext?.data,
+        refereeStats: !refereeProfile?.data && referee.status !== "ready",
         travelGeo: travel.status !== "ready"
       }
     }
   };
 }
+
 
 function detailsFilePath(dayKey, matchId) {
   return resolveDataPath("details", dayKey, `${matchId}.json`);
@@ -413,7 +346,7 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   });
 
   const payload = {
-    ...buildDetailsPayload(match, valuePicks),
+    ...buildDetailsPayload(match, valuePicks, aiBlocks),
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,
@@ -485,7 +418,7 @@ for (const match of rows) {
   });
 
   const payload = {
-    ...buildDetailsPayload(match, valuePicks),
+    ...buildDetailsPayload(match, valuePicks, aiBlocks),
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,

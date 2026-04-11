@@ -59,8 +59,30 @@ function resolveLeagueSlug(leagueEntry) {
 
 function getCurrentSeasonHistoryRows(season = DEFAULT_SEASON) {
   const filePath = resolveDataPath("history", `${season}.json`);
-  const raw = readJsonSafe(filePath, []);
-  return safeArray(raw);
+  const raw = readJsonSafe(filePath, null);
+
+  if (!raw) return [];
+
+  // ήδη array (fallback περίπτωση)
+  if (Array.isArray(raw)) return raw;
+
+  // περίπτωση days → extract rows μέσα από κάθε day
+  if (raw.days && typeof raw.days === "object") {
+    const all = [];
+
+    for (const dayKey of Object.keys(raw.days)) {
+      const day = raw.days[dayKey];
+
+      // εδώ είναι το σημαντικό
+      if (Array.isArray(day?.rows)) {
+        all.push(...day.rows);
+      }
+    }
+
+    return all;
+  }
+
+  return [];
 }
 
 function isFinalStatus(status) {
@@ -346,18 +368,168 @@ function normalizeStandingsRow(row, index = 0) {
   };
 }
 
+function estimateExpectedLeagueSize(slug) {
+  const map = {
+    "eng.1": 20,
+    "eng.2": 24,
+    "eng.3": 24,
+    "eng.4": 24,
+    "eng.5": 24,
+    "ger.1": 18,
+    "ger.2": 18,
+    "esp.1": 20,
+    "esp.2": 22,
+    "ita.1": 20,
+    "ita.2": 20,
+    "fra.1": 18,
+    "fra.2": 18,
+    "ned.1": 18,
+    "ned.2": 20,
+    "por.1": 18,
+    "bel.1": 16,
+    "sco.1": 12,
+    "sco.2": 10,
+    "tur.1": 20,
+    "aut.1": 12,
+    "swe.1": 16,
+    "nor.1": 16,
+    "usa.1": 15,
+    "arg.1": 28,
+    "arg.2": 18,
+    "bra.1": 20,
+    "bra.2": 20,
+    "uru.1": 16,
+    "chi.1": 16,
+    "jpn.1": 20,
+    "ksa.1": 18,
+    "rsa.1": 16,
+    "rsa.2": 16
+  };
+
+  return map[slug] || 20;
+}
+
+function computeStandingsCompleteness(rows = [], slug = "") {
+  const rowCount = safeArray(rows).length;
+  const expectedSize = estimateExpectedLeagueSize(slug);
+
+  if (!rowCount || expectedSize <= 0) {
+    return {
+      rowCount,
+      expectedSize,
+      completeness: 0
+    };
+  }
+
+  return {
+    rowCount,
+    expectedSize,
+    completeness: Math.max(0, Math.min(1, rowCount / expectedSize))
+  };
+}
+
+function validateStandingsShape(rows = []) {
+  const safeRows = safeArray(rows);
+
+  if (!safeRows.length) {
+    return {
+      ok: false,
+      validRows: [],
+      reasons: ["no_rows"]
+    };
+  }
+
+  const validRows = safeRows.filter(row => {
+    const team = row?.team || row?.teamName || row?.name;
+    const position = Number(row?.position ?? row?.rank);
+
+    return !!normalizeText(team) && Number.isFinite(position) && position > 0;
+  });
+
+  const uniqueTeams = new Set(
+    validRows.map(row => normalizeText(row?.team || row?.teamName || row?.name))
+  );
+
+  const uniquePositions = new Set(
+    validRows.map(row => Number(row?.position ?? row?.rank))
+  );
+
+  const reasons = [];
+
+  if (!validRows.length) reasons.push("no_valid_rows");
+  if (uniqueTeams.size !== validRows.length) reasons.push("duplicate_teams");
+  if (uniquePositions.size !== validRows.length) reasons.push("duplicate_positions");
+
+  return {
+    ok: reasons.length === 0,
+    validRows,
+    reasons
+  };
+}
+
+function scoreStandingsConfidence(rows = [], slug = "", baseConfidence = 0.9) {
+  const { validRows, reasons } = validateStandingsShape(rows);
+  const { rowCount, expectedSize, completeness } = computeStandingsCompleteness(validRows, slug);
+
+  if (!validRows.length) {
+    return {
+      confidence: 0,
+      completeness,
+      rowCount,
+      expectedSize,
+      reasons: reasons.length ? reasons : ["no_valid_rows"]
+    };
+  }
+
+  // hard floor: tables that are too small are not reliable competition context
+  if (rowCount < 6) {
+    return {
+      confidence: 0,
+      completeness,
+      rowCount,
+      expectedSize,
+      reasons: [...reasons, "too_small_for_context"]
+    };
+  }
+
+  // stronger penalty for incomplete tables
+  let confidence = Number(baseConfidence) || 0.8;
+
+  confidence *= completeness;
+
+  if (rowCount < 10) confidence *= 0.65;
+  else if (rowCount < 14) confidence *= 0.82;
+  else if (rowCount < 18) confidence *= 0.92;
+
+  if (reasons.includes("duplicate_teams")) confidence *= 0.5;
+  if (reasons.includes("duplicate_positions")) confidence *= 0.5;
+
+  confidence = Math.max(0, Math.min(1, confidence));
+
+  return {
+    confidence,
+    completeness,
+    rowCount,
+    expectedSize,
+    reasons
+  };
+}
+
 function reconcileStandingsRows(slug, candidates = []) {
   const best = chooseBestCandidate(candidates);
+
+  const sourceAudit = candidates.map(c => ({
+    type: c?.type || "unknown",
+    label: c?.label || "unknown",
+    ok: !!c?.ok
+  }));
 
   if (!best) {
     return {
       league: slug,
       confidence: 0,
-      sourceAudit: candidates.map(c => ({
-        type: c?.type || "unknown",
-        label: c?.label || "unknown",
-        ok: !!c?.ok
-      })),
+      completeness: 0,
+      sourceAudit,
       table: []
     };
   }
@@ -371,18 +543,52 @@ function reconcileStandingsRows(slug, candidates = []) {
       return pa - pb;
     });
 
+  const scored = scoreStandingsConfidence(
+    normalized,
+    slug,
+    Number(best.confidence) || 0.8
+  );
+
+  // if table is too weak/incomplete, do not expose it as active league state
+  const MIN_CONFIDENCE = 0.4;
+
+  if (scored.confidence < MIN_CONFIDENCE) {
+    return {
+      league: slug,
+      confidence: scored.confidence,
+      completeness: scored.completeness,
+      sourceAudit: [
+        ...sourceAudit,
+        {
+          type: "validation",
+          label: `low-confidence:${scored.confidence.toFixed(2)}`,
+          ok: false
+        }
+      ],
+      table: []
+    };
+  }
+
+  const enrichedTable = normalized.map(row => ({
+    ...row,
+    confidence: scored.confidence
+  }));
+
   return {
     league: slug,
-    confidence: Number(best.confidence) || 0.8,
-    sourceAudit: candidates.map(c => ({
-      type: c?.type || "unknown",
-      label: c?.label || "unknown",
-      ok: !!c?.ok
-    })),
-    table: normalized
+    confidence: scored.confidence,
+    completeness: scored.completeness,
+    sourceAudit: [
+      ...sourceAudit,
+      {
+        type: "validation",
+        label: `rows:${scored.rowCount}/${scored.expectedSize}`,
+        ok: true
+      }
+    ],
+    table: enrichedTable
   };
 }
-
 function writeLeagueStandingsArtifact(slug, state) {
   const outDir = resolveDataPath("standings");
   ensureDir(outDir);
@@ -393,6 +599,7 @@ function writeLeagueStandingsArtifact(slug, state) {
     league: slug,
     updatedAt: Date.now(),
     confidence: Number(state?.confidence) || 0,
+    completeness: Number(state?.completeness) || 0,
     sourceAudit: safeArray(state?.sourceAudit),
     table: safeArray(state?.table)
   };

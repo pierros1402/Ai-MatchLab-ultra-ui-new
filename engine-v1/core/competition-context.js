@@ -74,16 +74,24 @@ export function buildCompetitionContext(match) {
   const standingsFile = resolveDataPath("standings", `${match?.leagueSlug}.json`);
   const standings = readJsonSafe(standingsFile, null);
 
-  if (!standings || !Array.isArray(standings?.table)) {
+  const standingsConfidence = Number(standings?.confidence || 0);
+  const standingsTable = Array.isArray(standings?.table) ? standings.table : [];
+  const MIN_STANDINGS_CONFIDENCE = 0.4;
+
+  if (!standings || !standingsTable.length || standingsConfidence   < MIN_STANDINGS_CONFIDENCE) {
     return {
-      key: "competition_context",
+      ok: false,
       status: "empty",
-      data: null,
-      confidence: 0
+      league: match?.leagueSlug || null,
+      reason: !standings
+        ? "no_standings_file"
+        : !standingsTable.length
+          ? "empty_table"
+          : "low_confidence_table"
     };
   }
 
-  const table = standings.table;
+  const table = standingsTable;
   const totalTeams =
     Math.max(...table.map(t => Number(t.position) || 0)) || table.length;
 

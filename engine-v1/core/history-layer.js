@@ -53,6 +53,22 @@ function sortByKickoffDesc(a, b) {
   return safeNum(b?.kickoff_ms, 0) - safeNum(a?.kickoff_ms, 0);
 }
 
+function resolveSeasonFromDay(dayKey) {
+  if (!dayKey) return null;
+
+  const d = new Date(dayKey);
+  if (Number.isNaN(d.getTime())) return null;
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1;
+
+  // season split: Aug → Jul
+  if (month >= 8) {
+    return `${year}-${year + 1}`;
+  }
+
+  return `${year - 1}-${year}`;
+}
+
 function isFinalRow(row) {
   const s = String(row?.status || "").toUpperCase();
   return s === "FT" || s.includes("FINAL") || s.includes("FULL_TIME") || s.includes("COMPLETE") || s.includes("AET") || s.includes("PEN");
@@ -106,12 +122,6 @@ function normalizeHistoryRow(row, fallbackSeason = null) {
   };
 }
 
-export function resolveSeasonFromDay(dayKey) {
-  const [year, month] = String(dayKey || "").split("-").map(Number);
-  if (!year || !month) return "unknown-season";
-  return month >= 7 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-}
-
 export function readCurrentSeasonRows(season) {
   if (__currentSeasonRowsCache.has(season)) {
     return __currentSeasonRowsCache.get(season);
@@ -121,7 +131,7 @@ export function readCurrentSeasonRows(season) {
   const payload = readJsonSafe(filePath, { days: [] });
 
   const rows = Array.isArray(payload?.days)
-    ? payload.days.flatMap(day => day?.rows || day?.matches || [])
+    ? payload.days.flatMap(day => Array.isArray(day?.rows) ? day.rows : [])
     : [];
 
   const normalized = rows

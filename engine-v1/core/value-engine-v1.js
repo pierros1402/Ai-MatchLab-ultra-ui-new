@@ -1530,6 +1530,95 @@ function computeConfidence({
   return clamp(raw, BOUNDS.minConfidence, BOUNDS.maxConfidence);
 }
 
+function normalizeCompetitionContext(raw) {
+  const data = raw?.data || raw || null;
+
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const importance = String(data.importance || "unknown").toLowerCase();
+  const stakes = Array.isArray(data.stakes) ? data.stakes.filter(Boolean) : [];
+  const pressure = Array.isArray(data.pressure) ? data.pressure.filter(Boolean) : [];
+  const notes = Array.isArray(data.notes) ? data.notes.filter(Boolean) : [];
+
+  return {
+    type: data.type || null,
+    importance,
+    positions: data.positions || null,
+    stakes,
+    pressure,
+    notes
+  };
+}
+
+function buildContextIntelligenceFromInput(input) {
+  const explicit = input?.contextIntelligence;
+  if (explicit && typeof explicit === "object" && Object.keys(explicit).length) {
+    return explicit;
+  }
+
+  const competitionContext =
+    normalizeCompetitionContext(input?.researchedFacts?.competitionContext) ||
+    normalizeCompetitionContext(input?.competitionContext) ||
+    normalizeCompetitionContext(input?.context);
+
+  if (!competitionContext) {
+    return {};
+  }
+
+  return {
+    competitionContext,
+    importance: competitionContext.importance || "unknown",
+    stakes: competitionContext.stakes || [],
+    pressure: competitionContext.pressure || [],
+    notes: competitionContext.notes || []
+  };
+}
+
+function buildAiContextSignals(contextIntelligence = {}) {
+  const signals = [];
+
+  const competitionContext = normalizeCompetitionContext(
+    contextIntelligence?.competitionContext || contextIntelligence
+  );
+
+  const importance = String(
+    contextIntelligence?.importance ||
+    competitionContext?.importance ||
+    "unknown"
+  ).toLowerCase();
+
+  const stakes = Array.isArray(contextIntelligence?.stakes)
+    ? contextIntelligence.stakes
+    : competitionContext?.stakes || [];
+
+  const pressure = Array.isArray(contextIntelligence?.pressure)
+    ? contextIntelligence.pressure
+    : competitionContext?.pressure || [];
+
+  if (importance === "high") signals.push("ai_context_high_importance");
+  if (importance === "medium") signals.push("ai_context_medium_importance");
+
+  for (const item of stakes) {
+    const s = String(item || "").toLowerCase();
+    if (s.includes("title")) signals.push("title_pressure");
+    if (s.includes("promotion")) signals.push("promotion_race");
+    if (s.includes("playoff")) signals.push("playoff_pressure");
+    if (s.includes("relegation")) signals.push("relegation_pressure");
+    if (s.includes("survival")) signals.push("survival_pressure");
+  }
+
+  for (const item of pressure) {
+    const s = String(item || "").toLowerCase();
+    if (s.includes("must")) signals.push("must_result_pressure");
+    if (s.includes("desperate")) signals.push("desperation_spot");
+    if (s.includes("safe")) signals.push("safe_table_state");
+  }
+
+  return [...new Set(signals)];
+}
+
 function buildSignals({
   outcomeScores,
   goalsProfile,
@@ -1538,7 +1627,8 @@ function buildSignals({
   awayMetrics,
   matchupBias,
   dynamicWeights,
-  priorsMeta
+  priorsMeta,
+  contextIntelligence
 }) {
   const signals = [];
 
@@ -1609,12 +1699,17 @@ function buildSignals({
     signals.push("matchup_goals_history");
   }
 
-  if (priorsMeta?.used) {
-    signals.push("priors_applied");
-  }
+    if (priorsMeta?.used) {
+      signals.push("priors_applied");
+    }
 
-  return signals;
-}
+    const aiSignals = buildAiContextSignals(contextIntelligence);
+    for (const signal of aiSignals) {
+      signals.push(signal);
+    }
+
+    return signals;
+  }
 
 // ------------------------------------------------------------
 // PUBLIC EVALUATOR
@@ -1893,7 +1988,7 @@ export async function evaluateMatchValue(input, opts = {}) {
 // -----------------------------
   // APPLY AI CONTEXT INTEGRATION
   // -----------------------------
-  const contextIntelligence = input?.contextIntelligence || {};
+  const contextIntelligence = buildContextIntelligenceFromInput(input);
 
   const integrated = applyValueContextIntegration(
     {
@@ -1962,7 +2057,16 @@ export async function evaluateMatchValue(input, opts = {}) {
       },
       contextAdjusted: !!integrated?.contextAdjusted,
       contextDelta: integrated?.contextDelta ?? 0,
-      contextReasons: integrated?.contextReasons || []
+      contextReasons: integrated?.contextReasons || [],
+      aiContext: {
+        available: !!Object.keys(contextIntelligence || {}).length,
+        importance:
+          contextIntelligence?.importance ||
+          contextIntelligence?.competitionContext?.importance ||
+          "unknown",
+        stakes: contextIntelligence?.stakes || [],
+        pressure: contextIntelligence?.pressure || []
+      }
     }
   };
 }
