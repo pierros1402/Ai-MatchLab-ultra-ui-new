@@ -6,6 +6,7 @@ import { finalizeDayIfSafe } from "./finalize-day.js";
 import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
 import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
+import { buildStandingsDay } from "./build-standings-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 
 export async function runDailyCycle(options = {}) {
@@ -46,32 +47,36 @@ export async function runDailyCycle(options = {}) {
   const monitor = await monitorActiveLeagues(dayKey);
   console.log("[daily-cycle] monitor:done", monitor);
 
-// -------------------------------------
-// VALUE BUILD (FIRST)
-// -------------------------------------
-console.log("[daily-cycle] value-build:start", { dayKey });
+  console.log("[daily-cycle] standings-build:start", { dayKey });
 
-const valueBuild = await buildValueDay(dayKey, { rebuild: true });
+  const standingsBuild = await buildStandingsDay(
+    dayKey,
+    activeLeagues?.leagues || activeLeagues?.activeLeagues || []
+  );
 
-console.log("[daily-cycle] value-build:done", {
-  ok: valueBuild?.ok,
-  date: valueBuild?.date,
-  count: valueBuild?.count ?? 0
-});
+  console.log("[daily-cycle] standings-build:done", standingsBuild);
 
-// -------------------------------------
-// DETAILS BUILD (AFTER VALUE)
-// -------------------------------------
-console.log("[daily-cycle] details-build:start", { dayKey });
+  console.log("[daily-cycle] details-build:start", { dayKey });
 
-const detailsBuild = await buildDetailsDay(dayKey, { rebuild: false });
+  const detailsBuild = await buildDetailsDay(dayKey, { rebuild: false });
 
-console.log("[daily-cycle] details-build:done", detailsBuild);
+  console.log("[daily-cycle] details-build:done", detailsBuild);
+
+  console.log("[daily-cycle] value-build:start", { dayKey });
+
+  const valueBuild = await buildValueDay(dayKey, { rebuild: true });
+
+  console.log("[daily-cycle] value-build:done", {
+    ok: valueBuild?.ok,
+    date: valueBuild?.date,
+    count: valueBuild?.count ?? 0
+  });
 
   let finalizeValueBuild = null;
   let finalize = null;
   let historyAppend = null;
   let indexesRebuild = null;
+  
 
   if (doFinalize) {
     console.log("[daily-cycle] finalize-value-build:start", { finalizeDayKey });
@@ -116,6 +121,7 @@ console.log("[daily-cycle] details-build:done", detailsBuild);
     discoveryWindow,
     activeLeagues,
     monitor,
+    standingsBuild,
     detailsBuild,
     valueBuild,
     finalizeValueBuild,

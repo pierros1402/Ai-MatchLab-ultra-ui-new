@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { getFixturesByDay, getFixtureById } from "../storage/json-db.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
@@ -465,39 +466,55 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
   let skipped = 0;
   const files = [];
 
-  for (const match of rows) {
-    const file = detailsFilePath(dayKey, match.matchId);
-    const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
+for (const match of rows) {
+  console.log("[build-details-day] match:start", {
+    matchId: match?.matchId,
+    homeTeam: match?.homeTeam,
+    awayTeam: match?.awayTeam
+  });
 
-    const valuePicks = getValueForMatch(dayKey, match.matchId);
+  const file = detailsFilePath(dayKey, match.matchId);
+  const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
-    const aiBlocks = await buildAiDetailsBlock(match, {
-      dayKey,
-      valuePicks,
-      allFixtures: rows
+  const valuePicks = getValueForMatch(dayKey, match.matchId);
+
+  const aiBlocks = await buildAiDetailsBlock(match, {
+    dayKey,
+    valuePicks,
+    allFixtures: rows
+  });
+
+  const payload = {
+    ...buildDetailsPayload(match, valuePicks),
+    researchedFacts: aiBlocks.researchedFacts,
+    aiContext: aiBlocks.aiContext,
+    sourceAudit: aiBlocks.sourceAudit,
+    learningMeta: aiBlocks.learningMeta
+  };
+
+  const nextSignature = buildDetailsSignature(match, valuePicks, payload);
+
+  if (!rebuild && existing?.meta?.signature === nextSignature) {
+    console.log("[build-details-day] match:skip", {
+      matchId: match?.matchId
     });
 
-    const payload = {
-      ...buildDetailsPayload(match, valuePicks),
-      researchedFacts: aiBlocks.researchedFacts,
-      aiContext: aiBlocks.aiContext,
-      sourceAudit: aiBlocks.sourceAudit,
-      learningMeta: aiBlocks.learningMeta
-    };
-
-    const nextSignature = buildDetailsSignature(match, valuePicks, payload);
-
-    if (!rebuild && existing?.meta?.signature === nextSignature) {
-      skipped += 1;
-      files.push(file);
-      continue;
-    }
-
-    payload.meta.signature = nextSignature;
-    writeJson(file, payload);
-    built += 1;
+    skipped += 1;
     files.push(file);
+    continue;
   }
+
+  payload.meta.signature = nextSignature;
+  writeJson(file, payload);
+
+  console.log("[build-details-day] match:write", {
+    matchId: match?.matchId,
+    file
+  });
+
+  built += 1;
+  files.push(file);
+}
 
   return {
     ok: true,
@@ -509,3 +526,29 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
   };
 }
 
+const __filename = fileURLToPath(import.meta.url);
+
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
+  const dayKey = process.argv[2];
+  const rebuild = process.argv.includes("--rebuild");
+
+  console.log("[build-details-day] cli:start", {
+    argv: process.argv.slice(2),
+    dayKey,
+    rebuild
+  });
+
+  if (!dayKey) {
+    console.error("[build-details-day] missing dayKey");
+    process.exit(1);
+  }
+
+  buildDetailsDay(dayKey, { rebuild })
+    .then(result => {
+      console.log("[build-details-day] cli:done", result);
+    })
+    .catch(err => {
+      console.error("[build-details-day] cli:fatal", err);
+      process.exit(1);
+    });
+}

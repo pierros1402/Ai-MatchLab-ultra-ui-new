@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import { resolveDataPath } from "../storage/data-root.js";
 
 function readJsonSafe(file, fallback = null) {
@@ -11,25 +10,47 @@ function readJsonSafe(file, fallback = null) {
   }
 }
 
-export function loadIntelligenceSupport(dayKey, matchId) {
+export function loadIntelligenceSupport(dayKey, matchId, valuePicks = []) {
   const priors = readJsonSafe(
     resolveDataPath("model-priors", "2025-2026.json"),
     {}
   );
 
-  const value = readJsonSafe(
-    resolveDataPath("value", `${dayKey}.json`),
-    { picks: [] }
-  );
+  const hasPriors =
+    !!priors &&
+    (
+      Object.keys(priors?.teamPriors || {}).length > 0 ||
+      Object.keys(priors?.leaguePriors || {}).length > 0 ||
+      Object.keys(priors?.matchupPriors || {}).length > 0
+    );
 
-  const matchValue = (value.picks || []).filter(
-    p => String(p.matchId) === String(matchId)
-  );
+  const normalizedValue = Array.isArray(valuePicks) ? valuePicks : [];
+
+  const sortedValue = normalizedValue
+    .slice()
+    .sort((a, b) => Number(b?.score || 0) - Number(a?.score || 0));
+
+  const topValue = sortedValue[0] || null;
+
+  const valueSummary = {
+    count: sortedValue.length,
+    topMarket: topValue?.market || topValue?.marketName || null,
+    topPick: topValue?.pick || null,
+    topScore: Number.isFinite(Number(topValue?.score)) ? Number(topValue.score) : null,
+    avgConfidence: sortedValue.length
+      ? (
+          sortedValue.reduce((sum, p) => sum + Number(p?.confidence || 0), 0) /
+          sortedValue.length
+        )
+      : 0
+  };
 
   return {
     priors,
-    value: matchValue,
-    hasValue: matchValue.length > 0,
-    hasPriors: Object.keys(priors || {}).length > 0
+    hasPriors,
+    value: sortedValue,
+    hasValue: sortedValue.length > 0,
+    topValue,
+    valueSummary
   };
 }

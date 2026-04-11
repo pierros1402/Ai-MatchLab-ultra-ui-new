@@ -7,6 +7,20 @@ import {
   loadModelPriors
 } from "./value-engine-v1.js";
 
+function readJsonSafe(filePath, fallback = null) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function readDetailsSnapshot(dayKey, matchId) {
+  const filePath = resolveDataPath("details", dayKey, `${matchId}.json`);
+  return readJsonSafe(filePath, null);
+}
+
 // ------------------------------
 // LOCAL CACHES
 // ------------------------------
@@ -29,7 +43,7 @@ function isPlayable(match) {
 
 // ------------------------------
 function writeValueSnapshot(date, result) {
-  const dir = ensureDir(resolveDataPath("value"));
+  ensureDir(resolveDataPath("value"));
   const file = resolveDataPath("value", `${date}.json`);
 
   let existing = {
@@ -59,14 +73,10 @@ function writeValueSnapshot(date, result) {
     newMap.set(key, p);
   }
 
-  // ------------------------------
-  // MERGE LOGIC
-  // ------------------------------
-
-  // 1. κρατάμε ό,τι ήδη υπάρχει (FT / LIVE / παλιά PRE)
+  // 1. κρατάμε ό,τι ήδη υπάρχει
   const merged = new Map(existingMap);
 
-  // 2. overwrite μόνο τα νέα PRE picks
+  // 2. overwrite μόνο τα νέα picks
   for (const [key, val] of newMap) {
     const existingPick = existingMap.get(key);
 
@@ -88,6 +98,7 @@ function writeValueSnapshot(date, result) {
 
   fs.writeFileSync(file, JSON.stringify(payload, null, 2));
 }
+
 // ------------------------------
 async function getSeasonResources(season, force = false) {
   if (!force && __seasonResourceCache.has(season)) {
@@ -212,36 +223,36 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     return __valueDayCache.get(cacheKey);
   }
 
-// ------------------------------
-// SNAPSHOT GUARD (FILE CACHE)
-// ------------------------------
-if (!rebuild) {
-  try {
-    const file = resolveDataPath("value", `${date}.json`);
+  // ------------------------------
+  // SNAPSHOT GUARD (FILE CACHE)
+  // ------------------------------
+  if (!rebuild) {
+    try {
+      const file = resolveDataPath("value", `${date}.json`);
 
-    if (fs.existsSync(file)) {
-      const raw = fs.readFileSync(file, "utf-8");
-      const parsed = JSON.parse(raw);
+      if (fs.existsSync(file)) {
+        const raw = fs.readFileSync(file, "utf-8");
+        const parsed = JSON.parse(raw);
 
-      const normalized = {
-        ok: true,
-        date: parsed.date || date,
-        createdAt: parsed.createdAt ?? null,
-        updatedAt: parsed.updatedAt ?? null,
-        count: Array.isArray(parsed.picks) ? parsed.picks.length : 0,
-        picks: Array.isArray(parsed.picks) ? parsed.picks : []
-      };
+        const normalized = {
+          ok: true,
+          date: parsed.date || date,
+          createdAt: parsed.createdAt ?? null,
+          updatedAt: parsed.updatedAt ?? null,
+          count: Array.isArray(parsed.picks) ? parsed.picks.length : 0,
+          picks: Array.isArray(parsed.picks) ? parsed.picks : []
+        };
 
-      __valueDayCache.set(cacheKey, normalized);
+        __valueDayCache.set(cacheKey, normalized);
 
-      console.log("[value] snapshot hit", { date });
+        console.log("[value] snapshot hit", { date });
 
-      return normalized;
+        return normalized;
+      }
+    } catch (e) {
+      console.log("[value] snapshot read failed", e?.message || e);
     }
-  } catch (e) {
-    console.log("[value] snapshot read failed", e?.message || e);
   }
-}
 
   const now = Date.now();
 
@@ -261,11 +272,24 @@ if (!rebuild) {
 
   for (const match of matches) {
     try {
+      const details = readDetailsSnapshot(date, match.matchId);
+
       const value = await evaluateMatchValue(
         {
           ...match,
           kickoff: match.kickoffUtc,
-          season
+          season,
+          contextIntelligence: {
+            competitionContext: details?.researchedFacts?.competitionContext || null,
+            refereeProfile: details?.researchedFacts?.refereeProfile || null,
+            teamNews: details?.researchedFacts?.teamNews || null,
+            expectedLineups: details?.researchedFacts?.expectedLineups || null,
+            headToHead: details?.researchedFacts?.headToHead || null,
+            formGuide: details?.researchedFacts?.formGuide || null,
+
+  // 🔥 NEW
+            signals: details?.aiContext?.signals || []
+          }
         },
         { season, indexes, priors }
       );
@@ -273,7 +297,15 @@ if (!rebuild) {
       if (!value) continue;
 
       picks.push(...expandValueMarkets(match, value));
-    } catch (_) {}
+    } catch (err) {
+      console.log("[value] match failed", {
+        date,
+        matchId: match?.matchId,
+        homeTeam: match?.homeTeam,
+        awayTeam: match?.awayTeam,
+        error: err?.message || String(err)
+      });
+    }
   }
 
   const result = {

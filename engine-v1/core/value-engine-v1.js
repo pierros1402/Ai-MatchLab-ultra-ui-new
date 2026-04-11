@@ -7,6 +7,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { resolveDataPath } from "../storage/data-root.js";
 import { applyValueContextModifiers } from "./value-context-modifiers.js";
+import { applyValueContextIntegration } from "./value-context-integration.js";
 
 const DATA_DIR = resolveDataPath();
 const HISTORY_INDEX_DIR = path.join(DATA_DIR, "history-index");
@@ -103,6 +104,28 @@ function round(value, digits = 3) {
   if (!Number.isFinite(n)) return 0;
   const p = 10 ** digits;
   return Math.round(n * p) / p;
+}
+
+function renormalize1X2Scores(scores = {}) {
+  const home = Number(scores.homeWinScore) || 0;
+  const draw = Number(scores.drawScore) || 0;
+  const away = Number(scores.awayWinScore) || 0;
+
+  const sum = home + draw + away;
+
+  if (sum <= 0) {
+    return {
+      homeWinScore: 0.33,
+      drawScore: 0.34,
+      awayWinScore: 0.33
+    };
+  }
+
+  return {
+    homeWinScore: home / sum,
+    drawScore: draw / sum,
+    awayWinScore: away / sum
+  };
 }
 
 function safeArray(value) {
@@ -1867,6 +1890,48 @@ export async function evaluateMatchValue(input, opts = {}) {
     }
   });
 
+// -----------------------------
+  // APPLY AI CONTEXT INTEGRATION
+  // -----------------------------
+  const contextIntelligence = input?.contextIntelligence || {};
+
+  const integrated = applyValueContextIntegration(
+    {
+      ...baseValue,
+      homeWinScore: round(
+        contextApplied?.adjusted?.homeWinScore ?? baseValue.homeWinScore,
+        3
+      ),
+      drawScore: round(
+        contextApplied?.adjusted?.drawScore ?? baseValue.drawScore,
+        3
+      ),
+      awayWinScore: round(
+        contextApplied?.adjusted?.awayWinScore ?? baseValue.awayWinScore,
+        3
+      ),
+      over25Score: round(
+        contextApplied?.adjusted?.over25Score ?? baseValue.over25Score,
+        3
+      ),
+      bttsScore: round(
+        contextApplied?.adjusted?.bttsScore ?? baseValue.bttsScore,
+        3
+      ),
+      confidence: round(
+        contextApplied?.meta?.confidenceAdjusted ?? baseValue.confidence,
+        3
+      )
+    },
+    contextIntelligence
+  );
+
+  const normalized1X2 = renormalize1X2Scores({
+    homeWinScore: integrated?.homeWinScore,
+    drawScore: integrated?.drawScore,
+    awayWinScore: integrated?.awayWinScore
+  });
+
   const modifierSignals = [
     ...(contextApplied?.modifiers?.motivation?.reasons || []),
     ...(contextApplied?.modifiers?.fatigue?.reasons || []),
@@ -1876,48 +1941,28 @@ export async function evaluateMatchValue(input, opts = {}) {
 
   return {
     ...baseValue,
-    homeWinScore: round(
-      contextApplied?.adjusted?.homeWinScore ?? baseValue.homeWinScore,
-      3
-    ),
-    drawScore: round(
-      contextApplied?.adjusted?.drawScore ?? baseValue.drawScore,
-      3
-    ),
-    awayWinScore: round(
-      contextApplied?.adjusted?.awayWinScore ?? baseValue.awayWinScore,
-      3
-    ),
-    over15Score: round(
-      contextApplied?.adjusted?.over15Score ?? baseValue.over15Score,
-      3
-    ),
-    over25Score: round(
-      contextApplied?.adjusted?.over25Score ?? baseValue.over25Score,
-      3
-    ),
-    over35Score: round(
-      contextApplied?.adjusted?.over35Score ?? baseValue.over35Score,
-      3
-    ),
-    bttsScore: round(
-      contextApplied?.adjusted?.bttsScore ?? baseValue.bttsScore,
-      3
-    ),
-    confidence: round(
-      contextApplied?.meta?.confidenceAdjusted ?? baseValue.confidence,
-      3
-    ),
-    signals: [...signals, ...modifierSignals],
+    ...integrated,
+    homeWinScore: round(normalized1X2.homeWinScore, 3),
+    drawScore: round(normalized1X2.drawScore, 3),
+    awayWinScore: round(normalized1X2.awayWinScore, 3),
+    over15Score: baseValue.over15Score,
+    over35Score: baseValue.over35Score,
+    signals: [...new Set([
+      ...(baseValue.signals || []),
+      ...modifierSignals
+    ])],
     modifiers: contextApplied?.modifiers || null,
     context: contextApplied?.context || null,
     meta: {
-      ...baseValue.meta,
+      ...(baseValue.meta || {}),
       mode: "statistical_plus_context",
       contextModifiers: {
         applied: true,
         version: "value-context-modifiers-v1.0"
-      }
+      },
+      contextAdjusted: !!integrated?.contextAdjusted,
+      contextDelta: integrated?.contextDelta ?? 0,
+      contextReasons: integrated?.contextReasons || []
     }
   };
 }
