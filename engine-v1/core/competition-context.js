@@ -15,6 +15,10 @@ function safeNum(v, fallback = null) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function uniqueStrings(arr) {
+  return [...new Set((Array.isArray(arr) ? arr : []).filter(Boolean))];
+}
+
 function normalizeTeamName(name) {
   return String(name || "")
     .toLowerCase()
@@ -29,37 +33,22 @@ function normalizeTeamName(name) {
 function sameTeam(a, b) {
   const na = normalizeTeamName(a);
   const nb = normalizeTeamName(b);
+
   if (!na || !nb) return false;
-  return na === nb || na.includes(nb) || nb.includes(na);
+  if (na === nb) return true;
+  if (na.includes(nb) || nb.includes(na)) return true;
+
+  const partsA = na.split(" ").filter(Boolean);
+  const partsB = nb.split(" ").filter(Boolean);
+
+  const overlap = partsA.filter(part => partsB.includes(part));
+
+  return overlap.length >= 2;
 }
 
 function normalizePosition(pos) {
   const n = safeNum(pos, null);
   return n && n > 0 ? n : null;
-}
-
-function classifyStake(position, totalTeams) {
-  if (!position || !totalTeams) return "unknown";
-
-  if (position <= 2) return "title";
-  if (position <= Math.ceil(totalTeams * 0.25)) return "promotion";
-  if (position >= totalTeams - 2) return "relegation";
-  return "safe";
-}
-
-function stakePressure(stake) {
-  switch (stake) {
-    case "title":
-      return 0.9;
-    case "promotion":
-      return 0.75;
-    case "relegation":
-      return 0.95;
-    case "safe":
-      return 0.3;
-    default:
-      return 0.2;
-  }
 }
 
 function findTeamRow(table, teamName) {
@@ -70,57 +59,298 @@ function findTeamRow(table, teamName) {
   );
 }
 
+function classifySeasonPhase(matchesLeft) {
+  const n = safeNum(matchesLeft, 0);
+  if (n <= 6) return "late";
+  if (n <= 12) return "mid";
+  return "early";
+}
+
+function classifyGapTier(gap) {
+  const n = safeNum(gap, null);
+  if (n === null) return "unknown";
+  if (n <= 3) return "tight";
+  if (n <= 6) return "live";
+  if (n <= 9) return "reachable";
+  return "far";
+}
+
+function resolveStandingsMeta(standings) {
+  const table = Array.isArray(standings?.table)
+    ? standings.table
+    : Array.isArray(standings?.standings)
+      ? standings.standings
+      : Array.isArray(standings?.rows)
+        ? standings.rows
+        : [];
+
+  const totalTeams =
+    safeNum(standings?.meta?.totalTeams, null) ||
+    safeNum(standings?.totalTeams, null) ||
+    table.length ||
+    0;
+
+  const matchesPlayedMax = table.reduce((acc, row) => {
+    const played =
+      safeNum(row?.played, null) ??
+      safeNum(row?.games, null) ??
+      safeNum(row?.matchesPlayed, null) ??
+      0;
+
+    return Math.max(acc, played);
+  }, 0);
+
+  const seasonMatches =
+    safeNum(standings?.meta?.seasonMatches, null) ||
+    safeNum(standings?.seasonMatches, null) ||
+    (totalTeams > 0 ? (totalTeams - 1) * 2 : null);
+
+  const matchesLeftEstimate =
+    seasonMatches !== null
+      ? Math.max(seasonMatches - matchesPlayedMax, 0)
+      : null;
+
+  return {
+    table,
+    totalTeams,
+    matchesPlayedMax,
+    matchesLeftEstimate
+  };
+}
+
+function resolveCutoffMap(totalTeams) {
+  const n = safeNum(totalTeams, 0);
+
+  return {
+    title: 1,
+    europe: n >= 18 ? 4 : n >= 14 ? 3 : 2,
+    playoff: n >= 20 ? 6 : n >= 16 ? 4 : null,
+    relegationStart: n >= 20 ? n - 2 : n >= 16 ? n - 1 : n
+  };
+}
+
+function sortTableByPoints(table) {
+  return [...table].sort((a, b) => {
+    const pa = safeNum(a?.points, 0);
+    const pb = safeNum(b?.points, 0);
+
+    if (pb !== pa) return pb - pa;
+
+    const ga = safeNum(a?.goalDifference, 0) ?? safeNum(a?.gd, 0) ?? 0;
+    const gb = safeNum(b?.goalDifference, 0) ?? safeNum(b?.gd, 0) ?? 0;
+
+    return gb - ga;
+  });
+}
+
+function computeGapToTopZone(row, sortedTable, zoneRank) {
+  if (!row || !Array.isArray(sortedTable) || !zoneRank) return null;
+
+  const targetRow = sortedTable[zoneRank - 1];
+  if (!targetRow) return null;
+
+  const points = safeNum(row?.points, 0);
+  const targetPoints = safeNum(targetRow?.points, 0);
+
+  return Math.max(targetPoints - points, 0);
+}
+
+function computeRelegationMargin(row, sortedTable, relegationStartRank) {
+  if (!row || !Array.isArray(sortedTable) || !relegationStartRank) return null;
+
+  const cutoffRow = sortedTable[relegationStartRank - 1];
+  if (!cutoffRow) return null;
+
+  const points = safeNum(row?.points, 0);
+  const cutoffPoints = safeNum(cutoffRow?.points, 0);
+
+  return Math.max(points - cutoffPoints, 0);
+}
+
 export function buildCompetitionContext(match) {
   const standingsFile = resolveDataPath("standings", `${match?.leagueSlug}.json`);
   const standings = readJsonSafe(standingsFile, null);
 
   const standingsConfidence = Number(standings?.confidence || 0);
-  const standingsTable = Array.isArray(standings?.table) ? standings.table : [];
   const MIN_STANDINGS_CONFIDENCE = 0.4;
 
-  if (!standings || !standingsTable.length || standingsConfidence   < MIN_STANDINGS_CONFIDENCE) {
+  const meta = resolveStandingsMeta(standings);
+  const table = meta.table;
+
+  if (!standings || !table.length || standingsConfidence < MIN_STANDINGS_CONFIDENCE) {
+    console.log("[competition-context] skipped", {
+      league: match?.leagueSlug || null,
+      reason: !standings
+        ? "no_standings_file"
+        : !table.length
+          ? "empty_table"
+          : "low_confidence_table",
+      confidence: standingsConfidence,
+      standingsFile
+    });
+
     return {
       ok: false,
       status: "empty",
       league: match?.leagueSlug || null,
       reason: !standings
         ? "no_standings_file"
-        : !standingsTable.length
+        : !table.length
           ? "empty_table"
           : "low_confidence_table"
     };
   }
 
-  const table = standingsTable;
-  const totalTeams =
-    Math.max(...table.map(t => Number(t.position) || 0)) || table.length;
+  const sortedTable = sortTableByPoints(table);
+  const totalTeams = meta.totalTeams || sortedTable.length || 0;
+  const matchesLeft = meta.matchesLeftEstimate;
+  const phase = classifySeasonPhase(matchesLeft ?? 0);
+  const cutoffs = resolveCutoffMap(totalTeams);
 
-  const homeRow = findTeamRow(table, match?.homeTeam);
-  const awayRow = findTeamRow(table, match?.awayTeam);
+  const homeRow = findTeamRow(sortedTable, match?.homeTeam);
+  const awayRow = findTeamRow(sortedTable, match?.awayTeam);
 
-  const homePos = normalizePosition(homeRow?.position ?? homeRow?.rank);
-  const awayPos = normalizePosition(awayRow?.position ?? awayRow?.rank);
+  if (!homeRow || !awayRow) {
+    console.log("[competition-context] partial", {
+      league: match?.leagueSlug || null,
+      reason: "team_not_found_in_table",
+      homeTeam: match?.homeTeam || null,
+      awayTeam: match?.awayTeam || null,
+      foundHome: !!homeRow,
+      foundAway: !!awayRow
+    });
 
-  const homeStake = classifyStake(homePos, totalTeams);
-  const awayStake = classifyStake(awayPos, totalTeams);
-
-  const homePressure = stakePressure(homeStake);
-  const awayPressure = stakePressure(awayStake);
-
-  let importance = "low";
-  const maxPressure = Math.max(homePressure, awayPressure);
-
-  if (maxPressure > 0.85) importance = "high";
-  else if (maxPressure > 0.6) importance = "medium";
-
-  const notes = [];
-
-  if (homeStake === "relegation" || awayStake === "relegation") {
-    notes.push("Relegation pressure present");
+    return {
+      ok: false,
+      status: "partial",
+      league: match?.leagueSlug || null,
+      reason: "team_not_found_in_table"
+    };
   }
 
-  if (homeStake === "title" || awayStake === "title") {
-    notes.push("Title race involvement");
+  const homePos = normalizePosition(homeRow?.position ?? homeRow?.rank) || (sortedTable.indexOf(homeRow) + 1);
+  const awayPos = normalizePosition(awayRow?.position ?? awayRow?.rank) || (sortedTable.indexOf(awayRow) + 1);
+
+  const homePts = safeNum(homeRow?.points, 0);
+  const awayPts = safeNum(awayRow?.points, 0);
+
+  const homeTitleGap = computeGapToTopZone(homeRow, sortedTable, cutoffs.title);
+  const awayTitleGap = computeGapToTopZone(awayRow, sortedTable, cutoffs.title);
+
+  const homeEuropeGap = computeGapToTopZone(homeRow, sortedTable, cutoffs.europe);
+  const awayEuropeGap = computeGapToTopZone(awayRow, sortedTable, cutoffs.europe);
+
+  const homePlayoffGap =
+    cutoffs.playoff ? computeGapToTopZone(homeRow, sortedTable, cutoffs.playoff) : null;
+  const awayPlayoffGap =
+    cutoffs.playoff ? computeGapToTopZone(awayRow, sortedTable, cutoffs.playoff) : null;
+
+  const homeRelegMargin = computeRelegationMargin(homeRow, sortedTable, cutoffs.relegationStart);
+  const awayRelegMargin = computeRelegationMargin(awayRow, sortedTable, cutoffs.relegationStart);
+
+  const homeTitleTier = classifyGapTier(homeTitleGap);
+  const awayTitleTier = classifyGapTier(awayTitleGap);
+  const homeEuropeTier = classifyGapTier(homeEuropeGap);
+  const awayEuropeTier = classifyGapTier(awayEuropeGap);
+  const homePlayoffTier = classifyGapTier(homePlayoffGap);
+  const awayPlayoffTier = classifyGapTier(awayPlayoffGap);
+
+  const stakes = [];
+  const pressure = [];
+  const notes = [];
+
+  const homeVsAwayGap = Math.abs(homePts - awayPts);
+  const directRival = homeVsAwayGap <= 3 && Math.abs(homePos - awayPos) <= 3;
+
+  const latePhase = phase === "late";
+  const midPhase = phase === "mid";
+
+  if (latePhase && (homeTitleTier === "tight" || awayTitleTier === "tight")) {
+    stakes.push("title_race");
+    pressure.push("must_win");
+    notes.push("Late-season title race pressure");
+  }
+
+  if (
+    (latePhase || midPhase) &&
+    (
+      homeEuropeTier === "tight" ||
+      homeEuropeTier === "live" ||
+      awayEuropeTier === "tight" ||
+      awayEuropeTier === "live"
+    )
+  ) {
+    stakes.push("europe_race");
+    pressure.push("protect_position");
+  }
+
+  if (
+    cutoffs.playoff &&
+    (
+      homePlayoffTier === "tight" ||
+      homePlayoffTier === "live" ||
+      awayPlayoffTier === "tight" ||
+      awayPlayoffTier === "live"
+    )
+  ) {
+    stakes.push("playoff_race");
+    pressure.push("chasing_cutoff");
+  }
+
+  if (
+    latePhase &&
+    (
+      (homeRelegMargin !== null && homeRelegMargin <= 6) ||
+      (awayRelegMargin !== null && awayRelegMargin <= 6)
+    )
+  ) {
+    stakes.push("relegation_battle");
+    pressure.push("must_win");
+    notes.push("Relegation pressure near bottom zone");
+  }
+
+  if (
+    latePhase &&
+    (
+      (homeRelegMargin !== null && homeRelegMargin <= 3) ||
+      (awayRelegMargin !== null && awayRelegMargin <= 3)
+    )
+  ) {
+    stakes.push("survival");
+  }
+
+  if (directRival && stakes.length) {
+    stakes.push("direct_rival_match");
+    pressure.push("cannot_lose");
+  }
+
+  const safeMidTable =
+    !stakes.length &&
+    homePos > cutoffs.europe &&
+    awayPos > cutoffs.europe &&
+    (homeRelegMargin === null || homeRelegMargin > 9) &&
+    (awayRelegMargin === null || awayRelegMargin > 9);
+
+  if (safeMidTable) {
+    pressure.push("safe_table_state");
+    notes.push("Mid-table low-pressure league game");
+  }
+
+  let importance = "low";
+
+  if (
+    stakes.includes("title_race") ||
+    stakes.includes("relegation_battle") ||
+    stakes.includes("survival") ||
+    (stakes.includes("direct_rival_match") && latePhase)
+  ) {
+    importance = "high";
+  } else if (
+    stakes.includes("europe_race") ||
+    stakes.includes("playoff_race") ||
+    stakes.includes("direct_rival_match")
+  ) {
+    importance = "medium";
   }
 
   return {
@@ -128,22 +358,20 @@ export function buildCompetitionContext(match) {
     status: "ready",
     data: {
       type: "league",
-      phase: "regular",
+      phase,
       positions: {
         home: homePos,
-        away: awayPos
+        away: awayPos,
+        pointsHome: homePts,
+        pointsAway: awayPts,
+        matchesLeft,
+        totalTeams
       },
-      stakes: {
-        home: homeStake,
-        away: awayStake
-      },
-      pressure: {
-        home: homePressure,
-        away: awayPressure
-      },
+      stakes: uniqueStrings(stakes),
+      pressure: uniqueStrings(pressure),
       importance,
-      notes
+      notes: uniqueStrings(notes)
     },
-    confidence: 0.75
+    confidence: 0.86
   };
 }

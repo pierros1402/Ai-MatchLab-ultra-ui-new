@@ -129,6 +129,10 @@ function expandValueMarkets(match, value) {
   const btts = Number(value?.bttsScore ?? -1);
   const confidence = Number(value?.confidence ?? 0);
 
+  const signals = Array.isArray(value?.signals) ? value.signals : [];
+  const meta = value?.meta || {};
+  const context = value?.context || null;
+
   // 1X2 (NO DRAW)
   if (Number.isFinite(home) && Number.isFinite(away)) {
     const best = Math.max(home, away);
@@ -146,7 +150,10 @@ function expandValueMarkets(match, value) {
         marketName: "1X2",
         pick: home > away ? "HOME" : "AWAY",
         score: best,
-        confidence
+        confidence,
+        signals,
+        meta,
+        context
       });
     }
   }
@@ -162,7 +169,10 @@ function expandValueMarkets(match, value) {
       marketName: "Over / Under 1.5",
       pick: "Over 1.5",
       score: over15,
-      confidence
+      confidence,
+      signals,
+      meta,
+      context
     });
   }
 
@@ -177,7 +187,10 @@ function expandValueMarkets(match, value) {
       marketName: "Over / Under 2.5",
       pick: "Over 2.5",
       score: over25,
-      confidence
+      confidence,
+      signals,
+      meta,
+      context
     });
   }
 
@@ -192,7 +205,10 @@ function expandValueMarkets(match, value) {
       marketName: "Over / Under 3.5",
       pick: "Over 3.5",
       score: over35,
-      confidence
+      confidence,
+      signals,
+      meta,
+      context
     });
   }
 
@@ -207,13 +223,15 @@ function expandValueMarkets(match, value) {
       marketName: "BTTS",
       pick: "BTTS YES",
       score: btts,
-      confidence
+      confidence,
+      signals,
+      meta,
+      context
     });
   }
 
   return items;
 }
-
 // ------------------------------
 export async function buildValueDay(date, { rebuild = false, env } = {}) {
   const season = "2025-2026";
@@ -274,25 +292,29 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     try {
       const details = readDetailsSnapshot(date, match.matchId);
 
-      const value = await evaluateMatchValue(
-        {
-          ...match,
-          kickoff: match.kickoffUtc,
-          season,
-          contextIntelligence: {
-            competitionContext: details?.researchedFacts?.competitionContext || null,
-            refereeProfile: details?.researchedFacts?.refereeProfile || null,
-            teamNews: details?.researchedFacts?.teamNews || null,
-            expectedLineups: details?.researchedFacts?.expectedLineups || null,
-            headToHead: details?.researchedFacts?.headToHead || null,
-            formGuide: details?.researchedFacts?.formGuide || null,
+            const competitionContext =
+              details?.researchedFacts?.competitionContext || null;
 
-  // 🔥 NEW
-            signals: details?.aiContext?.signals || []
-          }
-        },
-        { season, indexes, priors }
-      );
+            const competitionData = competitionContext?.data || {};
+
+            const value = await evaluateMatchValue(
+              {
+                ...match,
+                kickoff: match.kickoffUtc,
+                season,
+                contextIntelligence: {
+                  ...competitionData,
+                  competitionContext,
+                  refereeProfile: details?.researchedFacts?.refereeProfile || null,
+                  teamNews: details?.researchedFacts?.teamNews || null,
+                  expectedLineups: details?.researchedFacts?.expectedLineups || null,
+                  headToHead: details?.researchedFacts?.headToHead || null,
+                  formGuide: details?.researchedFacts?.formGuide || null,
+                  signals: details?.aiContext?.signals || []
+                }
+              },
+              { season, indexes, priors }
+            );
 
       if (!value) continue;
 

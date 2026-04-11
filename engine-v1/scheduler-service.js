@@ -4,6 +4,7 @@ import { finalizeDayIfSafe } from "./jobs/finalize-day.js";
 import { discoverActiveLeagues } from "./jobs/discover-active-leagues.js";
 import { monitorActiveLeagues } from "./jobs/monitor-active-leagues.js";
 import { runDailyCycle } from "./jobs/run-daily-cycle.js";
+import { buildStandingsDay } from "./jobs/build-standings-day.js";
 
 const STARTUP_DELAY_MS = 10 * 1000;
 const TICK_MS = 2 * 60 * 1000;
@@ -143,6 +144,13 @@ async function runTick() {
 
     // 1) βασικό ingest σήμερα
     await safeStep(`ingest:${today}`, async () => ingestDay(today));
+
+    // 🔥 BUILD STANDINGS
+    await safeStep(`standings:${today}`, async () => {
+      const active = await discoverActiveLeagues(today);
+      const leagues = active?.leagues || [];
+      return buildStandingsDay(today, leagues);
+    });
 
     // 2) monitor με auto-recovery
     await safeStep(`monitor:${today}`, async () => monitorWithRecovery(today));
