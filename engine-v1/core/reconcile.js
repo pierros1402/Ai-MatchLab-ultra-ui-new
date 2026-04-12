@@ -9,6 +9,8 @@ function buildSignature(row) {
     row.minute ?? "",
     row.scoreHome ?? "",
     row.scoreAway ?? "",
+    row.penalties?.home ?? "",
+    row.penalties?.away ?? "",
     row.venue ?? ""
   ].join("|");
 }
@@ -58,6 +60,8 @@ export function reconcileFixture(existing, incoming) {
     rawStatus: incoming.rawStatus,
     scoreHome: incoming.scoreHome,
     scoreAway: incoming.scoreAway,
+    penalties: incoming.penalties || existing.penalties || null,
+    decidedBy: incoming.decidedBy || existing.decidedBy || null,
     minute: incoming.minute,
     venue: incoming.venue,
 

@@ -73,10 +73,7 @@ function normalizeEvent(e, fallbackLeagueSlug = null) {
       e?.date ||
       null,
 
-    // raw ESPN status for downstream mapping
     rawStatus,
-
-    // keep the state too — downstream can map from rawStatus/state
     status: state || rawStatus || "",
 
     minute:
@@ -99,6 +96,107 @@ function normalizeEvent(e, fallbackLeagueSlug = null) {
 function normalizePayloadEvents(data, fallbackLeagueSlug = null) {
   const events = Array.isArray(data?.events) ? data.events : [];
   return events.map(e => normalizeEvent(e, fallbackLeagueSlug));
+}
+
+function safeNum(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function extractPenaltyInfoFromSummary(data) {
+  const headerComp =
+    data?.header?.competitions?.[0] ||
+    null;
+
+  const comp =
+    data?.boxscore?.teams?.length
+      ? null
+      : (data?.gamepackageJSON?.header?.competitions?.[0] || null);
+
+  const competition =
+    headerComp ||
+    data?.competitions?.[0] ||
+    data?.header?.events?.[0]?.competitions?.[0] ||
+    comp ||
+    null;
+
+  const competitors = Array.isArray(competition?.competitors)
+    ? competition.competitors
+    : [];
+
+  const home =
+    competitors.find(c => c?.homeAway === "home") ||
+    competitors[0] ||
+    null;
+
+  const away =
+    competitors.find(c => c?.homeAway === "away") ||
+    competitors[1] ||
+    null;
+
+  const homeShootout =
+    safeNum(home?.shootoutScore) ??
+    safeNum(home?.shootout?.score) ??
+    safeNum(home?.penaltyScore);
+
+  const awayShootout =
+    safeNum(away?.shootoutScore) ??
+    safeNum(away?.shootout?.score) ??
+    safeNum(away?.penaltyScore);
+
+  const detail =
+    String(
+      competition?.status?.type?.detail ||
+      competition?.status?.detail ||
+      data?.header?.competitions?.[0]?.status?.type?.detail ||
+      ""
+    ).toUpperCase();
+
+  const shortDetail =
+    String(
+      competition?.status?.type?.shortDetail ||
+      data?.header?.competitions?.[0]?.status?.type?.shortDetail ||
+      ""
+    ).toUpperCase();
+
+  const noteTexts = [
+    ...(Array.isArray(data?.notes) ? data.notes.map(x => x?.headline || x?.text || "") : []),
+    ...(Array.isArray(competition?.notes) ? competition.notes.map(x => x?.headline || x?.text || "") : [])
+  ]
+    .map(x => String(x || ""))
+    .filter(Boolean);
+
+  const notesJoined = noteTexts.join(" | ").toUpperCase();
+
+  const hasPensSignal =
+    detail.includes("PEN") ||
+    shortDetail.includes("PEN") ||
+    notesJoined.includes("PENALT");
+
+  if (
+    Number.isFinite(homeShootout) &&
+    Number.isFinite(awayShootout)
+  ) {
+    return {
+      penalties: {
+        home: homeShootout,
+        away: awayShootout
+      },
+      decidedBy: "pens"
+    };
+  }
+
+  if (hasPensSignal) {
+    return {
+      penalties: null,
+      decidedBy: "pens"
+    };
+  }
+
+  return {
+    penalties: null,
+    decidedBy: null
+  };
 }
 
 export async function fetchLeagueFixtures(slug, date = null) {
@@ -164,5 +262,58 @@ export async function fetchLeagueFixtures(slug, date = null) {
   } catch (e) {
     console.log("[espn adapter] fatal", slug, date, e?.message || e);
     return { events: [] };
+  }
+}
+
+export async function fetchMatchSummary(slug, matchId) {
+  try {
+    if (!slug || !matchId) {
+      return {
+        ok: false,
+        reason: "missing_slug_or_match",
+        penalties: null,
+        decidedBy: null
+      };
+    }
+
+    const url = `${ESPN_BASE}/${slug}/summary?event=${encodeURIComponent(matchId)}`;
+    const res = await fetch(url);
+
+    if (res.status === 400 || res.status === 404) {
+      await res.body?.cancel?.();
+      return {
+        ok: false,
+        reason: `http_${res.status}`,
+        penalties: null,
+        decidedBy: null
+      };
+    }
+
+    if (!res.ok) {
+      await res.body?.cancel?.();
+      return {
+        ok: false,
+        reason: `http_${res.status}`,
+        penalties: null,
+        decidedBy: null
+      };
+    }
+
+    const data = await res.json();
+    const extracted = extractPenaltyInfoFromSummary(data);
+
+    return {
+      ok: true,
+      reason: "summary_loaded",
+      penalties: extracted.penalties,
+      decidedBy: extracted.decidedBy
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      reason: e?.message || "summary_fetch_failed",
+      penalties: null,
+      decidedBy: null
+    };
   }
 }

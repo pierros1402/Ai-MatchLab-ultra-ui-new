@@ -25,7 +25,23 @@ export function normalizeFixture(event, slug) {
   const status = mapStatus(rawStatus);
 
   let scoreHome = parseScore(home?.score);
-  let scoreAway = parseScore(away?.score);
+  let scoreAway = parseScore(away?.score); 
+
+  let penalties = null;
+
+  // ESPN penalty extraction
+  const homeShootout = parseScore(home?.shootoutScore);
+  const awayShootout = parseScore(away?.shootoutScore);
+
+  if (
+    Number.isFinite(homeShootout) &&
+    Number.isFinite(awayShootout)
+  ) {
+    penalties = {
+      home: homeShootout,
+      away: awayShootout
+    };
+  }
 
   // ------------------------------------------------------------
   // PRE / SCHEDULED → no scores
@@ -51,6 +67,8 @@ export function normalizeFixture(event, slug) {
 
     scoreHome,
     scoreAway,
+    penalties,
+    decidedBy: penalties ? "pens" : null,
 
     rawStatus,
     status,

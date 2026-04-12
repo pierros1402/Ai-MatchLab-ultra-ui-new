@@ -118,6 +118,18 @@ export function normalizeFixtureSource2(event, slug) {
     scoreAway = null;
   }
 
+  let penalties = null;
+
+  if (
+    Number.isFinite(Number(event.penHome)) &&
+    Number.isFinite(Number(event.penAway))
+  ) {
+    penalties = {
+      home: Number(event.penHome),
+      away: Number(event.penAway)
+    };
+  }
+
   const minute = normalizeMinute(
     event.minute ?? event.clock
   );
@@ -138,6 +150,8 @@ export function normalizeFixtureSource2(event, slug) {
 
     scoreHome,
     scoreAway,
+    penalties,
+    decidedBy: penalties ? "pens" : null,
 
     rawStatus: String(rawStatus),
     status,

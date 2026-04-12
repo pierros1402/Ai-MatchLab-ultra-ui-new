@@ -4,6 +4,42 @@ import { getObservationsByMatchId } from "../storage/observations-db.js";
 import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
+const NO_DRAW_COMPETITIONS = new Set([
+  "jpn.1"
+]);
+
+function isNoDrawCompetition(slug) {
+  return NO_DRAW_COMPETITIONS.has(String(slug || "").trim());
+}
+
+function hasPenaltyResolution(row) {
+  const homePens = Number(row?.penalties?.home);
+  const awayPens = Number(row?.penalties?.away);
+
+  const hasStructuredPens =
+    Number.isFinite(homePens) &&
+    Number.isFinite(awayPens);
+
+  const decidedByPens =
+    String(row?.decidedBy || "").toLowerCase() === "pens";
+
+  return hasStructuredPens || decidedByPens;
+}
+
+function isMissingMandatoryResolution(row) {
+  if (!row) return false;
+  if (!isNoDrawCompetition(row.leagueSlug)) return false;
+  if (!isOperationallyTerminal(row)) return false;
+
+  const home = Number(row.scoreHome);
+  const away = Number(row.scoreAway);
+
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return false;
+  if (home !== away) return false;
+
+  return !hasPenaltyResolution(row);
+}
+
 function opState(row) {
   return String(row?.operationalState || "").toUpperCase();
 }
@@ -254,6 +290,18 @@ export async function finalizeDayIfSafe(dayKey) {
       dayKey,
       count: unstableTerminal.length,
       matchIds: unstableTerminal.map(r => r.matchId)
+    };
+  }
+
+  const unresolvedMandatoryResolution = rows.filter(isMissingMandatoryResolution);
+
+  if (unresolvedMandatoryResolution.length) {
+    return {
+      ok: false,
+      reason: "missing_mandatory_resolution",
+      dayKey,
+      count: unresolvedMandatoryResolution.length,
+      matchIds: unresolvedMandatoryResolution.map(r => r.matchId)
     };
   }
 

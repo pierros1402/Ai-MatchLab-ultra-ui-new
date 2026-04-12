@@ -669,6 +669,15 @@ export async function reconcileObservations({
 
     scoreHome: scorePick.scoreHome,
     scoreAway: scorePick.scoreAway,
+    penalties: newest?.penalties || existing?.penalties || null,
+    decidedBy:
+      newest?.decidedBy ||
+      existing?.decidedBy ||
+      (String(
+        newest?.rawStatus ||
+        existing?.rawStatus ||
+        ""
+      ).toUpperCase().includes("PEN") ? "pens" : null),
 
     venue: newest.venue || existing?.venue || null,
 

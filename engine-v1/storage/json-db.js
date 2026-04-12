@@ -268,6 +268,8 @@ export function upsertFixtureWithMeta(row) {
         minute: row.minute,
         scoreHome: row.scoreHome,
         scoreAway: row.scoreAway,
+        penalties: row.penalties,
+        decidedBy: row.decidedBy,
         kickoffUtc: row.kickoffUtc,
         operationalState: row.operationalState,
         isDisplayLive: row.isDisplayLive,

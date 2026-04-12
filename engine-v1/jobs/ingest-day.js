@@ -1,5 +1,5 @@
 import { LEAGUE_SEEDS } from "../config.js";
-import { fetchLeagueFixtures } from "../adapters/espn.js";
+import { fetchLeagueFixtures, fetchMatchSummary } from "../adapters/espn.js";
 import { fetchLeagueFixturesSource2 } from "../adapters/source2.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { normalizeFixtureSource2 } from "../core/normalize-source2.js";
@@ -16,6 +16,14 @@ import {
   getObservationsByMatchId
 } from "../storage/observations-db.js";
 
+const NO_DRAW_COMPETITIONS = new Set([
+  "jpn.1" // J-League 2026 special format
+]);
+
+function isNoDrawCompetition(slug) {
+  return NO_DRAW_COMPETITIONS.has(slug);
+}
+
 function emptyLeagueStats() {
   return {
     rawEventsEspn: 0,
@@ -27,6 +35,74 @@ function emptyLeagueStats() {
     skippedWrongDay: 0,
     skippedNull: 0,
     observationsWritten: 0
+  };
+}
+
+function isTerminalStatus(status) {
+  const s = String(status || "").toUpperCase();
+
+  return (
+    s === "FT" ||
+    s.includes("FINAL") ||
+    s.includes("FULL_TIME") ||
+    s.includes("AET") ||
+    s.includes("PEN")
+  );
+}
+
+function isEligibleForSummaryEnrichment(row) {
+  if (!row) return false;
+  if (!row.matchId || !row.leagueSlug) return false;
+
+  const status = String(row.status || "").toUpperCase();
+
+  if (!isTerminalStatus(status)) return false;
+
+  // already enriched
+  if (row.penalties?.home != null && row.penalties?.away != null) return false;
+  if (String(row.decidedBy || "").toLowerCase() === "pens") return false;
+
+  const home = Number(row.scoreHome);
+  const away = Number(row.scoreAway);
+
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return false;
+
+  const isDraw = home === away;
+
+  // 🔴 CASE 1 — NO DRAW COMPETITION (MANDATORY PENALTIES)
+  if (isNoDrawCompetition(row.leagueSlug)) {
+    return isDraw;
+  }
+
+  // 🔴 CASE 2 — NORMAL COMPETITIONS (OPTIONAL PENALTIES)
+  // εδώ μπορείς αργότερα να βάλεις cup logic
+
+  return false;
+}
+
+async function enrichMergedFixtureFromSummary(merged) {
+  if (!isEligibleForSummaryEnrichment(merged)) {
+    return merged;
+  }
+
+  const summary = await fetchMatchSummary(
+    merged.leagueSlug,
+    merged.matchId
+  );
+
+  if (!summary?.ok) {
+    return merged;
+  }
+
+  if (!summary.penalties && !summary.decidedBy) {
+    return merged;
+  }
+
+  return {
+    ...merged,
+    penalties: summary.penalties || merged.penalties || null,
+    decidedBy: summary.decidedBy || merged.decidedBy || null,
+    updatedAt: Date.now()
   };
 }
 
@@ -50,92 +126,80 @@ export async function ingestDay(dayKey, env) {
     byLeague: {}
   };
 
-const ESPN_SUPPORTED = new Set([
-  // ENGLAND
-  "eng.1",
-  "eng.2",
-  "eng.3",
-  "eng.4",
-  "eng.5",
-  "eng.fa",
-  "eng.league_cup",
-  "eng.trophy",
+  const ESPN_SUPPORTED = new Set([
+    "eng.1",
+    "eng.2",
+    "eng.3",
+    "eng.4",
+    "eng.5",
+    "eng.fa",
+    "eng.league_cup",
+    "eng.trophy",
 
-  // GERMANY
-  "ger.1",
-  "ger.2",
-  "ger.dfb_pokal",
+    "ger.1",
+    "ger.2",
+    "ger.dfb_pokal",
 
-  // SPAIN
-  "esp.1",
-  "esp.2",
-  "esp.copa_del_rey",
-  "esp.super_cup",
+    "esp.1",
+    "esp.2",
+    "esp.copa_del_rey",
+    "esp.super_cup",
 
-  // ITALY
-  "ita.1",
-  "ita.2",
-  "ita.coppa_italia",
+    "ita.1",
+    "ita.2",
+    "ita.coppa_italia",
 
-  // FRANCE
-  "fra.1",
-  "fra.2",
-  "fra.coupe_de_france",
-  "fra.super_cup",
+    "fra.1",
+    "fra.2",
+    "fra.coupe_de_france",
+    "fra.super_cup",
 
-  // NETHERLANDS
-  "ned.1",
-  "ned.2",
-  "ned.cup",
+    "ned.1",
+    "ned.2",
+    "ned.cup",
 
-  // PORTUGAL / BELGIUM
-  "por.1",
-  "bel.1",
+    "por.1",
+    "bel.1",
 
-  // SCOTLAND
-  "sco.1",
-  "sco.2",
-  "sco.challenge",
-  "sco.tennents",
+    "sco.1",
+    "sco.2",
+    "sco.challenge",
+    "sco.tennents",
 
-  // GREECE / CYPRUS / TURKEY / SWITZERLAND / AUSTRIA / DENMARK / SWEDEN / NORWAY
-  "gre.1",
-  "cyp.1",
-  "tur.1",
-  "sui.1",
-  "aut.1",
-  "den.1",
-  "swe.1",
-  "nor.1",
+    "gre.1",
+    "cyp.1",
+    "tur.1",
+    "sui.1",
+    "aut.1",
+    "den.1",
+    "swe.1",
+    "nor.1",
 
-  // UEFA
-  "uefa.champions",
-  "uefa.europa",
-  "uefa.europa.conf",
+    "uefa.champions",
+    "uefa.europa",
+    "uefa.europa.conf",
 
-  // AFC / CAF / CONMEBOL
-  "afc.champions",
-  "afc.cup",
-  "caf.champions",
-  "caf.confed",
-  "caf.nations",
-  "conmebol.libertadores",
+    "afc.champions",
+    "afc.cup",
+    "caf.champions",
+    "caf.confed",
+    "caf.nations",
+    "conmebol.libertadores",
 
-  // AMERICAS
-  "usa.1",
-  "arg.1",
-  "bra.1",
-  "mex.1",
-  "uru.1",
-  "col.1",
-  "chi.1",
-  "per.1",
+    "usa.1",
+    "arg.1",
+    "bra.1",
+    "mex.1",
+    "uru.1",
+    "col.1",
+    "chi.1",
+    "per.1",
 
-  // ASIA / AFRICA (μόνο όσα ήδη φαίνονται να δουλεύουν)
-  "jpn.1",
-  "ksa.1",
-  "rsa.1"
-]);
+    "jpn.1",
+    "ksa.1",
+    "rsa.1"
+  ]);
+
   for (const slug of LEAGUE_SEEDS) {
     results.leagues++;
 
@@ -157,19 +221,17 @@ const ESPN_SUPPORTED = new Set([
     results.byLeague[slug] = emptyLeagueStats();
     results.byLeague[slug].rawEventsEspn = espnEvents.length;
     results.byLeague[slug].rawEventsSource2 = source2Events.length;
-    // ------------------------------------------------------------
-    // PROCESS BOTH SOURCES THROUGH SAME PIPELINE
-    // ------------------------------------------------------------
+
     const pipelines = [
       {
         source: "espn",
         events: espnEvents,
-        normalize: (event) => normalizeFixture(event, slug)
+        normalize: event => normalizeFixture(event, slug)
       },
       {
         source: "source2",
         events: source2Events,
-        normalize: (event) => normalizeFixtureSource2(event, slug)
+        normalize: event => normalizeFixtureSource2(event, slug)
       }
     ];
 
@@ -186,9 +248,6 @@ const ESPN_SUPPORTED = new Set([
         results.normalized++;
         results.byLeague[slug].normalized++;
 
-        // ---------------------------------
-        // ALWAYS WRITE OBSERVATION
-        // ---------------------------------
         appendObservation({
           ts: Date.now(),
           requestedDay: dayKey,
@@ -212,55 +271,46 @@ const ESPN_SUPPORTED = new Set([
         results.observationsWritten++;
         results.byLeague[slug].observationsWritten++;
 
-        // ---------------------------------
-// WRONG DAY FILTER (FIXED)
-// ---------------------------------
-const allowedDays = new Set([
-  dayKey,
-  shiftDay(dayKey, -1),
-  shiftDay(dayKey, +1)
-]);
+        const allowedDays = new Set([
+          dayKey,
+          shiftDay(dayKey, -1),
+          shiftDay(dayKey, +1)
+        ]);
 
-const status = String(normalized?.status || "").toUpperCase();
+        const status = String(normalized?.status || "").toUpperCase();
 
-const isLive =
-  status.includes("LIVE") ||
-  status.includes("IN_PROGRESS") ||
-  status.includes("FIRST_HALF") ||
-  status.includes("SECOND_HALF") ||
-  status.includes("HALF_TIME") ||
-  status.includes("EXTRA_TIME");
+        const isLive =
+          status.includes("LIVE") ||
+          status.includes("IN_PROGRESS") ||
+          status.includes("FIRST_HALF") ||
+          status.includes("SECOND_HALF") ||
+          status.includes("HALF_TIME") ||
+          status.includes("EXTRA_TIME");
 
-// KEEP LIVE ALWAYS
-if (!isLive && !allowedDays.has(normalized.dayKey)) {
-  results.skippedWrongDay++;
-  results.byLeague[slug].skippedWrongDay++;
+        if (!isLive && !allowedDays.has(normalized.dayKey)) {
+          results.skippedWrongDay++;
+          results.byLeague[slug].skippedWrongDay++;
 
-  appendSkipped({
-    ts: Date.now(),
-    requestedDay: dayKey,
-    actualDay: normalized.dayKey,
-    league: slug,
-    source: normalized.source,
-    matchId: normalized.matchId,
-    homeTeam: normalized.homeTeam,
-    awayTeam: normalized.awayTeam,
-    kickoffUtc: normalized.kickoffUtc,
-    reason: "wrong_day"
-  });
+          appendSkipped({
+            ts: Date.now(),
+            requestedDay: dayKey,
+            actualDay: normalized.dayKey,
+            league: slug,
+            source: normalized.source,
+            matchId: normalized.matchId,
+            homeTeam: normalized.homeTeam,
+            awayTeam: normalized.awayTeam,
+            kickoffUtc: normalized.kickoffUtc,
+            reason: "wrong_day"
+          });
 
-  continue;
-}
+          continue;
+        }
 
-        // ---------------------------------
-        // MULTI-SOURCE RECONCILE + UPSERT
-        // ---------------------------------
         const existing = getFixtureById(normalized.matchId);
+        const observations = getObservationsByMatchId(normalized.matchId);
 
-        const observations =
-          getObservationsByMatchId(normalized.matchId);
-
-        const merged = await reconcileObservations({
+        let merged = await reconcileObservations({
           env,
           observations,
           existing
@@ -269,6 +319,8 @@ if (!isLive && !allowedDays.has(normalized.dayKey)) {
         if (!merged) {
           continue;
         }
+
+        merged = await enrichMergedFixtureFromSummary(merged);
 
         const action = upsertFixtureWithMeta(merged);
 
@@ -286,23 +338,23 @@ if (!isLive && !allowedDays.has(normalized.dayKey)) {
     }
   }
 
-try {
-  const hasRealChanges =
-    results.inserted > 0 ||
-    results.updated > 0;
+  try {
+    const hasRealChanges =
+      results.inserted > 0 ||
+      results.updated > 0;
 
-  if (hasRealChanges) {
-    console.log("[ingest] auto value build:start", { dayKey });
+    if (hasRealChanges) {
+      console.log("[ingest] auto value build:start", { dayKey });
 
-    await buildValueDay(dayKey, { rebuild: true, env });
+      await buildValueDay(dayKey, { rebuild: true, env });
 
-    console.log("[ingest] auto value build:done", { dayKey });
-  } else {
-    console.log("[ingest] auto value skipped:no changes", { dayKey });
+      console.log("[ingest] auto value build:done", { dayKey });
+    } else {
+      console.log("[ingest] auto value skipped:no changes", { dayKey });
+    }
+  } catch (err) {
+    console.error("[ingest] auto value build FAILED", err);
   }
-} catch (err) {
-  console.error("[ingest] auto value build FAILED", err);
-}
 
   return results;
 }
