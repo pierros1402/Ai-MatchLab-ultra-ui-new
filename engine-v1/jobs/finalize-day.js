@@ -4,6 +4,10 @@ import { getObservationsByMatchId } from "../storage/observations-db.js";
 import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
+function opState(row) {
+  return String(row?.operationalState || "").toUpperCase();
+}
+
 function isLiveLike(status) {
   const s = String(status || "").toUpperCase();
 
@@ -20,10 +24,7 @@ function isLiveLike(status) {
 function isPreLike(status) {
   const s = String(status || "").toUpperCase();
 
-  return (
-    s === "PRE" ||
-    s.includes("SCHEDULED")
-  );
+  return s === "PRE" || s.includes("SCHEDULED");
 }
 
 function isTerminal(status) {
@@ -32,7 +33,10 @@ function isTerminal(status) {
   return (
     s.includes("FT") ||
     s.includes("FINAL") ||
-    s.includes("COMPLETE")
+    s.includes("FULL_TIME") ||
+    s.includes("COMPLETE") ||
+    s.includes("AET") ||
+    s.includes("PEN")
   );
 }
 
@@ -45,6 +49,49 @@ function isSpecial(status) {
     s.includes("ABANDONED") ||
     s === "SPECIAL"
   );
+}
+
+function isOperationallyBlockingLive(row) {
+  const op = opState(row);
+
+  if (op === "LIVE") return true;
+  if (op === "STALE_LIVE") return true;
+  if (op === "TERMINAL_UNCONFIRMED") return true;
+
+  if (!op) {
+    return isLiveLike(row?.status);
+  }
+
+  return false;
+}
+
+function isOperationallyBlockingPre(row) {
+  const op = opState(row);
+
+  if (op === "PRE") return true;
+  if (!op) return isPreLike(row?.status);
+
+  return false;
+}
+
+function isOperationallyTerminal(row) {
+  const op = opState(row);
+
+  if (op === "TERMINAL_CONFIRMED") return true;
+  if (op === "SPECIAL") return false;
+
+  if (!op) return isTerminal(row?.status);
+
+  return false;
+}
+
+function isOperationallySpecial(row) {
+  const op = opState(row);
+
+  if (op === "SPECIAL") return true;
+  if (!op) return isSpecial(row?.status);
+
+  return false;
 }
 
 function sameDayObservation(obs, dayKey) {
@@ -95,9 +142,9 @@ function evaluatePickResult(pick, match) {
 
   if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
 
-  if (pick.market === "Over / Under 1.5") return (home + away) > 1;
-  if (pick.market === "Over / Under 2.5") return (home + away) > 2;
-  if (pick.market === "Over / Under 3.5") return (home + away) > 3;
+  if (pick.market === "Over / Under 1.5") return home + away > 1;
+  if (pick.market === "Over / Under 2.5") return home + away > 2;
+  if (pick.market === "Over / Under 3.5") return home + away > 3;
   if (pick.market === "BTTS") return home > 0 && away > 0;
 
   if (pick.market === "1X2") {
@@ -113,7 +160,9 @@ function evaluatePickResult(pick, match) {
 
 function updateValueResults(dayKey, rows = []) {
   const valueFile = resolveDataPath("value", `${dayKey}.json`);
-  if (!fs.existsSync(valueFile)) return { ok: false, reason: "no_value_file", dayKey };
+  if (!fs.existsSync(valueFile)) {
+    return { ok: false, reason: "no_value_file", dayKey };
+  }
 
   const valueData = JSON.parse(fs.readFileSync(valueFile, "utf8"));
   const matchMap = new Map();
@@ -155,34 +204,33 @@ export async function finalizeDayIfSafe(dayKey) {
     return { ok: false, reason: "no_rows", dayKey };
   }
 
-  const liveMatches = rows.filter(r => isLiveLike(r.status));
+  const liveMatches = rows.filter(isOperationallyBlockingLive);
 
   if (liveMatches.length) {
     return {
       ok: false,
       reason: "live_exists",
       dayKey,
-      liveCount: liveMatches.length
+      liveCount: liveMatches.length,
+      matchIds: liveMatches.map(r => r.matchId)
     };
   }
 
-  const preMatches = rows.filter(r => isPreLike(r.status));
-
-  const blockingPre = preMatches.filter(
-    r => !isSpecial(r.status)
-  );
+  const preMatches = rows.filter(isOperationallyBlockingPre);
+  const blockingPre = preMatches.filter(r => !isOperationallySpecial(r));
 
   if (blockingPre.length) {
     return {
       ok: false,
       reason: "pre_exists",
       dayKey,
-      preCount: blockingPre.length
+      preCount: blockingPre.length,
+      matchIds: blockingPre.map(r => r.matchId)
     };
   }
 
   const invalid = rows.filter(
-    r => !isTerminal(r.status) && !isSpecial(r.status)
+    r => !isOperationallyTerminal(r) && !isOperationallySpecial(r)
   );
 
   if (invalid.length) {
@@ -190,12 +238,13 @@ export async function finalizeDayIfSafe(dayKey) {
       ok: false,
       reason: "non_terminal_remaining",
       dayKey,
-      count: invalid.length
+      count: invalid.length,
+      matchIds: invalid.map(r => r.matchId)
     };
   }
 
   const unstableTerminal = rows.filter(
-    r => isTerminal(r.status) && !hasStableTerminalObservation(r, dayKey)
+    r => isOperationallyTerminal(r) && !hasStableTerminalObservation(r, dayKey)
   );
 
   if (unstableTerminal.length) {

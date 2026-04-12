@@ -1,10 +1,11 @@
 // ============================================================
-// RECONCILE OBSERVATIONS – Phase 2B
+// RECONCILE OBSERVATIONS – Phase 2B+
 // - Multi-source ready
 // - Deterministic reconciliation
 // - Canonical fixture output
 // - Disagreement logging
 // - Confidence scoring
+// - Independent operational state layer
 // ============================================================
 
 import {
@@ -81,6 +82,21 @@ function isLive(status) {
 
 function isPre(status) {
   return !isLive(status) && !isTerminal(status);
+}
+
+function isSpecialStatus(rawStatus, status) {
+  const s1 = String(status || "").toUpperCase();
+  const s2 = String(rawStatus || "").toUpperCase();
+
+  return (
+    s1 === "SPECIAL" ||
+    s1.includes("POSTPONED") ||
+    s1.includes("CANCELED") ||
+    s1.includes("ABANDONED") ||
+    s2.includes("POSTPONED") ||
+    s2.includes("CANCELED") ||
+    s2.includes("ABANDONED")
+  );
 }
 
 function safeNum(v, fallback = null) {
@@ -256,20 +272,16 @@ function pickMinute(observations, existing, chosenStatus) {
     const second = isSecondHalfStatus(status);
     const half = isHalfTimeStatus(status);
 
-    // SECOND HALF πρέπει να ξεκινά από 46 και πάνω
     if (second) {
       if (parsed.base >= 46) return parsed.base;
       if (parsed.base === 45 && parsed.extra > 0) return 46;
       return Math.max(46, parsed.base);
     }
 
-    // HT: κρατάμε το 45 σαν όριο ημιχρόνου
     if (half) {
       return 45.999;
     }
 
-    // FIRST HALF / generic live:
-    // 45+X να είναι λίγο πάνω από 45 αλλά κάτω από 46
     return parsed.base + (parsed.extra / 1000);
   }
 
@@ -307,7 +319,6 @@ function pickMinute(observations, existing, chosenStatus) {
   let value = existing?.minute ?? null;
   let source = existing?.source ?? null;
 
-  // αν δεν έχουμε καθόλου existing minute, πάρε το καλύτερο available
   if (value == null || value === "") {
     if (best?.minute != null && best?.minute !== "") {
       return {
@@ -316,7 +327,6 @@ function pickMinute(observations, existing, chosenStatus) {
       };
     }
 
-    // fallback για SECOND_HALF χωρίς minute
     if (isSecondHalfStatus(best?.status)) {
       return {
         value: "46",
@@ -327,7 +337,6 @@ function pickMinute(observations, existing, chosenStatus) {
     return { value, source };
   }
 
-  // αν το best observation είναι καθαρά πιο μπροστά, προχώρα
   if (
     bestCmp != null &&
     (existingCmp == null || bestCmp > existingCmp)
@@ -347,9 +356,6 @@ function pickMinute(observations, existing, chosenStatus) {
     }
   }
 
-  // ειδικός κανόνας:
-  // αν existing είναι 45+X / HT και best λέει SECOND_HALF αλλά δεν έχει minute,
-  // τότε μην μένεις κολλημένος για πάντα -> πήγαινε στο 46
   if (
     isSecondHalfStatus(best?.status) &&
     (
@@ -470,6 +476,118 @@ function computeConfidence({
   return round3(clamp01(score));
 }
 
+function resolveOperationalState({
+  rows,
+  existing,
+  kickoffUtc,
+  chosenStatus,
+  chosenMinute,
+  newestRawStatus
+}) {
+  const latestTs = Math.max(...rows.map(x => Number(x?.ts || 0)), 0);
+  const now = Date.now();
+  const kickoffMs = kickoffUtc ? new Date(kickoffUtc).getTime() : null;
+  const minuteParsed = parseMinute(chosenMinute);
+
+  const ageMs = latestTs ? now - latestTs : Number.POSITIVE_INFINITY;
+  const elapsedMs =
+    Number.isFinite(kickoffMs) && kickoffMs > 0
+      ? now - kickoffMs
+      : null;
+
+  if (isSpecialStatus(newestRawStatus, chosenStatus)) {
+    return {
+      operationalState: "SPECIAL",
+      isDisplayLive: false,
+      isDisplayPre: false,
+      isDisplayFinal: false,
+      terminalConfidence: 1
+    };
+  }
+
+  if (isTerminal(chosenStatus)) {
+    return {
+      operationalState: "TERMINAL_CONFIRMED",
+      isDisplayLive: false,
+      isDisplayPre: false,
+      isDisplayFinal: true,
+      terminalConfidence: 1
+    };
+  }
+
+  if (isPre(chosenStatus)) {
+    return {
+      operationalState: "PRE",
+      isDisplayLive: false,
+      isDisplayPre: true,
+      isDisplayFinal: false,
+      terminalConfidence: 0
+    };
+  }
+
+  const liveLike = isLive(chosenStatus);
+
+  if (!liveLike) {
+    return {
+      operationalState: "UNKNOWN",
+      isDisplayLive: false,
+      isDisplayPre: false,
+      isDisplayFinal: false,
+      terminalConfidence: 0
+    };
+  }
+
+  const nearEndMinute =
+    minuteParsed &&
+    (
+      minuteParsed.base >= 88 ||
+      (minuteParsed.base === 45 && minuteParsed.extra > 0)
+    );
+
+  const staleByObservationAge =
+    Number.isFinite(ageMs) && ageMs > 75 * 60 * 1000;
+
+  const staleByKickoffWindow =
+    Number.isFinite(elapsedMs) && elapsedMs > 3.5 * 60 * 60 * 1000;
+
+  const stronglyFinishedWindow =
+    Number.isFinite(elapsedMs) && elapsedMs > 5 * 60 * 60 * 1000;
+
+  const existingWasTerminalUnconfirmed =
+    String(existing?.operationalState || "").toUpperCase() === "TERMINAL_UNCONFIRMED";
+
+  if (
+    stronglyFinishedWindow &&
+    (nearEndMinute || staleByObservationAge || existingWasTerminalUnconfirmed)
+  ) {
+    return {
+      operationalState: "TERMINAL_UNCONFIRMED",
+      isDisplayLive: false,
+      isDisplayPre: false,
+      isDisplayFinal: false,
+      terminalConfidence: 0.35
+    };
+  }
+
+  if (staleByObservationAge || staleByKickoffWindow) {
+    return {
+      operationalState: "STALE_LIVE",
+      isDisplayLive: false,
+      isDisplayPre: false,
+      isDisplayFinal: false,
+      terminalConfidence: 0.15
+    };
+  }
+
+  return {
+    operationalState: "LIVE",
+    isDisplayLive: true,
+    isDisplayPre: false,
+    isDisplayFinal: false,
+    terminalConfidence: 0
+  };
+}
+
 export async function reconcileObservations({
   env,
   observations,
@@ -507,6 +625,31 @@ export async function reconcileObservations({
     chosenStatus: statusPick.value
   });
 
+  const kickoffUtc = kickoff.value || newest.kickoffUtc || existing?.kickoffUtc || null;
+
+  const runtimeState = resolveOperationalState({
+    rows,
+    existing,
+    kickoffUtc,
+    chosenStatus: statusPick.value,
+    chosenMinute: minutePick.value,
+    newestRawStatus: newest?.rawStatus
+  });
+
+  const latestTs = Math.max(...rows.map(x => Number(x?.ts || 0)), 0);
+  const now = Date.now();
+  const kickoffMs = kickoffUtc ? new Date(kickoffUtc).getTime() : null;
+
+  const ageMs = latestTs ? now - latestTs : Number.POSITIVE_INFINITY;
+  const elapsedMs =
+    Number.isFinite(kickoffMs) && kickoffMs > 0
+      ? now - kickoffMs
+      : null;
+
+  const isStale =
+    runtimeState.operationalState === "STALE_LIVE" ||
+    runtimeState.operationalState === "TERMINAL_UNCONFIRMED";
+
   const resolved = {
     matchId,
     source: "reconciled",
@@ -518,7 +661,7 @@ export async function reconcileObservations({
     homeTeam: homeTeam.value || newest.homeTeam || existing?.homeTeam || null,
     awayTeam: awayTeam.value || newest.awayTeam || existing?.awayTeam || null,
 
-    kickoffUtc: kickoff.value || newest.kickoffUtc || existing?.kickoffUtc || null,
+    kickoffUtc,
 
     status: statusPick.value || newest.status || existing?.status || "PRE",
     rawStatus: newest.rawStatus || existing?.rawStatus || null,
@@ -529,11 +672,19 @@ export async function reconcileObservations({
 
     venue: newest.venue || existing?.venue || null,
 
-    // ------------------------------------------------------------
-    // RUNTIME VISIBILITY
-    // today/active panels read ONLY staging rows
-    // finalized days are switched later by finalizeDayIfSafe()
-    // ------------------------------------------------------------
+    operationalState: runtimeState.operationalState,
+    isDisplayLive: runtimeState.isDisplayLive,
+    isDisplayPre: runtimeState.isDisplayPre,
+    isDisplayFinal: runtimeState.isDisplayFinal,
+    terminalConfidence: runtimeState.terminalConfidence,
+
+    health: {
+      isStale,
+      lastUpdateAgeMs: ageMs,
+      elapsedSinceKickoffMs: elapsedMs,
+      observationCount: rows.length
+    },
+
     state: existing?.state === "final" ? "final" : "staging",
     finalized: existing?.state === "final" ? 1 : 0,
     updatedAt: Date.now(),

@@ -1558,10 +1558,17 @@ function buildContextIntelligenceFromInput(input) {
     return explicit;
   }
 
+  const blockCompetitionContext =
+    input?.blocks?.find?.(b => b?.key === "competition_context") ||
+    input?.researchedFacts?.blocks?.find?.(b => b?.key === "competition_context") ||
+    input?.details?.blocks?.find?.(b => b?.key === "competition_context") ||
+    null;
+
   const competitionContext =
     normalizeCompetitionContext(input?.researchedFacts?.competitionContext) ||
     normalizeCompetitionContext(input?.competitionContext) ||
-    normalizeCompetitionContext(input?.context);
+    normalizeCompetitionContext(input?.context) ||
+    normalizeCompetitionContext(blockCompetitionContext);
 
   if (!competitionContext) {
     return {};

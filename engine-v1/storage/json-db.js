@@ -215,8 +215,7 @@ export function getActiveByDay(dayKey) {
     .filter(
       x =>
         x.dayKey === dayKey &&
-        x.state === "staging" &&
-        ["PRE", "LIVE", "FT", "SPECIAL"].includes(x.status)
+        x.state === "staging"
     )
     .sort((a, b) => String(a.kickoffUtc).localeCompare(String(b.kickoffUtc)));
 }
@@ -265,10 +264,19 @@ export function upsertFixtureWithMeta(row) {
     function buildComparable(row) {
       return JSON.stringify({
         status: row.status,
+        rawStatus: row.rawStatus,
         minute: row.minute,
         scoreHome: row.scoreHome,
         scoreAway: row.scoreAway,
-        kickoffUtc: row.kickoffUtc
+        kickoffUtc: row.kickoffUtc,
+        operationalState: row.operationalState,
+        isDisplayLive: row.isDisplayLive,
+        isDisplayPre: row.isDisplayPre,
+        isDisplayFinal: row.isDisplayFinal,
+        terminalConfidence: row.terminalConfidence,
+        health: row.health,
+        sources: row.sources,
+        reconcileMeta: row.reconcileMeta
       });
     }
 
