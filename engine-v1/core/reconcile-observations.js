@@ -47,6 +47,12 @@ const LIVE_STATUSES = [
   "LIVE"
 ];
 
+const SOURCE_WEIGHTS = {
+  espn: 1.0,
+  source2: 0.9,
+  unknown: 0.5
+};
+
 function sourceProfile(source) {
   return SOURCE_PROFILE[source] || SOURCE_PROFILE.unknown;
 }
@@ -158,31 +164,71 @@ function pickBest(observations, field, reliabilityField) {
   };
 }
 
-function pickStatus(observations, existing) {
-  const ranked = [...observations].sort((a, b) => {
-    const pa = sourceProfile(a.source);
-    const pb = sourceProfile(b.source);
+function pickStatusWeighted(observations, existing) {
+  const latestPerSource = new Map();
 
-    const aScore =
-      (isTerminal(a.status) ? 1000 : isLive(a.status) ? 500 : 100) +
-      (pa.statusReliability || 0) * 100 +
-      Number(a.ts || 0) / 1e13;
+  for (const row of observations) {
+    const source = String(row?.source || "unknown").trim() || "unknown";
+    const prev = latestPerSource.get(source);
 
-    const bScore =
-      (isTerminal(b.status) ? 1000 : isLive(b.status) ? 500 : 100) +
-      (pb.statusReliability || 0) * 100 +
-      Number(b.ts || 0) / 1e13;
+    if (!prev || Number(row?.ts || 0) > Number(prev?.ts || 0)) {
+      latestPerSource.set(source, row);
+    }
+  }
 
-    return bScore - aScore;
-  });
+  let best = null;
+  let bestScore = -Infinity;
 
-  const best = ranked[0];
+  for (const row of latestPerSource.values()) {
+    const source = String(row?.source || "unknown").trim() || "unknown";
+    const profile = sourceProfile(source);
+    const sourceWeight = SOURCE_WEIGHTS[source] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
+    const freshness = Number(row?.ts || 0) / 1e13;
+
+    const terminalBonus = isTerminal(row?.status) ? 1000 : 0;
+    const liveBonus = isLive(row?.status) ? 500 : 100;
+
+    const rankScore =
+      sourceWeight * 1000 +
+      (profile.statusReliability ?? 0.5) * 100 +
+      terminalBonus +
+      liveBonus +
+      freshness;
+
+    if (rankScore > bestScore) {
+      bestScore = rankScore;
+      best = row;
+    }
+  }
 
   let value = best?.status ?? existing?.status ?? "PRE";
   let source = best?.source || null;
 
   if (existing?.status && isTerminal(existing.status)) {
-    const terminalObs = ranked.find(x => isTerminal(x.status));
+    const terminalObs = Array.from(latestPerSource.values())
+      .filter(row => isTerminal(row?.status))
+      .sort((a, b) => {
+        const sa = String(a?.source || "unknown").trim() || "unknown";
+        const sb = String(b?.source || "unknown").trim() || "unknown";
+
+        const pa = sourceProfile(sa);
+        const pb = sourceProfile(sb);
+
+        const wa = SOURCE_WEIGHTS[sa] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
+        const wb = SOURCE_WEIGHTS[sb] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
+
+        const scoreA =
+          wa * 1000 +
+          (pa.statusReliability ?? 0.5) * 100 +
+          Number(a?.ts || 0) / 1e13;
+
+        const scoreB =
+          wb * 1000 +
+          (pb.statusReliability ?? 0.5) * 100 +
+          Number(b?.ts || 0) / 1e13;
+
+        return scoreB - scoreA;
+      })[0];
 
     if (terminalObs) {
       value = terminalObs.status;
@@ -196,32 +242,51 @@ function pickStatus(observations, existing) {
   return { value, source };
 }
 
-function pickScore(observations, existing, chosenStatus) {
-  const eligible = observations.filter(x => {
+function pickScoreWeighted(observations, existing, chosenStatus) {
+  const eligible = observations.filter(row => {
     if (isPre(chosenStatus)) return true;
-    return x.scoreHome != null && x.scoreAway != null;
+    return row.scoreHome != null && row.scoreAway != null;
   });
 
-  const ranked = [...eligible].sort((a, b) => {
-    const pa = sourceProfile(a.source);
-    const pb = sourceProfile(b.source);
+  const latestPerSource = new Map();
 
-    const ra = pa.scoreReliability || 0;
-    const rb = pb.scoreReliability || 0;
+  for (const row of eligible) {
+    const source = String(row?.source || "unknown").trim() || "unknown";
+    const prev = latestPerSource.get(source);
 
-    if (rb !== ra) return rb - ra;
-    return byNewest(a, b);
-  });
+    if (!prev || Number(row?.ts || 0) > Number(prev?.ts || 0)) {
+      latestPerSource.set(source, row);
+    }
+  }
 
-  const top = ranked[0];
+  let best = null;
+  let bestScore = -Infinity;
+
+  for (const row of latestPerSource.values()) {
+    const source = String(row?.source || "unknown").trim() || "unknown";
+    const profile = sourceProfile(source);
+    const sourceWeight = SOURCE_WEIGHTS[source] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
+    const reliability = profile.scoreReliability ?? 0.5;
+    const freshness = Number(row?.ts || 0) / 1e13;
+
+    const rankScore =
+      sourceWeight * 1000 +
+      reliability * 100 +
+      freshness;
+
+    if (rankScore > bestScore) {
+      bestScore = rankScore;
+      best = row;
+    }
+  }
 
   let scoreHome =
-    top?.scoreHome != null ? safeNum(top.scoreHome, 0) : existing?.scoreHome ?? 0;
+    best?.scoreHome != null ? safeNum(best.scoreHome, 0) : existing?.scoreHome ?? 0;
 
   let scoreAway =
-    top?.scoreAway != null ? safeNum(top.scoreAway, 0) : existing?.scoreAway ?? 0;
+    best?.scoreAway != null ? safeNum(best.scoreAway, 0) : existing?.scoreAway ?? 0;
 
-  let source = top?.source || null;
+  let source = best?.source || null;
 
   if (existing && isTerminal(existing.status) && isTerminal(chosenStatus)) {
     const prevHome = safeNum(existing.scoreHome, 0);
@@ -239,6 +304,7 @@ function pickScore(observations, existing, chosenStatus) {
 
   return { scoreHome, scoreAway, source };
 }
+
 
 function pickMinute(observations, existing, chosenStatus) {
   if (isPre(chosenStatus) || isTerminal(chosenStatus)) {
@@ -394,6 +460,32 @@ function buildSourcesMap(observations) {
   return out;
 }
 
+function computeDisagreement(rows) {
+  const latestPerSource = new Map();
+
+  for (const row of rows) {
+    const source = String(row?.source || "").trim();
+    if (!source) continue;
+
+    const prev = latestPerSource.get(source);
+
+    if (!prev || Number(row?.ts || 0) > Number(prev?.ts || 0)) {
+      latestPerSource.set(source, row);
+    }
+  }
+
+  const signatures = Array.from(latestPerSource.values()).map(row => {
+    const status = String(row?.status || "").toUpperCase();
+    const scoreHome = safeNum(row?.scoreHome, null);
+    const scoreAway = safeNum(row?.scoreAway, null);
+    const minute = row?.minute == null ? "" : String(row.minute).trim();
+
+    return `${status}|${scoreHome}|${scoreAway}|${minute}`;
+  });
+
+  return signatures.length > 1 && new Set(signatures).size > 1;
+}
+
 function computeConfidence({
   rows,
   statusPick,
@@ -516,6 +608,32 @@ function resolveOperationalState({
   }
 
   if (isPre(chosenStatus)) {
+    const beforeKickoffWindow =
+      Number.isFinite(elapsedMs) && elapsedMs < 0;
+
+    const suspiciousPreAfterKickoff =
+      Number.isFinite(elapsedMs) && elapsedMs > 2 * 60 * 60 * 1000;
+
+    if (beforeKickoffWindow) {
+      return {
+        operationalState: "PRE",
+        isDisplayLive: false,
+        isDisplayPre: true,
+        isDisplayFinal: false,
+        terminalConfidence: 0
+      };
+    }
+
+    if (suspiciousPreAfterKickoff) {
+      return {
+        operationalState: "UNKNOWN",
+        isDisplayLive: false,
+        isDisplayPre: false,
+        isDisplayFinal: false,
+        terminalConfidence: 0
+      };
+    }
+
     return {
       operationalState: "PRE",
       isDisplayLive: false,
@@ -553,8 +671,34 @@ function resolveOperationalState({
   const stronglyFinishedWindow =
     Number.isFinite(elapsedMs) && elapsedMs > 5 * 60 * 60 * 1000;
 
+  const veryStrongFinishedWindow =
+    Number.isFinite(elapsedMs) && elapsedMs > 6.5 * 60 * 60 * 1000;
+
   const existingWasTerminalUnconfirmed =
     String(existing?.operationalState || "").toUpperCase() === "TERMINAL_UNCONFIRMED";
+
+  const recentRows = [...rows]
+    .sort((a, b) => Number(b?.ts || 0) - Number(a?.ts || 0))
+    .slice(0, 3);
+
+  const stableRecentScore =
+    recentRows.length >= 2 &&
+    new Set(
+      recentRows.map(r => `${safeNum(r?.scoreHome, null)}-${safeNum(r?.scoreAway, null)}`)
+    ).size === 1;
+
+  if (
+    veryStrongFinishedWindow &&
+    (stableRecentScore || nearEndMinute || existingWasTerminalUnconfirmed)
+  ) {
+    return {
+      operationalState: "TERMINAL_UNCONFIRMED",
+      isDisplayLive: false,
+      isDisplayPre: false,
+      isDisplayFinal: false,
+      terminalConfidence: stableRecentScore ? 0.7 : 0.45
+    };
+  }
 
   if (
     stronglyFinishedWindow &&
@@ -565,7 +709,7 @@ function resolveOperationalState({
       isDisplayLive: false,
       isDisplayPre: false,
       isDisplayFinal: false,
-      terminalConfidence: 0.35
+      terminalConfidence: stableRecentScore ? 0.55 : 0.35
     };
   }
 
@@ -593,7 +737,12 @@ export async function reconcileObservations({
   observations,
   existing = null
 }) {
-  const rows = Array.isArray(observations) ? observations.filter(Boolean) : [];
+  const rows = Array.isArray(observations)
+    ? observations
+        .filter(Boolean)
+        .sort((a, b) => Number(b?.ts || 0) - Number(a?.ts || 0))
+        .slice(0, 10) // KEEP ONLY LAST 10 OBS
+    : [];
 
   if (!rows.length) {
     return existing || null;
@@ -608,13 +757,11 @@ export async function reconcileObservations({
   const awayTeam = pickBest(rows, "awayTeam", "teamsReliability");
   const leagueName = pickBest(rows, "leagueName", "teamsReliability");
 
-  const statusPick = pickStatus(rows, existing);
-  const scorePick = pickScore(rows, existing, statusPick.value);
+  const statusPick = pickStatusWeighted(rows, existing);
+  const scorePick = pickScoreWeighted(rows, existing, statusPick.value);
   const minutePick = pickMinute(rows, existing, statusPick.value);
 
-  const disagreement =
-    rows.length > 1 &&
-    new Set(rows.map(x => `${x.status}|${x.scoreHome}|${x.scoreAway}|${x.minute}`)).size > 1;
+  const disagreement = computeDisagreement(rows);
 
   const confidence = computeConfidence({
     rows,
@@ -649,6 +796,16 @@ export async function reconcileObservations({
   const isStale =
     runtimeState.operationalState === "STALE_LIVE" ||
     runtimeState.operationalState === "TERMINAL_UNCONFIRMED";
+
+  let chosenMinuteSource = null;
+
+  if (isPre(statusPick.value)) {
+    chosenMinuteSource = null;
+  } else if (isLive(statusPick.value)) {
+    chosenMinuteSource = "reconciled";
+  } else if (isTerminal(statusPick.value)) {
+    chosenMinuteSource = minutePick?.source || "reconciled";
+  }
 
   const resolved = {
     matchId,
@@ -706,7 +863,7 @@ export async function reconcileObservations({
         homeTeam.source === awayTeam.source ? homeTeam.source : "mixed",
       chosenStatusSource: statusPick.source,
       chosenScoreSource: scorePick.source,
-      chosenMinuteSource: minutePick.source,
+      chosenMinuteSource,
       disagreement,
       confidence,
       observationsCount: rows.length,

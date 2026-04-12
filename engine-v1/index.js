@@ -13,6 +13,7 @@ import { getFixtureById } from "./storage/json-db.js";
 import { buildValueDay } from "./core/build-value-day.js";
 import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload } from "./api/details.js";
+import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -343,6 +344,36 @@ app.get("/match", (req, res) => {
     ok: true,
     match
   });
+});
+
+app.get("/match-intelligence", async (req, res) => {
+  const id = String(req.query.id || "");
+
+  if (!id) {
+    res.status(400).json({ ok: false, error: "missing_id" });
+    return;
+  }
+
+  try {
+    const fixture = getFixtureById(id);
+
+    if (!fixture) {
+      res.status(404).json({ ok: false, error: "match_not_found" });
+      return;
+    }
+
+    const result = await buildMatchIntelligence(fixture);
+
+    res.json(result);
+  } catch (err) {
+    console.error("[match-intelligence] failed", err?.message || err);
+
+    res.status(500).json({
+      ok: false,
+      error: "match_intelligence_failed",
+      message: String(err?.message || err)
+    });
+  }
 });
 
 app.get("/details", async (req, res) => {

@@ -24,6 +24,11 @@ export function normalizeFixture(event, slug) {
   const rawStatus = comp?.status?.type?.name || "UNKNOWN";
   const status = mapStatus(rawStatus);
 
+  const decidedBy =
+    String(rawStatus || "").toUpperCase().includes("PEN")
+      ? "pens"
+      : null;
+
   let scoreHome = parseScore(home?.score);
   let scoreAway = parseScore(away?.score); 
 
@@ -68,7 +73,7 @@ export function normalizeFixture(event, slug) {
     scoreHome,
     scoreAway,
     penalties,
-    decidedBy: penalties ? "pens" : null,
+    decidedBy: penalties ? "pens" : decidedBy,
 
     rawStatus,
     status,

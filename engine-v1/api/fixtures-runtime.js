@@ -111,12 +111,20 @@ function isDisplayActive(row) {
 export function buildFixturesRuntime(mode, dayKey) {
   if (mode === "today") {
     const rows = getStagingByDay(dayKey);
-    return rows.filter(isDisplayToday);
+
+    // ONLY reconciled truth
+    const canonical = rows.filter(r => r?.source === "reconciled");
+
+    return canonical.filter(isDisplayToday);
   }
 
   if (mode === "active") {
     const rows = getActiveByDay(dayKey);
-    return rows.filter(isDisplayActive);
+
+    // ONLY reconciled truth
+    const canonical = rows.filter(r => r?.source === "reconciled");
+
+    return canonical.filter(isDisplayActive);
   }
 
   return getStagingByDay(dayKey);
