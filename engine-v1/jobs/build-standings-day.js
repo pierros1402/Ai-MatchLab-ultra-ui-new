@@ -589,6 +589,7 @@ function reconcileStandingsRows(slug, candidates = []) {
     table: enrichedTable
   };
 }
+
 function writeLeagueStandingsArtifact(slug, state) {
   const outDir = resolveDataPath("standings");
   ensureDir(outDir);
@@ -613,6 +614,24 @@ function writeLeagueStandingsArtifact(slug, state) {
 }
 
 export async function buildStandingsDay(dayKey, leagues = [], options = {}) {
+  if (!Array.isArray(leagues) || leagues.length === 0) {
+    try {
+      const historyRows = getCurrentSeasonHistoryRows(String(options.season || DEFAULT_SEASON));
+
+      const slugs = Array.from(
+        new Set(
+          safeArray(historyRows)
+            .map(row => getLeagueSlugFromRow(row))
+            .filter(Boolean)
+        )
+      );
+
+      leagues = slugs.map(slug => ({ slug }));
+    } catch (err) {
+      console.warn("[buildStandingsDay] failed to derive leagues from history:",   err.message);
+      leagues = [];
+    }
+  }
   const season = String(options.season || DEFAULT_SEASON);
   const results = [];
 

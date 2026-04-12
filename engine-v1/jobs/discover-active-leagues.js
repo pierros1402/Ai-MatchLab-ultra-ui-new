@@ -1,9 +1,12 @@
 import fs from "fs";
 import { getDataRoot, resolveDataPath } from "../storage/data-root.js";
-import { LEAGUE_SEEDS, leagueName } from "../config.js";
+import * as config from "../config.js";
 import { fetchLeagueFixtures } from "../adapters/espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { athensDayKey } from "../core/daykey.js";
+
+const LEAGUE_SEEDS = config.LEAGUE_SEEDS || [];
+const leagueName = config.leagueName;
 
 const dataDir = getDataRoot();
 const outPath = resolveDataPath("active-leagues.json");
@@ -29,6 +32,8 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
     leagues: []
   };
 
+  const activeFromMatches = new Map();
+
   for (const slug of LEAGUE_SEEDS) {
     result.leaguesScanned++;
 
@@ -53,7 +58,7 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
     }
 
     if (matches.length > 0) {
-      result.leagues.push({
+      activeFromMatches.set(slug, {
         slug,
         leagueName: leagueName(slug),
         matchCount: matches.length,
@@ -61,10 +66,51 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
         matches
       });
 
-      result.activeLeagueCount++;
       result.totalMatches += matches.length;
     }
   }
+
+  const historyPath = resolveDataPath("history/2025-2026.json");
+  const activeFromHistory = new Set();
+
+  try {
+    const history = JSON.parse(fs.readFileSync(historyPath, "utf8"));
+    const days = Array.isArray(history?.days) ? history.days : [];
+    const recentDays = days.slice(-7);
+
+    for (const day of recentDays) {
+      for (const row of day.rows || []) {
+        if (row?.leagueSlug) {
+          activeFromHistory.add(row.leagueSlug);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[discoverActiveLeagues] history fallback failed:", err.message);
+  }
+
+  const allActive = new Set([
+    ...activeFromMatches.keys(),
+    ...activeFromHistory
+  ]);
+
+  for (const slug of allActive) {
+    const fromMatches = activeFromMatches.get(slug);
+
+    if (fromMatches) {
+      result.leagues.push(fromMatches);
+    } else {
+      result.leagues.push({
+        slug,
+        leagueName: leagueName(slug),
+        matchCount: 0,
+        matchIds: [],
+        matches: []
+      });
+    }
+  }
+
+  result.activeLeagueCount = result.leagues.length;
 
   writeActiveLeagues(result);
   return result;

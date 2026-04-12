@@ -19,15 +19,30 @@ function uniqueStrings(arr) {
   return [...new Set((Array.isArray(arr) ? arr : []).filter(Boolean))];
 }
 
+const STOPWORDS = new Set([
+  "fc", "cf", "sc", "afc", "club", "athletic", "de", "the", "ac", "as",
+  "fk", "nk", "sk", "if", "bk", "ik", "ff", "sv", "tsv"
+]);
+
 function normalizeTeamName(name) {
-  return String(name || "")
-    .toLowerCase()
+  if (!name) return "";
+
+  return String(name)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\b(fc|cf|sc|afc|club|athletic|de|the|ac|as|fk|nk|sk|if|bk|ik|ff|sv|tsv)\b/g, " ")
+    .toLowerCase()
+    .replace(/[’'`]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
+    .split(" ")
+    .filter(token => token && !STOPWORDS.has(token))
+    .join(" ")
+    .trim();
+}
+
+function tokenizeTeamName(name) {
+  return normalizeTeamName(name)
+    .split(" ")
+    .filter(Boolean);
 }
 
 function sameTeam(a, b) {
@@ -35,13 +50,23 @@ function sameTeam(a, b) {
   const nb = normalizeTeamName(b);
 
   if (!na || !nb) return false;
+
+  // exact canonical match
   if (na === nb) return true;
-  if (na.includes(nb) || nb.includes(na)) return true;
 
-  const partsA = na.split(" ").filter(Boolean);
-  const partsB = nb.split(" ").filter(Boolean);
+  const tokensA = tokenizeTeamName(a);
+  const tokensB = tokenizeTeamName(b);
 
-  const overlap = partsA.filter(part => partsB.includes(part));
+  if (!tokensA.length || !tokensB.length) return false;
+
+  // one side fully contained in the other
+  const allAInB = tokensA.every(token => tokensB.includes(token));
+  const allBInA = tokensB.every(token => tokensA.includes(token));
+
+  if (allAInB || allBInA) return true;
+
+  // controlled overlap fallback
+  const overlap = tokensA.filter(token => tokensB.includes(token));
 
   return overlap.length >= 2;
 }
