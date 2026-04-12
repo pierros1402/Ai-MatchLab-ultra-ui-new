@@ -215,14 +215,19 @@ export function buildCompetitionContext(match) {
     });
 
     return {
-      ok: false,
-      status: "empty",
-      league: match?.leagueSlug || null,
-      reason: !standings
-        ? "no_standings_file"
-        : !table.length
-          ? "empty_table"
-          : "low_confidence_table"
+      key: "competition_context",
+      ok: true,
+      status: "fallback",
+      data: {
+        type: "league",
+        phase: "unknown",
+        positions: null,
+        stakes: [],
+        pressure: ["low_confidence_table"],
+        importance: "low",
+        notes: ["Fallback: missing or low-confidence standings"]
+      },
+      confidence: 0.3
     };
   }
 
@@ -246,10 +251,19 @@ export function buildCompetitionContext(match) {
     });
 
     return {
-      ok: false,
-      status: "partial",
-      league: match?.leagueSlug || null,
-      reason: "team_not_found_in_table"
+      key: "competition_context",
+      ok: true,
+      status: "fallback",
+      data: {
+        type: "league",
+        phase: "unknown",
+        positions: null,
+        stakes: [],
+        pressure: ["unknown_table_context"],
+        importance: "low",
+        notes: ["Fallback: team not found in standings"]
+      },
+      confidence: 0.3
     };
   }
 
