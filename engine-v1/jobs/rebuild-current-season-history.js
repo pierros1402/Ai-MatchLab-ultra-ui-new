@@ -337,6 +337,15 @@ function recalcTotalMatches(history) {
   }, 0);
 }
 
+function emptyDayBucket(dayKey) {
+  return {
+    dayKey,
+    matchCount: 0,
+    rows: [],
+    updatedAt: Date.now()
+  };
+}
+
 async function loadExistingProgress(start, end, totalDays) {
   let history = {
     ok: true,

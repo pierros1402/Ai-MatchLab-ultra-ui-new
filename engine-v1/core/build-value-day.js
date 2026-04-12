@@ -6,6 +6,7 @@ import {
   loadValueIndexes,
   loadModelPriors
 } from "./value-engine-v1.js";
+import { buildMatchIntelligence } from "./build-match-intelligence.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -232,6 +233,95 @@ function expandValueMarkets(match, value) {
 
   return items;
 }
+
+function clamp01(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return 0;
+  if (x < 0) return 0;
+  if (x > 1) return 1;
+  return x;
+}
+
+function applyIntelligenceToValue(value, intelligence) {
+  if (!value || !intelligence?.ok) {
+    return value;
+  }
+
+  const mode = String(intelligence?.coverage?.mode || "fallback").toLowerCase();
+
+  if (mode === "fallback") {
+    return {
+      ...value,
+      intelligence: {
+        applied: false,
+        mode,
+        reason: "fallback_coverage"
+      }
+    };
+  }
+
+  const multiplier = mode === "full" ? 1.0 : 0.5;
+
+  let homeWinScore = Number(value.homeWinScore ?? 0);
+  let drawScore = Number(value.drawScore ?? 0);
+  let awayWinScore = Number(value.awayWinScore ?? 0);
+  let over25Score = Number(value.over25Score ?? 0);
+  let bttsScore = Number(value.bttsScore ?? 0);
+
+  const signals = Array.isArray(intelligence?.signals) ? intelligence.signals : [];
+  const finalAssessment = intelligence?.finalAssessment || {};
+  const standingsContext = intelligence?.standingsContext || {};
+
+  if (finalAssessment.lean === "home") {
+    homeWinScore += 0.05 * multiplier;
+    drawScore -= 0.02 * multiplier;
+  } else if (finalAssessment.lean === "away") {
+    awayWinScore += 0.05 * multiplier;
+    drawScore -= 0.02 * multiplier;
+  } else if (finalAssessment.lean === "draw") {
+    drawScore += 0.05 * multiplier;
+  }
+
+  if (signals.includes("attack_support")) {
+    over25Score += 0.04 * multiplier;
+    bttsScore += 0.03 * multiplier;
+  }
+
+  if (signals.includes("defensive_resilience")) {
+    over25Score -= 0.03 * multiplier;
+    bttsScore -= 0.02 * multiplier;
+    drawScore += 0.02 * multiplier;
+  }
+
+  if (signals.includes("home_form_edge")) {
+    homeWinScore += 0.04 * multiplier;
+  }
+
+  if (signals.includes("away_form_edge")) {
+    awayWinScore += 0.04 * multiplier;
+  }
+
+  if (signals.includes("motivation_pressure_high")) {
+    homeWinScore += Number(standingsContext?.homePressure || 0) * 0.02 * multiplier;
+    awayWinScore += Number(standingsContext?.awayPressure || 0) * 0.02 * multiplier;
+  }
+
+  return {
+    ...value,
+    homeWinScore: clamp01(homeWinScore),
+    drawScore: clamp01(drawScore),
+    awayWinScore: clamp01(awayWinScore),
+    over25Score: clamp01(over25Score),
+    bttsScore: clamp01(bttsScore),
+    intelligence: {
+      applied: true,
+      mode,
+      coverage: intelligence?.coverage || null,
+      signals
+    }
+  };
+}
+
 // ------------------------------
 export async function buildValueDay(date, { rebuild = false, env } = {}) {
   const season = "2025-2026";
@@ -297,28 +387,33 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
 
             const competitionData = competitionContext?.data || {};
 
-            const value = await evaluateMatchValue(
-              {
-                ...match,
-                kickoff: match.kickoffUtc,
-                season,
-                contextIntelligence: {
-                  ...competitionData,
-                  competitionContext,
-                  refereeProfile: details?.researchedFacts?.refereeProfile || null,
-                  teamNews: details?.researchedFacts?.teamNews || null,
-                  expectedLineups: details?.researchedFacts?.expectedLineups || null,
-                  headToHead: details?.researchedFacts?.headToHead || null,
-                  formGuide: details?.researchedFacts?.formGuide || null,
-                  signals: details?.aiContext?.signals || []
-                }
-              },
-              { season, indexes, priors }
-            );
+                  const intelligence = await buildMatchIntelligence(match, { season });
+
+                  const value = await evaluateMatchValue(
+                    {
+                      ...match,
+                      kickoff: match.kickoffUtc,
+                      season,
+                      contextIntelligence: {
+                        ...competitionData,
+                        competitionContext,
+                        refereeProfile: details?.researchedFacts?.refereeProfile || null,
+                        teamNews: details?.researchedFacts?.teamNews || null,
+                        expectedLineups: details?.researchedFacts?.expectedLineups || null,
+                        headToHead: details?.researchedFacts?.headToHead || null,
+                        formGuide: details?.researchedFacts?.formGuide || null,
+                        signals: details?.aiContext?.signals || [],
+                        matchIntelligence: intelligence
+                      }
+                    },
+                    { season, indexes, priors }
+                  );
 
       if (!value) continue;
 
-      picks.push(...expandValueMarkets(match, value));
+      const enrichedValue = applyIntelligenceToValue(value, intelligence);
+
+      picks.push(...expandValueMarkets(match, enrichedValue));
     } catch (err) {
       console.log("[value] match failed", {
         date,

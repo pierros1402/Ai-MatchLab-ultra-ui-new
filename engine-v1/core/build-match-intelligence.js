@@ -55,15 +55,28 @@ function getAllFixturesLocal() {
   return safeArray(readJsonSafe(filePath, []));
 }
 
-function getStandingsMap(dayKey) {
-  const filePath = resolveDataPath(path.join("standings", `${dayKey}.json`));
-  const rows = readJsonSafe(filePath, []);
+function getStandingsMap() {
+  const dirPath = resolveDataPath("standings");
   const byLeague = new Map();
 
-  for (const row of safeArray(rows)) {
-    const slug = String(row?.league || row?.leagueSlug || "").trim();
-    if (!slug) continue;
-    byLeague.set(slug, row);
+  try {
+    if (!fs.existsSync(dirPath)) return byLeague;
+
+    const files = fs.readdirSync(dirPath);
+
+    for (const file of files) {
+      if (!file.endsWith(".json")) continue;
+
+      const slug = file.replace(".json", "");
+      const filePath = path.join(dirPath, file);
+
+      const data = readJsonSafe(filePath, null);
+      if (!data) continue;
+
+      byLeague.set(slug, data);
+    }
+  } catch {
+    return byLeague;
   }
 
   return byLeague;
@@ -312,7 +325,7 @@ export async function buildMatchIntelligence(fixture, { season = "2025-2026" } =
     };
   }
 
-  const standingsByLeague = getStandingsMap(fixture.dayKey);
+  const standingsByLeague = getStandingsMap();
   const historyRows = getHistorySeason(season);
 
   const leagueStandings = standingsByLeague.get(fixture.leagueSlug) || null;
@@ -345,6 +358,26 @@ export async function buildMatchIntelligence(fixture, { season = "2025-2026" } =
     motivation
   });
 
+  const coverage = {
+    hasStandings: motivation?.summary !== "no_standings_context",
+    hasHomeForm: safeNum(homeForm?.matches, 0) > 0,
+    hasAwayForm: safeNum(awayForm?.matches, 0) > 0,
+    hasH2H: safeNum(h2h?.length, 0) > 0
+  };
+
+  const coverageCount =
+    Number(coverage.hasStandings) +
+    Number(coverage.hasHomeForm) +
+    Number(coverage.hasAwayForm) +
+    Number(coverage.hasH2H);
+
+  let coverageMode = "fallback";
+  if (coverageCount >= 4) {
+    coverageMode = "full";
+  } else if (coverageCount >= 2) {
+    coverageMode = "partial";
+  }
+
   return {
     ok: true,
     matchId: fixture.matchId,
@@ -356,6 +389,12 @@ export async function buildMatchIntelligence(fixture, { season = "2025-2026" } =
     competitionContext: {
       leagueSlug: fixture.leagueSlug,
       leagueName: fixture.leagueName || null
+    },
+
+    coverage: {
+      ...coverage,
+      coverageCount,
+      mode: coverageMode
     },
 
     standingsContext: motivation,
@@ -372,7 +411,10 @@ export async function buildMatchIntelligence(fixture, { season = "2025-2026" } =
 
     signals,
 
-    finalAssessment,
+    finalAssessment: {
+      ...finalAssessment,
+      intelligenceMode: coverageMode
+    },
 
     generatedAt: Date.now()
   };
