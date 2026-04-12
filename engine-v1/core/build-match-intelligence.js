@@ -84,7 +84,28 @@ function getStandingsMap() {
 
 function getHistorySeason(season = "2025-2026") {
   const filePath = resolveDataPath(path.join("history", `${season}.json`));
-  return safeArray(readJsonSafe(filePath, []));
+  const raw = readJsonSafe(filePath, null);
+
+  if (!raw) return [];
+
+  if (Array.isArray(raw)) {
+    return raw;
+  }
+
+  if (raw.days && typeof raw.days === "object") {
+    const rows = [];
+
+    for (const dayKey of Object.keys(raw.days)) {
+      const bucket = raw.days[dayKey];
+      if (Array.isArray(bucket?.rows)) {
+        rows.push(...bucket.rows);
+      }
+    }
+
+    return rows;
+  }
+
+  return [];
 }
 
 function getRecentTeamMatches(historyRows, teamName, limit = 5) {
