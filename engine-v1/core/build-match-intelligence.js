@@ -108,9 +108,13 @@ function getHistorySeason(season = "2025-2026") {
   return [];
 }
 
-function getRecentTeamMatches(historyRows, teamName, limit = 5) {
+function getRecentTeamMatches(historyRows, teamName, limit = 5, excludeMatchId = null) {
   const matches = historyRows
     .filter(row => {
+      if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
+        return false;
+      }
+
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
 
       return (
@@ -118,7 +122,7 @@ function getRecentTeamMatches(historyRows, teamName, limit = 5) {
         namesLikelyMatch(row?.awayTeam, teamName)
       );
     })
-    .sort((a, b) => new Date(b?.kickoffUtc || 0) - new Date(a?.kickoffUtc || 0))
+    .sort((a, b) => new Date(b?.kickoff || b?.kickoffUtc || 0) - new Date(a?.kickoff || a?.kickoffUtc || 0))
     .slice(0, limit);
 
   if (matches.length > 0) {
@@ -129,6 +133,10 @@ function getRecentTeamMatches(historyRows, teamName, limit = 5) {
 
   return fixtures
     .filter(row => {
+      if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
+        return false;
+      }
+
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
 
       return (
@@ -136,7 +144,7 @@ function getRecentTeamMatches(historyRows, teamName, limit = 5) {
         namesLikelyMatch(row?.awayTeam, teamName)
       );
     })
-    .sort((a, b) => new Date(b?.kickoffUtc || 0) - new Date(a?.kickoffUtc || 0))
+    .sort((a, b) => new Date(b?.kickoff || b?.kickoffUtc || 0) - new Date(a?.kickoff || a?.kickoffUtc || 0))
     .slice(0, limit);
 }
 
@@ -175,9 +183,13 @@ function summarizeTeamForm(matches, teamName) {
   };
 }
 
-function getH2H(historyRows, homeTeam, awayTeam, limit = 5) {
+function getH2H(historyRows, homeTeam, awayTeam, limit = 5, excludeMatchId = null) {
   const fromHistory = historyRows
     .filter(row => {
+      if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
+        return false;
+      }
+
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
 
       return (
@@ -191,7 +203,7 @@ function getH2H(historyRows, homeTeam, awayTeam, limit = 5) {
         )
       );
     })
-    .sort((a, b) => new Date(b?.kickoffUtc || 0) - new Date(a?.kickoffUtc || 0))
+    .sort((a, b) => new Date(b?.kickoff || b?.kickoffUtc || 0) - new Date(a?.kickoff || a?.kickoffUtc || 0))
     .slice(0, limit);
 
   if (fromHistory.length > 0) {
@@ -202,6 +214,10 @@ function getH2H(historyRows, homeTeam, awayTeam, limit = 5) {
 
   return fixtures
     .filter(row => {
+      if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
+        return false;
+      }
+
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
 
       return (
@@ -215,8 +231,25 @@ function getH2H(historyRows, homeTeam, awayTeam, limit = 5) {
         )
       );
     })
-    .sort((a, b) => new Date(b?.kickoffUtc || 0) - new Date(a?.kickoffUtc || 0))
+    .sort((a, b) => new Date(b?.kickoff || b?.kickoffUtc || 0) - new Date(a?.kickoff || a?.kickoffUtc || 0))
     .slice(0, limit);
+}
+
+function getPhaseSummary(standingsState) {
+  const phases = standingsState?.phases && typeof standingsState.phases === "object"
+    ? standingsState.phases
+    : {};
+
+  const keys = Object.keys(phases);
+
+  return {
+    hasPhaseTables: keys.length > 0,
+    phaseKeys: keys,
+    hasRegular: Array.isArray(phases.regular) && phases.regular.length > 0,
+    hasPlayoff: Array.isArray(phases.playoff) && phases.playoff.length > 0,
+    hasPlayout: Array.isArray(phases.playout) && phases.playout.length > 0,
+    hasBarrage: Array.isArray(phases.barrage) && phases.barrage.length > 0
+  };
 }
 
 function buildMotivationSignal(standingsTable, homeTeam, awayTeam) {
@@ -350,10 +383,11 @@ export async function buildMatchIntelligence(fixture, { season = "2025-2026" } =
   const historyRows = getHistorySeason(season);
 
   const leagueStandings = standingsByLeague.get(fixture.leagueSlug) || null;
+  const phaseSummary = getPhaseSummary(leagueStandings);
 
-  const homeRecent = getRecentTeamMatches(historyRows, fixture.homeTeam, 5);
-  const awayRecent = getRecentTeamMatches(historyRows, fixture.awayTeam, 5);
-  const h2h = getH2H(historyRows, fixture.homeTeam, fixture.awayTeam, 5);
+  const homeRecent = getRecentTeamMatches(historyRows, fixture.homeTeam, 5, fixture.matchId);
+  const awayRecent = getRecentTeamMatches(historyRows, fixture.awayTeam, 5, fixture.matchId);
+  const h2h = getH2H(historyRows, fixture.homeTeam, fixture.awayTeam, 5, fixture.matchId);
 
   const homeForm = summarizeTeamForm(homeRecent, fixture.homeTeam);
   const awayForm = summarizeTeamForm(awayRecent, fixture.awayTeam);
@@ -383,14 +417,16 @@ export async function buildMatchIntelligence(fixture, { season = "2025-2026" } =
     hasStandings: motivation?.summary !== "no_standings_context",
     hasHomeForm: safeNum(homeForm?.matches, 0) > 0,
     hasAwayForm: safeNum(awayForm?.matches, 0) > 0,
-    hasH2H: safeNum(h2h?.length, 0) > 0
+    hasH2H: safeNum(h2h?.length, 0) > 0,
+    hasPhaseContext: !!phaseSummary?.hasPhaseTables
   };
 
   const coverageCount =
     Number(coverage.hasStandings) +
     Number(coverage.hasHomeForm) +
     Number(coverage.hasAwayForm) +
-    Number(coverage.hasH2H);
+    Number(coverage.hasH2H) +
+    Number(coverage.hasPhaseContext);
 
   let coverageMode = "fallback";
   if (coverageCount >= 4) {
@@ -409,7 +445,8 @@ export async function buildMatchIntelligence(fixture, { season = "2025-2026" } =
 
     competitionContext: {
       leagueSlug: fixture.leagueSlug,
-      leagueName: fixture.leagueName || null
+      leagueName: fixture.leagueName || null,
+      phaseSummary
     },
 
     coverage: {

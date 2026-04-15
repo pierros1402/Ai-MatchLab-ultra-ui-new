@@ -113,6 +113,37 @@ function getAwayTeam(row) {
   return row?.awayTeam || row?.away || null;
 }
 
+function getPhaseKey(row) {
+  const raw = String(row?.phase || "").trim().toLowerCase();
+
+  if (!raw) return "regular";
+
+  if (
+    raw.includes("playoff") ||
+    raw.includes("championship") ||
+    raw.includes("promotion") ||
+    raw.includes("final stage")
+  ) {
+    return "playoff";
+  }
+
+  if (
+    raw.includes("playout") ||
+    raw.includes("relegation")
+  ) {
+    return "playout";
+  }
+
+  if (
+    raw.includes("baraz") ||
+    raw.includes("barrage")
+  ) {
+    return "barrage";
+  }
+
+  return raw;
+}
+
 function getScoreHome(row) {
   return toNumber(
     row?.scoreHome,
@@ -252,6 +283,46 @@ function buildTableFromHistoryRows(rows, slug) {
   return finalizeTableRows(tableMap);
 }
 
+function buildPhaseTablesFromHistoryRows(rows, slug) {
+  const phaseMaps = new Map();
+
+  const filtered = safeArray(rows).filter(row => {
+    const rowLeague = getLeagueSlugFromRow(row);
+    if (rowLeague !== slug) return false;
+    if (!isFinalStatus(row?.status)) return false;
+
+    const homeTeam = getHomeTeam(row);
+    const awayTeam = getAwayTeam(row);
+    const scoreHome = getScoreHome(row);
+    const scoreAway = getScoreAway(row);
+
+    return (
+      !!homeTeam &&
+      !!awayTeam &&
+      Number.isFinite(scoreHome) &&
+      Number.isFinite(scoreAway)
+    );
+  });
+
+  for (const row of filtered) {
+    const phase = getPhaseKey(row);
+
+    if (!phaseMaps.has(phase)) {
+      phaseMaps.set(phase, new Map());
+    }
+
+    applyMatchToTable(phaseMaps.get(phase), row);
+  }
+
+  const phases = {};
+
+  for (const [phase, tableMap] of phaseMaps.entries()) {
+    phases[phase] = finalizeTableRows(tableMap);
+  }
+
+  return phases;
+}
+
 // ------------------------------------------------------------
 // CANDIDATE COLLECTION
 // ------------------------------------------------------------
@@ -262,14 +333,26 @@ function collectStandingsCandidatesForLeague(slug, dayKey, options = {}) {
   // Candidate 1: current-season truth reconstructed from history
   try {
     const historyRows = getCurrentSeasonHistoryRows(season);
-    const tableFromHistory = buildTableFromHistoryRows(historyRows, slug);
+    const phaseTables = buildPhaseTablesFromHistoryRows(historyRows, slug);
+    const regularTable = safeArray(phaseTables.regular);
+    const playoffTable = safeArray(phaseTables.playoff);
+    const playoutTable = safeArray(phaseTables.playout);
+    const barrageTable = safeArray(phaseTables.barrage);
+
+    const primaryTable =
+      regularTable.length ? regularTable :
+      playoffTable.length ? playoffTable :
+      playoutTable.length ? playoutTable :
+      barrageTable.length ? barrageTable :
+      [];
 
     candidates.push({
       type: "local_truth_history",
       label: `history-${season}`,
-      ok: tableFromHistory.length > 0,
-      confidence: tableFromHistory.length > 0 ? 0.9 : 0,
-      rows: tableFromHistory
+      ok: primaryTable.length > 0,
+      confidence: primaryTable.length > 0 ? 0.9 : 0,
+      rows: primaryTable,
+      phases: phaseTables
     });
   } catch (e) {
     candidates.push({
@@ -530,6 +613,7 @@ function reconcileStandingsRows(slug, candidates = []) {
       confidence: 0,
       completeness: 0,
       sourceAudit,
+      phases: {},
       table: []
     };
   }
@@ -542,6 +626,20 @@ function reconcileStandingsRows(slug, candidates = []) {
       const pb = toNumber(b.position, 999);
       return pa - pb;
     });
+
+  const normalizedPhases = Object.fromEntries(
+    Object.entries(best?.phases || {}).map(([phase, rows]) => [
+      phase,
+      safeArray(rows)
+        .map((row, idx) => normalizeStandingsRow(row, idx))
+        .filter(row => !!normalizeText(row.team || row.teamName || row.name))
+        .sort((a, b) => {
+          const pa = toNumber(a.position, 999);
+          const pb = toNumber(b.position, 999);
+          return pa - pb;
+        })
+    ])
+  );
 
   const scored = scoreStandingsConfidence(
     normalized,
@@ -565,6 +663,7 @@ function reconcileStandingsRows(slug, candidates = []) {
           ok: false
         }
       ],
+      phases: normalizedPhases,
       table: []
     };
   }
@@ -573,6 +672,16 @@ function reconcileStandingsRows(slug, candidates = []) {
     ...row,
     confidence: scored.confidence
   }));
+
+  const enrichedPhases = Object.fromEntries(
+    Object.entries(normalizedPhases).map(([phase, rows]) => [
+      phase,
+      rows.map(row => ({
+        ...row,
+        confidence: scored.confidence
+      }))
+    ])
+  );
 
   return {
     league: slug,
@@ -586,6 +695,7 @@ function reconcileStandingsRows(slug, candidates = []) {
         ok: true
       }
     ],
+    phases: enrichedPhases,
     table: enrichedTable
   };
 }
@@ -596,12 +706,33 @@ function writeLeagueStandingsArtifact(slug, state) {
 
   const filePath = path.join(outDir, `${slug}.json`);
 
+  const phaseTables =
+    state?.phases && typeof state.phases === "object"
+      ? state.phases
+      : {};
+
+  const phaseKeys = Object.keys(phaseTables);
+
   const payload = {
     league: slug,
     updatedAt: Date.now(),
+
     confidence: Number(state?.confidence) || 0,
     completeness: Number(state?.completeness) || 0,
+
     sourceAudit: safeArray(state?.sourceAudit),
+
+    // 🔥 NEW STANDARD FORMAT
+    phaseSummary: {
+      hasPhaseTables: phaseKeys.length > 1,
+      phaseKeys
+    },
+
+    phaseTables,
+
+    // backward compatibility
+    phases: phaseTables,
+
     table: safeArray(state?.table)
   };
 

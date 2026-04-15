@@ -193,6 +193,40 @@ function buildRefereeNarrative(refereeContext) {
   };
 }
 
+function resolveActivePhase(match, competitionContext) {
+  const phaseSummary =
+    competitionContext?.phaseSummary ||
+    competitionContext?.data?.phaseSummary ||
+    null;
+
+  if (!phaseSummary || !phaseSummary.hasPhaseTables) {
+    return {
+      phase: "regular",
+      reason: "no_phase_data"
+    };
+  }
+
+  const keys = phaseSummary.phaseKeys || [];
+
+  if (keys.includes("playoff")) {
+    return { phase: "playoff", reason: "phase_key_detected" };
+  }
+
+  if (keys.includes("playout")) {
+    return { phase: "playout", reason: "phase_key_detected" };
+  }
+
+  if (keys.includes("knockout")) {
+    return { phase: "knockout", reason: "cup_structure" };
+  }
+
+  return {
+    phase: "regular",
+    reason: "fallback_regular"
+  };
+}
+
+
 export function inferMatchContext(match, support) {
   const signals = [];
   const warnings = [];
@@ -203,6 +237,7 @@ export function inferMatchContext(match, support) {
   const historyContext = support?.historyContext || null;
   const headToHeadGuide = support?.headToHeadGuide || null;
   const competitionContext = support?.competitionContext?.data || null;
+  const phaseInfo = resolveActivePhase(match, competitionContext);
   const refereeContext = support?.refereeContext || null;
   const teamNewsContext = support?.teamNewsContext || null;
   const lineupContext = support?.lineupContext || null;
@@ -252,6 +287,25 @@ export function inferMatchContext(match, support) {
   if (competitionContext) {
     signals.push("competition_context_available");
     confidence += 0.05;
+
+  if (phaseInfo?.phase) {
+    signals.push(`phase_${phaseInfo.phase}`);
+
+    if (phaseInfo.phase === "playoff") {
+      signals.push("high_competition_pressure");
+      confidence += 0.06;
+    }
+
+    if (phaseInfo.phase === "playout") {
+      signals.push("relegation_battle_phase");
+      confidence += 0.06;
+    }
+
+    if (phaseInfo.phase === "knockout") {
+      signals.push("elimination_match");
+      confidence += 0.08;
+    }
+  }
 
     if (competitionContext?.importance === "high") {
       signals.push("high_stakes_match");
@@ -490,6 +544,7 @@ export function inferMatchContext(match, support) {
 
   return {
     status: "ready",
+    phase: phaseInfo,
     summary: {
       el: summaryPartsEl.join(" "),
       en: summaryPartsEn.join(" ")
@@ -524,9 +579,19 @@ export function inferMatchContext(match, support) {
                 : ""
       },
       motivationProfile: {
-        label: competitionContext?.importance === "high" ? "high_stakes" : "unknown",
+        label:
+          phaseInfo.phase === "playoff"
+            ? "title_or_promotion_phase"
+            : phaseInfo.phase === "playout"
+            ? "relegation_survival_phase"
+            : phaseInfo.phase === "knockout"
+            ? "elimination_phase"
+            : competitionContext?.importance === "high"
+            ? "high_stakes"
+            : "regular_context",
         explanation: ""
       },
+ 
       tacticalInteraction: {
         label: support.hasValue
           ? "value_supported_context"

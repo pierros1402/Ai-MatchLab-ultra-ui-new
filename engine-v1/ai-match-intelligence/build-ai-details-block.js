@@ -176,6 +176,7 @@ const enrichedSupport = {
   return {
     researchedFacts,
     aiContext,
+    phase: aiContext?.phase || null,
     sourceAudit,
     learningMeta
   };

@@ -1,6 +1,17 @@
 import fs from "fs/promises";
 import { getFixturesByDay } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
+import path from "path";
+
+function readArchiveSeason(slug, season) {
+  try {
+    const filePath = resolveDataPath("history-archive", slug, `${season}.json`);
+    const raw = JSON.parse(require("fs").readFileSync(filePath, "utf8"));
+    return Array.isArray(raw?.matches) ? raw.matches : [];
+  } catch {
+    return [];
+  }
+}
 
 const HISTORY_DIR = ensureDir(resolveDataPath("history"));
 
@@ -110,7 +121,23 @@ export async function appendFinalizedDayToHistory(dayKey) {
 
   const days = normalizeHistoryDays(existingHistory);
 
-  const normalizedRows = rows.map(r => normalizeHistoryRow(r, season, dayKey));
+  let normalizedRows = rows.map(r => normalizeHistoryRow(r, season, dayKey));
+
+  // 🔽 fallback από archive αν δεν έχουμε αρκετά rows
+  if (normalizedRows.length < 3) {
+    console.log("[history] fallback to archive for", dayKey);
+
+    const archiveRows = readArchiveSeason(
+      rows[0]?.leagueSlug || "",
+      season
+    ).filter(r => r.dayKey === dayKey);
+
+    if (archiveRows.length) {
+      normalizedRows = archiveRows.map(r =>
+        normalizeHistoryRow(r, season, dayKey)
+      );
+    }
+  }
 
   console.log("[history] normalized rows:", normalizedRows.length);
 

@@ -101,13 +101,49 @@ function classifyGapTier(gap) {
 }
 
 function resolveStandingsMeta(standings) {
-  const table = Array.isArray(standings?.table)
+  const phaseSummary =
+    standings?.phaseSummary ||
+    standings?.meta?.phaseSummary ||
+    null;
+
+  const phaseTables =
+    standings?.phaseTables && typeof standings.phaseTables === "object"
+      ? standings.phaseTables
+      : standings?.phases && typeof standings.phases === "object"
+        ? standings.phases
+        : null;
+
+  const defaultTable = Array.isArray(standings?.table)
     ? standings.table
     : Array.isArray(standings?.standings)
       ? standings.standings
       : Array.isArray(standings?.rows)
         ? standings.rows
         : [];
+
+  let activePhase = "regular";
+  let table = defaultTable;
+
+  if (phaseSummary?.hasPhaseTables && phaseTables) {
+    const keys = Array.isArray(phaseSummary?.phaseKeys) ? phaseSummary.phaseKeys : Object.keys(phaseTables);
+
+    if (keys.includes("playoff") && Array.isArray(phaseTables.playoff) && phaseTables.playoff.length) {
+      activePhase = "playoff";
+      table = phaseTables.playoff;
+    } else if (keys.includes("playout") && Array.isArray(phaseTables.playout) && phaseTables.playout.length) {
+      activePhase = "playout";
+      table = phaseTables.playout;
+    } else if (keys.includes("regular") && Array.isArray(phaseTables.regular) && phaseTables.regular.length) {
+      activePhase = "regular";
+      table = phaseTables.regular;
+    } else {
+      const firstUsableKey = keys.find(k => Array.isArray(phaseTables[k]) && phaseTables[k].length);
+      if (firstUsableKey) {
+        activePhase = firstUsableKey;
+        table = phaseTables[firstUsableKey];
+      }
+    }
+  }
 
   const totalTeams =
     safeNum(standings?.meta?.totalTeams, null) ||
@@ -139,7 +175,9 @@ function resolveStandingsMeta(standings) {
     table,
     totalTeams,
     matchesPlayedMax,
-    matchesLeftEstimate
+    matchesLeftEstimate,
+    activePhase,
+    phaseSummary
   };
 }
 
@@ -234,7 +272,8 @@ export function buildCompetitionContext(match) {
   const sortedTable = sortTableByPoints(table);
   const totalTeams = meta.totalTeams || sortedTable.length || 0;
   const matchesLeft = meta.matchesLeftEstimate;
-  const phase = classifySeasonPhase(matchesLeft ?? 0);
+  const seasonPhase = classifySeasonPhase(matchesLeft ?? 0);
+  const competitionPhase = meta.activePhase || "regular";
   const cutoffs = resolveCutoffMap(totalTeams);
 
   const homeRow = findTeamRow(sortedTable, match?.homeTeam);
@@ -301,8 +340,8 @@ export function buildCompetitionContext(match) {
   const homeVsAwayGap = Math.abs(homePts - awayPts);
   const directRival = homeVsAwayGap <= 3 && Math.abs(homePos - awayPos) <= 3;
 
-  const latePhase = phase === "late";
-  const midPhase = phase === "mid";
+  const latePhase = seasonPhase === "late";
+  const midPhase = seasonPhase === "mid";
 
   if (latePhase && (homeTitleTier === "tight" || awayTitleTier === "tight")) {
     stakes.push("title_race");
@@ -397,7 +436,10 @@ export function buildCompetitionContext(match) {
     status: "ready",
     data: {
       type: "league",
-      phase,
+      phase: competitionPhase,
+      seasonPhase,
+      phaseSummary: meta.phaseSummary || null,
+      activePhase: competitionPhase,
       positions: {
         home: homePos,
         away: awayPos,
@@ -406,7 +448,21 @@ export function buildCompetitionContext(match) {
         matchesLeft,
         totalTeams
       },
-      stakes: uniqueStrings(stakes),
+      stakes: {
+        home:
+          homeTitleTier === "tight" ? "title" :
+          homeEuropeTier === "tight" || homeEuropeTier === "live" ? "europe" :
+          homePlayoffTier === "tight" || homePlayoffTier === "live" ? "promotion" :
+          homeRelegMargin !== null && homeRelegMargin <= 6 ? "relegation" :
+          "neutral",
+        away:
+          awayTitleTier === "tight" ? "title" :
+          awayEuropeTier === "tight" || awayEuropeTier === "live" ? "europe" :
+          awayPlayoffTier === "tight" || awayPlayoffTier === "live" ? "promotion" :
+          awayRelegMargin !== null && awayRelegMargin <= 6 ? "relegation" :
+          "neutral",
+        tags: uniqueStrings(stakes)
+      },
       pressure: uniqueStrings(pressure),
       importance,
       notes: uniqueStrings(notes)

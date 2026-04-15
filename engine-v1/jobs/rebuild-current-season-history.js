@@ -123,6 +123,39 @@ function getHomeAway(ev) {
   return { home, away };
 }
 
+function inferPhaseFromContext({ leagueSlug, competitionType, dayKey }) {
+  if (competitionType !== "league") return "knockout";
+
+  const slug = String(leagueSlug || "").toLowerCase();
+
+  // Leagues WITHOUT phases
+  const alwaysRegular = [
+    "eng.", "ger.", "esp.", "ita.", "fra.", "por.", "ned.", "tur."
+  ];
+
+  if (alwaysRegular.some(prefix => slug.startsWith(prefix))) {
+    return "regular";
+  }
+
+  // Phase-based leagues (basic version)
+  const phaseLeagues = [
+    "bel.1", "gre.1", "den.1", "sco.1", "aut.1"
+  ];
+
+  if (!phaseLeagues.includes(slug)) {
+    return "regular";
+  }
+
+  // Simple season timing heuristic
+  const month = Number(String(dayKey).split("-")[1]);
+
+  if (month >= 4) {
+    return "playoff";
+  }
+
+  return "regular";
+}
+
 function normalizeEvent(ev, requestedLeague, targetDay) {
   const id = String(ev?.id || "").trim();
   if (!id) return null;
@@ -213,7 +246,11 @@ function normalizeEvent(ev, requestedLeague, targetDay) {
     competitionType,
     leagueTier: getLeagueTier(leagueSlug),
     leagueTrust: getLeagueTrust(leagueSlug),
-    phase: "regular"
+    phase: inferPhaseFromContext({
+      leagueSlug,
+      competitionType,
+      dayKey: targetDay
+    })
   };
 }
 
@@ -429,10 +466,10 @@ async function rebuildCurrentSeason() {
   for (const dayKey of days) {
     const existingDay = history.days.find(d => d?.dayKey === dayKey);
 
-    if (existingDay && Array.isArray(existingDay.rows) && existingDay.rows.length) {
-      console.log(
-        `[history rebuild] skip existing ${dayKey} matches=${existingDay.rows.length}`
-      );
+    const FORCE_REBUILD = true;
+
+    if (!FORCE_REBUILD && existingDay && Array.isArray(existingDay.rows) &&  existingDay.rows.length) {
+      console.log(`[history rebuild] skip existing ${dayKey} matches= ${existingDay.rows.length}`);
       continue;
     }
 
