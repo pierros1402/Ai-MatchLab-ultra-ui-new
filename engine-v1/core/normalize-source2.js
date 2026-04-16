@@ -1,5 +1,6 @@
 import { LEAGUE_NAME_MAP } from "../config.js";
 import { athensDayFromKickoff } from "./daykey.js";
+import { buildMatchKey } from "./normalize.js";
 
 // ============================================================
 // HELPERS
@@ -14,130 +15,63 @@ function parseScore(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-// ------------------------------------------------------------
-// STATUS → CANONICAL (PRE / LIVE / FT)
-// ------------------------------------------------------------
-function mapStatus(rawStatus) {
-  const s = String(rawStatus || "").toUpperCase();
-
-  if (
-    s.includes("FINAL") ||
-    s.includes("FULL_TIME") ||
-    s.includes("FT") ||
-    s.includes("AET") ||
-    s.includes("PEN")
-  ) {
-    return "FT";
-  }
-
-  if (
-    s.includes("LIVE") ||
-    s.includes("IN_PROGRESS") ||
-    s.includes("FIRST_HALF") ||
-    s.includes("SECOND_HALF") ||
-    s.includes("HT")
-  ) {
-    return "LIVE";
-  }
-
-  return "PRE";
-}
-
-// ------------------------------------------------------------
-// MINUTE NORMALIZATION
-// ------------------------------------------------------------
 function normalizeMinute(v) {
-  if (!v) return "0'";
+  if (v === null || v === undefined) return null;
 
-  const s = String(v).trim();
+  const n = Number(v);
+  if (Number.isFinite(n)) return `${n}'`;
 
-  // ήδη σωστό
-  if (/^\d+\+?\d*'$/.test(s)) return s;
-
-  // 45:23 → 45'
-  const match = s.match(/^(\d{1,3})/);
-  if (match) return `${match[1]}'`;
-
-  // fallback
-  return "0'";
+  return null;
 }
 
 // ============================================================
-// MAIN NORMALIZER
+// MAIN NORMALIZER (COMPATIBLE WITH NEW source2.js)
 // ============================================================
 
 export function normalizeFixtureSource2(event, slug) {
   if (!event || typeof event !== "object") return null;
 
-  const matchId =
-    event.matchId ||
-    event.id ||
-    event.fixtureId ||
-    null;
+  const fixture = event.fixture || {};
+  const teams = event.teams || {};
+  const goals = event.goals || {};
+  const meta = event.__meta || {};
 
-  const kickoff =
-    event.kickoffUtc ||
-    event.kickoff ||
-    event.date ||
-    null;
+  const kickoff = fixture.date;
+  const homeTeam = teams?.home?.name;
+  const awayTeam = teams?.away?.name;
 
-  const homeTeam =
-    event.homeTeam ||
-    event.home ||
-    event.teams?.home ||
-    null;
-
-  const awayTeam =
-    event.awayTeam ||
-    event.away ||
-    event.teams?.away ||
-    null;
-
-  if (!matchId || !kickoff || !homeTeam || !awayTeam) {
+  if (!kickoff || !homeTeam || !awayTeam) {
     return null;
   }
 
-  const rawStatus =
-    event.rawStatus ||
-    event.status ||
-    "UNKNOWN";
+  const rawStatus = fixture?.status?.short || "UNKNOWN";
+  const status = meta.normalizedStatus || "PRE";
 
-  const status = mapStatus(rawStatus);
+  let scoreHome = parseScore(goals.home);
+  let scoreAway = parseScore(goals.away);
 
-  let scoreHome = parseScore(
-    event.scoreHome ?? event.homeScore
-  );
-
-  let scoreAway = parseScore(
-    event.scoreAway ?? event.awayScore
-  );
-
-  // PRE → no scores
   if (status === "PRE") {
     scoreHome = null;
     scoreAway = null;
   }
 
-  let penalties = null;
+  const minute = normalizeMinute(fixture?.status?.elapsed);
 
-  if (
-    Number.isFinite(Number(event.penHome)) &&
-    Number.isFinite(Number(event.penAway))
-  ) {
-    penalties = {
-      home: Number(event.penHome),
-      away: Number(event.penAway)
-    };
-  }
+  const matchKey = buildMatchKey({
+    homeTeam,
+    awayTeam,
+    kickoffUtc: kickoff
+  });
 
-  const minute = normalizeMinute(
-    event.minute ?? event.clock
-  );
+  const providerMatchId = fixture.id;
 
   return {
-    matchId: String(matchId),
+    matchId: String(providerMatchId || matchKey),
+    matchKey,
+
     source: "source2",
-    sourceId: String(event.sourceId || matchId),
+    sourceId: String(providerMatchId || matchKey),
+    sourceMatchId: String(providerMatchId || matchKey),
 
     leagueSlug: slug,
     leagueName: LEAGUE_NAME_MAP[slug] || slug,
@@ -150,14 +84,15 @@ export function normalizeFixtureSource2(event, slug) {
 
     scoreHome,
     scoreAway,
-    penalties,
-    decidedBy: penalties ? "pens" : null,
 
-    rawStatus: String(rawStatus),
+    penalties: null,
+    decidedBy: null,
+
+    rawStatus: rawStatus,
     status,
     minute,
 
-    venue: event.venue || null,
+    venue: fixture?.venue?.name || null,
 
     state: "staging",
     finalized: 0,
