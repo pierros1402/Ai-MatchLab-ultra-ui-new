@@ -11,6 +11,31 @@ function parseScore(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function normalizeTeamKey(name = "") {
+  return String(name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
+function roundKickoffTo10Min(utc) {
+  const ts = new Date(utc || 0).getTime();
+  if (!Number.isFinite(ts) || ts <= 0) return "0";
+
+  const rounded = Math.round(ts / (10 * 60 * 1000)) * (10 * 60 * 1000);
+  return String(rounded);
+}
+
+export function buildMatchKey({ homeTeam, awayTeam, kickoffUtc }) {
+  return [
+    normalizeTeamKey(homeTeam),
+    normalizeTeamKey(awayTeam),
+    roundKickoffTo10Min(kickoffUtc)
+  ].join("|");
+}
+
 export function normalizeFixture(event, slug) {
   const comp = event?.competitions?.[0];
   if (!comp) return null;
@@ -21,6 +46,10 @@ export function normalizeFixture(event, slug) {
   const kickoff = event?.date || comp?.date || null;
   if (!kickoff) return null;
 
+  const homeTeam = home?.team?.displayName || null;
+  const awayTeam = away?.team?.displayName || null;
+  if (!homeTeam || !awayTeam) return null;
+
   const rawStatus = comp?.status?.type?.name || "UNKNOWN";
   const status = mapStatus(rawStatus);
 
@@ -30,11 +59,10 @@ export function normalizeFixture(event, slug) {
       : null;
 
   let scoreHome = parseScore(home?.score);
-  let scoreAway = parseScore(away?.score); 
+  let scoreAway = parseScore(away?.score);
 
   let penalties = null;
 
-  // ESPN penalty extraction
   const homeShootout = parseScore(home?.shootoutScore);
   const awayShootout = parseScore(away?.shootoutScore);
 
@@ -48,18 +76,23 @@ export function normalizeFixture(event, slug) {
     };
   }
 
-  // ------------------------------------------------------------
-  // PRE / SCHEDULED → no scores
-  // ------------------------------------------------------------
   if (status === "STATUS_SCHEDULED" || status === "PRE") {
     scoreHome = null;
     scoreAway = null;
   }
 
+  const matchKey = buildMatchKey({
+    homeTeam,
+    awayTeam,
+    kickoffUtc: kickoff
+  });
+
   return {
-    matchId: String(event.id),
+    matchId: String(event.id), // κρατιέται προσωρινά για backward compatibility
+    matchKey,
     source: "espn",
     sourceId: String(event.id),
+    sourceMatchId: String(event.id),
 
     leagueSlug: slug,
     leagueName: LEAGUE_NAME_MAP[slug] || slug,
@@ -67,8 +100,8 @@ export function normalizeFixture(event, slug) {
     dayKey: athensDayFromKickoff(kickoff),
     kickoffUtc: kickoff,
 
-    homeTeam: home?.team?.displayName || null,
-    awayTeam: away?.team?.displayName || null,
+    homeTeam,
+    awayTeam,
 
     scoreHome,
     scoreAway,

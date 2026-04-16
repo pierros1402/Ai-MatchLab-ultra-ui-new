@@ -8,12 +8,14 @@ import { buildValueDay } from "../core/build-value-day.js";
 import { shiftDay } from "../core/daykey.js";
 import {
   getFixtureById,
+  getFixtureByMatchKey,
   upsertFixtureWithMeta
 } from "../storage/json-db.js";
 import { appendSkipped } from "../storage/skipped-log.js";
 import {
   appendObservation,
-  getObservationsByMatchId
+  getObservationsByMatchId,
+  getObservationsByMatchKey
 } from "../storage/observations-db.js";
 
 const NO_DRAW_COMPETITIONS = new Set([
@@ -254,7 +256,9 @@ export async function ingestDay(dayKey, env) {
           actualDay: normalized.dayKey,
           source: normalized.source,
           sourceId: normalized.sourceId,
+          sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
           matchId: normalized.matchId,
+          matchKey: normalized.matchKey,
           leagueSlug: normalized.leagueSlug,
           leagueName: normalized.leagueName,
           homeTeam: normalized.homeTeam,
@@ -265,6 +269,8 @@ export async function ingestDay(dayKey, env) {
           minute: normalized.minute,
           scoreHome: normalized.scoreHome,
           scoreAway: normalized.scoreAway,
+          penalties: normalized.penalties || null,
+          decidedBy: normalized.decidedBy || null,
           venue: normalized.venue
         });
 
@@ -307,8 +313,13 @@ export async function ingestDay(dayKey, env) {
           continue;
         }
 
-        const existing = getFixtureById(normalized.matchId);
-        const observations = getObservationsByMatchId(normalized.matchId);
+        const existing =
+          getFixtureByMatchKey(normalized.matchKey) ||
+          getFixtureById(normalized.matchId);
+
+        const observations = normalized.matchKey
+          ? getObservationsByMatchKey(normalized.matchKey)
+          : getObservationsByMatchId(normalized.matchId);
 
         let merged = await reconcileObservations({
           env,

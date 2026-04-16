@@ -57,7 +57,16 @@ export function appendObservation(item) {
 
 export function getObservationsByMatchId(matchId) {
   if (!matchId) return [];
-  return readObservations().filter(x => String(x?.matchId || "") === String(matchId));
+  return readObservations().filter(
+    x => String(x?.matchId || "") === String(matchId)
+  );
+}
+
+export function getObservationsByMatchKey(matchKey) {
+  if (!matchKey) return [];
+  return readObservations().filter(
+    x => String(x?.matchKey || "") === String(matchKey)
+  );
 }
 
 export function getObservationsFilePath() {

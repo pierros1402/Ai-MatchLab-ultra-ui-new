@@ -7,7 +7,10 @@
 // - Confidence scoring
 // - Independent operational state layer
 // ============================================================
-
+import {
+  updateSourceReliability,
+  getSourceReliabilitySnapshot
+} from "../storage/source-reliability.js";
 import {
   collectDisagreements,
   persistDisagreements
@@ -137,6 +140,39 @@ function round3(n) {
   return Math.round(n * 1000) / 1000;
 }
 
+function getConfidenceBand(confidence, { hasConflict = false } = {}) {
+  if (hasConflict) {
+    if (confidence >= 0.55) return "MEDIUM";
+    return "LOW";
+  }
+
+  if (confidence >= 0.75) return "HIGH";
+  if (confidence >= 0.55) return "MEDIUM";
+  return "LOW";
+}
+
+function getLearnedReliability(source, reliabilityDb = {}) {
+  const key = String(source || "").trim();
+  const row = reliabilityDb?.[key];
+
+  if (!row) return null;
+
+  const total = Number(row.total || 0);
+  const agreements = Number(row.agreements || 0);
+
+  if (total <= 0) return null;
+
+  return agreements / total;
+}
+
+function getEffectiveReliability(source, baseReliability, reliabilityDb = {}) {
+  const learned = getLearnedReliability(source, reliabilityDb);
+
+  if (learned == null) return baseReliability ?? 0.5;
+
+  return ((baseReliability ?? 0.5) * 0.6) + (learned * 0.4);
+}
+
 function pickBest(observations, field, reliabilityField) {
   const ranked = [...observations].sort((a, b) => {
     const pa = sourceProfile(a.source);
@@ -164,7 +200,7 @@ function pickBest(observations, field, reliabilityField) {
   };
 }
 
-function pickStatusWeighted(observations, existing) {
+function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
   const latestPerSource = new Map();
 
   for (const row of observations) {
@@ -188,9 +224,15 @@ function pickStatusWeighted(observations, existing) {
     const terminalBonus = isTerminal(row?.status) ? 1000 : 0;
     const liveBonus = isLive(row?.status) ? 500 : 100;
 
+    const effectiveStatusReliability = getEffectiveReliability(
+      source,
+      profile.statusReliability ?? 0.5,
+      reliabilityDb
+    );
+
     const rankScore =
       sourceWeight * 1000 +
-      (profile.statusReliability ?? 0.5) * 100 +
+      effectiveStatusReliability * 100 +
       terminalBonus +
       liveBonus +
       freshness;
@@ -217,14 +259,26 @@ function pickStatusWeighted(observations, existing) {
         const wa = SOURCE_WEIGHTS[sa] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
         const wb = SOURCE_WEIGHTS[sb] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
 
+        const effectiveA = getEffectiveReliability(
+          sa,
+          pa.statusReliability ?? 0.5,
+          reliabilityDb
+        );
+
+        const effectiveB = getEffectiveReliability(
+          sb,
+          pb.statusReliability ?? 0.5,
+          reliabilityDb
+        );
+
         const scoreA =
           wa * 1000 +
-          (pa.statusReliability ?? 0.5) * 100 +
+          effectiveA * 100 +
           Number(a?.ts || 0) / 1e13;
 
         const scoreB =
           wb * 1000 +
-          (pb.statusReliability ?? 0.5) * 100 +
+          effectiveB * 100 +
           Number(b?.ts || 0) / 1e13;
 
         return scoreB - scoreA;
@@ -486,13 +540,79 @@ function computeDisagreement(rows) {
   return signatures.length > 1 && new Set(signatures).size > 1;
 }
 
+function computeConflictTypes(rows) {
+  const latestPerSource = new Map();
+
+  for (const row of rows) {
+    const source = String(row?.source || "").trim();
+    if (!source) continue;
+
+    const prev = latestPerSource.get(source);
+
+    if (!prev || Number(row?.ts || 0) > Number(prev?.ts || 0)) {
+      latestPerSource.set(source, row);
+    }
+  }
+
+  const latest = Array.from(latestPerSource.values());
+  if (latest.length <= 1) return [];
+
+  const statuses = new Set(
+    latest.map(row => String(row?.status || "").toUpperCase())
+  );
+
+  const scorePairs = new Set(
+    latest.map(row => `${safeNum(row?.scoreHome, null)}|${safeNum(row?.scoreAway, null)}`)
+  );
+
+  const normalizedMinutes = latest
+    .map(row => {
+      const m = row?.minute;
+      if (!m) return null;
+
+      const str = String(m).trim().toUpperCase();
+
+      // αγνόησε terminal / non-informative values
+      if (str === "FT" || str === "HT") return null;
+
+      return str;
+    })
+    .filter(Boolean);
+
+  const minuteSet = new Set(normalizedMinutes);
+
+  const kickoffs = new Set(
+    latest.map(row => String(row?.kickoffUtc || ""))
+  );
+
+  const homeTeams = new Set(
+    latest.map(row => String(row?.homeTeam || "").trim().toLowerCase())
+  );
+
+  const awayTeams = new Set(
+    latest.map(row => String(row?.awayTeam || "").trim().toLowerCase())
+  );
+
+  const types = [];
+
+  if (statuses.size > 1) types.push("status");
+  if (scorePairs.size > 1) types.push("score");
+  if (minuteSet.size > 1) types.push("minute");
+  if (kickoffs.size > 1) types.push("kickoff");
+  if (homeTeams.size > 1 || awayTeams.size > 1) types.push("identity");
+
+  return types;
+}
+
 function computeConfidence({
   rows,
   statusPick,
   scorePick,
   minutePick,
   disagreement,
-  chosenStatus
+  chosenStatus,
+  conflictTypes = [],
+  reliabilityDb = {}
 }) {
   const uniqueSources = [...new Set(rows.map(x => String(x?.source || "").trim()).filter(Boolean))];
   const sourceCount = uniqueSources.length;
@@ -501,27 +621,51 @@ function computeConfidence({
 
   score += Math.min(sourceCount, 3) * 0.08;
 
-  const statusReliability =
+  const statusBaseReliability =
     sourceProfile(statusPick?.source).statusReliability ??
     sourceProfile(statusPick?.source).priority / 100 ??
     0.5;
 
+  const statusLearnedReliability =
+    getLearnedReliability(statusPick?.source, reliabilityDb);
+
+  const statusReliability =
+    statusLearnedReliability != null
+      ? ((statusBaseReliability * 0.6) + (statusLearnedReliability * 0.4))
+      : statusBaseReliability;
+
   score += statusReliability * 0.20;
 
   if (scorePick?.source) {
-    const scoreReliability =
+    const scoreBaseReliability =
       sourceProfile(scorePick.source).scoreReliability ??
       sourceProfile(scorePick.source).priority / 100 ??
       0.5;
+
+    const scoreLearnedReliability =
+      getLearnedReliability(scorePick?.source, reliabilityDb);
+
+    const scoreReliability =
+      scoreLearnedReliability != null
+        ? ((scoreBaseReliability * 0.6) + (scoreLearnedReliability * 0.4))
+        : scoreBaseReliability;
 
     score += scoreReliability * 0.12;
   }
 
   if (minutePick?.source) {
-    const minuteReliability =
+    const minuteBaseReliability =
       sourceProfile(minutePick.source).statusReliability ??
       sourceProfile(minutePick.source).priority / 100 ??
       0.5;
+
+    const minuteLearnedReliability =
+      getLearnedReliability(minutePick?.source, reliabilityDb);
+
+    const minuteReliability =
+      minuteLearnedReliability != null
+        ? ((minuteBaseReliability * 0.6) + (minuteLearnedReliability * 0.4))
+        : minuteBaseReliability;
 
     score += minuteReliability * 0.10;
   }
@@ -541,7 +685,15 @@ function computeConfidence({
   }
 
   if (disagreement) {
-    score -= 0.15;
+    let penalty = 0.08;
+
+    if (conflictTypes.includes("minute")) penalty += 0.03;
+    if (conflictTypes.includes("score")) penalty += 0.12;
+    if (conflictTypes.includes("status")) penalty += 0.18;
+    if (conflictTypes.includes("kickoff")) penalty += 0.12;
+    if (conflictTypes.includes("identity")) penalty += 0.30;
+
+    score -= penalty;
   } else {
     score += 0.08;
   }
@@ -566,6 +718,69 @@ function computeConfidence({
   }
 
   return round3(clamp01(score));
+}
+
+function buildStatusReason(rows, statusPick, conflictTypes) {
+  const sources = [...new Set(rows.map(r => r.source))];
+
+  if (!conflictTypes.includes("status")) {
+    return {
+      type: "consensus",
+      chosen: statusPick.value,
+      source: statusPick.source,
+      sources
+    };
+  }
+
+  return {
+    type: "conflict",
+    chosen: statusPick.value,
+    source: statusPick.source,
+    conflict: "status",
+    competingSources: sources
+  };
+}
+
+function buildScoreReason(rows, scorePick, conflictTypes) {
+  const sources = [...new Set(rows.map(r => r.source))];
+
+  if (!conflictTypes.includes("score")) {
+    return {
+      type: "consensus",
+      chosen: `${scorePick.scoreHome}-${scorePick.scoreAway}`,
+      source: scorePick.source,
+      sources
+    };
+  }
+
+  return {
+    type: "conflict",
+    chosen: `${scorePick.scoreHome}-${scorePick.scoreAway}`,
+    source: scorePick.source,
+    conflict: "score",
+    competingSources: sources
+  };
+}
+
+function buildMinuteReason(rows, minutePick, conflictTypes) {
+  const sources = [...new Set(rows.map(r => r.source))];
+
+  if (!conflictTypes.includes("minute")) {
+    return {
+      type: "consensus",
+      chosen: minutePick.value,
+      source: minutePick.source,
+      sources
+    };
+  }
+
+  return {
+    type: "conflict",
+    chosen: minutePick.value,
+    source: minutePick.source,
+    conflict: "minute",
+    competingSources: sources
+  };
 }
 
 function resolveOperationalState({
@@ -751,17 +966,21 @@ export async function reconcileObservations({
   const sorted = [...rows].sort(byNewest);
   const newest = sorted[0];
   const matchId = newest?.matchId || existing?.matchId || "";
+  const matchKey = newest?.matchKey || existing?.matchKey || "";
 
   const kickoff = pickBest(rows, "kickoffUtc", "kickoffReliability");
   const homeTeam = pickBest(rows, "homeTeam", "teamsReliability");
   const awayTeam = pickBest(rows, "awayTeam", "teamsReliability");
   const leagueName = pickBest(rows, "leagueName", "teamsReliability");
 
-  const statusPick = pickStatusWeighted(rows, existing);
+  const reliabilityDb = getSourceReliabilitySnapshot();
+
+  const statusPick = pickStatusWeighted(rows, existing, reliabilityDb);
   const scorePick = pickScoreWeighted(rows, existing, statusPick.value);
   const minutePick = pickMinute(rows, existing, statusPick.value);
 
   const disagreement = computeDisagreement(rows);
+  const conflictTypes = computeConflictTypes(rows);
 
   const confidence = computeConfidence({
     rows,
@@ -769,8 +988,24 @@ export async function reconcileObservations({
     scorePick,
     minutePick,
     disagreement,
-    chosenStatus: statusPick.value
+    chosenStatus: statusPick.value,
+    conflictTypes,
+    reliabilityDb
   });
+
+  const hasConflict = disagreement === true;
+
+  const confidenceBand = getConfidenceBand(confidence, {
+    hasConflict
+  });
+
+  const needsReview =
+    hasConflict ||
+    confidenceBand === "LOW" ||
+    (
+      confidenceBand === "MEDIUM" &&
+      isLive(statusPick.value)
+    );
 
   const kickoffUtc = kickoff.value || newest.kickoffUtc || existing?.kickoffUtc || null;
 
@@ -809,6 +1044,7 @@ export async function reconcileObservations({
 
   const resolved = {
     matchId,
+    matchKey,
     source: "reconciled",
     dayKey: newest.actualDay || newest.dayKey || existing?.dayKey || null,
 
@@ -864,11 +1100,25 @@ export async function reconcileObservations({
       chosenStatusSource: statusPick.source,
       chosenScoreSource: scorePick.source,
       chosenMinuteSource,
+
       disagreement,
+      conflictTypes,
       confidence,
       observationsCount: rows.length,
+
+      // 🔥 NEW: DECISION EXPLANATION
+      decision: {
+        status: buildStatusReason(rows, statusPick, conflictTypes),
+        score: buildScoreReason(rows, scorePick, conflictTypes),
+        minute: buildMinuteReason(rows, minutePick, conflictTypes)
+      },
+
       updatedAt: Date.now()
-    }
+    },
+    hasConflict,
+    needsReview,
+    confidenceBand,
+    conflictTypes
   };
 
   const disagreementEntries = collectDisagreements(matchId, rows, resolved);
@@ -877,5 +1127,6 @@ export async function reconcileObservations({
     await persistDisagreements(env, disagreementEntries, rows, resolved);
   }
 
+  updateSourceReliability(rows, conflictTypes);
   return resolved;
 }

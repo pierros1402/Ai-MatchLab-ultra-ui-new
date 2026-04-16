@@ -14,6 +14,7 @@ import { buildValueDay } from "./core/build-value-day.js";
 import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload } from "./api/details.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
+import 'dotenv/config';
 
 const app = express();
 const PORT = process.env.PORT || 3010;

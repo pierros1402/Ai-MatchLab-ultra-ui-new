@@ -347,10 +347,39 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
 
   const payload = {
     ...buildDetailsPayload(match, valuePicks, aiBlocks),
+
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,
-    learningMeta: aiBlocks.learningMeta
+    learningMeta: aiBlocks.learningMeta,
+
+    // 🔥 NEW — SOURCE INTELLIGENCE (FROM RECONCILE)
+    sourceIntelligence: match?.reconcileMeta
+      ? {
+          decision: match.reconcileMeta.decision || {
+            status: {
+              type: "consensus",
+              chosen: match.status,
+              source: match.reconcileMeta?.chosenStatusSource || null,
+              sources: Object.keys(match.sources || {})
+            },
+            score: {
+              type: "consensus",
+              chosen: `${match.scoreHome}-${match.scoreAway}`,
+              source: match.reconcileMeta?.chosenScoreSource || null
+             },
+             minute: {
+               type: "consensus",
+               chosen: match.minute,
+               source: match.reconcileMeta?.chosenMinuteSource || null
+            }
+          },
+          confidence: match.reconcileMeta.confidence ?? null,
+          conflicts: match.reconcileMeta.conflictTypes || [],
+          disagreement: match.reconcileMeta.disagreement || false,
+          sources: match.reconcileMeta.observationsCount || 0
+        }
+      : null
   };
 
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);
@@ -419,10 +448,39 @@ for (const match of rows) {
 
   const payload = {
     ...buildDetailsPayload(match, valuePicks, aiBlocks),
+
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,
-    learningMeta: aiBlocks.learningMeta
+    learningMeta: aiBlocks.learningMeta,
+
+    // 🔥 NEW — SOURCE INTELLIGENCE (FROM RECONCILE)
+    sourceIntelligence: match?.reconcileMeta
+      ? {
+          decision: match.reconcileMeta.decision || {
+            status: {
+              type: "consensus",
+              chosen: match.status,
+              source: match.reconcileMeta?.chosenStatusSource || null,
+              sources: Object.keys(match.sources || {})
+            },
+            score: {
+              type: "consensus",
+              chosen: `${match.scoreHome}-${match.scoreAway}`,
+              source: match.reconcileMeta?.chosenScoreSource || null
+            },
+            minute: {
+              type: "consensus",
+              chosen: match.minute,
+              source: match.reconcileMeta?.chosenMinuteSource || null
+            }
+          },
+          confidence: match.reconcileMeta.confidence ?? null,
+          conflicts: match.reconcileMeta.conflictTypes || [],
+          disagreement: match.reconcileMeta.disagreement || false,
+          sources: match.reconcileMeta.observationsCount || 0
+        }
+      : null
   };
 
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);

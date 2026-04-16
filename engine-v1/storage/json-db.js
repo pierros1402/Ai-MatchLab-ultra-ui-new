@@ -176,6 +176,11 @@ export function getFixtureById(matchId) {
   return db.fixtures.find(x => String(x.matchId) === String(matchId)) || null;
 }
 
+export function getFixtureByMatchKey(matchKey) {
+  const db = readDb();
+  return db.fixtures.find(x => String(x.matchKey || "") === String(matchKey)) || null;
+}
+
 export function upsertFixture(row) {
   const db = readDb();
 
@@ -242,16 +247,31 @@ export function markDayFinal(dayKey) {
 // CHANGE DETECTION HELPERS
 // =====================================================
 
-export function findFixtureIndex(db, matchId) {
+export function findFixtureIndex(db, rowOrMatchId) {
+  if (rowOrMatchId && typeof rowOrMatchId === "object") {
+    const row = rowOrMatchId;
+
+    if (row.matchKey) {
+      const byKey = db.fixtures.findIndex(
+        x => String(x.matchKey || "") === String(row.matchKey)
+      );
+      if (byKey !== -1) return byKey;
+    }
+
+    return db.fixtures.findIndex(
+      x => String(x.matchId) === String(row.matchId)
+    );
+  }
+
   return db.fixtures.findIndex(
-    x => String(x.matchId) === String(matchId)
+    x => String(x.matchId) === String(rowOrMatchId)
   );
 }
 
 export function upsertFixtureWithMeta(row) {
   const db = readDb();
 
-  const idx = findFixtureIndex(db, row.matchId);
+  const idx = findFixtureIndex(db, row);
 
   let action = "inserted";
 
@@ -278,7 +298,11 @@ export function upsertFixtureWithMeta(row) {
         terminalConfidence: row.terminalConfidence,
         health: row.health,
         sources: row.sources,
-        reconcileMeta: row.reconcileMeta
+        reconcileMeta: {
+          confidence: row?.reconcileMeta?.confidence,
+          conflictTypes: row?.reconcileMeta?.conflictTypes,
+          disagreement: row?.reconcileMeta?.disagreement
+        }
       });
     }
 
