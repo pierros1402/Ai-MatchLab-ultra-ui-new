@@ -3,6 +3,7 @@ const BASE_URL = "https://v3.football.api-sports.io";
 
 // Cache: 1 fetch per dayKey
 const __dailyCache = new Map();
+const __rateLimitedDays = new Set();
 
 function buildHeaders() {
   return {
@@ -196,6 +197,184 @@ function mapLeagueIdToSlug(leagueId) {
   return map[Number(leagueId)] || null;
 }
 
+const slugToLeagueId = {
+  "eng.1": 39,
+  "eng.2": 40,
+  "eng.3": 41,
+  "eng.4": 42,
+  "eng.5": 43,
+
+  "eng.fa": 45,
+  "eng.league_cup": 48,
+  "eng.trophy": 528,
+
+  "ger.1": 78,
+  "ger.2": 79,
+  "ger.3": 80,
+  "ger.dfb_pokal": 81,
+
+  "esp.1": 140,
+  "esp.2": 141,
+  "esp.copa_del_rey": 143,
+  "esp.super_cup": 556,
+
+  "ita.1": 135,
+  "ita.2": 136,
+  "ita.coppa_italia": 137,
+
+  "fra.1": 61,
+  "fra.2": 62,
+  "fra.coupe_de_france": 66,
+  "fra.super_cup": 526,
+
+  "ned.1": 88,
+  "ned.2": 89,
+  "ned.cup": 96,
+
+  "por.1": 94,
+  "por.2": 95,
+  "por.taca.portugal": 97,
+
+  "bel.1": 144,
+  "bel.2": 145,
+
+  "sco.1": 179,
+  "sco.2": 180,
+  "sco.challenge": 181,
+  "sco.tennents": 182,
+
+  "gre.1": 197,
+  "gre.2": 198,
+  "gre.cup": 200,
+
+  "cyp.1": 211,
+  "cyp.2": 212,
+  "cyp.cup": 213,
+
+  "tur.1": 203,
+  "tur.2": 204,
+  "tur.cup": 206,
+
+  "sui.1": 207,
+  "sui.2": 208,
+  "sui.cup": 210,
+
+  "aut.1": 188,
+  "aut.2": 189,
+  "aut.cup": 190,
+
+  "den.1": 119,
+  "den.2": 120,
+  "den.cup": 121,
+
+  "swe.1": 113,
+  "swe.2": 114,
+  "swe.cup": 115,
+
+  "nor.1": 103,
+  "nor.2": 104,
+  "nor.cup": 105,
+
+  "fin.1": 244,
+  "fin.2": 245,
+
+  "pol.1": 106,
+  "pol.2": 107,
+  "pol.cup": 108,
+
+  "cze.1": 345,
+  "cze.2": 346,
+  "cze.cup": 347,
+
+  "rou.1": 283,
+  "rou.2": 284,
+  "rou.cup": 285,
+
+  "srb.1": 286,
+  "srb.2": 287,
+  "srb.cup": 549,
+
+  "cro.1": 2100,
+  "cro.2": 2101,
+  "cro.cup": 2102,
+
+  "hun.1": 271,
+  "hun.2": 272,
+  "hun.cup": 273,
+
+  "bul.1": 172,
+  "bul.2": 173,
+  "bul.cup": 174,
+
+  "ukr.1": 218,
+  "ukr.2": 219,
+  "ukr.cup": 220,
+
+  "uefa.champions": 2,
+  "uefa.europa": 3,
+  "uefa.europa.conf": 848,
+
+  "afc.champions": 17,
+  "afc.cup": 18,
+
+  "caf.champions": 12,
+  "caf.confed": 20,
+  "caf.nations": 15,
+
+  "conmebol.libertadores": 13,
+
+  "usa.1": 253,
+  "usa.2": 254,
+
+  "arg.1": 128,
+  "arg.2": 129,
+
+  "bra.1": 71,
+  "bra.2": 72,
+
+  "mex.1": 262,
+  "mex.2": 263,
+
+  "uru.1": 268,
+  "uru.2": 269,
+
+  "col.1": 239,
+  "col.2": 240,
+
+  "chi.1": 265,
+  "chi.2": 266,
+
+  "per.1": 281,
+  "per.2": 282,
+
+  "jpn.1": 98,
+  "jpn.2": 99,
+
+  "kor.1": 292,
+  "kor.2": 293,
+
+  "ksa.1": 307,
+  "ksa.2": 308,
+
+  "uae.1": 301,
+  "uae.2": 302,
+
+  "qat.1": 304,
+  "qat.2": 305,
+
+  "rsa.1": 288,
+  "rsa.2": 289,
+
+  "egy.1": 233,
+  "egy.2": 234,
+
+  "mar.1": 2000,
+  "mar.2": 2001,
+
+  "tun.1": 2002,
+  "tun.2": 2003
+};
+
 function mapStatus(shortCode) {
   const s = String(shortCode || "").toUpperCase();
 
@@ -256,17 +435,26 @@ function mapFixture(row) {
   };
 }
 
-async function fetchDailySource2Rows(dayKey) {
+async function fetchDailySource2Rows(dayKey, slug) {
+  const cacheKey = `${dayKey}:${slug}`;
+
   if (!API_KEY) {
     console.warn("[source2] missing API_FOOTBALL_KEY");
     return [];
   }
 
-  if (__dailyCache.has(dayKey)) {
-    return __dailyCache.get(dayKey);
+  if (__rateLimitedDays.has(dayKey)) {
+    return [];
   }
 
-  const url = `${BASE_URL}/fixtures?date=${encodeURIComponent(dayKey)}`;
+  if (__dailyCache.has(cacheKey)) {
+    return __dailyCache.get(cacheKey);
+  }
+
+  const leagueId = slugToLeagueId[slug];
+  if (!leagueId) return [];
+
+  const url = `${BASE_URL}/fixtures?date=${encodeURIComponent(dayKey)}&league=${leagueId}`;
 
   try {
     const res = await fetch(url, {
@@ -274,26 +462,33 @@ async function fetchDailySource2Rows(dayKey) {
       headers: buildHeaders()
     });
 
+    if (res.status === 429) {
+      console.warn("[source2] daily fetch rate-limited", dayKey, slug);
+      __rateLimitedDays.add(dayKey);
+      __dailyCache.set(cacheKey, []);
+      return [];
+    }
+
     if (!res.ok) {
-      console.warn("[source2] daily fetch bad response", res.status, dayKey);
-      __dailyCache.set(dayKey, []);
+      console.warn("[source2] daily fetch bad response", res.status, dayKey, slug);
+      __dailyCache.set(cacheKey, []);
       return [];
     }
 
     const json = await res.json();
     const rows = safeArray(json?.response);
 
-    __dailyCache.set(dayKey, rows);
+    __dailyCache.set(cacheKey, rows);
     return rows;
   } catch (err) {
     console.error("[source2] daily fetch failed", err?.message || err);
-    __dailyCache.set(dayKey, []);
+    __dailyCache.set(cacheKey, []);
     return [];
   }
 }
 
 export async function fetchLeagueFixturesSource2(slug, dayKey) {
-  const rows = await fetchDailySource2Rows(dayKey);
+  const rows = await fetchDailySource2Rows(dayKey, slug);
 
   const events = rows
     .map(mapFixture)

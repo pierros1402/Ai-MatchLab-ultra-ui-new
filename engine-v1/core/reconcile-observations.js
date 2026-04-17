@@ -296,7 +296,7 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
   return { value, source };
 }
 
-function pickScoreWeighted(observations, existing, chosenStatus) {
+function pickScoreWeighted(observations, existing, chosenStatus, reliabilityDb = {}) {
   const eligible = observations.filter(row => {
     if (isPre(chosenStatus)) return true;
     return row.scoreHome != null && row.scoreAway != null;
@@ -320,7 +320,11 @@ function pickScoreWeighted(observations, existing, chosenStatus) {
     const source = String(row?.source || "unknown").trim() || "unknown";
     const profile = sourceProfile(source);
     const sourceWeight = SOURCE_WEIGHTS[source] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
-    const reliability = profile.scoreReliability ?? 0.5;
+    const reliability = getEffectiveReliability(
+      source,
+      profile.scoreReliability ?? 0.5,
+      reliabilityDb
+    );
     const freshness = Number(row?.ts || 0) / 1e13;
 
     const rankScore =
@@ -976,7 +980,12 @@ export async function reconcileObservations({
   const reliabilityDb = getSourceReliabilitySnapshot();
 
   const statusPick = pickStatusWeighted(rows, existing, reliabilityDb);
-  const scorePick = pickScoreWeighted(rows, existing, statusPick.value);
+  const scorePick = pickScoreWeighted(
+    rows,
+    existing,
+    statusPick.value,
+    reliabilityDb
+  );
   const minutePick = pickMinute(rows, existing, statusPick.value);
 
   const disagreement = computeDisagreement(rows);
