@@ -405,6 +405,10 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   const matches = getActiveByDay(date).filter(m => {
     if (!isPlayable(m)) return false;
 
+    if (rebuild) {
+      return true;
+    }
+
     const status = String(m?.status || "").toUpperCase();
     if (status !== "PRE") return false;
 
