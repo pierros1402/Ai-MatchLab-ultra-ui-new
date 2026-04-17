@@ -16,6 +16,10 @@ function normalizeTeamKey(name = "") {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+
+    // 🔥 NEW — remove common suffixes
+    .replace(/\b(fc|cf|sc|if|ac|afc|club|footballclub|fodbold|fk)\b/g, "")
+
     .replace(/[^a-z0-9]/g, "")
     .trim();
 }

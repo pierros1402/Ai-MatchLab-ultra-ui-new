@@ -12,6 +12,17 @@ const dbTmpPath = path.join(dataDir, "fixtures.json.tmp");
 const dbBakPath = path.join(dataDir, "fixtures.json.bak");
 const lockDir = path.join(dataDir, ".fixtures.lock");
 
+// 🔥 ADD THIS EXACTLY HERE
+function normalizeTeamKey(name = "") {
+  return String(name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(fc|cf|sc|if|ac|afc|club|footballclub|fodbold|fk|nk|hnk)\b/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
@@ -247,27 +258,42 @@ export function markDayFinal(dayKey) {
 // CHANGE DETECTION HELPERS
 // =====================================================
 
-export function findFixtureIndex(db, rowOrMatchId) {
-  if (rowOrMatchId && typeof rowOrMatchId === "object") {
-    const row = rowOrMatchId;
-
-    if (row.matchKey) {
-      const byKey = db.fixtures.findIndex(
-        x => String(x.matchKey || "") === String(row.matchKey)
-      );
-      if (byKey !== -1) return byKey;
-    }
-
-    return db.fixtures.findIndex(
-      x => String(x.matchId) === String(row.matchId)
+export function findFixtureIndex(db, row) {
+  // 1. matchKey (όπως τώρα)
+  if (row.matchKey) {
+    const byKey = db.fixtures.findIndex(
+      x => String(x.matchKey || "") === String(row.matchKey)
     );
+    if (byKey !== -1) return byKey;
   }
 
+  // 2. SAME KICKOFF + SIMILAR TEAMS (🔥 NEW)
+  const bySimilar = db.fixtures.findIndex(x => {
+    if (!x.kickoffUtc || !row.kickoffUtc) return false;
+
+    const sameKickoff =
+      new Date(x.kickoffUtc).getTime() === new Date(row.kickoffUtc).getTime();
+
+    if (!sameKickoff) return false;
+
+    const h1 = normalizeTeamKey(x.homeTeam);
+    const a1 = normalizeTeamKey(x.awayTeam);
+    const h2 = normalizeTeamKey(row.homeTeam);
+    const a2 = normalizeTeamKey(row.awayTeam);
+
+    return (
+      (h1.includes(h2) || h2.includes(h1)) &&
+      (a1.includes(a2) || a2.includes(a1))
+    );
+  });
+
+  if (bySimilar !== -1) return bySimilar;
+
+  // 3. fallback matchId
   return db.fixtures.findIndex(
-    x => String(x.matchId) === String(rowOrMatchId)
+    x => String(x.matchId) === String(row.matchId)
   );
 }
-
 export function upsertFixtureWithMeta(row) {
   const db = readDb();
 

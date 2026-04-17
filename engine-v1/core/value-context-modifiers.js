@@ -151,6 +151,16 @@ export async function applyValueContextModifiers({
     lookAhead
   });
 
+  let reconcileReasons = [];
+
+  const reconcileAdjusted = applyReconcileContext(
+    fixture,
+    adjusted,
+    reconcileReasons
+  );
+
+  const finalAdjusted = reconcileAdjusted.next;
+
   const confidenceAdjusted = computeAdjustedConfidence({
     baseConfidence: toNumber(baseValue.confidence, 0.5),
     fatigue,
@@ -158,13 +168,17 @@ export async function applyValueContextModifiers({
     lookAhead,
     motivation,
     contextMeta,
-    config
+    config,
+    fixture
   });
 
   return {
     ...baseValue,
-    adjusted,
+    adjusted: finalAdjusted,
     modifiers: {
+       reconcile: {
+         reasons: reconcileReasons
+       },
       motivation,
       fatigue,
       congestion,
@@ -415,6 +429,60 @@ function computeLookAheadModifier({
   };
 }
 
+function applyReconcileContext(fixture, adjusted, reasons = []) {
+  const next = { ...adjusted };
+
+  const hasConflict = fixture?.hasConflict === true;
+  const needsReview = fixture?.needsReview === true;
+  const confidenceBand = String(fixture?.confidenceBand || "").toUpperCase();
+  const conflictTypes = Array.isArray(fixture?.conflictTypes) ? fixture.conflictTypes : [];
+  const reconcileConfidence = Number(fixture?.reconcileMeta?.confidence || 0);
+
+  if (hasConflict) {
+    next.homeWinScore -= 0.04;
+    next.drawScore -= 0.02;
+    next.awayWinScore -= 0.04;
+    next.over25Score -= 0.03;
+    next.over35Score -= 0.03;
+    next.bttsScore -= 0.03;
+    reasons.push("reconcile_conflict");
+  }
+
+  if (needsReview) {
+    next.homeWinScore -= 0.03;
+    next.awayWinScore -= 0.03;
+    next.over25Score -= 0.02;
+    next.bttsScore -= 0.02;
+    reasons.push("reconcile_needs_review");
+  }
+
+  if (confidenceBand === "LOW") {
+    next.homeWinScore -= 0.05;
+    next.awayWinScore -= 0.05;
+    next.over25Score -= 0.04;
+    next.bttsScore -= 0.04;
+    reasons.push("reconcile_low_confidence");
+  } else if (confidenceBand === "MEDIUM") {
+    next.homeWinScore -= 0.02;
+    next.awayWinScore -= 0.02;
+    next.over25Score -= 0.02;
+    next.bttsScore -= 0.02;
+  } else if (confidenceBand === "HIGH" && reconcileConfidence >= 0.9 && !hasConflict) {
+    next.homeWinScore += 0.01;
+    next.awayWinScore += 0.01;
+    reasons.push("reconcile_high_confidence");
+  }
+
+  if (conflictTypes.includes("score")) {
+    next.over25Score -= 0.05;
+    next.over35Score -= 0.05;
+    next.bttsScore -= 0.05;
+    reasons.push("score_conflict");
+  }
+
+  return { next, reasons };
+}
+
 // ------------------------------------------------------------
 // ADJUSTMENTS
 // ------------------------------------------------------------
@@ -488,7 +556,8 @@ function computeAdjustedConfidence({
   lookAhead,
   motivation,
   contextMeta,
-  config
+  config,
+  fixture
 }) {
   let adjusted = toNumber(baseConfidence, 0.5);
 
@@ -510,6 +579,44 @@ function computeAdjustedConfidence({
 
   if (motivation.reasons.includes("late_season_pressure")) {
     adjusted -= 0.01;
+  }
+
+  const hasConflict = fixture?.hasConflict === true;
+  const needsReview = fixture?.needsReview === true;
+  const confidenceBand = String(fixture?.confidenceBand || "").toUpperCase();
+  const conflictTypes = Array.isArray(fixture?.conflictTypes) ? fixture.conflictTypes : [];
+  const reconcileConfidence = Number(fixture?.reconcileMeta?.confidence || 0);
+
+  if (hasConflict) {
+    adjusted -= 0.06;
+  }
+
+  if (needsReview) {
+    adjusted -= 0.04;
+  }
+
+  if (confidenceBand === "LOW") {
+    adjusted -= 0.06;
+  } else if (confidenceBand === "MEDIUM") {
+    adjusted -= 0.03;
+  } else if (confidenceBand === "HIGH" && reconcileConfidence >= 0.9 && !hasConflict) {
+    adjusted += 0.015;
+  }
+
+  if (conflictTypes.includes("score")) {
+    adjusted -= 0.07;
+  }
+
+  if (conflictTypes.includes("status")) {
+    adjusted -= 0.05;
+  }
+
+  if (conflictTypes.includes("kickoff")) {
+    adjusted -= 0.02;
+  }
+
+  if (conflictTypes.includes("minute")) {
+    adjusted -= 0.02;
   }
 
   const trustCeiling = getTrustCeiling(contextMeta.leagueTrust, config.confidence);
