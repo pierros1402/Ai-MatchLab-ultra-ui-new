@@ -234,6 +234,44 @@ function expandValueMarkets(match, value) {
   return items;
 }
 
+function normalizeValueTeamKey(name) {
+  return String(name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(fc|cf|sc|afc|ac|cd|fk|sk|nk|sv|if|bk|club|deportivo|futbol|football|soccer)\b/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
+function dedupeValuePicks(picks) {
+  const bestByKey = new Map();
+
+  for (const p of Array.isArray(picks) ? picks : []) {
+    const homeKey = normalizeValueTeamKey(p.homeTeam || p.home || "");
+    const awayKey = normalizeValueTeamKey(p.awayTeam || p.away || "");
+    const kickoffKey = String(p.kickoff || "");
+    const marketKey = String(p.market || p.marketName || "");
+    const dedupeKey = `${homeKey}|${awayKey}|${kickoffKey}|${marketKey}`;
+
+    const existing = bestByKey.get(dedupeKey);
+
+    if (!existing) {
+      bestByKey.set(dedupeKey, p);
+      continue;
+    }
+
+    const existingScore = Number(existing.score || 0);
+    const nextScore = Number(p.score || 0);
+
+    if (nextScore > existingScore) {
+      bestByKey.set(dedupeKey, p);
+    }
+  }
+
+  return Array.from(bestByKey.values());
+}
+
 function clamp01(n) {
   const x = Number(n);
   if (!Number.isFinite(x)) return 0;
@@ -425,11 +463,13 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     }
   }
 
+  const dedupedPicks = dedupeValuePicks(picks);
+
   const result = {
     ok: true,
     date,
-    count: picks.length,
-    picks
+    count: dedupedPicks.length,
+    picks: dedupedPicks
   };
 
   __valueDayCache.set(cacheKey, result);
