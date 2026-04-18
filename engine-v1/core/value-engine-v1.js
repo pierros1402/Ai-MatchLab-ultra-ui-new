@@ -5,6 +5,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
+import fsSync from "node:fs";
 import { resolveDataPath } from "../storage/data-root.js";
 import { applyValueContextModifiers } from "./value-context-modifiers.js";
 import { applyValueContextIntegration } from "./value-context-integration.js";
@@ -88,6 +89,21 @@ async function readJsonSafe(filePath, fallback = null) {
     return JSON.parse(raw);
   } catch {
     return fallback;
+  }
+}
+
+function loadAiFromDetails(dayKey, matchId) {
+  try {
+    if (!dayKey || !matchId) return null;
+
+    const file = path.join(DATA_DIR, "details", String(dayKey), `${matchId}.json`);
+
+    if (!fsSync.existsSync(file)) return null;
+
+    const json = JSON.parse(fsSync.readFileSync(file, "utf8"));
+    return json?.ai || null;
+  } catch {
+    return null;
   }
 }
 
@@ -1626,6 +1642,110 @@ function buildAiContextSignals(contextIntelligence = {}) {
   return [...new Set(signals)];
 }
 
+function applyAiTaskAdjustments(value, input) {
+  const tasks = input?.ai?.tasks || [];
+
+  if (!Array.isArray(tasks) || !tasks.length) {
+    return { adjusted: value, reasons: [] };
+  }
+  console.log("AI TASKS INPUT:", input?.ai?.tasks);
+
+  let {
+    homeWinScore,
+    drawScore,
+    awayWinScore,
+    over25Score,
+    bttsScore
+  } = value;
+
+  const reasons = [];
+
+  for (const task of tasks) {
+    if (!task?.data) continue;
+
+    // -------------------
+    // FORM SIGNAL
+    // -------------------
+    if (task.key === "form_signal") {
+      const home = task.data?.homeTeam;
+      const away = task.data?.awayTeam;
+ 
+      console.log("FORM TASK:", home?.momentum, away?.momentum);
+
+      if (home?.momentum === "strong") {
+        homeWinScore += 0.04;
+        reasons.push("ai_form_home_strong");
+      }
+
+      if (away?.momentum === "strong") {
+        awayWinScore += 0.04;
+        reasons.push("ai_form_away_strong");
+      }
+
+      if (home?.momentum === "negative") {
+        homeWinScore -= 0.03;
+        reasons.push("ai_form_home_negative");
+      }
+
+      if (away?.momentum === "negative") {
+        awayWinScore -= 0.03;
+        reasons.push("ai_form_away_negative");
+      }
+      if (home?.momentum === "poor") {
+        homeWinScore -= 0.04;
+        reasons.push("ai_form_home_poor");
+      }
+
+      if (away?.momentum === "poor") {
+        awayWinScore -= 0.04;
+        reasons.push("ai_form_away_poor");
+      }
+    }
+
+    // -------------------
+    // H2H SIGNAL
+    // -------------------
+    if (task.key === "h2h_signal") {
+      const pattern = task.data?.trend?.goalPattern;
+
+      if (pattern === "overlean") {
+        over25Score += 0.05;
+        reasons.push("ai_h2h_overlean");
+      }
+
+      if (pattern === "underlean") {
+        over25Score -= 0.05;
+        reasons.push("ai_h2h_underlean");
+      }
+    }
+
+    // -------------------
+    // COMPETITION CONTEXT
+    // -------------------
+    if (task.key === "competition_context") {
+      const importance = task.data?.importance;
+
+      if (importance === "high") {
+        // μειώνουμε randomness
+        drawScore -= 0.03;
+        reasons.push("ai_high_importance_reduce_draw");
+      }
+    }
+  }
+
+  return {
+    adjusted: {
+      ...value,
+      homeWinScore: clamp(homeWinScore),
+      drawScore: clamp(drawScore),
+      awayWinScore: clamp(awayWinScore),
+      over25Score: clamp(over25Score),
+      bttsScore: clamp(bttsScore)
+    },
+    reasons
+  };
+}
+
 function buildSignals({
   outcomeScores,
   goalsProfile,
@@ -1741,6 +1861,10 @@ export async function evaluateMatchValue(input, opts = {}) {
   const fixtureDate = parseDateSafe(
     pickFirstDefined(input?.kickoff, input?.date, input?.dayKey)
   );
+
+  const ai = loadAiFromDetails(input?.dayKey, input?.matchId);
+  input.ai = ai;
+  console.log("LOADED AI:", ai);
 
   if (!(fixtureDate instanceof Date)) {
     throw new Error("evaluateMatchValue: missing/invalid fixture date");
@@ -1878,7 +2002,8 @@ export async function evaluateMatchValue(input, opts = {}) {
     awayMetrics,
     matchupBias,
     dynamicWeights,
-    priorsMeta
+    priorsMeta,
+    contextIntelligence: buildContextIntelligenceFromInput(input)
   });
 
   const baseValue = {
@@ -1997,34 +2122,44 @@ export async function evaluateMatchValue(input, opts = {}) {
   // -----------------------------
   const contextIntelligence = buildContextIntelligenceFromInput(input);
 
+// -----------------------------
+// APPLY AI TASK ADJUSTMENTS
+// -----------------------------
+  const aiAdjusted = applyAiTaskAdjustments(baseValue, input);
+  console.log("AI ADJUSTED:", aiAdjusted);
+  console.log("AI TASKS INPUT:", input?.ai?.tasks);
+
+  const preIntegrated = {
+    ...aiAdjusted.adjusted,
+    homeWinScore: round(
+      contextApplied?.adjusted?.homeWinScore ?? aiAdjusted.adjusted.homeWinScore,
+      3
+    ),
+    drawScore: round(
+      contextApplied?.adjusted?.drawScore ?? aiAdjusted.adjusted.drawScore,
+      3
+    ),
+    awayWinScore: round(
+      contextApplied?.adjusted?.awayWinScore ?? aiAdjusted.adjusted.awayWinScore,
+      3
+    ),
+    over25Score: round(
+      contextApplied?.adjusted?.over25Score ?? aiAdjusted.adjusted.over25Score,
+      3
+    ),
+    bttsScore: round(
+      contextApplied?.adjusted?.bttsScore ?? aiAdjusted.adjusted.bttsScore,
+      3
+    ),
+    confidence: round(
+      contextApplied?.meta?.confidenceAdjusted ?? baseValue.confidence,
+      3
+    )
+  };
+
+  baseValue = aiAdjusted.adjusted;
   const integrated = applyValueContextIntegration(
-    {
-      ...baseValue,
-      homeWinScore: round(
-        contextApplied?.adjusted?.homeWinScore ?? baseValue.homeWinScore,
-        3
-      ),
-      drawScore: round(
-        contextApplied?.adjusted?.drawScore ?? baseValue.drawScore,
-        3
-      ),
-      awayWinScore: round(
-        contextApplied?.adjusted?.awayWinScore ?? baseValue.awayWinScore,
-        3
-      ),
-      over25Score: round(
-        contextApplied?.adjusted?.over25Score ?? baseValue.over25Score,
-        3
-      ),
-      bttsScore: round(
-        contextApplied?.adjusted?.bttsScore ?? baseValue.bttsScore,
-        3
-      ),
-      confidence: round(
-        contextApplied?.meta?.confidenceAdjusted ?? baseValue.confidence,
-        3
-      )
-    },
+    preIntegrated,
     contextIntelligence
   );
 
@@ -2051,6 +2186,7 @@ export async function evaluateMatchValue(input, opts = {}) {
     over35Score: baseValue.over35Score,
     signals: [...new Set([
       ...(baseValue.signals || []),
+      ...(aiAdjusted.reasons || []),
       ...modifierSignals
     ])],
     modifiers: contextApplied?.modifiers || null,

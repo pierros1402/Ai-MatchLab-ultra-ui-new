@@ -348,6 +348,7 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   const payload = {
     ...buildDetailsPayload(match, valuePicks, aiBlocks),
 
+    ai: aiBlocks.ai || null,
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,
@@ -449,6 +450,7 @@ for (const match of rows) {
   const payload = {
     ...buildDetailsPayload(match, valuePicks, aiBlocks),
 
+    ai: aiBlocks.ai || null,
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,

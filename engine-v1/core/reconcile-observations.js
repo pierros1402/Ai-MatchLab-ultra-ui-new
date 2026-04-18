@@ -1070,6 +1070,21 @@ export async function reconcileObservations({
     chosenMinuteSource = minutePick?.source || "reconciled";
   }
 
+  const observedSources = [
+    ...new Set(
+      rows
+        .map(row => String(row?.source || "").trim())
+        .filter(Boolean)
+    )
+  ];
+
+  const sourceParticipation = {
+    observedSources,
+    sourceCount: observedSources.length,
+    hasSecondarySource: observedSources.some(src => src !== "espn"),
+    isMultiSourceObserved: observedSources.length >= 2
+  };
+
   const resolved = {
     matchId,
     matchKey,
@@ -1126,6 +1141,7 @@ export async function reconcileObservations({
     updatedAt: Date.now(),
 
     sources: buildSourcesMap(rows),
+    sourceParticipation,
 
     reconcileMeta: {
       chosenKickoffSource: kickoff.source,
