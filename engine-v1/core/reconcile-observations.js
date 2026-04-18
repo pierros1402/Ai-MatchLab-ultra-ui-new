@@ -364,7 +364,7 @@ function pickScoreWeighted(observations, existing, chosenStatus, reliabilityDb =
 }
 
 
-function pickMinute(observations, existing, chosenStatus) {
+function pickMinute(observations, existing, chosenStatus, reliabilityDb = {}) {
   if (isPre(chosenStatus) || isTerminal(chosenStatus)) {
     return {
       value: isTerminal(chosenStatus) ? "FT" : null,
@@ -402,9 +402,7 @@ function pickMinute(observations, existing, chosenStatus) {
       return Math.max(46, parsed.base);
     }
 
-    if (half) {
-      return 45.999;
-    }
+    if (half) return 45.999;
 
     return parsed.base + (parsed.extra / 1000);
   }
@@ -422,11 +420,26 @@ function pickMinute(observations, existing, chosenStatus) {
         return bCmp - aCmp;
       }
 
-      const pa = sourceProfile(a.source);
-      const pb = sourceProfile(b.source);
+      const aSource = String(a?.source || "unknown").trim() || "unknown";
+      const bSource = String(b?.source || "unknown").trim() || "unknown";
 
-      if ((pb.statusReliability || 0) !== (pa.statusReliability || 0)) {
-        return (pb.statusReliability || 0) - (pa.statusReliability || 0);
+      const aProfile = sourceProfile(aSource);
+      const bProfile = sourceProfile(bSource);
+
+      const aReliability = getEffectiveReliability(
+        aSource,
+        aProfile.statusReliability ?? 0.5,
+        reliabilityDb
+      );
+
+      const bReliability = getEffectiveReliability(
+        bSource,
+        bProfile.statusReliability ?? 0.5,
+        reliabilityDb
+      );
+
+      if (bReliability !== aReliability) {
+        return bReliability - aReliability;
       }
 
       return byNewest(a, b);
@@ -443,55 +456,22 @@ function pickMinute(observations, existing, chosenStatus) {
   let value = existing?.minute ?? null;
   let source = existing?.source ?? null;
 
-  if (value == null || value === "") {
-    if (best?.minute != null && best?.minute !== "") {
-      return {
-        value: best.minute,
-        source: best.source || null
-      };
+  if (!value) {
+    if (best?.minute) {
+      return { value: best.minute, source: best.source || null };
     }
 
     if (isSecondHalfStatus(best?.status)) {
-      return {
-        value: "46",
-        source: best?.source || null
-      };
+      return { value: "46", source: best?.source || null };
     }
 
     return { value, source };
   }
 
-  if (
-    bestCmp != null &&
-    (existingCmp == null || bestCmp > existingCmp)
-  ) {
-    if (best?.minute != null && best?.minute !== "") {
-      return {
-        value: best.minute,
-        source: best.source || null
-      };
+  if (bestCmp != null && (existingCmp == null || bestCmp > existingCmp)) {
+    if (best?.minute) {
+      return { value: best.minute, source: best.source || null };
     }
-
-    if (isSecondHalfStatus(best?.status)) {
-      return {
-        value: "46",
-        source: best?.source || null
-      };
-    }
-  }
-
-  if (
-    isSecondHalfStatus(best?.status) &&
-    (
-      isHalfTimeStatus(existing?.status) ||
-      (existingParsed && existingParsed.base === 45)
-    ) &&
-    (!best?.minute || String(best.minute).trim() === "")
-  ) {
-    return {
-      value: "46",
-      source: best?.source || source
-    };
   }
 
   return { value, source };
@@ -532,16 +512,55 @@ function computeDisagreement(rows) {
     }
   }
 
-  const signatures = Array.from(latestPerSource.values()).map(row => {
-    const status = String(row?.status || "").toUpperCase();
-    const scoreHome = safeNum(row?.scoreHome, null);
-    const scoreAway = safeNum(row?.scoreAway, null);
-    const minute = row?.minute == null ? "" : String(row.minute).trim();
+  const latest = Array.from(latestPerSource.values());
+  if (latest.length <= 1) return false;
 
-    return `${status}|${scoreHome}|${scoreAway}|${minute}`;
-  });
+  const statuses = latest.map(row => String(row?.status || "").toUpperCase());
+  const scorePairs = latest.map(
+    row => `${safeNum(row?.scoreHome, null)}|${safeNum(row?.scoreAway, null)}`
+  );
 
-  return signatures.length > 1 && new Set(signatures).size > 1;
+  const statusSet = new Set(statuses);
+  const scoreSet = new Set(scorePairs);
+
+  const hasStatusDisagreement = statusSet.size > 1;
+  const hasScoreDisagreement = scoreSet.size > 1;
+
+  // Αν υπάρχει διαφωνία σε status ή score, είναι πραγματικό disagreement.
+  if (hasStatusDisagreement || hasScoreDisagreement) {
+    return true;
+  }
+
+  // Από εδώ και κάτω εξετάζουμε μόνο minute-only divergence.
+  // Αν status + score συμφωνούν και το ματς είναι live, μικρές αποκλίσεις minute
+  // δεν πρέπει να βαφτίζονται full disagreement.
+  const liveLike = latest.some(row => isLive(row?.status));
+  if (!liveLike) {
+    return false;
+  }
+
+  const minuteValues = latest
+    .map(row => {
+      const parsed = parseMinute(row?.minute);
+      if (!parsed) return null;
+      return parsed.base + (parsed.extra / 100);
+    })
+    .filter(v => Number.isFinite(v));
+
+  if (minuteValues.length <= 1) {
+    return false;
+  }
+
+  const minMinute = Math.min(...minuteValues);
+  const maxMinute = Math.max(...minuteValues);
+  const minuteSpread = maxMinute - minMinute;
+
+  // Μικρές αποκλίσεις live feed (πχ 44 vs 45+1 ή 67 vs 68) είναι φυσιολογικές.
+  if (minuteSpread <= 2.5) {
+    return false;
+  }
+
+  return true;
 }
 
 function computeConflictTypes(rows) {
@@ -986,7 +1005,7 @@ export async function reconcileObservations({
     statusPick.value,
     reliabilityDb
   );
-  const minutePick = pickMinute(rows, existing, statusPick.value);
+  const minutePick = pickMinute(rows, existing, statusPick.value, reliabilityDb);
 
   const disagreement = computeDisagreement(rows);
   const conflictTypes = computeConflictTypes(rows);
@@ -1066,7 +1085,13 @@ export async function reconcileObservations({
     kickoffUtc,
 
     status: statusPick.value || newest.status || existing?.status || "PRE",
-    rawStatus: newest.rawStatus || existing?.rawStatus || null,
+    rawStatus:
+      rows
+        .filter(row => String(row?.source || "") === String(statusPick?.source || ""))
+        .sort((a, b) => Number(b?.ts || 0) - Number(a?.ts || 0))[0]?.rawStatus ||
+      newest.rawStatus ||
+      existing?.rawStatus ||
+      null,
     minute: minutePick.value,
 
     scoreHome: scorePick.scoreHome,

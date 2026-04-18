@@ -1,10 +1,41 @@
 const API_KEY = process.env.API_FOOTBALL_KEY;
 const BASE_URL = "https://v3.football.api-sports.io";
 
-// Cache: 1 fetch per dayKey
+// Cache: 1 fetch per dayKey:slug
 const __dailyCache = new Map();
 const __rateLimitedDays = new Set();
 
+// SOURCE2 = weak / opportunistic signal
+// Δεν προσπαθούμε να καλύψουμε όλο το universe με free plan.
+// Ξεκινάμε μόνο με λίγες high-value λίγκες.
+const SOURCE2_TARGET_SLUGS = new Set([
+  "eng.1",
+  "eng.2",
+  "ger.1",
+  "ger.2",
+  "esp.1",
+  "esp.2",
+  "ita.1",
+  "ita.2",
+  "fra.1",
+  "fra.2",
+  "gre.1",
+  "bel.1",
+  "por.1",
+  "ned.1",
+  "tur.1",
+  "uefa.champions",
+  "uefa.europa",
+  "uefa.europa.conf"
+]);
+
+export function isSource2Enabled() {
+  return Boolean(API_KEY);
+}
+
+export function isSource2TargetLeague(slug) {
+  return SOURCE2_TARGET_SLUGS.has(String(slug || "").trim());
+}
 function buildHeaders() {
   return {
     "x-apisports-key": API_KEY
@@ -443,6 +474,10 @@ async function fetchDailySource2Rows(dayKey, slug) {
     return [];
   }
 
+  if (!isSource2TargetLeague(slug)) {
+    return [];
+  }
+
   if (__rateLimitedDays.has(dayKey)) {
     return [];
   }
@@ -477,6 +512,13 @@ async function fetchDailySource2Rows(dayKey, slug) {
 
     const json = await res.json();
     const rows = safeArray(json?.response);
+
+    console.log("[source2] fetch", {
+      dayKey,
+      slug,
+      leagueId,
+      rows: rows.length
+    });
 
     __dailyCache.set(cacheKey, rows);
     return rows;
