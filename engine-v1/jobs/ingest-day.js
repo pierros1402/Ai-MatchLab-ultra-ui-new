@@ -1,6 +1,10 @@
 import { LEAGUE_SEEDS } from "../config.js";
 import { fetchLeagueFixtures, fetchMatchSummary } from "../adapters/espn.js";
-import { fetchLeagueFixturesSource2 } from "../adapters/source2.js";
+import {
+  fetchLeagueFixturesSource2,
+  isSource2Enabled,
+  isSource2TargetLeague
+} from "../adapters/source2.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { normalizeFixtureSource2 } from "../core/normalize-source2.js";
 import { reconcileObservations } from "../core/reconcile-observations.js";
@@ -213,8 +217,14 @@ export async function ingestDay(dayKey, env) {
       espnEvents = Array.isArray(espnData?.events) ? espnData.events : [];
     }
 
-    const source2Data = await fetchLeagueFixturesSource2(slug, dayKey);
-    source2Events = Array.isArray(source2Data?.events) ? source2Data.events : [];
+    const shouldUseSource2 =
+      isSource2Enabled() &&
+      isSource2TargetLeague(slug);
+
+    if (shouldUseSource2) {
+      const source2Data = await fetchLeagueFixturesSource2(slug, dayKey);
+      source2Events = Array.isArray(source2Data?.events) ? source2Data.events : [];
+    }
 
     results.rawEventsEspn += espnEvents.length;
     results.rawEventsSource2 += source2Events.length;
