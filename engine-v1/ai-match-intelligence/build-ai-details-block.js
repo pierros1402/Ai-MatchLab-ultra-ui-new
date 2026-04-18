@@ -102,7 +102,6 @@ const enrichedSupport = {
     expectedLineups: taskResults.expected_lineups,
     formGuide,
     headToHead: headToHeadGuide,
-    formGuide,
 
     valueContext: {
       count: support.valueSummary?.count || 0,
@@ -173,7 +172,66 @@ const enrichedSupport = {
     cacheHit: !!research?.cacheHit
   });
 
+function toTask({ key, data, ok = true, status = "ok", notes = [], reasons = [] }) {
   return {
+    key,
+    ok,
+    status,
+    data: data || null,
+    notes,
+    reasons
+  };
+}
+
+const aiTasks = [];
+
+// competition_context
+aiTasks.push(
+  toTask({
+    key: "competition_context",
+    ok: !!competitionContext?.data,
+    status: competitionContext?.data ? "ok" : "fallback",
+    data: competitionContext?.data || null,
+    notes: competitionContext?.notes || [],
+    reasons: competitionContext?.reasons || []
+  })
+);
+
+// form_signal
+aiTasks.push(
+  toTask({
+    key: "form_signal",
+    ok:
+      (formGuide?.homeTeam?.sampleSize || 0) >= 3 &&
+      (formGuide?.awayTeam?.sampleSize || 0) >= 3,
+    status:
+      (formGuide?.homeTeam?.sampleSize || 0) >= 3 &&
+      (formGuide?.awayTeam?.sampleSize || 0) >= 3
+        ? "ok"
+        : "fallback",
+    data: formGuide || null,
+    notes: [],
+    reasons: []
+  })
+);
+
+// h2h_signal
+aiTasks.push(
+  toTask({
+    key: "h2h_signal",
+    ok: (headToHeadGuide?.sampleSize || 0) >= 3,
+    status:
+      (headToHeadGuide?.sampleSize || 0) >= 3 ? "ok" : "fallback",
+    data: headToHeadGuide || null,
+    notes: [],
+    reasons: []
+  })
+);
+
+  return {
+    ai: {
+      tasks: aiTasks
+    },
     researchedFacts,
     aiContext,
     phase: aiContext?.phase || null,

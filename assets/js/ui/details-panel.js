@@ -595,6 +595,83 @@ return `
     `;
   }
 
+function summarizeAiTask(task) {
+  const key = String(task?.key || "");
+  const data = task?.data || null;
+
+  if (!data || typeof data !== "object") {
+    return "No structured data.";
+  }
+
+  if (key === "competition_context") {
+    const importance = data.importance || "unknown";
+    const pressure = Array.isArray(data.pressure) ? data.pressure.join(", ") : "";
+    const stakes = Array.isArray(data.stakes) ? data.stakes.join(", ") : "";
+    return [
+      `Importance: ${importance}`,
+      pressure ? `Pressure: ${pressure}` : "",
+      stakes ? `Stakes: ${stakes}` : ""
+    ].filter(Boolean).join(" • ");
+  }
+
+  if (key === "form_signal") {
+    const home = data?.homeTeam;
+    const away = data?.awayTeam;
+    const homeScore = home?.formScore != null ? Number(home.formScore).toFixed(2) : "—";
+    const awayScore = away?.formScore != null ? Number(away.formScore).toFixed(2) : "—";
+    const homeMomentum = home?.momentum || "unknown";
+    const awayMomentum = away?.momentum || "unknown";
+    return `Home form: ${homeScore} (${homeMomentum}) • Away form: ${awayScore} (${awayMomentum})`;
+  }
+
+  if (key === "h2h_signal") {
+    const edge = data?.trend?.edge || "unknown";
+    const goalPattern = data?.trend?.goalPattern || "unknown";
+    const sampleSize = data?.sampleSize ?? 0;
+    return `Sample: ${sampleSize} • Edge: ${edge} • Goal pattern: ${goalPattern}`;
+  }
+
+  return "Structured AI task available.";
+}
+
+function renderAiTasksBlock(snapshot) {
+  console.log("[AI TASKS SNAPSHOT]", snapshot?.ai);
+  const tasks = Array.isArray(snapshot?.ai?.tasks) ? snapshot.ai.tasks : [];
+  if (!tasks.length) return "";
+
+  const rows = tasks.map((task) => {
+    const key = String(task?.key || "unknown");
+    const status = String(task?.status || "unknown");
+    const ok = !!task?.ok;
+    const summary = summarizeAiTask(task);
+
+    return `
+      <div style="padding:10px 12px;border:1px solid rgba(255,255,255,0.10);border-radius:12px;background:rgba(255,255,255,0.03);">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="font-weight:900;">${esc(key)}</div>
+          <div style="font-size:12px;opacity:.85;">
+            <span style="padding:4px 8px;border-radius:10px;border:1px solid rgba(255,255,255,0.10);background:${ok ? "rgba(0,200,120,0.12)" : "rgba(255,180,0,0.12)"};">
+              ${esc(status)}
+            </span>
+          </div>
+        </div>
+        <div style="margin-top:8px;line-height:1.4;opacity:.92;">
+          ${esc(summary)}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div style="margin-top:14px;">
+      <div style="font-weight:900;margin-bottom:8px;">AI Tasks</div>
+      <div style="display:grid;gap:8px;">
+        ${rows}
+      </div>
+    </div>
+  `;
+}
+
 // ------------------------------------------------------------
 // MATCH REGIME DETECTOR
 // ------------------------------------------------------------
@@ -631,6 +708,7 @@ function renderRuntimeIntel(aiIntel, aiSignals) {
         <div style="font-weight:900;margin-bottom:8px;">AI Match Intelligence</div>
         <div class="muted">Runtime intel unavailable.</div>
       </div>
+      ${renderAiTasksBlock(snap)}
     `;
   }
 
@@ -1073,6 +1151,7 @@ async function renderLocal(match, mountEl) {
   // ------------------------------------------------------------
   if (newDetails?.snapshot) {
     const snap = newDetails.snapshot;
+    console.log("[DETAILS SNAPSHOT CHECK]", snap.ai);
     const valueRows = Array.isArray(newDetails.value)
       ? newDetails.value
       : Array.isArray(snap.value)
@@ -1247,6 +1326,14 @@ async function renderLocal(match, mountEl) {
           : ``
       }
     `;
+
+    const aiHtml = renderAiTasksBlock(snap);
+
+    if (aiHtml) {
+      const container = document.createElement("div");
+      container.innerHTML = aiHtml;
+      el.appendChild(container);
+    }
 
     document.dispatchEvent(new CustomEvent("details-rendered"));
 
