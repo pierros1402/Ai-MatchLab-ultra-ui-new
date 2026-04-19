@@ -145,6 +145,102 @@ const EXPLICIT_NAME_MAP = {
   "ukr.2": "Ukrainian First League",
   "ukr.cup": "Ukrainian Cup",
 
+  // ALBANIA
+  "alb.1": "Albanian Superliga",
+  "alb.2": "Albanian First Division",
+
+  // ARMENIA
+  "arm.1": "Armenian Premier League",
+  "arm.2": "Armenian First League",
+
+  // AZERBAIJAN
+  "aze.1": "Azerbaijan Premier League",
+  "aze.2": "Azerbaijan First Division",
+
+  // BOSNIA AND HERZEGOVINA
+  "bih.1": "Premier League of Bosnia and Herzegovina",
+  "bih.2": "Bosnia and Herzegovina First League",
+
+  // BELARUS
+  "blr.1": "Belarusian Premier League",
+  "blr.2": "Belarusian First League",
+
+  // ESTONIA
+  "est.1": "Estonian Meistriliiga",
+  "est.2": "Estonian Esiliiga",
+
+  // FAROE ISLANDS
+  "fro.1": "Faroe Islands Premier League",
+  "fro.2": "Faroe Islands 1. deild",
+
+  // GEORGIA
+  "geo.1": "Erovnuli Liga",
+  "geo.2": "Erovnuli Liga 2",
+
+  // ICELAND
+  "isl.1": "Icelandic Besta deild karla",
+  "isl.2": "Icelandic 1. deild karla",
+
+  // IRELAND
+  "irl.1": "League of Ireland Premier Division",
+  "irl.2": "League of Ireland First Division",
+
+  // ISRAEL
+  "isr.1": "Israeli Premier League",
+  "isr.2": "Liga Leumit",
+
+  // KAZAKHSTAN
+  "kaz.1": "Kazakhstan Premier League",
+  "kaz.2": "Kazakhstan First Division",
+
+  // KOSOVO
+  "kos.1": "Football Superleague of Kosovo",
+  "kos.2": "Kosovo First League",
+
+  // LATVIA
+  "lva.1": "Latvian Virsliga",
+  "lva.2": "Latvian 1. Liga",
+
+  // LITHUANIA
+  "ltu.1": "Lithuanian A Lyga",
+  "ltu.2": "Lithuanian I Lyga",
+
+  // LUXEMBOURG
+  "lux.1": "Luxembourg National Division",
+  "lux.2": "Luxembourg Division of Honour",
+
+  // MOLDOVA
+  "mda.1": "Moldovan Super Liga",
+  "mda.2": "Moldovan Liga 1",
+
+  // MALTA
+  "mlt.1": "Maltese Premier League",
+  "mlt.2": "Maltese Challenge League",
+
+  // MONTENEGRO
+  "mne.1": "Montenegrin First League",
+  "mne.2": "Montenegrin Second League",
+
+  // NORTH MACEDONIA
+  "mkd.1": "Macedonian First Football League",
+  "mkd.2": "Macedonian Second Football League",
+
+  // NORTHERN IRELAND
+  "nir.1": "NIFL Premiership",
+  "nir.2": "NIFL Championship",
+
+  // SLOVAKIA
+  "svk.1": "Slovak Super Liga",
+  "svk.2": "2. Liga",
+
+  // SLOVENIA
+  "svn.1": "Slovenian PrvaLiga",
+  "svn.2": "Slovenian Second League",
+
+  // WALES
+  "wal.1": "Cymru Premier",
+  "wal.2": "Cymru North/South",
+
   // UEFA
   "uefa.champions": "UEFA Champions League",
   "uefa.europa": "UEFA Europa League",

@@ -1,3 +1,5 @@
+import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
+
 const API_KEY = process.env.API_FOOTBALL_KEY;
 const BASE_URL = "https://v3.football.api-sports.io";
 
@@ -5,29 +7,41 @@ const BASE_URL = "https://v3.football.api-sports.io";
 const __dailyCache = new Map();
 const __rateLimitedDays = new Set();
 
-// SOURCE2 = weak / opportunistic signal
-// Δεν προσπαθούμε να καλύψουμε όλο το universe με free plan.
-// Ξεκινάμε μόνο με λίγες high-value λίγκες.
-const SOURCE2_TARGET_SLUGS = new Set([
-  "eng.1",
-  "eng.2",
-  "ger.1",
-  "ger.2",
-  "esp.1",
-  "esp.2",
-  "ita.1",
-  "ita.2",
-  "fra.1",
-  "fra.2",
-  "gre.1",
-  "bel.1",
-  "por.1",
-  "ned.1",
-  "tur.1",
-  "uefa.champions",
-  "uefa.europa",
-  "uefa.europa.conf"
-]);
+// Για να μη χάνουμε σιωπηλά coverage που υπάρχει στο registry
+// αλλά δεν έχει ακόμα leagueId mapping στο provider layer.
+const __missingLeagueIdLogged = new Set();
+
+// SOURCE2 = provider adapter
+// Τα target slugs τα παίρνουμε από το canonical coverage universe,
+// όχι από μικρή hardcoded λίστα.
+const SOURCE2_TARGET_SLUGS = new Set(
+  LEAGUES_COVERAGE
+    .filter(seed => {
+      const slug = String(seed?.slug || "").trim();
+      const type = String(seed?.type || "").trim();
+      const region = String(seed?.region || "").trim();
+
+      if (!slug) return false;
+
+      // Όλες οι UEFA continental
+      if (slug.startsWith("uefa.")) return true;
+
+      // Όλες οι ευρωπαϊκές εγχώριες λίγκες
+      if (region === "europe" && type === "league") return true;
+
+      // Όλα τα εγχώρια κύπελλα Ευρώπης
+      if (region === "europe" && type === "cup") return true;
+
+      // Υπόλοιπος κόσμος: μόνο 1η κατηγορία προς το παρόν
+      if (region !== "europe" && type === "league" && /\.1$/.test(slug)) return true;
+
+      // Άλλες διεθνείς διοργανώσεις που υποστηρίζεις
+      if (type === "continental") return true;
+
+      return false;
+    })
+    .map(seed => String(seed.slug).trim())
+);
 
 export function isSource2Enabled() {
   return Boolean(API_KEY);
@@ -36,6 +50,21 @@ export function isSource2Enabled() {
 export function isSource2TargetLeague(slug) {
   return SOURCE2_TARGET_SLUGS.has(String(slug || "").trim());
 }
+
+function getSource2LeagueId(slug) {
+  const key = String(slug || "").trim();
+  if (!key) return null;
+
+  const leagueId = slugToLeagueId[key] || null;
+
+  if (!leagueId && !__missingLeagueIdLogged.has(key)) {
+    console.warn("[source2] missing leagueId mapping for slug:", key);
+    __missingLeagueIdLogged.add(key);
+  }
+
+  return leagueId;
+}
+
 function buildHeaders() {
   return {
     "x-apisports-key": API_KEY
@@ -486,8 +515,11 @@ async function fetchDailySource2Rows(dayKey, slug) {
     return __dailyCache.get(cacheKey);
   }
 
-  const leagueId = slugToLeagueId[slug];
-  if (!leagueId) return [];
+  const leagueId = getSource2LeagueId(slug);
+  if (!leagueId) {
+    __dailyCache.set(cacheKey, []);
+    return [];
+  }
 
   const url = `${BASE_URL}/fixtures?date=${encodeURIComponent(dayKey)}&league=${leagueId}`;
 

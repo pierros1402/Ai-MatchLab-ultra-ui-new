@@ -1,12 +1,6 @@
 import { LEAGUE_SEEDS } from "../config.js";
-import { fetchLeagueFixtures, fetchMatchSummary } from "../adapters/espn.js";
-import {
-  fetchLeagueFixturesSource2,
-  isSource2Enabled,
-  isSource2TargetLeague
-} from "../adapters/source2.js";
-import { normalizeFixture } from "../core/normalize.js";
-import { normalizeFixtureSource2 } from "../core/normalize-source2.js";
+import { fetchMatchSummary } from "../adapters/espn.js";
+import { getFixtureAdapters } from "../adapters/registry.js";
 import { reconcileObservations } from "../core/reconcile-observations.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { shiftDay } from "../core/daykey.js";
@@ -33,7 +27,9 @@ function isNoDrawCompetition(slug) {
 function emptyLeagueStats() {
   return {
     rawEventsEspn: 0,
+    rawEventsApiFootball: 0,
     rawEventsSource2: 0,
+    providerStats: {},
     normalized: 0,
     inserted: 0,
     updated: 0,
@@ -42,6 +38,48 @@ function emptyLeagueStats() {
     skippedNull: 0,
     observationsWritten: 0
   };
+}
+
+function addRawEventsForAdapter(results, leagueStats, adapterId, count) {
+  const n = Number(count || 0);
+  const key = String(adapterId || "").trim() || "unknown";
+
+  const resultBucket = ensureProviderStatsBucket(results, key);
+  const leagueBucket = ensureProviderStatsBucket(leagueStats, key);
+
+  resultBucket.rawEvents += n;
+  leagueBucket.rawEvents += n;
+
+  if (key === "espn") {
+    results.rawEventsEspn += n;
+    leagueStats.rawEventsEspn += n;
+    return;
+  }
+
+  if (key === "api_football" || key === "source2") {
+    results.rawEventsApiFootball += n;
+    leagueStats.rawEventsApiFootball += n;
+
+    results.rawEventsSource2 += n;
+    leagueStats.rawEventsSource2 += n;
+    return;
+  }
+}
+
+function ensureProviderStatsBucket(target, adapterId) {
+  const key = String(adapterId || "").trim() || "unknown";
+
+  if (!target.providerStats) {
+    target.providerStats = {};
+  }
+
+  if (!target.providerStats[key]) {
+    target.providerStats[key] = {
+      rawEvents: 0
+    };
+  }
+
+  return target.providerStats[key];
 }
 
 function isTerminalStatus(status) {
@@ -118,7 +156,9 @@ export async function ingestDay(dayKey, env) {
     leagues: 0,
     rawEvents: 0,
     rawEventsEspn: 0,
+    rawEventsApiFootball: 0,
     rawEventsSource2: 0,
+    providerStats: {},
     normalized: 0,
 
     inserted: 0,
@@ -132,124 +172,71 @@ export async function ingestDay(dayKey, env) {
     byLeague: {}
   };
 
-  const ESPN_SUPPORTED = new Set([
-    "eng.1",
-    "eng.2",
-    "eng.3",
-    "eng.4",
-    "eng.5",
-    "eng.fa",
-    "eng.league_cup",
-    "eng.trophy",
-
-    "ger.1",
-    "ger.2",
-    "ger.dfb_pokal",
-
-    "esp.1",
-    "esp.2",
-    "esp.copa_del_rey",
-    "esp.super_cup",
-
-    "ita.1",
-    "ita.2",
-    "ita.coppa_italia",
-
-    "fra.1",
-    "fra.2",
-    "fra.coupe_de_france",
-    "fra.super_cup",
-
-    "ned.1",
-    "ned.2",
-    "ned.cup",
-
-    "por.1",
-    "bel.1",
-
-    "sco.1",
-    "sco.2",
-    "sco.challenge",
-    "sco.tennents",
-
-    "gre.1",
-    "cyp.1",
-    "tur.1",
-    "sui.1",
-    "aut.1",
-    "den.1",
-    "swe.1",
-    "nor.1",
-
-    "uefa.champions",
-    "uefa.europa",
-    "uefa.europa.conf",
-
-    "afc.champions",
-    "afc.cup",
-    "caf.champions",
-    "caf.confed",
-    "caf.nations",
-    "conmebol.libertadores",
-
-    "usa.1",
-    "arg.1",
-    "bra.1",
-    "mex.1",
-    "uru.1",
-    "col.1",
-    "chi.1",
-    "per.1",
-
-    "jpn.1",
-    "ksa.1",
-    "rsa.1"
-  ]);
-
+ 
   for (const slug of LEAGUE_SEEDS) {
     results.leagues++;
 
-    let espnEvents = [];
-    let source2Events = [];
-
-    if (ESPN_SUPPORTED.has(slug)) {
-      const espnData = await fetchLeagueFixtures(slug, dayKey);
-      espnEvents = Array.isArray(espnData?.events) ? espnData.events : [];
-    }
-
-    const shouldUseSource2 =
-      isSource2Enabled() &&
-      isSource2TargetLeague(slug);
-
-    if (shouldUseSource2) {
-      const source2Data = await fetchLeagueFixturesSource2(slug, dayKey);
-      source2Events = Array.isArray(source2Data?.events) ? source2Data.events : [];
-    }
-
-    results.rawEventsEspn += espnEvents.length;
-    results.rawEventsSource2 += source2Events.length;
-    results.rawEvents += espnEvents.length + source2Events.length;
-
     results.byLeague[slug] = emptyLeagueStats();
-    results.byLeague[slug].rawEventsEspn = espnEvents.length;
-    results.byLeague[slug].rawEventsSource2 = source2Events.length;
 
-    const pipelines = [
-      {
-        source: "espn",
-        events: espnEvents,
-        normalize: event => normalizeFixture(event, slug)
-      },
-      {
-        source: "source2",
-        events: source2Events,
-        normalize: event => normalizeFixtureSource2(event, slug)
+    const adapters = getFixtureAdapters().filter(adapter => {
+      try {
+        return adapter.isEnabled() && adapter.supportsLeague(slug);
+      } catch (err) {
+        console.error("[ingest] adapter capability check failed", {
+          dayKey,
+          slug,
+          adapterId: adapter?.id || "unknown",
+          error: String(err?.message || err)
+        });
+        return false;
       }
-    ];
+    });
+
+    const pipelines = [];
+
+    for (const adapter of adapters) {
+      let events = [];
+
+      try {
+        const data = await adapter.fetch({ slug, dayKey, env });
+        events = Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error("[ingest] adapter fetch failed", {
+          dayKey,
+          slug,
+          adapterId: adapter?.id || "unknown",
+          error: String(err?.message || err)
+        });
+        events = [];
+      }
+
+      addRawEventsForAdapter(results, results.byLeague[slug], adapter.id, events.length);
+      results.rawEvents += events.length;
+
+      pipelines.push({
+        source: adapter.id,
+        sourceLabel: adapter.label || adapter.id,
+        sourcePriority: Number(adapter.priority || 0),
+        events,
+        normalize: event => adapter.normalize(event, slug)
+      });
+    }
 
     for (const pipe of pipelines) {
       for (const event of pipe.events) {
-        const normalized = pipe.normalize(event);
+        let normalized = null;
+
+        try {
+          normalized = pipe.normalize(event);
+        } catch (err) {
+          console.error("[ingest] normalize failed", {
+            dayKey,
+            slug,
+            source: pipe.source,
+            error: String(err?.message || err)
+          });
+          normalized = null;
+        }
 
         if (!normalized) {
           results.skippedNull++;
@@ -264,7 +251,9 @@ export async function ingestDay(dayKey, env) {
           ts: Date.now(),
           requestedDay: dayKey,
           actualDay: normalized.dayKey,
-          source: normalized.source,
+          source: pipe.source || normalized.source,
+          sourceLabel: pipe.sourceLabel || pipe.source || normalized.source,
+          sourcePriority: Number(pipe.sourcePriority || 0),
           sourceId: normalized.sourceId,
           sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
           matchId: normalized.matchId,
@@ -312,7 +301,7 @@ export async function ingestDay(dayKey, env) {
             requestedDay: dayKey,
             actualDay: normalized.dayKey,
             league: slug,
-            source: normalized.source,
+            source: pipe.source || normalized.source,
             matchId: normalized.matchId,
             homeTeam: normalized.homeTeam,
             awayTeam: normalized.awayTeam,

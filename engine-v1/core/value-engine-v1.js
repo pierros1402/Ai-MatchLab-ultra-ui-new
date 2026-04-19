@@ -2006,7 +2006,7 @@ export async function evaluateMatchValue(input, opts = {}) {
     contextIntelligence: buildContextIntelligenceFromInput(input)
   });
 
-  const baseValue = {
+  let baseValue ={
     season,
     leagueSlug,
     homeTeam,
