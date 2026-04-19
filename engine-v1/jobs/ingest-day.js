@@ -29,7 +29,7 @@ function emptyLeagueStats() {
     rawEventsEspn: 0,
     rawEventsApiFootball: 0,
     rawEventsSource2: 0,
-    providerStats: {},
+    providerStats: buildProviderStatsSkeleton(),
     normalized: 0,
     inserted: 0,
     updated: 0,
@@ -80,6 +80,21 @@ function ensureProviderStatsBucket(target, adapterId) {
   }
 
   return target.providerStats[key];
+}
+
+function buildProviderStatsSkeleton() {
+  const stats = {};
+
+  for (const adapter of getFixtureAdapters()) {
+    const key = String(adapter?.id || "").trim();
+    if (!key) continue;
+
+    stats[key] = {
+      rawEvents: 0
+    };
+  }
+
+  return stats;
 }
 
 function isTerminalStatus(status) {
@@ -158,7 +173,7 @@ export async function ingestDay(dayKey, env) {
     rawEventsEspn: 0,
     rawEventsApiFootball: 0,
     rawEventsSource2: 0,
-    providerStats: {},
+    providerStats: buildProviderStatsSkeleton(),
     normalized: 0,
 
     inserted: 0,
