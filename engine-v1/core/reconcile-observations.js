@@ -25,7 +25,7 @@ const SOURCE_PROFILE = {
     scoreReliability: 0.90
   },
 
-  source2: {
+  api_football: {
     priority: 90,
     kickoffReliability: 0.88,
     teamsReliability: 0.88,
@@ -52,12 +52,34 @@ const LIVE_STATUSES = [
 
 const SOURCE_WEIGHTS = {
   espn: 1.0,
-  source2: 0.9,
+  api_football: 0.9,
   unknown: 0.5
 };
 
+function canonicalSource(source) {
+  const key = String(source || "").trim().toLowerCase();
+
+  if (!key) return "unknown";
+  if (key === "source2") return "api_football";
+
+  return key;
+}
+
 function sourceProfile(source) {
-  return SOURCE_PROFILE[source] || SOURCE_PROFILE.unknown;
+  return SOURCE_PROFILE[canonicalSource(source)] || SOURCE_PROFILE.unknown;
+}
+
+function sourceWeightForRow(row) {
+  const source = canonicalSource(row?.source);
+  const base = SOURCE_WEIGHTS[source] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
+
+  const dynamicPriority = Number(row?.sourcePriority || 0);
+  const dynamicWeight =
+    dynamicPriority > 0
+      ? Math.max(0, Math.min(1.5, dynamicPriority / 100))
+      : null;
+
+  return dynamicWeight != null ? dynamicWeight : base;
 }
 
 function byNewest(a, b) {
@@ -189,7 +211,7 @@ function pickBest(observations, field, reliabilityField) {
     if (row[field] != null && row[field] !== "") {
       return {
         value: row[field],
-        source: row.source || "unknown"
+        source: canonicalSource(row.source)
       };
     }
   }
@@ -204,7 +226,7 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
   const latestPerSource = new Map();
 
   for (const row of observations) {
-    const source = String(row?.source || "unknown").trim() || "unknown";
+    const source = canonicalSource(row?.source);
     const prev = latestPerSource.get(source);
 
     if (!prev || Number(row?.ts || 0) > Number(prev?.ts || 0)) {
@@ -216,9 +238,9 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
   let bestScore = -Infinity;
 
   for (const row of latestPerSource.values()) {
-    const source = String(row?.source || "unknown").trim() || "unknown";
+    const source = canonicalSource(row?.source);
     const profile = sourceProfile(source);
-    const sourceWeight = SOURCE_WEIGHTS[source] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
+    const sourceWeight = sourceWeightForRow(row);
     const freshness = Number(row?.ts || 0) / 1e13;
 
     const terminalBonus = isTerminal(row?.status) ? 1000 : 0;
@@ -250,8 +272,8 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
     const terminalObs = Array.from(latestPerSource.values())
       .filter(row => isTerminal(row?.status))
       .sort((a, b) => {
-        const sa = String(a?.source || "unknown").trim() || "unknown";
-        const sb = String(b?.source || "unknown").trim() || "unknown";
+        const sa = canonicalSource(a?.source);
+        const sb = canonicalSource(b?.source);
 
         const pa = sourceProfile(sa);
         const pb = sourceProfile(sb);
@@ -305,7 +327,7 @@ function pickScoreWeighted(observations, existing, chosenStatus, reliabilityDb =
   const latestPerSource = new Map();
 
   for (const row of eligible) {
-    const source = String(row?.source || "unknown").trim() || "unknown";
+    const source = canonicalSource(row?.source);
     const prev = latestPerSource.get(source);
 
     if (!prev || Number(row?.ts || 0) > Number(prev?.ts || 0)) {
@@ -317,9 +339,9 @@ function pickScoreWeighted(observations, existing, chosenStatus, reliabilityDb =
   let bestScore = -Infinity;
 
   for (const row of latestPerSource.values()) {
-    const source = String(row?.source || "unknown").trim() || "unknown";
+    const source = canonicalSource(row?.source);
     const profile = sourceProfile(source);
-    const sourceWeight = SOURCE_WEIGHTS[source] ?? SOURCE_WEIGHTS.unknown ?? 0.5;
+    const sourceWeight = sourceWeightForRow(row);
     const reliability = getEffectiveReliability(
       source,
       profile.scoreReliability ?? 0.5,
@@ -420,8 +442,8 @@ function pickMinute(observations, existing, chosenStatus, reliabilityDb = {}) {
         return bCmp - aCmp;
       }
 
-      const aSource = String(a?.source || "unknown").trim() || "unknown";
-      const bSource = String(b?.source || "unknown").trim() || "unknown";
+      const aSource = canonicalSource(a?.source);
+      const bSource = canonicalSource(b?.source);
 
       const aProfile = sourceProfile(aSource);
       const bProfile = sourceProfile(bSource);
@@ -437,6 +459,13 @@ function pickMinute(observations, existing, chosenStatus, reliabilityDb = {}) {
         bProfile.statusReliability ?? 0.5,
         reliabilityDb
       );
+
+      const aWeight = sourceWeightForRow(a);
+      const bWeight = sourceWeightForRow(b);
+
+      if (bWeight !== aWeight) {
+        return bWeight - aWeight;
+      }
 
       if (bReliability !== aReliability) {
         return bReliability - aReliability;
@@ -481,7 +510,7 @@ function buildSourcesMap(observations) {
   const out = {};
 
   for (const row of observations) {
-    const src = row.source || "unknown";
+    const src = canonicalSource(row.source);
     const prev = out[src];
 
     if (!prev || Number(row.ts || 0) > Number(prev.observedAt || 0)) {
@@ -502,7 +531,7 @@ function computeDisagreement(rows) {
   const latestPerSource = new Map();
 
   for (const row of rows) {
-    const source = String(row?.source || "").trim();
+    const source = canonicalSource(row?.source);
     if (!source) continue;
 
     const prev = latestPerSource.get(source);
@@ -637,7 +666,7 @@ function computeConfidence({
   conflictTypes = [],
   reliabilityDb = {}
 }) {
-  const uniqueSources = [...new Set(rows.map(x => String(x?.source || "").trim()).filter(Boolean))];
+  const uniqueSources = [...new Set(rows.map(x => canonicalSource(x?.source)).filter(Boolean))];
   const sourceCount = uniqueSources.length;
 
   let score = 0.35;

@@ -47,59 +47,16 @@ function writeValueSnapshot(date, result) {
   ensureDir(resolveDataPath("value"));
   const file = resolveDataPath("value", `${date}.json`);
 
-  let existing = {
+  const payload = {
     date,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    picks: []
-  };
-
-  if (fs.existsSync(file)) {
-    try {
-      existing = JSON.parse(fs.readFileSync(file, "utf-8"));
-    } catch {}
-  }
-
-  const existingMap = new Map();
-
-  for (const p of existing.picks || []) {
-    const key = `${p.matchId}|${p.market}`;
-    existingMap.set(key, p);
-  }
-
-  const newMap = new Map();
-
-  for (const p of result.picks || []) {
-    const key = `${p.matchId}|${p.market}`;
-    newMap.set(key, p);
-  }
-
-  // 1. κρατάμε ό,τι ήδη υπάρχει
-  const merged = new Map(existingMap);
-
-  // 2. overwrite μόνο τα νέα picks
-  for (const [key, val] of newMap) {
-    const existingPick = existingMap.get(key);
-
-    merged.set(key, {
-      ...val,
-      result: existingPick?.result ?? null
-    });
-  }
-
-  const finalPicks = Array.from(merged.values());
-
-  const payload = {
-    date,
-    createdAt: existing.createdAt || Date.now(),
-    updatedAt: Date.now(),
-    count: finalPicks.length,
-    picks: finalPicks
+    count: result.picks.length,
+    picks: result.picks
   };
 
   fs.writeFileSync(file, JSON.stringify(payload, null, 2));
 }
-
 // ------------------------------
 async function getSeasonResources(season, force = false) {
   if (!force && __seasonResourceCache.has(season)) {
@@ -134,32 +91,103 @@ function expandValueMarkets(match, value) {
   const meta = value?.meta || {};
   const context = value?.context || null;
 
-  // 1X2 (NO DRAW)
-  if (Number.isFinite(home) && Number.isFinite(away)) {
-    const best = Math.max(home, away);
-    const second = Math.min(home, away);
-    const gap = best - second;
+  const aiSignals = value?.signals || [];
 
-    if (best >= 0.58 && gap >= 0.08) {
-      items.push({
-        matchId: match.matchId,
-        leagueSlug: match.leagueSlug,
-        homeTeam: match.homeTeam,
-        awayTeam: match.awayTeam,
-        kickoff: match.kickoffUtc,
-        market: "1X2",
-        marketName: "1X2",
-        pick: home > away ? "HOME" : "AWAY",
-        score: best,
-        confidence,
-        signals,
-        meta,
-        context
-      });
-    }
+  const aiStrongPositive =
+    aiSignals.includes("ai_form_home_strong") ||
+    aiSignals.includes("ai_form_away_strong") ||
+    aiSignals.includes("ai_h2h_over_signal");
+
+  const aiStrongNegative = aiSignals.some(s =>
+    s.includes("ai_form_home_negative") ||
+    s.includes("ai_form_home_poor") ||
+    s.includes("ai_form_away_negative") ||
+    s.includes("ai_form_away_poor")
+  );
+
+  const aiOverLean =
+    aiSignals.includes("ai_h2h_overlean");
+
+  if (aiStrongNegative) {
+    return [];
   }
 
-  if (over15 >= 0.62) {
+// -----------------------------
+// AI PENALTY / BOOST
+// -----------------------------
+let adjustedOver15 = over15;
+let adjustedOver25 = over25;
+let adjustedOver35 = over35;
+let adjustedBtts = btts;
+let adjusted1X2 = {
+  home: value.homeWinScore,
+  draw: value.drawScore,
+  away: value.awayWinScore
+};
+
+// -----------------------------
+// AI PENALTY / BOOST
+// -----------------------------
+
+if (aiStrongPositive) {
+  adjustedOver25 *= 1.04;
+  adjustedBtts *= 1.03;
+
+  adjusted1X2.home *= 1.03;
+  adjusted1X2.away *= 1.03;
+}
+
+// extra: overlean influence
+if (aiOverLean) {
+  adjustedOver25 *= 1.05;
+  adjustedOver35 *= 1.04;
+}
+
+function toBand(score) {
+  if (score >= 0.72) return "HIGH";
+  if (score >= 0.60) return "MEDIUM";
+  return "LOW";
+}
+
+// 1X2 (NO DRAW)
+if (
+  Number.isFinite(adjusted1X2.home) &&
+  Number.isFinite(adjusted1X2.away)
+) {
+  const best = Math.max(adjusted1X2.home, adjusted1X2.away);
+  const second = Math.min(adjusted1X2.home, adjusted1X2.away);
+  const gap = best - second;
+
+  if (best >= 0.66 && gap >= 0.08) {
+
+    // AI HARD FILTER
+    
+
+    items.push({
+      matchId: match.matchId,
+      leagueSlug: match.leagueSlug,
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      kickoff: match.kickoffUtc,
+      market: "1X2",
+      marketName: "1X2",
+      pick: adjusted1X2.home > adjusted1X2.away ? "HOME" : "AWAY",
+      score: best,
+      band: toBand(best),
+      confidence,
+      signals,
+      meta,
+      context
+    });
+  }
+}
+
+  if (adjustedOver15 >= 0.67) {
+
+  // AI HARD FILTER
+    
+
+
     items.push({
       matchId: match.matchId,
       leagueSlug: match.leagueSlug,
@@ -169,7 +197,8 @@ function expandValueMarkets(match, value) {
       market: "Over / Under 1.5",
       marketName: "Over / Under 1.5",
       pick: "Over 1.5",
-      score: over15,
+      score: adjustedOver15,
+      band: toBand(adjustedOver15),
       confidence,
       signals,
       meta,
@@ -177,7 +206,11 @@ function expandValueMarkets(match, value) {
     });
   }
 
-  if (over25 >= 0.57) {
+  if (adjustedOver25 >= 0.60) {
+
+  // AI HARD FILTER
+    if (!aiOverLean && adjustedOver25 < 0.63) return items;
+
     items.push({
       matchId: match.matchId,
       leagueSlug: match.leagueSlug,
@@ -187,7 +220,8 @@ function expandValueMarkets(match, value) {
       market: "Over / Under 2.5",
       marketName: "Over / Under 2.5",
       pick: "Over 2.5",
-      score: over25,
+      score: adjustedOver25,
+      band: toBand(adjustedOver25),
       confidence,
       signals,
       meta,
@@ -195,7 +229,11 @@ function expandValueMarkets(match, value) {
     });
   }
 
-  if (over35 >= 0.60) {
+  if (adjustedOver35 >= 0.64) {
+
+  // AI HARD FILTER
+    
+
     items.push({
       matchId: match.matchId,
       leagueSlug: match.leagueSlug,
@@ -205,7 +243,8 @@ function expandValueMarkets(match, value) {
       market: "Over / Under 3.5",
       marketName: "Over / Under 3.5",
       pick: "Over 3.5",
-      score: over35,
+      score: adjustedOver35,
+      band: toBand(adjustedOver35),
       confidence,
       signals,
       meta,
@@ -213,7 +252,11 @@ function expandValueMarkets(match, value) {
     });
   }
 
-  if (btts >= 0.57) {
+  if (adjustedBtts >= 0.62) {
+
+  // AI HARD FILTER
+    
+
     items.push({
       matchId: match.matchId,
       leagueSlug: match.leagueSlug,
@@ -223,7 +266,8 @@ function expandValueMarkets(match, value) {
       market: "BTTS",
       marketName: "BTTS",
       pick: "BTTS YES",
-      score: btts,
+      score: adjustedBtts,
+      band: toBand(adjustedBtts),
       confidence,
       signals,
       meta,
@@ -466,8 +510,18 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
       });
     }
   }
-
+ 
   const dedupedPicks = dedupeValuePicks(picks);
+  
+  dedupedPicks.sort((a, b) => {
+    const bandRank = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+    const bandDiff = (bandRank[b.band] || 0) - (bandRank[a.band] || 0);
+    if (bandDiff !== 0) return bandDiff;
+
+    return (b.score || 0) - (a.score || 0);
+  });
+
 
   const result = {
     ok: true,
