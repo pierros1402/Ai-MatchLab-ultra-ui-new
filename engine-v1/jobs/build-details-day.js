@@ -111,6 +111,14 @@ function buildDetailsSignature(match, valuePicks, payload) {
     ),
     competitionType: String(payload?.context?.competitionType || ""),
     importance: String(payload?.context?.importance || ""),
+    teamNewsStatus: String(payload?.teamNews?.status || ""),
+    teamNewsSource: String(payload?.teamNews?.source || ""),
+    teamNewsHomeNotes: Array.isArray(payload?.teamNews?.data?.homeTeam?.notes)
+      ? payload.teamNews.data.homeTeam.notes.length
+      : 0,
+    teamNewsAwayNotes: Array.isArray(payload?.teamNews?.data?.awayTeam?.notes)
+      ? payload.teamNews.data.awayTeam.notes.length
+      : 0,
     valueCount: Array.isArray(valuePicks) ? valuePicks.length : 0,
     topValue: topPick
       ? {
@@ -165,6 +173,26 @@ function buildRefereeBlock(match) {
   };
 }
 
+function buildTeamNewsBlock(teamNewsFact) {
+  if (!teamNewsFact || teamNewsFact.status !== "ok" || !teamNewsFact.data) {
+    return {
+      status: teamNewsFact?.status || "empty",
+      source: teamNewsFact?.source || null,
+      confidence: teamNewsFact?.confidence ?? 0,
+      data: null,
+      reason: teamNewsFact?.reason || null
+    };
+  }
+
+  return {
+    status: "ok",
+    source: teamNewsFact.source || null,
+    confidence: teamNewsFact.confidence ?? 0,
+    data: teamNewsFact.data,
+    reason: null
+  };
+}
+
 function buildTravelBlock(match) {
   const slug = String(match?.leagueSlug || "").toLowerCase();
 
@@ -189,7 +217,7 @@ function buildTravelBlock(match) {
   };
 }
 
-function buildAnalysisBlock(match, valuePicks, competitionContext, referee, travel) {
+function buildAnalysisBlock(match, valuePicks, competitionContext, referee, travel, teamNews) {
   const codes = [];
 
   if (isLiveLike(match?.status)) codes.push("live_match");
@@ -243,6 +271,33 @@ function buildAnalysisBlock(match, valuePicks, competitionContext, referee, trav
     partsEn.push("The referee has been identified, but profile statistics are still missing.");
   }
 
+  const homeTeamNewsNotes = Array.isArray(teamNews?.data?.homeTeam?.notes)
+    ? teamNews.data.homeTeam.notes.length
+    : 0;
+
+  const awayTeamNewsNotes = Array.isArray(teamNews?.data?.awayTeam?.notes)
+    ? teamNews.data.awayTeam.notes.length
+    : 0;
+
+  const totalTeamNewsNotes = homeTeamNewsNotes + awayTeamNewsNotes;
+
+  if (teamNews?.status === "ok") {
+    partsEl.push(
+      totalTeamNewsNotes > 0
+        ? `Υπάρχει διαθέσιμο team news context για τον αγώνα με ${totalTeamNewsNotes} συνολικές σημειώσεις ομάδων.`
+        : "Υπάρχει διαθέσιμο team news context για τον αγώνα."
+    );
+    partsEn.push(
+      totalTeamNewsNotes > 0
+        ? `Team news context is available for this match with ${totalTeamNewsNotes} combined team notes.`
+        : "Team news context is available for this match."
+    );
+  } else if (teamNews?.status === "empty" || teamNews?.status === "pending") {
+    partsEl.push("Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot.");
+    partsEn.push("Team news context is not yet available in the snapshot.");
+  }
+
+
   if (travel?.status !== "ready") {
     partsEl.push("Η εκτίμηση ταξιδιού θα ενεργοποιηθεί όταν προστεθεί geo cache ομάδων.");
     partsEn.push("Travel estimation will activate once the team geo cache is added.");
@@ -257,13 +312,62 @@ function buildAnalysisBlock(match, valuePicks, competitionContext, referee, trav
   };
 }
 
+function buildSourceIntelligence(match) {
+  if (!match?.reconcileMeta) return null;
+
+  const decision = match.reconcileMeta.decision || {
+    status: {
+      type: "consensus",
+      chosen: match.status,
+      source: match.reconcileMeta?.chosenStatusSource || null,
+      sources: Object.keys(match.sources || {})
+    },
+    score: {
+      type: "consensus",
+      chosen: `${match.scoreHome}-${match.scoreAway}`,
+      source: match.reconcileMeta?.chosenScoreSource || null
+    },
+    minute: {
+      type: "consensus",
+      chosen: match.minute,
+      source: match.reconcileMeta?.chosenMinuteSource || null
+    }
+  };
+
+  const decisionSources = Array.from(
+    new Set([
+      ...(Array.isArray(decision?.status?.sources) ? decision.status.sources : []),
+      decision?.status?.source || null,
+      decision?.score?.source || null,
+      decision?.minute?.source || null
+    ].filter(Boolean))
+  );
+
+  return {
+    decision,
+    confidence: match.reconcileMeta.confidence ?? null,
+    conflicts: match.reconcileMeta.conflictTypes || [],
+    disagreement: match.reconcileMeta.disagreement || false,
+    sources: decisionSources.length
+  };
+}
+
 function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
   const competitionContext = aiBlocks?.researchedFacts?.competitionContext || null;
   const refereeProfile = aiBlocks?.researchedFacts?.refereeProfile || null;
+  const teamNewsFact = aiBlocks?.researchedFacts?.teamNews || null;
 
   const referee = buildRefereeBlock(match);
   const travel = buildTravelBlock(match);
-  const analysis = buildAnalysisBlock(match, valuePicks, competitionContext, referee, travel);
+  const teamNews = buildTeamNewsBlock(teamNewsFact);
+  const analysis = buildAnalysisBlock(
+    match,
+    valuePicks,
+    competitionContext,
+    referee,
+    travel,
+    teamNews
+  );
 
   return {
     matchId: String(match.matchId),
@@ -299,6 +403,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
           ...refereeProfile.data
         }
       : referee,
+    teamNews,
     travel,
     value: Array.isArray(valuePicks) ? valuePicks : [],
     analysis,
@@ -312,6 +417,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       pendingSignals: {
         standings: !competitionContext?.data,
         refereeStats: !refereeProfile?.data && referee.status !== "ready",
+        teamNews: !teamNewsFact?.data,
         travelGeo: travel.status !== "ready"
       }
     }
@@ -353,34 +459,31 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,
     learningMeta: aiBlocks.learningMeta,
+    remoteTaskQueue: aiBlocks.remoteTaskQueue || [],
+    remoteTaskRouter: aiBlocks.remoteTaskRouter || {
+      status: "idle",
+      queueSize: 0,
+      queuedCapabilities: []
+    },
+    remoteExecution: aiBlocks.remoteExecution || {
+      status: "idle",
+      mode: "stub",
+      queueSize: 0,
+      executedCount: 0,
+      queuedCount: 0,
+      successCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+      providersTried: [],
+      results: [],
+      meta: {
+        matchId: String(match?.matchId || ""),
+        dayKey,
+        executorVersion: "remote-executor-stub-v1"
+      }
+    },
 
-    // 🔥 NEW — SOURCE INTELLIGENCE (FROM RECONCILE)
-    sourceIntelligence: match?.reconcileMeta
-      ? {
-          decision: match.reconcileMeta.decision || {
-            status: {
-              type: "consensus",
-              chosen: match.status,
-              source: match.reconcileMeta?.chosenStatusSource || null,
-              sources: Object.keys(match.sources || {})
-            },
-            score: {
-              type: "consensus",
-              chosen: `${match.scoreHome}-${match.scoreAway}`,
-              source: match.reconcileMeta?.chosenScoreSource || null
-             },
-             minute: {
-               type: "consensus",
-               chosen: match.minute,
-               source: match.reconcileMeta?.chosenMinuteSource || null
-            }
-          },
-          confidence: match.reconcileMeta.confidence ?? null,
-          conflicts: match.reconcileMeta.conflictTypes || [],
-          disagreement: match.reconcileMeta.disagreement || false,
-          sources: match.reconcileMeta.observationsCount || 0
-        }
-      : null
+    sourceIntelligence: buildSourceIntelligence(match)
   };
 
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);
@@ -455,34 +558,31 @@ for (const match of rows) {
     aiContext: aiBlocks.aiContext,
     sourceAudit: aiBlocks.sourceAudit,
     learningMeta: aiBlocks.learningMeta,
+    remoteTaskQueue: aiBlocks.remoteTaskQueue || [],
+    remoteTaskRouter: aiBlocks.remoteTaskRouter || {
+      status: "idle",
+      queueSize: 0,
+      queuedCapabilities: []
+    },
+    remoteExecution: aiBlocks.remoteExecution || {
+      status: "idle",
+      mode: "stub",
+      queueSize: 0,
+      executedCount: 0,
+      queuedCount: 0,
+      successCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+      providersTried: [],
+      results: [],
+      meta: {
+        matchId: String(match?.matchId || ""),
+        dayKey,
+        executorVersion: "remote-executor-stub-v1"
+      }
+    },
 
-    // 🔥 NEW — SOURCE INTELLIGENCE (FROM RECONCILE)
-    sourceIntelligence: match?.reconcileMeta
-      ? {
-          decision: match.reconcileMeta.decision || {
-            status: {
-              type: "consensus",
-              chosen: match.status,
-              source: match.reconcileMeta?.chosenStatusSource || null,
-              sources: Object.keys(match.sources || {})
-            },
-            score: {
-              type: "consensus",
-              chosen: `${match.scoreHome}-${match.scoreAway}`,
-              source: match.reconcileMeta?.chosenScoreSource || null
-            },
-            minute: {
-              type: "consensus",
-              chosen: match.minute,
-              source: match.reconcileMeta?.chosenMinuteSource || null
-            }
-          },
-          confidence: match.reconcileMeta.confidence ?? null,
-          conflicts: match.reconcileMeta.conflictTypes || [],
-          disagreement: match.reconcileMeta.disagreement || false,
-          sources: match.reconcileMeta.observationsCount || 0
-        }
-      : null
+    sourceIntelligence: buildSourceIntelligence(match)
   };
 
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);

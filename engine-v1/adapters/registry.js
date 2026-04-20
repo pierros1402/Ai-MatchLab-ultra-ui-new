@@ -1,12 +1,5 @@
 import { fetchLeagueFixtures } from "./espn.js";
-import {
-  fetchLeagueFixturesSource2,
-  isSource2Enabled,
-  isSource2TargetLeague
-} from "./source2.js";
-
 import { normalizeFixture } from "../core/normalize.js";
-import { normalizeFixtureSource2 } from "../core/normalize-source2.js";
 
 const ESPN_SUPPORTED = new Set([
   "eng.1",
@@ -103,28 +96,6 @@ const FIXTURE_ADAPTERS = [
       return normalizeFixture(event, slug);
     }
   },
-
-  {
-    id: "api_football",
-    legacyId: "source2",
-    label: "API-Football",
-    kind: "fixtures",
-    priority: 80,
-    family: "secondary",
-    isEnabled() {
-      return isSource2Enabled();
-    },
-    supportsLeague(slug) {
-      return isSource2TargetLeague(slug);
-    },
-    async fetch({ slug, dayKey }) {
-      const data = await fetchLeagueFixturesSource2(slug, dayKey);
-      return Array.isArray(data?.events) ? data.events : [];
-    },
-    normalize(event, slug) {
-      return normalizeFixtureSource2(event, slug);
-    }
-  }
 ];
 
 export function getFixtureAdapters() {
@@ -142,4 +113,61 @@ export function getFixtureAdapterById(id) {
   return (
     FIXTURE_ADAPTERS.find(adapter => adapter.id === key || adapter.legacyId === key) || null
   );
+}
+
+export function getFixtureProviderPlan(slug) {
+  const supported = getFixtureAdapters().filter(adapter => {
+    try {
+      return adapter.isEnabled() && adapter.supportsLeague(slug);
+    } catch {
+      return false;
+    }
+  });
+
+  const primary = supported[0] || null;
+  const fallbacks = supported.slice(1);
+
+  const mode =
+    supported.length > 1 ? "multi" : supported.length === 1 ? "single" : "none";
+
+  let execution = "skip";
+
+  if (mode === "single") {
+    execution = "primary_only";
+  } else if (mode === "multi") {
+    execution = "primary_then_conditional_fallback";
+  }
+
+  return {
+    leagueSlug: slug,
+    mode,
+    execution,
+    fallbackPolicy: {
+      enabled: mode === "multi",
+      strategy: "on_primary_failure_or_empty",
+      triggerOnPrimaryError: true,
+      triggerOnPrimaryEmpty: true
+    },
+    providers: supported.map(adapter => ({
+      id: adapter.id,
+      label: adapter.label || adapter.id,
+      priority: Number(adapter.priority || 0),
+      family: adapter.family || "unknown",
+      enabled: true
+    })),
+    primary: primary
+      ? {
+          id: primary.id,
+          label: primary.label || primary.id,
+          priority: Number(primary.priority || 0),
+          family: primary.family || "unknown"
+        }
+      : null,
+    fallbacks: fallbacks.map(adapter => ({
+      id: adapter.id,
+      label: adapter.label || adapter.id,
+      priority: Number(adapter.priority || 0),
+      family: adapter.family || "unknown"
+    }))
+  };
 }

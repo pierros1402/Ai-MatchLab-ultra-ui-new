@@ -517,15 +517,36 @@ function buildSourcesMap(observations) {
       out[src] = {
         observedAt: Number(row.ts || 0),
         sourceId: row.sourceId || null,
+
         status: row.status || null,
+        rawStatus: row.rawStatus || null,
+        minute: row.minute || null,
+
         scoreHome: safeNum(row.scoreHome, null),
-        scoreAway: safeNum(row.scoreAway, null)
+        scoreAway: safeNum(row.scoreAway, null),
+
+        kickoffUtc: row.kickoffUtc || null,
+        leagueName: row.leagueName || null,
+        homeTeam: row.homeTeam || null,
+        awayTeam: row.awayTeam || null,
+        venue: row.venue || null,
+
+        referee: row.referee || null,
+        officials: Array.isArray(row.officials) ? row.officials : [],
+
+        injuries: Array.isArray(row.injuries) ? row.injuries : [],
+        suspensions: Array.isArray(row.suspensions) ? row.suspensions : [],
+        missingPlayers: Array.isArray(row.missingPlayers) ? row.missingPlayers : [],
+        teamNews: row.teamNews || null,
+
+        scoreBreakdown: row.scoreBreakdown || null,
+        extraFacts: row.extraFacts || null
       };
     }
   }
 
   return out;
-}
+} 
 
 function computeDisagreement(rows) {
   const latestPerSource = new Map();
