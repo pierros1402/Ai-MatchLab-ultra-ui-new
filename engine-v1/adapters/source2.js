@@ -453,6 +453,7 @@ function mapFixture(row) {
   const league = row?.league || {};
   const teams = row?.teams || {};
   const goals = row?.goals || {};
+  const score = row?.score || {};
   const status = fixture?.status || {};
 
   const leagueSlug = mapLeagueIdToSlug(league.id);
@@ -462,30 +463,68 @@ function mapFixture(row) {
     fixture: {
       id: fixture.id,
       date: fixture.date,
+      referee: fixture?.referee || null,
+      timezone: fixture?.timezone || null,
       venue: {
-        name: fixture?.venue?.name || null
+        name: fixture?.venue?.name || null,
+        city: fixture?.venue?.city || null
       },
       status: {
         short: status.short || null,
+        long: status.long || null,
         elapsed: status.elapsed ?? null
       }
     },
     league: {
       id: league.id,
       name: league.name || null,
-      country: league.country || null
+      country: league.country || null,
+      round: league.round || null,
+      season: league.season || null
     },
     teams: {
       home: {
-        name: teams?.home?.name || null
+        id: teams?.home?.id ?? null,
+        name: teams?.home?.name || null,
+        winner: teams?.home?.winner ?? null
       },
       away: {
-        name: teams?.away?.name || null
+        id: teams?.away?.id ?? null,
+        name: teams?.away?.name || null,
+        winner: teams?.away?.winner ?? null
       }
     },
     goals: {
       home: goals.home ?? null,
       away: goals.away ?? null
+    },
+    score: {
+      halftime: score?.halftime || null,
+      fulltime: score?.fulltime || null,
+      extratime: score?.extratime || null,
+      penalty: score?.penalty || null
+    },
+    __facts: {
+      referee: fixture?.referee || null,
+      venueName: fixture?.venue?.name || null,
+      venueCity: fixture?.venue?.city || null,
+      statusShort: status.short || null,
+      statusLong: status.long || null,
+      elapsed: status.elapsed ?? null,
+      round: league.round || null,
+      season: league.season || null,
+      homeTeamId: teams?.home?.id ?? null,
+      awayTeamId: teams?.away?.id ?? null,
+      homeWinner: teams?.home?.winner ?? null,
+      awayWinner: teams?.away?.winner ?? null,
+      halftimeHome: score?.halftime?.home ?? null,
+      halftimeAway: score?.halftime?.away ?? null,
+      fulltimeHome: score?.fulltime?.home ?? null,
+      fulltimeAway: score?.fulltime?.away ?? null,
+      extratimeHome: score?.extratime?.home ?? null,
+      extratimeAway: score?.extratime?.away ?? null,
+      penaltyHome: score?.penalty?.home ?? null,
+      penaltyAway: score?.penalty?.away ?? null
     },
     __meta: {
       source: "source2",
@@ -494,7 +533,6 @@ function mapFixture(row) {
     }
   };
 }
-
 async function fetchDailySource2Rows(dayKey, slug) {
   const cacheKey = `${dayKey}:${slug}`;
 

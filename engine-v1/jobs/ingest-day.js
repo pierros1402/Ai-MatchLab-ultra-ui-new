@@ -1,9 +1,11 @@
+import fs from "fs";
 import { LEAGUE_SEEDS } from "../config.js";
 import { fetchMatchSummary } from "../adapters/espn.js";
-import { getFixtureAdapters } from "../adapters/registry.js";
+import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
 import { reconcileObservations } from "../core/reconcile-observations.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { shiftDay } from "../core/daykey.js";
+import { resolveDataPath } from "../storage/data-root.js";
 import {
   getFixtureById,
   getFixtureByMatchKey,
@@ -22,6 +24,50 @@ const NO_DRAW_COMPETITIONS = new Set([
 
 function isNoDrawCompetition(slug) {
   return NO_DRAW_COMPETITIONS.has(slug);
+}
+
+function readActiveLeaguesForDay(dayKey) {
+  try {
+    const activePath = resolveDataPath("active-leagues.json");
+
+    if (!fs.existsSync(activePath)) {
+      return new Set();
+    }
+
+    const raw = JSON.parse(fs.readFileSync(activePath, "utf8"));
+
+    if (!raw || raw.dayKey !== dayKey || !Array.isArray(raw.leagues)) {
+      return new Set();
+    }
+
+    return new Set(
+      raw.leagues
+        .filter(x => Number(x?.matchCount || 0) > 0)
+        .map(x => String(x?.slug || "").trim())
+        .filter(Boolean)
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function shouldAllowEmptyFallbackForLeague(activeLeagueSet, slug) {
+  return activeLeagueSet.has(String(slug || "").trim());
+}
+
+function shouldSkipPrimaryOnlyLeague(providerPlan, slug, activeLeagueSet) {
+  const execution = String(providerPlan?.execution || "").trim();
+  const primaryId = String(providerPlan?.primary?.id || "").trim();
+
+  if (execution !== "primary_only") {
+    return false;
+  }
+
+  if (primaryId !== "api_football") {
+    return false;
+  }
+
+  return !activeLeagueSet.has(String(slug || "").trim());
 }
 
 function emptyLeagueStats() {
@@ -95,6 +141,212 @@ function buildProviderStatsSkeleton() {
   }
 
   return stats;
+}
+
+function selectAdaptersForPlan(adapters, providerPlan) {
+  const execution = String(providerPlan?.execution || "").trim();
+
+  if (execution === "skip") {
+    return {
+      primary: null,
+      fallbacks: [],
+      execution
+    };
+  }
+
+  const primaryId = String(providerPlan?.primary?.id || "").trim();
+  const fallbackIds = Array.isArray(providerPlan?.fallbacks)
+    ? providerPlan.fallbacks.map(x => String(x?.id || "").trim()).filter(Boolean)
+    : [];
+
+  const primary =
+    adapters.find(adapter => String(adapter?.id || "").trim() === primaryId) || null;
+
+  const fallbacks = adapters.filter(adapter =>
+    fallbackIds.includes(String(adapter?.id || "").trim())
+  );
+
+  return {
+    primary,
+    fallbacks,
+    execution
+  };
+}
+
+async function fetchAdapterEventsSafe(adapter, { slug, dayKey, env }) {
+  try {
+    const data = await adapter.fetch({ slug, dayKey, env });
+    return {
+      ok: true,
+      adapterId: adapter?.id || "unknown",
+      events: Array.isArray(data) ? data : [],
+      error: null
+    };
+  } catch (err) {
+    console.error("[ingest] adapter fetch failed", {
+      dayKey,
+      slug,
+      adapterId: adapter?.id || "unknown",
+      error: String(err?.message || err)
+    });
+
+    return {
+      ok: false,
+      adapterId: adapter?.id || "unknown",
+      events: [],
+      error: err
+    };
+  }
+}
+
+function shouldEscalateToFallback({
+  providerPlan,
+  primaryFetchResult,
+  slug,
+  activeLeagueSet
+}) {
+  const execution = String(providerPlan?.execution || "").trim();
+
+  if (execution !== "primary_then_conditional_fallback") {
+    return false;
+  }
+
+  const fallbackPolicy = providerPlan?.fallbackPolicy || {};
+  const triggerOnPrimaryError = fallbackPolicy?.triggerOnPrimaryError !== false;
+  const triggerOnPrimaryEmpty = fallbackPolicy?.triggerOnPrimaryEmpty !== false;
+
+  if (!primaryFetchResult) {
+    return true;
+  }
+
+  if (!primaryFetchResult.ok && triggerOnPrimaryError) {
+    return true;
+  }
+
+  if (
+    primaryFetchResult.ok &&
+    Number(primaryFetchResult.events?.length || 0) === 0 &&
+    triggerOnPrimaryEmpty
+  ) {
+    return shouldAllowEmptyFallbackForLeague(activeLeagueSet, slug);
+  }
+
+  return false;
+}
+
+async function buildPipelinesForLeague({
+  adapters,
+  providerPlan,
+  slug,
+  dayKey,
+  env,
+  results,
+  leagueStats,
+  activeLeagueSet
+}) {
+  const selection = selectAdaptersForPlan(adapters, providerPlan);
+  const pipelines = [];
+
+  if (selection.execution === "skip") {
+    return pipelines;
+  }
+
+  if (shouldSkipPrimaryOnlyLeague(providerPlan, slug, activeLeagueSet)) {
+    return pipelines;
+  }
+
+  const primary = selection.primary;
+
+  if (primary) {
+    leagueStats.providerExecution.selectedProviders.push(primary.id);
+
+    const primaryFetchResult = await fetchAdapterEventsSafe(primary, {
+      slug,
+      dayKey,
+      env
+    });
+
+    addRawEventsForAdapter(
+      results,
+      leagueStats,
+      primary.id,
+      primaryFetchResult.events.length
+    );
+    results.rawEvents += primaryFetchResult.events.length;
+
+    pipelines.push({
+      source: primary.id,
+      sourceLabel: primary.label || primary.id,
+      sourcePriority: Number(primary.priority || 0),
+      events: primaryFetchResult.events,
+      normalize: event => primary.normalize(event, slug)
+    });
+
+    if (
+      shouldEscalateToFallback({
+        providerPlan,
+        primaryFetchResult,
+        slug,
+        activeLeagueSet
+      })
+    ) {
+      for (const fallback of selection.fallbacks) {
+        leagueStats.providerExecution.selectedProviders.push(fallback.id);
+
+        const fallbackFetchResult = await fetchAdapterEventsSafe(fallback, {
+          slug,
+          dayKey,
+          env
+        });
+
+        addRawEventsForAdapter(
+          results,
+          leagueStats,
+          fallback.id,
+          fallbackFetchResult.events.length
+        );
+        results.rawEvents += fallbackFetchResult.events.length;
+
+        pipelines.push({
+          source: fallback.id,
+          sourceLabel: fallback.label || fallback.id,
+          sourcePriority: Number(fallback.priority || 0),
+          events: fallbackFetchResult.events,
+          normalize: event => fallback.normalize(event, slug)
+        });
+      }
+    }
+
+    return pipelines;
+  }
+
+  for (const fallback of selection.fallbacks) {
+    leagueStats.providerExecution.selectedProviders.push(fallback.id);
+
+    const fallbackFetchResult = await fetchAdapterEventsSafe(fallback, {
+      slug,
+      dayKey,
+      env
+    });
+
+    addRawEventsForAdapter(
+      results,
+      leagueStats,
+      fallback.id,
+      fallbackFetchResult.events.length
+    );
+    results.rawEvents += fallbackFetchResult.events.length;
+
+    pipelines.push({
+      source: fallback.id,
+      sourceLabel: fallback.label || fallback.id,
+      sourcePriority: Number(fallback.priority || 0),
+      events: fallbackFetchResult.events,
+      normalize: event => fallback.normalize(event, slug)
+    });
+  }
+
+  return pipelines;
 }
 
 function isTerminalStatus(status) {
@@ -184,14 +436,23 @@ export async function ingestDay(dayKey, env) {
     skippedNull: 0,
     observationsWritten: 0,
 
-    byLeague: {}
+    byLeague: {},
+    providerPlans: {}
   };
-
- 
+  const activeLeagueSet = readActiveLeaguesForDay(dayKey); 
   for (const slug of LEAGUE_SEEDS) {
     results.leagues++;
 
     results.byLeague[slug] = emptyLeagueStats();
+
+    const providerPlan = getFixtureProviderPlan(slug);
+    results.providerPlans[slug] = providerPlan;
+    results.byLeague[slug].providerPlan = providerPlan;
+    results.byLeague[slug].providerExecution = {
+      mode: providerPlan?.mode || "none",
+      execution: providerPlan?.execution || "skip",
+      selectedProviders: []
+    };
 
     const adapters = getFixtureAdapters().filter(adapter => {
       try {
@@ -207,35 +468,16 @@ export async function ingestDay(dayKey, env) {
       }
     });
 
-    const pipelines = [];
-
-    for (const adapter of adapters) {
-      let events = [];
-
-      try {
-        const data = await adapter.fetch({ slug, dayKey, env });
-        events = Array.isArray(data) ? data : [];
-      } catch (err) {
-        console.error("[ingest] adapter fetch failed", {
-          dayKey,
-          slug,
-          adapterId: adapter?.id || "unknown",
-          error: String(err?.message || err)
-        });
-        events = [];
-      }
-
-      addRawEventsForAdapter(results, results.byLeague[slug], adapter.id, events.length);
-      results.rawEvents += events.length;
-
-      pipelines.push({
-        source: adapter.id,
-        sourceLabel: adapter.label || adapter.id,
-        sourcePriority: Number(adapter.priority || 0),
-        events,
-        normalize: event => adapter.normalize(event, slug)
-      });
-    }
+    const pipelines = await buildPipelinesForLeague({
+      adapters,
+      providerPlan,
+      slug,
+      dayKey,
+      env,
+      results,
+      leagueStats: results.byLeague[slug],
+      activeLeagueSet
+    });
 
     for (const pipe of pipelines) {
       for (const event of pipe.events) {
