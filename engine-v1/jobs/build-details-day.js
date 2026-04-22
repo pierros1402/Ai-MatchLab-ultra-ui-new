@@ -6,7 +6,7 @@ import { athensDayFromKickoff } from "../core/daykey.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { buildAiDetailsBlock } from "../ai-match-intelligence/build-ai-details-block.js";
 import { buildRefereeContext } from "../core/referee-context.js";
-import { buildTravelContext } from "../core/travel-context.js";
+
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -221,19 +221,20 @@ function buildTeamNewsBlock(teamNewsFact) {
   };
 }
 
-function buildTravelBlock(match) {
-  const travelContext = buildTravelContext(match);
-
+function buildTravelBlock(travelContextFact) {
   return {
-    status: travelContext?.status || "empty",
-    source: travelContext?.source || "local-team-geo",
-    reason: travelContext?.reason || null,
-    confidence: travelContext?.confidence ?? 0,
-    distanceKm: travelContext?.data?.distanceKm ?? null,
-    impact: travelContext?.data?.impact || "unknown",
-    home: travelContext?.data?.home || null,
-    away: travelContext?.data?.away || null,
-    note: travelContext?.data?.note || {
+    status: travelContextFact?.status || "empty",
+    source: travelContextFact?.source || "local-team-geo",
+    reason: travelContextFact?.reason || null,
+    confidence: travelContextFact?.confidence ?? 0,
+    distanceKm: travelContextFact?.data?.distanceKm ?? null,
+    impact: travelContextFact?.data?.impact || "unknown",
+    sameCountry: travelContextFact?.data?.sameCountry ?? null,
+    crossBorder: travelContextFact?.data?.crossBorder ?? null,
+    travelProfile: travelContextFact?.data?.travelProfile || "unknown",
+    home: travelContextFact?.data?.home || null,
+    away: travelContextFact?.data?.away || null,
+    note: travelContextFact?.data?.note || {
       code: "travel_pending",
       el: "Δεν υπάρχει ακόμη διαθέσιμο local travel context.",
       en: "Local travel context is not yet available."
@@ -403,9 +404,10 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
   const competitionContext = aiBlocks?.researchedFacts?.competitionContext || null;
   const refereeProfile = aiBlocks?.researchedFacts?.refereeProfile || null;
   const teamNewsFact = aiBlocks?.researchedFacts?.teamNews || null;
+  const travelContextFact = aiBlocks?.researchedFacts?.travelContext || null;
 
   const referee = buildRefereeBlock(match);
-  const travel = buildTravelBlock(match);
+  const travel = buildTravelBlock(travelContextFact);
   const teamNews = buildTeamNewsBlock(teamNewsFact);
   const analysis = buildAnalysisBlock(
     match,
@@ -451,7 +453,9 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
           : competitionContext?.data?.diagnostics?.reason === "possible_cross_competition_mismatch"
             ? "suspect"
             : "limited",
-      travelImpact: travel.impact
+      travelImpact: travel.impact,
+      travelProfile: travel.travelProfile,
+      crossBorder: travel.crossBorder
     },
     referee: refereeProfile?.data
       ? {
