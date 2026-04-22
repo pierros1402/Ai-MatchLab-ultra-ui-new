@@ -31,12 +31,12 @@ function buildIncomingRecord(row) {
   const team = normalizeText(row?.team);
   if (!team) return null;
 
-  const lat = normalizeNumber(row?.lat);
-  const lon = normalizeNumber(row?.lon);
+  const lat = normalizeNumber(row?.latitude ?? row?.lat);
+  const lon = normalizeNumber(row?.longitude ?? row?.lon);
 
   return {
     team,
-    venue: normalizeText(row?.venue || row?.stadium) || null,
+    venue: normalizeText(row?.venue ?? row?.stadium) || null,
     city: normalizeText(row?.city) || null,
     country: normalizeText(row?.country) || null,
     latitude: lat,
