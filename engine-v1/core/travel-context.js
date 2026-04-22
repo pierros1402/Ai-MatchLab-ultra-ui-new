@@ -19,6 +19,41 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+function normalizeCountry(value) {
+  const raw = String(value || "").trim().toLowerCase();
+
+  const aliases = {
+    uk: "united kingdom",
+    "great britain": "united kingdom",
+    england: "united kingdom",
+    scotland: "united kingdom",
+    wales: "united kingdom",
+    "northern ireland": "united kingdom",
+    usa: "united states of america",
+    "united states": "united states of america",
+    türkiye: "turkey",
+    czechia: "czech republic"
+  };
+
+  return aliases[raw] || raw;
+}
+
+function isSameCountry(homeGeo, awayGeo) {
+  const home = normalizeCountry(homeGeo?.country);
+  const away = normalizeCountry(awayGeo?.country);
+
+  if (!home || !away) return null;
+  return home === away;
+}
+
+function classifyTravelProfile(distanceKm, sameCountry) {
+  if (!Number.isFinite(distanceKm)) return "unknown";
+  if (sameCountry === false) return "cross_border";
+  if (distanceKm >= 700) return "long_domestic";
+  if (distanceKm >= 250) return "regional_domestic";
+  return "local_domestic";
+}
+
 function classifyImpact(distanceKm) {
   if (!Number.isFinite(distanceKm)) return "unknown";
   if (distanceKm >= 500) return "high";
@@ -26,12 +61,20 @@ function classifyImpact(distanceKm) {
   return "low";
 }
 
-function buildNote(status, distanceKm, homeGeo, awayGeo) {
+function buildNote(status, distanceKm, homeGeo, awayGeo, sameCountry, travelProfile) {
   if (status === "ready") {
+    if (sameCountry === false) {
+      return {
+        code: "travel_ready_cross_border",
+        el: `Υπολογίστηκε εκτίμηση ταξιδιού περίπου ${Math.round(distanceKm)} χλμ και πρόκειται για διασυνοριακή μετακίνηση με βάση το τοπικό geo cache ομάδων.`,
+        en: `A travel estimate of approximately ${Math.round(distanceKm)} km was calculated and the trip is cross-border based on the local team geo cache.`
+      };
+    }
+
     return {
       code: "travel_ready",
-      el: `Υπολογίστηκε εκτίμηση ταξιδιού περίπου ${Math.round(distanceKm)} χλμ με βάση το τοπικό geo cache ομάδων.`,
-      en: `Travel estimate of approximately ${Math.round(distanceKm)} km was calculated from the local team geo cache.`
+      el: `Υπολογίστηκε εκτίμηση ταξιδιού περίπου ${Math.round(distanceKm)} χλμ (${travelProfile}) με βάση το τοπικό geo cache ομάδων.`,
+      en: `A travel estimate of approximately ${Math.round(distanceKm)} km (${travelProfile}) was calculated from the local team geo cache.`
     };
   }
 
@@ -82,7 +125,10 @@ export function buildTravelContext(match) {
         away: awayGeo || null,
         distanceKm: null,
         impact: "unknown",
-        note: buildNote("partial", null, homeGeo, awayGeo)
+        sameCountry: null,
+        crossBorder: null,
+        travelProfile: "unknown",
+        note: buildNote("partial", null, homeGeo, awayGeo, null, "unknown")
       },
       confidence: 0.35,
       source: "local-team-geo",
@@ -105,7 +151,17 @@ export function buildTravelContext(match) {
         away: awayGeo,
         distanceKm: null,
         impact: "unknown",
-        note: buildNote("partial", null, homeGeo, awayGeo)
+        sameCountry: isSameCountry(homeGeo, awayGeo),
+        crossBorder: isSameCountry(homeGeo, awayGeo) === false,
+        travelProfile: "unknown",
+        note: buildNote(
+          "partial",
+          null,
+          homeGeo,
+          awayGeo,
+          isSameCountry(homeGeo, awayGeo),
+          "unknown"
+        )
       },
       confidence: 0.45,
       source: "local-team-geo",
@@ -121,6 +177,8 @@ export function buildTravelContext(match) {
   );
 
   const impact = classifyImpact(distanceKm);
+  const sameCountry = isSameCountry(homeGeo, awayGeo);
+  const travelProfile = classifyTravelProfile(distanceKm, sameCountry);
 
   return {
     key: "travel_context",
@@ -130,7 +188,17 @@ export function buildTravelContext(match) {
       away: awayGeo,
       distanceKm: Number(distanceKm.toFixed(1)),
       impact,
-      note: buildNote("ready", distanceKm, homeGeo, awayGeo)
+      sameCountry,
+      crossBorder: sameCountry === false,
+      travelProfile,
+      note: buildNote(
+        "ready",
+        distanceKm,
+        homeGeo,
+        awayGeo,
+        sameCountry,
+        travelProfile
+      )
     },
     confidence: 0.78,
     source: "local-team-geo",

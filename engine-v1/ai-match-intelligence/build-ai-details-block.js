@@ -332,6 +332,11 @@ const research = await fetchMatchResearch(match, {
   } else if (lineupReliability && lineupReliability !== "usable") {
     missing.push("expected_lineups_reliability");
   }
+
+  if (!travelContext?.data) {
+    missing.push("travel_context");
+  }
+
   if (!support.hasValue) missing.push("value_snapshot");
 
   const sourceAudit = {
@@ -353,6 +358,7 @@ const research = await fetchMatchResearch(match, {
     hasCompetitionContext: !!competitionContext?.data,
     hasReferee: !!refereeContext?.data,
     hasValue: support.hasValue,
+    hasTravel: !!travelContext?.data,
     hasForm: !!(
       formGuide?.homeTeam?.sampleSize ||
       formGuide?.awayTeam?.sampleSize
@@ -771,6 +777,16 @@ const research = await fetchMatchResearch(match, {
     const refereeIdentityOnly = refereeReliability === "identity_only";
     const refereeUsable = refereeUsed && refereeReliability !== "identity_only";
 
+    const travelReady = finalFacts?.travelContext?.status === "ready";
+    const travelData = finalFacts?.travelContext?.data || null;
+    const travelProfile = String(travelData?.travelProfile || "unknown");
+    const travelImpact = String(travelData?.impact || "unknown");
+    const travelCrossBorder = travelData?.crossBorder === true;
+    const travelDistanceKm =
+      typeof travelData?.distanceKm === "number"
+        ? travelData.distanceKm
+        : null;
+
     const competitionStatus = String(finalFacts?.competitionContext?.status || "");
     const competitionReason =
       finalFacts?.competitionContext?.data?.diagnostics?.reason || null;
@@ -794,6 +810,13 @@ const research = await fetchMatchResearch(match, {
     support.refereeUsed = refereeUsable;
     support.refereeIdentityOnly = refereeIdentityOnly;
     support.refereeReliability = refereeReliability || "empty";
+
+    support.travelUsed = travelReady;
+    support.travelProfile = travelProfile;
+    support.travelImpact = travelImpact;
+    support.travelCrossBorder = travelCrossBorder;
+    support.travelDistanceKm = travelDistanceKm;
+
     support.competitionContextUsed = competitionReady;
     support.competitionContextSuspect = competitionSuspect;
     support.competitionContextLimited = competitionLimited;
@@ -823,6 +846,21 @@ const research = await fetchMatchResearch(match, {
       signals.push("referee_profile_identity_only");
     }
 
+    if (travelReady && !signals.includes("travel_context_available")) {
+      signals.push("travel_context_available");
+    }
+
+    if (travelCrossBorder && !signals.includes("travel_cross_border")) {
+      signals.push("travel_cross_border");
+    }
+
+    if (
+      (travelProfile === "long_domestic" || travelImpact === "high" || travelImpact === "very_high") &&
+      !signals.includes("travel_burden_high")
+    ) {
+      signals.push("travel_burden_high");
+    }
+
     const sanitizedSignals = signals.filter(
       signal =>
         signal !== "lineup_context_available" &&
@@ -830,7 +868,10 @@ const research = await fetchMatchResearch(match, {
         signal !== "competition_context_available" &&
         signal !== "competition_context_ready" &&
         signal !== "competition_context_suspect" &&
-        signal !== "competition_context_limited"
+        signal !== "competition_context_limited" &&
+        signal !== "travel_context_available" &&
+        signal !== "travel_cross_border" &&
+        signal !== "travel_burden_high"
     );
 
     if (lineupUsable) {
@@ -847,8 +888,22 @@ const research = await fetchMatchResearch(match, {
       sanitizedSignals.push("competition_context_limited");
     }
 
-    let summary = ctx.summary;
-    if (summary && typeof summary === "object") {
+    if (travelReady) {
+      sanitizedSignals.push("travel_context_available");
+    }
+
+    if (travelCrossBorder) {
+      sanitizedSignals.push("travel_cross_border");
+    }
+
+    if (
+      travelReady &&
+      (travelProfile === "long_domestic" || travelImpact === "high" || travelImpact === "very_high")
+    ) {
+      sanitizedSignals.push("travel_burden_high");
+    }
+
+    let summary = ctx.summary;    if (summary && typeof summary === "object") {
       summary = { ...summary };
 
       if (teamNewsUsable) {
@@ -896,6 +951,34 @@ const research = await fetchMatchResearch(match, {
         }
         if (typeof summary.en === "string" && !summary.en.includes("referee identity")) {
           summary.en = `${summary.en} Only referee identity is available without enough reliable statistical profile.`;
+        }
+      }
+
+      if (travelReady) {
+        if (typeof summary.el === "string" && !summary.el.includes("travel context")) {
+          summary.el = `${summary.el} Υπάρχει διαθέσιμο travel context από το local geo substrate.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("travel context")) {
+          summary.en = `${summary.en} Travel context is available from the local geo substrate.`;
+        }
+      }
+
+      if (travelCrossBorder) {
+        if (typeof summary.el === "string" && !summary.el.includes("διασυνοριακή μετακίνηση")) {
+          summary.el = `${summary.el} Καταγράφεται διασυνοριακή μετακίνηση για την εκτός έδρας ομάδα.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("cross-border")) {
+          summary.en = `${summary.en} A cross-border trip is recorded for the away side.`;
+        }
+      } else if (
+        travelReady &&
+        (travelProfile === "long_domestic" || travelImpact === "high" || travelImpact === "very_high")
+      ) {
+        if (typeof summary.el === "string" && !summary.el.includes("μεγάλη εσωτερική μετακίνηση")) {
+          summary.el = `${summary.el} Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("long domestic trip")) {
+          summary.en = `${summary.en} A long domestic trip is recorded for the away side.`;
         }
       }
 
