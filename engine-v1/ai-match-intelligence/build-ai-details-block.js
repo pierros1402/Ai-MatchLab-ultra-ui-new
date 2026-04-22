@@ -10,10 +10,121 @@ import { buildCompetitionContext } from "../core/competition-context.js";
 import { buildRefereeContext } from "../core/referee-context.js";
 import { buildTeamNewsContext } from "../core/team-news-context.js";
 import { buildLineupContext } from "../core/lineup-context.js";
+import { buildTravelContext } from "../core/travel-context.js";
 import { buildEvidenceBundle } from "./build-evidence-bundle.js";
-import { executeRemoteTaskQueue } from "./execute-remote-task-queue.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-export async function buildAiDetailsBlock(match, { dayKey, valuePicks }) {
+function normalizeLocalRefereeFact(refereeContext) {
+  if (!refereeContext?.data) {
+    return {
+      key: "referee_profile",
+      status: "empty",
+      data: null,
+      confidence: 0,
+      source: "local-referees",
+      reason: "missing_local_referee_evidence"
+    };
+  }
+
+  const reliability =
+    refereeContext?.data?.reliability ||
+    refereeContext?.reliability ||
+    "usable";
+
+  return {
+    key: "referee_profile",
+    status: "ok",
+    data: {
+      ...(refereeContext.data || {}),
+      reliability
+    },
+    confidence: refereeContext?.confidence ?? 0.6,
+    source: refereeContext?.source || "local-referees",
+    reliability,
+    reason: refereeContext?.reason || null
+  };
+}
+
+function normalizeLocalTeamNewsFact(teamNewsContext) {
+  if (!teamNewsContext?.data) {
+    return {
+      key: "team_news",
+      status: "empty",
+      data: null,
+      confidence: 0,
+      source: "local-team-news",
+      reason: "missing_local_team_news_evidence"
+    };
+  }
+
+  const homeCount = Array.isArray(teamNewsContext?.data?.homeTeam?.notes)
+    ? teamNewsContext.data.homeTeam.notes.length
+    : 0;
+
+  const awayCount = Array.isArray(teamNewsContext?.data?.awayTeam?.notes)
+    ? teamNewsContext.data.awayTeam.notes.length
+    : 0;
+
+  const evidenceCount = homeCount + awayCount;
+  const bothSides = homeCount > 0 && awayCount > 0;
+
+  const reliability =
+    teamNewsContext?.data?.reliability ||
+    teamNewsContext?.reliability ||
+    (
+      evidenceCount <= 0
+        ? "empty"
+        : (evidenceCount >= 2 || bothSides)
+          ? "usable"
+          : "thin"
+    );
+
+  return {
+    key: "team_news",
+    status: "ok",
+    data: {
+      ...(teamNewsContext.data || {}),
+      reliability
+    },
+    confidence: teamNewsContext?.confidence ?? 0.6,
+    source: teamNewsContext?.source || "local-team-news",
+    reliability,
+    reason: teamNewsContext?.reason || null
+  };
+}
+
+function resolveProjectRoot() {
+  return path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+}
+
+function resolveValueFile(dayKey) {
+  return path.join(resolveProjectRoot(), "data", "value", `${dayKey}.json`);
+}
+
+function readJsonSafe(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function loadValuePicksForMatch(dayKey, matchId) {
+  if (!dayKey || !matchId) return [];
+
+  const file = resolveValueFile(dayKey);
+  if (!fs.existsSync(file)) return [];
+
+  const payload = readJsonSafe(file);
+  const picks = Array.isArray(payload?.picks) ? payload.picks : [];
+
+  return picks.filter(p => String(p?.matchId) === String(matchId));
+}
+
+
+export async function buildAiDetailsBlock(match, { dayKey, valuePicks } = {}) {
   console.log("[ai-details] build:start", match.matchId);
 
   const researchPlan = buildResearchPlan(match);
@@ -31,6 +142,7 @@ export async function buildAiDetailsBlock(match, { dayKey, valuePicks }) {
   const competitionContext = buildCompetitionContext(match);
   const refereeContext = buildRefereeContext(match);
   const teamNewsContext = buildTeamNewsContext(match);
+  const travelContext = buildTravelContext(match);
 
   const lineupContext = buildLineupContext(match, {
     formGuide,
@@ -52,8 +164,17 @@ export async function buildAiDetailsBlock(match, { dayKey, valuePicks }) {
     usedArchiveForAway: historyContext?.meta?.usedArchiveForAway || false
   });
 
-  const support = loadIntelligenceSupport(dayKey, match.matchId, valuePicks);
-  const research = await fetchMatchResearch(match, { useCache: true });
+  const hydratedValuePicks =
+    Array.isArray(valuePicks) && valuePicks.length
+      ? valuePicks
+      : loadValuePicksForMatch(dayKey, match?.matchId);
+
+  const support = loadIntelligenceSupport(
+    dayKey,
+    match.matchId,
+    hydratedValuePicks
+  );
+
 
 // -----------------------------
 // 🔥 HISTORY INTELLIGENCE INJECTION
@@ -83,6 +204,21 @@ const enrichedSupport = {
   historySignals
 };
 
+const research = await fetchMatchResearch(match, {
+  useCache: false,
+  allowRemote: true,
+  context: {
+    competitionContext,
+    refereeContext,
+    teamNewsContext,
+    lineupContext,
+    historyContext,
+    formGuide,
+    headToHeadGuide,
+    support: enrichedSupport
+  }
+});
+
   const aiContext = inferMatchContext(match, {
     ...enrichedSupport,
     research,
@@ -94,7 +230,6 @@ const enrichedSupport = {
     formGuide,
     headToHeadGuide
   });
-
   const evidenceBundle = buildEvidenceBundle(match, {
     research,
     competitionContext,
@@ -111,33 +246,30 @@ const enrichedSupport = {
     status: "structured",
 
     competitionContext,
-    refereeProfile: refereeContext?.data
-      ? refereeContext
+    refereeProfile: normalizeLocalRefereeFact(refereeContext),
+    teamNews: normalizeLocalTeamNewsFact(teamNewsContext),
+    travelContext: travelContext?.data
+      ? travelContext
       : {
-          key: "referee_profile",
+          key: "travel_context",
           status: "empty",
           data: null,
           confidence: 0,
-          source: "local-referees",
-          reason: "missing_local_referee_evidence"
-        },
-    teamNews: teamNewsContext?.data
-      ? teamNewsContext
-      : {
-          key: "team_news",
-          status: "empty",
-          data: null,
-          confidence: 0,
-          source: "local-team-news",
-          reason: "missing_local_team_news_evidence"
+          source: "local-team-geo",
+          reason: "missing_local_team_geo_evidence"
         },
     expectedLineups: lineupContext?.data
       ? {
           key: "expected_lineups",
-          status: "ok",
-          data: lineupContext.data,
+          status: lineupContext?.status === "empty" ? "empty" : "ok",
+          data: {
+            ...(lineupContext.data || {}),
+            reliability: lineupContext?.reliability || "empty"
+          },
           confidence: lineupContext.confidence ?? 0.6,
-          source: "local-lineup-model"
+          source: "local-lineup-model",
+          reliability: lineupContext?.reliability || "empty",
+          diagnostics: lineupContext?.diagnostics || null
         }
       : (taskResults.expected_lineups || {
           key: "expected_lineups",
@@ -161,17 +293,52 @@ const enrichedSupport = {
   };
 
   const missing = [];
-  if (!competitionContext?.data) missing.push("competition_context");
-  if (!refereeContext?.data) missing.push("referee_profile");
-  if (!teamNewsContext?.data) missing.push("team_news");
-  if (!lineupContext?.data) missing.push("expected_lineups");
+  if (!competitionContext?.data) {
+    missing.push("competition_context");
+  } else if (competitionContext?.status !== "ready") {
+    missing.push("competition_context_reliability");
+  }
+
+  const refereeReliability = String(
+    refereeContext?.data?.reliability ||
+    refereeContext?.reliability ||
+    ""
+  );
+
+  if (!refereeContext?.data) {
+    missing.push("referee_profile");
+  } else if (refereeReliability && refereeReliability !== "usable") {
+    missing.push("referee_profile_reliability");
+  }
+  const teamNewsReliability = String(
+    teamNewsContext?.data?.reliability ||
+    teamNewsContext?.reliability ||
+    ""
+  );
+
+  if (!teamNewsContext?.data) {
+    missing.push("team_news");
+  } else if (teamNewsReliability && teamNewsReliability !== "usable") {
+    missing.push("team_news_reliability");
+  }
+  const lineupReliability = String(
+    lineupContext?.data?.reliability ||
+    lineupContext?.reliability ||
+    ""
+  );
+
+  if (!lineupContext?.data) {
+    missing.push("expected_lineups");
+  } else if (lineupReliability && lineupReliability !== "usable") {
+    missing.push("expected_lineups_reliability");
+  }
   if (!support.hasValue) missing.push("value_snapshot");
 
   const sourceAudit = {
     status: evidenceBundle.status,
     sourcesUsed: evidenceBundle.summary.providers,
     conflicts: [],
-    missing: evidenceBundle.summary.missing,
+    missing,
     trustSummary: evidenceBundle.summary.trustCounts,
     evidence: evidenceBundle.evidence,
     cacheHit: !!research?.cacheHit
@@ -200,11 +367,45 @@ const enrichedSupport = {
       && sourceAudit.evidence.some(item => item?.kind === kind && item?.status === "available");
   }
 
-  function mergeRemoteExecutionIntoFacts(baseFacts, remoteExecutionResult) {
+  function mergeRemoteExecutionIntoFacts(baseFacts, researchEnvelope, remoteExecutionResult) {
     const merged = { ...(baseFacts || {}) };
     const results = Array.isArray(remoteExecutionResult?.results)
       ? remoteExecutionResult.results
       : [];
+
+    if (researchEnvelope?.teamNews) {
+      merged.teamNews = {
+        status: "ok",
+        source: Array.isArray(researchEnvelope?.sources) && researchEnvelope.sources.length
+          ? researchEnvelope.sources.join(",")
+          : "remote-research-envelope",
+        confidence: 0.6,
+        data: researchEnvelope.teamNews
+      };
+    }
+
+    if (researchEnvelope?.referee) {
+      merged.refereeProfile = {
+        status: "ok",
+        source: Array.isArray(researchEnvelope?.sources) && researchEnvelope.sources.length
+          ? researchEnvelope.sources.join(",")
+          : "remote-research-envelope",
+        confidence: 0.6,
+        data: researchEnvelope.referee
+      };
+    }
+
+    if (researchEnvelope?.competitionContext) {
+      merged.competitionContext = {
+        ...(merged.competitionContext || {}),
+        status: "ok",
+        source: Array.isArray(researchEnvelope?.sources) && researchEnvelope.sources.length
+          ? researchEnvelope.sources.join(",")
+          : "remote-research-envelope",
+        confidence: 0.6,
+        data: researchEnvelope.competitionContext
+      };
+    }
 
     for (const item of results) {
       if (!item || !item.capability) continue;
@@ -261,15 +462,58 @@ const enrichedSupport = {
       ? remoteExecutionResult.results
       : [];
 
+    const lineupOk = finalFacts?.expectedLineups?.status === "ok";
+    const lineupReliability = String(
+      finalFacts?.expectedLineups?.data?.reliability ||
+      finalFacts?.expectedLineups?.reliability ||
+      ""
+    );
+    const lineupLimited = lineupReliability === "limited";
+
     const teamNewsOk = finalFacts?.teamNews?.status === "ok";
+    const teamNewsReliability = String(
+      finalFacts?.teamNews?.data?.reliability ||
+      finalFacts?.teamNews?.reliability ||
+      ""
+    );
+    const teamNewsThin = teamNewsReliability === "thin";
+
     const refereeOk = finalFacts?.refereeProfile?.status === "ok";
+    const refereeReliability = String(
+      finalFacts?.refereeProfile?.data?.reliability ||
+      finalFacts?.refereeProfile?.reliability ||
+      ""
+    );
+    const refereeIdentityOnly = refereeReliability === "identity_only";
+    const travelReady = finalFacts?.travelContext?.status === "ready";
+    const travelSource = String(finalFacts?.travelContext?.source || "");
+
+    if (lineupOk) {
+      missing.delete("expected_lineups");
+    }
+
+    if (lineupLimited) {
+      missing.add("expected_lineups_reliability");
+    } else if (lineupOk) {
+      missing.delete("expected_lineups_reliability");
+    }
 
     if (teamNewsOk) {
       missing.delete("team_news");
     }
 
-    if (refereeOk) {
-      missing.delete("referee_profile");
+    if (teamNewsThin) {
+      missing.add("team_news_reliability");
+    } else if (teamNewsOk) {
+      missing.delete("team_news_reliability");
+    }
+
+    if (travelReady) {
+      missing.delete("travel_context");
+      missing.delete("travel_geo");
+      if (travelSource) sourcesUsed.add(travelSource);
+    } else {
+      missing.add("travel_context");
     }
 
     for (const item of results) {
@@ -290,18 +534,110 @@ const enrichedSupport = {
       }
     }
 
+    const competitionSuspect =
+      finalFacts?.competitionContext?.data?.diagnostics?.reason ===
+      "possible_cross_competition_mismatch";
+
+    const normalizedEvidence = Array.isArray(audit.evidence)
+      ? audit.evidence.map(item => {
+          if (!item) return item;
+
+          if (item.kind === "competition_context_local") {
+            if (competitionSuspect) {
+              return {
+                ...item,
+                trustClass: "suspect_local",
+                confidence: Math.min(Number(item.confidence ?? 0.8), 0.3),
+                status: "limited",
+                meta: {
+                  ...(item.meta || {}),
+                  diagnosticsReason: "possible_cross_competition_mismatch"
+                }
+              };
+            }
+
+            if (finalFacts?.competitionContext?.status !== "ready") {
+              return {
+                ...item,
+                trustClass: "fallback_local",
+                confidence: Math.min(Number(item.confidence ?? 0.8), 0.45),
+                status: "limited"
+              };
+            }
+
+            return item;
+          }
+
+          if (item.kind === "referee_profile") {
+            if (refereeIdentityOnly) {
+              return {
+                ...item,
+                trustClass: "identity_only_local",
+                confidence: Math.min(Number(item.confidence ?? 0.6), 0.45),
+                status: "limited",
+                meta: {
+                  ...(item.meta || {}),
+                  reliability: "identity_only"
+                }
+              };
+            }
+
+            return item;
+          }
+
+          if (item.kind === "team_news") {
+            if (teamNewsThin) {
+              return {
+                ...item,
+                trustClass: "thin_local",
+                confidence: Math.min(Number(item.confidence ?? 0.55), 0.42),
+                status: "limited",
+                meta: {
+                  ...(item.meta || {}),
+                  reliability: "thin"
+                }
+              };
+            }
+
+            return item;
+          }
+
+          if (item.kind === "expected_lineups") {
+            if (lineupLimited) {
+              return {
+                ...item,
+                trustClass: "limited_local",
+                confidence: Math.min(Number(item.confidence ?? 0.55), 0.42),
+                status: "limited",
+                meta: {
+                  ...(item.meta || {}),
+                  reliability: "limited"
+                }
+              };
+            }
+
+            return item;
+          }
+
+          return item;
+        })
+      : [];
+
     const trustSummary =
-      missing.size === 0
-        ? "local_and_remote_evidence_available"
-        : sourcesUsed.size > 0
-          ? "partial_remote_enrichment"
-          : (audit.trustSummary || "local_only_partial");
+      competitionSuspect
+        ? "local_evidence_with_competition_suspect_context"
+        : missing.size === 0
+          ? "local_and_remote_evidence_available"
+          : sourcesUsed.size > 0
+            ? "partial_remote_enrichment"
+            : (audit.trustSummary || "local_only_partial");
 
     return {
       ...audit,
       sourcesUsed: Array.from(sourcesUsed),
       missing: Array.from(missing),
-      trustSummary
+      trustSummary,
+      evidence: normalizedEvidence
     };
   }
 
@@ -399,47 +735,190 @@ const enrichedSupport = {
     const support = { ...(ctx.support || {}) };
     const signals = Array.isArray(ctx.signals) ? [...ctx.signals] : [];
 
+    const remoteResearchUsed = !research?.skipped && (
+      !!research?.cacheHit ||
+      !!research?.competitionContext ||
+      !!research?.referee ||
+      !!research?.teamNews ||
+      !!research?.lineups ||
+      (Array.isArray(research?.sources) && research.sources.length > 0)
+    );
+
+    const lineupUsed = finalFacts?.expectedLineups?.status === "ok";
+    const lineupReliability = String(
+      finalFacts?.expectedLineups?.data?.reliability ||
+      finalFacts?.expectedLineups?.reliability ||
+      ""
+    );
+    const lineupLimited = lineupReliability === "limited";
+    const lineupUsable = lineupUsed && lineupReliability !== "limited";
+
     const teamNewsUsed = finalFacts?.teamNews?.status === "ok";
+    const teamNewsReliability = String(
+      finalFacts?.teamNews?.data?.reliability ||
+      finalFacts?.teamNews?.reliability ||
+      ""
+    );
+    const teamNewsThin = teamNewsReliability === "thin";
+    const teamNewsUsable = teamNewsUsed && teamNewsReliability !== "thin";
+
     const refereeUsed = finalFacts?.refereeProfile?.status === "ok";
+    const refereeReliability = String(
+      finalFacts?.refereeProfile?.data?.reliability ||
+      finalFacts?.refereeProfile?.reliability ||
+      ""
+    );
+    const refereeIdentityOnly = refereeReliability === "identity_only";
+    const refereeUsable = refereeUsed && refereeReliability !== "identity_only";
 
-    support.teamNewsUsed = teamNewsUsed;
-    support.refereeUsed = support.refereeUsed || refereeUsed;
+    const competitionStatus = String(finalFacts?.competitionContext?.status || "");
+    const competitionReason =
+      finalFacts?.competitionContext?.data?.diagnostics?.reason || null;
+    const competitionConfidence =
+      finalFacts?.competitionContext?.confidence ?? 0;
 
-    if (teamNewsUsed && !signals.includes("team_news_available")) {
+    const competitionReady = competitionStatus === "ready";
+    const competitionSuspect =
+      competitionReason === "possible_cross_competition_mismatch";
+    const competitionLimited =
+      !competitionReady && !competitionSuspect;
+
+    support.researchUsed = remoteResearchUsed;
+    support.cacheHit = remoteResearchUsed ? !!research?.cacheHit : false;
+    support.lineupUsed = lineupUsable;
+    support.lineupLimited = lineupLimited;
+    support.lineupReliability = lineupReliability || "empty";
+    support.teamNewsUsed = teamNewsUsable;
+    support.teamNewsThin = teamNewsThin;
+    support.teamNewsReliability = teamNewsReliability || "empty";
+    support.refereeUsed = refereeUsable;
+    support.refereeIdentityOnly = refereeIdentityOnly;
+    support.refereeReliability = refereeReliability || "empty";
+    support.competitionContextUsed = competitionReady;
+    support.competitionContextSuspect = competitionSuspect;
+    support.competitionContextLimited = competitionLimited;
+    support.competitionContextConfidence = competitionConfidence;
+
+    if (lineupUsable && !signals.includes("lineup_context_available")) {
+      signals.push("lineup_context_available");
+    }
+
+    if (lineupLimited && !signals.includes("lineup_context_limited")) {
+      signals.push("lineup_context_limited");
+    }
+
+    if (teamNewsUsable && !signals.includes("team_news_available")) {
       signals.push("team_news_available");
     }
 
-    if (refereeUsed && !signals.includes("referee_profile_available")) {
+    if (teamNewsThin && !signals.includes("team_news_thin")) {
+      signals.push("team_news_thin");
+    }
+
+    if (refereeUsable && !signals.includes("referee_profile_available")) {
       signals.push("referee_profile_available");
+    }
+
+    if (refereeIdentityOnly && !signals.includes("referee_profile_identity_only")) {
+      signals.push("referee_profile_identity_only");
+    }
+
+    const sanitizedSignals = signals.filter(
+      signal =>
+        signal !== "lineup_context_available" &&
+        signal !== "lineup_context_limited" &&
+        signal !== "competition_context_available" &&
+        signal !== "competition_context_ready" &&
+        signal !== "competition_context_suspect" &&
+        signal !== "competition_context_limited"
+    );
+
+    if (lineupUsable) {
+      sanitizedSignals.push("lineup_context_available");
+    } else if (lineupLimited) {
+      sanitizedSignals.push("lineup_context_limited");
+    }
+
+    if (competitionReady) {
+      sanitizedSignals.push("competition_context_ready");
+    } else if (competitionSuspect) {
+      sanitizedSignals.push("competition_context_suspect");
+    } else if (competitionLimited) {
+      sanitizedSignals.push("competition_context_limited");
     }
 
     let summary = ctx.summary;
     if (summary && typeof summary === "object") {
       summary = { ...summary };
 
-      if (teamNewsUsed) {
+      if (teamNewsUsable) {
         if (typeof summary.el === "string" && !summary.el.includes("team news")) {
           summary.el = `${summary.el} Υπάρχει διαθέσιμο team news context στο enriched snapshot.`;
         }
         if (typeof summary.en === "string" && !summary.en.includes("team news")) {
           summary.en = `${summary.en} Team news context is available in the enriched snapshot.`;
         }
+      } else if (teamNewsThin) {
+        if (typeof summary.el === "string" && !summary.el.includes("περιορισμένο team news")) {
+          summary.el = `${summary.el} Υπάρχει περιορισμένο team news context με χαμηλή πληρότητα.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("limited team news")) {
+          summary.en = `${summary.en} Limited team news context is available with low completeness.`;
+        }
       }
 
-      if (refereeUsed) {
+      if (lineupUsable) {
+        if (typeof summary.el === "string" && !summary.el.includes("lineup")) {
+          summary.el = `${summary.el} Υπάρχει διαθέσιμο lineup context στο enriched snapshot.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("lineup")) {
+          summary.en = `${summary.en} Lineup context is available in the enriched snapshot.`;
+        }
+      } else if (lineupLimited) {
+        if (typeof summary.el === "string" && !summary.el.includes("περιορισμένο lineup")) {
+          summary.el = `${summary.el} Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("limited lineup")) {
+          summary.en = `${summary.en} Limited lineup context is available with low completeness.`;
+        }
+      }
+
+      if (refereeUsable) {
         if (typeof summary.el === "string" && !summary.el.includes("διαιτητ")) {
           summary.el = `${summary.el} Υπάρχει διαθέσιμο referee profile στο enriched snapshot.`;
         }
         if (typeof summary.en === "string" && !summary.en.includes("referee")) {
           summary.en = `${summary.en} Referee profile is available in the enriched snapshot.`;
         }
+      } else if (refereeIdentityOnly) {
+        if (typeof summary.el === "string" && !summary.el.includes("ταυτότητα διαιτητή")) {
+          summary.el = `${summary.el} Υπάρχει μόνο ταυτότητα διαιτητή χωρίς επαρκή στατιστικά αξιοπιστίας.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("referee identity")) {
+          summary.en = `${summary.en} Only referee identity is available without enough reliable statistical profile.`;
+        }
+      }
+
+      if (competitionSuspect) {
+        if (typeof summary.el === "string" && !summary.el.includes("ασυμφωνία διοργάνωσης")) {
+          summary.el = `${summary.el} Το competition context παραμένει ύποπτο για πιθανή ασυμφωνία διοργάνωσης από την πηγή.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("competition mismatch")) {
+          summary.en = `${summary.en} The competition context remains suspect for a possible source-side competition mismatch.`;
+        }
+      } else if (competitionLimited) {
+        if (typeof summary.el === "string" && !summary.el.includes("βαθμολογικό πλαίσιο")) {
+          summary.el = `${summary.el} Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.`;
+        }
+        if (typeof summary.en === "string" && !summary.en.includes("standings context")) {
+          summary.en = `${summary.en} The available standings context remains reliability-limited.`;
+        }
       }
     }
-
     return {
       ...ctx,
       support,
-      signals,
+      signals: sanitizedSignals,
       summary
     };
   }
@@ -452,49 +931,86 @@ const enrichedSupport = {
     const factStatus = String(fact?.status || "").toLowerCase();
 
     let state = "pending";
-    let resolution = "missing";
+    let resolution = "missing_local";
     let provider = null;
     let confidence = 0;
-    let remoteFallbackRecommended = false;
+    let remoteFallbackRecommended = Array.isArray(task?.fallbackEvidence)
+      && task.fallbackEvidence.length > 0;
 
     if (capability === "competition_context") {
       if (competitionContext?.data) {
         state = "done";
-        resolution =
-          competitionContext?.status === "fallback"
-            ? "fallback_local"
-            : "deterministic_local";
+
+        if (
+          competitionContext?.data?.diagnostics?.reason ===
+          "possible_cross_competition_mismatch"
+        ) {
+          resolution = "suspect_local";
+        } else if (competitionContext?.status === "fallback") {
+          resolution = "fallback_local";
+        } else {
+          resolution = "deterministic_local";
+        }
+
         provider = "local-standings";
         confidence = competitionContext?.confidence ?? 0.3;
-      } else {
-        remoteFallbackRecommended = true;
       }
     } else if (capability === "referee_profile") {
+      const refereeReliability = String(
+        refereeContext?.data?.reliability ||
+        refereeContext?.reliability ||
+        ""
+      );
+
       if (refereeContext?.data && hasEvidenceKind("referee_profile")) {
         state = "done";
-        resolution = "deterministic_local";
+        resolution =
+          refereeReliability === "identity_only"
+            ? "identity_only_local"
+            : "deterministic_local";
         provider = "local-referees";
-        confidence = refereeContext?.confidence ?? 0.6;
-      } else {
-        remoteFallbackRecommended = true;
+        confidence =
+          refereeReliability === "identity_only"
+            ? Math.min(refereeContext?.confidence ?? 0.6, 0.45)
+            : (refereeContext?.confidence ?? 0.6);
       }
     } else if (capability === "team_news") {
+      const teamNewsReliability = String(
+        teamNewsContext?.data?.reliability ||
+        teamNewsContext?.reliability ||
+        ""
+      );
+
       if (teamNewsContext?.data && hasEvidenceKind("team_news")) {
         state = "done";
-        resolution = "hybrid_local";
+        resolution =
+          teamNewsReliability === "thin"
+            ? "thin_local"
+            : "deterministic_local";
         provider = "local-team-news";
-        confidence = teamNewsContext?.confidence ?? 0.55;
-      } else {
-        remoteFallbackRecommended = true;
+        confidence =
+          teamNewsReliability === "thin"
+            ? Math.min(teamNewsContext?.confidence ?? 0.55, 0.42)
+            : (teamNewsContext?.confidence ?? 0.55);
       }
     } else if (capability === "expected_lineups") {
+      const lineupReliability = String(
+        lineupContext?.data?.reliability ||
+        lineupContext?.reliability ||
+        ""
+      );
+
       if (lineupContext?.data) {
         state = "done";
-        resolution = "model_local";
+        resolution =
+          lineupReliability === "limited"
+            ? "limited_local"
+            : "deterministic_local";
         provider = "local-lineup-model";
-        confidence = lineupContext?.confidence ?? 0.6;
-      } else {
-        remoteFallbackRecommended = true;
+        confidence =
+          lineupReliability === "limited"
+            ? Math.min(lineupContext?.confidence ?? 0.55, 0.42)
+            : (lineupContext?.confidence ?? 0.55);
       }
     } else if (capability === "form_guide") {
       if ((formGuide?.homeTeam?.sampleSize || 0) >= 3 && (formGuide?.awayTeam?.sampleSize || 0) >= 3) {
@@ -554,7 +1070,6 @@ const enrichedSupport = {
       fallbackEvidence: Array.isArray(task.fallbackEvidence) ? task.fallbackEvidence : []
     };
   }
-
   const taskExecution = Array.isArray(researchPlan?.tasks)
     ? researchPlan.tasks.map(buildTaskExecution)
     : [];
@@ -573,22 +1088,16 @@ const enrichedSupport = {
       fallbackEvidence: task.fallbackEvidence
     }));
 
-  const remoteExecution = await executeRemoteTaskQueue(match, remoteTaskQueue, {
-    dayKey,
-    research,
-    support: enrichedSupport,
-    researchedFacts,
-    teamNewsContext,
-    refereeContext,
-    competitionContext,
-    lineupContext,
-    historyContext,
-    formGuide,
-    headToHeadGuide
-  });
+  const remoteExecution = {
+    status: research?.remoteStatus || "idle",
+    queueSize: remoteTaskQueue.length,
+    providersTried: Array.isArray(research?.sources) ? research.sources : [],
+    results: Array.isArray(research?.remoteResults) ? research.remoteResults : []
+  };
 
   const mergedResearchedFacts = mergeRemoteExecutionIntoFacts(
     researchedFacts,
+    research,
     remoteExecution
   );
 
@@ -610,9 +1119,9 @@ const enrichedSupport = {
 
   const normalizedRemoteExecution = {
     ...(remoteExecution || {}),
-    executedQueueSize: Number.isFinite(Number(remoteExecution?.queueSize))
-      ? Number(remoteExecution.queueSize)
-      : (Array.isArray(remoteExecution?.results) ? remoteExecution.results.length : 0),
+    executedQueueSize: Array.isArray(remoteExecution?.results)
+      ? remoteExecution.results.length
+      : 0,
     queueSize: normalizedTaskLayer.remoteTaskQueue.length,
     unresolvedCapabilities: normalizedTaskLayer.remoteTaskRouter.queuedCapabilities,
     resolvedCapabilities: normalizedTaskLayer.tasks
@@ -625,6 +1134,7 @@ const enrichedSupport = {
       tasks: normalizedTaskLayer.tasks
     },
     researchedFacts: mergedResearchedFacts,
+    travelContext: mergedResearchedFacts?.travelContext || null,
     aiContext: normalizedAiContext,
     phase: aiContext?.phase || null,
     sourceAudit: normalizedSourceAudit,

@@ -1,23 +1,7 @@
-import fs from "fs";
-import { resolveDataPath } from "../storage/data-root.js";
-
-function readJsonSafe(filePath, fallback = null) {
-  try {
-    if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
-    return fallback;
-  }
-}
-
-function normalizeTeamKey(name) {
-  return String(name || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
+import {
+  readTeamNewsRecord
+} from "../storage/team-news-db.js";
+import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 
 function impactScore(absences = []) {
   if (!absences.length) return 0;
@@ -40,62 +24,163 @@ function classifyImpact(score) {
   return "none";
 }
 
+function dedupeText(items = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    const text = String(raw || "").trim();
+    if (!text) continue;
+
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+  }
+
+  return out;
+}
+
+function resolveLeagueSlug(match = {}) {
+  return (
+    match?.leagueSlug ||
+    match?.league?.slug ||
+    match?.competition?.slug ||
+    null
+  );
+}
+
+function readTeamNewsWithAliases(leagueSlug, teamName) {
+  const candidates = resolveAliasCandidates(leagueSlug, teamName);
+  const tried = [];
+
+  for (const candidate of candidates) {
+    tried.push(candidate);
+    const record = readTeamNewsRecord(candidate);
+    if (record) {
+      return {
+        record,
+        matchedOn: candidate,
+        candidates: tried
+      };
+    }
+  }
+
+  return {
+    record: null,
+    matchedOn: null,
+    candidates: tried
+  };
+}
+
+function buildSide(teamName, resolved) {
+  const record = resolved?.record || null;
+  const absences = record?.absences || [];
+  const recordNotes = record?.notes || [];
+  const impact = impactScore(absences);
+  const impactLevel = classifyImpact(impact);
+
+  const notes = dedupeText([
+    ...recordNotes,
+    ...absences.map(x => {
+      const player = String(x?.player || "").trim();
+      const reason = String(x?.reason || "").trim();
+
+      if (player && reason) return `${player}: ${reason}`;
+      if (player) return player;
+      if (reason) return reason;
+      return null;
+    })
+  ]);
+
+  return {
+    team: teamName || null,
+    matchedOn: resolved?.matchedOn || null,
+    lookupCandidates: resolved?.candidates || [],
+    absences,
+    notes,
+    impactScore: impact,
+    impactLevel,
+    source: record?.source || "local-team-news",
+    updatedAt: record?.updatedAt || null
+  };
+}
+
 export function buildTeamNewsContext(match) {
-  const homeKey = normalizeTeamKey(match?.homeTeam);
-  const awayKey = normalizeTeamKey(match?.awayTeam);
+  const leagueSlug = resolveLeagueSlug(match);
 
-  const homeFile = resolveDataPath("team-news", `${homeKey}.json`);
-  const awayFile = resolveDataPath("team-news", `${awayKey}.json`);
+  const homeResolved = readTeamNewsWithAliases(leagueSlug, match?.homeTeam);
+  const awayResolved = readTeamNewsWithAliases(leagueSlug, match?.awayTeam);
 
-  const homeData = readJsonSafe(homeFile, null);
-  const awayData = readJsonSafe(awayFile, null);
+  const homeData = buildSide(match?.homeTeam, homeResolved);
+  const awayData = buildSide(match?.awayTeam, awayResolved);
 
-  if (!homeData && !awayData) {
+  const hasHome = !!homeResolved?.record;
+  const hasAway = !!awayResolved?.record;
+
+  if (!hasHome && !hasAway) {
     return {
       key: "team_news",
       status: "empty",
       data: null,
-      confidence: 0
+      confidence: 0,
+      source: "local-team-news",
+      reason: "missing_local_team_news"
     };
   }
 
-  const homeAbs = homeData?.absences || [];
-  const awayAbs = awayData?.absences || [];
+  const totalAbsences =
+    homeData.absences.length + awayData.absences.length;
 
-  const homeImpact = impactScore(homeAbs);
-  const awayImpact = impactScore(awayAbs);
+  const summaryNotes = [];
+  const homeNotes = Array.isArray(homeData?.notes) ? homeData.notes : [];
+  const awayNotes = Array.isArray(awayData?.notes) ? awayData.notes : [];
+  const homeCount = homeNotes.length;
+  const awayCount = awayNotes.length;
+  const evidenceCount = homeCount + awayCount;
+  const bothSides = homeCount > 0 && awayCount > 0;
 
-  const homeLevel = classifyImpact(homeImpact);
-  const awayLevel = classifyImpact(awayImpact);
+  const reliability =
+    evidenceCount <= 0
+      ? "empty"
+      : (evidenceCount >= 2 || bothSides)
+        ? "usable"
+        : "thin";
 
-  const notes = [];
-
-  if (homeLevel === "severe") {
-    notes.push(`${match.homeTeam} σημαντικές απουσίες`);
+  if (homeData.impactLevel === "severe") {
+    summaryNotes.push(`${match?.homeTeam} σημαντικές απουσίες`);
   }
 
-  if (awayLevel === "severe") {
-    notes.push(`${match.awayTeam} σημαντικές απουσίες`);
+  if (awayData.impactLevel === "severe") {
+    summaryNotes.push(`${match?.awayTeam} σημαντικές απουσίες`);
   }
 
   return {
     key: "team_news",
     status: "ready",
     data: {
-      home: {
-        absences: homeAbs,
-        impactScore: homeImpact,
-        impactLevel: homeLevel
+      home: homeData,
+      away: awayData,
+
+      homeTeam: {
+        notes: homeData.notes
       },
-      away: {
-        absences: awayAbs,
-        impactScore: awayImpact,
-        impactLevel: awayLevel
+      awayTeam: {
+        notes: awayData.notes
       },
-      notes
+
+      notes: dedupeText(summaryNotes),
+      reliability,
+      evidenceCount,
+      homeCount,
+      awayCount,
+      bothSides
     },
     confidence:
-      (homeAbs.length + awayAbs.length) > 5 ? 0.8 :
-      (homeAbs.length + awayAbs.length) > 0 ? 0.6 : 0.3
+      totalAbsences > 5 ? 0.8 :
+      totalAbsences > 0 ? 0.6 : 0.3,
+    source: "local-team-news",
+    reliability,
+    reason: null
   };
 }

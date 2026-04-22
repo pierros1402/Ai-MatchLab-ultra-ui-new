@@ -40,6 +40,24 @@ function pickRefereeObjectFromOfficials(officials = []) {
   return null;
 }
 
+function buildNamedRefereeCandidate(value, role = "referee") {
+  const name = normalizeName(
+    value?.name ||
+    value?.displayName ||
+    value?.fullName ||
+    value?.referee ||
+    value?.refereeName
+  );
+
+  if (!name) return null;
+
+  return {
+    ...value,
+    name,
+    role: value?.role || value?.type || role
+  };
+}
+
 function extractRefereeStats(data = {}) {
   const stats = data?.stats || {};
   const profile = data?.profile || {};
@@ -107,6 +125,46 @@ function extractRefereeStats(data = {}) {
   };
 }
 
+function inferRefereeReliability(data = {}, stats = {}) {
+  const hasName = !!normalizeName(data?.name);
+  const hasDisciplineStats =
+    stats?.yellowPerMatch != null ||
+    stats?.redPerMatch != null ||
+    stats?.foulPerMatch != null ||
+    stats?.penaltyPerMatch != null;
+
+  const sampleSize = toNumber(stats?.sampleSize);
+  const hasUsableSample = sampleSize != null && sampleSize >= 3;
+
+  if (!hasName) {
+    return {
+      reliability: "empty",
+      hasName: false,
+      hasDisciplineStats: false,
+      hasUsableSample: false,
+      sampleSize
+    };
+  }
+
+  if (hasDisciplineStats || hasUsableSample) {
+    return {
+      reliability: "usable",
+      hasName: true,
+      hasDisciplineStats,
+      hasUsableSample,
+      sampleSize
+    };
+  }
+
+  return {
+    reliability: "identity_only",
+    hasName: true,
+    hasDisciplineStats: false,
+    hasUsableSample: false,
+    sampleSize
+  };
+}
+
 function buildCanonicalRefereeProfile(data, provider, confidence = 0.65, reason = null, status = "success") {
   const name = normalizeName(data?.name);
   if (!name) {
@@ -114,16 +172,57 @@ function buildCanonicalRefereeProfile(data, provider, confidence = 0.65, reason 
       status: "unavailable",
       reason: reason || "missing_referee_name",
       confidence: 0,
+      reliability: "empty",
+      diagnostics: {
+        provider,
+        hasName: false,
+        hasDisciplineStats: false,
+        hasUsableSample: false,
+        sampleSize: null,
+        source: data?.source || null
+      },
       data: null
     };
   }
 
   const stats = extractRefereeStats(data);
+  const reliabilityMeta = inferRefereeReliability(data, stats);
+
+  const resolvedReason =
+    reason ||
+    (reliabilityMeta.reliability === "identity_only"
+      ? "referee_identity_without_stats"
+      : null);
+
+  const resolvedStatus =
+    reliabilityMeta.reliability === "usable"
+      ? status === "unavailable"
+        ? "partial"
+        : "success"
+      : reliabilityMeta.reliability === "identity_only"
+        ? "partial"
+        : "unavailable";
+
+  const resolvedConfidence =
+    reliabilityMeta.reliability === "usable"
+      ? confidence
+      : reliabilityMeta.reliability === "identity_only"
+        ? Math.min(confidence, 0.45)
+        : 0;
 
   return {
-    status,
-    reason,
-    confidence,
+    status: resolvedStatus,
+    reason: resolvedReason,
+    confidence: resolvedConfidence,
+    reliability: reliabilityMeta.reliability,
+    diagnostics: {
+      provider,
+      hasName: reliabilityMeta.hasName,
+      hasDisciplineStats: reliabilityMeta.hasDisciplineStats,
+      hasUsableSample: reliabilityMeta.hasUsableSample,
+      sampleSize: reliabilityMeta.sampleSize,
+      source: data?.source || null
+    },
     data: {
       name,
       yellowPerMatch: stats.yellowPerMatch,
@@ -131,7 +230,8 @@ function buildCanonicalRefereeProfile(data, provider, confidence = 0.65, reason 
       foulPerMatch: stats.foulPerMatch,
       penaltyPerMatch: stats.penaltyPerMatch,
       sampleSize: stats.sampleSize,
-      provider
+      provider,
+      reliability: reliabilityMeta.reliability
     }
   };
 }
@@ -170,25 +270,68 @@ function extractRefereeFromMatch(match = {}) {
   const espn = match?.sources?.espn || {};
   const source2 = match?.sources?.source2 || {};
 
+  const localOfficiating =
+    match?.sources?.localOfficiating ||
+    match?.sources?.officiating ||
+    match?.officiating ||
+    {};
+
+  const matchOfficials =
+    match?.officials ||
+    match?.matchOfficials ||
+    [];
+
   const espnProfile = espn?.refereeProfile || {};
   const source2Profile = source2?.refereeProfile || {};
+  const localProfile =
+    localOfficiating?.refereeProfile ||
+    localOfficiating?.referee ||
+    localOfficiating?.payload?.referee ||
+    {};
 
   const espnOfficial = pickRefereeObjectFromOfficials(espn?.officials);
   const source2Official = pickRefereeObjectFromOfficials(source2?.officials);
+  const localOfficial =
+    pickRefereeObjectFromOfficials(localOfficiating?.officials) ||
+    pickRefereeObjectFromOfficials(localOfficiating?.payload?.officials) ||
+    pickRefereeObjectFromOfficials(matchOfficials);
+
+  const localNamed =
+    buildNamedRefereeCandidate(localProfile) ||
+    buildNamedRefereeCandidate(localOfficiating) ||
+    buildNamedRefereeCandidate(localOfficiating?.payload) ||
+    null;
 
   return {
     ...(source2Official || {}),
     ...(espnOfficial || {}),
+    ...(localOfficial || {}),
     ...(espnProfile || {}),
     ...(source2Profile || {}),
+    ...(localProfile || {}),
+    ...(localNamed || {}),
     name:
+      normalizeName(
+        localProfile?.name ||
+        localProfile?.displayName ||
+        localProfile?.fullName ||
+        localProfile?.refereeName
+      ) ||
+      normalizeName(
+        localOfficial?.name ||
+        localOfficial?.displayName ||
+        localOfficial?.fullName
+      ) ||
+      normalizeName(
+        localNamed?.name
+      ) ||
       source2Profile?.name ||
       espnProfile?.name ||
       normalizeName(source2Official?.name || source2Official?.displayName || source2Official?.fullName) ||
       normalizeName(espnOfficial?.name || espnOfficial?.displayName || espnOfficial?.fullName) ||
-      match?.referee ||
-      espn?.referee ||
-      source2?.referee ||
+      normalizeName(match?.referee || match?.refereeName) ||
+      normalizeName(espn?.referee || espn?.refereeName) ||
+      normalizeName(source2?.referee || source2?.refereeName) ||
       null
   };
 }
@@ -196,34 +339,34 @@ function extractRefereeFromMatch(match = {}) {
 export async function fetchRefereeResearchBridge(match, task, context = {}) {
   const extracted = extractRefereeFromResearch(match, context);
   const stats = extractRefereeStats(extracted);
+  const reliabilityMeta = inferRefereeReliability(extracted, stats);
 
   return buildCanonicalRefereeProfile(
     extracted,
     "referee-research-bridge",
-    stats.yellowPerMatch != null || stats.sampleSize != null ? 0.78 : 0.62,
-    null,
-    stats.yellowPerMatch != null || stats.sampleSize != null ? "success" : "partial"
+    reliabilityMeta.reliability === "usable" ? 0.78 : 0.62,
+    reliabilityMeta.reliability === "identity_only"
+      ? "referee_identity_without_stats"
+      : null,
+    reliabilityMeta.reliability === "usable" ? "success" : "partial"
   );
 }
 
 export async function fetchRefereeMatchFacts(match, task, context = {}) {
   const extracted = extractRefereeFromMatch(match);
   const stats = extractRefereeStats(extracted);
+  const reliabilityMeta = inferRefereeReliability(extracted, stats);
 
   return buildCanonicalRefereeProfile(
     extracted,
     "referee-match-facts",
-    stats.yellowPerMatch != null || stats.sampleSize != null ? 0.69 : 0.54,
-    null,
-    stats.yellowPerMatch != null || stats.sampleSize != null ? "success" : "partial"
+    reliabilityMeta.reliability === "usable" ? 0.69 : 0.54,
+    reliabilityMeta.reliability === "identity_only"
+      ? "referee_identity_without_stats"
+      : null,
+    reliabilityMeta.reliability === "usable" ? "success" : "partial"
   );
 }
-
 export async function fetchRefereeStub(match, task, context = {}) {
-  return {
-    status: "unavailable",
-    reason: "provider_contract_ready_no_live_source",
-    confidence: 0,
-    data: null
-  };
+  return fetchRefereeMatchFacts(match, task, context);
 }

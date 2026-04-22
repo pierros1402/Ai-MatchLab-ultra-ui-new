@@ -1,17 +1,6 @@
 import fs from "fs/promises";
 import { getFixturesByDay } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
-import path from "path";
-
-function readArchiveSeason(slug, season) {
-  try {
-    const filePath = resolveDataPath("history-archive", slug, `${season}.json`);
-    const raw = JSON.parse(require("fs").readFileSync(filePath, "utf8"));
-    return Array.isArray(raw?.matches) ? raw.matches : [];
-  } catch {
-    return [];
-  }
-}
 
 const HISTORY_DIR = ensureDir(resolveDataPath("history"));
 
@@ -34,6 +23,44 @@ async function readJsonSafe(filePath, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function isTerminalRow(row) {
+  const status = String(row?.status || "").toUpperCase();
+  const rawStatus = String(row?.rawStatus || "").toUpperCase();
+  const operationalState = String(row?.operationalState || "").toUpperCase();
+
+  if (Number(row?.finalized) === 1) return true;
+  if (String(row?.state || "").toLowerCase() === "final") return true;
+  if (row?.isDisplayFinal === true) return true;
+
+  if (
+    status === "FT" ||
+    status === "AET" ||
+    status === "PEN" ||
+    status === "POST" ||
+    status === "FINAL"
+  ) {
+    return true;
+  }
+
+  if (
+    rawStatus.includes("STATUS_FULL_TIME") ||
+    rawStatus.includes("STATUS_FINAL") ||
+    rawStatus.includes("STATUS_AET") ||
+    rawStatus.includes("STATUS_PEN")
+  ) {
+    return true;
+  }
+
+  if (
+    operationalState === "TERMINAL_CONFIRMED" ||
+    operationalState === "TERMINAL"
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function normalizeHistoryRow(row, season, dayKey) {
@@ -89,25 +116,51 @@ function normalizeHistoryDays(history) {
     .sort((a, b) => String(a.dayKey).localeCompare(String(b.dayKey)));
 }
 
+function mergeRowsById(existingRows, incomingRows) {
+  const map = new Map();
+
+  for (const row of existingRows || []) {
+    const key = String(row?.id || "");
+    if (key) map.set(key, row);
+  }
+
+  for (const row of incomingRows || []) {
+    const key = String(row?.id || "");
+    if (key) map.set(key, row);
+  }
+
+  return [...map.values()].sort((a, b) => {
+    const ak = Number(a?.kickoff_ms || 0);
+    const bk = Number(b?.kickoff_ms || 0);
+    if (ak !== bk) return ak - bk;
+    return String(a?.id || "").localeCompare(String(b?.id || ""));
+  });
+}
+
 export async function appendFinalizedDayToHistory(dayKey) {
   const rows = getFixturesByDay(dayKey);
+  const terminalRows = rows.filter(isTerminalRow);
 
   console.log("[history] day:", dayKey);
   console.log("[history] rows count:", rows.length);
+  console.log("[history] terminal rows count:", terminalRows.length);
 
-  if (rows.length) {
-    console.log("[history] sample row:", {
-      matchId: rows[0]?.matchId,
-      status: rows[0]?.status,
-      scoreHome: rows[0]?.scoreHome,
-      scoreAway: rows[0]?.scoreAway
+  if (terminalRows.length) {
+    console.log("[history] terminal sample row:", {
+      matchId: terminalRows[0]?.matchId,
+      status: terminalRows[0]?.status,
+      rawStatus: terminalRows[0]?.rawStatus,
+      operationalState: terminalRows[0]?.operationalState,
+      finalized: terminalRows[0]?.finalized,
+      scoreHome: terminalRows[0]?.scoreHome,
+      scoreAway: terminalRows[0]?.scoreAway
     });
   }
 
-  if (!rows.length) {
+  if (!terminalRows.length) {
     return {
       ok: false,
-      reason: "no_rows",
+      reason: "no_terminal_rows",
       dayKey
     };
   }
@@ -118,31 +171,14 @@ export async function appendFinalizedDayToHistory(dayKey) {
 
   const historyPath = resolveDataPath("history", `${season}.json`);
   const existingHistory = await readJsonSafe(historyPath, { season, days: [] });
-
   const days = normalizeHistoryDays(existingHistory);
 
-  let normalizedRows = rows.map(r => normalizeHistoryRow(r, season, dayKey));
+  const normalizedRows = terminalRows.map(r => normalizeHistoryRow(r, season, dayKey));
 
-  // 🔽 fallback από archive αν δεν έχουμε αρκετά rows
-  if (normalizedRows.length < 3) {
-    console.log("[history] fallback to archive for", dayKey);
-
-    const archiveRows = readArchiveSeason(
-      rows[0]?.leagueSlug || "",
-      season
-    ).filter(r => r.dayKey === dayKey);
-
-    if (archiveRows.length) {
-      normalizedRows = archiveRows.map(r =>
-        normalizeHistoryRow(r, season, dayKey)
-      );
-    }
-  }
-
-  console.log("[history] normalized rows:", normalizedRows.length);
+  console.log("[history] normalized terminal rows:", normalizedRows.length);
 
   if (normalizedRows.length) {
-    console.log("[history] normalized sample:", {
+    console.log("[history] normalized terminal sample:", {
       id: normalizedRows[0].id,
       status: normalizedRows[0].status,
       scoreHome: normalizedRows[0].scoreHome,
@@ -152,11 +188,13 @@ export async function appendFinalizedDayToHistory(dayKey) {
   }
 
   const existingIndex = days.findIndex(d => d?.dayKey === dayKey);
+  const existingDayRows = existingIndex >= 0 ? (days[existingIndex]?.rows || []) : [];
+  const mergedRows = mergeRowsById(existingDayRows, normalizedRows);
 
   const dayPayload = {
     dayKey,
-    matchCount: normalizedRows.length,
-    rows: normalizedRows,
+    matchCount: mergedRows.length,
+    rows: mergedRows,
     updatedAt: Date.now()
   };
 
@@ -179,7 +217,10 @@ export async function appendFinalizedDayToHistory(dayKey) {
     ok: true,
     season,
     dayKey,
+    rowsRead: rows.length,
+    terminalRows: terminalRows.length,
     rowsWritten: normalizedRows.length,
+    mergedRows: mergedRows.length,
     historyPath
   };
 }

@@ -4,6 +4,16 @@ function pushEvidence(bucket, item) {
   bucket.push(item);
 }
 
+function reliabilityMeta(ctx, fallback = "empty") {
+  const reliability = String(
+    ctx?.data?.reliability ||
+    ctx?.reliability ||
+    fallback
+  );
+
+  return { reliability };
+}
+
 function normalizeResearchSources(research) {
   const items = [];
   const sources = Array.isArray(research?.sources) ? research.sources : [];
@@ -83,35 +93,77 @@ export function buildEvidenceBundle(match, inputs = {}) {
   }
 
   if (refereeContext?.data) {
+    const { reliability } = reliabilityMeta(refereeContext);
+
     pushEvidence(evidence, {
-      kind: "referee_local",
-      key: "referee_local",
+      kind: "referee_profile",
+      key: "referee_profile",
       provider: "local-referees",
-      trustClass: "deterministic_local",
-      confidence: 0.75,
-      status: "available"
+      trustClass:
+        reliability === "identity_only"
+          ? "identity_only_local"
+          : "deterministic_local",
+      confidence:
+        reliability === "identity_only"
+          ? Math.min(Number(refereeContext?.confidence ?? 0.75), 0.45)
+          : Number(refereeContext?.confidence ?? 0.75),
+      status:
+        reliability === "identity_only"
+          ? "limited"
+          : "available",
+      meta: {
+        reliability
+      }
     });
   }
 
   if (teamNewsContext?.data) {
+    const { reliability } = reliabilityMeta(teamNewsContext);
+
     pushEvidence(evidence, {
-      kind: "team_news_local",
-      key: "team_news_local",
+      kind: "team_news",
+      key: "team_news",
       provider: "local-team-news",
-      trustClass: "deterministic_local",
-      confidence: 0.65,
-      status: "available"
+      trustClass:
+        reliability === "thin"
+          ? "thin_local"
+          : "deterministic_local",
+      confidence:
+        reliability === "thin"
+          ? Math.min(Number(teamNewsContext?.confidence ?? 0.65), 0.42)
+          : Number(teamNewsContext?.confidence ?? 0.65),
+      status:
+        reliability === "thin"
+          ? "limited"
+          : "available",
+      meta: {
+        reliability
+      }
     });
   }
 
   if (lineupContext?.data) {
+    const { reliability } = reliabilityMeta(lineupContext);
+
     pushEvidence(evidence, {
-      kind: "lineup_projection_local",
-      key: "lineup_projection_local",
+      kind: "expected_lineups",
+      key: "expected_lineups",
       provider: "local-lineup-model",
-      trustClass: "model_local",
-      confidence: 0.6,
-      status: "available"
+      trustClass:
+        reliability === "limited"
+          ? "limited_local"
+          : "model_local",
+      confidence:
+        reliability === "limited"
+          ? Math.min(Number(lineupContext?.confidence ?? 0.6), 0.42)
+          : Number(lineupContext?.confidence ?? 0.6),
+      status:
+        reliability === "limited"
+          ? "limited"
+          : "available",
+      meta: {
+        reliability
+      }
     });
   }
 
@@ -189,10 +241,30 @@ export function buildEvidenceBundle(match, inputs = {}) {
   }, {});
 
   const missing = [];
+
+  const refereeReliability = reliabilityMeta(refereeContext).reliability;
+  const teamNewsReliability = reliabilityMeta(teamNewsContext).reliability;
+  const lineupReliability = reliabilityMeta(lineupContext).reliability;
+
   if (!competitionContext?.data) missing.push("competition_context");
-  if (!refereeContext?.data) missing.push("referee_profile");
-  if (!teamNewsContext?.data) missing.push("team_news");
-  if (!lineupContext?.data) missing.push("expected_lineups");
+
+  if (!refereeContext?.data) {
+    missing.push("referee_profile");
+  } else if (refereeReliability !== "usable") {
+    missing.push("referee_profile_reliability");
+  }
+
+  if (!teamNewsContext?.data) {
+    missing.push("team_news");
+  } else if (teamNewsReliability !== "usable") {
+    missing.push("team_news_reliability");
+  }
+
+  if (!lineupContext?.data) {
+    missing.push("expected_lineups");
+  } else if (lineupReliability !== "usable") {
+    missing.push("expected_lineups_reliability");
+  }
   if (!(homeSample > 0 || awaySample > 0)) missing.push("form_guide");
   if (!(h2hSample > 0)) missing.push("head_to_head");
   if (!support?.hasValue) missing.push("value_snapshot");

@@ -63,17 +63,31 @@ function getCurrentSeasonHistoryRows(season = DEFAULT_SEASON) {
 
   if (!raw) return [];
 
-  // ήδη array (fallback περίπτωση)
-  if (Array.isArray(raw)) return raw;
+  // περίπτωση 1: legacy plain array rows
+  if (Array.isArray(raw)) {
+    return raw.filter(Boolean);
+  }
 
-  // περίπτωση days → extract rows μέσα από κάθε day
-  if (raw.days && typeof raw.days === "object") {
+  // περίπτωση 2: object με days ως array
+  if (Array.isArray(raw?.days)) {
+    const all = [];
+
+    for (const day of raw.days) {
+      if (Array.isArray(day?.rows)) {
+        all.push(...day.rows);
+      }
+    }
+
+    return all;
+  }
+
+  // περίπτωση 3: object με days ως keyed object
+  if (raw?.days && typeof raw.days === "object") {
     const all = [];
 
     for (const dayKey of Object.keys(raw.days)) {
       const day = raw.days[dayKey];
 
-      // εδώ είναι το σημαντικό
       if (Array.isArray(day?.rows)) {
         all.push(...day.rows);
       }

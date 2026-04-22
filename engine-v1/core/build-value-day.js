@@ -1,5 +1,5 @@
 import fs from "fs";
-import { getActiveByDay } from "../storage/json-db.js";
+import { getActiveByDay, getFixturesByDay } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import {
   evaluateMatchValue,
@@ -423,30 +423,39 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
       if (fs.existsSync(file)) {
         const raw = fs.readFileSync(file, "utf-8");
         const parsed = JSON.parse(raw);
+        const parsedPicks = Array.isArray(parsed?.picks) ? parsed.picks : [];
 
         const normalized = {
           ok: true,
           date: parsed.date || date,
           createdAt: parsed.createdAt ?? null,
           updatedAt: parsed.updatedAt ?? null,
-          count: Array.isArray(parsed.picks) ? parsed.picks.length : 0,
-          picks: Array.isArray(parsed.picks) ? parsed.picks : []
+          count: parsedPicks.length,
+          picks: parsedPicks
         };
 
-        __valueDayCache.set(cacheKey, normalized);
+        if (parsedPicks.length > 0) {
+          __valueDayCache.set(cacheKey, normalized);
 
-        console.log("[value] snapshot hit", { date });
+          console.log("[value] snapshot hit", {
+            date,
+            count: parsedPicks.length
+          });
 
-        return normalized;
+          return normalized;
+        }
+
+        console.log("[value] snapshot empty -> recompute", { date });
       }
     } catch (e) {
       console.log("[value] snapshot read failed", e?.message || e);
     }
   }
-
   const now = Date.now();
 
-  const matches = getActiveByDay(date).filter(m => {
+  const sourceMatches = rebuild ? getFixturesByDay(date) : getActiveByDay(date);
+
+  const matches = sourceMatches.filter(m => {
     if (!isPlayable(m)) return false;
 
     if (rebuild) {
@@ -459,7 +468,6 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     const kickoffTs = new Date(m?.kickoffUtc || 0).getTime();
     return kickoffTs > now;
   });
-
   const { indexes, priors } = await getSeasonResources(season, rebuild);
 
   const picks = [];

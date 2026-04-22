@@ -1,5 +1,6 @@
 import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
+import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -45,6 +46,16 @@ function tokenizeTeamName(name) {
     .filter(Boolean);
 }
 
+function normalizedComparableName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function sameTeam(a, b) {
   const na = normalizeTeamName(a);
   const nb = normalizeTeamName(b);
@@ -76,12 +87,36 @@ function normalizePosition(pos) {
   return n && n > 0 ? n : null;
 }
 
-function findTeamRow(table, teamName) {
-  return table.find(row =>
-    sameTeam(row?.team, teamName) ||
-    sameTeam(row?.teamName, teamName) ||
-    sameTeam(row?.name, teamName)
-  );
+function findTeamRow(table, leagueSlug, teamName) {
+  const candidates = resolveAliasCandidates(leagueSlug, teamName);
+  const normalizedCandidates = candidates
+    .map(normalizedComparableName)
+    .filter(Boolean);
+
+  return table.find(row => {
+    const rowNames = [row?.team, row?.teamName, row?.name].filter(Boolean);
+    const normalizedRowNames = rowNames
+      .map(normalizedComparableName)
+      .filter(Boolean);
+
+    const exactAliasMatch = normalizedCandidates.some(candidate =>
+      normalizedRowNames.some(rowName => rowName === candidate)
+    );
+
+    if (exactAliasMatch) return true;
+
+    const containsAliasMatch = normalizedCandidates.some(candidate =>
+      normalizedRowNames.some(rowName =>
+        rowName.includes(candidate) || candidate.includes(rowName)
+      )
+    );
+
+    if (containsAliasMatch) return true;
+
+    return candidates.some(candidate =>
+      rowNames.some(rowName => sameTeam(rowName, candidate))
+    );
+  });
 }
 
 function classifySeasonPhase(matchesLeft) {
@@ -235,7 +270,7 @@ export function buildCompetitionContext(match) {
   const standings = readJsonSafe(standingsFile, null);
 
   const standingsConfidence = Number(standings?.confidence || 0);
-  const MIN_STANDINGS_CONFIDENCE = 0.4;
+  const MIN_STANDINGS_CONFIDENCE = 0.25;
 
   const meta = resolveStandingsMeta(standings);
   const table = meta.table;
@@ -276,13 +311,18 @@ export function buildCompetitionContext(match) {
   const competitionPhase = meta.activePhase || "regular";
   const cutoffs = resolveCutoffMap(totalTeams);
 
-  const homeRow = findTeamRow(sortedTable, match?.homeTeam);
-  const awayRow = findTeamRow(sortedTable, match?.awayTeam);
+  const homeRow = findTeamRow(sortedTable, match?.leagueSlug, match?.homeTeam);
+  const awayRow = findTeamRow(sortedTable, match?.leagueSlug, match?.awayTeam);
 
   if (!homeRow || !awayRow) {
+    const mismatchReason =
+      homeRow || awayRow
+        ? "possible_cross_competition_mismatch"
+        : "team_not_found_in_table";
+
     console.log("[competition-context] partial", {
       league: match?.leagueSlug || null,
-      reason: "team_not_found_in_table",
+      reason: mismatchReason,
       homeTeam: match?.homeTeam || null,
       awayTeam: match?.awayTeam || null,
       foundHome: !!homeRow,
@@ -298,9 +338,25 @@ export function buildCompetitionContext(match) {
         phase: "unknown",
         positions: null,
         stakes: [],
-        pressure: ["unknown_table_context"],
+        pressure: uniqueStrings([
+          homeRow || awayRow
+            ? "possible_cross_competition_mismatch"
+            : "unknown_table_context"
+        ]),
         importance: "low",
-        notes: ["Fallback: team not found in standings"]
+        notes: uniqueStrings([
+          homeRow || awayRow
+            ? "Fallback: possible cross-competition mismatch"
+            : "Fallback: team not found in standings"
+        ]),
+        diagnostics: {
+          reason: mismatchReason,
+          leagueSlug: match?.leagueSlug || null,
+          homeTeam: match?.homeTeam || null,
+          awayTeam: match?.awayTeam || null,
+          foundHome: !!homeRow,
+          foundAway: !!awayRow
+        }
       },
       confidence: 0.3
     };
@@ -431,6 +487,11 @@ export function buildCompetitionContext(match) {
     importance = "medium";
   }
 
+  const resolvedConfidence = Math.max(
+    0.55,
+    Math.min(0.86, Number((0.45 + standingsConfidence).toFixed(2)))
+  );
+
   return {
     key: "competition_context",
     status: "ready",
@@ -467,6 +528,6 @@ export function buildCompetitionContext(match) {
       importance,
       notes: uniqueStrings(notes)
     },
-    confidence: 0.86
+    confidence: resolvedConfidence
   };
 }

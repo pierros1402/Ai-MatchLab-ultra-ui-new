@@ -47,6 +47,56 @@ function findLastMatchDate(last5) {
   return last5[0]?.date || null;
 }
 
+function inferLineupReliability({
+  homeRestDays,
+  awayRestDays,
+  homeAbsenceImpact,
+  awayAbsenceImpact
+}) {
+  const hasHomeRest = homeRestDays != null;
+  const hasAwayRest = awayRestDays != null;
+  const hasAnyRest = hasHomeRest || hasAwayRest;
+  const hasBothRest = hasHomeRest && hasAwayRest;
+
+  const hasHomeAbsences = homeAbsenceImpact > 0;
+  const hasAwayAbsences = awayAbsenceImpact > 0;
+  const hasAnyAbsences = hasHomeAbsences || hasAwayAbsences;
+
+  if (!hasAnyRest && !hasAnyAbsences) {
+    return {
+      reliability: "empty",
+      hasHomeRest,
+      hasAwayRest,
+      hasBothRest,
+      hasHomeAbsences,
+      hasAwayAbsences,
+      hasAnyAbsences
+    };
+  }
+
+  if (hasBothRest && hasAnyAbsences) {
+    return {
+      reliability: "usable",
+      hasHomeRest,
+      hasAwayRest,
+      hasBothRest,
+      hasHomeAbsences,
+      hasAwayAbsences,
+      hasAnyAbsences
+    };
+  }
+
+  return {
+    reliability: "limited",
+    hasHomeRest,
+    hasAwayRest,
+    hasBothRest,
+    hasHomeAbsences,
+    hasAwayAbsences,
+    hasAnyAbsences
+  };
+}
+
 export function buildLineupContext(match, { formGuide, teamNewsContext }) {
   const kickoffUtc = match?.kickoffUtc || null;
 
@@ -68,24 +118,34 @@ export function buildLineupContext(match, { formGuide, teamNewsContext }) {
   const homeStrength = expectedStrength(homeAbsenceImpact, homeRotation);
   const awayStrength = expectedStrength(awayAbsenceImpact, awayRotation);
 
-  const hasData =
-    homeRestDays != null ||
-    awayRestDays != null ||
-    homeAbsenceImpact > 0 ||
-    awayAbsenceImpact > 0;
+  const reliabilityMeta = inferLineupReliability({
+    homeRestDays,
+    awayRestDays,
+    homeAbsenceImpact,
+    awayAbsenceImpact
+  });
 
-  if (!hasData) {
+  if (reliabilityMeta.reliability === "empty") {
     return {
       key: "expected_lineups",
       status: "empty",
       data: null,
-      confidence: 0
+      confidence: 0,
+      reliability: "empty",
+      diagnostics: {
+        hasHomeRest: reliabilityMeta.hasHomeRest,
+        hasAwayRest: reliabilityMeta.hasAwayRest,
+        hasBothRest: reliabilityMeta.hasBothRest,
+        hasHomeAbsences: reliabilityMeta.hasHomeAbsences,
+        hasAwayAbsences: reliabilityMeta.hasAwayAbsences,
+        hasAnyAbsences: reliabilityMeta.hasAnyAbsences
+      }
     };
   }
 
   return {
     key: "expected_lineups",
-    status: "ready",
+    status: reliabilityMeta.reliability === "usable" ? "ready" : "partial",
     data: {
       home: {
         restDays: homeRestDays,
@@ -100,6 +160,15 @@ export function buildLineupContext(match, { formGuide, teamNewsContext }) {
         expectedStrength: awayStrength
       }
     },
-    confidence: 0.62
+    confidence: reliabilityMeta.reliability === "usable" ? 0.62 : 0.42,
+    reliability: reliabilityMeta.reliability,
+    diagnostics: {
+      hasHomeRest: reliabilityMeta.hasHomeRest,
+      hasAwayRest: reliabilityMeta.hasAwayRest,
+      hasBothRest: reliabilityMeta.hasBothRest,
+      hasHomeAbsences: reliabilityMeta.hasHomeAbsences,
+      hasAwayAbsences: reliabilityMeta.hasAwayAbsences,
+      hasAnyAbsences: reliabilityMeta.hasAnyAbsences
+    }
   };
 }
