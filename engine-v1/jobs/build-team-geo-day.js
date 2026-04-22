@@ -100,19 +100,21 @@ function resolveExistingGeo(teamName) {
     };
   }
 
-  const lat = Number(record?.lat);
-  const lon = Number(record?.lon);
-  const hasCoordinates = Number.isFinite(lat) && Number.isFinite(lon);
+  const latitude = Number(record?.latitude);
+  const longitude = Number(record?.longitude);
+  const hasCoordinates =
+    Number.isFinite(latitude) && Number.isFinite(longitude);
 
   return {
     exists: hasCoordinates,
     record: {
+      key: record?.key || null,
       team: record?.team || team,
-      lat: Number.isFinite(lat) ? lat : null,
-      lon: Number.isFinite(lon) ? lon : null,
-      stadium: normalizeText(record?.stadium) || null,
+      venue: normalizeText(record?.venue) || null,
       city: normalizeText(record?.city) || null,
       country: normalizeText(record?.country) || null,
+      latitude: Number.isFinite(latitude) ? latitude : null,
+      longitude: Number.isFinite(longitude) ? longitude : null,
       source: normalizeText(record?.source) || "local-team-geo",
       updatedAt: record?.updatedAt || null,
       hasCoordinates
@@ -163,11 +165,11 @@ export async function buildTeamGeoDay(dayKey) {
   const importTemplate = missing.map(item => ({
     team: item.teamName,
     leagueSlug: item.leagueSlug || null,
-    stadium: "",
+    venue: "",
     city: "",
     country: "",
-    lat: null,
-    lon: null,
+    latitude: null,
+    longitude: null,
     source: "manual_batch"
   }));
 
