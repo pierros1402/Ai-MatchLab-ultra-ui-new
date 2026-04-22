@@ -7,6 +7,7 @@ import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.j
 import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
+import { buildTeamNewsDay } from "./build-team-news-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 
 export async function runDailyCycle(options = {}) {
@@ -47,6 +48,12 @@ export async function runDailyCycle(options = {}) {
   const monitor = await monitorActiveLeagues(dayKey);
   console.log("[daily-cycle] monitor:done", monitor);
 
+  let teamNewsBuild = null;
+  let finalizeValueBuild = null;
+  let finalize = null;
+  let historyAppend = null;
+  let indexesRebuild = null;
+
   console.log("[daily-cycle] standings-build:start", { dayKey });
 
   const standingsBuild = await buildStandingsDay(
@@ -55,6 +62,19 @@ export async function runDailyCycle(options = {}) {
   );
 
   console.log("[daily-cycle] standings-build:done", standingsBuild);
+
+  console.log("[daily-cycle] team-news-build:start", { dayKey });
+
+  teamNewsBuild = await buildTeamNewsDay(dayKey);
+
+  console.log("[daily-cycle] team-news-build:done", {
+    ok: teamNewsBuild?.ok,
+    dayKey: teamNewsBuild?.dayKey,
+    totalTeams: teamNewsBuild?.totalTeams ?? 0,
+    existingCount: teamNewsBuild?.existingCount ?? 0,
+    missingCount: teamNewsBuild?.missingCount ?? 0,
+    coveragePct: teamNewsBuild?.coveragePct ?? 0
+  });
 
   console.log("[daily-cycle] details-build:start", { dayKey });
 
@@ -71,11 +91,6 @@ export async function runDailyCycle(options = {}) {
     date: valueBuild?.date,
     count: valueBuild?.count ?? 0
   });
-
-  let finalizeValueBuild = null;
-  let finalize = null;
-  let historyAppend = null;
-  let indexesRebuild = null;
   
 
   if (doFinalize) {
@@ -122,6 +137,7 @@ export async function runDailyCycle(options = {}) {
     activeLeagues,
     monitor,
     standingsBuild,
+    teamNewsBuild,
     detailsBuild,
     valueBuild,
     finalizeValueBuild,

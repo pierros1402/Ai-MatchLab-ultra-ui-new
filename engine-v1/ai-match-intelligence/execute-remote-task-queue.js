@@ -11,7 +11,7 @@ import {
 } from "./remote-providers/referee-profile-provider.js";
 
 function isSuccessStatus(status) {
-  return status === "success" || status === "partial" || status === "resolved_stub";
+  return status === "success" || status === "partial";
 }
 
 function statusRank(status) {
@@ -19,6 +19,7 @@ function statusRank(status) {
   if (status === "partial") return 3;
   if (status === "resolved_stub") return 2;
   if (status === "unavailable") return 1;
+  if (status === "skipped") return 0;
   return 0;
 }
 
@@ -121,8 +122,8 @@ export async function executeRemoteTaskQueue(match, taskQueue = [], context = {}
         key: task?.key || null,
         capability,
         provider: null,
-        status: "blocked",
-        reason: "no_enabled_provider",
+        status: "skipped",
+        reason: "no_remote_provider_registered",
         confidence: 0,
         data: null,
         attempts: [],
@@ -175,12 +176,26 @@ export async function executeRemoteTaskQueue(match, taskQueue = [], context = {}
     });
   }
 
-  const unresolved = results.filter(item => !isSuccessStatus(item.status));
+  const actionableResults = results.filter(item => item.status !== "skipped");
+  const successfulResults = actionableResults.filter(item => isSuccessStatus(item.status));
+  const unavailableResults = actionableResults.filter(item => item.status === "unavailable");
+  const blockedResults = actionableResults.filter(
+    item => item.status !== "unavailable" && !isSuccessStatus(item.status)
+  );
+
+  let queueStatus = "ok";
+  if (blockedResults.length > 0) {
+    queueStatus = "partial";
+  } else if (successfulResults.length > 0 && unavailableResults.length > 0) {
+    queueStatus = "partial";
+  } else if (successfulResults.length === 0 && unavailableResults.length > 0) {
+    queueStatus = "unavailable";
+  }
 
   return {
-    status: unresolved.length ? "partial" : "ok",
+    status: queueStatus,
     queueSize: queue.length,
-    providersTried: Array.from(providersTried),
+    providersTried: [...new Set(results.flatMap(item => item.providersTried || []))],
     results
   };
 }

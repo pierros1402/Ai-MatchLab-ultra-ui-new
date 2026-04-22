@@ -59,9 +59,9 @@ export function buildResearchPlan(match) {
       capability: "competition_context",
       outputKey: "competitionContext",
       preferredEvidence: ["local-standings", "local-competition-state"],
-      fallbackEvidence: ["remote-competition-research"],
+      fallbackEvidence: [],
       priority: 100,
-      mode: "deterministic_first",
+      mode: "deterministic_only",
       question: "What is the competition stage, round, and importance of this match?"
     }),
 
@@ -70,11 +70,11 @@ export function buildResearchPlan(match) {
       required: false,
       capability: "referee_profile",
       outputKey: "refereeProfile",
-      preferredEvidence: ["local-referees"],
+      preferredEvidence: ["local-referee-history"],
       fallbackEvidence: ["remote-referee-research"],
-      priority: 70,
+      priority: 78,
       mode: "hybrid",
-      question: "Who is the referee and what is their card/penalty tendency and style?"
+      question: "Who is the referee and what is the officiating profile for this match?"
     }),
 
     buildTask({
@@ -95,7 +95,7 @@ export function buildResearchPlan(match) {
       capability: "expected_lineups",
       outputKey: "expectedLineups",
       preferredEvidence: ["local-lineup-model"],
-      fallbackEvidence: ["remote-lineup-research"],
+      fallbackEvidence: [],
       priority: 72,
       mode: "model_first",
       question: "What are the expected starting lineups and rotation risks?"
@@ -154,11 +154,18 @@ export function buildResearchPlan(match) {
     ...base,
     tasks,
     meta: {
-      version: "research-plan-v3",
+      version: "research-plan-v4",
       tasksCount: tasks.length,
       planningMode: "capability_based",
-      deterministicTasks: tasks.filter(t => t.mode === "deterministic_only" || t.mode === "deterministic_first").length,
-      hybridTasks: tasks.filter(t => t.mode === "hybrid" || t.mode === "model_first").length
+      deterministicTasks: tasks.filter(
+        t => t.mode === "deterministic_only" || t.mode === "deterministic_first"
+      ).length,
+      hybridTasks: tasks.filter(
+        t => t.mode === "hybrid" || t.mode === "model_first"
+      ).length,
+      remoteEligibleTasks: tasks.filter(
+        t => Array.isArray(t.fallbackEvidence) && t.fallbackEvidence.length > 0
+      ).map(t => t.key)
     }
   };
 }

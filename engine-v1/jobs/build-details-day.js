@@ -5,6 +5,8 @@ import { getFixturesByDay, getFixtureById } from "../storage/json-db.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { buildAiDetailsBlock } from "../ai-match-intelligence/build-ai-details-block.js";
+import { buildRefereeContext } from "../core/referee-context.js";
+import { buildTravelContext } from "../core/travel-context.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -110,14 +112,19 @@ function buildDetailsSignature(match, valuePicks, payload) {
       ""
     ),
     competitionType: String(payload?.context?.competitionType || ""),
+    competitionStatus: String(payload?.context?.status || ""),
+    competitionReason: String(payload?.context?.diagnostics?.reason || ""),
     importance: String(payload?.context?.importance || ""),
     teamNewsStatus: String(payload?.teamNews?.status || ""),
     teamNewsSource: String(payload?.teamNews?.source || ""),
-    teamNewsHomeNotes: Array.isArray(payload?.teamNews?.data?.homeTeam?.notes)
-      ? payload.teamNews.data.homeTeam.notes.length
+    teamNewsHomeAbsences: Array.isArray(payload?.teamNews?.data?.home?.absences)
+      ? payload.teamNews.data.home.absences.length
       : 0,
-    teamNewsAwayNotes: Array.isArray(payload?.teamNews?.data?.awayTeam?.notes)
-      ? payload.teamNews.data.awayTeam.notes.length
+    teamNewsAwayAbsences: Array.isArray(payload?.teamNews?.data?.away?.absences)
+      ? payload.teamNews.data.away.absences.length
+      : 0,
+    teamNewsNotes: Array.isArray(payload?.teamNews?.data?.notes)
+      ? payload.teamNews.data.notes.length
       : 0,
     valueCount: Array.isArray(valuePicks) ? valuePicks.length : 0,
     topValue: topPick
@@ -135,84 +142,101 @@ function buildDetailsSignature(match, valuePicks, payload) {
 }
 
 function buildRefereeBlock(match) {
-  const refereeName =
-    match?.referee ||
-    match?.sources?.espn?.referee ||
-    null;
+  const refereeContext = buildRefereeContext(match);
 
-  const refKey = refereeName
-    ? String(refereeName).trim().toLowerCase().replace(/\s+/g, "_")
-    : null;
+  const stats = refereeContext?.data?.stats || null;
+  const name = refereeContext?.data?.name || null;
+  const style = refereeContext?.data?.style || "unknown";
+  const role = refereeContext?.data?.role || "referee";
 
-  const refFile = refKey ? resolveDataPath("referees", `${refKey}.json`) : null;
-  const cached = refFile ? readJsonSafe(refFile, null) : null;
+  let note = null;
 
-  return {
-    status: cached ? "ready" : refereeName ? "partial" : "pending",
-    name: cached?.name || refereeName || null,
-    stats: {
-      avgCards: cached?.avgCards ?? null,
-      avgPenalties: cached?.avgPenalties ?? null,
-      avgFouls: cached?.avgFouls ?? null,
-      sampleSize: cached?.sampleSize ?? null
-    },
-    style: cached?.style || "unknown",
-    note: cached
-      ? null
-      : refereeName
-        ? {
-            code: "referee_stats_pending",
-            el: "Ο διαιτητής εντοπίστηκε αλλά δεν υπάρχουν ακόμη αποθηκευμένα στατιστικά.",
-            en: "Referee identified, but no stored statistics are available yet."
-          }
-        : {
-            code: "referee_pending",
-            el: "Δεν υπάρχει ακόμη διαθέσιμος διαιτητής για το snapshot.",
-            en: "No referee is available yet for this snapshot."
-          }
-  };
-}
-
-function buildTeamNewsBlock(teamNewsFact) {
-  if (!teamNewsFact || teamNewsFact.status !== "ok" || !teamNewsFact.data) {
-    return {
-      status: teamNewsFact?.status || "empty",
-      source: teamNewsFact?.source || null,
-      confidence: teamNewsFact?.confidence ?? 0,
-      data: null,
-      reason: teamNewsFact?.reason || null
+  if (refereeContext?.status === "ready") {
+    note = null;
+  } else if (refereeContext?.status === "partial") {
+    note = {
+      code: "referee_stats_pending",
+      el: "Υπάρχει τοπική ταυτότητα διαιτητή, αλλά δεν υπάρχουν ακόμη αποθηκευμένα στατιστικά προφίλ.",
+      en: "A local referee identity is available, but no stored statistical profile exists yet."
+    };
+  } else {
+    note = {
+      code: "referee_identity_missing",
+      el: "Δεν υπάρχει ακόμη τοπική ταυτότητα διαιτητή για το snapshot.",
+      en: "No local referee identity is available yet for this snapshot."
     };
   }
 
   return {
-    status: "ok",
-    source: teamNewsFact.source || null,
-    confidence: teamNewsFact.confidence ?? 0,
-    data: teamNewsFact.data,
-    reason: null
+    status: refereeContext?.status || "empty",
+    source: refereeContext?.source || "local-officiating",
+    reason: refereeContext?.reason || null,
+    confidence: refereeContext?.confidence ?? 0,
+    name,
+    role,
+    stats: {
+      avgCards: stats?.avgCards ?? null,
+      avgPenalties: stats?.avgPenalties ?? null,
+      avgFouls: stats?.avgFouls ?? null,
+      sampleSize: stats?.sampleSize ?? null
+    },
+    style,
+    note
+  };
+}
+
+function buildTeamNewsBlock(teamNewsFact) {
+  if (!teamNewsFact || !teamNewsFact.data) {
+    return {
+      status: teamNewsFact?.status || "empty",
+      source: teamNewsFact?.source || "local-team-news",
+      confidence: teamNewsFact?.confidence ?? 0,
+      data: null,
+      reason: teamNewsFact?.reason || "missing_local_team_news"
+    };
+  }
+
+  return {
+    status: teamNewsFact?.status || "ready",
+    source: teamNewsFact?.source || "local-team-news",
+    confidence: teamNewsFact?.confidence ?? 0,
+    data: {
+      home: teamNewsFact?.data?.home || {
+        absences: [],
+        impactScore: 0,
+        impactLevel: "none",
+        source: "local-team-news",
+        updatedAt: null
+      },
+      away: teamNewsFact?.data?.away || {
+        absences: [],
+        impactScore: 0,
+        impactLevel: "none",
+        source: "local-team-news",
+        updatedAt: null
+      },
+      notes: Array.isArray(teamNewsFact?.data?.notes) ? teamNewsFact.data.notes : []
+    },
+    reason: teamNewsFact?.reason || null
   };
 }
 
 function buildTravelBlock(match) {
-  const slug = String(match?.leagueSlug || "").toLowerCase();
-
-  // V1: structure-first. Real geo lookup μπαίνει όταν δημιουργηθεί data/geo/teams.json.
-  const hasGeoCache = fs.existsSync(resolveDataPath("geo", "teams.json"));
+  const travelContext = buildTravelContext(match);
 
   return {
-    status: hasGeoCache ? "partial" : "pending",
-    distanceKm: null,
-    impact: "unknown",
-    note: {
+    status: travelContext?.status || "empty",
+    source: travelContext?.source || "local-team-geo",
+    reason: travelContext?.reason || null,
+    confidence: travelContext?.confidence ?? 0,
+    distanceKm: travelContext?.data?.distanceKm ?? null,
+    impact: travelContext?.data?.impact || "unknown",
+    home: travelContext?.data?.home || null,
+    away: travelContext?.data?.away || null,
+    note: travelContext?.data?.note || {
       code: "travel_pending",
-      el:
-        slug.includes("champions") || slug.includes("europa")
-          ? "Η απόσταση ταξιδιού θα ενεργοποιηθεί όταν μπει το geo cache ομάδων."
-          : "Η απόσταση ταξιδιού εκκρεμεί μέχρι να προστεθεί το geo cache ομάδων.",
-      en:
-        slug.includes("champions") || slug.includes("europa")
-          ? "Travel distance will activate once the team geo cache is added."
-          : "Travel distance is pending until the team geo cache is added."
+      el: "Δεν υπάρχει ακόμη διαθέσιμο local travel context.",
+      en: "Local travel context is not yet available."
     }
   };
 }
@@ -250,7 +274,10 @@ function buildAnalysisBlock(match, valuePicks, competitionContext, referee, trav
     partsEn.push("No value snapshot is available yet for this match.");
   }
 
-  if (competitionContext?.data) {
+  const competitionReason =
+    competitionContext?.data?.diagnostics?.reason || null;
+
+  if (competitionContext?.status === "ready" && competitionContext?.data) {
     if (importance === "high") {
       partsEl.push("Υπάρχει ένδειξη αυξημένης σημασίας από το competition context.");
       partsEn.push("There is an indication of elevated importance from the competition context.");
@@ -258,9 +285,16 @@ function buildAnalysisBlock(match, valuePicks, competitionContext, referee, trav
       partsEl.push("Υπάρχει ένδειξη μεσαίας σημασίας από το competition context.");
       partsEn.push("There is an indication of medium importance from the competition context.");
     }
-  } else if (competitionContext?.status === "empty") {
-    partsEl.push("Δεν υπάρχει ακόμη επαρκές standings context για να εκτιμηθεί η βαθμολογική σημασία.");
-    partsEn.push("There is not yet enough standings context to assess competitive importance.");
+  } else if (competitionReason === "possible_cross_competition_mismatch") {
+    partsEl.push("Το competition context υποδεικνύει πιθανή ασυμφωνία διοργάνωσης ή διασταυρούμενο ζευγάρι ομάδων από την πηγή.");
+    partsEn.push("The competition context indicates a possible competition mismatch or cross-competition pairing from the source.");
+  } else if (
+    competitionContext?.status === "fallback" ||
+    competitionContext?.status === "partial" ||
+    competitionContext?.status === "empty"
+  ) {
+    partsEl.push("Δεν υπάρχει ακόμη επαρκές αξιόπιστο standings context για ασφαλή εκτίμηση βαθμολογικής σημασίας.");
+    partsEn.push("There is not yet enough reliable standings context for a safe assessment of competitive importance.");
   }
 
   if (referee?.status === "pending") {
@@ -271,26 +305,33 @@ function buildAnalysisBlock(match, valuePicks, competitionContext, referee, trav
     partsEn.push("The referee has been identified, but profile statistics are still missing.");
   }
 
-  const homeTeamNewsNotes = Array.isArray(teamNews?.data?.homeTeam?.notes)
-    ? teamNews.data.homeTeam.notes.length
+  const homeAbsenceCount = Array.isArray(teamNews?.data?.home?.absences)
+    ? teamNews.data.home.absences.length
     : 0;
 
-  const awayTeamNewsNotes = Array.isArray(teamNews?.data?.awayTeam?.notes)
-    ? teamNews.data.awayTeam.notes.length
+  const awayAbsenceCount = Array.isArray(teamNews?.data?.away?.absences)
+    ? teamNews.data.away.absences.length
     : 0;
 
-  const totalTeamNewsNotes = homeTeamNewsNotes + awayTeamNewsNotes;
+  const totalAbsences = homeAbsenceCount + awayAbsenceCount;
+  const totalTeamNewsNotes = Array.isArray(teamNews?.data?.notes)
+    ? teamNews.data.notes.length
+    : 0;
 
-  if (teamNews?.status === "ok") {
+  if (teamNews?.status === "ready" || teamNews?.status === "ok") {
     partsEl.push(
-      totalTeamNewsNotes > 0
-        ? `Υπάρχει διαθέσιμο team news context για τον αγώνα με ${totalTeamNewsNotes} συνολικές σημειώσεις ομάδων.`
-        : "Υπάρχει διαθέσιμο team news context για τον αγώνα."
+      totalAbsences > 0
+        ? `Υπάρχει διαθέσιμο team news context για τον αγώνα με ${totalAbsences} συνολικές καταγεγραμμένες απουσίες.`
+        : totalTeamNewsNotes > 0
+          ? `Υπάρχει διαθέσιμο team news context για τον αγώνα με ${totalTeamNewsNotes} συνολικές σημειώσεις ομάδων.`
+          : "Υπάρχει διαθέσιμο team news context για τον αγώνα."
     );
     partsEn.push(
-      totalTeamNewsNotes > 0
-        ? `Team news context is available for this match with ${totalTeamNewsNotes} combined team notes.`
-        : "Team news context is available for this match."
+      totalAbsences > 0
+        ? `Team news context is available for this match with ${totalAbsences} recorded absences in total.`
+        : totalTeamNewsNotes > 0
+          ? `Team news context is available for this match with ${totalTeamNewsNotes} combined team notes.`
+          : "Team news context is available for this match."
     );
   } else if (teamNews?.status === "empty" || teamNews?.status === "pending") {
     partsEl.push("Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot.");
@@ -298,9 +339,15 @@ function buildAnalysisBlock(match, valuePicks, competitionContext, referee, trav
   }
 
 
-  if (travel?.status !== "ready") {
-    partsEl.push("Η εκτίμηση ταξιδιού θα ενεργοποιηθεί όταν προστεθεί geo cache ομάδων.");
-    partsEn.push("Travel estimation will activate once the team geo cache is added.");
+  if (travel?.status === "ready" && Number.isFinite(travel?.distanceKm)) {
+    partsEl.push(`Η εκτίμηση ταξιδιού είναι περίπου ${travel.distanceKm} χλμ (${travel.impact}).`);
+    partsEn.push(`Estimated travel distance is approximately ${travel.distanceKm} km (${travel.impact}).`);
+  } else if (travel?.status === "partial") {
+    partsEl.push("Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.");
+    partsEn.push("Partial local travel context exists, but it is not yet sufficient for a full distance estimate.");
+  } else if (travel?.status === "empty" || travel?.status === "pending") {
+    partsEl.push("Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.");
+    partsEn.push("Local travel context is not yet available in the snapshot.");
   }
 
   return {
@@ -389,12 +436,21 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       venue: match.venue || null
     },
     context: {
+      status: competitionContext?.status || "empty",
+      confidence: competitionContext?.confidence ?? 0,
       competitionType: competitionContext?.data?.type || classifyCompetitionType(match),
       importance: competitionContext?.data?.importance || "unknown",
       positions: competitionContext?.data?.positions || null,
       stakes: competitionContext?.data?.stakes || null,
       pressure: competitionContext?.data?.pressure || null,
       notes: Array.isArray(competitionContext?.data?.notes) ? competitionContext.data.notes : [],
+      diagnostics: competitionContext?.data?.diagnostics || null,
+      sourceReliability:
+        competitionContext?.status === "ready"
+          ? "usable"
+          : competitionContext?.data?.diagnostics?.reason === "possible_cross_competition_mismatch"
+            ? "suspect"
+            : "limited",
       travelImpact: travel.impact
     },
     referee: refereeProfile?.data
@@ -415,7 +471,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       snapshotMode: "update_on_change",
       signature: null,
       pendingSignals: {
-        standings: !competitionContext?.data,
+        standings: competitionContext?.status !== "ready",
         refereeStats: !refereeProfile?.data && referee.status !== "ready",
         teamNews: !teamNewsFact?.data,
         travelGeo: travel.status !== "ready"
@@ -457,6 +513,11 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
     ai: aiBlocks.ai || null,
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
+    aiSummary: aiBlocks?.aiContext?.summary || null,
+    valueSummary:
+      aiBlocks?.aiContext?.valueSummary ||
+      aiBlocks?.researchedFacts?.valueContext ||
+      null,
     sourceAudit: aiBlocks.sourceAudit,
     learningMeta: aiBlocks.learningMeta,
     remoteTaskQueue: aiBlocks.remoteTaskQueue || [],
@@ -556,6 +617,11 @@ for (const match of rows) {
     ai: aiBlocks.ai || null,
     researchedFacts: aiBlocks.researchedFacts,
     aiContext: aiBlocks.aiContext,
+    aiSummary: aiBlocks?.aiContext?.summary || null,
+    valueSummary:
+      aiBlocks?.aiContext?.valueSummary ||
+      aiBlocks?.researchedFacts?.valueContext ||
+      null,
     sourceAudit: aiBlocks.sourceAudit,
     learningMeta: aiBlocks.learningMeta,
     remoteTaskQueue: aiBlocks.remoteTaskQueue || [],
