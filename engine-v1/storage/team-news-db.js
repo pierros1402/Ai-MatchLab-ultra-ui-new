@@ -100,6 +100,77 @@ function normalizeNotes(items = []) {
   return out;
 }
 
+function normalizeAliases(items = [], team = null) {
+  const out = [];
+  const seen = new Set();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    const text = normalizeText(raw);
+    if (!text) continue;
+
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    out.push(text);
+  }
+
+  const safeTeam = normalizeText(team);
+  if (safeTeam) {
+    const key = safeTeam.toLowerCase();
+    if (!seen.has(key)) {
+      out.unshift(safeTeam);
+    }
+  }
+
+  return out;
+}
+
+function normalizeEvidenceItem(item = {}) {
+  const url = normalizeText(item?.url || item?.href);
+  const label = normalizeText(item?.label || item?.title || item?.source);
+  const publisher = normalizeText(item?.publisher || item?.site || item?.domain);
+  const publishedAt = normalizeText(item?.publishedAt || item?.date);
+
+  if (!url && !label && !publisher) return null;
+
+  return {
+    label: label || null,
+    url: url || null,
+    publisher: publisher || null,
+    publishedAt: publishedAt || null
+  };
+}
+
+function dedupeEvidence(items = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    const item = normalizeEvidenceItem(raw);
+    if (!item) continue;
+
+    const key = [
+      normalizeText(item?.url).toLowerCase(),
+      normalizeText(item?.label).toLowerCase(),
+      normalizeText(item?.publisher).toLowerCase()
+    ].join("__");
+
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    out.push(item);
+  }
+
+  return out;
+}
+
+function normalizeMetaObject(input = {}) {
+  return input && typeof input === "object" && !Array.isArray(input)
+    ? input
+    : {};
+}
+
 function normalizeAbsences(items = []) {
   return dedupeAbsences(
     (Array.isArray(items) ? items : [])
@@ -125,9 +196,20 @@ export function normalizeTeamNewsRecord(input = {}) {
   return {
     key,
     team: team || null,
+    leagueSlug: normalizeText(input?.leagueSlug) || null,
+    matchIds: Array.from(
+      new Set(
+        (Array.isArray(input?.matchIds) ? input.matchIds : [])
+          .map(v => normalizeText(v))
+          .filter(Boolean)
+      )
+    ),
+    aliases: normalizeAliases(input?.aliases || [], team || null),
     absences: normalizeAbsences(input?.absences || []),
     notes: normalizeNotes(input?.notes || []),
+    evidence: dedupeEvidence(input?.evidence || []),
     source: normalizeText(input?.source) || "local-team-news",
+    sourceMeta: normalizeMetaObject(input?.sourceMeta),
     updatedAt: input?.updatedAt || new Date().toISOString()
   };
 }

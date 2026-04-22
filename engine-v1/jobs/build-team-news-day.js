@@ -152,9 +152,17 @@ export async function buildTeamNewsDay(dayKey) {
   const importTemplate = missing.map(item => ({
     team: item.teamName,
     leagueSlug: item.leagueSlug || null,
+    matchIds: item.matchId ? [item.matchId] : [],
+    aliases: Array.isArray(item.tried) ? item.tried.filter(Boolean) : [item.teamName],
     absences: [],
     notes: [],
-    source: "manual_batch"
+    evidence: [],
+    source: "manual_batch",
+    sourceMeta: {
+      side: item.side || null,
+      generatedFromDayKey: dayKey,
+      generatedAt: new Date().toISOString()
+    }
   }));
 
   const file = reportFilePath(dayKey);

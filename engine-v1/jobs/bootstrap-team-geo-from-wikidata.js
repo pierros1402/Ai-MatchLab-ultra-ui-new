@@ -238,6 +238,69 @@ async function withRowTimeout(promise, timeoutMs, teamName) {
   }
 }
 
+function toPositiveInteger(value, fallback) {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+}
+
+function toNonNegativeInteger(value, fallback) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 ? n : fallback;
+}
+
+function toBooleanFlag(value, fallback = false) {
+  if (value === undefined || value === null || value === "") return fallback;
+
+  const normalized = String(value).trim().toLowerCase();
+
+  if (["1", "true", "yes", "y", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "n", "off"].includes(normalized)) return false;
+
+  return fallback;
+}
+
+function defaultCheckpointFile(outputFile) {
+  const dir = path.dirname(outputFile);
+  const base = path.basename(outputFile, ".json");
+  return path.join(dir, `${base}.checkpoint.json`);
+}
+
+function readJsonObject(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeCheckpoint(filePath, payload) {
+  writeJson(filePath, payload);
+}
+
+function parseCliOptions(argv = []) {
+  const options = {};
+
+  for (const arg of argv) {
+    if (!arg.startsWith("--")) continue;
+
+    const clean = arg.slice(2);
+    const eqIndex = clean.indexOf("=");
+
+    if (eqIndex === -1) {
+      options[clean] = true;
+      continue;
+    }
+
+    const key = clean.slice(0, eqIndex);
+    const value = clean.slice(eqIndex + 1);
+    options[key] = value;
+  }
+
+  return options;
+}
+
 async function fetchJson(
   url,
   { retries = 1, baseDelayMs = 600, timeoutMs = 7000 } = {}
@@ -728,7 +791,13 @@ function mergeResolvedRow(inputRow, resolved) {
 export async function bootstrapTeamGeoFromWikidata({
   inputFile = DEFAULT_INPUT,
   outputFile = DEFAULT_OUTPUT,
-  delayMs = 1100
+  delayMs = 1100,
+  rowTimeoutMs = 20000,
+  startIndex = 0,
+  limit = null,
+  checkpointEvery = 5,
+  checkpointFile = null,
+  resume = true
 } = {}) {
   const rows = readJsonArray(inputFile);
 
@@ -742,23 +811,65 @@ export async function bootstrapTeamGeoFromWikidata({
     };
   }
 
-  const output = [];
+  const safeStartIndex = toNonNegativeInteger(startIndex, 0);
+  const safeLimit = limit === null ? null : toPositiveInteger(limit, null);
+  const safeDelayMs = toNonNegativeInteger(delayMs, 1100);
+  const safeRowTimeoutMs = toPositiveInteger(rowTimeoutMs, 20000);
+  const safeCheckpointEvery = toPositiveInteger(checkpointEvery, 5);
+  const resolvedCheckpointFile = checkpointFile || defaultCheckpointFile(outputFile);
+
+  let output = [];
   let alreadyComplete = 0;
   let enrichedComplete = 0;
   let enrichedPartial = 0;
   let notFound = 0;
+  let effectiveStartIndex = safeStartIndex;
 
-  for (let i = 0; i < rows.length; i += 1) {
+  if (resume) {
+    const checkpoint = readJsonObject(resolvedCheckpointFile);
+
+    if (
+      checkpoint &&
+      checkpoint.inputFile === inputFile &&
+      checkpoint.outputFile === outputFile &&
+      Array.isArray(checkpoint.output)
+    ) {
+      output = checkpoint.output;
+      alreadyComplete = toNonNegativeInteger(checkpoint.alreadyComplete, 0);
+      enrichedComplete = toNonNegativeInteger(checkpoint.enrichedComplete, 0);
+      enrichedPartial = toNonNegativeInteger(checkpoint.enrichedPartial, 0);
+      notFound = toNonNegativeInteger(checkpoint.notFound, 0);
+      effectiveStartIndex = Math.max(
+        safeStartIndex,
+        toNonNegativeInteger(checkpoint.nextIndex, safeStartIndex)
+      );
+
+      console.log("[bootstrap-team-geo-from-wikidata] checkpoint:resume", {
+        checkpointFile: resolvedCheckpointFile,
+        nextIndex: effectiveStartIndex,
+        outputRows: output.length
+      });
+    }
+  }
+
+  const endExclusive =
+    safeLimit === null
+      ? rows.length
+      : Math.min(rows.length, effectiveStartIndex + safeLimit);
+
+  for (let i = effectiveStartIndex; i < endExclusive; i += 1) {
     const row = rows[i];
     const team = normalizeText(row?.team);
 
     console.log("[bootstrap-team-geo-from-wikidata] row:start", {
       index: i + 1,
       total: rows.length,
+      batchStartIndex: effectiveStartIndex,
+      batchEndIndex: endExclusive - 1,
       team
     });
 
-        try {
+    try {
       if (isCompleteRow(row)) {
         alreadyComplete += 1;
         output.push({
@@ -775,7 +886,7 @@ export async function bootstrapTeamGeoFromWikidata({
       } else {
         const resolved = await withRowTimeout(
           resolveTeamGeo(row),
-          20000,
+          safeRowTimeoutMs,
           team
         );
 
@@ -876,8 +987,35 @@ export async function bootstrapTeamGeoFromWikidata({
       });
     }
 
-    if (i < rows.length - 1 && delayMs > 0) {
-      await sleep(delayMs);
+    const processedInBatch = i - effectiveStartIndex + 1;
+    const shouldCheckpoint =
+      processedInBatch % safeCheckpointEvery === 0 || i === endExclusive - 1;
+
+    if (shouldCheckpoint) {
+      writeCheckpoint(resolvedCheckpointFile, {
+        ok: true,
+        inputFile,
+        outputFile,
+        total: rows.length,
+        nextIndex: i + 1,
+        alreadyComplete,
+        enrichedComplete,
+        enrichedPartial,
+        notFound,
+        output
+      });
+
+      writeJson(outputFile, output);
+
+      console.log("[bootstrap-team-geo-from-wikidata] checkpoint:write", {
+        checkpointFile: resolvedCheckpointFile,
+        nextIndex: i + 1,
+        outputRows: output.length
+      });
+    }
+
+    if (i < endExclusive - 1 && safeDelayMs > 0) {
+      await sleep(safeDelayMs);
     }
   }
 
@@ -887,26 +1025,69 @@ export async function bootstrapTeamGeoFromWikidata({
     ok: true,
     inputFile,
     outputFile,
+    checkpointFile: resolvedCheckpointFile,
     total: rows.length,
+    startedAtIndex: effectiveStartIndex,
+    finishedAtIndex: endExclusive - 1,
+    processedThisRun: Math.max(0, endExclusive - effectiveStartIndex),
     alreadyComplete,
     enrichedComplete,
     enrichedPartial,
     notFound
   };
 }
-
 const __filename = fileURLToPath(import.meta.url);
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
   const inputFile = process.argv[2] || DEFAULT_INPUT;
   const outputFile = process.argv[3] || DEFAULT_OUTPUT;
+  const options = parseCliOptions(process.argv.slice(4));
+
+  const delayMs = toNonNegativeInteger(options.delay ?? options.delayMs, 1100);
+  const rowTimeoutMs = toPositiveInteger(
+    options["row-timeout"] ?? options.rowTimeoutMs,
+    20000
+  );
+  const startIndex = toNonNegativeInteger(
+    options.start ?? options.startIndex,
+    0
+  );
+  const limit =
+    options.limit === undefined ? null : toPositiveInteger(options.limit, null);
+  const checkpointEvery = toPositiveInteger(
+    options["checkpoint-every"] ?? options.checkpointEvery,
+    5
+  );
+  const checkpointFile =
+    normalizeText(options.checkpoint || options.checkpointFile) || null;
+  const resume =
+    options["no-resume"] !== undefined
+      ? false
+      : toBooleanFlag(options.resume, true);
 
   console.log("[bootstrap-team-geo-from-wikidata] cli:start", {
     inputFile,
-    outputFile
+    outputFile,
+    delayMs,
+    rowTimeoutMs,
+    startIndex,
+    limit,
+    checkpointEvery,
+    checkpointFile,
+    resume
   });
 
-  bootstrapTeamGeoFromWikidata({ inputFile, outputFile })
+  bootstrapTeamGeoFromWikidata({
+    inputFile,
+    outputFile,
+    delayMs,
+    rowTimeoutMs,
+    startIndex,
+    limit,
+    checkpointEvery,
+    checkpointFile,
+    resume
+  })
     .then(result => {
       console.log("[bootstrap-team-geo-from-wikidata] cli:done", result);
       process.exit(result?.ok ? 0 : 1);
