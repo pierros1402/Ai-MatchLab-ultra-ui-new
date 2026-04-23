@@ -14,7 +14,8 @@ export async function runDailyCycle(options = {}) {
   const {
     dayKey = athensDayKey(),
     doFinalize = true,
-    daysForward = 2
+    daysForward = 2,
+    detailsRebuild = false
   } = options;
 
   const startedAt = Date.now();
@@ -76,11 +77,22 @@ export async function runDailyCycle(options = {}) {
     coveragePct: teamNewsBuild?.coveragePct ?? 0
   });
 
-  console.log("[daily-cycle] details-build:start", { dayKey });
+  console.log("[daily-cycle] details-build:start", {
+    dayKey,
+    rebuild: detailsRebuild
+  });
 
-  const detailsBuild = await buildDetailsDay(dayKey, { rebuild: false });
+  const detailsBuild = await buildDetailsDay(dayKey, {
+    rebuild: detailsRebuild
+  });
 
-  console.log("[daily-cycle] details-build:done", detailsBuild);
+  console.log("[daily-cycle] details-build:done", {
+    ok: detailsBuild?.ok,
+    dayKey: detailsBuild?.dayKey,
+    rebuild: detailsRebuild,
+    built: detailsBuild?.built ?? 0,
+    skipped: detailsBuild?.skipped ?? 0
+  });
 
   console.log("[daily-cycle] value-build:start", { dayKey });
 
@@ -130,6 +142,7 @@ export async function runDailyCycle(options = {}) {
     ok: true,
     dayKey,
     finalizeDayKey,
+    detailsRebuild,
     startedAt,
     finishedAt,
     ms: finishedAt - startedAt,

@@ -141,6 +141,97 @@ function buildDetailsSignature(match, valuePicks, payload) {
   return JSON.stringify(signaturePayload);
 }
 
+function dedupeText(items = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    const text = String(raw || "").trim();
+    if (!text) continue;
+
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+  }
+
+  return out;
+}
+
+function parseAbsencesFromNotes(notes = []) {
+  const absences = [];
+
+  for (const raw of Array.isArray(notes) ? notes : []) {
+    const text = String(raw || "").trim();
+    if (!text) continue;
+
+    const m = text.match(/^([^:]+):\s*(.+)$/);
+    if (!m) continue;
+
+    const player = String(m[1] || "").trim();
+    const reason = String(m[2] || "").trim();
+
+    if (!player && !reason) continue;
+
+    absences.push({
+      player: player || null,
+      reason: reason || "unknown",
+      importance: "high"
+    });
+  }
+
+  return absences;
+}
+
+function impactScoreFromAbsences(absences = []) {
+  if (!Array.isArray(absences) || !absences.length) return 0;
+
+  let score = 0;
+
+  for (const p of absences) {
+    if (p?.importance === "high") score += 0.4;
+    else if (p?.importance === "medium") score += 0.25;
+    else score += 0.1;
+  }
+
+  return Math.min(score, 1);
+}
+
+function impactLevelFromScore(score = 0) {
+  if (score >= 0.7) return "severe";
+  if (score >= 0.4) return "moderate";
+  if (score > 0) return "minor";
+  return "none";
+}
+
+function synthesizeTeamNewsSide(sideData, fallbackSource) {
+  const source = sideData?.source || fallbackSource || "local-team-news";
+  const updatedAt = sideData?.updatedAt || null;
+
+  if (sideData?.absences || sideData?.impactScore != null || sideData?.impactLevel) {
+    return {
+      absences: Array.isArray(sideData?.absences) ? sideData.absences : [],
+      impactScore: Number.isFinite(Number(sideData?.impactScore)) ? Number(sideData.impactScore) : 0,
+      impactLevel: sideData?.impactLevel || "none",
+      source,
+      updatedAt
+    };
+  }
+
+  const notes = Array.isArray(sideData?.notes) ? sideData.notes : [];
+  const absences = parseAbsencesFromNotes(notes);
+  const impactScore = impactScoreFromAbsences(absences);
+  const impactLevel = impactLevelFromScore(impactScore);
+
+  return {
+    absences,
+    impactScore,
+    impactLevel,
+    source,
+    updatedAt
+  };
+}
+
 function buildRefereeBlock(match) {
   const refereeContext = buildRefereeContext(match);
 
@@ -196,26 +287,47 @@ function buildTeamNewsBlock(teamNewsFact) {
     };
   }
 
+  const source = teamNewsFact?.source || "local-team-news";
+
+  const homeRaw =
+    teamNewsFact?.data?.home ||
+    teamNewsFact?.data?.homeTeam ||
+    null;
+
+  const awayRaw =
+    teamNewsFact?.data?.away ||
+    teamNewsFact?.data?.awayTeam ||
+    null;
+
+  const home = synthesizeTeamNewsSide(homeRaw, source);
+  const away = synthesizeTeamNewsSide(awayRaw, source);
+
+  const topLevelNotes = Array.isArray(teamNewsFact?.data?.notes)
+    ? teamNewsFact.data.notes
+    : [];
+
+  const homeNotes = Array.isArray(teamNewsFact?.data?.homeTeam?.notes)
+    ? teamNewsFact.data.homeTeam.notes
+    : [];
+
+  const awayNotes = Array.isArray(teamNewsFact?.data?.awayTeam?.notes)
+    ? teamNewsFact.data.awayTeam.notes
+    : [];
+
+  const notes = dedupeText([
+    ...topLevelNotes,
+    ...homeNotes,
+    ...awayNotes
+  ]);
+
   return {
     status: teamNewsFact?.status || "ready",
-    source: teamNewsFact?.source || "local-team-news",
+    source,
     confidence: teamNewsFact?.confidence ?? 0,
     data: {
-      home: teamNewsFact?.data?.home || {
-        absences: [],
-        impactScore: 0,
-        impactLevel: "none",
-        source: "local-team-news",
-        updatedAt: null
-      },
-      away: teamNewsFact?.data?.away || {
-        absences: [],
-        impactScore: 0,
-        impactLevel: "none",
-        source: "local-team-news",
-        updatedAt: null
-      },
-      notes: Array.isArray(teamNewsFact?.data?.notes) ? teamNewsFact.data.notes : []
+      home,
+      away,
+      notes
     },
     reason: teamNewsFact?.reason || null
   };

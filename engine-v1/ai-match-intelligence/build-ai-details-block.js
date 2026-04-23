@@ -903,8 +903,23 @@ const research = await fetchMatchResearch(match, {
       sanitizedSignals.push("travel_burden_high");
     }
 
-    let summary = ctx.summary;    if (summary && typeof summary === "object") {
-      summary = { ...summary };
+    let summary = ctx.summary;
+    if (summary && typeof summary === "object") {
+      summary = {
+        ...summary,
+        teamNews: {
+          status: teamNewsUsable ? "usable" : teamNewsThin ? "thin" : "empty",
+          source: finalFacts?.teamNews?.source || null,
+          reliability:
+            finalFacts?.teamNews?.data?.reliability ||
+            finalFacts?.teamNews?.reliability ||
+            null,
+          evidenceCount:
+            typeof finalFacts?.teamNews?.data?.evidenceCount === "number"
+              ? finalFacts.teamNews.data.evidenceCount
+              : 0
+        }
+      };
 
       if (teamNewsUsable) {
         if (typeof summary.el === "string" && !summary.el.includes("team news")) {
