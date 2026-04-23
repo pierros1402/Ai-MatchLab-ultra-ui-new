@@ -95,7 +95,8 @@ async function forcedBootstrapForDay(dayKey) {
     runDailyCycle({
       dayKey,
       doFinalize: true,
-      daysForward: 2
+      daysForward: 2,
+      detailsRebuild: true
     })
   );
 
@@ -232,7 +233,8 @@ async function bootstrap() {
     runDailyCycle({
       dayKey: today,
       doFinalize: true,
-      daysForward: 2
+      daysForward: 2,
+      detailsRebuild: true
     })
   );
 

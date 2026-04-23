@@ -1,0 +1,3 @@
+Set WshShell = CreateObject("WScript.Shell")
+WshShell.Run Chr(34) & "C:\Ai-MatchLab-ULTRA-UI\startup\start-ui.cmd" & Chr(34), 0, False
+Set WshShell = Nothing
