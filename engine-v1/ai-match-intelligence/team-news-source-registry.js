@@ -64,6 +64,150 @@ const GLOBAL_FOOTBALL_SOURCES = [
 ];
 
 const LEAGUE_SOURCE_REGISTRY = {
+  "rsa.1": [
+    {
+      id: "psl-official",
+      label: "Premier Soccer League official site",
+      type: "league",
+      trustTier: "league",
+      buildUrls(input) {
+        const team = encodeURIComponent(normalizeText(input?.team));
+        return [
+          `https://www.psl.co.za/?s=${team}`,
+          "https://www.psl.co.za/news"
+        ];
+      }
+    },
+    {
+      id: "orlando-pirates-official",
+      label: "Orlando Pirates official site",
+      type: "official_club",
+      trustTier: "official",
+      teams: [
+        "orlando pirates",
+        "pirates"
+      ],
+      buildUrls() {
+        return [
+          "https://www.orlandopiratesfc.com/",
+          "https://www.orlandopiratesfc.com/news"
+        ];
+      }
+    },
+    {
+      id: "kaizer-chiefs-official",
+      label: "Kaizer Chiefs official site",
+      type: "official_club",
+      trustTier: "official",
+      teams: [
+        "kaizer chiefs",
+        "chiefs"
+      ],
+      buildUrls() {
+        return [
+          "https://www.kaizerchiefs.com/",
+          "https://www.kaizerchiefs.com/news/"
+        ];
+      }
+    },
+    {
+      id: "mamelodi-sundowns-official",
+      label: "Mamelodi Sundowns official site",
+      type: "official_club",
+      trustTier: "official",
+      teams: [
+        "mamelodi sundowns",
+        "sundowns"
+      ],
+      buildUrls() {
+        return [
+          "https://sundownsfc.co.za/",
+          "https://sundownsfc.co.za/news/"
+        ];
+      }
+    },
+    {
+      id: "richards-bay-official",
+      label: "Richards Bay official site",
+      type: "official_club",
+      trustTier: "official",
+      teams: [
+        "richards bay",
+        "richards bay fc"
+      ],
+      buildUrls() {
+        return [
+          "https://richardsbayfc.co.za/",
+          "https://richardsbayfc.co.za/news/"
+        ];
+      }
+    },
+    {
+      id: "stellenbosch-official",
+      label: "Stellenbosch official site",
+      type: "official_club",
+      trustTier: "official",
+      teams: [
+        "stellenbosch",
+        "stellenbosch fc",
+        "stellies"
+      ],
+      buildUrls() {
+        return [
+          "https://www.stellenboschfc.com/",
+          "https://www.stellenboschfc.com/media/"
+        ];
+      }
+    },
+    {
+      id: "polokwane-city-official",
+      label: "Polokwane City official site",
+      type: "official_club",
+      trustTier: "official",
+      teams: [
+        "polokwane city",
+        "polokwane city fc"
+      ],
+      buildUrls() {
+        return [
+          "https://polokwanecityfc.co.za/",
+          "https://polokwanecityfc.co.za/news/"
+        ];
+      }
+    },
+    {
+      id: "ts-galaxy-official",
+      label: "TS Galaxy official site",
+      type: "official_club",
+      trustTier: "official",
+      teams: [
+        "ts galaxy",
+        "ts galaxy fc"
+      ],
+      buildUrls() {
+        return [
+          "https://www.tsgalaxyfc.com/",
+          "https://www.tsgalaxyfc.com/news/"
+        ];
+      }
+    }
+  ],
+
+  "rsa.2": [
+    {
+      id: "psl-official-rsa2",
+      label: "Premier Soccer League official site",
+      type: "league",
+      trustTier: "league",
+      buildUrls(input) {
+        const team = encodeURIComponent(normalizeText(input?.team));
+        return [
+          `https://www.psl.co.za/?s=${team}`,
+          "https://www.psl.co.za/news"
+        ];
+      }
+    }
+  ],
   "chi.1": [
     {
       id: "campeonato-chileno",

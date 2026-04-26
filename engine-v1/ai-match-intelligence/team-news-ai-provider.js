@@ -620,6 +620,75 @@ function normalizeLinkedUrl(href, baseUrl) {
   }
 }
 
+function getRegistryArticleTeamAliases(teamName) {
+  const raw = normalizeText(teamName).toLowerCase();
+  const aliases = new Set();
+
+  if (!raw) {
+    return [];
+  }
+
+  aliases.add(raw);
+
+  const compact = raw.replace(/[^a-z0-9]+/g, "");
+
+  if (compact === "kaizerchiefs") {
+    aliases.add("chiefs");
+    aliases.add("amakhosi");
+    aliases.add("kaizer-chiefs");
+    aliases.add("kaizer chiefs");
+  }
+
+  if (compact === "orlandopirates") {
+    aliases.add("pirates");
+    aliases.add("bucs");
+    aliases.add("orlando-pirates");
+    aliases.add("orlando pirates");
+  }
+
+  if (compact === "mamelodisundowns") {
+    aliases.add("sundowns");
+    aliases.add("masandawana");
+    aliases.add("mamelodi-sundowns");
+    aliases.add("mamelodi sundowns");
+  }
+
+  if (compact === "richardsbay") {
+    aliases.add("richards-bay");
+    aliases.add("richards bay");
+    aliases.add("richards bay fc");
+  }
+
+  if (compact === "tsgalaxy") {
+    aliases.add("ts-galaxy");
+    aliases.add("ts galaxy");
+    aliases.add("ts galaxy fc");
+  }
+
+  if (compact === "polokwanecity") {
+    aliases.add("polokwane-city");
+    aliases.add("polokwane city");
+    aliases.add("polokwane city fc");
+  }
+
+  if (compact === "stellenbosch") {
+    aliases.add("stellenbosch fc");
+    aliases.add("stellies");
+  }
+
+  return Array.from(aliases).filter(alias => alias.length >= 4);
+}
+
+function registryArticleHaystackIncludesAny(haystack, aliases = []) {
+  const value = normalizeText(haystack).toLowerCase();
+
+  if (!value) {
+    return false;
+  }
+
+  return aliases.some(alias => value.includes(normalizeText(alias).toLowerCase()));
+}
+
 function shouldKeepRegistryArticleLink(link, input) {
   const title = normalizeText(link?.title);
   const url = normalizeText(link?.url);
@@ -629,38 +698,71 @@ function shouldKeepRegistryArticleLink(link, input) {
     url
   ].filter(Boolean).join(" ").toLowerCase();
 
-  const team = normalizeText(input?.team).toLowerCase();
+  const teamAliases = getRegistryArticleTeamAliases(input?.team);
+  const opponentAliases = getRegistryArticleTeamAliases(input?.opponent);
 
-  const opponent = normalizeText(input?.opponent).toLowerCase();
-
-  if (!haystack || !team) {
+  if (!haystack || teamAliases.length === 0) {
     return false;
   }
 
   const blockedNavTitle =
+    /^(home|news|latest news|fixtures|results|standings|table|tickets|shop|store|club|team|squad|players|contact|media|videos|gallery|login|register|search|about|history|academy|development|membership)$/i.test(title) ||
     /^(el equipo|club|plantel masculino|plantel femenino|fútbol joven|futbol joven|ramas deportivas|escuelas oficiales|noticias|contacto|socios|tienda|iniciar sesión|iniciar sesion|buscar|fútbol masculino|futbol masculino|fútbol femenino|futbol femenino)$/i.test(title);
 
   const blockedCategoryUrl =
     /\/category\/(campeonato-masculino|campeonato-femenino|futbol-joven|fútbol-joven)\/?$/i.test(url) ||
     /\/futbol-joven\/?$/i.test(url) ||
-    /\/noticias\/?$/i.test(url);
+    /\/noticias\/?$/i.test(url) ||
+    /\/news\/?$/i.test(url) ||
+    /\/media\/?$/i.test(url) ||
+    /\/fixtures\/?$/i.test(url) ||
+    /\/results\/?$/i.test(url) ||
+    /\/squad\/?$/i.test(url) ||
+    /\/team\/?$/i.test(url) ||
+    /\/team-news\/?$/i.test(url) ||
+    /\/team-news\/articles\/?$/i.test(url) ||
+    /\/articles\/?$/i.test(url);
 
-  if (blockedNavTitle || blockedCategoryUrl) {
+  const blockedSoftContent =
+    /\b(birthday|anniversary|century|100\s+not\s+out|wallpaper|gallery|photos|pictures|tickets|store|shop|competition|giveaway)\b/i.test(haystack);
+
+  if (blockedNavTitle || blockedCategoryUrl || blockedSoftContent) {
     return false;
   }
 
-  const hasTeam = haystack.includes(team);
+  const hasTeam = registryArticleHaystackIncludesAny(haystack, teamAliases);
+  const hasOpponent = registryArticleHaystackIncludesAny(haystack, opponentAliases);
 
-  const hasOpponent = opponent
-    ? haystack.includes(opponent)
-    : false;
+  const isPslMatchcentreDetail =
+    /psl\.co\.za\/matchcentre\/detail\//i.test(url);
+
+  if (isPslMatchcentreDetail && !(hasTeam && hasOpponent)) {
+    return false;
+  }
+
+  if (isPslMatchcentreDetail && /^match summary$/i.test(title)) {
+    return false;
+  }
 
   const hasStrongArticleSignal =
+    /\bpreview\b/i.test(haystack) ||
+    /\bmatch\s+preview\b/i.test(haystack) ||
+    /\bteam\s+news\b/i.test(haystack) ||
+    /\bline[-\s]?up\b/i.test(haystack) ||
+    /\bstarting\s+xi\b/i.test(haystack) ||
+    /\bsquad\b/i.test(haystack) ||
+    /\binjury\b/i.test(haystack) ||
+    /\binjuries\b/i.test(haystack) ||
+    /\binjured\b/i.test(haystack) ||
+    /\bsuspended\b/i.test(haystack) ||
+    /\bsuspension\b/i.test(haystack) ||
+    /\bunavailable\b/i.test(haystack) ||
+    /\bdoubtful\b/i.test(haystack) ||
+    /\bvs\b/i.test(haystack) ||
+    /\bversus\b/i.test(haystack) ||
     /\bprevia\b/i.test(haystack) ||
     /\bfecha\b/i.test(haystack) ||
     /\bjornada\b/i.test(haystack) ||
-    /\bvs\b/i.test(haystack) ||
-    /\bversus\b/i.test(haystack) ||
     /\bconvocados\b/i.test(haystack) ||
     /\bconvocatoria\b/i.test(haystack) ||
     /\bn[oó]mina\b/i.test(haystack) ||
@@ -679,7 +781,6 @@ function shouldKeepRegistryArticleLink(link, input) {
 
 function scoreRegistryArticleLink(link, input) {
   const title = normalizeText(link?.title).toLowerCase();
-
   const url = normalizeText(link?.url).toLowerCase();
 
   const haystack = [
@@ -687,29 +788,40 @@ function scoreRegistryArticleLink(link, input) {
     url
   ].filter(Boolean).join(" ");
 
-  const team = normalizeText(input?.team).toLowerCase();
-
-  const opponent = normalizeText(input?.opponent).toLowerCase();
+  const teamAliases = getRegistryArticleTeamAliases(input?.team);
+  const opponentAliases = getRegistryArticleTeamAliases(input?.opponent);
 
   let score = 0;
 
-  if (team && haystack.includes(team)) {
-    score += 4;
+  if (registryArticleHaystackIncludesAny(haystack, teamAliases)) {
+    score += 5;
   }
 
-  if (opponent && haystack.includes(opponent)) {
-    score += 6;
+  if (registryArticleHaystackIncludesAny(haystack, opponentAliases)) {
+    score += 7;
+  }
+
+  if (/\bpreview\b|\bmatch\s+preview\b/i.test(haystack)) {
+    score += 10;
+  }
+
+  if (/\bteam\s+news\b|\bline[-\s]?up\b|\bstarting\s+xi\b|\bsquad\b/i.test(haystack)) {
+    score += 10;
+  }
+
+  if (/\binjury\b|\binjuries\b|\binjured\b|\bsuspended\b|\bsuspension\b|\bunavailable\b|\bdoubtful\b/i.test(haystack)) {
+    score += 12;
+  }
+
+  if (/\bvs\b|\bversus\b/i.test(haystack)) {
+    score += 5;
   }
 
   if (/\bprevia\b/i.test(haystack)) {
     score += 8;
   }
 
-  if (/\bfecha\b/i.test(haystack)) {
-    score += 4;
-  }
-
-  if (/\bvs\b|\bversus\b/i.test(haystack)) {
+  if (/\bfecha\b|\bjornada\b/i.test(haystack)) {
     score += 4;
   }
 
@@ -721,12 +833,27 @@ function scoreRegistryArticleLink(link, input) {
     score -= 6;
   }
 
-  if (/\/noticias\/?$/i.test(url)) {
-    score -= 6;
+  if (
+    /\/noticias\/?$/i.test(url) ||
+    /\/news\/?$/i.test(url) ||
+    /\/media\/?$/i.test(url) ||
+    /\/team-news\/?$/i.test(url) ||
+    /\/team-news\/articles\/?$/i.test(url) ||
+    /\/articles\/?$/i.test(url)
+  ) {
+    score -= 30;
+  }
+
+  if (/psl\.co\.za\/matchcentre\/detail\//i.test(url) && /^match summary$/i.test(title)) {
+    score -= 50;
   }
 
   if (/\/futbol-joven\/?$/i.test(url)) {
     score -= 6;
+  }
+
+  if (/\b(birthday|anniversary|century|100\s+not\s+out|wallpaper|gallery|tickets|store|shop|giveaway)\b/i.test(haystack)) {
+    score -= 20;
   }
 
   return score;
@@ -1228,7 +1355,7 @@ function shouldKeepDirectArticleLink(link, input) {
   }
 
   const blockedNavTitle =
-    /^(home|news|latest news|club|team|first team|fixtures|results|tickets|shop|store|contact|privacy|terms|history|honours|academy|women)$/i.test(title);
+    /^(home|news|latest news|team news|articles|fixtures|results|standings|table|tickets|shop|store|club|team|squad|players|contact|media|videos|gallery|login|register|search|about|history|academy|development|membership)$/i.test(title);
 
   const blockedStaticUrl =
     /\/(fixtures|results|tickets|shop|store|contact|privacy|terms|history|honours|academy|women)\/?$/i.test(url);
@@ -2378,6 +2505,7 @@ function buildTrustedRegistrySourceNote(source, input) {
 
 function buildTrustedDirectSourceNote(source, input) {
   const normalizedSource = normalizeSourceItem(source);
+
   if (!normalizedSource) return null;
 
   const isDirectSource =
@@ -2402,20 +2530,64 @@ function buildTrustedDirectSourceNote(source, input) {
   const publisher = normalizeText(normalizedSource.publisher);
   const url = normalizeText(normalizedSource.url);
   const text = normalizeText(normalizedSource.text);
+  const sourceType = normalizeText(normalizedSource.sourceType);
 
   if (!team || !url || text.length < 120) return null;
 
+  const haystack = [
+    title,
+    publisher,
+    url,
+    text
+  ].filter(Boolean).join(" ").toLowerCase();
+
+  const teamLc = team.toLowerCase();
+  const opponentLc = opponent.toLowerCase();
+
+  const hasTeam = haystack.includes(teamLc);
+  const hasOpponent = opponentLc ? haystack.includes(opponentLc) : true;
+
+  const isHomeLikeSource =
+    sourceType === "direct_official_home" ||
+    sourceType === "direct_league_home" ||
+    sourceType === "direct_federation_home" ||
+    /\/$/.test(url.replace(/^https?:\/\/[^/]+/i, ""));
+
+  const isArticleLikeSource =
+    sourceType === "direct_article" ||
+    /\/news\/.+/i.test(url) ||
+    /\/football-news\/.+/i.test(url) ||
+    /\/article\/.+/i.test(url) ||
+    /\/articles\/.+/i.test(url) ||
+    /\/preview/i.test(url) ||
+    /\bpreview\b/i.test(title) ||
+    /\bteam news\b/i.test(title) ||
+    /\binjur/i.test(title) ||
+    /\bsuspend/i.test(title);
+
+  if (isHomeLikeSource) {
+    return null;
+  }
+
+  if (!isArticleLikeSource) {
+    return null;
+  }
+
+  if (!hasTeam && !hasOpponent) {
+    return null;
+  }
+
   const signalType = detectTeamNewsSignal([title, publisher, text].filter(Boolean).join(" "), input);
 
+  if (!signalType) {
+    return null;
+  }
+
   return {
-    type: signalType ? "credible_selection_note" : "source_available_note",
-    value: signalType
-      ? team + (opponent ? " vs " + opponent : "") + ": trusted direct source contains team-news signal (" + signalType + "): " + (title || publisher || url)
-      : team + (opponent ? " vs " + opponent : "") + ": trusted direct source was fetched and kept for team-news review: " + (title || publisher || url),
+    type: "credible_selection_note",
+    value: team + (opponent ? " vs " + opponent : "") + ": trusted direct article contains team-news signal (" + signalType + "): " + (title || publisher || url),
     source: url,
-    confidence: signalType
-      ? (normalizedSource.trustTier === "official" ? 0.68 : 0.58)
-      : (normalizedSource.trustTier === "official" ? 0.50 : 0.42),
+    confidence: normalizedSource.trustTier === "official" ? 0.66 : 0.56,
     meta: {
       sourceMode: normalizedSource.sourceMode,
       sourceId: normalizedSource.sourceId,
@@ -2590,6 +2762,8 @@ function buildExtractionSnippets(text, terms = []) {
   return snippets;
 }
 
+
+
 function extractStructuredFactsFromSources(input, sources = []) {
   const absences = [];
   const notes = [];
@@ -2613,28 +2787,11 @@ function extractStructuredFactsFromSources(input, sources = []) {
     "line-up",
     "starting xi",
     "squad",
-
-    "lesionado",
-    "lesionados",
-    "lesión",
-    "bajas",
-    "sancionado",
-    "suspendido",
-    "convocados",
-    "convocatoria",
-    "alineación",
-    "alineacion",
-    "once inicial",
-    "previa",
-
-    "skader",
-    "suspensjoner",
-    "tropp",
-    "lagoppstilling",
-
     "absent",
     "available",
-    "unavailable"
+    "unavailable",
+    "missing",
+    "without"
   ].filter(Boolean);
 
   for (const rawSource of Array.isArray(sources) ? sources : []) {
@@ -2668,21 +2825,14 @@ function extractStructuredFactsFromSources(input, sources = []) {
     }
 
     for (const absence of extractNamedAbsences(text, source)) {
-      if (!absenceLooksAttributedToTarget(absence, source, input)) {
+      if (
+        typeof absenceLooksAttributedToTarget === "function" &&
+        !absenceLooksAttributedToTarget(absence, source, input)
+      ) {
         continue;
       }
 
       absences.push(absence);
-    }
-
-    const trustedDirectNote = buildTrustedDirectSourceNote(source, input);
-
-    if (trustedDirectNote) {
-      notes.push(trustedDirectNote);
-
-      if (trustedDirectNote.type === "credible_selection_note") {
-        continue;
-      }
     }
 
     const trustedRegistryNote = buildTrustedRegistrySourceNote(source, input);
