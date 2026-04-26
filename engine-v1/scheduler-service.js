@@ -165,7 +165,8 @@ async function runTick() {
         runDailyCycle({
           dayKey: today,
           doFinalize: true,
-          daysForward: 2
+          daysForward: 2,
+          detailsRebuild: true
         })
       );
     }

@@ -1,10 +1,7 @@
 import { readResearchCache, writeResearchCache } from "./research-cache.js";
 import { executeRemoteTaskQueue } from "./execute-remote-task-queue.js";
 import { buildResearchPlan } from "./build-research-plan.js";
-import {
-  readTeamNewsRecord,
-  writeTeamNewsRecord
-} from "../storage/team-news-db.js";
+import { readTeamNewsRecord, writeTeamNewsRecord } from "../storage/team-news-db.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -66,7 +63,15 @@ function dedupeNotes(items = []) {
   return out;
 }
 
-function buildCanonicalTeamNewsRecord(teamName, sideData, source = "remote_research") {
+function buildCanonicalTeamNewsRecord(
+  teamName,
+  sideData,
+  {
+    source = "remote_research",
+    leagueSlug = null,
+    sourceMeta = null
+  } = {}
+) {
   const team = normalizeText(teamName);
   if (!team) return null;
 
@@ -79,10 +84,48 @@ function buildCanonicalTeamNewsRecord(teamName, sideData, source = "remote_resea
 
   return {
     team,
+    leagueSlug: normalizeText(leagueSlug) || null,
     absences,
     notes,
+    evidence: Array.isArray(sideData?.evidence) ? sideData.evidence : [],
     source,
+    sourceMeta: sourceMeta && typeof sourceMeta === "object" ? sourceMeta : {},
     updatedAt: new Date().toISOString()
+  };
+}
+
+function dedupeEvidence(items = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    const text =
+      typeof raw === "string"
+        ? normalizeText(raw)
+        : normalizeText(raw?.text || raw?.label || raw?.source || "");
+
+    if (!text) continue;
+
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    if (typeof raw === "string") {
+      out.push(raw);
+    } else if (raw && typeof raw === "object") {
+      out.push(raw);
+    } else {
+      out.push(text);
+    }
+  }
+
+  return out;
+}
+
+function mergeSourceMeta(existingMeta, incomingMeta) {
+  return {
+    ...(existingMeta && typeof existingMeta === "object" ? existingMeta : {}),
+    ...(incomingMeta && typeof incomingMeta === "object" ? incomingMeta : {})
   };
 }
 
@@ -92,6 +135,7 @@ function mergeCanonicalTeamNews(existing, incoming) {
 
   return {
     team: incoming.team,
+    leagueSlug: incoming.leagueSlug || existing.leagueSlug || null,
     absences: dedupeAbsences([
       ...(existing?.absences || []),
       ...(incoming?.absences || [])
@@ -100,12 +144,21 @@ function mergeCanonicalTeamNews(existing, incoming) {
       ...(existing?.notes || []),
       ...(incoming?.notes || [])
     ]),
+    evidence: dedupeEvidence([
+      ...(existing?.evidence || []),
+      ...(incoming?.evidence || [])
+    ]),
     source: incoming.source || existing.source || "remote_research",
+    sourceMeta: mergeSourceMeta(existing?.sourceMeta, incoming?.sourceMeta),
     updatedAt: new Date().toISOString()
   };
 }
 
-function persistCanonicalTeamNewsFromResearch(match, normalized) {
+function persistCanonicalTeamNewsFromResearch(
+  match,
+  normalized,
+  { contextHints = false } = {}
+) {
   const payload = normalized?.teamNews;
   if (!payload || typeof payload !== "object") {
     return {
@@ -114,37 +167,111 @@ function persistCanonicalTeamNewsFromResearch(match, normalized) {
     };
   }
 
+  const homeSide = payload?.home || payload?.homeTeam || null;
+  const awaySide = payload?.away || payload?.awayTeam || null;
+
   const homeIncoming = buildCanonicalTeamNewsRecord(
     match?.homeTeam,
-    payload?.home || payload?.homeTeam || null,
-    "remote_research"
+    homeSide,
+    {
+      source: "remote_research",
+      leagueSlug: match?.leagueSlug || null,
+      sourceMeta: buildCanonicalTeamNewsSourceMeta(
+        match,
+        normalized,
+        "home",
+        homeSide,
+        { contextHints }
+      )
+    }
   );
 
   const awayIncoming = buildCanonicalTeamNewsRecord(
     match?.awayTeam,
-    payload?.away || payload?.awayTeam || null,
-    "remote_research"
+    awaySide,
+    {
+      source: "remote_research",
+      leagueSlug: match?.leagueSlug || null,
+      sourceMeta: buildCanonicalTeamNewsSourceMeta(
+        match,
+        normalized,
+        "away",
+        awaySide,
+        { contextHints }
+      )
+    }
   );
 
-  const writes = [];
+  const candidates = [];
 
   for (const incoming of [homeIncoming, awayIncoming]) {
     if (!incoming) continue;
 
     const existing = readTeamNewsRecord(incoming.team);
-    const merged = mergeCanonicalTeamNews(existing, incoming);
-    writeTeamNewsRecord(merged);
 
-    writes.push({
-      team: merged.team,
-      absencesCount: Array.isArray(merged.absences) ? merged.absences.length : 0,
-      notesCount: Array.isArray(merged.notes) ? merged.notes.length : 0
+    candidates.push({
+      team: incoming.team,
+      leagueSlug: incoming.leagueSlug || null,
+      source: incoming.source || null,
+      sourceMeta: incoming.sourceMeta || {},
+      absencesCount: Array.isArray(incoming.absences) ? incoming.absences.length : 0,
+      notesCount: Array.isArray(incoming.notes) ? incoming.notes.length : 0,
+      evidenceCount: Array.isArray(incoming.evidence) ? incoming.evidence.length : 0,
+      existingRecord: !!existing
     });
   }
 
+const written = [];
+
+for (const incoming of [homeIncoming, awayIncoming]) {
+  if (!incoming) continue;
+
+  const existing = readTeamNewsRecord(incoming.team);
+  const merged = mergeCanonicalTeamNews(existing, incoming);
+
+  if (!merged) continue;
+
+  const writeResult = writeTeamNewsRecord(merged);
+
+  written.push({
+    team: merged.team,
+    filePath: writeResult?.filePath || null,
+    absencesCount: Array.isArray(merged.absences) ? merged.absences.length : 0,
+    notesCount: Array.isArray(merged.notes) ? merged.notes.length : 0,
+    evidenceCount: Array.isArray(merged.evidence) ? merged.evidence.length : 0
+  });
+}
+
+return {
+  persisted: written.length > 0,
+  reason: written.length > 0 ? null : "no_canonical_team_news_candidates",
+  candidates,
+  written
+};
+}
+
+function buildCanonicalTeamNewsSourceMeta(
+  match,
+  normalized,
+  side,
+  sideData,
+  { contextHints = false } = {}
+) {
   return {
-    persisted: writes.length > 0,
-    writes
+    sourceKind: "remote_research",
+    remoteStatus: normalizeText(normalized?.remoteStatus) || null,
+    providers: Array.isArray(normalized?.sources) ? normalized.sources : [],
+    matchId: normalizeText(match?.matchId) || null,
+    leagueSlug: normalizeText(match?.leagueSlug) || null,
+    dayKey: normalizeText(match?.dayKey) || null,
+    homeTeam: normalizeText(match?.homeTeam || match?.homeTeamName) || null,
+    awayTeam: normalizeText(match?.awayTeam || match?.awayTeamName) || null,
+    side: normalizeText(side) || null,
+    contextHints: !!contextHints,
+    absencesCount: Array.isArray(sideData?.absences) ? sideData.absences.length : 0,
+    notesCount: Array.isArray(sideData?.notes) ? sideData.notes.length : 0,
+    evidenceCount: Array.isArray(sideData?.evidence) ? sideData.evidence.length : 0,
+    generatedAt: new Date().toISOString()
   };
 }
 
@@ -153,7 +280,10 @@ function applyFallbackEvidence(normalized, fallbackEvidence = {}) {
     ...normalized
   };
 
-  if (!out.teamNews && fallbackEvidence?.teamNews) {
+  if (
+    (!out.teamNews || !out.teamNews?.data) &&
+    fallbackEvidence?.teamNews
+  ) {
     out.teamNews = fallbackEvidence.teamNews;
     out.sources = Array.isArray(out.sources)
       ? [...new Set([...out.sources, "fallback-team-news-evidence"])]
@@ -280,23 +410,10 @@ export async function fetchMatchResearch(
   });
 
   if (!remoteEnabled) {
-    console.log("[ai-research] fetch:skipped", match.matchId, "remote_research_disabled");
-
-    return {
-      competitionContext: null,
-      referee: null,
-      teamNews: null,
-      lineups: null,
-      sources: [],
-      remoteStatus: "skipped",
-      remoteResults: [],
-      cacheHit: false,
-      skipped: true,
-      skippedReason: "remote_research_disabled"
-    };
+    console.log("[ai-research] fetch:local-only", match.matchId, "remote_research_disabled");
   }
 
-  if (useCache && !contextHints) {
+  if (useCache && !contextHints && remoteEnabled) {
     const cached = readResearchCache(match.matchId, { maxAgeMinutes: 180 });
     if (cached?.payload) {
       console.log("[ai-research] cache:hit", match.matchId);
@@ -319,9 +436,11 @@ export async function fetchMatchResearch(
     }
   );
 
-  const normalizedBase = normalizeResearchEnvelope(queueResult);
-  const normalized = applyFallbackEvidence(normalizedBase, fallbackEvidence);
-  const canonicalTeamNewsWrite = persistCanonicalTeamNewsFromResearch(match, normalized);
+const normalizedBase = normalizeResearchEnvelope(queueResult);
+const normalized = applyFallbackEvidence(normalizedBase, fallbackEvidence);
+  const canonicalTeamNewsWrite = persistCanonicalTeamNewsFromResearch(match, normalized, {
+    contextHints
+  });
 
   console.log("[ai-research] fetch:done", match.matchId, {
     remoteStatus: normalized.remoteStatus,
@@ -338,6 +457,7 @@ export async function fetchMatchResearch(
 
   return {
     ...normalized,
+    canonicalTeamNewsWrite,
     cacheHit: false,
     skipped: false
   };

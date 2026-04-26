@@ -11,6 +11,17 @@ function parseScore(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+const TEAM_NAME_REPAIRS = new Map([
+  ["AtlΓ©tico de San Luis", "Atlético de San Luis"],
+  ["MazatlΓ΅n FC", "Mazatlán FC"]
+]);
+
+function repairTeamDisplayName(name = "") {
+  const raw = String(name || "").trim();
+  if (!raw) return null;
+  return TEAM_NAME_REPAIRS.get(raw) || raw;
+}
+
 function normalizeTeamKey(name = "") {
   return String(name || "")
     .toLowerCase()
@@ -50,8 +61,8 @@ export function normalizeFixture(event, slug) {
   const kickoff = event?.date || comp?.date || null;
   if (!kickoff) return null;
 
-  const homeTeam = home?.team?.displayName || null;
-  const awayTeam = away?.team?.displayName || null;
+  const homeTeam = repairTeamDisplayName(home?.team?.displayName || null);
+  const awayTeam = repairTeamDisplayName(away?.team?.displayName || null);
   if (!homeTeam || !awayTeam) return null;
 
   const rawStatus = comp?.status?.type?.name || "UNKNOWN";
