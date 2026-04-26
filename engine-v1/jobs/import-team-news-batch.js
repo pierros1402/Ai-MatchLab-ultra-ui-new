@@ -129,6 +129,24 @@ function normalizeObject(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 
+function isAcceptedRow(row = {}) {
+  if (!row || typeof row !== "object" || Array.isArray(row)) return false;
+
+  if (row.accepted === true) return true;
+  if (row.canonicalAccepted === true) return true;
+  if (row.acceptance?.accepted === true) return true;
+  if (row.decision?.accepted === true) return true;
+
+  const status = normalizeText(
+    row.status ||
+    row.acceptance?.status ||
+    row.decision?.status ||
+    row.resolution
+  ).toLowerCase();
+
+  return status === "accepted";
+}
+
 function normalizeInputRow(row = {}) {
   const team = normalizeText(row?.team);
   if (!team) return null;
@@ -149,6 +167,7 @@ function normalizeInputRow(row = {}) {
     evidence,
     source: normalizeText(row?.source) || "batch-import",
     sourceMeta: normalizeObject(row?.sourceMeta),
+    accepted: isAcceptedRow(row),
     hasEvidence:
       absences.length > 0 ||
       notes.length > 0 ||
@@ -184,7 +203,8 @@ function mergeRecord(existing, incoming) {
     source: incoming.source || existing?.source || "batch-import",
     sourceMeta: {
       ...(existing?.sourceMeta || {}),
-      ...(incoming?.sourceMeta || {})
+      ...(incoming?.sourceMeta || {}),
+      canonicalAccepted: true
     },
     updatedAt: new Date().toISOString()
   };
@@ -217,6 +237,15 @@ export async function importTeamNewsBatch(filePath) {
       skipped.push({
         row,
         reason: "missing_team"
+      });
+      continue;
+    }
+
+    if (!normalized.accepted) {
+      skipped.push({
+        row,
+        team: normalized.team,
+        reason: "not_accepted"
       });
       continue;
     }

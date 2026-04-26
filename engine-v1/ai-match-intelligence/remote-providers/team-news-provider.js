@@ -88,20 +88,19 @@ function inferTeamNewsReliability(data = {}) {
   };
 }
 
-function buildCanonicalTeamNews(data, provider, confidence = 0.65, reason = null, status = "success") {
-  const homeNotes = dedupeNotes(data?.homeTeam?.notes);
-  const awayNotes = dedupeNotes(data?.awayTeam?.notes);
-  const normalized = {
-    homeTeam: { notes: homeNotes },
-    awayTeam: { notes: awayNotes }
-  };
-
-  const reliabilityMeta = inferTeamNewsReliability(normalized);
+function buildCanonicalTeamNews(
+  extracted,
+  provider,
+  confidence,
+  reason = null,
+  status = "partial"
+) {
+  const reliabilityMeta = inferTeamNewsReliability(extracted);
 
   if (reliabilityMeta.reliability === "empty") {
     return {
       status: "unavailable",
-      reason: reason || "no_team_news_evidence",
+      reason: reason || "missing_team_news_evidence",
       confidence: 0,
       reliability: "empty",
       diagnostics: {
@@ -115,28 +114,10 @@ function buildCanonicalTeamNews(data, provider, confidence = 0.65, reason = null
     };
   }
 
-  const resolvedReason =
-    reason ||
-    (reliabilityMeta.reliability === "thin"
-      ? "limited_team_news_evidence"
-      : null);
-
-  const resolvedStatus =
-    reliabilityMeta.reliability === "usable"
-      ? status === "unavailable"
-        ? "partial"
-        : "success"
-      : "partial";
-
-  const resolvedConfidence =
-    reliabilityMeta.reliability === "usable"
-      ? confidence
-      : Math.min(confidence, 0.44);
-
   return {
-    status: resolvedStatus,
-    reason: resolvedReason,
-    confidence: resolvedConfidence,
+    status,
+    reason,
+    confidence,
     reliability: reliabilityMeta.reliability,
     diagnostics: {
       provider,
@@ -147,76 +128,77 @@ function buildCanonicalTeamNews(data, provider, confidence = 0.65, reason = null
     },
     data: {
       homeTeam: {
-        notes: homeNotes
+        notes: asArray(extracted?.homeTeam?.notes)
       },
       awayTeam: {
-        notes: awayNotes
-      },
-      provider,
-      evidenceCount: reliabilityMeta.evidenceCount,
-      reliability: reliabilityMeta.reliability
+        notes: asArray(extracted?.awayTeam?.notes)
+      }
     }
   };
 }
 
 function extractTeamNewsFromResearch(context = {}) {
   const factData = context?.researchedFacts?.teamNews?.data;
-  if (
-    factData?.homeTeam?.notes ||
-    factData?.awayTeam?.notes ||
-    factData?.home?.notes ||
-    factData?.away?.notes
-  ) {
+
+  const factHomeBucket = {
+    ...(factData?.homeTeam || {}),
+    ...(factData?.home || {})
+  };
+  const factAwayBucket = {
+    ...(factData?.awayTeam || {}),
+    ...(factData?.away || {})
+  };
+
+  const factHomeNotes = pullNotesFromBucket(factHomeBucket);
+  const factAwayNotes = pullNotesFromBucket(factAwayBucket);
+
+  if (factHomeNotes.length || factAwayNotes.length) {
     return {
       homeTeam: {
-        notes: dedupeNotes([
-          ...(factData?.homeTeam?.notes || []),
-          ...(factData?.home?.notes || [])
-        ])
+        notes: factHomeNotes
       },
       awayTeam: {
-        notes: dedupeNotes([
-          ...(factData?.awayTeam?.notes || []),
-          ...(factData?.away?.notes || [])
-        ])
+        notes: factAwayNotes
       }
     };
   }
 
   const ctxData = context?.teamNewsContext?.data;
-  if (
-    ctxData?.homeTeam?.notes ||
-    ctxData?.awayTeam?.notes ||
-    ctxData?.home?.notes ||
-    ctxData?.away?.notes
-  ) {
+
+  const ctxHomeBucket = {
+    ...(ctxData?.homeTeam || {}),
+    ...(ctxData?.home || {})
+  };
+  const ctxAwayBucket = {
+    ...(ctxData?.awayTeam || {}),
+    ...(ctxData?.away || {})
+  };
+
+  const ctxHomeNotes = pullNotesFromBucket(ctxHomeBucket);
+  const ctxAwayNotes = pullNotesFromBucket(ctxAwayBucket);
+
+  if (ctxHomeNotes.length || ctxAwayNotes.length) {
     return {
       homeTeam: {
-        notes: dedupeNotes([
-          ...(ctxData?.homeTeam?.notes || []),
-          ...(ctxData?.home?.notes || [])
-        ])
+        notes: ctxHomeNotes
       },
       awayTeam: {
-        notes: dedupeNotes([
-          ...(ctxData?.awayTeam?.notes || []),
-          ...(ctxData?.away?.notes || [])
-        ])
+        notes: ctxAwayNotes
       }
     };
   }
 
   const research = context?.research || {};
-  const homeBucket =
-    research?.teamNews?.homeTeam ||
-    research?.team_news?.homeTeam ||
-    research?.homeTeamNews ||
-    {};
-  const awayBucket =
-    research?.teamNews?.awayTeam ||
-    research?.team_news?.awayTeam ||
-    research?.awayTeamNews ||
-    {};
+  const homeBucket = {
+    ...(research?.teamNews?.homeTeam || {}),
+    ...(research?.team_news?.homeTeam || {}),
+    ...(research?.homeTeamNews || {})
+  };
+  const awayBucket = {
+    ...(research?.teamNews?.awayTeam || {}),
+    ...(research?.team_news?.awayTeam || {}),
+    ...(research?.awayTeamNews || {})
+  };
 
   return {
     homeTeam: { notes: pullNotesFromBucket(homeBucket) },
@@ -285,6 +267,23 @@ function extractTeamNewsFromMatch(match = {}) {
       ...(espn?.awayMissingPlayers || [])
     ]
   };
+
+  const forceFromDetails = match?.detailContext?.teamNews?.data;
+
+  if (forceFromDetails) {
+    return {
+      homeTeam: {
+        notes: Array.isArray(forceFromDetails?.home?.notes)
+          ? forceFromDetails.home.notes
+          : []
+      },
+      awayTeam: {
+        notes: Array.isArray(forceFromDetails?.away?.notes)
+          ? forceFromDetails.away.notes
+          : []
+      }
+    };
+  }
 
   return {
     homeTeam: { notes: pullNotesFromBucket(homeBucket) },

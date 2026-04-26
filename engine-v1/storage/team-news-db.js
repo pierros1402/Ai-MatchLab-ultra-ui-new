@@ -20,6 +20,15 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+function isCanonicalTeamNewsRecord(value) {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    normalizeText(value.team).length > 0
+  );
+}
+
 function normalizeTeamKey(name) {
   return String(name || "")
     .trim()
@@ -222,7 +231,8 @@ export function readTeamNewsRecord(teamNameOrKey) {
   if (!raw) return null;
 
   try {
-    return normalizeTeamNewsRecord(raw);
+    const normalized = normalizeTeamNewsRecord(raw);
+    return isCanonicalTeamNewsRecord(normalized) ? normalized : null;
   } catch {
     return null;
   }
