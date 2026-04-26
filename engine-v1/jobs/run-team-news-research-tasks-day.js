@@ -798,6 +798,14 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
       aiProviderResult = await runTeamNewsAIProvider(task);
 
       if (aiProviderResult?.status === "resolved") {
+        const providerExtractionSnippets = Array.isArray(aiProviderResult?.extractionSnippets)
+          ? aiProviderResult.extractionSnippets.filter(Boolean)
+          : [];
+
+        const providerEvidenceSources = Array.isArray(aiProviderResult?.evidenceSources)
+          ? aiProviderResult.evidenceSources.filter(Boolean)
+          : [];
+
         finalCandidate = {
           ...candidateOutput,
           absences: aiProviderResult.absences || [],
@@ -806,6 +814,8 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             ...(candidateOutput.evidence || []),
             ...(aiProviderResult.evidence || [])
           ],
+          extractionSnippets: providerExtractionSnippets,
+          evidenceSources: providerEvidenceSources,
           writeRecommendation: true,
           writeReason: "ai_provider_resolved",
           aiProvider: {
@@ -814,12 +824,24 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             mode: aiProviderResult.mode || null,
             sourceCount: aiProviderResult.sourceCount ?? null,
             reason: aiProviderResult.reason || null,
-            diagnostics: aiProviderResult.diagnostics || null
+            diagnostics: aiProviderResult.diagnostics || null,
+            extractionSnippets: providerExtractionSnippets,
+            evidenceSources: providerEvidenceSources
           }
         };
       } else {
+        const providerExtractionSnippets = Array.isArray(aiProviderResult?.extractionSnippets)
+          ? aiProviderResult.extractionSnippets.filter(Boolean)
+          : [];
+
+        const providerEvidenceSources = Array.isArray(aiProviderResult?.evidenceSources)
+          ? aiProviderResult.evidenceSources.filter(Boolean)
+          : [];
+
         finalCandidate = {
           ...candidateOutput,
+          extractionSnippets: providerExtractionSnippets,
+          evidenceSources: providerEvidenceSources,
           aiProvider: {
             status: aiProviderResult?.status || "not_resolved",
             provider: aiProviderResult?.provider || "team-news-ai-provider",
@@ -827,7 +849,9 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             sourceCount: aiProviderResult?.sourceCount ?? null,
             reason: aiProviderResult?.reason || "provider_returned_no_resolution",
             input: aiProviderResult?.input || null,
-            diagnostics: aiProviderResult?.diagnostics || null
+            diagnostics: aiProviderResult?.diagnostics || null,
+            extractionSnippets: providerExtractionSnippets,
+            evidenceSources: providerEvidenceSources
           }
         };
       }
