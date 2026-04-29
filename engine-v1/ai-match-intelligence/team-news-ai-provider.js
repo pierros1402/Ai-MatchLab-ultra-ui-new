@@ -21,6 +21,29 @@ function buildUnresolved(reason, extra = {}) {
   };
 }
 
+function buildFallbackRequired(reason, extra = {}) {
+  return {
+    status: "fallback_required",
+    absences: [],
+    notes: [],
+    evidence: [
+      {
+        type: "fallback_team_news_required",
+        label: "fallback team-news intelligence required",
+        value: {
+          reason,
+          nextLayer: "recent_lineups_usage_analysis",
+          description: "No reliable team-news article sources were found; fallback should infer availability from recent lineups and player usage."
+        },
+        source: "team-news-ai-provider.fallback",
+        confidence: 0.35
+      }
+    ],
+    reason,
+    ...extra
+  };
+}
+
 function buildPrompt(task) {
   const team = normalizeText(task?.target?.team);
   const opponent = normalizeText(task?.target?.opponent);
@@ -261,10 +284,13 @@ function candidateLooksLikeFootballSearchHit(source, input) {
   const title = normalizeText(source?.title);
   const url = normalizeText(source?.url);
   const publisher = normalizeText(source?.publisher);
+  const text = normalizeText(source?.text);
 
   if (
     isBlockedNoisePublisher(url) ||
     isBlockedNoisePublisher(publisher) ||
+    isBlockedSourceDomain(url) ||
+    isBlockedSourceDomain(publisher) ||
     isSearchPageSource(source)
   ) {
     return false;
@@ -273,15 +299,14 @@ function candidateLooksLikeFootballSearchHit(source, input) {
   const haystack = [
     title,
     url,
-    publisher
+    publisher,
+    text
   ].filter(Boolean).join(" ").toLowerCase();
 
   const team = normalizeText(input?.team).toLowerCase();
   const opponent = normalizeText(input?.opponent).toLowerCase();
 
   if (!haystack || !team) return false;
-
-  if (isBlockedSourceDomain(url) || isBlockedSourceDomain(publisher)) return false;
 
   const hasTeam = haystack.includes(team);
   const hasOpponent = opponent ? haystack.includes(opponent) : false;
@@ -292,13 +317,20 @@ function candidateLooksLikeFootballSearchHit(source, input) {
     /\bfutbol\b/i.test(haystack) ||
     /\bfútbol\b/i.test(haystack) ||
     /\bteam-news\b/i.test(haystack) ||
+    /\bteam news\b/i.test(haystack) ||
     /\bpreview\b/i.test(haystack) ||
+    /\bmatch preview\b/i.test(haystack) ||
     /\binjur/i.test(haystack) ||
     /\bsuspend/i.test(haystack) ||
     /\blineup\b/i.test(haystack) ||
+    /\bline-up\b/i.test(haystack) ||
     /\bsquad\b/i.test(haystack) ||
     /\bmatch\b/i.test(haystack) ||
-    /\bfc\b/i.test(haystack);
+    /\bfc\b/i.test(haystack) ||
+    /\bpremier league\b/i.test(haystack) ||
+    /\bskysports\b/i.test(haystack) ||
+    /\bbbc\b/i.test(haystack) ||
+    /\bflashscore\b/i.test(haystack);
 
   const blockedNoise =
     /\bapp store\b/i.test(haystack) ||
@@ -313,97 +345,37 @@ function candidateLooksLikeFootballSearchHit(source, input) {
 }
 
 function sourceLooksRelevant(source, input) {
-  const normalizedSource = normalizeSourceItem(source);
-  if (!normalizedSource) return false;
-
-  const haystack = normalizeText([
-    normalizedSource.title,
-    normalizedSource.publisher,
-    normalizedSource.url,
-    normalizedSource.text
-  ].filter(Boolean).join(" ")).toLowerCase();
+  const text = normalizeText(
+    `${source?.title || ""} ${source?.snippet || ""} ${source?.url || ""}`
+  ).toLowerCase();
 
   const team = normalizeText(input?.team).toLowerCase();
-  const opponent = normalizeText(input?.opponent).toLowerCase();
 
-  if (!haystack || !team) return false;
+  if (!text || !team) return false;
 
-  const isRegistrySource =
-    normalizedSource.sourceMode === "registry" ||
-    normalizedSource.query === "registry";
-
-  const isDirectSource =
-    normalizedSource.sourceMode === "direct" ||
-    normalizedSource.query === "direct" ||
-    /^direct_/i.test(normalizedSource.sourceType || "");
-
-  const isTrustedRegistrySource =
-    isRegistrySource &&
-    (
-      normalizedSource.trustTier === "official" ||
-      normalizedSource.trustTier === "league" ||
-      normalizedSource.trustTier === "reference"
-    );
-
-  const isTrustedDirectSource =
-    isDirectSource &&
-    (
-      normalizedSource.trustTier === "official" ||
-      normalizedSource.trustTier === "league" ||
-      normalizedSource.trustTier === "local_media" ||
-      normalizedSource.trustTier === "reference"
-    );
-
-  const hasTeam = haystack.includes(team);
-
-  const hasOpponent = opponent
-    ? haystack.includes(opponent)
-    : true;
-
-  const hasTeamNewsSignal =
-    /team news|injur|suspend|lineup|line-up|starting xi|absent|doubt|fitness|squad|convocados|lesion|lesión|sancion|alineaci|noticias|plantel|convocatoria|previa|bajas|citados|n[oó]mina|formaci[oó]n|once inicial|tropp|skader|lagoppstilling/i.test(haystack);
-
-  const isSearchUrl =
-    normalizedSource.sourceType === "search_url" ||
-    /\/search\b|\/schnellsuche\b|\?q=|\?query=|\?s=/i.test(normalizedSource.url || "");
-
-  const isOfficialOrLeague =
-    normalizedSource.trustTier === "official" ||
-    normalizedSource.trustTier === "league";
-
-  const isArticleLike =
-    normalizedSource.sourceType === "registry_article" ||
-    /\/news\/|\/noticias\/|\/previa-|\/preview-|\/match-|\/article\/|\/actualidad\/|\/futbol\/|\/club\/|\/equipo\//i.test(normalizedSource.url || "");
-
-  const textLength = normalizeText(normalizedSource.text).length;
-
-  if (isSearchUrl) {
+  // πρέπει να υπάρχει ακριβές match team
+  if (!text.includes(team)) {
     return false;
   }
 
-  if (isTrustedRegistrySource && isOfficialOrLeague && hasTeam && textLength >= 120) {
-    return true;
+  // ❌ reject γνωστές παγίδες (similar names)
+  if (
+    text.includes("deportivo la coruna") ||
+    text.includes("rc deportivo") ||
+    text.includes("deportivo coruna")
+  ) {
+    return false;
   }
 
-  if (isTrustedRegistrySource && isArticleLike && textLength >= 120 && (hasTeam || hasOpponent || hasTeamNewsSignal)) {
-    return true;
+  // ❌ reject generic pages
+  if (
+    /live score|livescore|h2h|head to head|standings|table|history|club info|team  profile|squad overview|match stats|prediction/i.test(text)
+  ) {
+    return false;
   }
 
-  if (isTrustedRegistrySource && hasTeam && (hasOpponent || hasTeamNewsSignal)) {
-    return true;
-  }
-
-  if (isTrustedDirectSource && isOfficialOrLeague && hasTeam && textLength >= 120) {
-    return true;
-  }
-
-  if (isTrustedDirectSource && hasTeam && (hasOpponent || hasTeamNewsSignal)) {
-    return true;
-  }
-
-  return hasTeam && hasTeamNewsSignal;
+  return true;
 }
-
 async function fetchTextResult(url, { timeoutMs = 10000, maxChars = 120000 } = {}) {
   const startedAt = Date.now();
   const controller = new AbortController();
@@ -620,73 +592,65 @@ function normalizeLinkedUrl(href, baseUrl) {
   }
 }
 
-function getRegistryArticleTeamAliases(teamName) {
-  const raw = normalizeText(teamName).toLowerCase();
-  const aliases = new Set();
+
+function decodeJsonishScalar(value) {
+  const raw = normalizeText(value);
 
   if (!raw) {
-    return [];
+    return "";
   }
 
-  aliases.add(raw);
-
-  const compact = raw.replace(/[^a-z0-9]+/g, "");
-
-  if (compact === "kaizerchiefs") {
-    aliases.add("chiefs");
-    aliases.add("amakhosi");
-    aliases.add("kaizer-chiefs");
-    aliases.add("kaizer chiefs");
+  try {
+    return JSON.parse(`"${raw.replace(/`/g, "\\`")}"`);
+  } catch {
+    return decodeHtml(raw)
+      .replace(/\\u([0-9a-f]{4})/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+      .replace(/\\\//g, "/")
+      .replace(/\\"/g, '"')
+      .replace(/\\n|\\r|\\t/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
-
-  if (compact === "orlandopirates") {
-    aliases.add("pirates");
-    aliases.add("bucs");
-    aliases.add("orlando-pirates");
-    aliases.add("orlando pirates");
-  }
-
-  if (compact === "mamelodisundowns") {
-    aliases.add("sundowns");
-    aliases.add("masandawana");
-    aliases.add("mamelodi-sundowns");
-    aliases.add("mamelodi sundowns");
-  }
-
-  if (compact === "richardsbay") {
-    aliases.add("richards-bay");
-    aliases.add("richards bay");
-    aliases.add("richards bay fc");
-  }
-
-  if (compact === "tsgalaxy") {
-    aliases.add("ts-galaxy");
-    aliases.add("ts galaxy");
-    aliases.add("ts galaxy fc");
-  }
-
-  if (compact === "polokwanecity") {
-    aliases.add("polokwane-city");
-    aliases.add("polokwane city");
-    aliases.add("polokwane city fc");
-  }
-
-  if (compact === "stellenbosch") {
-    aliases.add("stellenbosch fc");
-    aliases.add("stellies");
-  }
-
-  return Array.from(aliases).filter(alias => alias.length >= 4);
 }
 
-function registryArticleHaystackIncludesAny(haystack, aliases = []) {
-  const value = normalizeText(haystack).toLowerCase();
+function extractJsonishRegistryLinks(html, baseUrl, row) {
+  const out = [];
+  const safeHtml = decodeHtml(String(html || ""));
+  const patterns = [
+    /"title"\s*:\s*"((?:\\.|[^"\\]){4,240})"[\s\S]{0,700}?"url"\s*:\s*"((?:\\.|[^"\\]){2,700})"/gi,
+    /"url"\s*:\s*"((?:\\.|[^"\\]){2,700})"[\s\S]{0,700}?"title"\s*:\s*"((?:\\.|[^"\\]){4,240})"/gi,
+    /"headline"\s*:\s*"((?:\\.|[^"\\]){4,240})"[\s\S]{0,700}?"url"\s*:\s*"((?:\\.|[^"\\]){2,700})"/gi,
+    /"url"\s*:\s*"((?:\\.|[^"\\]){2,700})"[\s\S]{0,700}?"headline"\s*:\s*"((?:\\.|[^"\\]){4,240})"/gi
+  ];
 
-  if (!value) {
-    return false;
+  for (const pattern of patterns) {
+    const reversed = pattern.source.startsWith('"url"');
+
+    for (const match of safeHtml.matchAll(pattern)) {
+      const rawTitle = reversed ? match[2] : match[1];
+      const rawUrl = reversed ? match[1] : match[2];
+      const title = stripHtml(decodeJsonishScalar(rawTitle));
+      const url = normalizeLinkedUrl(decodeJsonishScalar(rawUrl), baseUrl);
+
+      if (!title || !url) {
+        continue;
+      }
+
+      out.push({
+        title,
+        url,
+        publisher: getPublisherFromUrl(url),
+        sourceMode: "registry",
+        sourceId: `${row.id}:article`,
+        sourceType: "registry_article",
+        trustTier: row.trustTier,
+        parentSourceId: row.id,
+        parentUrl: baseUrl
+      });
+    }
   }
 
-  return aliases.some(alias => value.includes(normalizeText(alias).toLowerCase()));
+  return out;
 }
 
 function shouldKeepRegistryArticleLink(link, input) {
@@ -698,71 +662,57 @@ function shouldKeepRegistryArticleLink(link, input) {
     url
   ].filter(Boolean).join(" ").toLowerCase();
 
-  const teamAliases = getRegistryArticleTeamAliases(input?.team);
-  const opponentAliases = getRegistryArticleTeamAliases(input?.opponent);
+  const team = normalizeText(input?.team).toLowerCase();
+  const opponent = normalizeText(input?.opponent).toLowerCase();
 
-  if (!haystack || teamAliases.length === 0) {
+  if (!haystack) {
     return false;
   }
 
   const blockedNavTitle =
-    /^(home|news|latest news|fixtures|results|standings|table|tickets|shop|store|club|team|squad|players|contact|media|videos|gallery|login|register|search|about|history|academy|development|membership)$/i.test(title) ||
+    /^(home|news|latest|latest news|all news|first team|first team news|fixtures|results|tickets|shop|store|players|fans|contact|login|sign up|search|club|teams|women|academy)$/i.test(title) ||
     /^(el equipo|club|plantel masculino|plantel femenino|fútbol joven|futbol joven|ramas deportivas|escuelas oficiales|noticias|contacto|socios|tienda|iniciar sesión|iniciar sesion|buscar|fútbol masculino|futbol masculino|fútbol femenino|futbol femenino)$/i.test(title);
 
-  const blockedCategoryUrl =
+  const blockedListingUrl =
+    /\/news\/?$/i.test(url) ||
+    /\/news\/latest\/?$/i.test(url) ||
+    /\/news\/first-team\/?$/i.test(url) ||
+    /\/en\/news\/?$/i.test(url) ||
+    /\/en\/news\/all-news\/?$/i.test(url) ||
+    /\/en\/news\/latest-mens-news\/?$/i.test(url) ||
     /\/category\/(campeonato-masculino|campeonato-femenino|futbol-joven|fútbol-joven)\/?$/i.test(url) ||
     /\/futbol-joven\/?$/i.test(url) ||
-    /\/noticias\/?$/i.test(url) ||
-    /\/news\/?$/i.test(url) ||
-    /\/media\/?$/i.test(url) ||
-    /\/fixtures\/?$/i.test(url) ||
-    /\/results\/?$/i.test(url) ||
-    /\/squad\/?$/i.test(url) ||
-    /\/team\/?$/i.test(url) ||
-    /\/team-news\/?$/i.test(url) ||
-    /\/team-news\/articles\/?$/i.test(url) ||
-    /\/articles\/?$/i.test(url);
+    /\/noticias\/?$/i.test(url);
 
-  const blockedSoftContent =
-    /\b(birthday|anniversary|century|100\s+not\s+out|wallpaper|gallery|photos|pictures|tickets|store|shop|competition|giveaway)\b/i.test(haystack);
-
-  if (blockedNavTitle || blockedCategoryUrl || blockedSoftContent) {
+  if (blockedNavTitle || blockedListingUrl) {
     return false;
   }
 
-  const hasTeam = registryArticleHaystackIncludesAny(haystack, teamAliases);
-  const hasOpponent = registryArticleHaystackIncludesAny(haystack, opponentAliases);
-
-  const isPslMatchcentreDetail =
-    /psl\.co\.za\/matchcentre\/detail\//i.test(url);
-
-  if (isPslMatchcentreDetail && !(hasTeam && hasOpponent)) {
-    return false;
-  }
-
-  if (isPslMatchcentreDetail && /^match summary$/i.test(title)) {
-    return false;
-  }
+  const hasTeam = team ? haystack.includes(team) : false;
+  const hasOpponent = opponent ? haystack.includes(opponent) : false;
 
   const hasStrongArticleSignal =
-    /\bpreview\b/i.test(haystack) ||
-    /\bmatch\s+preview\b/i.test(haystack) ||
-    /\bteam\s+news\b/i.test(haystack) ||
-    /\bline[-\s]?up\b/i.test(haystack) ||
-    /\bstarting\s+xi\b/i.test(haystack) ||
-    /\bsquad\b/i.test(haystack) ||
+    /\bteam news\b/i.test(haystack) ||
     /\binjury\b/i.test(haystack) ||
     /\binjuries\b/i.test(haystack) ||
-    /\binjured\b/i.test(haystack) ||
-    /\bsuspended\b/i.test(haystack) ||
+    /\binjury update\b/i.test(haystack) ||
+    /\binjury latest\b/i.test(haystack) ||
     /\bsuspension\b/i.test(haystack) ||
-    /\bunavailable\b/i.test(haystack) ||
-    /\bdoubtful\b/i.test(haystack) ||
-    /\bvs\b/i.test(haystack) ||
-    /\bversus\b/i.test(haystack) ||
+    /\bsuspended\b/i.test(haystack) ||
+    /\blineup\b/i.test(haystack) ||
+    /\bline-up\b/i.test(haystack) ||
+    /\bpredicted lineup\b/i.test(haystack) ||
+    /\bexpected lineup\b/i.test(haystack) ||
+    /\bstarting xi\b/i.test(haystack) ||
+    /\bxi vs\b/i.test(haystack) ||
+    /\bpreview\b/i.test(haystack) ||
+    /\bmatch preview\b/i.test(haystack) ||
+    /\bsquad\b/i.test(haystack) ||
     /\bprevia\b/i.test(haystack) ||
     /\bfecha\b/i.test(haystack) ||
     /\bjornada\b/i.test(haystack) ||
+    /\bvs\b/i.test(haystack) ||
+    /\bversus\b/i.test(haystack) ||
     /\bconvocados\b/i.test(haystack) ||
     /\bconvocatoria\b/i.test(haystack) ||
     /\bn[oó]mina\b/i.test(haystack) ||
@@ -772,15 +722,27 @@ function shouldKeepRegistryArticleLink(link, input) {
     /\bsuspendidos\b/i.test(haystack) ||
     /\bbajas\b/i.test(haystack);
 
+  const looksLikeArticleUrl =
+    /\/news\/[^/?#]+/i.test(url) ||
+    /\/en\/news\/[^/?#]+/i.test(url) ||
+    /\/article\/[^/?#]+/i.test(url) ||
+    /\/sport\/football\//i.test(url) ||
+    /\/football\//i.test(url);
+
   return (
-    (hasTeam && hasOpponent) ||
-    (hasTeam && hasStrongArticleSignal) ||
-    (hasOpponent && hasStrongArticleSignal)
+    looksLikeArticleUrl &&
+    (
+      hasStrongArticleSignal ||
+      hasTeam ||
+      hasOpponent ||
+      title.length > 25   // <-- fallback για generic articles
+    )
   );
 }
 
 function scoreRegistryArticleLink(link, input) {
   const title = normalizeText(link?.title).toLowerCase();
+
   const url = normalizeText(link?.url).toLowerCase();
 
   const haystack = [
@@ -788,44 +750,33 @@ function scoreRegistryArticleLink(link, input) {
     url
   ].filter(Boolean).join(" ");
 
-  const teamAliases = getRegistryArticleTeamAliases(input?.team);
-  const opponentAliases = getRegistryArticleTeamAliases(input?.opponent);
+  const team = normalizeText(input?.team).toLowerCase();
+
+  const opponent = normalizeText(input?.opponent).toLowerCase();
 
   let score = 0;
 
-  if (registryArticleHaystackIncludesAny(haystack, teamAliases)) {
-    score += 5;
+  if (team && haystack.includes(team)) {
+    score += 4;
   }
 
-  if (registryArticleHaystackIncludesAny(haystack, opponentAliases)) {
-    score += 7;
-  }
-
-  if (/\bpreview\b|\bmatch\s+preview\b/i.test(haystack)) {
-    score += 10;
-  }
-
-  if (/\bteam\s+news\b|\bline[-\s]?up\b|\bstarting\s+xi\b|\bsquad\b/i.test(haystack)) {
-    score += 10;
-  }
-
-  if (/\binjury\b|\binjuries\b|\binjured\b|\bsuspended\b|\bsuspension\b|\bunavailable\b|\bdoubtful\b/i.test(haystack)) {
-    score += 12;
-  }
-
-  if (/\bvs\b|\bversus\b/i.test(haystack)) {
-    score += 5;
+  if (opponent && haystack.includes(opponent)) {
+    score += 6;
   }
 
   if (/\bprevia\b/i.test(haystack)) {
     score += 8;
   }
 
-  if (/\bfecha\b|\bjornada\b/i.test(haystack)) {
+  if (/\bfecha\b/i.test(haystack)) {
     score += 4;
   }
 
-  if (/convocados|convocatoria|n[oó]mina|citados|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|suspend|bajas/i.test(haystack)) {
+  if (/\bvs\b|\bversus\b/i.test(haystack)) {
+    score += 4;
+  }
+
+  if (/convocados|convocatoria|n[oó]mina|citados|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|suspend|bajas|team news|injury update|injuries|suspensions|squad news|expected lineup|predicted lineup|match preview/i.test(haystack)) {
     score += 10;
   }
 
@@ -833,27 +784,12 @@ function scoreRegistryArticleLink(link, input) {
     score -= 6;
   }
 
-  if (
-    /\/noticias\/?$/i.test(url) ||
-    /\/news\/?$/i.test(url) ||
-    /\/media\/?$/i.test(url) ||
-    /\/team-news\/?$/i.test(url) ||
-    /\/team-news\/articles\/?$/i.test(url) ||
-    /\/articles\/?$/i.test(url)
-  ) {
-    score -= 30;
-  }
-
-  if (/psl\.co\.za\/matchcentre\/detail\//i.test(url) && /^match summary$/i.test(title)) {
-    score -= 50;
+  if (/\/noticias\/?$/i.test(url)) {
+    score -= 6;
   }
 
   if (/\/futbol-joven\/?$/i.test(url)) {
     score -= 6;
-  }
-
-  if (/\b(birthday|anniversary|century|100\s+not\s+out|wallpaper|gallery|tickets|store|shop|giveaway)\b/i.test(haystack)) {
-    score -= 20;
   }
 
   return score;
@@ -862,6 +798,8 @@ function scoreRegistryArticleLink(link, input) {
 function extractRegistryArticleLinksFromHtml(html, baseUrl, row, input) {
   const collected = [];
   const safeHtml = String(html || "");
+
+  const rejectedLinks = [];
 
   let baseHost = null;
 
@@ -920,6 +858,13 @@ function extractRegistryArticleLinksFromHtml(html, baseUrl, row, input) {
     };
 
     if (!shouldKeepRegistryArticleLink(link, input)) {
+      if (rejectedLinks.length < 12) {
+        rejectedLinks.push({
+          title: link.title,
+          url: link.url,
+          reason: "shouldKeepRegistryArticleLink_false"
+        });
+      }
       continue;
     }
 
@@ -929,12 +874,60 @@ function extractRegistryArticleLinksFromHtml(html, baseUrl, row, input) {
     });
   }
 
-  return collected
-    .filter(link => link.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 6)
-    .map(({ score, ...link }) => link);
-}
+
+
+  for (const jsonLink of extractJsonishRegistryLinks(safeHtml, baseUrl, row)) {
+    let host = null;
+
+    try {
+      host = new URL(jsonLink.url).hostname.replace(/^www\./i, "");
+    } catch {
+      host = null;
+    }
+
+    if (baseHost && host && host !== baseHost) {
+      continue;
+    }
+
+    if (/\.(jpg|jpeg|png|gif|webp|svg|pdf|zip|rar)$/i.test(jsonLink.url)) {
+      continue;
+    }
+
+    const key = jsonLink.url.toLowerCase();
+
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+
+    if (!shouldKeepRegistryArticleLink(jsonLink, input)) {
+      if (rejectedLinks.length < 12) {
+        rejectedLinks.push({
+          title: jsonLink.title,
+          url: jsonLink.url,
+          reason: "shouldKeepRegistryArticleLink_false_json"
+        });
+      }
+      continue;
+    }
+
+    collected.push({
+      ...jsonLink,
+      score: scoreRegistryArticleLink(jsonLink, input) + 3
+    });
+  }
+
+    const kept = collected
+      .filter(link => link.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map(({ score, ...link }) => link);
+
+    kept.rejectedLinks = rejectedLinks;
+
+    return kept;
+  }
 async function fetchRegistrySources(input) {
   const registryRows = getTeamNewsSourcesForTask(input);
   const maxRegistrySources = clamp(process.env.AIML_TEAM_NEWS_MAX_REGISTRY_SOURCES || 3, 1, 6);
@@ -1025,6 +1018,16 @@ async function fetchRegistrySources(input) {
     const articleLinks = html
       ? extractRegistryArticleLinksFromHtml(html, row.url, row, input)
       : [];
+
+    if (diagnostics.registryRejectedArticleSamples === undefined) {
+      diagnostics.registryRejectedArticleSamples = [];
+    }
+
+    if (Array.isArray(articleLinks.rejectedLinks)) {
+      diagnostics.registryRejectedArticleSamples.push(
+        ...articleLinks.rejectedLinks.slice(0, 12 -     diagnostics.registryRejectedArticleSamples.length)
+      );
+    }
 
     for (const articleLink of articleLinks) {
       const articleFetchResult = await fetchTextResult(articleLink.url, {
@@ -1161,610 +1164,31 @@ async function searchWeb(query) {
   };
 }
 
-
-function slugifyUrlPart(value) {
-  return normalizeText(value)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function compactTeamKey(value) {
-  return slugifyUrlPart(value).replace(/-/g, "");
-}
-
-function buildDirectTeamNewsSources(input) {
-  const team = normalizeText(input?.team);
-  const opponent = normalizeText(input?.opponent);
-  const leagueSlug = normalizeText(input?.leagueSlug);
-  const teamKey = compactTeamKey(team);
-  const opponentKey = compactTeamKey(opponent);
-  const rows = [];
-
-  function add(row) {
-    const url = normalizeUrl(row?.url);
-    if (!url) return;
-    if (isBlockedSourceDomain(url) || isBlockedNoisePublisher(url)) return;
-
-    rows.push({
-      title: row.title,
-      url,
-      publisher: getPublisherFromUrl(url),
-      sourceMode: "direct",
-      sourceId: row.sourceId,
-      sourceType: row.sourceType || "direct_page",
-      trustTier: row.trustTier || "reference",
-      targetTeam: team,
-      opponent,
-      leagueSlug
-    });
-  }
-
-  function addTeamSourceSet(countryKey, clubKey, urls, trustTier = "official") {
-    for (const [title, url, sourceType] of urls) {
-      add({
-        title,
-        url,
-        sourceType,
-        sourceId: `direct:${countryKey}:${clubKey}:${sourceType}`,
-        trustTier
-      });
-    }
-  }
-
-  if (/^mex\./i.test(leagueSlug) || /\b(Puebla|Quer[eé]taro|Queretaro)\b/i.test(`${team} ${opponent}`)) {
-    const mexicoTeams = {
-      puebla: [
-        ["Puebla official site", "https://www.clubpuebla.com/", "direct_official_home"],
-        ["Puebla official news", "https://www.clubpuebla.com/noticias", "direct_official_news"]
-      ],
-      queretaro: [
-        ["Querétaro official site", "https://clubqueretaro.com/", "direct_official_home"],
-        ["Querétaro official news", "https://clubqueretaro.com/noticias", "direct_official_news"]
-      ]
-    };
-
-    for (const [key, urls] of Object.entries(mexicoTeams)) {
-      if (!teamKey.includes(key) && !opponentKey.includes(key)) continue;
-      addTeamSourceSet("mex", key, urls, "official");
-    }
-
-    add({
-      title: "Liga MX official site",
-      url: "https://ligamx.net/",
-      sourceType: "direct_league_home",
-      sourceId: "direct:mex:ligamx:home",
-      trustTier: "league"
-    });
-  }
-
-  if (
-    /^rsa\./i.test(leagueSlug) ||
-    /\b(Orlando Pirates|Kaizer Chiefs|Richards Bay|Mamelodi Sundowns|Stellenbosch|Sekhukhune|Golden Arrows|AmaZulu|SuperSport United|TS Galaxy|Chippa United|Marumo Gallants|Polokwane City|Cape Town City)\b/i.test(`${team} ${opponent}`)
-  ) {
-    const southAfricaTeams = {
-      orlandopirates: [
-        ["Orlando Pirates official site", "https://www.orlandopiratesfc.com/", "direct_official_home"],
-        ["Orlando Pirates official news", "https://www.orlandopiratesfc.com/news/", "direct_official_news"],
-        ["Orlando Pirates first team", "https://www.orlandopiratesfc.com/team/first-team/", "direct_official_team"]
-      ],
-      kaizerchiefs: [
-        ["Kaizer Chiefs official site", "https://www.kaizerchiefs.com/", "direct_official_home"],
-        ["Kaizer Chiefs official news", "https://www.kaizerchiefs.com/news/", "direct_official_news"],
-        ["Kaizer Chiefs team", "https://www.kaizerchiefs.com/club/team/", "direct_official_team"]
-      ],
-      richardsbay: [
-        ["Richards Bay official site", "https://richardsbayfc.co.za/", "direct_official_home"],
-        ["Richards Bay official news", "https://richardsbayfc.co.za/news/", "direct_official_news"]
-      ],
-      mamelodisundowns: [
-        ["Mamelodi Sundowns official site", "https://sundownsfc.co.za/", "direct_official_home"],
-        ["Mamelodi Sundowns official news", "https://sundownsfc.co.za/news/", "direct_official_news"],
-        ["Mamelodi Sundowns first team", "https://sundownsfc.co.za/teams/", "direct_official_team"]
-      ],
-      stellenbosch: [
-        ["Stellenbosch official site", "https://www.stellenboschfc.com/", "direct_official_home"],
-        ["Stellenbosch official news", "https://www.stellenboschfc.com/news/", "direct_official_news"]
-      ],
-      sekhukhuneunited: [
-        ["Sekhukhune United official site", "https://sekhukhuneunitedfc.co.za/", "direct_official_home"],
-        ["Sekhukhune United official news", "https://sekhukhuneunitedfc.co.za/news/", "direct_official_news"]
-      ],
-      goldenarrows: [
-        ["Golden Arrows official site", "https://goldenarrowsfc.com/", "direct_official_home"],
-        ["Golden Arrows official news", "https://goldenarrowsfc.com/news/", "direct_official_news"]
-      ],
-      amazulu: [
-        ["AmaZulu official site", "https://amazulufc.com/", "direct_official_home"],
-        ["AmaZulu official news", "https://amazulufc.com/news/", "direct_official_news"]
-      ],
-      supersportunited: [
-        ["SuperSport United official site", "https://supersportunited.co.za/", "direct_official_home"],
-        ["SuperSport United official news", "https://supersportunited.co.za/news/", "direct_official_news"]
-      ],
-      tsgalaxy: [
-        ["TS Galaxy official site", "https://tsgalaxyfc.com/", "direct_official_home"],
-        ["TS Galaxy official news", "https://tsgalaxyfc.com/news/", "direct_official_news"]
-      ],
-      chippaunited: [
-        ["Chippa United official site", "https://chippaunitedfc.co.za/", "direct_official_home"],
-        ["Chippa United official news", "https://chippaunitedfc.co.za/news/", "direct_official_news"]
-      ],
-      marumogallants: [
-        ["Marumo Gallants official site", "https://marumogallantsfc.co.za/", "direct_official_home"]
-      ],
-      polokwanecity: [
-        ["Polokwane City official site", "https://polokwanecityfc.co.za/", "direct_official_home"]
-      ],
-      capetowncity: [
-        ["Cape Town City official site", "https://capetowncityfc.co.za/", "direct_official_home"],
-        ["Cape Town City official news", "https://capetowncityfc.co.za/news/", "direct_official_news"]
-      ]
-    };
-
-    for (const [key, urls] of Object.entries(southAfricaTeams)) {
-      if (!teamKey.includes(key) && !opponentKey.includes(key)) continue;
-      addTeamSourceSet("rsa", key, urls, "official");
-    }
-
-    add({
-      title: "Premier Soccer League official site",
-      url: "https://www.psl.co.za/",
-      sourceType: "direct_league_home",
-      sourceId: "direct:rsa:psl:home",
-      trustTier: "league"
-    });
-
-    add({
-      title: "Premier Soccer League fixtures",
-      url: "https://www.psl.co.za/matchcentre",
-      sourceType: "direct_league_matchcentre",
-      sourceId: "direct:rsa:psl:matchcentre",
-      trustTier: "league"
-    });
-
-    add({
-      title: "SAFA official site",
-      url: "https://www.safa.net/",
-      sourceType: "direct_federation_home",
-      sourceId: "direct:rsa:safa:home",
-      trustTier: "reference"
-    });
-  }
-
-  return rows;
-}
-
-function shouldKeepDirectArticleLink(link, input) {
-  const title = normalizeText(link?.title);
-  const url = normalizeText(link?.url);
-
-  const haystack = [
-    title,
-    url
-  ].filter(Boolean).join(" ").toLowerCase();
-
-  const team = normalizeText(input?.team).toLowerCase();
-  const opponent = normalizeText(input?.opponent).toLowerCase();
-
-  if (!haystack || !team) {
-    return false;
-  }
-
-  const blockedNavTitle =
-    /^(home|news|latest news|team news|articles|fixtures|results|standings|table|tickets|shop|store|club|team|squad|players|contact|media|videos|gallery|login|register|search|about|history|academy|development|membership)$/i.test(title);
-
-  const blockedStaticUrl =
-    /\/(fixtures|results|tickets|shop|store|contact|privacy|terms|history|honours|academy|women)\/?$/i.test(url);
-
-  if (blockedNavTitle || blockedStaticUrl) {
-    return false;
-  }
-
-  const hasTeam = haystack.includes(team);
-
-  const hasOpponent = opponent
-    ? haystack.includes(opponent)
-    : false;
-
-  const hasArticlePath =
-    /\/news\/|\/article\/|\/articles\/|\/match-|\/preview|preview-|team-news|club-news|latest-news|\/202\d\//i.test(url);
-
-  const hasStrongArticleSignal =
-    /\bpreview\b/i.test(haystack) ||
-    /\bmatch preview\b/i.test(haystack) ||
-    /\bteam news\b/i.test(haystack) ||
-    /\binjur/i.test(haystack) ||
-    /\bsuspend/i.test(haystack) ||
-    /\bline-?up\b/i.test(haystack) ||
-    /\bstarting xi\b/i.test(haystack) ||
-    /\bsquad\b/i.test(haystack) ||
-    /\bselection\b/i.test(haystack) ||
-    /\bfitness\b/i.test(haystack) ||
-    /\bdoubt\b/i.test(haystack) ||
-    /\babsent\b/i.test(haystack) ||
-    /\bmiss(?:es|ing)?\b/i.test(haystack) ||
-    /\bvs\b|\bversus\b/i.test(haystack);
-
-  return (
-    (hasTeam && hasOpponent) ||
-    (hasTeam && hasStrongArticleSignal) ||
-    (hasOpponent && hasStrongArticleSignal) ||
-    (hasArticlePath && (hasTeam || hasOpponent || hasStrongArticleSignal))
-  );
-}
-
-function scoreDirectArticleLink(link, input) {
-  const title = normalizeText(link?.title).toLowerCase();
-  const url = normalizeText(link?.url).toLowerCase();
-
-  const haystack = [
-    title,
-    url
-  ].filter(Boolean).join(" ");
-
-  const team = normalizeText(input?.team).toLowerCase();
-  const opponent = normalizeText(input?.opponent).toLowerCase();
-
-  let score = 0;
-
-  const hasTeam = !!team && haystack.includes(team);
-  const hasOpponent = !!opponent && haystack.includes(opponent);
-
-  if (hasTeam) {
-    score += 10;
-  }
-
-  if (hasOpponent) {
-    score += 22;
-  }
-
-  if (hasTeam && hasOpponent) {
-    score += 35;
-  }
-
-  if (/\bpreview\b|\bmatch preview\b/i.test(haystack)) {
-    score += 14;
-  }
-
-  if (/\bteam news\b|\binjur|\bsuspend|\bline-?up\b|\bstarting xi\b|\bsquad\b|\bselection\b|\bfitness\b|\bdoubt\b|\babsent\b|\bmissing\b/i.test(haystack)) {
-    score += 18;
-  }
-
-  if (/\bvs\b|\bversus\b/i.test(haystack)) {
-    score += 8;
-  }
-
-  if (/\/news\/|\/article\/|\/articles\/|\/match-|\/preview|preview-|team-news|club-news|latest-news|\/202\d\//i.test(url)) {
-    score += 6;
-  }
-
-  const knownSouthAfricaTeamMatches = [
-    "kaizer chiefs",
-    "orlando pirates",
-    "richards bay",
-    "mamelodi sundowns",
-    "amazulu",
-    "stellenbosch",
-    "polokwane city",
-    "ts galaxy",
-    "magesi",
-    "baroka",
-    "kruger united",
-    "hungry lions",
-    "gomora united",
-    "venda",
-    "midlands wanderers"
-  ].filter(name => haystack.includes(name));
-
-  const hasThirdTeamMention = knownSouthAfricaTeamMatches.some(name => {
-    if (team && name === team) return false;
-    if (opponent && name === opponent) return false;
-    return true;
-  });
-
-  const looksLikeOtherFixturePreview =
-    /\bpreview\b/i.test(haystack) &&
-    hasThirdTeamMention &&
-    !hasOpponent;
-
-  if (looksLikeOtherFixturePreview) {
-    score -= 35;
-  }
-
-  if (!hasOpponent && !/\bteam news\b|\binjur|\bsuspend|\bline-?up\b|\bstarting xi\b|\bsquad\b|\bselection\b|\bfitness\b|\bdoubt\b|\babsent\b|\bmissing\b/i.test(haystack)) {
-    score -= 12;
-  }
-
-  if (/\/category\/|\/tag\/|\/author\/|\/page\/\d+\/?$/i.test(url)) {
-    score -= 10;
-  }
-
-  if (/\/news\/?$/i.test(url)) {
-    score -= 12;
-  }
-
-  if (/\/team\/first-team\/?$/i.test(url)) {
-    score -= 12;
-  }
-
-  if (/academy|women|u-?\d+|under-\d+/i.test(haystack)) {
-    score -= 18;
-  }
-
-  return score;
-}
-
-function extractDirectArticleLinksFromHtml(html, baseUrl, row, input) {
-  const collected = [];
-  const safeHtml = String(html || "");
-  const seen = new Set();
-
-  let baseHost = null;
-
-  try {
-    baseHost = new URL(baseUrl).hostname.replace(/^www\./i, "");
-  } catch {
-    baseHost = null;
-  }
-
-  const linkRe = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-
-  for (const match of safeHtml.matchAll(linkRe)) {
-    const url = normalizeLinkedUrl(match[1], baseUrl);
-    const title = stripHtml(match[2]);
-
-    if (!url || !title) {
-      continue;
-    }
-
-    let host = null;
-
-    try {
-      host = new URL(url).hostname.replace(/^www\./i, "");
-    } catch {
-      host = null;
-    }
-
-    if (baseHost && host && host !== baseHost) {
-      continue;
-    }
-
-    if (/\.(jpg|jpeg|png|gif|webp|svg|pdf|zip|rar|mp4|mp3)$/i.test(url)) {
-      continue;
-    }
-
-    const key = url.toLowerCase();
-
-    if (seen.has(key)) {
-      continue;
-    }
-
-    seen.add(key);
-
-    const link = {
-      title,
-      url,
-      publisher: getPublisherFromUrl(url),
-      sourceMode: "direct",
-      sourceId: `${row.sourceId || "direct"}:article`,
-      sourceType: "direct_article",
-      trustTier: row.trustTier || "official",
-      parentSourceId: row.sourceId || null,
-      parentUrl: baseUrl
-    };
-
-    if (!shouldKeepDirectArticleLink(link, input)) {
-      continue;
-    }
-
-    collected.push({
-      ...link,
-      score: scoreDirectArticleLink(link, input)
-    });
-  }
-
-  return collected
-    .filter(link => link.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 8)
-    .map(({ score, ...link }) => link);
-}
-
-async function fetchDirectSources(input) {
-  const maxDirectSources = clamp(process.env.AIML_TEAM_NEWS_MAX_DIRECT_SOURCES || 5, 1, 10);
-  const maxDirectArticleLinks = clamp(process.env.AIML_TEAM_NEWS_MAX_DIRECT_ARTICLE_LINKS || 8, 0, 20);
-  const maxDirectArticleFetches = clamp(process.env.AIML_TEAM_NEWS_MAX_DIRECT_ARTICLE_FETCHES || 4, 0, 12);
-  const timeoutMs = clamp(process.env.AIML_TEAM_NEWS_DIRECT_FETCH_TIMEOUT_MS || 3500, 1000, 9000);
-
-  const rows = buildDirectTeamNewsSources(input);
-
-  const diagnostics = {
-    directSourceCount: rows.length,
-    fetchedDirectCount: 0,
-    usableDirectCount: 0,
-    discoveredDirectArticleCount: 0,
-    fetchedDirectArticleCount: 0,
-    usableDirectArticleCount: 0,
-    directSamples: rows.slice(0, 10).map(row => ({
-      title: row.title,
-      url: row.url,
-      publisher: row.publisher,
-      sourceType: row.sourceType,
-      trustTier: row.trustTier
-    })),
-    fetchSamples: [],
-    articleSamples: []
-  };
-
-  const sources = [];
-  const articleCandidates = [];
-  const seenArticleUrls = new Set();
-
-  for (const row of rows.slice(0, maxDirectSources)) {
-    if (isSearchPageSource(row)) continue;
-
-    const result = await fetchTextResult(row.url, { timeoutMs, maxChars: 120000 });
-    const html = result.ok ? result.text : null;
-    const text = html ? stripHtml(html).slice(0, 10000) : "";
-
-    if (html) diagnostics.fetchedDirectCount += 1;
-
-    if (diagnostics.fetchSamples.length < 10) {
-      diagnostics.fetchSamples.push({
-        title: row.title,
-        url: row.url,
-        publisher: row.publisher,
-        sourceType: row.sourceType,
-        trustTier: row.trustTier,
-        fetched: !!html,
-        fetchStatus: result.status,
-        fetchReason: result.reason,
-        fetchContentType: result.contentType,
-        fetchDurationMs: result.durationMs,
-        fetchFinalUrl: result.finalUrl,
-        fetchErrorName: result.errorName || null,
-        fetchErrorMessage: result.errorMessage || null,
-        textLength: text.length,
-        textPreview: text.replace(/\s+/g, " ").slice(0, 900)
-      });
-    }
-
-    if (html && maxDirectArticleLinks > 0) {
-      const articleLinks = extractDirectArticleLinksFromHtml(
-        html,
-        result.finalUrl || row.url,
-        row,
-        input
-      );
-
-      for (const link of articleLinks) {
-        if (!link?.url) continue;
-
-        const key = link.url.toLowerCase();
-
-        if (seenArticleUrls.has(key)) continue;
-
-        seenArticleUrls.add(key);
-        articleCandidates.push(link);
-      }
-    }
-
-    const source = normalizeSourceItem({
-      ...row,
-      text,
-      query: "direct"
-    });
-
-    if (!source || !source.url || normalizeText([source.title, source.publisher, source.text].filter(Boolean).join(" ")).length < 80) {
-      continue;
-    }
-
-    diagnostics.usableDirectCount += 1;
-    sources.push(source);
-  }
-
-  const rankedArticles = articleCandidates
-    .map(link => ({
-      link,
-      score: scoreDirectArticleLink(link, input)
-    }))
-    .sort((a, b) => b.score - a.score)
-    .map(row => row.link)
-    .slice(0, maxDirectArticleLinks);
-
-  diagnostics.discoveredDirectArticleCount = rankedArticles.length;
-
-  diagnostics.articleSamples = rankedArticles.slice(0, 10).map(link => ({
-    title: link.title,
-    url: link.url,
-    publisher: link.publisher,
-    sourceType: link.sourceType,
-    trustTier: link.trustTier,
-    parentUrl: link.parentUrl
-  }));
-
-  for (const article of rankedArticles.slice(0, maxDirectArticleFetches)) {
-    const result = await fetchTextResult(article.url, { timeoutMs, maxChars: 120000 });
-    const html = result.ok ? result.text : null;
-    const text = html ? stripHtml(html).slice(0, 12000) : "";
-
-    if (html) diagnostics.fetchedDirectArticleCount += 1;
-
-    if (diagnostics.fetchSamples.length < 16) {
-      diagnostics.fetchSamples.push({
-        title: article.title,
-        url: article.url,
-        publisher: article.publisher,
-        sourceType: article.sourceType,
-        trustTier: article.trustTier,
-        parentUrl: article.parentUrl,
-        fetched: !!html,
-        fetchStatus: result.status,
-        fetchReason: result.reason,
-        fetchContentType: result.contentType,
-        fetchDurationMs: result.durationMs,
-        fetchFinalUrl: result.finalUrl,
-        fetchErrorName: result.errorName || null,
-        fetchErrorMessage: result.errorMessage || null,
-        textLength: text.length,
-        textPreview: text.replace(/\s+/g, " ").slice(0, 900)
-      });
-    }
-
-    const source = normalizeSourceItem({
-      ...article,
-      text,
-      query: "direct"
-    });
-
-    if (!source || !source.url || normalizeText([source.title, source.publisher, source.text].filter(Boolean).join(" ")).length < 120) {
-      continue;
-    }
-
-    diagnostics.usableDirectArticleCount += 1;
-    sources.push(source);
-  }
-
-  return { sources, diagnostics };
-}
-
-function scoreDirectSourceForTask(source, input) {
-  const haystack = [source?.title, source?.url, source?.publisher, source?.text]
-    .map(normalizeText)
-    .join(" ")
-    .toLowerCase();
-  const team = normalizeText(input?.team).toLowerCase();
-  const opponent = normalizeText(input?.opponent).toLowerCase();
-  let score = 0;
-
-  if (source?.sourceMode === "direct" || source?.query === "direct") score += 10;
-  if (source?.trustTier === "official") score += 25;
-  if (source?.trustTier === "league") score += 16;
-  if (team && haystack.includes(team)) score += 12;
-  if (opponent && haystack.includes(opponent)) score += 18;
-  if (/convocad|convocatoria|citados|n[oó]mina|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|bajas|suspend|sancion|previa|jornada|partido|vs|versus/i.test(haystack)) score += 20;
-  if (/femenil|femenino|femenina|sub-\d+|academy|cantera/i.test(haystack)) score -= 30;
-
-  return score;
-}
-
-function sortDirectSourcesForTask(sources, input) {
-  return (Array.isArray(sources) ? sources : [])
-    .map(source => ({ source, score: scoreDirectSourceForTask(source, input) }))
-    .sort((a, b) => b.score - a.score)
-    .map(row => row.source);
-}
-
 function buildSearchQueries(input) {
   const team = normalizeText(input?.team);
   const opponent = normalizeText(input?.opponent);
   const leagueSlug = normalizeText(input?.leagueSlug);
 
-  const pair = [team, opponent].filter(Boolean).join(" ");
+  const teamAliases = team === "Manchester United"
+    ? ["Manchester United", "Man Utd", "Man United"]
+    : [team];
+
+  const opponentAliases = opponent === "Manchester United"
+    ? ["Manchester United", "Man Utd", "Man United"]
+    : [opponent];
+
+  const primaryTeam = teamAliases[0];
+  const primaryOpponent = opponentAliases[0];
+
+  const pair = [primaryTeam, primaryOpponent].filter(Boolean).join(" ");
+
+  const aliasPairs = [];
+
+  for (const t of teamAliases) {
+    for (const o of opponentAliases) {
+      if (t && o) aliasPairs.push([t, o]);
+    }
+  }
 
   const isSpanishContext =
     /^mex\./i.test(leagueSlug) ||
@@ -1787,61 +1211,73 @@ function buildSearchQueries(input) {
     /^nor\./i.test(leagueSlug) ||
     /\b(Fredrikstad|Viking FK|Rosenborg|SK Brann|Brann)\b/i.test(`${team} ${opponent}`);
 
+  const englishQueries = aliasPairs.flatMap(([t, o]) => [
+    `"${t}" "${o}" football team news injuries suspensions expected lineup`,
+    `"${t}" "${o}" football preview team news`,
+    `"${t}" "${o}" preview injuries lineup`,
+    `"${t}" "${o}" match preview`,
+    `"${t}" "${o}" confirmed team news injury latest`,
+    `"${t}" "${o}" predicted lineup injury latest`,
+    `${t} ${o} team news injury latest`,
+    `${t} ${o} predicted lineup team news`
+  ]);
+
+  const simpleQueries = aliasPairs.flatMap(([t, o]) => [
+    `${t} ${o} team news`,
+    `${t} ${o} injuries`,
+    `${t} ${o} lineup`,
+    `${t} ${o} preview`,
+    `${t} vs ${o} team news`,
+    `${t} vs ${o} injuries`,
+    `${t} squad news`,
+    `${t} injury update`
+  ]);
+
   const mexicoPriorityQueries = [
-    `site:ligamx.net "${team}" "${opponent}"`,
-    `site:clubpuebla.com "${opponent}" convocatoria`,
-    `"${team}" "${opponent}" previa bajas lesionados`,
-    `"${team}" "${opponent}" convocatoria alineacion`,
-    `"${team}" "${opponent}" posible once`,
+    `site:ligamx.net "${primaryTeam}" "${primaryOpponent}"`,
+    `site:clubpuebla.com "${primaryOpponent}" convocatoria`,
+    `"${primaryTeam}" "${primaryOpponent}" previa bajas lesionados`,
+    `"${primaryTeam}" "${primaryOpponent}" convocatoria alineacion`,
+    `"${primaryTeam}" "${primaryOpponent}" posible once`,
     `${pair} previa bajas lesionados`,
     `${pair} convocatoria alineacion`,
     `${pair} Liga MX previa`
   ];
 
   const spanishQueries = [
-    `"${team}" "${opponent}" previa bajas lesionados suspendidos alineacion`,
-    `"${team}" "${opponent}" previa convocados lesionados suspendidos`,
-    `"${team}" "${opponent}" posible once bajas lesionados`,
-    `"${team}" "${opponent}" convocatoria`,
-    `"${team}" lesionados suspendidos convocados`,
-    `"${team}" bajas lesionados convocatoria`,
-    `"${team}" alineacion probable`,
+    `"${primaryTeam}" "${primaryOpponent}" previa bajas lesionados suspendidos alineacion`,
+    `"${primaryTeam}" "${primaryOpponent}" previa convocados lesionados suspendidos`,
+    `"${primaryTeam}" "${primaryOpponent}" posible once bajas lesionados`,
+    `"${primaryTeam}" "${primaryOpponent}" convocatoria`,
+    `"${primaryTeam}" lesionados suspendidos convocados`,
+    `"${primaryTeam}" bajas lesionados convocatoria`,
+    `"${primaryTeam}" alineacion probable`,
     pair ? `${pair} previa lesionados convocados` : null
   ];
 
   const norwegianQueries = [
-    `"${team}" "${opponent}" lagnyheter skader suspensjoner tropp`,
-    `"${team}" "${opponent}" forventet lagoppstilling`,
-    `"${team}" "${opponent}" preview team news`,
-    `"${team}" skader suspensjoner tropp`,
-    `"${team}" forventet lagoppstilling`
-  ];
-
-  const englishQueries = [
-    `"${team}" "${opponent}" football team news injuries suspensions expected lineup`,
-    `"${team}" "${opponent}" football preview team news`,
-    `"${team}" "${opponent}" preview injuries lineup`,
-    `"${team}" "${opponent}" match preview`,
-    `"${team}" injuries suspensions squad news`,
-    `"${team}" team news lineup`,
-    `"${team}" expected lineup`,
-    pair ? `${pair} injuries suspensions lineup` : null,
-    pair ? `${pair} preview team news` : null
+    `"${primaryTeam}" "${primaryOpponent}" lagnyheter skader suspensjoner tropp`,
+    `"${primaryTeam}" "${primaryOpponent}" forventet lagoppstilling`,
+    `"${primaryTeam}" "${primaryOpponent}" preview team news`,
+    `"${primaryTeam}" skader suspensjoner tropp`,
+    `"${primaryTeam}" forventet lagoppstilling`
   ];
 
   const leagueQueries = [
-    leagueSlug ? `"${team}" ${leagueSlug} injuries suspensions squad news` : null,
-    leagueSlug ? `"${team}" ${leagueSlug} previa lesionados convocados` : null
+    leagueSlug ? `"${primaryTeam}" ${leagueSlug} injuries suspensions squad news` : null,
+    leagueSlug ? `"${primaryTeam}" ${leagueSlug} previa lesionados convocados` : null
   ];
 
   const queries = [
-    ...(isMexicoContext ? mexicoPriorityQueries : []),
-    ...(isSpanishContext && !isMexicoContext ? spanishQueries : []),
-    ...(isNorwegianContext ? norwegianQueries : []),
-    ...englishQueries,
-    ...leagueQueries,
-    ...(!isSpanishContext ? spanishQueries.slice(0, 2) : []),
-    ...(!isNorwegianContext ? norwegianQueries.slice(0, 1) : [])
+    `"${team}" "${opponent}" team news`,
+    `"${team}" ${opponent} preview`,
+    `"${team}" lineup`,
+    `"${team}" injuries`,
+    `"${team}" squad`,
+    `${team} match preview`,
+    `${team} squad`,
+    `${team} lineup`,
+    `${team} injuries`
   ];
 
   return [...new Set(queries.filter(Boolean))];
@@ -1943,14 +1379,76 @@ function sortRegistrySourcesForTask(sources, input) {
     .map(row => row.source);
 }
 
+function scoreFetchCandidateForTask(source, input) {
+  const title = normalizeText(source?.title).toLowerCase();
+  const url = normalizeText(source?.url).toLowerCase();
+  const publisher = normalizeText(source?.publisher).toLowerCase();
+  const sourceType = normalizeText(source?.sourceType).toLowerCase();
+  const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
+  const haystack = [title, url, publisher, sourceType].filter(Boolean).join(" ");
+  const team = normalizeText(input?.team).toLowerCase();
+  const opponent = normalizeText(input?.opponent).toLowerCase();
+
+  let score = 0;
+
+  if (team && haystack.includes(team)) score += 8;
+  if (opponent && haystack.includes(opponent)) score += 12;
+
+    if (/team news|injury update|injury latest|injuries|suspensions|squad news|confirmed team news|predicted lineup|expected lineup|lineups?|starting xi|xi vs|match preview|preview/i.test(haystack)) {
+    score += 60;
+  }
+
+  if (/standard\.co\.uk|sports\.yahoo\.com|bbc\.co\.uk|skysports\.com|premierleague\.com|premierinjuries\.com|football\.london|manchestereveningnews\.co\.uk|theathletic\.com/i.test(haystack)) {
+    score += 20;
+  }
+
+  if (/sofascore|flashscore|365scores|aiscore|besoccer|livesoccertv/i.test(haystack)) {
+    score -= 45;
+  }
+
+  if (/preview|match preview|previa|bajas|lesionados|lesión|lesion|convocados|convocatoria|suspendidos|injuries|suspensions|team news|squad news/i.test(haystack)) {
+    score += 40;
+  }
+
+  if (/official_club_news|official|registry/i.test(`${sourceType} ${sourceMode}`)) {
+    score += 4;
+  }
+
+  if (/\/news\/?$|\/news\/latest\/?$|\/news\/first-team\/?$|\/en\/news\/?$|\/en\/news\/all-news\/?$|\/en\/news\/latest-mens-news\/?$/i.test(url)) {
+    score -= 35;
+  }
+
+  if (/latest news|all news|first team news|club news/i.test(title) && !/team news|injury|lineup|preview|squad/i.test(title)) {
+    score -= 25;
+  }
+
+  if (/\.(jpg|jpeg|png|gif|webp|svg|pdf|zip|rar)$/i.test(url)) {
+    score -= 100;
+  }
+
+  return score;
+}
+
+function sortFetchCandidatesForTask(candidates, input) {
+  return (Array.isArray(candidates) ? candidates : [])
+    .map((source, index) => ({
+      source,
+      index,
+      score: scoreFetchCandidateForTask(source, input)
+    }))
+    .sort((a, b) => (b.score - a.score) || (a.index - b.index))
+    .map(row => row.source);
+}
+
 async function collectTeamNewsSources(input) {
-  const maxSearchResults = clamp(process.env.AIML_TEAM_NEWS_MAX_SEARCH_RESULTS || 5, 1, 12);
-  const maxFetchedPages = clamp(process.env.AIML_TEAM_NEWS_MAX_FETCHED_PAGES || 1, 0, 5);
-  const maxSearchQueries = clamp(process.env.AIML_TEAM_NEWS_MAX_SEARCH_QUERIES || 2, 1, 4);
+  const maxSearchResults = clamp(process.env.AIML_TEAM_NEWS_MAX_SEARCH_RESULTS || 8, 1, 12);
+  const maxFetchedPages = clamp(process.env.AIML_TEAM_NEWS_MAX_FETCHED_PAGES || 6, 0, 10);
+  const maxSearchQueries = clamp(process.env.AIML_TEAM_NEWS_MAX_SEARCH_QUERIES || 5, 1, 8);
   const enrichedFetchTimeoutMs = clamp(process.env.AIML_TEAM_NEWS_ENRICH_FETCH_TIMEOUT_MS || 3500, 1000, 10000);
   const queries = buildSearchQueries(input).slice(0, maxSearchQueries);
   const seen = new Set();
   const candidates = [];
+
   const diagnostics = {
     queries,
     rawSearchCount: 0,
@@ -1960,50 +1458,8 @@ async function collectTeamNewsSources(input) {
     sampleCandidates: [],
     rejectedSamples: [],
     searchAttempts: [],
-    direct: null,
     registry: null
   };
-
-  const directResult = await fetchDirectSources(input);
-
-  diagnostics.direct = directResult?.diagnostics || null;
-
-  const directSources = sortDirectSourcesForTask(
-    (Array.isArray(directResult?.sources) ? directResult.sources : [])
-      .map(normalizeSourceItem)
-      .filter(Boolean)
-      .filter(hasRealSource),
-    input
-  );
-
-  if (diagnostics.direct) {
-    diagnostics.direct.rankedDirectSamples = directSources.slice(0, 8).map(source => ({
-      title: source.title,
-      url: source.url,
-      publisher: source.publisher,
-      sourceType: source.sourceType,
-      trustTier: source.trustTier,
-      score: scoreDirectSourceForTask(source, input)
-    }));
-  }
-
-  for (const source of directSources) {
-    if (!source?.url) continue;
-    if (seen.has(source.url)) continue;
-    seen.add(source.url);
-    candidates.push({ ...source, query: "direct", sourceMode: "direct" });
-
-    if (diagnostics.sampleCandidates.length < 5) {
-      diagnostics.sampleCandidates.push({
-        title: source.title,
-        url: source.url,
-        publisher: source.publisher,
-        query: "direct"
-      });
-    }
-
-    if (candidates.length >= maxSearchResults) break;
-  }
 
   const registryResult = await fetchRegistrySources(input);
 
@@ -2033,30 +1489,7 @@ async function collectTeamNewsSources(input) {
       }));
   }
 
-  for (const source of registrySources) {
-    if (!source?.url) continue;
-    if (seen.has(source.url)) continue;
-
-    seen.add(source.url);
-
-    candidates.push({
-      ...source,
-      query: "registry",
-      sourceMode: "registry"
-    });
-
-    if (diagnostics.sampleCandidates.length < 5) {
-      diagnostics.sampleCandidates.push({
-        title: source.title,
-        url: source.url,
-        publisher: source.publisher,
-        query: "registry"
-      });
-    }
-
-    if (candidates.length >= maxSearchResults) break;
-  }
-
+  // 1) ΠΡΩΤΑ search results, γιατί αυτά δίνουν πραγματικά articles.
   for (const query of queries) {
     const searchResult = await searchWeb(query);
     const rows = Array.isArray(searchResult?.rows) ? searchResult.rows : [];
@@ -2088,9 +1521,9 @@ async function collectTeamNewsSources(input) {
       }
 
       seen.add(source.url);
-      candidates.push({ ...source, query });
+      candidates.push({ ...source, query, sourceMode: "search" });
 
-      if (diagnostics.sampleCandidates.length < 5) {
+      if (diagnostics.sampleCandidates.length < 8) {
         diagnostics.sampleCandidates.push({
           title: source.title,
           url: source.url,
@@ -2099,7 +1532,32 @@ async function collectTeamNewsSources(input) {
         });
       }
 
-      if (candidates.length >= maxSearchResults) break;
+      if (candidates.length >= maxSearchResults * 1.5) break;
+    }
+
+    if (candidates.length >= maxSearchResults) break;
+  }
+
+  // 2) Μετά registry, μόνο ως fallback / trusted enrichment.
+  for (const source of registrySources) {
+    if (!source?.url) continue;
+    if (seen.has(source.url)) continue;
+
+    seen.add(source.url);
+
+    candidates.push({
+      ...source,
+      query: "registry",
+      sourceMode: "registry"
+    });
+
+    if (diagnostics.sampleCandidates.length < 8) {
+      diagnostics.sampleCandidates.push({
+        title: source.title,
+        url: source.url,
+        publisher: source.publisher,
+        query: "registry"
+      });
     }
 
     if (candidates.length >= maxSearchResults) break;
@@ -2107,14 +1565,40 @@ async function collectTeamNewsSources(input) {
 
   diagnostics.candidateCount = candidates.length;
 
+  const fetchOrderedCandidates = sortFetchCandidatesForTask(candidates, input);
+
+  diagnostics.fetchPrioritySamples = fetchOrderedCandidates
+    .slice(0, 8)
+    .map(source => ({
+      title: source.title,
+      url: source.url,
+      publisher: source.publisher,
+      query: source.query,
+      sourceMode: source.sourceMode,
+      sourceType: source.sourceType,
+      trustTier: source.trustTier,
+      score: scoreFetchCandidateForTask(source, input)
+    }));
+
   const enriched = [];
-  for (const source of candidates.slice(0, maxFetchedPages)) {
-    const html = await fetchText(source.url, { timeoutMs: enrichedFetchTimeoutMs, maxChars: 90000 });
-    const text = html ? stripHtml(html).slice(0, 6000) : source.text;
-    enriched.push({ ...source, text: text || source.text || source.title });
+
+  for (const source of fetchOrderedCandidates.slice(0, maxFetchedPages)) {
+    const html = await fetchText(source.url, {
+      timeoutMs: enrichedFetchTimeoutMs,
+      maxChars: 120000
+    });
+
+    const text = html
+      ? stripHtml(html).slice(0, 12000)
+      : source.text;
+
+    enriched.push({
+      ...source,
+      text: text || source.text || source.title
+    });
   }
 
-  for (const source of candidates.slice(maxFetchedPages)) {
+  for (const source of fetchOrderedCandidates.slice(maxFetchedPages)) {
     enriched.push(source);
   }
 
@@ -2123,7 +1607,9 @@ async function collectTeamNewsSources(input) {
     .filter(Boolean);
 
   const realSources = normalized.filter(hasRealSource);
-  const relevantSources = realSources.filter(source => sourceLooksRelevant(source, input));
+  const relevantSources = realSources
+    .filter(source => sourceLooksRelevant(source, input))
+    .filter(source => scoreFetchCandidateForTask(source, input) >= 0);
 
   diagnostics.realSourceCount = realSources.length;
   diagnostics.relevantSourceCount = relevantSources.length;
@@ -2166,29 +1652,51 @@ const BAD_ABSENCE_PLAYER_PATTERNS = [
 
 function looksLikeBadAbsencePlayerName(player) {
   const value = normalizeText(player);
+  const lower = value.toLowerCase();
 
-  if (!value) {
-    return true;
-  }
-
-  if (value.length < 4 || value.length > 55) {
-    return true;
-  }
+  if (!value) return true;
+  if (value.length < 4 || value.length > 55) return true;
 
   if (BAD_ABSENCE_PLAYER_PATTERNS.some(pattern => pattern.test(value))) {
     return true;
   }
 
-  const words = value.split(/\s+/).filter(Boolean);
-
-  if (words.length > 4) {
+  // CSS / HTML / generic junk
+  if (
+    lower === "background" ||
+    lower === "foreground" ||
+    lower === "color" ||
+    lower === "font" ||
+    lower === "standard" ||
+    lower.includes("var(") ||
+    lower.includes("--") ||
+    lower.includes("_base") ||
+    lower.includes("component") ||
+    lower.includes("siteheader") ||
+    lower.includes("footer")
+  ) {
     return true;
   }
 
-  const lower = value.toLowerCase();
+  // Αν είναι όλο lowercase, συνήθως δεν είναι όνομα παίκτη από άρθρο.
+  if (value === lower) {
+    return true;
+  }
+
+  const words = value.split(/\s+/).filter(Boolean);
+
+  // Θέλουμε τουλάχιστον 2 tokens για canonical absence.
+  // Π.χ. "Rico Henry", "Luke Shaw", "K. Schade"
+  if (words.length < 2 || words.length > 4) {
+    return true;
+  }
+
+  if (words.some(word => word.length < 2)) {
+    return true;
+  }
 
   if (
-    /\b(home|away|match|club|news|preview|lineup|fixtures|results|standings|table|tickets|shop|history|honours)\b/i.test(lower)
+    /\b(home|away|match|club|news|preview|lineup|fixtures|results|standings|table|tickets|shop|history|honours|background|foreground|component|footer|header)\b/i.test(lower)
   ) {
     return true;
   }
@@ -2200,49 +1708,177 @@ function looksLikeBadAbsencePlayerName(player) {
   return false;
 }
 
+function classifyAbsenceFromText(value) {
+  const text = normalizeText(value).toLowerCase();
+
+  if (/red card|κόκκινη|suspend|suspended|suspension|ban|banned|τιμωρ/i.test(text)) {
+    return { type: "suspension", status: "out" };
+  }
+
+  if (/doubt|doubtful|αμφίβολος|questionable|χτύπημα|knock/i.test(text)) {
+    return { type: "injury", status: "doubtful" };
+  }
+
+  if (/injur|τραυματισ|muscle|hamstring|knee|groin|back|ankle|thigh|acl|μέση|γόνατο|βουβων|μηρια|πόδι|μυϊκ/i.test(text)) {
+    return { type: "injury", status: "out" };
+  }
+
+  if (/unavailable|ruled out|sidelined|absent|εκτός|δεν θα αγωνισ/i.test(text)) {
+    return { type: "absence", status: "out" };
+  }
+
+  return null;
+}
+
+function normalizeCompactPlayerName(player) {
+  const value = normalizeText(player)
+    .replace(/\s+/g, " ")
+    .replace(/\s*,\s*/g, " ")
+    .trim();
+
+  return value;
+}
+
 function extractNamedAbsences(text, source) {
   const out = [];
   const safeText = normalizeText(text).replace(/\s+/g, " ");
 
-  const playerNamePattern = "[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,3}";
-
-  const patterns = [
-    new RegExp(
-      "(" + playerNamePattern + ")\\s+(?:is|are|was|were|remains?|remain|continues?\\s+to\\s+be)?\\s*(?:ruled\\s+out|sidelined|injured|suspended|doubtful|a\\s+doubt|unavailable)",
-      "g"
-    ),
-    new RegExp(
-      "(?:without|missing|absent)\\s+(?:(?:the\\s+services\\s+of|the\\s+injured|the\\s+suspended|injured|suspended|defender|midfielder|striker|forward|goalkeeper|keeper)\\s+){0,4}(" + playerNamePattern + ")",
-      "g"
-    ),
-    new RegExp(
-      "(" + playerNamePattern + ")\\s+(?:will|is\\s+expected\\s+to|set\\s+to)\\s+miss",
-      "g"
-    )
+  const sentencePatterns = [
+    /([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,3})\s+(?:is|are|was|were)?\s*(?:ruled out|sidelined|injured|suspended|doubtful|a doubt|unavailable)/g,
+    /(?:without|missing|absent)\s+([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,3})/g,
+    /([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,3})\s+will\s+miss/g
   ];
 
-  for (const pattern of patterns) {
+  for (const pattern of sentencePatterns) {
     for (const match of safeText.matchAll(pattern)) {
-      const player = normalizeText(match[1]);
+      const player = normalizeCompactPlayerName(match[1]);
       if (looksLikeBadAbsencePlayerName(player)) continue;
 
-      const lowerWindow = safeText.slice(Math.max(0, match.index - 80), match.index + 160).toLowerCase();
-      const type = lowerWindow.includes("suspend") ? "suspension" : "injury";
-      const status = lowerWindow.includes("doubt") ? "doubtful" : "out";
+      const context = safeText.slice(Math.max(0, match.index - 100), match.index + 180);
+      const classified = classifyAbsenceFromText(context);
+      if (!classified) continue;
 
       out.push({
         player,
-        type,
-        status,
-        source: source?.url || source?.publisher || source?.title || null
+        type: classified.type,
+        status: classified.status,
+        reason: normalizeText(context).slice(0, 220),
+        source: source?.url || source?.publisher || source?.title || null,
+        confidence: 0.66
+      });
+    }
+  }
+
+  const compactPatterns = [
+    /([A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,2}\s+[A-Z]\.)\s+([^.;|]{0,90}(?:injur|τραυματισ|red card|κόκκινη|suspend|τιμωρ|doubt|χτύπημα|muscle|hamstring|knee|groin|back|acl|μέση|γόνατο|βουβων|μηρια|πόδι|μυϊκ)[^.;|]{0,90})/gi,
+    /([A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-ZÀ-ÖØ-Þ][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,3})\s*[-–—:]\s*([^.;|]{0,90}(?:injur|τραυματισ|red card|κόκκινη|suspend|τιμωρ|doubt|χτύπημα|muscle|hamstring|knee|groin|back|acl|μέση|γόνατο|βουβων|μηρια|πόδι|μυϊκ)[^.;|]{0,90})/gi
+  ];
+
+  for (const pattern of compactPatterns) {
+    for (const match of safeText.matchAll(pattern)) {
+      const player = normalizeCompactPlayerName(match[1]);
+      const reason = normalizeText(match[2]);
+
+      if (looksLikeBadAbsencePlayerName(player)) continue;
+
+      const classified = classifyAbsenceFromText(reason);
+      if (!classified) continue;
+
+      out.push({
+        player,
+        type: classified.type,
+        status: classified.status,
+        reason: reason.slice(0, 220),
+        source: source?.url || source?.publisher || source?.title || null,
+        confidence: 0.62
       });
     }
   }
 
   const unique = new Map();
+
   for (const row of out) {
     const key = `${row.player.toLowerCase()}|${row.type}|${row.status}`;
     if (!unique.has(key)) unique.set(key, row);
+  }
+
+  return Array.from(unique.values()).slice(0, 12);
+}
+
+function validateExtractedAbsences(absences, sources, input) {
+  if (!Array.isArray(absences) || absences.length === 0) return [];
+
+  const targetTeam = normalizeText(input?.team).toLowerCase();
+
+  const trustedDomains = [
+    "manutd.com",
+    "brentfordfc.com",
+    "premierleague.com",
+    "bbc",
+    "sky",
+    "skysports",
+    "theguardian",
+    "espn",
+    "football.london",
+    "manchestereveningnews"
+  ];
+
+  const valid = [];
+
+  for (const a of absences) {
+    const player = normalizeText(a?.player);
+    const reason = normalizeText(a?.reason);
+    const source = normalizeText(a?.source).toLowerCase();
+
+    if (!player) continue;
+    if (looksLikeBadAbsencePlayerName(player)) continue;
+
+    if (!/^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]+$/.test(player)) continue;
+
+    if (
+      /team|player|squad|coach|manager|background|foreground|component|footer|header|var\(|--|_base/i.test(player)
+    ) {
+      continue;
+    }
+
+    if (
+      /var\(|--|_base|data-component|siteheader|footer|background|foreground/i.test(reason)
+    ) {
+      continue;
+    }
+
+    const hasAbsenceReason =
+      /injur|suspend|sidelined|ruled out|unavailable|absent|doubt|doubtful|knock|hamstring|knee|ankle|groin|muscle|acl|red card|ban|banned/i.test(reason);
+
+    if (!hasAbsenceReason) continue;
+
+    const isTrusted = trustedDomains.some(domain => source.includes(domain));
+    if (!isTrusted) continue;
+
+    const context = `${reason} ${source}`.toLowerCase();
+
+    // Critical safety gate:
+    // Μην αποδέχεσαι absence αν το context δεν δείχνει την target ομάδα.
+    // Αυτό κόβει περιπτώσεις τύπου Brentford -> Harry Maguire.
+    if (targetTeam && context && !context.includes(targetTeam)) {
+      continue;
+    }
+
+    valid.push({
+      ...a,
+      player,
+      reason: reason.slice(0, 220),
+      source: a.source || null
+    });
+  }
+
+  const unique = new Map();
+
+  for (const row of valid) {
+    const key = `${row.player.toLowerCase()}|${row.type}|${row.status}`;
+    if (!unique.has(key)) {
+      unique.set(key, row);
+    }
   }
 
   return Array.from(unique.values()).slice(0, 8);
@@ -2502,375 +2138,83 @@ function buildTrustedRegistrySourceNote(source, input) {
   return null;
 }
 
-
-function buildTrustedDirectSourceNote(source, input) {
-  const normalizedSource = normalizeSourceItem(source);
-
-  if (!normalizedSource) return null;
-
-  const isDirectSource =
-    normalizedSource.sourceMode === "direct" ||
-    normalizedSource.query === "direct" ||
-    /^direct_/i.test(normalizedSource.sourceType || "");
-
-  const isTrustedDirectSource =
-    isDirectSource &&
-    (
-      normalizedSource.trustTier === "official" ||
-      normalizedSource.trustTier === "league" ||
-      normalizedSource.trustTier === "local_media" ||
-      normalizedSource.trustTier === "reference"
-    );
-
-  if (!isTrustedDirectSource) return null;
-
-  const team = normalizeText(input?.team);
-  const opponent = normalizeText(input?.opponent);
-  const title = normalizeText(normalizedSource.title);
-  const publisher = normalizeText(normalizedSource.publisher);
-  const url = normalizeText(normalizedSource.url);
-  const text = normalizeText(normalizedSource.text);
-  const sourceType = normalizeText(normalizedSource.sourceType);
-
-  if (!team || !url || text.length < 120) return null;
-
-  const haystack = [
-    title,
-    publisher,
-    url,
-    text
-  ].filter(Boolean).join(" ").toLowerCase();
-
-  const teamLc = team.toLowerCase();
-  const opponentLc = opponent.toLowerCase();
-
-  const hasTeam = haystack.includes(teamLc);
-  const hasOpponent = opponentLc ? haystack.includes(opponentLc) : true;
-
-  const isHomeLikeSource =
-    sourceType === "direct_official_home" ||
-    sourceType === "direct_league_home" ||
-    sourceType === "direct_federation_home" ||
-    /\/$/.test(url.replace(/^https?:\/\/[^/]+/i, ""));
-
-  const isArticleLikeSource =
-    sourceType === "direct_article" ||
-    /\/news\/.+/i.test(url) ||
-    /\/football-news\/.+/i.test(url) ||
-    /\/article\/.+/i.test(url) ||
-    /\/articles\/.+/i.test(url) ||
-    /\/preview/i.test(url) ||
-    /\bpreview\b/i.test(title) ||
-    /\bteam news\b/i.test(title) ||
-    /\binjur/i.test(title) ||
-    /\bsuspend/i.test(title);
-
-  if (isHomeLikeSource) {
-    return null;
-  }
-
-  if (!isArticleLikeSource) {
-    return null;
-  }
-
-  if (!hasTeam && !hasOpponent) {
-    return null;
-  }
-
-  const signalType = detectTeamNewsSignal([title, publisher, text].filter(Boolean).join(" "), input);
-
-  if (!signalType) {
-    return null;
-  }
-
-  return {
-    type: "credible_selection_note",
-    value: team + (opponent ? " vs " + opponent : "") + ": trusted direct article contains team-news signal (" + signalType + "): " + (title || publisher || url),
-    source: url,
-    confidence: normalizedSource.trustTier === "official" ? 0.66 : 0.56,
-    meta: {
-      sourceMode: normalizedSource.sourceMode,
-      sourceId: normalizedSource.sourceId,
-      sourceType: normalizedSource.sourceType,
-      trustTier: normalizedSource.trustTier,
-      publisher,
-      signalType,
-      textLength: text.length
-    }
-  };
-}
-
-function getTeamAttributionAliases(teamName) {
-  const team = normalizeText(teamName).toLowerCase();
-  const compact = compactTeamKey(team);
-
-  const aliases = new Set();
-
-  if (team) aliases.add(team);
-  if (compact) aliases.add(compact);
-
-  if (compact === "kaizerchiefs") {
-    aliases.add("chiefs");
-    aliases.add("amakhosi");
-    aliases.add("kaizer chiefs");
-  }
-
-  if (compact === "orlandopirates") {
-    aliases.add("pirates");
-    aliases.add("bucs");
-    aliases.add("orlando pirates");
-  }
-
-  if (compact === "mamelodisundowns") {
-    aliases.add("sundowns");
-    aliases.add("mamelodi sundowns");
-  }
-
-  if (compact === "richardsbay") {
-    aliases.add("richards bay");
-  }
-
-  if (compact === "tsgalaxy") {
-    aliases.add("ts galaxy");
-  }
-
-  if (compact === "polokwanecity") {
-    aliases.add("polokwane city");
-  }
-
-  if (compact === "stellenbosch") {
-    aliases.add("stellenbosch");
-  }
-
-  return Array.from(aliases).filter(Boolean);
-}
-
-function looseIncludesTeamName(value, teamName) {
-  const text = normalizeText(value).toLowerCase();
-  const compactText = compactTeamKey(text);
-
-  if (!text || !teamName) return false;
-
-  for (const alias of getTeamAttributionAliases(teamName)) {
-    const normalizedAlias = normalizeText(alias).toLowerCase();
-    const compactAlias = compactTeamKey(normalizedAlias);
-
-    if (normalizedAlias.length >= 4 && text.includes(normalizedAlias)) {
-      return true;
-    }
-
-    if (compactAlias.length >= 4 && compactText.includes(compactAlias)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function getSourceTitleTeamBias(source, input = {}) {
-  const title = normalizeText(source?.title);
-  const team = normalizeText(input?.team);
-  const opponent = normalizeText(input?.opponent);
-
-  const hasTargetInTitle = looseIncludesTeamName(title, team);
-  const hasOpponentInTitle = opponent ? looseIncludesTeamName(title, opponent) : false;
-
-  if (hasTargetInTitle && !hasOpponentInTitle) return "target";
-  if (hasOpponentInTitle && !hasTargetInTitle) return "opponent";
-  if (hasTargetInTitle && hasOpponentInTitle) return "both";
-
-  return "unknown";
-}
-
-function absenceLooksAttributedToTarget(absence, source, input = {}) {
-  const player = normalizeText(absence?.player);
-  const text = normalizeText(source?.text || source?.title);
-  const team = normalizeText(input?.team);
-  const opponent = normalizeText(input?.opponent);
-
-  if (!player || !text || !team) return false;
-
-  const titleBias = getSourceTitleTeamBias(source, input);
-
-  if (titleBias === "opponent") {
-    return false;
-  }
-
-  if (titleBias === "target") {
-    return true;
-  }
-
-  const lowerText = text.toLowerCase();
-  const lowerPlayer = player.toLowerCase();
-  const playerIndex = lowerText.indexOf(lowerPlayer);
-
-  if (playerIndex < 0) {
-    return false;
-  }
-
-  const windowText = text.slice(
-    Math.max(0, playerIndex - 220),
-    Math.min(text.length, playerIndex + 260)
-  );
-
-  const hasTargetNearPlayer = looseIncludesTeamName(windowText, team);
-  const hasOpponentNearPlayer = opponent
-    ? looseIncludesTeamName(windowText, opponent)
-    : false;
-
-  if (hasTargetNearPlayer && !hasOpponentNearPlayer) {
-    return true;
-  }
-
-  if (hasOpponentNearPlayer && !hasTargetNearPlayer) {
-    return false;
-  }
-
-  return false;
-}
-
-function buildExtractionSnippets(text, terms = []) {
-  const value = normalizeText(text);
-  const lower = value.toLowerCase();
-  const snippets = [];
-  const seen = new Set();
-
-  for (const term of terms) {
-    const needle = normalizeText(term).toLowerCase();
-    if (!needle) continue;
-
-    let index = lower.indexOf(needle);
-
-    while (index >= 0 && snippets.length < 20) {
-      const start = Math.max(0, index - 260);
-      const end = Math.min(value.length, index + needle.length + 320);
-      const snippet = value.slice(start, end).replace(/\s+/g, " ").trim();
-      const key = `${needle}:${start}:${end}`;
-
-      if (!seen.has(key)) {
-        seen.add(key);
-        snippets.push({
-          term,
-          snippet
-        });
-      }
-
-      index = lower.indexOf(needle, index + needle.length);
-    }
-  }
-
-  return snippets;
-}
-
-
-
 function extractStructuredFactsFromSources(input, sources = []) {
   const absences = [];
   const notes = [];
-  const extractionSnippets = [];
   const evidenceSources = [];
-
-  const extractionTerms = [
-    input?.team,
-    input?.opponent,
-
-    "injury",
-    "injuries",
-    "injured",
-    "suspended",
-    "suspension",
-    "doubt",
-    "doubtful",
-    "fitness",
-    "team news",
-    "lineup",
-    "line-up",
-    "starting xi",
-    "squad",
-    "absent",
-    "available",
-    "unavailable",
-    "missing",
-    "without"
-  ].filter(Boolean);
 
   for (const rawSource of Array.isArray(sources) ? sources : []) {
     const source = normalizeSourceItem(rawSource);
+    if (!source) continue;
 
-    if (!source) {
-      continue;
-    }
-
-    if (!sourceLooksRelevant(source, input)) {
-      continue;
-    }
+    if (!sourceLooksRelevant(source, input)) continue;
 
     const text = normalizeText(source.text || source.title);
-
     evidenceSources.push(source);
 
-    const snippets = buildExtractionSnippets(text, extractionTerms);
-
-    for (const snippet of snippets) {
-      extractionSnippets.push({
-        ...snippet,
-        source: source.url,
-        title: source.title,
-        publisher: source.publisher,
-        sourceMode: source.sourceMode || null,
-        sourceId: source.sourceId || null,
-        sourceType: source.sourceType || null,
-        trustTier: source.trustTier || null
-      });
+    // --- Named extraction (existing)
+    for (const absence of extractNamedAbsences(text, source)) {
+      absences.push(absence);
     }
 
-    for (const absence of extractNamedAbsences(text, source)) {
+    // --- Simple sentence extraction (NEW)
+    const sentences = text.split(/[\.\n]/);
+
+    for (const rawSentence of sentences) {
+      const sentence = normalizeText(rawSentence);
+      if (!sentence) continue;
+
       if (
-        typeof absenceLooksAttributedToTarget === "function" &&
-        !absenceLooksAttributedToTarget(absence, source, input)
+        !/injur|suspend|ruled out|unavailable|miss|out|doubt|doubtful|knock|hamstring|knee|ankle|muscle/i.test(sentence)
       ) {
         continue;
       }
 
-      absences.push(absence);
-    }
+      const matches = sentence.match(/\b[A-Z][a-z]+(?:\s[A-Z][a-z]+){1,2}\b/g);
+      if (!matches) continue;
 
-    const trustedRegistryNote = buildTrustedRegistrySourceNote(source, input);
+      for (const name of matches) {
+        if (looksLikeBadAbsencePlayerName(name)) continue;
 
-    if (trustedRegistryNote) {
-      notes.push(trustedRegistryNote);
-
-      if (trustedRegistryNote.type === "credible_selection_note") {
-        continue;
+        absences.push({
+          player: name,
+          type: /suspend|ban/i.test(sentence) ? "suspension" : "injury",
+          status: /doubt|doubtful/i.test(sentence) ? "doubtful" : "out",
+          reason: sentence.slice(0, 220),
+          source: source.url || source.publisher || source.title || null,
+          confidence: 0.55
+        });
       }
     }
 
-    const credibleSearchHitNote = buildCredibleSearchHitNote(source, input);
+    // --- Notes logic (unchanged)
+    const trustedRegistryNote = buildTrustedRegistrySourceNote(source, input);
+    if (trustedRegistryNote) {
+      notes.push(trustedRegistryNote);
+      if (trustedRegistryNote.type === "credible_selection_note") continue;
+    }
 
+    const credibleSearchHitNote = buildCredibleSearchHitNote(source, input);
     if (credibleSearchHitNote) {
       notes.push(credibleSearchHitNote);
       continue;
     }
 
     const note = buildSourceNote(source);
-
-    if (note) {
-      notes.push(note);
-    }
+    if (note) notes.push(note);
   }
 
+  // --- Dedup absences
   const uniqueAbsences = new Map();
-
   for (const row of absences) {
     const key = `${normalizeText(row.player).toLowerCase()}|${normalizeText(row.type).toLowerCase()}`;
-
     if (!uniqueAbsences.has(key)) {
       uniqueAbsences.set(key, row);
     }
   }
 
+  // --- Dedup notes
   const uniqueNotes = new Map();
-
   for (const row of notes) {
     const key = [
       normalizeText(row.type).toLowerCase(),
@@ -2883,27 +2227,16 @@ function extractStructuredFactsFromSources(input, sources = []) {
     }
   }
 
-  const uniqueSnippets = new Map();
-
-  for (const row of extractionSnippets) {
-    const key = [
-      normalizeText(row.term).toLowerCase(),
-      normalizeText(row.source).toLowerCase(),
-      normalizeText(row.snippet).slice(0, 220).toLowerCase()
-    ].join("|");
-
-    if (!uniqueSnippets.has(key)) {
-      uniqueSnippets.set(key, row);
-    }
-  }
+  const rawAbsences = Array.from(uniqueAbsences.values());
+  const validatedAbsences = validateExtractedAbsences(rawAbsences, evidenceSources, input);
 
   return {
-    absences: Array.from(uniqueAbsences.values()).slice(0, 10),
+    absences: validatedAbsences,
     notes: Array.from(uniqueNotes.values()).slice(0, 6),
-    extractionSnippets: Array.from(uniqueSnippets.values()).slice(0, 12),
     evidenceSources: evidenceSources.slice(0, 6)
   };
 }
+
 export async function runTeamNewsAIProvider(task) {
   const input = buildPrompt(task);
 
@@ -2922,12 +2255,18 @@ export async function runTeamNewsAIProvider(task) {
     .filter(source => sourceLooksRelevant(source, input));
 
   if (realSources.length === 0) {
-    return buildUnresolved("no_real_team_news_sources", {
+    return buildFallbackRequired("no_real_team_news_sources", {
       input,
       provider: "team-news-ai-provider",
       mode: "source_agnostic_web_research_v1",
       sourceCount: 0,
-      diagnostics
+      diagnostics,
+      fallback: {
+        required: true,
+        type: "recent_lineups_usage_analysis",
+        reason: "no_reliable_team_news_article_sources",
+        nextStep: "infer_missing_regular_players_from_recent_lineups"
+      }
     });
   }
 
@@ -2940,22 +2279,68 @@ export async function runTeamNewsAIProvider(task) {
   const canonicalNotes = extracted.notes.filter(note => {
     const type = note?.type;
     const blocked = note?.meta?.blockedAsEvidence === true;
+    const signalType = normalizeText(note?.meta?.signalType).toLowerCase();
+    const publisher = normalizeText(note?.meta?.publisher || note?.source).toLowerCase();
+    const trustTier = normalizeText(note?.meta?.trustTier).toLowerCase();
 
     if (blocked) {
       return false;
     }
 
+    const isTrustedTier =
+      trustTier === "official" ||
+      trustTier === "league" ||
+      trustTier === "high";
+
+    const isGenericLineupPublisher =
+      publisher.includes("sofascore") ||
+      publisher.includes("fotmob") ||
+      publisher.includes("flashscore") ||
+      publisher.includes("365scores") ||
+      publisher.includes("aiscore") ||
+      publisher.includes("besoccer") ||
+      publisher.includes("footballdatabase") ||
+      publisher.includes("globalsportsarchive") ||
+      publisher.includes("bulinews");
+
+    if (
+      type === "credible_selection_note" &&
+      signalType === "lineup_signal" &&
+      isGenericLineupPublisher &&
+      !isTrustedTier
+    ) {
+      return false;
+    }
+
     return (
       type === "credible_selection_note" ||
-      type === "credible_expected_lineup_note" ||
-      type === "source_available_note"
+      type === "credible_expected_lineup_note"
     );
   });
 
-  const writeNotes = [
-    ...canonicalNotes,
-    ...sourceAvailableNotes
-  ];
+  const writeNotes = canonicalNotes;
+
+  const hasOnlyNonCanonicalSignals =
+    extracted.absences.length === 0 &&
+    writeNotes.length === 0 &&
+    extracted.notes.length > 0;
+
+  if (hasOnlyNonCanonicalSignals) {
+    return buildFallbackRequired("only_lineup_or_low_quality_selection_signals", {
+      input,
+      provider: "team-news-ai-provider",
+      mode: "source_agnostic_web_research_v1",
+      sourceCount: realSources.length,
+      diagnostics,
+      nonCanonicalNotes: extracted.notes.slice(0, 6),
+      fallback: {
+        required: true,
+        type: "recent_lineups_usage_analysis",
+        reason: "lineup_signals_found_but_no_confirmed_team_news_or_named_absences",
+        nextStep: "infer_missing_regular_players_from_recent_lineups"
+      }
+    });
+  }
 
   if (extracted.absences.length === 0 && writeNotes.length === 0) {
     return buildUnresolved("no_canonical_team_news_facts_extracted", {
@@ -2964,9 +2349,7 @@ export async function runTeamNewsAIProvider(task) {
       provider: "team-news-ai-provider",
       mode: "source_agnostic_web_research_v1",
       diagnostics,
-      sourceAvailableNotes,
-      extractionSnippets: extracted.extractionSnippets || [],
-      evidenceSources: extracted.evidenceSources || []
+      sourceAvailableNotes
     });
   }
 
@@ -2988,8 +2371,7 @@ export async function runTeamNewsAIProvider(task) {
         sourceId: source.sourceId || null,
         sourceType: source.sourceType || null,
         trustTier: source.trustTier || null
-      })),
-      extractionSnippets: extracted.extractionSnippets || []
+      }))
     },
     confidence: extracted.absences.length > 0 ? 0.64 : 0.56,
     source: "source-agnostic-web-research"
@@ -3019,8 +2401,6 @@ export async function runTeamNewsAIProvider(task) {
     sourceCount: realSources.length,
     provider: "team-news-ai-provider",
     mode: "source_agnostic_web_research_v1",
-    diagnostics,
-    extractionSnippets: extracted.extractionSnippets || [],
-    evidenceSources: extracted.evidenceSources || []
+    diagnostics
   };
 }

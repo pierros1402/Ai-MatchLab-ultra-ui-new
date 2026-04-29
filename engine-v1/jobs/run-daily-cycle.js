@@ -13,13 +13,51 @@ import { buildTeamNewsResearchTasksDay } from "./build-team-news-research-tasks-
 import { runTeamNewsResearchTasksDay } from "./run-team-news-research-tasks-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 
+function normalizePositiveIntegerOption(value, fallback) {
+  if (value === Infinity) return Infinity;
+
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n <= 0) {
+    return fallback;
+  }
+
+  return Math.floor(n);
+}
+
+function readPositiveIntegerEnv(name, fallback) {
+  const raw = globalThis.process?.env?.[name];
+
+  if (raw == null || raw === "") {
+    return fallback;
+  }
+
+  if (String(raw).toLowerCase() === "all" || String(raw).toLowerCase() === "infinity") {
+    return Infinity;
+  }
+
+  return normalizePositiveIntegerOption(raw, fallback);
+}
+
 export async function runDailyCycle(options = {}) {
   const {
     dayKey = athensDayKey(),
     doFinalize = true,
     daysForward = 2,
-    detailsRebuild = true
+    detailsRebuild = true,
+    teamNewsMaxTeams = readPositiveIntegerEnv("TEAM_NEWS_MAX_TEAMS", Infinity),
+    teamNewsResearchMaxTasks = readPositiveIntegerEnv("TEAM_NEWS_RESEARCH_MAX_TASKS", 24)
   } = options;
+
+  const normalizedTeamNewsMaxTeams = normalizePositiveIntegerOption(
+    teamNewsMaxTeams,
+    Infinity
+  );
+
+  const normalizedTeamNewsResearchMaxTasks = normalizePositiveIntegerOption(
+    teamNewsResearchMaxTasks,
+    24
+  );
 
   const startedAt = Date.now();
   const finalizeDayKey = shiftDay(dayKey, -1);
@@ -28,7 +66,9 @@ export async function runDailyCycle(options = {}) {
     dayKey,
     finalizeDayKey,
     doFinalize,
-    daysForward
+    daysForward,
+    teamNewsMaxTeams: normalizedTeamNewsMaxTeams,
+    teamNewsResearchMaxTasks: normalizedTeamNewsResearchMaxTasks
   });
 
   console.log("[daily-cycle] discoverWindow:start");
@@ -109,7 +149,7 @@ export async function runDailyCycle(options = {}) {
   console.log("[daily-cycle] team-news-research-tasks:start", { dayKey });
 
   teamNewsResearchTasks = await buildTeamNewsResearchTasksDay(dayKey, {
-    maxTeams: Infinity
+    maxTeams: normalizedTeamNewsMaxTeams
   });
 
   console.log("[daily-cycle] team-news-research-tasks:done", {
@@ -122,7 +162,7 @@ export async function runDailyCycle(options = {}) {
   console.log("[daily-cycle] team-news-research-run:start", { dayKey });
 
   teamNewsResearchRun = await runTeamNewsResearchTasksDay(dayKey, {
-    maxTasks: Infinity
+    maxTasks: normalizedTeamNewsResearchMaxTasks
   });
 
   console.log("[daily-cycle] team-news-research-run:done", {
@@ -214,4 +254,33 @@ export async function runDailyCycle(options = {}) {
     historyAppend,
     indexesRebuild
   };
+}
+
+const { pathToFileURL } = await import("node:url");
+
+const entryUrl = globalThis.process?.argv?.[1]
+  ? pathToFileURL(globalThis.process.argv[1]).href
+  : null;
+
+if (entryUrl === import.meta.url) {
+  const cliDayKey = globalThis.process?.argv?.[2] || athensDayKey();
+
+  try {
+    const result = await runDailyCycle({
+      dayKey: cliDayKey
+    });
+
+    console.log("[daily-cycle] cli:done", {
+      ok: result?.ok,
+      dayKey: result?.dayKey,
+      ms: result?.ms,
+      teamNewsResearchTaskCount: result?.teamNewsResearchRun?.taskCount ?? 0,
+      teamNewsAcceptedCandidateCount: result?.teamNewsResearchRun?.acceptedCandidateCount ?? 0,
+      teamNewsCanonicalWriteCount: result?.teamNewsResearchRun?.canonicalWriteCount ?? 0,
+      valueCount: result?.valueBuild?.count ?? 0
+    });
+  } catch (error) {
+    console.error("[daily-cycle] cli:fatal", error);
+    globalThis.process.exitCode = 1;
+  }
 }

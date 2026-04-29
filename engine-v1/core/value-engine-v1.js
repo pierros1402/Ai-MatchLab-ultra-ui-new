@@ -1,5 +1,12 @@
+﻿const DEBUG_AI_VALUE =
+  String(globalThis.process?.env?.DEBUG_AI_VALUE || "").toLowerCase() === "true";
+
+function debugAiValueLog(...args) {
+  if (!DEBUG_AI_VALUE) return;
+  console.log(...args);
+}
 // ============================================================
-// VALUE ENGINE V1 — PURE STATISTICAL VALUE (NO ODDS)
+// VALUE ENGINE V1 β€” PURE STATISTICAL VALUE (NO ODDS)
 // engine-v1/core/value-engine-v1.js
 // ============================================================
 
@@ -200,7 +207,7 @@ function basicNormalizeText(value) {
     .toLowerCase()
     .replace(/&/g, " and ")
     .replace(/\+/g, " ")
-    .replace(/[’'`]/g, "")
+    .replace(/[β€™'`]/g, "")
     .replace(/[().,/\\-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -1648,7 +1655,7 @@ function applyAiTaskAdjustments(value, input) {
   if (!Array.isArray(tasks) || !tasks.length) {
     return { adjusted: value, reasons: [] };
   }
-  console.log("AI TASKS INPUT:", input?.ai?.tasks);
+  debugAiValueLog("AI TASKS INPUT:", input?.ai?.tasks);
 
   let {
     homeWinScore,
@@ -1726,7 +1733,7 @@ function applyAiTaskAdjustments(value, input) {
       const importance = task.data?.importance;
 
       if (importance === "high") {
-        // μειώνουμε randomness
+        // ΞΌΞµΞΉΟΞ½ΞΏΟ…ΞΌΞµ randomness
         drawScore -= 0.03;
         reasons.push("ai_high_importance_reduce_draw");
       }
@@ -1864,7 +1871,7 @@ export async function evaluateMatchValue(input, opts = {}) {
 
   const ai = loadAiFromDetails(input?.dayKey, input?.matchId);
   input.ai = ai;
-  console.log("LOADED AI:", ai);
+  debugAiValueLog("LOADED AI:", ai);
 
   if (!(fixtureDate instanceof Date)) {
     throw new Error("evaluateMatchValue: missing/invalid fixture date");
@@ -2126,8 +2133,8 @@ export async function evaluateMatchValue(input, opts = {}) {
 // APPLY AI TASK ADJUSTMENTS
 // -----------------------------
   const aiAdjusted = applyAiTaskAdjustments(baseValue, input);
-  console.log("AI ADJUSTED:", aiAdjusted);
-  console.log("AI TASKS INPUT:", input?.ai?.tasks);
+  debugAiValueLog("AI ADJUSTED:", aiAdjusted);
+  debugAiValueLog("AI TASKS INPUT:", input?.ai?.tasks);
 
   const preIntegrated = {
     ...aiAdjusted.adjusted,
@@ -2176,9 +2183,23 @@ export async function evaluateMatchValue(input, opts = {}) {
     ...(contextApplied?.modifiers?.lookAhead?.reasons || [])
   ].filter(Boolean);
 
+function computeBand(score) {
+  if (score >= 0.80) return "HIGH";
+  if (score >= 0.70) return "MEDIUM";
+  return "LOW";
+}
+
+const band = {
+  over15: computeBand(baseValue.over15Score),
+  over25: computeBand(baseValue.over25Score),
+  over35: computeBand(baseValue.over35Score),
+  btts: computeBand(baseValue.bttsScore)
+};
+
   return {
     ...baseValue,
     ...integrated,
+    band,
     homeWinScore: round(normalized1X2.homeWinScore, 3),
     drawScore: round(normalized1X2.drawScore, 3),
     awayWinScore: round(normalized1X2.awayWinScore, 3),

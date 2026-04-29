@@ -6,6 +6,8 @@ import { athensDayFromKickoff } from "../core/daykey.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { buildAiDetailsBlock } from "../ai-match-intelligence/build-ai-details-block.js";
 import { buildRefereeContext } from "../core/referee-context.js";
+import { readPlayerUsageRecord } from "../storage/player-usage-db.js";
+import { inferAbsencesFromUsage } from "../ai-match-intelligence/player-usage/absence-inference.js";
 
 
 function readJsonSafe(filePath, fallback = null) {
@@ -530,6 +532,26 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     teamNews
   );
 
+// ---------- PLAYER USAGE INTELLIGENCE ----------
+
+const homeUsage = readPlayerUsageRecord(match?.homeTeam);
+const awayUsage = readPlayerUsageRecord(match?.awayTeam);
+
+const homeAbsenceIntel = inferAbsencesFromUsage({
+  playerUsage: homeUsage,
+  teamNews: teamNews?.data?.home
+});
+
+const awayAbsenceIntel = inferAbsencesFromUsage({
+  playerUsage: awayUsage,
+  teamNews: teamNews?.data?.away
+});
+
+const playerUsageIntel = {
+  home: homeAbsenceIntel,
+  away: awayAbsenceIntel
+};
+
   return {
     matchId: String(match.matchId),
     dayKey: kickoffDay(match),
@@ -576,9 +598,30 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
         }
       : referee,
     teamNews,
+    lineups: {
+      home: {
+        starters: Array.isArray(match?.lineups?.home?.starters)
+          ? match.lineups.home.starters
+          : [],
+        bench: Array.isArray(match?.lineups?.home?.bench)
+          ? match.lineups.home.bench
+          : []
+      },
+      away: {
+        starters: Array.isArray(match?.lineups?.away?.starters)
+          ? match.lineups.away.starters
+          : [],
+        bench: Array.isArray(match?.lineups?.away?.bench)
+          ? match.lineups.away.bench
+          : []
+      },
+      source: match?.lineups ? "fixture.lineups" : "missing",
+      status: match?.lineups ? "partial" : "missing"
+    },
     travel,
     value: Array.isArray(valuePicks) ? valuePicks : [],
     analysis,
+    playerUsageIntel,
     meta: {
       version: "details-snapshot-v2",
       builderVersion: "2026-04-11-unified-competition-context",

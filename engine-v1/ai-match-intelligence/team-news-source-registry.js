@@ -64,150 +64,276 @@ const GLOBAL_FOOTBALL_SOURCES = [
 ];
 
 const LEAGUE_SOURCE_REGISTRY = {
-  "rsa.1": [
+
+  "uefa.champions": [
     {
-      id: "psl-official",
-      label: "Premier Soccer League official site",
-      type: "league",
+      id: "uefa-champions-news",
+      label: "UEFA Champions League official news",
+      type: "competition_news",
       trustTier: "league",
       buildUrls(input) {
         const team = encodeURIComponent(normalizeText(input?.team));
         return [
-          `https://www.psl.co.za/?s=${team}`,
-          "https://www.psl.co.za/news"
+          "https://www.uefa.com/uefachampionsleague/news/",
+          `https://www.uefa.com/uefachampionsleague/search/?q=${team}`
         ];
       }
     },
     {
-      id: "orlando-pirates-official",
-      label: "Orlando Pirates official site",
-      type: "official_club",
+      id: "psg-official-news",
+      label: "Paris Saint-Germain official news",
+      type: "official_club_news",
       trustTier: "official",
-      teams: [
-        "orlando pirates",
-        "pirates"
-      ],
+      teams: ["psg", "paris saint-germain", "paris saint germain"],
       buildUrls() {
         return [
-          "https://www.orlandopiratesfc.com/",
-          "https://www.orlandopiratesfc.com/news"
+          "https://en.psg.fr/teams/first-team/content/news",
+          "https://www.psg.fr/equipes/equipe-premiere/content/actualite"
         ];
       }
     },
     {
-      id: "kaizer-chiefs-official",
-      label: "Kaizer Chiefs official site",
-      type: "official_club",
+      id: "bayern-official-news",
+      label: "Bayern Munich official news",
+      type: "official_club_news",
       trustTier: "official",
-      teams: [
-        "kaizer chiefs",
-        "chiefs"
-      ],
+      teams: ["bayern munich", "bayern", "fc bayern", "fc bayern munich"],
       buildUrls() {
         return [
-          "https://www.kaizerchiefs.com/",
-          "https://www.kaizerchiefs.com/news/"
+          "https://fcbayern.com/en/news",
+          "https://fcbayern.com/en/teams/professionals"
         ];
       }
     },
     {
-      id: "mamelodi-sundowns-official",
-      label: "Mamelodi Sundowns official site",
-      type: "official_club",
+      id: "real-madrid-official-news",
+      label: "Real Madrid official news",
+      type: "official_club_news",
       trustTier: "official",
-      teams: [
-        "mamelodi sundowns",
-        "sundowns"
-      ],
+      teams: ["real madrid"],
       buildUrls() {
         return [
-          "https://sundownsfc.co.za/",
-          "https://sundownsfc.co.za/news/"
+          "https://www.realmadrid.com/en-US/news/football/first-team",
+          "https://www.realmadrid.com/en-US/football/first-team"
         ];
       }
     },
     {
-      id: "richards-bay-official",
-      label: "Richards Bay official site",
-      type: "official_club",
+      id: "barcelona-official-news",
+      label: "FC Barcelona official news",
+      type: "official_club_news",
       trustTier: "official",
-      teams: [
-        "richards bay",
-        "richards bay fc"
-      ],
+      teams: ["barcelona", "fc barcelona"],
       buildUrls() {
         return [
-          "https://richardsbayfc.co.za/",
-          "https://richardsbayfc.co.za/news/"
-        ];
-      }
-    },
-    {
-      id: "stellenbosch-official",
-      label: "Stellenbosch official site",
-      type: "official_club",
-      trustTier: "official",
-      teams: [
-        "stellenbosch",
-        "stellenbosch fc",
-        "stellies"
-      ],
-      buildUrls() {
-        return [
-          "https://www.stellenboschfc.com/",
-          "https://www.stellenboschfc.com/media/"
-        ];
-      }
-    },
-    {
-      id: "polokwane-city-official",
-      label: "Polokwane City official site",
-      type: "official_club",
-      trustTier: "official",
-      teams: [
-        "polokwane city",
-        "polokwane city fc"
-      ],
-      buildUrls() {
-        return [
-          "https://polokwanecityfc.co.za/",
-          "https://polokwanecityfc.co.za/news/"
-        ];
-      }
-    },
-    {
-      id: "ts-galaxy-official",
-      label: "TS Galaxy official site",
-      type: "official_club",
-      trustTier: "official",
-      teams: [
-        "ts galaxy",
-        "ts galaxy fc"
-      ],
-      buildUrls() {
-        return [
-          "https://www.tsgalaxyfc.com/",
-          "https://www.tsgalaxyfc.com/news/"
+          "https://www.fcbarcelona.com/en/football/first-team/news",
+          "https://www.fcbarcelona.com/en/football/first-team/players"
         ];
       }
     }
   ],
 
-  "rsa.2": [
+  "eng.1": [
     {
-      id: "psl-official-rsa2",
-      label: "Premier Soccer League official site",
-      type: "league",
+      id: "premierleague-news",
+      label: "Premier League official news",
+      type: "league_news",
       trustTier: "league",
-      buildUrls(input) {
-        const team = encodeURIComponent(normalizeText(input?.team));
+      buildUrls() {
         return [
-          `https://www.psl.co.za/?s=${team}`,
-          "https://www.psl.co.za/news"
+          "https://www.premierleague.com/en/news"
         ];
       }
+    },
+    {
+      id: "arsenal-official-news",
+      label: "Arsenal official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["arsenal"],
+      buildUrls() { return ["https://www.arsenal.com/news"]; }
+    },
+    {
+      id: "aston-villa-official-news",
+      label: "Aston Villa official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["aston villa"],
+      buildUrls() { return ["https://www.avfc.co.uk/news/"]; }
+    },
+    {
+      id: "bournemouth-official-news",
+      label: "AFC Bournemouth official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["bournemouth", "afc bournemouth"],
+      buildUrls() { return ["https://www.afcb.co.uk/news/"]; }
+    },
+    {
+      id: "brentford-official-news",
+      label: "Brentford official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["brentford"],
+      buildUrls() {
+        return [
+          "https://www.brentfordfc.com/en/news/all-news",
+          "https://www.brentfordfc.com/en/news/latest-mens-news"
+        ];
+      }
+    },
+    {
+      id: "brentford-premierinjuries",
+      label: "Brentford Premier Injuries team page",
+      type: "specialist_injury_page",
+      trustTier: "specialist",
+      teams: ["brentford"],
+      buildUrls() { return ["https://www.premierinjuries.com/teams/brentford"]; }
+    },
+    {
+      id: "brighton-official-news",
+      label: "Brighton official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["brighton", "brighton & hove albion", "brighton and hove albion"],
+      buildUrls() { return ["https://www.brightonandhovealbion.com/pages/en/latest-news"]; }
+    },
+    {
+      id: "burnley-official-news",
+      label: "Burnley official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["burnley"],
+      buildUrls() { return ["https://www.burnleyfootballclub.com/content/latest-news"]; }
+    },
+    {
+      id: "chelsea-official-news",
+      label: "Chelsea official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["chelsea"],
+      buildUrls() { return ["https://www.chelseafc.com/en/news/latest-news"]; }
+    },
+    {
+      id: "crystal-palace-official-news",
+      label: "Crystal Palace official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["crystal palace"],
+      buildUrls() { return ["https://www.cpfc.co.uk/news/"]; }
+    },
+    {
+      id: "everton-official-news",
+      label: "Everton official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["everton"],
+      buildUrls() { return ["https://www.evertonfc.com/news"]; }
+    },
+    {
+      id: "fulham-official-news",
+      label: "Fulham official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["fulham"],
+      buildUrls() { return ["https://www.fulhamfc.com/news"]; }
+    },
+    {
+      id: "leeds-official-news",
+      label: "Leeds United official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["leeds", "leeds united"],
+      buildUrls() { return ["https://www.leedsunited.com/en/news"]; }
+    },
+    {
+      id: "liverpool-official-news",
+      label: "Liverpool official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["liverpool"],
+      buildUrls() { return ["https://www.liverpoolfc.com/news"]; }
+    },
+    {
+      id: "manchester-city-official-news",
+      label: "Manchester City official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["manchester city", "man city"],
+      buildUrls() { return ["https://www.mancity.com/news/mens"]; }
+    },
+    {
+      id: "manchester-united-official-news",
+      label: "Manchester United official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["manchester united", "man utd", "man united", "manchester utd"],
+      buildUrls() {
+        return [
+          "https://www.manutd.com/en/news/latest",
+          "https://www.manutd.com/en/news/first-team",
+          "https://www.manutd.com/en/news"
+        ];
+      }
+    },
+    {
+      id: "manchester-united-premierinjuries",
+      label: "Manchester United Premier Injuries team page",
+      type: "specialist_injury_page",
+      trustTier: "specialist",
+      teams: ["manchester united", "man utd", "man united", "manchester utd"],
+      buildUrls() { return ["https://www.premierinjuries.com/teams/manchester-united"]; }
+    },
+    {
+      id: "newcastle-official-news",
+      label: "Newcastle United official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["newcastle", "newcastle united"],
+      buildUrls() { return ["https://www.newcastleunited.com/en/news/latest-news"]; }
+    },
+    {
+      id: "nottingham-forest-official-news",
+      label: "Nottingham Forest official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["nottingham forest", "forest"],
+      buildUrls() { return ["https://www.nottinghamforest.co.uk/news/"]; }
+    },
+    {
+      id: "sunderland-official-news",
+      label: "Sunderland official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["sunderland"],
+      buildUrls() { return ["https://www.safc.com/news"]; }
+    },
+    {
+      id: "tottenham-official-news",
+      label: "Tottenham Hotspur official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["tottenham", "tottenham hotspur", "spurs"],
+      buildUrls() { return ["https://www.tottenhamhotspur.com/news/"]; }
+    },
+    {
+      id: "west-ham-official-news",
+      label: "West Ham United official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["west ham", "west ham united"],
+      buildUrls() { return ["https://www.whufc.com/news"]; }
+    },
+    {
+      id: "wolves-official-news",
+      label: "Wolves official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["wolves", "wolverhampton", "wolverhampton wanderers"],
+      buildUrls() { return ["https://www.wolves.co.uk/news/"]; }
     }
   ],
+
   "chi.1": [
     {
       id: "campeonato-chileno",
@@ -359,6 +485,303 @@ const LEAGUE_SOURCE_REGISTRY = {
   ]
 };
 
+const EUROPE_MEDIA_SOURCE_REGISTRY = {
+  "uefa.champions": [
+    {
+      id: "uefa-cl-news",
+      label: "UEFA Champions League news",
+      type: "competition_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.uefa.com/uefachampionsleague/news/"];
+      }
+    }
+  ],
+
+  "uefa.europa": [
+    {
+      id: "uefa-el-news",
+      label: "UEFA Europa League news",
+      type: "competition_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.uefa.com/uefaeuropaleague/news/"];
+      }
+    }
+  ],
+
+  "uefa.conference": [
+    {
+      id: "uefa-ecl-news",
+      label: "UEFA Conference League news",
+      type: "competition_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.uefa.com/uefaeuropaconferenceleague/news/"];
+      }
+    }
+  ],
+
+  "eng.1": [
+    {
+      id: "premierleague-news",
+      label: "Premier League news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.premierleague.com/news"];
+      }
+    },
+    {
+      id: "bbc-pl-news",
+      label: "BBC Premier League news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.bbc.com/sport/football/premier-league"];
+      }
+    },
+    {
+      id: "sky-pl-news",
+      label: "Sky Sports Premier League news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.skysports.com/premier-league"];
+      }
+    }
+  ],
+
+  "eng.2": [
+    {
+      id: "efl-championship-news",
+      label: "EFL Championship news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.efl.com/news/"];
+      }
+    },
+    {
+      id: "bbc-championship-news",
+      label: "BBC Championship news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.bbc.com/sport/football/championship"];
+      }
+    },
+    {
+      id: "sky-championship-news",
+      label: "Sky Sports Championship news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.skysports.com/championship"];
+      }
+    }
+  ],
+
+  "eng.3": [
+    {
+      id: "efl-league-one-news",
+      label: "EFL League One news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.efl.com/news/"];
+      }
+    },
+    {
+      id: "bbc-league-one-news",
+      label: "BBC League One news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.bbc.com/sport/football/league-one"];
+      }
+    },
+    {
+      id: "sky-league-one-news",
+      label: "Sky Sports League One news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.skysports.com/league-1"];
+      }
+    }
+  ],
+
+  "esp.1": [
+    {
+      id: "marca-news",
+      label: "Marca football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.marca.com/futbol.html"];
+      }
+    },
+    {
+      id: "as-news",
+      label: "AS football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://as.com/futbol/"];
+      }
+    }
+  ],
+
+  "ita.1": [
+    {
+      id: "gazzetta-news",
+      label: "Gazzetta football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.gazzetta.it/Calcio/"];
+      }
+    }
+  ],
+
+  "fra.1": [
+    {
+      id: "lequipe-news",
+      label: "L'Équipe football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.lequipe.fr/Football/"];
+      }
+    }
+  ],
+
+  "ger.1": [
+    {
+      id: "kicker-news",
+      label: "Kicker football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.kicker.de/fussball"];
+      }
+    }
+  ],
+
+  "ned.1": [
+    {
+      id: "eredivisie-news",
+      label: "Eredivisie official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://eredivisie.eu/news/"];
+      }
+    },
+    {
+      id: "vi-football-news",
+      label: "Voetbal International news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.vi.nl/nieuws"];
+      }
+    },
+    {
+      id: "espn-nl-football-news",
+      label: "ESPN Netherlands football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.espn.nl/voetbal/"];
+      }
+    }
+  ],
+
+  "swe.1": [
+    {
+      id: "allsvenskan-news",
+      label: "Allsvenskan official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://allsvenskan.se/nyheter/"];
+      }
+    },
+    {
+      id: "fotbollskanalen-news",
+      label: "Fotbollskanalen news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.fotbollskanalen.se/allsvenskan/"];
+      }
+    },
+    {
+      id: "aftonbladet-football-news",
+      label: "Aftonbladet football news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.aftonbladet.se/sportbladet/fotboll"];
+      }
+    }
+  ],
+
+  "per.1": [
+    {
+      id: "peru-rpp-futbol",
+      label: "RPP Futbol news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://rpp.pe/futbol"];
+      }
+    },
+    {
+      id: "peru-ovacion-noticias",
+      label: "Ovacion noticias",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://ovacion.pe/noticias"];
+      }
+    },
+    {
+      id: "peru-liga1-news",
+      label: "Liga 1 Peru official site",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://ligadefutbolprofesional.pe/noticias/"];
+      }
+    }
+  ],
+
+  "bol.1": [
+    {
+      id: "bolivia-diez-news",
+      label: "Diez Bolivia football news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.diez.bo/futbol"];
+      }
+    },
+    {
+      id: "bolivia-tigo-sports-news",
+      label: "Tigo Sports Bolivia football news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.tigosports.com.bo/futbol"];
+      }
+    }
+  ]
+};
+
+
 function sourceAppliesToTeam(source, input) {
   const teams = Array.isArray(source?.teams) ? source.teams : [];
   if (teams.length === 0) return true;
@@ -392,8 +815,18 @@ export function getTeamNewsSourcesForTask(input = {}) {
   const leagueSlug = normalizeLeagueSlug(input?.leagueSlug);
 
   const leagueSources = LEAGUE_SOURCE_REGISTRY[leagueSlug] || [];
+  const extraEuropeSources = EUROPE_MEDIA_SOURCE_REGISTRY[leagueSlug] || [];
 
   const selectedLeagueSources = leagueSources
+    .filter(source => sourceAppliesToTeam(source, input))
+    .sort((a, b) => {
+      const aTeamSpecific = Array.isArray(a?.teams) && a.teams.length > 0;
+      const bTeamSpecific = Array.isArray(b?.teams) && b.teams.length > 0;
+      return Number(bTeamSpecific) - Number(aTeamSpecific);
+    })
+    .flatMap(source => expandSource(source, input));
+
+  const selectedExtraSources = extraEuropeSources
     .filter(source => sourceAppliesToTeam(source, input))
     .flatMap(source => expandSource(source, input));
 
@@ -402,6 +835,7 @@ export function getTeamNewsSourcesForTask(input = {}) {
 
   return uniqByUrl([
     ...selectedLeagueSources,
+    ...selectedExtraSources,
     ...globalSources
   ]);
 }
