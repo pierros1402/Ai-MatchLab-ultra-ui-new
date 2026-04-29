@@ -1,3 +1,5 @@
+import { validateCanonicalTeamNewsPayload } from "../team-news/team-news-validator.js";
+
 function asArray(value) {
   if (Array.isArray(value)) return value.filter(Boolean);
   if (value == null) return [];
@@ -114,6 +116,30 @@ function buildCanonicalTeamNews(
     };
   }
 
+  const notesHome = asArray(extracted?.homeTeam?.notes);
+  const notesAway = asArray(extracted?.awayTeam?.notes);
+
+  const rawPayload = {
+    data: {
+      home: {
+        absences: notesHome.map((note) => ({
+          player: note,
+          reason: note,
+          importance: "medium"
+        }))
+      },
+      away: {
+        absences: notesAway.map((note) => ({
+          player: note,
+          reason: note,
+          importance: "medium"
+        }))
+      }
+    }
+  };
+
+  const validated = validateCanonicalTeamNewsPayload(rawPayload);
+
   return {
     status,
     reason,
@@ -124,14 +150,24 @@ function buildCanonicalTeamNews(
       homeCount: reliabilityMeta.homeCount,
       awayCount: reliabilityMeta.awayCount,
       evidenceCount: reliabilityMeta.evidenceCount,
-      bothSides: reliabilityMeta.bothSides
+      bothSides: reliabilityMeta.bothSides,
+      rawHomeAbsences: validated.diagnostics.rawHomeAbsences,
+      rawAwayAbsences: validated.diagnostics.rawAwayAbsences,
+      cleanHomeAbsences: validated.diagnostics.cleanHomeAbsences,
+      cleanAwayAbsences: validated.diagnostics.cleanAwayAbsences
     },
     data: {
       homeTeam: {
-        notes: asArray(extracted?.homeTeam?.notes)
+        notes: notesHome
       },
       awayTeam: {
-        notes: asArray(extracted?.awayTeam?.notes)
+        notes: notesAway
+      },
+      home: {
+        absences: validated.data.home.absences
+      },
+      away: {
+        absences: validated.data.away.absences
       }
     }
   };

@@ -79,6 +79,7 @@ function isStrongCanonicalNote(note) {
   const source = normalizeText(note?.source);
   const value = normalizeText(note?.value);
   const blocked = note?.meta?.blockedAsEvidence === true;
+  const confidence = Number(note?.confidence);
 
   if (blocked) {
     return false;
@@ -92,7 +93,16 @@ function isStrongCanonicalNote(note) {
     type === "expected_lineup" ||
     type === "credible_expected_lineup_note" ||
     type === "confirmed_absence_note" ||
-    type === "confirmed_team_news_note"
+    type === "confirmed_team_news_note" ||
+    type === "reviewed_team_news_note"
+  ) {
+    return true;
+  }
+
+  if (
+    type === "credible_selection_note" &&
+    Number.isFinite(confidence) &&
+    confidence >= 0.55
   ) {
     return true;
   }
@@ -353,21 +363,87 @@ function hasNonEmptyObject(value) {
   return !!value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length > 0;
 }
 
+function normalizeNoteValue(value) {
+  if (value == null) return "";
+
+  if (typeof value === "string") {
+    return normalizeText(value);
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return normalizeText(value);
+  }
+
+  if (typeof value === "object") {
+    const direct =
+      value.value ||
+      value.note ||
+      value.text ||
+      value.summary ||
+      value.headline ||
+      value.message ||
+      value.reason ||
+      value.status ||
+      value.player ||
+      value.name ||
+      value.label;
+
+    if (direct != null && typeof direct !== "object") {
+      return normalizeText(direct);
+    }
+
+    const player = normalizeText(value.player || value.name);
+    const status = normalizeText(value.status || value.type || value.reason);
+
+    if (player && status) {
+      return `${player}: ${status}`;
+    }
+
+    if (player) {
+      return player;
+    }
+
+    if (status) {
+      return status;
+    }
+
+    return "";
+  }
+
+  return "";
+}
+
+function isBadCanonicalNoteText(value) {
+  const text = normalizeText(value).toLowerCase();
+
+  if (!text) return true;
+  if (text === "[object object]") return true;
+  if (text.length < 10) return true;
+
+  // ❌ κόβουμε μόνο μη-αποδεικτικά registry/fetch messages.
+  // Τα source-reported team-news signals περνάνε ως canonical notes,
+  // αλλά ΟΧΙ ως absences.
+  if (
+    text.includes("trusted registry source") ||
+    text.includes("source was fetched")
+  ) {
+    return true;
+  }
+
+  // ❌ κόβουμε navigation / generic junk
+  if (
+    /^(home|news|latest news|club|team|first team|fixtures|results|tickets|shop|store|contact|privacy|terms|history|honours|academy|women)$/i.test(text)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function pushNormalizedNote(out, type, value, source = null) {
   if (value == null) return;
 
   const noteType = normalizeText(type) || "selection_note";
-
-  if (typeof value === "string") {
-    const text = normalizeText(value);
-    if (!text) return;
-    out.push({
-      type: noteType,
-      value: text,
-      source: normalizeText(source) || null
-    });
-    return;
-  }
 
   if (Array.isArray(value)) {
     for (const row of value) {
@@ -376,14 +452,25 @@ function pushNormalizedNote(out, type, value, source = null) {
     return;
   }
 
-  if (typeof value === "object") {
-    if (!hasNonEmptyObject(value)) return;
-    out.push({
-      type: noteType,
-      value,
-      source: normalizeText(source) || null
-    });
+  const text = normalizeNoteValue(value);
+
+  if (isBadCanonicalNoteText(text)) {
+    return;
   }
+
+  out.push({
+    type: noteType,
+    value: text,
+    source: normalizeText(source) || null
+  });
+}
+
+function sanitizeCandidateNotes(notes = []) {
+  return (Array.isArray(notes) ? notes : [])
+    .filter(note => {
+      const value = normalizeCanonicalNoteValue(note?.value ?? note);
+      return !isBadCanonicalNoteText(value);
+    });
 }
 
 function extractNormalizedTeamNewsFactsFromValue(type, rawValue) {
@@ -527,17 +614,44 @@ function evaluateAcceptance(task, candidateOutput, evidenceTags = []) {
   const notes = Array.isArray(candidateOutput?.notes) ? candidateOutput.notes : [];
   const hasStrongCanonicalNote = notes.some(note => isStrongCanonicalNote(note));
 
+  const hasWriteRecommendation = candidateOutput?.writeRecommendation === true;
+
+  const hit =
+    requireAnyOf.length === 0 ||
+    requireAnyOf.some(tag => evidenceTags.includes(tag));
+
+  const hasProviderResolved =
+    candidateOutput?.aiProvider?.status === "resolved" ||
+    candidateOutput?.writeReason === "ai_provider_resolved" ||
+    candidateOutput?.writeReason === "local_plus_ai_provider_resolved";
+
+  const hasQualityAbsence =
+    normalizedAbsenceCount > 0;
+
   const hasQualityCanonicalFacts =
-    normalizedAbsenceCount > 0 ||
+    hasQualityAbsence ||
     hasStrongCanonicalNote;
 
-  const hit = requireAnyOf.some(tag => evidenceTags.includes(tag));
+  const acceptedByProviderAbsence =
+    hasWriteRecommendation &&
+    hasProviderResolved &&
+    hasQualityAbsence;
 
-  const accepted =
+  const acceptedByProviderCanonicalNote =
+    hasWriteRecommendation &&
+    hasProviderResolved &&
+    hasStrongCanonicalNote;
+
+  const acceptedByPolicyEvidence =
+    hasWriteRecommendation &&
     hasQualityCanonicalFacts &&
-    candidateOutput?.writeRecommendation === true &&
     evidenceCount >= minimumEvidenceItems &&
     hit;
+
+  const accepted =
+    acceptedByProviderAbsence ||
+    acceptedByProviderCanonicalNote ||
+    acceptedByPolicyEvidence;
 
   return {
     accepted,
@@ -550,8 +664,65 @@ function evaluateAcceptance(task, candidateOutput, evidenceTags = []) {
     hasNormalizedFacts: normalizedAbsenceCount > 0 || normalizedNoteCount > 0,
     hasQualityCanonicalFacts,
     hasStrongCanonicalNote,
+    acceptedByProviderAbsence,
+    acceptedByProviderCanonicalNote,
+    acceptedByPolicyEvidence,
     reason: accepted ? "accepted" : "insufficient_quality_canonical_facts_for_canonical_write"
   };
+}
+
+function buildReviewedTeamNewsAnswer(task, candidateOutput, acceptance) {
+  const targetTeam = getTargetTeam(task);
+  const opponent = getOpponent(task);
+  const aiProvider = candidateOutput?.aiProvider || null;
+  const providerResolved = aiProvider?.status === "resolved";
+  const normalizedAbsenceCount = Array.isArray(candidateOutput?.absences)
+    ? candidateOutput.absences.length
+    : 0;
+
+  const normalizedNoteCount = Array.isArray(candidateOutput?.notes)
+    ? candidateOutput.notes.length
+    : 0;
+
+  const providerSourceCount = Number(aiProvider?.sourceCount || 0);
+  const evidenceCount = Array.isArray(candidateOutput?.evidence)
+    ? candidateOutput.evidence.length
+    : 0;
+
+  if (!providerResolved) return null;
+  if (normalizedAbsenceCount > 0) return null;
+  if (providerSourceCount <= 0 && evidenceCount <= 0 && normalizedNoteCount === 0) return null;
+
+  return {
+    status: "reviewed_no_confirmed_absences",
+    team: targetTeam,
+    opponent: opponent || null,
+    absences: [],
+    notes: [
+      {
+        type: "reviewed_team_news_answer",
+        value: "Reviewed trusted team-news sources; no confirmed named absences were extracted.",
+        source: aiProvider?.provider || "team-news-ai-provider",
+        confidence: 0.62
+      }
+    ],
+    evidence: candidateOutput?.evidence || [],
+    aiProvider,
+    reason: "ai_provider_resolved_with_notes_but_no_named_absences",
+    canonicalWrite: false
+  };
+}
+
+function deriveResultStatus(acceptance, reviewedAnswer) {
+  if (acceptance?.accepted) {
+    return "accepted_candidate";
+  }
+
+  if (reviewedAnswer?.status === "reviewed_no_confirmed_absences") {
+    return "reviewed_no_confirmed_absences";
+  }
+
+  return "unresolved_candidate";
 }
 
 function compactEvidenceValue(value) {
@@ -619,37 +790,142 @@ function normalizeCanonicalAbsences(absences = [], { team = "" } = {}) {
     .filter(row => !isLikelyBadAbsencePlayerName(row.player, team));
 }
 
-function normalizeCanonicalNotes(notes = []) {
+function normalizeCanonicalNoteValue(value) {
+  if (value == null) return "";
+
+  if (typeof value === "string") {
+    return normalizeText(value);
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return normalizeText(String(value));
+  }
+
+  if (typeof value === "object") {
+    const direct =
+      value.value ??
+      value.note ??
+      value.text ??
+      value.summary ??
+      value.headline ??
+      value.message ??
+      value.reason ??
+      value.description ??
+      null;
+
+    if (direct != null && typeof direct !== "object") {
+      return normalizeText(direct);
+    }
+
+    const player = normalizeText(value.player || value.name);
+    const status = normalizeText(value.status || value.type || value.reason);
+
+    if (player && status) {
+      return `${player}: ${status}`;
+    }
+
+    if (player) return player;
+    if (status) return status;
+
+    return "";
+  }
+
+  return "";
+}
+
+function isWeakCanonicalNoteValue(value, absencePlayerNames = new Set()) {
+  const text = normalizeText(value);
+  const lc = text.toLowerCase();
+
+  if (!text) return true;
+  if (lc === "[object object]") return true;
+  if (text.length < 8) return true;
+
+  if (
+    /^(out|injury|injured|suspended|suspension|unknown|available|unavailable|yes|no|doubtful|reported)$/i.test(text)
+  ) {
+    return true;
+  }
+
+  if (
+    /^(home|news|latest news|team news|club|team|first team|fixtures|results|tickets|shop|store|contact|privacy|terms|history|honours|academy|women)$/i.test(text)
+  ) {
+    return true;
+  }
+
+  for (const playerName of absencePlayerNames) {
+    const playerLc = normalizeText(playerName).toLowerCase();
+
+    if (!playerLc) continue;
+
+    if (
+      lc === playerLc ||
+      lc === `${playerLc}: out` ||
+      lc === `${playerLc} out` ||
+      lc === `${playerLc}: injured` ||
+      lc === `${playerLc} injured` ||
+      lc === `${playerLc}: injury` ||
+      lc === `${playerLc} injury` ||
+      lc === `${playerLc}: suspended` ||
+      lc === `${playerLc} suspended`
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function normalizeCanonicalNotes(notes = [], { absences = [] } = {}) {
+  const absencePlayerNames = new Set(
+    (Array.isArray(absences) ? absences : [])
+      .map(row => normalizeText(row?.player))
+      .filter(Boolean)
+  );
+
+  const seen = new Set();
+
   return (Array.isArray(notes) ? notes : [])
     .filter(row => row != null)
     .map(row => {
       if (typeof row === "string") {
         return {
           type: "selection_note",
-          value: normalizeText(row),
+          value: normalizeCanonicalNoteValue(row),
           source: null,
           confidence: null,
           meta: null
         };
       }
 
-      if (typeof row === "object") {
-        return {
-          type: normalizeText(row?.type || "selection_note"),
-          value: row?.value ?? row,
-          source: normalizeText(row?.source) || null,
-          confidence: Number.isFinite(Number(row?.confidence))
-            ? Number(row.confidence)
-            : null,
-          meta: row?.meta && typeof row.meta === "object"
-            ? row.meta
-            : null
-        };
+      const value = normalizeCanonicalNoteValue(row);
+      const type = normalizeText(row?.type) || "selection_note";
+      const source = normalizeText(row?.source) || null;
+
+      return {
+        type,
+        value,
+        source,
+        confidence: Number.isFinite(Number(row?.confidence)) ? Number(row.confidence) : null,
+        meta: row?.meta && typeof row.meta === "object" ? row.meta : null
+      };
+    })
+    .filter(row => row.value)
+    .filter(row => !isWeakCanonicalNoteValue(row.value, absencePlayerNames))
+    .filter(row => {
+      const key = [
+        normalizeText(row.type).toLowerCase(),
+        normalizeText(row.value).toLowerCase(),
+        normalizeText(row.source).toLowerCase()
+      ].join("|");
+
+      if (seen.has(key)) {
+        return false;
       }
 
-      return null;
-    })
-    .filter(Boolean);
+      seen.add(key);
+      return true;
+    });
 }
 
 function buildCanonicalTeamNewsDocument({ dayKey, task, candidateOutput, acceptance }) {
@@ -663,7 +939,7 @@ function buildCanonicalTeamNewsDocument({ dayKey, task, candidateOutput, accepta
     : [];
 
   const absences = normalizeCanonicalAbsences(rawAbsences, { team });
-  const notes = normalizeCanonicalNotes(candidateOutput?.notes || []);
+  const notes = normalizeCanonicalNotes(candidateOutput?.notes || [], { absences });
   const evidence = compactEvidenceItems(candidateOutput?.evidence || []);
   const rejectedAbsenceCount = rawAbsences.length - absences.length;
 
@@ -794,18 +1070,23 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
     let finalCandidate = candidateOutput;
     let aiProviderResult = null;
 
-    if (!candidateOutput.writeRecommendation) {
+    const localEvidenceTags = classifyEvidence(candidateOutput.evidence || []);
+    const localAcceptance = evaluateAcceptance(task, candidateOutput, localEvidenceTags);
+
+    const localNormalizedAbsenceCount = Number(
+      localAcceptance?.normalizedAbsenceCount ??
+      localAcceptance?.absenceCount ??
+      0
+    );
+
+    const localHasQualityFacts =
+      candidateOutput?.writeRecommendation === true &&
+      localNormalizedAbsenceCount > 0;
+
+    if (!localHasQualityFacts) {
       aiProviderResult = await runTeamNewsAIProvider(task);
 
       if (aiProviderResult?.status === "resolved") {
-        const providerExtractionSnippets = Array.isArray(aiProviderResult?.extractionSnippets)
-          ? aiProviderResult.extractionSnippets.filter(Boolean)
-          : [];
-
-        const providerEvidenceSources = Array.isArray(aiProviderResult?.evidenceSources)
-          ? aiProviderResult.evidenceSources.filter(Boolean)
-          : [];
-
         finalCandidate = {
           ...candidateOutput,
           absences: aiProviderResult.absences || [],
@@ -814,8 +1095,6 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             ...(candidateOutput.evidence || []),
             ...(aiProviderResult.evidence || [])
           ],
-          extractionSnippets: providerExtractionSnippets,
-          evidenceSources: providerEvidenceSources,
           writeRecommendation: true,
           writeReason: "ai_provider_resolved",
           aiProvider: {
@@ -824,24 +1103,15 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             mode: aiProviderResult.mode || null,
             sourceCount: aiProviderResult.sourceCount ?? null,
             reason: aiProviderResult.reason || null,
-            diagnostics: aiProviderResult.diagnostics || null,
-            extractionSnippets: providerExtractionSnippets,
-            evidenceSources: providerEvidenceSources
+            input: aiProviderResult.input || null,
+            diagnostics: aiProviderResult.diagnostics || null
           }
         };
       } else {
-        const providerExtractionSnippets = Array.isArray(aiProviderResult?.extractionSnippets)
-          ? aiProviderResult.extractionSnippets.filter(Boolean)
-          : [];
-
-        const providerEvidenceSources = Array.isArray(aiProviderResult?.evidenceSources)
-          ? aiProviderResult.evidenceSources.filter(Boolean)
-          : [];
-
         finalCandidate = {
           ...candidateOutput,
-          extractionSnippets: providerExtractionSnippets,
-          evidenceSources: providerEvidenceSources,
+          writeRecommendation: false,
+          writeReason: "insufficient_quality_local_and_ai_team_news",
           aiProvider: {
             status: aiProviderResult?.status || "not_resolved",
             provider: aiProviderResult?.provider || "team-news-ai-provider",
@@ -849,21 +1119,24 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             sourceCount: aiProviderResult?.sourceCount ?? null,
             reason: aiProviderResult?.reason || "provider_returned_no_resolution",
             input: aiProviderResult?.input || null,
-            diagnostics: aiProviderResult?.diagnostics || null,
-            extractionSnippets: providerExtractionSnippets,
-            evidenceSources: providerEvidenceSources
+            diagnostics: aiProviderResult?.diagnostics || null
           }
         };
       }
     }
 
+    finalCandidate = {
+      ...finalCandidate,
+      notes: sanitizeCandidateNotes(finalCandidate.notes || [])
+    };
+
     const finalEvidenceTags = classifyEvidence(finalCandidate.evidence || []);
     const acceptance = evaluateAcceptance(task, finalCandidate, finalEvidenceTags);
-
+    const reviewedAnswer = buildReviewedTeamNewsAnswer(task, finalCandidate, acceptance);
     const resultRow = {
       taskId: task?.taskId || null,
       taskType: task?.taskType || null,
-      status: acceptance.accepted ? "accepted_candidate" : "unresolved_candidate",
+      status: deriveResultStatus(acceptance, reviewedAnswer),
       dayKey: safeDayKey,
       match: task?.match || null,
       target: task?.target || null,
@@ -880,6 +1153,7 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
       },
       aiProviderAudit: finalCandidate?.aiProvider || null,
       candidateOutput: finalCandidate,
+      reviewedAnswer,
       acceptance,
       canonicalWrite: null,
       audit: {
@@ -908,6 +1182,7 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
     dayKey: safeDayKey,
     taskCount: limitedTasks.length,
     acceptedCandidateCount: results.filter(x => x.status === "accepted_candidate").length,
+    reviewedNoConfirmedAbsencesCount: results.filter(x => x.status === "reviewed_no_confirmed_absences").length,
     unresolvedCandidateCount: results.filter(x => x.status === "unresolved_candidate").length,
     canonicalWriteCount: canonicalWrites.filter(x => x?.ok).length,
     canonicalWrites,
@@ -946,6 +1221,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename
         dayKey: result?.dayKey,
         taskCount: result?.taskCount ?? 0,
         acceptedCandidateCount: result?.acceptedCandidateCount ?? 0,
+        reviewedNoConfirmedAbsencesCount: result?.reviewedNoConfirmedAbsencesCount ?? 0,
         unresolvedCandidateCount: result?.unresolvedCandidateCount ?? 0,
         canonicalWriteCount: result?.canonicalWriteCount ?? 0,
         file: result?.file || null

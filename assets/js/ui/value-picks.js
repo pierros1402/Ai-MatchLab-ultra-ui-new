@@ -398,7 +398,22 @@ function renderRow(p) {
   const home = p?.home ?? p?.homeTeam ?? "—";
   const away = p?.away ?? p?.awayTeam ?? "—";
 
-  const conf = confidenceKey(p?.confidence);
+  const market = marketFromPick(p);
+
+  function pickBandForMarket(row, marketName) {
+    if (typeof row?.band === "string") return confidenceKey(row.band);
+
+    if (row?.band && typeof row.band === "object") {
+      if (marketName === "Over / Under 1.5") return confidenceKey(row.band.over15);
+      if (marketName === "Over / Under 2.5") return confidenceKey(row.band.over25);
+      if (marketName === "Over / Under 3.5") return confidenceKey(row.band.over35);
+      if (marketName === "BTTS") return confidenceKey(row.band.btts);
+    }
+
+    return confidenceKey(row?.confidence);
+  }
+
+  const conf = pickBandForMarket(p, market);
   const scorePct = scoreToPct(
     typeof p?.score === "number"
       ? p.score
@@ -427,7 +442,7 @@ function renderRow(p) {
   const time = kickoffHHMM(kickoffMs);
   const timeHtml = time ? `<span class="value-time">${esc(time)}</span>` : "";
 
-  const marketLabel = marketShortLabel(marketFromPick(p));
+  const marketLabel = marketShortLabel(market);
   const pickLabel =
     String(p?.pick || "").trim() ||
     marketLabel ||

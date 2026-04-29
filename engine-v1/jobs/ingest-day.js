@@ -405,9 +405,54 @@ async function enrichMergedFixtureFromSummary(merged) {
     return merged;
   }
 
-  if (!summary.penalties && !summary.decidedBy) {
-    return merged;
+// 🔥 EXTRACT LINEUPS (NEW)
+  function extractLineupsFromSummary(summary) {
+    const home = { starters: [], bench: [] };
+    const away = { starters: [], bench: [] };
+
+    const players = summary?.boxscore?.players || [];
+
+    for (const team of players) {
+      const isHome = team?.team?.homeAway === "home";
+      const target = isHome ? home : away;
+
+      for (const group of team?.statistics || []) {
+        for (const a of group?.athletes || []) {
+          const name = a?.athlete?.displayName;
+          if (!name) continue;
+
+          if (a?.starter) {
+            target.starters.push(name);
+          } else {
+            target.bench.push(name);
+          }
+        }
+      }
+    }
+
+    return { home, away };
   }
+
+// 👉 APPLY LINEUPS IF AVAILABLE
+  let lineups = null;
+
+  if (summary?.boxscore?.players) {
+    lineups = extractLineupsFromSummary(summary);
+  }
+
+// 👉 RETURN ENRICHED OBJECT
+  return {
+    ...merged,
+    penalties: summary.penalties || merged.penalties || null,
+    decidedBy: summary.decidedBy || merged.decidedBy || null,
+    lineups: lineups
+      ? {
+          home: lineups.home,
+          away: lineups.away
+        }
+      : merged.lineups || null,
+    updatedAt: Date.now()
+  };
 
   return {
     ...merged,
