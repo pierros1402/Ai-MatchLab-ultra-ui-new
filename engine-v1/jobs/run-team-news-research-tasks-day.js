@@ -79,7 +79,6 @@ function isStrongCanonicalNote(note) {
   const source = normalizeText(note?.source);
   const value = normalizeText(note?.value);
   const blocked = note?.meta?.blockedAsEvidence === true;
-  const confidence = Number(note?.confidence);
 
   if (blocked) {
     return false;
@@ -89,6 +88,26 @@ function isStrongCanonicalNote(note) {
     return false;
   }
 
+  if (isBadCanonicalNoteText(value)) {
+    return false;
+  }
+
+  // Generic provider messages like:
+  // "source reports team-news signal (lineup_signal)"
+  // are NOT canonical team-news facts.
+  if (/source reports team-news signal/i.test(value)) {
+    return false;
+  }
+
+  if (/trusted registry source/i.test(value)) {
+    return false;
+  }
+
+  if (/source was fetched/i.test(value)) {
+    return false;
+  }
+
+  // Only concrete, fact-bearing note types may force a canonical write.
   if (
     type === "expected_lineup" ||
     type === "credible_expected_lineup_note" ||
@@ -99,14 +118,8 @@ function isStrongCanonicalNote(note) {
     return true;
   }
 
-  if (
-    type === "credible_selection_note" &&
-    Number.isFinite(confidence) &&
-    confidence >= 0.55
-  ) {
-    return true;
-  }
-
+  // credible_selection_note is intentionally NOT strong enough.
+  // It may describe that a source exists, but not that a team-news fact exists.
   return false;
 }
 

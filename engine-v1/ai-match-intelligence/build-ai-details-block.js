@@ -11,6 +11,7 @@ import { buildRefereeContext } from "../core/referee-context.js";
 import { buildTeamNewsContext } from "../core/team-news-context.js";
 import { buildLineupContext } from "../core/lineup-context.js";
 import { buildTravelContext } from "../core/travel-context.js";
+import { buildMatchProfileContext } from "../core/match-profile-context.js";
 import { buildEvidenceBundle } from "./build-evidence-bundle.js";
 import fs from "fs";
 import path from "path";
@@ -175,6 +176,18 @@ export async function buildAiDetailsBlock(match, { dayKey, valuePicks } = {}) {
     hydratedValuePicks
   );
 
+  const matchProfileContext = buildMatchProfileContext(match, {
+    historyContext,
+    formGuide,
+    headToHeadGuide,
+    competitionContext,
+    refereeContext,
+    teamNewsContext,
+    lineupContext,
+    travelContext,
+    valueSummary: support?.valueSummary || null
+  });
+
 
 // -----------------------------
 // 🔥 HISTORY INTELLIGENCE INJECTION
@@ -215,6 +228,7 @@ const research = await fetchMatchResearch(match, {
     historyContext,
     formGuide,
     headToHeadGuide,
+    matchProfileContext,
     support: enrichedSupport
   }
 });
@@ -228,7 +242,8 @@ const research = await fetchMatchResearch(match, {
     lineupContext,
     historyContext,
     formGuide,
-    headToHeadGuide
+    headToHeadGuide,
+    matchProfileContext
   });
   const evidenceBundle = buildEvidenceBundle(match, {
     research,
@@ -239,6 +254,7 @@ const research = await fetchMatchResearch(match, {
     historyContext,
     formGuide,
     headToHeadGuide,
+    matchProfileContext,
     support
   });
 
@@ -246,6 +262,7 @@ const research = await fetchMatchResearch(match, {
     status: "structured",
 
     competitionContext,
+    matchProfile: matchProfileContext,
     refereeProfile: normalizeLocalRefereeFact(refereeContext),
     teamNews: normalizeLocalTeamNewsFact(teamNewsContext),
     travelContext: travelContext?.data

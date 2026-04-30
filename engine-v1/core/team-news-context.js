@@ -50,6 +50,67 @@ function resolveLeagueSlug(match = {}) {
   );
 }
 
+function normalizeComparableTeam(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function recordMatchesRequestedTeam(record, requestedTeam, candidates = []) {
+  if (!record) return false;
+
+  const requestedKey = normalizeComparableTeam(requestedTeam);
+  const recordTeamKey = normalizeComparableTeam(record?.team);
+  const recordKey = normalizeComparableTeam(record?.key);
+
+  const candidateKeys = new Set(
+    (Array.isArray(candidates) ? candidates : [])
+      .map(normalizeComparableTeam)
+      .filter(Boolean)
+  );
+
+  if (requestedKey && recordTeamKey && requestedKey === recordTeamKey) return true;
+  if (requestedKey && recordKey && requestedKey === recordKey) return true;
+  if (recordTeamKey && candidateKeys.has(recordTeamKey)) return true;
+  if (recordKey && candidateKeys.has(recordKey)) return true;
+
+  const aliasKeys = (Array.isArray(record?.aliases) ? record.aliases : [])
+    .map(normalizeComparableTeam)
+    .filter(Boolean);
+
+  return aliasKeys.some(key => candidateKeys.has(key) || key === requestedKey);
+}
+
+function absenceBelongsToRequestedTeam(absence, requestedTeam, record) {
+  const requestedKey = normalizeComparableTeam(requestedTeam);
+  const recordTeamKey = normalizeComparableTeam(record?.team);
+  const recordKey = normalizeComparableTeam(record?.key);
+
+  const explicitTeamKeys = [
+    absence?.team,
+    absence?.sourceTeam
+  ]
+    .map(normalizeComparableTeam)
+    .filter(Boolean);
+
+  if (!explicitTeamKeys.length) return true;
+
+  return explicitTeamKeys.some(key =>
+    key === requestedKey ||
+    key === recordTeamKey ||
+    key === recordKey
+  );
+}
+
+function filterAbsencesForTeam(absences = [], requestedTeam, record) {
+  return (Array.isArray(absences) ? absences : [])
+    .filter(absence => absenceBelongsToRequestedTeam(absence, requestedTeam, record));
+}
+
 function readTeamNewsWithAliases(leagueSlug, teamName) {
   const candidates = resolveAliasCandidates(leagueSlug, teamName);
   const tried = [];
@@ -57,7 +118,8 @@ function readTeamNewsWithAliases(leagueSlug, teamName) {
   for (const candidate of candidates) {
     tried.push(candidate);
     const record = readTeamNewsRecord(candidate);
-    if (record) {
+
+    if (record && recordMatchesRequestedTeam(record, teamName, candidates)) {
       return {
         record,
         matchedOn: candidate,
@@ -75,7 +137,7 @@ function readTeamNewsWithAliases(leagueSlug, teamName) {
 
 function buildSide(teamName, resolved) {
   const record = resolved?.record || null;
-  const absences = record?.absences || [];
+  const absences = filterAbsencesForTeam(record?.absences || [], teamName, record);
   const recordNotes = record?.notes || [];
   const impact = impactScore(absences);
   const impactLevel = classifyImpact(impact);

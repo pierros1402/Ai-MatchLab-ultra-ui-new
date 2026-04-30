@@ -346,19 +346,27 @@ function candidateLooksLikeFootballSearchHit(source, input) {
 
 function sourceLooksRelevant(source, input) {
   const text = normalizeText(
-    `${source?.title || ""} ${source?.snippet || ""} ${source?.url || ""}`
+    `${source?.title || ""} ${source?.snippet || ""} ${source?.text || ""} ${source?.url || ""}`
   ).toLowerCase();
 
+  const title = normalizeText(source?.title).toLowerCase();
+  const url = normalizeText(source?.url).toLowerCase();
+
   const team = normalizeText(input?.team).toLowerCase();
+  const opponent = normalizeText(input?.opponent).toLowerCase();
 
   if (!text || !team) return false;
 
-  // πρέπει να υπάρχει ακριβές match team
-  if (!text.includes(team)) {
+  const hasTeam = text.includes(team);
+  const hasOpponent = opponent ? text.includes(opponent) : false;
+
+  // Πρέπει να υπάρχει τουλάχιστον η ομάδα-στόχος.
+  // Δεν δεχόμαστε πλέον generic football pages μόνο επειδή γράφουν football/BBC/Sky.
+  if (!hasTeam) {
     return false;
   }
 
-  // ❌ reject γνωστές παγίδες (similar names)
+  // Reject γνωστές παγίδες similar names.
   if (
     text.includes("deportivo la coruna") ||
     text.includes("rc deportivo") ||
@@ -367,14 +375,72 @@ function sourceLooksRelevant(source, input) {
     return false;
   }
 
-  // ❌ reject generic pages
+  // Reject generic/listing/stat pages.
   if (
-    /live score|livescore|h2h|head to head|standings|table|history|club info|team  profile|squad overview|match stats|prediction/i.test(text)
+    /live score|livescore|h2h|head to head|standings|table|history|club info|team profile|squad overview|match stats|prediction/i.test(text)
   ) {
     return false;
   }
 
-  return true;
+  // Reject league landing pages.
+  if (
+    /^bbc sport$/i.test(title) ||
+    /championship - football - bbc sport/i.test(title) ||
+    /league one - bbc sport/i.test(title) ||
+    /league two - bbc sport/i.test(title) ||
+    /premier league - football - bbc sport/i.test(title) ||
+    /sky sports homepage/i.test(title) ||
+    /football news, fixtures, results, table/i.test(title) ||
+    /news, fixtures, results, table/i.test(title)
+  ) {
+    return false;
+  }
+
+  if (
+    /bbc\.com\/sport\/football\/(premier-league|championship|league-one|league-two)\/?$/i.test(url) ||
+    /skysports\.com\/(premier-league|championship|league-1|league-2)\/?$/i.test(url)
+  ) {
+    return false;
+  }
+
+  const hasTeamNewsSignal =
+    /\bteam news\b/i.test(text) ||
+    /\binjury\b/i.test(text) ||
+    /\binjuries\b/i.test(text) ||
+    /\binjury update\b/i.test(text) ||
+    /\bsuspension\b/i.test(text) ||
+    /\bsuspended\b/i.test(text) ||
+    /\blineup\b/i.test(text) ||
+    /\bline-up\b/i.test(text) ||
+    /\bexpected lineup\b/i.test(text) ||
+    /\bpredicted lineup\b/i.test(text) ||
+    /\bstarting xi\b/i.test(text) ||
+    /\bsquad news\b/i.test(text) ||
+    /\bmatch preview\b/i.test(text) ||
+    /\bpreview\b/i.test(text) ||
+    /\bconfirmed absences\b/i.test(text) ||
+    /\bunavailable\b/i.test(text) ||
+    /\bruled out\b/i.test(text) ||
+    /\bdoubtful\b/i.test(text) ||
+    /\bconvocados\b/i.test(text) ||
+    /\bconvocatoria\b/i.test(text) ||
+    /\bnomina\b/i.test(text) ||
+    /\bnómina\b/i.test(text) ||
+    /\blineacion\b/i.test(text) ||
+    /\balineación\b/i.test(text) ||
+    /\blesion\b/i.test(text) ||
+    /\blesión\b/i.test(text) ||
+    /\blesionados\b/i.test(text) ||
+    /\bsuspendidos\b/i.test(text) ||
+    /\bbajas\b/i.test(text);
+
+  const hasMatchSignal =
+    hasOpponent ||
+    /\bvs\b/i.test(text) ||
+    /\bversus\b/i.test(text) ||
+    /\bv\b/i.test(text);
+
+  return hasTeamNewsSignal || hasMatchSignal;
 }
 async function fetchTextResult(url, { timeoutMs = 10000, maxChars = 120000 } = {}) {
   const startedAt = Date.now();
@@ -729,13 +795,22 @@ function shouldKeepRegistryArticleLink(link, input) {
     /\/sport\/football\//i.test(url) ||
     /\/football\//i.test(url);
 
+  const blockedGenericArticleUrl =
+    /bbc\.com\/sport\/football\/(premier-league|championship|league-one|league-two)\/?$/i.test(url) ||
+    /skysports\.com\/(premier-league|championship|league-1|league-2)\/?$/i.test(url) ||
+    /\/football\/?$/i.test(url) ||
+    /\/sport\/football\/?$/i.test(url);
+
+  if (blockedGenericArticleUrl) {
+    return false;
+  }
+
   return (
     looksLikeArticleUrl &&
     (
       hasStrongArticleSignal ||
-      hasTeam ||
-      hasOpponent ||
-      title.length > 25   // <-- fallback για generic articles
+      (hasTeam && hasOpponent) ||
+      (hasTeam && /\bvs\b|\bversus\b|\bv\b|\bpreview\b|\bmatch preview\b/i.test(haystack))
     )
   );
 }
@@ -1095,6 +1170,21 @@ async function fetchRegistrySources(input) {
     ].filter(Boolean).join(" ");
 
     if (normalizeText(compact).length < 80) continue;
+
+    // Μην χρησιμοποιείς registry landing/listing pages σαν evidence.
+    // Οι registry σελίδες είναι μόνο για να βρούμε πραγματικά article links.
+    // Canonical team-news πρέπει να βασίζεται σε article-level ή match/team-specific πηγή.
+    const directRegistrySourceIsArticle = shouldKeepRegistryArticleLink(
+      {
+        title: source.title,
+        url: source.url
+      },
+      input
+    );
+
+    if (!directRegistrySourceIsArticle) {
+      continue;
+    }
 
     diagnostics.usableRegistryCount += 1;
 
@@ -1790,6 +1880,9 @@ function extractNamedAbsences(text, source) {
         status: classified.status,
         reason: reason.slice(0, 220),
         source: source?.url || source?.publisher || source?.title || null,
+        sourceTitle: source?.title || null,
+        sourcePublisher: source?.publisher || null,
+        sourceTrustTier: source?.trustTier || null,
         confidence: 0.62
       });
     }
@@ -1809,6 +1902,7 @@ function validateExtractedAbsences(absences, sources, input) {
   if (!Array.isArray(absences) || absences.length === 0) return [];
 
   const targetTeam = normalizeText(input?.team).toLowerCase();
+  const opponentTeam = normalizeText(input?.opponent).toLowerCase();
 
   const trustedDomains = [
     "manutd.com",
@@ -1823,12 +1917,39 @@ function validateExtractedAbsences(absences, sources, input) {
     "manchestereveningnews"
   ];
 
+  const teamTokens = targetTeam
+    .split(/\s+/)
+    .map(v => v.trim())
+    .filter(v => v.length >= 4);
+
+  const opponentTokens = opponentTeam
+    .split(/\s+/)
+    .map(v => v.trim())
+    .filter(v => v.length >= 4);
+
+  const hasTeamSignal = (text, tokens) => {
+    const value = normalizeText(text).toLowerCase();
+    if (!value || tokens.length === 0) return false;
+    if (targetTeam && value.includes(targetTeam)) return true;
+    return tokens.some(token => value.includes(token));
+  };
+
+  const hasOpponentSignal = (text) => {
+    const value = normalizeText(text).toLowerCase();
+    if (!value || opponentTokens.length === 0) return false;
+    if (opponentTeam && value.includes(opponentTeam)) return true;
+    return opponentTokens.some(token => value.includes(token));
+  };
+
   const valid = [];
 
   for (const a of absences) {
     const player = normalizeText(a?.player);
     const reason = normalizeText(a?.reason);
     const source = normalizeText(a?.source).toLowerCase();
+    const sourceTitle = normalizeText(a?.sourceTitle).toLowerCase();
+    const sourcePublisher = normalizeText(a?.sourcePublisher).toLowerCase();
+    const sourceTrustTier = normalizeText(a?.sourceTrustTier).toLowerCase();
 
     if (!player) continue;
     if (looksLikeBadAbsencePlayerName(player)) continue;
@@ -1855,12 +1976,49 @@ function validateExtractedAbsences(absences, sources, input) {
     const isTrusted = trustedDomains.some(domain => source.includes(domain));
     if (!isTrusted) continue;
 
-    const context = `${reason} ${source}`.toLowerCase();
+    const textualEvidence = [
+      reason,
+      sourceTitle,
+      sourcePublisher
+    ].filter(Boolean).join(" ").toLowerCase();
 
-    // Critical safety gate:
-    // Μην αποδέχεσαι absence αν το context δεν δείχνει την target ομάδα.
-    // Αυτό κόβει περιπτώσεις τύπου Brentford -> Harry Maguire.
-    if (targetTeam && context && !context.includes(targetTeam)) {
+    const urlOnlyEvidence = source;
+
+    const reasonHasTargetTeam = hasTeamSignal(reason, teamTokens);
+    const textualHasTargetTeam = hasTeamSignal(textualEvidence, teamTokens);
+    const textualHasOpponentTeam = hasOpponentSignal(textualEvidence);
+
+    const isOfficialOrClubSource =
+      sourceTrustTier === "official" ||
+      sourceTrustTier === "club" ||
+      sourceTrustTier === "team_official";
+
+    /*
+      Critical safety gate:
+      URL-only match pages often contain both teams.
+      Example: manchester-united-vs-brentford URL can make Brentford pass
+      even when the absence sentence is actually about Manchester United.
+    */
+    if (!reasonHasTargetTeam && !isOfficialOrClubSource) {
+      if (!textualHasTargetTeam) {
+        continue;
+      }
+
+      if (textualHasOpponentTeam && !reasonHasTargetTeam) {
+        continue;
+      }
+    }
+
+    /*
+      Final guard:
+      If the only team signal comes from the URL, reject it.
+    */
+    if (
+      targetTeam &&
+      !reasonHasTargetTeam &&
+      !textualHasTargetTeam &&
+      urlOnlyEvidence.includes(targetTeam)
+    ) {
       continue;
     }
 
@@ -1876,12 +2034,10 @@ function validateExtractedAbsences(absences, sources, input) {
 
   for (const row of valid) {
     const key = `${row.player.toLowerCase()}|${row.type}|${row.status}`;
-    if (!unique.has(key)) {
-      unique.set(key, row);
-    }
+    if (!unique.has(key)) unique.set(key, row);
   }
 
-  return Array.from(unique.values()).slice(0, 8);
+  return Array.from(unique.values()).slice(0, 12);
 }
 
 function buildSourceNote(source) {
@@ -2182,6 +2338,9 @@ function extractStructuredFactsFromSources(input, sources = []) {
           status: /doubt|doubtful/i.test(sentence) ? "doubtful" : "out",
           reason: sentence.slice(0, 220),
           source: source.url || source.publisher || source.title || null,
+          sourceTitle: source.title || null,
+          sourcePublisher: source.publisher || null,
+          sourceTrustTier: source.trustTier || null,
           confidence: 0.55
         });
       }
@@ -2277,44 +2436,39 @@ export async function runTeamNewsAIProvider(task) {
   );
 
   const canonicalNotes = extracted.notes.filter(note => {
-    const type = note?.type;
+    const type = normalizeText(note?.type).toLowerCase();
+    const value = normalizeText(note?.value);
     const blocked = note?.meta?.blockedAsEvidence === true;
-    const signalType = normalizeText(note?.meta?.signalType).toLowerCase();
-    const publisher = normalizeText(note?.meta?.publisher || note?.source).toLowerCase();
-    const trustTier = normalizeText(note?.meta?.trustTier).toLowerCase();
 
     if (blocked) {
       return false;
     }
 
-    const isTrustedTier =
-      trustTier === "official" ||
-      trustTier === "league" ||
-      trustTier === "high";
+    if (!value) {
+      return false;
+    }
 
-    const isGenericLineupPublisher =
-      publisher.includes("sofascore") ||
-      publisher.includes("fotmob") ||
-      publisher.includes("flashscore") ||
-      publisher.includes("365scores") ||
-      publisher.includes("aiscore") ||
-      publisher.includes("besoccer") ||
-      publisher.includes("footballdatabase") ||
-      publisher.includes("globalsportsarchive") ||
-      publisher.includes("bulinews");
+    // Search/registry source availability is not canonical team news.
+    // It only proves that a source exists, not that there is a verified absence,
+    // confirmed lineup, or concrete team-news fact.
+    if (/source reports team-news signal/i.test(value)) {
+      return false;
+    }
 
-    if (
-      type === "credible_selection_note" &&
-      signalType === "lineup_signal" &&
-      isGenericLineupPublisher &&
-      !isTrustedTier
-    ) {
+    if (/trusted registry source/i.test(value)) {
+      return false;
+    }
+
+    if (/source was fetched/i.test(value)) {
       return false;
     }
 
     return (
-      type === "credible_selection_note" ||
-      type === "credible_expected_lineup_note"
+      type === "credible_expected_lineup_note" ||
+      type === "expected_lineup" ||
+      type === "confirmed_absence_note" ||
+      type === "confirmed_team_news_note" ||
+      type === "reviewed_team_news_note"
     );
   });
 

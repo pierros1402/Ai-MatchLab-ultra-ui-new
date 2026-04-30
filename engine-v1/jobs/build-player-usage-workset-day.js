@@ -44,38 +44,86 @@ function readDetailsForDay(dayKey) {
   return details;
 }
 
-function collectTeamsFromDetails(details = []) {
+function getMatchId(match) {
+  return (
+    match?.basic?.matchId ||
+    match?.basic?.id ||
+    match?.matchId ||
+    match?.id ||
+    null
+  );
+}
+
+function getKickoff(match) {
+  return (
+    match?.basic?.kickoff ||
+    match?.basic?.date ||
+    match?.basic?.startTime ||
+    match?.kickoff ||
+    match?.date ||
+    null
+  );
+}
+
+function collectTeamsFromDetails(details = [], dayKey = null) {
   const teams = new Map();
+
+  function addTeamContext({ team, opponent, side, leagueSlug, match }) {
+    if (!team) return;
+
+    const key = normalizePlayerUsageTeamKey(team);
+
+    if (!teams.has(key)) {
+      teams.set(key, {
+        key,
+        team,
+        leagueSlug: leagueSlug || null,
+        matchContexts: []
+      });
+    }
+
+    const row = teams.get(key);
+
+    if (!row.leagueSlug && leagueSlug) {
+      row.leagueSlug = leagueSlug;
+    }
+
+    row.matchContexts.push({
+      matchId: getMatchId(match),
+      dayKey: match?.basic?.dayKey || dayKey || null,
+      opponent: opponent || null,
+      side,
+      leagueSlug: leagueSlug || null,
+      kickoff: getKickoff(match)
+    });
+  }
 
   for (const match of details) {
     const home = match?.basic?.homeTeam;
     const away = match?.basic?.awayTeam;
     const leagueSlug = match?.basic?.leagueSlug;
 
-    if (home) {
-      const key = normalizePlayerUsageTeamKey(home);
-      if (!teams.has(key)) {
-        teams.set(key, {
-          key,
-          team: home,
-          leagueSlug: leagueSlug || null
-        });
-      }
-    }
+    addTeamContext({
+      team: home,
+      opponent: away,
+      side: "home",
+      leagueSlug,
+      match
+    });
 
-    if (away) {
-      const key = normalizePlayerUsageTeamKey(away);
-      if (!teams.has(key)) {
-        teams.set(key, {
-          key,
-          team: away,
-          leagueSlug: leagueSlug || null
-        });
-      }
-    }
+    addTeamContext({
+      team: away,
+      opponent: home,
+      side: "away",
+      leagueSlug,
+      match
+    });
   }
 
-  return Array.from(teams.values());
+  return Array.from(teams.values()).map(row => ({
+    ...row,
+    matchContexts: row.matchContexts.slice(0, 5)
+  }));
 }
 
 function evaluateTeamUsageState(teamRow) {
@@ -109,7 +157,7 @@ function evaluateTeamUsageState(teamRow) {
 export async function buildPlayerUsageWorksetDay(dayKey) {
   const details = readDetailsForDay(dayKey);
 
-  const teams = collectTeamsFromDetails(details);
+  const teams = collectTeamsFromDetails(details, dayKey);
 
   const results = [];
   let missingCount = 0;

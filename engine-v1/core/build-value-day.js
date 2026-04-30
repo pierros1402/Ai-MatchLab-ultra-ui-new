@@ -77,201 +77,187 @@ async function getSeasonResources(season, force = false) {
 function expandValueMarkets(match, value) {
   const items = [];
 
-  const home = Number(value?.homeWinScore ?? -1);
-  const away = Number(value?.awayWinScore ?? -1);
-
   const over15 = Number(value?.over15Score ?? -1);
   const over25 = Number(value?.over25Score ?? -1);
   const over35 = Number(value?.over35Score ?? -1);
-
   const btts = Number(value?.bttsScore ?? -1);
   const confidence = Number(value?.confidence ?? 0);
+  const expectedTotalGoals = Number(value?.meta?.expectedTotalGoals ?? 0);
 
   const signals = Array.isArray(value?.signals) ? value.signals : [];
-  const meta = value?.meta || {};
   const context = value?.context || null;
 
-  const aiSignals = value?.signals || [];
+  const hasSignal = (name) => signals.includes(name);
+  const hasAnySignal = (names) => names.some(name => hasSignal(name));
 
-  const aiStrongPositive =
-    aiSignals.includes("ai_form_home_strong") ||
-    aiSignals.includes("ai_form_away_strong") ||
-    aiSignals.includes("ai_h2h_over_signal");
+  const hasPoorForm = hasAnySignal([
+    "ai_form_home_negative",
+    "ai_form_home_poor",
+    "ai_form_away_negative",
+    "ai_form_away_poor"
+  ]);
 
-  const aiStrongNegative = aiSignals.some(s =>
-    s.includes("ai_form_home_negative") ||
-    s.includes("ai_form_home_poor") ||
-    s.includes("ai_form_away_negative") ||
-    s.includes("ai_form_away_poor")
-  );
+  const hasGoalSupport = hasAnySignal([
+    "over25_support",
+    "mutual_attack_profile",
+    "matchup_goals_history",
+    "ai_h2h_overlean"
+  ]);
 
-  const aiOverLean =
-    aiSignals.includes("ai_h2h_overlean");
+  const hasStrongGoalSupport = hasAnySignal([
+    "mutual_attack_profile",
+    "matchup_goals_history",
+    "ai_h2h_overlean"
+  ]);
 
-  if (aiStrongNegative) {
-    return [];
+  const hasBttsSupport = hasAnySignal([
+    "btts_support",
+    "mutual_attack_profile"
+  ]);
+
+  const hasGoalsBlocker = hasAnySignal([
+    "defensive_profile",
+    "under25_lean"
+  ]);
+
+  const hasBttsBlocker = hasAnySignal([
+    "defensive_profile",
+    "btts_no_lean",
+    "under25_lean"
+  ]);
+
+  const aiStrongPositive = hasAnySignal([
+    "ai_form_home_strong",
+    "ai_form_away_strong"
+  ]);
+
+  const aiOverLean = hasSignal("ai_h2h_overlean");
+
+  let adjustedOver15 = over15;
+  let adjustedOver25 = over25;
+  let adjustedOver35 = over35;
+  let adjustedBtts = btts;
+
+  const adjusted1X2 = {
+    home: Number(value?.homeWinScore ?? -1),
+    away: Number(value?.awayWinScore ?? -1)
+  };
+
+  if (aiStrongPositive && !hasPoorForm) {
+    adjustedOver25 *= 1.03;
+    adjustedBtts *= 1.02;
+    adjusted1X2.home *= 1.02;
+    adjusted1X2.away *= 1.02;
   }
 
-// -----------------------------
-// AI PENALTY / BOOST
-// -----------------------------
-let adjustedOver15 = over15;
-let adjustedOver25 = over25;
-let adjustedOver35 = over35;
-let adjustedBtts = btts;
-let adjusted1X2 = {
-  home: value.homeWinScore,
-  draw: value.drawScore,
-  away: value.awayWinScore
-};
+  if (aiOverLean && !hasGoalsBlocker) {
+    adjustedOver25 *= 1.04;
+    adjustedOver35 *= 1.03;
+  }
 
-// -----------------------------
-// AI PENALTY / BOOST
-// -----------------------------
+  function toBand(score) {
+    if (score >= 0.75) return "HIGH";
+    if (score >= 0.65) return "MEDIUM";
+    return "LOW";
+  }
 
-if (aiStrongPositive) {
-  adjustedOver25 *= 1.04;
-  adjustedBtts *= 1.03;
-
-  adjusted1X2.home *= 1.03;
-  adjusted1X2.away *= 1.03;
-}
-
-// extra: overlean influence
-if (aiOverLean) {
-  adjustedOver25 *= 1.05;
-  adjustedOver35 *= 1.04;
-}
-
-function toBand(score) {
-  if (score >= 0.72) return "HIGH";
-  if (score >= 0.60) return "MEDIUM";
-  return "LOW";
-}
-
-// 1X2 (NO DRAW)
-if (
-  Number.isFinite(adjusted1X2.home) &&
-  Number.isFinite(adjusted1X2.away)
-) {
-  const best = Math.max(adjusted1X2.home, adjusted1X2.away);
-  const second = Math.min(adjusted1X2.home, adjusted1X2.away);
-  const gap = best - second;
-
-  if (best >= 0.66 && gap >= 0.08) {
-
-    // AI HARD FILTER
-    
-
+  function pushPick({ market, marketName, pick, score }) {
     items.push({
       matchId: match.matchId,
       leagueSlug: match.leagueSlug,
       homeTeam: match.homeTeam,
       awayTeam: match.awayTeam,
       kickoff: match.kickoffUtc,
-      market: "1X2",
-      marketName: "1X2",
-      pick: adjusted1X2.home > adjusted1X2.away ? "HOME" : "AWAY",
-      score: best,
-      band: toBand(best),
+      market,
+      marketName,
+      pick,
+      score,
+      band: toBand(score),
       confidence,
-      signals,
-      meta,
+      signals: [...signals],
+      meta: { ...(value.meta || {}) },
       context
     });
   }
-}
 
-  if (adjustedOver15 >= 0.67) {
+  // 1X2: only clear home/away edges. Draw remains suppressed for now.
+  if (
+    Number.isFinite(adjusted1X2.home) &&
+    Number.isFinite(adjusted1X2.away)
+  ) {
+    const best = Math.max(adjusted1X2.home, adjusted1X2.away);
+    const second = Math.min(adjusted1X2.home, adjusted1X2.away);
+    const gap = best - second;
+    const pick = adjusted1X2.home > adjusted1X2.away ? "HOME" : "AWAY";
 
-  // AI HARD FILTER
-    
+    if (best >= 0.68 && gap >= 0.10 && confidence >= 0.42) {
+      pushPick({
+        market: "1X2",
+        marketName: "1X2",
+        pick,
+        score: best
+      });
+    }
+  }
 
-
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
+  // O1.5: baseline market, but no longer accepts weak/defensive profiles.
+  if (
+    adjustedOver15 >= 0.70 &&
+    !hasGoalsBlocker &&
+    confidence >= 0.40
+  ) {
+    pushPick({
       market: "Over / Under 1.5",
       marketName: "Over / Under 1.5",
       pick: "Over 1.5",
-      score: adjustedOver15,
-      band: toBand(adjustedOver15),
-      confidence,
-      signals,
-      meta,
-      context
+      score: adjustedOver15
     });
   }
 
-  if (adjustedOver25 >= 0.60) {
-
-  // AI HARD FILTER
-    if (!aiOverLean && adjustedOver25 < 0.63) return items;
-
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
+  // O2.5: must have real goal support, not just a marginal numeric score.
+  // Slightly tolerant after intelligence/match-profile adjustments, but only when xG profile supports goals.
+  if (
+    adjustedOver25 >= 0.65 &&
+    expectedTotalGoals >= 2.75 &&
+    hasGoalSupport &&
+    !hasGoalsBlocker &&
+    confidence >= 0.44
+  ) {
+    pushPick({
       market: "Over / Under 2.5",
       marketName: "Over / Under 2.5",
       pick: "Over 2.5",
-      score: adjustedOver25,
-      band: toBand(adjustedOver25),
-      confidence,
-      signals,
-      meta,
-      context
+      score: adjustedOver25
     });
   }
 
-  if (adjustedOver35 >= 0.64) {
-
-  // AI HARD FILTER
-    
-
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
+  // O3.5: rare market only. Needs strong goal support and no defensive blocker.
+  if (
+    adjustedOver35 >= 0.74 &&
+    hasStrongGoalSupport &&
+    !hasGoalsBlocker &&
+    confidence >= 0.48
+  ) {
+    pushPick({
       market: "Over / Under 3.5",
       marketName: "Over / Under 3.5",
       pick: "Over 3.5",
-      score: adjustedOver35,
-      band: toBand(adjustedOver35),
-      confidence,
-      signals,
-      meta,
-      context
+      score: adjustedOver35
     });
   }
 
-  if (adjustedBtts >= 0.62) {
-
-  // AI HARD FILTER
-    
-
-    items.push({
-      matchId: match.matchId,
-      leagueSlug: match.leagueSlug,
-      homeTeam: match.homeTeam,
-      awayTeam: match.awayTeam,
-      kickoff: match.kickoffUtc,
+  // BTTS YES: requires explicit BTTS/attack support and rejects defensive/no-BTTS profiles.
+  if (
+    adjustedBtts >= 0.68 &&
+    hasBttsSupport &&
+    !hasBttsBlocker &&
+    confidence >= 0.45
+  ) {
+    pushPick({
       market: "BTTS",
       marketName: "BTTS",
       pick: "BTTS YES",
-      score: adjustedBtts,
-      band: toBand(adjustedBtts),
-      confidence,
-      signals,
-      meta,
-      context
+      score: adjustedBtts
     });
   }
 
@@ -475,6 +461,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   for (const match of matches) {
     try {
       const details = readDetailsSnapshot(date, match.matchId);
+      const matchProfile = details?.researchedFacts?.matchProfile || null;
 
             const competitionContext =
               details?.researchedFacts?.competitionContext || null;
@@ -496,6 +483,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
                         expectedLineups: details?.researchedFacts?.expectedLineups || null,
                         headToHead: details?.researchedFacts?.headToHead || null,
                         formGuide: details?.researchedFacts?.formGuide || null,
+                        matchProfile,
                         signals: details?.aiContext?.signals || [],
                         matchIntelligence: intelligence
                       }
@@ -506,8 +494,9 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
       if (!value) continue;
 
       const enrichedValue = applyIntelligenceToValue(value, intelligence);
+      const finalValue = applyMatchProfileToValue(enrichedValue, matchProfile);
 
-      picks.push(...expandValueMarkets(match, enrichedValue));
+      picks.push(...expandValueMarkets(match, finalValue));
     } catch (err) {
       console.log("[value] match failed", {
         date,
@@ -542,4 +531,189 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   writeValueSnapshot(date, result);
 
   return result;
+}
+function applyMatchProfileToValue(value, matchProfile) {
+  if (!value || !matchProfile?.data) return value;
+
+  const data = matchProfile.data;
+
+  const homeForm = Number(data?.seasonFormLast5?.home?.record?.points || 0);
+  const awayForm = Number(data?.seasonFormLast5?.away?.record?.points || 0);
+
+  const homePos = Number(data?.standings?.home?.position || 0);
+  const awayPos = Number(data?.standings?.away?.position || 0);
+
+  const h2hEdge = data?.h2hLast5?.trend?.edge || null;
+  const h2hGoalPattern = data?.h2hLast5?.trend?.goalPattern || null;
+
+  let homeWin = Number(value.homeWinScore ?? value.homeWin ?? value.home ?? 0);
+  let awayWin = Number(value.awayWinScore ?? value.awayWin ?? value.away ?? 0);
+  let over25 = Number(value.over25Score || 0);
+  let btts = Number(value.bttsScore || 0);
+
+  const appliedReasons = [];
+  const PROFILE_IMPACT_MULTIPLIER = 0.55;
+  const PROFILE_MAX_NET_BOOST = 0.055;
+
+  if (!matchProfile?.data) {
+    console.log("[matchProfile] missing data", matchProfile);
+  }
+
+  if (homeForm > awayForm + 2) {
+    homeWin += 0.04 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_home_form_edge",
+      impact: 0.04 * PROFILE_IMPACT_MULTIPLIER,
+      note: `MatchProfile last5 points: home ${homeForm}, away ${awayForm}`
+    });
+  } else if (awayForm > homeForm + 2) {
+    awayWin += 0.04 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_away_form_edge",
+      impact: 0.04 * PROFILE_IMPACT_MULTIPLIER,
+      note: `MatchProfile last5 points: home ${homeForm}, away ${awayForm}`
+    });
+  }
+
+  if (homePos && awayPos) {
+    const gap = awayPos - homePos;
+
+    if (gap >= 5) {
+      homeWin += 0.05 * PROFILE_IMPACT_MULTIPLIER;
+      appliedReasons.push({
+        code: "match_profile_home_table_edge",
+        impact: 0.05 * PROFILE_IMPACT_MULTIPLIER,
+        note: `MatchProfile table positions: home #${homePos}, away #${awayPos}`
+      });
+    } else if (gap <= -5) {
+      awayWin += 0.05 * PROFILE_IMPACT_MULTIPLIER;
+      appliedReasons.push({
+        code: "match_profile_away_table_edge",
+        impact: 0.05 * PROFILE_IMPACT_MULTIPLIER,
+        note: `MatchProfile table positions: home #${homePos}, away #${awayPos}`
+      });
+    }
+  }
+
+  if (h2hEdge === "home") {
+    homeWin += 0.02 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_h2h_home_edge",
+      impact: 0.02 * PROFILE_IMPACT_MULTIPLIER,
+      note: "MatchProfile H2H trend leans home"
+    });
+  } else if (h2hEdge === "away") {
+    awayWin += 0.02 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_h2h_away_edge",
+      impact: 0.02 * PROFILE_IMPACT_MULTIPLIER,
+      note: "MatchProfile H2H trend leans away"
+    });
+  }
+
+  if (h2hGoalPattern === "overlean") {
+    over25 += 0.04 * PROFILE_IMPACT_MULTIPLIER;
+    btts += 0.03 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_h2h_overlean",
+      impact: 0.04 * PROFILE_IMPACT_MULTIPLIER,
+      note: "MatchProfile H2H goal pattern leans over"
+    });
+  } else if (h2hGoalPattern === "underlean") {
+    over25 -= 0.03 * PROFILE_IMPACT_MULTIPLIER;
+    btts -= 0.02 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_h2h_underlean",
+      impact: -0.03 * PROFILE_IMPACT_MULTIPLIER,
+      note: "MatchProfile H2H goal pattern leans under"
+    });
+  }
+
+  if (data?.playerUsage?.home?.coreStarters?.length >= 6) {
+    homeWin += 0.02 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_home_usage_stability",
+      impact: 0.02 * PROFILE_IMPACT_MULTIPLIER,
+      note: "Home player-usage core starters available"
+    });
+  }
+
+  if (data?.playerUsage?.away?.coreStarters?.length >= 6) {
+    awayWin += 0.02 * PROFILE_IMPACT_MULTIPLIER;
+    appliedReasons.push({
+      code: "match_profile_away_usage_stability",
+      impact: 0.02 * PROFILE_IMPACT_MULTIPLIER,
+      note: "Away player-usage core starters available"
+    });
+  }
+
+  const nextSignals = Array.isArray(value.signals) ? [...value.signals] : [];
+  if (appliedReasons.length > 0) {
+    nextSignals.push("match_profile_applied");
+  }
+
+  const originalHomeWin = Number(value.homeWinScore ?? value.homeWin ?? value.home ?? 0);
+  const originalAwayWin = Number(value.awayWinScore ?? value.awayWin ?? value.away ?? 0);
+  const originalOver25 = Number(value.over25Score ?? 0);
+  const originalBtts = Number(value.bttsScore ?? 0);
+
+  const capBoost = (next, original) => {
+    const delta = next - original;
+
+    if (delta > PROFILE_MAX_NET_BOOST) {
+      return original + PROFILE_MAX_NET_BOOST;
+    }
+
+    if (delta < -PROFILE_MAX_NET_BOOST) {
+      return original - PROFILE_MAX_NET_BOOST;
+    }
+
+    return next;
+  };
+
+  homeWin = capBoost(homeWin, originalHomeWin);
+  awayWin = capBoost(awayWin, originalAwayWin);
+  over25 = capBoost(over25, originalOver25);
+  btts = capBoost(btts, originalBtts);
+
+  return {
+    ...value,
+    homeWinScore: clamp01(homeWin),
+    awayWinScore: clamp01(awayWin),
+    over25Score: clamp01(over25),
+    bttsScore: clamp01(btts),
+    signals: [...new Set(nextSignals)],
+    meta: {
+      ...(value.meta || {}),
+      matchProfileApplied: appliedReasons.length > 0,
+      matchProfileConfidence: matchProfile.confidence || 0,
+      matchProfileReasons: appliedReasons
+    }
+  };
+}
+
+const isCliRun =
+  process.argv[1] &&
+  import.meta.url === new URL(`file://${process.argv[1].replace(/\\/g, "/")}`).href;
+
+if (isCliRun) {
+  const date = process.argv[2];
+
+  if (!date) {
+    console.error("[build-value-day] missing date argument");
+    process.exit(1);
+  }
+
+  buildValueDay(date, { rebuild: true })
+    .then(result => {
+      console.log("[build-value-day] done", {
+        ok: result?.ok,
+        date: result?.date,
+        count: result?.count
+      });
+    })
+    .catch(error => {
+      console.error("[build-value-day] fatal", error);
+      process.exit(1);
+    });
 }
