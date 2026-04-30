@@ -59,12 +59,29 @@ function normalizeAbsence(item = {}) {
     item?.note
   );
 
+  const team = normalizeText(
+    item?.team ||
+    item?.teamName ||
+    item?.club ||
+    item?.clubName ||
+    item?.targetTeam ||
+    item?.squadTeam
+  );
+
+  const sourceTeam = normalizeText(
+    item?.sourceTeam ||
+    item?.reportedTeam ||
+    item?.matchedTeam
+  );
+
   if (!player && !reason) return null;
 
   return {
     player: player || null,
     reason: reason || null,
-    importance: normalizeImportance(item?.importance)
+    importance: normalizeImportance(item?.importance),
+    team: team || null,
+    sourceTeam: sourceTeam || null
   };
 }
 
@@ -76,7 +93,9 @@ function dedupeAbsences(items = []) {
     const player = normalizeText(item?.player).toLowerCase();
     const reason = normalizeText(item?.reason).toLowerCase();
     const importance = normalizeImportance(item?.importance);
-    const key = `${player}__${reason}__${importance}`;
+    const team = normalizeText(item?.team);
+    const sourceTeam = normalizeText(item?.sourceTeam);
+    const key = `${player}__${reason}__${importance}__${team.toLowerCase()}__${sourceTeam.toLowerCase()}`;
 
     if (seen.has(key)) continue;
     seen.add(key);
@@ -84,7 +103,9 @@ function dedupeAbsences(items = []) {
     out.push({
       player: item?.player || null,
       reason: item?.reason || null,
-      importance
+      importance,
+      team: team || null,
+      sourceTeam: sourceTeam || null
     });
   }
 

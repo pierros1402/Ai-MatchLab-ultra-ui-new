@@ -16,13 +16,38 @@ function getWorksetPath(dayKey) {
 }
 
 function buildTask(teamRow, dayKey) {
+  const matchContexts = Array.isArray(teamRow.matchContexts)
+    ? teamRow.matchContexts
+    : [];
+
+  const primaryContext = matchContexts[0] || null;
+  const opponent = primaryContext?.opponent || null;
+
+  const suggestedQueries = [
+    `"${teamRow.team}" lineup last match`,
+    `"${teamRow.team}" starting eleven`,
+    `"${teamRow.team}" recent lineups`,
+    `"${teamRow.team}" squad minutes`,
+    `"${teamRow.team}" ${teamRow.leagueSlug || ""} lineups`
+  ];
+
+  if (opponent) {
+    suggestedQueries.unshift(
+      `"${teamRow.team}" "${opponent}" lineups`,
+      `"${teamRow.team}" vs "${opponent}" team news`,
+      `"${teamRow.team}" "${opponent}" starting XI`
+    );
+  }
+
   return {
     taskId: `player_usage:${dayKey}:${teamRow.key}`,
     taskType: "player_usage",
     dayKey,
     key: teamRow.key,
     team: teamRow.team,
+    opponent,
     leagueSlug: teamRow.leagueSlug || null,
+    matchContexts,
     status: "pending",
     reason: teamRow.reason || "needs_player_usage_population",
     targetOutputFile: resolveDataPath(
@@ -42,15 +67,10 @@ function buildTask(teamRow, dayKey) {
         "players[].starter",
         "players[].minutes",
         "players[].position"
-      ]
+      ],
+      matchContexts
     },
-    suggestedQueries: [
-      `"${teamRow.team}" lineup last match`,
-      `"${teamRow.team}" starting eleven`,
-      `"${teamRow.team}" recent lineups`,
-      `"${teamRow.team}" squad minutes`,
-      `"${teamRow.team}" ${teamRow.leagueSlug || ""} lineups`
-    ],
+    suggestedQueries,
     outputSchema: {
       team: teamRow.team,
       leagueSlug: teamRow.leagueSlug || null,

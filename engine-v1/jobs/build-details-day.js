@@ -95,6 +95,52 @@ function getValueForMatch(dayKey, matchId) {
   return all.filter(p => String(p?.matchId) === String(matchId));
 }
 
+function buildValuePicksByMatch(dayKey) {
+  const all = readValuePicksForDay(dayKey);
+  const map = new Map();
+
+  for (const pick of all) {
+    const key = String(pick?.matchId || "");
+    if (!key) continue;
+
+    if (!map.has(key)) {
+      map.set(key, []);
+    }
+
+    map.get(key).push(pick);
+  }
+
+  return map;
+}
+
+function buildValueSummaryFromPicks(valuePicks = []) {
+  const picks = Array.isArray(valuePicks) ? valuePicks : [];
+
+  if (!picks.length) {
+    return null;
+  }
+
+  const sorted = picks
+    .slice()
+    .sort((a, b) => Number(b?.score || 0) - Number(a?.score || 0));
+
+  const top = sorted[0];
+
+  return {
+    count: picks.length,
+    topMarket: top?.market || top?.marketName || null,
+    topPick: top?.pick || null,
+    topScore: Number.isFinite(Number(top?.score)) ? Number(top.score) : null,
+    avgConfidence: Number(
+      (
+        picks.reduce((sum, p) => sum + Number(p?.confidence || 0), 0) /
+        picks.length
+      ).toFixed(3)
+    ),
+    confidence: 0.75
+  };
+}
+
 function buildDetailsSignature(match, valuePicks, payload) {
   const topPick = (valuePicks || [])
     .slice()
@@ -658,7 +704,8 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   const file = detailsFilePath(dayKey, match.matchId);
   const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
-  const valuePicks = getValueForMatch(dayKey, match.matchId);
+  const valuePicksByMatch = buildValuePicksByMatch(dayKey);
+  const valuePicks = valuePicksByMatch.get(String(match.matchId)) || [];
 
   const aiBlocks = await buildAiDetailsBlock(match, {
     dayKey,
@@ -674,6 +721,7 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
     aiContext: aiBlocks.aiContext,
     aiSummary: aiBlocks?.aiContext?.summary || null,
     valueSummary:
+      buildValueSummaryFromPicks(valuePicks) ||
       aiBlocks?.aiContext?.valueSummary ||
       aiBlocks?.researchedFacts?.valueContext ||
       null,
@@ -748,6 +796,13 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
 
   ensureDir(resolveDataPath("details", dayKey));
 
+  const valuePicksByMatch = buildValuePicksByMatch(dayKey);
+
+  console.log("[build-details-day] value:snapshot", {
+    dayKey,
+    matchesWithValue: valuePicksByMatch.size
+  });
+
   let built = 0;
   let skipped = 0;
   const files = [];
@@ -762,7 +817,7 @@ for (const match of rows) {
   const file = detailsFilePath(dayKey, match.matchId);
   const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
-  const valuePicks = getValueForMatch(dayKey, match.matchId);
+  const valuePicks = valuePicksByMatch.get(String(match.matchId)) || [];
 
   const aiBlocks = await buildAiDetailsBlock(match, {
     dayKey,
@@ -778,6 +833,7 @@ for (const match of rows) {
     aiContext: aiBlocks.aiContext,
     aiSummary: aiBlocks?.aiContext?.summary || null,
     valueSummary:
+      buildValueSummaryFromPicks(valuePicks) ||
       aiBlocks?.aiContext?.valueSummary ||
       aiBlocks?.researchedFacts?.valueContext ||
       null,

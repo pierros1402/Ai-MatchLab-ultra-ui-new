@@ -38,11 +38,23 @@ function getTargetResultPath(dayKey, teamKey) {
 }
 
 function buildPrompt(task) {
+  const matchContexts = Array.isArray(task.matchContexts)
+    ? task.matchContexts
+    : [];
+
+  const matchContextLines = matchContexts.length
+    ? matchContexts.map(ctx =>
+        `- ${ctx.side || "unknown"} vs ${ctx.opponent || "unknown opponent"} | matchId=${ctx.matchId || "unknown"} | league=${ctx.leagueSlug || task.leagueSlug || "unknown"} | kickoff=${ctx.kickoff || "unknown"}`
+      )
+    : ["- No match context available."];
+
   return [
     `You are AIMatchLab player-usage research.`,
     ``,
     `Goal: collect recent player usage for ${task.team}.`,
     `League/context: ${task.leagueSlug || "unknown"}.`,
+    `Upcoming/current match contexts:`,
+    ...matchContextLines,
     ``,
     `Return only valid JSON. No markdown.`,
     ``,
@@ -93,7 +105,9 @@ function buildAiRequest(task, dayKey) {
     taskId: task.taskId || null,
     key: teamKey,
     team: task.team,
+    opponent: task.opponent || null,
     leagueSlug: task.leagueSlug || null,
+    matchContexts: Array.isArray(task.matchContexts) ? task.matchContexts : [],
     status: "pending_ai_research",
     targetOutputFile: getTargetResultPath(dayKey, teamKey),
     prompt: buildPrompt(task),

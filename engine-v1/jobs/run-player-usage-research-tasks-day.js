@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { runPlayerUsageProvider } from "../ai-match-intelligence/remote-providers/player-usage-provider.js";
+import { validatePlayerUsageResearchResult } from "../ai-match-intelligence/player-usage/player-usage-validator.js";
 import { writePlayerUsageRecord } from "../storage/player-usage-db.js";
 
 function readJsonSafe(filePath, fallback = null) {
@@ -39,13 +40,23 @@ function getTaskTeam(task) {
   return normalizeText(task?.team);
 }
 
-function hasUsableUsageData(providerResult) {
-  return (
-    providerResult?.status === "ok" &&
-    providerResult?.data &&
-    Array.isArray(providerResult.data.matches) &&
-    providerResult.data.matches.length > 0
-  );
+function validateProviderUsageData(providerResult, fallback = {}) {
+  if (providerResult?.status !== "ok" || !providerResult?.data) {
+    return {
+      ok: false,
+      status: "unresolved_no_input",
+      reason: providerResult?.reason || "provider_unavailable",
+      confidence: providerResult?.confidence ?? 0,
+      matchCount: Array.isArray(providerResult?.data?.matches)
+        ? providerResult.data.matches.length
+        : 0,
+      playerCount: 0,
+      issues: [],
+      record: null
+    };
+  }
+
+  return validatePlayerUsageResearchResult(providerResult.data, fallback);
 }
 
 export async function runPlayerUsageResearchTasksDay(dayKey, { maxTasks = Infinity } = {}) {
@@ -81,15 +92,27 @@ export async function runPlayerUsageResearchTasksDay(dayKey, { maxTasks = Infini
       dayKey: safeDayKey
     });
 
+    const validation = validateProviderUsageData(providerResult, {
+      key,
+      team,
+      leagueSlug: task?.leagueSlug || null
+    });
+
     let canonicalWrite = null;
 
-    if (hasUsableUsageData(providerResult)) {
+    if (validation.ok && validation.record) {
       const record = {
-        ...providerResult.data,
-        key,
-        team,
-        leagueSlug: task?.leagueSlug || providerResult.data.leagueSlug || null,
-        updatedAt: new Date().toISOString()
+        ...validation.record,
+        updatedAt: new Date().toISOString(),
+        meta: {
+          ...validation.record.meta,
+          providerStatus: providerResult?.status || "unavailable",
+          providerReason: providerResult?.reason || null,
+          providerMode: providerResult?.data?.meta?.mode || null,
+          inputFile: providerResult?.data?.meta?.inputFile || null,
+          importer: "run-player-usage-research-tasks-day",
+          importedAt: new Date().toISOString()
+        }
       };
 
       canonicalWrite = writePlayerUsageRecord(record);
@@ -99,7 +122,7 @@ export async function runPlayerUsageResearchTasksDay(dayKey, { maxTasks = Infini
     results.push({
       taskId: task?.taskId || null,
       taskType: task?.taskType || "player_usage",
-      status: hasUsableUsageData(providerResult)
+      status: validation.ok
         ? "accepted_player_usage"
         : "unresolved_player_usage",
       dayKey: safeDayKey,
@@ -115,6 +138,15 @@ export async function runPlayerUsageResearchTasksDay(dayKey, { maxTasks = Infini
           ? providerResult.data.matches.length
           : 0,
         meta: providerResult?.data?.meta || null
+      },
+      validationAudit: {
+        ok: validation.ok,
+        status: validation.status,
+        reason: validation.reason,
+        confidence: validation.confidence,
+        matchCount: validation.matchCount,
+        playerCount: validation.playerCount,
+        issues: validation.issues
       },
       canonicalWrite,
       audit: {
