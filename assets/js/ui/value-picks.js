@@ -22,39 +22,71 @@
   // --------------------------------------------------------------------------
   // DOM
   // --------------------------------------------------------------------------
-  const root =
-    document.querySelector("#right-panel .intelligence-panel.value-panel") ||
-    document.querySelector("aside#right-panel .intelligence-panel.value-panel") ||
-    document.querySelector("#value-panel") ||
-    document.querySelector("[data-panel='value']") ||
-    document.querySelector(".value-panel") ||
-    document.querySelector("#panel-value");
+  let root = null;
+  let headWrapEl = null;
+  let bodyEl = null;
 
-    if (!root) {
+  function isVisibleNode(el) {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return Boolean(
+      el.isConnected &&
+      rect.width > 0 &&
+      rect.height > 0 &&
+      window.getComputedStyle(el).display !== "none" &&
+      window.getComputedStyle(el).visibility !== "hidden"
+    );
+  }
+
+  function resolveValueRoot() {
+    const candidates = Array.from(document.querySelectorAll([
+      "#right-panel .intelligence-panel.value-panel",
+      "aside#right-panel .intelligence-panel.value-panel",
+      ".right-column .intelligence-panel.value-panel",
+      ".intelligence-panel.value-panel",
+      "#value-panel",
+      "[data-panel='value']",
+      ".value-panel",
+      "#panel-value"
+    ].join(",")));
+
+    const visible = candidates.find(isVisibleNode);
+    if (visible) return visible;
+
+    return candidates.find((el) => el?.isConnected) || null;
+  }
+
+  function resolveDomRefs() {
+    const nextRoot = resolveValueRoot();
+
+    if (!nextRoot) {
       warn("Value panel root not found");
-      return;
+      return false;
     }
 
-    log("root found", root);
+    root = nextRoot;
+    headWrapEl = root.querySelector(".value-head-wrap") || null;
+
+    bodyEl =
+      root.querySelector("#value-picks-list") ||
+      root.querySelector(".value-picks-list") ||
+      root.querySelector(".panel-body") ||
+      root;
+
+    if (!bodyEl) {
+      warn("Value panel body not found");
+      return false;
+    }
+
+    return true;
+  }
+
+  if (!resolveDomRefs()) {
+    return;
+  }
+
+  log("root found", root);
   console.log("[value-picks] root rect", root.getBoundingClientRect());
-  const listEl =
-    root.querySelector("#value-picks-list") ||
-    root.querySelector(".value-picks-list") ||
-    null;
-
-  const headWrapEl =
-    root.querySelector(".value-head-wrap") ||
-    null;
-
-
-
-  // render content into the dedicated list container
-  const bodyEl =
-    root.querySelector(".panel-body #value-picks-list") ||
-    root.querySelector(".panel-body") ||
-    root;
-
-
 
   // --------------------------------------------------------------------------
   // League map (FULL set, aligned with leagues.txt)
@@ -478,6 +510,8 @@ function renderRow(p) {
 }
 
   function render(payload) {
+    if (!resolveDomRefs()) return;
+
     console.log("[value-picks] render:start", payload);
   //window.AIML_PANEL?.set(root, "loading", "Loading value picks...");
     lastPayload = payload;
