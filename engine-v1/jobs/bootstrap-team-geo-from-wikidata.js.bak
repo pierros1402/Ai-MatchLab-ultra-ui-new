@@ -1,0 +1,1911 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { ensureDir, resolveDataPath } from "../storage/data-root.js";
+import {
+  getLeagueCoverage,
+  isContinentalCompetition
+} from "../../workers/_shared/leagues-coverage.js";
+
+const WIKIDATA_API_URL = "https://www.wikidata.org/w/api.php";
+const DEFAULT_INPUT = resolveDataPath(
+  "team-geo",
+  "_bootstrap",
+  "team-geo.bootstrap.json"
+);
+const DEFAULT_OUTPUT = resolveDataPath(
+  "team-geo",
+  "_bootstrap",
+  "team-geo.bootstrap.enriched.json"
+);
+
+function writeJson(filePath, data) {
+  ensureDir(path.dirname(filePath));
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+}
+
+function readJsonArray(filePath) {
+  if (!fs.existsSync(filePath)) return [];
+  const raw = fs.readFileSync(filePath, "utf8");
+  const parsed = JSON.parse(raw);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function repairTextEncoding(value) {
+  return String(value ?? "")
+    // Common UTF-8 mojibake rendered through Greek/Windows codepage.
+    .replace(/Γ±/g, "ñ")
+    .replace(/Γ­/g, "í")
+    .replace(/Γ©/g, "é")
+    .replace(/Γ¡/g, "á")
+    .replace(/Γ³/g, "ó")
+    .replace(/Γº/g, "ú")
+    .replace(/Γ¼/g, "ü")
+    .replace(/Γ£/g, "ã")
+    .replace(/Γ§/g, "ç")
+    .replace(/Γ¨/g, "è")
+    .replace(/Γª/g, "ê")
+    .replace(/Γ´/g, "ô")
+    .replace(/Γ¯/g, "ï")
+
+    // Common UTF-8 mojibake rendered as Ã sequences.
+    .replace(/Ã±/g, "ñ")
+    .replace(/Ã­/g, "í")
+    .replace(/Ã©/g, "é")
+    .replace(/Ã¡/g, "á")
+    .replace(/Ã³/g, "ó")
+    .replace(/Ãº/g, "ú")
+    .replace(/Ã¼/g, "ü")
+    .replace(/Ã£/g, "ã")
+    .replace(/Ã§/g, "ç")
+    .replace(/Ã¨/g, "è")
+    .replace(/Ãª/g, "ê")
+    .replace(/Ã´/g, "ô")
+    .replace(/Ã¯/g, "ï");
+}
+
+function normalizeText(value) {
+  return repairTextEncoding(value)
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function normalizeCountry(value) {
+  return normalizeText(value).toLowerCase();
+}
+
+function isValidLatitude(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= -90 && n <= 90 && n !== 0;
+}
+
+function isValidLongitude(value) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= -180 && n <= 180 && n !== 0;
+}
+
+function countryTokenToExpectedLabel(countryToken) {
+  const map = {
+    england: "England",
+    germany: "Germany",
+    spain: "Spain",
+    italy: "Italy",
+    france: "France",
+    netherlands: "Netherlands",
+    portugal: "Portugal",
+    belgium: "Belgium",
+    scotland: "Scotland",
+    greece: "Greece",
+    cyprus: "Cyprus",
+    turkey: "Turkey",
+    switzerland: "Switzerland",
+    austria: "Austria",
+    denmark: "Denmark",
+    sweden: "Sweden",
+    norway: "Norway",
+    finland: "Finland",
+    poland: "Poland",
+    czech_republic: "Czech Republic",
+    romania: "Romania",
+    serbia: "Serbia",
+    croatia: "Croatia",
+    hungary: "Hungary",
+    bulgaria: "Bulgaria",
+    ukraine: "Ukraine",
+    albania: "Albania",
+    armenia: "Armenia",
+    azerbaijan: "Azerbaijan",
+    bosnia_and_herzegovina: "Bosnia and Herzegovina",
+    belarus: "Belarus",
+    estonia: "Estonia",
+    faroe_islands: "Faroe Islands",
+    georgia: "Georgia",
+    iceland: "Iceland",
+    ireland: "Ireland",
+    israel: "Israel",
+    kazakhstan: "Kazakhstan",
+    kosovo: "Kosovo",
+    latvia: "Latvia",
+    lithuania: "Lithuania",
+    luxembourg: "Luxembourg",
+    moldova: "Moldova",
+    malta: "Malta",
+    montenegro: "Montenegro",
+    north_macedonia: "North Macedonia",
+    northern_ireland: "Northern Ireland",
+    slovakia: "Slovakia",
+    slovenia: "Slovenia",
+    wales: "Wales",
+
+    usa: "United States of America",
+    argentina: "Argentina",
+    brazil: "Brazil",
+    mexico: "Mexico",
+    uruguay: "Uruguay",
+    colombia: "Colombia",
+    chile: "Chile",
+    peru: "Peru",
+
+    japan: "Japan",
+    south_korea: "South Korea",
+    saudi_arabia: "Saudi Arabia",
+    uae: "United Arab Emirates",
+    qatar: "Qatar",
+
+    south_africa: "South Africa",
+    egypt: "Egypt",
+    morocco: "Morocco",
+    tunisia: "Tunisia"
+  };
+
+  return map[normalizeCountry(countryToken)] || null;
+}
+
+function expectedCountryFromLeagueSlug(leagueSlug) {
+  const slug = normalizeText(leagueSlug);
+  if (!slug) return null;
+
+  const coverage = getLeagueCoverage(slug);
+  if (!coverage) return null;
+
+  if (isContinentalCompetition(slug)) {
+    return null;
+  }
+
+  const countryToken = normalizeCountry(coverage?.country);
+
+  if (
+    !countryToken ||
+    countryToken === "uefa" ||
+    countryToken === "afc" ||
+    countryToken === "caf" ||
+    countryToken === "conmebol"
+  ) {
+    return null;
+  }
+
+  return countryTokenToExpectedLabel(countryToken);
+}
+
+function countryLooksCompatible(expectedCountry, actualCountry) {
+  const expected = normalizeCountry(expectedCountry);
+  const actual = normalizeCountry(actualCountry);
+
+  if (!expected) return true;
+  if (!actual) return true;
+  if (expected === actual) return true;
+
+  const aliases = {
+    england: ["united kingdom", "uk", "great britain"],
+    scotland: ["united kingdom", "uk", "great britain"],
+    wales: ["united kingdom", "uk", "great britain"],
+    "northern ireland": ["united kingdom", "uk", "great britain"],
+
+    "united states of america": ["united states", "usa"],
+    "united states": ["united states of america", "usa"],
+    usa: ["united states", "united states of america"],
+
+    turkey: ["türkiye"],
+    türkiye: ["turkey"],
+
+    "czech republic": ["czechia"],
+    czechia: ["czech republic"],
+
+    "bosnia and herzegovina": ["bosnia-herzegovina", "bosnia"],
+    "south korea": ["republic of korea", "korea republic"],
+    "north macedonia": ["macedonia"],
+    "united arab emirates": ["uae"]
+  };
+
+  const expectedAliases = new Set([expected, ...(aliases[expected] || [])]);
+  const actualAliases = new Set([actual, ...(aliases[actual] || [])]);
+
+  for (const item of expectedAliases) {
+    if (actualAliases.has(item)) return true;
+  }
+
+  return false;
+}
+
+function hasUsableCoordinates(row) {
+  return isValidLatitude(row?.latitude) && isValidLongitude(row?.longitude);
+}
+
+function isCompleteRow(row) {
+  return (
+    !!normalizeText(row?.team) &&
+    !!normalizeText(row?.venue) &&
+    !!normalizeText(row?.city) &&
+    !!normalizeText(row?.country) &&
+    hasUsableCoordinates(row)
+  );
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function createTimeoutSignal(timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => {
+    controller.abort(new Error(`fetch_timeout_${timeoutMs}ms`));
+  }, timeoutMs);
+
+  return {
+    signal: controller.signal,
+    clear: () => clearTimeout(timer)
+  };
+}
+
+async function withRowTimeout(promise, timeoutMs, teamName) {
+  let timer = null;
+
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`row_timeout_${timeoutMs}ms:${teamName || "unknown_team"}`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+function toPositiveInteger(value, fallback) {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+}
+
+function toNonNegativeInteger(value, fallback) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 ? n : fallback;
+}
+
+function toBooleanFlag(value, fallback = false) {
+  if (value === undefined || value === null || value === "") return fallback;
+
+  const normalized = String(value).trim().toLowerCase();
+
+  if (["1", "true", "yes", "y", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "n", "off"].includes(normalized)) return false;
+
+  return fallback;
+}
+
+function defaultCheckpointFile(outputFile) {
+  const dir = path.dirname(outputFile);
+  const base = path.basename(outputFile, ".json");
+  return path.join(dir, `${base}.checkpoint.json`);
+}
+
+function readJsonObject(filePath) {
+  if (!fs.existsSync(filePath)) return null;
+
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeCheckpoint(filePath, payload) {
+  writeJson(filePath, payload);
+}
+
+function parseCliOptions(argv = []) {
+  const options = {};
+
+  for (const arg of argv) {
+    if (!arg.startsWith("--")) continue;
+
+    const clean = arg.slice(2);
+    const eqIndex = clean.indexOf("=");
+
+    if (eqIndex === -1) {
+      options[clean] = true;
+      continue;
+    }
+
+    const key = clean.slice(0, eqIndex);
+    const value = clean.slice(eqIndex + 1);
+    options[key] = value;
+  }
+
+  return options;
+}
+
+async function fetchJson(
+  url,
+  { retries = 1, baseDelayMs = 600, timeoutMs = 7000 } = {}
+) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const timeout = createTimeoutSignal(timeoutMs);
+
+      let response;
+      try {
+        response = await fetch(url, {
+          signal: timeout.signal,
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "AiMatchLabTeamGeoBootstrap/1.0 (local bootstrap job)"
+          }
+        });
+      } finally {
+        timeout.clear();
+      }
+
+      if (response.ok) {
+        return response.json();
+      }
+
+      const retryable =
+        response.status === 429 ||
+        response.status === 500 ||
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504;
+
+      if (!retryable || attempt >= retries) {
+        throw new Error(`wikidata_http_${response.status}`);
+      }
+
+      const retryAfterHeader = Number(response.headers.get("retry-after"));
+      const retryAfterMs =
+        Number.isFinite(retryAfterHeader) && retryAfterHeader > 0
+          ? retryAfterHeader * 1000
+          : null;
+
+      const backoffMs =
+        retryAfterMs ||
+        Math.round(baseDelayMs * Math.pow(2, attempt) + Math.random() * 400);
+
+      await sleep(backoffMs);
+    } catch (err) {
+      lastError = err;
+
+      const message = String(err?.message || err);
+      const retryable =
+        message.includes("wikidata_http_429") ||
+        message.includes("wikidata_http_500") ||
+        message.includes("wikidata_http_502") ||
+        message.includes("wikidata_http_503") ||
+        message.includes("wikidata_http_504") ||
+        message.includes("fetch failed") ||
+        message.includes("network") ||
+        message.includes("fetch_timeout_") ||
+        message.includes("aborted") ||
+        message.includes("AbortError");
+
+      if (!retryable || attempt >= retries) {
+        throw err;
+      }
+
+      const backoffMs = Math.round(
+        baseDelayMs * Math.pow(2, attempt) + Math.random() * 400
+      );
+
+      await sleep(backoffMs);
+    }
+  }
+
+  throw lastError || new Error("wikidata_fetch_failed");
+}
+
+function buildSearchUrl(teamName, limit = 5) {
+  const url = new URL(WIKIDATA_API_URL);
+  url.searchParams.set("action", "wbsearchentities");
+  url.searchParams.set("format", "json");
+  url.searchParams.set("language", "en");
+  url.searchParams.set("type", "item");
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("search", teamName);
+  url.searchParams.set("origin", "*");
+  return url.toString();
+}
+
+function buildGetEntitiesUrl(ids) {
+  const url = new URL(WIKIDATA_API_URL);
+  url.searchParams.set("action", "wbgetentities");
+  url.searchParams.set("format", "json");
+  url.searchParams.set("languages", "en");
+  url.searchParams.set("props", "labels|claims");
+  url.searchParams.set("ids", ids.join("|"));
+  url.searchParams.set("origin", "*");
+  return url.toString();
+}
+
+function getEntityLabel(entity) {
+  return normalizeText(entity?.labels?.en?.value);
+}
+
+function getClaims(entity, propertyId) {
+  return Array.isArray(entity?.claims?.[propertyId]) ? entity.claims[propertyId] : [];
+}
+
+function entityHasClaimEntity(entity, propertyId, targetId) {
+  return getClaims(entity, propertyId).some(claim => {
+    return getEntityIdFromClaim(claim) === targetId;
+  });
+}
+
+function isCountryLikeEntity(entity) {
+  // Q6256 = country
+  // Q3624078 = sovereign state
+  // Q7275 = state
+  return (
+    entityHasClaimEntity(entity, "P31", "Q6256") ||
+    entityHasClaimEntity(entity, "P31", "Q3624078") ||
+    entityHasClaimEntity(entity, "P31", "Q7275")
+  );
+}
+
+function getEntityIdFromClaim(claim) {
+  return claim?.mainsnak?.datavalue?.value?.id || null;
+}
+
+function getCoordinateFromClaim(claim) {
+  const value = claim?.mainsnak?.datavalue?.value;
+  if (!value) return { latitude: null, longitude: null };
+
+  const latitude = Number(value?.latitude);
+  const longitude = Number(value?.longitude);
+
+  return {
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null
+  };
+}
+
+function isExactOfficialLabelMatch(teamName, candidateLabel) {
+  const wanted = normalizeSearchText(teamName);
+  const candidate = normalizeSearchText(candidateLabel);
+
+  if (!wanted || !candidate) return false;
+  if (wanted === candidate) return true;
+
+  const wantedAliases = new Set(getOfficialTeamNames(teamName).map(normalizeSearchText));
+  const candidateAliases = new Set(getOfficialTeamNames(candidateLabel).map(normalizeSearchText));
+
+  if (wantedAliases.has(candidate)) return true;
+  if (candidateAliases.has(wanted)) return true;
+
+  for (const item of wantedAliases) {
+    if (candidateAliases.has(item)) return true;
+  }
+
+  return false;
+}
+
+function scoreTeamEntity(entity, searchHit, teamName, expectedCountry) {
+  const label = normalizeText(getEntityLabel(entity)).toLowerCase();
+  const wanted = normalizeText(teamName).toLowerCase();
+  const description = normalizeText(searchHit?.description).toLowerCase();
+  const expected = normalizeCountry(expectedCountry);
+
+  let score = 0;
+
+  if (label === wanted) score += 20;
+  if (label.includes(wanted) || wanted.includes(label)) score += 8;
+
+  if (description.includes("football club")) score += 6;
+  if (description.includes("soccer club")) score += 6;
+  if (description.includes("sports club")) score += 2;
+
+  if (getClaims(entity, "P115").length) score += 10;
+
+  if (expected) {
+    if (description.includes(expected)) {
+      score += 12;
+    } else if (description) {
+      score -= 8;
+    }
+  }
+
+  return score;
+}
+
+function normalizeSearchText(value) {
+  return normalizeText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function importantTeamTokens(teamName) {
+  const stop = new Set([
+    "fc",
+    "fk",
+    "cf",
+    "sc",
+    "ac",
+    "afc",
+    "if",
+    "bk",
+    "ksv",
+    "utd",
+    "united",
+    "club",
+    "de",
+    "la",
+    "the"
+  ]);
+
+  return normalizeSearchText(teamName)
+    .split(" ")
+    .map(x => x.trim())
+    .filter(x => x.length >= 3 && !stop.has(x));
+}
+
+function buildVenueSearchQueries(teamName, expectedCountry, teamLabel = "") {
+  const names = [
+    teamName,
+    teamLabel,
+    ...getOfficialTeamNames(teamName)
+  ]
+    .map(name => normalizeText(name))
+    .filter(Boolean);
+
+  const uniqueNames = [...new Set(names)].slice(0, 2);
+  const queries = [];
+
+  for (const name of uniqueNames) {
+    queries.push(`${name} stadium`);
+    queries.push(`${name} football stadium`);
+
+    if (expectedCountry) {
+      queries.push(`${name} ${expectedCountry} stadium`);
+    }
+  }
+
+  return [...new Set(queries.map(q => normalizeText(q)).filter(Boolean))].slice(0, 4);
+}
+
+function scoreVenueEntity(entity, searchHit, teamName, expectedCountry) {
+  const label = normalizeSearchText(getEntityLabel(entity));
+  const description = normalizeSearchText(searchHit?.description);
+  const wantedTokens = importantTeamTokens(teamName);
+  const expected = normalizeSearchText(expectedCountry);
+
+  let score = 0;
+
+  if (getClaims(entity, "P625").length) score += 20;
+  if (getClaims(entity, "P17").length) score += 5;
+  if (getClaims(entity, "P131").length) score += 3;
+
+  if (
+    label.includes("stadium") ||
+    label.includes("arena") ||
+    label.includes("park") ||
+    label.includes("ground") ||
+    description.includes("stadium") ||
+    description.includes("football venue") ||
+    description.includes("sports venue") ||
+    description.includes("arena")
+  ) {
+    score += 10;
+  }
+
+  for (const token of wantedTokens) {
+    if (label.includes(token)) score += 8;
+    if (description.includes(token)) score += 4;
+  }
+
+  if (expected) {
+    if (description.includes(expected)) score += 6;
+  }
+
+  return score;
+}
+
+async function resolveVenueBySearch(inputRow, teamLabel = "") {
+  const teamName = normalizeText(inputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+  const queries = buildVenueSearchQueries(teamName, expectedCountry, teamLabel);
+
+  const merged = [];
+  const seenIds = new Set();
+
+  for (const query of queries.slice(0, 4)) {
+    try {
+      const searchData = await fetchJson(buildSearchUrl(query, 6), {
+        retries: 0,
+        baseDelayMs: 250,
+        timeoutMs: 3500
+      });
+
+      const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
+
+      for (const item of searchResults) {
+        const id = item?.id;
+        if (!id || seenIds.has(id)) continue;
+        seenIds.add(id);
+        merged.push(item);
+      }
+
+      if (merged.length >= 8) break;
+    } catch {
+      continue;
+    }
+  }
+
+  if (!merged.length) return null;
+
+  const ids = merged.map(item => item.id).filter(Boolean).slice(0, 8);
+
+  const entitiesData = await fetchJson(buildGetEntitiesUrl(ids), {
+    retries: 0,
+    baseDelayMs: 300,
+    timeoutMs: 5000
+  });
+
+  const entities = entitiesData?.entities || {};
+  const searchHitById = Object.fromEntries(
+    merged
+      .filter(item => item?.id)
+      .map(item => [item.id, item])
+  );
+
+  const rankedVenues = Object.values(entities)
+    .map(entity => ({
+      entity,
+      score: scoreVenueEntity(
+        entity,
+        searchHitById[entity?.id] || null,
+        teamName,
+        expectedCountry
+      )
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  for (const item of rankedVenues.slice(0, 4)) {
+    const venueEntity = item.entity;
+    const coordClaim = getClaims(venueEntity, "P625")[0];
+    const coords = getCoordinateFromClaim(coordClaim);
+
+    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+      continue;
+    }
+
+    const countryClaim = getClaims(venueEntity, "P17")[0];
+    const adminClaim = getClaims(venueEntity, "P131")[0];
+
+    const countryId = getEntityIdFromClaim(countryClaim);
+    const adminId = getEntityIdFromClaim(adminClaim);
+    const lookupIds = [countryId, adminId].filter(Boolean);
+
+    let lookupEntities = {};
+
+    if (lookupIds.length) {
+      const lookupData = await fetchJson(buildGetEntitiesUrl(lookupIds), {
+        retries: 0,
+        baseDelayMs: 300,
+        timeoutMs: 5000
+      });
+      lookupEntities = lookupData?.entities || {};
+    }
+
+    const country = countryId ? getEntityLabel(lookupEntities[countryId]) : "";
+    const city = adminId ? getEntityLabel(lookupEntities[adminId]) : "";
+
+    const resolved = {
+      teamLabel: teamLabel || teamName,
+      venue: getEntityLabel(venueEntity) || "",
+      city: city || "",
+      country: country || expectedCountry || "",
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      wikidataTeamId: null,
+      wikidataVenueId: venueEntity.id || null
+    };
+
+    const validation = validateResolvedGeo(inputRow, resolved);
+
+    if (validation?.ok === false) {
+      continue;
+    }
+
+    return {
+      ...resolved,
+      validation: {
+        ...(validation || {}),
+        sourceMode: "venue_search_fallback",
+        venueSearchScore: item.score
+      }
+    };
+  }
+
+  return null;
+}
+
+function buildCitySearchQueries(teamName, expectedCountry, teamLabel = "") {
+  function cityCandidateFromName(value) {
+    return normalizeText(value)
+      .replace(/\bF\.?C\.?\b/gi, "")
+      .replace(/\bC\.?F\.?\b/gi, "")
+      .replace(/\bS\.?C\.?\b/gi, "")
+      .replace(/\bA\.?C\.?\b/gi, "")
+      .replace(/\bR\.?C\.?D\.?\b/gi, "")
+      .replace(/\bFootball Club\b/gi, "")
+      .replace(/\bFutbol Club\b/gi, "")
+      .replace(/\bClub\b/gi, "")
+      .replace(/\bUnited\b/gi, "")
+      .replace(/\bUtd\b/gi, "")
+      .replace(/\bCity\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  const directTeamCity = cityCandidateFromName(teamName);
+  const directLabelCity = cityCandidateFromName(teamLabel);
+
+  const names = [
+    directTeamCity,
+    directLabelCity,
+    stripDiacritics(directTeamCity),
+    stripDiacritics(directLabelCity)
+  ]
+    .map(name => normalizeText(name))
+    .filter(Boolean);
+
+  const uniqueNames = [...new Set(names)].slice(0, 3);
+  const queries = [];
+
+  for (const name of uniqueNames) {
+    if (expectedCountry) {
+      queries.push(`${name} ${expectedCountry}`);
+    }
+
+    queries.push(name);
+  }
+
+  return [...new Set(queries.map(q => normalizeText(q)).filter(Boolean))].slice(0, 6);
+}
+
+function scoreCityEntity(entity, searchHit, teamName, expectedCountry) {
+  const label = normalizeSearchText(getEntityLabel(entity));
+  const description = normalizeSearchText(searchHit?.description);
+  const wantedTokens = importantTeamTokens(teamName);
+  const expected = normalizeSearchText(expectedCountry);
+
+  let score = 0;
+
+  if (getClaims(entity, "P625").length) score += 30;
+  if (getClaims(entity, "P17").length) score += 8;
+  if (getClaims(entity, "P131").length) score += 4;
+
+  if (
+    description.includes("city") ||
+    description.includes("town") ||
+    description.includes("municipality") ||
+    description.includes("commune") ||
+    description.includes("settlement") ||
+    description.includes("civil parish") ||
+    description.includes("unparished area")
+  ) {
+    score += 14;
+  }
+
+  for (const token of wantedTokens) {
+    if (label === token) score += 30;
+    else if (label.startsWith(`${token} `)) score += 18;
+    else if (label.includes(token)) score += 10;
+
+    if (description.includes(token)) score += 4;
+  }
+
+  if (expected) {
+    if (description.includes(expected)) score += 8;
+  }
+
+  return score;
+}
+
+async function resolveCityBySearch(inputRow, teamLabel = "") {
+  const teamName = normalizeText(inputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+  const queries = buildCitySearchQueries(teamName, expectedCountry, teamLabel);
+
+  const merged = [];
+  const seenIds = new Set();
+
+  for (const query of queries.slice(0, 4)) {
+    try {
+      const searchData = await fetchJson(buildSearchUrl(query, 8), {
+        retries: 0,
+        baseDelayMs: 250,
+        timeoutMs: 4000
+      });
+
+      const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
+
+      for (const item of searchResults) {
+        const id = item?.id;
+        if (!id || seenIds.has(id)) continue;
+        seenIds.add(id);
+        merged.push(item);
+      }
+
+      if (merged.length >= 6) break;
+    } catch {
+      continue;
+    }
+  }
+
+  if (!merged.length) return null;
+
+  const ids = merged.map(item => item.id).filter(Boolean).slice(0, 8);
+
+  let entitiesData = null;
+
+  try {
+    entitiesData = await fetchJson(buildGetEntitiesUrl(ids), {
+      retries: 0,
+      baseDelayMs: 300,
+      timeoutMs: 4500
+    });
+  } catch {
+    return null;
+  }
+
+  const entities = entitiesData?.entities || {};
+  const searchHitById = Object.fromEntries(
+    merged
+      .filter(item => item?.id)
+      .map(item => [item.id, item])
+  );
+
+  const rankedCities = Object.values(entities)
+    .map(entity => ({
+      entity,
+      score: scoreCityEntity(
+        entity,
+        searchHitById[entity?.id] || null,
+        teamName,
+        expectedCountry
+      )
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  for (const item of rankedCities.slice(0, 4)) {
+    const cityEntity = item.entity;
+
+    if (isCountryLikeEntity(cityEntity)) {
+      continue;
+    }
+
+    const coordClaim = getClaims(cityEntity, "P625")[0];
+    const coords = getCoordinateFromClaim(coordClaim);
+
+    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+      continue;
+    }
+
+    const countryClaim = getClaims(cityEntity, "P17")[0];
+    const countryId = getEntityIdFromClaim(countryClaim);
+
+    let country = expectedCountry || "";
+
+    if (countryId) {
+      try {
+        const countryData = await fetchJson(buildGetEntitiesUrl([countryId]), {
+          retries: 0,
+          baseDelayMs: 300,
+          timeoutMs: 3500
+        });
+
+        country = getEntityLabel(countryData?.entities?.[countryId]) || country;
+      } catch {
+        country = expectedCountry || "";
+      }
+    }
+
+    const resolved = {
+      teamLabel: teamLabel || teamName,
+      venue: "",
+      city: getEntityLabel(cityEntity) || teamName,
+      country: country || expectedCountry || "",
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      wikidataTeamId: null,
+      wikidataVenueId: null,
+      wikidataCityId: cityEntity.id || null
+    };
+
+    const validation = validateResolvedGeo(inputRow, resolved);
+
+    if (validation?.ok === false) {
+      continue;
+    }
+
+    return {
+      ...resolved,
+      validation: {
+        ...(validation || {}),
+        quality: "city_fallback",
+        sourceMode: "city_search_fallback",
+        citySearchScore: item.score
+      }
+    };
+  }
+
+  return null;
+}
+
+async function resolveLocationFromTeamEntity(inputRow, teamEntity, teamLabel = "") {
+  if (!teamEntity || typeof teamEntity !== "object") return null;
+
+  const teamName = normalizeText(inputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+
+  const claimProps = [
+    "P159", // headquarters location
+    "P740", // location of formation
+    "P276", // location
+    "P131"  // located in administrative territorial entity
+  ];
+
+  const candidateIds = [];
+
+  for (const prop of claimProps) {
+    for (const claim of getClaims(teamEntity, prop)) {
+      const id = getEntityIdFromClaim(claim);
+      if (id && !candidateIds.includes(id)) {
+        candidateIds.push(id);
+      }
+    }
+  }
+
+  if (!candidateIds.length) return null;
+
+  let entitiesData = null;
+
+  try {
+    entitiesData = await fetchJson(buildGetEntitiesUrl(candidateIds.slice(0, 8)), {
+      retries: 0,
+      baseDelayMs: 300,
+      timeoutMs: 5000
+    });
+  } catch {
+    return null;
+  }
+
+  const entities = entitiesData?.entities || {};
+
+  for (const locationEntity of Object.values(entities)) {
+    if (isCountryLikeEntity(locationEntity)) {
+      continue;
+    }
+
+    const coordClaim = getClaims(locationEntity, "P625")[0];
+    const coords = getCoordinateFromClaim(coordClaim);
+
+    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+      continue;
+    }
+
+    const countryClaim = getClaims(locationEntity, "P17")[0];
+    const countryId = getEntityIdFromClaim(countryClaim);
+
+    let country = expectedCountry || "";
+
+    if (countryId) {
+      try {
+        const countryData = await fetchJson(buildGetEntitiesUrl([countryId]), {
+          retries: 0,
+          baseDelayMs: 300,
+          timeoutMs: 3500
+        });
+
+        country = getEntityLabel(countryData?.entities?.[countryId]) || country;
+      } catch {
+        country = expectedCountry || "";
+      }
+    }
+
+    const resolved = {
+      teamLabel: teamLabel || teamName,
+      venue: "",
+      city: getEntityLabel(locationEntity) || "",
+      country: country || expectedCountry || "",
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      wikidataTeamId: teamEntity.id || null,
+      wikidataVenueId: null,
+      wikidataCityId: locationEntity.id || null
+    };
+
+    const validation = validateResolvedGeo(inputRow, resolved);
+
+    if (validation?.ok === false) {
+      continue;
+    }
+
+    return {
+      ...resolved,
+      validation: {
+        ...(validation || {}),
+        quality: "location_fallback",
+        sourceMode: "team_entity_location_claim",
+        locationClaimSource: "team_entity"
+      }
+    };
+  }
+
+  return null;
+}
+
+function validateResolvedGeo(inputRow, resolved) {
+  const slug = normalizeText(inputRow?.leagueSlug);
+  const coverage = getLeagueCoverage(slug);
+  const expectedCountry = expectedCountryFromLeagueSlug(slug);
+  const actualCountry = normalizeText(resolved?.country);
+
+  if (!coverage) {
+    return {
+      ok: true,
+      quality: "unknown_league"
+    };
+  }
+
+  if (
+    expectedCountry &&
+    actualCountry &&
+    !countryLooksCompatible(expectedCountry, actualCountry)
+  ) {
+    return {
+      ok: false,
+      reason: "country_mismatch",
+      expectedCountry,
+      actualCountry,
+      leagueSlug: slug
+    };
+  }
+
+  const hasCoords = hasUsableCoordinates(resolved);
+  const hasVenue = !!normalizeText(resolved?.venue);
+  const hasCity = !!normalizeText(resolved?.city);
+  const hasCountry = !!actualCountry;
+
+  if (hasCoords && hasVenue && hasCity && hasCountry) {
+    return {
+      ok: true,
+      quality: "complete",
+      leagueSlug: slug,
+      leagueType: coverage?.type || null
+    };
+  }
+
+  if (hasCoords || hasVenue || hasCity || hasCountry) {
+    return {
+      ok: true,
+      quality: "partial",
+      leagueSlug: slug,
+      leagueType: coverage?.type || null
+    };
+  }
+
+  return {
+    ok: false,
+    reason: "empty_resolution",
+    leagueSlug: slug
+  };
+}
+
+const TEAM_SEARCH_ALIAS_OVERRIDES = {
+  "Al Nassr": ["Al Nassr FC", "Al-Nassr FC", "Al-Nassr Football Club"],
+  "Barcelona": ["FC Barcelona", "Futbol Club Barcelona"],
+  "BK Häcken": ["BK Häcken", "Häcken", "Bollklubben Häcken"],
+  "Bolívar": ["Club Bolívar", "Bolivar La Paz", "Club Bolivar"],
+  "Burnley": ["Burnley FC", "Burnley F.C.", "Burnley Football Club"],
+  "Celta Vigo": ["RC Celta de Vigo", "Real Club Celta de Vigo", "Celta de Vigo"],
+  "Corinthians": ["Sport Club Corinthians Paulista", "Corinthians Paulista"],
+  "Djurgården": ["Djurgårdens IF Fotboll", "Djurgårdens IF", "Djurgarden"],
+  "Elche": ["Elche CF", "Elche Club de Fútbol"],
+  "FC Andorra": ["FC Andorra", "Futbol Club Andorra"],
+  "Fluminense": ["Fluminense FC", "Fluminense Football Club", "Fluminense Football Club Rio de Janeiro"],
+  "Getafe": ["Getafe CF", "Getafe Club de Fútbol"],
+  "Girona": ["Girona FC", "Girona Futbol Club"],
+  "Independiente Medellín": ["Deportivo Independiente Medellín", "Independiente Medellin", "DIM"],
+  "Kifisia": ["Kifisia FC", "Kifisia F.C.", "A.E. Kifisia FC", "AE Kifisia"],
+  "Lazio": ["S.S. Lazio", "SS Lazio", "Società Sportiva Lazio"],
+  "León": ["Club León", "Leon FC", "Club Leon"],
+  "Mallorca": ["RCD Mallorca", "Real Club Deportivo Mallorca", "Mallorca"],
+  "Middlesbrough": ["Middlesbrough FC", "Middlesbrough F.C.", "Middlesbrough Football Club"],
+  "Monterrey": ["C.F. Monterrey", "CF Monterrey", "Club de Fútbol Monterrey"],
+  "Nantes": ["FC Nantes", "Football Club de Nantes"],
+  "Nice": ["OGC Nice", "Olympique Gymnaste Club Nice"],
+  "Panetolikos": ["Panetolikos FC", "Panetolikos F.C.", "Panetolikos G.F.S."],
+  "Peñarol": ["Club Atlético Peñarol", "Penarol", "CA Peñarol"],
+  "Pisa": ["Pisa SC", "Pisa Sporting Club", "AC Pisa 1909"],
+  "Pisa SC": ["Pisa", "Pisa Sporting Club", "AC Pisa 1909"],
+  "Puebla": ["Club Puebla", "Puebla FC", "Puebla F.C."],
+  "Querétaro": ["Querétaro FC", "Querétaro F.C.", "Queretaro FC", "Club Querétaro"],
+  "Sporting CP": ["Sporting Clube de Portugal", "Sporting CP", "Sporting Lisbon"],
+  "Stellenbosch": ["Stellenbosch FC", "Stellenbosch Football Club"],
+  "Västerås SK": ["Västerås SK Fotboll", "Västerås SK", "Vasteras SK"]
+};
+
+function stripDiacritics(value) {
+  return normalizeText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function uniqueCleanStrings(values) {
+  return [
+    ...new Set(
+      values
+        .map(value => normalizeText(value))
+        .filter(Boolean)
+    )
+  ];
+}
+
+function buildGenericTeamAliases(teamName) {
+  const raw = normalizeText(teamName);
+  if (!raw) return [];
+
+  const noDiacritics = stripDiacritics(raw);
+
+  const variants = [
+    raw,
+    noDiacritics
+  ];
+
+  const compactRules = [
+    [/^FC\s+/i, ""],
+    [/\s+FC$/i, ""],
+    [/^CF\s+/i, ""],
+    [/\s+CF$/i, ""],
+    [/^SC\s+/i, ""],
+    [/\s+SC$/i, ""],
+    [/^AC\s+/i, ""],
+    [/\s+AC$/i, ""],
+    [/^AFC\s+/i, ""],
+    [/\s+AFC$/i, ""],
+    [/^RC\s+/i, ""],
+    [/\s+RC$/i, ""],
+    [/^RCD\s+/i, ""],
+    [/\s+RCD$/i, ""],
+    [/^Real\s+/i, ""],
+    [/^Club\s+/i, ""],
+    [/\s+Club$/i, ""],
+    [/\s+Utd$/i, " United"],
+    [/\s+F\.C\.$/i, " FC"],
+    [/\s+C\.F\.$/i, " CF"]
+  ];
+
+  for (const base of [raw, noDiacritics]) {
+    for (const [pattern, replacement] of compactRules) {
+      const next = normalizeText(base.replace(pattern, replacement));
+      if (next && next !== base) variants.push(next);
+    }
+  }
+
+  const suffixes = [
+    "FC",
+    "F.C.",
+    "Football Club",
+    "football club",
+    "soccer club"
+  ];
+
+  for (const base of [...variants]) {
+    for (const suffix of suffixes) {
+      if (!new RegExp(`\\b${suffix.replace(".", "\\.")}\\b`, "i").test(base)) {
+        variants.push(`${base} ${suffix}`);
+      }
+    }
+  }
+
+  if (/\bUnited\b/i.test(raw)) {
+    variants.push(raw.replace(/\bUnited\b/i, "Utd"));
+  }
+
+  if (/\bUtd\b/i.test(raw)) {
+    variants.push(raw.replace(/\bUtd\b/i, "United"));
+  }
+
+  return uniqueCleanStrings(variants);
+}
+
+function getOfficialTeamNames(teamName) {
+  const raw = normalizeText(teamName);
+  const repaired = normalizeText(repairTextEncoding(teamName));
+  const noDiacritics = stripDiacritics(repaired);
+
+  const overrides = [
+    ...(TEAM_SEARCH_ALIAS_OVERRIDES[raw] || []),
+    ...(TEAM_SEARCH_ALIAS_OVERRIDES[repaired] || []),
+    ...(TEAM_SEARCH_ALIAS_OVERRIDES[noDiacritics] || [])
+  ];
+
+  return uniqueCleanStrings([
+    raw,
+    repaired,
+    noDiacritics,
+    ...overrides,
+    ...buildGenericTeamAliases(raw),
+    ...buildGenericTeamAliases(repaired)
+  ]).slice(0, 12);
+}
+
+function buildSearchQueries(teamName, expectedCountry) {
+  const baseNames = getOfficialTeamNames(teamName).slice(0, 8);
+  const queries = [];
+
+  for (const name of baseNames) {
+    queries.push(name);
+    queries.push(`${name} football club`);
+
+    if (expectedCountry) {
+      queries.push(`${name} ${expectedCountry}`);
+      queries.push(`${name} ${expectedCountry} football club`);
+    }
+  }
+
+  return uniqueCleanStrings(queries).slice(0, 24);
+}
+async function searchTeamCandidates(teamName, expectedCountry) {
+  const queries = buildSearchQueries(teamName, expectedCountry).slice(0, 6);
+  const merged = [];
+  const seenIds = new Set();
+
+  for (const query of queries) {
+    try {
+      const searchData = await fetchJson(buildSearchUrl(query, 5), {
+        retries: 0,
+        baseDelayMs: 250,
+        timeoutMs: 3500
+      });
+
+      const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
+
+      for (const item of searchResults) {
+        const id = item?.id;
+        if (!id || seenIds.has(id)) continue;
+        seenIds.add(id);
+        merged.push(item);
+      }
+
+      if (merged.length >= 8) break;
+    } catch {
+      continue;
+    }
+  }
+
+  return merged.slice(0, 8);
+}
+
+async function resolveTeamGeo(inputRow) {
+  const teamName = normalizeText(inputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+
+  const searchResults = await searchTeamCandidates(teamName, expectedCountry);
+
+  if (!searchResults.length) {
+    return (
+      await resolveVenueBySearch(inputRow, teamName) ||
+      await resolveCityBySearch(inputRow, teamName)
+    );
+  }
+  const candidateIds = searchResults
+    .map(item => item?.id)
+    .filter(Boolean)
+    .slice(0, 8);
+
+  if (!candidateIds.length) {
+    return null;
+  }
+
+  const teamEntitiesData = await fetchJson(buildGetEntitiesUrl(candidateIds), {
+    retries: 0,
+    baseDelayMs: 300,
+    timeoutMs: 5000
+  });
+  const teamEntities = teamEntitiesData?.entities || {};
+
+  const searchHitById = Object.fromEntries(
+    searchResults
+      .filter(item => item?.id)
+      .map(item => [item.id, item])
+  );
+
+  const rankedTeams = Object.values(teamEntities)
+    .map(entity => ({
+      entity,
+      score: scoreTeamEntity(
+        entity,
+        searchHitById[entity?.id] || null,
+        teamName,
+        expectedCountry
+      )
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const bestRank = rankedTeams[0] || null;
+  const secondRank = rankedTeams[1] || null;
+  const bestTeam = bestRank?.entity || null;
+
+  if (!bestTeam) {
+    return null;
+  }
+
+  const bestTeamLabel = getEntityLabel(bestTeam) || teamName;
+  const exactOfficialLabelMatch = isExactOfficialLabelMatch(teamName, bestTeamLabel);
+
+  if (
+    secondRank &&
+    Number.isFinite(bestRank?.score) &&
+    Number.isFinite(secondRank?.score) &&
+    bestRank.score - secondRank.score < 4 &&
+    !exactOfficialLabelMatch
+  ) {
+    return {
+      rejected: true,
+      rejectReason: "ambiguous_top_candidates",
+      teamLabel: bestTeamLabel,
+      venue: "",
+      city: "",
+      country: "",
+      latitude: null,
+      longitude: null,
+      wikidataTeamId: bestTeam.id || null,
+      wikidataVenueId: null
+    };
+  }
+
+  const venueClaim = getClaims(bestTeam, "P115")[0];
+  const venueId = getEntityIdFromClaim(venueClaim);
+
+  if (!venueId) {
+    const fallbackVenue = await resolveVenueBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackVenue) {
+      return {
+        ...fallbackVenue,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackLocation = await resolveLocationFromTeamEntity(
+      inputRow,
+      bestTeam,
+      bestTeamLabel
+    );
+
+    if (fallbackLocation) {
+      return {
+        ...fallbackLocation,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackCity = await resolveCityBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackCity) {
+      return {
+        ...fallbackCity,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    return {
+      teamLabel: getEntityLabel(bestTeam) || teamName,
+      venue: "",
+      city: "",
+      country: "",
+      latitude: null,
+      longitude: null,
+      wikidataTeamId: bestTeam.id || null,
+      wikidataVenueId: null,
+      wikidataCityId: null
+    };
+  }
+
+  const venueEntitiesData = await fetchJson(buildGetEntitiesUrl([venueId]), {
+    retries: 1,
+    baseDelayMs: 500,
+    timeoutMs: 8000
+  });
+  const venueEntity = venueEntitiesData?.entities?.[venueId] || null;
+
+  if (!venueEntity) {
+    const fallbackVenue = await resolveVenueBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackVenue) {
+      return {
+        ...fallbackVenue,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackLocation = await resolveLocationFromTeamEntity(
+      inputRow,
+      bestTeam,
+      bestTeamLabel
+    );
+
+    if (fallbackLocation) {
+      return {
+        ...fallbackLocation,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackCity = await resolveCityBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackCity) {
+      return {
+        ...fallbackCity,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    return {
+      teamLabel: getEntityLabel(bestTeam) || teamName,
+      venue: "",
+      city: "",
+      country: "",
+      latitude: null,
+      longitude: null,
+      wikidataTeamId: bestTeam.id || null,
+      wikidataVenueId: venueId,
+      wikidataCityId: null
+    };
+  }
+
+  const coordClaim = getClaims(venueEntity, "P625")[0];
+  const countryClaim = getClaims(venueEntity, "P17")[0];
+  const adminClaim = getClaims(venueEntity, "P131")[0];
+
+  const coords = getCoordinateFromClaim(coordClaim);
+
+  if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+    const fallbackVenue = await resolveVenueBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackVenue) {
+      return {
+        ...fallbackVenue,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackLocation = await resolveLocationFromTeamEntity(
+      inputRow,
+      bestTeam,
+      bestTeamLabel
+    );
+
+    if (fallbackLocation) {
+      return {
+        ...fallbackLocation,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackCity = await resolveCityBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackCity) {
+      return {
+        ...fallbackCity,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+  }
+
+  const countryId = getEntityIdFromClaim(countryClaim);
+  const adminId = getEntityIdFromClaim(adminClaim);
+
+  const lookupIds = [countryId, adminId].filter(Boolean);
+  let lookupEntities = {};
+
+  if (lookupIds.length) {
+    const lookupData = await fetchJson(buildGetEntitiesUrl(lookupIds), {
+      retries: 1,
+      baseDelayMs: 500,
+      timeoutMs: 8000
+    });
+    lookupEntities = lookupData?.entities || {};
+  }
+
+  const country = countryId ? getEntityLabel(lookupEntities[countryId]) : "";
+  const city = adminId ? getEntityLabel(lookupEntities[adminId]) : "";
+
+  const resolved = {
+    teamLabel: getEntityLabel(bestTeam) || teamName,
+    venue: getEntityLabel(venueEntity) || "",
+    city: city || "",
+    country: country || "",
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    wikidataTeamId: bestTeam.id || null,
+    wikidataVenueId: venueEntity.id || null
+  };
+
+  const validation = validateResolvedGeo(inputRow, resolved);
+
+  return {
+    ...resolved,
+    validation
+  };
+}
+
+function mergeResolvedRow(inputRow, resolved) {
+  const latitude = isValidLatitude(resolved?.latitude)
+    ? Number(resolved.latitude)
+    : (isValidLatitude(inputRow?.latitude) ? Number(inputRow.latitude) : null);
+
+  const longitude = isValidLongitude(resolved?.longitude)
+    ? Number(resolved.longitude)
+    : (isValidLongitude(inputRow?.longitude) ? Number(inputRow.longitude) : null);
+
+  return {
+    team: normalizeText(inputRow?.team),
+    leagueSlug: normalizeText(inputRow?.leagueSlug) || null,
+    venue: normalizeText(resolved?.venue) || normalizeText(inputRow?.venue) || "",
+    city: normalizeText(resolved?.city) || normalizeText(inputRow?.city) || "",
+    country: normalizeText(resolved?.country) || normalizeText(inputRow?.country) || "",
+    latitude,
+    longitude,
+    source: "wikidata_bootstrap",
+    sourceMeta: {
+      wikidataTeamId: resolved?.wikidataTeamId || null,
+      wikidataVenueId: resolved?.wikidataVenueId || null,
+      wikidataCityId: resolved?.wikidataCityId || null,
+      teamLabel: normalizeText(resolved?.teamLabel) || null,
+      validation: resolved?.validation || null,
+      rejected: !!resolved?.rejected,
+      rejectReason: resolved?.rejectReason || null
+    }
+  };
+}
+
+export async function bootstrapTeamGeoFromWikidata({
+  inputFile = DEFAULT_INPUT,
+  outputFile = DEFAULT_OUTPUT,
+  delayMs = 1100,
+  rowTimeoutMs = 20000,
+  startIndex = 0,
+  limit = null,
+  checkpointEvery = 5,
+  checkpointFile = null,
+  resume = true
+} = {}) {
+  const rows = readJsonArray(inputFile);
+
+  if (!rows.length) {
+    return {
+      ok: false,
+      reason: "no_rows",
+      inputFile,
+      outputFile,
+      total: 0
+    };
+  }
+
+  const safeStartIndex = toNonNegativeInteger(startIndex, 0);
+  const safeLimit = limit === null ? null : toPositiveInteger(limit, null);
+  const safeDelayMs = toNonNegativeInteger(delayMs, 1100);
+  const safeRowTimeoutMs = toPositiveInteger(rowTimeoutMs, 20000);
+  const safeCheckpointEvery = toPositiveInteger(checkpointEvery, 5);
+  const resolvedCheckpointFile = checkpointFile || defaultCheckpointFile(outputFile);
+
+  let output = [];
+  let alreadyComplete = 0;
+  let enrichedComplete = 0;
+  let enrichedPartial = 0;
+  let notFound = 0;
+  let effectiveStartIndex = safeStartIndex;
+
+  if (resume) {
+    const checkpoint = readJsonObject(resolvedCheckpointFile);
+
+    if (
+      checkpoint &&
+      checkpoint.inputFile === inputFile &&
+      checkpoint.outputFile === outputFile &&
+      Array.isArray(checkpoint.output)
+    ) {
+      output = checkpoint.output;
+      alreadyComplete = toNonNegativeInteger(checkpoint.alreadyComplete, 0);
+      enrichedComplete = toNonNegativeInteger(checkpoint.enrichedComplete, 0);
+      enrichedPartial = toNonNegativeInteger(checkpoint.enrichedPartial, 0);
+      notFound = toNonNegativeInteger(checkpoint.notFound, 0);
+      effectiveStartIndex = Math.max(
+        safeStartIndex,
+        toNonNegativeInteger(checkpoint.nextIndex, safeStartIndex)
+      );
+
+      console.log("[bootstrap-team-geo-from-wikidata] checkpoint:resume", {
+        checkpointFile: resolvedCheckpointFile,
+        nextIndex: effectiveStartIndex,
+        outputRows: output.length
+      });
+    }
+  }
+
+  const endExclusive =
+    safeLimit === null
+      ? rows.length
+      : Math.min(rows.length, effectiveStartIndex + safeLimit);
+
+  for (let i = effectiveStartIndex; i < endExclusive; i += 1) {
+    const row = rows[i];
+    const team = normalizeText(row?.team);
+
+    console.log("[bootstrap-team-geo-from-wikidata] row:start", {
+      index: i + 1,
+      total: rows.length,
+      batchStartIndex: effectiveStartIndex,
+      batchEndIndex: endExclusive - 1,
+      team
+    });
+
+    try {
+      if (isCompleteRow(row)) {
+        alreadyComplete += 1;
+        output.push({
+          ...row,
+          source: normalizeText(row?.source) || "bootstrap_manual"
+        });
+
+        console.log("[bootstrap-team-geo-from-wikidata] row:done", {
+          index: i + 1,
+          total: rows.length,
+          team,
+          status: "already_complete"
+        });
+      } else {
+        const resolved = await withRowTimeout(
+          resolveTeamGeo(row),
+          safeRowTimeoutMs,
+          team
+        );
+
+        if (!resolved) {
+          notFound += 1;
+          output.push({
+            ...row,
+            source: normalizeText(row?.source) || "bootstrap_manual",
+            sourceMeta: {
+              error: "not_found"
+            }
+          });
+
+          console.log("[bootstrap-team-geo-from-wikidata] row:done", {
+            index: i + 1,
+            total: rows.length,
+            team,
+            status: "not_found"
+          });
+        } else if (resolved?.rejected) {
+          notFound += 1;
+          output.push({
+            ...row,
+            source: normalizeText(row?.source) || "bootstrap_manual",
+            sourceMeta: {
+              error: resolved.rejectReason || "rejected_candidate",
+              wikidataTeamId: resolved?.wikidataTeamId || null,
+              teamLabel: normalizeText(resolved?.teamLabel) || null
+            }
+          });
+
+          console.log("[bootstrap-team-geo-from-wikidata] row:done", {
+            index: i + 1,
+            total: rows.length,
+            team,
+            status: "rejected",
+            reason: resolved.rejectReason || "rejected_candidate"
+          });
+        } else {
+          const merged = mergeResolvedRow(row, resolved);
+          const validationOk = merged?.sourceMeta?.validation?.ok !== false;
+
+          if (!validationOk) {
+            notFound += 1;
+            output.push({
+              ...row,
+              source: normalizeText(row?.source) || "bootstrap_manual",
+              sourceMeta: {
+                error: merged?.sourceMeta?.validation?.reason || "validation_failed",
+                validation: merged?.sourceMeta?.validation || null,
+                wikidataTeamId: merged?.sourceMeta?.wikidataTeamId || null,
+                wikidataVenueId: merged?.sourceMeta?.wikidataVenueId || null,
+                teamLabel: merged?.sourceMeta?.teamLabel || null
+              }
+            });
+
+            console.log("[bootstrap-team-geo-from-wikidata] row:done", {
+              index: i + 1,
+              total: rows.length,
+              team,
+              status: "rejected",
+              reason: merged?.sourceMeta?.validation?.reason || "validation_failed"
+            });
+          } else {
+            output.push(merged);
+
+            if (isCompleteRow(merged)) {
+              enrichedComplete += 1;
+            } else {
+              enrichedPartial += 1;
+            }
+
+            console.log("[bootstrap-team-geo-from-wikidata] row:done", {
+              index: i + 1,
+              total: rows.length,
+              team,
+              status: isCompleteRow(merged) ? "enriched_complete" : "enriched_partial",
+              validation: merged?.sourceMeta?.validation?.quality || null
+            });
+          }
+        }
+      }
+    } catch (err) {
+      notFound += 1;
+      output.push({
+        ...row,
+        source: normalizeText(row?.source) || "bootstrap_manual",
+        sourceMeta: {
+          error: err?.message || String(err)
+        }
+      });
+
+      console.log("[bootstrap-team-geo-from-wikidata] row:error", {
+        index: i + 1,
+        total: rows.length,
+        team,
+        error: err?.message || String(err)
+      });
+    }
+
+    const processedInBatch = i - effectiveStartIndex + 1;
+    const shouldCheckpoint =
+      processedInBatch % safeCheckpointEvery === 0 || i === endExclusive - 1;
+
+    if (shouldCheckpoint) {
+      writeCheckpoint(resolvedCheckpointFile, {
+        ok: true,
+        inputFile,
+        outputFile,
+        total: rows.length,
+        nextIndex: i + 1,
+        alreadyComplete,
+        enrichedComplete,
+        enrichedPartial,
+        notFound,
+        output
+      });
+
+      writeJson(outputFile, output);
+
+      console.log("[bootstrap-team-geo-from-wikidata] checkpoint:write", {
+        checkpointFile: resolvedCheckpointFile,
+        nextIndex: i + 1,
+        outputRows: output.length
+      });
+    }
+
+    if (i < endExclusive - 1 && safeDelayMs > 0) {
+      await sleep(safeDelayMs);
+    }
+  }
+
+  writeJson(outputFile, output);
+
+  return {
+    ok: true,
+    inputFile,
+    outputFile,
+    checkpointFile: resolvedCheckpointFile,
+    total: rows.length,
+    startedAtIndex: effectiveStartIndex,
+    finishedAtIndex: endExclusive - 1,
+    processedThisRun: Math.max(0, endExclusive - effectiveStartIndex),
+    alreadyComplete,
+    enrichedComplete,
+    enrichedPartial,
+    notFound
+  };
+}
+const __filename = fileURLToPath(import.meta.url);
+
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
+  const inputFile = process.argv[2] || DEFAULT_INPUT;
+  const outputFile = process.argv[3] || DEFAULT_OUTPUT;
+  const options = parseCliOptions(process.argv.slice(4));
+
+  const delayMs = toNonNegativeInteger(options.delay ?? options.delayMs, 1100);
+  const rowTimeoutMs = toPositiveInteger(
+    options["row-timeout"] ?? options.rowTimeoutMs,
+    20000
+  );
+  const startIndex = toNonNegativeInteger(
+    options.start ?? options.startIndex,
+    0
+  );
+  const limit =
+    options.limit === undefined ? null : toPositiveInteger(options.limit, null);
+  const checkpointEvery = toPositiveInteger(
+    options["checkpoint-every"] ?? options.checkpointEvery,
+    5
+  );
+  const checkpointFile =
+    normalizeText(options.checkpoint || options.checkpointFile) || null;
+  const resume =
+    options["no-resume"] !== undefined
+      ? false
+      : toBooleanFlag(options.resume, true);
+
+  console.log("[bootstrap-team-geo-from-wikidata] cli:start", {
+    inputFile,
+    outputFile,
+    delayMs,
+    rowTimeoutMs,
+    startIndex,
+    limit,
+    checkpointEvery,
+    checkpointFile,
+    resume
+  });
+
+  bootstrapTeamGeoFromWikidata({
+    inputFile,
+    outputFile,
+    delayMs,
+    rowTimeoutMs,
+    startIndex,
+    limit,
+    checkpointEvery,
+    checkpointFile,
+    resume
+  })
+    .then(result => {
+      console.log("[bootstrap-team-geo-from-wikidata] cli:done", result);
+      process.exit(result?.ok ? 0 : 1);
+    })
+    .catch(err => {
+      console.error("[bootstrap-team-geo-from-wikidata] cli:fatal", err);
+      process.exit(1);
+    });
+}

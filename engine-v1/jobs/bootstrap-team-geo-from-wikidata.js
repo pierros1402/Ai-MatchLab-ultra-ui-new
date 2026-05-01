@@ -26,13 +26,154 @@ function writeJson(filePath, data) {
 
 function readJsonArray(filePath) {
   if (!fs.existsSync(filePath)) return [];
-  const raw = fs.readFileSync(filePath, "utf8");
+  const raw = fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, "");
   const parsed = JSON.parse(raw);
   return Array.isArray(parsed) ? parsed : [];
 }
 
+function replaceAllLiteral(text, needle, replacement) {
+  return String(text ?? "").split(needle).join(replacement);
+}
+
+function repairTextEncoding(value) {
+  let text = String(value ?? "");
+
+  const repairs = [
+    ["\u0393\u00b1", "\u00f1"],
+    ["\u0393\u00ad", "\u00ed"],
+    ["\u0393\u00a9", "\u00e9"],
+    ["\u0393\u00a1", "\u00e1"],
+    ["\u0393\u00b3", "\u00f3"],
+    ["\u0393\u00ba", "\u00fa"],
+    ["\u0393\u00bc", "\u00fc"],
+    ["\u0393\u00a3", "\u00e3"],
+    ["\u0393\u00a7", "\u00e7"],
+    ["\u0393\u00a8", "\u00e8"],
+    ["\u0393\u00aa", "\u00ea"],
+    ["\u0393\u00b4", "\u00f4"],
+    ["\u0393\u00af", "\u00ef"],
+
+    ["\u00c3\u00b1", "\u00f1"],
+    ["\u00c3\u00ad", "\u00ed"],
+    ["\u00c3\u00a9", "\u00e9"],
+    ["\u00c3\u00a1", "\u00e1"],
+    ["\u00c3\u00b3", "\u00f3"],
+    ["\u00c3\u00ba", "\u00fa"],
+    ["\u00c3\u00bc", "\u00fc"],
+    ["\u00c3\u00a3", "\u00e3"],
+    ["\u00c3\u00a7", "\u00e7"],
+    ["\u00c3\u00a8", "\u00e8"],
+    ["\u00c3\u00aa", "\u00ea"],
+    ["\u00c3\u00b4", "\u00f4"],
+    ["\u00c3\u00af", "\u00ef"],
+
+    ["\u039e\u201c\u0392\u00b1", "\u00f1"],
+    ["\u039e\u201c\u0392\u00ad", "\u00ed"],
+    ["\u039e\u201c\u0392\u00a9", "\u00e9"],
+    ["\u039e\u201c\u0392\u00a1", "\u00e1"],
+    ["\u039e\u201c\u0392\u00b3", "\u00f3"],
+    ["\u039e\u201c\u0392\u00ba", "\u00fa"],
+    ["\u039e\u201c\u0392\u00bc", "\u00fc"],
+    ["\u039e\u201c\u0392\u00a3", "\u00e3"],
+    ["\u039e\u201c\u0392\u00a7", "\u00e7"],
+    ["\u039e\u201c\u0392\u00a8", "\u00e8"],
+    ["\u039e\u201c\u0392\u00aa", "\u00ea"],
+    ["\u039e\u201c\u0392\u00b4", "\u00f4"],
+    ["\u039e\u201c\u0392\u00af", "\u00ef"],
+
+    ["\u0393\u0192\u0392\u00b1", "\u00f1"],
+    ["\u0393\u0192\u0392\u00ad", "\u00ed"],
+    ["\u0393\u0192\u0392\u00a9", "\u00e9"],
+    ["\u0393\u0192\u0392\u00a1", "\u00e1"],
+    ["\u0393\u0192\u0392\u00b3", "\u00f3"],
+    ["\u0393\u0192\u0392\u00ba", "\u00fa"],
+    ["\u0393\u0192\u0392\u00bc", "\u00fc"],
+    ["\u0393\u0192\u0392\u00a3", "\u00e3"],
+    ["\u0393\u0192\u0392\u00a7", "\u00e7"],
+    ["\u0393\u0192\u0392\u00a8", "\u00e8"],
+    ["\u0393\u0192\u0392\u00aa", "\u00ea"],
+    ["\u0393\u0192\u0392\u00b4", "\u00f4"],
+    ["\u0393\u0192\u0392\u00af", "\u00ef"],
+
+    ["\u039e\u00b2\u03b2\u201a\u00ac\u03b2\u20ac", "\u2013"],
+    ["\u03b2\u201a\u00ac\u03b2\u20ac", "\u2013"]
+  ];
+
+  for (const [bad, good] of repairs) {
+    text = replaceAllLiteral(text, bad, good);
+  }
+
+  return text;
+}
+
 function normalizeText(value) {
-  return String(value || "").trim();
+  return repairTextEncoding(value)
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+const KNOWN_DAMAGED_TEAM_NAME_REPAIRS = new Map([
+  ["pe??arol", "Pe\u00f1arol"],
+  ["pe arol", "Pe\u00f1arol"],
+  ["penarol", "Pe\u00f1arol"],
+  ["independiente medell??n", "Independiente Medell\u00edn"],
+  ["independiente medell n", "Independiente Medell\u00edn"],
+  ["independiente medellin", "Independiente Medell\u00edn"],
+  ["bolivar", "Bol\u00edvar"],
+  ["pisa sporting club", "Pisa SC"]
+]);
+
+function canonicalTeamName(value) {
+  const repaired = normalizeText(value);
+  if (!repaired) return "";
+
+  const lookupKey = stripDiacritics(repaired)
+    .toLowerCase()
+    .replace(/[^a-z0-9?\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return KNOWN_DAMAGED_TEAM_NAME_REPAIRS.get(lookupKey) || repaired;
+}
+
+function normalizeBootstrapInputRow(row) {
+  return {
+    ...row,
+    team: canonicalTeamName(row?.team),
+    leagueSlug: normalizeText(row?.leagueSlug) || null,
+    venue: normalizeText(row?.venue) || "",
+    city: normalizeText(row?.city) || "",
+    country: normalizeText(row?.country) || "",
+    source: normalizeText(row?.source) || ""
+  };
+}
+
+function normalizeSourceMeta(meta = {}) {
+  if (!meta || typeof meta !== "object") return meta || null;
+
+  return {
+    ...meta,
+    teamLabel: meta.teamLabel ? canonicalTeamName(meta.teamLabel) : meta.teamLabel,
+    error: meta.error ? normalizeText(meta.error) : meta.error,
+    rejectReason: meta.rejectReason ? normalizeText(meta.rejectReason) : meta.rejectReason
+  };
+}
+
+function normalizeOutputRow(row, sourceFallback = "bootstrap_manual") {
+  const normalized = normalizeBootstrapInputRow(row || {});
+
+  return {
+    ...row,
+    team: normalized.team,
+    leagueSlug: normalized.leagueSlug,
+    venue: normalized.venue,
+    city: normalized.city,
+    country: normalized.country,
+    latitude: isValidLatitude(row?.latitude) ? Number(row.latitude) : null,
+    longitude: isValidLongitude(row?.longitude) ? Number(row.longitude) : null,
+    source: normalizeText(row?.source) || sourceFallback,
+    sourceMeta: normalizeSourceMeta(row?.sourceMeta || null)
+  };
 }
 
 function normalizeCountry(value) {
@@ -170,8 +311,8 @@ function countryLooksCompatible(expectedCountry, actualCountry) {
     "united states": ["united states of america", "usa"],
     usa: ["united states", "united states of america"],
 
-    turkey: ["türkiye"],
-    türkiye: ["turkey"],
+    turkiye: ["turkey"],
+    turkiye: ["turkey"],
 
     "czech republic": ["czechia"],
     czechia: ["czech republic"],
@@ -269,7 +410,7 @@ function readJsonObject(filePath) {
   if (!fs.existsSync(filePath)) return null;
 
   try {
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return JSON.parse(fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, ""));
   } catch {
     return null;
   }
@@ -381,13 +522,13 @@ async function fetchJson(
   throw lastError || new Error("wikidata_fetch_failed");
 }
 
-function buildSearchUrl(teamName) {
+function buildSearchUrl(teamName, limit = 5) {
   const url = new URL(WIKIDATA_API_URL);
   url.searchParams.set("action", "wbsearchentities");
   url.searchParams.set("format", "json");
   url.searchParams.set("language", "en");
   url.searchParams.set("type", "item");
-  url.searchParams.set("limit", "5");
+  url.searchParams.set("limit", String(limit));
   url.searchParams.set("search", teamName);
   url.searchParams.set("origin", "*");
   return url.toString();
@@ -412,6 +553,23 @@ function getClaims(entity, propertyId) {
   return Array.isArray(entity?.claims?.[propertyId]) ? entity.claims[propertyId] : [];
 }
 
+function entityHasClaimEntity(entity, propertyId, targetId) {
+  return getClaims(entity, propertyId).some(claim => {
+    return getEntityIdFromClaim(claim) === targetId;
+  });
+}
+
+function isCountryLikeEntity(entity) {
+  // Q6256 = country
+  // Q3624078 = sovereign state
+  // Q7275 = state
+  return (
+    entityHasClaimEntity(entity, "P31", "Q6256") ||
+    entityHasClaimEntity(entity, "P31", "Q3624078") ||
+    entityHasClaimEntity(entity, "P31", "Q7275")
+  );
+}
+
 function getEntityIdFromClaim(claim) {
   return claim?.mainsnak?.datavalue?.value?.id || null;
 }
@@ -427,6 +585,26 @@ function getCoordinateFromClaim(claim) {
     latitude: Number.isFinite(latitude) ? latitude : null,
     longitude: Number.isFinite(longitude) ? longitude : null
   };
+}
+
+function isExactOfficialLabelMatch(teamName, candidateLabel) {
+  const wanted = normalizeSearchText(teamName);
+  const candidate = normalizeSearchText(candidateLabel);
+
+  if (!wanted || !candidate) return false;
+  if (wanted === candidate) return true;
+
+  const wantedAliases = new Set(getOfficialTeamNames(teamName).map(normalizeSearchText));
+  const candidateAliases = new Set(getOfficialTeamNames(candidateLabel).map(normalizeSearchText));
+
+  if (wantedAliases.has(candidate)) return true;
+  if (candidateAliases.has(wanted)) return true;
+
+  for (const item of wantedAliases) {
+    if (candidateAliases.has(item)) return true;
+  }
+
+  return false;
 }
 
 function scoreTeamEntity(entity, searchHit, teamName, expectedCountry) {
@@ -455,6 +633,541 @@ function scoreTeamEntity(entity, searchHit, teamName, expectedCountry) {
   }
 
   return score;
+}
+
+function normalizeSearchText(value) {
+  return normalizeText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function importantTeamTokens(teamName) {
+  const stop = new Set([
+    "fc",
+    "fk",
+    "cf",
+    "sc",
+    "ac",
+    "afc",
+    "if",
+    "bk",
+    "ksv",
+    "utd",
+    "united",
+    "club",
+    "de",
+    "la",
+    "the"
+  ]);
+
+  return normalizeSearchText(teamName)
+    .split(" ")
+    .map(x => x.trim())
+    .filter(x => x.length >= 3 && !stop.has(x));
+}
+
+function buildVenueSearchQueries(teamName, expectedCountry, teamLabel = "") {
+  const names = [
+    teamName,
+    teamLabel,
+    ...getOfficialTeamNames(teamName)
+  ]
+    .map(name => normalizeText(name))
+    .filter(Boolean);
+
+  const uniqueNames = [...new Set(names)].slice(0, 2);
+  const queries = [];
+
+  for (const name of uniqueNames) {
+    queries.push(`${name} stadium`);
+    queries.push(`${name} football stadium`);
+
+    if (expectedCountry) {
+      queries.push(`${name} ${expectedCountry} stadium`);
+    }
+  }
+
+  return [...new Set(queries.map(q => normalizeText(q)).filter(Boolean))].slice(0, 4);
+}
+
+function scoreVenueEntity(entity, searchHit, teamName, expectedCountry) {
+  const label = normalizeSearchText(getEntityLabel(entity));
+  const description = normalizeSearchText(searchHit?.description);
+  const wantedTokens = importantTeamTokens(teamName);
+  const expected = normalizeSearchText(expectedCountry);
+
+  let score = 0;
+
+  if (getClaims(entity, "P625").length) score += 20;
+  if (getClaims(entity, "P17").length) score += 5;
+  if (getClaims(entity, "P131").length) score += 3;
+
+  if (
+    label.includes("stadium") ||
+    label.includes("arena") ||
+    label.includes("park") ||
+    label.includes("ground") ||
+    description.includes("stadium") ||
+    description.includes("football venue") ||
+    description.includes("sports venue") ||
+    description.includes("arena")
+  ) {
+    score += 10;
+  }
+
+  for (const token of wantedTokens) {
+    if (label.includes(token)) score += 8;
+    if (description.includes(token)) score += 4;
+  }
+
+  if (expected) {
+    if (description.includes(expected)) score += 6;
+  }
+
+  return score;
+}
+
+async function resolveVenueBySearch(inputRow, teamLabel = "") {
+  const teamName = normalizeText(inputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+  const queries = buildVenueSearchQueries(teamName, expectedCountry, teamLabel);
+
+  const merged = [];
+  const seenIds = new Set();
+
+  for (const query of queries.slice(0, 4)) {
+    try {
+      const searchData = await fetchJson(buildSearchUrl(query, 6), {
+        retries: 0,
+        baseDelayMs: 250,
+        timeoutMs: 3500
+      });
+
+      const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
+
+      for (const item of searchResults) {
+        const id = item?.id;
+        if (!id || seenIds.has(id)) continue;
+        seenIds.add(id);
+        merged.push(item);
+      }
+
+      if (merged.length >= 8) break;
+    } catch {
+      continue;
+    }
+  }
+
+  if (!merged.length) return null;
+
+  const ids = merged.map(item => item.id).filter(Boolean).slice(0, 8);
+
+  const entitiesData = await fetchJson(buildGetEntitiesUrl(ids), {
+    retries: 0,
+    baseDelayMs: 300,
+    timeoutMs: 5000
+  });
+
+  const entities = entitiesData?.entities || {};
+  const searchHitById = Object.fromEntries(
+    merged
+      .filter(item => item?.id)
+      .map(item => [item.id, item])
+  );
+
+  const rankedVenues = Object.values(entities)
+    .map(entity => ({
+      entity,
+      score: scoreVenueEntity(
+        entity,
+        searchHitById[entity?.id] || null,
+        teamName,
+        expectedCountry
+      )
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  for (const item of rankedVenues.slice(0, 4)) {
+    const venueEntity = item.entity;
+    const coordClaim = getClaims(venueEntity, "P625")[0];
+    const coords = getCoordinateFromClaim(coordClaim);
+
+    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+      continue;
+    }
+
+    const countryClaim = getClaims(venueEntity, "P17")[0];
+    const adminClaim = getClaims(venueEntity, "P131")[0];
+
+    const countryId = getEntityIdFromClaim(countryClaim);
+    const adminId = getEntityIdFromClaim(adminClaim);
+    const lookupIds = [countryId, adminId].filter(Boolean);
+
+    let lookupEntities = {};
+
+    if (lookupIds.length) {
+      const lookupData = await fetchJson(buildGetEntitiesUrl(lookupIds), {
+        retries: 0,
+        baseDelayMs: 300,
+        timeoutMs: 5000
+      });
+      lookupEntities = lookupData?.entities || {};
+    }
+
+    const country = countryId ? getEntityLabel(lookupEntities[countryId]) : "";
+    const city = adminId ? getEntityLabel(lookupEntities[adminId]) : "";
+
+    const resolved = {
+      teamLabel: teamLabel || teamName,
+      venue: getEntityLabel(venueEntity) || "",
+      city: city || "",
+      country: country || expectedCountry || "",
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      wikidataTeamId: null,
+      wikidataVenueId: venueEntity.id || null
+    };
+
+    const validation = validateResolvedGeo(inputRow, resolved);
+
+    if (validation?.ok === false) {
+      continue;
+    }
+
+    return {
+      ...resolved,
+      validation: {
+        ...(validation || {}),
+        sourceMode: "venue_search_fallback",
+        venueSearchScore: item.score
+      }
+    };
+  }
+
+  return null;
+}
+
+function buildCitySearchQueries(teamName, expectedCountry, teamLabel = "") {
+  function cityCandidateFromName(value) {
+    return normalizeText(value)
+      .replace(/\bF\.?C\.?\b/gi, "")
+      .replace(/\bC\.?F\.?\b/gi, "")
+      .replace(/\bS\.?C\.?\b/gi, "")
+      .replace(/\bA\.?C\.?\b/gi, "")
+      .replace(/\bR\.?C\.?D\.?\b/gi, "")
+      .replace(/\bFootball Club\b/gi, "")
+      .replace(/\bFutbol Club\b/gi, "")
+      .replace(/\bClub\b/gi, "")
+      .replace(/\bUnited\b/gi, "")
+      .replace(/\bUtd\b/gi, "")
+      .replace(/\bCity\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  const directTeamCity = cityCandidateFromName(teamName);
+  const directLabelCity = cityCandidateFromName(teamLabel);
+
+  const names = [
+    directTeamCity,
+    directLabelCity,
+    stripDiacritics(directTeamCity),
+    stripDiacritics(directLabelCity)
+  ]
+    .map(name => normalizeText(name))
+    .filter(Boolean);
+
+  const uniqueNames = [...new Set(names)].slice(0, 3);
+  const queries = [];
+
+  for (const name of uniqueNames) {
+    if (expectedCountry) {
+      queries.push(`${name} ${expectedCountry}`);
+    }
+
+    queries.push(name);
+  }
+
+  return [...new Set(queries.map(q => normalizeText(q)).filter(Boolean))].slice(0, 6);
+}
+
+function scoreCityEntity(entity, searchHit, teamName, expectedCountry) {
+  const label = normalizeSearchText(getEntityLabel(entity));
+  const description = normalizeSearchText(searchHit?.description);
+  const wantedTokens = importantTeamTokens(teamName);
+  const expected = normalizeSearchText(expectedCountry);
+
+  let score = 0;
+
+  if (getClaims(entity, "P625").length) score += 30;
+  if (getClaims(entity, "P17").length) score += 8;
+  if (getClaims(entity, "P131").length) score += 4;
+
+  if (
+    description.includes("city") ||
+    description.includes("town") ||
+    description.includes("municipality") ||
+    description.includes("commune") ||
+    description.includes("settlement") ||
+    description.includes("civil parish") ||
+    description.includes("unparished area")
+  ) {
+    score += 14;
+  }
+
+  for (const token of wantedTokens) {
+    if (label === token) score += 30;
+    else if (label.startsWith(`${token} `)) score += 18;
+    else if (label.includes(token)) score += 10;
+
+    if (description.includes(token)) score += 4;
+  }
+
+  if (expected) {
+    if (description.includes(expected)) score += 8;
+  }
+
+  return score;
+}
+
+async function resolveCityBySearch(inputRow, teamLabel = "") {
+  const teamName = normalizeText(inputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+  const queries = buildCitySearchQueries(teamName, expectedCountry, teamLabel);
+
+  const merged = [];
+  const seenIds = new Set();
+
+  for (const query of queries.slice(0, 4)) {
+    try {
+      const searchData = await fetchJson(buildSearchUrl(query, 8), {
+        retries: 0,
+        baseDelayMs: 250,
+        timeoutMs: 4000
+      });
+
+      const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
+
+      for (const item of searchResults) {
+        const id = item?.id;
+        if (!id || seenIds.has(id)) continue;
+        seenIds.add(id);
+        merged.push(item);
+      }
+
+      if (merged.length >= 6) break;
+    } catch {
+      continue;
+    }
+  }
+
+  if (!merged.length) return null;
+
+  const ids = merged.map(item => item.id).filter(Boolean).slice(0, 8);
+
+  let entitiesData = null;
+
+  try {
+    entitiesData = await fetchJson(buildGetEntitiesUrl(ids), {
+      retries: 0,
+      baseDelayMs: 300,
+      timeoutMs: 4500
+    });
+  } catch {
+    return null;
+  }
+
+  const entities = entitiesData?.entities || {};
+  const searchHitById = Object.fromEntries(
+    merged
+      .filter(item => item?.id)
+      .map(item => [item.id, item])
+  );
+
+  const rankedCities = Object.values(entities)
+    .map(entity => ({
+      entity,
+      score: scoreCityEntity(
+        entity,
+        searchHitById[entity?.id] || null,
+        teamName,
+        expectedCountry
+      )
+    }))
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  for (const item of rankedCities.slice(0, 4)) {
+    const cityEntity = item.entity;
+
+    if (isCountryLikeEntity(cityEntity)) {
+      continue;
+    }
+
+    const coordClaim = getClaims(cityEntity, "P625")[0];
+    const coords = getCoordinateFromClaim(coordClaim);
+
+    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+      continue;
+    }
+
+    const countryClaim = getClaims(cityEntity, "P17")[0];
+    const countryId = getEntityIdFromClaim(countryClaim);
+
+    let country = expectedCountry || "";
+
+    if (countryId) {
+      try {
+        const countryData = await fetchJson(buildGetEntitiesUrl([countryId]), {
+          retries: 0,
+          baseDelayMs: 300,
+          timeoutMs: 3500
+        });
+
+        country = getEntityLabel(countryData?.entities?.[countryId]) || country;
+      } catch {
+        country = expectedCountry || "";
+      }
+    }
+
+    const resolved = {
+      teamLabel: teamLabel || teamName,
+      venue: "",
+      city: getEntityLabel(cityEntity) || teamName,
+      country: country || expectedCountry || "",
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      wikidataTeamId: null,
+      wikidataVenueId: null,
+      wikidataCityId: cityEntity.id || null
+    };
+
+    const validation = validateResolvedGeo(inputRow, resolved);
+
+    if (validation?.ok === false) {
+      continue;
+    }
+
+    return {
+      ...resolved,
+      validation: {
+        ...(validation || {}),
+        quality: "city_fallback",
+        sourceMode: "city_search_fallback",
+        citySearchScore: item.score
+      }
+    };
+  }
+
+  return null;
+}
+
+async function resolveLocationFromTeamEntity(inputRow, teamEntity, teamLabel = "") {
+  if (!teamEntity || typeof teamEntity !== "object") return null;
+
+  const teamName = normalizeText(inputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+
+  const claimProps = [
+    "P159", // headquarters location
+    "P740", // location of formation
+    "P276", // location
+    "P131"  // located in administrative territorial entity
+  ];
+
+  const candidateIds = [];
+
+  for (const prop of claimProps) {
+    for (const claim of getClaims(teamEntity, prop)) {
+      const id = getEntityIdFromClaim(claim);
+      if (id && !candidateIds.includes(id)) {
+        candidateIds.push(id);
+      }
+    }
+  }
+
+  if (!candidateIds.length) return null;
+
+  let entitiesData = null;
+
+  try {
+    entitiesData = await fetchJson(buildGetEntitiesUrl(candidateIds.slice(0, 8)), {
+      retries: 0,
+      baseDelayMs: 300,
+      timeoutMs: 5000
+    });
+  } catch {
+    return null;
+  }
+
+  const entities = entitiesData?.entities || {};
+
+  for (const locationEntity of Object.values(entities)) {
+    if (isCountryLikeEntity(locationEntity)) {
+      continue;
+    }
+
+    const coordClaim = getClaims(locationEntity, "P625")[0];
+    const coords = getCoordinateFromClaim(coordClaim);
+
+    if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+      continue;
+    }
+
+    const countryClaim = getClaims(locationEntity, "P17")[0];
+    const countryId = getEntityIdFromClaim(countryClaim);
+
+    let country = expectedCountry || "";
+
+    if (countryId) {
+      try {
+        const countryData = await fetchJson(buildGetEntitiesUrl([countryId]), {
+          retries: 0,
+          baseDelayMs: 300,
+          timeoutMs: 3500
+        });
+
+        country = getEntityLabel(countryData?.entities?.[countryId]) || country;
+      } catch {
+        country = expectedCountry || "";
+      }
+    }
+
+    const resolved = {
+      teamLabel: teamLabel || teamName,
+      venue: "",
+      city: getEntityLabel(locationEntity) || "",
+      country: country || expectedCountry || "",
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      wikidataTeamId: teamEntity.id || null,
+      wikidataVenueId: null,
+      wikidataCityId: locationEntity.id || null
+    };
+
+    const validation = validateResolvedGeo(inputRow, resolved);
+
+    if (validation?.ok === false) {
+      continue;
+    }
+
+    return {
+      ...resolved,
+      validation: {
+        ...(validation || {}),
+        quality: "location_fallback",
+        sourceMode: "team_entity_location_claim",
+        locationClaimSource: "team_entity"
+      }
+    };
+  }
+
+  return null;
 }
 
 function validateResolvedGeo(inputRow, resolved) {
@@ -514,120 +1227,348 @@ function validateResolvedGeo(inputRow, resolved) {
   };
 }
 
-const TEAM_SEARCH_ALIASES = {
-  "Al Nassr": ["Al Nassr FC", "Al-Nassr FC"],
-  "Barcelona": ["FC Barcelona"],
-  "BK Häcken": ["BK Häcken", "Häcken"],
-  "Burnley": ["Burnley F.C.", "Burnley FC"],
-  "Celta Vigo": ["RC Celta de Vigo", "Real Club Celta de Vigo"],
-  "Djurgården": ["Djurgårdens IF Fotboll", "Djurgårdens IF"],
-  "Elche": ["Elche CF"],
-  "Getafe": ["Getafe CF"],
-  "Kifisia": ["Kifisia F.C.", "A.E. Kifisia FC"],
-  "Lazio": ["S.S. Lazio", "SS Lazio"],
-  "León": ["Club León", "Leon FC"],
-  "Middlesbrough": ["Middlesbrough F.C.", "Middlesbrough FC"],
-  "Monterrey": ["C.F. Monterrey", "CF Monterrey"],
-  "Nantes": ["FC Nantes"],
-  "Nice": ["OGC Nice"],
-  "Panetolikos": ["Panetolikos F.C.", "Panetolikos FC"],
-  "Puebla": ["Club Puebla", "Puebla F.C."],
-  "Querétaro": ["Querétaro F.C.", "Queretaro FC"],
-  "Sporting CP": ["Sporting Clube de Portugal", "Sporting CP"],
-  "Stellenbosch": ["Stellenbosch FC"],
-  "Västerås SK": ["Västerås SK Fotboll", "Västerås SK"]
+const TEAM_SEARCH_ALIAS_OVERRIDES = {
+  "Al Nassr": ["Al Nassr FC", "Al-Nassr FC", "Al-Nassr Football Club"],
+  "Barcelona": ["FC Barcelona", "Futbol Club Barcelona"],
+  "BK HΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¤cken": ["BK HΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¤cken", "HΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¤cken", "Bollklubben HΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¤cken"],
+  "BolΞΒΞ²β‚¬ΒΞβ€™Ξ’Β­var": ["Club BolΞΒΞ²β‚¬ΒΞβ€™Ξ’Β­var", "Bolivar La Paz", "Club Bolivar"],
+  "Burnley": ["Burnley FC", "Burnley F.C.", "Burnley Football Club"],
+  "Celta Vigo": ["RC Celta de Vigo", "Real Club Celta de Vigo", "Celta de Vigo"],
+  "Corinthians": ["Sport Club Corinthians Paulista", "Corinthians Paulista"],
+  "DjurgΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¥rden": ["DjurgΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¥rdens IF Fotboll", "DjurgΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¥rdens IF", "Djurgarden"],
+  "Elche": ["Elche CF", "Elche Club de FΞΒΞ²β‚¬ΒΞΒΞ’Βtbol"],
+  "FC Andorra": ["FC Andorra", "Futbol Club Andorra"],
+  "Fluminense": ["Fluminense FC", "Fluminense Football Club", "Fluminense Football Club Rio de Janeiro"],
+  "Getafe": ["Getafe CF", "Getafe Club de FΞΒΞ²β‚¬ΒΞΒΞ’Βtbol"],
+  "Girona": ["Girona FC", "Girona Futbol Club"],
+  "Independiente MedellΞΒΞ²β‚¬ΒΞβ€™Ξ’Β­n": ["Deportivo Independiente MedellΞΒΞ²β‚¬ΒΞβ€™Ξ’Β­n", "Independiente Medellin", "DIM"],
+  "Kifisia": ["Kifisia FC", "Kifisia F.C.", "A.E. Kifisia FC", "AE Kifisia"],
+  "Lazio": ["S.S. Lazio", "SS Lazio", "SocietΞΒΞ²β‚¬ΒΞβ€™Ξ’Β  Sportiva Lazio"],
+  "LeΞΒΞ²β‚¬ΒΞβ€™Ξ’Β³n": ["Club LeΞΒΞ²β‚¬ΒΞβ€™Ξ’Β³n", "Leon FC", "Club Leon"],
+  "Mallorca": ["RCD Mallorca", "Real Club Deportivo Mallorca", "Mallorca"],
+  "Middlesbrough": ["Middlesbrough FC", "Middlesbrough F.C.", "Middlesbrough Football Club"],
+  "Monterrey": ["C.F. Monterrey", "CF Monterrey", "Club de FΞΒΞ²β‚¬ΒΞΒΞ’Βtbol Monterrey"],
+  "Nantes": ["FC Nantes", "Football Club de Nantes"],
+  "Nice": ["OGC Nice", "Olympique Gymnaste Club Nice"],
+  "Panetolikos": ["Panetolikos FC", "Panetolikos F.C.", "Panetolikos G.F.S."],
+  "PeΞΒΞ²β‚¬ΒΞβ€™Ξ’Β±arol": ["Club AtlΞΒΞ²β‚¬ΒΞβ€™Ξ’Β©tico PeΞΒΞ²β‚¬ΒΞβ€™Ξ’Β±arol", "Penarol", "CA PeΞΒΞ²β‚¬ΒΞβ€™Ξ’Β±arol"],
+  "Pisa": ["Pisa SC", "Pisa Sporting Club", "AC Pisa 1909"],
+  "Pisa SC": ["Pisa", "Pisa Sporting Club", "AC Pisa 1909"],
+  "Puebla": ["Club Puebla", "Puebla FC", "Puebla F.C."],
+  "QuerΞΒΞ²β‚¬ΒΞβ€™Ξ’Β©taro": ["QuerΞΒΞ²β‚¬ΒΞβ€™Ξ’Β©taro FC", "QuerΞΒΞ²β‚¬ΒΞβ€™Ξ’Β©taro F.C.", "Queretaro FC", "Club QuerΞΒΞ²β‚¬ΒΞβ€™Ξ’Β©taro"],
+  "Sporting CP": ["Sporting Clube de Portugal", "Sporting CP", "Sporting Lisbon"],
+  "Stellenbosch": ["Stellenbosch FC", "Stellenbosch Football Club"],
+  "VΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¤sterΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¥s SK": ["VΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¤sterΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¥s SK Fotboll", "VΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¤sterΞΒΞ²β‚¬ΒΞβ€™Ξ’Β¥s SK", "Vasteras SK"]
 };
 
-function getOfficialTeamNames(teamName) {
-  return [teamName, ...(TEAM_SEARCH_ALIASES[teamName] || [])]
-    .map(name => normalizeText(name))
+const VERIFIED_GEO_FALLBACKS = {
+  "pe\u00f1arol": {
+    teamLabel: "Club Atl\u00e9tico Pe\u00f1arol",
+    venue: "Estadio Campe\u00f3n del Siglo",
+    city: "Montevideo",
+    country: "Uruguay",
+    latitude: -34.79675,
+    longitude: -56.067138888889,
+    wikidataTeamId: "Q131777",
+    wikidataVenueId: "Q16564746",
+    wikidataCityId: null
+  },
+  "independiente medell\u00edn": {
+    teamLabel: "Deportivo Independiente Medell\u00edn",
+    venue: "Estadio Atanasio Girardot",
+    city: "Medell\u00edn",
+    country: "Colombia",
+    latitude: 6.256667,
+    longitude: -75.59,
+    wikidataTeamId: "Q583923",
+    wikidataVenueId: "Q1369335",
+    wikidataCityId: null
+  },
+  "bol\u00edvar": {
+    teamLabel: "Club Bol\u00edvar",
+    venue: "Estadio Hernando Siles",
+    city: "La Paz",
+    country: "Bolivia",
+    latitude: -16.499444,
+    longitude: -68.122778,
+    wikidataTeamId: "Q750815",
+    wikidataVenueId: "Q1369431",
+    wikidataCityId: null
+  },
+  "pisa": {
+    teamLabel: "Pisa SC",
+    venue: "Arena Garibaldi \u2013 Stadio Romeo Anconetani",
+    city: "Pisa",
+    country: "Italy",
+    latitude: 43.72528,
+    longitude: 10.4,
+    wikidataTeamId: "Q543210",
+    wikidataVenueId: "Q3659558",
+    wikidataCityId: null
+  },
+  "pisa sc": {
+    teamLabel: "Pisa SC",
+    venue: "Arena Garibaldi \u2013 Stadio Romeo Anconetani",
+    city: "Pisa",
+    country: "Italy",
+    latitude: 43.72528,
+    longitude: 10.4,
+    wikidataTeamId: "Q543210",
+    wikidataVenueId: "Q3659558",
+    wikidataCityId: null
+  }
+};
+
+function verifiedGeoFallbackForTeam(inputRow) {
+  const teamName = canonicalTeamName(inputRow?.team);
+
+  const directKeys = [
+    teamName,
+    normalizeText(inputRow?.team)
+  ]
+    .map(value => normalizeText(value).toLowerCase().trim())
     .filter(Boolean);
+
+  const asciiKeys = directKeys
+    .map(value => stripDiacritics(value))
+    .map(value => value.replace(/[^a-z0-9\s]/g, " "))
+    .map(value => value.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
+  const allKeys = [...new Set([...directKeys, ...asciiKeys])];
+
+  const aliases = {
+    penarol: "pe\u00f1arol",
+    "club atletico penarol": "pe\u00f1arol",
+    "ca penarol": "pe\u00f1arol",
+
+    "independiente medellin": "independiente medell\u00edn",
+    "deportivo independiente medellin": "independiente medell\u00edn",
+    dim: "independiente medell\u00edn",
+
+    bolivar: "bol\u00edvar",
+    "club bolivar": "bol\u00edvar",
+    "bolivar la paz": "bol\u00edvar",
+
+    pisa: "pisa",
+    "pisa sc": "pisa sc",
+    "pisa sporting club": "pisa sc",
+    "ac pisa 1909": "pisa sc"
+  };
+
+  for (const key of allKeys) {
+    const fallbackKey = VERIFIED_GEO_FALLBACKS[key] ? key : aliases[key];
+
+    if (!fallbackKey || !VERIFIED_GEO_FALLBACKS[fallbackKey]) continue;
+
+    const fallback = VERIFIED_GEO_FALLBACKS[fallbackKey];
+
+    const validation = {
+      ok: true,
+      quality: "verified_fallback",
+      leagueSlug: normalizeText(inputRow?.leagueSlug) || null,
+      leagueType: getLeagueCoverage(normalizeText(inputRow?.leagueSlug))?.type || null,
+      sourceMode: "verified_geo_fallback"
+    };
+
+    return {
+      teamLabel: normalizeText(fallback.teamLabel),
+      venue: normalizeText(fallback.venue),
+      city: normalizeText(fallback.city),
+      country: normalizeText(fallback.country),
+      latitude: fallback.latitude,
+      longitude: fallback.longitude,
+      wikidataTeamId: fallback.wikidataTeamId || null,
+      wikidataVenueId: fallback.wikidataVenueId || null,
+      wikidataCityId: fallback.wikidataCityId || null,
+      validation
+    };
+  }
+
+  return null;
 }
 
-function isExactOfficialLabelMatch(teamName, entityLabel) {
-  const label = normalizeText(entityLabel).toLowerCase();
-  if (!label) return false;
+function stripDiacritics(value) {
+  return normalizeText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
 
-  return getOfficialTeamNames(teamName)
-    .map(name => normalizeText(name).toLowerCase())
-    .includes(label);
+function uniqueCleanStrings(values) {
+  return [
+    ...new Set(
+      values
+        .map(value => normalizeText(value))
+        .filter(Boolean)
+    )
+  ];
+}
+
+function buildGenericTeamAliases(teamName) {
+  const raw = normalizeText(teamName);
+  if (!raw) return [];
+
+  const noDiacritics = stripDiacritics(raw);
+
+  const variants = [
+    raw,
+    noDiacritics
+  ];
+
+  const compactRules = [
+    [/^FC\s+/i, ""],
+    [/\s+FC$/i, ""],
+    [/^CF\s+/i, ""],
+    [/\s+CF$/i, ""],
+    [/^SC\s+/i, ""],
+    [/\s+SC$/i, ""],
+    [/^AC\s+/i, ""],
+    [/\s+AC$/i, ""],
+    [/^AFC\s+/i, ""],
+    [/\s+AFC$/i, ""],
+    [/^RC\s+/i, ""],
+    [/\s+RC$/i, ""],
+    [/^RCD\s+/i, ""],
+    [/\s+RCD$/i, ""],
+    [/^Real\s+/i, ""],
+    [/^Club\s+/i, ""],
+    [/\s+Club$/i, ""],
+    [/\s+Utd$/i, " United"],
+    [/\s+F\.C\.$/i, " FC"],
+    [/\s+C\.F\.$/i, " CF"]
+  ];
+
+  for (const base of [raw, noDiacritics]) {
+    for (const [pattern, replacement] of compactRules) {
+      const next = normalizeText(base.replace(pattern, replacement));
+      if (next && next !== base) variants.push(next);
+    }
+  }
+
+  const suffixes = [
+    "FC",
+    "F.C.",
+    "Football Club",
+    "football club",
+    "soccer club"
+  ];
+
+  for (const base of [...variants]) {
+    for (const suffix of suffixes) {
+      if (!new RegExp(`\\b${suffix.replace(".", "\\.")}\\b`, "i").test(base)) {
+        variants.push(`${base} ${suffix}`);
+      }
+    }
+  }
+
+  if (/\bUnited\b/i.test(raw)) {
+    variants.push(raw.replace(/\bUnited\b/i, "Utd"));
+  }
+
+  if (/\bUtd\b/i.test(raw)) {
+    variants.push(raw.replace(/\bUtd\b/i, "United"));
+  }
+
+  return uniqueCleanStrings(variants);
+}
+
+function getOfficialTeamNames(teamName) {
+  const raw = normalizeText(teamName);
+  const repaired = normalizeText(repairTextEncoding(teamName));
+  const noDiacritics = stripDiacritics(repaired);
+
+  const overrides = [
+    ...(TEAM_SEARCH_ALIAS_OVERRIDES[raw] || []),
+    ...(TEAM_SEARCH_ALIAS_OVERRIDES[repaired] || []),
+    ...(TEAM_SEARCH_ALIAS_OVERRIDES[noDiacritics] || [])
+  ];
+
+  return uniqueCleanStrings([
+    raw,
+    repaired,
+    noDiacritics,
+    ...overrides,
+    ...buildGenericTeamAliases(raw),
+    ...buildGenericTeamAliases(repaired)
+  ]).slice(0, 12);
 }
 
 function buildSearchQueries(teamName, expectedCountry) {
-  const aliases = TEAM_SEARCH_ALIASES[teamName] || [];
-  const baseNames = [teamName, ...aliases];
-
+  const baseNames = getOfficialTeamNames(teamName).slice(0, 8);
   const queries = [];
 
   for (const name of baseNames) {
     queries.push(name);
     queries.push(`${name} football club`);
-    queries.push(`${name} soccer club`);
 
     if (expectedCountry) {
       queries.push(`${name} ${expectedCountry}`);
       queries.push(`${name} ${expectedCountry} football club`);
-      queries.push(`${name} ${expectedCountry} soccer club`);
     }
   }
 
-  return [
-    ...new Set(
-      queries
-        .map(q => normalizeText(q))
-        .filter(Boolean)
-    )
-  ];
+  return uniqueCleanStrings(queries).slice(0, 24);
 }
 async function searchTeamCandidates(teamName, expectedCountry) {
-  const queries = buildSearchQueries(teamName, expectedCountry);
+  const queries = buildSearchQueries(teamName, expectedCountry).slice(0, 6);
   const merged = [];
   const seenIds = new Set();
 
   for (const query of queries) {
-    const searchData = await fetchJson(buildSearchUrl(query), {
-      retries: 1,
-      baseDelayMs: 400,
-      timeoutMs: 5000
-    });
-    const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
+    try {
+      const searchData = await fetchJson(buildSearchUrl(query, 5), {
+        retries: 0,
+        baseDelayMs: 250,
+        timeoutMs: 3500
+      });
 
-    for (const item of searchResults) {
-      const id = item?.id;
-      if (!id || seenIds.has(id)) continue;
-      seenIds.add(id);
-      merged.push(item);
+      const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
+
+      for (const item of searchResults) {
+        const id = item?.id;
+        if (!id || seenIds.has(id)) continue;
+        seenIds.add(id);
+        merged.push(item);
+      }
+
+      if (merged.length >= 8) break;
+    } catch {
+      continue;
     }
-
-    if (merged.length >= 10) break;
   }
 
-  return merged.slice(0, 10);
+  return merged.slice(0, 8);
 }
 
 async function resolveTeamGeo(inputRow) {
-  const teamName = normalizeText(inputRow?.team);
-  const expectedCountry = expectedCountryFromLeagueSlug(inputRow?.leagueSlug);
+  const normalizedInputRow = normalizeBootstrapInputRow(inputRow);
+  const verifiedFallback = verifiedGeoFallbackForTeam(normalizedInputRow);
+  if (verifiedFallback) return verifiedFallback;
 
+  const teamName = canonicalTeamName(normalizedInputRow?.team);
+  const expectedCountry = expectedCountryFromLeagueSlug(normalizedInputRow?.leagueSlug);
   const searchResults = await searchTeamCandidates(teamName, expectedCountry);
 
   if (!searchResults.length) {
-    return null;
+    return (
+      await resolveVenueBySearch(normalizedInputRow, teamName) ||
+      await resolveCityBySearch(normalizedInputRow, teamName) ||
+      verifiedGeoFallbackForTeam(normalizedInputRow)
+    );
   }
-
   const candidateIds = searchResults
     .map(item => item?.id)
     .filter(Boolean)
-    .slice(0, 10);
+    .slice(0, 8);
 
   if (!candidateIds.length) {
     return null;
   }
 
   const teamEntitiesData = await fetchJson(buildGetEntitiesUrl(candidateIds), {
-    retries: 1,
-    baseDelayMs: 500,
-    timeoutMs: 8000
+    retries: 0,
+    baseDelayMs: 300,
+    timeoutMs: 5000
   });
   const teamEntities = teamEntitiesData?.entities || {};
 
@@ -685,7 +1626,41 @@ async function resolveTeamGeo(inputRow) {
   const venueId = getEntityIdFromClaim(venueClaim);
 
   if (!venueId) {
-    return {
+    const fallbackVenue = await resolveVenueBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackVenue) {
+      return {
+        ...fallbackVenue,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackLocation = await resolveLocationFromTeamEntity(
+      inputRow,
+      bestTeam,
+      bestTeamLabel
+    );
+
+    if (fallbackLocation) {
+      return {
+        ...fallbackLocation,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackCity = await resolveCityBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackCity) {
+      return {
+        ...fallbackCity,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    return verifiedGeoFallbackForTeam(normalizedInputRow) || {
       teamLabel: getEntityLabel(bestTeam) || teamName,
       venue: "",
       city: "",
@@ -693,7 +1668,8 @@ async function resolveTeamGeo(inputRow) {
       latitude: null,
       longitude: null,
       wikidataTeamId: bestTeam.id || null,
-      wikidataVenueId: null
+      wikidataVenueId: null,
+      wikidataCityId: null
     };
   }
 
@@ -705,7 +1681,41 @@ async function resolveTeamGeo(inputRow) {
   const venueEntity = venueEntitiesData?.entities?.[venueId] || null;
 
   if (!venueEntity) {
-    return {
+    const fallbackVenue = await resolveVenueBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackVenue) {
+      return {
+        ...fallbackVenue,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackLocation = await resolveLocationFromTeamEntity(
+      inputRow,
+      bestTeam,
+      bestTeamLabel
+    );
+
+    if (fallbackLocation) {
+      return {
+        ...fallbackLocation,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackCity = await resolveCityBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackCity) {
+      return {
+        ...fallbackCity,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    return verifiedGeoFallbackForTeam(normalizedInputRow) || {
       teamLabel: getEntityLabel(bestTeam) || teamName,
       venue: "",
       city: "",
@@ -713,7 +1723,8 @@ async function resolveTeamGeo(inputRow) {
       latitude: null,
       longitude: null,
       wikidataTeamId: bestTeam.id || null,
-      wikidataVenueId: venueId
+      wikidataVenueId: venueId,
+      wikidataCityId: null
     };
   }
 
@@ -722,6 +1733,46 @@ async function resolveTeamGeo(inputRow) {
   const adminClaim = getClaims(venueEntity, "P131")[0];
 
   const coords = getCoordinateFromClaim(coordClaim);
+
+  if (!isValidLatitude(coords.latitude) || !isValidLongitude(coords.longitude)) {
+    const fallbackVenue = await resolveVenueBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackVenue) {
+      return {
+        ...fallbackVenue,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackLocation = await resolveLocationFromTeamEntity(
+      inputRow,
+      bestTeam,
+      bestTeamLabel
+    );
+
+    if (fallbackLocation) {
+      return {
+        ...fallbackLocation,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const fallbackCity = await resolveCityBySearch(inputRow, bestTeamLabel);
+
+    if (fallbackCity) {
+      return {
+        ...fallbackCity,
+        teamLabel: bestTeamLabel,
+        wikidataTeamId: bestTeam.id || null
+      };
+    }
+
+    const verifiedFallback = verifiedGeoFallbackForTeam(normalizedInputRow);
+    if (verifiedFallback) return verifiedFallback;
+  }
+
   const countryId = getEntityIdFromClaim(countryClaim);
   const adminId = getEntityIdFromClaim(adminClaim);
 
@@ -769,7 +1820,7 @@ function mergeResolvedRow(inputRow, resolved) {
     : (isValidLongitude(inputRow?.longitude) ? Number(inputRow.longitude) : null);
 
   return {
-    team: normalizeText(inputRow?.team),
+    team: canonicalTeamName(inputRow?.team),
     leagueSlug: normalizeText(inputRow?.leagueSlug) || null,
     venue: normalizeText(resolved?.venue) || normalizeText(inputRow?.venue) || "",
     city: normalizeText(resolved?.city) || normalizeText(inputRow?.city) || "",
@@ -780,8 +1831,9 @@ function mergeResolvedRow(inputRow, resolved) {
     sourceMeta: {
       wikidataTeamId: resolved?.wikidataTeamId || null,
       wikidataVenueId: resolved?.wikidataVenueId || null,
-      teamLabel: normalizeText(resolved?.teamLabel) || null,
-      validation: resolved?.validation || null,
+      wikidataCityId: resolved?.wikidataCityId || null,
+      teamLabel: canonicalTeamName(resolved?.teamLabel) || null,
+      validation: normalizeSourceMeta(resolved?.validation || null),
       rejected: !!resolved?.rejected,
       rejectReason: resolved?.rejectReason || null
     }
@@ -834,7 +1886,7 @@ export async function bootstrapTeamGeoFromWikidata({
       checkpoint.outputFile === outputFile &&
       Array.isArray(checkpoint.output)
     ) {
-      output = checkpoint.output;
+      output = checkpoint.output.map(row => normalizeOutputRow(row));
       alreadyComplete = toNonNegativeInteger(checkpoint.alreadyComplete, 0);
       enrichedComplete = toNonNegativeInteger(checkpoint.enrichedComplete, 0);
       enrichedPartial = toNonNegativeInteger(checkpoint.enrichedPartial, 0);
@@ -858,8 +1910,8 @@ export async function bootstrapTeamGeoFromWikidata({
       : Math.min(rows.length, effectiveStartIndex + safeLimit);
 
   for (let i = effectiveStartIndex; i < endExclusive; i += 1) {
-    const row = rows[i];
-    const team = normalizeText(row?.team);
+    const row = normalizeBootstrapInputRow(rows[i]);
+    const team = canonicalTeamName(row?.team);
 
     console.log("[bootstrap-team-geo-from-wikidata] row:start", {
       index: i + 1,
@@ -872,10 +1924,7 @@ export async function bootstrapTeamGeoFromWikidata({
     try {
       if (isCompleteRow(row)) {
         alreadyComplete += 1;
-        output.push({
-          ...row,
-          source: normalizeText(row?.source) || "bootstrap_manual"
-        });
+        output.push(normalizeOutputRow(row, "bootstrap_manual"));
 
         console.log("[bootstrap-team-geo-from-wikidata] row:done", {
           index: i + 1,
@@ -892,13 +1941,13 @@ export async function bootstrapTeamGeoFromWikidata({
 
         if (!resolved) {
           notFound += 1;
-          output.push({
+          output.push(normalizeOutputRow({
             ...row,
             source: normalizeText(row?.source) || "bootstrap_manual",
             sourceMeta: {
               error: "not_found"
             }
-          });
+          }, "bootstrap_manual"));
 
           console.log("[bootstrap-team-geo-from-wikidata] row:done", {
             index: i + 1,
@@ -908,15 +1957,15 @@ export async function bootstrapTeamGeoFromWikidata({
           });
         } else if (resolved?.rejected) {
           notFound += 1;
-          output.push({
+          output.push(normalizeOutputRow({
             ...row,
             source: normalizeText(row?.source) || "bootstrap_manual",
             sourceMeta: {
               error: resolved.rejectReason || "rejected_candidate",
               wikidataTeamId: resolved?.wikidataTeamId || null,
-              teamLabel: normalizeText(resolved?.teamLabel) || null
+              teamLabel: canonicalTeamName(resolved?.teamLabel) || null
             }
-          });
+          }, "bootstrap_manual"));
 
           console.log("[bootstrap-team-geo-from-wikidata] row:done", {
             index: i + 1,
@@ -931,7 +1980,7 @@ export async function bootstrapTeamGeoFromWikidata({
 
           if (!validationOk) {
             notFound += 1;
-            output.push({
+            output.push(normalizeOutputRow({
               ...row,
               source: normalizeText(row?.source) || "bootstrap_manual",
               sourceMeta: {
@@ -941,7 +1990,7 @@ export async function bootstrapTeamGeoFromWikidata({
                 wikidataVenueId: merged?.sourceMeta?.wikidataVenueId || null,
                 teamLabel: merged?.sourceMeta?.teamLabel || null
               }
-            });
+            }, "bootstrap_manual"));
 
             console.log("[bootstrap-team-geo-from-wikidata] row:done", {
               index: i + 1,
@@ -971,13 +2020,13 @@ export async function bootstrapTeamGeoFromWikidata({
       }
     } catch (err) {
       notFound += 1;
-      output.push({
+      output.push(normalizeOutputRow({
         ...row,
         source: normalizeText(row?.source) || "bootstrap_manual",
         sourceMeta: {
           error: err?.message || String(err)
         }
-      });
+      }, "bootstrap_manual"));
 
       console.log("[bootstrap-team-geo-from-wikidata] row:error", {
         index: i + 1,

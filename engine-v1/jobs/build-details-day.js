@@ -7,7 +7,11 @@ import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { buildAiDetailsBlock } from "../ai-match-intelligence/build-ai-details-block.js";
 import { buildRefereeContext } from "../core/referee-context.js";
 import { readPlayerUsageRecord } from "../storage/player-usage-db.js";
+import { readTeamGeoRecord } from "../storage/team-geo-db.js";
 import { inferAbsencesFromUsage } from "../ai-match-intelligence/player-usage/absence-inference.js";
+
+const DETAILS_SCHEMA_VERSION = "details-snapshot-v3";
+const DETAILS_BUILDER_VERSION = "2026-05-01-player-usage-travel-geo-signature";
 
 
 function readJsonSafe(filePath, fallback = null) {
@@ -141,10 +145,173 @@ function buildValueSummaryFromPicks(valuePicks = []) {
   };
 }
 
+function compactString(value, max = 600) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+function compactArray(value, max = 12) {
+  return Array.isArray(value) ? value.slice(0, max) : [];
+}
+
+function compactForDetails(value, {
+  maxArrayItems = 12,
+  maxStringLength = 600,
+  maxDepth = 6
+} = {}) {
+  const seen = new WeakSet();
+
+  function walk(input, depth = 0, key = "") {
+    if (input == null) return input;
+
+    if (typeof input === "string") {
+      return input.length > maxStringLength
+        ? `${input.slice(0, maxStringLength)}…`
+        : input;
+    }
+
+    if (typeof input !== "object") return input;
+
+    if (seen.has(input)) {
+      return "[circular]";
+    }
+
+    if (depth >= maxDepth) {
+      return "[max_depth]";
+    }
+
+    seen.add(input);
+
+    const heavyKeys = new Set([
+      "html",
+      "rawHtml",
+      "body",
+      "rawBody",
+      "text",
+      "rawText",
+      "pageText",
+      "textPreview",
+      "searchAttempts",
+      "sampleCandidates",
+      "rejectedSamples",
+      "registryArticleSamples",
+      "registryRejectedArticleSamples",
+      "rawSearchResults",
+      "rawResults",
+      "fetchHtml",
+      "debug",
+      "debugDump"
+    ]);
+
+    if (Array.isArray(input)) {
+      return input.slice(0, maxArrayItems).map(item => walk(item, depth + 1, key));
+    }
+
+    const out = {};
+
+    for (const [k, v] of Object.entries(input)) {
+      if (heavyKeys.has(k)) {
+        if (typeof v === "string") {
+          out[k] = compactString(v, 300);
+        } else if (Array.isArray(v)) {
+          out[k] = {
+            truncated: true,
+            originalCount: v.length,
+            sample: v.slice(0, 3).map(item => walk(item, depth + 1, k))
+          };
+        } else if (v && typeof v === "object") {
+          out[k] = "[heavy_object_omitted]";
+        } else {
+          out[k] = v;
+        }
+        continue;
+      }
+
+      out[k] = walk(v, depth + 1, k);
+    }
+
+    return out;
+  }
+
+  return walk(value);
+}
+
+function compactRemoteTaskQueueForDetails(queue) {
+  return compactArray(queue, 20).map(task => ({
+    capability: task?.capability || null,
+    status: task?.status || null,
+    reason: task?.reason || null,
+    team: task?.team || task?.targetTeam || null,
+    opponent: task?.opponent || null,
+    side: task?.side || null,
+    leagueSlug: task?.leagueSlug || null,
+    matchId: task?.matchId ? String(task.matchId) : null
+  }));
+}
+
+function compactRemoteExecutionForDetails(remoteExecution) {
+  if (!remoteExecution) {
+    return {
+      status: "idle",
+      mode: "stub",
+      queueSize: 0,
+      executedCount: 0,
+      queuedCount: 0,
+      successCount: 0,
+      failedCount: 0,
+      skippedCount: 0,
+      providersTried: [],
+      results: []
+    };
+  }
+
+  return {
+    status: remoteExecution?.status || null,
+    mode: remoteExecution?.mode || null,
+    queueSize: Number(remoteExecution?.queueSize || 0),
+    executedCount: Number(remoteExecution?.executedCount || 0),
+    queuedCount: Number(remoteExecution?.queuedCount || 0),
+    successCount: Number(remoteExecution?.successCount || 0),
+    failedCount: Number(remoteExecution?.failedCount || 0),
+    skippedCount: Number(remoteExecution?.skippedCount || 0),
+    providersTried: compactArray(remoteExecution?.providersTried, 10),
+    results: compactArray(remoteExecution?.results, 10).map(result => ({
+      capability: result?.capability || null,
+      provider: result?.provider || null,
+      status: result?.status || null,
+      reason: result?.reason || null,
+      team: result?.team || result?.targetTeam || null,
+      key: result?.key || null
+    })),
+    meta: compactForDetails(remoteExecution?.meta || null, {
+      maxArrayItems: 8,
+      maxStringLength: 300,
+      maxDepth: 3
+    })
+  };
+}
+
+function compactResearchedFactsForDetails(researchedFacts, playerUsageIntel) {
+  const facts = compactForDetails(researchedFacts || {}, {
+    maxArrayItems: 12,
+    maxStringLength: 600,
+    maxDepth: 6
+  });
+
+  return {
+    ...facts,
+    playerUsageIntel: compactPlayerUsageIntelForFacts(playerUsageIntel)
+  };
+}
+
 function buildDetailsSignature(match, valuePicks, payload) {
   const topPick = (valuePicks || [])
     .slice()
     .sort((a, b) => Number(b?.score || 0) - Number(a?.score || 0))[0] || null;
+
+  const playerUsageHome = payload?.playerUsageIntel?.home || null;
+  const playerUsageAway = payload?.playerUsageIntel?.away || null;
 
   const signaturePayload = {
     matchId: String(match?.matchId || ""),
@@ -174,6 +341,26 @@ function buildDetailsSignature(match, valuePicks, payload) {
     teamNewsNotes: Array.isArray(payload?.teamNews?.data?.notes)
       ? payload.teamNews.data.notes.length
       : 0,
+
+    travelStatus: String(payload?.travel?.status || ""),
+    travelSource: String(payload?.travel?.source || ""),
+    travelDistanceKm: Number.isFinite(Number(payload?.travel?.distanceKm))
+      ? Number(payload.travel.distanceKm)
+      : null,
+    travelImpact: String(payload?.travel?.impact || ""),
+    travelProfile: String(payload?.travel?.travelProfile || ""),
+    travelSameCountry: payload?.travel?.sameCountry ?? null,
+    travelCrossBorder: payload?.travel?.crossBorder ?? null,
+    travelHomeKey: String(payload?.travel?.home?.key || ""),
+    travelAwayKey: String(payload?.travel?.away?.key || ""),
+
+    playerUsageHomeStatus: playerUsageHome?.status || null,
+    playerUsageHomeConfidence: playerUsageHome?.confidence ?? null,
+    playerUsageHomeReason: playerUsageHome?.reason || null,
+    playerUsageAwayStatus: playerUsageAway?.status || null,
+    playerUsageAwayConfidence: playerUsageAway?.confidence ?? null,
+    playerUsageAwayReason: playerUsageAway?.reason || null,
+
     valueCount: Array.isArray(valuePicks) ? valuePicks.length : 0,
     topValue: topPick
       ? {
@@ -182,8 +369,8 @@ function buildDetailsSignature(match, valuePicks, payload) {
           score: Number.isFinite(Number(topPick.score)) ? Number(topPick.score) : null
         }
       : null,
-    schemaVersion: "details-snapshot-v2",
-    builderVersion: "2026-04-08-update-on-change"
+    schemaVersion: DETAILS_SCHEMA_VERSION,
+    builderVersion: DETAILS_BUILDER_VERSION
   };
 
   return JSON.stringify(signaturePayload);
@@ -381,6 +568,168 @@ function buildTeamNewsBlock(teamNewsFact) {
   };
 }
 
+function compactGeoRecord(record, fallbackTeam) {
+  if (!record || typeof record !== "object") return null;
+
+  const latitude = Number(record.latitude);
+  const longitude = Number(record.longitude);
+
+  return {
+    key: record.key || null,
+    team: record.team || fallbackTeam || null,
+    venue: record.venue || null,
+    city: record.city || null,
+    country: record.country || null,
+    latitude: Number.isFinite(latitude) ? latitude : null,
+    longitude: Number.isFinite(longitude) ? longitude : null,
+    source: record.source || "local-team-geo",
+    updatedAt: record.updatedAt || null
+  };
+}
+
+function hasGeoCoordinates(geo) {
+  return (
+    geo &&
+    Number.isFinite(Number(geo.latitude)) &&
+    Number.isFinite(Number(geo.longitude))
+  );
+}
+
+function degToRad(value) {
+  return (Number(value) * Math.PI) / 180;
+}
+
+function haversineKm(a, b) {
+  if (!hasGeoCoordinates(a) || !hasGeoCoordinates(b)) return null;
+
+  const earthKm = 6371;
+  const dLat = degToRad(Number(b.latitude) - Number(a.latitude));
+  const dLon = degToRad(Number(b.longitude) - Number(a.longitude));
+
+  const lat1 = degToRad(Number(a.latitude));
+  const lat2 = degToRad(Number(b.latitude));
+
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+
+  return Math.round(earthKm * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
+}
+
+function travelImpactFromDistance(distanceKm, crossBorder) {
+  if (!Number.isFinite(Number(distanceKm))) return "unknown";
+
+  const km = Number(distanceKm);
+
+  if (km >= 2500) return "high";
+  if (km >= 800) return "medium";
+  if (km >= 250) return crossBorder ? "medium" : "low";
+  if (km > 0) return "minimal";
+
+  return "none";
+}
+
+function travelProfileFromDistance(distanceKm, crossBorder) {
+  if (!Number.isFinite(Number(distanceKm))) return "unknown";
+
+  const km = Number(distanceKm);
+
+  if (km >= 2500) return "long_haul";
+  if (km >= 800) return "regional_flight";
+  if (km >= 250) return crossBorder ? "cross_border_short_trip" : "domestic_trip";
+  if (km > 0) return "local_or_short_trip";
+
+  return "same_venue_or_unknown";
+}
+
+function buildLocalTravelContext(match) {
+  const homeTeam = match?.homeTeam || null;
+  const awayTeam = match?.awayTeam || null;
+
+  const homeGeo = compactGeoRecord(readTeamGeoRecord(homeTeam), homeTeam);
+  const awayGeo = compactGeoRecord(readTeamGeoRecord(awayTeam), awayTeam);
+
+  const homeReady = hasGeoCoordinates(homeGeo);
+  const awayReady = hasGeoCoordinates(awayGeo);
+
+  if (!homeReady && !awayReady) {
+    return {
+      status: "empty",
+      source: "local-team-geo",
+      reason: "missing_home_and_away_geo",
+      confidence: 0,
+      data: {
+        distanceKm: null,
+        impact: "unknown",
+        sameCountry: null,
+        crossBorder: null,
+        travelProfile: "unknown",
+        home: homeGeo,
+        away: awayGeo,
+        note: {
+          code: "travel_geo_missing",
+          el: "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
+          en: "No local geo records are available yet for the teams."
+        }
+      }
+    };
+  }
+
+  if (!homeReady || !awayReady) {
+    return {
+      status: "partial",
+      source: "local-team-geo",
+      reason: !homeReady ? "missing_home_geo" : "missing_away_geo",
+      confidence: 0.35,
+      data: {
+        distanceKm: null,
+        impact: "unknown",
+        sameCountry: null,
+        crossBorder: null,
+        travelProfile: "partial_geo",
+        home: homeGeo,
+        away: awayGeo,
+        note: {
+          code: "travel_geo_partial",
+          el: "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
+          en: "Partial local geo context exists, but one team is missing coordinates."
+        }
+      }
+    };
+  }
+
+  const distanceKm = haversineKm(homeGeo, awayGeo);
+  const sameCountry =
+    homeGeo.country && awayGeo.country
+      ? String(homeGeo.country).toLowerCase() === String(awayGeo.country).toLowerCase()
+      : null;
+
+  const crossBorder = sameCountry == null ? null : !sameCountry;
+  const impact = travelImpactFromDistance(distanceKm, crossBorder);
+  const travelProfile = travelProfileFromDistance(distanceKm, crossBorder);
+
+  return {
+    status: Number.isFinite(Number(distanceKm)) ? "ready" : "partial",
+    source: "local-team-geo",
+    reason: Number.isFinite(Number(distanceKm)) ? null : "distance_unavailable",
+    confidence: Number.isFinite(Number(distanceKm)) ? 0.78 : 0.45,
+    data: {
+      distanceKm,
+      impact,
+      sameCountry,
+      crossBorder,
+      travelProfile,
+      home: homeGeo,
+      away: awayGeo,
+      note: {
+        code: "travel_geo_ready",
+        el: `Η εκτίμηση ταξιδιού βασίζεται σε local team geo records.`,
+        en: "Travel estimate is based on local team geo records."
+      }
+    }
+  };
+}
+
 function buildTravelBlock(travelContextFact) {
   return {
     status: travelContextFact?.status || "empty",
@@ -560,11 +909,71 @@ function buildSourceIntelligence(match) {
   };
 }
 
+function compactPlayerUsageIntelForFacts(playerUsageIntel) {
+  function compactNames(items) {
+    if (!Array.isArray(items)) return [];
+
+    return items
+      .map((x) => {
+        if (typeof x === "string") return x.trim();
+
+        if (x && typeof x === "object") {
+          return String(x.name || x.player || x.playerName || "").trim();
+        }
+
+        return "";
+      })
+      .filter(Boolean);
+  }
+
+  function compactSide(side) {
+    const x = side && typeof side === "object" ? side : {};
+
+    return {
+      team: x.team || null,
+      opponent: x.opponent || null,
+      side: x.side || null,
+      leagueSlug: x.leagueSlug || null,
+      leagueName: x.leagueName || null,
+      competitionType: x.competitionType || null,
+      source: x.source || null,
+      updatedAt: x.updatedAt || null,
+
+      status: x.status || "unavailable",
+      reason: x.reason || null,
+      confidence: Number.isFinite(Number(x.confidence)) ? Number(x.confidence) : 0,
+      sampleMatches:
+        x.sampleMatches != null
+          ? x.sampleMatches
+          : x.matchCount != null
+            ? x.matchCount
+            : x.meta?.sampleMatches != null
+              ? x.meta.sampleMatches
+              : 0,
+
+      expectedStarters: compactNames(x.expectedStarters),
+      confirmedAbsences: compactNames(x.confirmedAbsences),
+      inferredAbsences: compactNames(x.inferredAbsences)
+    };
+  }
+
+  return {
+    home: compactSide(playerUsageIntel?.home),
+    away: compactSide(playerUsageIntel?.away)
+  };
+}
 function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
   const competitionContext = aiBlocks?.researchedFacts?.competitionContext || null;
   const refereeProfile = aiBlocks?.researchedFacts?.refereeProfile || null;
   const teamNewsFact = aiBlocks?.researchedFacts?.teamNews || null;
-  const travelContextFact = aiBlocks?.researchedFacts?.travelContext || null;
+  const researchedTravelContextFact = aiBlocks?.researchedFacts?.travelContext || null;
+  const localTravelContextFact = buildLocalTravelContext(match);
+
+  const travelContextFact =
+    researchedTravelContextFact?.status === "ready" &&
+    Number.isFinite(Number(researchedTravelContextFact?.data?.distanceKm))
+      ? researchedTravelContextFact
+      : localTravelContextFact;
 
   const referee = buildRefereeBlock(match);
   const travel = buildTravelBlock(travelContextFact);
@@ -578,25 +987,57 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     teamNews
   );
 
-// ---------- PLAYER USAGE INTELLIGENCE ----------
+  // ---------- PLAYER USAGE INTELLIGENCE ----------
 
-const homeUsage = readPlayerUsageRecord(match?.homeTeam);
-const awayUsage = readPlayerUsageRecord(match?.awayTeam);
+  const homeUsage = readPlayerUsageRecord(match?.homeTeam);
+  const awayUsage = readPlayerUsageRecord(match?.awayTeam);
 
-const homeAbsenceIntel = inferAbsencesFromUsage({
-  playerUsage: homeUsage,
-  teamNews: teamNews?.data?.home
-});
+  const homeAbsenceIntel = inferAbsencesFromUsage({
+    playerUsage: homeUsage,
+    teamNews: teamNews?.data?.home,
+    context: {
+      team: match?.homeTeam || null,
+      leagueSlug: match?.leagueSlug || null,
+      leagueName: match?.leagueName || null,
+      competitionType: classifyCompetitionType(match)
+    }
+  });
 
-const awayAbsenceIntel = inferAbsencesFromUsage({
-  playerUsage: awayUsage,
-  teamNews: teamNews?.data?.away
-});
+  const awayAbsenceIntel = inferAbsencesFromUsage({
+    playerUsage: awayUsage,
+    teamNews: teamNews?.data?.away,
+    context: {
+      team: match?.awayTeam || null,
+      leagueSlug: match?.leagueSlug || null,
+      leagueName: match?.leagueName || null,
+      competitionType: classifyCompetitionType(match)
+    }
+  });
 
-const playerUsageIntel = {
-  home: homeAbsenceIntel,
-  away: awayAbsenceIntel
-};
+  const playerUsageIntel = {
+    home: {
+      ...homeAbsenceIntel,
+      team: match.homeTeam || null,
+      opponent: match.awayTeam || null,
+      side: "home",
+      leagueSlug: homeUsage?.leagueSlug || match.leagueSlug || null,
+      leagueName: match.leagueName || null,
+      competitionType: classifyCompetitionType(match),
+      source: homeUsage?.source || null,
+      updatedAt: homeUsage?.updatedAt || null
+    },
+    away: {
+      ...awayAbsenceIntel,
+      team: match.awayTeam || null,
+      opponent: match.homeTeam || null,
+      side: "away",
+      leagueSlug: awayUsage?.leagueSlug || match.leagueSlug || null,
+      leagueName: match.leagueName || null,
+      competitionType: classifyCompetitionType(match),
+      source: awayUsage?.source || null,
+      updatedAt: awayUsage?.updatedAt || null
+    }
+  };
 
   return {
     matchId: String(match.matchId),
@@ -669,8 +1110,8 @@ const playerUsageIntel = {
     analysis,
     playerUsageIntel,
     meta: {
-      version: "details-snapshot-v2",
-      builderVersion: "2026-04-11-unified-competition-context",
+      version: DETAILS_SCHEMA_VERSION,
+      builderVersion: DETAILS_BUILDER_VERSION,
       languageReady: ["el", "en"],
       source: "engine-v1",
       snapshotMode: "update_on_change",
@@ -713,43 +1154,44 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
     allFixtures: getFixturesByDay(dayKey) || []
   });
 
+  const basePayload = buildDetailsPayload(match, valuePicks, aiBlocks);
+
   const payload = {
-    ...buildDetailsPayload(match, valuePicks, aiBlocks),
+    ...basePayload,
 
     ai: aiBlocks.ai || null,
-    researchedFacts: aiBlocks.researchedFacts,
-    aiContext: aiBlocks.aiContext,
+    researchedFacts: compactResearchedFactsForDetails(
+      aiBlocks.researchedFacts,
+      basePayload.playerUsageIntel
+    ),
+    aiContext: compactForDetails(aiBlocks.aiContext, {
+      maxArrayItems: 16,
+      maxStringLength: 800,
+      maxDepth: 6
+    }),
     aiSummary: aiBlocks?.aiContext?.summary || null,
     valueSummary:
       buildValueSummaryFromPicks(valuePicks) ||
       aiBlocks?.aiContext?.valueSummary ||
       aiBlocks?.researchedFacts?.valueContext ||
       null,
-    sourceAudit: aiBlocks.sourceAudit,
-    learningMeta: aiBlocks.learningMeta,
-    remoteTaskQueue: aiBlocks.remoteTaskQueue || [],
+    sourceAudit: compactForDetails(aiBlocks.sourceAudit, {
+      maxArrayItems: 12,
+      maxStringLength: 500,
+      maxDepth: 5
+    }),
+    learningMeta: compactForDetails(aiBlocks.learningMeta, {
+      maxArrayItems: 8,
+      maxStringLength: 400,
+      maxDepth: 4
+    }),
+    remoteTaskQueue: compactRemoteTaskQueueForDetails(aiBlocks.remoteTaskQueue),
     remoteTaskRouter: aiBlocks.remoteTaskRouter || {
       status: "idle",
       queueSize: 0,
       queuedCapabilities: []
     },
-    remoteExecution: aiBlocks.remoteExecution || {
-      status: "idle",
-      mode: "stub",
-      queueSize: 0,
-      executedCount: 0,
-      queuedCount: 0,
-      successCount: 0,
-      failedCount: 0,
-      skippedCount: 0,
-      providersTried: [],
-      results: [],
-      meta: {
-        matchId: String(match?.matchId || ""),
-        dayKey,
-        executorVersion: "remote-executor-stub-v1"
-      }
-    },
+    remoteExecution:       compactRemoteExecutionForDetails(aiBlocks.remoteExecution),
 
     sourceIntelligence: buildSourceIntelligence(match)
   };
@@ -768,6 +1210,7 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   }
 
   payload.meta.signature = nextSignature;
+
   writeJson(file, payload);
 
   return {
@@ -825,43 +1268,44 @@ for (const match of rows) {
     allFixtures: rows
   });
 
+  const basePayload = buildDetailsPayload(match, valuePicks, aiBlocks);
+
   const payload = {
-    ...buildDetailsPayload(match, valuePicks, aiBlocks),
+    ...basePayload,
 
     ai: aiBlocks.ai || null,
-    researchedFacts: aiBlocks.researchedFacts,
-    aiContext: aiBlocks.aiContext,
+    researchedFacts: compactResearchedFactsForDetails(
+      aiBlocks.researchedFacts,
+      basePayload.playerUsageIntel
+    ),
+    aiContext: compactForDetails(aiBlocks.aiContext, {
+      maxArrayItems: 16,
+      maxStringLength: 800,
+      maxDepth: 6
+    }),
     aiSummary: aiBlocks?.aiContext?.summary || null,
     valueSummary:
       buildValueSummaryFromPicks(valuePicks) ||
       aiBlocks?.aiContext?.valueSummary ||
       aiBlocks?.researchedFacts?.valueContext ||
       null,
-    sourceAudit: aiBlocks.sourceAudit,
-    learningMeta: aiBlocks.learningMeta,
-    remoteTaskQueue: aiBlocks.remoteTaskQueue || [],
+    sourceAudit: compactForDetails(aiBlocks.sourceAudit, {
+      maxArrayItems: 12,
+      maxStringLength: 500,
+      maxDepth: 5
+    }),
+    learningMeta: compactForDetails(aiBlocks.learningMeta, {
+      maxArrayItems: 8,
+      maxStringLength: 400,
+      maxDepth: 4
+    }),
+    remoteTaskQueue: compactRemoteTaskQueueForDetails(aiBlocks.remoteTaskQueue),
     remoteTaskRouter: aiBlocks.remoteTaskRouter || {
       status: "idle",
       queueSize: 0,
       queuedCapabilities: []
     },
-    remoteExecution: aiBlocks.remoteExecution || {
-      status: "idle",
-      mode: "stub",
-      queueSize: 0,
-      executedCount: 0,
-      queuedCount: 0,
-      successCount: 0,
-      failedCount: 0,
-      skippedCount: 0,
-      providersTried: [],
-      results: [],
-      meta: {
-        matchId: String(match?.matchId || ""),
-        dayKey,
-        executorVersion: "remote-executor-stub-v1"
-      }
-    },
+    remoteExecution: compactRemoteExecutionForDetails(aiBlocks.remoteExecution),
 
     sourceIntelligence: buildSourceIntelligence(match)
   };

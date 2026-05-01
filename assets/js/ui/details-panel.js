@@ -1,5 +1,5 @@
 /* ============================================================
-   assets/js/ui/details-panel.js (FULL LINKED v1.8.4)
+   assets/js/ui/details-panel.js (FULL LINKED v1.8.5)
    - Matches Details panel:
        ⓘ click opens DetailsPanel.renderLocal(matchObj, mountEl)
    - Hybrid + Standard Questions from Details Worker:
@@ -24,7 +24,7 @@
     }
   };
 
-  const VER = "1.8.4";
+  const VER = "1.8.5";
   if (window.__AIML_DETAILS_PANEL_VER__ === VER) return;
   window.__AIML_DETAILS_PANEL_VER__ = VER;
 
@@ -159,6 +159,8 @@ const DETAILS_ENUM_I18N = {
     competitionType: {
       league: "League",
       cup: "Cup",
+      international_cup: "International cup",
+      domestic_cup: "Domestic cup",
       unknown: "Unknown"
     },
     motivation: {
@@ -190,6 +192,8 @@ const DETAILS_ENUM_I18N = {
     competitionType: {
       league: "Πρωτάθλημα",
       cup: "Κύπελλο",
+      international_cup: "Διεθνής διοργάνωση",
+      domestic_cup: "Εγχώριο κύπελλο",
       unknown: "Άγνωστο"
     },
     motivation: {
@@ -614,6 +618,37 @@ function summarizeAiTask(task) {
     ].filter(Boolean).join(" • ");
   }
 
+  if (key === "travel_context") {
+    const distance =
+      data.distanceKm != null && Number.isFinite(Number(data.distanceKm))
+        ? `${Number(data.distanceKm).toFixed(1)} km`
+        : "—";
+
+    const impact = data.impact || "unknown";
+    const profile = data.travelProfile || "unknown";
+    const sameCountry =
+      data.sameCountry === true
+        ? "yes"
+        : data.sameCountry === false
+        ? "no"
+        : "unknown";
+
+    const crossBorder =
+      data.crossBorder === true
+        ? "yes"
+        : data.crossBorder === false
+        ? "no"
+        : "unknown";
+
+    return [
+      `Distance: ${distance}`,
+      `Impact: ${impact}`,
+      `Profile: ${profile}`,
+      `Same country: ${sameCountry}`,
+      `Cross-border: ${crossBorder}`
+    ].join(" • ");
+  }
+
   if (key === "form_signal") {
     const home = data?.homeTeam;
     const away = data?.awayTeam;
@@ -634,9 +669,51 @@ function summarizeAiTask(task) {
   return "Structured AI task available.";
 }
 
+function buildLocalTravelTaskFromSnapshot(snapshot) {
+  const travel = snapshot?.travel || null;
+
+  if (!travel || travel.status !== "ready") {
+    return null;
+  }
+
+  return {
+    key: "travel_context",
+    status: "ready",
+    ok: true,
+    source: travel.source || "local-team-geo",
+    data: {
+      status: travel.status,
+      source: travel.source || "local-team-geo",
+      distanceKm: travel.distanceKm ?? null,
+      impact: travel.impact || "unknown",
+      travelProfile: travel.travelProfile || "unknown",
+      sameCountry: travel.sameCountry ?? null,
+      crossBorder: travel.crossBorder ?? null,
+      confidence: travel.confidence ?? null
+    }
+  };
+}
+
 function renderAiTasksBlock(snapshot) {
   console.log("[AI TASKS SNAPSHOT]", snapshot?.ai);
-  const tasks = Array.isArray(snapshot?.ai?.tasks) ? snapshot.ai.tasks : [];
+
+  const baseTasks = Array.isArray(snapshot?.ai?.tasks) ? snapshot.ai.tasks : [];
+  const localTravelTask = buildLocalTravelTaskFromSnapshot(snapshot);
+
+  const hasTravelTask = baseTasks.some(
+    task => String(task?.key || "") === "travel_context"
+  );
+
+  const tasks = localTravelTask
+    ? hasTravelTask
+      ? baseTasks.map(task =>
+          String(task?.key || "") === "travel_context"
+            ? localTravelTask
+            : task
+        )
+      : [...baseTasks, localTravelTask]
+    : baseTasks;
+
   if (!tasks.length) return "";
 
   const rows = tasks.map((task) => {
@@ -1104,6 +1181,209 @@ function startIntelWatcher(matchId, rerenderFn) {
     return String(m?.status || "").replace("STATUS_", "") || "";
   }
 
+  function normalizePlayerUsageSide(side) {
+    const x = side && typeof side === "object" ? side : {};
+
+    return {
+      team: x.team || null,
+      opponent: x.opponent || null,
+      side: x.side || null,
+      leagueSlug: x.leagueSlug || null,
+      leagueName: x.leagueName || null,
+      competitionType: x.competitionType || null,
+      source: x.source || null,
+      updatedAt: x.updatedAt || null,
+
+      status: String(x.status || "unavailable"),
+      reason: String(x.reason || ""),
+      confidence: Number.isFinite(Number(x.confidence)) ? Number(x.confidence) : 0,
+      sampleMatches:        x.sampleMatches != null
+          ? x.sampleMatches
+          : x.matchCount != null
+          ? x.matchCount
+          : x.meta?.sampleMatches != null
+          ? x.meta.sampleMatches
+          : 0,
+      expectedStarters: Array.isArray(x.expectedStarters) ? x.expectedStarters : [],
+      confirmedAbsences: Array.isArray(x.confirmedAbsences) ? x.confirmedAbsences : [],
+      inferredAbsences: Array.isArray(x.inferredAbsences) ? x.inferredAbsences : []
+    };
+  }
+
+  function pickPlayerUsageIntelFromSnapshot(snap) {
+    const direct = snap?.playerUsageIntel;
+    const researched = snap?.researchedFacts?.playerUsageIntel;
+
+    const researchedHasMetadata =
+      researched &&
+      typeof researched === "object" &&
+      (
+        researched.home?.leagueSlug ||
+        researched.home?.leagueName ||
+        researched.home?.competitionType ||
+        researched.away?.leagueSlug ||
+        researched.away?.leagueName ||
+        researched.away?.competitionType
+      );
+
+    const src =
+      researchedHasMetadata
+        ? researched
+        : direct && typeof direct === "object"
+        ? direct
+        : researched && typeof researched === "object"
+        ? researched
+        : null;
+
+    if (!src) return null;
+
+    return {
+      home: normalizePlayerUsageSide(src.home),
+      away: normalizePlayerUsageSide(src.away)
+    };
+  }
+
+  function renderPlayerUsageNames(items, emptyText) {
+    const arr = Array.isArray(items) ? items : [];
+    if (!arr.length) {
+      return `<div class="muted">${esc(emptyText || "—")}</div>`;
+    }
+
+    return `
+      <div style="display:grid;gap:6px;">
+        ${arr
+          .slice(0, 12)
+          .map((x) => {
+            const name =
+              typeof x === "string"
+                ? x
+                : x?.name || x?.player || x?.playerName || "Player";
+
+            const meta =
+              typeof x === "object" && x
+                ? [
+                    x.position ? String(x.position) : "",
+                    x.confidence != null ? `conf ${Number(x.confidence).toFixed(2)}` : "",
+                    x.frequency != null ? `freq ${Number(x.frequency).toFixed(2)}` : ""
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")
+                : "";
+
+            return `
+              <div style="display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div style="font-weight:800;">${esc(name)}</div>
+                ${meta ? `<div class="muted" style="text-align:right;font-size:12px;">${esc(meta)}</div>` : ``}
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderPlayerUsageSide(title, side) {
+    const status = side?.status || "unavailable";
+    const confidence = Number.isFinite(Number(side?.confidence))
+      ? Number(side.confidence)
+      : 0;
+
+    const ready =
+      status === "ready" ||
+      status === "valid_usage" ||
+      status === "available" ||
+      side?.expectedStarters?.length > 0;
+
+    return `
+      <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+          <div style="font-weight:900;">${esc(title)}</div>
+          <div style="font-size:12px;padding:4px 8px;border-radius:10px;border:1px solid rgba(255,255,255,0.10);background:${
+            ready ? "rgba(0,200,120,0.12)" : "rgba(255,180,0,0.12)"
+          };">
+            ${esc(status)}
+          </div>
+        </div>
+
+        <div class="muted" style="margin-top:6px;font-size:12px;">
+          Team: <b>${esc(side?.team || title || "—")}</b>
+          ${
+            side?.opponent
+              ? `<span style="margin-left:8px;">Opponent: <b>${esc(side.opponent)}</b></span>`
+              : ``
+          }
+        </div>
+
+        <div class="muted" style="margin-top:6px;font-size:12px;">
+          Competition: <b>${esc(side?.leagueName || side?.leagueSlug || "—")}</b>
+          ${
+            side?.leagueSlug
+              ? `<span style="margin-left:8px;">Slug: <b>${esc(side.leagueSlug)}</b></span>`
+              : ``
+          }
+        </div>
+
+        <div class="muted" style="margin-top:6px;font-size:12px;">
+          Type: <b>${esc(side?.competitionType || "—")}</b>
+          <span style="margin-left:8px;">Confidence: <b>${esc(confidence.toFixed(2))}</b></span>
+          <span style="margin-left:8px;">Sample: <b>${esc(String(side?.sampleMatches ?? 0))}</b></span>
+        </div>
+        ${
+          side?.reason
+            ? `<div class="muted" style="margin-top:6px;font-size:12px;">${esc(side.reason)}</div>`
+            : ``
+        }
+
+        <div style="margin-top:10px;font-weight:900;font-size:13px;">Expected starters</div>
+        <div style="margin-top:6px;">
+          ${renderPlayerUsageNames(side?.expectedStarters, "No expected starters available.")}
+        </div>
+
+        <div style="margin-top:10px;font-weight:900;font-size:13px;">Confirmed absences</div>
+        <div style="margin-top:6px;">
+          ${renderPlayerUsageNames(side?.confirmedAbsences, "No confirmed absences.")}
+        </div>
+
+        ${
+          Array.isArray(side?.inferredAbsences) && side.inferredAbsences.length
+            ? `
+              <div style="margin-top:10px;font-weight:900;font-size:13px;">Inferred absences</div>
+              <div style="margin-top:6px;">
+                ${renderPlayerUsageNames(side.inferredAbsences, "No inferred absences.")}
+              </div>
+            `
+            : ``
+        }
+      </div>
+    `;
+  }
+
+  function renderPlayerUsageIntelBlock(snap) {
+    const intel = pickPlayerUsageIntelFromSnapshot(snap);
+
+    if (!intel) {
+      return `
+        <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="font-weight:900;margin-bottom:8px;">Player Usage Intel</div>
+          <div class="muted">Player usage intel unavailable.</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div style="margin-top:14px;">
+        <div style="font-weight:900;margin-bottom:8px;">Player Usage Intel</div>
+        <div class="muted" style="font-size:12px;margin-bottom:10px;">
+          Validated local player-usage substrate. No fake absence rule active.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">
+          ${renderPlayerUsageSide("Home", intel.home)}
+          ${renderPlayerUsageSide("Away", intel.away)}
+        </div>
+      </div>
+    `;
+  }
+
   function renderDetailsInfoBox() {
     return `
       <div id="aiml-details-info-box" style="display:none;margin-top:10px;padding:10px 12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
@@ -1221,10 +1501,25 @@ async function renderLocal(match, mountEl) {
       snap.context?.motivation || "unknown"
     );
 
+    const rawCompetitionType =
+      snap.basic?.competitionType ||
+      snap.context?.competitionType ||
+      "unknown";
+
     const competitionType = translateDetailsEnum(
       "competitionType",
-      snap.context?.competitionType || "unknown"
+      rawCompetitionType
     );
+
+    const competitionName =
+      snap.basic?.leagueName ||
+      snap.leagueName ||
+      "";
+
+    const competitionSlug =
+      snap.basic?.leagueSlug ||
+      snap.leagueSlug ||
+      "";
 
     const travelImpact = translateDetailsEnum(
       "travelImpact",
@@ -1287,7 +1582,13 @@ async function renderLocal(match, mountEl) {
       <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">
         <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
           <div style="font-weight:900;margin-bottom:8px;">Context Snapshot</div>
-          <div>Competition Type: <b>${esc(competitionType)}</b></div>
+          <div>Competition: <b>${esc(competitionName || "—")}</b></div>
+          <div style="margin-top:6px;">Type: <b>${esc(competitionType)}</b></div>
+          ${
+            competitionSlug
+              ? `<div style="margin-top:6px;">Slug: <b>${esc(competitionSlug)}</b></div>`
+              : ``
+          }
           <div style="margin-top:6px;">Motivation: <b>${esc(motivation)}</b></div>
           <div style="margin-top:6px;">Travel Impact: <b>${esc(travelImpact)}</b></div>
           <div style="margin-top:6px;">Distance: <b>${esc(distanceKm)}</b></div>
@@ -1312,6 +1613,8 @@ async function renderLocal(match, mountEl) {
         <div style="margin-top:6px;">Away Position: <b>${esc(awayPos)}</b></div>
         <div style="margin-top:6px;">Total Teams: <b>${esc(totalTeams)}</b></div>
       </div>
+
+      ${renderPlayerUsageIntelBlock(snap)}
 
       ${valueHtml}
 

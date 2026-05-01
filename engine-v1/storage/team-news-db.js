@@ -195,10 +195,27 @@ function dedupeEvidence(items = []) {
   return out;
 }
 
-function normalizeMetaObject(input = {}) {
-  return input && typeof input === "object" && !Array.isArray(input)
-    ? input
-    : {};
+function compactSourceMeta(input = {}) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return {};
+  }
+
+  return {
+    provider: normalizeText(input?.provider) || null,
+    mode: normalizeText(input?.mode) || null,
+    status: normalizeText(input?.status) || null,
+    reason: normalizeText(input?.reason) || null,
+    confidence: Number.isFinite(Number(input?.confidence))
+      ? Number(input.confidence)
+      : null,
+    sourceCount: Number.isFinite(Number(input?.sourceCount))
+      ? Number(input.sourceCount)
+      : null,
+    evidenceCount: Number.isFinite(Number(input?.evidenceCount))
+      ? Number(input.evidenceCount)
+      : null,
+    generatedAt: normalizeText(input?.generatedAt || input?.executedAt) || null
+  };
 }
 
 function normalizeAbsences(items = []) {
@@ -239,7 +256,7 @@ export function normalizeTeamNewsRecord(input = {}) {
     notes: normalizeNotes(input?.notes || []),
     evidence: dedupeEvidence(input?.evidence || []),
     source: normalizeText(input?.source) || "local-team-news",
-    sourceMeta: normalizeMetaObject(input?.sourceMeta),
+    sourceMeta: compactSourceMeta(input?.sourceMeta),
     updatedAt: input?.updatedAt || new Date().toISOString()
   };
 }
@@ -267,12 +284,45 @@ export function writeTeamNewsRecord(record) {
     throw new Error("writeTeamNewsRecord: invalid team key");
   }
 
-  writeJson(filePath, normalized);
+  const safeRecord = {
+    key: normalized.key,
+    team: normalized.team || null,
+    leagueSlug: normalized.leagueSlug || null,
+    matchIds: Array.isArray(normalized.matchIds)
+      ? normalized.matchIds.slice(0, 20)
+      : [],
+    aliases: Array.isArray(normalized.aliases)
+      ? normalized.aliases.slice(0, 20).map(v => normalizeText(v)).filter(Boolean)
+      : [],
+    absences: Array.isArray(normalized.absences)
+      ? normalized.absences.slice(0, 30).map(row => ({
+          player: normalizeText(row?.player) || null,
+          reason: normalizeText(row?.reason) || null,
+          importance: normalizeImportance(row?.importance)
+        }))
+      : [],
+    notes: Array.isArray(normalized.notes)
+      ? normalized.notes.slice(0, 30).map(v => normalizeText(v)).filter(Boolean)
+      : [],
+    evidence: Array.isArray(normalized.evidence)
+      ? normalized.evidence.slice(0, 20).map(row => ({
+          label: normalizeText(row?.label).slice(0, 240) || null,
+          url: normalizeText(row?.url).slice(0, 500) || null,
+          publisher: normalizeText(row?.publisher).slice(0, 120) || null,
+          publishedAt: normalizeText(row?.publishedAt).slice(0, 80) || null
+        }))
+      : [],
+    source: normalizeText(normalized.source) || "local-team-news",
+    sourceMeta: compactSourceMeta(normalized.sourceMeta),
+    updatedAt: normalized.updatedAt || new Date().toISOString()
+  };
+
+  writeJson(filePath, safeRecord);
 
   return {
     ok: true,
     filePath,
-    record: normalized
+    record: safeRecord
   };
 }
 

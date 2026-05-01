@@ -99,8 +99,10 @@ function buildUsageStatus({ playerUsage, sampleMatches, confidence }) {
 
 export function inferAbsencesFromUsage({
   playerUsage,
-  teamNews
+  teamNews,
+  context = {}
 }) {
+  const usageContext = context && typeof context === "object" ? context : {};
   const starterIntel = buildStarterIntelligence(playerUsage || {});
 
   const expectedStarters = Array.isArray(starterIntel?.expectedStarters)
@@ -127,6 +129,10 @@ export function inferAbsencesFromUsage({
     }));
 
   return {
+    team: playerUsage?.team || usageContext.team || null,
+    leagueSlug: playerUsage?.leagueSlug || usageContext.leagueSlug || null,
+    leagueName: playerUsage?.leagueName || usageContext.leagueName || null,
+    competitionType: usageContext.competitionType || null,
     status: usageStatus.status,
     reason: usageStatus.reason,
     confidence,

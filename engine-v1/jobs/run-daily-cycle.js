@@ -8,6 +8,7 @@ import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
+import { applyTeamGeoSeedsDay } from "./apply-team-geo-seeds-day.js";
 import { buildTeamNewsWorksetDay } from "./build-team-news-workset-day.js";
 import { buildTeamNewsResearchTasksDay } from "./build-team-news-research-tasks-day.js";
 import { runTeamNewsResearchTasksDay } from "./run-team-news-research-tasks-day.js";
@@ -92,6 +93,7 @@ export async function runDailyCycle(options = {}) {
   const monitor = await monitorActiveLeagues(dayKey);
   console.log("[daily-cycle] monitor:done", monitor);
 
+  let teamGeoSeeds = null;
   let teamNewsWorkset = null;
   let teamNewsResearchTasks = null;
   let teamNewsResearchRun = null;
@@ -114,6 +116,21 @@ export async function runDailyCycle(options = {}) {
     leagueCount: standingsBuild?.leagueCount ?? 0,
     built: standingsBuild?.built ?? 0,
     skipped: standingsBuild?.skipped ?? 0
+  });
+
+  console.log("[daily-cycle] team-geo-seeds:start", { dayKey });
+
+  teamGeoSeeds = await applyTeamGeoSeedsDay(dayKey);
+
+  console.log("[daily-cycle] team-geo-seeds:done", {
+    ok: teamGeoSeeds?.ok,
+    dayKey: teamGeoSeeds?.dayKey,
+    seedCount: teamGeoSeeds?.seedCount ?? 0,
+    appliedCount: teamGeoSeeds?.appliedCount ?? 0,
+    unresolvedCount: teamGeoSeeds?.unresolvedCount ?? 0,
+    beforeCoveragePct: teamGeoSeeds?.before?.coveragePct ?? 0,
+    afterCoveragePct: teamGeoSeeds?.after?.coveragePct ?? 0,
+    afterMissingCount: teamGeoSeeds?.after?.missingCount ?? 0
   });
 
   console.log("[daily-cycle] details-build:start", {
@@ -243,6 +260,7 @@ export async function runDailyCycle(options = {}) {
     activeLeagues,
     monitor,
     standingsBuild,
+    teamGeoSeeds,
     detailsBuild,
     teamNewsWorkset,
     teamNewsResearchTasks,
@@ -274,6 +292,8 @@ if (entryUrl === import.meta.url) {
       ok: result?.ok,
       dayKey: result?.dayKey,
       ms: result?.ms,
+      teamGeoAppliedCount: result?.teamGeoSeeds?.appliedCount ?? 0,
+      teamGeoMissingCount: result?.teamGeoSeeds?.after?.missingCount ?? 0,
       teamNewsResearchTaskCount: result?.teamNewsResearchRun?.taskCount ?? 0,
       teamNewsAcceptedCandidateCount: result?.teamNewsResearchRun?.acceptedCandidateCount ?? 0,
       teamNewsCanonicalWriteCount: result?.teamNewsResearchRun?.canonicalWriteCount ?? 0,
