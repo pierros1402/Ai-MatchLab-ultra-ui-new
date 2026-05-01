@@ -1159,6 +1159,17 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   const payload = {
     ...basePayload,
 
+    teamNews: compactForDetails(basePayload.teamNews, {
+      maxArrayItems: 12,
+      maxStringLength: 400,
+      maxDepth: 5
+    }),
+    playerUsageIntel: compactForDetails(basePayload.playerUsageIntel, {
+      maxArrayItems: 12,
+      maxStringLength: 400,
+      maxDepth: 5
+    }),
+
     ai: aiBlocks.ai || null,
     researchedFacts: compactResearchedFactsForDetails(
       aiBlocks.researchedFacts,
@@ -1272,6 +1283,17 @@ for (const match of rows) {
 
   const payload = {
     ...basePayload,
+
+    teamNews: compactForDetails(basePayload.teamNews, {
+      maxArrayItems: 12,
+      maxStringLength: 400,
+      maxDepth: 5
+    }),
+    playerUsageIntel: compactForDetails(basePayload.playerUsageIntel, {
+      maxArrayItems: 12,
+      maxStringLength: 400,
+      maxDepth: 5
+    }),
 
     ai: aiBlocks.ai || null,
     researchedFacts: compactResearchedFactsForDetails(
