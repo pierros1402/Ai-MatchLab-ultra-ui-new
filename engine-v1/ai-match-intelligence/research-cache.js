@@ -20,6 +20,62 @@ function cacheFile(matchId) {
   return resolveDataPath("research-cache", `${matchId}.json`);
 }
 
+function compactValue(value, depth = 0) {
+  if (value == null) return value;
+
+  if (depth >= 8) {
+    return "[cache_depth_limit]";
+  }
+
+  if (typeof value === "string") {
+    return value.length > 4000 ? `${value.slice(0, 4000)}...[cache_string_truncated]` : value;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.slice(0, 80).map(item => compactValue(item, depth + 1));
+  }
+
+  if (typeof value === "object") {
+    const out = {};
+
+    for (const [key, child] of Object.entries(value)) {
+      if (
+        key === "remoteResults" ||
+        key === "results" ||
+        key === "raw" ||
+        key === "html" ||
+        key === "body" ||
+        key === "content" ||
+        key === "fullText" ||
+        key === "allFixtures"
+      ) {
+        continue;
+      }
+
+      out[key] = compactValue(child, depth + 1);
+    }
+
+    return out;
+  }
+
+  return null;
+}
+
+function buildCachePayload(payload = {}) {
+  return compactValue({
+    competitionContext: payload?.competitionContext || null,
+    referee: payload?.referee || null,
+    teamNews: payload?.teamNews || null,
+    lineups: payload?.lineups || null,
+    sources: Array.isArray(payload?.sources) ? payload.sources : [],
+    remoteStatus: payload?.remoteStatus || "unavailable"
+  });
+}
+
 export function readResearchCache(matchId, { maxAgeMinutes = 180 } = {}) {
   const file = cacheFile(matchId);
   const cached = readJsonSafe(file, null);
@@ -43,9 +99,9 @@ export function writeResearchCache(matchId, payload) {
     meta: {
       fetchedAt: new Date().toISOString(),
       fetchedAtTs: Date.now(),
-      version: "research-cache-v1"
+      version: "research-cache-v2-compact"
     },
-    payload
+    payload: buildCachePayload(payload)
   };
 
   writeJson(file, wrapped);

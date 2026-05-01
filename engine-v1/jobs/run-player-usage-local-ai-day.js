@@ -80,8 +80,8 @@ function isUsableResult(result) {
   return (
     result &&
     Array.isArray(result.matches) &&
-    result.matches.length > 0 &&
-    Number(result.confidence) >= 0.35
+    result.matches.length >= 2 &&
+    Number(result.confidence) >= 0.55
   );
 }
 
@@ -96,7 +96,8 @@ function buildInput(request) {
     "- Do not invent players.",
     "- Do not use ESPN as canonical source.",
     "- Prefer official club site, competition match centre, club match report, or credible lineup report.",
-    "- It is acceptable to return fewer than 5 matches if evidence is reliable."
+    "- Return at least 2 reliable recent matches, otherwise return matches: [] and confidence: 0.",
+    "- It is acceptable to return fewer than 5 matches only if there are at least 2 reliable matches."
   ].join("\n");
 }
 

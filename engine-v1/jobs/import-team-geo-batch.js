@@ -4,7 +4,8 @@ import { fileURLToPath } from "url";
 import { readTeamGeoRecord, writeTeamGeoRecord } from "../storage/team-geo-db.js";
 
 function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const raw = fs.readFileSync(filePath, "utf8").replace(/^\uFEFF/, "");
+  return JSON.parse(raw);
 }
 
 function normalizeText(value) {
