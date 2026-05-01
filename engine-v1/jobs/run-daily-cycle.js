@@ -8,6 +8,13 @@ import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
+import { buildPlayerUsageWorksetDay } from "./build-player-usage-workset-day.js";
+import { applyPlayerUsageSeedsDay } from "./apply-player-usage-seeds-day.js";
+import { buildPlayerUsageResearchTasksDay } from "./build-player-usage-research-tasks-day.js";
+import { buildPlayerUsageAiRequestsDay } from "./build-player-usage-ai-requests-day.js";
+import { runPlayerUsageAiExecutorDay } from "./run-player-usage-ai-executor-day.js";
+import { runPlayerUsageResearchTasksDay } from "./run-player-usage-research-tasks-day.js";
+import { importPlayerUsageManualResultsDay } from "./import-player-usage-manual-results-day.js";
 import { applyTeamGeoSeedsDay } from "./apply-team-geo-seeds-day.js";
 import { buildTeamNewsWorksetDay } from "./build-team-news-workset-day.js";
 import { buildTeamNewsResearchTasksDay } from "./build-team-news-research-tasks-day.js";
@@ -47,7 +54,9 @@ export async function runDailyCycle(options = {}) {
     daysForward = 2,
     detailsRebuild = true,
     teamNewsMaxTeams = readPositiveIntegerEnv("TEAM_NEWS_MAX_TEAMS", Infinity),
-    teamNewsResearchMaxTasks = readPositiveIntegerEnv("TEAM_NEWS_RESEARCH_MAX_TASKS", 24)
+    teamNewsResearchMaxTasks = readPositiveIntegerEnv("TEAM_NEWS_RESEARCH_MAX_TASKS", 24),
+    playerUsageResearchMaxTasks = readPositiveIntegerEnv("PLAYER_USAGE_RESEARCH_MAX_TASKS", 24),
+    playerUsageAiExecutorMode = process.env.PLAYER_USAGE_AI_EXECUTOR_MODE || "disabled"
   } = options;
 
   const normalizedTeamNewsMaxTeams = normalizePositiveIntegerOption(
@@ -69,7 +78,9 @@ export async function runDailyCycle(options = {}) {
     doFinalize,
     daysForward,
     teamNewsMaxTeams: normalizedTeamNewsMaxTeams,
-    teamNewsResearchMaxTasks: normalizedTeamNewsResearchMaxTasks
+    teamNewsResearchMaxTasks: normalizedTeamNewsResearchMaxTasks,
+    playerUsageResearchMaxTasks: normalizedPlayerUsageResearchMaxTasks,
+    playerUsageAiExecutorMode
   });
 
   console.log("[daily-cycle] discoverWindow:start");
@@ -94,6 +105,14 @@ export async function runDailyCycle(options = {}) {
   console.log("[daily-cycle] monitor:done", monitor);
 
   let teamGeoSeeds = null;
+  let playerUsageWorkset = null;
+  let playerUsageSeeds = null;
+  let playerUsageResearchTasks = null;
+  let playerUsageAiRequests = null;
+  let playerUsageAiExecutor = null;
+  let playerUsageManualImport = null;
+  let playerUsageResearchRun = null;
+  let playerUsageDetailsRefresh = null;
   let teamNewsWorkset = null;
   let teamNewsResearchTasks = null;
   let teamNewsResearchRun = null;
@@ -149,6 +168,141 @@ export async function runDailyCycle(options = {}) {
     built: detailsBuild?.built ?? 0,
     skipped: detailsBuild?.skipped ?? 0
   });
+
+  console.log("[daily-cycle] player-usage-workset:start", { dayKey });
+
+  playerUsageWorkset = await buildPlayerUsageWorksetDay(dayKey);
+
+  console.log("[daily-cycle] player-usage-workset:done", {
+    ok: playerUsageWorkset?.ok,
+    dayKey: playerUsageWorkset?.dayKey,
+    teamCount: playerUsageWorkset?.teamCount ?? 0,
+    missingCount: playerUsageWorkset?.missingCount ?? 0,
+    insufficientCount: playerUsageWorkset?.insufficientCount ?? 0,
+    okCount: playerUsageWorkset?.okCount ?? 0,
+    file: playerUsageWorkset?.file || null
+  });
+
+  console.log("[daily-cycle] player-usage-seeds:start", { dayKey });
+
+  playerUsageSeeds = await applyPlayerUsageSeedsDay(dayKey);
+
+  console.log("[daily-cycle] player-usage-seeds:done", {
+    ok: playerUsageSeeds?.ok,
+    dayKey: playerUsageSeeds?.dayKey,
+    seedCount: playerUsageSeeds?.seedCount ?? 0,
+    checkedCount: playerUsageSeeds?.checkedCount ?? 0,
+    canonicalWriteCount: playerUsageSeeds?.canonicalWriteCount ?? 0,
+    unresolvedCount: playerUsageSeeds?.unresolvedCount ?? 0,
+    file: playerUsageSeeds?.file || null
+  });
+
+  if ((playerUsageSeeds?.canonicalWriteCount ?? 0) > 0) {
+    console.log("[daily-cycle] player-usage-workset-refresh:start", { dayKey });
+
+    playerUsageWorkset = await buildPlayerUsageWorksetDay(dayKey);
+
+    console.log("[daily-cycle] player-usage-workset-refresh:done", {
+      ok: playerUsageWorkset?.ok,
+      dayKey: playerUsageWorkset?.dayKey,
+      teamCount: playerUsageWorkset?.teamCount ?? 0,
+      missingCount: playerUsageWorkset?.missingCount ?? 0,
+      insufficientCount: playerUsageWorkset?.insufficientCount ?? 0,
+      okCount: playerUsageWorkset?.okCount ?? 0,
+      file: playerUsageWorkset?.file || null
+    });
+  }
+
+  console.log("[daily-cycle] player-usage-research-tasks:start", { dayKey });
+
+  playerUsageResearchTasks = await buildPlayerUsageResearchTasksDay(dayKey);
+
+  console.log("[daily-cycle] player-usage-research-tasks:done", {
+    ok: playerUsageResearchTasks?.ok,
+    dayKey: playerUsageResearchTasks?.dayKey,
+    taskCount: playerUsageResearchTasks?.taskCount ?? 0,
+    file: playerUsageResearchTasks?.file || null
+  });
+
+  console.log("[daily-cycle] player-usage-ai-requests:start", { dayKey });
+
+  playerUsageAiRequests = await buildPlayerUsageAiRequestsDay(dayKey);
+
+  console.log("[daily-cycle] player-usage-ai-requests:done", {
+    ok: playerUsageAiRequests?.ok,
+    dayKey: playerUsageAiRequests?.dayKey,
+    requestCount: playerUsageAiRequests?.requestCount ?? 0,
+    indexFile: playerUsageAiRequests?.indexFile || null
+  });
+
+  console.log("[daily-cycle] player-usage-ai-executor:start", {
+    dayKey,
+    mode: playerUsageAiExecutorMode
+  });
+
+  playerUsageAiExecutor = await runPlayerUsageAiExecutorDay(dayKey, {
+    mode: playerUsageAiExecutorMode
+  });
+
+  console.log("[daily-cycle] player-usage-ai-executor:done", {
+    ok: playerUsageAiExecutor?.ok,
+    dayKey: playerUsageAiExecutor?.dayKey,
+    mode: playerUsageAiExecutor?.mode,
+    requestCount: playerUsageAiExecutor?.requestCount ?? 0,
+    selectedCount: playerUsageAiExecutor?.selectedCount ?? 0,
+    bundleCount: playerUsageAiExecutor?.bundleCount ?? 0,
+    canonicalWriteCount: playerUsageAiExecutor?.canonicalWriteCount ?? 0,
+    researchResultWriteCount: playerUsageAiExecutor?.researchResultWriteCount ?? 0,
+    file: playerUsageAiExecutor?.file || null,
+    reason: playerUsageAiExecutor?.reason || null
+  });
+
+  console.log("[daily-cycle] player-usage-manual-import:start", { dayKey });
+
+  playerUsageManualImport = await importPlayerUsageManualResultsDay(dayKey);
+
+  console.log("[daily-cycle] player-usage-manual-import:done", {
+    ok: playerUsageManualImport?.ok,
+    dayKey: playerUsageManualImport?.dayKey,
+    inputFileCount: playerUsageManualImport?.inputFileCount ?? 0,
+    importedCount: playerUsageManualImport?.importedCount ?? 0,
+    rejectedCount: playerUsageManualImport?.rejectedCount ?? 0,
+    file: playerUsageManualImport?.file || null
+  });
+
+  console.log("[daily-cycle] player-usage-research-run:start", {
+    dayKey,
+    maxTasks: normalizedPlayerUsageResearchMaxTasks
+  });
+
+  playerUsageResearchRun = await runPlayerUsageResearchTasksDay(dayKey, {
+    maxTasks: normalizedPlayerUsageResearchMaxTasks
+  });
+
+  console.log("[daily-cycle] player-usage-research-run:done", {
+    ok: playerUsageResearchRun?.ok,
+    dayKey: playerUsageResearchRun?.dayKey,
+    taskCount: playerUsageResearchRun?.taskCount ?? 0,
+    acceptedPlayerUsageCount: playerUsageResearchRun?.acceptedPlayerUsageCount ?? 0,
+    unresolvedPlayerUsageCount: playerUsageResearchRun?.unresolvedPlayerUsageCount ?? 0,
+    canonicalWriteCount: playerUsageResearchRun?.canonicalWriteCount ?? 0,
+    file: playerUsageResearchRun?.file || null
+  });
+
+  if (((playerUsageSeeds?.canonicalWriteCount ?? 0) + (playerUsageManualImport?.importedCount ?? 0) + (playerUsageResearchRun?.canonicalWriteCount ?? 0)) > 0) {
+    console.log("[daily-cycle] player-usage-details-refresh:start", { dayKey });
+
+    playerUsageDetailsRefresh = await buildDetailsDay(dayKey, {
+      rebuild: true
+    });
+
+    console.log("[daily-cycle] player-usage-details-refresh:done", {
+      ok: playerUsageDetailsRefresh?.ok,
+      dayKey: playerUsageDetailsRefresh?.dayKey,
+      built: playerUsageDetailsRefresh?.built ?? 0,
+      skipped: playerUsageDetailsRefresh?.skipped ?? 0
+    });
+  }
 
   console.log("[daily-cycle] team-news-workset:start", { dayKey });
 
@@ -262,6 +416,14 @@ export async function runDailyCycle(options = {}) {
     standingsBuild,
     teamGeoSeeds,
     detailsBuild,
+    playerUsageWorkset,
+    playerUsageSeeds,
+    playerUsageResearchTasks,
+    playerUsageAiRequests,
+    playerUsageAiExecutor,
+    playerUsageManualImport,
+    playerUsageResearchRun,
+    playerUsageDetailsRefresh,
     teamNewsWorkset,
     teamNewsResearchTasks,
     teamNewsResearchRun,
@@ -294,6 +456,12 @@ if (entryUrl === import.meta.url) {
       ms: result?.ms,
       teamGeoAppliedCount: result?.teamGeoSeeds?.appliedCount ?? 0,
       teamGeoMissingCount: result?.teamGeoSeeds?.after?.missingCount ?? 0,
+      playerUsageSeedWriteCount: result?.playerUsageSeeds?.canonicalWriteCount ?? 0,
+      playerUsageExecutorBundleCount: result?.playerUsageAiExecutor?.bundleCount ?? 0,
+      playerUsageManualImportCount: result?.playerUsageManualImport?.importedCount ?? 0,
+      playerUsageTaskCount: result?.playerUsageResearchTasks?.taskCount ?? 0,
+      playerUsageCanonicalWriteCount: result?.playerUsageResearchRun?.canonicalWriteCount ?? 0,
+      playerUsageUnresolvedCount: result?.playerUsageResearchRun?.unresolvedPlayerUsageCount ?? 0,
       teamNewsResearchTaskCount: result?.teamNewsResearchRun?.taskCount ?? 0,
       teamNewsAcceptedCandidateCount: result?.teamNewsResearchRun?.acceptedCandidateCount ?? 0,
       teamNewsCanonicalWriteCount: result?.teamNewsResearchRun?.canonicalWriteCount ?? 0,
