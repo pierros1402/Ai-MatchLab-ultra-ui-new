@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "fs";
 import ExcelJS from "exceljs";
 import { athensDayKey, shiftDay } from "./core/daykey.js";
 import { ingestDay } from "./jobs/ingest-day.js";
@@ -13,6 +14,7 @@ import { getFixtureById } from "./storage/json-db.js";
 import { buildValueDay } from "./core/build-value-day.js";
 import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload } from "./api/details.js";
+import { resolveDataPath } from "./storage/data-root.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import 'dotenv/config';
 
@@ -127,6 +129,89 @@ app.get("/fixtures-runtime", (req, res) => {
 });
 
 
+
+
+function fileInfoSafe(...parts) {
+  const filePath = resolveDataPath(...parts);
+
+  try {
+    if (!fs.existsSync(filePath)) {
+      return {
+        exists: false,
+        path: filePath,
+        bytes: 0,
+        mb: 0
+      };
+    }
+
+    const stat = fs.statSync(filePath);
+
+    return {
+      exists: true,
+      path: filePath,
+      bytes: stat.size,
+      mb: Number((stat.size / 1024 / 1024).toFixed(2))
+    };
+  } catch (err) {
+    return {
+      exists: false,
+      path: filePath,
+      error: String(err?.message || err)
+    };
+  }
+}
+
+function dirInfoSafe(...parts) {
+  const dirPath = resolveDataPath(...parts);
+
+  try {
+    if (!fs.existsSync(dirPath)) {
+      return {
+        exists: false,
+        path: dirPath,
+        fileCount: 0
+      };
+    }
+
+    const files = fs.readdirSync(dirPath)
+      .filter(name => name.endsWith(".json"));
+
+    return {
+      exists: true,
+      path: dirPath,
+      fileCount: files.length,
+      sample: files.slice(0, 10)
+    };
+  } catch (err) {
+    return {
+      exists: false,
+      path: dirPath,
+      error: String(err?.message || err)
+    };
+  }
+}
+
+app.get("/debug/value-inputs", (req, res) => {
+  const date = String(req.query.date || athensDayKey());
+  const season = String(req.query.season || "2025-2026");
+
+  res.json({
+    ok: true,
+    date,
+    season,
+    cwd: process.cwd(),
+    inputs: {
+      fixtures: fileInfoSafe("fixtures.json"),
+      valueFile: fileInfoSafe("value", `${date}.json`),
+      detailsDir: dirInfoSafe("details", date),
+      modelPriors: fileInfoSafe("model-priors", `${season}.json`),
+      history: fileInfoSafe("history", `${season}.json`),
+      historyIndexTeamForm: fileInfoSafe("history-index", "team-form", `${season}.json`),
+      historyIndexMatchups: fileInfoSafe("history-index", "matchups", `${season}.json`),
+      observations: fileInfoSafe("observations.json")
+    }
+  });
+});
 
 app.get("/value-picks", async (req, res) => {
   const date = String(req.query.date || athensDayKey());
