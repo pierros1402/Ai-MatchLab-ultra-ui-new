@@ -1,5 +1,8 @@
 import express from "express";
 import fs from "fs";
+import { spawn } from "child_process";
+import path from "path";
+import { fileURLToPath } from "url";
 import ExcelJS from "exceljs";
 import { athensDayKey, shiftDay } from "./core/daykey.js";
 import { ingestDay } from "./jobs/ingest-day.js";
@@ -21,6 +24,11 @@ import 'dotenv/config';
 const app = express();
 const PORT = process.env.PORT || 3010;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const OPS_JOBS = new Map();
+const OPS_JOB_MAX_LOG = 16000;
+
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -33,6 +41,180 @@ app.use((req, res, next) => {
 
   next();
 });
+
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function trimLog(value) {
+  const s = String(value || "");
+  if (s.length <= OPS_JOB_MAX_LOG) return s;
+  return s.slice(s.length - OPS_JOB_MAX_LOG);
+}
+
+function publicJob(job) {
+  if (!job) return null;
+
+  return {
+    id: job.id,
+    type: job.type,
+    dayKey: job.dayKey,
+    status: job.status,
+    startedAt: job.startedAt,
+    finishedAt: job.finishedAt || null,
+    runtimeMs: job.finishedAt
+      ? new Date(job.finishedAt).getTime() - new Date(job.startedAt).getTime()
+      : Date.now() - new Date(job.startedAt).getTime(),
+    exitCode: job.exitCode ?? null,
+    signal: job.signal || null,
+    pid: job.pid || null,
+    command: job.command,
+    args: job.args,
+    stdoutTail: job.stdoutTail || "",
+    stderrTail: job.stderrTail || "",
+    result: job.result || null,
+    error: job.error || null
+  };
+}
+
+function latestRunningJob(type, dayKey) {
+  for (const job of OPS_JOBS.values()) {
+    if (
+      job.type === type &&
+      job.dayKey === dayKey &&
+      ["queued", "running"].includes(job.status)
+    ) {
+      return job;
+    }
+  }
+
+  return null;
+}
+
+function startOpsChildJob({ type, dayKey, command, args, cwd }) {
+  const existing = latestRunningJob(type, dayKey);
+
+  if (existing) {
+    return {
+      created: false,
+      job: existing
+    };
+  }
+
+  const id = `${type}:${dayKey}:${Date.now()}`;
+
+  const job = {
+    id,
+    type,
+    dayKey,
+    status: "queued",
+    startedAt: nowIso(),
+    finishedAt: null,
+    exitCode: null,
+    signal: null,
+    pid: null,
+    command,
+    args,
+    cwd,
+    stdoutTail: "",
+    stderrTail: "",
+    result: null,
+    error: null
+  };
+
+  OPS_JOBS.set(id, job);
+
+  const child = spawn(command, args, {
+    cwd,
+    env: process.env,
+    stdio: ["ignore", "pipe", "pipe"],
+    windowsHide: true
+  });
+
+  job.status = "running";
+  job.pid = child.pid;
+
+  child.stdout.on("data", chunk => {
+    const text = chunk.toString();
+    job.stdoutTail = trimLog((job.stdoutTail || "") + text);
+    process.stdout.write(`[ops:${id}:stdout] ${text}`);
+  });
+
+  child.stderr.on("data", chunk => {
+    const text = chunk.toString();
+    job.stderrTail = trimLog((job.stderrTail || "") + text);
+    process.stderr.write(`[ops:${id}:stderr] ${text}`);
+  });
+
+  child.on("error", err => {
+    job.status = "failed";
+    job.error = String(err?.message || err);
+    job.finishedAt = nowIso();
+  });
+
+  child.on("close", (code, signal) => {
+    job.exitCode = code;
+    job.signal = signal || null;
+    job.finishedAt = nowIso();
+    job.status = code === 0 ? "succeeded" : "failed";
+
+    const out = String(job.stdoutTail || "").trim();
+    const jsonStart = out.lastIndexOf("{");
+
+    if (jsonStart >= 0) {
+      try {
+        job.result = JSON.parse(out.slice(jsonStart));
+      } catch {
+        job.result = null;
+      }
+    }
+  });
+
+  return {
+    created: true,
+    job
+  };
+}
+
+function startBuildDetailsJob(dayKey, { rebuild = false } = {}) {
+  const args = [
+    path.join(__dirname, "jobs", "build-details-day.js"),
+    dayKey
+  ];
+
+  if (rebuild) args.push("--rebuild");
+
+  return startOpsChildJob({
+    type: "build-details",
+    dayKey,
+    command: process.execPath,
+    args,
+    cwd: __dirname
+  });
+}
+
+function startValueBuildJob(dayKey, { rebuild = false } = {}) {
+  const code = `
+    import { buildValueDay } from "./core/build-value-day.js";
+    const dayKey = process.argv[1];
+    const rebuild = process.argv.includes("--rebuild");
+    const result = await buildValueDay(dayKey, { rebuild });
+    console.log(JSON.stringify(result));
+  `;
+
+  const args = ["--input-type=module", "-e", code, dayKey];
+
+  if (rebuild) args.push("--rebuild");
+
+  return startOpsChildJob({
+    type: "value-build",
+    dayKey,
+    command: process.execPath,
+    args,
+    cwd: __dirname
+  });
+}
 
 function intParam(value, fallback) {
   const n = Number(value);
@@ -98,6 +280,69 @@ function dateRange(from, to) {
   return out;
 }
 
+
+
+app.get("/ops/job-status", (req, res) => {
+  const id = String(req.query.id || "");
+
+  if (id) {
+    const job = OPS_JOBS.get(id);
+
+    if (!job) {
+      res.status(404).json({
+        ok: false,
+        error: "job_not_found",
+        id
+      });
+      return;
+    }
+
+    res.json({
+      ok: true,
+      job: publicJob(job)
+    });
+    return;
+  }
+
+  const jobs = Array.from(OPS_JOBS.values())
+    .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))
+    .slice(0, 20)
+    .map(publicJob);
+
+  res.json({
+    ok: true,
+    count: jobs.length,
+    jobs
+  });
+});
+
+app.get("/ops/build-details-async", (req, res) => {
+  const dayKey = String(req.query.date || athensDayKey());
+  const rebuild = boolParam(req.query.rebuild, false);
+
+  const { created, job } = startBuildDetailsJob(dayKey, { rebuild });
+
+  res.json({
+    ok: true,
+    accepted: true,
+    created,
+    job: publicJob(job)
+  });
+});
+
+app.get("/ops/value-build-async", (req, res) => {
+  const dayKey = String(req.query.date || athensDayKey());
+  const rebuild = boolParam(req.query.rebuild, false);
+
+  const { created, job } = startValueBuildJob(dayKey, { rebuild });
+
+  res.json({
+    ok: true,
+    accepted: true,
+    created,
+    job: publicJob(job)
+  });
+});
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "engine-v1" });
