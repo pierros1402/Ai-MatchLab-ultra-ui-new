@@ -280,6 +280,259 @@ function dateRange(from, to) {
   return out;
 }
 
+function readJsonFileSafe(filePath, fallback = null) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function truthyEnv(value) {
+  const s = String(value || "").trim().toLowerCase();
+  return s === "1" || s === "true" || s === "yes" || s === "on";
+}
+
+function isRenderRuntime() {
+  return Boolean(process.env.RENDER || process.env.RENDER_SERVICE_ID || process.env.RENDER_EXTERNAL_URL);
+}
+
+function snapshotOnlyMode() {
+  return String(process.env.APP_MODE || "").trim().toUpperCase() === "SNAPSHOT_ONLY" ||
+    truthyEnv(process.env.AIML_SNAPSHOT_ONLY);
+}
+
+function allowRuntimeBuilds() {
+  return truthyEnv(process.env.ALLOW_RUNTIME_BUILDS) || truthyEnv(process.env.AIML_ALLOW_RUNTIME_BUILDS);
+}
+
+function runtimeBuildsDisabled() {
+  return snapshotOnlyMode() || (isRenderRuntime() && !allowRuntimeBuilds());
+}
+
+function deploySnapshotRoot(dayKey) {
+  return resolveDataPath("deploy-snapshots", String(dayKey));
+}
+
+function deploySnapshotLatestFile() {
+  return resolveDataPath("deploy-snapshots", "latest.json");
+}
+
+function readDeploySnapshotLatest() {
+  return readJsonFileSafe(deploySnapshotLatestFile(), null);
+}
+
+function deploySnapshotManifestFile(dayKey) {
+  return path.join(deploySnapshotRoot(dayKey), "manifest.json");
+}
+
+function readDeploySnapshotManifest(dayKey) {
+  return readJsonFileSafe(deploySnapshotManifestFile(dayKey), null);
+}
+
+function deploySnapshotExists(dayKey) {
+  return Boolean(readDeploySnapshotManifest(dayKey)?.ok);
+}
+
+function resolveSnapshotDate(requestedDate = "") {
+  const explicit = String(requestedDate || "").trim();
+
+  if (explicit && deploySnapshotExists(explicit)) {
+    return explicit;
+  }
+
+  const latest = readDeploySnapshotLatest();
+  const latestDate = String(latest?.date || "").trim();
+
+  if (latestDate && deploySnapshotExists(latestDate)) {
+    return latestDate;
+  }
+
+  return explicit || latestDate || "";
+}
+
+function readDeploySnapshotValue(dayKey) {
+  const filePath = path.join(deploySnapshotRoot(dayKey), "value.json");
+  return readJsonFileSafe(filePath, null);
+}
+
+function readDeploySnapshotFixtures(dayKey) {
+  const filePath = path.join(deploySnapshotRoot(dayKey), "fixtures.json");
+  return readJsonFileSafe(filePath, null);
+}
+
+function readDeploySnapshotDetail(dayKey, matchId) {
+  const filePath = path.join(deploySnapshotRoot(dayKey), "details", `${String(matchId)}.json`);
+  return readJsonFileSafe(filePath, null);
+}
+
+function snapshotValueResponse(dayKey) {
+  const resolvedDate = resolveSnapshotDate(dayKey);
+  const payload = resolvedDate ? readDeploySnapshotValue(resolvedDate) : null;
+  const manifest = resolvedDate ? readDeploySnapshotManifest(resolvedDate) : null;
+
+  if (!payload) {
+    return {
+      ok: false,
+      error: "snapshot_value_not_found",
+      date: resolvedDate || String(dayKey || ""),
+      source: "snapshot"
+    };
+  }
+
+  const picks = Array.isArray(payload?.picks) ? payload.picks : [];
+
+  return {
+    ...payload,
+    ok: payload?.ok !== false,
+    date: resolvedDate,
+    count: picks.length,
+    picks,
+    source: "snapshot",
+    snapshot: {
+      date: resolvedDate,
+      generatedAt: manifest?.generatedAt || null,
+      hash: manifest?.hash || null,
+      valueCount: picks.length,
+      detailsCount: Number(manifest?.counts?.details || 0),
+      fixturesCount: Number(manifest?.counts?.fixtures || 0)
+    }
+  };
+}
+
+function snapshotFixturesRuntimeResponse(mode, dayKey) {
+  const resolvedDate = resolveSnapshotDate(dayKey);
+  const payload = resolvedDate ? readDeploySnapshotFixtures(resolvedDate) : null;
+  const manifest = resolvedDate ? readDeploySnapshotManifest(resolvedDate) : null;
+
+  if (!payload) {
+    return {
+      ok: false,
+      error: "snapshot_fixtures_not_found",
+      mode,
+      date: resolvedDate || String(dayKey || ""),
+      source: "snapshot"
+    };
+  }
+
+  const matches = Array.isArray(payload?.fixtures)
+    ? payload.fixtures
+    : Array.isArray(payload?.matches)
+      ? payload.matches
+      : Array.isArray(payload)
+        ? payload
+        : [];
+
+  return {
+    ok: true,
+    mode,
+    date: resolvedDate,
+    count: matches.length,
+    matches,
+    source: "snapshot",
+    snapshot: {
+      date: resolvedDate,
+      generatedAt: manifest?.generatedAt || null,
+      hash: manifest?.hash || null,
+      valueCount: Number(manifest?.counts?.valuePicks || 0),
+      detailsCount: Number(manifest?.counts?.details || 0),
+      fixturesCount: matches.length
+    }
+  };
+}
+
+function snapshotDetailsResponse(matchId, requestedDate = "") {
+  const datesToTry = [];
+
+  const explicitDate = String(requestedDate || "").trim();
+  if (explicitDate) datesToTry.push(explicitDate);
+
+  const latestDate = resolveSnapshotDate(explicitDate);
+  if (latestDate && !datesToTry.includes(latestDate)) datesToTry.push(latestDate);
+
+  const snapshotsRoot = resolveDataPath("deploy-snapshots");
+
+  try {
+    if (fs.existsSync(snapshotsRoot)) {
+      const discoveredDates = fs.readdirSync(snapshotsRoot)
+        .filter(name => /^\d{4}-\d{2}-\d{2}$/.test(name))
+        .sort()
+        .reverse();
+
+      for (const date of discoveredDates) {
+        if (!datesToTry.includes(date)) datesToTry.push(date);
+      }
+    }
+  } catch {
+    // ignore discovery errors and use explicit/latest candidates
+  }
+
+  for (const date of datesToTry) {
+    const detail = readDeploySnapshotDetail(date, matchId);
+    if (!detail) continue;
+
+    const valuePayload = readDeploySnapshotValue(date);
+    const picks = Array.isArray(valuePayload?.picks)
+      ? valuePayload.picks.filter(p => String(p?.matchId) === String(matchId))
+      : [];
+
+    const manifest = readDeploySnapshotManifest(date);
+
+    return {
+      ok: true,
+      matchId: String(matchId),
+      dayKey: date,
+      basic: detail?.basic || detail?.fixture || {
+        matchId: String(matchId),
+        leagueSlug: detail?.leagueSlug || null,
+        leagueName: detail?.leagueName || null,
+        homeTeam: detail?.homeTeam || null,
+        awayTeam: detail?.awayTeam || null,
+        kickoffUtc: detail?.kickoffUtc || null,
+        status: detail?.status || null
+      },
+      value: picks,
+      snapshot: detail,
+      source: "snapshot",
+      meta: {
+        hasSnapshot: true,
+        hasValue: picks.length > 0,
+        isLive: String(detail?.basic?.status || detail?.status || "").toUpperCase() === "LIVE",
+        isFinal: String(detail?.basic?.status || detail?.status || "").toUpperCase() === "FT",
+        version: "details-api-v1-snapshot",
+        snapshot: {
+          date,
+          generatedAt: manifest?.generatedAt || null,
+          hash: manifest?.hash || null,
+          valueCount: Number(manifest?.counts?.valuePicks || 0),
+          detailsCount: Number(manifest?.counts?.details || 0),
+          fixturesCount: Number(manifest?.counts?.fixtures || 0)
+        }
+      }
+    };
+  }
+
+  return {
+    ok: false,
+    error: "snapshot_detail_not_found",
+    matchId: String(matchId),
+    source: "snapshot"
+  };
+}
+
+function rejectRuntimeBuild(res, endpoint, dayKey) {
+  res.status(403).json({
+    ok: false,
+    error: "runtime_build_disabled",
+    endpoint,
+    date: String(dayKey || ""),
+    message: "Runtime builds are disabled in snapshot/Render mode. Build locally or in GitHub Actions, export deploy snapshot, then redeploy/read snapshot.",
+    source: "snapshot_guard"
+  });
+}
+
+
 
 
 app.get("/ops/job-status", (req, res) => {
@@ -320,6 +573,10 @@ app.get("/ops/build-details-async", (req, res) => {
   const dayKey = String(req.query.date || athensDayKey());
   const rebuild = boolParam(req.query.rebuild, false);
 
+  if (runtimeBuildsDisabled()) {
+    return rejectRuntimeBuild(res, "/ops/build-details-async", dayKey);
+  }
+
   const { created, job } = startBuildDetailsJob(dayKey, { rebuild });
 
   res.json({
@@ -334,6 +591,10 @@ app.get("/ops/value-build-async", (req, res) => {
   const dayKey = String(req.query.date || athensDayKey());
   const rebuild = boolParam(req.query.rebuild, false);
 
+  if (runtimeBuildsDisabled()) {
+    return rejectRuntimeBuild(res, "/ops/value-build-async", dayKey);
+  }
+
   const { created, job } = startValueBuildJob(dayKey, { rebuild });
 
   res.json({
@@ -344,6 +605,92 @@ app.get("/ops/value-build-async", (req, res) => {
   });
 });
 
+app.get("/deploy-snapshot/latest", (_req, res) => {
+  const latest = readDeploySnapshotLatest();
+
+  if (!latest) {
+    res.status(404).json({
+      ok: false,
+      error: "deploy_snapshot_latest_not_found",
+      source: "snapshot"
+    });
+    return;
+  }
+
+  res.json({
+    ...latest,
+    source: "snapshot"
+  });
+});
+
+app.get("/deploy-snapshot", (req, res) => {
+  const requestedDate = String(req.query.date || "");
+  const date = resolveSnapshotDate(requestedDate);
+  const manifest = date ? readDeploySnapshotManifest(date) : null;
+
+  if (!manifest) {
+    res.status(404).json({
+      ok: false,
+      error: "deploy_snapshot_not_found",
+      date: requestedDate,
+      source: "snapshot"
+    });
+    return;
+  }
+
+  res.json({
+    ok: true,
+    source: "snapshot",
+    date,
+    manifest
+  });
+});
+
+app.get("/debug/deploy-snapshot", (req, res) => {
+  const requestedDate = String(req.query.date || "");
+  const date = resolveSnapshotDate(requestedDate);
+  const manifest = date ? readDeploySnapshotManifest(date) : null;
+  const value = date ? readDeploySnapshotValue(date) : null;
+  const fixtures = date ? readDeploySnapshotFixtures(date) : null;
+
+  if (!manifest) {
+    res.status(404).json({
+      ok: false,
+      error: "deploy_snapshot_not_found",
+      date: requestedDate,
+      source: "snapshot"
+    });
+    return;
+  }
+
+  res.json({
+    ok: true,
+    source: "snapshot",
+    date,
+    generatedAt: manifest?.generatedAt || null,
+    hash: manifest?.hash || null,
+    counts: manifest?.counts || null,
+    coverage: manifest?.coverage || null,
+    sizes: manifest?.sizes || null,
+    files: {
+      manifest: fileInfoSafe("deploy-snapshots", date, "manifest.json"),
+      fixtures: fileInfoSafe("deploy-snapshots", date, "fixtures.json"),
+      value: fileInfoSafe("deploy-snapshots", date, "value.json"),
+      detailsDir: dirInfoSafe("deploy-snapshots", date, "details")
+    },
+    runtime: {
+      appMode: process.env.APP_MODE || null,
+      snapshotOnlyMode: snapshotOnlyMode(),
+      render: isRenderRuntime(),
+      runtimeBuildsDisabled: runtimeBuildsDisabled(),
+      allowRuntimeBuilds: allowRuntimeBuilds()
+    },
+    payloadCounts: {
+      fixtures: Array.isArray(fixtures?.fixtures) ? fixtures.fixtures.length : 0,
+      valuePicks: Array.isArray(value?.picks) ? value.picks.length : 0
+    }
+  });
+});
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "engine-v1" });
 });
@@ -353,6 +700,15 @@ app.get("/fixtures-runtime", (req, res) => {
     const mode = String(req.query.mode || "today");
     const dayKey = String(req.query.date || athensDayKey());
 
+    if (snapshotOnlyMode()) {
+      const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
+
+      if (snapshotResult.ok) {
+        res.json(snapshotResult);
+        return;
+      }
+    }
+
     const rows = buildFixturesRuntime(mode, dayKey);
 
     res.json({
@@ -360,10 +716,22 @@ app.get("/fixtures-runtime", (req, res) => {
       mode,
       date: dayKey,
       count: rows.length,
-      matches: rows
+      matches: rows,
+      source: "runtime"
     });
   } catch (err) {
     console.error("[fixtures-runtime] failed", err?.message || err);
+
+    if (runtimeBuildsDisabled()) {
+      const mode = String(req.query.mode || "today");
+      const dayKey = String(req.query.date || athensDayKey());
+      const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
+
+      if (snapshotResult.ok) {
+        res.json(snapshotResult);
+        return;
+      }
+    }
 
     res.status(503).json({
       ok: false,
@@ -462,8 +830,36 @@ app.get("/value-picks", async (req, res) => {
   const date = String(req.query.date || athensDayKey());
   const rebuild = boolParam(req.query.rebuild, false);
 
+  if (runtimeBuildsDisabled()) {
+    if (rebuild) {
+      return rejectRuntimeBuild(res, "/value-picks?rebuild=true", date);
+    }
+
+    const snapshotResult = snapshotValueResponse(date);
+
+    if (snapshotResult.ok) {
+      res.json(snapshotResult);
+      return;
+    }
+
+    res.status(404).json(snapshotResult);
+    return;
+  }
+
+  if (!rebuild) {
+    const snapshotResult = snapshotValueResponse(date);
+
+    if (snapshotOnlyMode() && snapshotResult.ok) {
+      res.json(snapshotResult);
+      return;
+    }
+  }
+
   const result = await buildValueDay(date, { rebuild });
-  res.json(result);
+  res.json({
+    ...result,
+    source: "runtime"
+  });
 });
 
 app.get("/value-export/range", async (req, res) => {
@@ -709,6 +1105,7 @@ app.get("/match-intelligence", async (req, res) => {
 
 app.get("/details", async (req, res) => {
   const id = String(req.query.id || "");
+  const date = String(req.query.date || "");
   const rebuild = boolParam(req.query.rebuild, false);
 
   if (!id) {
@@ -717,6 +1114,31 @@ app.get("/details", async (req, res) => {
   }
 
   try {
+    if (runtimeBuildsDisabled()) {
+      if (rebuild) {
+        return rejectRuntimeBuild(res, "/details?rebuild=true", date);
+      }
+
+      const snapshotResult = snapshotDetailsResponse(id, date);
+
+      if (snapshotResult.ok) {
+        res.json(snapshotResult);
+        return;
+      }
+
+      res.status(404).json(snapshotResult);
+      return;
+    }
+
+    if (!rebuild && snapshotOnlyMode()) {
+      const snapshotResult = snapshotDetailsResponse(id, date);
+
+      if (snapshotResult.ok) {
+        res.json(snapshotResult);
+        return;
+      }
+    }
+
     const result = await getDetailsPayload(id, { rebuild });
 
     if (!result?.ok) {
@@ -725,7 +1147,10 @@ app.get("/details", async (req, res) => {
       return;
     }
 
-    res.json(result);
+    res.json({
+      ...result,
+      source: "runtime"
+    });
   } catch (err) {
     console.error("[details] failed", err?.message || err);
 
@@ -740,6 +1165,10 @@ app.get("/details", async (req, res) => {
 app.get("/build-details", async (req, res) => {
   const dayKey = String(req.query.date || athensDayKey());
   const rebuild = boolParam(req.query.rebuild, false);
+
+  if (runtimeBuildsDisabled()) {
+    return rejectRuntimeBuild(res, "/build-details", dayKey);
+  }
 
   const result = await buildDetailsDay(dayKey, { rebuild });
   res.json(result);
@@ -761,6 +1190,10 @@ app.get("/run-daily-cycle", async (req, res) => {
   const dayKey = String(req.query.date || athensDayKey());
   const doFinalize = boolParam(req.query.finalize, true);
   const daysForward = intParam(req.query.daysForward, 2);
+
+  if (runtimeBuildsDisabled()) {
+    return rejectRuntimeBuild(res, "/run-daily-cycle", dayKey);
+  }
 
   const result = await runDailyCycle({
     dayKey,
