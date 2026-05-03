@@ -65,11 +65,8 @@ jobs:
       - name: Run daily cycle
         run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
 
-      - name: Apply known geo seeds
-        run: node ./engine-v1/jobs/apply-team-geo-seeds-day.js "$DAY_KEY"
-
-      - name: Build geo report after seeds
-        run: node ./engine-v1/jobs/build-team-geo-day.js "$DAY_KEY"
+      - name: Run team geo enrichment
+        run: node ./engine-v1/jobs/run-team-geo-enrichment-day.js "$DAY_KEY" --min-coverage=80 --limit=40 --delay-ms=900 --row-timeout-ms=16000
 
       - name: Rebuild details after geo
         run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
