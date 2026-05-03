@@ -38,12 +38,127 @@ jobs:
         id: day
         shell: bash
         env:
-          INPUT_DAY_KEY: ${{ github.event.inputs.dayKey }}
+          INPUT_DAY_KEY: ${{ inputs.dayKey }}
         run: |
-          if [ -n "$INPUT_DAY_KEY" ]; then
-            DAY_KEY="$INPUT_DAY_KEY"
-          else
+          RAW_DAY_KEY="${INPUT_DAY_KEY:-}"
+          DAY_KEY="$(printf "%s" "$RAW_DAY_KEY" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n 1 || true)"
+
+          if [ -z "$DAY_KEY" ]; then
             DAY_KEY="$(TZ=Europe/Athens date +%F)"
+          fi
+
+          if ! printf "%s" "$DAY_KEY" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}
+
+      - name: Install root dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm install --no-audit --no-fund
+
+      - name: Run daily cycle
+        run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
+
+      - name: Apply known geo seeds
+        run: node ./engine-v1/jobs/apply-team-geo-seeds-day.js "$DAY_KEY"
+
+      - name: Build geo report after seeds
+        run: node ./engine-v1/jobs/build-team-geo-day.js "$DAY_KEY"
+
+      - name: Rebuild details after geo
+        run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+
+      - name: Export deploy snapshot
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
+
+      - name: Snapshot verification
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require("fs");
+
+          const day = process.env.DAY_KEY;
+          const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
+          const valueFile = `data/deploy-snapshots/${day}/value.json`;
+          const detailsDir = `data/deploy-snapshots/${day}/details`;
+
+          if (!fs.existsSync(manifestFile)) {
+            throw new Error(`missing manifest: ${manifestFile}`);
+          }
+
+          if (!fs.existsSync(valueFile)) {
+            throw new Error(`missing value: ${valueFile}`);
+          }
+
+          if (!fs.existsSync(detailsDir)) {
+            throw new Error(`missing details dir: ${detailsDir}`);
+          }
+
+          const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
+          const value = JSON.parse(fs.readFileSync(valueFile, "utf8"));
+          const details = fs.readdirSync(detailsDir).filter(f => f.endsWith(".json"));
+
+          console.log(JSON.stringify({
+            date: manifest.date,
+            hash: manifest.hash,
+            counts: manifest.counts,
+            coverage: manifest.coverage,
+            valueCount: value.count,
+            valuePicks: Array.isArray(value.picks) ? value.picks.length : null,
+            detailsFiles: details.length
+          }, null, 2));
+
+          if (!details.length) {
+            throw new Error("snapshot has zero detail files");
+          }
+          NODE
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Stage allowed generated files only
+        shell: bash
+        run: |
+          git restore --staged . || true
+
+          git add data/deploy-snapshots/latest.json
+          git add "data/deploy-snapshots/${DAY_KEY}/"
+
+          if compgen -G "data/team-geo/*.json" > /dev/null; then
+            git add data/team-geo/*.json
+          fi
+
+          echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
+          git diff --cached --name-only \
+            | grep -Ev '^(data/deploy-snapshots/|data/team-geo/)' || true
+
+          if git diff --cached --name-only \
+            | grep -Ev '^(data/deploy-snapshots/|data/team-geo/)' > /tmp/disallowed-staged.txt; then
+            if [ -s /tmp/disallowed-staged.txt ]; then
+              echo "ERROR: disallowed files staged:"
+              cat /tmp/disallowed-staged.txt
+              exit 1
+            fi
+          fi
+
+          echo "=== STAGED COUNT ==="
+          git diff --cached --name-only | wc -l
+
+      - name: Commit and push snapshot
+        shell: bash
+        run: |
+          if git diff --cached --quiet; then
+            echo "No snapshot or geo changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Auto refresh deploy snapshot for ${DAY_KEY}"
+          git push
+; then
+            echo "ERROR: invalid DAY_KEY=$DAY_KEY"
+            exit 1
           fi
 
           echo "dayKey=$DAY_KEY" >> "$GITHUB_OUTPUT"
