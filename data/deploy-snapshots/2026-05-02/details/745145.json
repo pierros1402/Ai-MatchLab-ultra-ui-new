@@ -1,7 +1,7 @@
 {
   "matchId": "745145",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:09.420Z",
+  "generatedAt": "2026-05-03T03:51:32.289Z",
   "basic": {
     "matchId": "745145",
     "leagueSlug": "eng.2",
@@ -10,11 +10,11 @@
     "homeTeam": "Hull City",
     "awayTeam": "Norwich City",
     "kickoffUtc": "2026-05-02T11:30:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 2,
+    "scoreAway": 1,
     "venue": "The MKM Stadium"
   },
   "context": {
@@ -43,9 +43,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -88,6 +88,36 @@
             "player": "Suspended",
             "reason": "Suspended",
             "importance": "medium"
+          },
+          {
+            "player": "Away test note from fallback evidence: Away test note from fallback evidence",
+            "reason": "Away test note from fallback evidence: Away test note from fallback evidence",
+            "importance": "medium"
+          },
+          {
+            "player": "Test Away Player: Suspended: Test Away Player: Suspended",
+            "reason": "Test Away Player: Suspended: Test Away Player: Suspended",
+            "importance": "medium"
+          },
+          {
+            "player": "Suspended: Suspended",
+            "reason": "Suspended: Suspended",
+            "importance": "medium"
+          },
+          {
+            "player": "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+            "reason": "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+            "importance": "medium"
+          },
+          {
+            "player": "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+            "reason": "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+            "importance": "medium"
+          },
+          {
+            "player": "Suspended: Suspended: Suspended: Suspended",
+            "reason": "Suspended: Suspended: Suspended: Suspended",
+            "importance": "medium"
           }
         ],
         "impactScore": 0,
@@ -105,7 +135,13 @@
       "notes": [
         "Away test note from fallback evidence",
         "Test Away Player: Suspended",
-        "Suspended"
+        "Suspended",
+        "Away test note from fallback evidence: Away test note from fallback evidence",
+        "Test Away Player: Suspended: Test Away Player: Suspended",
+        "Suspended: Suspended",
+        "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+        "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+        "Suspended: Suspended: Suspended: Suspended"
       ]
     },
     "reason": null
@@ -123,41 +159,52 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_away_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 167.6,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
     "home": {
       "key": "hull_city",
       "team": "Hull City",
-      "venue": "MKM Stadium",
-      "city": "Hull",
       "country": "England",
+      "city": "Hull",
+      "venue": "MKM Stadium",
       "latitude": 53.7459183,
       "longitude": -0.3680605,
       "source": "manual_batch",
       "updatedAt": "2026-04-22T05:04:46.245Z"
     },
-    "away": null,
+    "away": {
+      "key": "norwich_city",
+      "team": "Norwich City",
+      "country": "United Kingdom",
+      "city": "Norwich",
+      "venue": "Carrow Road",
+      "latitude": 52.62222222222222,
+      "longitude": 1.3091666666666666,
+      "source": "wikidata_bootstrap",
+      "updatedAt": "2026-05-03T03:00:41.540Z"
+    },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 168 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 168 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [],
   "analysis": {
     "codes": [
+      "final_match",
       "medium_competition_context"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 3 συνολικές καταγεγραμμένες απουσίες. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is available for this match with 3 recorded absences in total. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 9 συνολικές καταγεγραμμένες απουσίες. Η εκτίμηση ταξιδιού είναι περίπου 167.6 χλμ (low).",
+      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is available for this match with 9 recorded absences in total. Estimated travel distance is approximately 167.6 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -185,6 +232,36 @@
         {
           "name": "Suspended",
           "reason": "Suspended",
+          "source": null
+        },
+        {
+          "name": "Away test note from fallback evidence: Away test note from fallback evidence",
+          "reason": "Away test note from fallback evidence: Away test note from fallback evidence",
+          "source": null
+        },
+        {
+          "name": "Test Away Player: Suspended: Test Away Player: Suspended",
+          "reason": "Test Away Player: Suspended: Test Away Player: Suspended",
+          "source": null
+        },
+        {
+          "name": "Suspended: Suspended",
+          "reason": "Suspended: Suspended",
+          "source": null
+        },
+        {
+          "name": "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+          "reason": "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+          "source": null
+        },
+        {
+          "name": "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+          "reason": "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+          "source": null
+        },
+        {
+          "name": "Suspended: Suspended: Suspended: Suspended",
+          "reason": "Suspended: Suspended: Suspended: Suspended",
           "source": null
         }
       ],
@@ -237,12 +314,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"745145\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":3,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":3,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"hull_city\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"745145\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":2,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":9,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":9,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":167.6,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"hull_city\",\"travelAwayKey\":\"norwich_city\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -298,7 +375,7 @@
         "state": "done",
         "resolution": "remote",
         "provider": "team-news-research-bridge",
-        "confidence": 0.6,
+        "confidence": 0.8,
         "remoteFallbackRecommended": true,
         "preferredEvidence": [
           "local-team-news"
@@ -374,7 +451,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -698,7 +775,7 @@
           "inferredAbsenceRisk": {
             "home": {
               "status": "unavailable",
-              "confirmedAbsenceCount": 1,
+              "confirmedAbsenceCount": 7,
               "coreStarterCount": 0,
               "note": "No player-usage record available."
             },
@@ -713,7 +790,7 @@
         "teamNews": {
           "status": "ready",
           "reliability": "usable",
-          "confidence": 0.6
+          "confidence": 0.8
         },
         "lineup": {
           "status": "ready",
@@ -721,8 +798,8 @@
           "confidence": 0.62
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 0,
@@ -768,7 +845,13 @@
           "notes": [
             "Away test note from fallback evidence",
             "Test Away Player: Suspended",
-            "Suspended"
+            "Suspended",
+            "Away test note from fallback evidence: Away test note from fallback evidence",
+            "Test Away Player: Suspended: Test Away Player: Suspended",
+            "Suspended: Suspended",
+            "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+            "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+            "Suspended: Suspended: Suspended: Suspended"
           ]
         },
         "awayTeam": {
@@ -790,6 +873,36 @@
               "player": "Suspended",
               "reason": "Suspended",
               "importance": "medium"
+            },
+            {
+              "player": "Away test note from fallback evidence: Away test note from fallback evidence",
+              "reason": "Away test note from fallback evidence: Away test note from fallback evidence",
+              "importance": "medium"
+            },
+            {
+              "player": "Test Away Player: Suspended: Test Away Player: Suspended",
+              "reason": "Test Away Player: Suspended: Test Away Player: Suspended",
+              "importance": "medium"
+            },
+            {
+              "player": "Suspended: Suspended",
+              "reason": "Suspended: Suspended",
+              "importance": "medium"
+            },
+            {
+              "player": "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+              "reason": "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+              "importance": "medium"
+            },
+            {
+              "player": "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+              "reason": "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+              "importance": "medium"
+            },
+            {
+              "player": "Suspended: Suspended: Suspended: Suspended",
+              "reason": "Suspended: Suspended: Suspended: Suspended",
+              "importance": "medium"
             }
           ]
         },
@@ -800,7 +913,7 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
         "home": {
           "key": "hull_city",
@@ -813,21 +926,31 @@
           "source": "manual_batch",
           "updatedAt": "2026-04-22T05:04:46.245Z"
         },
-        "away": null,
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "away": {
+          "key": "norwich_city",
+          "team": "Norwich City",
+          "country": "United Kingdom",
+          "city": "Norwich",
+          "venue": "Carrow Road",
+          "latitude": 52.62222222222222,
+          "longitude": 1.3091666666666666,
+          "source": "wikidata_bootstrap",
+          "updatedAt": "2026-05-03T03:00:41.540Z"
+        },
+        "distanceKm": 167.6,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 168 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 168 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -837,7 +960,7 @@
           "restDays": 7,
           "fatigue": "low",
           "rotationRisk": "low",
-          "expectedStrength": "strong"
+          "expectedStrength": "reduced"
         },
         "away": {
           "restDays": 7,
@@ -1079,7 +1202,13 @@
         "confirmedAbsences": [
           "Away test note from fallback evidence",
           "Test Away Player: Suspended",
-          "Suspended"
+          "Suspended",
+          "Away test note from fallback evidence: Away test note from fallback evidence",
+          "Test Away Player: Suspended: Test Away Player: Suspended",
+          "Suspended: Suspended",
+          "Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence: Away test note from fallback evidence",
+          "Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended: Test Away Player: Suspended",
+          "Suspended: Suspended: Suspended: Suspended"
         ],
         "inferredAbsences": []
       },
@@ -1109,8 +1238,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Hull City - Norwich City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Hull City: 0-3-2 στα τελευταία 5. Norwich City: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14255 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Hull City 1 νίκες, ισοπαλίες 1, Norwich City 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Hull City=promotion, Norwich City=neutral. Απουσίες: Hull City=minor, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:strong; Norwich City=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-      "en": "Hull City vs Norwich City: contextual analysis using historical and available data. Hull City: 0-3-2 across the last 5. Norwich City: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14255 available match records. Across the last 5 head-to-head meetings: Hull City 1 wins, draws 1, Norwich City 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Hull City=promotion, Norwich City=neutral. Absences: Hull City=minor, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:strong; Norwich City=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enric…",
+      "el": "Hull City - Norwich City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Hull City: 0-3-2 στα τελευταία 5. Norwich City: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14255 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Hull City 1 νίκες, ισοπαλίες 1, Norwich City 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Hull City=promotion, Norwich City=neutral. Απουσίες: Hull City=severe, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:reduced; Norwich City=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot…",
+      "en": "Hull City vs Norwich City: contextual analysis using historical and available data. Hull City: 0-3-2 across the last 5. Norwich City: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14255 available match records. Across the last 5 head-to-head meetings: Hull City 1 wins, draws 1, Norwich City 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Hull City=promotion, Norwich City=neutral. Absences: Hull City=severe, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:reduced; Norwich City=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enr…",
       "teamNews": {
         "status": "usable",
         "source": "team-news-research-bridge",
@@ -1129,8 +1258,11 @@
       "phase_regular",
       "promotion_race",
       "team_news_available",
+      "home_team_weakened",
+      "home_lineup_strength_reduced",
       "lineup_context_available",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1180,11 +1312,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 167.6,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1192,8 +1324,8 @@
     }
   },
   "aiSummary": {
-    "el": "Hull City - Norwich City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Hull City: 0-3-2 στα τελευταία 5. Norwich City: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14255 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Hull City 1 νίκες, ισοπαλίες 1, Norwich City 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Hull City=promotion, Norwich City=neutral. Απουσίες: Hull City=minor, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:strong; Norwich City=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "Hull City vs Norwich City: contextual analysis using historical and available data. Hull City: 0-3-2 across the last 5. Norwich City: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14255 available match records. Across the last 5 head-to-head meetings: Hull City 1 wins, draws 1, Norwich City 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Hull City=promotion, Norwich City=neutral. Absences: Hull City=minor, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:strong; Norwich City=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "Hull City - Norwich City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Hull City: 0-3-2 στα τελευταία 5. Norwich City: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14255 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Hull City 1 νίκες, ισοπαλίες 1, Norwich City 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Hull City=promotion, Norwich City=neutral. Απουσίες: Hull City=severe, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:reduced; Norwich City=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Hull City vs Norwich City: contextual analysis using historical and available data. Hull City: 0-3-2 across the last 5. Norwich City: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14255 available match records. Across the last 5 head-to-head meetings: Hull City 1 wins, draws 1, Norwich City 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Hull City=promotion, Norwich City=neutral. Absences: Hull City=severe, Norwich City=none. Lineup context: Hull City=fatigue:low, rotation:low, strength:reduced; Norwich City=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "usable",
       "source": "team-news-research-bridge",
@@ -1220,13 +1352,13 @@
       "local-standings",
       "local-team-news",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
-      "value_snapshot",
-      "travel_context"
+      "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1291,7 +1423,7 @@
         "key": "team_news",
         "provider": "local-team-news",
         "trustClass": "deterministic_local",
-        "confidence": 0.6,
+        "confidence": 0.8,
         "status": "available",
         "meta": {
           "reliability": "usable"
@@ -1409,7 +1541,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1417,7 +1549,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "2-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1425,14 +1557,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

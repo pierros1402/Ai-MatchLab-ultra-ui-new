@@ -1,7 +1,7 @@
 {
   "matchId": "747304",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:33:15.797Z",
+  "generatedAt": "2026-05-03T03:52:58.852Z",
   "basic": {
     "matchId": "747304",
     "leagueSlug": "ger.2",
@@ -10,10 +10,10 @@
     "homeTeam": "Schalke 04",
     "awayTeam": "Fortuna Düsseldorf",
     "kickoffUtc": "2026-05-02T18:30:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
     "scoreAway": 0,
     "venue": "Veltins Arena"
   },
@@ -51,9 +51,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -95,21 +95,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 38.9,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "schalke_04",
+      "team": "Schalke 04",
+      "country": "Germany",
+      "city": "Gelsenkirchen",
+      "venue": null,
+      "latitude": 51.5177,
+      "longitude": 7.0857,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.643Z"
+    },
+    "away": {
+      "key": "fortuna_dusseldorf",
+      "team": "Fortuna Düsseldorf",
+      "country": "Germany",
+      "city": "Düsseldorf",
+      "venue": null,
+      "latitude": 51.2277,
+      "longitude": 6.7735,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.643Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 39 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 39 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -124,15 +144,18 @@
       "pick": "Over 1.5",
       "score": 0.775,
       "band": "HIGH",
-      "confidence": 0.88,
+      "confidence": 0.935,
       "signals": [
         "away_edge",
         "over25_support",
         "form_influence_reduced",
         "mutual_attack_profile",
         "priors_applied",
+        "ai_context_high_importance",
+        "must_result_pressure",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -235,164 +258,68 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
-        "contextDelta": 0,
-        "contextReasons": [],
-        "aiContext": {
-          "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
-      },
-      "context": {
-        "season": "2025-2026",
-        "leagueSlug": "ger.2",
-        "competitionType": "league",
-        "phase": "regular",
-        "leagueTrust": "medium",
-        "leagueTier": 2,
-        "homeRestDays": 13,
-        "awayRestDays": 8,
-        "homeMatchesLast7": 0,
-        "awayMatchesLast7": 0,
-        "homeMatchesLast14": 1,
-        "awayMatchesLast14": 1,
-        "homeNextMatchInDays": null,
-        "awayNextMatchInDays": null
-      }
-    },
-    {
-      "matchId": "747304",
-      "leagueSlug": "ger.2",
-      "homeTeam": "Schalke 04",
-      "awayTeam": "Fortuna Düsseldorf",
-      "kickoff": "2026-05-02T18:30Z",
-      "market": "Over / Under 2.5",
-      "marketName": "Over / Under 2.5",
-      "pick": "Over 2.5",
-      "score": 0.654,
-      "band": "MEDIUM",
-      "confidence": 0.88,
-      "signals": [
-        "away_edge",
-        "over25_support",
-        "form_influence_reduced",
-        "mutual_attack_profile",
-        "priors_applied",
-        "late_season_pressure",
-        "close_strength_gap"
-      ],
-      "meta": {
-        "model": "value-engine-v1",
-        "mode": "statistical_plus_context",
-        "formWindow": 5,
-        "formRules": {
-          "sameSeasonOnly": true,
-          "maxAgeDays": 35,
-          "fullStrengthDays": 7,
-          "decayStartDays": 8,
-          "heavyDecayDays": 14,
-          "breakdownDays": 21
-        },
-        "baseWeights": {
-          "form": 0.5,
-          "homeAway": 0.2,
-          "goals": 0.2,
-          "matchup": 0.1
-        },
-        "effectiveWeights": {
-          "homeOverallFormWeight": 0.191,
-          "awayOverallFormWeight": 0.383,
-          "homeSideFormWeight": 0.12,
-          "awaySideFormWeight": 0.12
-        },
-        "expectedHomeGoals": 1.631,
-        "expectedAwayGoals": 1.562,
-        "expectedTotalGoals": 3.193,
-        "homeStrength": 0.341,
-        "awayStrength": 0.453,
-        "homeEdge": 0.338,
-        "awayPenalty": 0.084,
-        "recency": {
-          "homeOverall": {
-            "sample": 6,
-            "rawSample": 3,
-            "priorSample": 84,
-            "daysSinceLastMatch": 13,
-            "spanDays": 14,
-            "freshnessScore": 0.45,
-            "continuityScore": 0.85
+        "contextAdjusted": true,
+        "contextDelta": 0.04,
+        "contextReasons": [
+          {
+            "code": "form_home_stronger",
+            "impact": 0.08,
+            "note": "Home team has significantly stronger form"
           },
-          "awayOverall": {
-            "sample": 6,
-            "rawSample": 3,
-            "priorSample": 116,
-            "daysSinceLastMatch": 8,
-            "spanDays": 20,
-            "freshnessScore": 0.9,
-            "continuityScore": 0.85
+          {
+            "code": "competition_high_stakes",
+            "impact": 0.04,
+            "note": "High-stakes league context"
           },
-          "homeSide": {
-            "sample": 5,
-            "rawSample": 2,
-            "priorSample": 84,
-            "daysSinceLastMatch": 13,
-            "spanDays": 14,
-            "freshnessScore": 0.45,
-            "continuityScore": 0.7
+          {
+            "code": "home_motivation_boost",
+            "impact": 0.03,
+            "note": "Home stake: title"
           },
-          "awaySide": {
-            "sample": 4,
-            "rawSample": 1,
-            "priorSample": 116,
-            "daysSinceLastMatch": 28,
-            "spanDays": 0,
-            "freshnessScore": 0.08,
-            "continuityScore": 0.35
+          {
+            "code": "ai_home_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong home form edge"
           }
-        },
-        "matchupSample": 3,
-        "priorsUsed": true,
-        "priors": {
-          "used": true,
-          "homePriorSample": 84,
-          "awayPriorSample": 116,
-          "leaguePriorSample": 1044,
-          "matchupPriorSample": 4
-        },
-        "resolution": {
-          "homeInput": "Schalke 04",
-          "awayInput": "Fortuna Düsseldorf",
-          "homeResolvedKey": "Schalke 04",
-          "awayResolvedKey": "Fortuna Düsseldorf",
-          "homeResolveScore": 1,
-          "awayResolveScore": 1,
-          "matchupResolvedKey": "Fortuna Düsseldorf::Schalke 04",
-          "matchupResolveScore": 0.93,
-          "homePriorKey": "ger.2::Schalke 04",
-          "awayPriorKey": "ger.2::Fortuna Düsseldorf",
-          "matchupPriorKey": "ger.2|Fortuna Düsseldorf|Schalke 04"
-        },
-        "sourceKeys": {
-          "homeTeamKey": "Schalke 04",
-          "awayTeamKey": "Fortuna Düsseldorf",
-          "leagueKey": "ger.2",
-          "matchupKey": "Fortuna Düsseldorf::Schalke 04"
-        },
-        "contextModifiers": {
-          "applied": true,
-          "version": "value-context-modifiers-v1.0"
-        },
-        "contextAdjusted": false,
-        "contextDelta": 0,
-        "contextReasons": [],
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
+          "importance": "high",
+          "stakes": {
+            "home": "title",
+            "away": "relegation",
+            "tags": [
+              "title_race",
+              "europe_race",
+              "playoff_race",
+              "relegation_battle"
+            ]
+          },
+          "pressure": [
+            "must_win",
+            "protect_position",
+            "chasing_cutoff"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_home_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 11, away 3"
+          },
+          {
+            "code": "match_profile_home_table_edge",
+            "impact": 0.027500000000000004,
+            "note": "MatchProfile table positions: home #1, away #14"
+          },
+          {
+            "code": "match_profile_h2h_underlean",
+            "impact": -0.0165,
+            "note": "MatchProfile H2H goal pattern leans under"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -414,12 +341,13 @@
   ],
   "analysis": {
     "codes": [
+      "final_match",
       "value_present",
       "high_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.775. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.775. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.775. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 38.9 χλμ (low).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.775. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 38.9 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -483,12 +411,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"747304\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.775},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"747304\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":38.9,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"schalke_04\",\"travelAwayKey\":\"fortuna_dusseldorf\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.775},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -617,10 +545,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -637,7 +565,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.88,
+        "confidence": 0.935,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -975,15 +903,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
-          "count": 2,
+          "count": 1,
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.775,
-          "avgConfidence": 0.88
+          "avgConfidence": 0.935
         },
         "summary": [
           "Table: Schalke 04 #1 vs Fortuna Düsseldorf #14.",
@@ -991,7 +919,7 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -999,7 +927,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -1023,11 +951,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "schalke_04",
+          "team": "Schalke 04",
+          "country": "Germany",
+          "city": "Gelsenkirchen",
+          "venue": null,
+          "latitude": 51.5177,
+          "longitude": 7.0857,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.643Z"
+        },
+        "away": {
+          "key": "fortuna_dusseldorf",
+          "team": "Fortuna Düsseldorf",
+          "country": "Germany",
+          "city": "Düsseldorf",
+          "venue": null,
+          "latitude": 51.2277,
+          "longitude": 6.7735,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.643Z"
+        },
+        "distanceKm": 38.9,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 39 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 39 km (local_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1127,11 +1088,11 @@
       "meta": "[circular]"
     },
     "valueContext": {
-      "count": 2,
+      "count": 1,
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.775,
-      "avgConfidence": 0.88,
+      "avgConfidence": 0.935,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1333,17 +1294,18 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
     ],
     "valueSummary": {
-      "count": 2,
+      "count": 1,
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.775,
-      "avgConfidence": 0.88
+      "avgConfidence": 0.935
     },
     "reasoning": {
       "tempoProfile": {
@@ -1383,11 +1345,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 38.9,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1395,8 +1357,8 @@
     }
   },
   "aiSummary": {
-    "el": "Schalke 04 - Fortuna Düsseldorf: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Schalke 04: 3-2-0 στα τελευταία 5. Fortuna Düsseldorf: 1-0-4 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Schalke 04 2 νίκες, ισοπαλίες 1, Fortuna Düsseldorf 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Schalke 04=title, Fortuna Düsseldorf=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Schalke 04=fatigue:low, rotation:low, strength:strong; Fortuna Düsseldorf=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.775. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Schalke 04 vs Fortuna Düsseldorf: contextual analysis using historical and available data. Schalke 04: 3-2-0 across the last 5. Fortuna Düsseldorf: 1-0-4 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13083 available match records. Across the last 5 head-to-head meetings: Schalke 04 2 wins, draws 1, Fortuna Düsseldorf 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward tighter games. Table context: Schalke 04=title, Fortuna Düsseldorf=relegation. This match is assessed as high importance. Lineup context: Schalke 04=fatigue:low, rotation:low, strength:strong; Fortuna Düsseldorf=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.775. Limited lineup context is available with low completeness.",
+    "el": "Schalke 04 - Fortuna Düsseldorf: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Schalke 04: 3-2-0 στα τελευταία 5. Fortuna Düsseldorf: 1-0-4 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Schalke 04 2 νίκες, ισοπαλίες 1, Fortuna Düsseldorf 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Schalke 04=title, Fortuna Düsseldorf=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Schalke 04=fatigue:low, rotation:low, strength:strong; Fortuna Düsseldorf=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.775. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Schalke 04 vs Fortuna Düsseldorf: contextual analysis using historical and available data. Schalke 04: 3-2-0 across the last 5. Fortuna Düsseldorf: 1-0-4 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13083 available match records. Across the last 5 head-to-head meetings: Schalke 04 2 wins, draws 1, Fortuna Düsseldorf 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward tighter games. Table context: Schalke 04=title, Fortuna Düsseldorf=relegation. This match is assessed as high importance. Lineup context: Schalke 04=fatigue:low, rotation:low, strength:strong; Fortuna Düsseldorf=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.775. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1405,11 +1367,11 @@
     }
   },
   "valueSummary": {
-    "count": 2,
+    "count": 1,
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.775,
-    "avgConfidence": 0.88,
+    "avgConfidence": 0.935,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1424,14 +1386,14 @@
       "local-standings",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1627,7 +1589,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1635,7 +1597,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-0",
         "source": "espn",
         "sources": [
           "espn"
@@ -1643,14 +1605,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

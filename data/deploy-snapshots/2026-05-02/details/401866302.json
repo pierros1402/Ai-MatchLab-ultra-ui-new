@@ -1,7 +1,7 @@
 {
   "matchId": "401866302",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:33:25.406Z",
+  "generatedAt": "2026-05-03T03:53:03.934Z",
   "basic": {
     "matchId": "401866302",
     "leagueSlug": "bel.1",
@@ -10,11 +10,11 @@
     "homeTeam": "Sint-Truidense",
     "awayTeam": "Union St.-Gilloise",
     "kickoffUtc": "2026-05-02T18:45:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 2,
+    "scoreAway": 1,
     "venue": "Daio Wasabi Stayen Stadium"
   },
   "context": {
@@ -45,9 +45,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -89,41 +89,253 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
-    "home": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 60.2,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "sint_truidense",
+      "team": "Sint-Truidense",
+      "country": "Belgium",
+      "city": "Sint-Truiden",
+      "venue": null,
+      "latitude": 50.8169,
+      "longitude": 5.1864,
+      "source": "known_team_geo_seed_city_center_v2",
+      "updatedAt": "2026-05-03T03:49:04.299Z"
+    },
     "away": {
       "key": "union_st_gilloise",
       "team": "Union St.-Gilloise",
-      "venue": "Joseph Marien Stadium",
-      "city": "Forest",
       "country": "Belgium",
+      "city": "Forest",
+      "venue": "Joseph Marien Stadium",
       "latitude": 50.8178,
       "longitude": 4.32917,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.397Z"
     },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 60 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 60 km (local_domestic) was calculated from the local team geo cache."
     }
   },
-  "value": [],
+  "value": [
+    {
+      "matchId": "401866302",
+      "leagueSlug": "bel.1",
+      "homeTeam": "Sint-Truidense",
+      "awayTeam": "Union St.-Gilloise",
+      "kickoff": "2026-05-02T18:45Z",
+      "market": "1X2",
+      "marketName": "1X2",
+      "pick": "AWAY",
+      "score": 0.7270000000000001,
+      "band": "MEDIUM",
+      "confidence": 0.873,
+      "signals": [
+        "away_edge",
+        "form_influence_reduced",
+        "priors_applied",
+        "ai_context_medium_importance",
+        "late_season_pressure",
+        "close_strength_gap",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.191,
+          "awayOverallFormWeight": 0.3,
+          "homeSideFormWeight": 0.12,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 0.976,
+        "expectedAwayGoals": 1.586,
+        "expectedTotalGoals": 2.562,
+        "homeStrength": 0.256,
+        "awayStrength": 0.531,
+        "homeEdge": 0.172,
+        "awayPenalty": 0.088,
+        "recency": {
+          "homeOverall": {
+            "sample": 6,
+            "rawSample": 3,
+            "priorSample": 144,
+            "daysSinceLastMatch": 13,
+            "spanDays": 14,
+            "freshnessScore": 0.45,
+            "continuityScore": 0.85
+          },
+          "awayOverall": {
+            "sample": 7,
+            "rawSample": 4,
+            "priorSample": 160,
+            "daysSinceLastMatch": 10,
+            "spanDays": 17,
+            "freshnessScore": 0.6,
+            "continuityScore": 1
+          },
+          "homeSide": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 144,
+            "daysSinceLastMatch": 21,
+            "spanDays": 0,
+            "freshnessScore": 0.155,
+            "continuityScore": 0.65
+          },
+          "awaySide": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 160,
+            "daysSinceLastMatch": 20,
+            "spanDays": 0,
+            "freshnessScore": 0.19,
+            "continuityScore": 0.65
+          }
+        },
+        "matchupSample": 4,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 144,
+          "awayPriorSample": 160,
+          "leaguePriorSample": 1285,
+          "matchupPriorSample": 8
+        },
+        "resolution": {
+          "homeInput": "Sint-Truidense",
+          "awayInput": "Union St.-Gilloise",
+          "homeResolvedKey": "Sint-Truidense",
+          "awayResolvedKey": "Union St.-Gilloise",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "Sint-Truidense::Union St.-Gilloise",
+          "matchupResolveScore": 0.93,
+          "homePriorKey": "bel.1::Sint-Truidense",
+          "awayPriorKey": "bel.1::Union St.-Gilloise",
+          "matchupPriorKey": "bel.1|Sint-Truidense|Union St.-Gilloise"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "Sint-Truidense",
+          "awayTeamKey": "Union St.-Gilloise",
+          "leagueKey": "bel.1",
+          "matchupKey": "Sint-Truidense::Union St.-Gilloise"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_away_stronger",
+            "impact": 0.08,
+            "note": "Away team has significantly stronger form"
+          },
+          {
+            "code": "away_motivation_boost",
+            "impact": 0.03,
+            "note": "Away stake: title"
+          },
+          {
+            "code": "ai_h2h_away_edge",
+            "impact": 0.06,
+            "note": "AI detected away H2H edge"
+          },
+          {
+            "code": "ai_away_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong away form edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "medium",
+          "stakes": {
+            "home": "europe",
+            "away": "title",
+            "tags": [
+              "europe_race",
+              "playoff_race"
+            ]
+          },
+          "pressure": [
+            "protect_position",
+            "chasing_cutoff"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.74,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_away_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 1, away 13"
+          },
+          {
+            "code": "match_profile_h2h_away_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans away"
+          },
+          {
+            "code": "match_profile_h2h_underlean",
+            "impact": -0.0165,
+            "note": "MatchProfile H2H goal pattern leans under"
+          }
+        ]
+      },
+      "context": {
+        "season": "2025-2026",
+        "leagueSlug": "bel.1",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 13,
+        "awayRestDays": 10,
+        "homeMatchesLast7": 0,
+        "awayMatchesLast7": 0,
+        "homeMatchesLast14": 1,
+        "awayMatchesLast14": 2,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    }
+  ],
   "analysis": {
     "codes": [
+      "final_match",
+      "value_present",
       "medium_competition_context"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.727. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 60.2 χλμ (low).",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.727. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 60.2 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -187,12 +399,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401866302\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"union_st_gilloise\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401866302\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":2,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":60.2,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"sint_truidense\",\"travelAwayKey\":\"union_st_gilloise\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.7270000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -324,7 +536,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -338,10 +550,10 @@
         "required": false,
         "priority": 65,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-value",
+        "confidence": 0.873,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -673,15 +885,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
-          "count": 0,
-          "topMarket": null,
-          "topPick": null,
-          "topScore": null,
-          "avgConfidence": 0
+          "count": 1,
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.7270000000000001,
+          "avgConfidence": 0.873
         },
         "summary": [
           "Table: Sint-Truidense #5 vs Union St.-Gilloise #2.",
@@ -721,9 +933,19 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
-        "home": null,
+        "home": {
+          "key": "sint_truidense",
+          "team": "Sint-Truidense",
+          "country": "Belgium",
+          "city": "Sint-Truiden",
+          "venue": null,
+          "latitude": 50.8169,
+          "longitude": 5.1864,
+          "source": "known_team_geo_seed_city_center_v2",
+          "updatedAt": "2026-05-03T03:49:04.299Z"
+        },
         "away": {
           "key": "union_st_gilloise",
           "team": "Union St.-Gilloise",
@@ -735,20 +957,20 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.397Z"
         },
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "distanceKm": 60.2,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 60 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 60 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -846,12 +1068,12 @@
       "meta": "[circular]"
     },
     "valueContext": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0,
-      "confidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.7270000000000001,
+      "avgConfidence": 0.873,
+      "confidence": 0.75
     },
     "researchPlan": {
       "matchId": "401866302",
@@ -1027,8 +1249,8 @@
       "reason": "phase_key_detected"
     },
     "summary": {
-      "el": "Sint-Truidense - Union St.-Gilloise: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sint-Truidense: 0-1-4 στα τελευταία 5. Union St.-Gilloise: 4-1-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13332 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Sint-Truidense 0 νίκες, ισοπαλίες 1, Union St.-Gilloise 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Sint-Truidense vs Union St.-Gilloise: contextual analysis using historical and available data. Sint-Truidense: 0-1-4 across the last 5. Union St.-Gilloise: 4-1-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13332 available match records. Across the last 5 head-to-head meetings: Sint-Truidense 0 wins, draws 1, Union St.-Gilloise 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+      "el": "Sint-Truidense - Union St.-Gilloise: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sint-Truidense: 0-1-4 στα τελευταία 5. Union St.-Gilloise: 4-1-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13332 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Sint-Truidense 0 νίκες, ισοπαλίες 1, Union St.-Gilloise 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.727. Υπάρχει περιορισμένο lineup context με χαμηλή πληρό…",
+      "en": "Sint-Truidense vs Union St.-Gilloise: contextual analysis using historical and available data. Sint-Truidense: 0-1-4 across the last 5. Union St.-Gilloise: 4-1-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13332 available match records. Across the last 5 head-to-head meetings: Sint-Truidense 0 wins, draws 1, Union St.-Gilloise 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.727. Limited lineup context is available …",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -1036,7 +1258,7 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.8800000000000001,
+    "confidence": 0.92,
     "signals": [
       "historical_context_available",
       "history_form_available",
@@ -1047,26 +1269,30 @@
       "phase_playoff",
       "high_competition_pressure",
       "title_pressure",
+      "value_support_present",
+      "value_1x2_signal",
+      "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
     ],
     "valueSummary": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.7270000000000001,
+      "avgConfidence": 0.873
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "history_informed",
+        "label": "result_driven",
         "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "historical_low_event_risk",
+        "label": "directional_match_edge",
         "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
@@ -1074,17 +1300,17 @@
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "h2h_supported_context",
+        "label": "value_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "matchup_informed",
+        "label": "market_informed",
         "explanation": ""
       }
     },
     "support": {
       "priorsUsed": true,
-      "valueUsed": false,
+      "valueUsed": true,
       "researchUsed": true,
       "historyUsed": true,
       "h2hUsed": true,
@@ -1098,11 +1324,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 60.2,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1110,8 +1336,8 @@
     }
   },
   "aiSummary": {
-    "el": "Sint-Truidense - Union St.-Gilloise: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sint-Truidense: 0-1-4 στα τελευταία 5. Union St.-Gilloise: 4-1-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13332 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Sint-Truidense 0 νίκες, ισοπαλίες 1, Union St.-Gilloise 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Sint-Truidense vs Union St.-Gilloise: contextual analysis using historical and available data. Sint-Truidense: 0-1-4 across the last 5. Union St.-Gilloise: 4-1-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13332 available match records. Across the last 5 head-to-head meetings: Sint-Truidense 0 wins, draws 1, Union St.-Gilloise 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+    "el": "Sint-Truidense - Union St.-Gilloise: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sint-Truidense: 0-1-4 στα τελευταία 5. Union St.-Gilloise: 4-1-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13332 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Sint-Truidense 0 νίκες, ισοπαλίες 1, Union St.-Gilloise 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.727. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Sint-Truidense vs Union St.-Gilloise: contextual analysis using historical and available data. Sint-Truidense: 0-1-4 across the last 5. Union St.-Gilloise: 4-1-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13332 available match records. Across the last 5 head-to-head meetings: Sint-Truidense 0 wins, draws 1, Union St.-Gilloise 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Sint-Truidense=europe, Union St.-Gilloise=title. Lineup context: Sint-Truidense=fatigue:low, rotation:low, strength:strong; Union St.-Gilloise=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.727. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1120,11 +1346,12 @@
     }
   },
   "valueSummary": {
-    "count": 0,
-    "topMarket": null,
-    "topPick": null,
-    "topScore": null,
-    "avgConfidence": 0
+    "count": 1,
+    "topMarket": "1X2",
+    "topPick": "AWAY",
+    "topScore": 0.7270000000000001,
+    "avgConfidence": 0.873,
+    "confidence": 0.75
   },
   "sourceAudit": {
     "status": "partial",
@@ -1137,15 +1364,15 @@
       "team-news-provider-stub",
       "local-standings",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "value_snapshot",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1249,6 +1476,19 @@
         "meta": {
           "sampleSize": 5
         }
+      },
+      {
+        "kind": "value_snapshot_local",
+        "key": "value_snapshot_local",
+        "provider": "local-value",
+        "trustClass": "model_local",
+        "confidence": 0.72,
+        "status": "available",
+        "meta": {
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.7270000000000001
+        }
       }
     ],
     "cacheHit": false
@@ -1328,7 +1568,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1336,7 +1576,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "2-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1344,14 +1584,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

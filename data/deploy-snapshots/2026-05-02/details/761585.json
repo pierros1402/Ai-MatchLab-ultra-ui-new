@@ -1,7 +1,7 @@
 {
   "matchId": "761585",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:33:17.160Z",
+  "generatedAt": "2026-05-03T03:52:59.613Z",
   "basic": {
     "matchId": "761585",
     "leagueSlug": "usa.1",
@@ -10,11 +10,11 @@
     "homeTeam": "Sporting Kansas City",
     "awayTeam": "Seattle Sounders FC",
     "kickoffUtc": "2026-05-02T18:30:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
+    "scoreAway": 1,
     "venue": "Children's Mercy Park"
   },
   "context": {
@@ -45,9 +45,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "long_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -89,31 +89,53 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 2418.5,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "long_domestic",
+    "home": {
+      "key": "sporting_kansas_city",
+      "team": "Sporting Kansas City",
+      "country": "United States",
+      "city": "Kansas City",
+      "venue": null,
+      "latitude": 39.0997,
+      "longitude": -94.5786,
+      "source": "known_team_geo_seed_city_center_v2",
+      "updatedAt": "2026-05-03T03:49:04.268Z"
+    },
+    "away": {
+      "key": "seattle_sounders_fc",
+      "team": "Seattle Sounders FC",
+      "country": "United States",
+      "city": "Seattle",
+      "venue": null,
+      "latitude": 47.6062,
+      "longitude": -122.3321,
+      "source": "known_team_geo_seed_city_center_v2",
+      "updatedAt": "2026-05-03T03:49:04.269Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 2419 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 2419 km (long_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [],
   "analysis": {
     "codes": [
-      "medium_competition_context"
+      "final_match",
+      "medium_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 2418.5 χλμ (high).",
+      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 2418.5 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -177,12 +199,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"761585\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"761585\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":2418.5,\"travelImpact\":\"high\",\"travelProfile\":\"long_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"sporting_kansas_city\",\"travelAwayKey\":\"seattle_sounders_fc\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -311,10 +333,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -604,8 +626,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 0,
@@ -619,7 +641,7 @@
           "Last5 points: home 0, away 2."
         ]
       },
-      "confidence": 0.6,
+      "confidence": 0.67,
       "readiness": {
         "history": true,
         "form": true,
@@ -627,7 +649,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -651,11 +673,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "sporting_kansas_city",
+          "team": "Sporting Kansas City",
+          "country": "United States",
+          "city": "Kansas City",
+          "venue": null,
+          "latitude": 39.0997,
+          "longitude": -94.5786,
+          "source": "known_team_geo_seed_city_center_v2",
+          "updatedAt": "2026-05-03T03:49:04.268Z"
+        },
+        "away": {
+          "key": "seattle_sounders_fc",
+          "team": "Seattle Sounders FC",
+          "country": "United States",
+          "city": "Seattle",
+          "venue": null,
+          "latitude": 47.6062,
+          "longitude": -122.3321,
+          "source": "known_team_geo_seed_city_center_v2",
+          "updatedAt": "2026-05-03T03:49:04.269Z"
+        },
+        "distanceKm": 2418.5,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "long_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 2419 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 2419 km (long_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -926,8 +981,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Sporting Kansas City - Seattle Sounders FC: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sporting Kansas City: 0-0-5 στα τελευταία 5. Seattle Sounders FC: 0-2-0 στα τελευταία 2. Το historical layer βασίστηκε σε 12039 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Sporting Kansas City vs Seattle Sounders FC: contextual analysis using historical and available data. Sporting Kansas City: 0-0-5 across the last 5. Seattle Sounders FC: 0-2-0 across the last 2. The historical layer was based on 12039 available match records. Table context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+      "el": "Sporting Kansas City - Seattle Sounders FC: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sporting Kansas City: 0-0-5 στα τελευταία 5. Seattle Sounders FC: 0-2-0 στα τελευταία 2. Το historical layer βασίστηκε σε 12039 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+      "en": "Sporting Kansas City vs Seattle Sounders FC: contextual analysis using historical and available data. Sporting Kansas City: 0-0-5 across the last 5. Seattle Sounders FC: 0-2-0 across the last 2. The historical layer was based on 12039 available match records. Table context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -943,7 +998,9 @@
       "relegation_pressure",
       "promotion_race",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available",
+      "travel_burden_high"
     ],
     "warnings": [
       "referee_unavailable"
@@ -993,11 +1050,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "long_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 2418.5,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1005,8 +1062,8 @@
     }
   },
   "aiSummary": {
-    "el": "Sporting Kansas City - Seattle Sounders FC: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sporting Kansas City: 0-0-5 στα τελευταία 5. Seattle Sounders FC: 0-2-0 στα τελευταία 2. Το historical layer βασίστηκε σε 12039 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Sporting Kansas City vs Seattle Sounders FC: contextual analysis using historical and available data. Sporting Kansas City: 0-0-5 across the last 5. Seattle Sounders FC: 0-2-0 across the last 2. The historical layer was based on 12039 available match records. Table context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+    "el": "Sporting Kansas City - Seattle Sounders FC: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Sporting Kansas City: 0-0-5 στα τελευταία 5. Seattle Sounders FC: 0-2-0 στα τελευταία 2. Το historical layer βασίστηκε σε 12039 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Sporting Kansas City vs Seattle Sounders FC: contextual analysis using historical and available data. Sporting Kansas City: 0-0-5 across the last 5. Seattle Sounders FC: 0-2-0 across the last 2. The historical layer was based on 12039 available match records. Table context: Sporting Kansas City=relegation, Seattle Sounders FC=promotion. Lineup context: Sporting Kansas City=fatigue:low, rotation:low, strength:strong; Seattle Sounders FC=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1032,14 +1089,14 @@
       "team-news-provider-stub",
       "local-standings",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
       "expected_lineups_reliability",
-      "travel_context",
       "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1212,7 +1269,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1220,7 +1277,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1228,14 +1285,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

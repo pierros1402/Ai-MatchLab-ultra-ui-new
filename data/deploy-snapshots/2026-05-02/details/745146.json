@@ -1,7 +1,7 @@
 {
   "matchId": "745146",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:18.573Z",
+  "generatedAt": "2026-05-03T03:51:37.569Z",
   "basic": {
     "matchId": "745146",
     "leagueSlug": "eng.2",
@@ -10,11 +10,11 @@
     "homeTeam": "Watford",
     "awayTeam": "Coventry City",
     "kickoffUtc": "2026-05-02T11:30:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
     "scoreHome": 0,
-    "scoreAway": 0,
+    "scoreAway": 4,
     "venue": "Vicarage Road"
   },
   "context": {
@@ -49,9 +49,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -146,21 +146,6 @@
             "player": "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
             "reason": "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
             "importance": "medium"
-          },
-          {
-            "player": "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
-            "reason": "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
-            "importance": "medium"
-          },
-          {
-            "player": "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
-            "reason": "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
-            "importance": "medium"
-          },
-          {
-            "player": "Suspended: Suspended: Suspended: Suspended",
-            "reason": "Suspended: Suspended: Suspended: Suspended",
-            "importance": "medium"
           }
         ],
         "impactScore": 0,
@@ -180,10 +165,7 @@
         "Hamstring injury: Hamstring injury",
         "Suspended: Suspended",
         "Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff",
-        "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
-        "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
-        "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
-        "Suspended: Suspended: Suspended: Suspended"
+        "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury"
       ]
     },
     "reason": null
@@ -201,41 +183,52 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
-    "home": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 116.1,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "watford",
+      "team": "Watford",
+      "country": "England",
+      "city": "Watford",
+      "venue": null,
+      "latitude": 51.6565,
+      "longitude": -0.3903,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.609Z"
+    },
     "away": {
       "key": "coventry_city",
       "team": "Coventry City",
-      "venue": "Coventry Building Society Arena",
-      "city": "Coventry",
       "country": "England",
+      "city": "Coventry",
+      "venue": "Coventry Building Society Arena",
       "latitude": 52.4483481,
       "longitude": -1.4966347,
       "source": "manual_batch",
       "updatedAt": "2026-04-22T05:04:46.244Z"
     },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 116 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 116 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [],
   "analysis": {
     "codes": [
+      "final_match",
       "high_competition_context"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 15 συνολικές καταγεγραμμένες απουσίες. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is available for this match with 15 recorded absences in total. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 25 συνολικές καταγεγραμμένες απουσίες. Η εκτίμηση ταξιδιού είναι περίπου 116.1 χλμ (low).",
+      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is available for this match with 25 recorded absences in total. Estimated travel distance is approximately 116.1 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -334,21 +327,6 @@
           "name": "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
           "reason": "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
           "source": null
-        },
-        {
-          "name": "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
-          "reason": "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
-          "source": null
-        },
-        {
-          "name": "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
-          "reason": "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
-          "source": null
-        },
-        {
-          "name": "Suspended: Suspended: Suspended: Suspended",
-          "reason": "Suspended: Suspended: Suspended: Suspended",
-          "source": null
         }
       ],
       "inferredAbsences": [],
@@ -375,12 +353,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"745146\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":15,\"teamNewsNotes\":15,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"coventry_city\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"745146\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":0,\"scoreAway\":4,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":12,\"teamNewsNotes\":12,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":116.1,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"watford\",\"travelAwayKey\":\"coventry_city\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -512,7 +490,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -848,7 +826,7 @@
             },
             "away": {
               "status": "unavailable",
-              "confirmedAbsenceCount": 12,
+              "confirmedAbsenceCount": 22,
               "coreStarterCount": 0,
               "note": "No player-usage record available."
             }
@@ -865,8 +843,8 @@
           "confidence": 0.62
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 0,
@@ -998,9 +976,19 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
-        "home": null,
+        "home": {
+          "key": "watford",
+          "team": "Watford",
+          "country": "England",
+          "city": "Watford",
+          "venue": null,
+          "latitude": 51.6565,
+          "longitude": -0.3903,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.609Z"
+        },
         "away": {
           "key": "coventry_city",
           "team": "Coventry City",
@@ -1012,20 +1000,20 @@
           "source": "manual_batch",
           "updatedAt": "2026-04-22T05:04:46.244Z"
         },
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "distanceKm": 116.1,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 116 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 116 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1309,7 +1297,17 @@
           "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
           "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
           "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
-          "Suspended: Suspended: Suspended: Suspended"
+          "Suspended: Suspended: Suspended: Suspended",
+          "Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff",
+          "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
+          "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
+          "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
+          "Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended",
+          "Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff: Verified manually before kickoff",
+          "Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury: Player One: Hamstring injury",
+          "Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended: Player Two: Suspended",
+          "Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury: Hamstring injury",
+          "Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended: Suspended"
         ],
         "inferredAbsences": []
       }
@@ -1346,7 +1344,8 @@
       "away_team_weakened",
       "away_lineup_strength_reduced",
       "lineup_context_available",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1396,11 +1395,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 116.1,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1408,8 +1407,8 @@
     }
   },
   "aiSummary": {
-    "el": "Watford - Coventry City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Watford: 0-1-4 στα τελευταία 5. Coventry City: 3-2-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14255 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Watford 0 νίκες, ισοπαλίες 2, Coventry City 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Watford=neutral, Coventry City=title. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Watford=none, Coventry City=severe. Lineup context: Watford=fatigue:low, rotation:low, strength:strong; Coventry City=fatigue:low, rotation:low, strength:reduced. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "Watford vs Coventry City: contextual analysis using historical and available data. Watford: 0-1-4 across the last 5. Coventry City: 3-2-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14255 available match records. Across the last 5 head-to-head meetings: Watford 0 wins, draws 2, Coventry City 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Watford=neutral, Coventry City=title. This match is assessed as high importance. Absences: Watford=none, Coventry City=severe. Lineup context: Watford=fatigue:low, rotation:low, strength:strong; Coventry City=fatigue:low, rotation:low, strength:reduced. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "Watford - Coventry City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Watford: 0-1-4 στα τελευταία 5. Coventry City: 3-2-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14255 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Watford 0 νίκες, ισοπαλίες 2, Coventry City 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Watford=neutral, Coventry City=title. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Watford=none, Coventry City=severe. Lineup context: Watford=fatigue:low, rotation:low, strength:strong; Coventry City=fatigue:low, rotation:low, strength:reduced. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Watford vs Coventry City: contextual analysis using historical and available data. Watford: 0-1-4 across the last 5. Coventry City: 3-2-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14255 available match records. Across the last 5 head-to-head meetings: Watford 0 wins, draws 2, Coventry City 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Watford=neutral, Coventry City=title. This match is assessed as high importance. Absences: Watford=none, Coventry City=severe. Lineup context: Watford=fatigue:low, rotation:low, strength:strong; Coventry City=fatigue:low, rotation:low, strength:reduced. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "usable",
       "source": "team-news-research-bridge",
@@ -1436,13 +1435,13 @@
       "local-standings",
       "local-team-news",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
-      "value_snapshot",
-      "travel_context"
+      "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1625,7 +1624,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1633,7 +1632,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "0-4",
         "source": "espn",
         "sources": [
           "espn"
@@ -1641,14 +1640,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

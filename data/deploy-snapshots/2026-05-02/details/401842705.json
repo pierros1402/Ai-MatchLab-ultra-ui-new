@@ -1,7 +1,7 @@
 {
   "matchId": "401842705",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:23.329Z",
+  "generatedAt": "2026-05-03T03:51:40.087Z",
   "basic": {
     "matchId": "401842705",
     "leagueSlug": "swe.1",
@@ -10,11 +10,11 @@
     "homeTeam": "Degerfors IF",
     "awayTeam": "BK Häcken",
     "kickoffUtc": "2026-05-02T13:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
+    "scoreAway": 1,
     "venue": "Stora Valla"
   },
   "context": {
@@ -45,9 +45,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "medium",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -105,31 +105,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
-    "home": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 222.7,
+    "impact": "medium",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "degerfors_if",
+      "team": "Degerfors IF",
+      "country": "Sweden",
+      "city": "Degerfors",
+      "venue": null,
+      "latitude": 59.2371,
+      "longitude": 14.4308,
+      "source": "known_team_geo_seed_city_center_v2",
+      "updatedAt": "2026-05-03T03:49:04.266Z"
+    },
     "away": {
       "key": "bk_hacken",
       "team": "BK Häcken",
-      "venue": "Rambergsvallen",
-      "city": "Gothenburg Municipality",
       "country": "Sweden",
+      "city": "Gothenburg Municipality",
+      "venue": "Rambergsvallen",
       "latitude": 57.718888888889,
       "longitude": 11.930833333333,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T16:43:00.037Z"
     },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 223 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 223 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -144,7 +154,7 @@
       "pick": "Over 1.5",
       "score": 0.772,
       "band": "HIGH",
-      "confidence": 0.842,
+      "confidence": 0.857,
       "signals": [
         "away_edge",
         "over25_support",
@@ -152,8 +162,10 @@
         "form_influence_reduced",
         "matchup_goals_history",
         "priors_applied",
+        "ai_context_medium_importance",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -256,15 +268,247 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
+        "contextAdjusted": true,
         "contextDelta": 0,
-        "contextReasons": [],
+        "contextReasons": [
+          {
+            "code": "form_balanced",
+            "impact": 0.04,
+            "note": "Teams have similar recent form"
+          },
+          {
+            "code": "ai_h2h_over_signal",
+            "impact": 0.07,
+            "note": "AI detected open H2H pattern"
+          },
+          {
+            "code": "ai_h2h_home_edge",
+            "impact": 0.06,
+            "note": "AI detected home H2H edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
+          "importance": "medium",
+          "stakes": {
+            "home": "neutral",
+            "away": "europe",
+            "tags": [
+              "playoff_race",
+              "direct_rival_match"
+            ]
+          },
+          "pressure": [
+            "chasing_cutoff",
+            "cannot_lose"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.81,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_h2h_home_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans home"
+          },
+          {
+            "code": "match_profile_h2h_overlean",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile H2H goal pattern leans over"
+          }
+        ]
+      },
+      "context": {
+        "season": "2025-2026",
+        "leagueSlug": "swe.1",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 20,
+        "awayRestDays": 9,
+        "homeMatchesLast7": 0,
+        "awayMatchesLast7": 0,
+        "homeMatchesLast14": 0,
+        "awayMatchesLast14": 2,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    },
+    {
+      "matchId": "401842705",
+      "leagueSlug": "swe.1",
+      "homeTeam": "Degerfors IF",
+      "awayTeam": "BK Häcken",
+      "kickoff": "2026-05-02T13:00Z",
+      "market": "Over / Under 2.5",
+      "marketName": "Over / Under 2.5",
+      "pick": "Over 2.5",
+      "score": 0.7360000000000001,
+      "band": "MEDIUM",
+      "confidence": 0.857,
+      "signals": [
+        "away_edge",
+        "over25_support",
+        "home_form_decay",
+        "form_influence_reduced",
+        "matchup_goals_history",
+        "priors_applied",
+        "ai_context_medium_importance",
+        "late_season_pressure",
+        "close_strength_gap",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.12,
+          "awayOverallFormWeight": 0.325,
+          "homeSideFormWeight": 0.12,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 1.307,
+        "expectedAwayGoals": 1.937,
+        "expectedTotalGoals": 3.244,
+        "homeStrength": 0.139,
+        "awayStrength": 0.464,
+        "homeEdge": 0.072,
+        "awayPenalty": 0.291,
+        "recency": {
+          "homeOverall": {
+            "sample": 5,
+            "rawSample": 2,
+            "priorSample": 95,
+            "daysSinceLastMatch": 20,
+            "spanDays": 7,
+            "freshnessScore": 0.19,
+            "continuityScore": 0.65
+          },
+          "awayOverall": {
+            "sample": 7,
+            "rawSample": 4,
+            "priorSample": 125,
+            "daysSinceLastMatch": 9,
+            "spanDays": 16,
+            "freshnessScore": 0.65,
+            "continuityScore": 1
+          },
+          "homeSide": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 95,
+            "daysSinceLastMatch": 28,
+            "spanDays": 0,
+            "freshnessScore": 0.08,
+            "continuityScore": 0.35
+          },
+          "awaySide": {
+            "sample": 5,
+            "rawSample": 2,
+            "priorSample": 125,
+            "daysSinceLastMatch": 9,
+            "spanDays": 11,
+            "freshnessScore": 0.65,
+            "continuityScore": 0.85
+          }
+        },
+        "matchupSample": 3,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 95,
+          "awayPriorSample": 125,
+          "leaguePriorSample": 1001,
+          "matchupPriorSample": 7
+        },
+        "resolution": {
+          "homeInput": "Degerfors IF",
+          "awayInput": "BK Häcken",
+          "homeResolvedKey": "Degerfors IF",
+          "awayResolvedKey": "BK Häcken",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "BK Häcken::Degerfors IF",
+          "matchupResolveScore": 0.93,
+          "homePriorKey": "swe.1::Degerfors IF",
+          "awayPriorKey": "swe.1::BK Häcken",
+          "matchupPriorKey": "swe.1|BK Häcken|Degerfors IF"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "Degerfors IF",
+          "awayTeamKey": "BK Häcken",
+          "leagueKey": "swe.1",
+          "matchupKey": "BK Häcken::Degerfors IF"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_balanced",
+            "impact": 0.04,
+            "note": "Teams have similar recent form"
+          },
+          {
+            "code": "ai_h2h_over_signal",
+            "impact": 0.07,
+            "note": "AI detected open H2H pattern"
+          },
+          {
+            "code": "ai_h2h_home_edge",
+            "impact": 0.06,
+            "note": "AI detected home H2H edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "medium",
+          "stakes": {
+            "home": "neutral",
+            "away": "europe",
+            "tags": [
+              "playoff_race",
+              "direct_rival_match"
+            ]
+          },
+          "pressure": [
+            "chasing_cutoff",
+            "cannot_lose"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.81,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_h2h_home_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans home"
+          },
+          {
+            "code": "match_profile_h2h_overlean",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile H2H goal pattern leans over"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -286,12 +530,13 @@
   ],
   "analysis": {
     "codes": [
+      "final_match",
       "value_present",
       "medium_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.772. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.772. There is an indication of medium importance from the competition context. Team news context is available for this match. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.772. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Η εκτίμηση ταξιδιού είναι περίπου 222.7 χλμ (medium).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.772. There is an indication of medium importance from the competition context. Team news context is available for this match. Estimated travel distance is approximately 222.7 km (medium)."
     }
   },
   "playerUsageIntel": {
@@ -355,12 +600,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401842705\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"bk_hacken\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.772},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401842705\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":222.7,\"travelImpact\":\"medium\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"degerfors_if\",\"travelAwayKey\":\"bk_hacken\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.772},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -492,7 +737,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -509,7 +754,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.842,
+        "confidence": 0.857,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -841,15 +1086,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
-          "count": 1,
+          "count": 2,
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.772,
-          "avgConfidence": 0.842
+          "avgConfidence": 0.857
         },
         "summary": [
           "Table: Degerfors IF #10 vs BK Häcken #7.",
@@ -929,9 +1174,19 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
-        "home": null,
+        "home": {
+          "key": "degerfors_if",
+          "team": "Degerfors IF",
+          "country": "Sweden",
+          "city": "Degerfors",
+          "venue": null,
+          "latitude": 59.2371,
+          "longitude": 14.4308,
+          "source": "known_team_geo_seed_city_center_v2",
+          "updatedAt": "2026-05-03T03:49:04.266Z"
+        },
         "away": {
           "key": "bk_hacken",
           "team": "BK Häcken",
@@ -943,20 +1198,20 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T16:43:00.037Z"
         },
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "distanceKm": 222.7,
+        "impact": "medium",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 223 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 223 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1055,11 +1310,11 @@
       "meta": "[circular]"
     },
     "valueContext": {
-      "count": 1,
+      "count": 2,
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.772,
-      "avgConfidence": 0.842,
+      "avgConfidence": 0.857,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1259,17 +1514,18 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
     ],
     "valueSummary": {
-      "count": 1,
+      "count": 2,
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.772,
-      "avgConfidence": 0.842
+      "avgConfidence": 0.857
     },
     "reasoning": {
       "tempoProfile": {
@@ -1309,11 +1565,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "medium",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 222.7,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1321,8 +1577,8 @@
     }
   },
   "aiSummary": {
-    "el": "Degerfors IF - BK Häcken: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Degerfors IF: 3-1-1 στα τελευταία 5. BK Häcken: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13072 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Degerfors IF 2 νίκες, ισοπαλίες 2, BK Häcken 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Degerfors IF=neutral, BK Häcken=europe. Απουσίες: Degerfors IF=none, BK Häcken=none. Lineup context: Degerfors IF=fatigue:low, rotation:low, strength:strong; BK Häcken=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.772. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Degerfors IF vs BK Häcken: contextual analysis using historical and available data. Degerfors IF: 3-1-1 across the last 5. BK Häcken: 2-2-1 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13072 available match records. Across the last 5 head-to-head meetings: Degerfors IF 2 wins, draws 2, BK Häcken 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Degerfors IF=neutral, BK Häcken=europe. Absences: Degerfors IF=none, BK Häcken=none. Lineup context: Degerfors IF=fatigue:low, rotation:low, strength:strong; BK Häcken=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.772. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+    "el": "Degerfors IF - BK Häcken: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Degerfors IF: 3-1-1 στα τελευταία 5. BK Häcken: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13072 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Degerfors IF 2 νίκες, ισοπαλίες 2, BK Häcken 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Degerfors IF=neutral, BK Häcken=europe. Απουσίες: Degerfors IF=none, BK Häcken=none. Lineup context: Degerfors IF=fatigue:low, rotation:low, strength:strong; BK Häcken=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.772. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Degerfors IF vs BK Häcken: contextual analysis using historical and available data. Degerfors IF: 3-1-1 across the last 5. BK Häcken: 2-2-1 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13072 available match records. Across the last 5 head-to-head meetings: Degerfors IF 2 wins, draws 2, BK Häcken 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Degerfors IF=neutral, BK Häcken=europe. Absences: Degerfors IF=none, BK Häcken=none. Lineup context: Degerfors IF=fatigue:low, rotation:low, strength:strong; BK Häcken=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.772. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "usable",
       "source": "local-team-news",
@@ -1331,11 +1587,11 @@
     }
   },
   "valueSummary": {
-    "count": 1,
+    "count": 2,
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.772,
-    "avgConfidence": 0.842,
+    "avgConfidence": 0.857,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1351,13 +1607,13 @@
       "local-team-news",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1551,7 +1807,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1559,7 +1815,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1567,14 +1823,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

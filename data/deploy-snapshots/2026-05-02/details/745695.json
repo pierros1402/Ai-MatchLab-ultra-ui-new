@@ -1,7 +1,7 @@
 {
   "matchId": "745695",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:41.693Z",
+  "generatedAt": "2026-05-03T03:51:49.976Z",
   "basic": {
     "matchId": "745695",
     "leagueSlug": "eng.3",
@@ -10,11 +10,11 @@
     "homeTeam": "Bolton Wanderers",
     "awayTeam": "Luton Town",
     "kickoffUtc": "2026-05-02T14:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 2,
+    "scoreAway": 3,
     "venue": "Toughsheet Community Stadium"
   },
   "context": {
@@ -47,9 +47,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "medium",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -91,21 +91,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 232.2,
+    "impact": "medium",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "bolton_wanderers",
+      "team": "Bolton Wanderers",
+      "country": "England",
+      "city": "Bolton",
+      "venue": null,
+      "latitude": 53.5769,
+      "longitude": -2.4282,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.611Z"
+    },
+    "away": {
+      "key": "luton_town",
+      "team": "Luton Town",
+      "country": "England",
+      "city": "Luton",
+      "venue": null,
+      "latitude": 51.8787,
+      "longitude": -0.42,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.611Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 232 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 232 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -115,18 +135,20 @@
       "homeTeam": "Bolton Wanderers",
       "awayTeam": "Luton Town",
       "kickoff": "2026-05-02T14:00Z",
-      "market": "Over / Under 1.5",
-      "marketName": "Over / Under 1.5",
-      "pick": "Over 1.5",
-      "score": 0.78,
+      "market": "1X2",
+      "marketName": "1X2",
+      "pick": "AWAY",
+      "score": 0.7880000000000001,
       "band": "HIGH",
-      "confidence": 0.83,
+      "confidence": 0.885,
       "signals": [
         "away_edge",
         "over25_support",
         "priors_applied",
+        "ai_context_high_importance",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -229,15 +251,52 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
-        "contextDelta": 0,
-        "contextReasons": [],
+        "contextAdjusted": true,
+        "contextDelta": 0.04,
+        "contextReasons": [
+          {
+            "code": "form_away_stronger",
+            "impact": 0.08,
+            "note": "Away team has significantly stronger form"
+          },
+          {
+            "code": "competition_high_stakes",
+            "impact": 0.04,
+            "note": "High-stakes league context"
+          },
+          {
+            "code": "ai_away_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong away form edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
+          "importance": "high",
+          "stakes": {
+            "home": "europe",
+            "away": "europe",
+            "tags": [
+              "europe_race",
+              "playoff_race",
+              "direct_rival_match"
+            ]
+          },
+          "pressure": [
+            "protect_position",
+            "chasing_cutoff",
+            "cannot_lose"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_away_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 5, away 15"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -262,18 +321,20 @@
       "homeTeam": "Bolton Wanderers",
       "awayTeam": "Luton Town",
       "kickoff": "2026-05-02T14:00Z",
-      "market": "1X2",
-      "marketName": "1X2",
-      "pick": "AWAY",
-      "score": 0.7280000000000001,
-      "band": "MEDIUM",
-      "confidence": 0.83,
+      "market": "Over / Under 1.5",
+      "marketName": "Over / Under 1.5",
+      "pick": "Over 1.5",
+      "score": 0.78,
+      "band": "HIGH",
+      "confidence": 0.885,
       "signals": [
         "away_edge",
         "over25_support",
         "priors_applied",
+        "ai_context_high_importance",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -376,15 +437,52 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
-        "contextDelta": 0,
-        "contextReasons": [],
+        "contextAdjusted": true,
+        "contextDelta": 0.04,
+        "contextReasons": [
+          {
+            "code": "form_away_stronger",
+            "impact": 0.08,
+            "note": "Away team has significantly stronger form"
+          },
+          {
+            "code": "competition_high_stakes",
+            "impact": 0.04,
+            "note": "High-stakes league context"
+          },
+          {
+            "code": "ai_away_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong away form edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
+          "importance": "high",
+          "stakes": {
+            "home": "europe",
+            "away": "europe",
+            "tags": [
+              "europe_race",
+              "playoff_race",
+              "direct_rival_match"
+            ]
+          },
+          "pressure": [
+            "protect_position",
+            "chasing_cutoff",
+            "cannot_lose"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_away_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 5, away 15"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -406,12 +504,13 @@
   ],
   "analysis": {
     "codes": [
+      "final_match",
       "value_present",
       "high_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.780. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.780. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.788. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 232.2 χλμ (medium).",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.788. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 232.2 km (medium)."
     }
   },
   "playerUsageIntel": {
@@ -475,12 +574,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"745695\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.78},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"745695\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":2,\"scoreAway\":3,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":232.2,\"travelImpact\":\"medium\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"bolton_wanderers\",\"travelAwayKey\":\"luton_town\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.7880000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -609,10 +708,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -629,7 +728,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.83,
+        "confidence": 0.885,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -921,15 +1020,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 2,
-          "topMarket": "Over / Under 1.5",
-          "topPick": "Over 1.5",
-          "topScore": 0.78,
-          "avgConfidence": 0.83
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.7880000000000001,
+          "avgConfidence": 0.885
         },
         "summary": [
           "Table: Bolton Wanderers #5 vs Luton Town #7.",
@@ -937,7 +1036,7 @@
           "H2H sample: 1 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -945,7 +1044,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -969,11 +1068,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "bolton_wanderers",
+          "team": "Bolton Wanderers",
+          "country": "England",
+          "city": "Bolton",
+          "venue": null,
+          "latitude": 53.5769,
+          "longitude": -2.4282,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.611Z"
+        },
+        "away": {
+          "key": "luton_town",
+          "team": "Luton Town",
+          "country": "England",
+          "city": "Luton",
+          "venue": null,
+          "latitude": 51.8787,
+          "longitude": -0.42,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.611Z"
+        },
+        "distanceKm": 232.2,
+        "impact": "medium",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 232 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 232 km (local_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1068,10 +1200,10 @@
     },
     "valueContext": {
       "count": 2,
-      "topMarket": "Over / Under 1.5",
-      "topPick": "Over 1.5",
-      "topScore": 0.78,
-      "avgConfidence": 0.83,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.7880000000000001,
+      "avgConfidence": 0.885,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1248,8 +1380,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Bolton Wanderers - Luton Town: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Bolton Wanderers: 1-2-2 στα τελευταία 5. Luton Town: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Bolton Wanderers 0 νίκες, ισοπαλίες 1, Luton Town 0 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Bolton Wanderers=europe, Luton Town=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.780. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Bolton Wanderers vs Luton Town: contextual analysis using historical and available data. Bolton Wanderers: 1-2-2 across the last 5. Luton Town: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 1 head-to-head meetings: Bolton Wanderers 0 wins, draws 1, Luton Town 0 wins. The head-to-head profile is relatively balanced. Table context: Bolton Wanderers=europe, Luton Town=europe. This match is assessed as high importance. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.780. Limited lineup context is available with low completeness.",
+      "el": "Bolton Wanderers - Luton Town: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Bolton Wanderers: 1-2-2 στα τελευταία 5. Luton Town: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Bolton Wanderers 0 νίκες, ισοπαλίες 1, Luton Town 0 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Bolton Wanderers=europe, Luton Town=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.788. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context α…",
+      "en": "Bolton Wanderers vs Luton Town: contextual analysis using historical and available data. Bolton Wanderers: 1-2-2 across the last 5. Luton Town: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 1 head-to-head meetings: Bolton Wanderers 0 wins, draws 1, Luton Town 0 wins. The head-to-head profile is relatively balanced. Table context: Bolton Wanderers=europe, Luton Town=europe. This match is assessed as high importance. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.788. Limited lineup context is available with low completeness. Travel context is ava…",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -1267,28 +1399,29 @@
       "phase_regular",
       "high_stakes_match",
       "value_support_present",
-      "value_over15_signal",
+      "value_1x2_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
     ],
     "valueSummary": {
       "count": 2,
-      "topMarket": "Over / Under 1.5",
-      "topPick": "Over 1.5",
-      "topScore": 0.78,
-      "avgConfidence": 0.83
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.7880000000000001,
+      "avgConfidence": 0.885
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "history_informed",
+        "label": "result_driven",
         "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "form_shaped",
+        "label": "directional_match_edge",
         "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
@@ -1320,11 +1453,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "medium",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 232.2,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1332,8 +1465,8 @@
     }
   },
   "aiSummary": {
-    "el": "Bolton Wanderers - Luton Town: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Bolton Wanderers: 1-2-2 στα τελευταία 5. Luton Town: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Bolton Wanderers 0 νίκες, ισοπαλίες 1, Luton Town 0 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Bolton Wanderers=europe, Luton Town=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.780. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Bolton Wanderers vs Luton Town: contextual analysis using historical and available data. Bolton Wanderers: 1-2-2 across the last 5. Luton Town: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 1 head-to-head meetings: Bolton Wanderers 0 wins, draws 1, Luton Town 0 wins. The head-to-head profile is relatively balanced. Table context: Bolton Wanderers=europe, Luton Town=europe. This match is assessed as high importance. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.780. Limited lineup context is available with low completeness.",
+    "el": "Bolton Wanderers - Luton Town: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Bolton Wanderers: 1-2-2 στα τελευταία 5. Luton Town: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Bolton Wanderers 0 νίκες, ισοπαλίες 1, Luton Town 0 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Bolton Wanderers=europe, Luton Town=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.788. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Bolton Wanderers vs Luton Town: contextual analysis using historical and available data. Bolton Wanderers: 1-2-2 across the last 5. Luton Town: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 1 head-to-head meetings: Bolton Wanderers 0 wins, draws 1, Luton Town 0 wins. The head-to-head profile is relatively balanced. Table context: Bolton Wanderers=europe, Luton Town=europe. This match is assessed as high importance. Lineup context: Bolton Wanderers=fatigue:low, rotation:low, strength:strong; Luton Town=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.788. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1343,10 +1476,10 @@
   },
   "valueSummary": {
     "count": 2,
-    "topMarket": "Over / Under 1.5",
-    "topPick": "Over 1.5",
-    "topScore": 0.78,
-    "avgConfidence": 0.83,
+    "topMarket": "1X2",
+    "topPick": "AWAY",
+    "topScore": 0.7880000000000001,
+    "avgConfidence": 0.885,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1361,14 +1494,14 @@
       "local-standings",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1481,9 +1614,9 @@
         "confidence": 0.72,
         "status": "available",
         "meta": {
-          "topMarket": "Over / Under 1.5",
-          "topPick": "Over 1.5",
-          "topScore": 0.78
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.7880000000000001
         }
       }
     ],
@@ -1564,7 +1697,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1572,7 +1705,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "2-3",
         "source": "espn",
         "sources": [
           "espn"
@@ -1580,14 +1713,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

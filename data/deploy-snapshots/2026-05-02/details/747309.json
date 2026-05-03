@@ -1,7 +1,7 @@
 {
   "matchId": "747309",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:04.269Z",
+  "generatedAt": "2026-05-03T03:51:26.724Z",
   "basic": {
     "matchId": "747309",
     "leagueSlug": "ger.2",
@@ -10,10 +10,10 @@
     "homeTeam": "Holstein Kiel",
     "awayTeam": "TSV Eintracht Braunschweig",
     "kickoffUtc": "2026-05-02T11:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 2,
     "scoreAway": 0,
     "venue": "Holstein-Stadion"
   },
@@ -47,9 +47,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "medium",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -91,21 +91,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 230,
+    "impact": "medium",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "holstein_kiel",
+      "team": "Holstein Kiel",
+      "country": "Germany",
+      "city": "Kiel",
+      "venue": null,
+      "latitude": 54.3233,
+      "longitude": 10.1228,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.642Z"
+    },
+    "away": {
+      "key": "tsv_eintracht_braunschweig",
+      "team": "TSV Eintracht Braunschweig",
+      "country": "Germany",
+      "city": "Braunschweig",
+      "venue": null,
+      "latitude": 52.2689,
+      "longitude": 10.5268,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.642Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 230 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 230 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -120,14 +140,17 @@
       "pick": "Over 1.5",
       "score": 0.741,
       "band": "MEDIUM",
-      "confidence": 0.913,
+      "confidence": 0.9600000000000001,
       "signals": [
         "home_edge",
         "over25_support",
         "matchup_goals_history",
         "priors_applied",
+        "ai_context_high_importance",
+        "must_result_pressure",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -230,15 +253,65 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
-        "contextDelta": 0,
-        "contextReasons": [],
+        "contextAdjusted": true,
+        "contextDelta": 0.04,
+        "contextReasons": [
+          {
+            "code": "form_home_stronger",
+            "impact": 0.08,
+            "note": "Home team has significantly stronger form"
+          },
+          {
+            "code": "competition_high_stakes",
+            "impact": 0.04,
+            "note": "High-stakes league context"
+          },
+          {
+            "code": "dual_relegation_tension",
+            "impact": 0.025,
+            "note": "Both sides under relegation pressure"
+          },
+          {
+            "code": "ai_h2h_home_edge",
+            "impact": 0.06,
+            "note": "AI detected home H2H edge"
+          },
+          {
+            "code": "ai_home_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong home form edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
+          "importance": "high",
+          "stakes": {
+            "home": "relegation",
+            "away": "relegation",
+            "tags": [
+              "relegation_battle",
+              "direct_rival_match"
+            ]
+          },
+          "pressure": [
+            "must_win",
+            "cannot_lose"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_home_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 10, away 5"
+          },
+          {
+            "code": "match_profile_h2h_home_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans home"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -260,12 +333,13 @@
   ],
   "analysis": {
     "codes": [
+      "final_match",
       "value_present",
       "high_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.741. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.741. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.741. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 230 χλμ (medium).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.741. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 230 km (medium)."
     }
   },
   "playerUsageIntel": {
@@ -329,12 +403,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"747309\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.741},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"747309\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":2,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":230,\"travelImpact\":\"medium\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"holstein_kiel\",\"travelAwayKey\":\"tsv_eintracht_braunschweig\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.741},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -463,10 +537,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -483,7 +557,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.913,
+        "confidence": 0.9600000000000001,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -805,15 +879,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.741,
-          "avgConfidence": 0.913
+          "avgConfidence": 0.9600000000000001
         },
         "summary": [
           "Table: Holstein Kiel #11 vs TSV Eintracht Braunschweig #13.",
@@ -821,7 +895,7 @@
           "H2H sample: 4 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -829,7 +903,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -853,11 +927,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "holstein_kiel",
+          "team": "Holstein Kiel",
+          "country": "Germany",
+          "city": "Kiel",
+          "venue": null,
+          "latitude": 54.3233,
+          "longitude": 10.1228,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.642Z"
+        },
+        "away": {
+          "key": "tsv_eintracht_braunschweig",
+          "team": "TSV Eintracht Braunschweig",
+          "country": "Germany",
+          "city": "Braunschweig",
+          "venue": null,
+          "latitude": 52.2689,
+          "longitude": 10.5268,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.642Z"
+        },
+        "distanceKm": 230,
+        "impact": "medium",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 230 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 230 km (local_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -958,7 +1065,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.741,
-      "avgConfidence": 0.913,
+      "avgConfidence": 0.9600000000000001,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1158,7 +1265,8 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1168,7 +1276,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.741,
-      "avgConfidence": 0.913
+      "avgConfidence": 0.9600000000000001
     },
     "reasoning": {
       "tempoProfile": {
@@ -1208,11 +1316,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "medium",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 230,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1220,8 +1328,8 @@
     }
   },
   "aiSummary": {
-    "el": "Holstein Kiel - TSV Eintracht Braunschweig: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Holstein Kiel: 3-1-1 στα τελευταία 5. TSV Eintracht Braunschweig: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 4 μεταξύ τους: Holstein Kiel 3 νίκες, ισοπαλίες 1, TSV Eintracht Braunschweig 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Βαθμολογικό context: Holstein Kiel=relegation, TSV Eintracht Braunschweig=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Holstein Kiel=fatigue:low, rotation:low, strength:strong; TSV Eintracht Braunschweig=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.741. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Holstein Kiel vs TSV Eintracht Braunschweig: contextual analysis using historical and available data. Holstein Kiel: 3-1-1 across the last 5. TSV Eintracht Braunschweig: 1-2-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13083 available match records. Across the last 4 head-to-head meetings: Holstein Kiel 3 wins, draws 1, TSV Eintracht Braunschweig 0 wins. The head-to-head profile leans toward the home side. Table context: Holstein Kiel=relegation, TSV Eintracht Braunschweig=relegation. This match is assessed as high importance. Lineup context: Holstein Kiel=fatigue:low, rotation:low, strength:strong; TSV Eintracht Braunschweig=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.741. Limited lineup context is available with low completeness.",
+    "el": "Holstein Kiel - TSV Eintracht Braunschweig: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Holstein Kiel: 3-1-1 στα τελευταία 5. TSV Eintracht Braunschweig: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 4 μεταξύ τους: Holstein Kiel 3 νίκες, ισοπαλίες 1, TSV Eintracht Braunschweig 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Βαθμολογικό context: Holstein Kiel=relegation, TSV Eintracht Braunschweig=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Holstein Kiel=fatigue:low, rotation:low, strength:strong; TSV Eintracht Braunschweig=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.741. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Holstein Kiel vs TSV Eintracht Braunschweig: contextual analysis using historical and available data. Holstein Kiel: 3-1-1 across the last 5. TSV Eintracht Braunschweig: 1-2-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13083 available match records. Across the last 4 head-to-head meetings: Holstein Kiel 3 wins, draws 1, TSV Eintracht Braunschweig 0 wins. The head-to-head profile leans toward the home side. Table context: Holstein Kiel=relegation, TSV Eintracht Braunschweig=relegation. This match is assessed as high importance. Lineup context: Holstein Kiel=fatigue:low, rotation:low, strength:strong; TSV Eintracht Braunschweig=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.741. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1234,7 +1342,7 @@
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.741,
-    "avgConfidence": 0.913,
+    "avgConfidence": 0.96,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1249,14 +1357,14 @@
       "local-standings",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1452,7 +1560,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1460,7 +1568,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "2-0",
         "source": "espn",
         "sources": [
           "espn"
@@ -1468,14 +1576,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

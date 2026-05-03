@@ -1,7 +1,7 @@
 {
   "matchId": "747752",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:33:01.416Z",
+  "generatedAt": "2026-05-03T03:52:42.584Z",
   "basic": {
     "matchId": "747752",
     "leagueSlug": "fra.2",
@@ -10,11 +10,11 @@
     "homeTeam": "Dunkerque",
     "awayTeam": "Grenoble",
     "kickoffUtc": "2026-05-02T18:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
     "scoreHome": 0,
-    "scoreAway": 0,
+    "scoreAway": 1,
     "venue": "Stade Marcel-Tribut"
   },
   "context": {
@@ -39,9 +39,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "regional_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -99,29 +99,52 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 695.7,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "regional_domestic",
+    "home": {
+      "key": "dunkerque",
+      "team": "Dunkerque",
+      "country": "France",
+      "city": "Dunkirk",
+      "venue": null,
+      "latitude": 51.0344,
+      "longitude": 2.3768,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.648Z"
+    },
+    "away": {
+      "key": "grenoble",
+      "team": "Grenoble",
+      "country": "France",
+      "city": "Grenoble",
+      "venue": null,
+      "latitude": 45.1885,
+      "longitude": 5.7245,
+      "source": "known_team_geo_seed_city_center_v2",
+      "updatedAt": "2026-05-03T03:49:04.253Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 696 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 696 km (regional_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [],
   "analysis": {
-    "codes": [],
+    "codes": [
+      "final_match",
+      "high_travel_load"
+    ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει διαθέσιμο team news context για τον αγώνα. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. Team news context is available for this match. Local travel context is not yet available in the snapshot."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει διαθέσιμο team news context για τον αγώνα. Η εκτίμηση ταξιδιού είναι περίπου 695.7 χλμ (high).",
+      "en": "No value snapshot is available yet for this match. Team news context is available for this match. Estimated travel distance is approximately 695.7 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -185,12 +208,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"747752\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"747752\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":0,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":695.7,\"travelImpact\":\"high\",\"travelProfile\":\"regional_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"dunkerque\",\"travelAwayKey\":\"grenoble\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -319,10 +342,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -663,8 +686,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 0,
@@ -679,7 +702,7 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.74,
+      "confidence": 0.81,
       "readiness": {
         "history": true,
         "form": true,
@@ -687,7 +710,7 @@
         "standings": true,
         "teamNews": true,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -751,11 +774,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "dunkerque",
+          "team": "Dunkerque",
+          "country": "France",
+          "city": "Dunkirk",
+          "venue": null,
+          "latitude": 51.0344,
+          "longitude": 2.3768,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.648Z"
+        },
+        "away": {
+          "key": "grenoble",
+          "team": "Grenoble",
+          "country": "France",
+          "city": "Grenoble",
+          "venue": null,
+          "latitude": 45.1885,
+          "longitude": 5.7245,
+          "source": "known_team_geo_seed_city_center_v2",
+          "updatedAt": "2026-05-03T03:49:04.253Z"
+        },
+        "distanceKm": 695.7,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "regional_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 696 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 696 km (regional_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1033,8 +1089,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Dunkerque - Grenoble: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Dunkerque: 0-1-4 στα τελευταία 5. Grenoble: 0-4-1 στα τελευταία 5. Το historical layer βασίστηκε σε 13484 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Dunkerque 2 νίκες, ισοπαλίες 2, Grenoble 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Dunkerque=neutral, Grenoble=neutral. Απουσίες: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Dunkerque vs Grenoble: contextual analysis using historical and available data. Dunkerque: 0-1-4 across the last 5. Grenoble: 0-4-1 across the last 5. The historical layer was based on 13484 available match records. Across the last 5 head-to-head meetings: Dunkerque 2 wins, draws 2, Grenoble 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Dunkerque=neutral, Grenoble=neutral. Absences: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+      "el": "Dunkerque - Grenoble: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Dunkerque: 0-1-4 στα τελευταία 5. Grenoble: 0-4-1 στα τελευταία 5. Το historical layer βασίστηκε σε 13484 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Dunkerque 2 νίκες, ισοπαλίες 2, Grenoble 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Dunkerque=neutral, Grenoble=neutral. Απουσίες: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετ…",
+      "en": "Dunkerque vs Grenoble: contextual analysis using historical and available data. Dunkerque: 0-1-4 across the last 5. Grenoble: 0-4-1 across the last 5. The historical layer was based on 13484 available match records. Across the last 5 head-to-head meetings: Dunkerque 2 wins, draws 2, Grenoble 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Dunkerque=neutral, Grenoble=neutral. Absences: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A …",
       "teamNews": {
         "status": "usable",
         "source": "local-team-news",
@@ -1053,7 +1109,9 @@
       "phase_regular",
       "team_news_available",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available",
+      "travel_burden_high"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1103,11 +1161,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "regional_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 695.7,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1115,8 +1173,8 @@
     }
   },
   "aiSummary": {
-    "el": "Dunkerque - Grenoble: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Dunkerque: 0-1-4 στα τελευταία 5. Grenoble: 0-4-1 στα τελευταία 5. Το historical layer βασίστηκε σε 13484 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Dunkerque 2 νίκες, ισοπαλίες 2, Grenoble 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Dunkerque=neutral, Grenoble=neutral. Απουσίες: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Dunkerque vs Grenoble: contextual analysis using historical and available data. Dunkerque: 0-1-4 across the last 5. Grenoble: 0-4-1 across the last 5. The historical layer was based on 13484 available match records. Across the last 5 head-to-head meetings: Dunkerque 2 wins, draws 2, Grenoble 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Dunkerque=neutral, Grenoble=neutral. Absences: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+    "el": "Dunkerque - Grenoble: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Dunkerque: 0-1-4 στα τελευταία 5. Grenoble: 0-4-1 στα τελευταία 5. Το historical layer βασίστηκε σε 13484 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Dunkerque 2 νίκες, ισοπαλίες 2, Grenoble 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Dunkerque=neutral, Grenoble=neutral. Απουσίες: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Dunkerque vs Grenoble: contextual analysis using historical and available data. Dunkerque: 0-1-4 across the last 5. Grenoble: 0-4-1 across the last 5. The historical layer was based on 13484 available match records. Across the last 5 head-to-head meetings: Dunkerque 2 wins, draws 2, Grenoble 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Dunkerque=neutral, Grenoble=neutral. Absences: Dunkerque=none, Grenoble=none. Lineup context: Dunkerque=fatigue:low, rotation:low, strength:strong; Grenoble=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "local-team-news",
@@ -1143,13 +1201,13 @@
       "local-standings",
       "local-team-news",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "expected_lineups_reliability",
-      "travel_context",
       "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1344,7 +1402,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1352,7 +1410,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "0-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1360,14 +1418,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

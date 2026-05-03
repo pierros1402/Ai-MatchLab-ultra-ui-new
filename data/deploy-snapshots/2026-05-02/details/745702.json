@@ -1,7 +1,7 @@
 {
   "matchId": "745702",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:50.880Z",
+  "generatedAt": "2026-05-03T03:51:58.260Z",
   "basic": {
     "matchId": "745702",
     "leagueSlug": "eng.3",
@@ -10,12 +10,12 @@
     "homeTeam": "Reading",
     "awayTeam": "Blackpool",
     "kickoffUtc": "2026-05-02T14:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
     "scoreHome": 0,
-    "scoreAway": 0,
-    "venue": "Select Car Leasing Stadium"
+    "scoreAway": 1,
+    "venue": "Madejski Stadium"
   },
   "context": {
     "status": "ready",
@@ -43,9 +43,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "medium",
+    "travelProfile": "regional_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -87,29 +87,253 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 299.6,
+    "impact": "medium",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "regional_domestic",
+    "home": {
+      "key": "reading",
+      "team": "Reading",
+      "country": "United Kingdom",
+      "city": null,
+      "venue": "Reading Stadium",
+      "latitude": 51.4283,
+      "longitude": -0.9825,
+      "source": "wikidata_bootstrap",
+      "updatedAt": "2026-05-02T20:12:19.779Z"
+    },
+    "away": {
+      "key": "blackpool",
+      "team": "Blackpool",
+      "country": "England",
+      "city": "Blackpool",
+      "venue": null,
+      "latitude": 53.8175,
+      "longitude": -3.0357,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.617Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 300 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 300 km (regional_domestic) was calculated from the local team geo cache."
     }
   },
-  "value": [],
+  "value": [
+    {
+      "matchId": "745702",
+      "leagueSlug": "eng.3",
+      "homeTeam": "Reading",
+      "awayTeam": "Blackpool",
+      "kickoff": "2026-05-02T14:00Z",
+      "market": "1X2",
+      "marketName": "1X2",
+      "pick": "AWAY",
+      "score": 0.6920000000000001,
+      "band": "MEDIUM",
+      "confidence": 0.909,
+      "signals": [
+        "away_edge",
+        "matchup_goals_history",
+        "priors_applied",
+        "safe_table_state",
+        "late_season_pressure",
+        "close_strength_gap",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.35,
+          "awayOverallFormWeight": 0.35,
+          "homeSideFormWeight": 0.12,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 1.221,
+        "expectedAwayGoals": 1.368,
+        "expectedTotalGoals": 2.589,
+        "homeStrength": 0.429,
+        "awayStrength": 0.506,
+        "homeEdge": 0.122,
+        "awayPenalty": 0.092,
+        "recency": {
+          "homeOverall": {
+            "sample": 8,
+            "rawSample": 5,
+            "priorSample": 92,
+            "daysSinceLastMatch": 7,
+            "spanDays": 27,
+            "freshnessScore": 1,
+            "continuityScore": 0.7
+          },
+          "awayOverall": {
+            "sample": 8,
+            "rawSample": 5,
+            "priorSample": 92,
+            "daysSinceLastMatch": 7,
+            "spanDays": 27,
+            "freshnessScore": 1,
+            "continuityScore": 0.7
+          },
+          "homeSide": {
+            "sample": 5,
+            "rawSample": 2,
+            "priorSample": 92,
+            "daysSinceLastMatch": 26,
+            "spanDays": 8,
+            "freshnessScore": 0.08,
+            "continuityScore": 0.35
+          },
+          "awaySide": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 92,
+            "daysSinceLastMatch": 26,
+            "spanDays": 0,
+            "freshnessScore": 0.08,
+            "continuityScore": 0.35
+          }
+        },
+        "matchupSample": 3,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 92,
+          "awayPriorSample": 92,
+          "leaguePriorSample": 2228,
+          "matchupPriorSample": 4
+        },
+        "resolution": {
+          "homeInput": "Reading",
+          "awayInput": "Blackpool",
+          "homeResolvedKey": "Reading",
+          "awayResolvedKey": "Blackpool",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "Blackpool::Reading",
+          "matchupResolveScore": 0.93,
+          "homePriorKey": "eng.3::Reading",
+          "awayPriorKey": "eng.3::Blackpool",
+          "matchupPriorKey": "eng.3|Blackpool|Reading"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "Reading",
+          "awayTeamKey": "Blackpool",
+          "leagueKey": "eng.3",
+          "matchupKey": "Blackpool::Reading"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_away_stronger",
+            "impact": 0.08,
+            "note": "Away team has significantly stronger form"
+          },
+          {
+            "code": "ai_h2h_over_signal",
+            "impact": 0.07,
+            "note": "AI detected open H2H pattern"
+          },
+          {
+            "code": "ai_h2h_away_edge",
+            "impact": 0.06,
+            "note": "AI detected away H2H edge"
+          },
+          {
+            "code": "ai_away_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong away form edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "low",
+          "stakes": {
+            "home": "neutral",
+            "away": "neutral",
+            "tags": []
+          },
+          "pressure": [
+            "safe_table_state"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.74,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_away_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 5, away 12"
+          },
+          {
+            "code": "match_profile_home_table_edge",
+            "impact": 0.027500000000000004,
+            "note": "MatchProfile table positions: home #9, away #14"
+          },
+          {
+            "code": "match_profile_h2h_away_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans away"
+          },
+          {
+            "code": "match_profile_h2h_overlean",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile H2H goal pattern leans over"
+          }
+        ]
+      },
+      "context": {
+        "season": "2025-2026",
+        "leagueSlug": "eng.3",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 7,
+        "awayRestDays": 7,
+        "homeMatchesLast7": 1,
+        "awayMatchesLast7": 1,
+        "homeMatchesLast14": 1,
+        "awayMatchesLast14": 1,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    }
+  ],
   "analysis": {
-    "codes": [],
+    "codes": [
+      "final_match",
+      "value_present"
+    ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.692. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 299.6 χλμ (medium).",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.692. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 299.6 km (medium)."
     }
   },
   "playerUsageIntel": {
@@ -173,12 +397,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"745702\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"745702\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":0,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":299.6,\"travelImpact\":\"medium\",\"travelProfile\":\"regional_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"reading\",\"travelAwayKey\":\"blackpool\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.6920000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -307,10 +531,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -324,10 +548,10 @@
         "required": false,
         "priority": 65,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-value",
+        "confidence": 0.909,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -656,15 +880,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
-          "count": 0,
-          "topMarket": null,
-          "topPick": null,
-          "topScore": null,
-          "avgConfidence": 0
+          "count": 1,
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.6920000000000001,
+          "avgConfidence": 0.909
         },
         "summary": [
           "Table: Reading #9 vs Blackpool #14.",
@@ -672,7 +896,7 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -680,7 +904,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -704,11 +928,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "reading",
+          "team": "Reading",
+          "country": "United Kingdom",
+          "city": null,
+          "venue": "Reading Stadium",
+          "latitude": 51.4283,
+          "longitude": -0.9825,
+          "source": "wikidata_bootstrap",
+          "updatedAt": "2026-05-02T20:12:19.779Z"
+        },
+        "away": {
+          "key": "blackpool",
+          "team": "Blackpool",
+          "country": "England",
+          "city": "Blackpool",
+          "venue": null,
+          "latitude": 53.8175,
+          "longitude": -3.0357,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.617Z"
+        },
+        "distanceKm": 299.6,
+        "impact": "medium",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "regional_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 300 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 300 km (regional_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -805,12 +1062,12 @@
       "meta": "[circular]"
     },
     "valueContext": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0,
-      "confidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.6920000000000001,
+      "avgConfidence": 0.909,
+      "confidence": 0.75
     },
     "researchPlan": {
       "matchId": "745702",
@@ -986,8 +1243,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Reading - Blackpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Reading: 1-2-2 στα τελευταία 5. Blackpool: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Reading 2 νίκες, ισοπαλίες 0, Blackpool 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Reading vs Blackpool: contextual analysis using historical and available data. Reading: 1-2-2 across the last 5. Blackpool: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 5 head-to-head meetings: Reading 2 wins, draws 0, Blackpool 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+      "el": "Reading - Blackpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Reading: 1-2-2 στα τελευταία 5. Blackpool: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Reading 2 νίκες, ισοπαλίες 0, Blackpool 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.692. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+      "en": "Reading vs Blackpool: contextual analysis using historical and available data. Reading: 1-2-2 across the last 5. Blackpool: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 5 head-to-head meetings: Reading 2 wins, draws 0, Blackpool 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.692. Limited lineup context is available with low completeness. Travel context is available from the local geo subst…",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -995,7 +1252,7 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.8200000000000001,
+    "confidence": 0.92,
     "signals": [
       "historical_context_available",
       "history_form_available",
@@ -1004,26 +1261,29 @@
       "h2h_edge_away",
       "h2h_goal_pattern_over",
       "phase_regular",
+      "value_support_present",
+      "value_1x2_signal",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
     ],
     "valueSummary": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.6920000000000001,
+      "avgConfidence": 0.909
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "h2h_open_pattern",
+        "label": "result_driven",
         "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "historical_goal_variance",
+        "label": "directional_match_edge",
         "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
@@ -1031,17 +1291,17 @@
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "h2h_supported_context",
+        "label": "value_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "matchup_informed",
+        "label": "market_informed",
         "explanation": ""
       }
     },
     "support": {
       "priorsUsed": true,
-      "valueUsed": false,
+      "valueUsed": true,
       "researchUsed": true,
       "historyUsed": true,
       "h2hUsed": true,
@@ -1055,11 +1315,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "regional_domestic",
+      "travelImpact": "medium",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 299.6,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1067,8 +1327,8 @@
     }
   },
   "aiSummary": {
-    "el": "Reading - Blackpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Reading: 1-2-2 στα τελευταία 5. Blackpool: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Reading 2 νίκες, ισοπαλίες 0, Blackpool 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Reading vs Blackpool: contextual analysis using historical and available data. Reading: 1-2-2 across the last 5. Blackpool: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 5 head-to-head meetings: Reading 2 wins, draws 0, Blackpool 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+    "el": "Reading - Blackpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Reading: 1-2-2 στα τελευταία 5. Blackpool: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Reading 2 νίκες, ισοπαλίες 0, Blackpool 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.692. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Reading vs Blackpool: contextual analysis using historical and available data. Reading: 1-2-2 across the last 5. Blackpool: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 5 head-to-head meetings: Reading 2 wins, draws 0, Blackpool 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Reading=neutral, Blackpool=neutral. Lineup context: Reading=fatigue:low, rotation:low, strength:strong; Blackpool=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.692. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1077,11 +1337,12 @@
     }
   },
   "valueSummary": {
-    "count": 0,
-    "topMarket": null,
-    "topPick": null,
-    "topScore": null,
-    "avgConfidence": 0
+    "count": 1,
+    "topMarket": "1X2",
+    "topPick": "AWAY",
+    "topScore": 0.6920000000000001,
+    "avgConfidence": 0.909,
+    "confidence": 0.75
   },
   "sourceAudit": {
     "status": "partial",
@@ -1094,15 +1355,15 @@
       "team-news-provider-stub",
       "local-standings",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context",
-      "value_snapshot"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1206,6 +1467,19 @@
         "meta": {
           "sampleSize": 5
         }
+      },
+      {
+        "kind": "value_snapshot_local",
+        "key": "value_snapshot_local",
+        "provider": "local-value",
+        "trustClass": "model_local",
+        "confidence": 0.72,
+        "status": "available",
+        "meta": {
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.6920000000000001
+        }
       }
     ],
     "cacheHit": false
@@ -1285,7 +1559,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1293,7 +1567,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "0-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1301,14 +1575,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

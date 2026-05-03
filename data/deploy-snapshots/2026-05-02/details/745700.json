@@ -1,7 +1,7 @@
 {
   "matchId": "745700",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:48.465Z",
+  "generatedAt": "2026-05-03T03:51:54.885Z",
   "basic": {
     "matchId": "745700",
     "leagueSlug": "eng.3",
@@ -10,12 +10,12 @@
     "homeTeam": "Peterborough United",
     "awayTeam": "Doncaster Rovers",
     "kickoffUtc": "2026-05-02T14:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
-    "venue": "Weston Homes Stadium"
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
+    "scoreAway": 3,
+    "venue": "London Road Stadium"
   },
   "context": {
     "status": "ready",
@@ -43,9 +43,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -87,21 +87,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 121.5,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "peterborough_united",
+      "team": "Peterborough United",
+      "country": "England",
+      "city": "Peterborough",
+      "venue": null,
+      "latitude": 52.5695,
+      "longitude": -0.2405,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.615Z"
+    },
+    "away": {
+      "key": "doncaster_rovers",
+      "team": "Doncaster Rovers",
+      "country": "England",
+      "city": "Doncaster",
+      "venue": null,
+      "latitude": 53.5228,
+      "longitude": -1.1285,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.616Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 121 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 121 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -116,13 +136,15 @@
       "pick": "Over 1.5",
       "score": 0.713,
       "band": "MEDIUM",
-      "confidence": 0.879,
+      "confidence": 0.894,
       "signals": [
         "home_edge_strong",
         "priors_applied",
+        "safe_table_state",
         "late_season_pressure",
         "close_strength_gap",
-        "home_rest_3"
+        "home_rest_3",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -225,15 +247,41 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
+        "contextAdjusted": true,
         "contextDelta": 0,
-        "contextReasons": [],
+        "contextReasons": [
+          {
+            "code": "form_balanced",
+            "impact": 0.04,
+            "note": "Teams have similar recent form"
+          },
+          {
+            "code": "ai_h2h_away_edge",
+            "impact": 0.06,
+            "note": "AI detected away H2H edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
+          "importance": "low",
+          "stakes": {
+            "home": "neutral",
+            "away": "neutral",
+            "tags": []
+          },
+          "pressure": [
+            "safe_table_state"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_h2h_away_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans away"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -255,11 +303,12 @@
   ],
   "analysis": {
     "codes": [
+      "final_match",
       "value_present"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.713. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.713. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.713. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 121.5 χλμ (low).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.713. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 121.5 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -323,12 +372,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"745700\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.713},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"745700\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":3,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":121.5,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"peterborough_united\",\"travelAwayKey\":\"doncaster_rovers\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.713},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -457,10 +506,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -477,7 +526,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.879,
+        "confidence": 0.894,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -765,15 +814,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.713,
-          "avgConfidence": 0.879
+          "avgConfidence": 0.894
         },
         "summary": [
           "Table: Peterborough United #16 vs Doncaster Rovers #15.",
@@ -781,7 +830,7 @@
           "H2H sample: 1 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -789,7 +838,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -813,11 +862,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "peterborough_united",
+          "team": "Peterborough United",
+          "country": "England",
+          "city": "Peterborough",
+          "venue": null,
+          "latitude": 52.5695,
+          "longitude": -0.2405,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.615Z"
+        },
+        "away": {
+          "key": "doncaster_rovers",
+          "team": "Doncaster Rovers",
+          "country": "England",
+          "city": "Doncaster",
+          "venue": null,
+          "latitude": 53.5228,
+          "longitude": -1.1285,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.616Z"
+        },
+        "distanceKm": 121.5,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 121 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 121 km (local_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -914,7 +996,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.713,
-      "avgConfidence": 0.879,
+      "avgConfidence": 0.894,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1091,7 +1173,7 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Peterborough United - Doncaster Rovers: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Peterborough United: 0-3-2 στα τελευταία 5. Doncaster Rovers: 1-1-3 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Peterborough United 0 νίκες, ισοπαλίες 0, Doncaster Rovers 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Peterborough United=neutral, Doncaster Rovers=neutral. Lineup context: Peterborough United=fatigue:medium, rotation:low, strength:strong; Doncaster Rovers=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.713. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
+      "el": "Peterborough United - Doncaster Rovers: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Peterborough United: 0-3-2 στα τελευταία 5. Doncaster Rovers: 1-1-3 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Peterborough United 0 νίκες, ισοπαλίες 0, Doncaster Rovers 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Peterborough United=neutral, Doncaster Rovers=neutral. Lineup context: Peterborough United=fatigue:medium, rotation:low, strength:strong; Doncaster Rovers=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.713. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπά…",
       "en": "Peterborough United vs Doncaster Rovers: contextual analysis using historical and available data. Peterborough United: 0-3-2 across the last 5. Doncaster Rovers: 1-1-3 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 1 head-to-head meetings: Peterborough United 0 wins, draws 0, Doncaster Rovers 1 wins. The head-to-head profile leans toward the away side. Table context: Peterborough United=neutral, Doncaster Rovers=neutral. Lineup context: Peterborough United=fatigue:medium, rotation:low, strength:strong; Doncaster Rovers=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.713. Limited lineup context is available with low complet…",
       "teamNews": {
         "status": "empty",
@@ -1112,7 +1194,8 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1122,7 +1205,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.713,
-      "avgConfidence": 0.879
+      "avgConfidence": 0.894
     },
     "reasoning": {
       "tempoProfile": {
@@ -1162,11 +1245,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 121.5,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1174,8 +1257,8 @@
     }
   },
   "aiSummary": {
-    "el": "Peterborough United - Doncaster Rovers: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Peterborough United: 0-3-2 στα τελευταία 5. Doncaster Rovers: 1-1-3 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Peterborough United 0 νίκες, ισοπαλίες 0, Doncaster Rovers 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Peterborough United=neutral, Doncaster Rovers=neutral. Lineup context: Peterborough United=fatigue:medium, rotation:low, strength:strong; Doncaster Rovers=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.713. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Peterborough United vs Doncaster Rovers: contextual analysis using historical and available data. Peterborough United: 0-3-2 across the last 5. Doncaster Rovers: 1-1-3 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 1 head-to-head meetings: Peterborough United 0 wins, draws 0, Doncaster Rovers 1 wins. The head-to-head profile leans toward the away side. Table context: Peterborough United=neutral, Doncaster Rovers=neutral. Lineup context: Peterborough United=fatigue:medium, rotation:low, strength:strong; Doncaster Rovers=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.713. Limited lineup context is available with low completeness.",
+    "el": "Peterborough United - Doncaster Rovers: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Peterborough United: 0-3-2 στα τελευταία 5. Doncaster Rovers: 1-1-3 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 14267 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Peterborough United 0 νίκες, ισοπαλίες 0, Doncaster Rovers 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Peterborough United=neutral, Doncaster Rovers=neutral. Lineup context: Peterborough United=fatigue:medium, rotation:low, strength:strong; Doncaster Rovers=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.713. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Peterborough United vs Doncaster Rovers: contextual analysis using historical and available data. Peterborough United: 0-3-2 across the last 5. Doncaster Rovers: 1-1-3 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 14267 available match records. Across the last 1 head-to-head meetings: Peterborough United 0 wins, draws 0, Doncaster Rovers 1 wins. The head-to-head profile leans toward the away side. Table context: Peterborough United=neutral, Doncaster Rovers=neutral. Lineup context: Peterborough United=fatigue:medium, rotation:low, strength:strong; Doncaster Rovers=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.713. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1188,7 +1271,7 @@
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.713,
-    "avgConfidence": 0.879,
+    "avgConfidence": 0.894,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1203,14 +1286,14 @@
       "local-standings",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1406,7 +1489,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1414,7 +1497,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-3",
         "source": "espn",
         "sources": [
           "espn"
@@ -1422,14 +1505,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1
