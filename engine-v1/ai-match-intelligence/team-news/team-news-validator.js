@@ -128,11 +128,62 @@ function isGenericTeamNewsInjuryTerm(value) {
   return false;
 }
 
+
+function isBadTeamNewsBoilerplateText(value) {
+  const text = String(value || "").trim();
+  const lower = text.toLowerCase().replace(/\s+/g, " ").trim();
+
+  if (!text) return false;
+  if (lower.includes("[object object]")) return true;
+
+  const badExactPlayerTerms = new Set([
+    "placar final",
+    "menu principal",
+    "futebol futebol",
+    "mais esportes mais",
+    "esportes disney plus",
+    "podcasts podcasts programa",
+    "busca vit",
+    "brasileiro serie",
+    "coritiba coritiba",
+    "pen pedro rocha",
+    "resumo coment"
+  ]);
+
+  if (badExactPlayerTerms.has(lower)) return true;
+
+  const badNeedles = [
+    "ir para o conteúdo principal",
+    "ir para o menu principal",
+    "espn futebol futebol",
+    "nfl nfl nba",
+    "espn knockout",
+    "tênis tênis",
+    "f1 f1",
+    "olimpíadas olimpíada",
+    "disney plus",
+    "podcasts podcasts"
+  ];
+
+  if (badNeedles.some(needle => lower.includes(needle))) return true;
+
+  if (/\b(placar final|menu principal|mais esportes|futebol futebol|busca vit|brasileiro serie)\b/i.test(text) && text.length > 40) {
+    return true;
+  }
+
+  if (/\b(shots on target|fouls committed|yellow cards|red cards|goals against)\b/i.test(text) && text.length > 80) {
+    return true;
+  }
+
+  return false;
+}
+
 function isBadPlayerName(value) {
   const text = cleanText(value);
   const lower = text.toLowerCase();
 
   if (!text || text.length < 3) return true;
+  if (isBadTeamNewsBoilerplateText(text)) return true;
   if (isUrlLike(text)) return true;
   if (looksLikeSentence(text)) return true;
   if (lower.includes("http")) return true;
@@ -203,6 +254,72 @@ function normalizeImportance(value) {
   const text = cleanText(value).toLowerCase();
   if (["low", "medium", "high"].includes(text)) return text;
   return "medium";
+}
+
+
+function normalizeTeamNewsAbsenceShape(playerValue, reasonValue = "") {
+  let player = String(playerValue || "").trim();
+  let reason = String(reasonValue || "").trim();
+
+  const lowerPlayer = player.toLowerCase().replace(/\s+/g, " ").trim();
+
+  const reasonOnlyTerms = new Set([
+    "injury",
+    "suspension",
+    "suspended",
+    "illness",
+    "fitness",
+    "doubtful",
+    "questionable",
+    "lower back",
+    "lower body",
+    "upper body",
+    "broken foot",
+    "hamstring",
+    "knee",
+    "calf",
+    "groin",
+    "achilles",
+    "muscle"
+  ]);
+
+  if (!player || reasonOnlyTerms.has(lowerPlayer)) {
+    return null;
+  }
+
+  if (lowerPlayer.includes("certain absentee")) {
+    return null;
+  }
+
+  const suspendedMatch = player.match(/^(.+?)\s+is\s+suspended\.?$/i);
+  if (suspendedMatch) {
+    player = suspendedMatch[1].trim();
+    reason = reason || "suspension";
+  }
+
+  if (player.includes(":")) {
+    const parts = player.split(":").map(v => v.trim()).filter(Boolean);
+
+    if (parts.length >= 2) {
+      const first = parts[0];
+      const second = parts[1];
+      const compactSecond = second.toLowerCase().replace(/\s+/g, " ").trim();
+
+      if (reasonOnlyTerms.has(compactSecond)) {
+        player = first;
+        reason = reason || compactSecond;
+      } else {
+        return null;
+      }
+    }
+  }
+
+  if (!player || player.length < 3) return null;
+
+  return {
+    player,
+    reason: reason || null
+  };
 }
 
 function normalizeAbsence(item) {
