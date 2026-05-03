@@ -1494,32 +1494,55 @@ function getOfficialTeamNames(teamName) {
 }
 
 function buildSearchQueries(teamName, expectedCountry) {
-  const baseNames = getOfficialTeamNames(teamName).slice(0, 8);
+  const baseNames = getOfficialTeamNames(teamName).slice(0, 14);
   const queries = [];
 
   for (const name of baseNames) {
     queries.push(name);
+    queries.push(`${name} FC`);
+    queries.push(`${name} F.C.`);
     queries.push(`${name} football club`);
 
     if (expectedCountry) {
       queries.push(`${name} ${expectedCountry}`);
+      queries.push(`${name} ${expectedCountry} FC`);
+      queries.push(`${name} ${expectedCountry} F.C.`);
       queries.push(`${name} ${expectedCountry} football club`);
     }
   }
 
-  return uniqueCleanStrings(queries).slice(0, 24);
+  return uniqueCleanStrings(queries).slice(0, 48);
 }
+
+function isLikelyTransientWikidataError(err) {
+  const message = String(err?.message || err || "");
+
+  return (
+    message.includes("wikidata_http_429") ||
+    message.includes("wikidata_http_500") ||
+    message.includes("wikidata_http_502") ||
+    message.includes("wikidata_http_503") ||
+    message.includes("wikidata_http_504") ||
+    message.includes("fetch failed") ||
+    message.includes("network") ||
+    message.includes("fetch_timeout_") ||
+    message.includes("aborted") ||
+    message.includes("AbortError")
+  );
+}
+
 async function searchTeamCandidates(teamName, expectedCountry) {
-  const queries = buildSearchQueries(teamName, expectedCountry).slice(0, 6);
+  const queries = buildSearchQueries(teamName, expectedCountry).slice(0, 18);
   const merged = [];
   const seenIds = new Set();
+  let lastTransientError = null;
 
   for (const query of queries) {
     try {
-      const searchData = await fetchJson(buildSearchUrl(query, 5), {
-        retries: 0,
-        baseDelayMs: 250,
-        timeoutMs: 3500
+      const searchData = await fetchJson(buildSearchUrl(query, 8), {
+        retries: 2,
+        baseDelayMs: 1200,
+        timeoutMs: 10000
       });
 
       const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];
@@ -1531,13 +1554,25 @@ async function searchTeamCandidates(teamName, expectedCountry) {
         merged.push(item);
       }
 
-      if (merged.length >= 8) break;
-    } catch {
+      if (merged.length >= 12) break;
+    } catch (err) {
+      if (isLikelyTransientWikidataError(err)) {
+        lastTransientError = err;
+        await sleep(1500);
+        continue;
+      }
+
       continue;
     }
+
+    await sleep(350);
   }
 
-  return merged.slice(0, 8);
+  if (!merged.length && lastTransientError) {
+    throw new Error(String(lastTransientError?.message || lastTransientError));
+  }
+
+  return merged.slice(0, 12);
 }
 
 async function resolveTeamGeo(inputRow) {
