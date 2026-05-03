@@ -1,7 +1,7 @@
 {
   "matchId": "740938",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:22:48.511Z",
+  "generatedAt": "2026-05-03T14:22:55.180Z",
   "basic": {
     "matchId": "740938",
     "leagueSlug": "eng.1",
@@ -10,10 +10,10 @@
     "homeTeam": "AFC Bournemouth",
     "awayTeam": "Crystal Palace",
     "kickoffUtc": "2026-05-03T13:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": null,
-    "scoreHome": 0,
+    "status": "SECOND_HALF",
+    "rawStatus": "STATUS_SECOND_HALF",
+    "minute": "60'",
+    "scoreHome": 2,
     "scoreAway": 0,
     "venue": "Vitality Stadium"
   },
@@ -45,9 +45,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -179,31 +179,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_away_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 147,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
     "home": {
       "key": "afc_bournemouth",
       "team": "AFC Bournemouth",
-      "venue": "Dean Court",
-      "city": "Bournemouth",
       "country": "United Kingdom",
+      "city": "Bournemouth",
+      "venue": "Dean Court",
       "latitude": 50.735278,
       "longitude": -1.838333,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.391Z"
     },
-    "away": null,
+    "away": {
+      "key": "crystal_palace",
+      "team": "Crystal Palace",
+      "country": "England",
+      "city": "London",
+      "venue": null,
+      "latitude": 51.5074,
+      "longitude": -0.1278,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.082Z"
+    },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 147 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 147 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -218,7 +228,7 @@
       "pick": "Over 1.5",
       "score": 0.709,
       "band": "MEDIUM",
-      "confidence": 0.897,
+      "confidence": 0.912,
       "signals": [
         "away_edge",
         "priors_applied",
@@ -423,8 +433,8 @@
       "high_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.709. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 12 συνολικές καταγεγραμμένες απουσίες. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.709. There is an indication of elevated importance from the competition context. Team news context is available for this match with 12 recorded absences in total. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.709. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 14 συνολικές καταγεγραμμένες απουσίες. Η εκτίμηση ταξιδιού είναι περίπου 147 χλμ (low).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.709. There is an indication of elevated importance from the competition context. Team news context is available for this match with 14 recorded absences in total. Estimated travel distance is approximately 147 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -549,12 +559,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"740938\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"afc_bournemouth\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.709},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"740938\",\"dayKey\":\"2026-05-03\",\"status\":\"SECOND_HALF\",\"rawStatus\":\"STATUS_SECOND_HALF\",\"minute\":\"60'\",\"scoreHome\":2,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":147,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"afc_bournemouth\",\"travelAwayKey\":\"crystal_palace\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.709},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -686,7 +696,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -703,7 +713,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.897,
+        "confidence": 0.912,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -899,9 +909,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1838,
-            "mergedRows": 13559
+            "mergedRows": 13632
           }
         },
         "h2hLast5": {
@@ -1011,7 +1021,7 @@
           "inferredAbsenceRisk": {
             "home": {
               "status": "unavailable",
-              "confirmedAbsenceCount": 10,
+              "confirmedAbsenceCount": 12,
               "coreStarterCount": 0,
               "note": "No player-usage record available."
             },
@@ -1034,15 +1044,15 @@
           "confidence": 0.62
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.709,
-          "avgConfidence": 0.897
+          "avgConfidence": 0.912
         },
         "summary": [
           "Table: AFC Bournemouth #11 vs Crystal Palace #13.",
@@ -1167,7 +1177,7 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
         "home": {
           "key": "afc_bournemouth",
@@ -1180,21 +1190,31 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.391Z"
         },
-        "away": null,
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "away": {
+          "key": "crystal_palace",
+          "team": "Crystal Palace",
+          "country": "England",
+          "city": "London",
+          "venue": null,
+          "latitude": 51.5074,
+          "longitude": -0.1278,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.082Z"
+        },
+        "distanceKm": 147,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 147 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 147 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1297,7 +1317,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.709,
-      "avgConfidence": 0.897,
+      "avgConfidence": 0.912,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1457,7 +1477,9 @@
           "Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.",
           "Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.",
           "Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.",
-          "Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game."
+          "Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.",
+          "Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.: Official club coverage published ahead of the Leeds United fixture on 22/04/2026.",
+          "Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game.: Andoni Iraola gave team-focused pre-match comments in official club media on the eve of the game."
         ],
         "inferredAbsences": []
       },
@@ -1487,8 +1509,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "AFC Bournemouth - Crystal Palace: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. AFC Bournemouth: 1-4-0 στα τελευταία 5. Crystal Palace: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13559 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: AFC Bournemouth 2 νίκες, ισοπαλίες 3, Crystal Palace 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: AFC Bournemouth=promotion, Crystal Palace=promotion. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. Το ισχυρότερο value ma…",
-      "en": "AFC Bournemouth vs Crystal Palace: contextual analysis using historical and available data. AFC Bournemouth: 1-4-0 across the last 5. Crystal Palace: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13559 available match records. Across the last 5 head-to-head meetings: AFC Bournemouth 2 wins, draws 3, Crystal Palace 0 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: AFC Bournemouth=promotion, Crystal Palace=promotion. This match is assessed as high importance. Absences: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. T…",
+      "el": "AFC Bournemouth - Crystal Palace: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. AFC Bournemouth: 1-4-0 στα τελευταία 5. Crystal Palace: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13632 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: AFC Bournemouth 2 νίκες, ισοπαλίες 3, Crystal Palace 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: AFC Bournemouth=promotion, Crystal Palace=promotion. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. Το ισχυρότερο value ma…",
+      "en": "AFC Bournemouth vs Crystal Palace: contextual analysis using historical and available data. AFC Bournemouth: 1-4-0 across the last 5. Crystal Palace: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13632 available match records. Across the last 5 head-to-head meetings: AFC Bournemouth 2 wins, draws 3, Crystal Palace 0 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: AFC Bournemouth=promotion, Crystal Palace=promotion. This match is assessed as high importance. Absences: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. T…",
       "teamNews": {
         "status": "usable",
         "source": "team-news-research-bridge",
@@ -1523,7 +1545,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.709,
-      "avgConfidence": 0.897
+      "avgConfidence": 0.912
     },
     "reasoning": {
       "tempoProfile": {
@@ -1563,11 +1585,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 147,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1575,8 +1597,8 @@
     }
   },
   "aiSummary": {
-    "el": "AFC Bournemouth - Crystal Palace: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. AFC Bournemouth: 1-4-0 στα τελευταία 5. Crystal Palace: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13559 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: AFC Bournemouth 2 νίκες, ισοπαλίες 3, Crystal Palace 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: AFC Bournemouth=promotion, Crystal Palace=promotion. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.709. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "AFC Bournemouth vs Crystal Palace: contextual analysis using historical and available data. AFC Bournemouth: 1-4-0 across the last 5. Crystal Palace: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13559 available match records. Across the last 5 head-to-head meetings: AFC Bournemouth 2 wins, draws 3, Crystal Palace 0 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: AFC Bournemouth=promotion, Crystal Palace=promotion. This match is assessed as high importance. Absences: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.709. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "AFC Bournemouth - Crystal Palace: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. AFC Bournemouth: 1-4-0 στα τελευταία 5. Crystal Palace: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13632 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: AFC Bournemouth 2 νίκες, ισοπαλίες 3, Crystal Palace 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: AFC Bournemouth=promotion, Crystal Palace=promotion. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.709. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "AFC Bournemouth vs Crystal Palace: contextual analysis using historical and available data. AFC Bournemouth: 1-4-0 across the last 5. Crystal Palace: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13632 available match records. Across the last 5 head-to-head meetings: AFC Bournemouth 2 wins, draws 3, Crystal Palace 0 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: AFC Bournemouth=promotion, Crystal Palace=promotion. This match is assessed as high importance. Absences: AFC Bournemouth=severe, Crystal Palace=none. Lineup context: AFC Bournemouth=fatigue:low, rotation:low, strength:reduced; Crystal Palace=fatigue:medium, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.709. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "usable",
       "source": "team-news-research-bridge",
@@ -1589,7 +1611,7 @@
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.709,
-    "avgConfidence": 0.897,
+    "avgConfidence": 0.912,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1605,12 +1627,12 @@
       "local-team-news",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
-      "referee_profile",
-      "travel_context"
+      "referee_profile"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1700,7 +1722,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13559
+          "mergedRows": 13632
         }
       },
       {
@@ -1793,7 +1815,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "SECOND_HALF",
         "source": "espn",
         "sources": [
           "espn"
@@ -1801,7 +1823,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "2-0",
         "source": "espn",
         "sources": [
           "espn"
@@ -1809,14 +1831,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
-        "source": null,
+        "chosen": "55'",
+        "source": "espn",
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.861,
+    "confidence": 1,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

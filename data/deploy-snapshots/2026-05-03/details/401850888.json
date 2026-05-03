@@ -1,7 +1,7 @@
 {
   "matchId": "401850888",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:23:21.136Z",
+  "generatedAt": "2026-05-03T14:23:31.065Z",
   "basic": {
     "matchId": "401850888",
     "leagueSlug": "col.1",
@@ -23,7 +23,7 @@
     "competitionType": "league",
     "importance": "medium",
     "positions": {
-      "home": 3,
+      "home": 4,
       "away": 12,
       "pointsHome": 17,
       "pointsAway": 12,
@@ -43,9 +43,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "regional_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -103,21 +103,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 645.9,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "regional_domestic",
+    "home": {
+      "key": "alianza_fc",
+      "team": "Alianza FC",
+      "country": "Colombia",
+      "city": "Valledupar",
+      "venue": null,
+      "latitude": 10.4631,
+      "longitude": -73.2532,
+      "source": "known_team_geo_seed_city_center_v3",
+      "updatedAt": "2026-05-03T14:16:15.092Z"
+    },
+    "away": {
+      "key": "millonarios",
+      "team": "Millonarios",
+      "country": "Colombia",
+      "city": "Bogotá",
+      "venue": null,
+      "latitude": 4.711,
+      "longitude": -74.0721,
+      "source": "known_team_geo_seed_city_center_v3",
+      "updatedAt": "2026-05-03T14:16:15.092Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 646 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 646 km (regional_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -317,11 +337,12 @@
   "analysis": {
     "codes": [
       "value_present",
-      "medium_competition_context"
+      "medium_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.773. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.773. There is an indication of medium importance from the competition context. Team news context is available for this match. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.773. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Η εκτίμηση ταξιδιού είναι περίπου 645.9 χλμ (high).",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.773. There is an indication of medium importance from the competition context. Team news context is available for this match. Estimated travel distance is approximately 645.9 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -385,12 +406,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401850888\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.7730000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401850888\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":645.9,\"travelImpact\":\"high\",\"travelProfile\":\"regional_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"alianza_fc\",\"travelAwayKey\":\"millonarios\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.7730000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -519,10 +540,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -565,7 +586,7 @@
         },
         "activePhase": "regular",
         "positions": {
-          "home": 3,
+          "home": 4,
           "away": 12,
           "pointsHome": 17,
           "pointsAway": 12,
@@ -601,7 +622,7 @@
           "leagueSlug": "col.1",
           "home": {
             "team": "Alianza FC",
-            "position": 3,
+            "position": 4,
             "played": 15,
             "wins": 4,
             "draws": 5,
@@ -733,9 +754,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 410,
-            "mergedRows": 12364
+            "mergedRows": 12437
           }
         },
         "h2hLast5": {
@@ -837,8 +858,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
@@ -848,12 +869,12 @@
           "avgConfidence": 0.819
         },
         "summary": [
-          "Table: Alianza FC #3 vs Millonarios #12.",
+          "Table: Alianza FC #4 vs Millonarios #12.",
           "Last5 points: home 4, away 8.",
           "H2H sample: 2 recent matches."
         ]
       },
-      "confidence": 0.74,
+      "confidence": 0.81,
       "readiness": {
         "history": true,
         "form": true,
@@ -861,7 +882,7 @@
         "standings": true,
         "teamNews": true,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -925,11 +946,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "alianza_fc",
+          "team": "Alianza FC",
+          "country": "Colombia",
+          "city": "Valledupar",
+          "venue": null,
+          "latitude": 10.4631,
+          "longitude": -73.2532,
+          "source": "known_team_geo_seed_city_center_v3",
+          "updatedAt": "2026-05-03T14:16:15.092Z"
+        },
+        "away": {
+          "key": "millonarios",
+          "team": "Millonarios",
+          "country": "Colombia",
+          "city": "Bogotá",
+          "venue": null,
+          "latitude": 4.711,
+          "longitude": -74.0721,
+          "source": "known_team_geo_seed_city_center_v3",
+          "updatedAt": "2026-05-03T14:16:15.092Z"
+        },
+        "distanceKm": 645.9,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "regional_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 646 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 646 km (regional_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1204,8 +1258,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Alianza FC - Millonarios: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza FC: 1-1-3 στα τελευταία 5. Millonarios: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12364 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 2 μεταξύ τους: Alianza FC 0 νίκες, ισοπαλίες 0, Millonarios 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Alianza FC=europe, Millonarios=europe. Απουσίες: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.773. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πλ…",
-      "en": "Alianza FC vs Millonarios: contextual analysis using historical and available data. Alianza FC: 1-1-3 across the last 5. Millonarios: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12364 available match records. Across the last 2 head-to-head meetings: Alianza FC 0 wins, draws 0, Millonarios 2 wins. The head-to-head profile leans toward the away side. Table context: Alianza FC=europe, Millonarios=europe. Absences: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.773. Team news context is available in the enriched snapshot. Limited lineup context is available with l…",
+      "el": "Alianza FC - Millonarios: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza FC: 1-1-3 στα τελευταία 5. Millonarios: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12437 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 2 μεταξύ τους: Alianza FC 0 νίκες, ισοπαλίες 0, Millonarios 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Alianza FC=europe, Millonarios=europe. Απουσίες: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.773. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πλ…",
+      "en": "Alianza FC vs Millonarios: contextual analysis using historical and available data. Alianza FC: 1-1-3 across the last 5. Millonarios: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12437 available match records. Across the last 2 head-to-head meetings: Alianza FC 0 wins, draws 0, Millonarios 2 wins. The head-to-head profile leans toward the away side. Table context: Alianza FC=europe, Millonarios=europe. Absences: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.773. Team news context is available in the enriched snapshot. Limited lineup context is available with l…",
       "teamNews": {
         "status": "usable",
         "source": "local-team-news",
@@ -1226,7 +1280,9 @@
       "value_1x2_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available",
+      "travel_burden_high"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1276,11 +1332,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "regional_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 645.9,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1288,8 +1344,8 @@
     }
   },
   "aiSummary": {
-    "el": "Alianza FC - Millonarios: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza FC: 1-1-3 στα τελευταία 5. Millonarios: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12364 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 2 μεταξύ τους: Alianza FC 0 νίκες, ισοπαλίες 0, Millonarios 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Alianza FC=europe, Millonarios=europe. Απουσίες: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.773. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Alianza FC vs Millonarios: contextual analysis using historical and available data. Alianza FC: 1-1-3 across the last 5. Millonarios: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12364 available match records. Across the last 2 head-to-head meetings: Alianza FC 0 wins, draws 0, Millonarios 2 wins. The head-to-head profile leans toward the away side. Table context: Alianza FC=europe, Millonarios=europe. Absences: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.773. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+    "el": "Alianza FC - Millonarios: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza FC: 1-1-3 στα τελευταία 5. Millonarios: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12437 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 2 μεταξύ τους: Alianza FC 0 νίκες, ισοπαλίες 0, Millonarios 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Alianza FC=europe, Millonarios=europe. Απουσίες: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.773. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Alianza FC vs Millonarios: contextual analysis using historical and available data. Alianza FC: 1-1-3 across the last 5. Millonarios: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12437 available match records. Across the last 2 head-to-head meetings: Alianza FC 0 wins, draws 0, Millonarios 2 wins. The head-to-head profile leans toward the away side. Table context: Alianza FC=europe, Millonarios=europe. Absences: Alianza FC=none, Millonarios=none. Lineup context: Alianza FC=fatigue:low, rotation:low, strength:strong; Millonarios=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.773. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "local-team-news",
@@ -1318,13 +1374,13 @@
       "local-team-news",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1414,7 +1470,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12364
+          "mergedRows": 12437
         }
       },
       {

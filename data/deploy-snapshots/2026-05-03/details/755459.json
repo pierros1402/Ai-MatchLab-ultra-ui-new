@@ -1,7 +1,7 @@
 {
   "matchId": "755459",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:22:48.078Z",
+  "generatedAt": "2026-05-03T14:22:54.736Z",
   "basic": {
     "matchId": "755459",
     "leagueSlug": "rsa.1",
@@ -10,10 +10,10 @@
     "homeTeam": "Mamelodi Sundowns",
     "awayTeam": "Polokwane City",
     "kickoffUtc": "2026-05-03T13:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": null,
-    "scoreHome": 0,
+    "status": "SECOND_HALF",
+    "rawStatus": "STATUS_SECOND_HALF",
+    "minute": "52'",
+    "scoreHome": 1,
     "scoreAway": 0,
     "venue": "Loftus Versfeld Stadium"
   },
@@ -49,9 +49,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "medium",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -93,31 +93,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_away_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 241,
+    "impact": "medium",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
     "home": {
       "key": "mamelodi_sundowns",
       "team": "Mamelodi Sundowns",
-      "venue": "Loftus Versfeld Stadium",
-      "city": "Pretoria",
       "country": "South Africa",
+      "city": "Pretoria",
+      "venue": "Loftus Versfeld Stadium",
       "latitude": -25.753189,
       "longitude": 28.223014,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.391Z"
     },
-    "away": null,
+    "away": {
+      "key": "polokwane_city",
+      "team": "Polokwane City",
+      "country": "South Africa",
+      "city": "Polokwane",
+      "venue": null,
+      "latitude": -23.9045,
+      "longitude": 29.4689,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.077Z"
+    },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 241 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 241 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -130,9 +140,9 @@
       "market": "1X2",
       "marketName": "1X2",
       "pick": "HOME",
-      "score": 0.6940000000000001,
+      "score": 0.6920000000000001,
       "band": "MEDIUM",
-      "confidence": 0.891,
+      "confidence": 0.906,
       "signals": [
         "home_edge_strong",
         "btts_no_lean",
@@ -342,8 +352,8 @@
       "high_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → HOME με score 0.694. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "The strongest available value snapshot is 1X2 → HOME with score 0.694. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → HOME με score 0.692. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 241 χλμ (medium).",
+      "en": "The strongest available value snapshot is 1X2 → HOME with score 0.692. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 241 km (medium)."
     }
   },
   "playerUsageIntel": {
@@ -407,12 +417,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"755459\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"mamelodi_sundowns\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"HOME\",\"score\":0.6940000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"755459\",\"dayKey\":\"2026-05-03\",\"status\":\"SECOND_HALF\",\"rawStatus\":\"STATUS_SECOND_HALF\",\"minute\":\"52'\",\"scoreHome\":1,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":241,\"travelImpact\":\"medium\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"mamelodi_sundowns\",\"travelAwayKey\":\"polokwane_city\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"HOME\",\"score\":0.6920000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -544,7 +554,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -561,7 +571,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.891,
+        "confidence": 0.906,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -761,9 +771,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1124,
-            "mergedRows": 12974
+            "mergedRows": 13047
           }
         },
         "h2hLast5": {
@@ -886,15 +896,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
           "topMarket": "1X2",
           "topPick": "HOME",
-          "topScore": 0.6940000000000001,
-          "avgConfidence": 0.891
+          "topScore": 0.6920000000000001,
+          "avgConfidence": 0.906
         },
         "summary": [
           "Table: Mamelodi Sundowns #1 vs Polokwane City #7.",
@@ -934,7 +944,7 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
         "home": {
           "key": "mamelodi_sundowns",
@@ -947,21 +957,31 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.391Z"
         },
-        "away": null,
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "away": {
+          "key": "polokwane_city",
+          "team": "Polokwane City",
+          "country": "South Africa",
+          "city": "Polokwane",
+          "venue": null,
+          "latitude": -23.9045,
+          "longitude": 29.4689,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.077Z"
+        },
+        "distanceKm": 241,
+        "impact": "medium",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 241 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 241 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1059,8 +1079,8 @@
       "count": 1,
       "topMarket": "1X2",
       "topPick": "HOME",
-      "topScore": 0.6940000000000001,
-      "avgConfidence": 0.891,
+      "topScore": 0.6920000000000001,
+      "avgConfidence": 0.906,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1237,8 +1257,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Mamelodi Sundowns - Polokwane City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Mamelodi Sundowns: 3-1-1 στα τελευταία 5. Polokwane City: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 12974 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 4 μεταξύ τους: Mamelodi Sundowns 2 νίκες, ισοπαλίες 1, Polokwane City 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Mamelodi Sundowns=title, Polokwane City=neutral. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → HOME με score 0.694. Υπάρχει περιορισμένο …",
-      "en": "Mamelodi Sundowns vs Polokwane City: contextual analysis using historical and available data. Mamelodi Sundowns: 3-1-1 across the last 5. Polokwane City: 1-2-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 12974 available match records. Across the last 4 head-to-head meetings: Mamelodi Sundowns 2 wins, draws 1, Polokwane City 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Mamelodi Sundowns=title, Polokwane City=neutral. This match is assessed as high importance. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → HOME with score 0.69…",
+      "el": "Mamelodi Sundowns - Polokwane City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Mamelodi Sundowns: 3-1-1 στα τελευταία 5. Polokwane City: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13047 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 4 μεταξύ τους: Mamelodi Sundowns 2 νίκες, ισοπαλίες 1, Polokwane City 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Mamelodi Sundowns=title, Polokwane City=neutral. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → HOME με score 0.692. Υπάρχει περιορισμένο …",
+      "en": "Mamelodi Sundowns vs Polokwane City: contextual analysis using historical and available data. Mamelodi Sundowns: 3-1-1 across the last 5. Polokwane City: 1-2-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13047 available match records. Across the last 4 head-to-head meetings: Mamelodi Sundowns 2 wins, draws 1, Polokwane City 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Mamelodi Sundowns=title, Polokwane City=neutral. This match is assessed as high importance. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → HOME with score 0.69…",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -1260,7 +1280,8 @@
       "value_support_present",
       "value_1x2_signal",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1269,8 +1290,8 @@
       "count": 1,
       "topMarket": "1X2",
       "topPick": "HOME",
-      "topScore": 0.6940000000000001,
-      "avgConfidence": 0.891
+      "topScore": 0.6920000000000001,
+      "avgConfidence": 0.906
     },
     "reasoning": {
       "tempoProfile": {
@@ -1310,11 +1331,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "medium",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 241,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1322,8 +1343,8 @@
     }
   },
   "aiSummary": {
-    "el": "Mamelodi Sundowns - Polokwane City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Mamelodi Sundowns: 3-1-1 στα τελευταία 5. Polokwane City: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 12974 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 4 μεταξύ τους: Mamelodi Sundowns 2 νίκες, ισοπαλίες 1, Polokwane City 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Mamelodi Sundowns=title, Polokwane City=neutral. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → HOME με score 0.694. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Mamelodi Sundowns vs Polokwane City: contextual analysis using historical and available data. Mamelodi Sundowns: 3-1-1 across the last 5. Polokwane City: 1-2-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 12974 available match records. Across the last 4 head-to-head meetings: Mamelodi Sundowns 2 wins, draws 1, Polokwane City 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Mamelodi Sundowns=title, Polokwane City=neutral. This match is assessed as high importance. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → HOME with score 0.694. Limited lineup context is available with low completeness.",
+    "el": "Mamelodi Sundowns - Polokwane City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Mamelodi Sundowns: 3-1-1 στα τελευταία 5. Polokwane City: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13047 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 4 μεταξύ τους: Mamelodi Sundowns 2 νίκες, ισοπαλίες 1, Polokwane City 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Mamelodi Sundowns=title, Polokwane City=neutral. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → HOME με score 0.692. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Mamelodi Sundowns vs Polokwane City: contextual analysis using historical and available data. Mamelodi Sundowns: 3-1-1 across the last 5. Polokwane City: 1-2-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13047 available match records. Across the last 4 head-to-head meetings: Mamelodi Sundowns 2 wins, draws 1, Polokwane City 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Mamelodi Sundowns=title, Polokwane City=neutral. This match is assessed as high importance. Lineup context: Mamelodi Sundowns=fatigue:low, rotation:low, strength:strong; Polokwane City=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → HOME with score 0.692. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1335,8 +1356,8 @@
     "count": 1,
     "topMarket": "1X2",
     "topPick": "HOME",
-    "topScore": 0.6940000000000001,
-    "avgConfidence": 0.891,
+    "topScore": 0.6920000000000001,
+    "avgConfidence": 0.906,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1351,14 +1372,14 @@
       "local-standings",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1437,7 +1458,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12974
+          "mergedRows": 13047
         }
       },
       {
@@ -1473,7 +1494,7 @@
         "meta": {
           "topMarket": "1X2",
           "topPick": "HOME",
-          "topScore": 0.6940000000000001
+          "topScore": 0.6920000000000001
         }
       }
     ],
@@ -1554,7 +1575,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "SECOND_HALF",
         "source": "espn",
         "sources": [
           "espn"
@@ -1562,7 +1583,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-0",
         "source": "espn",
         "sources": [
           "espn"
@@ -1570,14 +1591,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
-        "source": null,
+        "chosen": "52'",
+        "source": "espn",
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 1,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

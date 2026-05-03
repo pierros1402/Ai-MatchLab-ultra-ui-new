@@ -1,7 +1,7 @@
 {
   "matchId": "761596",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:22:36.456Z",
+  "generatedAt": "2026-05-03T14:22:36.925Z",
   "basic": {
     "matchId": "761596",
     "leagueSlug": "usa.1",
@@ -23,11 +23,11 @@
     "competitionType": "league",
     "importance": "medium",
     "positions": {
-      "home": 10,
-      "away": 15,
+      "home": 12,
+      "away": 17,
       "pointsHome": 4,
       "pointsAway": 3,
-      "matchesLeft": 49,
+      "matchesLeft": 48,
       "totalTeams": 29
     },
     "stakes": {
@@ -43,9 +43,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "cross_border",
+    "crossBorder": true
   },
   "referee": {
     "status": "empty",
@@ -177,32 +177,53 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 1763.7,
+    "impact": "high",
+    "sameCountry": false,
+    "crossBorder": true,
+    "travelProfile": "cross_border",
+    "home": {
+      "key": "la_galaxy",
+      "team": "LA Galaxy",
+      "country": "United States",
+      "city": "Carson",
+      "venue": null,
+      "latitude": 33.8314,
+      "longitude": -118.282,
+      "source": "known_team_geo_seed_city_center_v3",
+      "updatedAt": "2026-05-03T14:16:15.100Z"
+    },
+    "away": {
+      "key": "vancouver_whitecaps",
+      "team": "Vancouver Whitecaps",
+      "country": "Canada",
+      "city": "Vancouver",
+      "venue": null,
+      "latitude": 49.2827,
+      "longitude": -123.1207,
+      "source": "known_team_geo_seed_city_center_v3",
+      "updatedAt": "2026-05-03T14:16:15.100Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready_cross_border",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 1764 χλμ και πρόκειται για διασυνοριακή μετακίνηση με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 1764 km was calculated and the trip is cross-border based on the local team geo cache."
     }
   },
   "value": [],
   "analysis": {
     "codes": [
       "final_match",
-      "medium_competition_context"
+      "medium_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 32 συνολικές καταγεγραμμένες απουσίες. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is available for this match with 32 recorded absences in total. Local travel context is not yet available in the snapshot."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 32 συνολικές καταγεγραμμένες απουσίες. Η εκτίμηση ταξιδιού είναι περίπου 1763.7 χλμ (high).",
+      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is available for this match with 32 recorded absences in total. Estimated travel distance is approximately 1763.7 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -327,12 +348,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"761596\",\"dayKey\":\"2026-05-03\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"761596\",\"dayKey\":\"2026-05-03\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":1763.7,\"travelImpact\":\"high\",\"travelProfile\":\"cross_border\",\"travelSameCountry\":false,\"travelCrossBorder\":true,\"travelHomeKey\":\"la_galaxy\",\"travelAwayKey\":\"vancouver_whitecaps\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -461,10 +482,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -507,11 +528,11 @@
         },
         "activePhase": "regular",
         "positions": {
-          "home": 10,
-          "away": 15,
+          "home": 12,
+          "away": 17,
           "pointsHome": 4,
           "pointsAway": 3,
-          "matchesLeft": 49,
+          "matchesLeft": 48,
           "totalTeams": 29
         },
         "stakes": {
@@ -543,7 +564,7 @@
           "leagueSlug": "usa.1",
           "home": {
             "team": "LA Galaxy",
-            "position": 10,
+            "position": 12,
             "played": 3,
             "wins": 1,
             "draws": 1,
@@ -559,7 +580,7 @@
           },
           "away": {
             "team": "Vancouver Whitecaps",
-            "position": 15,
+            "position": 17,
             "played": 2,
             "wins": 1,
             "draws": 0,
@@ -669,9 +690,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 0,
-            "mergedRows": 12039
+            "mergedRows": 12112
           }
         },
         "h2hLast5": {
@@ -750,8 +771,8 @@
           "confidence": 0.62
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 0,
@@ -761,11 +782,11 @@
           "avgConfidence": 0
         },
         "summary": [
-          "Table: LA Galaxy #10 vs Vancouver Whitecaps #15.",
+          "Table: LA Galaxy #12 vs Vancouver Whitecaps #17.",
           "Last5 points: home 4, away 3."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -773,7 +794,7 @@
         "standings": true,
         "teamNews": true,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -882,11 +903,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "la_galaxy",
+          "team": "LA Galaxy",
+          "country": "United States",
+          "city": "Carson",
+          "venue": null,
+          "latitude": 33.8314,
+          "longitude": -118.282,
+          "source": "known_team_geo_seed_city_center_v3",
+          "updatedAt": "2026-05-03T14:16:15.100Z"
+        },
+        "away": {
+          "key": "vancouver_whitecaps",
+          "team": "Vancouver Whitecaps",
+          "country": "Canada",
+          "city": "Vancouver",
+          "venue": null,
+          "latitude": 49.2827,
+          "longitude": -123.1207,
+          "source": "known_team_geo_seed_city_center_v3",
+          "updatedAt": "2026-05-03T14:16:15.100Z"
+        },
+        "distanceKm": 1763.7,
+        "impact": "high",
+        "sameCountry": false,
+        "crossBorder": true,
+        "travelProfile": "cross_border",
+        "note": {
+          "code": "travel_ready_cross_border",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 1764 χλμ και πρόκειται για διασυνοριακή μετακίνηση με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 1764 km was calculated and the trip is cross-border based on the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1188,8 +1242,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "LA Galaxy - Vancouver Whitecaps: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. LA Galaxy: 1-1-1 στα τελευταία 3. Vancouver Whitecaps: 1-0-1 στα τελευταία 2. Το historical layer βασίστηκε σε 12039 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: LA Galaxy=europe, Vancouver Whitecaps=europe. Απουσίες: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-      "en": "LA Galaxy vs Vancouver Whitecaps: contextual analysis using historical and available data. LA Galaxy: 1-1-1 across the last 3. Vancouver Whitecaps: 1-0-1 across the last 2. The historical layer was based on 12039 available match records. Table context: LA Galaxy=europe, Vancouver Whitecaps=europe. Absences: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+      "el": "LA Galaxy - Vancouver Whitecaps: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. LA Galaxy: 1-1-1 στα τελευταία 3. Vancouver Whitecaps: 1-0-1 στα τελευταία 2. Το historical layer βασίστηκε σε 12112 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: LA Galaxy=europe, Vancouver Whitecaps=europe. Απουσίες: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται διασυνοριακή μετακίνηση για την εκτός έδρας ομάδα.",
+      "en": "LA Galaxy vs Vancouver Whitecaps: contextual analysis using historical and available data. LA Galaxy: 1-1-1 across the last 3. Vancouver Whitecaps: 1-0-1 across the last 2. The historical layer was based on 12112 available match records. Table context: LA Galaxy=europe, Vancouver Whitecaps=europe. Absences: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate. A cross-border trip is recorded for the away side.",
       "teamNews": {
         "status": "usable",
         "source": "team-news-research-bridge",
@@ -1206,7 +1260,10 @@
       "home_team_weakened",
       "home_lineup_strength_reduced",
       "lineup_context_available",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available",
+      "travel_cross_border",
+      "travel_burden_high"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1256,11 +1313,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
-      "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelUsed": true,
+      "travelProfile": "cross_border",
+      "travelImpact": "high",
+      "travelCrossBorder": true,
+      "travelDistanceKm": 1763.7,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1268,8 +1325,8 @@
     }
   },
   "aiSummary": {
-    "el": "LA Galaxy - Vancouver Whitecaps: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. LA Galaxy: 1-1-1 στα τελευταία 3. Vancouver Whitecaps: 1-0-1 στα τελευταία 2. Το historical layer βασίστηκε σε 12039 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: LA Galaxy=europe, Vancouver Whitecaps=europe. Απουσίες: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "LA Galaxy vs Vancouver Whitecaps: contextual analysis using historical and available data. LA Galaxy: 1-1-1 across the last 3. Vancouver Whitecaps: 1-0-1 across the last 2. The historical layer was based on 12039 available match records. Table context: LA Galaxy=europe, Vancouver Whitecaps=europe. Absences: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "LA Galaxy - Vancouver Whitecaps: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. LA Galaxy: 1-1-1 στα τελευταία 3. Vancouver Whitecaps: 1-0-1 στα τελευταία 2. Το historical layer βασίστηκε σε 12112 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: LA Galaxy=europe, Vancouver Whitecaps=europe. Απουσίες: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται διασυνοριακή μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "LA Galaxy vs Vancouver Whitecaps: contextual analysis using historical and available data. LA Galaxy: 1-1-1 across the last 3. Vancouver Whitecaps: 1-0-1 across the last 2. The historical layer was based on 12112 available match records. Table context: LA Galaxy=europe, Vancouver Whitecaps=europe. Absences: LA Galaxy=severe, Vancouver Whitecaps=none. Lineup context: LA Galaxy=fatigue:low, rotation:low, strength:reduced; Vancouver Whitecaps=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate. A cross-border trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "team-news-research-bridge",
@@ -1296,12 +1353,12 @@
       "local-standings",
       "local-team-news",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
-      "travel_context",
       "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1392,7 +1449,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12039
+          "mergedRows": 12112
         }
       },
       {
@@ -1497,7 +1554,7 @@
         ]
       }
     },
-    "confidence": 0.971,
+    "confidence": 0.941,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

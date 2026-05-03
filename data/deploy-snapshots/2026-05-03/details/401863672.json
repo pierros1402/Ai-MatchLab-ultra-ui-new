@@ -1,7 +1,7 @@
 {
   "matchId": "401863672",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:22:53.054Z",
+  "generatedAt": "2026-05-03T14:22:58.246Z",
   "basic": {
     "matchId": "401863672",
     "leagueSlug": "den.1",
@@ -10,11 +10,11 @@
     "homeTeam": "FC Fredericia",
     "awayTeam": "F.C. København",
     "kickoffUtc": "2026-05-03T14:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": null,
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FIRST_HALF",
+    "rawStatus": "STATUS_FIRST_HALF",
+    "minute": "14'",
+    "scoreHome": 1,
+    "scoreAway": 1,
     "venue": "Monjasa Park"
   },
   "context": {
@@ -48,9 +48,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -108,31 +108,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
-    "home": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 177.6,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "fc_fredericia",
+      "team": "FC Fredericia",
+      "country": "Denmark",
+      "city": "Fredericia",
+      "venue": null,
+      "latitude": 55.5657,
+      "longitude": 9.7526,
+      "source": "known_team_geo_seed_city_center_v3",
+      "updatedAt": "2026-05-03T14:16:15.082Z"
+    },
     "away": {
       "key": "f_c_k_benhavn",
       "team": "F.C. København",
-      "venue": "Parken Stadium",
-      "city": "Copenhagen Municipality",
       "country": "Denmark",
+      "city": "Copenhagen Municipality",
+      "venue": "Parken Stadium",
       "latitude": 55.702469,
       "longitude": 12.572203,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.399Z"
     },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 178 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 178 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -147,7 +157,7 @@
       "pick": "Over 1.5",
       "score": 0.75,
       "band": "HIGH",
-      "confidence": 0.767,
+      "confidence": 0.782,
       "signals": [
         "away_edge",
         "over25_support",
@@ -352,9 +362,9 @@
       "market": "1X2",
       "marketName": "1X2",
       "pick": "AWAY",
-      "score": 0.7220000000000001,
+      "score": 0.7190000000000001,
       "band": "MEDIUM",
-      "confidence": 0.767,
+      "confidence": 0.782,
       "signals": [
         "away_edge",
         "over25_support",
@@ -557,8 +567,8 @@
       "high_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.750. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.750. There is an indication of elevated importance from the competition context. Team news context is available for this match. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.750. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Η εκτίμηση ταξιδιού είναι περίπου 177.6 χλμ (low).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.750. There is an indication of elevated importance from the competition context. Team news context is available for this match. Estimated travel distance is approximately 177.6 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -622,12 +632,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401863672\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"f_c_k_benhavn\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.75},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401863672\",\"dayKey\":\"2026-05-03\",\"status\":\"FIRST_HALF\",\"rawStatus\":\"STATUS_FIRST_HALF\",\"minute\":\"14'\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":177.6,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"fc_fredericia\",\"travelAwayKey\":\"f_c_k_benhavn\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.75},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -759,7 +769,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -776,7 +786,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.767,
+        "confidence": 0.782,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -976,9 +986,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 927,
-            "mergedRows": 12823
+            "mergedRows": 12896
           }
         },
         "h2hLast5": {
@@ -1090,15 +1100,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 2,
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.75,
-          "avgConfidence": 0.767
+          "avgConfidence": 0.782
         },
         "summary": [
           "Table: FC Fredericia #3 vs F.C. København #11.",
@@ -1178,9 +1188,19 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
-        "home": null,
+        "home": {
+          "key": "fc_fredericia",
+          "team": "FC Fredericia",
+          "country": "Denmark",
+          "city": "Fredericia",
+          "venue": null,
+          "latitude": 55.5657,
+          "longitude": 9.7526,
+          "source": "known_team_geo_seed_city_center_v3",
+          "updatedAt": "2026-05-03T14:16:15.082Z"
+        },
         "away": {
           "key": "f_c_k_benhavn",
           "team": "F.C. København",
@@ -1192,20 +1212,20 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.399Z"
         },
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "distanceKm": 177.6,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 178 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 178 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1306,7 +1326,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.75,
-      "avgConfidence": 0.767,
+      "avgConfidence": 0.782,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1483,8 +1503,8 @@
       "reason": "phase_key_detected"
     },
     "summary": {
-      "el": "FC Fredericia - F.C. København: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. FC Fredericia: 1-2-2 στα τελευταία 5. F.C. København: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12823 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 3 μεταξύ τους: FC Fredericia 1 νίκες, ισοπαλίες 0, F.C. København 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: FC Fredericia=promotion, F.C. København=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.750. Υπάρχει δ…",
-      "en": "FC Fredericia vs F.C. København: contextual analysis using historical and available data. FC Fredericia: 1-2-2 across the last 5. F.C. København: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12823 available match records. Across the last 3 head-to-head meetings: FC Fredericia 1 wins, draws 0, F.C. København 2 wins. The head-to-head profile leans toward the away side. Table context: FC Fredericia=promotion, F.C. København=europe. This match is assessed as high importance. Absences: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.750. …",
+      "el": "FC Fredericia - F.C. København: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. FC Fredericia: 1-2-2 στα τελευταία 5. F.C. København: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12896 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 3 μεταξύ τους: FC Fredericia 1 νίκες, ισοπαλίες 0, F.C. København 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: FC Fredericia=promotion, F.C. København=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.750. Υπάρχει δ…",
+      "en": "FC Fredericia vs F.C. København: contextual analysis using historical and available data. FC Fredericia: 1-2-2 across the last 5. F.C. København: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12896 available match records. Across the last 3 head-to-head meetings: FC Fredericia 1 wins, draws 0, F.C. København 2 wins. The head-to-head profile leans toward the away side. Table context: FC Fredericia=promotion, F.C. København=europe. This match is assessed as high importance. Absences: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.750. …",
       "teamNews": {
         "status": "usable",
         "source": "local-team-news",
@@ -1508,7 +1528,8 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1518,7 +1539,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.75,
-      "avgConfidence": 0.767
+      "avgConfidence": 0.782
     },
     "reasoning": {
       "tempoProfile": {
@@ -1558,11 +1579,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 177.6,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1570,8 +1591,8 @@
     }
   },
   "aiSummary": {
-    "el": "FC Fredericia - F.C. København: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. FC Fredericia: 1-2-2 στα τελευταία 5. F.C. København: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12823 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 3 μεταξύ τους: FC Fredericia 1 νίκες, ισοπαλίες 0, F.C. København 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: FC Fredericia=promotion, F.C. København=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.750. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "FC Fredericia vs F.C. København: contextual analysis using historical and available data. FC Fredericia: 1-2-2 across the last 5. F.C. København: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12823 available match records. Across the last 3 head-to-head meetings: FC Fredericia 1 wins, draws 0, F.C. København 2 wins. The head-to-head profile leans toward the away side. Table context: FC Fredericia=promotion, F.C. København=europe. This match is assessed as high importance. Absences: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.750. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+    "el": "FC Fredericia - F.C. København: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. FC Fredericia: 1-2-2 στα τελευταία 5. F.C. København: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12896 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 3 μεταξύ τους: FC Fredericia 1 νίκες, ισοπαλίες 0, F.C. København 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: FC Fredericia=promotion, F.C. København=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.750. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "FC Fredericia vs F.C. København: contextual analysis using historical and available data. FC Fredericia: 1-2-2 across the last 5. F.C. København: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12896 available match records. Across the last 3 head-to-head meetings: FC Fredericia 1 wins, draws 0, F.C. København 2 wins. The head-to-head profile leans toward the away side. Table context: FC Fredericia=promotion, F.C. København=europe. This match is assessed as high importance. Absences: FC Fredericia=none, F.C. København=none. Lineup context: FC Fredericia=fatigue:low, rotation:low, strength:strong; F.C. København=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.750. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "usable",
       "source": "local-team-news",
@@ -1584,7 +1605,7 @@
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.75,
-    "avgConfidence": 0.767,
+    "avgConfidence": 0.782,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1600,13 +1621,13 @@
       "local-team-news",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1696,7 +1717,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12823
+          "mergedRows": 12896
         }
       },
       {
@@ -1800,7 +1821,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FIRST_HALF",
         "source": "espn",
         "sources": [
           "espn"
@@ -1808,7 +1829,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1816,14 +1837,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
-        "source": null,
+        "chosen": "14'",
+        "source": "espn",
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 1,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

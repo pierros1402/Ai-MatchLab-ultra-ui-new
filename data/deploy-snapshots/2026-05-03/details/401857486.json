@@ -1,7 +1,7 @@
 {
   "matchId": "401857486",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:23:23.392Z",
+  "generatedAt": "2026-05-03T14:23:33.289Z",
   "basic": {
     "matchId": "401857486",
     "leagueSlug": "per.1",
@@ -43,9 +43,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "long_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -103,41 +103,52 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_away_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 999,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "long_domestic",
     "home": {
       "key": "alianza_atletico",
       "team": "Alianza Atlético",
-      "venue": "Estadio Campeones del 36",
-      "city": "Sullana",
       "country": "Peru",
+      "city": "Sullana",
+      "venue": "Estadio Campeones del 36",
       "latitude": -4.89696,
       "longitude": -80.684436,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.390Z"
     },
-    "away": null,
+    "away": {
+      "key": "sport_huancayo",
+      "team": "Sport Huancayo",
+      "country": "Peru",
+      "city": "Huancayo",
+      "venue": null,
+      "latitude": -12.0651,
+      "longitude": -75.2049,
+      "source": "known_team_geo_seed_city_center_v3",
+      "updatedAt": "2026-05-03T14:16:15.094Z"
+    },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 999 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 999 km (long_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [],
   "analysis": {
     "codes": [
-      "medium_competition_context"
+      "medium_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is available for this match. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Η εκτίμηση ταξιδιού είναι περίπου 999 χλμ (high).",
+      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is available for this match. Estimated travel distance is approximately 999 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -201,12 +212,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401857486\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"alianza_atletico\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401857486\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":999,\"travelImpact\":\"high\",\"travelProfile\":\"long_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"alianza_atletico\",\"travelAwayKey\":\"sport_huancayo\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -338,7 +349,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -549,9 +560,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1111,
-            "mergedRows": 13007
+            "mergedRows": 13080
           }
         },
         "h2hLast5": {
@@ -684,8 +695,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 0,
@@ -772,7 +783,7 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
         "home": {
           "key": "alianza_atletico",
@@ -785,21 +796,31 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.390Z"
         },
-        "away": null,
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "away": {
+          "key": "sport_huancayo",
+          "team": "Sport Huancayo",
+          "country": "Peru",
+          "city": "Huancayo",
+          "venue": null,
+          "latitude": -12.0651,
+          "longitude": -75.2049,
+          "source": "known_team_geo_seed_city_center_v3",
+          "updatedAt": "2026-05-03T14:16:15.094Z"
+        },
+        "distanceKm": 999,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "long_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 999 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 999 km (long_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1078,8 +1099,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Alianza Atlético - Sport Huancayo: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza Atlético: 1-0-4 στα τελευταία 5. Sport Huancayo: 1-2-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13007 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Alianza Atlético 0 νίκες, ισοπαλίες 2, Sport Huancayo 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Alianza Atlético=europe, Sport Huancayo=neutral. Απουσίες: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Alianza Atlético vs Sport Huancayo: contextual analysis using historical and available data. Alianza Atlético: 1-0-4 across the last 5. Sport Huancayo: 1-2-2 across the last 5. The historical layer was based on 13007 available match records. Across the last 5 head-to-head meetings: Alianza Atlético 0 wins, draws 2, Sport Huancayo 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Alianza Atlético=europe, Sport Huancayo=neutral. Absences: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with l…",
+      "el": "Alianza Atlético - Sport Huancayo: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza Atlético: 1-0-4 στα τελευταία 5. Sport Huancayo: 1-2-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13080 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Alianza Atlético 0 νίκες, ισοπαλίες 2, Sport Huancayo 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Alianza Atlético=europe, Sport Huancayo=neutral. Απουσίες: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέ…",
+      "en": "Alianza Atlético vs Sport Huancayo: contextual analysis using historical and available data. Alianza Atlético: 1-0-4 across the last 5. Sport Huancayo: 1-2-2 across the last 5. The historical layer was based on 13080 available match records. Across the last 5 head-to-head meetings: Alianza Atlético 0 wins, draws 2, Sport Huancayo 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Alianza Atlético=europe, Sport Huancayo=neutral. Absences: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with l…",
       "teamNews": {
         "status": "usable",
         "source": "local-team-news",
@@ -1098,7 +1119,9 @@
       "phase_regular",
       "team_news_available",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available",
+      "travel_burden_high"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1148,11 +1171,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "long_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 999,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1160,8 +1183,8 @@
     }
   },
   "aiSummary": {
-    "el": "Alianza Atlético - Sport Huancayo: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza Atlético: 1-0-4 στα τελευταία 5. Sport Huancayo: 1-2-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13007 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Alianza Atlético 0 νίκες, ισοπαλίες 2, Sport Huancayo 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Alianza Atlético=europe, Sport Huancayo=neutral. Απουσίες: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Alianza Atlético vs Sport Huancayo: contextual analysis using historical and available data. Alianza Atlético: 1-0-4 across the last 5. Sport Huancayo: 1-2-2 across the last 5. The historical layer was based on 13007 available match records. Across the last 5 head-to-head meetings: Alianza Atlético 0 wins, draws 2, Sport Huancayo 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Alianza Atlético=europe, Sport Huancayo=neutral. Absences: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+    "el": "Alianza Atlético - Sport Huancayo: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Alianza Atlético: 1-0-4 στα τελευταία 5. Sport Huancayo: 1-2-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13080 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Alianza Atlético 0 νίκες, ισοπαλίες 2, Sport Huancayo 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Alianza Atlético=europe, Sport Huancayo=neutral. Απουσίες: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Alianza Atlético vs Sport Huancayo: contextual analysis using historical and available data. Alianza Atlético: 1-0-4 across the last 5. Sport Huancayo: 1-2-2 across the last 5. The historical layer was based on 13080 available match records. Across the last 5 head-to-head meetings: Alianza Atlético 0 wins, draws 2, Sport Huancayo 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Alianza Atlético=europe, Sport Huancayo=neutral. Absences: Alianza Atlético=none, Sport Huancayo=none. Lineup context: Alianza Atlético=fatigue:low, rotation:low, strength:strong; Sport Huancayo=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "local-team-news",
@@ -1188,14 +1211,14 @@
       "local-standings",
       "local-team-news",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "expected_lineups_reliability",
-      "value_snapshot",
-      "travel_context"
+      "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1285,7 +1308,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13007
+          "mergedRows": 13080
         }
       },
       {
