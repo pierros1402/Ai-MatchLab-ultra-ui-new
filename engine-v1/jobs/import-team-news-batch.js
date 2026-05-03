@@ -14,15 +14,215 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+function extractTeamNewsPlayerName(item = {}) {
+  const raw =
+    item?.player ??
+    item?.name ??
+    item?.fullName ??
+    item?.playerName;
+
+  if (typeof raw === "string" || typeof raw === "number") {
+    return normalizeText(raw);
+  }
+
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return normalizeText(
+      raw.name ||
+      raw.fullName ||
+      raw.playerName ||
+      raw.displayName ||
+      raw.shortName
+    );
+  }
+
+  return "";
+}
+
+
+function isTeamNewsUrlLike(value) {
+  const text = normalizeText(value).toLowerCase();
+  return text.startsWith("http://") || text.startsWith("https://") || text.includes("www.");
+}
+
+function looksLikeTeamNewsSentence(value) {
+  const text = normalizeText(value);
+  if (!text) return false;
+  if (text.length > 55) return true;
+  if (/[.!?]$/.test(text) && text.split(/\s+/).length >= 6) return true;
+  if (/\b(official|coverage|published|fixture|comments|confirmed|reported|announced|ahead of|pre-match|post-match|club media|press conference|training update)\b/i.test(text) && text.split(/\s+/).length >= 5) return true;
+  return false;
+}
+
+
+function isGenericTeamNewsInjuryTerm(value) {
+  const lower = String(value || "").trim().toLowerCase();
+
+  if (!lower) return false;
+
+  const genericInjuryTerms = new Set([
+    "knee",
+    "ankle",
+    "hamstring",
+    "calf",
+    "thigh",
+    "groin",
+    "shoulder",
+    "back",
+    "head",
+    "foot",
+    "leg",
+    "muscle",
+    "injury",
+    "injured",
+    "illness",
+    "suspension",
+    "suspended",
+    "doubtful",
+    "questionable",
+    "out",
+    "unavailable",
+    "fitness",
+    "match fitness",
+    "knock",
+    "strain",
+    "sprain",
+    "minor injury",
+    "long-term injury",
+    "adductor",
+    "lower leg",
+    "upper leg",
+    "acl",
+    "achilles",
+    "meniscus",
+    "hip",
+    "rib",
+    "ribs",
+    "concussion",
+    "ill",
+    "illness",
+    "personal reasons",
+    "not disclosed",
+    "undisclosed",
+    "day-to-day",
+    "fitness issue",
+    "medical",
+    "rehab",
+    "recovery",
+    "upper body injury",
+    "lower body injury",
+    "body injury",
+    "upper-body",
+    "lower-body",
+    "upper body",
+    "lower body",
+    "hamstring injury",
+    "sports hernia"
+  ]);
+
+  if (genericInjuryTerms.has(lower)) return true;
+
+  const compact = lower.replace(/\s+/g, " ").trim();
+  if (genericInjuryTerms.has(compact)) return true;
+
+  if (compact.includes(":")) {
+    const parts = compact.split(":").map(v => v.trim()).filter(Boolean);
+    if (parts.length > 0 && parts.every(part => genericInjuryTerms.has(part))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isBadTeamNewsPlayerName(value) {
+  const text = normalizeText(value);
+  const lower = text.toLowerCase();
+
+  if (!text || text.length < 3) return true;
+  if (lower === "[object object]") return true;
+  if (isGenericTeamNewsInjuryTerm(lower)) return true;
+  if (isTeamNewsUrlLike(text)) return true;
+  if (looksLikeTeamNewsSentence(text)) return true;
+  if (lower.includes("http")) return true;
+
+  const genericInjuryTerms = new Set([
+    "knee",
+    "ankle",
+    "hamstring",
+    "calf",
+    "thigh",
+    "groin",
+    "shoulder",
+    "back",
+    "head",
+    "foot",
+    "leg",
+    "muscle",
+    "injury",
+    "injured",
+    "illness",
+    "suspension",
+    "suspended",
+    "doubtful",
+    "questionable",
+    "out",
+    "unavailable",
+    "fitness",
+    "match fitness",
+    "knock",
+    "strain",
+    "sprain",
+    "minor injury",
+    "long-term injury"
+  ]);
+
+  if (lower.includes("[object object]")) return true;
+  if (isGenericTeamNewsInjuryTerm(lower)) return true;
+  if (genericInjuryTerms.has(lower)) return true;
+
+
+  const blocked = new Set([
+    "evidence",
+    "source",
+    "sources",
+    "note",
+    "notes",
+    "team news",
+    "injury update",
+    "suspension",
+    "suspended",
+    "injured",
+    "unavailable",
+    "doubtful",
+    "unknown",
+    "confirmed",
+    "reported"
+  ]);
+
+  if (blocked.has(lower)) return true;
+  if (lower.startsWith("evidence:")) return true;
+  if (lower.startsWith("source:")) return true;
+  if (lower.startsWith("note:")) return true;
+
+  return false;
+}
+
 function normalizeAbsence(item = {}) {
-  const player = normalizeText(item?.player);
-  const reason = normalizeText(item?.reason);
+  const player = extractTeamNewsPlayerName(item);
+  if (isBadTeamNewsPlayerName(player)) return null;
+
+  const rawReason = normalizeText(item?.reason || item?.status || item?.description || item?.note);
+  const reason =
+    rawReason &&
+    !isTeamNewsUrlLike(rawReason) &&
+    rawReason.toLowerCase() !== player.toLowerCase()
+      ? rawReason
+      : "";
+
   const importance = normalizeText(item?.importance || "medium").toLowerCase();
 
-  if (!player && !reason) return null;
-
   return {
-    player: player || null,
+    player,
     reason: reason || null,
     importance:
       importance === "high" || importance === "medium" || importance === "low"
@@ -166,7 +366,10 @@ function normalizeInputRow(row = {}) {
     notes,
     evidence,
     source: normalizeText(row?.source) || "batch-import",
-    sourceMeta: normalizeObject(row?.sourceMeta),
+    sourceMeta: {
+      ...normalizeObject(row?.sourceMeta),
+      strictAbsenceGuard: true
+    },
     accepted: isAcceptedRow(row),
     hasEvidence:
       absences.length > 0 ||
@@ -204,7 +407,8 @@ function mergeRecord(existing, incoming) {
     sourceMeta: {
       ...(existing?.sourceMeta || {}),
       ...(incoming?.sourceMeta || {}),
-      canonicalAccepted: true
+      canonicalAccepted: true,
+      strictAbsenceGuard: true
     },
     updatedAt: new Date().toISOString()
   };

@@ -20,6 +20,199 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+function extractTeamNewsPlayerName(item = {}) {
+  const raw =
+    item?.player ??
+    item?.name ??
+    item?.fullName ??
+    item?.playerName;
+
+  if (typeof raw === "string" || typeof raw === "number") {
+    return normalizeText(raw);
+  }
+
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return normalizeText(
+      raw.name ||
+      raw.fullName ||
+      raw.playerName ||
+      raw.displayName ||
+      raw.shortName
+    );
+  }
+
+  return "";
+}
+
+
+function isTeamNewsUrlLike(value) {
+  const text = normalizeText(value).toLowerCase();
+  return text.startsWith("http://") || text.startsWith("https://") || text.includes("www.");
+}
+
+function looksLikeTeamNewsSentence(value) {
+  const text = normalizeText(value);
+  if (!text) return false;
+  if (text.length > 55) return true;
+  if (/[.!?]$/.test(text) && text.split(/\s+/).length >= 6) return true;
+  if (/\b(official|coverage|published|fixture|comments|confirmed|reported|announced|ahead of|pre-match|post-match|club media|press conference|training update)\b/i.test(text) && text.split(/\s+/).length >= 5) return true;
+  return false;
+}
+
+
+function isGenericTeamNewsInjuryTerm(value) {
+  const lower = String(value || "").trim().toLowerCase();
+
+  if (!lower) return false;
+
+  const genericInjuryTerms = new Set([
+    "knee",
+    "ankle",
+    "hamstring",
+    "calf",
+    "thigh",
+    "groin",
+    "shoulder",
+    "back",
+    "head",
+    "foot",
+    "leg",
+    "muscle",
+    "injury",
+    "injured",
+    "illness",
+    "suspension",
+    "suspended",
+    "doubtful",
+    "questionable",
+    "out",
+    "unavailable",
+    "fitness",
+    "match fitness",
+    "knock",
+    "strain",
+    "sprain",
+    "minor injury",
+    "long-term injury",
+    "adductor",
+    "lower leg",
+    "upper leg",
+    "acl",
+    "achilles",
+    "meniscus",
+    "hip",
+    "rib",
+    "ribs",
+    "concussion",
+    "ill",
+    "illness",
+    "personal reasons",
+    "not disclosed",
+    "undisclosed",
+    "day-to-day",
+    "fitness issue",
+    "medical",
+    "rehab",
+    "recovery",
+    "upper body injury",
+    "lower body injury",
+    "body injury",
+    "upper-body",
+    "lower-body",
+    "upper body",
+    "lower body",
+    "hamstring injury",
+    "sports hernia"
+  ]);
+
+  if (genericInjuryTerms.has(lower)) return true;
+
+  const compact = lower.replace(/\s+/g, " ").trim();
+  if (genericInjuryTerms.has(compact)) return true;
+
+  if (compact.includes(":")) {
+    const parts = compact.split(":").map(v => v.trim()).filter(Boolean);
+    if (parts.length > 0 && parts.every(part => genericInjuryTerms.has(part))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isBadTeamNewsPlayerName(value) {
+  const text = normalizeText(value);
+  const lower = text.toLowerCase();
+
+  if (!text || text.length < 3) return true;
+  if (lower === "[object object]") return true;
+  if (isGenericTeamNewsInjuryTerm(lower)) return true;
+  if (isTeamNewsUrlLike(text)) return true;
+  if (looksLikeTeamNewsSentence(text)) return true;
+  if (lower.includes("http")) return true;
+
+  const genericInjuryTerms = new Set([
+    "knee",
+    "ankle",
+    "hamstring",
+    "calf",
+    "thigh",
+    "groin",
+    "shoulder",
+    "back",
+    "head",
+    "foot",
+    "leg",
+    "muscle",
+    "injury",
+    "injured",
+    "illness",
+    "suspension",
+    "suspended",
+    "doubtful",
+    "questionable",
+    "out",
+    "unavailable",
+    "fitness",
+    "match fitness",
+    "knock",
+    "strain",
+    "sprain",
+    "minor injury",
+    "long-term injury"
+  ]);
+
+  if (lower.includes("[object object]")) return true;
+  if (isGenericTeamNewsInjuryTerm(lower)) return true;
+  if (genericInjuryTerms.has(lower)) return true;
+
+
+  const blocked = new Set([
+    "evidence",
+    "source",
+    "sources",
+    "note",
+    "notes",
+    "team news",
+    "injury update",
+    "suspension",
+    "suspended",
+    "injured",
+    "unavailable",
+    "doubtful",
+    "unknown",
+    "confirmed",
+    "reported"
+  ]);
+
+  if (blocked.has(lower)) return true;
+  if (lower.startsWith("evidence:")) return true;
+  if (lower.startsWith("source:")) return true;
+  if (lower.startsWith("note:")) return true;
+
+  return false;
+}
+
 function isCanonicalTeamNewsRecord(value) {
   return (
     !!value &&
@@ -46,18 +239,23 @@ function normalizeImportance(value) {
 }
 
 function normalizeAbsence(item = {}) {
-  const player = normalizeText(
-    item?.player ||
-    item?.name ||
-    item?.fullName
-  );
+  const player = extractTeamNewsPlayerName(item);
 
-  const reason = normalizeText(
+  if (isBadTeamNewsPlayerName(player)) return null;
+
+  const rawReason = normalizeText(
     item?.reason ||
     item?.status ||
     item?.description ||
     item?.note
   );
+
+  const reason =
+    rawReason &&
+    !isTeamNewsUrlLike(rawReason) &&
+    rawReason.toLowerCase() !== player.toLowerCase()
+      ? rawReason
+      : "";
 
   const team = normalizeText(
     item?.team ||
@@ -74,10 +272,8 @@ function normalizeAbsence(item = {}) {
     item?.matchedTeam
   );
 
-  if (!player && !reason) return null;
-
   return {
-    player: player || null,
+    player,
     reason: reason || null,
     importance: normalizeImportance(item?.importance),
     team: team || null,
@@ -89,20 +285,32 @@ function dedupeAbsences(items = []) {
   const out = [];
   const seen = new Set();
 
-  for (const item of items) {
-    const player = normalizeText(item?.player).toLowerCase();
-    const reason = normalizeText(item?.reason).toLowerCase();
+  for (const raw of Array.isArray(items) ? items : []) {
+    const item = normalizeAbsence(raw);
+    if (!item) continue;
+
+    const player = normalizeText(item?.player);
+    if (isBadTeamNewsPlayerName(player)) continue;
+
+    const reason = normalizeText(item?.reason);
     const importance = normalizeImportance(item?.importance);
     const team = normalizeText(item?.team);
     const sourceTeam = normalizeText(item?.sourceTeam);
-    const key = `${player}__${reason}__${importance}__${team.toLowerCase()}__${sourceTeam.toLowerCase()}`;
+
+    const key = [
+      player.toLowerCase(),
+      reason.toLowerCase(),
+      importance,
+      team.toLowerCase(),
+      sourceTeam.toLowerCase()
+    ].join("__");
 
     if (seen.has(key)) continue;
     seen.add(key);
 
     out.push({
-      player: item?.player || null,
-      reason: item?.reason || null,
+      player,
+      reason: reason || null,
       importance,
       team: team || null,
       sourceTeam: sourceTeam || null
@@ -214,7 +422,8 @@ function compactSourceMeta(input = {}) {
     evidenceCount: Number.isFinite(Number(input?.evidenceCount))
       ? Number(input.evidenceCount)
       : null,
-    generatedAt: normalizeText(input?.generatedAt || input?.executedAt) || null
+    generatedAt: normalizeText(input?.generatedAt || input?.executedAt) || null,
+    strictAbsenceGuard: true
   };
 }
 
@@ -295,11 +504,15 @@ export function writeTeamNewsRecord(record) {
       ? normalized.aliases.slice(0, 20).map(v => normalizeText(v)).filter(Boolean)
       : [],
     absences: Array.isArray(normalized.absences)
-      ? normalized.absences.slice(0, 30).map(row => ({
-          player: normalizeText(row?.player) || null,
-          reason: normalizeText(row?.reason) || null,
-          importance: normalizeImportance(row?.importance)
-        }))
+      ? normalized.absences
+          .slice(0, 30)
+          .map(normalizeAbsence)
+          .filter(Boolean)
+          .map(row => ({
+            player: normalizeText(row?.player) || null,
+            reason: normalizeText(row?.reason) || null,
+            importance: normalizeImportance(row?.importance)
+          }))
       : [],
     notes: Array.isArray(normalized.notes)
       ? normalized.notes.slice(0, 30).map(v => normalizeText(v)).filter(Boolean)
@@ -313,7 +526,10 @@ export function writeTeamNewsRecord(record) {
         }))
       : [],
     source: normalizeText(normalized.source) || "local-team-news",
-    sourceMeta: compactSourceMeta(normalized.sourceMeta),
+    sourceMeta: {
+      ...compactSourceMeta(normalized.sourceMeta),
+      strictAbsenceGuard: true
+    },
     updatedAt: normalized.updatedAt || new Date().toISOString()
   };
 
