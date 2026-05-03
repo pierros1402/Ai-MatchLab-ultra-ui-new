@@ -20,6 +20,7 @@ import { buildTeamNewsWorksetDay } from "./build-team-news-workset-day.js";
 import { buildTeamNewsResearchTasksDay } from "./build-team-news-research-tasks-day.js";
 import { runTeamNewsResearchTasksDay } from "./run-team-news-research-tasks-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
+import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 
 function normalizePositiveIntegerOption(value, fallback) {
   if (value === Infinity) return Infinity;
@@ -66,6 +67,11 @@ export async function runDailyCycle(options = {}) {
 
   const normalizedTeamNewsResearchMaxTasks = normalizePositiveIntegerOption(
     teamNewsResearchMaxTasks,
+    24
+  );
+
+  const normalizedPlayerUsageResearchMaxTasks = normalizePositiveIntegerOption(
+    playerUsageResearchMaxTasks,
     24
   );
 
@@ -117,6 +123,8 @@ export async function runDailyCycle(options = {}) {
   let teamNewsResearchTasks = null;
   let teamNewsResearchRun = null;
   let teamNewsBuild = null;
+  let finalDetailsSync = null;
+  let deploySnapshot = null;
   let finalizeValueBuild = null;
   let finalize = null;
   let historyAppend = null;
@@ -368,6 +376,31 @@ export async function runDailyCycle(options = {}) {
     date: valueBuild?.date,
     count: valueBuild?.count ?? 0
   });
+  console.log("[daily-cycle] final-details-sync:start", { dayKey });
+
+  finalDetailsSync = await buildDetailsDay(dayKey, {
+    rebuild: true
+  });
+
+  console.log("[daily-cycle] final-details-sync:done", {
+    ok: finalDetailsSync?.ok,
+    dayKey: finalDetailsSync?.dayKey,
+    built: finalDetailsSync?.built ?? 0,
+    skipped: finalDetailsSync?.skipped ?? 0
+  });
+
+  console.log("[daily-cycle] deploy-snapshot-export:start", { dayKey });
+
+  deploySnapshot = await Promise.resolve(exportDeploySnapshotDay(dayKey));
+
+  console.log("[daily-cycle] deploy-snapshot-export:done", {
+    ok: deploySnapshot?.ok,
+    date: deploySnapshot?.date,
+    hash: deploySnapshot?.hash,
+    counts: deploySnapshot?.counts,
+    coverage: deploySnapshot?.coverage
+  });
+
 
   if (doFinalize) {
     console.log("[daily-cycle] finalize-value-build:start", { finalizeDayKey });
@@ -429,6 +462,8 @@ export async function runDailyCycle(options = {}) {
     teamNewsResearchRun,
     teamNewsBuild,
     valueBuild,
+    finalDetailsSync,
+    deploySnapshot,
     finalizeValueBuild,
     finalize,
     historyAppend,
@@ -465,7 +500,9 @@ if (entryUrl === import.meta.url) {
       teamNewsResearchTaskCount: result?.teamNewsResearchRun?.taskCount ?? 0,
       teamNewsAcceptedCandidateCount: result?.teamNewsResearchRun?.acceptedCandidateCount ?? 0,
       teamNewsCanonicalWriteCount: result?.teamNewsResearchRun?.canonicalWriteCount ?? 0,
-      valueCount: result?.valueBuild?.count ?? 0
+      valueCount: result?.valueBuild?.count ?? 0,
+      snapshotHash: result?.deploySnapshot?.hash || null,
+      snapshotDetailsCount: result?.deploySnapshot?.counts?.details ?? 0
     });
   } catch (error) {
     console.error("[daily-cycle] cli:fatal", error);
