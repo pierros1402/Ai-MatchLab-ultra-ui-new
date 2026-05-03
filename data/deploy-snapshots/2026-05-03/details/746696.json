@@ -1,7 +1,7 @@
 {
   "matchId": "746696",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:22:59.631Z",
+  "generatedAt": "2026-05-03T14:23:08.381Z",
   "basic": {
     "matchId": "746696",
     "leagueSlug": "fra.1",
@@ -43,9 +43,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "long_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -177,31 +177,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_away_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 734.8,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "long_domestic",
     "home": {
       "key": "strasbourg",
       "team": "Strasbourg",
-      "venue": "Stade de la Meinau",
-      "city": "Strasbourg",
       "country": "France",
+      "city": "Strasbourg",
+      "venue": "Stade de la Meinau",
       "latitude": 48.55942,
       "longitude": 7.75738,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.396Z"
     },
-    "away": null,
+    "away": {
+      "key": "toulouse",
+      "team": "Toulouse",
+      "country": "France",
+      "city": "Toulouse",
+      "venue": null,
+      "latitude": 43.6047,
+      "longitude": 1.4442,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.096Z"
+    },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 735 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 735 km (long_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -390,11 +400,12 @@
   ],
   "analysis": {
     "codes": [
-      "value_present"
+      "value_present",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.726. Υπάρχει διαθέσιμο team news context για τον αγώνα με 34 συνολικές καταγεγραμμένες απουσίες. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.726. Team news context is available for this match with 34 recorded absences in total. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.726. Υπάρχει διαθέσιμο team news context για τον αγώνα με 34 συνολικές καταγεγραμμένες απουσίες. Η εκτίμηση ταξιδιού είναι περίπου 734.8 χλμ (high).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.726. Team news context is available for this match with 34 recorded absences in total. Estimated travel distance is approximately 734.8 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -519,12 +530,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"746696\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"strasbourg\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.726},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"746696\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":734.8,\"travelImpact\":\"high\",\"travelProfile\":\"long_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"strasbourg\",\"travelAwayKey\":\"toulouse\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.726},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -656,7 +667,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -866,9 +877,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1372,
-            "mergedRows": 13411
+            "mergedRows": 13484
           }
         },
         "h2hLast5": {
@@ -1001,8 +1012,8 @@
           "confidence": 0.62
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
@@ -1134,7 +1145,7 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
         "home": {
           "key": "strasbourg",
@@ -1147,21 +1158,31 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.396Z"
         },
-        "away": null,
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "away": {
+          "key": "toulouse",
+          "team": "Toulouse",
+          "country": "France",
+          "city": "Toulouse",
+          "venue": null,
+          "latitude": 43.6047,
+          "longitude": 1.4442,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.096Z"
+        },
+        "distanceKm": 734.8,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "long_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 735 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 735 km (long_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1476,8 +1497,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Strasbourg - Toulouse: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Strasbourg: 1-0-4 στα τελευταία 5. Toulouse: 1-1-3 στα τελευταία 5. Το historical layer βασίστηκε σε 13411 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Strasbourg 3 νίκες, ισοπαλίες 1, Toulouse 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Strasbourg=neutral, Toulouse=neutral. Απουσίες: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.726. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-      "en": "Strasbourg vs Toulouse: contextual analysis using historical and available data. Strasbourg: 1-0-4 across the last 5. Toulouse: 1-1-3 across the last 5. The historical layer was based on 13411 available match records. Across the last 5 head-to-head meetings: Strasbourg 3 wins, draws 1, Toulouse 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Strasbourg=neutral, Toulouse=neutral. Absences: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.726. Team news context is available in the enriched snapshot. Lineup context is available …",
+      "el": "Strasbourg - Toulouse: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Strasbourg: 1-0-4 στα τελευταία 5. Toulouse: 1-1-3 στα τελευταία 5. Το historical layer βασίστηκε σε 13484 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Strasbourg 3 νίκες, ισοπαλίες 1, Toulouse 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Strasbourg=neutral, Toulouse=neutral. Απουσίες: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.726. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπά…",
+      "en": "Strasbourg vs Toulouse: contextual analysis using historical and available data. Strasbourg: 1-0-4 across the last 5. Toulouse: 1-1-3 across the last 5. The historical layer was based on 13484 available match records. Across the last 5 head-to-head meetings: Strasbourg 3 wins, draws 1, Toulouse 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Strasbourg=neutral, Toulouse=neutral. Absences: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.726. Team news context is available in the enriched snapshot. Lineup context is available …",
       "teamNews": {
         "status": "usable",
         "source": "team-news-research-bridge",
@@ -1501,7 +1522,8 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_available",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1551,11 +1573,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "long_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 734.8,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1563,8 +1585,8 @@
     }
   },
   "aiSummary": {
-    "el": "Strasbourg - Toulouse: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Strasbourg: 1-0-4 στα τελευταία 5. Toulouse: 1-1-3 στα τελευταία 5. Το historical layer βασίστηκε σε 13411 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Strasbourg 3 νίκες, ισοπαλίες 1, Toulouse 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Strasbourg=neutral, Toulouse=neutral. Απουσίες: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.726. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "Strasbourg vs Toulouse: contextual analysis using historical and available data. Strasbourg: 1-0-4 across the last 5. Toulouse: 1-1-3 across the last 5. The historical layer was based on 13411 available match records. Across the last 5 head-to-head meetings: Strasbourg 3 wins, draws 1, Toulouse 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Strasbourg=neutral, Toulouse=neutral. Absences: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.726. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "Strasbourg - Toulouse: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Strasbourg: 1-0-4 στα τελευταία 5. Toulouse: 1-1-3 στα τελευταία 5. Το historical layer βασίστηκε σε 13484 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Strasbourg 3 νίκες, ισοπαλίες 1, Toulouse 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Strasbourg=neutral, Toulouse=neutral. Απουσίες: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.726. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Strasbourg vs Toulouse: contextual analysis using historical and available data. Strasbourg: 1-0-4 across the last 5. Toulouse: 1-1-3 across the last 5. The historical layer was based on 13484 available match records. Across the last 5 head-to-head meetings: Strasbourg 3 wins, draws 1, Toulouse 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Strasbourg=neutral, Toulouse=neutral. Absences: Strasbourg=severe, Toulouse=none. Lineup context: Strasbourg=fatigue:medium, rotation:medium, strength:reduced; Toulouse=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.726. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "team-news-research-bridge",
@@ -1593,12 +1615,12 @@
       "local-team-news",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
-      "referee_profile",
-      "travel_context"
+      "referee_profile"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1688,7 +1710,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13411
+          "mergedRows": 13484
         }
       },
       {

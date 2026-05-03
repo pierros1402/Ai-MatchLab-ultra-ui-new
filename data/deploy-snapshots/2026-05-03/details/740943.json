@@ -1,7 +1,7 @@
 {
   "matchId": "740943",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:22:54.347Z",
+  "generatedAt": "2026-05-03T14:23:02.853Z",
   "basic": {
     "matchId": "740943",
     "leagueSlug": "eng.1",
@@ -12,7 +12,7 @@
     "kickoffUtc": "2026-05-03T14:30:00.000Z",
     "status": "PRE",
     "rawStatus": "STATUS_SCHEDULED",
-    "minute": null,
+    "minute": "0'",
     "scoreHome": 0,
     "scoreAway": 0,
     "venue": "Old Trafford"
@@ -47,9 +47,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "cross_border",
+    "crossBorder": true
   },
   "referee": {
     "status": "empty",
@@ -181,21 +181,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 11111.5,
+    "impact": "high",
+    "sameCountry": false,
+    "crossBorder": true,
+    "travelProfile": "cross_border",
+    "home": {
+      "key": "manchester_united",
+      "team": "Manchester United",
+      "country": "England",
+      "city": "Manchester",
+      "venue": null,
+      "latitude": 53.4808,
+      "longitude": -2.2426,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.083Z"
+    },
+    "away": {
+      "key": "liverpool",
+      "team": "Liverpool",
+      "country": "Uruguay",
+      "city": "Montevideo",
+      "venue": null,
+      "latitude": -34.9011,
+      "longitude": -56.1645,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.080Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready_cross_border",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 11111 χλμ και πρόκειται για διασυνοριακή μετακίνηση με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 11111 km was calculated and the trip is cross-border based on the local team geo cache."
     }
   },
   "value": [
@@ -812,11 +832,12 @@
   "analysis": {
     "codes": [
       "value_present",
-      "high_competition_context"
+      "high_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.866. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 14 συνολικές καταγεγραμμένες απουσίες. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.866. There is an indication of elevated importance from the competition context. Team news context is available for this match with 14 recorded absences in total. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.866. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 16 συνολικές καταγεγραμμένες απουσίες. Η εκτίμηση ταξιδιού είναι περίπου 11111.5 χλμ (high).",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.866. There is an indication of elevated importance from the competition context. Team news context is available for this match with 16 recorded absences in total. Estimated travel distance is approximately 11111.5 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -941,12 +962,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"740943\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":3,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.8660000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"740943\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":11111.5,\"travelImpact\":\"high\",\"travelProfile\":\"cross_border\",\"travelSameCountry\":false,\"travelCrossBorder\":true,\"travelHomeKey\":\"manchester_united\",\"travelAwayKey\":\"liverpool\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":3,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.8660000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -1075,10 +1096,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -1293,9 +1314,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1838,
-            "mergedRows": 13559
+            "mergedRows": 13632
           }
         },
         "h2hLast5": {
@@ -1406,7 +1427,7 @@
           "inferredAbsenceRisk": {
             "home": {
               "status": "unavailable",
-              "confirmedAbsenceCount": 13,
+              "confirmedAbsenceCount": 15,
               "coreStarterCount": 0,
               "note": "No player-usage record available."
             },
@@ -1429,8 +1450,8 @@
           "confidence": 0.62
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 3,
@@ -1445,7 +1466,7 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.74,
+      "confidence": 0.81,
       "readiness": {
         "history": true,
         "form": true,
@@ -1453,7 +1474,7 @@
         "standings": true,
         "teamNews": true,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -1562,11 +1583,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "manchester_united",
+          "team": "Manchester United",
+          "country": "England",
+          "city": "Manchester",
+          "venue": null,
+          "latitude": 53.4808,
+          "longitude": -2.2426,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.083Z"
+        },
+        "away": {
+          "key": "liverpool",
+          "team": "Liverpool",
+          "country": "Uruguay",
+          "city": "Montevideo",
+          "venue": null,
+          "latitude": -34.9011,
+          "longitude": -56.1645,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.080Z"
+        },
+        "distanceKm": 11111.5,
+        "impact": "high",
+        "sameCountry": false,
+        "crossBorder": true,
+        "travelProfile": "cross_border",
+        "note": {
+          "code": "travel_ready_cross_border",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 11111 χλμ και πρόκειται για διασυνοριακή μετακίνηση με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 11111 km was calculated and the trip is cross-border based on the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1831,6 +1885,8 @@
           "Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks",
           "Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks",
           "Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks",
+          "Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks: Harry Maguire: Back from a two-game ban but was actually playing his first game in more than five weeks",
+          "Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks: Back from a two-game ban but was actually playing his first game in more than five weeks",
           "Back from a two-game ban but was actually playing his first game in more than five weeks"
         ],
         "inferredAbsences": []
@@ -1861,8 +1917,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Manchester United - Liverpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Manchester United: 2-1-2 στα τελευταία 5. Liverpool: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13559 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Manchester United 1 νίκες, ισοπαλίες 3, Liverpool 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Manchester United=europe, Liverpool=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με scor…",
-      "en": "Manchester United vs Liverpool: contextual analysis using historical and available data. Manchester United: 2-1-2 across the last 5. Liverpool: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13559 available match records. Across the last 5 head-to-head meetings: Manchester United 1 wins, draws 3, Liverpool 1 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: Manchester United=europe, Liverpool=europe. This match is assessed as high importance. Absences: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. The strongest value market is …",
+      "el": "Manchester United - Liverpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Manchester United: 2-1-2 στα τελευταία 5. Liverpool: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13632 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Manchester United 1 νίκες, ισοπαλίες 3, Liverpool 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Manchester United=europe, Liverpool=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με scor…",
+      "en": "Manchester United vs Liverpool: contextual analysis using historical and available data. Manchester United: 2-1-2 across the last 5. Liverpool: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13632 available match records. Across the last 5 head-to-head meetings: Manchester United 1 wins, draws 3, Liverpool 1 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: Manchester United=europe, Liverpool=europe. This match is assessed as high importance. Absences: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. The strongest value market is …",
       "teamNews": {
         "status": "usable",
         "source": "team-news-research-bridge",
@@ -1937,11 +1993,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
-      "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelUsed": true,
+      "travelProfile": "cross_border",
+      "travelImpact": "high",
+      "travelCrossBorder": true,
+      "travelDistanceKm": 11111.5,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1949,8 +2005,8 @@
     }
   },
   "aiSummary": {
-    "el": "Manchester United - Liverpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Manchester United: 2-1-2 στα τελευταία 5. Liverpool: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13559 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Manchester United 1 νίκες, ισοπαλίες 3, Liverpool 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Manchester United=europe, Liverpool=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.866. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "Manchester United vs Liverpool: contextual analysis using historical and available data. Manchester United: 2-1-2 across the last 5. Liverpool: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13559 available match records. Across the last 5 head-to-head meetings: Manchester United 1 wins, draws 3, Liverpool 1 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: Manchester United=europe, Liverpool=europe. This match is assessed as high importance. Absences: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.866. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "Manchester United - Liverpool: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Manchester United: 2-1-2 στα τελευταία 5. Liverpool: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13632 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Manchester United 1 νίκες, ισοπαλίες 3, Liverpool 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Manchester United=europe, Liverpool=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.866. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται διασυνοριακή μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Manchester United vs Liverpool: contextual analysis using historical and available data. Manchester United: 2-1-2 across the last 5. Liverpool: 3-1-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13632 available match records. Across the last 5 head-to-head meetings: Manchester United 1 wins, draws 3, Liverpool 1 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: Manchester United=europe, Liverpool=europe. This match is assessed as high importance. Absences: Manchester United=severe, Liverpool=none. Lineup context: Manchester United=fatigue:low, rotation:low, strength:reduced; Liverpool=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.866. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate. A cross-border trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "team-news-research-bridge",
@@ -1979,12 +2035,12 @@
       "local-team-news",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
-      "referee_profile",
-      "travel_context"
+      "referee_profile"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -2074,7 +2130,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13559
+          "mergedRows": 13632
         }
       },
       {
@@ -2190,7 +2246,7 @@
         ]
       }
     },
-    "confidence": 0.861,
+    "confidence": 0.891,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

@@ -1,7 +1,7 @@
 {
   "matchId": "748475",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:23:13.731Z",
+  "generatedAt": "2026-05-03T14:23:26.799Z",
   "basic": {
     "matchId": "748475",
     "leagueSlug": "esp.1",
@@ -12,7 +12,7 @@
     "kickoffUtc": "2026-05-03T19:00:00.000Z",
     "status": "PRE",
     "rawStatus": "STATUS_SCHEDULED",
-    "minute": null,
+    "minute": "0'",
     "scoreHome": 0,
     "scoreAway": 0,
     "venue": "RCDE Stadium"
@@ -49,9 +49,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "regional_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -183,21 +183,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 505.1,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "regional_domestic",
+    "home": {
+      "key": "espanyol",
+      "team": "Espanyol",
+      "country": "Spain",
+      "city": "Barcelona",
+      "venue": null,
+      "latitude": 41.3874,
+      "longitude": 2.1686,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.090Z"
+    },
+    "away": {
+      "key": "real_madrid",
+      "team": "Real Madrid",
+      "country": "Spain",
+      "city": "Madrid",
+      "venue": null,
+      "latitude": 40.4168,
+      "longitude": -3.7038,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.090Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 505 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 505 km (regional_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -429,11 +449,12 @@
   "analysis": {
     "codes": [
       "value_present",
-      "high_competition_context"
+      "high_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.816. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 35 συνολικές καταγεγραμμένες απουσίες. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.816. There is an indication of elevated importance from the competition context. Team news context is available for this match with 35 recorded absences in total. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.816. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 35 συνολικές καταγεγραμμένες απουσίες. Η εκτίμηση ταξιδιού είναι περίπου 505.1 χλμ (high).",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.816. There is an indication of elevated importance from the competition context. Team news context is available for this match with 35 recorded absences in total. Estimated travel distance is approximately 505.1 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -558,12 +579,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"748475\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.8160000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"748475\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":12,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":12,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":505.1,\"travelImpact\":\"high\",\"travelProfile\":\"regional_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"espanyol\",\"travelAwayKey\":\"real_madrid\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.8160000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -692,10 +713,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -912,9 +933,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1816,
-            "mergedRows": 13546
+            "mergedRows": 13619
           }
         },
         "h2hLast5": {
@@ -1048,8 +1069,8 @@
           "confidence": 0.62
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
@@ -1064,7 +1085,7 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.74,
+      "confidence": 0.81,
       "readiness": {
         "history": true,
         "form": true,
@@ -1072,7 +1093,7 @@
         "standings": true,
         "teamNews": true,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -1181,11 +1202,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "espanyol",
+          "team": "Espanyol",
+          "country": "Spain",
+          "city": "Barcelona",
+          "venue": null,
+          "latitude": 41.3874,
+          "longitude": 2.1686,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.090Z"
+        },
+        "away": {
+          "key": "real_madrid",
+          "team": "Real Madrid",
+          "country": "Spain",
+          "city": "Madrid",
+          "venue": null,
+          "latitude": 40.4168,
+          "longitude": -3.7038,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.090Z"
+        },
+        "distanceKm": 505.1,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "regional_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 505 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 505 km (regional_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1501,8 +1555,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Espanyol - Real Madrid: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Espanyol: 0-2-3 στα τελευταία 5. Real Madrid: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13546 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Espanyol 1 νίκες, ισοπαλίες 0, Real Madrid 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Espanyol=promotion, Real Madrid=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.816. Υπάρχει διαθέσιμο team n…",
-      "en": "Espanyol vs Real Madrid: contextual analysis using historical and available data. Espanyol: 0-2-3 across the last 5. Real Madrid: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13546 available match records. Across the last 5 head-to-head meetings: Espanyol 1 wins, draws 0, Real Madrid 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Espanyol=promotion, Real Madrid=europe. This match is assessed as high importance. Absences: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.816. Team n…",
+      "el": "Espanyol - Real Madrid: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Espanyol: 0-2-3 στα τελευταία 5. Real Madrid: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13619 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Espanyol 1 νίκες, ισοπαλίες 0, Real Madrid 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Espanyol=promotion, Real Madrid=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.816. Υπάρχει διαθέσιμο team n…",
+      "en": "Espanyol vs Real Madrid: contextual analysis using historical and available data. Espanyol: 0-2-3 across the last 5. Real Madrid: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13619 available match records. Across the last 5 head-to-head meetings: Espanyol 1 wins, draws 0, Real Madrid 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Espanyol=promotion, Real Madrid=europe. This match is assessed as high importance. Absences: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.816. Team n…",
       "teamNews": {
         "status": "usable",
         "source": "team-news-research-bridge",
@@ -1577,11 +1631,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "regional_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 505.1,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1589,8 +1643,8 @@
     }
   },
   "aiSummary": {
-    "el": "Espanyol - Real Madrid: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Espanyol: 0-2-3 στα τελευταία 5. Real Madrid: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13546 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Espanyol 1 νίκες, ισοπαλίες 0, Real Madrid 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Espanyol=promotion, Real Madrid=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.816. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "Espanyol vs Real Madrid: contextual analysis using historical and available data. Espanyol: 0-2-3 across the last 5. Real Madrid: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13546 available match records. Across the last 5 head-to-head meetings: Espanyol 1 wins, draws 0, Real Madrid 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Espanyol=promotion, Real Madrid=europe. This match is assessed as high importance. Absences: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.816. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "Espanyol - Real Madrid: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Espanyol: 0-2-3 στα τελευταία 5. Real Madrid: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13619 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Espanyol 1 νίκες, ισοπαλίες 0, Real Madrid 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Espanyol=promotion, Real Madrid=europe. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.816. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Espanyol vs Real Madrid: contextual analysis using historical and available data. Espanyol: 0-2-3 across the last 5. Real Madrid: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13619 available match records. Across the last 5 head-to-head meetings: Espanyol 1 wins, draws 0, Real Madrid 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward more open games. Table context: Espanyol=promotion, Real Madrid=europe. This match is assessed as high importance. Absences: Espanyol=severe, Real Madrid=none. Lineup context: Espanyol=fatigue:low, rotation:low, strength:reduced; Real Madrid=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.816. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "team-news-research-bridge",
@@ -1619,12 +1673,12 @@
       "local-team-news",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
-      "referee_profile",
-      "travel_context"
+      "referee_profile"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1714,7 +1768,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13546
+          "mergedRows": 13619
         }
       },
       {

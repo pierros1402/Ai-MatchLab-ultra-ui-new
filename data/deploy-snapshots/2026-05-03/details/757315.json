@@ -1,7 +1,7 @@
 {
   "matchId": "757315",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:22:49.737Z",
+  "generatedAt": "2026-05-03T14:22:56.395Z",
   "basic": {
     "matchId": "757315",
     "leagueSlug": "rsa.2",
@@ -51,7 +51,7 @@
     "diagnostics": null,
     "sourceReliability": "usable",
     "travelImpact": "unknown",
-    "travelProfile": "unknown",
+    "travelProfile": "partial_geo",
     "crossBorder": null
   },
   "referee": {
@@ -94,21 +94,31 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "partial",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
+    "reason": "missing_away_geo",
+    "confidence": 0.35,
     "distanceKm": null,
     "impact": "unknown",
     "sameCountry": null,
     "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
+    "travelProfile": "partial_geo",
+    "home": {
+      "key": "cape_town_city",
+      "team": "Cape Town City",
+      "venue": null,
+      "city": "Cape Town",
+      "country": "South Africa",
+      "latitude": -33.9249,
+      "longitude": 18.4241,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.103Z"
+    },
     "away": null,
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_geo_partial",
+      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
+      "en": "Partial local geo context exists, but one team is missing coordinates."
     }
   },
   "value": [],
@@ -117,8 +127,8 @@
       "high_competition_context"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
+      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
     }
   },
   "playerUsageIntel": {
@@ -182,7 +192,7 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"757315\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"757315\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"cape_town_city\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
@@ -316,10 +326,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.35,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -537,9 +547,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1151,
-            "mergedRows": 13005
+            "mergedRows": 13078
           }
         },
         "h2hLast5": {
@@ -631,8 +641,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "partial",
+          "confidence": 0.35
         },
         "value": {
           "count": 0,
@@ -647,7 +657,7 @@
           "H2H sample: 1 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -655,7 +665,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -679,11 +689,34 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "partial",
+      "data": {
+        "home": {
+          "key": "cape_town_city",
+          "team": "Cape Town City",
+          "country": "South Africa",
+          "city": "Cape Town",
+          "venue": null,
+          "latitude": -33.9249,
+          "longitude": 18.4241,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.103Z"
+        },
+        "away": null,
+        "distanceKm": null,
+        "impact": "unknown",
+        "sameCountry": null,
+        "crossBorder": null,
+        "travelProfile": "unknown",
+        "note": {
+          "code": "travel_geo_missing_one_side",
+          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
+          "en": "Local geo data is missing for one of the two teams."
+        }
+      },
+      "confidence": 0.35,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": "missing_local_team_geo_one_side"
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -956,8 +989,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Cape Town City - Gomora United: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Cape Town City: 1-3-1 στα τελευταία 5. Gomora United: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13005 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Cape Town City 1 νίκες, ισοπαλίες 0, Gomora United 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Βαθμολογικό context: Cape Town City=europe, Gomora United=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Cape Town City vs Gomora United: contextual analysis using historical and available data. Cape Town City: 1-3-1 across the last 5. Gomora United: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13005 available match records. Across the last 1 head-to-head meetings: Cape Town City 1 wins, draws 0, Gomora United 0 wins. The head-to-head profile leans toward the home side. Table context: Cape Town City=europe, Gomora United=relegation. This match is assessed as high importance. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+      "el": "Cape Town City - Gomora United: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Cape Town City: 1-3-1 στα τελευταία 5. Gomora United: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13078 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Cape Town City 1 νίκες, ισοπαλίες 0, Gomora United 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Βαθμολογικό context: Cape Town City=europe, Gomora United=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
+      "en": "Cape Town City vs Gomora United: contextual analysis using historical and available data. Cape Town City: 1-3-1 across the last 5. Gomora United: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13078 available match records. Across the last 1 head-to-head meetings: Cape Town City 1 wins, draws 0, Gomora United 0 wins. The head-to-head profile leans toward the home side. Table context: Cape Town City=europe, Gomora United=relegation. This match is assessed as high importance. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -1038,8 +1071,8 @@
     }
   },
   "aiSummary": {
-    "el": "Cape Town City - Gomora United: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Cape Town City: 1-3-1 στα τελευταία 5. Gomora United: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13005 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Cape Town City 1 νίκες, ισοπαλίες 0, Gomora United 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Βαθμολογικό context: Cape Town City=europe, Gomora United=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Cape Town City vs Gomora United: contextual analysis using historical and available data. Cape Town City: 1-3-1 across the last 5. Gomora United: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13005 available match records. Across the last 1 head-to-head meetings: Cape Town City 1 wins, draws 0, Gomora United 0 wins. The head-to-head profile leans toward the home side. Table context: Cape Town City=europe, Gomora United=relegation. This match is assessed as high importance. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+    "el": "Cape Town City - Gomora United: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Cape Town City: 1-3-1 στα τελευταία 5. Gomora United: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13078 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Cape Town City 1 νίκες, ισοπαλίες 0, Gomora United 0 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Βαθμολογικό context: Cape Town City=europe, Gomora United=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
+    "en": "Cape Town City vs Gomora United: contextual analysis using historical and available data. Cape Town City: 1-3-1 across the last 5. Gomora United: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13078 available match records. Across the last 1 head-to-head meetings: Cape Town City 1 wins, draws 0, Gomora United 0 wins. The head-to-head profile leans toward the home side. Table context: Cape Town City=europe, Gomora United=relegation. This match is assessed as high importance. Lineup context: Cape Town City=fatigue:low, rotation:low, strength:strong; Gomora United=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1072,8 +1105,8 @@
       "referee_profile",
       "team_news",
       "expected_lineups_reliability",
-      "travel_context",
-      "value_snapshot"
+      "value_snapshot",
+      "travel_context"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1152,7 +1185,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13005
+          "mergedRows": 13078
         }
       },
       {

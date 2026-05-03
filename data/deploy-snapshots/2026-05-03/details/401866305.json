@@ -1,7 +1,7 @@
 {
   "matchId": "401866305",
   "dayKey": "2026-05-03",
-  "generatedAt": "2026-05-03T10:23:04.219Z",
+  "generatedAt": "2026-05-03T14:23:14.692Z",
   "basic": {
     "matchId": "401866305",
     "leagueSlug": "bel.1",
@@ -45,9 +45,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -89,31 +89,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
-    "home": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 90.3,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "anderlecht",
+      "team": "Anderlecht",
+      "country": "Belgium",
+      "city": "Brussels",
+      "venue": null,
+      "latitude": 50.8503,
+      "longitude": 4.3517,
+      "source": "known_team_geo_seed_city_center_v4",
+      "updatedAt": "2026-05-03T14:21:16.101Z"
+    },
     "away": {
       "key": "club_brugge",
       "team": "Club Brugge",
-      "venue": "Jan Breydel Stadium",
-      "city": "Bruges",
       "country": "Belgium",
+      "city": "Bruges",
+      "venue": "Jan Breydel Stadium",
       "latitude": 51.193269,
       "longitude": 3.181311,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.396Z"
     },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 90 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 90 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -742,8 +752,8 @@
       "medium_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.749. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.749. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.749. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 90.3 χλμ (low).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.749. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 90.3 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -807,12 +817,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401866305\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"club_brugge\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":3,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.749},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401866305\",\"dayKey\":\"2026-05-03\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":90.3,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"anderlecht\",\"travelAwayKey\":\"club_brugge\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":3,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.749},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -944,7 +954,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -1158,9 +1168,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12039,
+            "currentSeasonRows": 12112,
             "archiveRows": 1541,
-            "mergedRows": 13332
+            "mergedRows": 13405
           }
         },
         "h2hLast5": {
@@ -1294,8 +1304,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 3,
@@ -1342,9 +1352,19 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
-        "home": null,
+        "home": {
+          "key": "anderlecht",
+          "team": "Anderlecht",
+          "country": "Belgium",
+          "city": "Brussels",
+          "venue": null,
+          "latitude": 50.8503,
+          "longitude": 4.3517,
+          "source": "known_team_geo_seed_city_center_v4",
+          "updatedAt": "2026-05-03T14:21:16.101Z"
+        },
         "away": {
           "key": "club_brugge",
           "team": "Club Brugge",
@@ -1356,20 +1376,20 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.396Z"
         },
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "distanceKm": 90.3,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 90 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 90 km (local_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1650,8 +1670,8 @@
       "reason": "phase_key_detected"
     },
     "summary": {
-      "el": "Anderlecht - Club Brugge: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Anderlecht: 1-1-3 στα τελευταία 5. Club Brugge: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13332 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Anderlecht 3 νίκες, ισοπαλίες 1, Club Brugge 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.749. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Anderlecht vs Club Brugge: contextual analysis using historical and available data. Anderlecht: 1-1-3 across the last 5. Club Brugge: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13332 available match records. Across the last 5 head-to-head meetings: Anderlecht 3 wins, draws 1, Club Brugge 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.749. Limited lineup context is available with low completeness.",
+      "el": "Anderlecht - Club Brugge: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Anderlecht: 1-1-3 στα τελευταία 5. Club Brugge: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13405 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Anderlecht 3 νίκες, ισοπαλίες 1, Club Brugge 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.749. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context απ…",
+      "en": "Anderlecht vs Club Brugge: contextual analysis using historical and available data. Anderlecht: 1-1-3 across the last 5. Club Brugge: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13405 available match records. Across the last 5 head-to-head meetings: Anderlecht 3 wins, draws 1, Club Brugge 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.749. Limited lineup context is available with low completeness. Travel conte…",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -1673,7 +1693,8 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1723,11 +1744,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 90.3,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1735,8 +1756,8 @@
     }
   },
   "aiSummary": {
-    "el": "Anderlecht - Club Brugge: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Anderlecht: 1-1-3 στα τελευταία 5. Club Brugge: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13332 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Anderlecht 3 νίκες, ισοπαλίες 1, Club Brugge 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.749. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Anderlecht vs Club Brugge: contextual analysis using historical and available data. Anderlecht: 1-1-3 across the last 5. Club Brugge: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13332 available match records. Across the last 5 head-to-head meetings: Anderlecht 3 wins, draws 1, Club Brugge 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.749. Limited lineup context is available with low completeness.",
+    "el": "Anderlecht - Club Brugge: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Anderlecht: 1-1-3 στα τελευταία 5. Club Brugge: 4-0-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13405 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Anderlecht 3 νίκες, ισοπαλίες 1, Club Brugge 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.749. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Anderlecht vs Club Brugge: contextual analysis using historical and available data. Anderlecht: 1-1-3 across the last 5. Club Brugge: 4-0-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13405 available match records. Across the last 5 head-to-head meetings: Anderlecht 3 wins, draws 1, Club Brugge 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Anderlecht=europe, Club Brugge=europe. Lineup context: Anderlecht=fatigue:low, rotation:low, strength:strong; Club Brugge=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.749. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1764,14 +1785,14 @@
       "local-standings",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1850,7 +1871,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13332
+          "mergedRows": 13405
         }
       },
       {
