@@ -1,7 +1,7 @@
 {
   "matchId": "747004",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:37.845Z",
+  "generatedAt": "2026-05-03T03:51:47.901Z",
   "basic": {
     "matchId": "747004",
     "leagueSlug": "ger.1",
@@ -10,11 +10,11 @@
     "homeTeam": "Werder Bremen",
     "awayTeam": "FC Augsburg",
     "kickoffUtc": "2026-05-02T13:30:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
+    "scoreAway": 3,
     "venue": "Weserstadion"
   },
   "context": {
@@ -45,9 +45,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "regional_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -89,21 +89,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 543.9,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "regional_domestic",
+    "home": {
+      "key": "werder_bremen",
+      "team": "Werder Bremen",
+      "country": "Germany",
+      "city": "Bremen",
+      "venue": null,
+      "latitude": 53.0793,
+      "longitude": 8.8017,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.639Z"
+    },
+    "away": {
+      "key": "fc_augsburg",
+      "team": "FC Augsburg",
+      "country": "Germany",
+      "city": "Augsburg",
+      "venue": null,
+      "latitude": 48.3705,
+      "longitude": 10.8978,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.639Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 544 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 544 km (regional_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [
@@ -118,14 +138,17 @@
       "pick": "Over 1.5",
       "score": 0.702,
       "band": "MEDIUM",
-      "confidence": 0.844,
+      "confidence": 0.899,
       "signals": [
         "away_edge",
         "home_form_decay",
         "form_influence_reduced",
         "priors_applied",
+        "ai_context_high_importance",
+        "must_result_pressure",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -228,15 +251,63 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
-        "contextDelta": 0,
-        "contextReasons": [],
+        "contextAdjusted": true,
+        "contextDelta": 0.04,
+        "contextReasons": [
+          {
+            "code": "form_balanced",
+            "impact": 0.04,
+            "note": "Teams have similar recent form"
+          },
+          {
+            "code": "competition_high_stakes",
+            "impact": 0.04,
+            "note": "High-stakes league context"
+          },
+          {
+            "code": "ai_h2h_home_edge",
+            "impact": 0.06,
+            "note": "AI detected home H2H edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
-          "pressure": []
-        }
+          "importance": "high",
+          "stakes": {
+            "home": "relegation",
+            "away": "neutral",
+            "tags": [
+              "relegation_battle"
+            ]
+          },
+          "pressure": [
+            "must_win"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_home_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 6, away 3"
+          },
+          {
+            "code": "match_profile_away_table_edge",
+            "impact": 0.027500000000000004,
+            "note": "MatchProfile table positions: home #15, away #9"
+          },
+          {
+            "code": "match_profile_h2h_home_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans home"
+          },
+          {
+            "code": "match_profile_h2h_underlean",
+            "impact": -0.0165,
+            "note": "MatchProfile H2H goal pattern leans under"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -258,12 +329,14 @@
   ],
   "analysis": {
     "codes": [
+      "final_match",
       "value_present",
-      "high_competition_context"
+      "high_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.702. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.702. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι Over / Under 1.5 → Over 1.5 με score 0.702. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 543.9 χλμ (high).",
+      "en": "The strongest available value snapshot is Over / Under 1.5 → Over 1.5 with score 0.702. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 543.9 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -327,12 +400,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"747004\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.702},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"747004\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":3,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":543.9,\"travelImpact\":\"high\",\"travelProfile\":\"regional_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"werder_bremen\",\"travelAwayKey\":\"fc_augsburg\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.702},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -461,10 +534,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -481,7 +554,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.844,
+        "confidence": 0.899,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -812,15 +885,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 1,
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.702,
-          "avgConfidence": 0.844
+          "avgConfidence": 0.899
         },
         "summary": [
           "Table: Werder Bremen #15 vs FC Augsburg #9.",
@@ -828,7 +901,7 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -836,7 +909,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -860,11 +933,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "werder_bremen",
+          "team": "Werder Bremen",
+          "country": "Germany",
+          "city": "Bremen",
+          "venue": null,
+          "latitude": 53.0793,
+          "longitude": 8.8017,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.639Z"
+        },
+        "away": {
+          "key": "fc_augsburg",
+          "team": "FC Augsburg",
+          "country": "Germany",
+          "city": "Augsburg",
+          "venue": null,
+          "latitude": 48.3705,
+          "longitude": 10.8978,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.639Z"
+        },
+        "distanceKm": 543.9,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "regional_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 544 χλμ (regional_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 544 km (regional_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -966,7 +1072,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.702,
-      "avgConfidence": 0.844,
+      "avgConfidence": 0.899,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1167,7 +1273,9 @@
       "value_over15_signal",
       "high_edge_market",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available",
+      "travel_burden_high"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1177,7 +1285,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.702,
-      "avgConfidence": 0.844
+      "avgConfidence": 0.899
     },
     "reasoning": {
       "tempoProfile": {
@@ -1217,11 +1325,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "regional_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 543.9,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1229,8 +1337,8 @@
     }
   },
   "aiSummary": {
-    "el": "Werder Bremen - FC Augsburg: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Werder Bremen: 2-0-3 στα τελευταία 5. FC Augsburg: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13266 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Werder Bremen 2 νίκες, ισοπαλίες 2, FC Augsburg 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Werder Bremen=relegation, FC Augsburg=neutral. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Werder Bremen=fatigue:low, rotation:low, strength:strong; FC Augsburg=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.702. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Werder Bremen vs FC Augsburg: contextual analysis using historical and available data. Werder Bremen: 2-0-3 across the last 5. FC Augsburg: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13266 available match records. Across the last 5 head-to-head meetings: Werder Bremen 2 wins, draws 2, FC Augsburg 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Werder Bremen=relegation, FC Augsburg=neutral. This match is assessed as high importance. Lineup context: Werder Bremen=fatigue:low, rotation:low, strength:strong; FC Augsburg=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.702. Limited lineup context is available with low completeness.",
+    "el": "Werder Bremen - FC Augsburg: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Werder Bremen: 2-0-3 στα τελευταία 5. FC Augsburg: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13266 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Werder Bremen 2 νίκες, ισοπαλίες 2, FC Augsburg 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Werder Bremen=relegation, FC Augsburg=neutral. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Werder Bremen=fatigue:low, rotation:low, strength:strong; FC Augsburg=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι Over / Under 1.5 → Over 1.5 με score 0.702. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "Werder Bremen vs FC Augsburg: contextual analysis using historical and available data. Werder Bremen: 2-0-3 across the last 5. FC Augsburg: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13266 available match records. Across the last 5 head-to-head meetings: Werder Bremen 2 wins, draws 2, FC Augsburg 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward tighter games. Table context: Werder Bremen=relegation, FC Augsburg=neutral. This match is assessed as high importance. Lineup context: Werder Bremen=fatigue:low, rotation:low, strength:strong; FC Augsburg=fatigue:low, rotation:low, strength:strong. The strongest value market is Over / Under 1.5 → Over 1.5 with score 0.702. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1243,7 +1351,7 @@
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.702,
-    "avgConfidence": 0.844,
+    "avgConfidence": 0.899,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1258,14 +1366,14 @@
       "local-standings",
       "local-lineup-model",
       "local-history",
-      "local-value"
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
-      "expected_lineups_reliability",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1461,7 +1569,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1469,7 +1577,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-3",
         "source": "espn",
         "sources": [
           "espn"
@@ -1477,14 +1585,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

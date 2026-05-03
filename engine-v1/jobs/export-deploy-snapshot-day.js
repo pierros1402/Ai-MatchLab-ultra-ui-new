@@ -85,6 +85,7 @@ function summarizeDetail(detail) {
 
   const hasTravel =
     Boolean(detail?.travelContext) ||
+    Boolean(detail?.travel) ||
     Boolean(detail?.context?.travel) ||
     Boolean(detail?.researchedFacts?.travelContext) ||
     Boolean(detail?.aiTasks?.travel_context);
@@ -98,11 +99,41 @@ function summarizeDetail(detail) {
     Boolean(detail?.researchedFacts?.teamNewsIntel) ||
     Boolean(detail?.teamNews);
 
+  const valueRows = [
+    ...(Array.isArray(detail?.value) ? detail.value : []),
+    ...(Array.isArray(detail?.valuePicks) ? detail.valuePicks : []),
+    ...(Array.isArray(detail?.valueSummary?.picks) ? detail.valueSummary.picks : [])
+  ];
+
   const hasValue =
+    valueRows.length > 0 ||
     Boolean(detail?.value) ||
     Boolean(detail?.valuePicks) ||
+    Boolean(detail?.valueSummary) ||
     Boolean(detail?.meta?.valueSynced) ||
     Boolean(detail?.meta?.matchProfileApplied);
+
+  const valueHasMatchProfile = valueRows.some(row =>
+    row?.matchProfileApplied === true ||
+    row?.matchProfileApplied === "true" ||
+    (Array.isArray(row?.signals) && row.signals.includes("match_profile_applied"))
+  );
+
+  const serializedValue = JSON.stringify({
+    value: detail?.value,
+    valuePicks: detail?.valuePicks,
+    valueSummary: detail?.valueSummary,
+    analysis: detail?.analysis
+  });
+
+  const matchProfileApplied =
+    Boolean(detail?.meta?.matchProfileApplied) ||
+    valueHasMatchProfile ||
+    serializedValue.includes("match_profile_applied");
+
+  const valueSynced =
+    Boolean(detail?.meta?.valueSynced) ||
+    hasValue;
 
   return {
     matchId,
@@ -110,8 +141,8 @@ function summarizeDetail(detail) {
     hasPlayerUsage,
     hasTeamNews,
     hasValue,
-    matchProfileApplied: Boolean(detail?.meta?.matchProfileApplied),
-    valueSynced: Boolean(detail?.meta?.valueSynced),
+    matchProfileApplied,
+    valueSynced,
     keys: Object.keys(detail || {}).sort()
   };
 }

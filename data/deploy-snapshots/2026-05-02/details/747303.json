@@ -1,7 +1,7 @@
 {
   "matchId": "747303",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:31:01.738Z",
+  "generatedAt": "2026-05-03T03:51:22.500Z",
   "basic": {
     "matchId": "747303",
     "leagueSlug": "ger.2",
@@ -10,11 +10,11 @@
     "homeTeam": "Arminia Bielefeld",
     "awayTeam": "VfL Bochum",
     "kickoffUtc": "2026-05-02T11:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
+    "scoreAway": 1,
     "venue": "SchücoArena"
   },
   "context": {
@@ -47,9 +47,9 @@
     ],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "unknown",
-    "crossBorder": null
+    "travelImpact": "low",
+    "travelProfile": "local_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -91,31 +91,52 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "unknown",
-    "home": null,
-    "away": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 109.2,
+    "impact": "low",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "local_domestic",
+    "home": {
+      "key": "arminia_bielefeld",
+      "team": "Arminia Bielefeld",
+      "country": "Germany",
+      "city": "Bielefeld",
+      "venue": null,
+      "latitude": 52.0302,
+      "longitude": 8.5325,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.640Z"
+    },
+    "away": {
+      "key": "vfl_bochum",
+      "team": "VfL Bochum",
+      "country": "Germany",
+      "city": "Bochum",
+      "venue": null,
+      "latitude": 51.4818,
+      "longitude": 7.2162,
+      "source": "known_team_geo_seed_city_center_v1",
+      "updatedAt": "2026-05-03T03:45:25.640Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 109 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 109 km (local_domestic) was calculated from the local team geo cache."
     }
   },
   "value": [],
   "analysis": {
     "codes": [
+      "final_match",
       "high_competition_context"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 109.2 χλμ (low).",
+      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 109.2 km (low)."
     }
   },
   "playerUsageIntel": {
@@ -179,12 +200,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"747303\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"747303\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":109.2,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"arminia_bielefeld\",\"travelAwayKey\":\"vfl_bochum\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": true,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -313,10 +334,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -625,8 +646,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
           "count": 0,
@@ -641,7 +662,7 @@
           "H2H sample: 1 recent matches."
         ]
       },
-      "confidence": 0.67,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
@@ -649,7 +670,7 @@
         "standings": true,
         "teamNews": false,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -673,11 +694,44 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "ready",
+      "data": {
+        "home": {
+          "key": "arminia_bielefeld",
+          "team": "Arminia Bielefeld",
+          "country": "Germany",
+          "city": "Bielefeld",
+          "venue": null,
+          "latitude": 52.0302,
+          "longitude": 8.5325,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.640Z"
+        },
+        "away": {
+          "key": "vfl_bochum",
+          "team": "VfL Bochum",
+          "country": "Germany",
+          "city": "Bochum",
+          "venue": null,
+          "latitude": 51.4818,
+          "longitude": 7.2162,
+          "source": "known_team_geo_seed_city_center_v1",
+          "updatedAt": "2026-05-03T03:45:25.640Z"
+        },
+        "distanceKm": 109.2,
+        "impact": "low",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "local_domestic",
+        "note": {
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 109 χλμ (local_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 109 km (local_domestic) was calculated from the local team geo cache."
+        }
+      },
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -952,8 +1006,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Arminia Bielefeld - VfL Bochum: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Arminia Bielefeld: 2-1-2 στα τελευταία 5. VfL Bochum: 2-1-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Arminia Bielefeld 0 νίκες, ισοπαλίες 0, VfL Bochum 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Arminia Bielefeld=relegation, VfL Bochum=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Arminia Bielefeld vs VfL Bochum: contextual analysis using historical and available data. Arminia Bielefeld: 2-1-2 across the last 5. VfL Bochum: 2-1-2 across the last 5. The historical layer was based on 13083 available match records. Across the last 1 head-to-head meetings: Arminia Bielefeld 0 wins, draws 0, VfL Bochum 1 wins. The head-to-head profile leans toward the away side. Table context: Arminia Bielefeld=relegation, VfL Bochum=relegation. This match is assessed as high importance. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+      "el": "Arminia Bielefeld - VfL Bochum: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Arminia Bielefeld: 2-1-2 στα τελευταία 5. VfL Bochum: 2-1-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Arminia Bielefeld 0 νίκες, ισοπαλίες 0, VfL Bochum 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Arminia Bielefeld=relegation, VfL Bochum=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+      "en": "Arminia Bielefeld vs VfL Bochum: contextual analysis using historical and available data. Arminia Bielefeld: 2-1-2 across the last 5. VfL Bochum: 2-1-2 across the last 5. The historical layer was based on 13083 available match records. Across the last 1 head-to-head meetings: Arminia Bielefeld 0 wins, draws 0, VfL Bochum 1 wins. The head-to-head profile leans toward the away side. Table context: Arminia Bielefeld=relegation, VfL Bochum=relegation. This match is assessed as high importance. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -972,7 +1026,8 @@
       "high_stakes_match",
       "relegation_pressure",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1022,11 +1077,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "local_domestic",
+      "travelImpact": "low",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 109.2,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1034,8 +1089,8 @@
     }
   },
   "aiSummary": {
-    "el": "Arminia Bielefeld - VfL Bochum: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Arminia Bielefeld: 2-1-2 στα τελευταία 5. VfL Bochum: 2-1-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Arminia Bielefeld 0 νίκες, ισοπαλίες 0, VfL Bochum 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Arminia Bielefeld=relegation, VfL Bochum=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Arminia Bielefeld vs VfL Bochum: contextual analysis using historical and available data. Arminia Bielefeld: 2-1-2 across the last 5. VfL Bochum: 2-1-2 across the last 5. The historical layer was based on 13083 available match records. Across the last 1 head-to-head meetings: Arminia Bielefeld 0 wins, draws 0, VfL Bochum 1 wins. The head-to-head profile leans toward the away side. Table context: Arminia Bielefeld=relegation, VfL Bochum=relegation. This match is assessed as high importance. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+    "el": "Arminia Bielefeld - VfL Bochum: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Arminia Bielefeld: 2-1-2 στα τελευταία 5. VfL Bochum: 2-1-2 στα τελευταία 5. Το historical layer βασίστηκε σε 13083 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Arminia Bielefeld 0 νίκες, ισοπαλίες 0, VfL Bochum 1 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Βαθμολογικό context: Arminia Bielefeld=relegation, VfL Bochum=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Arminia Bielefeld vs VfL Bochum: contextual analysis using historical and available data. Arminia Bielefeld: 2-1-2 across the last 5. VfL Bochum: 2-1-2 across the last 5. The historical layer was based on 13083 available match records. Across the last 1 head-to-head meetings: Arminia Bielefeld 0 wins, draws 0, VfL Bochum 1 wins. The head-to-head profile leans toward the away side. Table context: Arminia Bielefeld=relegation, VfL Bochum=relegation. This match is assessed as high importance. Lineup context: Arminia Bielefeld=fatigue:low, rotation:low, strength:strong; VfL Bochum=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1061,14 +1116,14 @@
       "team-news-provider-stub",
       "local-standings",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
       "expected_lineups_reliability",
-      "travel_context",
       "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1252,7 +1307,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1260,7 +1315,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1268,14 +1323,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

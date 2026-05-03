@@ -1,7 +1,7 @@
 {
   "matchId": "401857485",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:33:38.083Z",
+  "generatedAt": "2026-05-03T03:53:10.671Z",
   "basic": {
     "matchId": "401857485",
     "leagueSlug": "per.1",
@@ -10,10 +10,10 @@
     "homeTeam": "ADT",
     "awayTeam": "Atlético Grau",
     "kickoffUtc": "2026-05-02T20:15:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
     "scoreAway": 0,
     "venue": "Estadio Unión Tarma"
   },
@@ -43,9 +43,9 @@
     "notes": [],
     "diagnostics": null,
     "sourceReliability": "usable",
-    "travelImpact": "unknown",
-    "travelProfile": "partial_geo",
-    "crossBorder": null
+    "travelImpact": "high",
+    "travelProfile": "long_domestic",
+    "crossBorder": false
   },
   "referee": {
     "status": "empty",
@@ -103,41 +103,247 @@
     "status": "missing"
   },
   "travel": {
-    "status": "partial",
+    "status": "ready",
     "source": "local-team-geo",
-    "reason": "missing_home_geo",
-    "confidence": 0.35,
-    "distanceKm": null,
-    "impact": "unknown",
-    "sameCountry": null,
-    "crossBorder": null,
-    "travelProfile": "partial_geo",
-    "home": null,
+    "reason": null,
+    "confidence": 0.78,
+    "distanceKm": 879.2,
+    "impact": "high",
+    "sameCountry": true,
+    "crossBorder": false,
+    "travelProfile": "long_domestic",
+    "home": {
+      "key": "adt",
+      "team": "ADT",
+      "country": "Peru",
+      "city": "Tarma",
+      "venue": null,
+      "latitude": -11.4197,
+      "longitude": -75.6908,
+      "source": "known_team_geo_seed_city_center_v2",
+      "updatedAt": "2026-05-03T03:49:04.284Z"
+    },
     "away": {
       "key": "atletico_grau",
       "team": "Atlético Grau",
-      "venue": "Estadio Miguel Grau",
-      "city": "Piura",
       "country": "Peru",
+      "city": "Piura",
+      "venue": "Estadio Miguel Grau",
       "latitude": -5.192174,
       "longitude": -80.616797,
       "source": "wikidata_bootstrap",
       "updatedAt": "2026-04-22T13:28:17.390Z"
     },
     "note": {
-      "code": "travel_geo_partial",
-      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
-      "en": "Partial local geo context exists, but one team is missing coordinates."
+      "code": "travel_ready",
+      "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 879 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+      "en": "A travel estimate of approximately 879 km (long_domestic) was calculated from the local team geo cache."
     }
   },
-  "value": [],
+  "value": [
+    {
+      "matchId": "401857485",
+      "leagueSlug": "per.1",
+      "homeTeam": "ADT",
+      "awayTeam": "Atlético Grau",
+      "kickoff": "2026-05-02T20:15Z",
+      "market": "1X2",
+      "marketName": "1X2",
+      "pick": "AWAY",
+      "score": 0.6990000000000001,
+      "band": "MEDIUM",
+      "confidence": 0.716,
+      "signals": [
+        "away_edge",
+        "form_influence_reduced",
+        "priors_applied",
+        "ai_context_medium_importance",
+        "late_season_pressure",
+        "close_strength_gap",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.12,
+          "awayOverallFormWeight": 0.195,
+          "homeSideFormWeight": 0.12,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 1.245,
+        "expectedAwayGoals": 1.404,
+        "expectedTotalGoals": 2.649,
+        "homeStrength": 0.1,
+        "awayStrength": 0.325,
+        "homeEdge": 0.112,
+        "awayPenalty": 0.092,
+        "recency": {
+          "homeOverall": {
+            "sample": 3,
+            "rawSample": 0,
+            "priorSample": 102,
+            "daysSinceLastMatch": null,
+            "spanDays": null,
+            "freshnessScore": 0.2,
+            "continuityScore": 0.2
+          },
+          "awayOverall": {
+            "sample": 5,
+            "rawSample": 2,
+            "priorSample": 104,
+            "daysSinceLastMatch": 10,
+            "spanDays": 19,
+            "freshnessScore": 0.6,
+            "continuityScore": 0.65
+          },
+          "homeSide": {
+            "sample": 3,
+            "rawSample": 0,
+            "priorSample": 102,
+            "daysSinceLastMatch": null,
+            "spanDays": null,
+            "freshnessScore": 0.2,
+            "continuityScore": 0.2
+          },
+          "awaySide": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 104,
+            "daysSinceLastMatch": 29,
+            "spanDays": 0,
+            "freshnessScore": 0.08,
+            "continuityScore": 0.35
+          }
+        },
+        "matchupSample": 3,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 102,
+          "awayPriorSample": 104,
+          "leaguePriorSample": 936,
+          "matchupPriorSample": 7
+        },
+        "resolution": {
+          "homeInput": "ADT",
+          "awayInput": "Atlético Grau",
+          "homeResolvedKey": "ADT",
+          "awayResolvedKey": "Atlético Grau",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "ADT::Atlético Grau",
+          "matchupResolveScore": 0.93,
+          "homePriorKey": "per.1::ADT",
+          "awayPriorKey": "per.1::Atlético Grau",
+          "matchupPriorKey": "per.1|ADT|Atlético Grau"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "ADT",
+          "awayTeamKey": "Atlético Grau",
+          "leagueKey": "per.1",
+          "matchupKey": "ADT::Atlético Grau"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_away_stronger",
+            "impact": 0.08,
+            "note": "Away team has significantly stronger form"
+          },
+          {
+            "code": "ai_h2h_over_signal",
+            "impact": 0.07,
+            "note": "AI detected open H2H pattern"
+          },
+          {
+            "code": "ai_away_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong away form edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "medium",
+          "stakes": {
+            "home": "europe",
+            "away": "europe",
+            "tags": [
+              "playoff_race"
+            ]
+          },
+          "pressure": [
+            "chasing_cutoff"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.81,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_away_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 2, away 5"
+          },
+          {
+            "code": "match_profile_home_table_edge",
+            "impact": 0.027500000000000004,
+            "note": "MatchProfile table positions: home #4, away #9"
+          },
+          {
+            "code": "match_profile_h2h_overlean",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile H2H goal pattern leans over"
+          }
+        ]
+      },
+      "context": {
+        "season": "2025-2026",
+        "leagueSlug": "per.1",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 42,
+        "awayRestDays": 10,
+        "homeMatchesLast7": 0,
+        "awayMatchesLast7": 0,
+        "homeMatchesLast14": 0,
+        "awayMatchesLast14": 1,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    }
+  ],
   "analysis": {
     "codes": [
-      "medium_competition_context"
+      "final_match",
+      "value_present",
+      "medium_competition_context",
+      "high_travel_load"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is available for this match. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.699. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα. Η εκτίμηση ταξιδιού είναι περίπου 879.2 χλμ (high).",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.699. There is an indication of medium importance from the competition context. Team news context is available for this match. Estimated travel distance is approximately 879.2 km (high)."
     }
   },
   "playerUsageIntel": {
@@ -201,12 +407,12 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401857485\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"atletico_grau\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401857485\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":879.2,\"travelImpact\":\"high\",\"travelProfile\":\"long_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"adt\",\"travelAwayKey\":\"atletico_grau\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.6990000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
       "teamNews": false,
-      "travelGeo": true
+      "travelGeo": false
     }
   },
   "ai": {
@@ -338,7 +544,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-team-geo",
-        "confidence": 0.35,
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -352,10 +558,10 @@
         "required": false,
         "priority": 65,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-value",
+        "confidence": 0.716,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -685,15 +891,15 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "partial",
-          "confidence": 0.35
+          "status": "ready",
+          "confidence": 0.78
         },
         "value": {
-          "count": 0,
-          "topMarket": null,
-          "topPick": null,
-          "topScore": null,
-          "avgConfidence": 0
+          "count": 1,
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.6990000000000001,
+          "avgConfidence": 0.716
         },
         "summary": [
           "Table: ADT #4 vs Atlético Grau #9.",
@@ -773,9 +979,19 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "partial",
+      "status": "ready",
       "data": {
-        "home": null,
+        "home": {
+          "key": "adt",
+          "team": "ADT",
+          "country": "Peru",
+          "city": "Tarma",
+          "venue": null,
+          "latitude": -11.4197,
+          "longitude": -75.6908,
+          "source": "known_team_geo_seed_city_center_v2",
+          "updatedAt": "2026-05-03T03:49:04.284Z"
+        },
         "away": {
           "key": "atletico_grau",
           "team": "Atlético Grau",
@@ -787,20 +1003,20 @@
           "source": "wikidata_bootstrap",
           "updatedAt": "2026-04-22T13:28:17.390Z"
         },
-        "distanceKm": null,
-        "impact": "unknown",
-        "sameCountry": null,
-        "crossBorder": null,
-        "travelProfile": "unknown",
+        "distanceKm": 879.2,
+        "impact": "high",
+        "sameCountry": true,
+        "crossBorder": false,
+        "travelProfile": "long_domestic",
         "note": {
-          "code": "travel_geo_missing_one_side",
-          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
-          "en": "Local geo data is missing for one of the two teams."
+          "code": "travel_ready",
+          "el": "Υπολογίστηκε εκτίμηση ταξιδιού περίπου 879 χλμ (long_domestic) με βάση το τοπικό geo cache ομάδων.",
+          "en": "A travel estimate of approximately 879 km (long_domestic) was calculated from the local team geo cache."
         }
       },
-      "confidence": 0.35,
+      "confidence": 0.78,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_one_side"
+      "reason": null
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -899,12 +1115,12 @@
       "meta": "[circular]"
     },
     "valueContext": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0,
-      "confidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.6990000000000001,
+      "avgConfidence": 0.716,
+      "confidence": 0.75
     },
     "researchPlan": {
       "matchId": "401857485",
@@ -1080,8 +1296,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "ADT - Atlético Grau: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. ADT: 0-2-3 στα τελευταία 5. Atlético Grau: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13007 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: ADT 2 νίκες, ισοπαλίες 1, Atlético Grau 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: ADT=europe, Atlético Grau=europe. Απουσίες: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "ADT vs Atlético Grau: contextual analysis using historical and available data. ADT: 0-2-3 across the last 5. Atlético Grau: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13007 available match records. Across the last 5 head-to-head meetings: ADT 2 wins, draws 1, Atlético Grau 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: ADT=europe, Atlético Grau=europe. Absences: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+      "el": "ADT - Atlético Grau: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. ADT: 0-2-3 στα τελευταία 5. Atlético Grau: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13007 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: ADT 2 νίκες, ισοπαλίες 1, Atlético Grau 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: ADT=europe, Atlético Grau=europe. Απουσίες: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.699. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context μ…",
+      "en": "ADT vs Atlético Grau: contextual analysis using historical and available data. ADT: 0-2-3 across the last 5. Atlético Grau: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13007 available match records. Across the last 5 head-to-head meetings: ADT 2 wins, draws 1, Atlético Grau 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: ADT=europe, Atlético Grau=europe. Absences: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.699. Team news context is available in the enriched snapshot. Limited lineup conte…",
       "teamNews": {
         "status": "usable",
         "source": "local-team-news",
@@ -1089,7 +1305,7 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.8200000000000001,
+    "confidence": 0.92,
     "signals": [
       "historical_context_available",
       "history_form_available",
@@ -1099,26 +1315,30 @@
       "h2h_goal_pattern_over",
       "phase_regular",
       "team_news_available",
+      "value_support_present",
+      "value_1x2_signal",
       "lineup_context_limited",
-      "competition_context_ready"
+      "competition_context_ready",
+      "travel_context_available",
+      "travel_burden_high"
     ],
     "warnings": [
       "referee_unavailable"
     ],
     "valueSummary": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.6990000000000001,
+      "avgConfidence": 0.716
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "h2h_open_pattern",
+        "label": "result_driven",
         "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "historical_goal_variance",
+        "label": "directional_match_edge",
         "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
@@ -1126,17 +1346,17 @@
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "h2h_supported_context",
+        "label": "value_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "matchup_informed",
+        "label": "market_informed",
         "explanation": ""
       }
     },
     "support": {
       "priorsUsed": true,
-      "valueUsed": false,
+      "valueUsed": true,
       "researchUsed": true,
       "historyUsed": true,
       "h2hUsed": true,
@@ -1150,11 +1370,11 @@
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
       "refereeReliability": "empty",
-      "travelUsed": false,
-      "travelProfile": "unknown",
-      "travelImpact": "unknown",
+      "travelUsed": true,
+      "travelProfile": "long_domestic",
+      "travelImpact": "high",
       "travelCrossBorder": false,
-      "travelDistanceKm": null,
+      "travelDistanceKm": 879.2,
       "competitionContextUsed": true,
       "competitionContextSuspect": false,
       "competitionContextLimited": false,
@@ -1162,8 +1382,8 @@
     }
   },
   "aiSummary": {
-    "el": "ADT - Atlético Grau: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. ADT: 0-2-3 στα τελευταία 5. Atlético Grau: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13007 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: ADT 2 νίκες, ισοπαλίες 1, Atlético Grau 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: ADT=europe, Atlético Grau=europe. Απουσίες: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "ADT vs Atlético Grau: contextual analysis using historical and available data. ADT: 0-2-3 across the last 5. Atlético Grau: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13007 available match records. Across the last 5 head-to-head meetings: ADT 2 wins, draws 1, Atlético Grau 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: ADT=europe, Atlético Grau=europe. Absences: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness.",
+    "el": "ADT - Atlético Grau: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. ADT: 0-2-3 στα τελευταία 5. Atlético Grau: 1-2-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13007 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: ADT 2 νίκες, ισοπαλίες 1, Atlético Grau 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: ADT=europe, Atlético Grau=europe. Απουσίες: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.699. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Καταγράφεται μεγάλη εσωτερική μετακίνηση για την εκτός έδρας ομάδα.",
+    "en": "ADT vs Atlético Grau: contextual analysis using historical and available data. ADT: 0-2-3 across the last 5. Atlético Grau: 1-2-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13007 available match records. Across the last 5 head-to-head meetings: ADT 2 wins, draws 1, Atlético Grau 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: ADT=europe, Atlético Grau=europe. Absences: ADT=none, Atlético Grau=none. Lineup context: ADT=fatigue:low, rotation:low, strength:strong; Atlético Grau=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.699. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. A long domestic trip is recorded for the away side.",
     "teamNews": {
       "status": "usable",
       "source": "local-team-news",
@@ -1172,11 +1392,12 @@
     }
   },
   "valueSummary": {
-    "count": 0,
-    "topMarket": null,
-    "topPick": null,
-    "topScore": null,
-    "avgConfidence": 0
+    "count": 1,
+    "topMarket": "1X2",
+    "topPick": "AWAY",
+    "topScore": 0.6990000000000001,
+    "avgConfidence": 0.716,
+    "confidence": 0.75
   },
   "sourceAudit": {
     "status": "partial",
@@ -1190,14 +1411,14 @@
       "local-standings",
       "local-team-news",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-value",
+      "local-team-geo"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
-      "expected_lineups_reliability",
-      "value_snapshot",
-      "travel_context"
+      "expected_lineups_reliability"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1391,7 +1612,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1399,7 +1620,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-0",
         "source": "espn",
         "sources": [
           "espn"
@@ -1407,14 +1628,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

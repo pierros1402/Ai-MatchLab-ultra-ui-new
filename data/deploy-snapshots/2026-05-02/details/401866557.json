@@ -1,7 +1,7 @@
 {
   "matchId": "401866557",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:32:25.017Z",
+  "generatedAt": "2026-05-03T03:52:23.213Z",
   "basic": {
     "matchId": "401866557",
     "leagueSlug": "gre.1",
@@ -10,11 +10,11 @@
     "homeTeam": "Panserraikos FC",
     "awayTeam": "Larissa FC",
     "kickoffUtc": "2026-05-02T14:30:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
+    "scoreAway": 1,
     "venue": "Serres Stadium"
   },
   "context": {
@@ -132,13 +132,14 @@
       "pick": "Over 1.5",
       "score": 0.825,
       "band": "HIGH",
-      "confidence": 0.634,
+      "confidence": 0.649,
       "signals": [
         "home_edge",
         "over25_support",
         "btts_support",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -241,15 +242,54 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
+        "contextAdjusted": true,
         "contextDelta": 0,
-        "contextReasons": [],
+        "contextReasons": [
+          {
+            "code": "home_motivation_boost",
+            "impact": 0.03,
+            "note": "Home stake: promotion"
+          },
+          {
+            "code": "away_motivation_boost",
+            "impact": 0.03,
+            "note": "Away stake: promotion"
+          },
+          {
+            "code": "ai_h2h_away_edge",
+            "impact": 0.06,
+            "note": "AI detected away H2H edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
+          "importance": "low",
+          "stakes": {
+            "home": "promotion",
+            "away": "promotion",
+            "tags": []
+          },
           "pressure": []
-        }
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.74,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_home_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 8, away 5"
+          },
+          {
+            "code": "match_profile_h2h_away_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans away"
+          },
+          {
+            "code": "match_profile_h2h_underlean",
+            "impact": -0.0165,
+            "note": "MatchProfile H2H goal pattern leans under"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -277,15 +317,16 @@
       "market": "Over / Under 2.5",
       "marketName": "Over / Under 2.5",
       "pick": "Over 2.5",
-      "score": 0.6709999999999999,
+      "score": 0.6545,
       "band": "MEDIUM",
-      "confidence": 0.634,
+      "confidence": 0.649,
       "signals": [
         "home_edge",
         "over25_support",
         "btts_support",
         "late_season_pressure",
-        "close_strength_gap"
+        "close_strength_gap",
+        "match_profile_applied"
       ],
       "meta": {
         "model": "value-engine-v1",
@@ -388,15 +429,54 @@
           "applied": true,
           "version": "value-context-modifiers-v1.0"
         },
-        "contextAdjusted": false,
+        "contextAdjusted": true,
         "contextDelta": 0,
-        "contextReasons": [],
+        "contextReasons": [
+          {
+            "code": "home_motivation_boost",
+            "impact": 0.03,
+            "note": "Home stake: promotion"
+          },
+          {
+            "code": "away_motivation_boost",
+            "impact": 0.03,
+            "note": "Away stake: promotion"
+          },
+          {
+            "code": "ai_h2h_away_edge",
+            "impact": 0.06,
+            "note": "AI detected away H2H edge"
+          }
+        ],
         "aiContext": {
           "available": true,
-          "importance": "unknown",
-          "stakes": [],
+          "importance": "low",
+          "stakes": {
+            "home": "promotion",
+            "away": "promotion",
+            "tags": []
+          },
           "pressure": []
-        }
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.74,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_home_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 8, away 5"
+          },
+          {
+            "code": "match_profile_h2h_away_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans away"
+          },
+          {
+            "code": "match_profile_h2h_underlean",
+            "impact": -0.0165,
+            "note": "MatchProfile H2H goal pattern leans under"
+          }
+        ]
       },
       "context": {
         "season": "2025-2026",
@@ -418,6 +498,7 @@
   ],
   "analysis": {
     "codes": [
+      "final_match",
       "value_present"
     ],
     "summary": {
@@ -486,7 +567,7 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401866557\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":190.1,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"panserraikos_fc\",\"travelAwayKey\":\"larissa_fc\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.825},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401866557\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":190.1,\"travelImpact\":\"low\",\"travelProfile\":\"local_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"panserraikos_fc\",\"travelAwayKey\":\"larissa_fc\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"Over / Under 1.5\",\"pick\":\"Over 1.5\",\"score\":0.825},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
@@ -640,7 +721,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.634,
+        "confidence": 0.649,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -974,7 +1055,7 @@
           "topMarket": "Over / Under 1.5",
           "topPick": "Over 1.5",
           "topScore": 0.825,
-          "avgConfidence": 0.634
+          "avgConfidence": 0.649
         },
         "summary": [
           "Table: Panserraikos FC #9 vs Larissa FC #7.",
@@ -1152,7 +1233,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.825,
-      "avgConfidence": 0.634,
+      "avgConfidence": 0.649,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1364,7 +1445,7 @@
       "topMarket": "Over / Under 1.5",
       "topPick": "Over 1.5",
       "topScore": 0.825,
-      "avgConfidence": 0.634
+      "avgConfidence": 0.649
     },
     "reasoning": {
       "tempoProfile": {
@@ -1430,7 +1511,7 @@
     "topMarket": "Over / Under 1.5",
     "topPick": "Over 1.5",
     "topScore": 0.825,
-    "avgConfidence": 0.634,
+    "avgConfidence": 0.649,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1648,7 +1729,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1656,7 +1737,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1664,14 +1745,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1

@@ -1,7 +1,7 @@
 {
   "matchId": "401870108",
   "dayKey": "2026-05-02",
-  "generatedAt": "2026-05-01T21:32:19.881Z",
+  "generatedAt": "2026-05-03T03:52:20.482Z",
   "basic": {
     "matchId": "401870108",
     "leagueSlug": "cyp.1",
@@ -10,11 +10,11 @@
     "homeTeam": "Krasava",
     "awayTeam": "AEL",
     "kickoffUtc": "2026-05-02T14:00:00.000Z",
-    "status": "PRE",
-    "rawStatus": "STATUS_SCHEDULED",
-    "minute": "0'",
-    "scoreHome": 0,
-    "scoreAway": 0,
+    "status": "FT",
+    "rawStatus": "STATUS_FULL_TIME",
+    "minute": "FT",
+    "scoreHome": 1,
+    "scoreAway": 1,
     "venue": "Stadio Vitex Ammochostos Epistrofi"
   },
   "context": {
@@ -44,7 +44,7 @@
     "diagnostics": null,
     "sourceReliability": "usable",
     "travelImpact": "unknown",
-    "travelProfile": "unknown",
+    "travelProfile": "partial_geo",
     "crossBorder": null
   },
   "referee": {
@@ -103,29 +103,41 @@
     "status": "missing"
   },
   "travel": {
-    "status": "empty",
+    "status": "partial",
     "source": "local-team-geo",
-    "reason": "missing_home_and_away_geo",
-    "confidence": 0,
+    "reason": "missing_home_geo",
+    "confidence": 0.35,
     "distanceKm": null,
     "impact": "unknown",
     "sameCountry": null,
     "crossBorder": null,
-    "travelProfile": "unknown",
+    "travelProfile": "partial_geo",
     "home": null,
-    "away": null,
+    "away": {
+      "key": "ael",
+      "team": "AEL",
+      "venue": null,
+      "city": "Limassol",
+      "country": "Cyprus",
+      "latitude": 34.7071,
+      "longitude": 33.0226,
+      "source": "known_team_geo_seed_city_center_v2",
+      "updatedAt": "2026-05-03T03:49:04.302Z"
+    },
     "note": {
-      "code": "travel_geo_missing",
-      "el": "Δεν υπάρχουν ακόμη local geo records για τις ομάδες.",
-      "en": "No local geo records are available yet for the teams."
+      "code": "travel_geo_partial",
+      "el": "Υπάρχει μερικό local geo context, αλλά λείπουν συντεταγμένες για μία ομάδα.",
+      "en": "Partial local geo context exists, but one team is missing coordinates."
     }
   },
   "value": [],
   "analysis": {
-    "codes": [],
+    "codes": [
+      "final_match"
+    ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει διαθέσιμο team news context για τον αγώνα. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. Team news context is available for this match. Local travel context is not yet available in the snapshot."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει διαθέσιμο team news context για τον αγώνα. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
+      "en": "No value snapshot is available yet for this match. Team news context is available for this match. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
     }
   },
   "playerUsageIntel": {
@@ -189,7 +201,7 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"401870108\",\"dayKey\":\"2026-05-02\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"401870108\",\"dayKey\":\"2026-05-02\",\"status\":\"FT\",\"rawStatus\":\"STATUS_FULL_TIME\",\"minute\":\"FT\",\"scoreHome\":1,\"scoreAway\":1,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"ael\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
@@ -323,10 +335,10 @@
         "required": false,
         "priority": 40,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-team-geo",
+        "confidence": 0.35,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-team-geo"
@@ -641,8 +653,8 @@
           "confidence": 0.42
         },
         "travel": {
-          "status": "empty",
-          "confidence": 0
+          "status": "partial",
+          "confidence": 0.35
         },
         "value": {
           "count": 0,
@@ -657,7 +669,7 @@
           "H2H sample: 2 recent matches."
         ]
       },
-      "confidence": 0.74,
+      "confidence": 0.81,
       "readiness": {
         "history": true,
         "form": true,
@@ -665,7 +677,7 @@
         "standings": true,
         "teamNews": true,
         "lineup": true,
-        "travel": false,
+        "travel": true,
         "playerUsage": false,
         "value": true
       },
@@ -729,11 +741,34 @@
     },
     "travelContext": {
       "key": "travel_context",
-      "status": "empty",
-      "data": null,
-      "confidence": 0,
+      "status": "partial",
+      "data": {
+        "home": null,
+        "away": {
+          "key": "ael",
+          "team": "AEL",
+          "country": "Cyprus",
+          "city": "Limassol",
+          "venue": null,
+          "latitude": 34.7071,
+          "longitude": 33.0226,
+          "source": "known_team_geo_seed_city_center_v2",
+          "updatedAt": "2026-05-03T03:49:04.302Z"
+        },
+        "distanceKm": null,
+        "impact": "unknown",
+        "sameCountry": null,
+        "crossBorder": null,
+        "travelProfile": "unknown",
+        "note": {
+          "code": "travel_geo_missing_one_side",
+          "el": "Λείπουν τοπικά geo στοιχεία για μία από τις δύο ομάδες.",
+          "en": "Local geo data is missing for one of the two teams."
+        }
+      },
+      "confidence": 0.35,
       "source": "local-team-geo",
-      "reason": "missing_local_team_geo_evidence"
+      "reason": "missing_local_team_geo_one_side"
     },
     "expectedLineups": {
       "key": "expected_lineups",
@@ -1124,8 +1159,8 @@
     "missing": [
       "referee_profile",
       "expected_lineups_reliability",
-      "travel_context",
-      "value_snapshot"
+      "value_snapshot",
+      "travel_context"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1319,7 +1354,7 @@
     "decision": {
       "status": {
         "type": "consensus",
-        "chosen": "PRE",
+        "chosen": "FT",
         "source": "espn",
         "sources": [
           "espn"
@@ -1327,7 +1362,7 @@
       },
       "score": {
         "type": "consensus",
-        "chosen": "0-0",
+        "chosen": "1-1",
         "source": "espn",
         "sources": [
           "espn"
@@ -1335,14 +1370,14 @@
       },
       "minute": {
         "type": "consensus",
-        "chosen": null,
+        "chosen": "FT",
         "source": null,
         "sources": [
           "espn"
         ]
       }
     },
-    "confidence": 0.891,
+    "confidence": 0.971,
     "conflicts": [],
     "disagreement": false,
     "sources": 1
