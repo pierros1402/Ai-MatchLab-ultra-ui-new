@@ -10,26 +10,124 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+
+function normalizeTeamNewsNoteText(value) {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value || "").trim();
+  }
+
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return String(
+      value.note ||
+      value.reason ||
+      value.label ||
+      value.title ||
+      value.description ||
+      value.player ||
+      value.name ||
+      value.fullName ||
+      ""
+    ).trim();
+  }
+
+  return "";
+}
+
+function compactTeamNewsNoteText(value) {
+  return normalizeTeamNewsNoteText(value).toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+const TEAM_NEWS_BAD_NOTE_TERMS = new Set([
+  "knee",
+  "ankle",
+  "hamstring",
+  "hamstring injury",
+  "calf",
+  "thigh",
+  "groin",
+  "adductor",
+  "shoulder",
+  "back",
+  "head",
+  "foot",
+  "leg",
+  "lower leg",
+  "upper leg",
+  "lower body",
+  "upper body",
+  "sports hernia",
+  "muscle",
+  "injury",
+  "injured",
+  "illness",
+  "suspension",
+  "suspended",
+  "doubtful",
+  "questionable",
+  "out",
+  "unavailable",
+  "fitness",
+  "match fitness",
+  "knock",
+  "strain",
+  "sprain",
+  "acl",
+  "achilles",
+  "meniscus",
+  "hip",
+  "rib",
+  "ribs",
+  "concussion",
+  "personal reasons",
+  "not disclosed",
+  "undisclosed",
+  "day-to-day",
+  "medical",
+  "rehab",
+  "recovery"
+]);
+
+function isBadTeamNewsNote(value) {
+  const text = normalizeTeamNewsNoteText(value);
+  const lower = compactTeamNewsNoteText(text);
+
+  if (!text) return true;
+  if (lower.includes("[object object]")) return true;
+  if (TEAM_NEWS_BAD_NOTE_TERMS.has(lower)) return true;
+  if (lower.startsWith("http://") || lower.startsWith("https://") || lower.includes("www.")) return true;
+  if (lower.includes(" ir para o conteúdo principal ")) return true;
+  if (lower.includes(" ir para o menu principal ")) return true;
+  if (lower.includes(" espn futebol futebol ")) return true;
+  if (lower.includes(" nfl nfl nba ")) return true;
+  if (lower.includes(" disney plus ")) return true;
+  if (lower.includes(" podcasts ")) return true;
+
+  if (text.length > 240) return true;
+
+  if (/\b(placar final|menu principal|mais esportes|futebol futebol|busca vit|brasileiro serie)\b/i.test(text) && text.length > 80) {
+    return true;
+  }
+
+  if (lower.includes(":")) {
+    const parts = lower.split(":").map(v => v.trim()).filter(Boolean);
+    if (parts.length > 0 && parts.every(part => TEAM_NEWS_BAD_NOTE_TERMS.has(part))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 function dedupeNotes(items) {
   const out = [];
   const seen = new Set();
 
   for (const raw of asArray(items)) {
-    const text =
-      typeof raw === "string"
-        ? normalizeText(raw)
-        : normalizeText(
-            raw?.note ||
-            raw?.reason ||
-            raw?.label ||
-            raw?.description ||
-            raw?.player ||
-            raw?.name
-          );
+    const text = normalizeTeamNewsNoteText(raw);
+    if (isBadTeamNewsNote(text)) continue;
 
-    if (!text) continue;
-
-    const key = text.toLowerCase();
+    const key = compactTeamNewsNoteText(text);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(text);

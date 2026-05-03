@@ -376,15 +376,137 @@ function buildDetailsSignature(match, valuePicks, payload) {
   return JSON.stringify(signaturePayload);
 }
 
+
+function normalizeTeamNewsText(value) {
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value || "").trim();
+  }
+
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return String(
+      value.note ||
+      value.reason ||
+      value.label ||
+      value.title ||
+      value.description ||
+      value.player ||
+      value.name ||
+      value.fullName ||
+      ""
+    ).trim();
+  }
+
+  return "";
+}
+
+function compactTeamNewsText(value) {
+  return normalizeTeamNewsText(value).toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+const TEAM_NEWS_BAD_NOTE_TERMS = new Set([
+  "knee",
+  "ankle",
+  "hamstring",
+  "hamstring injury",
+  "calf",
+  "thigh",
+  "groin",
+  "adductor",
+  "shoulder",
+  "back",
+  "head",
+  "foot",
+  "leg",
+  "lower leg",
+  "upper leg",
+  "lower body",
+  "upper body",
+  "sports hernia",
+  "muscle",
+  "injury",
+  "injured",
+  "illness",
+  "suspension",
+  "suspended",
+  "doubtful",
+  "questionable",
+  "out",
+  "unavailable",
+  "fitness",
+  "match fitness",
+  "knock",
+  "strain",
+  "sprain",
+  "acl",
+  "achilles",
+  "meniscus",
+  "hip",
+  "rib",
+  "ribs",
+  "concussion",
+  "personal reasons",
+  "not disclosed",
+  "undisclosed",
+  "day-to-day",
+  "medical",
+  "rehab",
+  "recovery"
+]);
+
+function isBadTeamNewsNote(value) {
+  const text = normalizeTeamNewsText(value);
+  const lower = compactTeamNewsText(text);
+
+  if (!text) return true;
+  if (lower.includes("[object object]")) return true;
+  if (TEAM_NEWS_BAD_NOTE_TERMS.has(lower)) return true;
+  if (lower.startsWith("http://") || lower.startsWith("https://") || lower.includes("www.")) return true;
+  if (lower.includes(" ir para o conteúdo principal ")) return true;
+  if (lower.includes(" ir para o menu principal ")) return true;
+  if (lower.includes(" espn futebol futebol ")) return true;
+  if (lower.includes(" nfl nfl nba ")) return true;
+  if (lower.includes(" disney plus ")) return true;
+  if (lower.includes(" podcasts ")) return true;
+
+  if (text.length > 240) return true;
+
+  if (/\b(placar final|menu principal|mais esportes|futebol futebol|busca vit|brasileiro serie)\b/i.test(text) && text.length > 80) {
+    return true;
+  }
+
+  if (lower.includes(":")) {
+    const parts = lower.split(":").map(v => v.trim()).filter(Boolean);
+    if (parts.length > 0 && parts.every(part => TEAM_NEWS_BAD_NOTE_TERMS.has(part))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isBadTeamNewsPlayerName(value) {
+  const text = normalizeTeamNewsText(value);
+  const lower = compactTeamNewsText(text);
+
+  if (!text || text.length < 3) return true;
+  if (lower.includes("[object object]")) return true;
+  if (TEAM_NEWS_BAD_NOTE_TERMS.has(lower)) return true;
+  if (text.length > 55) return true;
+  if (/\b(official|coverage|published|fixture|comments|confirmed|reported|announced|ahead of|pre-match|post-match|club media|press conference|training update)\b/i.test(text)) return true;
+
+  return false;
+}
+
+
 function dedupeText(items = []) {
   const out = [];
   const seen = new Set();
 
   for (const raw of Array.isArray(items) ? items : []) {
-    const text = String(raw || "").trim();
-    if (!text) continue;
+    const text = normalizeTeamNewsText(raw);
+    if (isBadTeamNewsNote(text)) continue;
 
-    const key = text.toLowerCase();
+    const key = compactTeamNewsText(text);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(text);
@@ -393,29 +515,279 @@ function dedupeText(items = []) {
   return out;
 }
 
+
+function cleanDetailsTeamNewsText(value) {
+  return String(value || "").trim();
+}
+
+function compactDetailsTeamNewsText(value) {
+  return cleanDetailsTeamNewsText(value).toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+const DETAILS_TEAM_NEWS_REASON_TERMS = new Set([
+  "injury",
+  "suspension",
+  "suspended",
+  "illness",
+  "fitness",
+  "doubtful",
+  "questionable",
+  "lower back",
+  "lower body",
+  "upper body",
+  "broken foot",
+  "hamstring",
+  "knee",
+  "calf",
+  "groin",
+  "achilles",
+  "muscle",
+  "acl",
+  "adductor",
+  "ankle",
+  "thigh",
+  "knock",
+  "strain",
+  "sprain"
+]);
+
+function normalizeDetailsTeamNewsReason(value) {
+  const text = cleanDetailsTeamNewsText(value);
+  const lower = compactDetailsTeamNewsText(text);
+
+  if (!text) return "";
+
+  if (lower.includes("yellow-card accumulation")) return "suspension";
+  if (lower.includes("fifth yellow")) return "suspension";
+  if (lower.includes("serves a one-match suspension")) return "suspension";
+  if (lower.includes("is suspended")) return "suspension";
+
+  if (lower.includes("broken foot")) return "broken foot";
+  if (lower.includes("acl")) return "acl injury";
+  if (lower.includes("achilles")) return "achilles injury";
+  if (lower.includes("groin")) return "groin injury";
+  if (lower.includes("hamstring")) return "hamstring injury";
+  if (lower.includes("knee")) return "knee injury";
+  if (lower.includes("muscle")) return "muscle injury";
+  if (lower.includes("injury") || lower.includes("unavailable through injury") || lower.includes("sidelined")) return "injury";
+
+  if (DETAILS_TEAM_NEWS_REASON_TERMS.has(lower)) {
+    return lower === "suspended" ? "suspension" : lower;
+  }
+
+  return text;
+}
+
+function isBadDetailsTeamNewsPlayer(value) {
+  const text = cleanDetailsTeamNewsText(value);
+  const lower = compactDetailsTeamNewsText(text);
+
+  if (!text) return true;
+  if (text.length < 3) return true;
+  if (lower.includes("[object object]")) return true;
+  if (DETAILS_TEAM_NEWS_REASON_TERMS.has(lower)) return true;
+  if (lower.includes("certain absentee") && !lower.includes(":")) return true;
+
+  if (/\b(placar final|menu principal|futebol futebol|mais esportes|disney plus|podcasts|busca vit|resumo coment)\b/i.test(text)) {
+    return true;
+  }
+
+  if (/\b(shots on target|fouls committed|yellow cards|red cards|goals against)\b/i.test(text)) {
+    return true;
+  }
+
+  if (/\b(official|coverage|published|fixture|comments|confirmed|reported|announced|ahead of|pre-match|post-match|club media|press conference|training update)\b/i.test(text)) {
+    return true;
+  }
+
+  return false;
+}
+
+function normalizeDetailsTeamNewsAbsence(raw = {}) {
+  let player = "";
+  let reason = "";
+
+  if (typeof raw === "string") {
+    player = cleanDetailsTeamNewsText(raw);
+  } else if (raw && typeof raw === "object") {
+    player = cleanDetailsTeamNewsText(raw.player || raw.name || raw.fullName || raw.playerName);
+    reason = cleanDetailsTeamNewsText(raw.reason || raw.status || raw.description || raw.note);
+  }
+
+  if (!player) return null;
+
+  const suspendedMatch = player.match(/^(.+?)\s+is\s+suspended\.?$/i);
+  if (suspendedMatch) {
+    player = cleanDetailsTeamNewsText(suspendedMatch[1]);
+    reason = reason || "suspension";
+  }
+
+  if (player.includes(":")) {
+    const parts = player.split(":").map(v => cleanDetailsTeamNewsText(v)).filter(Boolean);
+
+    if (parts.length >= 2) {
+      player = parts[0];
+
+      const candidateReason = parts.slice(1).find(part => {
+        const lower = compactDetailsTeamNewsText(part);
+        return DETAILS_TEAM_NEWS_REASON_TERMS.has(lower) ||
+          lower.includes("injury") ||
+          lower.includes("suspension") ||
+          lower.includes("broken foot") ||
+          lower.includes("certain absentee");
+      });
+
+      if (candidateReason) {
+        reason = reason || normalizeDetailsTeamNewsReason(candidateReason);
+      }
+    }
+  }
+
+  reason = normalizeDetailsTeamNewsReason(reason);
+
+  if (isBadDetailsTeamNewsPlayer(player)) return null;
+
+  return {
+    player,
+    reason: reason || null,
+    importance:
+      raw && typeof raw === "object" && ["low", "medium", "high"].includes(compactDetailsTeamNewsText(raw.importance))
+        ? compactDetailsTeamNewsText(raw.importance)
+        : "medium"
+  };
+}
+
+function sanitizeDetailsTeamNewsAbsences(items = []) {
+  const byPlayer = new Map();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    const row = normalizeDetailsTeamNewsAbsence(raw);
+    if (!row) continue;
+
+    const playerKey = compactDetailsTeamNewsText(row.player);
+    const reasonKey = compactDetailsTeamNewsText(row.reason);
+
+    if (!playerKey) continue;
+
+    const existing = byPlayer.get(playerKey);
+
+    if (!existing) {
+      byPlayer.set(playerKey, row);
+      continue;
+    }
+
+    const existingHasReason = Boolean(compactDetailsTeamNewsText(existing.reason));
+    const rowHasReason = Boolean(reasonKey);
+
+    if (!existingHasReason && rowHasReason) {
+      byPlayer.set(playerKey, row);
+      continue;
+    }
+
+    if (existingHasReason && rowHasReason && compactDetailsTeamNewsText(existing.reason) !== reasonKey) {
+      const merged = {
+        ...existing,
+        reason: existing.reason
+      };
+
+      byPlayer.set(playerKey, merged);
+    }
+  }
+
+  return Array.from(byPlayer.values());
+}
+
+function sanitizeDetailsTeamNewsNotes(items = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    let text = cleanDetailsTeamNewsText(raw);
+    if (!text) continue;
+
+    const parts = text.split(":").map(v => cleanDetailsTeamNewsText(v)).filter(Boolean);
+
+    if (parts.length >= 2) {
+      const first = parts[0];
+      const rest = parts.slice(1).join(":").trim();
+
+      if (compactDetailsTeamNewsText(first) === compactDetailsTeamNewsText(rest)) {
+        text = first;
+      }
+    }
+
+    if (/\b(shots on target|fouls committed|yellow cards|red cards|goals against)\b/i.test(text)) {
+      continue;
+    }
+
+    const key = compactDetailsTeamNewsText(text);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+  }
+
+  return out;
+}
+
+function sanitizeDetailsTeamNewsSide(side = {}) {
+  if (!side || typeof side !== "object" || Array.isArray(side)) return side;
+
+  const absences = sanitizeDetailsTeamNewsAbsences(side.absences || []);
+  const impactScore = impactScoreFromAbsences(absences);
+  const impactLevel = impactLevelFromScore(impactScore);
+
+  return {
+    ...side,
+    absences,
+    impactScore,
+    impactLevel
+  };
+}
+
+function sanitizeDetailsTeamNewsPayload(payload) {
+  if (!payload || typeof payload !== "object") return payload;
+
+  const targets = [
+    payload.teamNews,
+    payload.researchedFacts?.teamNews
+  ];
+
+  for (const target of targets) {
+    if (!target || typeof target !== "object") continue;
+
+    if (target.data && typeof target.data === "object") {
+      if (Array.isArray(target.data.absences)) {
+        target.data.absences = sanitizeDetailsTeamNewsAbsences(target.data.absences);
+      }
+
+      if (Array.isArray(target.data.notes)) {
+        target.data.notes = sanitizeDetailsTeamNewsNotes(target.data.notes);
+      }
+
+      if (target.data.home) {
+        target.data.home = sanitizeDetailsTeamNewsSide(target.data.home);
+      }
+
+      if (target.data.away) {
+        target.data.away = sanitizeDetailsTeamNewsSide(target.data.away);
+      }
+    }
+  }
+
+  return payload;
+}
+
+
 function parseAbsencesFromNotes(notes = []) {
   const absences = [];
 
   for (const raw of Array.isArray(notes) ? notes : []) {
-    const text = String(raw || "").trim();
-    if (!text) continue;
-
-    const m = text.match(/^([^:]+):\s*(.+)$/);
-    if (!m) continue;
-
-    const player = String(m[1] || "").trim();
-    const reason = String(m[2] || "").trim();
-
-    if (!player && !reason) continue;
-
-    absences.push({
-      player: player || null,
-      reason: reason || "unknown",
-      importance: "high"
-    });
+    const row = normalizeDetailsTeamNewsAbsence(raw);
+    if (!row) continue;
+    absences.push(row);
   }
 
-  return absences;
+  return sanitizeDetailsTeamNewsAbsences(absences);
 }
 
 function impactScoreFromAbsences(absences = []) {
@@ -1207,6 +1579,10 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
     sourceIntelligence: buildSourceIntelligence(match)
   };
 
+  sanitizeDetailsTeamNewsPayload(payload);
+
+  
+
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);
 
   if (!rebuild && existing?.meta?.signature === nextSignature) {
@@ -1331,6 +1707,10 @@ for (const match of rows) {
 
     sourceIntelligence: buildSourceIntelligence(match)
   };
+
+  sanitizeDetailsTeamNewsPayload(payload);
+
+  
 
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);
 
