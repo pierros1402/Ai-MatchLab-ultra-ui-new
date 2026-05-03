@@ -147,6 +147,14 @@ function summarizeDetail(detail) {
   };
 }
 
+function emptyDir(dir) {
+  if (!fs.existsSync(dir)) return;
+
+  for (const entry of fs.readdirSync(dir)) {
+    fs.rmSync(path.join(dir, entry), { recursive: true, force: true });
+  }
+}
+
 function copyDetails(dayKey, snapshotDetailsDir) {
   const files = detailFilesForDay(dayKey);
   const summaries = [];
@@ -154,6 +162,7 @@ function copyDetails(dayKey, snapshotDetailsDir) {
   let largest = { file: null, bytes: 0, mb: 0 };
 
   ensureDir(snapshotDetailsDir);
+  emptyDir(snapshotDetailsDir);
 
   for (const src of files) {
     const detail = readJsonSafe(src, null);
