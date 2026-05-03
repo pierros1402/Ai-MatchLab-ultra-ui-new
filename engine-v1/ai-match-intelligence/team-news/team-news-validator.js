@@ -8,9 +8,124 @@ function cleanText(value) {
   return String(value || "").trim();
 }
 
+function extractTeamNewsPlayerName(item = {}) {
+  const raw =
+    item?.player ??
+    item?.name ??
+    item?.fullName ??
+    item?.playerName;
+
+  if (typeof raw === "string" || typeof raw === "number") {
+    return cleanText(raw);
+  }
+
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return cleanText(
+      raw.name ||
+      raw.fullName ||
+      raw.playerName ||
+      raw.displayName ||
+      raw.shortName
+    );
+  }
+
+  return "";
+}
+
+
 function isUrlLike(value) {
   const text = cleanText(value).toLowerCase();
   return text.startsWith("http://") || text.startsWith("https://") || text.includes("www.");
+}
+
+function looksLikeSentence(value) {
+  const text = cleanText(value);
+  if (!text) return false;
+  if (text.length > 55) return true;
+  if (/[.!?]$/.test(text) && text.split(/\s+/).length >= 6) return true;
+  if (/\b(official|coverage|published|fixture|comments|confirmed|reported|announced|ahead of|pre-match|post-match|club media|press conference|training update)\b/i.test(text) && text.split(/\s+/).length >= 5) return true;
+  return false;
+}
+
+
+function isGenericTeamNewsInjuryTerm(value) {
+  const lower = String(value || "").trim().toLowerCase();
+
+  if (!lower) return false;
+
+  const genericInjuryTerms = new Set([
+    "knee",
+    "ankle",
+    "hamstring",
+    "calf",
+    "thigh",
+    "groin",
+    "shoulder",
+    "back",
+    "head",
+    "foot",
+    "leg",
+    "muscle",
+    "injury",
+    "injured",
+    "illness",
+    "suspension",
+    "suspended",
+    "doubtful",
+    "questionable",
+    "out",
+    "unavailable",
+    "fitness",
+    "match fitness",
+    "knock",
+    "strain",
+    "sprain",
+    "minor injury",
+    "long-term injury",
+    "adductor",
+    "lower leg",
+    "upper leg",
+    "acl",
+    "achilles",
+    "meniscus",
+    "hip",
+    "rib",
+    "ribs",
+    "concussion",
+    "ill",
+    "illness",
+    "personal reasons",
+    "not disclosed",
+    "undisclosed",
+    "day-to-day",
+    "fitness issue",
+    "medical",
+    "rehab",
+    "recovery",
+    "upper body injury",
+    "lower body injury",
+    "body injury",
+    "upper-body",
+    "lower-body",
+    "upper body",
+    "lower body",
+    "hamstring injury",
+    "sports hernia"
+  ]);
+
+  if (genericInjuryTerms.has(lower)) return true;
+
+  const compact = lower.replace(/\s+/g, " ").trim();
+  if (genericInjuryTerms.has(compact)) return true;
+
+  if (compact.includes(":")) {
+    const parts = compact.split(":").map(v => v.trim()).filter(Boolean);
+    if (parts.length > 0 && parts.every(part => genericInjuryTerms.has(part))) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function isBadPlayerName(value) {
@@ -19,13 +134,67 @@ function isBadPlayerName(value) {
 
   if (!text || text.length < 3) return true;
   if (isUrlLike(text)) return true;
-  if (lower === "evidence") return true;
-  if (lower.startsWith("evidence:")) return true;
-  if (lower === "source") return true;
-  if (lower === "sources") return true;
-  if (lower === "note") return true;
-  if (lower === "notes") return true;
+  if (looksLikeSentence(text)) return true;
   if (lower.includes("http")) return true;
+
+  const genericInjuryTerms = new Set([
+    "knee",
+    "ankle",
+    "hamstring",
+    "calf",
+    "thigh",
+    "groin",
+    "shoulder",
+    "back",
+    "head",
+    "foot",
+    "leg",
+    "muscle",
+    "injury",
+    "injured",
+    "illness",
+    "suspension",
+    "suspended",
+    "doubtful",
+    "questionable",
+    "out",
+    "unavailable",
+    "fitness",
+    "match fitness",
+    "knock",
+    "strain",
+    "sprain",
+    "minor injury",
+    "long-term injury"
+  ]);
+
+  if (lower.includes("[object object]")) return true;
+  if (isGenericTeamNewsInjuryTerm(lower)) return true;
+  if (genericInjuryTerms.has(lower)) return true;
+
+
+  const blocked = new Set([
+    "evidence",
+    "source",
+    "sources",
+    "note",
+    "notes",
+    "team news",
+    "injury update",
+    "suspension",
+    "suspended",
+    "injured",
+    "unavailable",
+    "doubtful",
+    "unknown",
+    "confirmed",
+    "reported"
+  ]);
+
+  if (blocked.has(lower)) return true;
+  if (lower.startsWith("evidence:")) return true;
+  if (lower.startsWith("source:")) return true;
+  if (lower.startsWith("note:")) return true;
 
   return false;
 }
@@ -39,28 +208,56 @@ function normalizeImportance(value) {
 function normalizeAbsence(item) {
   if (!item || typeof item !== "object") return null;
 
-  const player =
-    cleanText(item.player) ||
-    cleanText(item.name) ||
-    cleanText(item.playerName);
+  const player = extractTeamNewsPlayerName(item);
 
   if (isBadPlayerName(player)) return null;
 
-  const reason = cleanText(item.reason || item.note || item.description);
+  const rawReason = cleanText(item.reason || item.note || item.description || item.status);
+  const reason =
+    rawReason &&
+    !isUrlLike(rawReason) &&
+    rawReason.toLowerCase() !== player.toLowerCase()
+      ? rawReason
+      : null;
 
   return {
     player,
-    reason: reason && !isUrlLike(reason) ? reason : null,
+    reason,
     importance: normalizeImportance(item.importance)
   };
+}
+
+function dedupeAbsences(items = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const raw of Array.isArray(items) ? items : []) {
+    const item = normalizeAbsence(raw);
+    if (!item) continue;
+
+    const key = [
+      cleanText(item.player).toLowerCase(),
+      cleanText(item.reason).toLowerCase(),
+      cleanText(item.importance).toLowerCase()
+    ].join("__");
+
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+
+  return out;
 }
 
 export function validateCanonicalTeamNewsPayload(payload = {}) {
   const homeRaw = asArray(payload?.data?.home?.absences);
   const awayRaw = asArray(payload?.data?.away?.absences);
 
-  const home = homeRaw.map(normalizeAbsence).filter(Boolean);
-  const away = awayRaw.map(normalizeAbsence).filter(Boolean);
+  const home = dedupeAbsences(homeRaw);
+  const away = dedupeAbsences(awayRaw);
+
+  const rejectedHomeAbsences = homeRaw.length - home.length;
+  const rejectedAwayAbsences = awayRaw.length - away.length;
 
   return {
     ok: true,
@@ -76,7 +273,15 @@ export function validateCanonicalTeamNewsPayload(payload = {}) {
       rawHomeAbsences: homeRaw.length,
       rawAwayAbsences: awayRaw.length,
       cleanHomeAbsences: home.length,
-      cleanAwayAbsences: away.length
+      cleanAwayAbsences: away.length,
+      rejectedHomeAbsences,
+      rejectedAwayAbsences,
+      strictAbsenceGuard: true
     }
   };
 }
+
+export {
+  isBadPlayerName,
+  normalizeAbsence
+};
