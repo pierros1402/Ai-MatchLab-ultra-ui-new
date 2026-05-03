@@ -49,10 +49,16 @@ function classifyRow(row) {
     };
   }
 
-  if (validationOk && quality === "partial" && coordsOk) {
+  if (
+    validationOk &&
+    coordsOk &&
+    (quality === "partial" || quality === "location_fallback")
+  ) {
     return {
       bucket: "safe_partial",
-      reason: "validation_partial_with_coordinates"
+      reason: quality === "location_fallback"
+        ? "validation_location_fallback_with_coordinates"
+        : "validation_partial_with_coordinates"
     };
   }
 
