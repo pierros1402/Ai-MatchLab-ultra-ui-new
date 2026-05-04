@@ -18,6 +18,7 @@ import { runPlayerUsageAiExecutorDay } from "./run-player-usage-ai-executor-day.
 import { runPlayerUsageResearchTasksDay } from "./run-player-usage-research-tasks-day.js";
 import { importPlayerUsageManualResultsDay } from "./import-player-usage-manual-results-day.js";
 import { applyTeamGeoSeedsDay } from "./apply-team-geo-seeds-day.js";
+import { buildTeamGeoDay } from "./build-team-geo-day.js";
 import { buildTeamNewsWorksetDay } from "./build-team-news-workset-day.js";
 import { buildTeamNewsResearchTasksDay } from "./build-team-news-research-tasks-day.js";
 import { runTeamNewsResearchTasksDay } from "./run-team-news-research-tasks-day.js";
@@ -120,6 +121,7 @@ export async function runDailyCycle(options = {}) {
   console.log("[daily-cycle] monitor:done", monitor);
 
   let teamGeoSeeds = null;
+  let teamGeoBuild = null;
   let playerUsageWorkset = null;
   let playerUsageManualValidation = null;
   let playerUsageSeeds = null;
@@ -169,6 +171,20 @@ export async function runDailyCycle(options = {}) {
     beforeCoveragePct: teamGeoSeeds?.before?.coveragePct ?? 0,
     afterCoveragePct: teamGeoSeeds?.after?.coveragePct ?? 0,
     afterMissingCount: teamGeoSeeds?.after?.missingCount ?? 0
+  });
+
+  console.log("[daily-cycle] team-geo-build:start", { dayKey });
+
+  teamGeoBuild = await buildTeamGeoDay(dayKey);
+
+  console.log("[daily-cycle] team-geo-build:done", {
+    ok: teamGeoBuild?.ok,
+    dayKey: teamGeoBuild?.dayKey,
+    totalTeams: teamGeoBuild?.totalTeams ?? 0,
+    existingCount: teamGeoBuild?.existingCount ?? 0,
+    missingCount: teamGeoBuild?.missingCount ?? 0,
+    coveragePct: teamGeoBuild?.coveragePct ?? 0,
+    file: teamGeoBuild?.file || null
   });
 
   console.log("[daily-cycle] details-build:start", {
@@ -495,6 +511,7 @@ export async function runDailyCycle(options = {}) {
     monitor,
     standingsBuild,
     teamGeoSeeds,
+    teamGeoBuild,
     detailsBuild,
     playerUsageWorkset,
     playerUsageManualValidation,
@@ -540,6 +557,8 @@ if (entryUrl === import.meta.url) {
       ms: result?.ms,
       teamGeoAppliedCount: result?.teamGeoSeeds?.appliedCount ?? 0,
       teamGeoMissingCount: result?.teamGeoSeeds?.after?.missingCount ?? 0,
+      teamGeoExistingCount: result?.teamGeoBuild?.existingCount ?? 0,
+      teamGeoCoveragePct: result?.teamGeoBuild?.coveragePct ?? 0,
       playerUsageManualAcceptedCount: result?.playerUsageManualValidation?.acceptedCount ?? 0,
       playerUsageManualRejectedCount: result?.playerUsageManualValidation?.rejectedCount ?? 0,
       playerUsageSeedWriteCount: result?.playerUsageSeeds?.canonicalWriteCount ?? 0,
