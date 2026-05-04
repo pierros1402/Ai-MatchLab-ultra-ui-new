@@ -22,7 +22,88 @@ function cleanName(value) {
   if (/www\./i.test(name)) return null;
   if (name.length < 3) return null;
 
+  if (norm.includes("object object")) return null;
+
+  const reasonOnlyTerms = new Set([
+    "injury",
+    "suspension",
+    "suspended",
+    "illness",
+    "fitness",
+    "doubtful",
+    "questionable",
+    "lower back",
+    "lower body",
+    "upper body",
+    "broken foot",
+    "hamstring",
+    "knee",
+    "calf",
+    "groin",
+    "achilles",
+    "muscle",
+    "acl",
+    "adductor",
+    "ankle",
+    "thigh",
+    "knock",
+    "strain",
+    "sprain"
+  ]);
+
+  if (reasonOnlyTerms.has(norm)) return null;
+
+  if (/\b(official|coverage|published|fixture|comments|confirmed|reported|announced|ahead of|pre-match|post-match|club media|press conference|training update)\b/i.test(name)) {
+    return null;
+  }
+
   return name;
+}
+
+function normalizeConfirmedAbsenceShape(rawName, rawReason = "") {
+  let name = String(rawName || "").trim();
+  let reason = String(rawReason || "").trim();
+
+  if (!name) return null;
+
+  const suspendedMatch = name.match(/^(.+?)\s+is\s+suspended\.?$/i);
+  if (suspendedMatch) {
+    name = suspendedMatch[1].trim();
+    reason = reason || "suspension";
+  }
+
+  if (name.includes(":")) {
+    const parts = name.split(":").map(v => String(v || "").trim()).filter(Boolean);
+
+    if (parts.length >= 2) {
+      const first = parts[0];
+      const secondNorm = normalizeName(parts[1]);
+
+      if (
+        secondNorm === "injury" ||
+        secondNorm === "suspension" ||
+        secondNorm === "suspended" ||
+        secondNorm === "illness" ||
+        secondNorm === "fitness" ||
+        secondNorm === "doubtful" ||
+        secondNorm === "questionable" ||
+        secondNorm.includes("injury")
+      ) {
+        name = first;
+        reason = reason || (secondNorm === "suspended" ? "suspension" : parts[1]);
+      } else {
+        return null;
+      }
+    }
+  }
+
+  const clean = cleanName(name);
+  if (!clean) return null;
+
+  return {
+    name: clean,
+    reason: reason || "confirmed_absence"
+  };
 }
 
 function toFiniteNumber(value, fallback = 0) {
@@ -44,22 +125,30 @@ function extractConfirmedAbsences(teamNews = {}) {
     if (!Array.isArray(src)) continue;
 
     for (const row of src) {
-      const rawName =
-        row?.player ||
-        row?.name ||
-        row?.playerName ||
-        row?.displayName;
+      let rawName = "";
+      let rawReason = "";
 
-      const name = cleanName(rawName);
-      if (!name) continue;
+      if (typeof row === "string" || typeof row === "number") {
+        rawName = String(row || "").trim();
+      } else if (row && typeof row === "object") {
+        rawName =
+          row?.player ||
+          row?.name ||
+          row?.playerName ||
+          row?.displayName ||
+          "";
 
-      const reason = String(row?.reason || row?.type || row?.status || "confirmed_absence").trim();
+        rawReason = row?.reason || row?.type || row?.status || "";
+      }
+
+      const shaped = normalizeConfirmedAbsenceShape(rawName, rawReason);
+      if (!shaped) continue;
 
       list.push({
-        name,
-        norm: normalizeName(name),
-        reason: reason || "confirmed_absence",
-        source: row?.source || null
+        name: shaped.name,
+        norm: normalizeName(shaped.name),
+        reason: shaped.reason || "confirmed_absence",
+        source: row && typeof row === "object" ? row?.source || null : null
       });
     }
   }
@@ -67,7 +156,20 @@ function extractConfirmedAbsences(teamNews = {}) {
   const byName = new Map();
   for (const row of list) {
     if (!row.norm) continue;
-    if (!byName.has(row.norm)) byName.set(row.norm, row);
+
+    const existing = byName.get(row.norm);
+    if (!existing) {
+      byName.set(row.norm, row);
+      continue;
+    }
+
+    if (
+      existing.reason === "confirmed_absence" &&
+      row.reason &&
+      row.reason !== "confirmed_absence"
+    ) {
+      byName.set(row.norm, row);
+    }
   }
 
   return Array.from(byName.values()).map(({ norm, ...row }) => row);
@@ -113,7 +215,11 @@ export function inferAbsencesFromUsage({
   const confidence = toFiniteNumber(playerUsage?.confidence, 0);
   const usageStatus = buildUsageStatus({ playerUsage, sampleMatches, confidence });
 
-  const confirmedAbsences = extractConfirmedAbsences(teamNews || {});
+  const confirmedAbsences =
+    usageStatus.status === "unavailable"
+      ? []
+      : extractConfirmedAbsences(teamNews || {});
+
   const expectedSet = new Set(expectedStarters.map(normalizeName).filter(Boolean));
 
   // Strict rule: do not invent absences from player usage alone.
