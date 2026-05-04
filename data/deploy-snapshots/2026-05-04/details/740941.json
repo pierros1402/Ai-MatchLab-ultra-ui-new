@@ -1,7 +1,7 @@
 {
   "matchId": "740941",
   "dayKey": "2026-05-04",
-  "generatedAt": "2026-05-04T04:40:14.121Z",
+  "generatedAt": "2026-05-04T07:49:50.809Z",
   "basic": {
     "matchId": "740941",
     "leagueSlug": "eng.1",
@@ -12,7 +12,7 @@
     "kickoffUtc": "2026-05-04T19:00:00.000Z",
     "status": "PRE",
     "rawStatus": "STATUS_SCHEDULED",
-    "minute": null,
+    "minute": "0'",
     "scoreHome": 0,
     "scoreAway": 0,
     "venue": "Hill Dickinson Stadium"
@@ -21,28 +21,32 @@
     "status": "ready",
     "confidence": 0.86,
     "competitionType": "league",
-    "importance": "medium",
+    "importance": "high",
     "positions": {
       "home": 9,
       "away": 2,
       "pointsHome": 47,
       "pointsAway": 70,
-      "matchesLeft": 3,
+      "matchesLeft": 4,
       "totalTeams": 20
     },
     "stakes": {
       "home": "promotion",
-      "away": "europe",
+      "away": "title",
       "tags": [
+        "title_race",
         "europe_race",
         "playoff_race"
       ]
     },
     "pressure": [
+      "must_win",
       "protect_position",
       "chasing_cutoff"
     ],
-    "notes": [],
+    "notes": [
+      "Late-season title race pressure"
+    ],
     "diagnostics": null,
     "sourceReliability": "usable",
     "travelImpact": "unknown",
@@ -70,54 +74,11 @@
     }
   },
   "teamNews": {
-    "status": "ok",
-    "source": "team-news-research-bridge",
-    "confidence": 0.74,
-    "data": {
-      "home": {
-        "absences": [],
-        "impactScore": 0,
-        "impactLevel": "none",
-        "source": "team-news-research-bridge",
-        "updatedAt": null
-      },
-      "away": {
-        "absences": [
-          {
-            "player": "Rodri",
-            "reason": null,
-            "importance": "medium"
-          },
-          {
-            "player": "Ruben Dias",
-            "reason": null,
-            "importance": "medium"
-          },
-          {
-            "player": "groin issue - not ready for Burnley",
-            "reason": null,
-            "importance": "medium"
-          },
-          {
-            "player": "not yet ready for Burnley",
-            "reason": null,
-            "importance": "medium"
-          }
-        ],
-        "impactScore": 1,
-        "impactLevel": "severe",
-        "source": "team-news-research-bridge",
-        "updatedAt": null
-      },
-      "notes": [
-        "Pep Guardiola provided the update on 21 Apr before the Burnley match.",
-        "Rodri: groin issue - not ready for Burnley",
-        "Ruben Dias: not yet ready for Burnley",
-        "groin issue - not ready for Burnley",
-        "not yet ready for Burnley"
-      ]
-    },
-    "reason": null
+    "status": "empty",
+    "source": "local-team-news",
+    "confidence": 0,
+    "data": null,
+    "reason": "missing_local_team_news_evidence"
   },
   "lineups": {
     "home": {
@@ -169,13 +130,14 @@
       "market": "1X2",
       "marketName": "1X2",
       "pick": "AWAY",
-      "score": 0.7270000000000001,
-      "band": "MEDIUM",
-      "confidence": 0.841,
+      "score": 0.8260000000000002,
+      "band": "HIGH",
+      "confidence": 0.911,
       "signals": [
         "away_edge",
         "priors_applied",
-        "ai_context_medium_importance",
+        "ai_context_high_importance",
+        "must_result_pressure",
         "late_season_pressure",
         "close_strength_gap",
         "match_profile_applied"
@@ -208,9 +170,9 @@
         "expectedAwayGoals": 1.944,
         "expectedTotalGoals": 2.886,
         "homeStrength": 0.3,
-        "awayStrength": 0.624,
+        "awayStrength": 0.623,
         "homeEdge": 0.195,
-        "awayPenalty": 0.144,
+        "awayPenalty": 0.142,
         "recency": {
           "homeOverall": {
             "sample": 6,
@@ -282,7 +244,7 @@
           "version": "value-context-modifiers-v1.0"
         },
         "contextAdjusted": true,
-        "contextDelta": -0.03,
+        "contextDelta": 0.04,
         "contextReasons": [
           {
             "code": "form_away_stronger",
@@ -290,24 +252,19 @@
             "note": "Away team has significantly stronger form"
           },
           {
+            "code": "competition_high_stakes",
+            "impact": 0.04,
+            "note": "High-stakes league context"
+          },
+          {
             "code": "home_motivation_boost",
             "impact": 0.03,
             "note": "Home stake: promotion"
           },
           {
-            "code": "away_absence_impact",
-            "impact": 0.12,
-            "note": "Away absences reduce away edge"
-          },
-          {
-            "code": "absence_uncertainty",
-            "impact": -0.03,
-            "note": "Absences increase variance"
-          },
-          {
-            "code": "away_lineup_reduced",
-            "impact": 0.05,
-            "note": "Away projected lineup strength reduced"
+            "code": "away_motivation_boost",
+            "impact": 0.03,
+            "note": "Away stake: title"
           },
           {
             "code": "ai_h2h_away_edge",
@@ -322,22 +279,24 @@
         ],
         "aiContext": {
           "available": true,
-          "importance": "medium",
+          "importance": "high",
           "stakes": {
             "home": "promotion",
-            "away": "europe",
+            "away": "title",
             "tags": [
+              "title_race",
               "europe_race",
               "playoff_race"
             ]
           },
           "pressure": [
+            "must_win",
             "protect_position",
             "chasing_cutoff"
           ]
         },
         "matchProfileApplied": true,
-        "matchProfileConfidence": 0.81,
+        "matchProfileConfidence": 0.74,
         "matchProfileReasons": [
           {
             "code": "match_profile_away_form_edge",
@@ -387,13 +346,14 @@
       "market": "Over / Under 1.5",
       "marketName": "Over / Under 1.5",
       "pick": "Over 1.5",
-      "score": 0.717,
+      "score": 0.71,
       "band": "MEDIUM",
-      "confidence": 0.841,
+      "confidence": 0.911,
       "signals": [
         "away_edge",
         "priors_applied",
-        "ai_context_medium_importance",
+        "ai_context_high_importance",
+        "must_result_pressure",
         "late_season_pressure",
         "close_strength_gap",
         "match_profile_applied"
@@ -426,9 +386,9 @@
         "expectedAwayGoals": 1.944,
         "expectedTotalGoals": 2.886,
         "homeStrength": 0.3,
-        "awayStrength": 0.624,
+        "awayStrength": 0.623,
         "homeEdge": 0.195,
-        "awayPenalty": 0.144,
+        "awayPenalty": 0.142,
         "recency": {
           "homeOverall": {
             "sample": 6,
@@ -500,7 +460,7 @@
           "version": "value-context-modifiers-v1.0"
         },
         "contextAdjusted": true,
-        "contextDelta": -0.03,
+        "contextDelta": 0.04,
         "contextReasons": [
           {
             "code": "form_away_stronger",
@@ -508,24 +468,19 @@
             "note": "Away team has significantly stronger form"
           },
           {
+            "code": "competition_high_stakes",
+            "impact": 0.04,
+            "note": "High-stakes league context"
+          },
+          {
             "code": "home_motivation_boost",
             "impact": 0.03,
             "note": "Home stake: promotion"
           },
           {
-            "code": "away_absence_impact",
-            "impact": 0.12,
-            "note": "Away absences reduce away edge"
-          },
-          {
-            "code": "absence_uncertainty",
-            "impact": -0.03,
-            "note": "Absences increase variance"
-          },
-          {
-            "code": "away_lineup_reduced",
-            "impact": 0.05,
-            "note": "Away projected lineup strength reduced"
+            "code": "away_motivation_boost",
+            "impact": 0.03,
+            "note": "Away stake: title"
           },
           {
             "code": "ai_h2h_away_edge",
@@ -540,22 +495,24 @@
         ],
         "aiContext": {
           "available": true,
-          "importance": "medium",
+          "importance": "high",
           "stakes": {
             "home": "promotion",
-            "away": "europe",
+            "away": "title",
             "tags": [
+              "title_race",
               "europe_race",
               "playoff_race"
             ]
           },
           "pressure": [
+            "must_win",
             "protect_position",
             "chasing_cutoff"
           ]
         },
         "matchProfileApplied": true,
-        "matchProfileConfidence": 0.81,
+        "matchProfileConfidence": 0.74,
         "matchProfileReasons": [
           {
             "code": "match_profile_away_form_edge",
@@ -600,11 +557,11 @@
   "analysis": {
     "codes": [
       "value_present",
-      "medium_competition_context"
+      "high_competition_context"
     ],
     "summary": {
-      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.727. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 4 συνολικές καταγεγραμμένες απουσίες. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
-      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.727. There is an indication of medium importance from the competition context. Team news context is available for this match with 4 recorded absences in total. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.826. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Υπάρχει μερικό local travel context, αλλά δεν επαρκεί ακόμη για πλήρη εκτίμηση απόστασης.",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.826. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Partial local travel context exists, but it is not yet sufficient for a full distance estimate."
     }
   },
   "playerUsageIntel": {
@@ -668,11 +625,11 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"740941\",\"dayKey\":\"2026-05-04\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":4,\"teamNewsNotes\":5,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"manchester_city\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.7270000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"740941\",\"dayKey\":\"2026-05-04\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"partial\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"partial_geo\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"manchester_city\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":2,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.8260000000000002},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
-      "teamNews": false,
+      "teamNews": true,
       "travelGeo": true
     }
   },
@@ -726,10 +683,10 @@
         "required": false,
         "priority": 75,
         "mode": "hybrid",
-        "state": "done",
-        "resolution": "remote",
+        "state": "pending",
+        "resolution": "unavailable",
         "provider": "team-news-research-bridge",
-        "confidence": 0.6,
+        "confidence": 0,
         "remoteFallbackRecommended": true,
         "preferredEvidence": [
           "local-team-news"
@@ -738,9 +695,9 @@
           "remote-team-news-research"
         ],
         "source": "team-news-research-bridge",
-        "remoteResolved": true,
-        "remoteStatus": "success",
-        "remoteReason": null
+        "remoteResolved": false,
+        "remoteStatus": "unavailable",
+        "remoteReason": "missing_team_news_evidence"
       },
       {
         "key": "expected_lineups",
@@ -750,9 +707,9 @@
         "priority": 72,
         "mode": "model_first",
         "state": "done",
-        "resolution": "deterministic_local",
+        "resolution": "limited_local",
         "provider": "local-lineup-model",
-        "confidence": 0.62,
+        "confidence": 0.42,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-lineup-model"
@@ -822,7 +779,7 @@
         "state": "done",
         "resolution": "deterministic_local",
         "provider": "local-value",
-        "confidence": 0.841,
+        "confidence": 0.911,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -852,23 +809,27 @@
           "away": 2,
           "pointsHome": 47,
           "pointsAway": 70,
-          "matchesLeft": 3,
+          "matchesLeft": 4,
           "totalTeams": 20
         },
         "stakes": {
           "home": "promotion",
-          "away": "europe",
+          "away": "title",
           "tags": [
+            "title_race",
             "europe_race",
             "playoff_race"
           ]
         },
         "pressure": [
+          "must_win",
           "protect_position",
           "chasing_cutoff"
         ],
-        "importance": "medium",
-        "notes": []
+        "importance": "high",
+        "notes": [
+          "Late-season title race pressure"
+        ]
       },
       "confidence": 0.86
     },
@@ -919,11 +880,11 @@
           "positions": "[circular]",
           "stakes": "[circular]",
           "pressure": "[circular]",
-          "importance": "medium",
+          "importance": "high",
           "confidence": 0.9,
           "source": "local-standings",
           "diagnostics": {
-            "standingsFile": "C:\\Ai-MatchLab-ULTRA-UI\\data\\standings\\eng.1.json",
+            "standingsFile": "/home/runner/work/Ai-MatchLab-ultra-ui-new/Ai-MatchLab-ultra-ui-new/data/standings/eng.1.json",
             "tableRows": 20,
             "foundHome": true,
             "foundAway": true
@@ -1018,9 +979,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12161,
+            "currentSeasonRows": 12121,
             "archiveRows": 1838,
-            "mergedRows": 13681
+            "mergedRows": 13641
           }
         },
         "h2hLast5": {
@@ -1136,21 +1097,21 @@
             },
             "away": {
               "status": "unavailable",
-              "confirmedAbsenceCount": 4,
+              "confirmedAbsenceCount": 0,
               "coreStarterCount": 0,
               "note": "No player-usage record available."
             }
           }
         },
         "teamNews": {
-          "status": "ready",
-          "reliability": "usable",
-          "confidence": 0.6
+          "status": "empty",
+          "reliability": "empty",
+          "confidence": 0
         },
         "lineup": {
-          "status": "ready",
-          "reliability": "usable",
-          "confidence": 0.62
+          "status": "partial",
+          "reliability": "limited",
+          "confidence": 0.42
         },
         "travel": {
           "status": "partial",
@@ -1160,8 +1121,8 @@
           "count": 2,
           "topMarket": "1X2",
           "topPick": "AWAY",
-          "topScore": 0.7270000000000001,
-          "avgConfidence": 0.841
+          "topScore": 0.8260000000000002,
+          "avgConfidence": 0.911
         },
         "summary": [
           "Table: Everton #9 vs Manchester City #2.",
@@ -1169,13 +1130,13 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.81,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
         "h2h": true,
         "standings": true,
-        "teamNews": true,
+        "teamNews": false,
         "lineup": true,
         "travel": true,
         "playerUsage": false,
@@ -1192,54 +1153,12 @@
       "reason": "missing_local_referee_evidence"
     },
     "teamNews": {
-      "status": "ok",
-      "source": "team-news-research-bridge",
-      "confidence": 0.74,
-      "data": {
-        "homeTeam": {
-          "notes": []
-        },
-        "awayTeam": {
-          "notes": [
-            "Pep Guardiola provided the update on 21 Apr before the Burnley match.",
-            "Rodri: groin issue - not ready for Burnley",
-            "Ruben Dias: not yet ready for Burnley",
-            "groin issue - not ready for Burnley",
-            "not yet ready for Burnley"
-          ]
-        },
-        "home": {
-          "absences": [],
-          "impactScore": 0,
-          "impactLevel": "none"
-        },
-        "away": {
-          "absences": [
-            {
-              "player": "Rodri",
-              "reason": null,
-              "importance": "medium"
-            },
-            {
-              "player": "Ruben Dias",
-              "reason": null,
-              "importance": "medium"
-            },
-            {
-              "player": "groin issue - not ready for Burnley",
-              "reason": null,
-              "importance": "medium"
-            },
-            {
-              "player": "not yet ready for Burnley",
-              "reason": null,
-              "importance": "medium"
-            }
-          ],
-          "impactScore": 1,
-          "impactLevel": "severe"
-        }
-      }
+      "key": "team_news",
+      "status": "empty",
+      "data": null,
+      "confidence": 0,
+      "source": "local-team-news",
+      "reason": "missing_local_team_news_evidence"
     },
     "travelContext": {
       "key": "travel_context",
@@ -1286,20 +1205,20 @@
           "restDays": 9,
           "fatigue": "low",
           "rotationRisk": "low",
-          "expectedStrength": "reduced"
+          "expectedStrength": "strong"
         },
-        "reliability": "usable"
+        "reliability": "limited"
       },
-      "confidence": 0.62,
+      "confidence": 0.42,
       "source": "local-lineup-model",
-      "reliability": "usable",
+      "reliability": "limited",
       "diagnostics": {
         "hasHomeRest": true,
         "hasAwayRest": true,
         "hasBothRest": true,
         "hasHomeAbsences": false,
-        "hasAwayAbsences": true,
-        "hasAnyAbsences": true
+        "hasAwayAbsences": false,
+        "hasAnyAbsences": false
       }
     },
     "formGuide": {
@@ -1373,8 +1292,8 @@
       "count": 2,
       "topMarket": "1X2",
       "topPick": "AWAY",
-      "topScore": 0.7270000000000001,
-      "avgConfidence": 0.841,
+      "topScore": 0.8260000000000002,
+      "avgConfidence": 0.911,
       "confidence": 0.75
     },
     "researchPlan": {
@@ -1551,11 +1470,11 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Everton - Manchester City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Everton: 1-1-3 στα τελευταία 5. Manchester City: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13681 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Everton 0 νίκες, ισοπαλίες 1, Manchester City 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Everton=promotion, Manchester City=europe. Απουσίες: Everton=none, Manchester City=severe. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:reduced. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.727. Υπάρχει διαθέσιμο team news context στο enriched…",
-      "en": "Everton vs Manchester City: contextual analysis using historical and available data. Everton: 1-1-3 across the last 5. Manchester City: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13681 available match records. Across the last 5 head-to-head meetings: Everton 0 wins, draws 1, Manchester City 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Everton=promotion, Manchester City=europe. Absences: Everton=none, Manchester City=severe. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:reduced. The strongest value market is 1X2 → AWAY with score 0.727. Team news context is available in…",
+      "el": "Everton - Manchester City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Everton: 1-1-3 στα τελευταία 5. Manchester City: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13641 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Everton 0 νίκες, ισοπαλίες 1, Manchester City 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Everton=promotion, Manchester City=title. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.826. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
+      "en": "Everton vs Manchester City: contextual analysis using historical and available data. Everton: 1-1-3 across the last 5. Manchester City: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13641 available match records. Across the last 5 head-to-head meetings: Everton 0 wins, draws 1, Manchester City 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Everton=promotion, Manchester City=title. This match is assessed as high importance. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.826. Limited lineup context is available with…",
       "teamNews": {
-        "status": "usable",
-        "source": "team-news-research-bridge",
+        "status": "empty",
+        "source": "local-team-news",
         "reliability": null,
         "evidenceCount": 0
       }
@@ -1569,14 +1488,13 @@
       "h2h_edge_away",
       "h2h_goal_pattern_under",
       "phase_regular",
+      "high_stakes_match",
+      "title_pressure",
       "promotion_race",
-      "team_news_available",
-      "away_team_weakened",
-      "away_lineup_strength_reduced",
       "value_support_present",
       "value_1x2_signal",
       "high_edge_market",
-      "lineup_context_available",
+      "lineup_context_limited",
       "competition_context_ready"
     ],
     "warnings": [
@@ -1586,8 +1504,8 @@
       "count": 2,
       "topMarket": "1X2",
       "topPick": "AWAY",
-      "topScore": 0.7270000000000001,
-      "avgConfidence": 0.841
+      "topScore": 0.8260000000000002,
+      "avgConfidence": 0.911
     },
     "reasoning": {
       "tempoProfile": {
@@ -1599,7 +1517,7 @@
         "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
-        "label": "regular_context",
+        "label": "high_stakes",
         "explanation": ""
       },
       "tacticalInteraction": {
@@ -1618,11 +1536,11 @@
       "historyUsed": true,
       "h2hUsed": true,
       "refereeUsed": false,
-      "lineupUsed": true,
+      "lineupUsed": false,
       "cacheHit": false,
-      "lineupLimited": false,
-      "lineupReliability": "usable",
-      "teamNewsUsed": true,
+      "lineupLimited": true,
+      "lineupReliability": "limited",
+      "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
@@ -1639,11 +1557,11 @@
     }
   },
   "aiSummary": {
-    "el": "Everton - Manchester City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Everton: 1-1-3 στα τελευταία 5. Manchester City: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13681 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Everton 0 νίκες, ισοπαλίες 1, Manchester City 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Everton=promotion, Manchester City=europe. Απουσίες: Everton=none, Manchester City=severe. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:reduced. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.727. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει διαθέσιμο lineup context στο enriched snapshot.",
-    "en": "Everton vs Manchester City: contextual analysis using historical and available data. Everton: 1-1-3 across the last 5. Manchester City: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13681 available match records. Across the last 5 head-to-head meetings: Everton 0 wins, draws 1, Manchester City 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Everton=promotion, Manchester City=europe. Absences: Everton=none, Manchester City=severe. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:reduced. The strongest value market is 1X2 → AWAY with score 0.727. Team news context is available in the enriched snapshot. Lineup context is available in the enriched snapshot.",
+    "el": "Everton - Manchester City: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Everton: 1-1-3 στα τελευταία 5. Manchester City: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13641 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Everton 0 νίκες, ισοπαλίες 1, Manchester City 4 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Everton=promotion, Manchester City=title. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.826. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
+    "en": "Everton vs Manchester City: contextual analysis using historical and available data. Everton: 1-1-3 across the last 5. Manchester City: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13641 available match records. Across the last 5 head-to-head meetings: Everton 0 wins, draws 1, Manchester City 4 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Everton=promotion, Manchester City=title. This match is assessed as high importance. Lineup context: Everton=fatigue:low, rotation:low, strength:strong; Manchester City=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.826. Limited lineup context is available with low completeness.",
     "teamNews": {
-      "status": "usable",
-      "source": "team-news-research-bridge",
+      "status": "empty",
+      "source": "local-team-news",
       "reliability": null,
       "evidenceCount": 0
     }
@@ -1652,8 +1570,8 @@
     "count": 2,
     "topMarket": "1X2",
     "topPick": "AWAY",
-    "topScore": 0.7270000000000001,
-    "avgConfidence": 0.841,
+    "topScore": 0.8260000000000002,
+    "avgConfidence": 0.911,
     "confidence": 0.75
   },
   "sourceAudit": {
@@ -1666,7 +1584,6 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
-      "local-team-news",
       "local-lineup-model",
       "local-history",
       "local-value"
@@ -1674,6 +1591,8 @@
     "conflicts": [],
     "missing": [
       "referee_profile",
+      "team_news",
+      "expected_lineups_reliability",
       "travel_context"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1735,25 +1654,14 @@
         "status": "available"
       },
       {
-        "kind": "team_news",
-        "key": "team_news",
-        "provider": "local-team-news",
-        "trustClass": "deterministic_local",
-        "confidence": 0.6,
-        "status": "available",
-        "meta": {
-          "reliability": "usable"
-        }
-      },
-      {
         "kind": "expected_lineups",
         "key": "expected_lineups",
         "provider": "local-lineup-model",
-        "trustClass": "model_local",
-        "confidence": 0.62,
-        "status": "available",
+        "trustClass": "limited_local",
+        "confidence": 0.42,
+        "status": "limited",
         "meta": {
-          "reliability": "usable"
+          "reliability": "limited"
         }
       },
       {
@@ -1764,7 +1672,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13681
+          "mergedRows": 13641
         }
       },
       {
@@ -1789,6 +1697,19 @@
         "meta": {
           "sampleSize": 5
         }
+      },
+      {
+        "kind": "value_snapshot_local",
+        "key": "value_snapshot_local",
+        "provider": "local-value",
+        "trustClass": "model_local",
+        "confidence": 0.72,
+        "status": "available",
+        "meta": {
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.8260000000000002
+        }
       }
     ],
     "cacheHit": false
@@ -1807,19 +1728,30 @@
       "side": null,
       "leagueSlug": null,
       "matchId": null
+    },
+    {
+      "capability": "team_news",
+      "status": null,
+      "reason": "missing_team_news_evidence",
+      "team": null,
+      "opponent": null,
+      "side": null,
+      "leagueSlug": null,
+      "matchId": null
     }
   ],
   "remoteTaskRouter": {
     "status": "pending",
-    "queueSize": 1,
+    "queueSize": 2,
     "queuedCapabilities": [
-      "referee_profile"
+      "referee_profile",
+      "team_news"
     ]
   },
   "remoteExecution": {
-    "status": "partial",
+    "status": "unavailable",
     "mode": null,
-    "queueSize": 1,
+    "queueSize": 2,
     "executedCount": 0,
     "queuedCount": 0,
     "successCount": 0,
@@ -1845,8 +1777,8 @@
       {
         "capability": "team_news",
         "provider": "team-news-research-bridge",
-        "status": "success",
-        "reason": null,
+        "status": "unavailable",
+        "reason": "missing_team_news_evidence",
         "team": null,
         "key": "team_news"
       }
