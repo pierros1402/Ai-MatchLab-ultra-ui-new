@@ -20,10 +20,36 @@ function looksLikeUrl(value) {
   return /^https?:\/\//i.test(normalizeText(value)) || /^www\./i.test(normalizeText(value));
 }
 
+function looksLikePlaceholderText(value) {
+  const text = normalizeText(value);
+  const lower = text.toLowerCase();
+
+  if (!text) return true;
+
+  if (
+    lower === "yyyy-mm-dd" ||
+    lower === "opponent name" ||
+    lower === "home_or_away" ||
+    lower === "team name here" ||
+    lower === "team_key_here" ||
+    lower.includes("verified player") ||
+    lower.includes("player one") ||
+    lower.includes("player two") ||
+    lower.includes("player three") ||
+    lower.includes("player four") ||
+    lower.includes("replace placeholders")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function looksLikeFakePlayerName(value) {
   const text = normalizeText(value);
   if (!text) return true;
   if (looksLikeUrl(text)) return true;
+  if (looksLikePlaceholderText(text)) return true;
 
   const lower = text.toLowerCase();
   const bannedExact = new Set([
@@ -117,6 +143,34 @@ function normalizeMatch(row, matchIndex, issues) {
     return null;
   }
 
+  const date = normalizeText(row.date || row.kickoffUtc);
+  const opponent = normalizeText(row.opponent);
+  const side = normalizeText(row.side).toLowerCase();
+
+  if (!date || looksLikePlaceholderText(date)) {
+    addIssue(issues, "invalid_match_date", "match date is missing or placeholder", {
+      matchIndex,
+      value: date || null
+    });
+    return null;
+  }
+
+  if (!opponent || looksLikePlaceholderText(opponent)) {
+    addIssue(issues, "invalid_match_opponent", "match opponent is missing or placeholder", {
+      matchIndex,
+      value: opponent || null
+    });
+    return null;
+  }
+
+  if (!["home", "away"].includes(side)) {
+    addIssue(issues, "invalid_match_side", "match side must be home or away", {
+      matchIndex,
+      value: row.side ?? null
+    });
+    return null;
+  }
+
   if (!Array.isArray(row.players)) {
     addIssue(issues, "missing_players_array", "match is missing players array", { matchIndex });
     return null;
@@ -131,13 +185,11 @@ function normalizeMatch(row, matchIndex, issues) {
     return null;
   }
 
-  const side = normalizeText(row.side).toLowerCase();
-
   return {
     matchId: normalizeText(row.matchId) || null,
-    date: normalizeText(row.date || row.kickoffUtc) || null,
-    opponent: normalizeText(row.opponent) || null,
-    side: side === "away" ? "away" : "home",
+    date,
+    opponent,
+    side,
     players
   };
 }
