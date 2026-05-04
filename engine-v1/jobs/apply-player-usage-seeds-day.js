@@ -1,4 +1,4 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
@@ -7,6 +7,8 @@ import {
   writePlayerUsageRecord
 } from "../storage/player-usage-db.js";
 import { validatePlayerUsageResearchResult } from "../ai-match-intelligence/player-usage/player-usage-validator.js";
+
+const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -27,13 +29,13 @@ function writeJson(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
 }
 
-function seedFilePath() {
+function localKnownSeedFilePath() {
   return resolveDataPath("player-usage", "known-player-usage-seeds.json");
 }
 
-function trackedSeedFilePath() {
+function trackedKnownSeedFilePath() {
   return path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
+    MODULE_DIR,
     "..",
     "seeds",
     "player-usage",
@@ -41,34 +43,15 @@ function trackedSeedFilePath() {
   );
 }
 
-function readSeedArray(filePath) {
-  const seeds = readJsonSafe(filePath, []);
-  if (!Array.isArray(seeds)) {
-    throw new Error(`seed file must contain an array: ${filePath}`);
-  }
-  return seeds;
-}
-
-function loadKnownPlayerUsageSeeds(seedFiles = []) {
-  const out = [];
-  const seen = new Set();
-
-  for (const filePath of seedFiles) {
-    const seeds = readSeedArray(filePath);
-
-    for (const seed of seeds) {
-      const key = normalizePlayerUsageTeamKey(seed?.key || seed?.team);
-      if (!key || seen.has(key)) continue;
-
-      seen.add(key);
-      out.push({
-        ...seed,
-        sourceSeedFile: filePath
-      });
-    }
-  }
-
-  return out;
+function trackedManualResultsDir(dayKey) {
+  return path.resolve(
+    MODULE_DIR,
+    "..",
+    "seeds",
+    "player-usage",
+    "manual-results",
+    dayKey
+  );
 }
 
 function worksetPath(dayKey) {
@@ -77,6 +60,77 @@ function worksetPath(dayKey) {
 
 function auditPath(dayKey) {
   return resolveDataPath("player-usage", "_seed-audit", `${dayKey}.json`);
+}
+
+function readSeedArray(filePath) {
+  const seeds = readJsonSafe(filePath, []);
+
+  if (!Array.isArray(seeds)) {
+    throw new Error(`seed file must contain an array: ${filePath}`);
+  }
+
+  return seeds.map(seed => ({
+    ...seed,
+    sourceSeedFile: filePath,
+    sourceInputType: "known_seed"
+  }));
+}
+
+function readManualResultFile(filePath) {
+  const json = readJsonSafe(filePath, null);
+
+  if (!json) return [];
+
+  if (Array.isArray(json)) {
+    return json.map(row => ({
+      ...row,
+      sourceSeedFile: filePath,
+      sourceInputType: "manual_result"
+    }));
+  }
+
+  if (Array.isArray(json.results)) {
+    return json.results.map(row => ({
+      ...row,
+      sourceSeedFile: filePath,
+      sourceInputType: "manual_result"
+    }));
+  }
+
+  return [{
+    ...json,
+    sourceSeedFile: filePath,
+    sourceInputType: "manual_result"
+  }];
+}
+
+function readManualResults(dayKey) {
+  const dir = trackedManualResultsDir(dayKey);
+
+  if (!fs.existsSync(dir)) {
+    return {
+      dir,
+      files: [],
+      records: []
+    };
+  }
+
+  const files = fs.readdirSync(dir)
+    .filter(file => file.endsWith(".json"))
+    .sort()
+    .map(file => path.join(dir, file));
+
+  const records = [];
+
+  for (const file of files) {
+    records.push(...readManualResultFile(file));
+  }
+
+  return {
+    dir,
+    files,
+    records
+  };
 }
 
 function buildSeedIndex(seeds = []) {
@@ -91,11 +145,17 @@ function buildSeedIndex(seeds = []) {
       .map(normalizeText)
       .filter(Boolean);
 
+    const canonicalKey = normalizePlayerUsageTeamKey(seed?.key || seed?.team);
+
     for (const name of names) {
       const key = normalizePlayerUsageTeamKey(name);
-      if (key && !index.has(key)) {
-        index.set(key, seed);
-      }
+      if (!key) continue;
+
+      index.set(key, seed);
+    }
+
+    if (canonicalKey) {
+      index.set(canonicalKey, seed);
     }
   }
 
@@ -103,19 +163,27 @@ function buildSeedIndex(seeds = []) {
 }
 
 function buildCandidateRecord(teamRow, seed) {
+  const now = new Date().toISOString();
+
   return {
     key: normalizePlayerUsageTeamKey(seed?.key || teamRow?.key || teamRow?.team),
     team: normalizeText(seed?.team || teamRow?.team),
     leagueSlug: normalizeText(seed?.leagueSlug || teamRow?.leagueSlug) || null,
     matches: Array.isArray(seed?.matches) ? seed.matches : [],
-    source: normalizeText(seed?.source) || "known_player_usage_seed",
+    source: normalizeText(seed?.source) || (
+      seed?.sourceInputType === "manual_result"
+        ? "tracked_player_usage_manual_result"
+        : "tracked_player_usage_seed"
+    ),
     confidence: Number.isFinite(Number(seed?.confidence)) ? Number(seed.confidence) : 0.6,
-    updatedAt: new Date().toISOString(),
+    updatedAt: now,
     meta: {
       ...(seed?.meta && typeof seed.meta === "object" ? seed.meta : {}),
       seeded: true,
+      sourceInputType: seed?.sourceInputType || "known_seed",
+      sourceSeedFile: seed?.sourceSeedFile || null,
       seedImporter: "apply-player-usage-seeds-day",
-      seededAt: new Date().toISOString()
+      seededAt: now
     }
   };
 }
@@ -128,11 +196,16 @@ export async function applyPlayerUsageSeedsDay(dayKey, options = {}) {
   }
 
   const seedFiles = [
-    seedFilePath(),
-    trackedSeedFilePath()
+    localKnownSeedFilePath(),
+    trackedKnownSeedFilePath()
   ];
 
-  const seeds = loadKnownPlayerUsageSeeds(seedFiles);
+  const knownSeeds = seedFiles.flatMap(file => readSeedArray(file));
+  const manual = readManualResults(safeDayKey);
+  const seeds = [
+    ...knownSeeds,
+    ...manual.records
+  ];
 
   const workset = readJsonSafe(worksetPath(safeDayKey), null);
 
@@ -176,6 +249,8 @@ export async function applyPlayerUsageSeedsDay(dayKey, options = {}) {
         confidence: validation.confidence,
         matchCount: validation.matchCount,
         playerCount: validation.playerCount,
+        sourceInputType: seed?.sourceInputType || null,
+        sourceSeedFile: seed?.sourceSeedFile || null,
         issues: validation.issues,
         wrote: false
       });
@@ -209,19 +284,35 @@ export async function applyPlayerUsageSeedsDay(dayKey, options = {}) {
       confidence: validation.confidence,
       matchCount: validation.matchCount,
       playerCount: validation.playerCount,
+      sourceInputType: seed?.sourceInputType || null,
+      sourceSeedFile: seed?.sourceSeedFile || null,
       wrote: Boolean(canonicalWrite?.ok),
       file: canonicalWrite?.file || null
     });
   }
+
+  const acceptedResults = results.filter(row =>
+    ["valid_usage", "partial_usage"].includes(row.status)
+  );
 
   const out = {
     ok: true,
     dayKey: safeDayKey,
     dryRun: Boolean(options.dryRun),
     seedFiles,
+    manualResultsDir: manual.dir,
+    manualResultFiles: manual.files,
+    knownSeedCount: knownSeeds.length,
+    manualResultCount: manual.records.length,
     seedCount: seeds.length,
     worksetTeamCount: workset.teams.length,
     checkedCount: results.length,
+    acceptedCount: acceptedResults.length,
+    readyCount: results.filter(row => row.status === "valid_usage").length,
+    partialCount: results.filter(row => row.status === "partial_usage").length,
+    rejectedCount: results.filter(row =>
+      row.status && !["valid_usage", "partial_usage", "unresolved_no_seed"].includes(row.status)
+    ).length,
     canonicalWriteCount: writes.filter(x => x?.ok).length,
     unresolvedCount: results.filter(x => !x.wrote).length,
     results,
@@ -250,8 +341,13 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename
       console.log("[apply-player-usage-seeds-day] cli:done", {
         ok: result.ok,
         dayKey: result.dayKey,
+        knownSeedCount: result.knownSeedCount,
+        manualResultCount: result.manualResultCount,
         seedCount: result.seedCount,
         checkedCount: result.checkedCount,
+        acceptedCount: result.acceptedCount,
+        readyCount: result.readyCount,
+        partialCount: result.partialCount,
         canonicalWriteCount: result.canonicalWriteCount,
         unresolvedCount: result.unresolvedCount,
         file: result.file
