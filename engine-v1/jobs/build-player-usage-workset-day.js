@@ -126,29 +126,138 @@ function collectTeamsFromDetails(details = [], dayKey = null) {
   }));
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function numberOrZero(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function countPlayersInMatches(matches = []) {
+  const names = new Set();
+
+  for (const match of asArray(matches)) {
+    for (const player of asArray(match?.players)) {
+      const name = String(player?.name || player?.player || "").trim().toLowerCase();
+      if (name) names.add(name);
+    }
+  }
+
+  return names.size;
+}
+
+function countStarterLikePlayers(matches = []) {
+  const names = new Set();
+
+  for (const match of asArray(matches)) {
+    for (const player of asArray(match?.players)) {
+      const name = String(player?.name || player?.player || "").trim().toLowerCase();
+      if (!name) continue;
+
+      const starter =
+        player?.starter === true ||
+        String(player?.role || "").toLowerCase() === "starter" ||
+        numberOrZero(player?.minutes) >= 60;
+
+      if (starter) names.add(name);
+    }
+  }
+
+  return names.size;
+}
+
+function getExpectedStartersCount(record = {}) {
+  return Math.max(
+    asArray(record?.expectedStarters).length,
+    asArray(record?.coreStarters).length,
+    asArray(record?.starters).length
+  );
+}
+
 function evaluateTeamUsageState(teamRow) {
   const existing = readPlayerUsageRecord(teamRow.key);
 
   if (!existing) {
     return {
       status: "missing",
-      reason: "no_canonical_player_usage_record"
+      reason: "no_canonical_player_usage_record",
+      matchCount: 0,
+      playerCount: 0,
+      starterLikeCount: 0,
+      expectedStartersCount: 0,
+      confidence: 0,
+      sampleCount: 0,
+      usageQuality: "missing",
+      priority: 100
     };
   }
 
-  const matchCount = Array.isArray(existing.matches) ? existing.matches.length : 0;
+  const matches = asArray(existing.matches);
+  const matchCount = matches.length;
+  const playerCount = countPlayersInMatches(matches);
+  const starterLikeCount = countStarterLikePlayers(matches);
+  const expectedStartersCount = getExpectedStartersCount(existing);
+  const confidence = numberOrZero(existing.confidence ?? existing?.meta?.confidence);
+  const sampleCount = numberOrZero(existing.sampleCount ?? existing?.meta?.sampleCount ?? matchCount);
 
-  if (matchCount < 3) {
+  const hasReadyStarters = expectedStartersCount >= 8 && confidence >= 0.65;
+  const hasReadyMatchSamples =
+    matchCount >= 3 &&
+    playerCount >= 11 &&
+    starterLikeCount >= 8 &&
+    confidence >= 0.55;
+
+  if (hasReadyStarters || hasReadyMatchSamples) {
+    return {
+      status: "ok",
+      reason: "usable_player_usage_record",
+      matchCount,
+      playerCount,
+      starterLikeCount,
+      expectedStartersCount,
+      confidence,
+      sampleCount,
+      usageQuality: "ready",
+      priority: 0
+    };
+  }
+
+  const hasSomeSignal =
+    matchCount > 0 ||
+    playerCount > 0 ||
+    starterLikeCount > 0 ||
+    expectedStartersCount > 0 ||
+    confidence > 0 ||
+    sampleCount > 0;
+
+  if (hasSomeSignal) {
     return {
       status: "insufficient",
-      reason: "not_enough_matches",
-      matchCount
+      reason: "partial_or_low_confidence_player_usage_record",
+      matchCount,
+      playerCount,
+      starterLikeCount,
+      expectedStartersCount,
+      confidence,
+      sampleCount,
+      usageQuality: "partial",
+      priority: 70
     };
   }
 
   return {
-    status: "ok",
-    matchCount
+    status: "insufficient",
+    reason: "stub_player_usage_record",
+    matchCount,
+    playerCount,
+    starterLikeCount,
+    expectedStartersCount,
+    confidence,
+    sampleCount,
+    usageQuality: "stub",
+    priority: 90
   };
 }
 
@@ -175,7 +284,14 @@ export async function buildPlayerUsageWorksetDay(dayKey) {
       ...teamRow,
       usageStatus: state.status,
       reason: state.reason || null,
-      matchCount: state.matchCount || 0
+      usageQuality: state.usageQuality || state.status,
+      priority: state.priority || 0,
+      matchCount: state.matchCount || 0,
+      playerCount: state.playerCount || 0,
+      starterLikeCount: state.starterLikeCount || 0,
+      expectedStartersCount: state.expectedStartersCount || 0,
+      confidence: state.confidence || 0,
+      sampleCount: state.sampleCount || 0
     });
   }
 
