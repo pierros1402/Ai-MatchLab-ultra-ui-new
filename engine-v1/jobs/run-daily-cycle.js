@@ -10,6 +10,8 @@ import { buildStandingsDay } from "./build-standings-day.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
 import { buildPlayerUsageWorksetDay } from "./build-player-usage-workset-day.js";
 import { applyPlayerUsageSeedsDay } from "./apply-player-usage-seeds-day.js";
+import { validatePlayerUsageManualResultsDay } from "./validate-player-usage-manual-results-day.js";
+import { buildPlayerUsageManualDraftsDay } from "./build-player-usage-manual-drafts-day.js";
 import { buildPlayerUsageResearchTasksDay } from "./build-player-usage-research-tasks-day.js";
 import { buildPlayerUsageAiRequestsDay } from "./build-player-usage-ai-requests-day.js";
 import { runPlayerUsageAiExecutorDay } from "./run-player-usage-ai-executor-day.js";
@@ -57,6 +59,7 @@ export async function runDailyCycle(options = {}) {
     teamNewsMaxTeams = readPositiveIntegerEnv("TEAM_NEWS_MAX_TEAMS", Infinity),
     teamNewsResearchMaxTasks = readPositiveIntegerEnv("TEAM_NEWS_RESEARCH_MAX_TASKS", 24),
     playerUsageResearchMaxTasks = readPositiveIntegerEnv("PLAYER_USAGE_RESEARCH_MAX_TASKS", 24),
+    playerUsageManualDraftLimit = readPositiveIntegerEnv("PLAYER_USAGE_MANUAL_DRAFT_LIMIT", 12),
     playerUsageAiExecutorMode = process.env.PLAYER_USAGE_AI_EXECUTOR_MODE || "disabled"
   } = options;
 
@@ -75,6 +78,11 @@ export async function runDailyCycle(options = {}) {
     24
   );
 
+  const normalizedPlayerUsageManualDraftLimit = normalizePositiveIntegerOption(
+    playerUsageManualDraftLimit,
+    12
+  );
+
   const startedAt = Date.now();
   const finalizeDayKey = shiftDay(dayKey, -1);
 
@@ -86,6 +94,7 @@ export async function runDailyCycle(options = {}) {
     teamNewsMaxTeams: normalizedTeamNewsMaxTeams,
     teamNewsResearchMaxTasks: normalizedTeamNewsResearchMaxTasks,
     playerUsageResearchMaxTasks: normalizedPlayerUsageResearchMaxTasks,
+    playerUsageManualDraftLimit: normalizedPlayerUsageManualDraftLimit,
     playerUsageAiExecutorMode
   });
 
@@ -112,7 +121,9 @@ export async function runDailyCycle(options = {}) {
 
   let teamGeoSeeds = null;
   let playerUsageWorkset = null;
+  let playerUsageManualValidation = null;
   let playerUsageSeeds = null;
+  let playerUsageManualDrafts = null;
   let playerUsageResearchTasks = null;
   let playerUsageAiRequests = null;
   let playerUsageAiExecutor = null;
@@ -191,6 +202,23 @@ export async function runDailyCycle(options = {}) {
     file: playerUsageWorkset?.file || null
   });
 
+  console.log("[daily-cycle] player-usage-manual-validation:start", { dayKey });
+
+  playerUsageManualValidation = await validatePlayerUsageManualResultsDay(dayKey);
+
+  console.log("[daily-cycle] player-usage-manual-validation:done", {
+    ok: playerUsageManualValidation?.ok,
+    dayKey: playerUsageManualValidation?.dayKey,
+    recordCount: playerUsageManualValidation?.recordCount ?? 0,
+    acceptedCount: playerUsageManualValidation?.acceptedCount ?? 0,
+    readyCount: playerUsageManualValidation?.readyCount ?? 0,
+    partialCount: playerUsageManualValidation?.partialCount ?? 0,
+    rejectedCount: playerUsageManualValidation?.rejectedCount ?? 0,
+    notInWorksetCount: playerUsageManualValidation?.notInWorksetCount ?? 0,
+    invalidJsonCount: playerUsageManualValidation?.invalidJsonCount ?? 0,
+    file: playerUsageManualValidation?.file || null
+  });
+
   console.log("[daily-cycle] player-usage-seeds:start", { dayKey });
 
   playerUsageSeeds = await applyPlayerUsageSeedsDay(dayKey);
@@ -220,6 +248,25 @@ export async function runDailyCycle(options = {}) {
       file: playerUsageWorkset?.file || null
     });
   }
+
+  console.log("[daily-cycle] player-usage-manual-drafts:start", {
+    dayKey,
+    limit: normalizedPlayerUsageManualDraftLimit
+  });
+
+  playerUsageManualDrafts = await buildPlayerUsageManualDraftsDay(dayKey, {
+    limit: normalizedPlayerUsageManualDraftLimit
+  });
+
+  console.log("[daily-cycle] player-usage-manual-drafts:done", {
+    ok: playerUsageManualDrafts?.ok,
+    dayKey: playerUsageManualDrafts?.dayKey,
+    worksetTeamCount: playerUsageManualDrafts?.worksetTeamCount ?? 0,
+    existingManualCount: playerUsageManualDrafts?.existingManualCount ?? 0,
+    draftCount: playerUsageManualDrafts?.draftCount ?? 0,
+    draftDir: playerUsageManualDrafts?.draftDir || null,
+    file: playerUsageManualDrafts?.file || null
+  });
 
   console.log("[daily-cycle] player-usage-research-tasks:start", { dayKey });
 
@@ -450,7 +497,9 @@ export async function runDailyCycle(options = {}) {
     teamGeoSeeds,
     detailsBuild,
     playerUsageWorkset,
+    playerUsageManualValidation,
     playerUsageSeeds,
+    playerUsageManualDrafts,
     playerUsageResearchTasks,
     playerUsageAiRequests,
     playerUsageAiExecutor,
@@ -491,7 +540,10 @@ if (entryUrl === import.meta.url) {
       ms: result?.ms,
       teamGeoAppliedCount: result?.teamGeoSeeds?.appliedCount ?? 0,
       teamGeoMissingCount: result?.teamGeoSeeds?.after?.missingCount ?? 0,
+      playerUsageManualAcceptedCount: result?.playerUsageManualValidation?.acceptedCount ?? 0,
+      playerUsageManualRejectedCount: result?.playerUsageManualValidation?.rejectedCount ?? 0,
       playerUsageSeedWriteCount: result?.playerUsageSeeds?.canonicalWriteCount ?? 0,
+      playerUsageManualDraftCount: result?.playerUsageManualDrafts?.draftCount ?? 0,
       playerUsageExecutorBundleCount: result?.playerUsageAiExecutor?.bundleCount ?? 0,
       playerUsageManualImportCount: result?.playerUsageManualImport?.importedCount ?? 0,
       playerUsageTaskCount: result?.playerUsageResearchTasks?.taskCount ?? 0,
