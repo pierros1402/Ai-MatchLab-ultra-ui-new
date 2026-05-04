@@ -36,6 +36,51 @@ function seedFilePath() {
   return resolveDataPath("team-geo", "known-team-geo-seeds.json");
 }
 
+function trackedSeedFilePath() {
+  return path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "seeds",
+    "team-geo",
+    "known-team-geo-seeds.json"
+  );
+}
+
+function readSeedArray(filePath) {
+  const seeds = readJsonSafe(filePath, []);
+  if (!Array.isArray(seeds)) {
+    throw new Error(`seed file must contain an array: ${filePath}`);
+  }
+  return seeds.map(seed => ({
+    ...seed,
+    sourceSeedFile: filePath
+  }));
+}
+
+function loadKnownTeamGeoSeeds() {
+  const seedFiles = [
+    seedFilePath(),
+    trackedSeedFilePath()
+  ];
+
+  const out = [];
+  const seen = new Set();
+
+  for (const filePath of seedFiles) {
+    for (const seed of readSeedArray(filePath)) {
+      const key = normalizeTeamKey(seed?.team);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(seed);
+    }
+  }
+
+  return {
+    seedFiles,
+    seeds: out
+  };
+}
+
 function buildSeedIndex(seeds) {
   const index = new Map();
 
@@ -103,12 +148,7 @@ export async function applyTeamGeoSeedsDay(dayKey, options = {}) {
     throw new Error("applyTeamGeoSeedsDay: missing dayKey");
   }
 
-  const seedsFile = seedFilePath();
-  const seeds = readJsonSafe(seedsFile, []);
-
-  if (!Array.isArray(seeds)) {
-    throw new Error(`seed file must contain an array: ${seedsFile}`);
-  }
+  const { seedFiles, seeds } = loadKnownTeamGeoSeeds();
 
   const seedIndex = buildSeedIndex(seeds);
 
@@ -162,7 +202,7 @@ export async function applyTeamGeoSeedsDay(dayKey, options = {}) {
     ok: true,
     dayKey,
     dryRun: Boolean(options.dryRun),
-    seedFile: seedsFile,
+    seedFiles,
     seedCount: seeds.length,
     before: {
       totalTeams: before.totalTeams,
