@@ -159,7 +159,34 @@ function isBadTeamNewsBoilerplateText(value) {
     "brasileiro serie",
     "coritiba coritiba",
     "pen pedro rocha",
-    "resumo coment"
+    "resumo coment",
+    "podcasts disney",
+    "ediciones programa",
+    "games ediciones",
+    "rugby voleibol",
+    "gaming rugby",
+    "poker nata",
+    "motor poker",
+    "golfe ciclismo",
+    "atletismo golfe",
+    "futsal basquete",
+    "surfe futsal",
+    "mais esportes",
+    "futebol not",
+    "games ediciones programa",
+    "gaming rugby voleibol",
+    "motor poker nata",
+    "atletismo golfe ciclismo",
+    "surfe futsal basquete",
+    "mais esportes boxe",
+    "more podcasts upcoming",
+    "watch sky bet",
+    "more sports scores",
+    "racing darts netball",
+    "rugby league golf",
+    "cricket rugby union",
+    "sky sports homepage",
+    "sky sports skip"
   ]);
 
   if (badExactPlayerTerms.has(lower)) return true;
@@ -174,7 +201,8 @@ function isBadTeamNewsBoilerplateText(value) {
     "f1 f1",
     "olimpíadas olimpíada",
     "disney plus",
-    "podcasts podcasts"
+    "podcasts podcasts",
+    "skip to content sky sports"
   ];
 
   if (badNeedles.some(needle => lower.includes(needle))) return true;
