@@ -31,6 +31,46 @@ function seedFilePath() {
   return resolveDataPath("player-usage", "known-player-usage-seeds.json");
 }
 
+function trackedSeedFilePath() {
+  return path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "seeds",
+    "player-usage",
+    "known-player-usage-seeds.json"
+  );
+}
+
+function readSeedArray(filePath) {
+  const seeds = readJsonSafe(filePath, []);
+  if (!Array.isArray(seeds)) {
+    throw new Error(`seed file must contain an array: ${filePath}`);
+  }
+  return seeds;
+}
+
+function loadKnownPlayerUsageSeeds(seedFiles = []) {
+  const out = [];
+  const seen = new Set();
+
+  for (const filePath of seedFiles) {
+    const seeds = readSeedArray(filePath);
+
+    for (const seed of seeds) {
+      const key = normalizePlayerUsageTeamKey(seed?.key || seed?.team);
+      if (!key || seen.has(key)) continue;
+
+      seen.add(key);
+      out.push({
+        ...seed,
+        sourceSeedFile: filePath
+      });
+    }
+  }
+
+  return out;
+}
+
 function worksetPath(dayKey) {
   return resolveDataPath("player-usage", "_workset", `${dayKey}.json`);
 }
@@ -87,12 +127,12 @@ export async function applyPlayerUsageSeedsDay(dayKey, options = {}) {
     throw new Error("missing dayKey");
   }
 
-  const seedFile = seedFilePath();
-  const seeds = readJsonSafe(seedFile, []);
+  const seedFiles = [
+    seedFilePath(),
+    trackedSeedFilePath()
+  ];
 
-  if (!Array.isArray(seeds)) {
-    throw new Error(`seed file must contain an array: ${seedFile}`);
-  }
+  const seeds = loadKnownPlayerUsageSeeds(seedFiles);
 
   const workset = readJsonSafe(worksetPath(safeDayKey), null);
 
@@ -178,7 +218,7 @@ export async function applyPlayerUsageSeedsDay(dayKey, options = {}) {
     ok: true,
     dayKey: safeDayKey,
     dryRun: Boolean(options.dryRun),
-    seedFile,
+    seedFiles,
     seedCount: seeds.length,
     worksetTeamCount: workset.teams.length,
     checkedCount: results.length,
