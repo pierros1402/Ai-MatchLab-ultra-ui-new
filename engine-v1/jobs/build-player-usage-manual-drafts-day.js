@@ -64,6 +64,47 @@ function buildDraft(teamRow) {
   const key = normalizePlayerUsageTeamKey(teamRow?.key || teamRow?.team);
   const team = clean(teamRow?.team);
   const leagueSlug = clean(teamRow?.leagueSlug);
+  const matchContexts = Array.isArray(teamRow?.matchContexts)
+    ? teamRow.matchContexts.slice(0, 3)
+    : [];
+
+  const templateMatches = matchContexts.length
+    ? matchContexts.map(context => ({
+        matchId: context?.matchId || null,
+        date: context?.dayKey || "YYYY-MM-DD",
+        opponent: clean(context?.opponent) || "Opponent Name",
+        side: clean(context?.side) || "home_or_away",
+        kickoff: context?.kickoff || null,
+        players: [
+          { name: "Verified Player One", starter: true, minutes: 90, position: "GK" },
+          { name: "Verified Player Two", starter: true, minutes: 90, position: "DF" },
+          { name: "Verified Player Three", starter: true, minutes: 75, position: "MF" }
+        ]
+      }))
+    : [
+        {
+          matchId: null,
+          date: "YYYY-MM-DD",
+          opponent: "Opponent Name",
+          side: "home_or_away",
+          players: [
+            { name: "Verified Player One", starter: true, minutes: 90, position: "GK" },
+            { name: "Verified Player Two", starter: true, minutes: 90, position: "DF" },
+            { name: "Verified Player Three", starter: true, minutes: 75, position: "MF" }
+          ]
+        },
+        {
+          matchId: null,
+          date: "YYYY-MM-DD",
+          opponent: "Opponent Name",
+          side: "home_or_away",
+          players: [
+            { name: "Verified Player One", starter: true, minutes: 90, position: "GK" },
+            { name: "Verified Player Two", starter: true, minutes: 90, position: "DF" },
+            { name: "Verified Player Four", starter: true, minutes: 80, position: "FW" }
+          ]
+        }
+      ];
 
   return {
     key,
@@ -74,34 +115,16 @@ function buildDraft(teamRow) {
     leagueSlug,
     source: "tracked_player_usage_manual_result",
     confidence: 0.45,
-    matches: [
-      {
-        matchId: null,
-        date: "YYYY-MM-DD",
-        opponent: "Opponent Name",
-        side: "home_or_away",
-        players: [
-          { name: "Verified Player One", starter: true, minutes: 90, position: "GK" },
-          { name: "Verified Player Two", starter: true, minutes: 90, position: "DF" },
-          { name: "Verified Player Three", starter: true, minutes: 75, position: "MF" }
-        ]
-      },
-      {
-        matchId: null,
-        date: "YYYY-MM-DD",
-        opponent: "Opponent Name",
-        side: "home_or_away",
-        players: [
-          { name: "Verified Player One", starter: true, minutes: 90, position: "GK" },
-          { name: "Verified Player Two", starter: true, minutes: 90, position: "DF" },
-          { name: "Verified Player Four", starter: true, minutes: 80, position: "FW" }
-        ]
-      }
-    ],
+    matches: templateMatches,
     meta: {
       reviewed: false,
       productionGrade: false,
       evidenceLevel: "draft_requires_verified_match_usage_samples",
+      worksetPriority: Number(teamRow?.priority || 0),
+      usageStatus: clean(teamRow?.usageStatus),
+      usageQuality: clean(teamRow?.usageQuality),
+      reason: clean(teamRow?.reason),
+      matchContexts,
       note: "Draft only. Replace placeholders with verified match/player usage before moving this file into engine-v1/seeds/player-usage/manual-results/YYYY-MM-DD/."
     }
   };
@@ -131,10 +154,16 @@ export async function buildPlayerUsageManualDraftsDay(dayKey, options = {}) {
       const confidence = Number(teamRow?.confidence || 0);
       const alreadyHasManualResult = existingManualKeys.has(key);
 
-      let priority = 0;
+      const worksetPriority = Number(teamRow?.priority || 0);
+      const usageQuality = clean(teamRow?.usageQuality);
+      const reason = clean(teamRow?.reason);
+
+      let priority = worksetPriority;
       if (!alreadyHasManualResult) priority += 30;
       if (usageStatus === "missing") priority += 30;
       if (usageStatus === "insufficient") priority += 20;
+      if (usageQuality === "stub") priority += 15;
+      if (usageQuality === "partial") priority += 8;
       if (confidence <= 0) priority += 10;
 
       return {
@@ -144,6 +173,10 @@ export async function buildPlayerUsageManualDraftsDay(dayKey, options = {}) {
         leagueSlug: clean(teamRow?.leagueSlug),
         usageStatus,
         confidence,
+        usageQuality,
+        reason,
+        priorityFromWorkset: worksetPriority,
+        matchContexts: Array.isArray(teamRow?.matchContexts) ? teamRow.matchContexts : [],
         sampleMatches: teamRow?.sampleMatches ?? null,
         alreadyHasManualResult,
         teamRow
@@ -169,7 +202,12 @@ export async function buildPlayerUsageManualDraftsDay(dayKey, options = {}) {
       team: row.team,
       leagueSlug: row.leagueSlug,
       usageStatus: row.usageStatus,
+      usageQuality: row.usageQuality,
+      reason: row.reason,
+      priority: row.priority,
+      priorityFromWorkset: row.priorityFromWorkset,
       confidence: row.confidence,
+      matchContextCount: row.matchContexts.length,
       file
     });
   }
