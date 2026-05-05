@@ -21,12 +21,35 @@ function getDetailsDir(dayKey) {
   return resolveDataPath("details", dayKey);
 }
 
-function readDetailsForDay(dayKey) {
-  const dir = getDetailsDir(dayKey);
+function getDeploySnapshotDetailsDir(dayKey) {
+  return resolveDataPath("deploy-snapshots", dayKey, "details");
+}
 
-  if (!fs.existsSync(dir)) {
-    throw new Error(`details dir not found: ${dir}`);
+function resolveDetailsDirForDay(dayKey) {
+  const canonicalDir = getDetailsDir(dayKey);
+
+  if (fs.existsSync(canonicalDir)) {
+    return {
+      dir: canonicalDir,
+      source: "canonical_details"
+    };
   }
+
+  const snapshotDir = getDeploySnapshotDetailsDir(dayKey);
+
+  if (fs.existsSync(snapshotDir)) {
+    return {
+      dir: snapshotDir,
+      source: "deploy_snapshot_details"
+    };
+  }
+
+  throw new Error(`details dir not found: ${canonicalDir} or ${snapshotDir}`);
+}
+
+function readDetailsForDay(dayKey) {
+  const resolved = resolveDetailsDirForDay(dayKey);
+  const dir = resolved.dir;
 
   const files = fs.readdirSync(dir)
     .filter(name => name.endsWith(".json"))
@@ -41,7 +64,12 @@ function readDetailsForDay(dayKey) {
     }
   }
 
-  return details;
+  return {
+    details,
+    detailsSource: resolved.source,
+    detailsDir: dir,
+    detailsFileCount: files.length
+  };
 }
 
 function getMatchId(match) {
@@ -264,7 +292,8 @@ function evaluateTeamUsageState(teamRow) {
 // ---------- main ----------
 
 export async function buildPlayerUsageWorksetDay(dayKey) {
-  const details = readDetailsForDay(dayKey);
+  const detailsPayload = readDetailsForDay(dayKey);
+  const details = detailsPayload.details;
 
   const teams = collectTeamsFromDetails(details, dayKey);
 
@@ -306,6 +335,9 @@ export async function buildPlayerUsageWorksetDay(dayKey) {
   const output = {
     ok: true,
     dayKey,
+    detailsSource: detailsPayload.detailsSource,
+    detailsDir: detailsPayload.detailsDir,
+    detailsFileCount: detailsPayload.detailsFileCount,
     teamCount: results.length,
     missingCount,
     insufficientCount,
@@ -319,6 +351,9 @@ export async function buildPlayerUsageWorksetDay(dayKey) {
   return {
     ok: true,
     dayKey,
+    detailsSource: detailsPayload.detailsSource,
+    detailsDir: detailsPayload.detailsDir,
+    detailsFileCount: detailsPayload.detailsFileCount,
     teamCount: results.length,
     missingCount,
     insufficientCount,
