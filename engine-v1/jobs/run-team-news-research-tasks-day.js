@@ -1117,7 +1117,8 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             sourceCount: aiProviderResult.sourceCount ?? null,
             reason: aiProviderResult.reason || null,
             input: aiProviderResult.input || null,
-            diagnostics: aiProviderResult.diagnostics || null
+            diagnostics: aiProviderResult.diagnostics || null,
+            extractionDiagnostics: aiProviderResult.extractionDiagnostics || null
           }
         };
       } else {
@@ -1132,7 +1133,8 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
             sourceCount: aiProviderResult?.sourceCount ?? null,
             reason: aiProviderResult?.reason || "provider_returned_no_resolution",
             input: aiProviderResult?.input || null,
-            diagnostics: aiProviderResult?.diagnostics || null
+            diagnostics: aiProviderResult?.diagnostics || null,
+            extractionDiagnostics: aiProviderResult?.extractionDiagnostics || null
           }
         };
       }

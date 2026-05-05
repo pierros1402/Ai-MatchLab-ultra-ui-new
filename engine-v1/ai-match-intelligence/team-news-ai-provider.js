@@ -2388,11 +2388,20 @@ function extractStructuredFactsFromSources(input, sources = []) {
 
   const rawAbsences = Array.from(uniqueAbsences.values());
   const validatedAbsences = validateExtractedAbsences(rawAbsences, evidenceSources, input);
+  const finalNotes = Array.from(uniqueNotes.values()).slice(0, 6);
+  const finalEvidenceSources = evidenceSources.slice(0, 6);
 
   return {
     absences: validatedAbsences,
-    notes: Array.from(uniqueNotes.values()).slice(0, 6),
-    evidenceSources: evidenceSources.slice(0, 6)
+    notes: finalNotes,
+    evidenceSources: finalEvidenceSources,
+    diagnostics: {
+      evidenceSourceCount: finalEvidenceSources.length,
+      rawAbsenceCount: rawAbsences.length,
+      validatedAbsenceCount: validatedAbsences.length,
+      rejectedAbsenceCount: Math.max(0, rawAbsences.length - validatedAbsences.length),
+      noteCount: finalNotes.length
+    }
   };
 }
 
@@ -2473,6 +2482,13 @@ export async function runTeamNewsAIProvider(task) {
   });
 
   const writeNotes = canonicalNotes;
+  const extractionDiagnostics = {
+    ...(extracted.diagnostics || {}),
+    realSourceCount: realSources.length,
+    sourceAvailableNoteCount: sourceAvailableNotes.length,
+    canonicalNoteCount: writeNotes.length,
+    nonCanonicalNoteCount: Math.max(0, extracted.notes.length - writeNotes.length)
+  };
 
   const hasOnlyNonCanonicalSignals =
     extracted.absences.length === 0 &&
@@ -2486,6 +2502,7 @@ export async function runTeamNewsAIProvider(task) {
       mode: "source_agnostic_web_research_v1",
       sourceCount: realSources.length,
       diagnostics,
+      extractionDiagnostics,
       nonCanonicalNotes: extracted.notes.slice(0, 6),
       fallback: {
         required: true,
@@ -2503,6 +2520,7 @@ export async function runTeamNewsAIProvider(task) {
       provider: "team-news-ai-provider",
       mode: "source_agnostic_web_research_v1",
       diagnostics,
+      extractionDiagnostics,
       sourceAvailableNotes
     });
   }
