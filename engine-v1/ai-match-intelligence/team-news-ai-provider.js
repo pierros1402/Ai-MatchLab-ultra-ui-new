@@ -1737,8 +1737,23 @@ const BAD_ABSENCE_PLAYER_PATTERNS = [
   /women/i,
   /women's/i,
   /u-?\d+/i,
-  /under\s+\d+/i
+  /under\s+\d+/i,
+  /sky\s+sports/i,
+  /sky\s+bet/i,
+  /watch\s+sky/i,
+  /sports\s+homepage/i,
+  /skip\s+to/i,
+  /cricket\s+rugby/i,
+  /rugby\s+union/i,
+  /rugby\s+league/i,
+  /racing\s+darts/i,
+  /darts\s+netball/i
 ];
+
+const BAD_ABSENCE_NAVIGATION_TEXT_RE =
+  /\b(skip|homepage|watch|bet|cricket|rugby|union|league|golf|racing|darts|netball|tennis|boxing|nfl|nba|formula\s*1|f1|more\s+sports|sports\s+news|live\s+scores|video|podcast|newsletter|sign\s+in|log\s+in|subscribe|advertisement|privacy|cookies?)\b/i;
+
+
 
 function looksLikeBadAbsencePlayerName(player) {
   const value = normalizeText(player);
@@ -1751,7 +1766,10 @@ function looksLikeBadAbsencePlayerName(player) {
     return true;
   }
 
-  // CSS / HTML / generic junk
+  if (BAD_ABSENCE_NAVIGATION_TEXT_RE.test(value)) {
+    return true;
+  }
+
   if (
     lower === "background" ||
     lower === "foreground" ||
@@ -1768,20 +1786,42 @@ function looksLikeBadAbsencePlayerName(player) {
     return true;
   }
 
-  // Αν είναι όλο lowercase, συνήθως δεν είναι όνομα παίκτη από άρθρο.
   if (value === lower) {
     return true;
   }
 
   const words = value.split(/\s+/).filter(Boolean);
 
-  // Θέλουμε τουλάχιστον 2 tokens για canonical absence.
-  // Π.χ. "Rico Henry", "Luke Shaw", "K. Schade"
   if (words.length < 2 || words.length > 4) {
     return true;
   }
 
   if (words.some(word => word.length < 2)) {
+    return true;
+  }
+
+  const sportsMenuWordCount = words.map(word => word.toLowerCase()).filter(word =>
+    [
+      "sky",
+      "sports",
+      "skip",
+      "homepage",
+      "watch",
+      "bet",
+      "cricket",
+      "rugby",
+      "union",
+      "league",
+      "golf",
+      "racing",
+      "darts",
+      "netball",
+      "tennis",
+      "boxing"
+    ].includes(word)
+  ).length;
+
+  if (sportsMenuWordCount >= 2) {
     return true;
   }
 
@@ -1791,7 +1831,7 @@ function looksLikeBadAbsencePlayerName(player) {
     return true;
   }
 
-  if (!/[A-Za-zÀ-ÖØ-öø-ÿ]/.test(value)) {
+  if (!/[A-Za-z?-??-??-?]/.test(value)) {
     return true;
   }
 
@@ -1898,6 +1938,7 @@ function extractNamedAbsences(text, source) {
   return Array.from(unique.values()).slice(0, 12);
 }
 
+
 function validateExtractedAbsences(absences, sources, input) {
   if (!Array.isArray(absences) || absences.length === 0) return [];
 
@@ -1954,7 +1995,16 @@ function validateExtractedAbsences(absences, sources, input) {
     if (!player) continue;
     if (looksLikeBadAbsencePlayerName(player)) continue;
 
-    if (!/^[A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]+$/.test(player)) continue;
+    if (
+      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(player) ||
+      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(reason) ||
+      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(sourceTitle) ||
+      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(sourcePublisher)
+    ) {
+      continue;
+    }
+
+    if (!/^[A-Za-z?-??-??-?'?.\- ]+$/.test(player)) continue;
 
     if (
       /team|player|squad|coach|manager|background|foreground|component|footer|header|var\(|--|_base/i.test(player)
@@ -1993,12 +2043,6 @@ function validateExtractedAbsences(absences, sources, input) {
       sourceTrustTier === "club" ||
       sourceTrustTier === "team_official";
 
-    /*
-      Critical safety gate:
-      URL-only match pages often contain both teams.
-      Example: manchester-united-vs-brentford URL can make Brentford pass
-      even when the absence sentence is actually about Manchester United.
-    */
     if (!reasonHasTargetTeam && !isOfficialOrClubSource) {
       if (!textualHasTargetTeam) {
         continue;
@@ -2009,10 +2053,6 @@ function validateExtractedAbsences(absences, sources, input) {
       }
     }
 
-    /*
-      Final guard:
-      If the only team signal comes from the URL, reject it.
-    */
     if (
       targetTeam &&
       !reasonHasTargetTeam &&
@@ -2038,260 +2078,6 @@ function validateExtractedAbsences(absences, sources, input) {
   }
 
   return Array.from(unique.values()).slice(0, 12);
-}
-
-function buildSourceNote(source) {
-  const text = normalizeText(source?.text || source?.title);
-  if (!text) return null;
-
-  const compact = text.replace(/\s+/g, " ").slice(0, 360);
-  return {
-    type: "selection_note",
-    value: compact,
-    source: source?.url || source?.publisher || source?.title || null
-  };
-}
-
-function detectTeamNewsSignal(text, input = {}) {
-  const value = normalizeText(text).toLowerCase();
-
-  if (!value) {
-    return null;
-  }
-
-  const team = normalizeText(input?.team).toLowerCase();
-
-  const opponent = normalizeText(input?.opponent).toLowerCase();
-
-  const hasTeam = team
-    ? value.includes(team)
-    : false;
-
-  const hasOpponent = opponent
-    ? value.includes(opponent)
-    : false;
-
-  const hasMatchContext =
-    hasOpponent ||
-    /\bpartido\b/i.test(value) ||
-    /\bprevia\b/i.test(value) ||
-    /\bfecha\b/i.test(value) ||
-    /\bjornada\b/i.test(value) ||
-    /\bversus\b/i.test(value) ||
-    /\bvs\.?\b/i.test(value) ||
-    /\bcampeonato\b/i.test(value) ||
-    /\bcopa\b/i.test(value) ||
-    /\bliga\b/i.test(value) ||
-    /\bmatch\b/i.test(value) ||
-    /\bpreview\b/i.test(value);
-
-  const strongSignalChecks = [
-    {
-      type: "injury_signal",
-      pattern: /injur|lesionad|lesión|lesion|doubt|fitness|out injured|baja por lesión|baja por lesion/i
-    },
-    {
-      type: "suspension_signal",
-      pattern: /suspend|suspended|suspension|sancionad|sanción|sancion/i
-    },
-    {
-      type: "squad_signal",
-      pattern: /convocados|convocatoria|citados|n[oó]mina|lista de citados|lista de convocados/i
-    },
-    {
-      type: "lineup_signal",
-      pattern: /lineup|line-up|starting xi|alineaci[oó]n|formaci[oó]n|titulares|once inicial/i
-    },
-    {
-      type: "selection_signal",
-      pattern: /team news|unavailable|absent|baja|bajas|alta médica|alta medica/i
-    }
-  ];
-
-  for (const check of strongSignalChecks) {
-    if (!check.pattern.test(value)) {
-      continue;
-    }
-
-    if (hasTeam || hasMatchContext) {
-      return check.type;
-    }
-  }
-
-  return null;
-}
-
-function buildCredibleSearchHitNote(source, input) {
-  const normalizedSource = normalizeSourceItem(source);
-
-  if (!normalizedSource) {
-    return null;
-  }
-
-  const team = normalizeText(input?.team);
-  const opponent = normalizeText(input?.opponent);
-  const title = normalizeText(normalizedSource.title);
-  const publisher = normalizeText(normalizedSource.publisher);
-  const url = normalizeText(normalizedSource.url);
-  const text = normalizeText(normalizedSource.text);
-
-  if (!team || !url) {
-    return null;
-  }
-
-  const haystack = [
-    title,
-    publisher,
-    url,
-    text
-  ].filter(Boolean).join(" ");
-
-  const signalType = detectTeamNewsSignal(haystack, input);
-
-  if (!signalType) {
-    return null;
-  }
-
-  const lowerTitle = title.toLowerCase();
-  const lowerUrl = url.toLowerCase();
-
-  const isGenericSearchPage =
-    normalizedSource.sourceType === "search_url" ||
-    /\/search\/?\b/i.test(lowerUrl) ||
-    /schnellsuche|buscar|busqueda|search/i.test(lowerUrl) ||
-    /transfermarkt search/i.test(lowerTitle);
-
-  if (isGenericSearchPage) {
-    return null;
-  }
-
-  return {
-    type: "credible_selection_note",
-    value: `${team}${opponent ? ` vs ${opponent}` : ""}: source reports team-news signal (${signalType}) from ${title || publisher || url}`,
-    source: url,
-    confidence: 0.58,
-    meta: {
-      sourceMode: normalizedSource.sourceMode || null,
-      sourceId: normalizedSource.sourceId || null,
-      sourceType: normalizedSource.sourceType || null,
-      trustTier: normalizedSource.trustTier || null,
-      publisher,
-      signalType
-    }
-  };
-}
-
-function buildTrustedRegistrySourceNote(source, input) {
-  const normalizedSource = normalizeSourceItem(source);
-
-  if (!normalizedSource) {
-    return null;
-  }
-
-  const isRegistrySource =
-    normalizedSource.sourceMode === "registry" ||
-    normalizedSource.query === "registry";
-
-  const isTrustedRegistrySource =
-    isRegistrySource &&
-    (
-      normalizedSource.trustTier === "official" ||
-      normalizedSource.trustTier === "league" ||
-      normalizedSource.trustTier === "reference"
-    );
-
-  if (!isTrustedRegistrySource) {
-    return null;
-  }
-
-  const team = normalizeText(input?.team);
-  const opponent = normalizeText(input?.opponent);
-  const title = normalizeText(normalizedSource.title);
-  const publisher = normalizeText(normalizedSource.publisher);
-  const url = normalizeText(normalizedSource.url);
-  const text = normalizeText(normalizedSource.text);
-
-  if (!team || !url) {
-    return null;
-  }
-
-  const isSearchUrl =
-    normalizedSource.sourceType === "search_url" ||
-    /\/search\b|\/schnellsuche\b|\?q=|\?query=|\?s=/i.test(url);
-
-  const isOfficialOrLeague =
-    normalizedSource.trustTier === "official" ||
-    normalizedSource.trustTier === "league";
-
-  const isArticleLike =
-    normalizedSource.sourceType === "registry_article" ||
-    /\/news\/|\/noticias\/|\/previa-|\/preview-|\/match-|\/article\/|\/actualidad\/|\/futbol\/|\/club\/|\/equipo\//i.test(url);
-
-  if (isSearchUrl) {
-    return {
-      type: "source_available_note",
-      value: `${team} has a trusted registry search source available for review: ${title || publisher || url}`,
-      source: url,
-      confidence: 0.24,
-      meta: {
-        sourceMode: normalizedSource.sourceMode,
-        sourceId: normalizedSource.sourceId,
-        sourceType: normalizedSource.sourceType,
-        trustTier: normalizedSource.trustTier,
-        publisher,
-        signalType: null,
-        blockedAsEvidence: true,
-        blockReason: "registry_search_url_not_team_news_evidence"
-      }
-    };
-  }
-
-  if (!isOfficialOrLeague && !isArticleLike) {
-    return null;
-  }
-
-  const signalType = detectTeamNewsSignal([
-    title,
-    publisher,
-    text
-  ].filter(Boolean).join(" "), input);
-
-  if (signalType) {
-    return {
-      type: "credible_selection_note",
-      value: `${team}${opponent ? ` vs ${opponent}` : ""}: trusted registry source contains team-news signal (${signalType}): ${title || publisher || url}`,
-      source: url,
-      confidence: normalizedSource.trustTier === "official" ? 0.66 : 0.58,
-      meta: {
-        sourceMode: normalizedSource.sourceMode,
-        sourceId: normalizedSource.sourceId,
-        sourceType: normalizedSource.sourceType,
-        trustTier: normalizedSource.trustTier,
-        publisher,
-        signalType
-      }
-    };
-  }
-
-  if (text.length >= 120) {
-    return {
-      type: "source_available_note",
-      value: `${team}${opponent ? ` vs ${opponent}` : ""}: trusted registry source was fetched and kept for team-news review: ${title || publisher || url}`,
-      source: url,
-      confidence: normalizedSource.trustTier === "official" ? 0.48 : 0.40,
-      meta: {
-        sourceMode: normalizedSource.sourceMode,
-        sourceId: normalizedSource.sourceId,
-        sourceType: normalizedSource.sourceType,
-        trustTier: normalizedSource.trustTier,
-        publisher,
-        signalType: null,
-        textLength: text.length
-      }
-    };
-  }
-
-  return null;
 }
 
 function extractStructuredFactsFromSources(input, sources = []) {
