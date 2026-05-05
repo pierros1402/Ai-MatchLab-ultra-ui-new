@@ -129,13 +129,33 @@ function mergeSourceMeta(existingMeta, incomingMeta) {
   };
 }
 
+
 function mergeCanonicalTeamNews(existing, incoming) {
   if (!incoming) return existing || null;
   if (!existing) return incoming;
 
+  const existingSource = normalizeText(existing?.source);
+  const existingProvider = normalizeText(existing?.sourceMeta?.provider);
+  const existingMode = normalizeText(existing?.sourceMeta?.mode);
+
+  const existingIsManualSeed =
+    existingSource === "tracked_team_news_manual_result" ||
+    existingProvider === "manual_team_news_seed" ||
+    existingMode === "manual_result";
+
   return {
-    team: incoming.team,
+    key: existing?.key || incoming?.key || null,
+    team: incoming.team || existing.team,
     leagueSlug: incoming.leagueSlug || existing.leagueSlug || null,
+    matchIds: dedupeNotes([
+      ...(existing?.matchIds || []),
+      ...(incoming?.matchIds || [])
+    ]),
+    aliases: dedupeNotes([
+      ...(existing?.aliases || []),
+      ...(incoming?.aliases || []),
+      incoming.team || existing.team
+    ]),
     absences: dedupeAbsences([
       ...(existing?.absences || []),
       ...(incoming?.absences || [])
@@ -148,7 +168,9 @@ function mergeCanonicalTeamNews(existing, incoming) {
       ...(existing?.evidence || []),
       ...(incoming?.evidence || [])
     ]),
-    source: incoming.source || existing.source || "remote_research",
+    source: existingIsManualSeed
+      ? (existingSource || "tracked_team_news_manual_result")
+      : (incoming.source || existing.source || "remote_research"),
     sourceMeta: mergeSourceMeta(existing?.sourceMeta, incoming?.sourceMeta),
     updatedAt: new Date().toISOString()
   };

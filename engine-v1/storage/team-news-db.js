@@ -437,9 +437,33 @@ function normalizeAbsence(item = {}) {
   };
 }
 
+
 function dedupeAbsences(items = []) {
-  const out = [];
-  const seen = new Set();
+  const byPlayer = new Map();
+
+  function importanceRank(value) {
+    const v = normalizeImportance(value);
+    if (v === "high") return 3;
+    if (v === "medium") return 2;
+    return 1;
+  }
+
+  function chooseBetterAbsence(current, next) {
+    if (!current) return next;
+
+    const currentReason = normalizeText(current?.reason);
+    const nextReason = normalizeText(next?.reason);
+
+    if (!currentReason && nextReason) return next;
+    if (currentReason && !nextReason) return current;
+
+    const currentRank = importanceRank(current?.importance);
+    const nextRank = importanceRank(next?.importance);
+
+    if (nextRank > currentRank) return next;
+
+    return current;
+  }
 
   for (const raw of Array.isArray(items) ? items : []) {
     const item = normalizeAbsence(raw);
@@ -453,27 +477,24 @@ function dedupeAbsences(items = []) {
     const team = normalizeText(item?.team);
     const sourceTeam = normalizeText(item?.sourceTeam);
 
-    const key = [
-      player.toLowerCase(),
-      reason.toLowerCase(),
-      importance,
-      team.toLowerCase(),
-      sourceTeam.toLowerCase()
-    ].join("__");
-
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    out.push({
+    const normalized = {
       player,
       reason: isBadTeamNewsBoilerplateText(reason) ? null : (reason || null),
       importance,
       team: team || null,
       sourceTeam: sourceTeam || null
-    });
+    };
+
+    const key = [
+      player.toLowerCase(),
+      team.toLowerCase(),
+      sourceTeam.toLowerCase()
+    ].join("__");
+
+    byPlayer.set(key, chooseBetterAbsence(byPlayer.get(key), normalized));
   }
 
-  return out;
+  return Array.from(byPlayer.values());
 }
 
 function normalizeNotes(items = []) {
