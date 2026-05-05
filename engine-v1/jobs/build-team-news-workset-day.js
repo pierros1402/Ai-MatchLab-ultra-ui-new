@@ -121,6 +121,7 @@ function extractMatchesFromRuntime(runtime) {
   return [];
 }
 
+
 function buildTeamEntry(team, leagueSlug, dayKey, match, side) {
   const safeTeam = repairCommonMojibake(team);
   if (!safeTeam) return null;
@@ -137,9 +138,21 @@ function buildTeamEntry(team, leagueSlug, dayKey, match, side) {
   const absencesCount = Array.isArray(existing?.absences) ? existing.absences.length : 0;
   const evidenceCount = Array.isArray(existing?.evidence) ? existing.evidence.length : 0;
 
+  const isReviewedManualSeed =
+    source === "tracked_team_news_manual_result" ||
+    normalizeText(existing?.sourceMeta?.provider) === "manual_team_news_seed" ||
+    normalizeText(existing?.sourceMeta?.mode) === "manual_result";
+
   const hasCanonical = !!existing;
   const hasUsableCanonicalEvidence =
-    notesCount > 0 || absencesCount > 0 || evidenceCount > 0;
+    hasCanonical &&
+    absencesCount > 0 &&
+    evidenceCount > 0 &&
+    (
+      isReviewedManualSeed ||
+      source !== "remote_research" ||
+      evidenceCount > 0
+    );
 
   const needsAcquisition = !hasCanonical || !hasUsableCanonicalEvidence;
 

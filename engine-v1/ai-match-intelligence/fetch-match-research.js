@@ -63,6 +63,7 @@ function dedupeNotes(items = []) {
   return out;
 }
 
+
 function buildCanonicalTeamNewsRecord(
   teamName,
   sideData,
@@ -77,8 +78,15 @@ function buildCanonicalTeamNewsRecord(
 
   const absences = dedupeAbsences(sideData?.absences || []);
   const notes = dedupeNotes(sideData?.notes || []);
+  const evidence = dedupeEvidence(sideData?.evidence || []);
 
-  if (absences.length <= 0 && notes.length <= 0) {
+  const isRemoteResearch = normalizeText(source) === "remote_research";
+
+  if (isRemoteResearch && (absences.length <= 0 || evidence.length <= 0)) {
+    return null;
+  }
+
+  if (!isRemoteResearch && absences.length <= 0 && notes.length <= 0) {
     return null;
   }
 
@@ -86,8 +94,8 @@ function buildCanonicalTeamNewsRecord(
     team,
     leagueSlug: normalizeText(leagueSlug) || null,
     absences,
-    notes,
-    evidence: Array.isArray(sideData?.evidence) ? sideData.evidence : [],
+    notes: isRemoteResearch ? [] : notes,
+    evidence,
     source,
     sourceMeta: sourceMeta && typeof sourceMeta === "object" ? sourceMeta : {},
     updatedAt: new Date().toISOString()
