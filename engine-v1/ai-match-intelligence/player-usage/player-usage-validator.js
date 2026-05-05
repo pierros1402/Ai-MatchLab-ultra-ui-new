@@ -104,6 +104,26 @@ function addIssue(issues, code, message, extra = {}) {
   issues.push({ code, message, ...extra });
 }
 
+function isManualPlayerUsageInput(raw = {}) {
+  const source = normalizeText(raw?.source).toLowerCase();
+  const sourceInputType = normalizeText(raw?.sourceInputType).toLowerCase();
+  const metaSourceInputType = normalizeText(raw?.meta?.sourceInputType).toLowerCase();
+
+  return (
+    source === "tracked_player_usage_manual_result" ||
+    source === "manual_player_usage_result" ||
+    sourceInputType === "manual_result" ||
+    metaSourceInputType === "manual_result"
+  );
+}
+
+function hasStrictManualApproval(raw = {}) {
+  return raw?.reviewed === true &&
+    raw?.productionGrade === true &&
+    raw?.meta?.reviewed === true &&
+    raw?.meta?.productionGrade === true;
+}
+
 function normalizePlayer(row, ctx, issues) {
   if (!isPlainObject(row)) {
     addIssue(issues, "invalid_player_row", "player row is not an object", ctx);
@@ -231,6 +251,17 @@ export function validatePlayerUsageResearchResult(raw = {}, fallback = {}) {
 
   const reviewed = raw.reviewed === true || raw?.meta?.reviewed === true || raw.status === "empty_reviewed";
   const hasNoInput = raw.status === "unresolved_no_input" || raw.status === "no_input";
+  const manualInput = isManualPlayerUsageInput(raw);
+  const strictManualApproval = hasStrictManualApproval(raw);
+
+  if (manualInput && !strictManualApproval) {
+    addIssue(issues, "manual_result_not_strictly_approved", "manual player-usage result must have reviewed:true and productionGrade:true at root and meta levels before import", {
+      reviewed: raw.reviewed ?? null,
+      productionGrade: raw.productionGrade ?? null,
+      metaReviewed: raw?.meta?.reviewed ?? null,
+      metaProductionGrade: raw?.meta?.productionGrade ?? null
+    });
+  }
 
   let status = "invalid_rejected";
   let reason = "validation_failed";
@@ -239,6 +270,12 @@ export function validatePlayerUsageResearchResult(raw = {}, fallback = {}) {
   if (hasNoInput) {
     status = "unresolved_no_input";
     reason = "research_result_marked_no_input";
+  } else if (manualInput && !strictManualApproval) {
+    status = "invalid_rejected";
+    reason = "manual_result_not_strictly_approved";
+  } else if (manualInput && issues.length > 0) {
+    status = "invalid_rejected";
+    reason = "manual_result_has_validation_issues";
   } else if (matches.length <= 0 && reviewed && issues.length === 0) {
     status = "empty_reviewed";
     reason = "reviewed_but_no_valid_usage_found";
