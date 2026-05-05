@@ -175,6 +175,9 @@ function buildCandidateRecord(teamRow, seed) {
         ? "tracked_player_usage_manual_result"
         : "tracked_player_usage_seed"
     ),
+    sourceInputType: seed?.sourceInputType || "known_seed",
+    reviewed: seed?.reviewed === true,
+    productionGrade: seed?.productionGrade === true,
     confidence: Number.isFinite(Number(seed?.confidence)) ? Number(seed.confidence) : 0.6,
     updatedAt: now,
     meta: {
