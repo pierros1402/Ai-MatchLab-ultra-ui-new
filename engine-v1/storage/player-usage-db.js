@@ -36,6 +36,16 @@ export function getPlayerUsagePath(teamNameOrKey) {
   return resolveDataPath("player-usage", `${key}.json`);
 }
 
+function normalizePlayerMinutes(value) {
+  if (value === null || value === undefined || value === "") return null;
+
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes)) return null;
+  if (minutes < 0 || minutes > 130) return null;
+
+  return Math.round(minutes);
+}
+
 function normalizePlayerRow(row = {}) {
   const name = normalizeText(row?.name || row?.player || row?.displayName);
   if (!name) return null;
@@ -43,7 +53,7 @@ function normalizePlayerRow(row = {}) {
   return {
     name,
     starter: row?.starter === true,
-    minutes: Number.isFinite(Number(row?.minutes)) ? Number(row.minutes) : null,
+    minutes: normalizePlayerMinutes(row?.minutes),
     position: normalizeText(row?.position) || null
   };
 }
