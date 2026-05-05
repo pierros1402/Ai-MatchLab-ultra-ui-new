@@ -22,6 +22,8 @@ import { buildTeamGeoDay } from "./build-team-geo-day.js";
 import { buildTeamNewsWorksetDay } from "./build-team-news-workset-day.js";
 import { buildTeamNewsResearchTasksDay } from "./build-team-news-research-tasks-day.js";
 import { runTeamNewsResearchTasksDay } from "./run-team-news-research-tasks-day.js";
+import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
+import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 
@@ -133,6 +135,8 @@ export async function runDailyCycle(options = {}) {
   let playerUsageResearchRun = null;
   let playerUsageDetailsRefresh = null;
   let teamNewsWorkset = null;
+  let teamNewsSeedValidation = null;
+  let teamNewsSeeds = null;
   let teamNewsResearchTasks = null;
   let teamNewsResearchRun = null;
   let teamNewsBuild = null;
@@ -388,6 +392,45 @@ export async function runDailyCycle(options = {}) {
     file: teamNewsWorkset?.file || null
   });
 
+  console.log("[daily-cycle] team-news-seeds-validation:start", { dayKey });
+
+  teamNewsSeedValidation = validateTeamNewsSeedsDay(dayKey);
+
+  console.log("[daily-cycle] team-news-seeds-validation:done", {
+    ok: teamNewsSeedValidation?.ok,
+    dayKey: teamNewsSeedValidation?.dayKey,
+    recordCount: teamNewsSeedValidation?.recordCount ?? 0,
+    acceptedCount: teamNewsSeedValidation?.acceptedCount ?? 0,
+    rejectedCount: teamNewsSeedValidation?.rejectedCount ?? 0
+  });
+
+  console.log("[daily-cycle] team-news-seeds-apply:start", { dayKey });
+
+  teamNewsSeeds = applyTeamNewsSeedsDay(dayKey);
+
+  console.log("[daily-cycle] team-news-seeds-apply:done", {
+    ok: teamNewsSeeds?.ok,
+    dayKey: teamNewsSeeds?.dayKey,
+    seedCount: teamNewsSeeds?.seedCount ?? 0,
+    acceptedCount: teamNewsSeeds?.acceptedCount ?? 0,
+    rejectedCount: teamNewsSeeds?.rejectedCount ?? 0,
+    canonicalWriteCount: teamNewsSeeds?.canonicalWriteCount ?? 0
+  });
+
+  if ((teamNewsSeeds?.canonicalWriteCount ?? 0) > 0) {
+    console.log("[daily-cycle] team-news-workset-refresh-after-seeds:start", { dayKey });
+
+    teamNewsWorkset = await buildTeamNewsWorksetDay(dayKey);
+
+    console.log("[daily-cycle] team-news-workset-refresh-after-seeds:done", {
+      ok: teamNewsWorkset?.ok,
+      teamsCount: teamNewsWorkset?.teamsCount ?? 0,
+      existingCount: teamNewsWorkset?.existingCount ?? 0,
+      missingCount: teamNewsWorkset?.missingCount ?? 0,
+      needsAcquisitionCount: teamNewsWorkset?.needsAcquisitionCount ?? 0
+    });
+  }
+
   console.log("[daily-cycle] team-news-research-tasks:start", { dayKey });
 
   teamNewsResearchTasks = await buildTeamNewsResearchTasksDay(dayKey, {
@@ -524,6 +567,8 @@ export async function runDailyCycle(options = {}) {
     playerUsageResearchRun,
     playerUsageDetailsRefresh,
     teamNewsWorkset,
+    teamNewsSeedValidation,
+    teamNewsSeeds,
     teamNewsResearchTasks,
     teamNewsResearchRun,
     teamNewsBuild,
@@ -568,6 +613,9 @@ if (entryUrl === import.meta.url) {
       playerUsageTaskCount: result?.playerUsageResearchTasks?.taskCount ?? 0,
       playerUsageCanonicalWriteCount: result?.playerUsageResearchRun?.canonicalWriteCount ?? 0,
       playerUsageUnresolvedCount: result?.playerUsageResearchRun?.unresolvedPlayerUsageCount ?? 0,
+      teamNewsSeedAcceptedCount: result?.teamNewsSeedValidation?.acceptedCount ?? 0,
+      teamNewsSeedRejectedCount: result?.teamNewsSeedValidation?.rejectedCount ?? 0,
+      teamNewsSeedWriteCount: result?.teamNewsSeeds?.canonicalWriteCount ?? 0,
       teamNewsResearchTaskCount: result?.teamNewsResearchRun?.taskCount ?? 0,
       teamNewsAcceptedCandidateCount: result?.teamNewsResearchRun?.acceptedCandidateCount ?? 0,
       teamNewsCanonicalWriteCount: result?.teamNewsResearchRun?.canonicalWriteCount ?? 0,
