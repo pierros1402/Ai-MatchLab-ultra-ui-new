@@ -3,7 +3,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { normalizePlayerUsageTeamKey } from "../storage/player-usage-db.js";
-import { runPlayerUsageLocalAiDay } from "./run-player-usage-local-ai-day.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -122,8 +121,7 @@ function parseArgs(argv) {
     dayKey: null,
     mode: process.env.PLAYER_USAGE_AI_EXECUTOR_MODE || "disabled",
     limit: null,
-    batchSize: 8,
-    maxRequests: null
+    batchSize: 8
   };
 
   for (const arg of argv) {
@@ -141,12 +139,6 @@ function parseArgs(argv) {
     if (arg.startsWith("--batch-size=")) {
       const n = Number(arg.slice("--batch-size=".length));
       args.batchSize = Number.isFinite(n) && n > 0 ? Math.floor(n) : args.batchSize;
-      continue;
-    }
-
-    if (arg.startsWith("--max-requests=")) {
-      const n = Number(arg.slice("--max-requests=".length));
-      args.maxRequests = Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
       continue;
     }
 
@@ -174,10 +166,6 @@ export async function runPlayerUsageAiExecutorDay(dayKey, options = {}) {
     ? Math.floor(Number(options.limit))
     : null;
 
-  const maxRequests = Number.isFinite(Number(options.maxRequests)) && Number(options.maxRequests) > 0
-    ? Math.floor(Number(options.maxRequests))
-    : (limit || 2);
-
   const files = listRequestFiles(safeDayKey);
   const requests = files
     .map(compactRequest)
@@ -203,54 +191,6 @@ export async function runPlayerUsageAiExecutorDay(dayKey, options = {}) {
       bundles: [],
       reason: "executor_disabled"
     };
-
-    writeJson(auditPath(safeDayKey), audit);
-
-    return {
-      ...audit,
-      file: auditPath(safeDayKey)
-    };
-  }
-
-  if (mode === "local-ai-candidates") {
-    let localAiResult = null;
-    let audit = null;
-
-    try {
-      localAiResult = await runPlayerUsageLocalAiDay(safeDayKey, {
-        maxRequests
-      });
-
-      audit = {
-        ...base,
-        ok: true,
-        bundleCount: 0,
-        bundles: [],
-        maxRequests,
-        candidateWrittenCount: localAiResult?.candidateWrittenCount ?? 0,
-        acceptedCount: localAiResult?.acceptedCount ?? 0,
-        rejectedCount: localAiResult?.rejectedCount ?? 0,
-        failedCount: localAiResult?.failedCount ?? 0,
-        localAiAuditFile: localAiResult?.file || null,
-        reason: "local_ai_candidates_written_for_review",
-        note: "local AI executor writes candidate-only records; promotion requires reviewed:true and productionGrade:true"
-      };
-    } catch (err) {
-      audit = {
-        ...base,
-        ok: false,
-        bundleCount: 0,
-        bundles: [],
-        maxRequests,
-        candidateWrittenCount: 0,
-        acceptedCount: 0,
-        rejectedCount: 0,
-        failedCount: 1,
-        localAiAuditFile: null,
-        reason: `local_ai_executor_failed:${err?.message || err}`,
-        note: "local AI executor failed before candidate review/promotion"
-      };
-    }
 
     writeJson(auditPath(safeDayKey), audit);
 
@@ -351,10 +291,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename
         requestCount: result.requestCount,
         selectedCount: result.selectedCount,
         bundleCount: result.bundleCount,
-        candidateWrittenCount: result.candidateWrittenCount ?? 0,
-        acceptedCount: result.acceptedCount ?? 0,
-        rejectedCount: result.rejectedCount ?? 0,
-        failedCount: result.failedCount ?? 0,
         canonicalWriteCount: result.canonicalWriteCount,
         researchResultWriteCount: result.researchResultWriteCount,
         file: result.file,
