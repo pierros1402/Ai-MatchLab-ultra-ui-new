@@ -2081,6 +2081,54 @@ function validateExtractedAbsences(absences, sources, input) {
 }
 
 
+
+
+function buildSourceNote(source = {}) {
+  if (typeof source === "string") {
+    const value = normalizeText(source);
+    return value || "source";
+  }
+
+  const title = normalizeText(source?.title || source?.sourceTitle || source?.label || source?.name);
+  const publisher = normalizeText(source?.publisher || source?.sourcePublisher || source?.domain || source?.site);
+  const url = normalizeText(source?.url || source?.source || source?.href || source?.link);
+  const snippet = normalizeText(source?.snippet || source?.description || source?.text || source?.summary);
+
+  const parts = [];
+
+  if (title) parts.push(title);
+  if (publisher) parts.push("publisher: " + publisher);
+  if (url) parts.push("source: " + url);
+  if (snippet) parts.push("snippet: " + snippet.slice(0, 220));
+
+  return parts.length > 0
+    ? parts.join(" | ")
+    : "source";
+}
+
+function buildCredibleSearchHitNote(source = {}) {
+  if (typeof source === "string") {
+    const value = normalizeText(source);
+    return value || "credible search hit";
+  }
+
+  const title = normalizeText(source?.title || source?.sourceTitle || source?.label);
+  const publisher = normalizeText(source?.publisher || source?.sourcePublisher || source?.domain);
+  const url = normalizeText(source?.url || source?.source || source?.href);
+  const snippet = normalizeText(source?.snippet || source?.description || source?.text);
+
+  const parts = [];
+
+  if (title) parts.push(title);
+  if (publisher) parts.push("publisher: " + publisher);
+  if (url) parts.push("source: " + url);
+  if (snippet) parts.push("snippet: " + snippet.slice(0, 220));
+
+  return parts.length > 0
+    ? parts.join(" | ")
+    : "credible search hit";
+}
+
 function buildTrustedRegistrySourceNote(source = {}) {
   const title = normalizeText(source?.title || source?.sourceTitle || source?.label);
   const publisher = normalizeText(source?.publisher || source?.sourcePublisher || source?.domain);
