@@ -80,6 +80,64 @@ function detailFilesForDay(dayKey) {
     .map(name => path.join(dir, name));
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function extractPlayerUsageSides(detail) {
+  const direct = detail?.playerUsageIntel;
+  const facts = detail?.researchedFacts?.playerUsageIntel;
+
+  return {
+    home: direct?.home || facts?.home || null,
+    away: direct?.away || facts?.away || null
+  };
+}
+
+function isUsablePlayerUsageSide(side) {
+  if (!side || typeof side !== "object") return false;
+
+  const status = String(side?.status || side?.readyStatus || side?.meta?.status || "").toLowerCase();
+
+  if (
+    status === "unavailable" ||
+    status === "missing" ||
+    status === "placeholder" ||
+    status === "stub"
+  ) {
+    return false;
+  }
+
+  const confidence =
+    Number.isFinite(Number(side?.confidence)) ? Number(side.confidence) :
+    Number.isFinite(Number(side?.meta?.confidence)) ? Number(side.meta.confidence) :
+    0;
+
+  const sampleMatches =
+    Number.isFinite(Number(side?.sampleMatches)) ? Number(side.sampleMatches) :
+    Number.isFinite(Number(side?.sampleCount)) ? Number(side.sampleCount) :
+    Number.isFinite(Number(side?.matchCount)) ? Number(side.matchCount) :
+    Number.isFinite(Number(side?.meta?.sampleMatches)) ? Number(side.meta.sampleMatches) :
+    Number.isFinite(Number(side?.meta?.sampleCount)) ? Number(side.meta.sampleCount) :
+    0;
+
+  const expectedStarters =
+    asArray(side?.expectedStarters).length > 0 ? asArray(side.expectedStarters) :
+    asArray(side?.coreStarters).length > 0 ? asArray(side.coreStarters) :
+    asArray(side?.starters).length > 0 ? asArray(side.starters) :
+    asArray(side?.players).filter(player =>
+      player?.role === "starter" ||
+      player?.expectedStarter === true ||
+      player?.isStarter === true
+    );
+
+  return (
+    confidence > 0 &&
+    sampleMatches >= 1 &&
+    expectedStarters.length >= 6
+  );
+}
+
 function summarizeDetail(detail) {
   const matchId = normalizeMatchId(detail?.matchId || detail?.basic?.matchId || detail?.fixture?.matchId);
 
@@ -90,9 +148,13 @@ function summarizeDetail(detail) {
     Boolean(detail?.researchedFacts?.travelContext) ||
     Boolean(detail?.aiTasks?.travel_context);
 
-  const hasPlayerUsage =
-    Boolean(detail?.playerUsageIntel) ||
-    Boolean(detail?.researchedFacts?.playerUsageIntel);
+  const playerUsageSides = extractPlayerUsageSides(detail);
+  const playerUsageUsableSides = [
+    isUsablePlayerUsageSide(playerUsageSides.home),
+    isUsablePlayerUsageSide(playerUsageSides.away)
+  ].filter(Boolean).length;
+
+  const hasPlayerUsage = playerUsageUsableSides > 0;
 
   const hasTeamNews =
     Boolean(detail?.teamNewsIntel) ||
@@ -139,6 +201,7 @@ function summarizeDetail(detail) {
     matchId,
     hasTravel,
     hasPlayerUsage,
+    playerUsageUsableSides,
     hasTeamNews,
     hasValue,
     matchProfileApplied,
