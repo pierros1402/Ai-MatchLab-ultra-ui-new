@@ -62,8 +62,7 @@ export async function runDailyCycle(options = {}) {
     teamNewsMaxTeams = readPositiveIntegerEnv("TEAM_NEWS_MAX_TEAMS", Infinity),
     teamNewsResearchMaxTasks = readPositiveIntegerEnv("TEAM_NEWS_RESEARCH_MAX_TASKS", 24),
     playerUsageResearchMaxTasks = readPositiveIntegerEnv("PLAYER_USAGE_RESEARCH_MAX_TASKS", 24),
-    playerUsageManualDraftLimit = readPositiveIntegerEnv("PLAYER_USAGE_MANUAL_DRAFT_LIMIT", 12),
-    playerUsageAiExecutorMode = process.env.PLAYER_USAGE_AI_EXECUTOR_MODE || "disabled"
+    playerUsageManualDraftLimit = readPositiveIntegerEnv("PLAYER_USAGE_MANUAL_DRAFT_LIMIT", 12)
   } = options;
 
   const normalizedTeamNewsMaxTeams = normalizePositiveIntegerOption(
@@ -97,8 +96,7 @@ export async function runDailyCycle(options = {}) {
     teamNewsMaxTeams: normalizedTeamNewsMaxTeams,
     teamNewsResearchMaxTasks: normalizedTeamNewsResearchMaxTasks,
     playerUsageResearchMaxTasks: normalizedPlayerUsageResearchMaxTasks,
-    playerUsageManualDraftLimit: normalizedPlayerUsageManualDraftLimit,
-    playerUsageAiExecutorMode
+    playerUsageManualDraftLimit: normalizedPlayerUsageManualDraftLimit
   });
 
   console.log("[daily-cycle] discoverWindow:start");
