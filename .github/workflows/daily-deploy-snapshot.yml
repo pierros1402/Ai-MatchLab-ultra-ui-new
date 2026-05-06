@@ -8,7 +8,10 @@ on:
         required: false
         default: ""
   schedule:
-    - cron: "30 4 * * *"
+    # 00:10 Europe/Athens during daylight saving time.
+    - cron: "10 21 * * *"
+    # 00:10 Europe/Athens during standard time.
+    - cron: "10 22 * * *"
 
 permissions:
   contents: write
