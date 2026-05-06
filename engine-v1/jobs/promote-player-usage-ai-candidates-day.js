@@ -108,6 +108,9 @@ function buildManualSeed(raw, validation, sourceFile, dayKey, teamRow) {
     matches: Array.isArray(record.matches) ? record.matches : [],
     meta: {
       ...(record.meta && typeof record.meta === "object" ? record.meta : {}),
+      reviewed: true,
+      productionGrade: true,
+      sourceInputType: "manual_result",
       promotedFromAiCandidate: true,
       originalCandidateFile: sourceFile,
       originalCandidateOnly: raw?.candidateOnly === true || raw?.meta?.candidateOnly === true,
