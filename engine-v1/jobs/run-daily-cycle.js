@@ -15,8 +15,6 @@ import { applyPlayerUsageSeedsDay } from "./apply-player-usage-seeds-day.js";
 import { validatePlayerUsageManualResultsDay } from "./validate-player-usage-manual-results-day.js";
 import { buildPlayerUsageManualDraftsDay } from "./build-player-usage-manual-drafts-day.js";
 import { buildPlayerUsageResearchTasksDay } from "./build-player-usage-research-tasks-day.js";
-import { buildPlayerUsageAiRequestsDay } from "./build-player-usage-ai-requests-day.js";
-import { runPlayerUsageAiExecutorDay } from "./run-player-usage-ai-executor-day.js";
 import { runPlayerUsageResearchTasksDay } from "./run-player-usage-research-tasks-day.js";
 import { importPlayerUsageManualResultsDay } from "./import-player-usage-manual-results-day.js";
 import { applyTeamGeoSeedsDay } from "./apply-team-geo-seeds-day.js";
@@ -133,8 +131,6 @@ export async function runDailyCycle(options = {}) {
   let playerUsageSeeds = null;
   let playerUsageManualDrafts = null;
   let playerUsageResearchTasks = null;
-  let playerUsageAiRequests = null;
-  let playerUsageAiExecutor = null;
   let playerUsageManualImport = null;
   let playerUsageResearchRun = null;
   let playerUsageDetailsRefresh = null;
@@ -337,39 +333,6 @@ export async function runDailyCycle(options = {}) {
     dayKey: playerUsageResearchTasks?.dayKey,
     taskCount: playerUsageResearchTasks?.taskCount ?? 0,
     file: playerUsageResearchTasks?.file || null
-  });
-
-  console.log("[daily-cycle] player-usage-ai-requests:start", { dayKey });
-
-  playerUsageAiRequests = await buildPlayerUsageAiRequestsDay(dayKey);
-
-  console.log("[daily-cycle] player-usage-ai-requests:done", {
-    ok: playerUsageAiRequests?.ok,
-    dayKey: playerUsageAiRequests?.dayKey,
-    requestCount: playerUsageAiRequests?.requestCount ?? 0,
-    indexFile: playerUsageAiRequests?.indexFile || null
-  });
-
-  console.log("[daily-cycle] player-usage-ai-executor:start", {
-    dayKey,
-    mode: playerUsageAiExecutorMode
-  });
-
-  playerUsageAiExecutor = await runPlayerUsageAiExecutorDay(dayKey, {
-    mode: playerUsageAiExecutorMode
-  });
-
-  console.log("[daily-cycle] player-usage-ai-executor:done", {
-    ok: playerUsageAiExecutor?.ok,
-    dayKey: playerUsageAiExecutor?.dayKey,
-    mode: playerUsageAiExecutor?.mode,
-    requestCount: playerUsageAiExecutor?.requestCount ?? 0,
-    selectedCount: playerUsageAiExecutor?.selectedCount ?? 0,
-    bundleCount: playerUsageAiExecutor?.bundleCount ?? 0,
-    canonicalWriteCount: playerUsageAiExecutor?.canonicalWriteCount ?? 0,
-    researchResultWriteCount: playerUsageAiExecutor?.researchResultWriteCount ?? 0,
-    file: playerUsageAiExecutor?.file || null,
-    reason: playerUsageAiExecutor?.reason || null
   });
 
   console.log("[daily-cycle] player-usage-manual-import:start", { dayKey });
@@ -603,8 +566,6 @@ export async function runDailyCycle(options = {}) {
     playerUsageSeeds,
     playerUsageManualDrafts,
     playerUsageResearchTasks,
-    playerUsageAiRequests,
-    playerUsageAiExecutor,
     playerUsageManualImport,
     playerUsageResearchRun,
     playerUsageDetailsRefresh,
@@ -655,7 +616,6 @@ if (entryUrl === import.meta.url) {
       playerUsageManualRejectedCount: result?.playerUsageManualValidation?.rejectedCount ?? 0,
       playerUsageSeedWriteCount: result?.playerUsageSeeds?.canonicalWriteCount ?? 0,
       playerUsageManualDraftCount: result?.playerUsageManualDrafts?.draftCount ?? 0,
-      playerUsageExecutorBundleCount: result?.playerUsageAiExecutor?.bundleCount ?? 0,
       playerUsageManualImportCount: result?.playerUsageManualImport?.importedCount ?? 0,
       playerUsageTaskCount: result?.playerUsageResearchTasks?.taskCount ?? 0,
       playerUsageCanonicalWriteCount: result?.playerUsageResearchRun?.canonicalWriteCount ?? 0,
