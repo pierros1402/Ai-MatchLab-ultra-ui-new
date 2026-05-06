@@ -32,6 +32,11 @@ function getAuditPath(dayKey) {
   return resolveDataPath("player-usage", "_ai-requests", `${dayKey}.local-ai.audit.json`);
 }
 
+
+
+function getCandidatePath(dayKey, key) {
+  return resolveDataPath("player-usage", "_ai-candidates", dayKey, `${key}.json`);
+}
 function normalizePlayer(row = {}) {
   const name = normalizeText(row?.name || row?.player || row?.displayName);
   if (!name) return null;
@@ -159,18 +164,33 @@ export async function runPlayerUsageLocalAiDay(dayKey, { maxRequests = 2 } = {})
     try {
       const normalized = await executeRequest(client, requestDoc);
       const accepted = isUsableResult(normalized);
+      const candidateOutputFile = getCandidatePath(safeDayKey, req.key);
 
-      if (accepted) {
-        writeJson(req.targetOutputFile, normalized);
-      }
+      const candidatePayload = {
+        ...normalized,
+        meta: {
+          ...(normalized.meta && typeof normalized.meta === "object" ? normalized.meta : {}),
+          candidateOnly: true,
+          reviewed: false,
+          productionGrade: false,
+          requiresManualReview: true,
+          originalTargetOutputFile: req.targetOutputFile,
+          candidateWriter: "run-player-usage-local-ai-day",
+          candidateWrittenAt: new Date().toISOString()
+        }
+      };
+
+      writeJson(candidateOutputFile, candidatePayload);
 
       results.push({
         key: req.key,
         team: req.team,
-        status: accepted ? "accepted_ai_result" : "rejected_empty_or_low_confidence",
+        status: accepted ? "candidate_written_requires_review" : "candidate_written_low_confidence",
         confidence: normalized.confidence,
         matchCount: normalized.matches.length,
-        targetOutputFile: req.targetOutputFile
+        targetOutputFile: req.targetOutputFile,
+        candidateOutputFile,
+        canonicalEligible: false
       });
     } catch (err) {
       results.push({
