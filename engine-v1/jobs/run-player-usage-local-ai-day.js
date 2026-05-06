@@ -168,12 +168,21 @@ export async function runPlayerUsageLocalAiDay(dayKey, { maxRequests = 2 } = {})
 
       const candidatePayload = {
         ...normalized,
+        candidateOnly: true,
+        reviewed: false,
+        productionGrade: false,
+        requiresManualReview: true,
+        canonicalEligible: false,
+        source: normalized.source === "local_ai_player_usage"
+          ? "local_ai_player_usage_candidate"
+          : normalized.source,
         meta: {
           ...(normalized.meta && typeof normalized.meta === "object" ? normalized.meta : {}),
           candidateOnly: true,
           reviewed: false,
           productionGrade: false,
           requiresManualReview: true,
+          canonicalEligible: false,
           originalTargetOutputFile: req.targetOutputFile,
           candidateWriter: "run-player-usage-local-ai-day",
           candidateWrittenAt: new Date().toISOString()
@@ -208,8 +217,12 @@ export async function runPlayerUsageLocalAiDay(dayKey, { maxRequests = 2 } = {})
     dayKey: safeDayKey,
     model: MODEL,
     requestedCount: requests.length,
-    acceptedCount: results.filter(r => r.status === "accepted_ai_result").length,
-    rejectedCount: results.filter(r => r.status === "rejected_empty_or_low_confidence").length,
+    candidateWrittenCount: results.filter(r =>
+      r.status === "candidate_written_requires_review" ||
+      r.status === "candidate_written_low_confidence"
+    ).length,
+    acceptedCount: results.filter(r => r.status === "candidate_written_requires_review").length,
+    rejectedCount: results.filter(r => r.status === "candidate_written_low_confidence").length,
     failedCount: results.filter(r => r.status === "ai_execution_failed").length,
     results,
     updatedAt: new Date().toISOString()
@@ -243,6 +256,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename
       console.log("[run-player-usage-local-ai-day] done", {
         ok: res.ok,
         requestedCount: res.requestedCount,
+        candidateWrittenCount: res.candidateWrittenCount,
         acceptedCount: res.acceptedCount,
         rejectedCount: res.rejectedCount,
         failedCount: res.failedCount,
