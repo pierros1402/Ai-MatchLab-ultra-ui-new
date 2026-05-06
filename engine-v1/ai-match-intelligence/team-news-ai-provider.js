@@ -2080,6 +2080,23 @@ function validateExtractedAbsences(absences, sources, input) {
   return Array.from(unique.values()).slice(0, 12);
 }
 
+
+function buildTrustedRegistrySourceNote(source = {}) {
+  const title = normalizeText(source?.title || source?.sourceTitle || source?.label);
+  const publisher = normalizeText(source?.publisher || source?.sourcePublisher || source?.domain);
+  const url = normalizeText(source?.url || source?.source || source?.href);
+
+  const parts = [];
+
+  if (title) parts.push(title);
+  if (publisher) parts.push("publisher: " + publisher);
+  if (url) parts.push("source: " + url);
+
+  return parts.length > 0
+    ? parts.join(" | ")
+    : "trusted registry source";
+}
+
 function extractStructuredFactsFromSources(input, sources = []) {
   const absences = [];
   const notes = [];
