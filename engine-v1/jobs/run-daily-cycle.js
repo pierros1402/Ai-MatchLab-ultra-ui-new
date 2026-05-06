@@ -9,6 +9,7 @@ import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
 import { buildPlayerUsageWorksetDay } from "./build-player-usage-workset-day.js";
+import { buildPlayerUsageDeterministicCandidatesDay } from "./build-player-usage-deterministic-candidates-day.js";
 import { buildPlayerUsageAiCandidateReviewDay } from "./build-player-usage-ai-candidate-review-day.js";
 import { promotePlayerUsageAiCandidatesDay } from "./promote-player-usage-ai-candidates-day.js";
 import { applyPlayerUsageSeedsDay } from "./apply-player-usage-seeds-day.js";
@@ -123,6 +124,7 @@ export async function runDailyCycle(options = {}) {
   let teamGeoSeeds = null;
   let teamGeoBuild = null;
   let playerUsageWorkset = null;
+  let playerUsageDeterministicCandidates = null;
   let playerUsageAiCandidateReview = null;
   let playerUsageAiCandidatePromotion = null;
   let playerUsageManualValidation = null;
@@ -218,6 +220,25 @@ export async function runDailyCycle(options = {}) {
     insufficientCount: playerUsageWorkset?.insufficientCount ?? 0,
     okCount: playerUsageWorkset?.okCount ?? 0,
     file: playerUsageWorkset?.file || null
+  });
+
+  console.log("[daily-cycle] player-usage-deterministic-candidates:start", { dayKey });
+
+  playerUsageDeterministicCandidates = await buildPlayerUsageDeterministicCandidatesDay(dayKey, {
+    write: true
+  });
+
+  console.log("[daily-cycle] player-usage-deterministic-candidates:done", {
+    ok: playerUsageDeterministicCandidates?.ok,
+    dayKey: playerUsageDeterministicCandidates?.dayKey,
+    dryRun: playerUsageDeterministicCandidates?.dryRun,
+    detailsFileCount: playerUsageDeterministicCandidates?.detailsFileCount ?? 0,
+    candidateReadyCount: playerUsageDeterministicCandidates?.candidateReadyCount ?? 0,
+    candidateWrittenCount: playerUsageDeterministicCandidates?.candidateWrittenCount ?? 0,
+    skippedExistingManualSeedCount: playerUsageDeterministicCandidates?.skippedExistingManualSeedCount ?? 0,
+    failedValidationCount: playerUsageDeterministicCandidates?.failedValidationCount ?? 0,
+    skippedInsufficientPlayersCount: playerUsageDeterministicCandidates?.skippedInsufficientPlayersCount ?? 0,
+    file: playerUsageDeterministicCandidates?.file || null
   });
 
   console.log("[daily-cycle] player-usage-ai-candidate-review:start", { dayKey });
@@ -558,6 +579,7 @@ export async function runDailyCycle(options = {}) {
     teamGeoBuild,
     detailsBuild,
     playerUsageWorkset,
+    playerUsageDeterministicCandidates,
     playerUsageAiCandidateReview,
     playerUsageAiCandidatePromotion,
     playerUsageManualValidation,
@@ -605,6 +627,8 @@ if (entryUrl === import.meta.url) {
       teamGeoMissingCount: result?.teamGeoSeeds?.after?.missingCount ?? 0,
       teamGeoExistingCount: result?.teamGeoBuild?.existingCount ?? 0,
       teamGeoCoveragePct: result?.teamGeoBuild?.coveragePct ?? 0,
+      playerUsageDeterministicCandidateWrittenCount: result?.playerUsageDeterministicCandidates?.candidateWrittenCount ?? 0,
+      playerUsageDeterministicCandidateReadyCount: result?.playerUsageDeterministicCandidates?.candidateReadyCount ?? 0,
       playerUsageAiCandidateReviewCount: result?.playerUsageAiCandidateReview?.candidateCount ?? 0,
       playerUsageAiCandidateNeedsReviewCount: result?.playerUsageAiCandidateReview?.needsReviewCount ?? 0,
       playerUsageAiCandidateReadyForPromotionCount: result?.playerUsageAiCandidateReview?.approvedReadyForPromotionCount ?? 0,
