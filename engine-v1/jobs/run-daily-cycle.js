@@ -9,6 +9,7 @@ import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
 import { buildPlayerUsageWorksetDay } from "./build-player-usage-workset-day.js";
+import { buildPlayerUsageAiCandidateReviewDay } from "./build-player-usage-ai-candidate-review-day.js";
 import { promotePlayerUsageAiCandidatesDay } from "./promote-player-usage-ai-candidates-day.js";
 import { applyPlayerUsageSeedsDay } from "./apply-player-usage-seeds-day.js";
 import { validatePlayerUsageManualResultsDay } from "./validate-player-usage-manual-results-day.js";
@@ -126,6 +127,7 @@ export async function runDailyCycle(options = {}) {
   let teamGeoSeeds = null;
   let teamGeoBuild = null;
   let playerUsageWorkset = null;
+  let playerUsageAiCandidateReview = null;
   let playerUsageAiCandidatePromotion = null;
   let playerUsageManualValidation = null;
   let playerUsageSeeds = null;
@@ -222,6 +224,23 @@ export async function runDailyCycle(options = {}) {
     insufficientCount: playerUsageWorkset?.insufficientCount ?? 0,
     okCount: playerUsageWorkset?.okCount ?? 0,
     file: playerUsageWorkset?.file || null
+  });
+
+  console.log("[daily-cycle] player-usage-ai-candidate-review:start", { dayKey });
+
+  playerUsageAiCandidateReview = await buildPlayerUsageAiCandidateReviewDay(dayKey);
+
+  console.log("[daily-cycle] player-usage-ai-candidate-review:done", {
+    ok: playerUsageAiCandidateReview?.ok,
+    dayKey: playerUsageAiCandidateReview?.dayKey,
+    candidateCount: playerUsageAiCandidateReview?.candidateCount ?? 0,
+    needsReviewCount: playerUsageAiCandidateReview?.needsReviewCount ?? 0,
+    approvedReadyForPromotionCount: playerUsageAiCandidateReview?.approvedReadyForPromotionCount ?? 0,
+    invalidCandidateCount: playerUsageAiCandidateReview?.invalidCandidateCount ?? 0,
+    notInWorksetCount: playerUsageAiCandidateReview?.notInWorksetCount ?? 0,
+    promotableCount: playerUsageAiCandidateReview?.promotableCount ?? 0,
+    reviewRequiredCount: playerUsageAiCandidateReview?.reviewRequiredCount ?? 0,
+    file: playerUsageAiCandidateReview?.file || null
   });
 
   console.log("[daily-cycle] player-usage-ai-candidate-promotion:start", { dayKey });
@@ -578,6 +597,7 @@ export async function runDailyCycle(options = {}) {
     teamGeoBuild,
     detailsBuild,
     playerUsageWorkset,
+    playerUsageAiCandidateReview,
     playerUsageAiCandidatePromotion,
     playerUsageManualValidation,
     playerUsageSeeds,
@@ -626,6 +646,9 @@ if (entryUrl === import.meta.url) {
       teamGeoMissingCount: result?.teamGeoSeeds?.after?.missingCount ?? 0,
       teamGeoExistingCount: result?.teamGeoBuild?.existingCount ?? 0,
       teamGeoCoveragePct: result?.teamGeoBuild?.coveragePct ?? 0,
+      playerUsageAiCandidateReviewCount: result?.playerUsageAiCandidateReview?.candidateCount ?? 0,
+      playerUsageAiCandidateNeedsReviewCount: result?.playerUsageAiCandidateReview?.needsReviewCount ?? 0,
+      playerUsageAiCandidateReadyForPromotionCount: result?.playerUsageAiCandidateReview?.approvedReadyForPromotionCount ?? 0,
       playerUsageAiCandidatePromotedCount: result?.playerUsageAiCandidatePromotion?.promotedCount ?? 0,
       playerUsageAiCandidateReviewRequiredCount: result?.playerUsageAiCandidatePromotion?.reviewRequiredCount ?? 0,
       playerUsageManualAcceptedCount: result?.playerUsageManualValidation?.acceptedCount ?? 0,
