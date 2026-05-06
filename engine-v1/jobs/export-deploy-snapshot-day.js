@@ -328,6 +328,8 @@ export function exportDeploySnapshotDay(dayKey) {
     coverage: {
       detailsWithTravel: detailsReport.summaries.filter(x => x.hasTravel).length,
       detailsWithPlayerUsage: detailsReport.summaries.filter(x => x.hasPlayerUsage).length,
+      playerUsageUsableSides: detailsReport.summaries.reduce((sum, x) => sum + Number(x.playerUsageUsableSides || 0), 0),
+      playerUsageTotalSides: detailsReport.summaries.length * 2,
       detailsWithTeamNews: detailsReport.summaries.filter(x => x.hasTeamNews).length,
       detailsWithValue: detailsReport.summaries.filter(x => x.hasValue).length,
       matchProfileApplied: detailsReport.summaries.filter(x => x.matchProfileApplied).length
