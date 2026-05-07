@@ -94,6 +94,110 @@ function extractPlayerUsageSides(detail) {
   };
 }
 
+function extractTeamNews(detail) {
+  return (
+    detail?.teamNewsIntel ||
+    detail?.researchedFacts?.teamNewsIntel ||
+    detail?.teamNews ||
+    detail?.researchedFacts?.teamNews ||
+    detail?.context?.teamNews ||
+    detail?.aiTasks?.team_news ||
+    null
+  );
+}
+
+function numericConfidence(...values) {
+  for (const value of values) {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+
+  return 0;
+}
+
+function statusText(...values) {
+  for (const value of values) {
+    const s = String(value || "").trim().toLowerCase();
+    if (s) return s;
+  }
+
+  return "";
+}
+
+function countTeamNewsContent(node) {
+  if (!node || typeof node !== "object") return 0;
+
+  return (
+    asArray(node.absences).length +
+    asArray(node.injuries).length +
+    asArray(node.suspensions).length +
+    asArray(node.notes).length +
+    asArray(node.evidence).length +
+    asArray(node.sources).length +
+    asArray(node.items).length +
+    asArray(node.players).length
+  );
+}
+
+function isUsableTeamNews(teamNews) {
+  if (!teamNews || typeof teamNews !== "object") return false;
+
+  const status = statusText(
+    teamNews.status,
+    teamNews.state,
+    teamNews.data?.status,
+    teamNews.data?.state
+  );
+
+  if (
+    status === "empty" ||
+    status === "missing" ||
+    status === "unavailable" ||
+    status === "placeholder" ||
+    status === "stub" ||
+    status === "no_data" ||
+    status === "none"
+  ) {
+    return false;
+  }
+
+  const confidence = numericConfidence(
+    teamNews.confidence,
+    teamNews.data?.confidence,
+    teamNews.home?.confidence,
+    teamNews.away?.confidence,
+    teamNews.data?.home?.confidence,
+    teamNews.data?.away?.confidence
+  );
+
+  const contentNodes = [
+    teamNews,
+    teamNews.data,
+    teamNews.home,
+    teamNews.away,
+    teamNews.data?.home,
+    teamNews.data?.away,
+    teamNews.teamNews,
+    teamNews.data?.teamNews
+  ];
+
+  const contentCount = contentNodes.reduce((sum, node) => sum + countTeamNewsContent(node), 0);
+
+  if (contentCount > 0) return true;
+
+  return (
+    confidence > 0 &&
+    (
+      status === "ready" ||
+      status === "ok" ||
+      status === "available" ||
+      status === "complete" ||
+      status === "structured" ||
+      status === "validated"
+    )
+  );
+}
+
 function isUsablePlayerUsageSide(side) {
   if (!side || typeof side !== "object") return false;
 
@@ -156,10 +260,8 @@ function summarizeDetail(detail) {
 
   const hasPlayerUsage = playerUsageUsableSides > 0;
 
-  const hasTeamNews =
-    Boolean(detail?.teamNewsIntel) ||
-    Boolean(detail?.researchedFacts?.teamNewsIntel) ||
-    Boolean(detail?.teamNews);
+  const teamNews = extractTeamNews(detail);
+  const hasTeamNews = isUsableTeamNews(teamNews);
 
   const valueRows = [
     ...(Array.isArray(detail?.value) ? detail.value : []),
