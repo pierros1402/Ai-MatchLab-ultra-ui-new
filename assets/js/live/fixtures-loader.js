@@ -78,7 +78,20 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     ).toUpperCase();
   }
 
+  function isStaleLiveMatch(m) {
+    const status = normalizeStatus(m);
+
+    return (
+      m?.staleLive === true ||
+      String(m?.statusType || "").toUpperCase() === "STALE_LIVE" ||
+      String(m?.status || "").toUpperCase() === "STALE_LIVE" ||
+      status.includes("STALE_LIVE")
+    );
+  }
+
   function isLiveStatus(m) {
+    if (isStaleLiveMatch(m)) return false;
+
     const s = normalizeStatus(m);
 
     return (
@@ -280,6 +293,7 @@ async function loadLive(dateYmd) {
     const matches = safeArray(data.matches);
 
     const liveMatches = matches.filter(m => {
+      if (isStaleLiveMatch(m)) return false;
       const s = String(
         m?.status?.type?.name ||
         m?.status?.type?.state ||
@@ -365,6 +379,7 @@ async function loadLive(dateYmd) {
 
       // 3. LIVE from TODAY
       const liveMatches = today.matches.filter(m => {
+        if (isStaleLiveMatch(m)) return false;
         const s = String(
           m?.status?.type?.name ||
           m?.status?.type?.state ||
