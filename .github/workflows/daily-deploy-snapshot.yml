@@ -50,8 +50,10 @@ jobs:
           ATHENS_MINUTE="$(TZ=Europe/Athens date +%M)"
 
           if [ "$EVENT_NAME" = "schedule" ]; then
-            if [ "$ATHENS_HOUR" != "00" ] || [ "$ATHENS_MINUTE" != "10" ]; then
-              echo "Skipping scheduled run outside 00:10 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+            # GitHub scheduled workflows are not guaranteed to start at the exact cron minute.
+            # Accept the intended Athens midnight window, while still skipping the duplicate DST/standard-time cron.
+            if [ "$ATHENS_HOUR" != "00" ] || [ "$ATHENS_MINUTE" -lt "10" ]; then
+              echo "Skipping scheduled run outside 00:10-00:59 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
               echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
               exit 0
