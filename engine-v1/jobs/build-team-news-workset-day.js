@@ -67,6 +67,10 @@ function resolveDetailsDir(dayKey) {
   return resolveDataPath("details", dayKey);
 }
 
+function resolveSnapshotDetailsDir(dayKey) {
+  return resolveDataPath("deploy-snapshots", dayKey, "details");
+}
+
 function resolveWorksetPath(dayKey) {
   return resolveDataPath("team-news", "_worksets", `${dayKey}.json`);
 }
@@ -191,43 +195,62 @@ export async function buildTeamNewsWorksetDay(dayKey) {
   const runtimePath = resolveRuntimePath(safeDayKey);
   const runtime = readJsonFile(runtimePath, null);
   const detailsDir = resolveDetailsDir(safeDayKey);
+  const snapshotDetailsDir = resolveSnapshotDetailsDir(safeDayKey);
 
   let matches = [];
+  let selectedDetailsDir = null;
+  let sourceMode = "none";
 
   if (runtime) {
     matches = extractMatchesFromRuntime(runtime);
-  } else if (fs.existsSync(detailsDir)) {
+    sourceMode = "runtime";
+  } else {
+    selectedDetailsDir = fs.existsSync(detailsDir)
+      ? detailsDir
+      : fs.existsSync(snapshotDetailsDir)
+        ? snapshotDetailsDir
+        : null;
+
+    if (!selectedDetailsDir) {
+      throw new Error(
+        `no runtime file, details directory, or deploy snapshot details found for dayKey ${safeDayKey}`
+      );
+    }
+
+    sourceMode = selectedDetailsDir === detailsDir
+      ? "canonical_details"
+      : "deploy_snapshot_details";
+
     const detailFiles = fs
-      .readdirSync(detailsDir)
+      .readdirSync(selectedDetailsDir)
       .filter(name => name.endsWith(".json"))
       .sort();
 
     matches = detailFiles
-    .map(name => readJsonFile(path.join(detailsDir, name), null))
-    .map(detail => {
-      if (!detail) return null;
+      .map(name => readJsonFile(path.join(selectedDetailsDir, name), null))
+      .map(detail => {
+        if (!detail) return null;
 
-      if (detail?.match) return detail.match;
+        if (detail?.match) return detail.match;
 
-      if (detail?.basic) {
-        return {
-          id: detail.basic.matchId || detail.matchId || null,
-          matchId: detail.basic.matchId || detail.matchId || null,
-          leagueSlug: detail.basic.leagueSlug || null,
-          homeTeamName: detail.basic.homeTeam || null,
-          awayTeamName: detail.basic.awayTeam || null
-        };
-      }
+        if (detail?.basic) {
+          return {
+            id: detail.basic.matchId || detail.matchId || null,
+            matchId: detail.basic.matchId || detail.matchId || null,
+            leagueSlug: detail.basic.leagueSlug || null,
+            homeTeamName: detail.basic.homeTeam || null,
+            awayTeamName: detail.basic.awayTeam || null,
+            kickoffUtc: detail.basic.kickoffUtc || null
+          };
+        }
 
-      return null;
-    })
-    .filter(Boolean);
-  } else {
-    throw new Error(
-      `no runtime file or details directory found for dayKey ${safeDayKey}`
-    );
+        return null;
+      })
+      .filter(Boolean);
   }
+
   const rawEntries = [];
+
 
   for (const match of matches) {
     const leagueSlug = matchLeagueSlug(match);
@@ -251,7 +274,10 @@ export async function buildTeamNewsWorksetDay(dayKey) {
     ok: true,
     dayKey: safeDayKey,
     runtimePath: runtime ? runtimePath : null,
-    detailsDir: fs.existsSync(detailsDir) ? detailsDir : null,
+    detailsDir: selectedDetailsDir,
+    canonicalDetailsDir: fs.existsSync(detailsDir) ? detailsDir : null,
+    snapshotDetailsDir: fs.existsSync(snapshotDetailsDir) ? snapshotDetailsDir : null,
+    sourceMode,
     teamsCount: teams.length,
     existingCount: existing.length,
     missingCount: missing.length,
