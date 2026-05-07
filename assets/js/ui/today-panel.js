@@ -54,6 +54,8 @@
 
    const s = String(st).toUpperCase();
 
+   if (s.includes("STALE_LIVE")) return false;
+
    return (
      s === "LIVE" ||                 // 👈 ΠΡΟΣΘΗΚΗ
      s.includes("IN_PROGRESS") ||
@@ -109,7 +111,12 @@
         const ko = Number(m.kickoff_ms || 0);
 
         const isPre = st === "PRE" || st.includes("SCHEDULED");
-        const isLive = isLiveStatus(st);
+        const isLive =
+          m?.staleLive === true ||
+          String(m?.statusType || "").toUpperCase() === "STALE_LIVE" ||
+          String(m?.status || "").toUpperCase() === "STALE_LIVE"
+            ? false
+            : isLiveStatus(st);
 
         // hide scheduled matches that should have started already
         if (isPre && ko && ko < now) {
@@ -180,7 +187,12 @@
       const info = document.createElement("span");
       const st = String(m.status || "").toUpperCase();
 
-      if (isLiveStatus(st)) {
+      if (
+        m?.staleLive !== true &&
+        String(m?.statusType || "").toUpperCase() !== "STALE_LIVE" &&
+        String(m?.status || "").toUpperCase() !== "STALE_LIVE" &&
+        isLiveStatus(st)
+      ) {
         const min = m.minute ? `${m.minute}'` : "";
         const sc =
           m.scoreHome != null && m.scoreAway != null
@@ -296,7 +308,11 @@
 // ----------------------------------
  
 
-      const hasLive = matches.some(m => isLiveStatus(m.status));
+      const hasLive = matches.some(m =>
+        m?.staleLive !== true &&
+        String(m?.statusType || "").toUpperCase() !== "STALE_LIVE" &&
+        isLiveStatus(m.status)
+      );
 
       if (hasLive) {
 

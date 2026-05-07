@@ -77,10 +77,21 @@ function initLivePanel(panel) {
     ).toUpperCase();
   }
 
+  function isStaleLiveMatch(m) {
+    return (
+      m?.staleLive === true ||
+      String(m?.statusType || "").toUpperCase() === "STALE_LIVE" ||
+      String(m?.status || "").toUpperCase() === "STALE_LIVE" ||
+      normalizeStatus(m).includes("STALE_LIVE")
+    );
+  }
+
   function isLiveStatus(st) {
     if (!st) return false;
 
     const s = String(st).toUpperCase();
+
+    if (s.includes("STALE_LIVE")) return false;
 
     return (
       s === "LIVE" ||                 // 👈 ΠΡΟΣΘΗΚΗ
@@ -268,7 +279,7 @@ function initLivePanel(panel) {
     if (placeholder) placeholder.style.display = "none";
 
     const live = matches
-      .filter(m => isLiveStatus(normalizeStatus(m)))
+      .filter(m => !isStaleLiveMatch(m) && isLiveStatus(normalizeStatus(m)))
       .sort((a, b) => priorityScore(b) - priorityScore(a));
 
     if (live.length === 0) {
