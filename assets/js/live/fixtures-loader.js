@@ -63,6 +63,17 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
       : "https://ai-matchlab-engine.onrender.com";
   }
 
+  async function fetchJson(url) {
+    const r = await fetch(url, { method: "GET", cache: "no-store" });
+
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`HTTP ${r.status} ${r.statusText} :: ${t.slice(0, 200)}`);
+    }
+
+    return await r.json();
+  }
+
   function safeArray(x) {
     return Array.isArray(x) ? x : [];
   }
