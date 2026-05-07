@@ -32,6 +32,10 @@ function getAuditPath(dayKey) {
   return resolveDataPath("team-news", "_manual-result-validation-audit", `${dayKey}.json`);
 }
 
+function getWorksetPath(dayKey) {
+  return resolveDataPath("team-news", "_worksets", `${dayKey}.json`);
+}
+
 function listSeedFiles(dayKey) {
   const dir = getSeedsDir(dayKey);
   if (!fs.existsSync(dir)) return [];
@@ -61,6 +65,182 @@ function normalizeEvidence(items = []) {
 
 function hasUsableEvidence(raw = {}) {
   return normalizeEvidence(raw?.evidence).length > 0;
+}
+
+function normalizeComparableText(value) {
+  return normalizeText(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeComparableToken(value) {
+  return normalizeComparableText(value).replace(/\s+/g, "");
+}
+
+function readWorksetSafe(dayKey) {
+  return readJsonSafe(getWorksetPath(dayKey), null);
+}
+
+function collectWorksetTeams(workset = {}) {
+  return [
+    ...(Array.isArray(workset?.teams) ? workset.teams : []),
+    ...(Array.isArray(workset?.missing) ? workset.missing : []),
+    ...(Array.isArray(workset?.existing) ? workset.existing : []),
+    ...(Array.isArray(workset?.needsAcquisition) ? workset.needsAcquisition : [])
+  ];
+}
+
+function worksetTeamKey(row = {}) {
+  return normalizeTeamKey(row?.key || row?.team);
+}
+
+function findWorksetMatchesForSeed(raw = {}, ctx = {}) {
+  const dayKey = normalizeText(ctx.dayKey);
+  const workset = ctx.workset || readWorksetSafe(dayKey);
+  const rows = collectWorksetTeams(workset);
+  const seedKey = normalizeTeamKey(raw?.key || raw?.team);
+  const seedTeam = normalizeText(raw?.team);
+  const seedTeamCmp = normalizeComparableText(seedTeam);
+  const seedMatchIds = new Set(
+    (Array.isArray(raw?.matchIds) ? raw.matchIds : [])
+      .map(normalizeText)
+      .filter(Boolean)
+  );
+
+  const matches = rows.filter(row => {
+    const rowTeam = normalizeText(row?.team);
+    const rowKey = worksetTeamKey(row);
+    const rowTeamCmp = normalizeComparableText(rowTeam);
+
+    const teamMatches =
+      (seedKey && rowKey && seedKey === rowKey) ||
+      (seedTeamCmp && rowTeamCmp && seedTeamCmp === rowTeamCmp);
+
+    if (!teamMatches) return false;
+
+    if (seedMatchIds.size === 0) return true;
+
+    return seedMatchIds.has(normalizeText(row?.matchId));
+  });
+
+  return {
+    workset,
+    rows,
+    matches
+  };
+}
+
+function validateSeedAgainstWorkset(raw = {}, ctx = {}) {
+  const dayKey = normalizeText(ctx.dayKey);
+  const side = normalizeAbsenceSide(raw?.side || raw?.targetSide);
+  const leagueSlug = normalizeText(raw?.leagueSlug);
+  const seedMatchIds = (Array.isArray(raw?.matchIds) ? raw.matchIds : [])
+    .map(normalizeText)
+    .filter(Boolean);
+
+  const { workset, rows, matches } = findWorksetMatchesForSeed(raw, ctx);
+
+  if (!workset || !Array.isArray(rows) || rows.length === 0) {
+    return {
+      ok: false,
+      code: "missing_team_news_workset",
+      message: "team-news manual seed requires a same-day team-news workset for contamination checks"
+    };
+  }
+
+  if (matches.length === 0) {
+    return {
+      ok: false,
+      code: "seed_team_not_in_workset",
+      message: "manual team-news seed team/matchId was not found in the same-day workset",
+      matchIds: seedMatchIds
+    };
+  }
+
+  if (side && !matches.some(row => normalizeAbsenceSide(row?.side) === side)) {
+    return {
+      ok: false,
+      code: "seed_side_not_in_workset",
+      message: "manual team-news seed side does not match same-day workset side",
+      side
+    };
+  }
+
+  if (leagueSlug && !matches.some(row => normalizeText(row?.leagueSlug) === leagueSlug)) {
+    return {
+      ok: false,
+      code: "seed_league_not_in_workset",
+      message: "manual team-news seed leagueSlug does not match same-day workset leagueSlug",
+      leagueSlug
+    };
+  }
+
+  return {
+    ok: true,
+    matches
+  };
+}
+
+function evidenceTextForAlignment(item = {}) {
+  return [
+    item?.label,
+    item?.url,
+    item?.publisher,
+    item?.publishedAt
+  ].map(normalizeText).filter(Boolean).join(" ");
+}
+
+function validateEvidenceMentionsSeedTeam(raw = {}, team = "") {
+  const evidence = normalizeEvidence(raw?.evidence);
+
+  if (evidence.length === 0) {
+    return {
+      ok: false,
+      code: "missing_evidence",
+      message: "manual team-news result must include at least one evidence item"
+    };
+  }
+
+  const names = [
+    team,
+    raw?.team,
+    ...(Array.isArray(raw?.aliases) ? raw.aliases : [])
+  ].map(normalizeText).filter(Boolean);
+
+  const comparableNames = names
+    .map(name => ({
+      spaced: normalizeComparableText(name),
+      token: normalizeComparableToken(name)
+    }))
+    .filter(row => row.spaced.length >= 3 || row.token.length >= 3);
+
+  const aligned = evidence.some(item => {
+    const text = normalizeComparableText(evidenceTextForAlignment(item));
+    const token = normalizeComparableToken(evidenceTextForAlignment(item));
+
+    return comparableNames.some(name => {
+      if (name.spaced && text.includes(name.spaced)) return true;
+      if (name.token && token.includes(name.token)) return true;
+      return false;
+    });
+  });
+
+  if (!aligned) {
+    return {
+      ok: false,
+      code: "evidence_not_aligned_to_seed_team",
+      message: "manual team-news evidence must mention the seed team or one of its aliases"
+    };
+  }
+
+  return {
+    ok: true
+  };
 }
 
 function normalizeAbsenceSide(value) {
@@ -160,6 +340,25 @@ export function validateTeamNewsSeedRecord(raw = {}, ctx = {}) {
     issues.push({ code: "missing_evidence", message: "manual team-news result must include at least one evidence item" });
   }
 
+  const worksetGuard = validateSeedAgainstWorkset(raw, ctx);
+  if (!worksetGuard.ok) {
+    issues.push({
+      code: worksetGuard.code,
+      message: worksetGuard.message,
+      matchIds: worksetGuard.matchIds || undefined,
+      side: worksetGuard.side || undefined,
+      leagueSlug: worksetGuard.leagueSlug || undefined
+    });
+  }
+
+  const evidenceAlignmentGuard = validateEvidenceMentionsSeedTeam(raw, team);
+  if (!evidenceAlignmentGuard.ok) {
+    issues.push({
+      code: evidenceAlignmentGuard.code,
+      message: evidenceAlignmentGuard.message
+    });
+  }
+
   const candidatePayload = {
     key,
     team,
@@ -190,6 +389,23 @@ export function validateTeamNewsSeedRecord(raw = {}, ctx = {}) {
       message: "manual team-news absences must include side: home or away, or the seed must provide side/targetSide",
       missingSideCount: splitAbsences.missingSideCount
     });
+  }
+
+  const targetSide = normalizeAbsenceSide(raw?.side || raw?.targetSide);
+  if (targetSide && candidatePayload.absences.length > 0) {
+    const wrongSideCount = candidatePayload.absences.filter(item => {
+      const side = normalizeAbsenceSide(item?.side) || targetSide;
+      return side !== targetSide;
+    }).length;
+
+    if (wrongSideCount > 0) {
+      issues.push({
+        code: "absence_side_mismatch",
+        message: "manual team-news absences must match the seed target side",
+        targetSide,
+        wrongSideCount
+      });
+    }
   }
 
   const canonicalValidationInput = {
@@ -240,6 +456,7 @@ export function validateTeamNewsSeedRecord(raw = {}, ctx = {}) {
 
 export function validateTeamNewsSeedsDay(dayKey) {
   const files = listSeedFiles(dayKey);
+  const workset = readWorksetSafe(dayKey);
   const results = files.map(file => {
     const raw = readJsonSafe(file, null);
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -255,7 +472,7 @@ export function validateTeamNewsSeedsDay(dayKey) {
       };
     }
 
-    return validateTeamNewsSeedRecord(raw, { dayKey, file });
+    return validateTeamNewsSeedRecord(raw, { dayKey, file, workset });
   });
 
   const audit = {
