@@ -41,19 +41,146 @@ jobs:
         shell: bash
         env:
           INPUT_DAY_KEY: ${{ inputs.dayKey }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           RAW_DAY_KEY="${INPUT_DAY_KEY:-}"
           DAY_KEY="$(printf "%s" "$RAW_DAY_KEY" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n 1 || true)"
+
+          ATHENS_HOUR="$(TZ=Europe/Athens date +%H)"
+          ATHENS_MINUTE="$(TZ=Europe/Athens date +%M)"
+
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            if [ "$ATHENS_HOUR" != "00" ] || [ "$ATHENS_MINUTE" != "10" ]; then
+              echo "Skipping scheduled run outside 00:10 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+              echo "skipBuild=true" >> "$GITHUB_OUTPUT"
+              echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          fi
 
           if [ -z "$DAY_KEY" ]; then
             DAY_KEY="$(TZ=Europe/Athens date +%F)"
           fi
 
-          if ! printf "%s" "$DAY_KEY" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+          if ! printf "%s" "$DAY_KEY" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}
+
+      - name: Install root dependencies
+        if: env.SKIP_BUILD != 'true'
+        run: npm install --no-audit --no-fund
+
+      - name: Install engine dependencies
+        if: env.SKIP_BUILD != 'true'
+        working-directory: engine-v1
+        run: npm install --no-audit --no-fund
+
+      - name: Run daily cycle
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
+
+      - name: Run team geo enrichment
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/run-team-geo-enrichment-day.js "$DAY_KEY" --min-coverage=80 --limit=40 --delay-ms=900 --row-timeout-ms=16000
+
+      - name: Rebuild details after geo
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+
+      - name: Export deploy snapshot
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
+
+      - name: Snapshot verification
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require("fs");
+
+          const day = process.env.DAY_KEY;
+          const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
+          const valueFile = `data/deploy-snapshots/${day}/value.json`;
+          const detailsDir = `data/deploy-snapshots/${day}/details`;
+
+          if (!fs.existsSync(manifestFile)) {
+            throw new Error(`missing manifest: ${manifestFile}`);
+          }
+
+          if (!fs.existsSync(valueFile)) {
+            throw new Error(`missing value: ${valueFile}`);
+          }
+
+          if (!fs.existsSync(detailsDir)) {
+            throw new Error(`missing details dir: ${detailsDir}`);
+          }
+
+          const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
+          const value = JSON.parse(fs.readFileSync(valueFile, "utf8"));
+          const details = fs.readdirSync(detailsDir).filter(f => f.endsWith(".json"));
+
+          console.log(JSON.stringify({
+            date: manifest.date,
+            hash: manifest.hash,
+            counts: manifest.counts,
+            coverage: manifest.coverage,
+            valueCount: value.count,
+            valuePicks: Array.isArray(value.picks) ? value.picks.length : null,
+            detailsFiles: details.length
+          }, null, 2));
+
+          if (!details.length) {
+            throw new Error("snapshot has zero detail files");
+          }
+          NODE
+
+      - name: Configure git author
+        if: env.SKIP_BUILD != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Stage allowed generated files only
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          git restore --staged . || true
+
+          git add data/deploy-snapshots/latest.json
+          git add "data/deploy-snapshots/${DAY_KEY}/"
+
+          if compgen -G "data/team-geo/*.json" > /dev/null; then
+            git add data/team-geo/*.json
+          fi
+
+          echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/team-geo/)' || true)"
+
+          if [ -n "$DISALLOWED" ]; then
+            echo "ERROR: disallowed files staged:"
+            echo "$DISALLOWED"
+            exit 1
+          fi
+
+          echo "=== STAGED COUNT ==="
+          git diff --cached --name-only | wc -l
+
+      - name: Commit and push snapshot
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          if git diff --cached --quiet; then
+            echo "No snapshot or geo changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Auto refresh deploy snapshot for ${DAY_KEY}"
+          git push
+; then
             echo "ERROR: invalid DAY_KEY=$DAY_KEY"
             exit 1
           fi
 
+          echo "skipBuild=false" >> "$GITHUB_OUTPUT"
+          echo "SKIP_BUILD=false" >> "$GITHUB_ENV"
           echo "dayKey=$DAY_KEY" >> "$GITHUB_OUTPUT"
           echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
           echo "Resolved DAY_KEY=$DAY_KEY"
