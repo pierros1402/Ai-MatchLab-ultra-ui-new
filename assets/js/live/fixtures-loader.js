@@ -330,29 +330,7 @@ async function loadLive(dateYmd) {
     const data = await fetchJson(url);
     const matches = safeArray(data.matches);
 
-    const liveMatches = matches.filter(m => {
-      if (isStaleLiveMatch(m)) return false;
-      const s = String(
-        m?.status?.type?.name ||
-        m?.status?.type?.state ||
-        m?.status ||
-        ""
-      ).toUpperCase();
-
-      return (
-        s.includes("LIVE") ||
-        s.includes("IN_PROGRESS") ||
-        s.includes("FIRST_HALF") ||
-        s.includes("SECOND_HALF") ||
-        s.includes("HALF_TIME") ||
-        s.includes("EXTRA_TIME") ||
-        s.includes("FIRST") ||
-        s.includes("SECOND") ||
-        s.includes("HALF") ||
-        s.includes("EXTRA") ||
-        s.includes("PROGRESS")
-      );
-    });
+    const liveMatches = matches.filter(m => isLiveStatus(m));
 
     const mergedLiveMatches = mergeStableMatches(
       window.__AIML_LAST_LIVE?.matches,
@@ -416,24 +394,7 @@ async function loadLive(dateYmd) {
       const today = await loadToday(day);
 
       // 3. LIVE from TODAY
-      const liveMatches = today.matches.filter(m => {
-        if (isStaleLiveMatch(m)) return false;
-        const s = String(
-          m?.status?.type?.name ||
-          m?.status?.type?.state ||
-          m?.status ||
-          ""
-        ).toUpperCase();
-
-        return (
-          s.includes("LIVE") ||
-          s.includes("IN_PROGRESS") ||
-          s.includes("FIRST_HALF") ||
-          s.includes("SECOND_HALF") ||
-          s.includes("HALF_TIME") ||
-          s.includes("EXTRA_TIME")
-        );
-      });
+      const liveMatches = today.matches.filter(m => isLiveStatus(m));
 
       const livePayload = {
         date: today.date,
