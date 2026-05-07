@@ -28,22 +28,39 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
   }
 
   function getBaseUrl() {
-    if (
+    const host = String(window.location?.hostname || "").toLowerCase();
+    const isLocalHost =
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "::1";
+
+    const cfgBase =
+      window.AIML_CONFIG &&
+      typeof window.AIML_CONFIG.BASE_URL === "string"
+        ? window.AIML_CONFIG.BASE_URL.trim()
+        : "";
+
+    const liveCfgBase =
       window.AIML_LIVE_CFG &&
       typeof window.AIML_LIVE_CFG.fixturesBase === "string"
-    ) {
-      return window.AIML_LIVE_CFG.fixturesBase.replace(/\/+$/, "");
-    }
-    return "http://localhost:3010";
-  }
+        ? window.AIML_LIVE_CFG.fixturesBase.trim()
+        : "";
 
-  async function fetchJson(url) {
-    const r = await fetch(url, { method: "GET", cache: "no-store" });
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`HTTP ${r.status} ${r.statusText} :: ${t.slice(0, 200)}`);
+    if (isLocalHost && liveCfgBase) {
+      return liveCfgBase.replace(/\/+$/, "");
     }
-    return await r.json();
+
+    if (cfgBase) {
+      return cfgBase.replace(/\/+$/, "");
+    }
+
+    if (liveCfgBase && !liveCfgBase.includes("localhost:3010")) {
+      return liveCfgBase.replace(/\/+$/, "");
+    }
+
+    return isLocalHost
+      ? "http://localhost:3010"
+      : "https://ai-matchlab-engine.onrender.com";
   }
 
   function safeArray(x) {
