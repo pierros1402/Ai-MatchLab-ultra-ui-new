@@ -459,30 +459,71 @@ function isSnapshotStaleLiveMatch(match, nowMs = Date.now()) {
   return ageHours >= snapshotLiveStaleThresholdHours();
 }
 
+function isSnapshotPreLikeStatus(match) {
+  const text = snapshotStatusText(match);
+
+  return (
+    text.includes("PRE") ||
+    text.includes("SCHEDULED") ||
+    text.includes("STATUS_SCHEDULED") ||
+    text.includes("NOT_STARTED")
+  );
+}
+
+function isSnapshotStalePreMatch(match, nowMs = Date.now()) {
+  if (!isSnapshotPreLikeStatus(match)) return false;
+
+  const kickoffMs = snapshotKickoffMs(match);
+  if (!Number.isFinite(kickoffMs)) return false;
+
+  const ageHours = (nowMs - kickoffMs) / 36e5;
+
+  return ageHours >= snapshotLiveStaleThresholdHours();
+}
+
 function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
   if (!match || typeof match !== "object") return match;
-
-  if (!isSnapshotStaleLiveMatch(match, nowMs)) return match;
 
   const kickoffMs = snapshotKickoffMs(match);
   const ageHours = Number.isFinite(kickoffMs)
     ? Math.round(((nowMs - kickoffMs) / 36e5) * 100) / 100
     : null;
 
-  return {
-    ...match,
-    status: "STALE_LIVE",
-    rawStatus: match.rawStatus || match.status || null,
-    statusType: "STALE_LIVE",
-    statusName: "Stale live snapshot",
-    phase: "STALE_LIVE",
-    live: false,
-    isLive: false,
-    staleLive: true,
-    staleLiveReason: "snapshot_live_status_too_old_for_kickoff",
-    staleLiveAgeHours: ageHours,
-    staleLiveThresholdHours: snapshotLiveStaleThresholdHours()
-  };
+  if (isSnapshotStaleLiveMatch(match, nowMs)) {
+    return {
+      ...match,
+      status: "STALE_LIVE",
+      rawStatus: match.rawStatus || match.status || null,
+      statusType: "STALE_LIVE",
+      statusName: "Stale live snapshot",
+      phase: "STALE_LIVE",
+      live: false,
+      isLive: false,
+      staleLive: true,
+      staleLiveReason: "snapshot_live_status_too_old_for_kickoff",
+      staleLiveAgeHours: ageHours,
+      staleLiveThresholdHours: snapshotLiveStaleThresholdHours()
+    };
+  }
+
+  if (isSnapshotStalePreMatch(match, nowMs)) {
+    return {
+      ...match,
+      status: "STALE_PRE",
+      rawStatus: match.rawStatus || match.status || null,
+      statusType: "STALE_PRE",
+      statusName: "Stale scheduled snapshot",
+      phase: "STALE_PRE",
+      live: false,
+      isLive: false,
+      stalePre: true,
+      stalePreReason: "snapshot_scheduled_status_too_old_for_kickoff",
+      stalePreAgeHours: ageHours,
+      stalePreThresholdHours: snapshotLiveStaleThresholdHours()
+    };
+  }
+
+  return match;
 }
 
 function snapshotFixturesRuntimeResponse(mode, dayKey) {

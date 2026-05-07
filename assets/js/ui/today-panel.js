@@ -57,14 +57,47 @@
    if (s.includes("STALE_LIVE")) return false;
 
    return (
-     s === "LIVE" ||                 // 👈 ΠΡΟΣΘΗΚΗ
+     s === "LIVE" ||
      s.includes("IN_PROGRESS") ||
      s.includes("LIVE") ||
      s.includes("FIRST_HALF") ||
      s.includes("SECOND_HALF") ||
      s.includes("HALF_TIME") ||
-     s.includes("EXTRA_TIME")
+     s.includes("EXTRA_TIME") ||
+     s.includes("STATUS_FIRST_HALF") ||
+     s.includes("STATUS_SECOND_HALF") ||
+     s.includes("STATUS_HALFTIME")
    );
+ }
+
+ function matchStatusText(m) {
+   return [
+     m?.status,
+     m?.rawStatus,
+     m?.statusType,
+     m?.statusName,
+     m?.state,
+     m?.phase,
+     m?.live === true || m?.isLive === true ? "LIVE" : ""
+   ]
+     .filter(Boolean)
+     .map(x => String(x).toUpperCase())
+     .join(" ");
+ }
+
+ function isStaleLiveMatch(m) {
+   return (
+     m?.staleLive === true ||
+     String(m?.status || "").toUpperCase() === "STALE_LIVE" ||
+     String(m?.rawStatus || "").toUpperCase() === "STALE_LIVE" ||
+     String(m?.statusType || "").toUpperCase() === "STALE_LIVE" ||
+     matchStatusText(m).includes("STALE_LIVE")
+   );
+ }
+
+ function isMatchLive(m) {
+   if (isStaleLiveMatch(m)) return false;
+   return isLiveStatus(matchStatusText(m));
  }
 
   function startOfTodayLocalMs() {
@@ -107,16 +140,11 @@
     const arr = LAST_MATCHES
       .filter(m => {
 
-        const st = String(m.status || "").toUpperCase();
+        const st = matchStatusText(m);
         const ko = Number(m.kickoff_ms || 0);
 
         const isPre = st === "PRE" || st.includes("SCHEDULED");
-        const isLive =
-          m?.staleLive === true ||
-          String(m?.statusType || "").toUpperCase() === "STALE_LIVE" ||
-          String(m?.status || "").toUpperCase() === "STALE_LIVE"
-            ? false
-            : isLiveStatus(st);
+        const isLive = isMatchLive(m);
 
         // hide scheduled matches that should have started already
         if (isPre && ko && ko < now) {
@@ -185,14 +213,9 @@
       right.className = "today-right";
 
       const info = document.createElement("span");
-      const st = String(m.status || "").toUpperCase();
+      const st = matchStatusText(m);
 
-      if (
-        m?.staleLive !== true &&
-        String(m?.statusType || "").toUpperCase() !== "STALE_LIVE" &&
-        String(m?.status || "").toUpperCase() !== "STALE_LIVE" &&
-        isLiveStatus(st)
-      ) {
+      if (isMatchLive(m)) {
         const min = m.minute ? `${m.minute}'` : "";
         const sc =
           m.scoreHome != null && m.scoreAway != null
@@ -285,6 +308,15 @@
         leagueName: m.leagueName,
         leagueSlug: m.leagueSlug,
         status: m.status,
+        rawStatus: m.rawStatus,
+        statusType: m.statusType,
+        statusName: m.statusName,
+        state: m.state,
+        phase: m.phase,
+        live: m.live,
+        isLive: m.isLive,
+        staleLive: m.staleLive,
+        staleLiveReason: m.staleLiveReason,
         scoreHome: m.scoreHome,
         scoreAway: m.scoreAway,
         minute: m.minute,
@@ -308,11 +340,7 @@
 // ----------------------------------
  
 
-      const hasLive = matches.some(m =>
-        m?.staleLive !== true &&
-        String(m?.statusType || "").toUpperCase() !== "STALE_LIVE" &&
-        isLiveStatus(m.status)
-      );
+      const hasLive = matches.some(m => isMatchLive(m));
 
       if (hasLive) {
 
@@ -381,6 +409,15 @@ if (window.on) {
       if (!existing) continue;
 
       existing.status = m.status;
+      existing.rawStatus = m.rawStatus;
+      existing.statusType = m.statusType;
+      existing.statusName = m.statusName;
+      existing.state = m.state;
+      existing.phase = m.phase;
+      existing.live = m.live;
+      existing.isLive = m.isLive;
+      existing.staleLive = m.staleLive;
+      existing.staleLiveReason = m.staleLiveReason;
       existing.minute = m.minute;
       existing.scoreHome = m.scoreHome;
       existing.scoreAway = m.scoreAway;
