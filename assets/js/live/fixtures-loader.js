@@ -70,12 +70,22 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
   }
 
   function normalizeStatus(m) {
-    return String(
-      m?.status?.type?.name ??
-      m?.status?.type?.state ??
-      m?.status ??
-      ""
-    ).toUpperCase();
+    const parts = [
+      m?.status?.type?.state,
+      m?.status?.type?.name,
+      m?.status,
+      m?.rawStatus,
+      m?.statusType,
+      m?.statusName,
+      m?.state,
+      m?.phase,
+      m?.live === true || m?.isLive === true ? "LIVE" : ""
+    ];
+
+    return parts
+      .filter(Boolean)
+      .map(x => String(x).toUpperCase())
+      .join(" ");
   }
 
   function isStaleLiveMatch(m) {

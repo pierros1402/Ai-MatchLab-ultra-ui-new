@@ -18,8 +18,25 @@
     return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   }
 
-  function normStatus(s) {
-    return String(s || "").toUpperCase();
+  function normStatus(value) {
+    if (value && typeof value === "object") {
+      return [
+        value?.status?.type?.state,
+        value?.status?.type?.name,
+        value?.status,
+        value?.rawStatus,
+        value?.statusType,
+        value?.statusName,
+        value?.state,
+        value?.phase,
+        value?.completed === true ? "COMPLETED" : ""
+      ]
+        .filter(Boolean)
+        .map(x => String(x).toUpperCase())
+        .join(" ");
+    }
+
+    return String(value || "").toUpperCase();
   }
 
   function isFinalStatus(status) {
@@ -47,8 +64,8 @@
 
   function sortMatches(a, b) {
 
-    const aFinal = isFinalStatus(a.status);
-    const bFinal = isFinalStatus(b.status);
+    const aFinal = isFinalStatus(a);
+    const bFinal = isFinalStatus(b);
 
   // PRE first, FT last
     if (aFinal !== bFinal) {
@@ -144,7 +161,7 @@
         const info = document.createElement("span");
         info.className = "match-info";
 
-        const status = normStatus(m.status);
+        const status = normStatus(m);
 
         if (isPostponedOrCanceled(status)) {
 
