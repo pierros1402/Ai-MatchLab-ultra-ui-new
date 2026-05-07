@@ -401,6 +401,90 @@ function snapshotValueResponse(dayKey) {
   };
 }
 
+function snapshotLiveStaleThresholdHours() {
+  const n = Number(process.env.AIML_STALE_LIVE_HOURS || 6);
+  return Number.isFinite(n) && n > 0 ? n : 6;
+}
+
+function snapshotStatusText(match) {
+  return [
+    match?.status,
+    match?.rawStatus,
+    match?.statusType,
+    match?.statusName,
+    match?.state,
+    match?.phase
+  ]
+    .filter(Boolean)
+    .map(value => String(value).trim().toUpperCase())
+    .join(" ");
+}
+
+function isSnapshotLiveLikeStatus(match) {
+  const text = snapshotStatusText(match);
+
+  return (
+    text.includes("LIVE") ||
+    text.includes("IN_PROGRESS") ||
+    text.includes("FIRST_HALF") ||
+    text.includes("SECOND_HALF") ||
+    text.includes("HALFTIME") ||
+    text.includes("STATUS_FIRST_HALF") ||
+    text.includes("STATUS_SECOND_HALF") ||
+    text.includes("STATUS_HALFTIME")
+  );
+}
+
+function snapshotKickoffMs(match) {
+  const value =
+    match?.kickoffUtc ||
+    match?.date ||
+    match?.startTime ||
+    match?.startUtc ||
+    null;
+
+  const ms = Date.parse(String(value || ""));
+
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function isSnapshotStaleLiveMatch(match, nowMs = Date.now()) {
+  if (!isSnapshotLiveLikeStatus(match)) return false;
+
+  const kickoffMs = snapshotKickoffMs(match);
+  if (!Number.isFinite(kickoffMs)) return false;
+
+  const ageHours = (nowMs - kickoffMs) / 36e5;
+
+  return ageHours >= snapshotLiveStaleThresholdHours();
+}
+
+function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
+  if (!match || typeof match !== "object") return match;
+
+  if (!isSnapshotStaleLiveMatch(match, nowMs)) return match;
+
+  const kickoffMs = snapshotKickoffMs(match);
+  const ageHours = Number.isFinite(kickoffMs)
+    ? Math.round(((nowMs - kickoffMs) / 36e5) * 100) / 100
+    : null;
+
+  return {
+    ...match,
+    status: "STALE_LIVE",
+    rawStatus: match.rawStatus || match.status || null,
+    statusType: "STALE_LIVE",
+    statusName: "Stale live snapshot",
+    phase: "STALE_LIVE",
+    live: false,
+    isLive: false,
+    staleLive: true,
+    staleLiveReason: "snapshot_live_status_too_old_for_kickoff",
+    staleLiveAgeHours: ageHours,
+    staleLiveThresholdHours: snapshotLiveStaleThresholdHours()
+  };
+}
+
 function snapshotFixturesRuntimeResponse(mode, dayKey) {
   const resolvedDate = resolveSnapshotDate(dayKey);
   const payload = resolvedDate ? readDeploySnapshotFixtures(resolvedDate) : null;
@@ -416,13 +500,15 @@ function snapshotFixturesRuntimeResponse(mode, dayKey) {
     };
   }
 
-  const matches = Array.isArray(payload?.fixtures)
+  const rawMatches = Array.isArray(payload?.fixtures)
     ? payload.fixtures
     : Array.isArray(payload?.matches)
       ? payload.matches
       : Array.isArray(payload)
         ? payload
         : [];
+
+  const matches = rawMatches.map(match => sanitizeSnapshotRuntimeMatch(match));
 
   return {
     ok: true,
