@@ -338,7 +338,9 @@ function deploySnapshotExists(dayKey) {
 function resolveSnapshotDate(requestedDate = "") {
   const explicit = String(requestedDate || "").trim();
 
-  if (explicit && deploySnapshotExists(explicit)) {
+  // If the caller asks for a specific date, never silently fall back to latest.
+  // Missing explicit snapshots must surface as not_found/empty for that date.
+  if (explicit) {
     return explicit;
   }
 
@@ -349,7 +351,7 @@ function resolveSnapshotDate(requestedDate = "") {
     return latestDate;
   }
 
-  return explicit || latestDate || "";
+  return latestDate || "";
 }
 
 function readDeploySnapshotValue(dayKey) {
