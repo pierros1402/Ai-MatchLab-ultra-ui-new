@@ -7,6 +7,97 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+function repairMojibakeText(value) {
+  const chars = Array.from(String(value || "").trim());
+  if (!chars.length) return "";
+
+  const c3Map = new Map([
+    [0x00a1, "á"],
+    [0x00a9, "é"],
+    [0x00ad, "í"],
+    [0x00b3, "ó"],
+    [0x00ba, "ú"],
+    [0x00b1, "ñ"],
+    [0x00b6, "ö"],
+    [0x00bc, "ü"],
+    [0x00a8, "è"],
+    [0x00a0, "à"],
+    [0x00a7, "ç"],
+    [0x0081, "Á"],
+    [0x0089, "É"],
+    [0x008d, "Í"],
+    [0x0093, "Ó"],
+    [0x009a, "Ú"],
+    [0x0091, "Ñ"]
+  ]);
+
+  const gammaMap = new Map([
+    [0x0385, "á"],
+    [0x00a9, "é"],
+    [0x00ad, "í"],
+    [0x00b3, "ó"],
+    [0x00ba, "ú"],
+    [0x00b1, "ñ"],
+    [0x00b6, "ö"],
+    [0x00bc, "ü"],
+    [0x00a8, "è"],
+    [0x20ac, "à"],
+    [0x00a7, "ç"],
+    [0x0020, "à"]
+  ]);
+
+  let out = "";
+
+  for (let i = 0; i < chars.length; i++) {
+    const current = chars[i];
+    const currentCode = current.codePointAt(0);
+
+    if ((currentCode === 0x00c3 || currentCode === 0x0393) && i + 1 < chars.length) {
+      const next = chars[i + 1];
+      const nextCode = next.codePointAt(0);
+      const replacement = currentCode === 0x00c3
+        ? c3Map.get(nextCode)
+        : gammaMap.get(nextCode);
+
+      if (replacement) {
+        out += replacement;
+        i++;
+        continue;
+      }
+    }
+
+    out += current;
+  }
+
+  return out;
+}
+
+function repairDisplayTeamName(value) {
+  return repairMojibakeText(value);
+}
+
+function sanitizeDeepStrings(value) {
+  if (typeof value === "string") {
+    return repairDisplayTeamName(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(item => sanitizeDeepStrings(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entryValue]) => [key, sanitizeDeepStrings(entryValue)])
+    );
+  }
+
+  return value;
+}
+
+function sanitizeSerializedJsonText(text) {
+  return repairMojibakeText(text);
+}
+
 function normalizeCanonicalKey(value) {
   return normalizeText(value)
     .toLowerCase()
@@ -27,7 +118,9 @@ function readJson(filePath) {
 
 function writeJson(filePath, data) {
   ensureDir(path.dirname(filePath));
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf8");
+  const safeData = sanitizeDeepStrings(data);
+  const jsonText = JSON.stringify(safeData, null, 2) + "\n";
+  fs.writeFileSync(filePath, sanitizeSerializedJsonText(jsonText), "utf8");
 }
 
 function resolveResearchTasksPath(dayKey) {
@@ -61,8 +154,8 @@ function buildQueryChecklist(task) {
 function buildDraftFromTask(task) {
   const target = task?.target || {};
   const match = task?.match || {};
-  const team = normalizeText(target?.team);
-  const opponent = normalizeText(target?.opponent);
+  const team = repairDisplayTeamName(target?.team);
+  const opponent = repairDisplayTeamName(target?.opponent);
   const side = normalizeText(target?.side);
   const key = normalizeText(target?.canonicalTarget?.key) || normalizeCanonicalKey(team);
 
@@ -94,15 +187,15 @@ function buildDraftFromTask(task) {
       matchId: normalizeText(match?.matchId),
       leagueSlug: normalizeText(match?.leagueSlug),
       kickoffUtc: normalizeText(match?.kickoffUtc),
-      homeTeam: normalizeText(match?.homeTeam),
-      awayTeam: normalizeText(match?.awayTeam)
+      homeTeam: repairDisplayTeamName(match?.homeTeam),
+      awayTeam: repairDisplayTeamName(match?.awayTeam)
     },
 
-    canonicalTarget: target?.canonicalTarget || {
+    canonicalTarget: sanitizeDeepStrings(target?.canonicalTarget || {
       entity: "team_news",
       key,
       team
-    },
+    }),
 
     absences: [],
     suspensions: [],
