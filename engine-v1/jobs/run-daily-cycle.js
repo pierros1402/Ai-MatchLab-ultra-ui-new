@@ -1,3 +1,4 @@
+import fs from "fs";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { discoverWindow } from "./discover-window.js";
 import { discoverActiveLeagues } from "./discover-active-leagues.js";
@@ -27,6 +28,7 @@ import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
 import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
+import { resolveDataPath } from "../storage/data-root.js";
 
 function normalizePositiveIntegerOption(value, fallback) {
   if (value === Infinity) return Infinity;
@@ -38,6 +40,111 @@ function normalizePositiveIntegerOption(value, fallback) {
   }
 
   return Math.floor(n);
+}
+
+function readCurrentDayFixtureCount(dayKey) {
+  try {
+    const file = resolveDataPath("fixtures.json");
+    if (!fs.existsSync(file)) return 0;
+
+    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+    const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+
+    return fixtures.filter(row => String(row?.dayKey || "") === String(dayKey)).length;
+  } catch {
+    return 0;
+  }
+}
+
+function getTargetIngestResult(discoveryWindow, dayKey) {
+  const rows = Array.isArray(discoveryWindow?.results) ? discoveryWindow.results : [];
+  return rows.find(row => String(row?.dayKey || "") === String(dayKey))?.ingest || null;
+}
+
+function buildTopWrongDayLeagues(ingest) {
+  const byLeague = ingest?.byLeague || {};
+
+  return Object.entries(byLeague)
+    .map(([slug, row]) => ({
+      slug,
+      rawEvents: Number(row?.rawEvents || 0),
+      normalized: Number(row?.normalized || 0),
+      skippedWrongDay: Number(row?.skippedWrongDay || 0),
+      inserted: Number(row?.inserted || 0),
+      updated: Number(row?.updated || 0),
+      unchanged: Number(row?.unchanged || 0)
+    }))
+    .filter(row => row.skippedWrongDay > 0 || row.normalized > 0 || row.rawEvents > 0)
+    .sort((a, b) => b.skippedWrongDay - a.skippedWrongDay)
+    .slice(0, 25);
+}
+
+function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
+  const ingest = getTargetIngestResult(discoveryWindow, dayKey);
+
+  if (!ingest) {
+    throw new Error(`daily_ingest_quality_failed: missing target-day ingest result for ${dayKey}`);
+  }
+
+  const rawEvents = Number(ingest.rawEvents || 0);
+  const normalized = Number(ingest.normalized || 0);
+  const inserted = Number(ingest.inserted || 0);
+  const updated = Number(ingest.updated || 0);
+  const unchanged = Number(ingest.unchanged || 0);
+  const skippedWrongDay = Number(ingest.skippedWrongDay || 0);
+  const skippedNull = Number(ingest.skippedNull || 0);
+  const fixtureCount = readCurrentDayFixtureCount(dayKey);
+
+  const keptByIngest = inserted + updated + unchanged;
+  const wrongDayRatio = normalized > 0 ? skippedWrongDay / normalized : 0;
+  const keptRatioFromRaw = rawEvents > 0 ? keptByIngest / rawEvents : 1;
+
+  const minRawForGate = Number(process.env.DAILY_INGEST_MIN_RAW_FOR_GATE || 50);
+  const maxWrongDayRatio = Number(process.env.DAILY_INGEST_MAX_WRONG_DAY_RATIO || 0.4);
+  const minKeptRatioFromRaw = Number(process.env.DAILY_INGEST_MIN_KEPT_RATIO_FROM_RAW || 0.5);
+  const minTargetFixtures = Number(process.env.DAILY_INGEST_MIN_TARGET_FIXTURES || 45);
+
+  const summary = {
+    dayKey,
+    rawEvents,
+    normalized,
+    inserted,
+    updated,
+    unchanged,
+    keptByIngest,
+    fixtureCount,
+    skippedWrongDay,
+    skippedNull,
+    wrongDayRatio: Number(wrongDayRatio.toFixed(3)),
+    keptRatioFromRaw: Number(keptRatioFromRaw.toFixed(3)),
+    minRawForGate,
+    maxWrongDayRatio,
+    minKeptRatioFromRaw,
+    minTargetFixtures,
+    topWrongDayLeagues: buildTopWrongDayLeagues(ingest)
+  };
+
+  console.log("[daily-cycle] ingest-quality", JSON.stringify(summary, null, 2));
+
+  if (rawEvents >= minRawForGate && wrongDayRatio > maxWrongDayRatio) {
+    throw new Error(
+      `daily_ingest_quality_failed: excessive wrong-day skips for ${dayKey}; summary=${JSON.stringify(summary)}`
+    );
+  }
+
+  if (rawEvents >= minRawForGate && keptRatioFromRaw < minKeptRatioFromRaw) {
+    throw new Error(
+      `daily_ingest_quality_failed: low kept/raw ratio for ${dayKey}; summary=${JSON.stringify(summary)}`
+    );
+  }
+
+  if (fixtureCount > 0 && fixtureCount < minTargetFixtures) {
+    throw new Error(
+      `daily_ingest_quality_failed: low target fixture count for ${dayKey}; summary=${JSON.stringify(summary)}`
+    );
+  }
+
+  return summary;
 }
 
 function readPositiveIntegerEnv(name, fallback) {
@@ -100,14 +207,6 @@ export async function runDailyCycle(options = {}) {
     playerUsageManualDraftLimit: normalizedPlayerUsageManualDraftLimit
   });
 
-  console.log("[daily-cycle] discoverWindow:start");
-  const discoveryWindow = await discoverWindow({
-    baseDay: dayKey,
-    daysBack: 1,
-    daysForward
-  });
-  console.log("[daily-cycle] discoverWindow:done");
-
   console.log("[daily-cycle] discover-active-leagues:start", { dayKey });
   const activeLeagues = await discoverActiveLeagues(dayKey);
   console.log("[daily-cycle] discover-active-leagues:done", {
@@ -116,6 +215,21 @@ export async function runDailyCycle(options = {}) {
     activeLeagueCount: activeLeagues?.activeLeagueCount ?? 0,
     totalMatches: activeLeagues?.totalMatches ?? 0
   });
+
+  console.log("[daily-cycle] discoverWindow:start");
+  const discoveryWindow = await discoverWindow({
+    baseDay: dayKey,
+    daysBack: 1,
+    daysForward
+  });
+  console.log("[daily-cycle] discoverWindow:done");
+
+  console.log("[daily-cycle] ingest-quality:start", { dayKey });
+  const ingestQuality = assertDailyIngestIsUsable({
+    dayKey,
+    discoveryWindow
+  });
+  console.log("[daily-cycle] ingest-quality:done", ingestQuality);
 
   console.log("[daily-cycle] monitor:start", { dayKey });
   const monitor = await monitorActiveLeagues(dayKey);
