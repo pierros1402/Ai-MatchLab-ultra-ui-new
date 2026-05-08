@@ -52,6 +52,66 @@ function dayFixtures(fixturesPayload, dayKey) {
     .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
 }
 
+function canonicalFixturesForDay(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+  const rows = [];
+  const seen = new Set();
+
+  if (!fs.existsSync(dir)) {
+    return rows;
+  }
+
+  for (const file of fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort()) {
+    const payload = readJsonSafe(path.join(dir, file), null);
+    const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+
+    for (const fixture of fixtures) {
+      const matchId = normalizeMatchId(
+        fixture?.matchId ||
+        fixture?.sourceMatchId ||
+        fixture?.sourceId ||
+        fixture?.matchKey ||
+        fixture?.id
+      );
+
+      if (!matchId || seen.has(matchId)) {
+        continue;
+      }
+
+      seen.add(matchId);
+      rows.push({
+        ...fixture,
+        matchId
+      });
+    }
+  }
+
+  return rows.sort((a, b) => {
+    const ka = String(a?.kickoffUtc || a?.date || a?.startTime || "");
+    const kb = String(b?.kickoffUtc || b?.date || b?.startTime || "");
+    if (ka !== kb) return ka.localeCompare(kb);
+    return String(a?.matchId || "").localeCompare(String(b?.matchId || ""));
+  });
+}
+
+function fixturesForSnapshotDay(dayKey) {
+  const fixturesPayload = readJsonSafe(resolveDataPath("fixtures.json"), { fixtures: [] });
+  const fixturesFromMain = dayFixtures(fixturesPayload, dayKey);
+  const fixturesFromCanonical = canonicalFixturesForDay(dayKey);
+
+  if (fixturesFromCanonical.length > fixturesFromMain.length) {
+    return {
+      source: "canonical_fixtures",
+      fixtures: fixturesFromCanonical
+    };
+  }
+
+  return {
+    source: "fixtures_json",
+    fixtures: fixturesFromMain
+  };
+}
+
 function valueForDay(dayKey) {
   const file = resolveDataPath("value", `${dayKey}.json`);
   const payload = readJsonSafe(file, null);
@@ -386,8 +446,9 @@ export function exportDeploySnapshotDay(dayKey) {
   ensureDir(snapshotRoot);
   ensureDir(snapshotDetailsDir);
 
-  const fixturesPayload = readJsonSafe(resolveDataPath("fixtures.json"), { fixtures: [] });
-  const fixtures = dayFixtures(fixturesPayload, dayKey);
+  const fixturesSnapshot = fixturesForSnapshotDay(dayKey);
+  const fixtures = fixturesSnapshot.fixtures;
+  const fixturesSource = fixturesSnapshot.source;
 
   const value = valueForDay(dayKey);
   const detailsReport = copyDetails(dayKey, snapshotDetailsDir);
@@ -417,6 +478,7 @@ export function exportDeploySnapshotDay(dayKey) {
     startedAt,
     source: "local_canonical_export",
     version: "deploy-snapshot-v1",
+    fixturesSource,
     files: {
       fixtures: "fixtures.json",
       value: "value.json",

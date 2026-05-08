@@ -1499,6 +1499,49 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
 }
 
 
+function readCanonicalFixturesForDay(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+  const rows = [];
+  const seen = new Set();
+
+  if (!fs.existsSync(dir)) {
+    return rows;
+  }
+
+  for (const file of fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort()) {
+    const payload = readJsonSafe(path.join(dir, file), null);
+    const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+
+    for (const fixture of fixtures) {
+      const matchId = String(
+        fixture?.matchId ||
+        fixture?.sourceMatchId ||
+        fixture?.sourceId ||
+        fixture?.matchKey ||
+        fixture?.id ||
+        ""
+      ).trim();
+
+      if (!matchId || seen.has(matchId)) {
+        continue;
+      }
+
+      seen.add(matchId);
+      rows.push({
+        ...fixture,
+        matchId
+      });
+    }
+  }
+
+  return rows.sort((a, b) => {
+    const ka = String(a?.kickoffUtc || a?.date || "");
+    const kb = String(b?.kickoffUtc || b?.date || "");
+    if (ka !== kb) return ka.localeCompare(kb);
+    return String(a?.matchId || "").localeCompare(String(b?.matchId || ""));
+  });
+}
+
 function detailsFilePath(dayKey, matchId) {
   return resolveDataPath("details", dayKey, `${matchId}.json`);
 }
@@ -1611,13 +1654,24 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
 }
 
 export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
-  const rows = getFixturesByDay(dayKey) || [];
+  let rows = getFixturesByDay(dayKey) || [];
+  let fixtureSource = "fixtures_json";
+
+  const canonicalRows = readCanonicalFixturesForDay(dayKey);
+  if (canonicalRows.length > rows.length) {
+    rows = canonicalRows;
+    fixtureSource = "canonical_fixtures";
+  } else if (!rows.length && canonicalRows.length) {
+    rows = canonicalRows;
+    fixtureSource = "canonical_fixtures";
+  }
 
   if (!rows.length) {
     return {
       ok: false,
       dayKey,
       reason: "no_rows",
+      fixtureSource,
       built: 0,
       skipped: 0,
       files: []
@@ -1630,6 +1684,8 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
 
   console.log("[build-details-day] value:snapshot", {
     dayKey,
+    fixtureSource,
+    fixtureCount: rows.length,
     matchesWithValue: valuePicksByMatch.size
   });
 
