@@ -1,7 +1,7 @@
 {
   "matchId": "746702",
   "dayKey": "2026-05-08",
-  "generatedAt": "2026-05-08T03:10:12.754Z",
+  "generatedAt": "2026-05-08T14:22:15.722Z",
   "basic": {
     "matchId": "746702",
     "leagueSlug": "fra.1",
@@ -75,31 +75,11 @@
     }
   },
   "teamNews": {
-    "status": "ok",
-    "source": "team-news-research-bridge",
-    "confidence": 0.74,
-    "data": {
-      "home": {
-        "absences": [],
-        "impactScore": 0,
-        "impactLevel": "none",
-        "source": "team-news-research-bridge",
-        "updatedAt": null
-      },
-      "away": {
-        "absences": [],
-        "impactScore": 0,
-        "impactLevel": "none",
-        "source": "team-news-research-bridge",
-        "updatedAt": null
-      },
-      "notes": [
-        "Official FC Nantes pre-match bulletin published for Paris SG vs FC Nantes on 22 Apr 2026.",
-        "FC Nantes confirmed the match squad ('groupe nantais') for the trip to Paris.",
-        "Club-side pre-match coverage exists and is usable as official team-news evidence."
-      ]
-    },
-    "reason": null
+    "status": "empty",
+    "source": "local-team-news",
+    "confidence": 0,
+    "data": null,
+    "reason": "missing_local_team_news_evidence"
   },
   "lineups": {
     "home": {
@@ -157,8 +137,8 @@
       "high_competition_context"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Υπάρχει διαθέσιμο team news context για τον αγώνα με 3 συνολικές σημειώσεις ομάδων. Η εκτίμηση ταξιδιού είναι περίπου 480.2 χλμ (medium).",
-      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is available for this match with 3 combined team notes. Estimated travel distance is approximately 480.2 km (medium)."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη αυξημένης σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Η εκτίμηση ταξιδιού είναι περίπου 480.2 χλμ (medium).",
+      "en": "No value snapshot is available yet for this match. There is an indication of elevated importance from the competition context. Team news context is not yet available in the snapshot. Estimated travel distance is approximately 480.2 km (medium)."
     }
   },
   "playerUsageIntel": {
@@ -222,11 +202,11 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"746702\",\"dayKey\":\"2026-05-08\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"ok\",\"teamNewsSource\":\"team-news-research-bridge\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":3,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":480.2,\"travelImpact\":\"medium\",\"travelProfile\":\"regional_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"lens\",\"travelAwayKey\":\"nantes\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"746702\",\"dayKey\":\"2026-05-08\",\"status\":\"PRE\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"0'\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"high\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"ready\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":480.2,\"travelImpact\":\"medium\",\"travelProfile\":\"regional_domestic\",\"travelSameCountry\":true,\"travelCrossBorder\":false,\"travelHomeKey\":\"lens\",\"travelAwayKey\":\"nantes\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
-      "teamNews": false,
+      "teamNews": true,
       "travelGeo": false
     }
   },
@@ -280,10 +260,10 @@
         "required": false,
         "priority": 75,
         "mode": "hybrid",
-        "state": "done",
-        "resolution": "remote",
+        "state": "pending",
+        "resolution": "unavailable",
         "provider": "team-news-research-bridge",
-        "confidence": 0.3,
+        "confidence": 0,
         "remoteFallbackRecommended": true,
         "preferredEvidence": [
           "local-team-news"
@@ -292,9 +272,9 @@
           "remote-team-news-research"
         ],
         "source": "team-news-research-bridge",
-        "remoteResolved": true,
-        "remoteStatus": "success",
-        "remoteReason": null
+        "remoteResolved": false,
+        "remoteStatus": "unavailable",
+        "remoteReason": "missing_team_news_evidence"
       },
       {
         "key": "expected_lineups",
@@ -482,7 +462,7 @@
           "confidence": 0.9,
           "source": "local-standings",
           "diagnostics": {
-            "standingsFile": "C:\\Ai-MatchLab-ULTRA-UI\\data\\standings\\fra.1.json",
+            "standingsFile": "/home/runner/work/Ai-MatchLab-ultra-ui-new/Ai-MatchLab-ultra-ui-new/data/standings/fra.1.json",
             "tableRows": 18,
             "foundHome": true,
             "foundAway": true
@@ -576,9 +556,9 @@
             ],
             "usedArchiveForHome": false,
             "usedArchiveForAway": false,
-            "currentSeasonRows": 12121,
+            "currentSeasonRows": 12126,
             "archiveRows": 1372,
-            "mergedRows": 13493
+            "mergedRows": 13498
           }
         },
         "h2hLast5": {
@@ -702,9 +682,9 @@
           }
         },
         "teamNews": {
-          "status": "ready",
-          "reliability": "usable",
-          "confidence": 0.3
+          "status": "empty",
+          "reliability": "empty",
+          "confidence": 0
         },
         "lineup": {
           "status": "partial",
@@ -728,13 +708,13 @@
           "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.81,
+      "confidence": 0.74,
       "readiness": {
         "history": true,
         "form": true,
         "h2h": true,
         "standings": true,
-        "teamNews": true,
+        "teamNews": false,
         "lineup": true,
         "travel": true,
         "playerUsage": false,
@@ -751,31 +731,12 @@
       "reason": "missing_local_referee_evidence"
     },
     "teamNews": {
-      "status": "ok",
-      "source": "team-news-research-bridge",
-      "confidence": 0.74,
-      "data": {
-        "homeTeam": {
-          "notes": []
-        },
-        "awayTeam": {
-          "notes": [
-            "Official FC Nantes pre-match bulletin published for Paris SG vs FC Nantes on 22 Apr 2026.",
-            "FC Nantes confirmed the match squad ('groupe nantais') for the trip to Paris.",
-            "Club-side pre-match coverage exists and is usable as official team-news evidence."
-          ]
-        },
-        "home": {
-          "absences": [],
-          "impactScore": 0,
-          "impactLevel": "none"
-        },
-        "away": {
-          "absences": [],
-          "impactScore": 0,
-          "impactLevel": "none"
-        }
-      }
+      "key": "team_news",
+      "status": "empty",
+      "data": null,
+      "confidence": 0,
+      "source": "local-team-news",
+      "reason": "missing_local_team_news_evidence"
     },
     "travelContext": {
       "key": "travel_context",
@@ -1094,11 +1055,11 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Lens - Nantes: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Lens: 1-2-2 στα τελευταία 5. Nantes: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13493 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Lens 4 νίκες, ισοπαλίες 0, Nantes 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Lens=europe, Nantes=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Lens=none, Nantes=none. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context…",
-      "en": "Lens vs Nantes: contextual analysis using historical and available data. Lens: 1-2-2 across the last 5. Nantes: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13493 available match records. Across the last 5 head-to-head meetings: Lens 4 wins, draws 0, Nantes 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Lens=europe, Nantes=relegation. This match is assessed as high importance. Absences: Lens=none, Nantes=none. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Trave…",
+      "el": "Lens - Nantes: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Lens: 1-2-2 στα τελευταία 5. Nantes: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13498 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Lens 4 νίκες, ισοπαλίες 0, Nantes 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Lens=europe, Nantes=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+      "en": "Lens vs Nantes: contextual analysis using historical and available data. Lens: 1-2-2 across the last 5. Nantes: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13498 available match records. Across the last 5 head-to-head meetings: Lens 4 wins, draws 0, Nantes 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Lens=europe, Nantes=relegation. This match is assessed as high importance. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
       "teamNews": {
-        "status": "usable",
-        "source": "team-news-research-bridge",
+        "status": "empty",
+        "source": "local-team-news",
         "reliability": null,
         "evidenceCount": 0
       }
@@ -1114,7 +1075,6 @@
       "phase_regular",
       "high_stakes_match",
       "relegation_pressure",
-      "team_news_available",
       "lineup_context_limited",
       "competition_context_ready",
       "travel_context_available"
@@ -1162,7 +1122,7 @@
       "cacheHit": false,
       "lineupLimited": true,
       "lineupReliability": "limited",
-      "teamNewsUsed": true,
+      "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
       "refereeIdentityOnly": false,
@@ -1179,11 +1139,11 @@
     }
   },
   "aiSummary": {
-    "el": "Lens - Nantes: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Lens: 1-2-2 στα τελευταία 5. Nantes: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13493 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Lens 4 νίκες, ισοπαλίες 0, Nantes 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Lens=europe, Nantes=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Απουσίες: Lens=none, Nantes=none. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Υπάρχει διαθέσιμο team news context στο enriched snapshot. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
-    "en": "Lens vs Nantes: contextual analysis using historical and available data. Lens: 1-2-2 across the last 5. Nantes: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13493 available match records. Across the last 5 head-to-head meetings: Lens 4 wins, draws 0, Nantes 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Lens=europe, Nantes=relegation. This match is assessed as high importance. Absences: Lens=none, Nantes=none. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Team news context is available in the enriched snapshot. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
+    "el": "Lens - Nantes: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Lens: 1-2-2 στα τελευταία 5. Nantes: 0-3-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 13498 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Lens 4 νίκες, ισοπαλίες 0, Nantes 1 νίκες. Το H2H γέρνει προς τους γηπεδούχους. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Lens=europe, Nantes=relegation. Ο αγώνας αξιολογείται ως υψηλής σημασίας. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate.",
+    "en": "Lens vs Nantes: contextual analysis using historical and available data. Lens: 1-2-2 across the last 5. Nantes: 0-3-2 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 13498 available match records. Across the last 5 head-to-head meetings: Lens 4 wins, draws 0, Nantes 1 wins. The head-to-head profile leans toward the home side. The head-to-head profile points toward more open games. Table context: Lens=europe, Nantes=relegation. This match is assessed as high importance. Lineup context: Lens=fatigue:low, rotation:low, strength:strong; Nantes=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate.",
     "teamNews": {
-      "status": "usable",
-      "source": "team-news-research-bridge",
+      "status": "empty",
+      "source": "local-team-news",
       "reliability": null,
       "evidenceCount": 0
     }
@@ -1205,7 +1165,6 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
-      "local-team-news",
       "local-lineup-model",
       "local-history",
       "local-team-geo"
@@ -1213,6 +1172,7 @@
     "conflicts": [],
     "missing": [
       "referee_profile",
+      "team_news",
       "expected_lineups_reliability",
       "value_snapshot"
     ],
@@ -1275,17 +1235,6 @@
         "status": "available"
       },
       {
-        "kind": "team_news",
-        "key": "team_news",
-        "provider": "local-team-news",
-        "trustClass": "deterministic_local",
-        "confidence": 0.3,
-        "status": "available",
-        "meta": {
-          "reliability": "usable"
-        }
-      },
-      {
         "kind": "expected_lineups",
         "key": "expected_lineups",
         "provider": "local-lineup-model",
@@ -1304,7 +1253,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 13493
+          "mergedRows": 13498
         }
       },
       {
@@ -1347,19 +1296,30 @@
       "side": null,
       "leagueSlug": null,
       "matchId": null
+    },
+    {
+      "capability": "team_news",
+      "status": null,
+      "reason": "missing_team_news_evidence",
+      "team": null,
+      "opponent": null,
+      "side": null,
+      "leagueSlug": null,
+      "matchId": null
     }
   ],
   "remoteTaskRouter": {
     "status": "pending",
-    "queueSize": 1,
+    "queueSize": 2,
     "queuedCapabilities": [
-      "referee_profile"
+      "referee_profile",
+      "team_news"
     ]
   },
   "remoteExecution": {
-    "status": "partial",
+    "status": "unavailable",
     "mode": null,
-    "queueSize": 1,
+    "queueSize": 2,
     "executedCount": 0,
     "queuedCount": 0,
     "successCount": 0,
@@ -1385,8 +1345,8 @@
       {
         "capability": "team_news",
         "provider": "team-news-research-bridge",
-        "status": "success",
-        "reason": null,
+        "status": "unavailable",
+        "reason": "missing_team_news_evidence",
         "team": null,
         "key": "team_news"
       }
