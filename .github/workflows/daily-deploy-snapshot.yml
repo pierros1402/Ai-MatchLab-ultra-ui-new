@@ -97,18 +97,7 @@ jobs:
 
           if [ -f "data/coverage-reports/${DAY_KEY}.json" ]; then
             echo "=== Fixture acquisition coverage report ==="
-            node - <<'NODE'
-            const fs = require("fs");
-            const day = process.env.DAY_KEY;
-            const file = `data/coverage-reports/${day}.json`;
-            const r = JSON.parse(fs.readFileSync(file, "utf8"));
-            console.log(JSON.stringify({
-              baseDayKey: r.baseDayKey,
-              selectedLeagues: r.selectedLeagues,
-              summary: r.summary,
-              coverage: r.coverage
-            }, null, 2));
-            NODE
+            node -e 'const fs=require("fs"); const day=process.env.DAY_KEY; const file="data/coverage-reports/"+day+".json"; const r=JSON.parse(fs.readFileSync(file,"utf8")); console.log(JSON.stringify({baseDayKey:r.baseDayKey,selectedLeagues:r.selectedLeagues,summary:r.summary,coverage:r.coverage},null,2));'
           else
             echo "WARNING: no fixture acquisition coverage report written for ${DAY_KEY}"
           fi
