@@ -8,10 +8,9 @@ on:
         required: false
         default: ""
   schedule:
-    # 00:10 Europe/Athens during daylight saving time.
-    - cron: "10 21 * * *"
-    # 00:10 Europe/Athens during standard time.
-    - cron: "10 22 * * *"
+    # Multiple retry slots. GitHub scheduled workflows can start late or be dropped under load.
+    # These UTC slots cover roughly 00:17-03:17 Europe/Athens across DST/standard time.
+    - cron: "17 21,22,23,0 * * *"
 
 permissions:
   contents: write
@@ -48,12 +47,13 @@ jobs:
 
           ATHENS_HOUR="$(TZ=Europe/Athens date +%H)"
           ATHENS_MINUTE="$(TZ=Europe/Athens date +%M)"
+          ATHENS_HOUR_NUM=$((10#$ATHENS_HOUR))
 
           if [ "$EVENT_NAME" = "schedule" ]; then
             # GitHub scheduled workflows are not guaranteed to start at the exact cron minute.
-            # Accept the intended Athens midnight window, while still skipping the duplicate DST/standard-time cron.
-            if [ "$ATHENS_HOUR" != "00" ] || [ "$ATHENS_MINUTE" -lt "10" ]; then
-              echo "Skipping scheduled run outside 00:10-00:59 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+            # Accept a wider early-morning Athens window so delayed scheduled runs still build.
+            if [ "$ATHENS_HOUR_NUM" -gt 5 ]; then
+              echo "Skipping scheduled run outside 00:00-05:59 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
               echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
               exit 0
