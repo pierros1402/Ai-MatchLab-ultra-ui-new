@@ -57,6 +57,50 @@ function readCurrentDayFixtureCount(dayKey) {
   }
 }
 
+function readCanonicalCoverageForDay(dayKey) {
+  try {
+    const file = resolveDataPath("coverage-reports", `${dayKey}.json`);
+    if (!fs.existsSync(file)) return null;
+
+    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+    const coverage = payload?.coverage || null;
+    const fixtures = Number(coverage?.fixtures || 0);
+    const leagues = Number(coverage?.leagues || 0);
+
+    if (!payload?.ok || fixtures <= 0) return null;
+
+    return {
+      fixtures,
+      leagues,
+      reportType: payload?.type || null,
+      startedAt: payload?.startedAt || null,
+      finishedAt: payload?.finishedAt || null,
+      startCursor: payload?.startCursor ?? null,
+      nextCursor: payload?.nextCursor ?? null,
+      leagueSeedCount: payload?.leagueSeedCount ?? null
+    };
+  } catch {
+    return null;
+  }
+}
+
+function resolveMinTargetFixtures({ staticMinTargetFixtures, canonicalCoverage }) {
+  if (!canonicalCoverage?.fixtures) {
+    return {
+      minTargetFixtures: staticMinTargetFixtures,
+      source: "static"
+    };
+  }
+
+  const canonicalFixtures = Number(canonicalCoverage.fixtures || 0);
+  const canonicalFloor = Math.max(1, Math.floor(canonicalFixtures * 0.95));
+
+  return {
+    minTargetFixtures: Math.min(staticMinTargetFixtures, canonicalFloor),
+    source: "canonical_coverage"
+  };
+}
+
 function getTargetIngestResult(discoveryWindow, dayKey) {
   const rows = Array.isArray(discoveryWindow?.results) ? discoveryWindow.results : [];
   return rows.find(row => String(row?.dayKey || "") === String(dayKey))?.ingest || null;
@@ -95,6 +139,7 @@ function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
   const skippedWrongDay = Number(ingest.skippedWrongDay || 0);
   const skippedNull = Number(ingest.skippedNull || 0);
   const fixtureCount = readCurrentDayFixtureCount(dayKey);
+  const canonicalCoverage = readCanonicalCoverageForDay(dayKey);
 
   const keptByIngest = inserted + updated + unchanged;
   const wrongDayRatio = normalized > 0 ? skippedWrongDay / normalized : 0;
@@ -103,7 +148,12 @@ function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
   const minRawForGate = Number(process.env.DAILY_INGEST_MIN_RAW_FOR_GATE || 50);
   const maxWrongDayRatio = Number(process.env.DAILY_INGEST_MAX_WRONG_DAY_RATIO || 0.4);
   const minKeptRatioFromRaw = Number(process.env.DAILY_INGEST_MIN_KEPT_RATIO_FROM_RAW || 0.5);
-  const minTargetFixtures = Number(process.env.DAILY_INGEST_MIN_TARGET_FIXTURES || 45);
+  const staticMinTargetFixtures = Number(process.env.DAILY_INGEST_MIN_TARGET_FIXTURES || 45);
+  const targetFixtureGate = resolveMinTargetFixtures({
+    staticMinTargetFixtures,
+    canonicalCoverage
+  });
+  const minTargetFixtures = targetFixtureGate.minTargetFixtures;
 
   const summary = {
     dayKey,
@@ -114,6 +164,7 @@ function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
     unchanged,
     keptByIngest,
     fixtureCount,
+    canonicalCoverage,
     skippedWrongDay,
     skippedNull,
     wrongDayRatio: Number(wrongDayRatio.toFixed(3)),
@@ -121,7 +172,9 @@ function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
     minRawForGate,
     maxWrongDayRatio,
     minKeptRatioFromRaw,
+    staticMinTargetFixtures,
     minTargetFixtures,
+    minTargetFixtureSource: targetFixtureGate.source,
     topWrongDayLeagues: buildTopWrongDayLeagues(ingest)
   };
 
@@ -139,7 +192,12 @@ function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
     );
   }
 
-  if (fixtureCount > 0 && fixtureCount < minTargetFixtures) {
+  const hasCanonicalFixtureTarget = Number(canonicalCoverage?.fixtures || 0) > 0;
+
+  if (
+    (hasCanonicalFixtureTarget && fixtureCount < minTargetFixtures) ||
+    (!hasCanonicalFixtureTarget && fixtureCount > 0 && fixtureCount < minTargetFixtures)
+  ) {
     throw new Error(
       `daily_ingest_quality_failed: low target fixture count for ${dayKey}; summary=${JSON.stringify(summary)}`
     );
