@@ -28,6 +28,7 @@ import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
 import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
+import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
 function normalizePositiveIntegerOption(value, fallback) {
@@ -205,6 +206,25 @@ export async function runDailyCycle(options = {}) {
     teamNewsResearchMaxTasks: normalizedTeamNewsResearchMaxTasks,
     playerUsageResearchMaxTasks: normalizedPlayerUsageResearchMaxTasks,
     playerUsageManualDraftLimit: normalizedPlayerUsageManualDraftLimit
+  });
+
+
+  console.log("[daily-cycle] canonical-fixtures-sync:start", { dayKey });
+
+  const canonicalFixturesSync = syncCanonicalFixturesToJsonDbDay(dayKey, {
+    write: true
+  });
+
+  console.log("[daily-cycle] canonical-fixtures-sync:done", {
+    ok: canonicalFixturesSync?.ok,
+    dayKey: canonicalFixturesSync?.dayKey,
+    fileCount: canonicalFixturesSync?.fileCount ?? 0,
+    rawRows: canonicalFixturesSync?.rawRows ?? 0,
+    acceptedRows: canonicalFixturesSync?.acceptedRows ?? 0,
+    inserted: canonicalFixturesSync?.inserted ?? 0,
+    updated: canonicalFixturesSync?.updated ?? 0,
+    unchanged: canonicalFixturesSync?.unchanged ?? 0,
+    skippedRows: canonicalFixturesSync?.skippedRows ?? 0
   });
 
   console.log("[daily-cycle] discover-active-leagues:start", { dayKey });
@@ -685,6 +705,7 @@ export async function runDailyCycle(options = {}) {
     startedAt,
     finishedAt,
     ms: finishedAt - startedAt,
+    canonicalFixturesSync,
     discoveryWindow,
     activeLeagues,
     monitor,
