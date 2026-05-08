@@ -1,8 +1,9 @@
 ﻿import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { LEAGUE_SEEDS, leagueName } from "../config.js";
+import { ESPN_BASE, LEAGUE_SEEDS, leagueName } from "../config.js";
 import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
+import { normalizeFixture } from "../core/normalize.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
@@ -343,6 +344,214 @@ async function acquireLeagueDay({ slug, dayKey, allowedDays }) {
   return stats;
 }
 
+
+function espnDateFromDayKey(dayKey) {
+  return String(dayKey || "").replaceAll("-", "");
+}
+
+function extractEspnLeagueId(uid) {
+  const match = String(uid || "").match(/~l:(\d+)~/);
+  return match ? match[1] : null;
+}
+
+async function fetchJson(url, label) {
+  const res = await fetch(url, {
+    headers: {
+      "user-agent": "Mozilla/5.0 Ai-MatchLab fixture acquisition",
+      "accept": "application/json,text/plain,*/*"
+    }
+  });
+
+  if (!res.ok) {
+    await res.body?.cancel?.();
+    throw new Error(String(label || "fetch") + " http_" + String(res.status));
+  }
+
+  return res.json();
+}
+
+function flattenEspnDropdownLeagues(payload) {
+  const rows = [];
+
+  function walk(node) {
+    if (!node || typeof node !== "object") return;
+
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+
+    const id = node.id != null ? String(node.id) : extractEspnLeagueId(node.uid);
+
+    if (id && (node.slug || node.name || node.shortName || node.abbreviation)) {
+      rows.push({
+        id,
+        slug: node.slug || null,
+        name: node.name || null,
+        shortName: node.shortName || null,
+        abbreviation: node.abbreviation || null
+      });
+    }
+
+    for (const key of Object.keys(node)) {
+      const value = node[key];
+      if (value && typeof value === "object") walk(value);
+    }
+  }
+
+  walk(payload?.leagues || payload);
+
+  const byId = new Map();
+  for (const row of rows) {
+    if (!byId.has(row.id)) byId.set(row.id, row);
+  }
+
+  return byId;
+}
+
+function existingCanonicalIdsForDay(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+  const ids = new Set();
+
+  if (!fs.existsSync(dir)) return ids;
+
+  for (const file of fs.readdirSync(dir).filter(x => x.endsWith(".json"))) {
+    const payload = readJson(path.join(dir, file), null);
+    const rows = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+
+    for (const row of rows) {
+      const id = stableFixtureId(row);
+      if (id) ids.add(id);
+    }
+  }
+
+  return ids;
+}
+
+async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
+  const targetSeedSet = new Set(
+    (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
+      .map(x => String(x || "").trim())
+      .filter(Boolean)
+  );
+
+  const stats = {
+    provider: "espn_all_scoreboard",
+    dayKey,
+    ok: false,
+    rawEvents: 0,
+    normalized: 0,
+    accepted: 0,
+    duplicateCanonical: 0,
+    skippedOtherDay: 0,
+    skippedOutOfTargetSeeds: 0,
+    skippedNoLeagueSlug: 0,
+    writtenByDay: {},
+    byLeague: {},
+    error: null
+  };
+
+  try {
+    const espnDate = espnDateFromDayKey(dayKey);
+    const scoreboardUrl = ESPN_BASE + "/all/scoreboard?dates=" + espnDate + "&limit=1000";
+    const dropdownUrl = "https://site.api.espn.com/apis/site/v2/leagues/dropdown?lang=en&region=us&calendartype=whitelist&limit=1000&sport=soccer";
+
+    const [scoreboard, dropdown] = await Promise.all([
+      fetchJson(scoreboardUrl, "espn_all_scoreboard"),
+      fetchJson(dropdownUrl, "espn_dropdown")
+    ]);
+
+    const dropdownById = flattenEspnDropdownLeagues(dropdown);
+    const events = Array.isArray(scoreboard?.events) ? scoreboard.events : [];
+    const existingIds = existingCanonicalIdsForDay(dayKey);
+    const grouped = new Map();
+
+    stats.rawEvents = events.length;
+
+    for (const event of events) {
+      const eventId = String(event?.id || "").trim();
+      if (!eventId) continue;
+
+      if (existingIds.has(eventId)) {
+        stats.duplicateCanonical++;
+        continue;
+      }
+
+      const leagueId = extractEspnLeagueId(event?.uid);
+      const dropdownLeague = leagueId ? dropdownById.get(leagueId) : null;
+      const slug = String(dropdownLeague?.slug || "").trim();
+
+      if (!slug) {
+        stats.skippedNoLeagueSlug++;
+        continue;
+      }
+
+      if (!targetSeedSet.has(slug)) {
+        stats.skippedOutOfTargetSeeds++;
+        continue;
+      }
+
+      const normalized = normalizeFixture(event, slug);
+      if (!normalized) continue;
+
+      stats.normalized++;
+
+      const fixtureDay = String(normalized.dayKey || "").trim();
+
+      if (!allowedDays.has(fixtureDay) || fixtureDay !== dayKey) {
+        stats.skippedOtherDay++;
+        continue;
+      }
+
+      const row = serializeFixture(
+        {
+          ...normalized,
+          leagueSlug: slug,
+          leagueName: leagueName(slug)
+        },
+        "espn_all_scoreboard",
+        dayKey
+      );
+
+      const key = fixtureDay + "::" + slug;
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          dayKey: fixtureDay,
+          slug,
+          rows: []
+        });
+      }
+
+      grouped.get(key).rows.push(row);
+      existingIds.add(eventId);
+      stats.accepted++;
+      stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
+    }
+
+    for (const group of grouped.values()) {
+      const current = readCanonicalLeague(group.dayKey, group.slug);
+      const merged = mergeCanonicalFixtures(current.fixtures, group.rows);
+
+      writeCanonicalLeague(group.dayKey, group.slug, merged, {
+        acquisitionProvider: "espn_all_scoreboard",
+        requestedLeagueSlug: "all",
+        requestedDayKey: dayKey,
+        mergedAt: new Date().toISOString(),
+        mode: "supplemental_target_seed_only"
+      });
+
+      stats.writtenByDay[group.dayKey] =
+        (stats.writtenByDay[group.dayKey] || 0) + group.rows.length;
+    }
+
+    stats.ok = true;
+    return stats;
+  } catch (err) {
+    stats.error = String(err?.message || err);
+    return stats;
+  }
+}
 function readCanonicalCoverage(dayKey) {
   const dir = resolveDataPath("canonical-fixtures", dayKey);
 
@@ -454,6 +663,53 @@ export async function runFixtureAcquisitionChunk(options = {}) {
       }
     }
   }
+
+  const supplemental = await acquireEspnAllScoreboardSupplemental({
+    dayKey: opts.dayKey,
+    allowedDays
+  });
+
+  report.results.push({
+    slug: "all",
+    leagueName: "ESPN All Scoreboard Supplemental",
+    dayKey: opts.dayKey,
+    providerMode: "supplemental",
+    providerExecution: "target_seed_only",
+    provider: supplemental.provider,
+    ok: supplemental.ok,
+    rawEvents: supplemental.rawEvents,
+    normalized: supplemental.normalized,
+    accepted: supplemental.accepted,
+    writtenByDay: supplemental.writtenByDay,
+    error: supplemental.error,
+    duplicateCanonical: supplemental.duplicateCanonical,
+    skippedOtherDay: supplemental.skippedOtherDay,
+    skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
+    skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
+    byLeague: supplemental.byLeague
+  });
+
+  report.summary.rawEvents += Number(supplemental.rawEvents || 0);
+  report.summary.normalized += Number(supplemental.normalized || 0);
+  report.summary.accepted += Number(supplemental.accepted || 0);
+
+  if (supplemental.error) {
+    report.summary.failedFetches++;
+  }
+
+  report.summary.supplementalAllScoreboard = {
+    provider: supplemental.provider,
+    ok: supplemental.ok,
+    rawEvents: supplemental.rawEvents,
+    normalized: supplemental.normalized,
+    accepted: supplemental.accepted,
+    duplicateCanonical: supplemental.duplicateCanonical,
+    skippedOtherDay: supplemental.skippedOtherDay,
+    skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
+    skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
+    byLeague: supplemental.byLeague,
+    error: supplemental.error
+  };
 
   report.coverage = readCanonicalCoverage(opts.dayKey);
   report.finishedAt = new Date().toISOString();
