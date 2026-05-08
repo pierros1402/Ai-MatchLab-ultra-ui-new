@@ -288,6 +288,21 @@ export const LEAGUES_COVERAGE = [
   { slug: "wal.1", tier: 2, trust: 0.80, type: "league", region: "europe", country: "wales" },
   { slug: "wal.2", tier: 3, trust: 0.68, type: "league", region: "europe", country: "wales" },
 
+  // ANDORRA
+  { slug: "and.1", tier: 3, trust: 0.64, type: "league", region: "europe", country: "andorra" },
+  { slug: "and.2", tier: 3, trust: 0.56, type: "league", region: "europe", country: "andorra" },
+  // GIBRALTAR
+  { slug: "gib.1", tier: 3, trust: 0.64, type: "league", region: "europe", country: "gibraltar" },
+  { slug: "gib.2", tier: 3, trust: 0.56, type: "league", region: "europe", country: "gibraltar" },
+  // LIECHTENSTEIN
+  { slug: "lie.1", tier: 3, trust: 0.60, type: "league", region: "europe", country: "liechtenstein" },
+  { slug: "lie.2", tier: 3, trust: 0.52, type: "league", region: "europe", country: "liechtenstein" },
+  // RUSSIA
+  { slug: "rus.1", tier: 2, trust: 0.80, type: "league", region: "europe", country: "russia" },
+  { slug: "rus.2", tier: 3, trust: 0.68, type: "league", region: "europe", country: "russia" },
+  // SAN MARINO
+  { slug: "smr.1", tier: 3, trust: 0.60, type: "league", region: "europe", country: "san_marino" },
+  { slug: "smr.2", tier: 3, trust: 0.52, type: "league", region: "europe", country: "san_marino" },
   // ----------------------------------------------------------
   // UEFA
   // ----------------------------------------------------------
@@ -347,9 +362,26 @@ export const LEAGUES_COVERAGE = [
   { slug: "qat.1", tier: 3, trust: 0.72, type: "league", region: "asia", country: "qatar" },
   { slug: "qat.2", tier: 3, trust: 0.62, type: "league", region: "asia", country: "qatar" },
 
+  // ADDITIONAL ASIA / WORLD TARGETS
+  // ----------------------------------------------------------
+  { slug: "idn.1", tier: 3, trust: 0.68, type: "league", region: "asia", country: "indonesia" },
+  { slug: "idn.2", tier: 3, trust: 0.58, type: "league", region: "asia", country: "indonesia" },
+  { slug: "mys.1", tier: 3, trust: 0.68, type: "league", region: "asia", country: "malaysia" },
+  { slug: "mys.2", tier: 3, trust: 0.58, type: "league", region: "asia", country: "malaysia" },
+  { slug: "ind.1", tier: 3, trust: 0.68, type: "league", region: "asia", country: "india" },
+  { slug: "ind.2", tier: 3, trust: 0.58, type: "league", region: "asia", country: "india" },
+
+  // ADDITIONAL AMERICAS TARGETS
+  // ----------------------------------------------------------
+  { slug: "ven.1", tier: 3, trust: 0.66, type: "league", region: "americas", country: "venezuela" },
+  { slug: "ven.2", tier: 3, trust: 0.56, type: "league", region: "americas", country: "venezuela" },
+  { slug: "ecu.1", tier: 3, trust: 0.68, type: "league", region: "americas", country: "ecuador" },
+  { slug: "ecu.2", tier: 3, trust: 0.58, type: "league", region: "americas", country: "ecuador" },
   // ----------------------------------------------------------
   // AFRICA
   // ----------------------------------------------------------
+  { slug: "uga.1", tier: 3, trust: 0.62, type: "league", region: "africa", country: "uganda" },
+  { slug: "uga.2", tier: 3, trust: 0.52, type: "league", region: "africa", country: "uganda" },
   { slug: "rsa.1", tier: 3, trust: 0.74, type: "league", region: "africa", country: "south_africa" },
   { slug: "rsa.2", tier: 3, trust: 0.66, type: "league", region: "africa", country: "south_africa" },
   { slug: "egy.1", tier: 3, trust: 0.72, type: "league", region: "africa", country: "egypt" },
