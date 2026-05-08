@@ -113,6 +113,46 @@ jobs:
             echo "WARNING: no fixture acquisition coverage report written for ${DAY_KEY}"
           fi
 
+      - name: Prune canonical fixture store
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/prune-canonical-fixture-store.js "$DAY_KEY" --days-back 3 --days-forward 30
+
+      - name: Commit canonical fixture acquisition store
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          git restore --staged . || true
+
+          if [ -d "data/canonical-fixtures" ]; then
+            git add data/canonical-fixtures
+          fi
+
+          if [ -d "data/coverage-reports" ]; then
+            git add data/coverage-reports
+          fi
+
+          if [ -d "data/ingest-state" ]; then
+            git add data/ingest-state
+          fi
+
+          echo "=== CANONICAL STORE STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/canonical-fixtures/|data/coverage-reports/|data/ingest-state/)' || true)"
+
+          if [ -n "$DISALLOWED" ]; then
+            echo "ERROR: disallowed canonical store files staged:"
+            echo "$DISALLOWED"
+            exit 1
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No canonical fixture acquisition changes to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update canonical fixture acquisition store for $DAY_KEY"
+            git push
+          fi
+
       - name: Run daily cycle
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
