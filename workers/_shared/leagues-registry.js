@@ -241,6 +241,21 @@ const EXPLICIT_NAME_MAP = {
   "wal.1": "Cymru Premier",
   "wal.2": "Cymru North/South",
 
+  // ANDORRA
+  "and.1": "Andorran Primera Divisió",
+  "and.2": "Andorran Segona Divisió",
+  // GIBRALTAR
+  "gib.1": "Gibraltar Football League",
+  "gib.2": "Gibraltar Second Division",
+  // LIECHTENSTEIN
+  "lie.1": "Liechtenstein First Level",
+  "lie.2": "Liechtenstein Second Level",
+  // RUSSIA
+  "rus.1": "Russian Premier League",
+  "rus.2": "Russian First League",
+  // SAN MARINO
+  "smr.1": "Campionato Sammarinese",
+  "smr.2": "San Marino Second Level",
   // UEFA
   "uefa.champions": "UEFA Champions League",
   "uefa.europa": "UEFA Europa League",
@@ -272,7 +287,17 @@ const EXPLICIT_NAME_MAP = {
   "per.1": "Peru Primera División",
   "per.2": "Peru Liga 2",
 
+  "ven.1": "Venezuelan Primera División",
+  "ven.2": "Venezuelan Segunda División",
+  "ecu.1": "LigaPro Ecuador",
+  "ecu.2": "Ecuador Serie B",
   // ASIA / MIDDLE EAST
+  "idn.1": "Indonesian Super League",
+  "idn.2": "Indonesian Second Division",
+  "mys.1": "Malaysian Super League",
+  "mys.2": "Malaysia Premier League",
+  "ind.1": "Indian Super League",
+  "ind.2": "Indian I-League",
   "jpn.1": "J1 League",
   "jpn.2": "J2 League",
   "kor.1": "K League 1",
@@ -285,6 +310,8 @@ const EXPLICIT_NAME_MAP = {
   "qat.2": "Qatari Second Division",
 
   // AFRICA DOMESTIC
+  "uga.1": "Ugandan Premier League",
+  "uga.2": "Ugandan Big League",
   "rsa.1": "South African Premiership",
   "rsa.2": "South African First Division",
   "egy.1": "Egyptian Premier League",
