@@ -1,0 +1,190 @@
+﻿name: Intraday deploy snapshot refresh
+
+on:
+  workflow_dispatch:
+    inputs:
+      dayKey:
+        description: "Day key to refresh, YYYY-MM-DD. Leave empty for Europe/Athens today."
+        required: false
+        default: ""
+  schedule:
+    # Hourly intraday refresh. Guard below limits execution to 07:00-23:59 Europe/Athens.
+    - cron: "23 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: intraday-deploy-snapshot-refresh
+  cancel-in-progress: true
+
+jobs:
+  refresh-and-commit-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Resolve day key
+        id: day
+        shell: bash
+        env:
+          INPUT_DAY_KEY: ${{ inputs.dayKey }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          RAW_DAY_KEY="${INPUT_DAY_KEY:-}"
+          DAY_KEY="$(printf "%s" "$RAW_DAY_KEY" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n 1 || true)"
+
+          ATHENS_HOUR="$(TZ=Europe/Athens date +%H)"
+          ATHENS_MINUTE="$(TZ=Europe/Athens date +%M)"
+          ATHENS_HOUR_NUM=$((10#$ATHENS_HOUR))
+
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            if [ "$ATHENS_HOUR_NUM" -lt 7 ] || [ "$ATHENS_HOUR_NUM" -gt 23 ]; then
+              echo "Skipping intraday run outside 07:00-23:59 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+              echo "skipBuild=true" >> "$GITHUB_OUTPUT"
+              echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
+          fi
+
+          if [ -z "$DAY_KEY" ]; then
+            DAY_KEY="$(TZ=Europe/Athens date +%F)"
+          fi
+
+          if ! printf "%s" "$DAY_KEY" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "ERROR: invalid DAY_KEY=$DAY_KEY"
+            exit 1
+          fi
+
+          echo "skipBuild=false" >> "$GITHUB_OUTPUT"
+          echo "SKIP_BUILD=false" >> "$GITHUB_ENV"
+          echo "dayKey=$DAY_KEY" >> "$GITHUB_OUTPUT"
+          echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
+          echo "Resolved DAY_KEY=$DAY_KEY"
+
+      - name: Install root dependencies
+        if: env.SKIP_BUILD != 'true'
+        run: npm install --no-audit --no-fund
+
+      - name: Install engine dependencies
+        if: env.SKIP_BUILD != 'true'
+        working-directory: engine-v1
+        run: npm install --no-audit --no-fund
+
+      - name: Run intraday snapshot refresh
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=6 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
+
+      - name: Snapshot verification
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require("fs");
+
+          const day = process.env.DAY_KEY;
+          const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
+          const fixturesFile = `data/deploy-snapshots/${day}/fixtures.json`;
+          const valueFile = `data/deploy-snapshots/${day}/value.json`;
+          const detailsDir = `data/deploy-snapshots/${day}/details`;
+
+          for (const file of [manifestFile, fixturesFile, valueFile]) {
+            if (!fs.existsSync(file)) {
+              throw new Error(`missing required snapshot file: ${file}`);
+            }
+          }
+
+          if (!fs.existsSync(detailsDir)) {
+            throw new Error(`missing details dir: ${detailsDir}`);
+          }
+
+          const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
+          const fixtures = JSON.parse(fs.readFileSync(fixturesFile, "utf8"));
+          const value = JSON.parse(fs.readFileSync(valueFile, "utf8"));
+          const details = fs.readdirSync(detailsDir).filter(f => f.endsWith(".json"));
+
+          console.log(JSON.stringify({
+            date: manifest.date,
+            generatedAt: manifest.generatedAt,
+            hash: manifest.hash,
+            fixturesSource: manifest.fixturesSource,
+            counts: manifest.counts,
+            coverage: manifest.coverage,
+            fixturesCount: fixtures.count,
+            valueCount: value.count,
+            valuePicks: Array.isArray(value.picks) ? value.picks.length : null,
+            detailsFiles: details.length
+          }, null, 2));
+
+          if (manifest.date !== day) {
+            throw new Error(`manifest date mismatch: expected ${day}, got ${manifest.date}`);
+          }
+
+          if (!Number.isFinite(Number(fixtures.count)) || Number(fixtures.count) <= 0) {
+            throw new Error("snapshot has zero fixtures");
+          }
+
+          if (!details.length) {
+            throw new Error("snapshot has zero detail files");
+          }
+          NODE
+
+      - name: Configure git author
+        if: env.SKIP_BUILD != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Stage allowed generated files only
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git restore --staged . || true
+
+          if [ -d "data/canonical-fixtures/${DAY_KEY}" ]; then
+            git add "data/canonical-fixtures/${DAY_KEY}/"
+          fi
+
+          git add data/deploy-snapshots/latest.json
+          git add "data/deploy-snapshots/${DAY_KEY}/"
+
+          ALLOWED='^(data/canonical-fixtures/|data/deploy-snapshots/)'
+          STAGED="$(git diff --cached --name-only || true)"
+
+          if [ -n "$STAGED" ]; then
+            echo "$STAGED"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev "$ALLOWED" || true)"
+            if [ -n "$BAD" ]; then
+              echo "ERROR: unexpected staged files:"
+              echo "$BAD"
+              exit 1
+            fi
+          fi
+
+      - name: Commit and push snapshot changes
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --cached --quiet; then
+            echo "No intraday snapshot changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Intraday refresh deploy snapshot for ${DAY_KEY}"
+          git push
