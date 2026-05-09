@@ -2311,6 +2311,73 @@ function extractStructuredFactsFromSources(input, sources = []) {
   };
 }
 
+function deriveNoRealSourceReason(diagnostics) {
+  const searchAttempts = Array.isArray(diagnostics?.searchAttempts)
+    ? diagnostics.searchAttempts
+    : [];
+
+  const flatAttempts = searchAttempts.flatMap(item =>
+    Array.isArray(item?.attempts) ? item.attempts : []
+  );
+
+  const blockedAttemptCount = flatAttempts.filter(attempt =>
+    attempt?.blocked === true ||
+    normalizeText(attempt?.failureReason) === "blocked_or_challenge_search_page"
+  ).length;
+
+  const attemptedSearchCount = flatAttempts.length;
+  const successfulResultAttemptCount = flatAttempts.filter(attempt =>
+    Number(attempt?.resultCount || 0) > 0
+  ).length;
+
+  const rawSearchCount = Number(diagnostics?.rawSearchCount || 0);
+  const candidateCount = Number(diagnostics?.candidateCount || 0);
+  const registryUsableCount = Number(diagnostics?.registry?.usableRegistryCount || 0);
+
+  if (rawSearchCount === 0 && candidateCount === 0 && blockedAttemptCount > 0) {
+    return {
+      reason: "search_blocked_or_empty",
+      fallbackReason: "search_access_blocked_or_empty_results",
+      searchAvailability: {
+        attemptedSearchCount,
+        blockedAttemptCount,
+        successfulResultAttemptCount,
+        rawSearchCount,
+        candidateCount,
+        registryUsableCount
+      }
+    };
+  }
+
+  if (rawSearchCount === 0 && candidateCount === 0 && attemptedSearchCount > 0) {
+    return {
+      reason: "search_empty_no_team_news_sources",
+      fallbackReason: "search_returned_no_usable_team_news_results",
+      searchAvailability: {
+        attemptedSearchCount,
+        blockedAttemptCount,
+        successfulResultAttemptCount,
+        rawSearchCount,
+        candidateCount,
+        registryUsableCount
+      }
+    };
+  }
+
+  return {
+    reason: "no_real_team_news_sources",
+    fallbackReason: "no_reliable_team_news_article_sources",
+    searchAvailability: {
+      attemptedSearchCount,
+      blockedAttemptCount,
+      successfulResultAttemptCount,
+      rawSearchCount,
+      candidateCount,
+      registryUsableCount
+    }
+  };
+}
+
 export async function runTeamNewsAIProvider(task) {
   const input = buildPrompt(task);
 
@@ -2329,16 +2396,19 @@ export async function runTeamNewsAIProvider(task) {
     .filter(source => sourceLooksRelevant(source, input));
 
   if (realSources.length === 0) {
-    return buildFallbackRequired("no_real_team_news_sources", {
+    const noSourceReason = deriveNoRealSourceReason(diagnostics);
+
+    return buildFallbackRequired(noSourceReason.reason, {
       input,
       provider: "team-news-ai-provider",
       mode: "source_agnostic_web_research_v1",
       sourceCount: 0,
       diagnostics,
+      searchAvailability: noSourceReason.searchAvailability,
       fallback: {
         required: true,
         type: "recent_lineups_usage_analysis",
-        reason: "no_reliable_team_news_article_sources",
+        reason: noSourceReason.fallbackReason,
         nextStep: "infer_missing_regular_players_from_recent_lineups"
       }
     });
