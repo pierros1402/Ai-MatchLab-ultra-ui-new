@@ -24,6 +24,7 @@ import { buildTeamGeoDay } from "./build-team-geo-day.js";
 import { buildTeamNewsWorksetDay } from "./build-team-news-workset-day.js";
 import { buildTeamNewsResearchTasksDay } from "./build-team-news-research-tasks-day.js";
 import { runTeamNewsResearchTasksDay } from "./run-team-news-research-tasks-day.js";
+import { buildTeamNewsResearchReviewDay } from "./build-team-news-research-review-day.js";
 import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
 import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
@@ -331,6 +332,7 @@ export async function runDailyCycle(options = {}) {
   let teamNewsSeeds = null;
   let teamNewsResearchTasks = null;
   let teamNewsResearchRun = null;
+  let teamNewsResearchReview = null;
   let teamNewsBuild = null;
   let finalDetailsSync = null;
   let deploySnapshot = null;
@@ -671,7 +673,26 @@ export async function runDailyCycle(options = {}) {
     acceptedCandidateCount: teamNewsResearchRun?.acceptedCandidateCount ?? 0,
     unresolvedCandidateCount: teamNewsResearchRun?.unresolvedCandidateCount ?? 0,
     canonicalWriteCount: teamNewsResearchRun?.canonicalWriteCount ?? 0,
+    promoteCanonical: teamNewsResearchRun?.promoteCanonical === true,
+    candidateOnly: teamNewsResearchRun?.candidateOnly === true,
     file: teamNewsResearchRun?.file || null
+  });
+
+  console.log("[daily-cycle] team-news-research-review:start", { dayKey });
+
+  teamNewsResearchReview = await buildTeamNewsResearchReviewDay(dayKey);
+
+  console.log("[daily-cycle] team-news-research-review:done", {
+    ok: teamNewsResearchReview?.ok,
+    dayKey: teamNewsResearchReview?.dayKey,
+    reviewRowCount: teamNewsResearchReview?.reviewRowCount ?? 0,
+    needsReviewCount: teamNewsResearchReview?.needsReviewCount ?? 0,
+    approvedReadyForPromotionCount: teamNewsResearchReview?.approvedReadyForPromotionCount ?? 0,
+    invalidCandidateCount: teamNewsResearchReview?.invalidCandidateCount ?? 0,
+    unresolvedCandidateCount: teamNewsResearchReview?.unresolvedCandidateCount ?? 0,
+    promotableCount: teamNewsResearchReview?.promotableCount ?? 0,
+    reviewRequiredCount: teamNewsResearchReview?.reviewRequiredCount ?? 0,
+    file: teamNewsResearchReview?.file || null
   });
 
   console.log("[daily-cycle] team-news-build:start", { dayKey });
@@ -787,6 +808,7 @@ export async function runDailyCycle(options = {}) {
     teamNewsSeeds,
     teamNewsResearchTasks,
     teamNewsResearchRun,
+    teamNewsResearchReview,
     teamNewsBuild,
     valueBuild,
     finalDetailsSync,
@@ -841,6 +863,11 @@ if (entryUrl === import.meta.url) {
       teamNewsResearchTaskCount: result?.teamNewsResearchRun?.taskCount ?? 0,
       teamNewsAcceptedCandidateCount: result?.teamNewsResearchRun?.acceptedCandidateCount ?? 0,
       teamNewsCanonicalWriteCount: result?.teamNewsResearchRun?.canonicalWriteCount ?? 0,
+      teamNewsResearchCandidateOnly: result?.teamNewsResearchRun?.candidateOnly === true,
+      teamNewsReviewRowCount: result?.teamNewsResearchReview?.reviewRowCount ?? 0,
+      teamNewsNeedsReviewCount: result?.teamNewsResearchReview?.needsReviewCount ?? 0,
+      teamNewsReadyForPromotionCount: result?.teamNewsResearchReview?.approvedReadyForPromotionCount ?? 0,
+      teamNewsPromotableCount: result?.teamNewsResearchReview?.promotableCount ?? 0,
       valueCount: result?.valueBuild?.count ?? 0,
       snapshotHash: result?.deploySnapshot?.hash || null,
       snapshotDetailsCount: result?.deploySnapshot?.counts?.details ?? 0
