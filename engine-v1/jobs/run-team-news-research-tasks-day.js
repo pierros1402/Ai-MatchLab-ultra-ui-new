@@ -1046,7 +1046,10 @@ function persistAcceptedCanonicalTeamNews({ dayKey, task, candidateOutput, accep
   };
 }
 
-export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity } = {}) {
+export async function runTeamNewsResearchTasksDay(dayKey, {
+  maxTasks = Infinity,
+  promoteCanonical = false
+} = {}) {
   const safeDayKey = normalizeText(dayKey);
   if (!safeDayKey) {
     throw new Error("missing dayKey");
@@ -1178,15 +1181,28 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
     };
 
     if (acceptance.accepted) {
-      const canonicalWrite = persistAcceptedCanonicalTeamNews({
-        dayKey: safeDayKey,
-        task,
-        candidateOutput: finalCandidate,
-        acceptance
-      });
+      if (promoteCanonical) {
+        const canonicalWrite = persistAcceptedCanonicalTeamNews({
+          dayKey: safeDayKey,
+          task,
+          candidateOutput: finalCandidate,
+          acceptance
+        });
 
-      resultRow.canonicalWrite = canonicalWrite;
-      canonicalWrites.push(canonicalWrite);
+        resultRow.canonicalWrite = canonicalWrite;
+        canonicalWrites.push(canonicalWrite);
+      } else {
+        resultRow.canonicalWrite = {
+          ok: false,
+          skipped: true,
+          wouldWrite: true,
+          reason: "candidate_only_requires_promote_canonical_flag",
+          team: getTargetTeam(task),
+          matchId: getMatchId(task),
+          normalizedAbsenceCount: acceptance?.normalizedAbsenceCount ?? null,
+          normalizedNoteCount: acceptance?.normalizedNoteCount ?? null
+        };
+      }
     }
 
     results.push(resultRow);
@@ -1200,6 +1216,8 @@ export async function runTeamNewsResearchTasksDay(dayKey, { maxTasks = Infinity 
     reviewedNoConfirmedAbsencesCount: results.filter(x => x.status === "reviewed_no_confirmed_absences").length,
     unresolvedCandidateCount: results.filter(x => x.status === "unresolved_candidate").length,
     canonicalWriteCount: canonicalWrites.filter(x => x?.ok).length,
+    promoteCanonical,
+    candidateOnly: !promoteCanonical,
     canonicalWrites,
     results,
     updatedAt: new Date().toISOString()
@@ -1218,7 +1236,10 @@ const __filename = fileURLToPath(import.meta.url);
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
   const dayKey = process.argv[2];
-  const maxTasksArg = process.argv[3];
+  const args = process.argv.slice(3);
+  const maxTasksArg = args.find(arg => /^\d+$/.test(String(arg || "")));
+  const promoteCanonical = args.includes("--promote-canonical");
+
   const maxTasks =
     Number.isFinite(Number(maxTasksArg)) && Number(maxTasksArg) > 0
       ? Number(maxTasksArg)
@@ -1226,10 +1247,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename
 
   console.log("[run-team-news-research-tasks-day] cli:start", {
     dayKey,
-    maxTasks: Number.isFinite(maxTasks) ? maxTasks : "all"
+    maxTasks: Number.isFinite(maxTasks) ? maxTasks : "all",
+    promoteCanonical
   });
 
-  runTeamNewsResearchTasksDay(dayKey, { maxTasks })
+  runTeamNewsResearchTasksDay(dayKey, { maxTasks, promoteCanonical })
     .then(result => {
       console.log("[run-team-news-research-tasks-day] cli:done", {
         ok: result?.ok,
@@ -1239,6 +1261,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename
         reviewedNoConfirmedAbsencesCount: result?.reviewedNoConfirmedAbsencesCount ?? 0,
         unresolvedCandidateCount: result?.unresolvedCandidateCount ?? 0,
         canonicalWriteCount: result?.canonicalWriteCount ?? 0,
+        promoteCanonical: result?.promoteCanonical === true,
+        candidateOnly: result?.candidateOnly === true,
         file: result?.file || null
       });
     })
