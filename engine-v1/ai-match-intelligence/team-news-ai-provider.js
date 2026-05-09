@@ -1280,6 +1280,10 @@ function buildSearchQueries(input) {
     }
   }
 
+  const isBrazilContext =
+    /^bra\./i.test(leagueSlug) ||
+    /\b(Coritiba|Internacional|Palmeiras|Flamengo|Fluminense|Botafogo|Santos|Sao Paulo|São Paulo|Vasco|Gremio|Grêmio|Cruzeiro|Atletico Mineiro|Atlético Mineiro|Bahia|Fortaleza|Ceara|Ceará|Sport Recife|Vitoria|Vitória)\b/i.test(`${team} ${opponent}`);
+
   const isSpanishContext =
     /^mex\./i.test(leagueSlug) ||
     /^arg\./i.test(leagueSlug) ||
@@ -1300,6 +1304,22 @@ function buildSearchQueries(input) {
   const isNorwegianContext =
     /^nor\./i.test(leagueSlug) ||
     /\b(Fredrikstad|Viking FK|Rosenborg|SK Brann|Brann)\b/i.test(`${team} ${opponent}`);
+
+  const brazilPriorityQueries = [
+    `"${primaryTeam}" "${primaryOpponent}" desfalques relacionados provável escalação`,
+    `"${primaryTeam}" "${primaryOpponent}" desfalques escalação provável`,
+    `"${primaryTeam}" "${primaryOpponent}" relacionados desfalques`,
+    `"${primaryTeam}" "${primaryOpponent}" provável time`,
+    `"${primaryTeam}" "${primaryOpponent}" ge globo escalação desfalques`,
+    `"${primaryTeam}" "${primaryOpponent}" lance escalação desfalques`,
+    `"${primaryTeam}" desfalques relacionados escalação`,
+    `"${primaryTeam}" provável escalação`,
+    `site:ge.globo.com "${primaryTeam}" "${primaryOpponent}" desfalques`,
+    `site:ge.globo.com "${primaryTeam}" provável escalação`,
+    `site:lance.com.br "${primaryTeam}" "${primaryOpponent}" desfalques`,
+    pair ? `${pair} desfalques escalação provável` : null,
+    pair ? `${pair} relacionados desfalques` : null
+  ];
 
   const englishQueries = aliasPairs.flatMap(([t, o]) => [
     `"${t}" "${o}" football team news injuries suspensions expected lineup`,
@@ -1329,9 +1349,9 @@ function buildSearchQueries(input) {
     `"${primaryTeam}" "${primaryOpponent}" previa bajas lesionados`,
     `"${primaryTeam}" "${primaryOpponent}" convocatoria alineacion`,
     `"${primaryTeam}" "${primaryOpponent}" posible once`,
-    `${pair} previa bajas lesionados`,
-    `${pair} convocatoria alineacion`,
-    `${pair} Liga MX previa`
+    pair ? `${pair} previa bajas lesionados` : null,
+    pair ? `${pair} convocatoria alineacion` : null,
+    pair ? `${pair} Liga MX previa` : null
   ];
 
   const spanishQueries = [
@@ -1358,7 +1378,7 @@ function buildSearchQueries(input) {
     leagueSlug ? `"${primaryTeam}" ${leagueSlug} previa lesionados convocados` : null
   ];
 
-  const queries = [
+  const baselineQueries = [
     `"${team}" "${opponent}" team news`,
     `"${team}" ${opponent} preview`,
     `"${team}" lineup`,
@@ -1370,9 +1390,19 @@ function buildSearchQueries(input) {
     `${team} injuries`
   ];
 
-  return [...new Set(queries.filter(Boolean))];
-}
+  const prioritized = [
+    ...(isBrazilContext ? brazilPriorityQueries : []),
+    ...(isMexicoContext ? mexicoPriorityQueries : []),
+    ...(isSpanishContext ? spanishQueries : []),
+    ...(isNorwegianContext ? norwegianQueries : []),
+    ...englishQueries,
+    ...simpleQueries,
+    ...leagueQueries,
+    ...baselineQueries
+  ];
 
+  return [...new Set(prioritized.filter(Boolean).map(q => normalizeText(q)).filter(Boolean))];
+}
 function scoreRegistrySourceForTask(source, input) {
   const title = normalizeText(source?.title).toLowerCase();
 
