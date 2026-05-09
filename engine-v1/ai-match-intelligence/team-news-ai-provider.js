@@ -1203,20 +1203,55 @@ async function fetchRegistrySources(input) {
   };
 }
 
+function classifySearchHtmlFailure(html) {
+  const value = String(html || "");
+  const lower = value.toLowerCase();
+
+  const challengeSignals = [
+    "challenges.cloudflare.com/turnstile",
+    "cf-turnstile",
+    "captcha",
+    "verify you are human",
+    "unusual traffic",
+    "are you a robot",
+    "enable javascript and cookies",
+    "challenge-platform"
+  ];
+
+  if (challengeSignals.some(signal => lower.includes(signal))) {
+    return "blocked_or_challenge_search_page";
+  }
+
+  if (/no results|nenhum resultado|não encontramos|n[aã]o encontramos|sem resultados/i.test(value)) {
+    return "search_no_results_page";
+  }
+
+  return null;
+}
+
+function buildSearchAttempt(engine, html, rows) {
+  const failureReason = classifySearchHtmlFailure(html);
+  const resultCount = Array.isArray(rows) ? rows.length : 0;
+
+  return {
+    engine,
+    ok: Boolean(html) && !failureReason,
+    blocked: failureReason === "blocked_or_challenge_search_page",
+    failureReason,
+    htmlLength: html ? html.length : 0,
+    resultCount
+  };
+}
+
 async function searchWeb(query) {
   const attempts = [];
-  const searchFetchTimeoutMs = clamp(process.env.AIML_TEAM_NEWS_SEARCH_FETCH_TIMEOUT_MS || 2500, 1000, 8000);
+  const searchFetchTimeoutMs = Math.max(1000, Number(process.env.AIML_TEAM_NEWS_SEARCH_FETCH_TIMEOUT_MS || 12000));
 
-  const ddgHtmlUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-  const ddgHtml = await fetchText(ddgHtmlUrl, { timeoutMs: searchFetchTimeoutMs, maxChars: 120000 });
-  const ddgRows = ddgHtml ? parseDuckDuckGoResults(ddgHtml) : [];
-
-  attempts.push({
-    engine: "duckduckgo_html",
-    ok: !!ddgHtml,
-    htmlLength: ddgHtml ? ddgHtml.length : 0,
-    resultCount: ddgRows.length
-  });
+  const ddgUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
+  const ddgHtml = await fetchText(ddgUrl, { timeoutMs: searchFetchTimeoutMs, maxChars: 120000 });
+  const ddgFailureReason = classifySearchHtmlFailure(ddgHtml);
+  const ddgRows = ddgHtml && !ddgFailureReason ? parseDuckDuckGoResults(ddgHtml) : [];
+  attempts.push(buildSearchAttempt("duckduckgo_html", ddgHtml, ddgRows));
 
   if (ddgRows.length > 0) {
     return { rows: ddgRows, attempts };
@@ -1224,14 +1259,9 @@ async function searchWeb(query) {
 
   const ddgLiteUrl = `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`;
   const ddgLiteHtml = await fetchText(ddgLiteUrl, { timeoutMs: searchFetchTimeoutMs, maxChars: 120000 });
-  const ddgLiteRows = ddgLiteHtml ? parseDuckDuckGoLiteResults(ddgLiteHtml) : [];
-
-  attempts.push({
-    engine: "duckduckgo_lite",
-    ok: !!ddgLiteHtml,
-    htmlLength: ddgLiteHtml ? ddgLiteHtml.length : 0,
-    resultCount: ddgLiteRows.length
-  });
+  const ddgLiteFailureReason = classifySearchHtmlFailure(ddgLiteHtml);
+  const ddgLiteRows = ddgLiteHtml && !ddgLiteFailureReason ? parseDuckDuckGoLiteResults(ddgLiteHtml) : [];
+  attempts.push(buildSearchAttempt("duckduckgo_lite", ddgLiteHtml, ddgLiteRows));
 
   if (ddgLiteRows.length > 0) {
     return { rows: ddgLiteRows, attempts };
@@ -1239,14 +1269,9 @@ async function searchWeb(query) {
 
   const bingUrl = `https://www.bing.com/search?q=${encodeURIComponent(query)}`;
   const bingHtml = await fetchText(bingUrl, { timeoutMs: searchFetchTimeoutMs, maxChars: 120000 });
-  const bingRows = bingHtml ? parseBingResults(bingHtml) : [];
-
-  attempts.push({
-    engine: "bing_html",
-    ok: !!bingHtml,
-    htmlLength: bingHtml ? bingHtml.length : 0,
-    resultCount: bingRows.length
-  });
+  const bingFailureReason = classifySearchHtmlFailure(bingHtml);
+  const bingRows = bingHtml && !bingFailureReason ? parseBingResults(bingHtml) : [];
+  attempts.push(buildSearchAttempt("bing_html", bingHtml, bingRows));
 
   return {
     rows: bingRows,
