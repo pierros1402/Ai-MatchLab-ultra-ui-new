@@ -174,8 +174,96 @@ jobs:
             fi
           fi
 
-      - name: Commit and push snapshot changes
+      - name: Detect material intraday snapshot changes
         if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node - <<'NODE'
+          const fs = require("fs");
+          const { execFileSync } = require("child_process");
+
+          const day = process.env.DAY_KEY;
+          const file = `data/deploy-snapshots/${day}/fixtures.json`;
+
+          function readJsonFromHead(path) {
+            try {
+              return JSON.parse(execFileSync("git", ["show", `HEAD:${path}`], { encoding: "utf8" }));
+            } catch {
+              return null;
+            }
+          }
+
+          function readJsonFile(path) {
+            if (!fs.existsSync(path)) return null;
+            return JSON.parse(fs.readFileSync(path, "utf8"));
+          }
+
+          function rowsOf(payload) {
+            if (!payload) return [];
+            if (Array.isArray(payload)) return payload;
+            if (Array.isArray(payload.matches)) return payload.matches;
+            if (Array.isArray(payload.fixtures)) return payload.fixtures;
+            if (Array.isArray(payload.items)) return payload.items;
+            return [];
+          }
+
+          function idOf(row) {
+            return String(row?.matchId ?? row?.id ?? row?.fixtureId ?? "").trim();
+          }
+
+          function material(row) {
+            return {
+              matchId: idOf(row),
+              status: row?.status ?? null,
+              statusType: row?.statusType ?? null,
+              rawStatus: row?.rawStatus ?? null,
+              phase: row?.phase ?? null,
+              minute: row?.minute ?? null,
+              scoreHome: row?.scoreHome ?? row?.homeScore ?? null,
+              scoreAway: row?.scoreAway ?? row?.awayScore ?? null,
+              live: row?.live ?? null,
+              isLive: row?.isLive ?? null,
+              staleLive: row?.staleLive ?? null,
+              kickoffUtc: row?.kickoffUtc ?? row?.date ?? row?.startTime ?? row?.startUtc ?? null
+            };
+          }
+
+          function normalize(payload) {
+            const map = new Map();
+            for (const row of rowsOf(payload)) {
+              const id = idOf(row);
+              if (id) map.set(id, material(row));
+            }
+            return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+          }
+
+          const before = readJsonFromHead(file);
+          const after = readJsonFile(file);
+
+          const beforeNorm = normalize(before);
+          const afterNorm = normalize(after);
+          const materialChanged = JSON.stringify(beforeNorm) !== JSON.stringify(afterNorm);
+
+          console.log(JSON.stringify({
+            file,
+            beforeRows: beforeNorm.length,
+            afterRows: afterNorm.length,
+            materialChanged
+          }, null, 2));
+
+          fs.appendFileSync(process.env.GITHUB_ENV, `INTRADAY_MATERIAL_CHANGE=${materialChanged ? "true" : "false"}\n`);
+
+          if (!materialChanged) {
+            console.log("No material score/status/minute changes. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
+            execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
+            execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
+          }
+          NODE
+
+      - name: Commit and push snapshot changes
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -187,3 +275,26 @@ jobs:
 
           git commit -m "Intraday refresh deploy snapshot for ${DAY_KEY}"
           git push
+
+      - name: Trigger Render redeploy
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true'
+        shell: bash
+        env:
+          RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
+          RENDER_UI_DEPLOY_HOOK_URL: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "${RENDER_ENGINE_DEPLOY_HOOK_URL:-}" ]; then
+            echo "Triggering Render engine redeploy..."
+            curl -fsS -X POST "${RENDER_ENGINE_DEPLOY_HOOK_URL}"
+          else
+            echo "RENDER_ENGINE_DEPLOY_HOOK_URL is not configured; skipping engine redeploy trigger."
+          fi
+
+          if [ -n "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
+            echo "Triggering Render UI redeploy..."
+            curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
+          else
+            echo "RENDER_UI_DEPLOY_HOOK_URL is not configured; skipping UI redeploy trigger."
+          fi
