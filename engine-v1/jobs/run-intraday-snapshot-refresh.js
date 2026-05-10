@@ -143,7 +143,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   });
 
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
-  const snapshot = exportDeploySnapshotDay(safeDayKey, { preserveDetails: true });
+  const snapshot = exportDeploySnapshotDay(safeDayKey, { preserveDetails: true, preserveValue: true });
   console.log("[intraday-snapshot-refresh] export-snapshot:done", {
     dayKey: safeDayKey,
     hash: snapshot?.hash,

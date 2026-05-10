@@ -112,17 +112,40 @@ function fixturesForSnapshotDay(dayKey) {
   };
 }
 
-function valueForDay(dayKey) {
+function valueForDay(dayKey, options = {}) {
   const file = resolveDataPath("value", `${dayKey}.json`);
   const payload = readJsonSafe(file, null);
 
+  const snapshotValueFile = options?.snapshotRoot
+    ? path.join(options.snapshotRoot, "value.json")
+    : null;
+  const snapshotPayload = options?.preserveValue === true && snapshotValueFile
+    ? readJsonSafe(snapshotValueFile, null)
+    : null;
+  const snapshotHasPicks = Array.isArray(snapshotPayload?.picks) && snapshotPayload.picks.length > 0;
+
   if (!payload || typeof payload !== "object") {
+    if (snapshotHasPicks) {
+      return {
+        ...snapshotPayload,
+        source: snapshotPayload?.source || "preserved_snapshot_value"
+      };
+    }
+
     return {
       ok: true,
       date: dayKey,
       count: 0,
       picks: [],
       source: "missing_local_value_file"
+    };
+  }
+
+  const payloadHasPicks = Array.isArray(payload?.picks) && payload.picks.length > 0;
+  if (options?.preserveValue === true && !payloadHasPicks && snapshotHasPicks) {
+    return {
+      ...snapshotPayload,
+      source: snapshotPayload?.source || "preserved_snapshot_value"
     };
   }
 
@@ -428,6 +451,35 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
     });
   }
 
+  if (options?.preserveDetails === true && fs.existsSync(snapshotDetailsDir)) {
+    summaries.length = 0;
+    totalBytes = 0;
+    largest = { file: null, bytes: 0, mb: 0 };
+
+    for (const name of fs.readdirSync(snapshotDetailsDir).filter(x => x.endsWith(".json")).sort()) {
+      const detailFile = path.join(snapshotDetailsDir, name);
+      const detail = readJsonSafe(detailFile, null);
+      if (!detail || typeof detail !== "object") continue;
+
+      const bytes = bytesOfFile(detailFile);
+      totalBytes += bytes;
+
+      if (bytes > largest.bytes) {
+        largest = {
+          file: name,
+          bytes,
+          mb: mb(bytes)
+        };
+      }
+
+      summaries.push({
+        file: name,
+        bytes,
+        mb: mb(bytes),
+        ...summarizeDetail(detail)
+      });
+    }
+  }
   return {
     count: summaries.length,
     totalBytes,
@@ -454,7 +506,7 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
   const fixtures = fixturesSnapshot.fixtures;
   const fixturesSource = fixturesSnapshot.source;
 
-  const value = valueForDay(dayKey);
+  const value = valueForDay(dayKey, { snapshotRoot, preserveValue: options?.preserveValue === true });
   const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails: options?.preserveDetails === true });
 
   const fixturesOut = {
