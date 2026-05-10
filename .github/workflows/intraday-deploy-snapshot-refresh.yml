@@ -8,9 +8,7 @@ on:
         required: false
         default: ""
   schedule:
-    # Hourly intraday refresh. Guard below limits execution to 07:00-23:59 Europe/Athens.
-    - cron: "23 * * * *"
-
+    # Hourly intraday refresh. Guard below limits execution to 07:00-23:59 Europe/Athens.    - cron: "*/15 * * * *"
 permissions:
   contents: write
 
@@ -85,7 +83,7 @@ jobs:
 
       - name: Run intraday snapshot refresh
         if: env.SKIP_BUILD != 'true'
-        run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=6 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
+        run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=1 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
 
       - name: Snapshot verification
         if: env.SKIP_BUILD != 'true'

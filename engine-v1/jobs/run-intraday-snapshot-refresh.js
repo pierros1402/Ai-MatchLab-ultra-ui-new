@@ -93,6 +93,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   const thisFile = fileURLToPath(import.meta.url);
   const jobsDir = path.dirname(thisFile);
   const acquisitionScript = path.join(jobsDir, "run-fixture-acquisition-chunk.js");
+  const liveStatusScript = path.join(jobsDir, "run-live-status-refresh-day.js");
 
   for (let i = 1; i <= chunks; i += 1) {
     console.log("[intraday-snapshot-refresh] acquisition-chunk:start", {
@@ -111,6 +112,10 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       daysForward
     ]);
   }
+
+  console.log("[intraday-snapshot-refresh] live-status-refresh:start", { dayKey: safeDayKey });
+  runNodeScript(liveStatusScript, [safeDayKey]);
+  console.log("[intraday-snapshot-refresh] live-status-refresh:done", { dayKey: safeDayKey });
 
   console.log("[intraday-snapshot-refresh] sync-canonical-fixtures:start", { dayKey: safeDayKey });
   const sync = syncCanonicalFixturesToJsonDbDay(safeDayKey, { write: true });
