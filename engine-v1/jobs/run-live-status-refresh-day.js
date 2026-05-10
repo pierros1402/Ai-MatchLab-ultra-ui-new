@@ -3,7 +3,7 @@ import path from "path";
 
 import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
-import { resolveDataPath, ensureDir } from "../core/paths.js";
+import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
