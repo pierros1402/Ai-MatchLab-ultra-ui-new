@@ -146,28 +146,29 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
       - name: Stage allowed generated files only
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: |
           set -euo pipefail
 
-          git restore --staged . || true
+          # Intraday refresh is status-only. Do not commit canonical acquisition
+          # store, coverage reports, ingest cursors, or runtime fixture DB files.
+          git restore -- data/canonical-fixtures data/coverage-reports data/ingest-state data/fixtures.json data/fixtures.json.bak 2>/dev/null || true
+          git clean -fd -- data/canonical-fixtures data/coverage-reports data/ingest-state 2>/dev/null || true
 
-          if [ -d "data/canonical-fixtures/${DAY_KEY}" ]; then
-            git add "data/canonical-fixtures/${DAY_KEY}/"
-          fi
+          test -e "data/deploy-snapshots/${DAY_KEY}/fixtures.json" && git add "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
+          test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
+          test -e "data/deploy-snapshots/${DAY_KEY}/value.json" && git add "data/deploy-snapshots/${DAY_KEY}/value.json"
+          test -d "data/deploy-snapshots/${DAY_KEY}/details" && git add "data/deploy-snapshots/${DAY_KEY}/details"
+          test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
 
-          git add data/deploy-snapshots/latest.json
-          git add "data/deploy-snapshots/${DAY_KEY}/"
-
-          ALLOWED='^(data/canonical-fixtures/|data/deploy-snapshots/)'
           STAGED="$(git diff --cached --name-only || true)"
+          echo "Staged files:"
+          printf "%s\n" "$STAGED"
 
           if [ -n "$STAGED" ]; then
-            echo "$STAGED"
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev "$ALLOWED" || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"
