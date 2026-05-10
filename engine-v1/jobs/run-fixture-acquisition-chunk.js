@@ -189,6 +189,48 @@ function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
 function mergeCanonicalFixtures(existing, incoming) {
   const map = new Map();
 
+  function meaningful(value) {
+    return value !== null && value !== undefined && value !== "";
+  }
+
+  function mergeRow(previous, next) {
+    if (!previous) return next;
+    if (!next) return previous;
+
+    const merged = { ...previous, ...next };
+
+    for (const key of [
+      "scoreHome",
+      "scoreAway",
+      "penalties",
+      "decidedBy",
+      "status",
+      "rawStatus",
+      "minute",
+      "venue",
+      "kickoffUtc",
+      "homeTeam",
+      "awayTeam",
+      "leagueSlug",
+      "leagueName",
+      "dayKey",
+      "source",
+      "sourceId",
+      "sourceMatchId"
+    ]) {
+      if (meaningful(next[key])) {
+        merged[key] = next[key];
+      } else if (meaningful(previous[key])) {
+        merged[key] = previous[key];
+      }
+    }
+
+    merged.firstSeenAt = previous.firstSeenAt || next.firstSeenAt || new Date().toISOString();
+    merged.lastSeenAt = next.lastSeenAt || previous.lastSeenAt || new Date().toISOString();
+
+    return merged;
+  }
+
   for (const row of existing || []) {
     const id = stableFixtureId(row);
     if (!id) continue;
@@ -198,15 +240,7 @@ function mergeCanonicalFixtures(existing, incoming) {
   for (const row of incoming || []) {
     const id = stableFixtureId(row);
     if (!id) continue;
-
-    const prev = map.get(id) || {};
-
-    map.set(id, {
-      ...prev,
-      ...row,
-      firstSeenAt: prev.firstSeenAt || row.firstSeenAt || new Date().toISOString(),
-      lastSeenAt: new Date().toISOString()
-    });
+    map.set(id, mergeRow(map.get(id), row));
   }
 
   return [...map.values()];
@@ -452,17 +486,37 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
   };
 
   try {
-    const espnDate = espnDateFromDayKey(dayKey);
-    const scoreboardUrl = ESPN_BASE + "/all/scoreboard?dates=" + espnDate + "&limit=1000";
+    const supplementalDays = [
+      shiftDay(dayKey, -1),
+      dayKey
+    ].filter(Boolean);
+
+    const scoreboardUrls = [...new Set(supplementalDays.map(d =>
+      ESPN_BASE + "/all/scoreboard?dates=" + espnDateFromDayKey(d) + "&limit=1000"
+    ))];
+
     const dropdownUrl = "https://site.api.espn.com/apis/site/v2/leagues/dropdown?lang=en&region=us&calendartype=whitelist&limit=1000&sport=soccer";
 
-    const [scoreboard, dropdown] = await Promise.all([
-      fetchJson(scoreboardUrl, "espn_all_scoreboard"),
+    const [scoreboards, dropdown] = await Promise.all([
+      Promise.all(scoreboardUrls.map((url, idx) => fetchJson(url, "espn_all_scoreboard_" + supplementalDays[idx]))),
       fetchJson(dropdownUrl, "espn_dropdown")
     ]);
 
     const dropdownById = flattenEspnDropdownLeagues(dropdown);
-    const events = Array.isArray(scoreboard?.events) ? scoreboard.events : [];
+    const eventById = new Map();
+
+    for (const scoreboard of scoreboards) {
+      const rows = Array.isArray(scoreboard?.events) ? scoreboard.events : [];
+      for (const event of rows) {
+        const id = String(event?.id || "").trim();
+        if (!id) continue;
+        eventById.set(id, event);
+      }
+    }
+
+    const events = [...eventById.values()];
+    stats.supplementalDays = supplementalDays;
+    stats.scoreboardUrls = scoreboardUrls;
     const existingIds = existingCanonicalIdsForDay(dayKey);
     const grouped = new Map();
 
