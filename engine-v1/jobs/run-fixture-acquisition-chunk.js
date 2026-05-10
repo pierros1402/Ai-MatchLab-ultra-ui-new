@@ -442,7 +442,7 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
     rawEvents: 0,
     normalized: 0,
     accepted: 0,
-    duplicateCanonical: 0,
+    existingCanonicalUpdates: 0,
     skippedOtherDay: 0,
     skippedOutOfTargetSeeds: 0,
     skippedNoLeagueSlug: 0,
@@ -472,10 +472,7 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
       const eventId = String(event?.id || "").trim();
       if (!eventId) continue;
 
-      if (existingIds.has(eventId)) {
-        stats.duplicateCanonical++;
-        continue;
-      }
+      const existedInCanonical = existingIds.has(eventId);
 
       const leagueId = extractEspnLeagueId(event?.uid);
       const dropdownLeague = leagueId ? dropdownById.get(leagueId) : null;
@@ -526,6 +523,9 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
       grouped.get(key).rows.push(row);
       existingIds.add(eventId);
       stats.accepted++;
+      if (existedInCanonical) {
+        stats.existingCanonicalUpdates++;
+      }
       stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
     }
 
@@ -682,7 +682,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     accepted: supplemental.accepted,
     writtenByDay: supplemental.writtenByDay,
     error: supplemental.error,
-    duplicateCanonical: supplemental.duplicateCanonical,
+    existingCanonicalUpdates: supplemental.existingCanonicalUpdates,
     skippedOtherDay: supplemental.skippedOtherDay,
     skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
     skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
@@ -703,7 +703,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     rawEvents: supplemental.rawEvents,
     normalized: supplemental.normalized,
     accepted: supplemental.accepted,
-    duplicateCanonical: supplemental.duplicateCanonical,
+    existingCanonicalUpdates: supplemental.existingCanonicalUpdates,
     skippedOtherDay: supplemental.skippedOtherDay,
     skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
     skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
