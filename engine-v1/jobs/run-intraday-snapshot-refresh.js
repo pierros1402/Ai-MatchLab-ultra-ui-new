@@ -2,10 +2,8 @@
 import { fileURLToPath } from "url";
 import path from "path";
 
-import { buildDetailsDay } from "./build-details-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
-import { buildValueDay } from "../core/build-value-day.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -124,30 +122,28 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     written: sync.written
   });
 
-  console.log("[intraday-snapshot-refresh] value:start", { dayKey: safeDayKey });
-  const value = await buildValueDay(safeDayKey);
-  console.log("[intraday-snapshot-refresh] value:done", {
+  const value = {
+    ok: true,
+    skipped: true,
+    reason: "intraday_status_only_uses_existing_value_file"
+  };
+  console.log("[intraday-snapshot-refresh] value:skipped", {
     dayKey: safeDayKey,
-    ok: value?.ok,
-    count: value?.count,
-    picks: Array.isArray(value?.picks) ? value.picks.length : null
+    reason: value.reason
   });
 
-  console.log("[intraday-snapshot-refresh] details:start", {
+  const details = {
+    ok: true,
+    skipped: true,
+    reason: "intraday_status_only_preserves_existing_snapshot_details"
+  };
+  console.log("[intraday-snapshot-refresh] details:skipped", {
     dayKey: safeDayKey,
-    rebuild: rebuildDetails
-  });
-  const details = await buildDetailsDay(safeDayKey, { rebuild: rebuildDetails });
-  console.log("[intraday-snapshot-refresh] details:done", {
-    dayKey: safeDayKey,
-    ok: details?.ok,
-    built: details?.built,
-    skipped: details?.skipped,
-    fixtureSource: details?.fixtureSource
+    reason: details.reason
   });
 
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
-  const snapshot = exportDeploySnapshotDay(safeDayKey);
+  const snapshot = exportDeploySnapshotDay(safeDayKey, { preserveDetails: true });
   console.log("[intraday-snapshot-refresh] export-snapshot:done", {
     dayKey: safeDayKey,
     hash: snapshot?.hash,
