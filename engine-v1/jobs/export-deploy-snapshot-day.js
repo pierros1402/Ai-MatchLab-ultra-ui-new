@@ -380,14 +380,18 @@ function emptyDir(dir) {
   }
 }
 
-function copyDetails(dayKey, snapshotDetailsDir) {
+function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
   const files = detailFilesForDay(dayKey);
   const summaries = [];
   let totalBytes = 0;
   let largest = { file: null, bytes: 0, mb: 0 };
 
+  const preserveExistingDetails = options?.preserveDetails === true;
+
   ensureDir(snapshotDetailsDir);
-  emptyDir(snapshotDetailsDir);
+  if (!preserveExistingDetails) {
+    emptyDir(snapshotDetailsDir);
+  }
 
   for (const src of files) {
     const detail = readJsonSafe(src, null);
@@ -433,7 +437,7 @@ function copyDetails(dayKey, snapshotDetailsDir) {
   };
 }
 
-export function exportDeploySnapshotDay(dayKey) {
+export function exportDeploySnapshotDay(dayKey, options = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dayKey || ""))) {
     throw new Error(`invalid dayKey: ${dayKey}`);
   }
@@ -451,7 +455,7 @@ export function exportDeploySnapshotDay(dayKey) {
   const fixturesSource = fixturesSnapshot.source;
 
   const value = valueForDay(dayKey);
-  const detailsReport = copyDetails(dayKey, snapshotDetailsDir);
+  const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails: options?.preserveDetails === true });
 
   const fixturesOut = {
     ok: true,
