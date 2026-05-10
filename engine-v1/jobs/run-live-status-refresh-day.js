@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
@@ -354,7 +355,11 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
   return stats;
 }
 
-if (import.meta.url === "file://" + process.argv[1]) {
+const isCli =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isCli) {
   runLiveStatusRefreshDay(process.argv[2])
     .then(result => {
       console.log(JSON.stringify(result, null, 2));

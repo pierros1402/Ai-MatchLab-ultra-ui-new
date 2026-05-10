@@ -58,7 +58,7 @@ function parseArgs(argv = []) {
     }
   }
 
-  out.chunks = Number.isFinite(out.chunks) && out.chunks > 0 ? Math.floor(out.chunks) : 6;
+  out.chunks = Number.isFinite(out.chunks) && out.chunks >= 0 ? Math.floor(out.chunks) : 6;
   out.chunkSize = Number.isFinite(out.chunkSize) && out.chunkSize > 0 ? Math.floor(out.chunkSize) : 12;
   out.daysBack = Number.isFinite(out.daysBack) && out.daysBack >= 0 ? Math.floor(out.daysBack) : 1;
   out.daysForward = Number.isFinite(out.daysForward) && out.daysForward >= 0 ? Math.floor(out.daysForward) : 14;
@@ -73,7 +73,9 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     throw new Error(`invalid dayKey: ${dayKey}`);
   }
 
-  const chunks = Number.isFinite(Number(options.chunks)) ? Number(options.chunks) : 6;
+  const chunks = Number.isFinite(Number(options.chunks)) && Number(options.chunks) >= 0
+    ? Math.floor(Number(options.chunks))
+    : 6;
   const chunkSize = Number.isFinite(Number(options.chunkSize)) ? Number(options.chunkSize) : 12;
   const daysBack = Number.isFinite(Number(options.daysBack)) ? Number(options.daysBack) : 1;
   const daysForward = Number.isFinite(Number(options.daysForward)) ? Number(options.daysForward) : 14;
@@ -95,22 +97,29 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   const acquisitionScript = path.join(jobsDir, "run-fixture-acquisition-chunk.js");
   const liveStatusScript = path.join(jobsDir, "run-live-status-refresh-day.js");
 
-  for (let i = 1; i <= chunks; i += 1) {
-    console.log("[intraday-snapshot-refresh] acquisition-chunk:start", {
-      dayKey: safeDayKey,
-      chunk: i,
-      chunks
-    });
+  if (chunks > 0) {
+    for (let i = 1; i <= chunks; i += 1) {
+      console.log("[intraday-snapshot-refresh] acquisition-chunk:start", {
+        dayKey: safeDayKey,
+        chunk: i,
+        chunks
+      });
 
-    runNodeScript(acquisitionScript, [
-      safeDayKey,
-      "--chunk-size",
-      chunkSize,
-      "--days-back",
-      daysBack,
-      "--days-forward",
-      daysForward
-    ]);
+      runNodeScript(acquisitionScript, [
+        safeDayKey,
+        "--chunk-size",
+        chunkSize,
+        "--days-back",
+        daysBack,
+        "--days-forward",
+        daysForward
+      ]);
+    }
+  } else {
+    console.log("[intraday-snapshot-refresh] acquisition-chunk:skipped", {
+      dayKey: safeDayKey,
+      reason: "chunks_zero_live_status_only"
+    });
   }
 
   console.log("[intraday-snapshot-refresh] live-status-refresh:start", { dayKey: safeDayKey });
