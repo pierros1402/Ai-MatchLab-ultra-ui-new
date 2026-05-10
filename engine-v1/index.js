@@ -403,9 +403,44 @@ function snapshotValueResponse(dayKey) {
   };
 }
 
-function snapshotLiveStaleThresholdHours() {
-  const n = Number(process.env.AIML_STALE_LIVE_HOURS || 6);
-  return Number.isFinite(n) && n > 0 ? n : 6;
+function readPositiveHoursEnv(name, fallback) {
+  const n = Number(process.env[name] || fallback);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+function snapshotLiveStaleThresholdHours(match = null) {
+  const text = snapshotStatusText(match);
+
+  if (
+    text.includes("FIRST_HALF") ||
+    text.includes("STATUS_FIRST_HALF") ||
+    text.includes("1ST_HALF")
+  ) {
+    return readPositiveHoursEnv("AIML_STALE_FIRST_HALF_HOURS", 1.5);
+  }
+
+  if (
+    text.includes("HALF_TIME") ||
+    text.includes("HALFTIME") ||
+    text.includes("STATUS_HALFTIME") ||
+    text === "HT"
+  ) {
+    return readPositiveHoursEnv("AIML_STALE_HALF_TIME_HOURS", 2.25);
+  }
+
+  if (
+    text.includes("SECOND_HALF") ||
+    text.includes("STATUS_SECOND_HALF") ||
+    text.includes("2ND_HALF")
+  ) {
+    return readPositiveHoursEnv("AIML_STALE_SECOND_HALF_HOURS", 2.75);
+  }
+
+  return readPositiveHoursEnv("AIML_STALE_LIVE_HOURS", 3);
+}
+
+function snapshotPreStaleThresholdHours() {
+  return readPositiveHoursEnv("AIML_STALE_PRE_HOURS", 0.75);
 }
 
 function snapshotStatusText(match) {
@@ -458,7 +493,7 @@ function isSnapshotStaleLiveMatch(match, nowMs = Date.now()) {
 
   const ageHours = (nowMs - kickoffMs) / 36e5;
 
-  return ageHours >= snapshotLiveStaleThresholdHours();
+  return ageHours >= snapshotLiveStaleThresholdHours(match);
 }
 
 function isSnapshotPreLikeStatus(match) {
@@ -480,7 +515,7 @@ function isSnapshotStalePreMatch(match, nowMs = Date.now()) {
 
   const ageHours = (nowMs - kickoffMs) / 36e5;
 
-  return ageHours >= snapshotLiveStaleThresholdHours();
+  return ageHours >= snapshotPreStaleThresholdHours();
 }
 
 function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
@@ -504,7 +539,10 @@ function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
       staleLive: true,
       staleLiveReason: "snapshot_live_status_too_old_for_kickoff",
       staleLiveAgeHours: ageHours,
-      staleLiveThresholdHours: snapshotLiveStaleThresholdHours()
+      staleLiveThresholdHours: snapshotLiveStaleThresholdHours(match),
+      sourceStatus: match.status || null,
+      sourceStatusType: match.statusType || null,
+      sourcePhase: match.phase || null
     };
   }
 
@@ -521,7 +559,10 @@ function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
       stalePre: true,
       stalePreReason: "snapshot_scheduled_status_too_old_for_kickoff",
       stalePreAgeHours: ageHours,
-      stalePreThresholdHours: snapshotLiveStaleThresholdHours()
+      stalePreThresholdHours: snapshotPreStaleThresholdHours(),
+      sourceStatus: match.status || null,
+      sourceStatusType: match.statusType || null,
+      sourcePhase: match.phase || null
     };
   }
 
