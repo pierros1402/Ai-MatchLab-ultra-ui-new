@@ -416,7 +416,7 @@ function snapshotLiveStaleThresholdHours(match = null) {
     text.includes("STATUS_FIRST_HALF") ||
     text.includes("1ST_HALF")
   ) {
-    return readPositiveHoursEnv("AIML_STALE_FIRST_HALF_HOURS", 1.5);
+    return readPositiveHoursEnv("AIML_STALE_FIRST_HALF_HOURS", 1.35);
   }
 
   if (
@@ -425,7 +425,7 @@ function snapshotLiveStaleThresholdHours(match = null) {
     text.includes("STATUS_HALFTIME") ||
     text === "HT"
   ) {
-    return readPositiveHoursEnv("AIML_STALE_HALF_TIME_HOURS", 2.25);
+    return readPositiveHoursEnv("AIML_STALE_HALF_TIME_HOURS", 1.75);
   }
 
   if (
@@ -433,10 +433,10 @@ function snapshotLiveStaleThresholdHours(match = null) {
     text.includes("STATUS_SECOND_HALF") ||
     text.includes("2ND_HALF")
   ) {
-    return readPositiveHoursEnv("AIML_STALE_SECOND_HALF_HOURS", 2.75);
+    return readPositiveHoursEnv("AIML_STALE_SECOND_HALF_HOURS", 2.15);
   }
 
-  return readPositiveHoursEnv("AIML_STALE_LIVE_HOURS", 3);
+  return readPositiveHoursEnv("AIML_STALE_LIVE_HOURS", 2.25);
 }
 
 function snapshotPreStaleThresholdHours() {
