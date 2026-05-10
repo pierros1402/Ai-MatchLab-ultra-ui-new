@@ -485,6 +485,62 @@ function snapshotKickoffMs(match) {
   return Number.isFinite(ms) ? ms : null;
 }
 
+function parseSnapshotMinute(value) {
+  const match = String(value || "").trim().match(/(\d{1,3})/);
+  if (!match) return null;
+
+  const n = Number(match[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function snapshotExpectedMinuteFromKickoffAge(ageMinutes) {
+  if (!Number.isFinite(ageMinutes)) return null;
+
+  if (ageMinutes <= 45) return Math.max(0, ageMinutes);
+  if (ageMinutes <= 60) return 45;
+
+  return Math.min(120, ageMinutes - 15);
+}
+
+function snapshotLiveMinuteLag(match, nowMs = Date.now()) {
+  if (!isSnapshotLiveLikeStatus(match)) return null;
+
+  const kickoffMs = snapshotKickoffMs(match);
+  if (!Number.isFinite(kickoffMs)) return null;
+
+  const sourceMinute = parseSnapshotMinute(match?.minute);
+  if (!Number.isFinite(sourceMinute)) return null;
+
+  const ageMinutes = (nowMs - kickoffMs) / 60000;
+  const expectedMinute = snapshotExpectedMinuteFromKickoffAge(ageMinutes);
+  if (!Number.isFinite(expectedMinute)) return null;
+
+  return {
+    sourceMinute,
+    expectedMinute,
+    minuteLag: expectedMinute - sourceMinute,
+    ageMinutes
+  };
+}
+
+function isSnapshotLiveMinuteLagStaleMatch(match, nowMs = Date.now()) {
+  const lag = snapshotLiveMinuteLag(match, nowMs);
+  if (!lag) return false;
+
+  const minAgeMinutes = Number(process.env.AIML_STALE_LIVE_MINUTE_LAG_MIN_AGE_MINUTES || 95);
+  const maxSourceMinute = Number(process.env.AIML_STALE_LIVE_MINUTE_LAG_MAX_SOURCE_MINUTE || 80);
+  const minLagMinutes = Number(process.env.AIML_STALE_LIVE_MINUTE_LAG_MINUTES || 25);
+
+  return (
+    Number.isFinite(minAgeMinutes) &&
+    Number.isFinite(maxSourceMinute) &&
+    Number.isFinite(minLagMinutes) &&
+    lag.ageMinutes >= minAgeMinutes &&
+    lag.sourceMinute < maxSourceMinute &&
+    lag.minuteLag >= minLagMinutes
+  );
+}
+
 function isSnapshotStaleLiveMatch(match, nowMs = Date.now()) {
   if (!isSnapshotLiveLikeStatus(match)) return false;
 
@@ -493,7 +549,10 @@ function isSnapshotStaleLiveMatch(match, nowMs = Date.now()) {
 
   const ageHours = (nowMs - kickoffMs) / 36e5;
 
-  return ageHours >= snapshotLiveStaleThresholdHours(match);
+  return (
+    ageHours >= snapshotLiveStaleThresholdHours(match) ||
+    isSnapshotLiveMinuteLagStaleMatch(match, nowMs)
+  );
 }
 
 function isSnapshotPreLikeStatus(match) {
@@ -527,6 +586,11 @@ function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
     : null;
 
   if (isSnapshotStaleLiveMatch(match, nowMs)) {
+    const minuteLag = snapshotLiveMinuteLag(match, nowMs);
+    const staleLiveReason = isSnapshotLiveMinuteLagStaleMatch(match, nowMs)
+      ? "snapshot_live_minute_lag_too_high"
+      : "snapshot_live_status_too_old_for_kickoff";
+
     return {
       ...match,
       status: "STALE_LIVE",
@@ -537,9 +601,16 @@ function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
       live: false,
       isLive: false,
       staleLive: true,
-      staleLiveReason: "snapshot_live_status_too_old_for_kickoff",
+      staleLiveReason,
       staleLiveAgeHours: ageHours,
       staleLiveThresholdHours: snapshotLiveStaleThresholdHours(match),
+      staleLiveSourceMinute: minuteLag?.sourceMinute ?? null,
+      staleLiveExpectedMinute: Number.isFinite(minuteLag?.expectedMinute)
+        ? Math.round(minuteLag.expectedMinute * 10) / 10
+        : null,
+      staleLiveMinuteLag: Number.isFinite(minuteLag?.minuteLag)
+        ? Math.round(minuteLag.minuteLag * 10) / 10
+        : null,
       sourceStatus: match.status || null,
       sourceStatusType: match.statusType || null,
       sourcePhase: match.phase || null
