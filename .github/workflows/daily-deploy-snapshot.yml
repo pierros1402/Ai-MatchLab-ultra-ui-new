@@ -224,8 +224,20 @@ jobs:
             git add data/team-geo/*.json
           fi
 
+          for team_news_file in \
+            "data/team-news/_worksets/${DAY_KEY}.json" \
+            "data/team-news/_research-tasks/${DAY_KEY}.json" \
+            "data/team-news/_research-results/${DAY_KEY}.json" \
+            "data/team-news/_research-review/${DAY_KEY}.json" \
+            "data/team-news/_reports/${DAY_KEY}.json"
+          do
+            if [ -f "$team_news_file" ]; then
+              git add "$team_news_file"
+            fi
+          done
+
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/team-geo/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/team-geo/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"
