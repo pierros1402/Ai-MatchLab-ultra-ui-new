@@ -344,6 +344,57 @@ function candidateLooksLikeFootballSearchHit(source, input) {
   return hasTeam || hasOpponent || hasFootballSignal;
 }
 
+function hasPortugueseTeamNewsSignal(value) {
+  const text = normalizeText(value).toLowerCase();
+
+  return (
+    /\bdesfalque\b/i.test(text) ||
+    /\bdesfalques\b/i.test(text) ||
+    /\bescalação\b/i.test(text) ||
+    /\bescalacao\b/i.test(text) ||
+    /\brelacionados\b/i.test(text) ||
+    /\bprovável escalação\b/i.test(text) ||
+    /\bprovavel escalacao\b/i.test(text) ||
+    /\bprovável time\b/i.test(text) ||
+    /\bprovavel time\b/i.test(text) ||
+    /\bsuspenso\b/i.test(text) ||
+    /\bsuspensos\b/i.test(text) ||
+    /\blesionado\b/i.test(text) ||
+    /\blesionados\b/i.test(text) ||
+    /\bdepartamento médico\b/i.test(text) ||
+    /\bdepartamento medico\b/i.test(text) ||
+    /\bnão joga\b/i.test(text) ||
+    /\bnao joga\b/i.test(text) ||
+    /\bnão enfrenta\b/i.test(text) ||
+    /\bnao enfrenta\b/i.test(text) ||
+    /\bfora\b/i.test(text)
+  );
+}
+
+function hasPortugueseAbsenceSignal(value) {
+  const text = normalizeText(value).toLowerCase();
+
+  return (
+    hasPortugueseTeamNewsSignal(text) ||
+    /\bnão terá\b/i.test(text) ||
+    /\bnao tera\b/i.test(text) ||
+    /\blesão\b/i.test(text) ||
+    /\blesao\b/i.test(text) ||
+    /\blesões\b/i.test(text) ||
+    /\blesoes\b/i.test(text) ||
+    /\bmachucado\b/i.test(text) ||
+    /\bmachucados\b/i.test(text) ||
+    /\bsuspensão\b/i.test(text) ||
+    /\bsuspensao\b/i.test(text) ||
+    /\bcartão\b/i.test(text) ||
+    /\bcartao\b/i.test(text) ||
+    /\bdúvida\b/i.test(text) ||
+    /\bduvida\b/i.test(text) ||
+    /\bdúvidas\b/i.test(text) ||
+    /\bduvidas\b/i.test(text)
+  );
+}
+
 function sourceLooksRelevant(source, input) {
   const text = normalizeText(
     `${source?.title || ""} ${source?.snippet || ""} ${source?.text || ""} ${source?.url || ""}`
@@ -440,7 +491,7 @@ function sourceLooksRelevant(source, input) {
     /\bversus\b/i.test(text) ||
     /\bv\b/i.test(text);
 
-  return hasTeamNewsSignal || hasMatchSignal;
+  return hasTeamNewsSignal || hasPortugueseTeamNewsSignal(text) || hasMatchSignal;
 }
 async function fetchTextResult(url, { timeoutMs = 10000, maxChars = 120000 } = {}) {
   const startedAt = Date.now();
@@ -851,7 +902,7 @@ function scoreRegistryArticleLink(link, input) {
     score += 4;
   }
 
-  if (/convocados|convocatoria|n[oó]mina|citados|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|suspend|bajas|team news|injury update|injuries|suspensions|squad news|expected lineup|predicted lineup|match preview/i.test(haystack)) {
+  if (/convocados|convocatoria|n[oó]mina|citados|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|suspend|bajas|team news|injury update|injuries|suspensions|squad news|expected lineup|predicted lineup|match preview/i.test(haystack) || hasPortugueseTeamNewsSignal(haystack)) {
     score += 10;
   }
 
@@ -1487,7 +1538,7 @@ function scoreRegistrySourceForTask(source, input) {
     score += 6;
   }
 
-  if (/convocados|convocatoria|n[oó]mina|citados|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|suspend|bajas/i.test(haystack)) {
+  if (/convocados|convocatoria|n[oó]mina|citados|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|suspend|bajas/i.test(haystack) || hasPortugueseTeamNewsSignal(haystack)) {
     score += 20;
   }
 
@@ -1551,7 +1602,7 @@ function scoreFetchCandidateForTask(source, input) {
     score -= 45;
   }
 
-  if (/preview|match preview|previa|bajas|lesionados|lesión|lesion|convocados|convocatoria|suspendidos|injuries|suspensions|team news|squad news/i.test(haystack)) {
+  if (/preview|match preview|previa|bajas|lesionados|lesión|lesion|convocados|convocatoria|suspendidos|injuries|suspensions|team news|squad news/i.test(haystack) || hasPortugueseTeamNewsSignal(haystack)) {
     score += 40;
   }
 
@@ -2074,7 +2125,8 @@ function validateExtractedAbsences(absences, sources, input) {
     }
 
     const hasAbsenceReason =
-      /injur|suspend|sidelined|ruled out|unavailable|absent|doubt|doubtful|knock|hamstring|knee|ankle|groin|muscle|acl|red card|ban|banned/i.test(reason);
+      /injur|suspend|sidelined|ruled out|unavailable|absent|doubt|doubtful|knock|hamstring|knee|ankle|groin|muscle|acl|red card|ban|banned/i.test(reason) ||
+      hasPortugueseAbsenceSignal(reason);
 
     if (!hasAbsenceReason) continue;
 
@@ -2227,12 +2279,12 @@ function extractStructuredFactsFromSources(input, sources = []) {
       if (!sentence) continue;
 
       if (
-        !/injur|suspend|ruled out|unavailable|miss|out|doubt|doubtful|knock|hamstring|knee|ankle|muscle/i.test(sentence)
+        !(/injur|suspend|ruled out|unavailable|miss|out|doubt|doubtful|knock|hamstring|knee|ankle|muscle/i.test(sentence) || hasPortugueseAbsenceSignal(sentence))
       ) {
         continue;
       }
 
-      const matches = sentence.match(/\b[A-Z][a-z]+(?:\s[A-Z][a-z]+){1,2}\b/g);
+      const matches = sentence.match(/\b\p{Lu}[\p{L}'’.\-]+(?:\s\p{Lu}[\p{L}'’.\-]+){1,2}\b/gu);
       if (!matches) continue;
 
       for (const name of matches) {
