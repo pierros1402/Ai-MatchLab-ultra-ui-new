@@ -242,8 +242,33 @@ jobs:
         run: |
           if git diff --cached --quiet; then
             echo "No snapshot or geo changes to commit."
+            echo "DAILY_SNAPSHOT_COMMITTED=false" >> "$GITHUB_ENV"
             exit 0
           fi
 
           git commit -m "Auto refresh deploy snapshot for ${DAY_KEY}"
           git push
+          echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
+
+      - name: Trigger Render redeploy after daily snapshot
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true'
+        shell: bash
+        env:
+          RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
+          RENDER_UI_DEPLOY_HOOK_URL: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "${RENDER_ENGINE_DEPLOY_HOOK_URL:-}" ]; then
+            echo "Triggering Render engine redeploy after daily snapshot..."
+            curl -fsS -X POST "${RENDER_ENGINE_DEPLOY_HOOK_URL}"
+          else
+            echo "RENDER_ENGINE_DEPLOY_HOOK_URL is not configured; skipping engine redeploy trigger."
+          fi
+
+          if [ -n "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
+            echo "Triggering Render UI redeploy after daily snapshot..."
+            curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
+          else
+            echo "RENDER_UI_DEPLOY_HOOK_URL is not configured; skipping UI redeploy trigger."
+          fi
