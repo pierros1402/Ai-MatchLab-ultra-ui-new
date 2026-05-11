@@ -8,7 +8,9 @@ on:
         required: false
         default: ""
   schedule:
-    # Live-focused intraday refresh. Guard below limits execution to 07:00-23:59 Europe/Athens.    - cron: "*/5 * * * *"
+    # Live-focused intraday refresh. Guard below limits execution to 07:00-23:59 Europe/Athens.    # Two staggered schedules reduce missed/delayed GitHub scheduled runs without external paid cron.
+    - cron: "*/5 * * * *"
+    - cron: "2-59/5 * * * *"
 permissions:
   contents: write
 
