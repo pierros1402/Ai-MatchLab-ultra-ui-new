@@ -2133,9 +2133,11 @@ function validateExtractedAbsences(absences, sources, input) {
     if (normalizedOpponent && normalizedPlayer === normalizedOpponent) continue;
     if (normalizedTargetTeam && normalizedTargetTeam.includes(normalizedPlayer) && playerWords.length > 1) continue;
     if (normalizedOpponent && normalizedOpponent.includes(normalizedPlayer) && playerWords.length > 1) continue;
+    if (normalizedTargetTeam && normalizedPlayer.startsWith(normalizedTargetTeam + " ")) continue;
+    if (normalizedOpponent && normalizedPlayer.startsWith(normalizedOpponent + " ")) continue;
 
     const blockedPlayerPhrasePattern =
-      /\b(entrar|cadastrar|cadastre|sócio|socio|torcedor|torcedores|conheça|conheca|benef[ií]cios|destaques|últimas|ultimas|notícias|noticias|brasileir[aã]o|jogos|simulador|mundo|lance|campe[oõ]es|categorias|times|v[ií]deos|videos|tabelas|futebol|internacional|colunistas|galerias|assinar|newsletter|publicidade|cookies|privacidade|termos|menu)\b/i;
+      /\b(entrar|cadastrar|cadastre|sócio|socio|torcedor|torcedores|conheça|conheca|benef[ií]cios|destaques|últimas|ultimas|notícias|noticias|brasileir[aã]o|jogos|simulador|mundo|lance|campe[oõ]es|categorias|times|v[ií]deos|videos|tabelas|futebol|internacional|colunistas|galerias|assinar|newsletter|publicidade|cookies|privacidade|termos|menu|clube|história|historia|vila|belmiro|mascote|jogadores|elenco|ex-jogadores|ídolos|idolos|classificação|classificacao|onde|enquetes|expediente|contato|rodapé|rodape|conteúdo|conteudo|principal|pular|coluna|sobre|títulos|titulos|escalações|escalacoes|apita|institucional|anuncie|conosco|mídia|midia|política|politica|carreiras|business|negócios|negocios|esportivo|lutas|tênis|tenis|vôlei|volei)\b/i;
 
     if (blockedPlayerPhrasePattern.test(normalizedPlayer)) continue;
 
