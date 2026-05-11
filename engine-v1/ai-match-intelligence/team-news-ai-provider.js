@@ -2061,7 +2061,17 @@ function validateExtractedAbsences(absences, sources, input) {
     "theguardian",
     "espn",
     "football.london",
-    "manchestereveningnews"
+    "manchestereveningnews",
+    "ge.globo.com",
+    "globo.com",
+    "lance.com.br",
+    "uol.com.br",
+    "gazetaesportiva.com",
+    "90min.com",
+    "sportingnews.com",
+    "esportenewsmundo.com.br",
+    "santistas.net",
+    "msn.com"
   ];
 
   const teamTokens = targetTeam
@@ -2110,7 +2120,7 @@ function validateExtractedAbsences(absences, sources, input) {
       continue;
     }
 
-    if (!/^[A-Za-z?-??-??-?'?.\- ]+$/.test(player)) continue;
+    if (!/^[\p{L}'’.\- ]+$/u.test(player)) continue;
 
     if (
       /team|player|squad|coach|manager|background|foreground|component|footer|header|var\(|--|_base/i.test(player)
