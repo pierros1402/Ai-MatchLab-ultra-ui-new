@@ -2006,7 +2006,16 @@ function isLowQualityAbsenceExtractionInput(text, source = {}) {
     /\bcompetition\b/i.test(haystack) ||
     /\bregular season\b/i.test(haystack) ||
     /\bmatch events\b/i.test(haystack) ||
-    /\bevents?\b.*\bcard\b/i.test(haystack)
+    /\bevents?\b.*\bcard\b/i.test(haystack) ||
+    /\bturnstiles?\b/i.test(haystack) ||
+    /\badmission\b/i.test(haystack) ||
+    /\bmatchday\s+guide\b/i.test(haystack) ||
+    /\blast\s+time\s+out\b/i.test(haystack) ||
+    /\bnear\s+miss\b/i.test(haystack) ||
+    /\bwent\s+wide\b/i.test(haystack) ||
+    /\bwill\s+play\s+(?:right|left)-back\b/i.test(haystack) ||
+    /\bretaining\s+his\s+place\b/i.test(haystack) ||
+    /\brecorded\s+back-to-back\b/i.test(haystack)
   ) {
     return true;
   }
@@ -2018,29 +2027,67 @@ function extractNamedAbsences(text, source) {
   const out = [];
   const safeText = normalizeText(text).replace(/\s+/g, " ");
 
-  const coordinatedSurgeryPattern =
-    /(?:confirmed\s+)?(?:that\s+)?(?:both\s+)?([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+and\s+([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+(?:will\s+)?(?:undergo|have|require)\s+surgery/gi;
+  const personNamePattern = "[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2}";
+  const optionalRolePattern = "(?:(?:goalkeeper|keeper|defender|midfielder|forward|striker|winger|captain)\\s+)?";
 
-  for (const match of safeText.matchAll(coordinatedSurgeryPattern)) {
-    const context = safeText.slice(Math.max(0, match.index - 120), match.index + 240);
-    const classified = classifyAbsenceFromText(context) || { type: "injury", status: "out" };
+  const coordinatedSurgeryPatterns = [
+    new RegExp(
+      "(?:has|have)\\s+confirmed\\s+(?:that\\s+)?(?:both\\s+)?" +
+        optionalRolePattern +
+        "(" + personNamePattern + ")" +
+        "\\s+and\\s+" +
+        optionalRolePattern +
+        "(" + personNamePattern + ")" +
+        "\\s+(?:will\\s+)?(?:undergo|have|require)\\s+surgery",
+      "gi"
+    ),
+    new RegExp(
+      "(?:both\\s+)?" +
+        optionalRolePattern +
+        "(" + personNamePattern + ")" +
+        "\\s+and\\s+" +
+        optionalRolePattern +
+        "(" + personNamePattern + ")" +
+        "\\s+(?:will\\s+)?(?:undergo|have|require)\\s+surgery",
+      "gi"
+    )
+  ];
 
-    for (const rawPlayer of [match[1], match[2]]) {
-      const player = normalizeCompactPlayerName(rawPlayer);
-      if (looksLikeBadAbsencePlayerName(player)) continue;
+  for (const coordinatedSurgeryPattern of coordinatedSurgeryPatterns) {
+    for (const match of safeText.matchAll(coordinatedSurgeryPattern)) {
+      const sentenceStart = Math.max(
+        0,
+        safeText.lastIndexOf(".", match.index) + 1,
+        safeText.lastIndexOf("!", match.index) + 1,
+        safeText.lastIndexOf("?", match.index) + 1
+      );
 
-      out.push({
-        player,
-        type: classified.type || "injury",
-        status: classified.status || "out",
-        reason: normalizeText(context).slice(0, 220),
-        source: source?.url || source?.publisher || source?.title || null,
-        sourceUrl: source?.url || null,
-        sourceTitle: source?.title || null,
-        sourcePublisher: source?.publisher || null,
-        sourceTrustTier: source?.trustTier || null,
-        confidence: 0.68
-      });
+      const nextStops = [".", "!", "?"]
+        .map(token => safeText.indexOf(token, match.index))
+        .filter(index => index > match.index);
+
+      const sentenceEnd = nextStops.length ? Math.min(...nextStops) + 1 : Math.min(safeText.length, match.index + 260);
+      const context = safeText.slice(sentenceStart, sentenceEnd).trim();
+
+      const classified = classifyAbsenceFromText(context) || { type: "injury", status: "out" };
+
+      for (const rawPlayer of [match[1], match[2]]) {
+        const player = normalizeCompactPlayerName(rawPlayer);
+        if (looksLikeBadAbsencePlayerName(player)) continue;
+
+        out.push({
+          player,
+          type: classified.type || "injury",
+          status: classified.status || "out",
+          reason: normalizeText(context).slice(0, 220),
+          source: source?.url || source?.publisher || source?.title || null,
+          sourceUrl: source?.url || null,
+          sourceTitle: source?.title || null,
+          sourcePublisher: source?.publisher || null,
+          sourceTrustTier: source?.trustTier || null,
+          confidence: 0.7
+        });
+      }
     }
   }
 
