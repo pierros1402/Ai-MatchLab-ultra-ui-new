@@ -1886,6 +1886,15 @@ function looksLikeBadAbsencePlayerName(player) {
   }
 
   if (
+    /^(injury|injuries)\s+(update|latest|news)$/i.test(value) ||
+    /^(team\s+news|squad\s+news|match\s+preview|matchday\s+guide|press\s+conference|latest\s+news|club\s+news|first\s+team\s+news|related\s+content)$/i.test(value) ||
+    /^(preview|report|reaction|highlights|gallery|tickets?|fixtures?|results?|standings?)$/i.test(value) ||
+    /^(official\s+website|principal\s+partner|official\s+partner|commercial\s+partner)$/i.test(value)
+  ) {
+    return true;
+  }
+
+  if (
     lower === "background" ||
     lower === "foreground" ||
     lower === "color" ||
@@ -2028,7 +2037,7 @@ function extractNamedAbsences(text, source) {
   const safeText = normalizeText(text).replace(/\s+/g, " ");
 
   const personNamePattern = "[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2}";
-  const optionalRolePattern = "(?:(?:goalkeeper|keeper|defender|midfielder|forward|striker|winger|captain)\\s+)?";
+  const optionalRolePattern = "(?:(?:goalkeeper|keeper|defender|midfielder|midfielders|forward|striker|winger|captain)\\s+)?";
 
   const coordinatedSurgeryPatterns = [
     new RegExp(
