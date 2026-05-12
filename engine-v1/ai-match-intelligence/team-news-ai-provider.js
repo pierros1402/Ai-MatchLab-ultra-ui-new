@@ -2019,7 +2019,7 @@ function extractNamedAbsences(text, source) {
   const safeText = normalizeText(text).replace(/\s+/g, " ");
 
   const coordinatedSurgeryPattern =
-    /(?:both\s+)?([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+and\s+([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+(?:will\s+)?(?:undergo|have|require)\s+surgery/gi;
+    /(?:confirmed\s+)?(?:that\s+)?(?:both\s+)?([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+and\s+([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+(?:will\s+)?(?:undergo|have|require)\s+surgery/gi;
 
   for (const match of safeText.matchAll(coordinatedSurgeryPattern)) {
     const context = safeText.slice(Math.max(0, match.index - 120), match.index + 240);
@@ -2195,6 +2195,19 @@ function validateExtractedAbsences(absences, sources, input) {
     const normalizedPlayer = normalizeText(player).toLowerCase();
     const normalizedTargetTeam = normalizeText(targetTeam).toLowerCase();
     const normalizedOpponent = normalizeText(input?.opponent || "").toLowerCase();
+
+    const playerReasonText = normalizeText(`${player || ""} ${reason || ""}`);
+
+    if (
+      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(playerReasonText) ||
+      /\brelated\s+content\b/i.test(playerReasonText) ||
+      /\bvisit\s+[a-z0-9 .'-]+\s+official\b/i.test(playerReasonText) ||
+      /\bwebsite\s+[a-z0-9 .'-]+\s+official\b/i.test(playerReasonText) ||
+      /\bpartners?\s+[a-z0-9 .'-]+\b/i.test(playerReasonText) ||
+      /\b(principal\s+partners?|official\s+partners?|commercial|shop|tickets?)\b/i.test(playerReasonText)
+    ) {
+      continue;
+    }
 
     const playerContainsTargetTeam =
       normalizedTargetTeam.length >= 4 &&
