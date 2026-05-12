@@ -2169,6 +2169,32 @@ function validateExtractedAbsences(absences, sources, input) {
     const normalizedPlayer = normalizeText(player).toLowerCase();
     const normalizedTargetTeam = normalizeText(targetTeam).toLowerCase();
     const normalizedOpponent = normalizeText(input?.opponent || "").toLowerCase();
+
+    const playerContainsTargetTeam =
+      normalizedTargetTeam.length >= 4 &&
+      normalizedPlayer !== normalizedTargetTeam &&
+      normalizedPlayer.includes(normalizedTargetTeam);
+
+    const playerContainsOpponentTeam =
+      normalizedOpponent.length >= 4 &&
+      normalizedPlayer !== normalizedOpponent &&
+      normalizedPlayer.includes(normalizedOpponent);
+
+    const playerHasClubPrefixNoise =
+      /^\s*(liga de quito|ldu quito|mushuc runa|real betis|celta vigo|levante|osasuna|atl[eé]tico madrid|asteras|panserraikos|atromitos|kifisia|panetolikos|larissa|modena|juve stabia|catanzaro|avellino|kilmarnock|dundee united|aberdeen|st mirren|livingston|peñarol|penarol|cerro largo|al nassr|al hilal)\s+[\p{L}'’.-]+/iu.test(player);
+
+    const playerLooksLikeCoachContamination =
+      /\b(coach|manager|head coach|entrenador|t[eé]cnico|dt|director t[eé]cnico)\b/i.test(reason) &&
+      /\b(alca[cç]er|alc[aá]cer|josep|entrenador|t[eé]cnico)\b/i.test(player);
+
+    if (
+      playerContainsTargetTeam ||
+      playerContainsOpponentTeam ||
+      playerHasClubPrefixNoise ||
+      playerLooksLikeCoachContamination
+    ) {
+      continue;
+    }
     const normalizedReason = normalizeText(reason).toLowerCase();
 
     const contaminatedReasonPattern =
