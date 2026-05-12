@@ -1866,7 +1866,7 @@ const BAD_ABSENCE_PLAYER_PATTERNS = [
 ];
 
 const BAD_ABSENCE_NAVIGATION_TEXT_RE =
-  /\b(skip|homepage|watch|bet|cricket|rugby|union|league|golf|racing|darts|netball|tennis|boxing|nfl|nba|formula\s*1|f1|more\s+sports|sports\s+news|live\s+scores|video|podcast|newsletter|sign\s+in|log\s+in|subscribe|advertisement|privacy|cookies?)\b/i;
+  /\b(skip|homepage|watch|bet|cricket|rugby|union|league|golf|racing|darts|netball|tennis|boxing|nfl|nba|formula\s*1|f1|more\s+sports|sports\s+news|live\s+scores|video|podcast|newsletter|sign\s+in|log\s+in|subscribe|advertisement|privacy|cookies?|related\s+content|visit|website|official\s+website|official|partner|partners|sponsor|sponsors|adidas|boskalis|eis\s+waste|waste\s+services|shop|store|ticket|tickets|hospitality|commercial|foundation|community)\b/i;
 
 
 
@@ -2017,6 +2017,32 @@ function isLowQualityAbsenceExtractionInput(text, source = {}) {
 function extractNamedAbsences(text, source) {
   const out = [];
   const safeText = normalizeText(text).replace(/\s+/g, " ");
+
+  const coordinatedSurgeryPattern =
+    /(?:both\s+)?([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+and\s+([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,2})\s+(?:will\s+)?(?:undergo|have|require)\s+surgery/gi;
+
+  for (const match of safeText.matchAll(coordinatedSurgeryPattern)) {
+    const context = safeText.slice(Math.max(0, match.index - 120), match.index + 240);
+    const classified = classifyAbsenceFromText(context) || { type: "injury", status: "out" };
+
+    for (const rawPlayer of [match[1], match[2]]) {
+      const player = normalizeCompactPlayerName(rawPlayer);
+      if (looksLikeBadAbsencePlayerName(player)) continue;
+
+      out.push({
+        player,
+        type: classified.type || "injury",
+        status: classified.status || "out",
+        reason: normalizeText(context).slice(0, 220),
+        source: source?.url || source?.publisher || source?.title || null,
+        sourceUrl: source?.url || null,
+        sourceTitle: source?.title || null,
+        sourcePublisher: source?.publisher || null,
+        sourceTrustTier: source?.trustTier || null,
+        confidence: 0.68
+      });
+    }
+  }
 
   const sentencePatterns = [
     /([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){0,3})\s+(?:is|are|was|were)?\s*(?:ruled out|sidelined|injured|suspended|doubtful|a doubt|unavailable)/g,
@@ -2201,6 +2227,14 @@ function validateExtractedAbsences(absences, sources, input) {
       /\b(entre ou cadastre-se|entrar cadastrar|sócio torcedor|socio torcedor|todos os torcedores|personalize o seu conteúdo|personalize o seu conteudo|destaques últimas|destaques ultimas|últimas notícias|ultimas noticias|pular para o conteúdo|pular para o conteudo|pular para o rodapé|pular para o rodape|publicidade|cookies|newsletter|assinar|menu)\b/i;
 
     if (contaminatedReasonPattern.test(normalizedReason)) continue;
+
+    if (
+      /\b(has|have)\s+confirmed\b/i.test(normalizedReason) &&
+      normalizedPlayer &&
+      normalizedReason.includes(`${normalizedPlayer} has confirmed`)
+    ) {
+      continue;
+    }
 
     const playerWords = normalizedPlayer.split(/\s+/).filter(Boolean);
     if (playerWords.length < 1 || playerWords.length > 3) continue;
