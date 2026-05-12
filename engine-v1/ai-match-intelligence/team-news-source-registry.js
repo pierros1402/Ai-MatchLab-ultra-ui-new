@@ -778,7 +778,7 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       type: "media_news",
       trustTier: "medium",
       buildUrls() {
-        return ["https://www.tycsports.com/primera-nacional/"];
+        return ["https://www.tycsports.com/primera-nacional.html"];
       }
     },
     {
@@ -832,7 +832,7 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       type: "media_news",
       trustTier: "high",
       buildUrls() {
-        return ["https://www.sport24.gr/football/ellada/superleague/"];
+        return ["https://www.sport24.gr/tag/superleague-1/"];
       }
     },
     {
