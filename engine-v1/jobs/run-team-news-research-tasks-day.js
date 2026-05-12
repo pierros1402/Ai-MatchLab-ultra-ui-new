@@ -1046,6 +1046,86 @@ function persistAcceptedCanonicalTeamNews({ dayKey, task, candidateOutput, accep
   };
 }
 
+const TEAM_NEWS_PRIORITY_LEAGUE_PREFIXES = [
+  "eng",
+  "esp",
+  "ita",
+  "ger",
+  "fra",
+  "ned",
+  "por",
+  "bel",
+  "gre",
+  "sco",
+  "tur",
+  "ksa"
+];
+
+const TEAM_NEWS_UEFA_PREFIXES = new Set([
+  "eng", "esp", "ita", "ger", "fra", "ned", "por", "bel", "gre", "sco", "tur",
+  "aut", "sui", "den", "swe", "nor", "fin", "pol", "cze", "svk", "hun", "rou",
+  "bul", "cro", "srb", "svn", "bih", "mkd", "alb", "mne", "kos", "irl", "nir",
+  "wal", "isr", "cyp", "ukr", "rus", "blr", "ltu", "lva", "est", "isl", "lux",
+  "mlt", "and", "smr", "lie", "arm", "aze", "geo", "kaz", "mda", "gib", "far"
+]);
+
+const TEAM_NEWS_SOUTH_AMERICA_PREFIXES = new Set([
+  "arg", "bra", "uru", "ecu", "per", "col", "chi", "bol", "par", "ven"
+]);
+
+function getTaskLeagueSlug(task = {}) {
+  return normalizeText(
+    task?.leagueSlug ||
+    task?.match?.leagueSlug ||
+    task?.fixture?.leagueSlug ||
+    task?.input?.leagueSlug ||
+    task?.league?.slug ||
+    task?.competition?.slug ||
+    ""
+  ).toLowerCase();
+}
+
+function getTaskLeaguePrefix(task = {}) {
+  const slug = getTaskLeagueSlug(task);
+  return slug.split(".")[0] || slug;
+}
+
+function getTaskPriorityScore(task = {}) {
+  const slug = getTaskLeagueSlug(task);
+  const prefix = getTaskLeaguePrefix(task);
+
+  const explicitPriority = TEAM_NEWS_PRIORITY_LEAGUE_PREFIXES.indexOf(prefix);
+  if (explicitPriority !== -1) {
+    const division = Number(slug.split(".")[1] || 99);
+    return explicitPriority * 100 + Math.min(division, 20);
+  }
+
+  if (TEAM_NEWS_UEFA_PREFIXES.has(prefix)) {
+    return 2000 + slug.localeCompare("zzz");
+  }
+
+  if (TEAM_NEWS_SOUTH_AMERICA_PREFIXES.has(prefix)) {
+    return 3000 + slug.localeCompare("zzz");
+  }
+
+  return 4000 + slug.localeCompare("zzz");
+}
+
+function sortTeamNewsResearchTasksForPriority(tasks = []) {
+  return (Array.isArray(tasks) ? tasks : [])
+    .map((task, index) => ({ task, index }))
+    .sort((a, b) => {
+      const priorityDiff = getTaskPriorityScore(a.task) - getTaskPriorityScore(b.task);
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const slugDiff = getTaskLeagueSlug(a.task).localeCompare(getTaskLeagueSlug(b.task));
+      if (slugDiff !== 0) return slugDiff;
+
+      return a.index - b.index;
+    })
+    .map(row => row.task);
+}
+
 export async function runTeamNewsResearchTasksDay(dayKey, {
   maxTasks = Infinity,
   promoteCanonical = false
@@ -1062,9 +1142,11 @@ export async function runTeamNewsResearchTasksDay(dayKey, {
     throw new Error(`team-news research tasks not found or invalid: ${tasksPath}`);
   }
 
-  const limitedTasks = tasksDoc.tasks.slice(
+  const prioritizedTasks = sortTeamNewsResearchTasksForPriority(tasksDoc.tasks);
+
+  const limitedTasks = prioritizedTasks.slice(
     0,
-    Number.isFinite(Number(maxTasks)) ? Number(maxTasks) : tasksDoc.tasks.length
+    Number.isFinite(Number(maxTasks)) ? Number(maxTasks) : prioritizedTasks.length
   );
 
   const detailMap = readDetailsMap(safeDayKey);
