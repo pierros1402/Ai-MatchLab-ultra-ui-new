@@ -2384,6 +2384,35 @@ function extractStructuredFactsFromSources(input, sources = []) {
   const finalNotes = Array.from(uniqueNotes.values()).slice(0, 6);
   const finalEvidenceSources = evidenceSources.slice(0, 6);
 
+  function slimAbsenceDiagnostic(row) {
+    if (!row || typeof row !== "object") return row;
+
+    return {
+      player: row.player,
+      type: row.type,
+      status: row.status,
+      reason: row.reason,
+      sourcePublisher: row.sourcePublisher,
+      sourceTitle: row.sourceTitle,
+      sourceUrl: row.sourceUrl
+    };
+  }
+
+  const validatedAbsenceKeys = new Set(
+    validatedAbsences.map(row =>
+      [normalizeText(row?.player), normalizeText(row?.reason), normalizeText(row?.sourceUrl)]
+        .join("|")
+        .toLowerCase()
+    )
+  );
+
+  const rejectedAbsences = rawAbsences.filter(row => {
+    const key = [normalizeText(row?.player), normalizeText(row?.reason), normalizeText(row?.sourceUrl)]
+      .join("|")
+      .toLowerCase();
+    return !validatedAbsenceKeys.has(key);
+  });
+
   return {
     absences: validatedAbsences,
     notes: finalNotes,
@@ -2393,7 +2422,11 @@ function extractStructuredFactsFromSources(input, sources = []) {
       rawAbsenceCount: rawAbsences.length,
       validatedAbsenceCount: validatedAbsences.length,
       rejectedAbsenceCount: Math.max(0, rawAbsences.length - validatedAbsences.length),
-      noteCount: finalNotes.length
+      rawAbsenceSamples: rawAbsences.slice(0, 10).map(slimAbsenceDiagnostic),
+      validatedAbsenceSamples: validatedAbsences.slice(0, 10).map(slimAbsenceDiagnostic),
+      rejectedAbsenceSamples: rejectedAbsences.slice(0, 10).map(slimAbsenceDiagnostic),
+      noteCount: finalNotes.length,
+      noteSamples: finalNotes.slice(0, 10)
     }
   };
 }
