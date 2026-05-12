@@ -2000,6 +2000,10 @@ function extractNamedAbsences(text, source) {
         status: classified.status,
         reason: normalizeText(context).slice(0, 220),
         source: source?.url || source?.publisher || source?.title || null,
+        sourceUrl: source?.url || null,
+        sourceTitle: source?.title || null,
+        sourcePublisher: source?.publisher || null,
+        sourceTrustTier: source?.trustTier || null,
         confidence: 0.66
       });
     }
@@ -2026,6 +2030,7 @@ function extractNamedAbsences(text, source) {
         status: classified.status,
         reason: reason.slice(0, 220),
         source: source?.url || source?.publisher || source?.title || null,
+        sourceUrl: source?.url || null,
         sourceTitle: source?.title || null,
         sourcePublisher: source?.publisher || null,
         sourceTrustTier: source?.trustTier || null,
@@ -2165,7 +2170,17 @@ function validateExtractedAbsences(absences, sources, input) {
 
     if (!hasAbsenceReason) continue;
 
-    const isTrusted = trustedDomains.some(domain => source.includes(domain));
+    const isOfficialOrClubSource =
+      sourceTrustTier === "official" ||
+      sourceTrustTier === "club" ||
+      sourceTrustTier === "team_official";
+
+    const isLeagueOrHighTrustSource =
+      sourceTrustTier === "league" ||
+      sourceTrustTier === "high";
+
+    const isTrustedDomain = trustedDomains.some(domain => source.includes(domain));
+    const isTrusted = isTrustedDomain || isOfficialOrClubSource || isLeagueOrHighTrustSource;
     if (!isTrusted) continue;
 
     const textualEvidence = [
@@ -2179,11 +2194,6 @@ function validateExtractedAbsences(absences, sources, input) {
     const reasonHasTargetTeam = hasTeamSignal(reason, teamTokens);
     const textualHasTargetTeam = hasTeamSignal(textualEvidence, teamTokens);
     const textualHasOpponentTeam = hasOpponentSignal(textualEvidence);
-
-    const isOfficialOrClubSource =
-      sourceTrustTier === "official" ||
-      sourceTrustTier === "club" ||
-      sourceTrustTier === "team_official";
 
     if (!reasonHasTargetTeam && !isOfficialOrClubSource) {
       if (!textualHasTargetTeam) {
