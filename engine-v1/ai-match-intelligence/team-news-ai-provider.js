@@ -1055,9 +1055,10 @@ function extractRegistryArticleLinksFromHtml(html, baseUrl, row, input) {
     return kept;
   }
 async function fetchRegistrySources(input) {
-  const registryRows = getTeamNewsSourcesForTask(input);
-  const maxRegistrySources = clamp(process.env.AIML_TEAM_NEWS_MAX_REGISTRY_SOURCES || 3, 1, 6);
-  const registryFetchTimeoutMs = clamp(process.env.AIML_TEAM_NEWS_REGISTRY_FETCH_TIMEOUT_MS || 2500, 1000, 8000);
+  const registryRows = sortRegistrySourcesForTask(getTeamNewsSourcesForTask(input), input);
+  const maxRegistrySources = clamp(process.env.AIML_TEAM_NEWS_MAX_REGISTRY_SOURCES || 6, 1, 8);
+  const registryFetchTimeoutMs = clamp(process.env.AIML_TEAM_NEWS_REGISTRY_FETCH_TIMEOUT_MS || 4500, 1000, 10000);
+  const officialRegistryFetchTimeoutMs = clamp(process.env.AIML_TEAM_NEWS_OFFICIAL_REGISTRY_FETCH_TIMEOUT_MS || 6500, 1000, 12000);
 
   const diagnostics = {
     registrySourceCount: registryRows.length,
@@ -1096,8 +1097,16 @@ async function fetchRegistrySources(input) {
       continue;
     }
 
+    const rowTrustTier = normalizeText(row?.trustTier).toLowerCase();
+    const rowType = normalizeText(row?.type).toLowerCase();
+    const rowIsOfficialOrClub =
+      rowTrustTier === "official" ||
+      rowTrustTier === "club" ||
+      rowTrustTier === "team_official" ||
+      /official_club_news|club_news|team_official/i.test(rowType);
+
     const fetchResult = await fetchTextResult(row.url, {
-      timeoutMs: registryFetchTimeoutMs,
+      timeoutMs: rowIsOfficialOrClub ? officialRegistryFetchTimeoutMs : registryFetchTimeoutMs,
       maxChars: 90000
     });
 
