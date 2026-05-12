@@ -386,8 +386,8 @@ function hasPortugueseAbsenceSignal(value) {
     /\bmachucados\b/i.test(text) ||
     /\bsuspensão\b/i.test(text) ||
     /\bsuspensao\b/i.test(text) ||
-    /\bcartão\b/i.test(text) ||
-    /\bcartao\b/i.test(text) ||
+    /\bcartão vermelho\b/i.test(text) ||
+    /\bcartao vermelho\b/i.test(text) ||
     /\bdúvida\b/i.test(text) ||
     /\bduvida\b/i.test(text) ||
     /\bdúvidas\b/i.test(text) ||
@@ -1984,6 +1984,36 @@ function normalizeCompactPlayerName(player) {
   return value;
 }
 
+function isLowQualityAbsenceExtractionInput(text, source = {}) {
+  const sourceUrl = normalizeText(source?.url || source?.source || source?.href).toLowerCase();
+  const sourceTitle = normalizeText(source?.title || source?.sourceTitle || source?.label).toLowerCase();
+  const sourcePublisher = normalizeText(source?.publisher || source?.sourcePublisher || source?.domain || source?.site).toLowerCase();
+  const haystack = normalizeText(`${text || ""} ${sourceTitle} ${sourcePublisher} ${sourceUrl}`).toLowerCase();
+
+  if (
+    /futeboleiro\.com\.br/i.test(sourceUrl) ||
+    /promiedos\.com/i.test(sourceUrl) ||
+    /futboltotal\.com/i.test(sourceUrl)
+  ) {
+    return true;
+  }
+
+  if (
+    /\bcartão amarelo\b/i.test(haystack) ||
+    /\bcartao amarelo\b/i.test(haystack) ||
+    /\byellow card\b/i.test(haystack) ||
+    /\binformation stadium\b/i.test(haystack) ||
+    /\bcompetition\b/i.test(haystack) ||
+    /\bregular season\b/i.test(haystack) ||
+    /\bmatch events\b/i.test(haystack) ||
+    /\bevents?\b.*\bcard\b/i.test(haystack)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function extractNamedAbsences(text, source) {
   const out = [];
   const safeText = normalizeText(text).replace(/\s+/g, " ");
@@ -2320,9 +2350,13 @@ function extractStructuredFactsFromSources(input, sources = []) {
     const text = normalizeText(source.text || source.title);
     evidenceSources.push(source);
 
+    const skipAbsenceExtraction = isLowQualityAbsenceExtractionInput(text, source);
+
     // --- Named extraction (existing)
-    for (const absence of extractNamedAbsences(text, source)) {
-      absences.push(absence);
+    if (!skipAbsenceExtraction) {
+      for (const absence of extractNamedAbsences(text, source)) {
+        absences.push(absence);
+      }
     }
 
     // --- Simple sentence extraction (NEW)
@@ -2331,6 +2365,7 @@ function extractStructuredFactsFromSources(input, sources = []) {
     for (const rawSentence of sentences) {
       const sentence = normalizeText(rawSentence);
       if (!sentence) continue;
+      if (skipAbsenceExtraction) continue;
 
       if (
         !(/injur|suspend|ruled out|unavailable|miss|out|doubt|doubtful|knock|hamstring|knee|ankle|muscle/i.test(sentence) || hasPortugueseAbsenceSignal(sentence))
