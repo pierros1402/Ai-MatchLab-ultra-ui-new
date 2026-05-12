@@ -579,8 +579,30 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://www.skysports.com/championship"];
       }
-    }
-  ],
+    },
+    {
+      id: "middlesbrough-official-news",
+      label: "Middlesbrough official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["middlesbrough"],
+      buildUrls() {
+        return ["https://www.mfc.co.uk/news/"];
+      }
+    },
+    {
+      id: "southampton-official-news",
+      label: "Southampton official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["southampton"],
+      buildUrls() {
+        return [
+          "https://www.southamptonfc.com/en/news",
+          "https://www.southamptonfc.com/en/news/latest-news"
+        ];
+      }
+    }],
 
   "eng.3": [
     {
@@ -630,8 +652,19 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://as.com/futbol/"];
       }
-    }
-  ],
+    },
+    {
+      id: "laliga-official-news",
+      label: "LaLiga official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.laliga.com/en-GB/news",
+          "https://www.laliga.com/en-ES/news"
+        ];
+      }
+    }],
 
   "ita.1": [
     {
@@ -728,6 +761,318 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       }
     }
   ],
+
+  "arg.2": [
+    {
+      id: "arg-afa-news",
+      label: "AFA official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.afa.com.ar/"];
+      }
+    },
+    {
+      id: "arg-tyc-primera-nacional",
+      label: "TyC Sports Primera Nacional news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.tycsports.com/primera-nacional/"];
+      }
+    },
+    {
+      id: "arg-ole-ascenso",
+      label: "Olé Ascenso news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.ole.com.ar/futbol-ascenso/"];
+      }
+    }
+  ],
+
+  "ecu.1": [
+    {
+      id: "ecu-ligapro-news",
+      label: "LigaPro Ecuador official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://ligapro.ec/"];
+      }
+    },
+    {
+      id: "ecu-futbolecuador-news",
+      label: "Futbol Ecuador news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.futbolecuador.com/"];
+      }
+    }
+  ],
+
+  "gre.1": [
+    {
+      id: "gre-superleague-news",
+      label: "Super League Greece official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.slgr.gr/el/news/",
+          "https://www.slgr.gr/en/news/"
+        ];
+      }
+    },
+    {
+      id: "gre-sport24-superleague",
+      label: "SPORT24 Super League news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.sport24.gr/football/ellada/superleague/"];
+      }
+    },
+    {
+      id: "gre-gazzetta-superleague",
+      label: "Gazzetta Super League news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.gazzetta.gr/football/superleague"];
+      }
+    },
+    {
+      id: "gre-monobala-news",
+      label: "Monobala Greek football news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://monobala.gr/"];
+      }
+    }
+  ],
+
+  "ind.1": [
+    {
+      id: "ind-isl-news",
+      label: "Indian Super League official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.indiansuperleague.com/news"];
+      }
+    },
+    {
+      id: "ind-aiff-news",
+      label: "AIFF official news",
+      type: "federation_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.the-aiff.com/"];
+      }
+    }
+  ],
+
+  "ind.2": [
+    {
+      id: "ind-aiff-ileague",
+      label: "AIFF I-League official page",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.the-aiff.com/competitions/i-league",
+          "https://www.the-aiff.com/"
+        ];
+      }
+    }
+  ],
+
+  "ita.2": [
+    {
+      id: "ita-serieb-official-news",
+      label: "Lega Serie B official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.legab.it/news",
+          "https://www.legab.it/seriebkt"
+        ];
+      }
+    },
+    {
+      id: "ita-football-italia-serieb",
+      label: "Football Italia Serie B news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://football-italia.net/serie-b/"];
+      }
+    },
+    {
+      id: "ita-seriebnews",
+      label: "SerieBnews news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.seriebnews.com/"];
+      }
+    }
+  ],
+
+  "ksa.1": [
+    {
+      id: "ksa-spl-news",
+      label: "Saudi Pro League official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.spl.com.sa/en/news"];
+      }
+    },
+    {
+      id: "ksa-arriyadiyah-football",
+      label: "Arriyadiyah football news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://www.arriyadiyah.com/football"];
+      }
+    }
+  ],
+
+  "rsa.1": [
+    {
+      id: "rsa-psl-news",
+      label: "South African PSL official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://www.psl.co.za/"];
+      }
+    },
+    {
+      id: "rsa-supersport-psl",
+      label: "SuperSport South African football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://supersport.com/football/south-africa"];
+      }
+    }
+  ],
+
+  "sco.1": [
+    {
+      id: "sco-spfl-news",
+      label: "SPFL official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://spfl.co.uk/news"];
+      }
+    },
+    {
+      id: "sco-bbc-premiership",
+      label: "BBC Scottish Premiership news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.bbc.com/sport/football/scottish-premiership"];
+      }
+    },
+    {
+      id: "sco-sky-premiership",
+      label: "Sky Sports Scottish Premiership news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.skysports.com/scottish-premiership"];
+      }
+    },
+    {
+      id: "kilmarnock-official-news",
+      label: "Kilmarnock official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["kilmarnock"],
+      buildUrls() {
+        return ["https://kilmarnockfc.co.uk/news/"];
+      }
+    },
+    {
+      id: "dundee-united-official-news",
+      label: "Dundee United official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["dundee united"],
+      buildUrls() {
+        return ["https://www.dundeeunitedfc.co.uk/news/"];
+      }
+    }
+  ],
+
+  "uga.1": [
+    {
+      id: "uga-upl-news",
+      label: "Uganda Premier League official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://upl.co.ug/",
+          "https://upl.co.ug/news/"
+        ];
+      }
+    },
+    {
+      id: "uga-fufa-upl",
+      label: "FUFA Uganda Premier League page",
+      type: "federation_news",
+      trustTier: "league",
+      buildUrls() {
+        return ["https://fufa.co.ug/competitions/uganda-premier-league/"];
+      }
+    },
+    {
+      id: "uga-kawowo-upl",
+      label: "Kawowo Uganda Premier League news",
+      type: "media_news",
+      trustTier: "medium",
+      buildUrls() {
+        return ["https://kawowo.com/tag/uganda-premier-league/"];
+      }
+    }
+  ],
+
+  "uru.1": [
+    {
+      id: "uru-auf-news",
+      label: "AUF official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.auf.org.uy/",
+          "https://www.auf.org.uy/liga-auf-uruguaya/"
+        ];
+      }
+    },
+    {
+      id: "uru-ovacion-football",
+      label: "Ovación Uruguay football news",
+      type: "media_news",
+      trustTier: "high",
+      buildUrls() {
+        return ["https://www.elpais.com.uy/ovacion/futbol"];
+      }
+    }
+  ],
+
 
   "per.1": [
     {
