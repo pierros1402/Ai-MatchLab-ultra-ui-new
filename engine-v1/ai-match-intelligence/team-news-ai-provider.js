@@ -2125,6 +2125,12 @@ function validateExtractedAbsences(absences, sources, input) {
     const normalizedPlayer = normalizeText(player).toLowerCase();
     const normalizedTargetTeam = normalizeText(targetTeam).toLowerCase();
     const normalizedOpponent = normalizeText(input?.opponent || "").toLowerCase();
+    const normalizedReason = normalizeText(reason).toLowerCase();
+
+    const contaminatedReasonPattern =
+      /\b(entre ou cadastre-se|entrar cadastrar|sócio torcedor|socio torcedor|todos os torcedores|personalize o seu conteúdo|personalize o seu conteudo|destaques últimas|destaques ultimas|últimas notícias|ultimas noticias|pular para o conteúdo|pular para o conteudo|pular para o rodapé|pular para o rodape|publicidade|cookies|newsletter|assinar|menu)\b/i;
+
+    if (contaminatedReasonPattern.test(normalizedReason)) continue;
 
     const playerWords = normalizedPlayer.split(/\s+/).filter(Boolean);
     if (playerWords.length < 1 || playerWords.length > 3) continue;
@@ -2137,7 +2143,7 @@ function validateExtractedAbsences(absences, sources, input) {
     if (normalizedOpponent && normalizedPlayer.startsWith(normalizedOpponent + " ")) continue;
 
     const blockedPlayerPhrasePattern =
-      /\b(entrar|cadastrar|cadastre|sócio|socio|torcedor|torcedores|conheça|conheca|benef[ií]cios|destaques|últimas|ultimas|notícias|noticias|brasileir[aã]o|jogos|simulador|mundo|lance|campe[oõ]es|categorias|times|v[ií]deos|videos|tabelas|futebol|internacional|colunistas|galerias|assinar|newsletter|publicidade|cookies|privacidade|termos|menu|clube|história|historia|vila|belmiro|mascote|jogadores|elenco|ex-jogadores|ídolos|idolos|classificação|classificacao|onde|enquetes|expediente|contato|rodapé|rodape|conteúdo|conteudo|principal|pular|coluna|sobre|títulos|titulos|escalações|escalacoes|apita|institucional|anuncie|conosco|mídia|midia|política|politica|carreiras|business|negócios|negocios|esportivo|lutas|tênis|tenis|vôlei|volei)\b/i;
+      /\b(entrar|cadastrar|cadastre|sócio|socio|torcedor|torcedores|conheça|conheca|benef[ií]cios|destaques|últimas|ultimas|notícias|noticias|brasileir[aã]o|jogos|simulador|mundo|lance|campe[oõ]es|categorias|times|v[ií]deos|videos|tabelas|futebol|internacional|colunistas|galerias|assinar|newsletter|publicidade|cookies|privacidade|termos|menu|clube|história|historia|vila|belmiro|mascote|jogadores|elenco|ex-jogadores|ídolos|idolos|classificação|classificacao|onde|enquetes|expediente|contato|rodapé|rodape|conteúdo|conteudo|principal|pular|coluna|sobre|títulos|titulos|escalações|escalacoes|apita|institucional|anuncie|conosco|mídia|midia|política|politica|carreiras|business|negócios|negocios|esportivo|lutas|tênis|tenis|vôlei|volei|cria|lab|mineiro|bahia|botafogo|ceará|ceara|cruzeiro|flamengo|fluminense|fortaleza|campo|polêmicas|polemicas|indica|ofertas)\b/i;
 
     if (blockedPlayerPhrasePattern.test(normalizedPlayer)) continue;
 
