@@ -664,6 +664,81 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
           "https://www.laliga.com/en-ES/news"
         ];
       }
+    },
+    {
+      id: "real-betis-official-news",
+      label: "Real Betis official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["real betis", "betis"],
+      buildUrls() {
+        return [
+          "https://en.realbetisbalompie.es/",
+          "https://www.realbetisbalompie.es/"
+        ];
+      }
+    },
+    {
+      id: "elche-official-news",
+      label: "Elche official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["elche", "elche cf"],
+      buildUrls() {
+        return ["https://www.elchecf.es/"];
+      }
+    },
+    {
+      id: "celta-official-news",
+      label: "Celta Vigo official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["celta vigo", "celta", "rc celta"],
+      buildUrls() {
+        return [
+          "https://rccelta.es/",
+          "https://rccelta.es/en/"
+        ];
+      }
+    },
+    {
+      id: "levante-official-news",
+      label: "Levante official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["levante", "levante ud"],
+      buildUrls() {
+        return [
+          "https://www.levanteud.com/en",
+          "https://www.levanteud.com/"
+        ];
+      }
+    },
+    {
+      id: "osasuna-official-news",
+      label: "Osasuna official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["osasuna", "ca osasuna"],
+      buildUrls() {
+        return [
+          "https://www.osasuna.es/en",
+          "https://www.osasuna.es/"
+        ];
+      }
+    },
+    {
+      id: "atletico-madrid-official-news",
+      label: "Atlético Madrid official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["atlético madrid", "atletico madrid", "atlético", "atletico"],
+      buildUrls() {
+        return [
+          "https://en.atleticodemadrid.com/",
+          "https://www.atleticodemadrid.com/"
+        ];
+      }
     }],
 
   "ita.1": [
@@ -810,8 +885,27 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://www.futbolecuador.com/"];
       }
-    }
-  ],
+    },
+    {
+      id: "mushuc-runa-official-news",
+      label: "Mushuc Runa official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["mushuc runa"],
+      buildUrls() {
+        return ["https://mushucrunasc.ec/"];
+      }
+    },
+    {
+      id: "liga-quito-official-news",
+      label: "Liga de Quito official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["liga de quito", "ldu quito", "liga quito"],
+      buildUrls() {
+        return ["https://www.ligadequito.com/"];
+      }
+    }],
 
   "gre.1": [
     {
@@ -852,8 +946,73 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://monobala.gr/"];
       }
-    }
-  ],
+    },
+    {
+      id: "asteras-official-news",
+      label: "Asteras Tripoli official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["asteras tripoli", "asteras aktor"],
+      buildUrls() {
+        return [
+          "https://www.asterastripolis.gr/",
+          "https://www.asterastripolis.gr/el/teleftaia-nea/protis-omadas"
+        ];
+      }
+    },
+    {
+      id: "panserraikos-official-news",
+      label: "Panserraikos official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["panserraikos", "panserraikos fc"],
+      buildUrls() {
+        return ["https://panserraikosfc.gr/"];
+      }
+    },
+    {
+      id: "atromitos-official-news",
+      label: "Atromitos official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["atromitos"],
+      buildUrls() {
+        return [
+          "https://www.atromitosfc.gr/",
+          "https://www.atromitosfc.gr/news/"
+        ];
+      }
+    },
+    {
+      id: "kifisia-official-news",
+      label: "Kifisia official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["kifisia", "ae kifisia"],
+      buildUrls() {
+        return ["https://kifisiafc.gr/"];
+      }
+    },
+    {
+      id: "panetolikos-official-news",
+      label: "Panetolikos official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["panetolikos"],
+      buildUrls() {
+        return ["https://www.panetolikos.gr/"];
+      }
+    },
+    {
+      id: "larissa-official-news",
+      label: "Larissa official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["larissa fc", "ael", "ael novibet"],
+      buildUrls() {
+        return ["https://www.aelfc.gr/"];
+      }
+    }],
 
   "ind.1": [
     {
@@ -921,8 +1080,47 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://www.seriebnews.com/"];
       }
-    }
-  ],
+    },
+    {
+      id: "modena-official-news",
+      label: "Modena official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["modena", "modena fc"],
+      buildUrls() {
+        return ["https://modenacalcio.com/"];
+      }
+    },
+    {
+      id: "juve-stabia-official-news",
+      label: "Juve Stabia official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["juve stabia", "ss juve stabia"],
+      buildUrls() {
+        return ["https://www.ssjuvestabia.it/"];
+      }
+    },
+    {
+      id: "catanzaro-official-news",
+      label: "Catanzaro official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["catanzaro", "us catanzaro"],
+      buildUrls() {
+        return ["https://www.uscatanzaro1929.com/"];
+      }
+    },
+    {
+      id: "avellino-official-news",
+      label: "Avellino official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["us avellino", "avellino"],
+      buildUrls() {
+        return ["https://www.usavellino1912.com/"];
+      }
+    }],
 
   "ksa.1": [
     {
@@ -942,8 +1140,33 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://www.arriyadiyah.com/football"];
       }
-    }
-  ],
+    },
+    {
+      id: "al-nassr-official-news",
+      label: "Al Nassr official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["al nassr", "al-nassr"],
+      buildUrls() {
+        return [
+          "https://alnassr.sa/",
+          "https://alnassr.sa/news"
+        ];
+      }
+    },
+    {
+      id: "al-hilal-official-news",
+      label: "Al Hilal official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["al hilal", "al-hilal"],
+      buildUrls() {
+        return [
+          "https://alhilal.com/",
+          "https://alhilal.com/news"
+        ];
+      }
+    }],
 
   "rsa.1": [
     {
@@ -1013,8 +1236,53 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://www.dundeeunitedfc.co.uk/news/"];
       }
-    }
-  ],
+    },
+    {
+      id: "aberdeen-official-news",
+      label: "Aberdeen official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["aberdeen"],
+      buildUrls() {
+        return [
+          "https://www.afc.co.uk/",
+          "https://www.afc.co.uk/news/"
+        ];
+      }
+    },
+    {
+      id: "st-mirren-official-news",
+      label: "St Mirren official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["st mirren", "saint mirren"],
+      buildUrls() {
+        return [
+          "https://www.stmirren.com/",
+          "https://www.stmirren.com/match-previews"
+        ];
+      }
+    },
+    {
+      id: "livingston-official-news",
+      label: "Livingston official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["livingston"],
+      buildUrls() {
+        return ["https://livingstonfc.co.uk/"];
+      }
+    },
+    {
+      id: "dundee-official-news",
+      label: "Dundee official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["dundee fc"],
+      buildUrls() {
+        return ["https://dundeefc.co.uk/"];
+      }
+    }],
 
   "uga.1": [
     {
@@ -1070,8 +1338,27 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://www.elpais.com.uy/ovacion/futbol"];
       }
-    }
-  ],
+    },
+    {
+      id: "penarol-official-news",
+      label: "Peñarol official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["peñarol", "penarol"],
+      buildUrls() {
+        return ["https://www.xn--pearol-xwa.org/"];
+      }
+    },
+    {
+      id: "cerro-largo-official-news",
+      label: "Cerro Largo official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["cerro largo"],
+      buildUrls() {
+        return ["https://cerrolargofc.com.uy/"];
+      }
+    }],
 
 
   "per.1": [
