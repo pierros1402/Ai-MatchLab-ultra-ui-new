@@ -2227,11 +2227,8 @@ function validateExtractedAbsences(absences, sources, input) {
     "lance.com.br",
     "uol.com.br",
     "gazetaesportiva.com",
-    "90min.com",
-    "sportingnews.com",
     "esportenewsmundo.com.br",
-    "santistas.net",
-    "msn.com"
+    "santistas.net"
   ];
 
   const teamTokens = targetTeam
@@ -2264,9 +2261,16 @@ function validateExtractedAbsences(absences, sources, input) {
     const player = normalizeText(a?.player);
     const reason = normalizeText(a?.reason);
     const source = normalizeText(a?.source).toLowerCase();
+    const sourceUrl = normalizeText(a?.sourceUrl || a?.source || "").toLowerCase();
     const sourceTitle = normalizeText(a?.sourceTitle).toLowerCase();
     const sourcePublisher = normalizeText(a?.sourcePublisher).toLowerCase();
     const sourceTrustTier = normalizeText(a?.sourceTrustTier).toLowerCase();
+
+    const titleLooksLikeDifferentDundeeOpponent =
+      /\bdundee\s+(?:utd|united)\b/i.test(sourceTitle) &&
+      normalizeText(input?.opponent).toLowerCase() === "dundee";
+
+    if (titleLooksLikeDifferentDundeeOpponent) continue;
 
     if (!player) continue;
     if (looksLikeBadAbsencePlayerName(player)) continue;
@@ -2323,6 +2327,46 @@ function validateExtractedAbsences(absences, sources, input) {
       continue;
     }
     const normalizedReason = normalizeText(reason).toLowerCase();
+    const escapedNormalizedPlayer = String(normalizedPlayer)
+      .split("\\").join("\\\\")
+      .split(".").join("\\.")
+      .split("*").join("\\*")
+      .split("+").join("\\+")
+      .split("?").join("\\?")
+      .split("^").join("\\^")
+      .split("$").join("\\$")
+      .split("{").join("\\{")
+      .split("}").join("\\}")
+      .split("(").join("\\(")
+      .split(")").join("\\)")
+      .split("|").join("\\|")
+      .split("[").join("\\[")
+      .split("]").join("\\]");
+
+    const noConfirmedAbsencePattern =
+      /\b(no\s+(?:fresh\s+)?(?:injury|injuries|injury concerns|absentees|suspensions|suspended players)|without\s+(?:any\s+)?(?:injury concerns|suspended players|suspensions)|sin\s+(?:suspendidos|lesionados|bajas|ausencias)|no\s+tiene\s+(?:suspendidos|lesionados|bajas))\b/i;
+
+    if (noConfirmedAbsencePattern.test(normalizedReason)) continue;
+
+    if (escapedNormalizedPlayer) {
+      const playerTakesSpotPattern = new RegExp(
+        "\\b" + escapedNormalizedPlayer + "\\b[\\s\\S]{0,160}\\b(?:takes?|took|has taken|toma|ocupa)\\s+(?:the\\s+)?(?:spot|place|slot|position|lugar|sitio)\\s+(?:of|de)\\b",
+        "i"
+      );
+
+      if (playerTakesSpotPattern.test(normalizedReason)) continue;
+
+      const playerCoachContextPattern = new RegExp(
+        "\\b(?:dirigido\\s+por|entrenado\\s+por|managed\\s+by|coached\\s+by|head\\s+coach|manager|entrenador|t[eé]cnico|dt)\\b[\\s\\S]{0,120}\\b" +
+          escapedNormalizedPlayer +
+          "\\b|\\b" +
+          escapedNormalizedPlayer +
+          "\\b[\\s\\S]{0,120}\\b(?:coach|manager|head\\s+coach|entrenador|t[eé]cnico|dt)\\b",
+        "i"
+      );
+
+      if (playerCoachContextPattern.test(normalizedReason)) continue;
+    }
 
     const contaminatedReasonPattern =
       /\b(entre ou cadastre-se|entrar cadastrar|sócio torcedor|socio torcedor|todos os torcedores|personalize o seu conteúdo|personalize o seu conteudo|destaques últimas|destaques ultimas|últimas notícias|ultimas noticias|pular para o conteúdo|pular para o conteudo|pular para o rodapé|pular para o rodape|publicidade|cookies|newsletter|assinar|menu)\b/i;
