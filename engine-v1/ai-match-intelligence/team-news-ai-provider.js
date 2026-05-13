@@ -1988,6 +1988,7 @@ function normalizeCompactPlayerName(player) {
   const value = normalizeText(player)
     .replace(/\s+/g, " ")
     .replace(/\s*,\s*/g, " ")
+    .replace(/\b(?:will|would|should|could|can|may|might|must)$/i, "")
     .trim();
 
   return value;
@@ -2064,19 +2065,12 @@ function extractNamedAbsences(text, source) {
 
   for (const coordinatedSurgeryPattern of coordinatedSurgeryPatterns) {
     for (const match of safeText.matchAll(coordinatedSurgeryPattern)) {
-      const sentenceStart = Math.max(
-        0,
-        safeText.lastIndexOf(".", match.index) + 1,
-        safeText.lastIndexOf("!", match.index) + 1,
-        safeText.lastIndexOf("?", match.index) + 1
-      );
-
       const nextStops = [".", "!", "?"]
         .map(token => safeText.indexOf(token, match.index))
         .filter(index => index > match.index);
 
       const sentenceEnd = nextStops.length ? Math.min(...nextStops) + 1 : Math.min(safeText.length, match.index + 260);
-      const context = safeText.slice(sentenceStart, sentenceEnd).trim();
+      const context = safeText.slice(match.index, sentenceEnd).trim();
 
       const classified = classifyAbsenceFromText(context) || { type: "injury", status: "out" };
 
