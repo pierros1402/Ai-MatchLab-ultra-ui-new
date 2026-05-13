@@ -2553,6 +2553,19 @@ function buildTrustedRegistrySourceNote(source = {}) {
   const title = normalizeText(source?.title || source?.sourceTitle || source?.label);
   const publisher = normalizeText(source?.publisher || source?.sourcePublisher || source?.domain);
   const url = normalizeText(source?.url || source?.source || source?.href);
+  const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
+  const sourceType = normalizeText(source?.sourceType || source?.type).toLowerCase();
+  const trustTier = normalizeText(source?.trustTier).toLowerCase();
+
+  const isTrustedRegistrySource =
+    sourceMode === "registry" ||
+    sourceType.includes("registry") ||
+    sourceType.includes("official_club_news") ||
+    sourceType.includes("team_official") ||
+    sourceType.includes("club_news") ||
+    trustTier === "official";
+
+  if (!isTrustedRegistrySource) return null;
 
   const parts = [];
 
@@ -2560,10 +2573,22 @@ function buildTrustedRegistrySourceNote(source = {}) {
   if (publisher) parts.push("publisher: " + publisher);
   if (url) parts.push("source: " + url);
 
-  return parts.length > 0
-    ? parts.join(" | ")
-    : "trusted registry source";
+  return {
+    type: "source_available_note",
+    value: parts.length > 0 ? parts.join(" | ") : "trusted registry source",
+    source: url || publisher || title || null,
+    publisher: publisher || null,
+    url: url || null,
+    confidence: trustTier === "official" ? 0.62 : 0.5,
+    meta: {
+      blockedAsEvidence: true,
+      sourceMode: sourceMode || null,
+      sourceType: sourceType || null,
+      trustTier: trustTier || null
+    }
+  };
 }
+
 
 function extractStructuredFactsFromSources(input, sources = []) {
   const absences = [];
