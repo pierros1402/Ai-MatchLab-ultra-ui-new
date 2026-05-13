@@ -1231,9 +1231,9 @@ async function fetchRegistrySources(input) {
 
     if (normalizeText(compact).length < 80) continue;
 
-    // Μην χρησιμοποιείς registry landing/listing pages σαν evidence.
-    // Οι registry σελίδες είναι μόνο για να βρούμε πραγματικά article links.
-    // Canonical team-news πρέπει να βασίζεται σε article-level ή match/team-specific πηγή.
+    // Registry landing/listing pages are normally only link-discovery pages.
+    // Exception: allow an official club page as low-volume evidence when the
+    // fetched text itself clearly references the current opponent/match context.
     const directRegistrySourceIsArticle = shouldKeepRegistryArticleLink(
       {
         title: source.title,
@@ -1242,7 +1242,19 @@ async function fetchRegistrySources(input) {
       input
     );
 
-    if (!directRegistrySourceIsArticle) {
+    const normalizedCompact = normalizeText(compact).toLowerCase();
+    const normalizedOpponent = normalizeText(input?.opponent).toLowerCase();
+    const registryTrustTier = normalizeText(row.trustTier).toLowerCase();
+    const registryType = normalizeText(row.type).toLowerCase();
+
+    const officialClubLandingHasMatchSignal =
+      registryTrustTier === "official" &&
+      /official_club_news|team_official|club_news/i.test(registryType) &&
+      normalizedOpponent &&
+      normalizedCompact.includes(normalizedOpponent) &&
+      /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|press room|press conference|preview|ahead of|trip to|visit|host)\b/i.test(compact);
+
+    if (!directRegistrySourceIsArticle && !officialClubLandingHasMatchSignal) {
       continue;
     }
 
@@ -1590,7 +1602,8 @@ function scoreFetchCandidateForTask(source, input) {
   const publisher = normalizeText(source?.publisher).toLowerCase();
   const sourceType = normalizeText(source?.sourceType).toLowerCase();
   const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
-  const haystack = [title, url, publisher, sourceType].filter(Boolean).join(" ");
+  const trustTier = normalizeText(source?.trustTier).toLowerCase();
+  const haystack = [title, url, publisher, sourceType, trustTier].filter(Boolean).join(" ");
   const team = normalizeText(input?.team).toLowerCase();
   const opponent = normalizeText(input?.opponent).toLowerCase();
 
@@ -1615,8 +1628,16 @@ function scoreFetchCandidateForTask(source, input) {
     score += 40;
   }
 
-  if (/official_club_news|official|registry/i.test(`${sourceType} ${sourceMode}`)) {
-    score += 4;
+  if (sourceMode === "registry" && sourceType === "registry_article" && trustTier === "official") {
+    score += 260;
+  } else if (sourceMode === "registry" && trustTier === "official") {
+    score += 220;
+  } else if (sourceMode === "registry" && trustTier === "league") {
+    score += 70;
+  } else if (sourceMode === "registry" && trustTier === "high") {
+    score += 40;
+  } else if (/official_club_news|official|registry/i.test(`${sourceType} ${sourceMode}`)) {
+    score += 20;
   }
 
   if (/\/news\/?$|\/news\/latest\/?$|\/news\/first-team\/?$|\/en\/news\/?$|\/en\/news\/all-news\/?$|\/en\/news\/latest-mens-news\/?$/i.test(url)) {
