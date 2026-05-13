@@ -280,6 +280,46 @@ function hasRealSource(item = {}) {
   return !!(source?.url && (source?.title || source?.text || source?.publisher));
 }
 
+function trustedRegistrySourceLooksRelevant(source = {}, input = {}) {
+  const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
+  const sourceType = normalizeText(source?.sourceType || source?.type).toLowerCase();
+  const trustTier = normalizeText(source?.trustTier).toLowerCase();
+
+  const isTrustedRegistrySource =
+    sourceMode === "registry" ||
+    sourceType.includes("registry") ||
+    sourceType.includes("official_club_news") ||
+    sourceType.includes("team_official") ||
+    sourceType.includes("club_news") ||
+    trustTier === "official";
+
+  if (!isTrustedRegistrySource) {
+    return false;
+  }
+
+  const team = normalizeText(input?.team).toLowerCase();
+  const opponent = normalizeText(input?.opponent).toLowerCase();
+  const haystack = normalizeText([
+    source?.title,
+    source?.publisher,
+    source?.url,
+    source?.text
+  ].filter(Boolean).join(" ")).toLowerCase();
+
+  if (!haystack) {
+    return false;
+  }
+
+  const hasTeamOrOpponent =
+    (team && haystack.includes(team)) ||
+    (opponent && haystack.includes(opponent));
+
+  const hasTeamNewsOrMatchSignal =
+    /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|line-?up|lineup|preview|match preview|kick-?off|press room|press conference|ahead of|trip to|visit|host)\b/i.test(haystack);
+
+  return Boolean(hasTeamOrOpponent && hasTeamNewsOrMatchSignal);
+}
+
 function candidateLooksLikeFootballSearchHit(source, input) {
   const title = normalizeText(source?.title);
   const url = normalizeText(source?.url);
@@ -1834,7 +1874,7 @@ async function collectTeamNewsSources(input) {
 
   const realSources = normalized.filter(hasRealSource);
   const relevantSources = realSources
-    .filter(source => sourceLooksRelevant(source, input))
+    .filter(source => sourceLooksRelevant(source, input) || trustedRegistrySourceLooksRelevant(source, input))
     .filter(source => scoreFetchCandidateForTask(source, input) >= 0);
 
   diagnostics.realSourceCount = realSources.length;
@@ -2821,7 +2861,7 @@ export async function runTeamNewsAIProvider(task) {
     .map(normalizeSourceItem)
     .filter(Boolean)
     .filter(hasRealSource)
-    .filter(source => sourceLooksRelevant(source, input));
+    .filter(source => sourceLooksRelevant(source, input) || trustedRegistrySourceLooksRelevant(source, input));
 
   if (realSources.length === 0) {
     const noSourceReason = deriveNoRealSourceReason(diagnostics);
