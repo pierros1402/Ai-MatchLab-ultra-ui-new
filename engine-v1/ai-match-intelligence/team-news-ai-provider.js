@@ -2171,6 +2171,46 @@ function validateExtractedAbsences(absences, sources, input) {
   const targetTeam = normalizeText(input?.team).toLowerCase();
   const opponentTeam = normalizeText(input?.opponent).toLowerCase();
 
+  const officialTargetSourceHosts = new Set(
+    getTeamNewsSourcesForTask(input)
+      .filter(row => {
+        const trustTier = normalizeText(row?.trustTier).toLowerCase();
+        const type = normalizeText(row?.type).toLowerCase();
+        return (
+          trustTier === "official" ||
+          trustTier === "club" ||
+          trustTier === "team_official" ||
+          /official_club_news|club_news|team_official/i.test(type)
+        );
+      })
+      .map(row => {
+        try {
+          return new URL(row.url).hostname.replace(/^www\./i, "").toLowerCase();
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean)
+  );
+
+  function sourceMatchesOfficialTargetRegistry(value) {
+    const raw = normalizeText(value).toLowerCase();
+    if (!raw || officialTargetSourceHosts.size === 0) return false;
+
+    let host = raw;
+    try {
+      host = new URL(raw).hostname.replace(/^www\./i, "").toLowerCase();
+    } catch {
+      host = raw.replace(/^www\./i, "").toLowerCase();
+    }
+
+    return Array.from(officialTargetSourceHosts).some(officialHost =>
+      host === officialHost ||
+      host.endsWith(`.${officialHost}`) ||
+      raw.includes(officialHost)
+    );
+  }
+
   const trustedDomains = [
     "manutd.com",
     "brentfordfc.com",
@@ -2333,7 +2373,10 @@ function validateExtractedAbsences(absences, sources, input) {
     const isOfficialOrClubSource =
       sourceTrustTier === "official" ||
       sourceTrustTier === "club" ||
-      sourceTrustTier === "team_official";
+      sourceTrustTier === "team_official" ||
+      sourceMatchesOfficialTargetRegistry(sourceUrl) ||
+      sourceMatchesOfficialTargetRegistry(sourcePublisher) ||
+      sourceMatchesOfficialTargetRegistry(source);
 
     const isLeagueOrHighTrustSource =
       sourceTrustTier === "league" ||
