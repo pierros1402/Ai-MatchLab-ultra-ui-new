@@ -2233,9 +2233,7 @@ function validateExtractedAbsences(absences, sources, input) {
 
     if (
       BAD_ABSENCE_NAVIGATION_TEXT_RE.test(player) ||
-      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(reason) ||
-      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(sourceTitle) ||
-      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(sourcePublisher)
+      BAD_ABSENCE_NAVIGATION_TEXT_RE.test(reason)
     ) {
       continue;
     }
