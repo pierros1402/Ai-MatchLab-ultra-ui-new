@@ -2648,7 +2648,7 @@ function extractStructuredFactsFromSources(input, sources = []) {
     const source = normalizeSourceItem(rawSource);
     if (!source) continue;
 
-    if (!sourceLooksRelevant(source, input)) continue;
+    if (!(sourceLooksRelevant(source, input) || trustedRegistrySourceLooksRelevant(source, input))) continue;
 
     const text = normalizeText(source.text || source.title);
     evidenceSources.push(source);
