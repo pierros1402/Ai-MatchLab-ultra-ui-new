@@ -632,6 +632,33 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
         return ["https://www.skysports.com/league-1"];
       }
     }
+  ,
+    {
+      id: "bradford-city-official-news",
+      label: "Bradford City official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["bradford city", "bradford"],
+      buildUrls() {
+        return [
+          "https://www.bradfordcityafc.com/news/",
+          "https://www.bradfordcityafc.com/"
+        ];
+      }
+    },
+    {
+      id: "bolton-wanderers-official-news",
+      label: "Bolton Wanderers official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["bolton wanderers", "bolton"],
+      buildUrls() {
+        return [
+          "https://www.bwfc.co.uk/news",
+          "https://www.bwfc.co.uk/"
+        ];
+      }
+    }
   ],
 
   "esp.1": [
@@ -739,7 +766,86 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
           "https://www.atleticodemadrid.com/"
         ];
       }
-    }],
+    },
+    {
+      id: "girona-official-news",
+      label: "Girona FC official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["girona", "girona fc"],
+      buildUrls() {
+        return [
+          "https://www.gironafc.cat/en/news",
+          "https://www.gironafc.cat/en"
+        ];
+      }
+    },
+    {
+      id: "real-sociedad-official-news",
+      label: "Real Sociedad official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["real sociedad"],
+      buildUrls() {
+        return [
+          "https://www.realsociedad.eus/en/news",
+          "https://www.realsociedad.eus/en"
+        ];
+      }
+    },
+    {
+      id: "valencia-official-news",
+      label: "Valencia CF official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["valencia", "valencia cf"],
+      buildUrls() {
+        return [
+          "https://www.valenciacf.com/news-vcf",
+          "https://www.valenciacf.com/home"
+        ];
+      }
+    },
+    {
+      id: "rayo-vallecano-official-news",
+      label: "Rayo Vallecano official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["rayo vallecano", "rayo"],
+      buildUrls() {
+        return [
+          "https://www.rayovallecano.es/noticias",
+          "https://www.rayovallecano.es/"
+        ];
+      }
+    },
+    {
+      id: "real-madrid-laliga-official-news",
+      label: "Real Madrid official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["real madrid"],
+      buildUrls() {
+        return [
+          "https://www.realmadrid.com/en-US/news",
+          "https://www.realmadrid.com/en-US/football/first-team/home"
+        ];
+      }
+    },
+    {
+      id: "real-oviedo-official-news",
+      label: "Real Oviedo official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["real oviedo", "oviedo"],
+      buildUrls() {
+        return [
+          "https://www.realoviedo.es/en/news",
+          "https://www.realoviedo.es/en"
+        ];
+      }
+    }
+  ],
 
   "ita.1": [
     {
