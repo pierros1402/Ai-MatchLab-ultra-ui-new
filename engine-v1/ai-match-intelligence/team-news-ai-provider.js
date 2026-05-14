@@ -1333,7 +1333,7 @@ async function fetchRegistrySources(input) {
       /official_club_news|team_official|club_news/i.test(registryType) &&
       normalizedOpponent &&
       normalizedCompact.includes(normalizedOpponent) &&
-      /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|press room|press conference|preview|ahead of|trip to|visit|host)\b/i.test(compact);
+      /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|press room|press conference|preview|ahead of|trip to|visit|host|previa|convocatoria|convocados|lista de convocados|entrenamiento|ultimo entrenamiento|último entrenamiento|rueda de prensa|parte medico|parte médico|lesion|lesión|lesiones|sancion|sanción|sancionados|baja|bajas|duda|plantel profesional|futbol profesional|fútbol profesional|proximo encuentro|próximo encuentro|ultimas noticias|últimas noticias|recibira|recibirá|cuartos de final|semifinal|fecha|torneo apertura|apertura|clausura|primera division|primera división|liga betplay|primera b)\b/i.test(compact);
 
     if (!directRegistrySourceIsArticle && !officialClubLandingHasMatchSignal) {
       continue;
