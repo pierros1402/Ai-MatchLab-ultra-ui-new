@@ -204,6 +204,35 @@ function isBlockedNoisePublisher(urlOrPublisher) {
   );
 }
 
+function isLowQualityTeamNewsSearchSource(source = {}) {
+  const title = normalizeText(source?.title).toLowerCase();
+  const url = normalizeText(source?.url).toLowerCase();
+  const publisher = normalizeText(source?.publisher).toLowerCase();
+  const haystack = [title, url, publisher].filter(Boolean).join(" ");
+
+  const lowTrustPublisher =
+    /\b(sportsmole|khelnow|tips\.gg|betimate|betonvalue|betmines|bettingtips4you|soccervital|forebet|betclan|footboom|myfootballfacts)\b/i.test(haystack) ||
+    /\b(dailystar\.com\.lb|leaguespy|footballcritic|sporticos|last5games|xscores|forzafootball|srdeportescr)\b/i.test(haystack) ||
+    /\b(transfermarkt|soccerway|youtube|soundcloud|onefootball)\b/i.test(haystack) ||
+    /\b(fotmob|sofascore|flashscore|flashfootball|livescore|uniscore|aiscore|365scores|royalscore)\b/i.test(haystack) ||
+    /\b(promiedos|futbolfantasy|comuniate|record\.com\.do|tribuna\.com|dailysports\.net)\b/i.test(haystack);
+
+  const lowTrustIntent =
+    /\b(prediction|predictions|betting tips|betting odds|odds|h2h|head to head|live score|livescore|stats preview|predicted lineups?|probable lineups?|lineups?|line-ups?|posibles alineaciones|previa fantasy|alineaciones probables)\b/i.test(haystack) ||
+    /\b(en vivo|marcador|resultado|resultados|final score|game highlights|highlights|video|youtube|sanciones y lesiones)\b/i.test(haystack) ||
+    /\b(pronostico|pronóstico|apuestas|cuotas|estadisticas|estadísticas)\b/i.test(haystack);
+
+  const hasOfficialTeamNewsIntent =
+    /\bofficial\b/i.test(haystack) ||
+    /\bteam news\b/i.test(haystack) ||
+    /\bconvocados\b/i.test(haystack) ||
+    /\bconvocatoria\b/i.test(haystack) ||
+    /\bparte medico\b/i.test(haystack) ||
+    /\bparte médico\b/i.test(haystack);
+
+  return lowTrustPublisher || (lowTrustIntent && !hasOfficialTeamNewsIntent);
+}
+
 function isSearchPageSource(source) {
   const title = normalizeText(source?.title).toLowerCase();
   const url = normalizeText(source?.url).toLowerCase();
@@ -240,6 +269,7 @@ function normalizeSourceItem(item = {}) {
     isBlockedSourceDomain(publisher) ||
     isBlockedNoisePublisher(url) ||
     isBlockedNoisePublisher(publisher) ||
+    isLowQualityTeamNewsSearchSource({ title, url, publisher }) ||
     isSearchPageSource({
       title,
       url,
@@ -1788,8 +1818,12 @@ function scoreFetchCandidateForTask(source, input) {
     score += 20;
   }
 
-  if (/sofascore|flashscore|365scores|aiscore|besoccer|livesoccertv/i.test(haystack)) {
-    score -= 45;
+  if (/sofascore|flashscore|365scores|aiscore|besoccer|livesoccertv|fotmob|flashfootball|uniscore|royalscore/i.test(haystack)) {
+    score -= 60;
+  }
+
+  if (isLowQualityTeamNewsSearchSource({ title, url, publisher })) {
+    score -= 120;
   }
 
   if (/preview|match preview|previa|bajas|lesionados|lesión|lesion|convocados|convocatoria|suspendidos|injuries|suspensions|team news|squad news/i.test(haystack) || hasPortugueseTeamNewsSignal(haystack)) {
