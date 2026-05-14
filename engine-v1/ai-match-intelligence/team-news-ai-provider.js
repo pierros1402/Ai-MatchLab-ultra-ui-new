@@ -317,6 +317,15 @@ function trustedRegistrySourceLooksRelevant(source = {}, input = {}) {
   const hasTeamNewsOrMatchSignal =
     /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|line-?up|lineup|preview|match preview|kick-?off|press room|press conference|ahead of|trip to|visit|host)\b/i.test(haystack);
 
+  const isOfficialRegistryArticle =
+    sourceMode === "registry" &&
+    sourceType.includes("registry_article") &&
+    trustTier === "official";
+
+  if (isOfficialRegistryArticle && hasTeamNewsOrMatchSignal) {
+    return true;
+  }
+
   return Boolean(hasTeamOrOpponent && hasTeamNewsOrMatchSignal);
 }
 
