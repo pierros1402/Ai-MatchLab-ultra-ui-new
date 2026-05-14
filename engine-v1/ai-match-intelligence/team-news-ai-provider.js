@@ -933,8 +933,16 @@ function shouldKeepRegistryArticleLink(link, input) {
     return false;
   }
 
-  const hasTeam = team ? haystack.includes(team) : false;
-  const hasOpponent = opponent ? haystack.includes(opponent) : false;
+  const hasTeam = team ? teamNewsHaystackHasName(haystack, input?.team) : false;
+  const hasOpponent = opponent ? teamNewsHaystackHasName(haystack, input?.opponent) : false;
+  const leagueSlug = normalizeText(input?.leagueSlug).toLowerCase();
+
+  const isSaudiLeague = leagueSlug === "ksa.1" || leagueSlug.startsWith("ksa.");
+  const isLeagueArticleUrl = /spl\.com\.sa\//i.test(url);
+
+  if (isSaudiLeague && isLeagueArticleUrl && !(hasTeam && hasOpponent)) {
+    return false;
+  }
 
   const hasStrongArticleSignal =
     /\bteam news\b/i.test(haystack) ||
@@ -954,6 +962,11 @@ function shouldKeepRegistryArticleLink(link, input) {
     /\bmatch preview\b/i.test(haystack) ||
     /\bsquad\b/i.test(haystack) ||
     /\bprevia\b/i.test(haystack) ||
+    /\brueda de prensa\b/i.test(haystack) ||
+    /\bconvocatoria\b/i.test(haystack) ||
+    /\bconvocados\b/i.test(haystack) ||
+    /\bprimer equipo\b/i.test(haystack) ||
+    /\bfirst team\b/i.test(haystack) ||
     /\bfecha\b/i.test(haystack) ||
     /\bjornada\b/i.test(haystack) ||
     /\bvs\b/i.test(haystack) ||
@@ -970,6 +983,7 @@ function shouldKeepRegistryArticleLink(link, input) {
   const looksLikeArticleUrl =
     /\/news\/[^/?#]+/i.test(url) ||
     /\/en\/news\/[^/?#]+/i.test(url) ||
+    /\/noticias\/[^/?#]+/i.test(url) ||
     /\/article\/[^/?#]+/i.test(url) ||
     /\/sport\/football\//i.test(url) ||
     /\/football\//i.test(url);
@@ -980,7 +994,21 @@ function shouldKeepRegistryArticleLink(link, input) {
     /\/football\/?$/i.test(url) ||
     /\/sport\/football\/?$/i.test(url);
 
-  if (blockedGenericArticleUrl) {
+  const blockedRegistryLandingArticle =
+    /\bofficial news\b/i.test(title) ||
+    /\b(latest news|all news|club news|first team news)\b/i.test(title) ||
+    /\b(news|noticias|primer equipo|first team|club)\b/i.test(title) && /[?&]category=/i.test(url) ||
+    /\/(news|noticias)\/?$/i.test(url) ||
+    /\/(en\/)?news\/?$/i.test(url) ||
+    /\/(en\/)?news\/(all-news|latest|latest-news|first-team|latest-mens-news)\/?$/i.test(url) ||
+    /\/football\/?$/i.test(url) ||
+    /\/football\/(news|latest-news|first-team)\/?$/i.test(url);
+
+  const blockedNonPreMatchArticle =
+    /\b(match report|crónica|cronica|highlights|extended highlights|full match replay|full match replays|match replay|post-match|post match)\b/i.test(haystack) ||
+    /\b(tribute|pays tribute|technical training days|femenino|women|academy|b team|youth team)\b/i.test(haystack);
+
+  if (blockedGenericArticleUrl || blockedRegistryLandingArticle || blockedNonPreMatchArticle) {
     return false;
   }
 
@@ -1394,7 +1422,7 @@ async function fetchRegistrySources(input) {
         (isLeagueRegistry && hasTeamContext && hasOpponentContext)
       );
 
-    if (!directRegistrySourceIsArticle && !registryLandingHasMatchSignal) {
+    if (!directRegistrySourceIsArticle) {
       continue;
     }
 
