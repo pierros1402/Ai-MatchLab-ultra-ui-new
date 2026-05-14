@@ -326,7 +326,39 @@ function trustedRegistrySourceLooksRelevant(source = {}, input = {}) {
     return true;
   }
 
+  const hasTeamAndOpponent = Boolean(
+    team &&
+    opponent &&
+    haystack.includes(team) &&
+    haystack.includes(opponent)
+  );
+
+  if (sourceMode === "registry" && trustTier !== "official") {
+    return Boolean(hasTeamAndOpponent && hasTeamNewsOrMatchSignal);
+  }
+
   return Boolean(hasTeamOrOpponent && hasTeamNewsOrMatchSignal);
+}
+
+function sourcePassesTeamNewsRelevance(source = {}, input = {}) {
+  const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
+  const sourceType = normalizeText(source?.sourceType || source?.type).toLowerCase();
+  const trustTier = normalizeText(source?.trustTier).toLowerCase();
+
+  const isRegistryLikeSource =
+    sourceMode === "registry" ||
+    sourceType.includes("registry") ||
+    sourceType.includes("official_club_news") ||
+    sourceType.includes("team_official") ||
+    sourceType.includes("club_news") ||
+    trustTier === "official" ||
+    trustTier === "league";
+
+  if (isRegistryLikeSource) {
+    return trustedRegistrySourceLooksRelevant(source, input);
+  }
+
+  return sourceLooksRelevant(source, input);
 }
 
 function candidateLooksLikeFootballSearchHit(source, input) {
@@ -1883,7 +1915,7 @@ async function collectTeamNewsSources(input) {
 
   const realSources = normalized.filter(hasRealSource);
   const relevantSources = realSources
-    .filter(source => sourceLooksRelevant(source, input) || trustedRegistrySourceLooksRelevant(source, input))
+    .filter(source => sourcePassesTeamNewsRelevance(source, input))
     .filter(source => scoreFetchCandidateForTask(source, input) >= 0);
 
   diagnostics.realSourceCount = realSources.length;
@@ -2336,6 +2368,8 @@ function validateExtractedAbsences(absences, sources, input) {
     const sourcePublisher = normalizeText(a?.sourcePublisher).toLowerCase();
     const sourceTrustTier = normalizeText(a?.sourceTrustTier).toLowerCase();
 
+    if (sourceTrustTier === "league") continue;
+
     const titleLooksLikeDifferentDundeeOpponent =
       /\bdundee\s+(?:utd|united)\b/i.test(sourceTitle) &&
       normalizeText(input?.opponent).toLowerCase() === "dundee";
@@ -2648,7 +2682,7 @@ function extractStructuredFactsFromSources(input, sources = []) {
     const source = normalizeSourceItem(rawSource);
     if (!source) continue;
 
-    if (!(sourceLooksRelevant(source, input) || trustedRegistrySourceLooksRelevant(source, input))) continue;
+    if (!(sourcePassesTeamNewsRelevance(source, input))) continue;
 
     const text = normalizeText(source.text || source.title);
     evidenceSources.push(source);
@@ -2870,7 +2904,7 @@ export async function runTeamNewsAIProvider(task) {
     .map(normalizeSourceItem)
     .filter(Boolean)
     .filter(hasRealSource)
-    .filter(source => sourceLooksRelevant(source, input) || trustedRegistrySourceLooksRelevant(source, input));
+    .filter(source => sourcePassesTeamNewsRelevance(source, input));
 
   if (realSources.length === 0) {
     const noSourceReason = deriveNoRealSourceReason(diagnostics);
