@@ -402,6 +402,7 @@ const LEAGUE_SOURCE_REGISTRY = {
       ],
       buildUrls() {
         return [
+          "https://clubdeportestolima.com.co/category/noticias/",
           "https://clubdeportestolima.com.co/"
         ];
       }
@@ -418,6 +419,87 @@ const LEAGUE_SOURCE_REGISTRY = {
       buildUrls() {
         return [
           "https://independientesantafe.com/"
+        ];
+      }
+    }
+  ,
+    {
+      id: "deportivo-pasto-official-news",
+      label: "Deportivo Pasto official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["deportivo pasto", "pasto"],
+      buildUrls() {
+        return [
+          "https://deportivopasto.com/noticias/",
+          "https://deportivopasto.com/"
+        ];
+      }
+    },
+    {
+      id: "junior-fc-official-news",
+      label: "Junior FC official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["atletico junior", "atlético junior", "junior", "junior fc"],
+      buildUrls() {
+        return [
+          "https://juniorfc.co/noticias",
+          "https://juniorfc.co/"
+        ];
+      }
+    },
+    {
+      id: "once-caldas-official-news",
+      label: "Once Caldas official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["once caldas"],
+      buildUrls() {
+        return [
+          "https://www.oncecaldas.com.co/category/noticias",
+          "https://www.oncecaldas.com.co/"
+        ];
+      }
+    }
+  ],
+
+  "col.2": [
+    {
+      id: "dimayor-primera-b",
+      label: "DIMAYOR official site",
+      type: "site_search",
+      trustTier: "league",
+      buildUrls(input) {
+        const team = encodeURIComponent(normalizeText(input?.team));
+        return [
+          `https://dimayor.com.co/?s=${team}`
+        ];
+      }
+    },
+    {
+      id: "bogota-fc-official-news",
+      label: "Bogotá FC official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["bogota fc", "bogotá fc", "bogota", "bogotá"],
+      buildUrls() {
+        return [
+          "https://bogotafc.com/noticias/",
+          "https://bogotafc.com/"
+        ];
+      }
+    },
+    {
+      id: "barranquilla-fc-official-news",
+      label: "Barranquilla FC official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["barranquilla fc", "barranquilla"],
+      buildUrls() {
+        return [
+          "https://barranquillafc.com/noticias/",
+          "https://barranquillafc.com/"
         ];
       }
     }
@@ -939,6 +1021,72 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       trustTier: "medium",
       buildUrls() {
         return ["https://www.aftonbladet.se/sportbladet/fotboll"];
+      }
+    }
+  ],
+
+  "arg.1": [
+    {
+      id: "arg-afa-liga-news",
+      label: "AFA official news",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.afa.com.ar/"
+        ];
+      }
+    },
+    {
+      id: "rosario-central-official-news",
+      label: "Rosario Central official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["rosario central"],
+      buildUrls() {
+        return [
+          "https://rosariocentral.com/noticias/",
+          "https://rosariocentral.com/"
+        ];
+      }
+    },
+    {
+      id: "racing-club-official-news",
+      label: "Racing Club official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["racing club", "racing"],
+      buildUrls() {
+        return [
+          "https://www.racingclub.com.ar/club/noticias/",
+          "https://www.racingclub.com.ar/"
+        ];
+      }
+    },
+    {
+      id: "river-plate-official-news",
+      label: "River Plate official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["river plate"],
+      buildUrls() {
+        return [
+          "https://www.cariverplate.com.ar/todas-las-noticias",
+          "https://www.cariverplate.com.ar/"
+        ];
+      }
+    },
+    {
+      id: "gimnasia-la-plata-official-news",
+      label: "Gimnasia La Plata official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["gimnasia la plata", "gimnasia y esgrima la plata"],
+      buildUrls() {
+        return [
+          "https://www.gimnasia.org.ar/noticias/",
+          "https://www.gimnasia.org.ar/"
+        ];
       }
     }
   ],
