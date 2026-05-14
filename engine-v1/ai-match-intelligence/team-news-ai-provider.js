@@ -851,6 +851,53 @@ function extractJsonishRegistryLinks(html, baseUrl, row) {
   return out;
 }
 
+function normalizeTeamNewsNeedle(value) {
+  return normalizeText(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildTeamNewsNameNeedles(value) {
+  const base = normalizeTeamNewsNeedle(value);
+  if (!base) return [];
+
+  const out = new Set([base]);
+
+  const compact = base
+    .replace(/\b(club|football|futbol|fc|cf|ac|ca|cd|sa|sad|deportivo|deportes|atletico|atlético)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (compact && compact.length >= 4) {
+    out.add(compact);
+  }
+
+  const parts = base.split(" ").filter(Boolean);
+  const first = parts[0] || "";
+  const last = parts[parts.length - 1] || "";
+
+  if (first.length >= 4 && !/^(club|deportivo|deportes|atletico|atlético)$/.test(first)) {
+    out.add(first);
+  }
+
+  if (last.length >= 4 && !/^(club|deportivo|deportes|atletico|atlético)$/.test(last)) {
+    out.add(last);
+  }
+
+  return [...out].filter(item => item.length >= 4);
+}
+
+function teamNewsHaystackHasName(haystack, name) {
+  const normalizedHaystack = normalizeTeamNewsNeedle(haystack);
+  if (!normalizedHaystack) return false;
+
+  return buildTeamNewsNameNeedles(name).some(needle => normalizedHaystack.includes(needle));
+}
+
 function shouldKeepRegistryArticleLink(link, input) {
   const title = normalizeText(link?.title);
   const url = normalizeText(link?.url);
@@ -1323,19 +1370,31 @@ async function fetchRegistrySources(input) {
       input
     );
 
-    const normalizedCompact = normalizeText(compact).toLowerCase();
-    const normalizedOpponent = normalizeText(input?.opponent).toLowerCase();
     const registryTrustTier = normalizeText(row.trustTier).toLowerCase();
     const registryType = normalizeText(row.type).toLowerCase();
 
-    const officialClubLandingHasMatchSignal =
-      registryTrustTier === "official" &&
-      /official_club_news|team_official|club_news/i.test(registryType) &&
-      normalizedOpponent &&
-      normalizedCompact.includes(normalizedOpponent) &&
+    const hasRegistryLandingSignal =
       /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|press room|press conference|preview|ahead of|trip to|visit|host|previa|convocatoria|convocados|lista de convocados|entrenamiento|ultimo entrenamiento|último entrenamiento|rueda de prensa|parte medico|parte médico|lesion|lesión|lesiones|sancion|sanción|sancionados|baja|bajas|duda|plantel profesional|futbol profesional|fútbol profesional|proximo encuentro|próximo encuentro|ultimas noticias|últimas noticias|recibira|recibirá|cuartos de final|semifinal|fecha|torneo apertura|apertura|clausura|primera division|primera división|liga betplay|primera b)\b/i.test(compact);
 
-    if (!directRegistrySourceIsArticle && !officialClubLandingHasMatchSignal) {
+    const hasTeamContext = teamNewsHaystackHasName(compact, input?.team);
+    const hasOpponentContext = teamNewsHaystackHasName(compact, input?.opponent);
+
+    const isOfficialClubRegistry =
+      registryTrustTier === "official" &&
+      /official_club|official_club_news|team_official|club_news/i.test(registryType);
+
+    const isLeagueRegistry =
+      registryTrustTier === "league" ||
+      /league_news|site_search/i.test(registryType);
+
+    const registryLandingHasMatchSignal =
+      hasRegistryLandingSignal &&
+      (
+        (isOfficialClubRegistry && hasOpponentContext) ||
+        (isLeagueRegistry && hasTeamContext && hasOpponentContext)
+      );
+
+    if (!directRegistrySourceIsArticle && !registryLandingHasMatchSignal) {
       continue;
     }
 
