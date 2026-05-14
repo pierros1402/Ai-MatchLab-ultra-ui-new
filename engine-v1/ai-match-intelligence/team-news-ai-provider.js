@@ -1082,13 +1082,42 @@ function shouldKeepRegistryArticleLink(link, input) {
     /\bsuspendidos\b/i.test(haystack) ||
     /\bbajas\b/i.test(haystack);
 
+  const sourceType = normalizeText(link?.sourceType).toLowerCase();
+  const trustTier = normalizeText(link?.trustTier).toLowerCase();
+
+  let parsedPath = "";
+
+  try {
+    parsedPath = new URL(url).pathname;
+  } catch {
+    parsedPath = url;
+  }
+
+  const isOfficialRegistryArticle =
+    sourceType.includes("registry_article") &&
+    /^(official|club|team_official)$/.test(trustTier);
+
+  const blockedOfficialRegistryArticlePath =
+    /\/(news-vcf|noticias|news|todas-las-noticias|fixtures?|fixture\/view|plantilla|futbol|football|category)\/?$/i.test(parsedPath) ||
+    /[?#](category|field_tags|page)=/i.test(url) ||
+    /\.(jpg|jpeg|png|gif|webp|svg|pdf|zip|rar)$/i.test(parsedPath);
+
+  const looksLikeOfficialRegistryArticleUrl =
+    isOfficialRegistryArticle &&
+    !blockedOfficialRegistryArticlePath &&
+    (
+      /\/[a-z]{2}\/\d{6,}(?:$|[/?#])/i.test(parsedPath) ||
+      /\/[a-z0-9][a-z0-9-]{4,}(?:$|[/?#])/i.test(parsedPath)
+    );
+
   const looksLikeArticleUrl =
     /\/news\/[^/?#]+/i.test(url) ||
     /\/en\/news\/[^/?#]+/i.test(url) ||
     /\/noticias\/[^/?#]+/i.test(url) ||
     /\/article\/[^/?#]+/i.test(url) ||
     /\/sport\/football\//i.test(url) ||
-    /\/football\//i.test(url);
+    /\/football\//i.test(url) ||
+    looksLikeOfficialRegistryArticleUrl;
 
   const blockedGenericArticleUrl =
     /bbc\.com\/sport\/football\/(premier-league|championship|league-one|league-two)\/?$/i.test(url) ||
@@ -1365,7 +1394,7 @@ async function fetchRegistrySources(input) {
 
     const fetchResult = await fetchTextResult(row.url, {
       timeoutMs: rowIsOfficialOrClub ? officialRegistryFetchTimeoutMs : registryFetchTimeoutMs,
-      maxChars: 90000
+      maxChars: 360000
     });
 
     const html = fetchResult.ok ? fetchResult.text : null;
