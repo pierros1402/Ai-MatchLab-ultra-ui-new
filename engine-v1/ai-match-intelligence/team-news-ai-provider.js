@@ -310,6 +310,76 @@ function hasRealSource(item = {}) {
   return !!(source?.url && (source?.title || source?.text || source?.publisher));
 }
 
+function productionEligibleSourceMatchesTask(source = {}, input = {}) {
+  const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
+  const sourceType = normalizeText(source?.sourceType || source?.type).toLowerCase();
+
+  const titleUrlHaystack = [
+    source?.title,
+    source?.url
+  ].filter(Boolean).join(" ");
+
+  const articleLeadHaystack = [
+    source?.title,
+    source?.url,
+    normalizeText(source?.text).slice(0, 700)
+  ].filter(Boolean).join(" ");
+
+  const fullHaystack = [
+    source?.title,
+    source?.publisher,
+    source?.url,
+    source?.text
+  ].filter(Boolean).join(" ");
+
+  if (sourceMode === "registry" && sourceType.includes("registry_article")) {
+    return (
+      teamNewsHaystackHasName(titleUrlHaystack, input?.opponent) ||
+      teamNewsHaystackHasName(articleLeadHaystack, input?.opponent)
+    );
+  }
+
+  return (
+    teamNewsHaystackHasName(fullHaystack, input?.team) ||
+    teamNewsHaystackHasName(fullHaystack, input?.opponent)
+  );
+}
+
+function isProductionEligibleTeamNewsSource(source = {}) {
+  const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
+  const sourceType = normalizeText(source?.sourceType || source?.type).toLowerCase();
+  const trustTier = normalizeText(source?.trustTier).toLowerCase();
+
+  const isApproved =
+    source?.approved === true ||
+    source?.productionEligible === true ||
+    source?.reviewed === true;
+
+  if (isApproved) {
+    return true;
+  }
+
+  const isRegistryArticle =
+    sourceMode === "registry" &&
+    sourceType.includes("registry_article") &&
+    /^(official|league|high)$/.test(trustTier);
+
+  if (isRegistryArticle) {
+    return true;
+  }
+
+  const isOfficialRegistrySource =
+    sourceMode === "registry" &&
+    trustTier === "official" &&
+    (
+      sourceType.includes("official_club_news") ||
+      sourceType.includes("team_official") ||
+      sourceType.includes("club_news")
+    );
+
+  return Boolean(isOfficialRegistrySource && sourceType.includes("registry_article"));
+}
+
 function trustedRegistrySourceLooksRelevant(source = {}, input = {}) {
   const sourceMode = normalizeText(source?.sourceMode || source?.query).toLowerCase();
   const sourceType = normalizeText(source?.sourceType || source?.type).toLowerCase();
@@ -898,7 +968,7 @@ function buildTeamNewsNameNeedles(value) {
   const out = new Set([base]);
 
   const compact = base
-    .replace(/\b(club|football|futbol|fc|cf|ac|ca|cd|sa|sad|deportivo|deportes|atletico|atlético)\b/g, " ")
+    .replace(/\b(club|football|futbol|fc|cf|ac|ca|cd|sa|sad|deportivo|deportes|atletico|atlético|real|royal|sporting|city|united|union|unión)\b/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -910,11 +980,13 @@ function buildTeamNewsNameNeedles(value) {
   const first = parts[0] || "";
   const last = parts[parts.length - 1] || "";
 
-  if (first.length >= 4 && !/^(club|deportivo|deportes|atletico|atlético)$/.test(first)) {
+  const genericTeamNameToken = /^(club|deportivo|deportes|atletico|atlético|real|royal|sporting|city|united|union|unión|football|futbol)$/;
+
+  if (first.length >= 4 && !genericTeamNameToken.test(first)) {
     out.add(first);
   }
 
-  if (last.length >= 4 && !/^(club|deportivo|deportes|atletico|atlético)$/.test(last)) {
+  if (last.length >= 4 && !genericTeamNameToken.test(last)) {
     out.add(last);
   }
 
@@ -1883,6 +1955,9 @@ async function collectTeamNewsSources(input) {
     candidateCount: 0,
     realSourceCount: 0,
     relevantSourceCount: 0,
+    productionEligibleSourceCount: 0,
+    diagnosticOnlySourceCount: 0,
+    diagnosticOnlySamples: [],
     sampleCandidates: [],
     rejectedSamples: [],
     searchAttempts: [],
@@ -2035,11 +2110,25 @@ async function collectTeamNewsSources(input) {
     .filter(Boolean);
 
   const realSources = normalized.filter(hasRealSource);
-  const relevantSources = realSources
+  const productionEligibleSources = realSources.filter(isProductionEligibleTeamNewsSource);
+  const diagnosticOnlySources = realSources.filter(source => !isProductionEligibleTeamNewsSource(source));
+
+  const relevantSources = productionEligibleSources
+    .filter(source => productionEligibleSourceMatchesTask(source, input))
     .filter(source => sourcePassesTeamNewsRelevance(source, input))
     .filter(source => scoreFetchCandidateForTask(source, input) >= 0);
 
   diagnostics.realSourceCount = realSources.length;
+  diagnostics.productionEligibleSourceCount = productionEligibleSources.length;
+  diagnostics.diagnosticOnlySourceCount = diagnosticOnlySources.length;
+  diagnostics.diagnosticOnlySamples = diagnosticOnlySources.slice(0, 8).map(source => ({
+    title: source.title,
+    url: source.url,
+    publisher: source.publisher,
+    sourceMode: source.sourceMode,
+    sourceType: source.sourceType,
+    trustTier: source.trustTier
+  }));
   diagnostics.relevantSourceCount = relevantSources.length;
 
   return {
