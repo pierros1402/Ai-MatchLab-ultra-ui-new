@@ -315,7 +315,7 @@ function trustedRegistrySourceLooksRelevant(source = {}, input = {}) {
     (opponent && haystack.includes(opponent));
 
   const hasTeamNewsOrMatchSignal =
-    /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|line-?up|lineup|preview|match preview|kick-?off|press room|press conference|ahead of|trip to|visit|host)\b/i.test(haystack);
+    /\b(team news|injur|injuries|suspend|suspension|unavailable|ruled out|doubt|line-?up|lineup|preview|match preview|kick-?off|press room|press conference|ahead of|trip to|visit|host|previa|convocatoria|convocados|lista de convocados|entrenamiento|ultimo entrenamiento|último entrenamiento|rueda de prensa|parte medico|parte médico|lesion|lesión|lesiones|sancion|sanción|sancionados|baja|bajas|duda|primer equipo)\b/i.test(haystack);
 
   const isOfficialRegistryArticle =
     sourceMode === "registry" &&
