@@ -343,6 +343,7 @@ export async function runDailyCycle(options = {}) {
   let finalDetailsSync = null;
   let valueCoverageReport = null;
   let deploySnapshot = null;
+  let finalizedDeploySnapshot = null;
   let finalizeValueBuild = null;
   let finalize = null;
   let historyAppend = null;
@@ -805,6 +806,21 @@ export async function runDailyCycle(options = {}) {
     console.log("[daily-cycle] finalize:done", finalize);
 
     if (finalize?.ok) {
+      console.log("[daily-cycle] finalized-deploy-snapshot-export:start", { finalizeDayKey });
+
+      finalizedDeploySnapshot = await Promise.resolve(exportDeploySnapshotDay(finalizeDayKey, {
+        updateLatest: false
+      }));
+
+      console.log("[daily-cycle] finalized-deploy-snapshot-export:done", {
+        ok: finalizedDeploySnapshot?.ok,
+        date: finalizedDeploySnapshot?.date,
+        hash: finalizedDeploySnapshot?.hash,
+        counts: finalizedDeploySnapshot?.counts,
+        coverage: finalizedDeploySnapshot?.coverage,
+        latestUpdated: finalizedDeploySnapshot?.latestUpdated
+      });
+
       console.log("[daily-cycle] history-append:start", { finalizeDayKey });
       historyAppend = await appendFinalizedDayToHistory(finalizeDayKey);
       console.log("[daily-cycle] history-append:done", historyAppend);
@@ -862,6 +878,7 @@ export async function runDailyCycle(options = {}) {
     valueCoverageReport,
     finalDetailsSync,
     deploySnapshot,
+    finalizedDeploySnapshot,
     finalizeValueBuild,
     finalize,
     historyAppend,
