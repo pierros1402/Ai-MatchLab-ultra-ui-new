@@ -1645,6 +1645,115 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
     }
   ],
 
+  "eng.4": [
+    {
+      id: "chesterfield-official-news",
+      label: "Chesterfield official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["chesterfield", "chesterfield fc"],
+      buildUrls() {
+        return ["https://chesterfield-fc.co.uk/latest-news", "https://chesterfield-fc.co.uk/category/news", "https://chesterfield-fc.co.uk/category/club-news"];
+      }
+    },
+    {
+      id: "notts-county-official-news",
+      label: "Notts County official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["notts county", "notts county fc"],
+      buildUrls() {
+        return ["https://www.nottscountyfc.co.uk/news/"];
+      }
+    },
+    {
+      id: "grimsby-town-official-news",
+      label: "Grimsby Town official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["grimsby town", "grimsby town fc"],
+      buildUrls() {
+        return ["https://gtfc.co.uk/"];
+      }
+    },
+    {
+      id: "salford-city-official-news",
+      label: "Salford City official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["salford city", "salford city fc"],
+      buildUrls() {
+        return ["https://www.salfordcityfc.co.uk/news/", "https://www.salfordcityfc.co.uk/category/clubnews"];
+      }
+    }
+  ],
+
+  "esp.2": [
+    {
+      id: "albacete-official-news",
+      label: "Albacete Balompie official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["albacete", "albacete bp", "albacete balompie", "albacete balompié"],
+      buildUrls() {
+        return ["https://www.albacetebalompie.es/"];
+      }
+    },
+    {
+      id: "cordoba-official-news",
+      label: "Cordoba CF official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["cordoba", "córdoba", "cordoba cf", "córdoba cf"],
+      buildUrls() {
+        return ["https://www.cordobacf.com/en/noticias", "https://www.cordobacf.com/en"];
+      }
+    },
+    {
+      id: "cadiz-official-news",
+      label: "Cadiz CF official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["cadiz", "cádiz", "cadiz cf", "cádiz cf"],
+      buildUrls() {
+        return ["https://www.cadizcf.com/noticias", "https://www.cadizcf.com/"];
+      }
+    },
+    {
+      id: "castellon-official-news",
+      label: "CD Castellon official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["castellon", "castellón", "cd castellon", "cd castellón"],
+      buildUrls() {
+        return ["https://www.cdcastellon.com/"];
+      }
+    }
+  ],
+
+  "tur.1": [
+    {
+      id: "besiktas-official-news",
+      label: "Besiktas official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["besiktas", "beşiktaş", "besiktas jk", "beşiktaş jk"],
+      buildUrls() {
+        return ["https://bjk.com.tr/en/all_news/1/0?fromMobile=true", "https://bjk.com.tr/en/?fromMobile=true"];
+      }
+    },
+    {
+      id: "caykur-rizespor-official-news",
+      label: "Caykur Rizespor official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["caykur rizespor", "çaykur rizespor", "rizespor"],
+      buildUrls() {
+        return ["https://www.caykurrizespor.org.tr/", "https://www.caykurrizespor.org.tr/Haber/Kategori/Duyurular.html"];
+      }
+    }
+  ],
+
   "bol.1": [
     {
       id: "bolivia-diez-news",
