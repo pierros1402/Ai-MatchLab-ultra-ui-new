@@ -1943,6 +1943,38 @@ export async function evaluateMatchValue(input, opts = {}) {
     awayMetrics.sample >= MIN_REQUIRED_RECENT_MATCHES;
 
   if (!hasMinimumRecentSample) {
+    if (opts.returnNullDiagnostics === true) {
+      return {
+        __valueNullDiagnostic: true,
+        reason: "minimum_recent_sample",
+        minimumRecentSample: {
+          minRequiredRecentMatches: MIN_REQUIRED_RECENT_MATCHES,
+          formMaxAgeDays: FORM_MAX_AGE_DAYS,
+          formWindow: FORM_WINDOW,
+          homeTeam,
+          awayTeam,
+          leagueSlug,
+          fixtureDate: fixtureDate.toISOString(),
+          homeResolvedKey: homeResolved.key,
+          awayResolvedKey: awayResolved.key,
+          homeRawSample: rawHomeMetrics?.sample ?? null,
+          awayRawSample: rawAwayMetrics?.sample ?? null,
+          homeBlendedSample: homeMetrics?.sample ?? null,
+          awayBlendedSample: awayMetrics?.sample ?? null,
+          homeSideRawSample: rawHomeSideMetrics?.sample ?? null,
+          awaySideRawSample: rawAwaySideMetrics?.sample ?? null,
+          homeSideBlendedSample: homeSideMetrics?.sample ?? null,
+          awaySideBlendedSample: awaySideMetrics?.sample ?? null,
+          homePriorSample: homePriorResolved?.value?.sample ?? null,
+          awayPriorSample: awayPriorResolved?.value?.sample ?? null,
+          homeRecentSelected: Array.isArray(homeAllSelection?.matches) ? homeAllSelection.matches.length : null,
+          awayRecentSelected: Array.isArray(awayAllSelection?.matches) ? awayAllSelection.matches.length : null,
+          homeSideSelected: Array.isArray(homeSideSelection?.matches) ? homeSideSelection.matches.length : null,
+          awaySideSelected: Array.isArray(awaySideSelection?.matches) ? awaySideSelection.matches.length : null
+        }
+      };
+    }
+
     return null;
   }
 
