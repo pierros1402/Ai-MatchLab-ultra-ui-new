@@ -108,6 +108,158 @@ function countBy(rows, keyFn) {
   );
 }
 
+function buildMarketRejectionDiagnostics(value) {
+  if (!value) return null;
+
+  const signals = Array.isArray(value?.signals) ? value.signals : [];
+  const hasSignal = (name) => signals.includes(name);
+  const hasAnySignal = (names) => names.some(name => hasSignal(name));
+
+  const confidence = Number(value?.confidence ?? 0);
+  const expectedTotalGoals = Number(value?.meta?.expectedTotalGoals ?? 0);
+
+  const over15 = Number(value?.over15Score ?? -1);
+  const over25 = Number(value?.over25Score ?? -1);
+  const over35 = Number(value?.over35Score ?? -1);
+  const btts = Number(value?.bttsScore ?? -1);
+
+  const homeWinScore = Number(value?.homeWinScore ?? -1);
+  const drawScore = Number(value?.drawScore ?? -1);
+  const awayWinScore = Number(value?.awayWinScore ?? -1);
+
+  const hasGoalSupport = hasAnySignal([
+    "over25_support",
+    "mutual_attack_profile",
+    "matchup_goals_history",
+    "ai_h2h_overlean"
+  ]);
+
+  const hasStrongGoalSupport = hasAnySignal([
+    "mutual_attack_profile",
+    "matchup_goals_history",
+    "ai_h2h_overlean"
+  ]);
+
+  const hasBttsSupport = hasAnySignal([
+    "btts_support",
+    "mutual_attack_profile"
+  ]);
+
+  const hasGoalsBlocker = hasAnySignal([
+    "defensive_profile",
+    "under25_lean"
+  ]);
+
+  const hasBttsBlocker = hasAnySignal([
+    "defensive_profile",
+    "btts_no_lean",
+    "under25_lean"
+  ]);
+
+  const diagnostics = {};
+
+  const homeAwayFinite = Number.isFinite(homeWinScore) && Number.isFinite(awayWinScore);
+  const bestSide = homeAwayFinite && homeWinScore >= awayWinScore ? "HOME" : homeAwayFinite ? "AWAY" : null;
+  const best1x2 = homeAwayFinite ? Math.max(homeWinScore, awayWinScore) : null;
+  const second1x2 = homeAwayFinite ? Math.min(homeWinScore, awayWinScore) : null;
+  const gap1x2 = homeAwayFinite ? best1x2 - second1x2 : null;
+
+  const sideHasNegativeFormSignal =
+    bestSide === "HOME"
+      ? hasAnySignal([
+          "home_form_decay",
+          "ai_form_home_negative",
+          "ai_form_home_poor"
+        ])
+      : bestSide === "AWAY"
+        ? hasAnySignal([
+            "away_form_decay",
+            "ai_form_away_negative",
+            "ai_form_away_poor"
+          ])
+        : false;
+
+  const oneX2Reasons = [];
+
+  if (!homeAwayFinite) oneX2Reasons.push("missing_home_away_scores");
+  if (homeAwayFinite && best1x2 < 0.68) oneX2Reasons.push("best_below_0.68");
+  if (homeAwayFinite && gap1x2 < 0.10) oneX2Reasons.push("gap_below_0.10");
+  if (confidence < 0.42) oneX2Reasons.push("confidence_below_0.42");
+  if (sideHasNegativeFormSignal) oneX2Reasons.push("side_negative_form");
+
+  diagnostics["1X2"] = {
+    eligible: oneX2Reasons.length === 0,
+    pick: bestSide,
+    score: best1x2,
+    gap: gap1x2,
+    drawScore: Number.isFinite(drawScore) ? drawScore : null,
+    reasons: oneX2Reasons
+  };
+
+  const qualifiesOver25 =
+    over25 >= 0.65 &&
+    expectedTotalGoals >= 2.75 &&
+    hasGoalSupport &&
+    !hasGoalsBlocker &&
+    confidence >= 0.44;
+
+  const over15Reasons = [];
+  if (over15 < 0.70) over15Reasons.push("score_below_0.70");
+  if (qualifiesOver25) over15Reasons.push("suppressed_by_over25");
+  if (hasGoalsBlocker) over15Reasons.push("goals_blocker");
+  if (confidence < 0.40) over15Reasons.push("confidence_below_0.40");
+
+  diagnostics["Over / Under 1.5"] = {
+    eligible: over15Reasons.length === 0,
+    pick: "Over 1.5",
+    score: over15,
+    reasons: over15Reasons
+  };
+
+  const over25Reasons = [];
+  if (over25 < 0.65) over25Reasons.push("score_below_0.65");
+  if (expectedTotalGoals < 2.75) over25Reasons.push("expected_goals_below_2.75");
+  if (!hasGoalSupport) over25Reasons.push("missing_goal_support");
+  if (hasGoalsBlocker) over25Reasons.push("goals_blocker");
+  if (confidence < 0.44) over25Reasons.push("confidence_below_0.44");
+
+  diagnostics["Over / Under 2.5"] = {
+    eligible: over25Reasons.length === 0,
+    pick: "Over 2.5",
+    score: over25,
+    expectedTotalGoals,
+    reasons: over25Reasons
+  };
+
+  const over35Reasons = [];
+  if (over35 < 0.74) over35Reasons.push("score_below_0.74");
+  if (!hasStrongGoalSupport) over35Reasons.push("missing_strong_goal_support");
+  if (hasGoalsBlocker) over35Reasons.push("goals_blocker");
+  if (confidence < 0.48) over35Reasons.push("confidence_below_0.48");
+
+  diagnostics["Over / Under 3.5"] = {
+    eligible: over35Reasons.length === 0,
+    pick: "Over 3.5",
+    score: over35,
+    reasons: over35Reasons
+  };
+
+  const bttsReasons = [];
+  if (btts < 0.68) bttsReasons.push("score_below_0.68");
+  if (!hasBttsSupport) bttsReasons.push("missing_btts_support");
+  if (hasBttsBlocker) bttsReasons.push("btts_blocker");
+  if (confidence < 0.45) bttsReasons.push("confidence_below_0.45");
+
+  diagnostics.BTTS = {
+    eligible: bttsReasons.length === 0,
+    pick: "BTTS YES",
+    score: btts,
+    reasons: bttsReasons
+  };
+
+  return diagnostics;
+}
+
 export async function buildValueCoverageReportDay(dayKey = athensDayKey(), options = {}) {
   const season = String(options.season || DEFAULT_SEASON);
   const canonicalMatches = getFixturesByDay(dayKey);
@@ -219,7 +371,8 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
             over15Score: value.over15Score ?? null,
             over25Score: value.over25Score ?? null,
             bttsScore: value.bttsScore ?? null,
-            signals: Array.isArray(value.signals) ? value.signals : []
+            signals: Array.isArray(value.signals) ? value.signals : [],
+            marketDiagnostics: buildMarketRejectionDiagnostics(value)
           }
         : null
     });

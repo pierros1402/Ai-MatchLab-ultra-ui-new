@@ -280,9 +280,17 @@ function expandValueMarkets(match, value) {
     }
   }
 
-  // O1.5: baseline market, but no longer accepts weak/defensive profiles.
+  const qualifiesOver25 =
+    adjustedOver25 >= 0.65 &&
+    expectedTotalGoals >= 2.75 &&
+    hasGoalSupport &&
+    !hasGoalsBlocker &&
+    confidence >= 0.44;
+
+  // O1.5: baseline market. Suppressed when the same match qualifies for stronger O2.5.
   if (
     adjustedOver15 >= 0.70 &&
+    !qualifiesOver25 &&
     !hasGoalsBlocker &&
     confidence >= 0.40
   ) {
@@ -296,13 +304,7 @@ function expandValueMarkets(match, value) {
 
   // O2.5: must have real goal support, not just a marginal numeric score.
   // Slightly tolerant after intelligence/match-profile adjustments, but only when xG profile supports goals.
-  if (
-    adjustedOver25 >= 0.65 &&
-    expectedTotalGoals >= 2.75 &&
-    hasGoalSupport &&
-    !hasGoalsBlocker &&
-    confidence >= 0.44
-  ) {
+  if (qualifiesOver25) {
     pushPick({
       market: "Over / Under 2.5",
       marketName: "Over / Under 2.5",
