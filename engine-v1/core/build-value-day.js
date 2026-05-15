@@ -190,7 +190,25 @@ function expandValueMarkets(match, value) {
     const gap = best - second;
     const pick = adjusted1X2.home > adjusted1X2.away ? "HOME" : "AWAY";
 
-    if (best >= 0.68 && gap >= 0.10 && confidence >= 0.42) {
+    const sideHasNegativeFormSignal =
+      pick === "HOME"
+        ? hasAnySignal([
+            "home_form_decay",
+            "ai_form_home_negative",
+            "ai_form_home_poor"
+          ])
+        : hasAnySignal([
+            "away_form_decay",
+            "ai_form_away_negative",
+            "ai_form_away_poor"
+          ]);
+
+    if (
+      best >= 0.68 &&
+      gap >= 0.10 &&
+      confidence >= 0.42 &&
+      !sideHasNegativeFormSignal
+    ) {
       pushPick({
         market: "1X2",
         marketName: "1X2",
