@@ -1396,6 +1396,58 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       }
     },
     {
+      id: "al-fayha-official-news",
+      label: "Al Fayha official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["al fayha", "al-fayha", "alfayha", "al feiha", "al-feiha"],
+      buildUrls() {
+        return [
+          "https://www.alfayhasc.com/",
+          "https://www.alfayhasc.com/en"
+        ];
+      }
+    },
+    {
+      id: "damac-official-news",
+      label: "Damac official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["damac", "damac fc", "damak"],
+      buildUrls() {
+        return [
+          "https://damac.sa/"
+        ];
+      }
+    },
+    {
+      id: "al-riyadh-official-news",
+      label: "Al Riyadh official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["al riyadh", "al-riyadh", "riyadh club", "al riyadh sc"],
+      buildUrls() {
+        return [
+          "https://riyadhclub.sa/",
+          "https://riyadhclub.sa/news/",
+          "https://riyadhclub.sa/en/%D8%A7%D9%84%D8%B1%D8%A6%D9%8A%D8%B3%D9%8A%D8%A9-english/"
+        ];
+      }
+    },
+    {
+      id: "al-taawoun-official-news",
+      label: "Al Taawoun official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["al taawoun", "al-taawoun", "altaawoun", "al taawon", "al-taawon"],
+      buildUrls() {
+        return [
+          "https://www.altaawounfc.com/",
+          "https://www.altaawounfc.com/news"
+        ];
+      }
+    },
+    {
       id: "al-nassr-official-news",
       label: "Al Nassr official news",
       type: "official_club_news",
