@@ -1110,12 +1110,23 @@ app.get("/value-export/range", async (req, res) => {
   const days = dateRange(from, to);
   const rebuild = boolParam(req.query.rebuild, false);
 
+  if (runtimeBuildsDisabled() && rebuild) {
+    return rejectRuntimeBuild(res, "/value-export/range?rebuild=true", from);
+  }
+
   const rows = [];
 
   for (const date of days) {
-    const result = await buildValueDay(date, { rebuild });
-    const filtered = result.picks.filter(shouldIncludeValuePick);
+    let result = null;
 
+    if (runtimeBuildsDisabled()) {
+      result = snapshotValueResponse(date);
+    } else {
+      result = await buildValueDay(date, { rebuild });
+    }
+
+    const picks = Array.isArray(result?.picks) ? result.picks : [];
+    const filtered = picks.filter(shouldIncludeValuePick);
 
     for (const p of filtered) {
       rows.push({
@@ -1127,7 +1138,9 @@ app.get("/value-export/range", async (req, res) => {
         market: p.market,
         pick: p.pick,
         score: p.score,
-        confidence: p.confidence
+        confidence: p.confidence,
+        result: p.result ?? null,
+        source: result?.source || null
       });
     }
   }
@@ -1155,7 +1168,9 @@ if (format === "xlsx") {
     { header: "Market", key: "market", width: 20 },
     { header: "Pick", key: "pick", width: 16 },
     { header: "Score", key: "score", width: 10 },
-    { header: "Confidence", key: "confidence", width: 12 }
+    { header: "Confidence", key: "confidence", width: 12 },
+    { header: "Result", key: "result", width: 12 },
+    { header: "Source", key: "source", width: 14 }
   ];
 
   for (const row of rows) {
@@ -1168,7 +1183,9 @@ if (format === "xlsx") {
       market: row.market,
       pick: row.pick,
       score: Number(row.score),
-      confidence: Number(row.confidence)
+      confidence: Number(row.confidence),
+      result: row.result || "",
+      source: row.source || ""
     });
   }
 
@@ -1178,7 +1195,7 @@ if (format === "xlsx") {
   headerRow.alignment = { vertical: "middle", horizontal: "center" };
 
   // Alignment by column
-  ["A", "B", "C", "F", "G", "H", "I"].forEach((col) => {
+  ["A", "B", "C", "F", "G", "H", "I", "J", "K"].forEach((col) => {
     sheet.getColumn(col).alignment = {
       vertical: "middle",
       horizontal: "center"
@@ -1202,7 +1219,7 @@ if (format === "xlsx") {
   // Auto filter
   sheet.autoFilter = {
     from: "A1",
-    to: "I1"
+    to: "K1"
   };
 
   res.setHeader(
@@ -1237,7 +1254,9 @@ if (format !== "csv") {
     "market",
     "pick",
     "score",
-    "confidence"
+    "confidence",
+    "result",
+    "source"
   ];
 
   const lines = [header.join(",")];
@@ -1252,7 +1271,9 @@ if (format !== "csv") {
       csvEscape(row.market),
       csvEscape(row.pick),
       row.score,
-      row.confidence
+      row.confidence,
+      csvEscape(row.result || ""),
+      csvEscape(row.source || "")
     ].join(","));
   }
 
