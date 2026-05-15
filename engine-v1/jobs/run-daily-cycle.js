@@ -27,6 +27,7 @@ import { runTeamNewsResearchTasksDay } from "./run-team-news-research-tasks-day.
 import { buildTeamNewsResearchReviewDay } from "./build-team-news-research-review-day.js";
 import { buildTeamNewsSourceCoverageReportDay } from "./build-team-news-source-coverage-report-day.js";
 import { normalizeTeamNewsSourceCoverageReportDay } from "./normalize-team-news-source-coverage-report-day.js";
+import { buildTeamNewsSourceEnrichmentTasksDay } from "./build-team-news-source-enrichment-tasks-day.js";
 import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
 import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
@@ -335,6 +336,7 @@ export async function runDailyCycle(options = {}) {
   let teamNewsResearchTasks = null;
   let teamNewsResearchRun = null;
   let teamNewsSourceCoverage = null;
+  let teamNewsSourceEnrichmentTasks = null;
   let teamNewsResearchReview = null;
   let teamNewsBuild = null;
   let finalDetailsSync = null;
@@ -694,6 +696,17 @@ export async function runDailyCycle(options = {}) {
     file: teamNewsSourceCoverage?.file || null,
     backlogFile: teamNewsSourceCoverage?.backlog?.file || null,
     backlogTotalRows: teamNewsSourceCoverage?.backlog?.totalRows ?? 0
+  });
+
+  console.log("[daily-cycle] team-news-source-enrichment-tasks:start", { dayKey });
+
+  teamNewsSourceEnrichmentTasks = buildTeamNewsSourceEnrichmentTasksDay(dayKey);
+
+  console.log("[daily-cycle] team-news-source-enrichment-tasks:done", {
+    ok: teamNewsSourceEnrichmentTasks?.ok,
+    dayKey: teamNewsSourceEnrichmentTasks?.dayKey,
+    totalTasks: teamNewsSourceEnrichmentTasks?.totalTasks ?? 0,
+    file: teamNewsSourceEnrichmentTasks?.file || null
   });
 
   console.log("[daily-cycle] team-news-research-review:start", { dayKey });
