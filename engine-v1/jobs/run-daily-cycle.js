@@ -31,6 +31,7 @@ import { buildTeamNewsSourceEnrichmentTasksDay } from "./build-team-news-source-
 import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
 import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
+import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
@@ -340,6 +341,7 @@ export async function runDailyCycle(options = {}) {
   let teamNewsResearchReview = null;
   let teamNewsBuild = null;
   let finalDetailsSync = null;
+  let valueCoverageReport = null;
   let deploySnapshot = null;
   let finalizeValueBuild = null;
   let finalize = null;
@@ -748,6 +750,21 @@ export async function runDailyCycle(options = {}) {
     date: valueBuild?.date,
     count: valueBuild?.count ?? 0
   });
+
+  console.log("[daily-cycle] value-coverage-report:start", { dayKey });
+
+  valueCoverageReport = await buildValueCoverageReportDay(dayKey);
+
+  console.log("[daily-cycle] value-coverage-report:done", {
+    ok: valueCoverageReport?.ok,
+    dayKey: valueCoverageReport?.dayKey,
+    file: valueCoverageReport?.file || null,
+    valueReturned: valueCoverageReport?.counts?.valueReturned ?? 0,
+    valueNull: valueCoverageReport?.counts?.valueNull ?? 0,
+    minimumRecentSampleNull: valueCoverageReport?.counts?.minimumRecentSampleNull ?? 0,
+    nullByClass: valueCoverageReport?.breakdown?.nullByClass || {}
+  });
+
   console.log("[daily-cycle] final-details-sync:start", { dayKey });
 
   finalDetailsSync = await buildDetailsDay(dayKey, {
@@ -842,6 +859,7 @@ export async function runDailyCycle(options = {}) {
     teamNewsResearchReview,
     teamNewsBuild,
     valueBuild,
+    valueCoverageReport,
     finalDetailsSync,
     deploySnapshot,
     finalizeValueBuild,
@@ -900,6 +918,9 @@ if (entryUrl === import.meta.url) {
       teamNewsReadyForPromotionCount: result?.teamNewsResearchReview?.approvedReadyForPromotionCount ?? 0,
       teamNewsPromotableCount: result?.teamNewsResearchReview?.promotableCount ?? 0,
       valueCount: result?.valueBuild?.count ?? 0,
+      valueCoverageReturnedCount: result?.valueCoverageReport?.counts?.valueReturned ?? 0,
+      valueCoverageNullCount: result?.valueCoverageReport?.counts?.valueNull ?? 0,
+      valueCoverageMinimumSampleNullCount: result?.valueCoverageReport?.counts?.minimumRecentSampleNull ?? 0,
       snapshotHash: result?.deploySnapshot?.hash || null,
       snapshotDetailsCount: result?.deploySnapshot?.counts?.details ?? 0
     });
