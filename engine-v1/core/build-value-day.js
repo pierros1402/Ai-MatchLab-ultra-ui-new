@@ -161,6 +161,46 @@ function expandValueMarkets(match, value) {
     return "LOW";
   }
 
+  function buildValuePickMeta() {
+    const homeWinScore = Number(value?.homeWinScore);
+    const drawScore = Number(value?.drawScore);
+    const awayWinScore = Number(value?.awayWinScore);
+
+    const hasOutcomeScores =
+      Number.isFinite(homeWinScore) &&
+      Number.isFinite(drawScore) &&
+      Number.isFinite(awayWinScore);
+
+    const bestSide =
+      Number.isFinite(homeWinScore) &&
+      Number.isFinite(awayWinScore)
+        ? (homeWinScore >= awayWinScore ? "HOME" : "AWAY")
+        : null;
+
+    const sideGap =
+      Number.isFinite(homeWinScore) &&
+      Number.isFinite(awayWinScore)
+        ? Math.abs(homeWinScore - awayWinScore)
+        : null;
+
+    return {
+      ...(value.meta || {}),
+      outcomeScores: hasOutcomeScores
+        ? {
+            homeWinScore,
+            drawScore,
+            awayWinScore,
+            bestSide,
+            sideGap,
+            drawGapToBestSide:
+              bestSide === "HOME"
+                ? homeWinScore - drawScore
+                : awayWinScore - drawScore
+          }
+        : null
+    };
+  }
+
   function pushPick({ market, marketName, pick, score }) {
     items.push({
       matchId: match.matchId,
@@ -175,7 +215,7 @@ function expandValueMarkets(match, value) {
       band: toBand(score),
       confidence,
       signals: [...signals],
-      meta: { ...(value.meta || {}) },
+      meta: buildValuePickMeta(),
       context
     });
   }
