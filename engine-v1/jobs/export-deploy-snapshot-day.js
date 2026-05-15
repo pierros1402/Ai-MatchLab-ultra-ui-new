@@ -591,14 +591,20 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
     hash: manifest.hash
   };
 
-  writeJsonStable(resolveDataPath("deploy-snapshots", "latest.json"), latest);
+  const latestFile = resolveDataPath("deploy-snapshots", "latest.json");
+  const updateLatest = options?.updateLatest !== false;
+
+  if (updateLatest) {
+    writeJsonStable(latestFile, latest);
+  }
 
   return {
     ok: true,
     date: dayKey,
     snapshotRoot,
     manifestFile: path.join(snapshotRoot, "manifest.json"),
-    latestFile: resolveDataPath("deploy-snapshots", "latest.json"),
+    latestFile,
+    latestUpdated: updateLatest,
     counts: manifest.counts,
     coverage: manifest.coverage,
     sizes: manifest.sizes,
