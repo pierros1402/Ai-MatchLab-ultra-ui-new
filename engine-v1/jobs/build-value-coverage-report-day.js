@@ -24,6 +24,32 @@ function readJsonSafe(file, fallback = null) {
   }
 }
 
+function readDeploySnapshotFixturesByDay(dayKey) {
+  const filePath = resolveDataPath("deploy-snapshots", dayKey, "fixtures.json");
+  const payload = readJsonSafe(filePath, null);
+  const rows = Array.isArray(payload?.fixtures)
+    ? payload.fixtures
+    : Array.isArray(payload)
+      ? payload
+      : [];
+
+  return rows
+    .filter(row => String(row?.dayKey || row?.date || "").slice(0, 10) === String(dayKey))
+    .sort((a, b) => String(a.kickoffUtc || a.kickoff || "").localeCompare(String(b.kickoffUtc || b.kickoff || "")));
+}
+
+function readDetailsForValueCoverage(dayKey, matchId) {
+  const canonicalFile = resolveDataPath("details", dayKey, `${matchId}.json`);
+  const canonical = readJsonSafe(canonicalFile, null);
+
+  if (canonical) {
+    return canonical;
+  }
+
+  const snapshotFile = resolveDataPath("deploy-snapshots", dayKey, "details", `${matchId}.json`);
+  return readJsonSafe(snapshotFile, null);
+}
+
 function isPlayable(match) {
   if (!match) return false;
   if (!match.homeTeam || !match.awayTeam) return false;
@@ -84,7 +110,28 @@ function countBy(rows, keyFn) {
 
 export async function buildValueCoverageReportDay(dayKey = athensDayKey(), options = {}) {
   const season = String(options.season || DEFAULT_SEASON);
-  const sourceMatches = getFixturesByDay(dayKey);
+  const canonicalMatches = getFixturesByDay(dayKey);
+  const snapshotFallbackMatches = canonicalMatches.length === 0
+    ? readDeploySnapshotFixturesByDay(dayKey)
+    : [];
+
+  const sourceMatches = canonicalMatches.length > 0
+    ? canonicalMatches
+    : snapshotFallbackMatches;
+
+  const inputSource = canonicalMatches.length > 0
+    ? "canonical_fixtures"
+    : snapshotFallbackMatches.length > 0
+      ? "deploy_snapshot_fixtures_fallback"
+      : "empty";
+
+  if (canonicalMatches.length === 0 && snapshotFallbackMatches.length > 0) {
+    console.log("[value-coverage] using deploy snapshot fixture fallback", {
+      dayKey,
+      sourceMatches: snapshotFallbackMatches.length
+    });
+  }
+
   const playable = sourceMatches.filter(isPlayable);
 
   const [indexes, priors] = await Promise.all([
@@ -96,8 +143,7 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
   const startedAt = new Date().toISOString();
 
   for (const match of playable) {
-    const detailFile = resolveDataPath("details", dayKey, `${match.matchId}.json`);
-    const details = readJsonSafe(detailFile, null);
+    const details = readDetailsForValueCoverage(dayKey, match.matchId);
 
     let intelligence = null;
     let intelligenceError = null;
@@ -189,6 +235,9 @@ export async function buildValueCoverageReportDay(dayKey = athensDayKey(), optio
     generatedAt: new Date().toISOString(),
     startedAt,
     source: {
+      inputSource,
+      canonicalMatches: canonicalMatches.length,
+      snapshotFallbackMatches: snapshotFallbackMatches.length,
       sourceMatches: sourceMatches.length,
       playable: playable.length
     },
