@@ -1097,6 +1097,68 @@ function shouldKeepRegistryArticleLink(link, input) {
     sourceType.includes("registry_article") &&
     /^(official|club|team_official)$/.test(trustTier);
 
+  const isSpanishSecondDivisionLeague = leagueSlug === "esp.2";
+
+  const blockedSpanishOfficialNoiseArticle =
+    isSpanishSecondDivisionLeague &&
+    isOfficialRegistryArticle &&
+    (
+      /\/(partidos|matches|match-center|videos?|video|galerias?|galeria|gallery|category)(?:\/|$)/i.test(parsedPath) ||
+      /[?#](?:category|field_tags|page)=/i.test(url) ||
+      /\bentradas\b/i.test(haystack) ||
+      /\btickets?\b/i.test(haystack) ||
+      /\bmovilidad\b/i.test(haystack) ||
+      /\bmobility\b/i.test(haystack) ||
+      /\bfull match\b/i.test(haystack) ||
+      /\bmatch centre\b/i.test(haystack) ||
+      /\bmatch center\b/i.test(haystack) ||
+      /\bhighlights?\b/i.test(haystack) ||
+      /\bresumen\b/i.test(haystack) ||
+      /\bpost[-\s]?match\b/i.test(haystack) ||
+      /\bcr[oó]nica\b/i.test(haystack) ||
+      /\bfinalizado\b/i.test(haystack) ||
+      /\bresultado\b/i.test(haystack) ||
+      /\bpartido completado\b/i.test(haystack) ||
+      /\btaquilla\b/i.test(haystack) ||
+      /\bventa de entradas\b/i.test(haystack) ||
+      /\babonos?\b/i.test(haystack) ||
+      /\bfundaci[oó]n\b/i.test(haystack) ||
+      /\bcantera\b/i.test(haystack) ||
+      /\bbase\b/i.test(haystack) ||
+      /\bjuvenil\b/i.test(haystack) ||
+      /\bfemenino\b/i.test(haystack) ||
+      /\btienda\b/i.test(haystack) ||
+      /\bsocios?\b/i.test(haystack) ||
+      /\batl[eé]tico\s+albacete\b/i.test(haystack) ||
+      /\bfilial\b/i.test(haystack) ||
+      /\b\d+\s*[-–]\s*\d+\b/i.test(haystack) ||
+      /\bempata\b/i.test(haystack) ||
+      /\bempate\b/i.test(haystack) ||
+      /\bpunto important/i.test(haystack) ||
+      /\bmedia vida\b/i.test(haystack) ||
+      /\btres puntos\b/i.test(haystack) ||
+      /\btriunfo\b/i.test(haystack) ||
+      /\bgol con denominaci[oó]n\b/i.test(haystack) ||
+      /\bmuy bien trabajados\b/i.test(haystack) ||
+      /\btras el empate\b/i.test(haystack) ||
+      /\bpartido de su equipo en\b/i.test(haystack) ||
+      /\bgran triunfo\b/i.test(haystack) ||
+      /\bse impone\b/i.test(haystack) ||
+      /\bfinal fren[eé]tico\b/i.test(haystack) ||
+      /\binstantes finales\b/i.test(haystack) ||
+      /\brecibe esta tarde\b/i.test(haystack) ||
+      /\bequipo leon[eé]s\b/i.test(haystack) ||
+      /\btemporada correcta\b/i.test(haystack) ||
+      /\bno quiere dejarse ir\b/i.test(haystack) ||
+      /\bmejorar como objetivo\b/i.test(haystack) ||
+      /\bel alba es incre[ií]ble\b/i.test(haystack) ||
+      /el-alba-es-increible/i.test(url)
+    );
+
+  if (blockedSpanishOfficialNoiseArticle) {
+    return false;
+  }
+
   const blockedOfficialRegistryArticlePath =
     /\/(news-vcf|noticias|news|todas-las-noticias|fixtures?|fixture\/view|plantilla|futbol|football|category)\/?$/i.test(parsedPath) ||
     /[?#](category|field_tags|page)=/i.test(url) ||
