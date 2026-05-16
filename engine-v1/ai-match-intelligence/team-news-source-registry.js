@@ -1748,7 +1748,7 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       trustTier: "official",
       teams: ["albacete", "albacete bp", "albacete balompie", "albacete balompié"],
       buildUrls() {
-        return ["https://www.albacetebalompie.es/"];
+        return ["https://www.albacetebalompie.es/noticias", "https://www.albacetebalompie.es/"];
       }
     },
     {
