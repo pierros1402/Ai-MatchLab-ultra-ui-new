@@ -27,7 +27,7 @@ function hasFlag(name) {
 const leagueSlug = String(argValue("league", "") || argValue("leagueSlug", "")).trim().toLowerCase();
 const shouldFetch = hasFlag("fetch");
 const shouldAuditCandidateMap = hasFlag("candidate-map");
-const candidateFetchLimit = Number(argValue("candidate-fetch-limit", "120")) || 120;
+const candidateFetchLimit = Number(argValue("candidate-fetch-limit", "240")) || 240;
 const fetchLimit = Number(argValue("fetch-limit", "80")) || 80;
 const fetchTimeoutMs = Number(argValue("fetch-timeout-ms", "5500")) || 5500;
 
@@ -475,16 +475,31 @@ function genericCandidateUrlsForTeam(team) {
   const compact = slugifyHostPart(team);
   if (!compact || compact.length < 3) return [];
 
-  return [
-    `https://${compact}.com/`,
-    `https://${compact}.com/news/`,
-    `https://www.${compact}.com/`,
-    `https://www.${compact}.com/news/`,
-    `https://${compact}.com.cy/`,
-    `https://${compact}.com.cy/news/`,
-    `https://www.${compact}.com.cy/`,
-    `https://www.${compact}.com.cy/news/`
-  ];
+  const variants = new Set([compact]);
+
+  if (!/fc$/.test(compact)) variants.add(`${compact}fc`);
+  if (!/afc$/.test(compact)) variants.add(`${compact}afc`);
+
+  const urls = [];
+
+  for (const variant of variants) {
+    urls.push(
+      `https://${variant}.com/`,
+      `https://${variant}.com/news/`,
+      `https://www.${variant}.com/`,
+      `https://www.${variant}.com/news/`,
+      `https://${variant}.co.uk/`,
+      `https://${variant}.co.uk/news/`,
+      `https://www.${variant}.co.uk/`,
+      `https://www.${variant}.co.uk/news/`,
+      `https://${variant}.com.cy/`,
+      `https://${variant}.com.cy/news/`,
+      `https://www.${variant}.com.cy/`,
+      `https://www.${variant}.com.cy/news/`
+    );
+  }
+
+  return [...new Set(urls)];
 }
 
 function candidateUrlsForTeam(team) {
@@ -516,13 +531,25 @@ function absoluteUrl(href, base) {
 }
 
 function looksLikeTeamNewsAnchor(title, url) {
-  const haystack = `${title || ""} ${url || ""}`.toLowerCase();
+  const rawTitle = String(title || "").trim();
+  const rawUrl = String(url || "");
+  const haystack = `${rawTitle} ${rawUrl}`.toLowerCase();
+
+  const genericOnly =
+    /^(news|all news|latest news|en|de|compliance|privacy|terms|shop|store|tickets?|commercial news|community news|ticket news)$/i.test(rawTitle);
+
+  if (genericOnly && !/\/news\/[^/?#]+/i.test(rawUrl)) {
+    return false;
+  }
+
   return (
-    /news|announcement|match|preview|squad|injury|training|press|team|fixture|αποστολή|απουσίες|τραυματ|προπόνηση|αγώνα|αγωνας|ανακοίνωση|νέα|ειδήσεις/i.test(haystack) ||
-    /\/news\/[^/?#]+/i.test(url || "") ||
-    /\/article\//i.test(url || "") ||
-    /\/category\/news/i.test(url || "") ||
-    /\/\d{4}\/\d{2}\//i.test(url || "")
+    /\b(match preview|preview|squad|team news|injur(?:y|ies)|training|press conference|first team|manager|head coach|fixture|fixtures|league two|efl|player|players|academy|ticket update)\b/i.test(haystack) ||
+    /\b(convocatoria|convocados|bajas|lesion|lesión|rueda de prensa|previa|primer equipo)\b/i.test(haystack) ||
+    /αποστολή|απουσίες|τραυματ|προπόνηση|αγώνα|αγωνας|ανακοίνωση|νέα|ειδήσεις/i.test(haystack) ||
+    /\/news\/[^/?#]+/i.test(rawUrl) ||
+    /\/article\//i.test(rawUrl) ||
+    /\/category\/news/i.test(rawUrl) ||
+    /\/\d{4}\/\d{2}\//i.test(rawUrl)
   );
 }
 
@@ -606,14 +633,32 @@ function scoreCandidateFetch(fetchResult, inspection, candidateUrl) {
 }
 
 function candidateQualitySignals(candidate = {}) {
-  const haystack = `${candidate.url || ""} ${candidate.finalUrl || ""} ${candidate.contentType || ""} ${candidate.textPreview || ""} ${(candidate.interestingAnchors || []).map(anchor => `${anchor.title || ""} ${anchor.url || ""}`).join(" ")}`.toLowerCase();
+  const qualityAnchors = [
+    ...(Array.isArray(candidate.interestingAnchors) ? candidate.interestingAnchors : []),
+    ...(Array.isArray(candidate.sampleInterestingAnchors) ? candidate.sampleInterestingAnchors : [])
+  ];
+
+  const haystack = `${candidate.url || ""} ${candidate.finalUrl || ""} ${candidate.contentType || ""} ${candidate.textPreview || ""} ${qualityAnchors.map(anchor => `${anchor.title || ""} ${anchor.url || ""}`).join(" ")}`.toLowerCase();
   const host = hostOf(candidate.finalUrl || candidate.url || "");
+  const candidateHost = hostOf(candidate.url || "");
+  const finalHost = hostOf(candidate.finalUrl || candidate.url || "");
+  const sameOrSubdomain =
+    !candidateHost ||
+    !finalHost ||
+    finalHost === candidateHost ||
+    finalHost.endsWith(`.${candidateHost}`);
 
   return {
     host,
+    candidateHost,
+    finalHost,
+    sameOrSubdomain,
     okStatus: Number(candidate.status || 0) >= 200 && Number(candidate.status || 0) < 400,
     htmlLike: /html|xhtml/i.test(candidate.contentType || "") || !candidate.contentType,
     parkingOrSale: /hugedomains|sedo|dan\.com|afternic|namecheap|godaddy|parked|domain for sale|buy this domain|connectyourdomain|coming soon|under construction/i.test(haystack),
+    thirdPartyOrBadRedirect: !sameOrSubdomain || /fansnetwork|wordpress\.com|blogspot|medium\.com|facebook\.com|x\.com|twitter\.com|instagram\.com|youtube\.com/i.test(haystack),
+    nonFootballBusinessNoise: /\b(yarns?|fibers?|fibres?|brochure|polymer|industrial|manufacturing|compliance|sustainability report)\b/i.test(haystack),
+    footballIdentity: /\b(fc|afc|football club|football|league two|efl|match preview|fixture|fixtures|results|squad|first team|men['’]?s first team|head coach|manager|player|players|training|academy|club shop|season tickets?)\b/i.test(haystack),
     weakPlaceholder: Number(candidate.textLength || 0) > 0 && Number(candidate.textLength || 0) < 1800 && Number(candidate.anchorCount || 0) < 4,
     newsListingUrl: /news|νέα|ειδήσεις|announcements|ανακοινώσεις/i.test(candidate.url || ""),
     enoughContent: Number(candidate.textLength || 0) >= 3500,
@@ -641,6 +686,9 @@ function classifyBestCandidate(bestCandidate = null, candidateFetches = []) {
   if (!signals.okStatus) reasons.push("non_2xx_3xx_status");
   if (!signals.htmlLike) reasons.push("non_html_content_type");
   if (signals.parkingOrSale) reasons.push("parking_or_domain_for_sale_signal");
+  if (signals.thirdPartyOrBadRedirect) reasons.push("third_party_or_bad_redirect");
+  if (signals.nonFootballBusinessNoise) reasons.push("non_football_business_noise");
+  if (!signals.footballIdentity) reasons.push("missing_football_club_identity");
   if (signals.weakPlaceholder) reasons.push("weak_placeholder_low_content_low_links");
   if (signals.noiseHeavy) reasons.push("noise_heavy_low_team_news_signal");
   if (!signals.enoughContent) reasons.push("low_content_length");
@@ -648,6 +696,14 @@ function classifyBestCandidate(bestCandidate = null, candidateFetches = []) {
 
   if (signals.parkingOrSale) {
     return { classification: "parking_or_domain_for_sale", registryReady: false, recommendedAction: "do_not_add_find_manual_official_source", reasons, signals };
+  }
+
+  if (signals.thirdPartyOrBadRedirect) {
+    return { classification: "third_party_or_bad_redirect", registryReady: false, recommendedAction: "do_not_add_find_manual_official_source", reasons, signals };
+  }
+
+  if (signals.nonFootballBusinessNoise || !signals.footballIdentity) {
+    return { classification: "non_football_or_wrong_site", registryReady: false, recommendedAction: "do_not_add_find_manual_official_source", reasons, signals };
   }
 
   if (!signals.okStatus) {
