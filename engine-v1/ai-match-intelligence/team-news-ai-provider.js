@@ -1110,6 +1110,107 @@ function shouldKeepRegistryArticleLink(link, input) {
       /\/[a-z0-9][a-z0-9-]{4,}(?:$|[/?#])/i.test(parsedPath)
     );
 
+  const ksaArabicAliasesForName = (name) => {
+    const raw = normalizeText(name).toLowerCase();
+
+    if (/al\s*fayha|al-fayha|alfayha|al\s*feiha|al-feiha/i.test(raw)) return ["الفيحاء"];
+    if (/damac|damak|ضمك/i.test(raw)) return ["ضمك"];
+    if (/al\s*riyadh|al-riyadh|riyadh club|الرياض/i.test(raw)) return ["الرياض"];
+    if (/al\s*taawoun|al-taawoun|altaawoun|al\s*taawon|al-taawon|التعاون/i.test(raw)) return ["التعاون"];
+    if (/al\s*hilal|al-hilal|الهلال/i.test(raw)) return ["الهلال"];
+    if (/al\s*qadsiah|al-qadsiah|القادسية/i.test(raw)) return ["القادسية"];
+    if (/al\s*fateh|al-fateh|الفتح/i.test(raw)) return ["الفتح"];
+
+    return [];
+  };
+
+  const ksaArticleHasAlias = aliases =>
+    Array.isArray(aliases) &&
+    aliases.length > 0 &&
+    aliases.some(alias => haystack.includes(alias));
+
+  const hasKsaOfficialMatchContext =
+    ksaArticleHasAlias(ksaArabicAliasesForName(input?.team)) &&
+    ksaArticleHasAlias(ksaArabicAliasesForName(input?.opponent));
+
+  const ksaArticleDateWindowOk = (() => {
+    const kickoffMs = Date.parse(input?.kickoffUtc || input?.kickoff || "");
+    if (!Number.isFinite(kickoffMs)) return true;
+
+    const dateMatch = haystack.match(/\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/);
+    if (!dateMatch) return true;
+
+    const articleMs = Date.UTC(
+      Number(dateMatch[1]),
+      Number(dateMatch[2]) - 1,
+      Number(dateMatch[3])
+    );
+
+    if (!Number.isFinite(articleMs)) return true;
+
+    const minMs = kickoffMs - 14 * 24 * 60 * 60 * 1000;
+    const maxMs = kickoffMs + 2 * 24 * 60 * 60 * 1000;
+
+    return articleMs >= minMs && articleMs <= maxMs;
+  })();
+
+  const hasKsaOfficialPreMatchSignal =
+    isSaudiLeague &&
+    isOfficialRegistryArticle &&
+    hasKsaOfficialMatchContext &&
+    ksaArticleDateWindowOk &&
+    (
+      /الفريق الأول/i.test(haystack) ||
+      /مباراة/i.test(haystack) ||
+      /مواجهة/i.test(haystack) ||
+      /موقعة/i.test(haystack) ||
+      /يواجه/i.test(haystack) ||
+      /يستضيف/i.test(haystack) ||
+      /استعداد/i.test(haystack) ||
+      /استعداداته/i.test(haystack) ||
+      /تدريبات/i.test(haystack) ||
+      /تحضيراته/i.test(haystack) ||
+      /مران/i.test(haystack) ||
+      /مرانه/i.test(haystack) ||
+      /ينهي/i.test(haystack) ||
+      /يواصل/i.test(haystack) ||
+      /يستأنف/i.test(haystack) ||
+      /الجولة/i.test(haystack) ||
+      /دوري روشن/i.test(haystack)
+    );
+
+  const blockedKsaOfficialPreMatchSignal =
+    /تحت\s*\d+/i.test(haystack) ||
+    /الشباب/i.test(haystack) ||
+    /الناشئين/i.test(haystack) ||
+    /البراعم/i.test(haystack) ||
+    /الأكاديمية/i.test(haystack) ||
+    /اكاديمية/i.test(haystack) ||
+    /السباحة/i.test(haystack) ||
+    /كرة الماء/i.test(haystack) ||
+    /كرة الطاولة/i.test(haystack) ||
+    /التايكوندو/i.test(haystack) ||
+    /المنتجات/i.test(haystack) ||
+    /منتجات/i.test(haystack) ||
+    /تذاكر/i.test(haystack) ||
+    /جمهور/i.test(haystack) ||
+    /جوائز/i.test(haystack) ||
+    /الرخصة/i.test(haystack) ||
+    /مجلس إدارة/i.test(haystack) ||
+    /اجتماع/i.test(haystack) ||
+    /وظيف/i.test(haystack) ||
+    /استثمار/i.test(haystack);
+
+  const looksLikeKsaOfficialArticleUrl =
+    hasKsaOfficialPreMatchSignal &&
+    !blockedKsaOfficialPreMatchSignal &&
+    (
+      /alfayhasc\.com\/blog\/\d+(?:$|[/?#])/i.test(url) ||
+      /damac\.sa\/\?p=\d+(?:$|[&#])/i.test(url) ||
+      /riyadhclub\.sa\/%[0-9a-f]{2}/i.test(url) ||
+      /altaawounfc\.com\/news\/\d+-/i.test(url)
+    );
+
   const looksLikeArticleUrl =
     /\/news\/[^/?#]+/i.test(url) ||
     /\/en\/news\/[^/?#]+/i.test(url) ||
@@ -1117,7 +1218,8 @@ function shouldKeepRegistryArticleLink(link, input) {
     /\/article\/[^/?#]+/i.test(url) ||
     /\/sport\/football\//i.test(url) ||
     /\/football\//i.test(url) ||
-    looksLikeOfficialRegistryArticleUrl;
+    looksLikeOfficialRegistryArticleUrl ||
+    looksLikeKsaOfficialArticleUrl;
 
   const blockedGenericArticleUrl =
     /bbc\.com\/sport\/football\/(premier-league|championship|league-one|league-two)\/?$/i.test(url) ||
@@ -1139,7 +1241,12 @@ function shouldKeepRegistryArticleLink(link, input) {
     /\b(match report|crónica|cronica|highlights|extended highlights|full match replay|full match replays|match replay|post-match|post match)\b/i.test(haystack) ||
     /\b(tribute|pays tribute|technical training days|femenino|women|academy|b team|youth team)\b/i.test(haystack);
 
-  if (blockedGenericArticleUrl || blockedRegistryLandingArticle || blockedNonPreMatchArticle) {
+  if (
+    blockedGenericArticleUrl ||
+    blockedRegistryLandingArticle ||
+    blockedNonPreMatchArticle ||
+    blockedKsaOfficialPreMatchSignal
+  ) {
     return false;
   }
 
@@ -1147,6 +1254,7 @@ function shouldKeepRegistryArticleLink(link, input) {
     looksLikeArticleUrl &&
     (
       hasStrongArticleSignal ||
+      looksLikeKsaOfficialArticleUrl ||
       (hasTeam && hasOpponent) ||
       (hasTeam && /\bvs\b|\bversus\b|\bv\b|\bpreview\b|\bmatch preview\b/i.test(haystack))
     )
@@ -1191,6 +1299,119 @@ function scoreRegistryArticleLink(link, input) {
 
   if (/convocados|convocatoria|n[oó]mina|citados|alineaci[oó]n|formaci[oó]n|lesion|lesi[oó]n|suspend|bajas|team news|injury update|injuries|suspensions|squad news|expected lineup|predicted lineup|match preview/i.test(haystack) || hasPortugueseTeamNewsSignal(haystack)) {
     score += 10;
+  }
+
+  const sourceType = normalizeText(link?.sourceType).toLowerCase();
+  const trustTier = normalizeText(link?.trustTier).toLowerCase();
+  const leagueSlug = normalizeText(input?.leagueSlug).toLowerCase();
+
+  const isKsaOfficialRegistryArticle =
+    (leagueSlug === "ksa.1" || leagueSlug.startsWith("ksa.")) &&
+    sourceType.includes("registry_article") &&
+    /^(official|club|team_official)$/.test(trustTier);
+
+  const ksaArabicAliasesForName = (name) => {
+    const raw = normalizeText(name).toLowerCase();
+
+    if (/al\s*fayha|al-fayha|alfayha|al\s*feiha|al-feiha/i.test(raw)) return ["الفيحاء"];
+    if (/damac|damak|ضمك/i.test(raw)) return ["ضمك"];
+    if (/al\s*riyadh|al-riyadh|riyadh club|الرياض/i.test(raw)) return ["الرياض"];
+    if (/al\s*taawoun|al-taawoun|altaawoun|al\s*taawon|al-taawon|التعاون/i.test(raw)) return ["التعاون"];
+    if (/al\s*hilal|al-hilal|الهلال/i.test(raw)) return ["الهلال"];
+    if (/al\s*qadsiah|al-qadsiah|القادسية/i.test(raw)) return ["القادسية"];
+    if (/al\s*fateh|al-fateh|الفتح/i.test(raw)) return ["الفتح"];
+
+    return [];
+  };
+
+  const ksaArticleHasAlias = aliases =>
+    Array.isArray(aliases) &&
+    aliases.length > 0 &&
+    aliases.some(alias => haystack.includes(alias));
+
+  const hasKsaOfficialMatchContext =
+    ksaArticleHasAlias(ksaArabicAliasesForName(input?.team)) &&
+    ksaArticleHasAlias(ksaArabicAliasesForName(input?.opponent));
+
+  const ksaArticleDateWindowOk = (() => {
+    const kickoffMs = Date.parse(input?.kickoffUtc || input?.kickoff || "");
+    if (!Number.isFinite(kickoffMs)) return true;
+
+    const dateMatch = haystack.match(/\b(20\d{2})[-\/](\d{1,2})[-\/](\d{1,2})\b/);
+    if (!dateMatch) return true;
+
+    const articleMs = Date.UTC(
+      Number(dateMatch[1]),
+      Number(dateMatch[2]) - 1,
+      Number(dateMatch[3])
+    );
+
+    if (!Number.isFinite(articleMs)) return true;
+
+    const minMs = kickoffMs - 14 * 24 * 60 * 60 * 1000;
+    const maxMs = kickoffMs + 2 * 24 * 60 * 60 * 1000;
+
+    return articleMs >= minMs && articleMs <= maxMs;
+  })();
+
+  const hasKsaOfficialPreMatchSignal =
+    hasKsaOfficialMatchContext &&
+    ksaArticleDateWindowOk &&
+    (
+      /الفريق الأول/i.test(haystack) ||
+    /مباراة/i.test(haystack) ||
+    /مواجهة/i.test(haystack) ||
+    /موقعة/i.test(haystack) ||
+    /يواجه/i.test(haystack) ||
+    /يستضيف/i.test(haystack) ||
+    /استعداد/i.test(haystack) ||
+    /استعداداته/i.test(haystack) ||
+    /تدريبات/i.test(haystack) ||
+    /تحضيراته/i.test(haystack) ||
+    /مران/i.test(haystack) ||
+    /مرانه/i.test(haystack) ||
+    /ينهي/i.test(haystack) ||
+    /يواصل/i.test(haystack) ||
+    /يستأنف/i.test(haystack) ||
+    /الجولة/i.test(haystack) ||
+    /دوري روشن/i.test(haystack)
+    );
+
+  const blockedKsaOfficialPreMatchSignal =
+    /تحت\s*\d+/i.test(haystack) ||
+    /الشباب/i.test(haystack) ||
+    /الناشئين/i.test(haystack) ||
+    /البراعم/i.test(haystack) ||
+    /الأكاديمية/i.test(haystack) ||
+    /اكاديمية/i.test(haystack) ||
+    /السباحة/i.test(haystack) ||
+    /كرة الماء/i.test(haystack) ||
+    /كرة الطاولة/i.test(haystack) ||
+    /التايكوندو/i.test(haystack) ||
+    /المنتجات/i.test(haystack) ||
+    /منتجات/i.test(haystack) ||
+    /تذاكر/i.test(haystack) ||
+    /جمهور/i.test(haystack) ||
+    /جوائز/i.test(haystack) ||
+    /الرخصة/i.test(haystack) ||
+    /مجلس إدارة/i.test(haystack) ||
+    /اجتماع/i.test(haystack) ||
+    /وظيف/i.test(haystack) ||
+    /استثمار/i.test(haystack);
+
+  const hasKsaOfficialArticleUrl =
+    /alfayhasc\.com\/(?:en\/)?blog\/\d+(?:$|[/?#])/i.test(url) ||
+    /damac\.sa\/\?p=\d+(?:$|[&#])/i.test(url) ||
+    /riyadhclub\.sa\/%[0-9a-f]{2}/i.test(url) ||
+    /altaawounfc\.com\/news\/\d+-/i.test(url);
+
+  if (
+    isKsaOfficialRegistryArticle &&
+    hasKsaOfficialArticleUrl &&
+    hasKsaOfficialPreMatchSignal &&
+    !blockedKsaOfficialPreMatchSignal
+  ) {
+    score += 14;
   }
 
   if (/\/category\//i.test(url)) {
@@ -1362,6 +1583,7 @@ async function fetchRegistrySources(input) {
     registryArticleSamples: []
   };
   const out = [];
+  const seenRegistryArticleUrls = new Set();
 
   for (const row of registryRows.slice(0, maxRegistrySources)) {
     if (isSearchPageSource({
@@ -1452,6 +1674,22 @@ async function fetchRegistrySources(input) {
     }
 
     for (const articleLink of articleLinks) {
+      let articleKey = normalizeText(articleLink?.url).toLowerCase();
+
+      try {
+        const parsedArticleUrl = new URL(articleLink.url);
+        parsedArticleUrl.hash = "";
+        articleKey = parsedArticleUrl.toString().replace(/\/$/, "").toLowerCase();
+      } catch {
+        articleKey = normalizeText(articleLink?.url).replace(/\/$/, "").toLowerCase();
+      }
+
+      if (!articleKey || seenRegistryArticleUrls.has(articleKey)) {
+        continue;
+      }
+
+      seenRegistryArticleUrls.add(articleKey);
+
       const articleFetchResult = await fetchTextResult(articleLink.url, {
         timeoutMs: 5000,
         maxChars: 120000
