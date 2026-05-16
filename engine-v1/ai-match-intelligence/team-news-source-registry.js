@@ -1304,6 +1304,69 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
     }
   ],
 
+  "cyp.1": [
+    {
+      id: "ael-limassol-official-news",
+      label: "AEL Limassol official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["ael", "ael limassol"],
+      buildUrls() {
+        return [
+          "https://ael.com.cy/news/"
+        ];
+      }
+    },
+    {
+      id: "anorthosis-official-news",
+      label: "Anorthosis official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["anorthosis", "anorthosis famagusta", "anorthosis ammochostou"],
+      buildUrls() {
+        return [
+          "https://anorthosisfc.com.cy/"
+        ];
+      }
+    },
+    {
+      id: "apoel-nicosia-official-news",
+      label: "APOEL Nicosia official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["apoel", "apoel nicosia", "apoel fc"],
+      buildUrls() {
+        return [
+          "https://www.apoelfc.com.cy/"
+        ];
+      }
+    },
+    {
+      id: "apollon-limassol-official-news",
+      label: "Apollon Limassol official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["apollon", "apollon limassol"],
+      buildUrls() {
+        return [
+          "https://www.apollon.com.cy/news/"
+        ];
+      }
+    },
+    {
+      id: "aris-limassol-official-news",
+      label: "Aris Limassol official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["aris", "aris limassol", "aris fc"],
+      buildUrls() {
+        return [
+          "https://arisfc.com/news/"
+        ];
+      }
+    }
+  ],
+
   "ita.2": [
     {
       id: "ita-serieb-official-news",
