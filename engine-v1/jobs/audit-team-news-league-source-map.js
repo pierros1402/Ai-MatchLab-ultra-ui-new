@@ -282,16 +282,29 @@ function collectCoverageBacklog(teams) {
   }
 }
 
-function isOfficialSource(source = {}) {
-  const haystack = `${source.id || ""} ${source.label || ""} ${source.type || ""} ${source.trustTier || ""}`.toLowerCase();
-  return /official|club_news|team_official/.test(haystack);
+function isTeamOfficialSource(source = {}) {
+  const type = String(source.type || "").toLowerCase();
+  const trustTier = String(source.trustTier || "").toLowerCase();
+
+  return /official_club_news|team_official/.test(type) && /official/.test(trustTier);
 }
 
-function hostOf(url) {
+function isLeagueOfficialSource(source = {}) {
+  const type = String(source.type || "").toLowerCase();
+  const trustTier = String(source.trustTier || "").toLowerCase();
+
+  return /league_news|federation_news/.test(type) && /league|official/.test(trustTier);
+}
+
+function isOfficialSource(source = {}) {
+  return isTeamOfficialSource(source);
+}
+
+function hostOf(value) {
   try {
-    return new URL(url).hostname.replace(/^www\./i, "").toLowerCase();
+    return new URL(String(value || "")).hostname.replace(/^www\./i, "").toLowerCase();
   } catch {
-    return "";
+    return null;
   }
 }
 
@@ -821,7 +834,8 @@ const rows = [...teams.values()]
   .sort((a, b) => a.team.localeCompare(b.team))
   .map(team => {
     const sources = getTeamNewsSourcesForTask({ leagueSlug, team: team.team, opponent: "" });
-    const officialSources = uniqueByUrl(sources.filter(isOfficialSource).map(summarizeSource));
+    const teamOfficialSources = uniqueByUrl(sources.filter(isTeamOfficialSource).map(summarizeSource));
+    const leagueOfficialSources = uniqueByUrl(sources.filter(isLeagueOfficialSource).map(summarizeSource));
     const registrySources = uniqueByUrl(sources.map(summarizeSource));
 
     return {
@@ -830,10 +844,14 @@ const rows = [...teams.values()]
       sourceHits: [...team.sourceHits.entries()].sort((a, b) => b[1] - a[1]).map(([source, count]) => ({ source, count })),
       sampleMatches: team.sampleMatches.slice(0, 8),
       registrySourceCount: registrySources.length,
-      officialSourceCount: officialSources.length,
-      officialSources,
-      nonOfficialSources: registrySources.filter(source => !isOfficialSource(source)).slice(0, 8),
-      status: officialSources.length > 0 ? "has_official_source" : "missing_official_source"
+      officialSourceCount: teamOfficialSources.length,
+      officialSources: teamOfficialSources,
+      leagueOfficialSourceCount: leagueOfficialSources.length,
+      leagueOfficialSources,
+      nonOfficialSources: registrySources
+        .filter(source => !isTeamOfficialSource(source) && !isLeagueOfficialSource(source))
+        .slice(0, 8),
+      status: teamOfficialSources.length > 0 ? "has_official_source" : "missing_official_source"
     };
   });
 
