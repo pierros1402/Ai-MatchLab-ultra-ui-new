@@ -66,6 +66,22 @@ function sourceTypeFromUrl(url) {
   return "official_club";
 }
 
+function isBritishOrIrishLeague(league) {
+  return /^(eng|sco|wal|nir|irl)\./i.test(String(league || ""));
+}
+
+function isSuspiciousForeignUkHost(league, host) {
+  return !isBritishOrIrishLeague(league) && /\.co\.uk$/i.test(String(host || ""));
+}
+
+function hasGrassrootsYouthClubPreview(text) {
+  return /\b(u7|u8|u9|u10|u11|u12|u13|u14|safeguarding|welfare|grassroots|mini soccer|youth football club|club documents|meet the team)\b/i.test(String(text || ""));
+}
+
+function hasFanOrUnofficialPreview(text) {
+  return /\b(transfer news|rumours?|advertise|write for us|fan site|unofficial|features)\b/i.test(String(text || ""));
+}
+
 function teamAliases(team) {
   const base = normalizeText(team);
   const lower = base.toLowerCase();
@@ -111,6 +127,9 @@ function candidateFromRow(league, row) {
   if (!signals.hasInterestingAnchors) reasons.push("missing_interesting_anchors");
   if (signals.noiseHeavy) reasons.push("noise_heavy");
   if (!isSameOrSubdomain(candidateHost || sourceHost, finalHost || sourceHost)) reasons.push("host_redirect_mismatch");
+  if (isSuspiciousForeignUkHost(league, sourceHost || finalHost)) reasons.push("suspicious_foreign_league_uk_domain");
+  if (hasGrassrootsYouthClubPreview(best.textPreview)) reasons.push("grassroots_youth_club_preview");
+  if (hasFanOrUnofficialPreview(best.textPreview)) reasons.push("fan_or_unofficial_preview");
   if (args.strictNewsUrl && !isStrictNewsUrl(url)) reasons.push("not_strict_news_listing_url");
 
   return {
