@@ -345,7 +345,9 @@ export async function runDailyCycle(options = {}) {
   let finalDetailsSync = null;
   let valueCoverageReport = null;
   let deploySnapshot = null;
-  let finalizedDeploySnapshot = null;$1  let finalizeReadiness = null;
+  let finalizedDeploySnapshot = null;
+  let finalizeValueBuild = null;
+  let finalizeReadiness = null;
   let finalize = null;
   let historyAppend = null;
   let indexesRebuild = null;
