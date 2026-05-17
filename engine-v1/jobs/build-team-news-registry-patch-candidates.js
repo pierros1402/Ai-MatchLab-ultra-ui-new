@@ -219,8 +219,8 @@ let s = fs.readFileSync(file, "utf8");
 
 const candidates = ${serialized};
 
-function assertAbsent(label, needle) {
-  if (s.includes(needle)) throw new Error(label + ": already exists");
+function sourceIdExists(id) {
+  return s.includes('id: "' + id + '"');
 }
 
 function findLeagueStart(league) {
@@ -276,21 +276,40 @@ function insertNewLeagueBefore(anchorLeague, league, blocks) {
 }
 
 const byLeague = new Map();
+const skippedExisting = [];
+
 for (const c of candidates) {
-  assertAbsent(c.id, 'id: "' + c.id + '"');
+  if (sourceIdExists(c.id)) {
+    skippedExisting.push({
+      league: c.league,
+      id: c.id
+    });
+    continue;
+  }
+
   if (!byLeague.has(c.league)) byLeague.set(c.league, []);
   byLeague.get(c.league).push(c.block);
 }
+
+let addedCount = 0;
 
 for (const [league, blocks] of byLeague.entries()) {
   const appended = appendToExistingLeague(league, blocks);
   if (!appended) {
     insertNewLeagueBefore("esp.2", league, blocks);
   }
+  addedCount += blocks.length;
 }
 
 fs.writeFileSync(file, s, "utf8");
-console.log("patched " + file + " with " + candidates.length + " official source candidates");
+console.log(JSON.stringify({
+  ok: true,
+  file,
+  requestedCandidates: candidates.length,
+  addedCount,
+  skippedExistingCount: skippedExisting.length,
+  skippedExisting
+}, null, 2));
 `;
 }
 
