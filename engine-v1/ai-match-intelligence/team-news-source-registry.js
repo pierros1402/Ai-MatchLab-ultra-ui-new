@@ -1437,7 +1437,18 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       buildUrls() {
         return ["https://www.usavellino1912.com/"];
       }
-    }],
+    },
+    {
+      id: "cesena-official-news",
+      label: "Cesena official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["cesena", "cesena fc"],
+      buildUrls() {
+        return ["https://cesenafc.com/it"];
+      }
+    }
+  ],
 
   "ksa.1": [
     {
@@ -1799,6 +1810,49 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       teams: ["salford city", "salford city fc"],
       buildUrls() {
         return ["https://www.salfordcityfc.co.uk/news/", "https://www.salfordcityfc.co.uk/category/clubnews"];
+      }
+    },
+    {
+      id: "bristol-rovers-official-news",
+      label: "Bristol Rovers official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["bristol rovers", "bristol rovers fc"],
+      buildUrls() {
+        return ["https://www.bristolrovers.co.uk/news"];
+      }
+    },
+    {
+      id: "cambridge-united-official-news",
+      label: "Cambridge United official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["cambridge united", "cambridge united fc"],
+      buildUrls() {
+        return ["https://www.cambridgeunited.com/news"];
+      }
+    }
+  ],
+
+  "eng.5": [
+    {
+      id: "altrincham-official-news",
+      label: "Altrincham official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["altrincham", "altrincham fc"],
+      buildUrls() {
+        return ["https://altrinchamfc.com/"];
+      }
+    },
+    {
+      id: "carlisle-united-official-news",
+      label: "Carlisle United official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["carlisle united", "carlisle united fc"],
+      buildUrls() {
+        return ["https://www.carlisleunited.co.uk/news"];
       }
     }
   ],
