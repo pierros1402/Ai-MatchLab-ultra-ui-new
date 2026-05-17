@@ -756,6 +756,19 @@ async function auditCandidateSources(rows) {
     row.bestCandidate = null;
     row.needsRegistrySource = row.officialSourceCount === 0;
 
+    if (!row.needsRegistrySource) {
+      row.candidateQuality = {
+        classification: "has_official_source",
+        registryReady: false,
+        recommendedAction: "no_registry_action_existing_official_source",
+        reasons: ["team_already_has_official_registry_source"]
+      };
+      row.bestCandidateClassification = row.candidateQuality.classification;
+      row.bestCandidateRegistryReady = false;
+      row.recommendedSourceAction = row.candidateQuality.recommendedAction;
+      continue;
+    }
+
     for (const url of urls) {
       if (count >= candidateFetchLimit) break;
 
@@ -871,7 +884,12 @@ for (const row of rows) {
   const key = row.bestCandidateClassification || (row.officialSourceCount > 0 ? "has_official_source" : "not_audited");
   candidateClassifications[key] = (candidateClassifications[key] || 0) + 1;
 }
-const registryReadyTeams = rows.filter(row => row.bestCandidateRegistryReady).map(row => row.team);
+const registryReadyTeams = rows
+  .filter(row => row.needsRegistrySource && row.bestCandidateRegistryReady)
+  .map(row => row.team);
+const registryReadyAlreadyCoveredTeams = rows
+  .filter(row => !row.needsRegistrySource && row.bestCandidateRegistryReady)
+  .map(row => row.team);
 const manualSourceTeams = rows.filter(row => row.needsRegistrySource && !row.bestCandidateRegistryReady).map(row => row.team);
 const outputPath = resolveDataPath("team-news", "_source-map-audits", `${leagueSlug}.json`);
 
@@ -892,10 +910,13 @@ const payload = {
     missingOfficialSourceCount: missingOfficial.length,
     candidateClassifications,
     registryReadyCount: registryReadyTeams.length,
+    registryReadyAlreadyCoveredCount: registryReadyAlreadyCoveredTeams.length,
     manualSourceCount: manualSourceTeams.length,
     withOfficial,
     missingOfficial,
     registryReadyTeams,
+    registryReadyMissingTeams: registryReadyTeams,
+    registryReadyAlreadyCoveredTeams,
     manualSourceTeams
   },
   rows
