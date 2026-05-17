@@ -103,14 +103,18 @@ function isFinalLike(row) {
   return /\b(FT|FULL_TIME|STATUS_FULL_TIME|FINAL|STATUS_FINAL|STATUS_FINAL_AET|AET|POST)\b/i.test(statusBucket(row));
 }
 
-function isRefreshCandidate(row, now = new Date()) {
+function isRefreshCandidate(row, now = new Date(), options = {}) {
   if (!row || isFinalLike(row)) return false;
 
   const bucket = statusBucket(row);
-  const staleOrLive = /\b(STALE|LIVE|FIRST_HALF|SECOND_HALF|HALF_TIME|IN_PROGRESS|STATUS_IN_PROGRESS)\b/i.test(bucket);
-  const preLike = /\b(PRE|SCHEDULED|STATUS_SCHEDULED)\b/i.test(bucket);
+  const staleOrLive = /\b(STALE|LIVE|FIRST_HALF|SECOND_HALF|HALF_TIME|IN_PROGRESS|STATUS_IN_PROGRESS|UNKNOWN)\b/i.test(bucket);
+  const preLike = /\b(PRE|SCHEDULED|STATUS_SCHEDULED|UNKNOWN)\b/i.test(bucket);
 
   if (staleOrLive) return true;
+
+  if (options.includeAllOpenStates && preLike) {
+    return true;
+  }
 
   const kickoff = row?.kickoffUtc ? new Date(row.kickoffUtc) : null;
   if (!kickoff || Number.isNaN(kickoff.getTime())) {
@@ -133,7 +137,7 @@ function collectTargetLeagues(dayKey, options = {}) {
     const slug = name.replace(/\.json$/i, "");
     const payload = readCanonicalLeague(dayKey, slug);
     const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
-    const candidates = fixtures.filter(row => isRefreshCandidate(row, now));
+    const candidates = fixtures.filter(row => isRefreshCandidate(row, now, options));
 
     if (candidates.length > 0) {
       out.set(slug, {
