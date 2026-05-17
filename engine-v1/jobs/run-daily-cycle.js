@@ -34,6 +34,7 @@ import { buildValueDay } from "../core/build-value-day.js";
 import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
+import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
 function normalizePositiveIntegerOption(value, fallback) {
@@ -793,6 +794,36 @@ export async function runDailyCycle(options = {}) {
 
 
   if (doFinalize) {
+    console.log("[daily-cycle] finalize-live-status-refresh:start", { finalizeDayKey });
+
+    const finalizeLiveStatusRefresh = await runLiveStatusRefreshDay(finalizeDayKey, {
+      includeAllOpenStates: true,
+      reason: "previous_day_finalization"
+    });
+
+    console.log("[daily-cycle] finalize-live-status-refresh:done", {
+      ok: finalizeLiveStatusRefresh?.ok,
+      dayKey: finalizeLiveStatusRefresh?.dayKey,
+      targetLeagueCount: finalizeLiveStatusRefresh?.targetLeagueCount ?? 0,
+      fetchedLeagueCount: finalizeLiveStatusRefresh?.fetchedLeagueCount ?? 0,
+      failedLeagueCount: finalizeLiveStatusRefresh?.failedLeagueCount ?? 0,
+      matchedRows: finalizeLiveStatusRefresh?.matchedRows ?? 0,
+      changedRows: finalizeLiveStatusRefresh?.changedRows ?? 0,
+      writtenLeagueCount: finalizeLiveStatusRefresh?.writtenLeagueCount ?? 0
+    });
+
+    console.log("[daily-cycle] finalize-canonical-sync:start", { finalizeDayKey });
+
+    const finalizeCanonicalSync = syncCanonicalFixturesToJsonDbDay(finalizeDayKey);
+
+    console.log("[daily-cycle] finalize-canonical-sync:done", {
+      ok: finalizeCanonicalSync?.ok,
+      dayKey: finalizeCanonicalSync?.dayKey,
+      canonicalRows: finalizeCanonicalSync?.canonicalRows ?? finalizeCanonicalSync?.rows ?? null,
+      written: finalizeCanonicalSync?.written ?? null,
+      output: finalizeCanonicalSync?.output || null
+    });
+
     console.log("[daily-cycle] finalize-value-build:start", { finalizeDayKey });
     finalizeValueBuild = await buildValueDay(finalizeDayKey, { rebuild: false });
     console.log("[daily-cycle] finalize-value-build:done", {
