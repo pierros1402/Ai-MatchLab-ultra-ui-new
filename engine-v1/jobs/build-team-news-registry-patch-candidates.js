@@ -82,6 +82,34 @@ function hasFanOrUnofficialPreview(text) {
   return /\b(transfer news|rumours?|advertise|write for us|fan site|unofficial|features)\b/i.test(String(text || ""));
 }
 
+function stripGreekAccents(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function hasKnownWrongTeamCollision(league, team, text) {
+  const haystack = stripGreekAccents(text).toLowerCase();
+  const normalizedTeam = String(team || "").toLowerCase();
+
+  if (league === "gre.1" && normalizedTeam === "aris") {
+    const wrongCyprusArisSignals = [
+      "limassol",
+      "lemesos",
+      "λεμεσου",
+      "κυπρ",
+      "cyprus",
+      "αρης λεμεσου"
+    ];
+
+    if (wrongCyprusArisSignals.some(signal => haystack.includes(signal))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function teamAliases(team) {
   const base = normalizeText(team);
   const lower = base.toLowerCase();
@@ -130,6 +158,7 @@ function candidateFromRow(league, row) {
   if (isSuspiciousForeignUkHost(league, sourceHost || finalHost)) reasons.push("suspicious_foreign_league_uk_domain");
   if (hasGrassrootsYouthClubPreview(best.textPreview)) reasons.push("grassroots_youth_club_preview");
   if (hasFanOrUnofficialPreview(best.textPreview)) reasons.push("fan_or_unofficial_preview");
+  if (hasKnownWrongTeamCollision(league, row.team, best.textPreview)) reasons.push("known_wrong_team_collision");
   if (args.strictNewsUrl && !isStrictNewsUrl(url)) reasons.push("not_strict_news_listing_url");
 
   return {
