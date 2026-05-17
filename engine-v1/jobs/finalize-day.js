@@ -246,8 +246,27 @@ function updateValueResults(dayKey, rows = []) {
   let unresolved = 0;
 
   for (const pick of sourceValueData.picks || []) {
-    const match = matchMap.get(String(pick.matchId));
+    delete pick.result;
+
+    const pickKeys = [pick?.matchId, pick?.id, pick?.fixtureId]
+      .filter(Boolean)
+      .map(v => String(v));
+
+    const match = pickKeys.map(key => matchMap.get(key)).find(Boolean);
+
     if (!match) {
+      unresolved += 1;
+      continue;
+    }
+
+    const homeScore = Number(match?.scoreHome ?? match?.homeScore);
+    const awayScore = Number(match?.scoreAway ?? match?.awayScore);
+
+    if (
+      !isOperationallyTerminal(match) ||
+      !Number.isFinite(homeScore) ||
+      !Number.isFinite(awayScore)
+    ) {
       unresolved += 1;
       continue;
     }
@@ -282,6 +301,71 @@ function updateValueResults(dayKey, rows = []) {
     unresolved,
     source: sourceValueData.settlement.source,
     wroteValueFile: valueFile
+  };
+}
+
+function readSnapshotFixtureRows(dayKey) {
+  const snapshotFixturesFile = resolveDataPath("deploy-snapshots", dayKey, "fixtures.json");
+  const data = readJsonSafe(snapshotFixturesFile, null);
+
+  if (!data) {
+    return {
+      rows: [],
+      source: null,
+      snapshotFixturesFile,
+      exists: fs.existsSync(snapshotFixturesFile)
+    };
+  }
+
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray(data.fixtures)
+      ? data.fixtures
+      : Array.isArray(data.rows)
+        ? data.rows
+        : Array.isArray(data.items)
+          ? data.items
+          : [];
+
+  return {
+    rows,
+    source: "deploy_snapshot_fixtures_fallback",
+    snapshotFixturesFile,
+    exists: fs.existsSync(snapshotFixturesFile)
+  };
+}
+
+export async function settleValueResultsIfPossible(dayKey) {
+  const storageRows = getFixturesByDay(dayKey);
+
+  const rowSource = storageRows.length
+    ? {
+        rows: storageRows,
+        source: "storage_rows",
+        snapshotFixturesFile: null,
+        exists: true
+      }
+    : readSnapshotFixtureRows(dayKey);
+
+  if (!rowSource.rows.length) {
+    return {
+      ok: false,
+      reason: "no_rows",
+      dayKey,
+      source: rowSource.source,
+      snapshotFixturesFile: rowSource.snapshotFixturesFile,
+      snapshotFixturesFileExists: rowSource.exists
+    };
+  }
+
+  const valueResolution = updateValueResults(dayKey, rowSource.rows);
+
+  return {
+    ok: Boolean(valueResolution?.ok),
+    dayKey,
+    rowSource: rowSource.source,
+    rowCount: rowSource.rows.length,
+    valueResolution
   };
 }
 
