@@ -670,8 +670,9 @@ function candidateQualitySignals(candidate = {}) {
     htmlLike: /html|xhtml/i.test(candidate.contentType || "") || !candidate.contentType,
     parkingOrSale: /hugedomains|sedo|dan\.com|afternic|namecheap|godaddy|parked|domain for sale|buy this domain|connectyourdomain|coming soon|under construction/i.test(haystack),
     thirdPartyOrBadRedirect: !sameOrSubdomain || /fansnetwork|wordpress\.com|blogspot|medium\.com|facebook\.com|x\.com|twitter\.com|instagram\.com|youtube\.com/i.test(haystack),
-    nonFootballBusinessNoise: /\b(yarns?|fibers?|fibres?|brochure|polymer|industrial|manufacturing|compliance|sustainability report)\b/i.test(haystack),
+    nonFootballBusinessNoise: /\b(yarns?|fibers?|fibres?|brochure|polymer|industrial|manufacturing|compliance|sustainability report|bank|banking|finance|saving|pricing|atm|branch(?:es)?|tadawul|capital|profits?|sme|economic forecasts?|saudi national bank|snb|alahli online|alahli tadawul|alahliecorp)\b/i.test(haystack),
     footballIdentity: /\b(fc|afc|football club|football|league two|efl|match preview|fixture|fixtures|results|squad|first team|men['’]?s first team|head coach|manager|player|players|training|academy|club shop|season tickets?)\b/i.test(haystack),
+    clubNewsSignal: /\b(latest news|club news|all news|news latest|match reports?|manager interviews?|player interviews?|press releases?|media|official statement|team news|first team news|mens first team|men['’]?s first team)\b|\/news(?:\/|\?|$)|\/blog(?:s)?(?:\/|\?|$)/i.test(haystack),
     weakPlaceholder: Number(candidate.textLength || 0) > 0 && Number(candidate.textLength || 0) < 1800 && Number(candidate.anchorCount || 0) < 4,
     newsListingUrl: /news|νέα|ειδήσεις|announcements|ανακοινώσεις/i.test(candidate.url || ""),
     enoughContent: Number(candidate.textLength || 0) >= 3500,
@@ -704,6 +705,7 @@ function classifyBestCandidate(bestCandidate = null, candidateFetches = []) {
   if (!signals.footballIdentity) reasons.push("missing_football_club_identity");
   if (signals.weakPlaceholder) reasons.push("weak_placeholder_low_content_low_links");
   if (signals.noiseHeavy) reasons.push("noise_heavy_low_team_news_signal");
+  if (!signals.newsListingUrl && !signals.clubNewsSignal) reasons.push("missing_club_news_or_article_listing_signal");
   if (!signals.enoughContent) reasons.push("low_content_length");
   if (!signals.hasAnyInterestingAnchor) reasons.push("no_team_news_like_anchors");
 
@@ -735,8 +737,12 @@ function classifyBestCandidate(bestCandidate = null, candidateFetches = []) {
     return { classification: "registry_ready", registryReady: true, recommendedAction: "add_official_registry_source", reasons: ["news_listing_url_with_fetchable_content_and_team_news_like_anchors"], signals };
   }
 
-  if (signals.enoughContent && signals.hasInterestingAnchors) {
+  if (signals.enoughContent && signals.hasInterestingAnchors && signals.clubNewsSignal) {
     return { classification: "registry_ready", registryReady: true, recommendedAction: "add_official_registry_source", reasons: ["fetchable_site_with_multiple_team_news_like_anchors"], signals };
+  }
+
+  if (signals.enoughContent && signals.hasInterestingAnchors && !signals.clubNewsSignal) {
+    return { classification: "manual_review", registryReady: false, recommendedAction: "manual_review_before_registry_add", reasons, signals };
   }
 
   if (signals.enoughContent && signals.hasAnyInterestingAnchor) {
