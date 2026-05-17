@@ -1698,11 +1698,22 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       label: "Dundee official news",
       type: "official_club_news",
       trustTier: "official",
-      teams: ["dundee fc"],
+      teams: ["dundee", "dundee fc"],
       buildUrls() {
-        return ["https://dundeefc.co.uk/"];
+        return ["https://dundeefc.co.uk/news/"];
       }
-    }],
+    },
+    {
+      id: "celtic-official-news",
+      label: "Celtic official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["celtic", "celtic fc"],
+      buildUrls() {
+        return ["https://www.celticfc.com/news/"];
+      }
+    }
+  ],
 
   "uga.1": [
     {
