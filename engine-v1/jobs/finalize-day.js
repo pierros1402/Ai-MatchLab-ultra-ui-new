@@ -194,13 +194,42 @@ function evaluatePickResult(pick, match) {
   return null;
 }
 
+function readJsonSafe(filePath, fallback = null) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
 function updateValueResults(dayKey, rows = []) {
   const valueFile = resolveDataPath("value", `${dayKey}.json`);
-  if (!fs.existsSync(valueFile)) {
-    return { ok: false, reason: "no_value_file", dayKey };
+  const snapshotValueFile = resolveDataPath("deploy-snapshots", dayKey, "value.json");
+
+  const localValueData = readJsonSafe(valueFile, null);
+  const snapshotValueData = readJsonSafe(snapshotValueFile, null);
+
+  const sourceValueData =
+    localValueData && typeof localValueData === "object"
+      ? localValueData
+      : snapshotValueData && typeof snapshotValueData === "object"
+        ? {
+            ...snapshotValueData,
+            source: snapshotValueData.source || "deploy_snapshot_value_fallback"
+          }
+        : null;
+
+  if (!sourceValueData || !Array.isArray(sourceValueData.picks)) {
+    return {
+      ok: false,
+      reason: "no_value_picks",
+      dayKey,
+      valueFileExists: fs.existsSync(valueFile),
+      snapshotValueFileExists: fs.existsSync(snapshotValueFile)
+    };
   }
 
-  const valueData = JSON.parse(fs.readFileSync(valueFile, "utf8"));
   const matchMap = new Map();
 
   for (const row of rows || []) {
@@ -214,23 +243,46 @@ function updateValueResults(dayKey, rows = []) {
   }
 
   let updated = 0;
+  let unresolved = 0;
 
-  for (const pick of valueData.picks || []) {
+  for (const pick of sourceValueData.picks || []) {
     const match = matchMap.get(String(pick.matchId));
-    if (!match) continue;
+    if (!match) {
+      unresolved += 1;
+      continue;
+    }
 
     const win = evaluatePickResult(pick, match);
-    if (win === null) continue;
+    if (win === null) {
+      unresolved += 1;
+      continue;
+    }
 
     pick.result = win ? "WIN" : "LOSS";
     updated += 1;
   }
 
-  valueData.updatedAt = Date.now();
-  valueData.count = Array.isArray(valueData.picks) ? valueData.picks.length : 0;
-  fs.writeFileSync(valueFile, JSON.stringify(valueData, null, 2));
+  sourceValueData.updatedAt = Date.now();
+  sourceValueData.count = Array.isArray(sourceValueData.picks) ? sourceValueData.picks.length : 0;
+  sourceValueData.settlement = {
+    dayKey,
+    source: localValueData ? "local_value_file" : "deploy_snapshot_value_fallback",
+    updated,
+    unresolved,
+    settledAt: new Date().toISOString()
+  };
 
-  return { ok: true, dayKey, updated };
+  fs.mkdirSync(resolveDataPath("value"), { recursive: true });
+  fs.writeFileSync(valueFile, JSON.stringify(sourceValueData, null, 2));
+
+  return {
+    ok: true,
+    dayKey,
+    updated,
+    unresolved,
+    source: sourceValueData.settlement.source,
+    wroteValueFile: valueFile
+  };
 }
 
 export async function finalizeDayIfSafe(dayKey) {
