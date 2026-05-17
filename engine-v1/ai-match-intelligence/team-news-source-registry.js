@@ -740,6 +740,36 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
           "https://www.bwfc.co.uk/"
         ];
       }
+    },
+    {
+      id: "cardiff-city-official-news",
+      label: "Cardiff City official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["cardiff city","cardiff city fc"],
+      buildUrls() {
+        return ["https://www.cardiffcityfc.co.uk/news"];
+      }
+    },
+    {
+      id: "exeter-city-official-news",
+      label: "Exeter City official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["exeter city","exeter city fc"],
+      buildUrls() {
+        return ["https://www.exetercityfc.co.uk/news"];
+      }
+    },
+    {
+      id: "blackpool-official-news",
+      label: "Blackpool official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["blackpool","blackpool fc"],
+      buildUrls() {
+        return ["https://www.blackpoolfc.co.uk/news/"];
+      }
     }
   ],
 
@@ -949,6 +979,16 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       trustTier: "high",
       buildUrls() {
         return ["https://www.lequipe.fr/Football/"];
+      }
+    },
+    {
+      id: "as-monaco-official-news",
+      label: "AS Monaco official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["as monaco","as monaco fc"],
+      buildUrls() {
+        return ["https://www.asmonaco.com/fr/news"];
       }
     }
   ],
@@ -1853,6 +1893,16 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
       teams: ["carlisle united", "carlisle united fc"],
       buildUrls() {
         return ["https://www.carlisleunited.co.uk/news"];
+      }
+    },
+    {
+      id: "eastleigh-official-news",
+      label: "Eastleigh official news",
+      type: "official_club_news",
+      trustTier: "official",
+      teams: ["eastleigh","eastleigh fc"],
+      buildUrls() {
+        return ["https://eastleighfc.com/news/"];
       }
     }
   ],
