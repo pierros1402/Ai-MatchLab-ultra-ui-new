@@ -35,6 +35,7 @@ import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.j
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
+import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
 function normalizePositiveIntegerOption(value, fallback) {
@@ -344,8 +345,7 @@ export async function runDailyCycle(options = {}) {
   let finalDetailsSync = null;
   let valueCoverageReport = null;
   let deploySnapshot = null;
-  let finalizedDeploySnapshot = null;
-  let finalizeValueBuild = null;
+  let finalizedDeploySnapshot = null;$1  let finalizeReadiness = null;
   let finalize = null;
   let historyAppend = null;
   let indexesRebuild = null;
@@ -824,6 +824,23 @@ export async function runDailyCycle(options = {}) {
       output: finalizeCanonicalSync?.output || null
     });
 
+    console.log("[daily-cycle] finalization-readiness:start", { finalizeDayKey });
+
+    finalizeReadiness = auditFinalizationReadinessDay(finalizeDayKey);
+
+    console.log("[daily-cycle] finalization-readiness:done", {
+      ok: finalizeReadiness?.ok,
+      dayKey: finalizeReadiness?.dayKey,
+      fixtures: finalizeReadiness?.fixtures ?? 0,
+      terminal: finalizeReadiness?.terminal ?? 0,
+      terminalMissingScore: finalizeReadiness?.terminalMissingScore ?? 0,
+      open: finalizeReadiness?.open ?? 0,
+      duplicateIdCount: finalizeReadiness?.duplicateIdCount ?? 0,
+      safeToFinalizeStats: Boolean(finalizeReadiness?.safeToFinalizeStats),
+      openByStatus: finalizeReadiness?.openByStatus || {},
+      openByLeague: finalizeReadiness?.openByLeague || {}
+    });
+
     console.log("[daily-cycle] finalize-value-build:start", { finalizeDayKey });
     finalizeValueBuild = await buildValueDay(finalizeDayKey, { rebuild: false });
     console.log("[daily-cycle] finalize-value-build:done", {
@@ -852,16 +869,47 @@ export async function runDailyCycle(options = {}) {
         latestUpdated: finalizedDeploySnapshot?.latestUpdated
       });
 
-      console.log("[daily-cycle] history-append:start", { finalizeDayKey });
-      historyAppend = await appendFinalizedDayToHistory(finalizeDayKey);
-      console.log("[daily-cycle] history-append:done", historyAppend);
+      if (finalizeReadiness?.safeToFinalizeStats) {
+        console.log("[daily-cycle] history-append:start", { finalizeDayKey });
+        historyAppend = await appendFinalizedDayToHistory(finalizeDayKey);
+        console.log("[daily-cycle] history-append:done", historyAppend);
 
-      console.log("[daily-cycle] indexes-rebuild:start", { finalizeDayKey });
-      indexesRebuild = await rebuildIndexesForSeason(finalizeDayKey);
-      console.log("[daily-cycle] indexes-rebuild:done", {
-        ok: indexesRebuild?.ok,
-        season: indexesRebuild?.season
-      });
+        console.log("[daily-cycle] indexes-rebuild:start", { finalizeDayKey });
+        indexesRebuild = await rebuildIndexesForSeason(finalizeDayKey);
+        console.log("[daily-cycle] indexes-rebuild:done", {
+          ok: indexesRebuild?.ok,
+          season: indexesRebuild?.season
+        });
+      } else {
+        historyAppend = {
+          ok: false,
+          skipped: true,
+          reason: "unsafe_finalization_readiness",
+          dayKey: finalizeDayKey,
+          readiness: finalizeReadiness
+            ? {
+                fixtures: finalizeReadiness.fixtures,
+                terminal: finalizeReadiness.terminal,
+                terminalMissingScore: finalizeReadiness.terminalMissingScore,
+                open: finalizeReadiness.open,
+                duplicateIdCount: finalizeReadiness.duplicateIdCount,
+                safeToFinalizeStats: finalizeReadiness.safeToFinalizeStats,
+                openByStatus: finalizeReadiness.openByStatus,
+                openByLeague: finalizeReadiness.openByLeague
+              }
+            : null
+        };
+
+        indexesRebuild = {
+          ok: false,
+          skipped: true,
+          reason: "history_append_skipped",
+          dayKey: finalizeDayKey
+        };
+
+        console.warn("[daily-cycle] history-append:skipped", historyAppend);
+        console.warn("[daily-cycle] indexes-rebuild:skipped", indexesRebuild);
+      }
     }
   }
 
@@ -907,6 +955,7 @@ export async function runDailyCycle(options = {}) {
     teamNewsBuild,
     valueBuild,
     valueCoverageReport,
+    finalizeReadiness,
     finalDetailsSync,
     deploySnapshot,
     finalizedDeploySnapshot,
