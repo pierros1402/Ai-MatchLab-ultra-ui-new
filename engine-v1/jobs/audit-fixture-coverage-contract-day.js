@@ -23,6 +23,7 @@ function parseArgs(argv = process.argv.slice(2)) {
   const out = {
     dayKey: null,
     strictSingleProvider: true,
+    warnOnly: false,
     minTrust: 0,
     valueTier: 1,
     uiTier: 2
@@ -56,6 +57,11 @@ function parseArgs(argv = process.argv.slice(2)) {
 
     if (arg === "--allow-single-provider") {
       out.strictSingleProvider = false;
+      continue;
+    }
+
+    if (arg === "--warn-only" || arg === "--exit-zero") {
+      out.warnOnly = true;
       continue;
     }
   }
@@ -396,7 +402,7 @@ if (isCli) {
     console.error(JSON.stringify({
       ok: false,
       reason: "missing_day",
-      usage: "node engine-v1/jobs/audit-fixture-coverage-contract-day.js --date=YYYY-MM-DD [--min-trust=0.8] [--value-tier=1] [--ui-tier=2] [--allow-single-provider]"
+      usage: "node engine-v1/jobs/audit-fixture-coverage-contract-day.js --date=YYYY-MM-DD [--min-trust=0.8] [--value-tier=1] [--ui-tier=2] [--allow-single-provider] [--warn-only|--exit-zero]"
     }, null, 2));
     process.exitCode = 1;
   } else {
@@ -406,6 +412,7 @@ if (isCli) {
       ok: result.ok,
       dayKey: result.dayKey,
       strictSingleProvider: result.strictSingleProvider,
+      warnOnly: args.warnOnly,
       minTrust: result.minTrust,
       valueTier: result.valueTier,
       uiTier: result.uiTier,
@@ -419,7 +426,7 @@ if (isCli) {
       sampleMissingCoverageEntries: result.missingCoverageEntries.slice(0, 25).map(x => x.slug)
     }, null, 2));
 
-    if (!result.safety.coverageSafeForValue) {
+    if (!args.warnOnly && !result.safety.coverageSafeForValue) {
       process.exitCode = 2;
     }
   }

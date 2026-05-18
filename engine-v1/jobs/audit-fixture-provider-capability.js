@@ -9,7 +9,8 @@ function parseArgs(argv = process.argv.slice(2)) {
   const out = {
     minTrust: 0,
     valueTier: 1,
-    uiTier: 2
+    uiTier: 2,
+    warnOnly: false
   };
 
   for (const arg of argv) {
@@ -25,6 +26,11 @@ function parseArgs(argv = process.argv.slice(2)) {
 
     if (arg.startsWith("--ui-tier=")) {
       out.uiTier = Number(arg.slice("--ui-tier=".length));
+      continue;
+    }
+
+    if (arg === "--warn-only" || arg === "--exit-zero") {
+      out.warnOnly = true;
       continue;
     }
   }
@@ -266,6 +272,7 @@ if (isCli) {
     minTrust: result.minTrust,
     valueTier: result.valueTier,
     uiTier: result.uiTier,
+    warnOnly: args.warnOnly,
     counts: result.counts,
     safety: result.safety,
     providerInventory: result.providerInventory,
@@ -276,7 +283,7 @@ if (isCli) {
     sampleUiSingleProviderEntries: result.debt.uiSingleProviderEntries.slice(0, 25).map(x => x.slug)
   }, null, 2));
 
-  if (!result.safety.providerCapabilitySafeForAutonomousValue) {
+  if (!args.warnOnly && !result.safety.providerCapabilitySafeForAutonomousValue) {
     process.exitCode = 2;
   }
 }
