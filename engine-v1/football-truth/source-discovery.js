@@ -1,5 +1,17 @@
-function normalizeText(value) {
+function repairMojibake(value) {
   return String(value || "")
+    .replace(/Γ΅/g, "á")
+    .replace(/Γ±/g, "ñ")
+    .replace(/Γ­/g, "í")
+    .replace(/Γ©/g, "é")
+    .replace(/Γ³/g, "ó")
+    .replace(/Γº/g, "ú")
+    .replace(/Γ‘/g, "Ñ")
+    .replace(/Γ‰/g, "É");
+}
+
+function normalizeText(value) {
+  return repairMojibake(value)
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^\p{L}\p{N}]+/gu, " ")
@@ -45,18 +57,21 @@ function deriveTeams(watchRow) {
   const homeTeam = watchRow?.homeTeam || watchRow?.home || watchRow?.homeName || null;
   const awayTeam = watchRow?.awayTeam || watchRow?.away || watchRow?.awayName || null;
 
+  const repairedHomeTeam = homeTeam ? repairMojibake(homeTeam).trim() : null;
+  const repairedAwayTeam = awayTeam ? repairMojibake(awayTeam).trim() : null;
+
   return {
-    homeTeam: homeTeam ? String(homeTeam).trim() : null,
-    awayTeam: awayTeam ? String(awayTeam).trim() : null,
-    homeSlug: slugText(homeTeam),
-    awaySlug: slugText(awayTeam),
-    homeCompact: compactText(homeTeam),
-    awayCompact: compactText(awayTeam)
+    homeTeam: repairedHomeTeam,
+    awayTeam: repairedAwayTeam,
+    homeSlug: slugText(repairedHomeTeam),
+    awaySlug: slugText(repairedAwayTeam),
+    homeCompact: compactText(repairedHomeTeam),
+    awayCompact: compactText(repairedAwayTeam)
   };
 }
 
 function buildSearchQueries(watchRow, teams) {
-  const date = asDateKey(watchRow?.date || watchRow?.dayKey || watchRow?.utcDate);
+  const date = asDateKey(watchRow?.date || watchRow?.day || watchRow?.dayKey || watchRow?.utcDate || watchRow?.kickoffUtc);
   const league = watchRow?.leagueName || watchRow?.league || watchRow?.leagueSlug || "";
 
   const base = [
@@ -111,7 +126,7 @@ function buildSearchQueries(watchRow, teams) {
 }
 
 function buildSourceDescriptors(watchRow, teams) {
-  const fixtureId = watchRow?.fixtureId || watchRow?.id || null;
+  const fixtureId = watchRow?.fixtureId || watchRow?.matchId || watchRow?.id || null;
   const leagueSlug = watchRow?.leagueSlug || null;
 
   const descriptors = [
@@ -199,8 +214,8 @@ export function discoverFinalResultSources(watchRow, options = {}) {
     verdict: "source_discovery_descriptors_ready",
     watchRow: watchRow || null,
     normalized: {
-      date: asDateKey(watchRow?.date || watchRow?.dayKey || watchRow?.utcDate),
-      fixtureId: watchRow?.fixtureId || watchRow?.id || null,
+      date: asDateKey(watchRow?.date || watchRow?.day || watchRow?.dayKey || watchRow?.utcDate || watchRow?.kickoffUtc),
+      fixtureId: watchRow?.fixtureId || watchRow?.matchId || watchRow?.id || null,
       leagueSlug: watchRow?.leagueSlug || null,
       homeTeam: teams.homeTeam,
       awayTeam: teams.awayTeam,
