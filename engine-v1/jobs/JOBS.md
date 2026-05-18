@@ -29,6 +29,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - verify-final-result-evidence-file.js: read-only final-result evidence verification report; input evidence JSON -> verifier report, canonicalWrites: 0, exit code 2 for conflicts and 1 for insufficient evidence.
 - build-final-result-evidence-file.js: read-only final-result evidence package builder; raw evidence JSON -> validated/review/rejected evidence package, canonicalWrites: 0, no fetch, no verification, no promotion.
 - build-and-verify-final-result-evidence-file.js: read-only combined final-result evidence diagnostic; raw evidence JSON -> evidence package -> verifier report, canonicalWrites: 0, no fetch, no promotion, exit code 2 for conflicts and 1 for insufficient evidence.
+- discover-final-result-sources-file.js: read-only final-result source discovery report; watchRow JSON -> source/search descriptors, canonicalWrites: 0, no fetch, no FT decision, no promotion.
 - audit-fixture-coverage-contract-day.js: fixture coverage contract audit; strict locally, warn-only in workflow.
 - audit-fixture-provider-capability.js: provider capability/debt audit; strict locally, warn-only in workflow.
 - audit-snapshot-mirror-day.js: snapshot parity audit.
