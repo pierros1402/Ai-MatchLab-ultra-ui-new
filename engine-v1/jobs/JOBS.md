@@ -179,3 +179,35 @@ Guarantees:
 - no writes to fixtures/history/value/details
 
 This job does not resolve URLs and does not download pages. It only materializes search query targets for a later explicit fetch diagnostic.
+
+
+### `materialize-final-result-source-resolution-tasks-file.js`
+
+Read-only final-result source resolution task materializer.
+
+Pipeline:
+
+```text
+searchTargets
+-> resolutionTasks
+-> manual/external search needed
+```
+
+Usage:
+
+```powershell
+node .\engine-v1\jobs\materialize-final-result-source-resolution-tasks-file.js --input .\path\to\final-result-source-search-targets.json --output .\data\football-truth\_diagnostics\final-result-source-resolution-tasks.json
+```
+
+Guarantees:
+
+- read-only diagnostic only
+- no fetch
+- no URL resolution side effects
+- no final truth decision
+- `canonicalWrites: 0`
+- no canonical promotion
+- no production repair
+- no writes to fixtures/history/value/details
+
+This job does not resolve URLs and does not download pages. It converts search targets into explicit resolution tasks for a later external/manual URL resolution or controlled fetch diagnostic layer.
