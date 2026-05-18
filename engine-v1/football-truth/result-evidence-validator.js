@@ -210,22 +210,22 @@ export function validateFinalResultEvidence(watchRow, candidate, options = {}) {
 
   confidence = Math.max(0, Math.min(1, Number(confidence.toFixed(3))));
 
-  let verdict = "weak_candidate";
+  let verdict = "weak_evidence";
   if (rejects.includes("missing_score") || rejects.includes("team_mismatch") || rejects.includes("date_mismatch")) {
-    verdict = "rejected";
+    verdict = "rejected_evidence";
   } else if (confidence >= 0.8) {
-    verdict = "accepted_candidate";
+    verdict = "validated_evidence";
   } else if (confidence >= 0.55) {
-    verdict = "review_candidate";
+    verdict = "review_evidence";
   }
 
-  if (options.requireOfficial === true && tier !== "official" && verdict === "accepted_candidate") {
-    verdict = "review_candidate";
+  if (options.requireOfficial === true && tier !== "official" && verdict === "validated_evidence") {
+    verdict = "review_evidence";
     reasons.push("downgraded_require_official");
   }
 
   return {
-    ok: verdict !== "rejected",
+    ok: verdict !== "rejected_evidence",
     verdict,
     confidence,
     sourceTier: tier,
@@ -255,7 +255,7 @@ export function validateFinalResultEvidence(watchRow, candidate, options = {}) {
 export function compareFinalResultCandidates(watchRow, candidates, options = {}) {
   const validated = candidates.map(candidate => validateFinalResultEvidence(watchRow, candidate, options));
 
-  const accepted = validated.filter(row => row.verdict === "accepted_candidate" || row.verdict === "review_candidate");
+  const accepted = validated.filter(row => row.verdict === "validated_evidence" || row.verdict === "review_evidence");
   const scoreKeys = new Set(
     accepted
       .filter(row => row.score)
@@ -267,8 +267,8 @@ export function compareFinalResultCandidates(watchRow, candidates, options = {})
   return {
     ok: accepted.length > 0 && !conflict,
     conflict,
-    acceptedCount: accepted.length,
-    rejectedCount: validated.filter(row => row.verdict === "rejected").length,
+    validatedEvidenceCount: accepted.length,
+    rejectedEvidenceCount: validated.filter(row => row.verdict === "rejected_evidence").length,
     best: accepted
       .slice()
       .sort((a, b) => b.confidence - a.confidence)[0] || null,
