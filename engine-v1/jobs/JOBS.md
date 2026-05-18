@@ -100,3 +100,51 @@ engine-v1/football-truth/
 - canonical-promotion-gate.js
 
 Jobs should call these modules instead of duplicating truth logic.
+
+
+### `extract-build-and-verify-final-result-evidence-file.js`
+
+Read-only end-to-end FT evidence diagnostic.
+
+Pipeline:
+
+```text
+prepared rows
+-> result-evidence-extractor rawEvidenceRows
+-> result-evidence-builder package / validator path
+-> final-result-verifier
+-> diagnostic report
+```
+
+Usage:
+
+```powershell
+node .\engine-v1\jobs\extract-build-and-verify-final-result-evidence-file.js --input .\path\to\prepared-evidence.json --output .\data\football-truth\_diagnostics\extract-build-and-verify-final-result-evidence-file.json
+```
+
+Supported input shapes:
+
+```json
+{ "watchRow": {}, "preparedRows": [] }
+```
+
+or:
+
+```json
+{ "cases": [{ "watchRow": {}, "preparedRows": [] }] }
+```
+
+Guarantees:
+
+- read-only diagnostic only
+- no fetch
+- `canonicalWrites: 0`
+- no canonical promotion
+- no production repair
+- no writes to fixtures/history/value/details
+
+Exit codes:
+
+- `0`: verified_final_result
+- `1`: needs_more_evidence
+- `2`: conflict
