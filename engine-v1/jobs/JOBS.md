@@ -93,6 +93,7 @@ engine-v1/football-truth/
 - result-evidence-validator.js
 - final-result-verifier.js
 - source-discovery.js
+- result-evidence-extractor.js
 - result-evidence-builder.js
 - source-reliability.js
 - canonical-promotion-gate.js
