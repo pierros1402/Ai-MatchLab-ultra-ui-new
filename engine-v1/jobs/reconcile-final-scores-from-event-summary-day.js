@@ -274,7 +274,18 @@ function rowPatch(row, finalScore, meta = {}) {
 }
 
 export async function reconcileFinalScoresFromEventSummaryDay(dayKey, options = {}) {
-  const write = Boolean(options.write);
+  const requestedWrite = Boolean(options.write);
+  const unsafeWriteFromSingleProvider = Boolean(options.unsafeWriteFromSingleProvider);
+  const write = requestedWrite && unsafeWriteFromSingleProvider;
+
+  if (requestedWrite && !unsafeWriteFromSingleProvider) {
+    throw new Error(
+      "Refusing canonical write from ESPN event summary single-provider diagnostic. " +
+      "Run without --write for report-only mode. Legacy canonical write requires " +
+      "--unsafe-write-from-single-provider and must not be used in production automation."
+    );
+  }
+
   const limit = Number.isFinite(Number(options.limit)) ? Number(options.limit) : Infinity;
   const reason = options.reason || "event_summary_fallback";
   const reconciledAt = new Date().toISOString();
@@ -419,7 +430,11 @@ export async function reconcileFinalScoresFromEventSummaryDay(dayKey, options = 
     ok: true,
     dayKey,
     write,
+    requestedWrite,
+    unsafeWriteFromSingleProvider,
     source: "espn_event_summary",
+    trust: "single_provider_diagnostic_only",
+    canonicalSafe: false,
     checked: checked.length,
     candidates: candidates.length,
     limitedCandidates: limitedCandidates.length,
@@ -462,6 +477,7 @@ function parseArgs(argv) {
   const out = {
     dayKey: null,
     write: false,
+    unsafeWriteFromSingleProvider: false,
     limit: Infinity
   };
 
@@ -478,6 +494,12 @@ function parseArgs(argv) {
 
     if (arg === "--write") {
       out.write = true;
+      continue;
+    }
+
+    if (arg === "--unsafe-write-from-single-provider") {
+      out.write = true;
+      out.unsafeWriteFromSingleProvider = true;
       continue;
     }
 
@@ -499,15 +521,25 @@ if (isCli) {
     console.error(JSON.stringify({
       ok: false,
       reason: "missing_day",
-      usage: "node engine-v1/jobs/reconcile-final-scores-from-event-summary-day.js --date=YYYY-MM-DD [--write]"
+      usage: "node engine-v1/jobs/reconcile-final-scores-from-event-summary-day.js --date=YYYY-MM-DD [report-only default; legacy local-only unsafe write: --unsafe-write-from-single-provider]"
     }, null, 2));
     process.exitCode = 1;
   } else {
-    const result = await reconcileFinalScoresFromEventSummaryDay(args.dayKey, args);
-    console.log(JSON.stringify(result, null, 2));
+    try {
+      const result = await reconcileFinalScoresFromEventSummaryDay(args.dayKey, args);
+      console.log(JSON.stringify(result, null, 2));
 
-    if (result.unresolved > 0) {
-      process.exitCode = 2;
+      if (result.unresolved > 0) {
+        process.exitCode = 2;
+      }
+    } catch (error) {
+      console.error(JSON.stringify({
+        ok: false,
+        reason: "unsafe_single_provider_write_rejected",
+        message: error?.message || String(error),
+        usage: "node engine-v1/jobs/reconcile-final-scores-from-event-summary-day.js --date=YYYY-MM-DD"
+      }, null, 2));
+      process.exitCode = 1;
     }
   }
 }
