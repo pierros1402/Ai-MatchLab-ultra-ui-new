@@ -34,6 +34,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - classify-final-result-sources-file.js: read-only final-result source reliability classification report; source descriptors JSON -> official/trusted/provider/aggregator/unknown/rejected tiers, canonicalWrites: 0, no fetch, no FT decision, no promotion.
 - discover-and-classify-final-result-sources-watchset-day.js: read-only combined final-result source discovery/reliability diagnostic; deploy snapshot watchset -> source/search descriptors -> source reliability tiers, canonicalWrites: 0, no fetch, no FT decision, no promotion.
 - extract-final-result-evidence-file.js: read-only final-result evidence extraction report; prepared/source rows JSON -> rawEvidenceRows, canonicalWrites: 0, no fetch, no verification, no FT decision, no promotion.
+- run-final-result-source-snapshot-evidence-diagnostic-file.js: read-only source snapshot evidence orchestrator; fetched source snapshots or validated URL resolutions -> prepare -> extract/build/verify diagnostic, canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
 - audit-fixture-coverage-contract-day.js: fixture coverage contract audit; strict locally, warn-only in workflow.
 - audit-fixture-provider-capability.js: provider capability/debt audit; strict locally, warn-only in workflow.
 - audit-snapshot-mirror-day.js: snapshot parity audit.
@@ -329,3 +330,58 @@ Guarantees:
 - no writes to fixtures/history/value/details
 
 This job only converts diagnostic source snapshots into prepared evidence rows. Use the separate extract/build/verify job for evidence extraction and verification.
+
+### `run-final-result-source-snapshot-evidence-diagnostic-file.js`
+
+Read-only source snapshot FT evidence orchestrator.
+
+Pipeline:
+
+```text
+validatedResolvedSourceUrls --allow-fetch
+-> fetch-final-result-source-url-snapshots-file.js
+-> fetchedSourceSnapshots
+-> prepare-final-result-evidence-rows-from-source-snapshots-file.js
+-> preparedRows
+-> extract-build-and-verify-final-result-evidence-file.js
+-> diagnostic report
+```
+
+It can also start directly from already fetched source snapshots:
+
+```text
+fetchedSourceSnapshots
+-> prepare-final-result-evidence-rows-from-source-snapshots-file.js
+-> preparedRows
+-> extract-build-and-verify-final-result-evidence-file.js
+-> diagnostic report
+```
+
+Usage without fetch:
+
+```powershell
+node .\engine-v1\jobs\run-final-result-source-snapshot-evidence-diagnostic-file.js --input .\data\football-truth\_diagnostics\final-result-source-url-snapshots.json --output .\data\football-truth\_diagnostics\final-result-source-snapshot-evidence-diagnostic.json
+```
+
+Usage with controlled fetch:
+
+```powershell
+node .\engine-v1\jobs\run-final-result-source-snapshot-evidence-diagnostic-file.js --input .\data\football-truth\_diagnostics\final-result-source-url-resolutions.json --output .\data\football-truth\_diagnostics\final-result-source-snapshot-evidence-diagnostic.json --allow-fetch --limit=1 --timeout-ms=5000 --max-bytes=50000
+```
+
+Supported input shapes:
+
+- `{ fetchedSourceSnapshots }`
+- `{ sourceSnapshots }`
+- `{ snapshots }`
+- output from `validate-final-result-source-url-resolutions-file.js`
+
+Guarantees:
+
+- read-only diagnostic wrapper
+- `canonicalWrites: 0`
+- no final truth production decision
+- no canonical promotion
+- no production repair
+- no writes to fixtures/history/value/details
+- fetch is blocked unless `--allow-fetch` is explicitly passed
