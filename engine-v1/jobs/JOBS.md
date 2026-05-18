@@ -1,4 +1,4 @@
-﻿# Engine Jobs Inventory
+# Engine Jobs Inventory
 
 Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, and unsafe legacy tools do not get mixed.
 
@@ -297,3 +297,35 @@ Guarantees:
 - no writes to fixtures/history/value/details
 
 This job downloads only validated resolved URLs when explicitly allowed. It does not extract final scores and does not update canonical data.
+
+
+### `prepare-final-result-evidence-rows-from-source-snapshots-file.js`
+
+Read-only final-result evidence row preparer from fetched source snapshots.
+
+Pipeline:
+
+```text
+fetchedSourceSnapshots
+-> preparedRows
+-> extract-build-and-verify-final-result-evidence-file.js
+```
+
+Usage:
+
+```powershell
+node .\engine-v1\jobs\prepare-final-result-evidence-rows-from-source-snapshots-file.js --input .\path\to\final-result-source-url-snapshots.json --output .\data\football-truth\_diagnostics\final-result-prepared-evidence-rows.json
+```
+
+Guarantees:
+
+- read-only diagnostic only
+- no fetch
+- no evidence extraction
+- no final truth decision
+- `canonicalWrites: 0`
+- no canonical promotion
+- no production repair
+- no writes to fixtures/history/value/details
+
+This job only converts diagnostic source snapshots into prepared evidence rows. Use the separate extract/build/verify job for evidence extraction and verification.
