@@ -24,6 +24,12 @@ function normalizeSourceKey(row) {
     row?.url ||
     row?.provider ||
     row?.sourceName ||
+    row?.candidate?.sourceName ||
+    row?.candidate?.sourceUrl ||
+    row?.candidate?.sourceType ||
+    row?.normalizedEvidence?.sourceName ||
+    row?.normalizedEvidence?.sourceUrl ||
+    row?.normalizedEvidence?.sourceKey ||
     "";
 
   return String(direct || "")
