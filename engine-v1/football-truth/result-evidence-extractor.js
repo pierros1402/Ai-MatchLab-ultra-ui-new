@@ -45,26 +45,48 @@ function scoreFromObject(value) {
   return { home, away };
 }
 
+function scorePairFromMatch(match) {
+  if (!match) return null;
+
+  const home = toIntegerScore(match[1]);
+  const away = toIntegerScore(match[2]);
+
+  if (home === null || away === null) return null;
+
+  // Text-extracted FT scores must not be inferred from timestamps or page-build numbers.
+  if (home > 20 || away > 20) return null;
+
+  return { home, away };
+}
+
 function scoreFromText(value) {
   const text = cleanText(value);
   if (!text) return null;
 
-  const patterns = [
-    /\b(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b/,
+  const finalContextPatterns = [
+    /\bfinal\s+score\b[^\d]{0,120}(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b/i,
+    /\bfull[ -]?time\b[^\d]{0,120}(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b/i,
+    /\bft\b[^\d]{0,120}(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b/i,
+    /\b(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b.{0,180}\bfinal\s+score\b/i,
+    /\b(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b.{0,180}\bfull[ -]?time\b/i,
+    /\b(\d{1,2})\s*[-–—:]\s*(\d{1,2})\b.{0,180}\bft\b/i
+  ];
+
+  for (const pattern of finalContextPatterns) {
+    const score = scorePairFromMatch(text.match(pattern));
+    if (score) return score;
+  }
+
+  const genericPatterns = [
+    // Generic extraction excludes colon to avoid treating timestamps like 19:29 as scores.
+    /\b(\d{1,2})\s*[-–—]\s*(\d{1,2})\b/,
     /\bhome\s+(\d{1,2})\s+away\s+(\d{1,2})\b/i,
     /\b(\d{1,2})\s+v\s+(\d{1,2})\b/i
   ];
 
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
-    if (!match) continue;
-
-    const home = toIntegerScore(match[1]);
-    const away = toIntegerScore(match[2]);
-
-    if (home !== null && away !== null) {
-      return { home, away };
-    }
+  for (const pattern of genericPatterns) {
+    const score = scorePairFromMatch(text.match(pattern));
+    if (score) return score;
   }
 
   return null;

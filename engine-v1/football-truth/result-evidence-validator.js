@@ -1,4 +1,4 @@
-﻿function normalizeText(value) {
+function normalizeText(value) {
   return String(value || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -101,14 +101,14 @@ function sourceTier(candidate) {
     return "official";
   }
 
-  if (type.includes("trusted") || type.includes("known_results")) return "trusted";
+  if (type.includes("trusted") || type.includes("known_results") || type.includes("provider")) return "trusted";
   if (type.includes("aggregator") || type.includes("scores")) return "aggregator";
   return "unknown";
 }
 
 function dateMatches(watchRow, candidate) {
-  const watchDate = String(watchRow?.kickoffUtc || watchRow?.date || "").slice(0, 10);
-  const candidateDate = String(candidate?.kickoffUtc || candidate?.date || candidate?.matchDate || "").slice(0, 10);
+  const watchDate = String(watchRow?.kickoffUtc || watchRow?.date || watchRow?.day || "").slice(0, 10);
+  const candidateDate = String(candidate?.kickoffUtc || candidate?.date || candidate?.matchDate || candidate?.day || "").slice(0, 10);
 
   if (!watchDate || !candidateDate) {
     return { ok: null, reason: "missing_date" };

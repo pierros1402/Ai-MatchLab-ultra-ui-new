@@ -214,12 +214,97 @@ function truncateText(value, maxBytes) {
   };
 }
 
+function buildResolutionTaskLookup(input) {
+  const map = new Map();
+
+  for (const oneCase of asArray(input?.cases)) {
+    const caseWatchRow = oneCase?.watchRow || oneCase?.match || oneCase?.fixture || null;
+
+    for (const task of asArray(oneCase?.resolutionTasks)) {
+      const taskId = cleanString(task?.taskId);
+      if (!taskId) continue;
+
+      map.set(taskId, {
+        ...task,
+        watchRow: task?.watchRow || caseWatchRow || null,
+        homeTeam: cleanString(task?.homeTeam || task?.watchRow?.homeTeam || caseWatchRow?.homeTeam),
+        awayTeam: cleanString(task?.awayTeam || task?.watchRow?.awayTeam || caseWatchRow?.awayTeam),
+        matchId: cleanString(task?.matchId || caseWatchRow?.matchId),
+        day: cleanString(task?.day || caseWatchRow?.day || caseWatchRow?.date),
+        leagueSlug: cleanString(task?.leagueSlug || caseWatchRow?.leagueSlug)
+      });
+    }
+  }
+
+  return map;
+}
+
+function inferTeamsFromSearchQuery(value) {
+  const query = cleanString(value);
+  if (!query) {
+    return {
+      homeTeam: "",
+      awayTeam: ""
+    };
+  }
+
+  const quoted = Array.from(query.matchAll(/"([^"]{2,80})"/g))
+    .map((match) => cleanString(match[1]))
+    .filter(Boolean);
+
+  if (quoted.length >= 2) {
+    return {
+      homeTeam: quoted[0],
+      awayTeam: quoted[1]
+    };
+  }
+
+  return {
+    homeTeam: "",
+    awayTeam: ""
+  };
+}
+function enrichValidatedUrlRow(row, input) {
+  if (!row || typeof row !== "object") return row;
+
+  const taskId = cleanString(row?.taskId);
+  const taskLookup = buildResolutionTaskLookup(input);
+  const matchedTask = row?.matchedTask || taskLookup.get(taskId) || null;
+  const watchRow = row?.watchRow || matchedTask?.watchRow || null;
+  const inferredTeams = inferTeamsFromSearchQuery(matchedTask?.query || row?.query || row?.original?.query);
+  const homeTeam = cleanString(row?.homeTeam || matchedTask?.homeTeam || watchRow?.homeTeam || inferredTeams.homeTeam);
+  const awayTeam = cleanString(row?.awayTeam || matchedTask?.awayTeam || watchRow?.awayTeam || inferredTeams.awayTeam);
+
+  return {
+    ...row,
+    matchId: cleanString(row?.matchId || matchedTask?.matchId || watchRow?.matchId),
+    day: cleanString(row?.day || matchedTask?.day || watchRow?.day || watchRow?.date),
+    leagueSlug: cleanString(row?.leagueSlug || matchedTask?.leagueSlug || watchRow?.leagueSlug),
+    homeTeam,
+    awayTeam,
+    matchedTask: matchedTask
+      ? {
+          ...matchedTask,
+          watchRow,
+          homeTeam: cleanString(matchedTask?.homeTeam || watchRow?.homeTeam || homeTeam),
+          awayTeam: cleanString(matchedTask?.awayTeam || watchRow?.awayTeam || awayTeam)
+        }
+      : null
+  };
+}
+
 function normalizeValidatedUrls(input) {
-  if (Array.isArray(input?.validatedResolvedSourceUrls)) return input.validatedResolvedSourceUrls;
-  if (Array.isArray(input?.validatedUrls)) return input.validatedUrls;
-  if (Array.isArray(input?.rows)) return input.rows;
-  if (Array.isArray(input)) return input;
-  return [];
+  const rows = Array.isArray(input?.validatedResolvedSourceUrls)
+    ? input.validatedResolvedSourceUrls
+    : Array.isArray(input?.validatedUrls)
+      ? input.validatedUrls
+      : Array.isArray(input?.rows)
+        ? input.rows
+        : Array.isArray(input)
+          ? input
+          : [];
+
+  return rows.map((row) => enrichValidatedUrlRow(row, input));
 }
 
 function buildBlockedFetch(row, index, reason) {
@@ -279,6 +364,9 @@ async function fetchOne(row, index, options) {
         sourceName: cleanString(row?.sourceName),
         sourceType: cleanString(row?.sourceType),
         resolvedBy: cleanString(row?.resolvedBy),
+        homeTeam: cleanString(row?.homeTeam || row?.matchedTask?.homeTeam || row?.matchedTask?.watchRow?.homeTeam),
+        awayTeam: cleanString(row?.awayTeam || row?.matchedTask?.awayTeam || row?.matchedTask?.watchRow?.awayTeam),
+        watchRow: row?.watchRow || row?.matchedTask?.watchRow || null,
         requestedUrl: resolvedUrl,
         finalUrl,
         host: hostnameOf(finalUrl),

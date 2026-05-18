@@ -223,8 +223,20 @@ function buildPreparedRow(snapshot, index, options = {}) {
   const sourceName = cleanString(snapshot?.sourceName || snapshot?.host || "unknown_source");
   const requestedUrl = cleanString(snapshot?.requestedUrl || snapshot?.url || snapshot?.resolvedUrl);
   const finalUrl = cleanString(snapshot?.finalUrl || requestedUrl);
-  const homeTeam = cleanString(snapshot?.homeTeam || snapshot?.teams?.home || snapshot?.matchedTask?.homeTeam);
-  const awayTeam = cleanString(snapshot?.awayTeam || snapshot?.teams?.away || snapshot?.matchedTask?.awayTeam);
+  const homeTeam = cleanString(
+    snapshot?.homeTeam ||
+    snapshot?.teams?.home ||
+    snapshot?.watchRow?.homeTeam ||
+    snapshot?.matchedTask?.homeTeam ||
+    snapshot?.matchedTask?.watchRow?.homeTeam
+  );
+  const awayTeam = cleanString(
+    snapshot?.awayTeam ||
+    snapshot?.teams?.away ||
+    snapshot?.watchRow?.awayTeam ||
+    snapshot?.matchedTask?.awayTeam ||
+    snapshot?.matchedTask?.watchRow?.awayTeam
+  );
   const finalSignal = inferFinalSignal(truncated.text, snapshot);
 
   return {
