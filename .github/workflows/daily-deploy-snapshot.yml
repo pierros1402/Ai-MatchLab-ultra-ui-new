@@ -1,4 +1,4 @@
-﻿name: Daily deploy snapshot
+name: Daily deploy snapshot
 
 on:
   workflow_dispatch:
@@ -158,6 +158,14 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
 
+      - name: Run fixture coverage contract audit
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/audit-fixture-coverage-contract-day.js --date="$DAY_KEY" --min-trust=0.8 --value-tier=1 --ui-tier=2 --warn-only
+
+      - name: Run fixture provider capability audit
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/audit-fixture-provider-capability.js --min-trust=0.8 --value-tier=1 --ui-tier=2 --warn-only
+
       - name: Snapshot verification
         if: env.SKIP_BUILD != 'true'
         shell: bash
@@ -216,6 +224,9 @@ jobs:
         shell: bash
         run: |
           git restore --staged . || true
+
+          # Audit reports are warning diagnostics for workflow logs, not deploy artifacts.
+          rm -rf data/fixture-coverage-contract-reports data/fixture-provider-capability-reports
 
           git add data/deploy-snapshots/latest.json
           git add "data/deploy-snapshots/${DAY_KEY}/"
