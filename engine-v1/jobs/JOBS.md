@@ -261,3 +261,39 @@ Guarantees:
 - no writes to fixtures/history/value/details
 
 This job only validates submitted URL resolutions against existing resolution tasks. It does not download pages or inspect page content.
+
+
+### `fetch-final-result-source-url-snapshots-file.js`
+
+Controlled final-result source URL fetch diagnostic.
+
+Pipeline:
+
+```text
+validatedResolvedSourceUrls
+-> fetchedSourceSnapshots / rejectedFetches
+```
+
+Usage:
+
+```powershell
+node .\engine-v1\jobs\fetch-final-result-source-url-snapshots-file.js --input .\path\to\final-result-source-url-resolutions.json --output .\data\football-truth\_diagnostics\final-result-source-url-snapshots.json
+```
+
+Fetch is blocked by default. Real downloads require explicit opt-in:
+
+```powershell
+node .\engine-v1\jobs\fetch-final-result-source-url-snapshots-file.js --input .\path\to\final-result-source-url-resolutions.json --output .\tmp-ft-url-snapshots.json --allow-fetch --limit=1 --timeout-ms=5000 --max-bytes=50000
+```
+
+Guarantees:
+
+- diagnostic output only
+- fetch requires explicit `--allow-fetch`
+- `canonicalWrites: 0`
+- no final truth decision
+- no canonical promotion
+- no production repair
+- no writes to fixtures/history/value/details
+
+This job downloads only validated resolved URLs when explicitly allowed. It does not extract final scores and does not update canonical data.
