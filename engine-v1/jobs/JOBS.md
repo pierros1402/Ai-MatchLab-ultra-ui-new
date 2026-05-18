@@ -211,3 +211,53 @@ Guarantees:
 - no writes to fixtures/history/value/details
 
 This job does not resolve URLs and does not download pages. It converts search targets into explicit resolution tasks for a later external/manual URL resolution or controlled fetch diagnostic layer.
+
+
+### `validate-final-result-source-url-resolutions-file.js`
+
+Read-only final-result source URL resolution validator.
+
+Pipeline:
+
+```text
+resolutionTasks
++ manually/externally resolved URLs
+-> validatedResolvedSourceUrls / rejectedUrlResolutions
+```
+
+Usage:
+
+```powershell
+node .\engine-v1\jobs\validate-final-result-source-url-resolutions-file.js --input .\path\to\url-resolutions.json --output .\data\football-truth\_diagnostics\final-result-source-url-resolutions.json
+```
+
+Input shape:
+
+```json
+{
+  "cases": [{ "resolutionTasks": [] }],
+  "urlResolutions": [
+    {
+      "taskId": "...",
+      "resolvedUrl": "https://...",
+      "sourceName": "...",
+      "sourceType": "official|provider|trusted|other",
+      "resolvedBy": "manual|external_search|operator|diagnostic",
+      "notes": "..."
+    }
+  ]
+}
+```
+
+Guarantees:
+
+- read-only diagnostic only
+- no fetch
+- no URL fetch
+- no final truth decision
+- `canonicalWrites: 0`
+- no canonical promotion
+- no production repair
+- no writes to fixtures/history/value/details
+
+This job only validates submitted URL resolutions against existing resolution tasks. It does not download pages or inspect page content.
