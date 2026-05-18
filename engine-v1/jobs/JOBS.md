@@ -26,6 +26,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - audit-finalization-readiness-day.js: checks if a day is safe to finalize.
 - audit-finalization-history-range.js: read-only historical FT/value damage audit.
 - build-finalization-repair-buckets.js: read-only repair bucket planner.
+- verify-final-result-evidence-file.js: read-only final-result evidence verification report; input evidence JSON -> verifier report, canonicalWrites: 0, exit code 2 for conflicts and 1 for insufficient evidence.
 - audit-fixture-coverage-contract-day.js: fixture coverage contract audit; strict locally, warn-only in workflow.
 - audit-fixture-provider-capability.js: provider capability/debt audit; strict locally, warn-only in workflow.
 - audit-snapshot-mirror-day.js: snapshot parity audit.
@@ -83,9 +84,10 @@ Do not keep adding unrelated scripts. New FT autonomy work should be implemented
 
 engine-v1/football-truth/
 - result-watchset-builder.js
-- source-discovery.js
-- result-candidate-builder.js
 - result-evidence-validator.js
+- final-result-verifier.js
+- source-discovery.js
+- result-evidence-builder.js
 - source-reliability.js
 - canonical-promotion-gate.js
 
