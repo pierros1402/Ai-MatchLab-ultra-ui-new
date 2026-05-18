@@ -148,3 +148,34 @@ Exit codes:
 - `0`: verified_final_result
 - `1`: needs_more_evidence
 - `2`: conflict
+
+
+### `materialize-final-result-source-search-targets-file.js`
+
+Read-only final-result source search target materializer.
+
+Pipeline:
+
+```text
+discover/classify report
+-> results[].discovery.searchDescriptors
+-> flattened diagnostic searchTargets
+```
+
+Usage:
+
+```powershell
+node .\engine-v1\jobs\materialize-final-result-source-search-targets-file.js --input .\path\to\discover-classify-report.json --output .\data\football-truth\_diagnostics\final-result-source-search-targets.json
+```
+
+Guarantees:
+
+- read-only diagnostic only
+- no fetch
+- no final truth decision
+- `canonicalWrites: 0`
+- no canonical promotion
+- no production repair
+- no writes to fixtures/history/value/details
+
+This job does not resolve URLs and does not download pages. It only materializes search query targets for a later explicit fetch diagnostic.
