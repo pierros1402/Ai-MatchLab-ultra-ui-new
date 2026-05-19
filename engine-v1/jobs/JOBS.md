@@ -928,3 +928,39 @@ Example:
 ```powershell
 node .\engine-v1\jobs\validate-final-result-truth-audit-resolution-review-pack-file.js --input .\data\football-truth\_diagnostics\truth-audit-range-2026-05-01_to_2026-05-19\truth-audit-resolution-review-pack-batch-0001.json
 ```
+
+### build-final-result-source-url-resolutions-from-review-pack-file.js
+
+Builds read-only source URL resolution validator input from an accepted filled final-result truth audit review pack.
+
+Input:
+- `--input <truth-audit-resolution-review-pack.json>`
+
+Optional:
+- `--output <final-result-source-url-resolutions-input.json>`
+
+Behavior:
+- reads review pack tasks
+- keeps only rows with `reviewed:true`, `acceptedForValidation:true`, and `productionApproved` not true
+- creates `cases[].resolutionTasks[]`
+- creates `urlResolutions[]` keyed by `taskId`
+- outputs the shape expected by `validate-final-result-source-url-resolutions-file.js`
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- `urlResolutionSideEffects:false`
+- no production final-truth decision
+- no canonical promotion
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-source-url-resolutions-from-review-pack-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-final-result-source-url-resolutions-from-review-pack-file.js --input .\data\football-truth\_diagnostics\truth-audit-resolution-review-pack-batch-0001.json
+```
