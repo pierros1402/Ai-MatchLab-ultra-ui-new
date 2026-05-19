@@ -39,6 +39,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - build-final-result-resolved-url-input-template-file.js: read-only helper that converts resolution tasks into a manual resolved-URL input template with cases and urlResolutions placeholders; canonicalWrites: 0, no fetch, no validation, no production FT decision or promotion.
 - build-final-result-consensus-review-summary-file.js: read-only helper that converts a final-result smoke/wrapper report into a manual review summary grouped by verified, conflict, and needs_more_evidence cases; canonicalWrites: 0, no fetch, no validation, no production FT decision or promotion.
 - build-final-result-review-queue-file.js: read-only helper that converts a final-result consensus review summary into a manual review queue grouped by ready_for_review, manual_conflict_review_required, and needs_more_independent_evidence; canonicalWrites: 0, no fetch, no validation, no production FT decision or promotion.
+- run-final-result-review-queue-day.js: read-only day wrapper that runs final-result consensus smoke, review summary, and review queue artifact generation from a resolved-URLs input; canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
 - audit-fixture-coverage-contract-day.js: fixture coverage contract audit; strict locally, warn-only in workflow.
 - audit-fixture-provider-capability.js: provider capability/debt audit; strict locally, warn-only in workflow.
 - audit-snapshot-mirror-day.js: snapshot parity audit.
@@ -338,6 +339,55 @@ This job only converts diagnostic source snapshots into prepared evidence rows. 
 
 
 
+
+
+### `run-final-result-review-queue-day.js`
+
+Read-only day wrapper that builds a final-result review queue artifact from a resolved-URLs input.
+
+Pipeline:
+
+```text
+run-final-result-consensus-smoke-day.js
+-> build-final-result-consensus-review-summary-file.js
+-> build-final-result-review-queue-file.js
+```
+
+Required input:
+
+```text
+--date YYYY-MM-DD
+--resolved-urls-file <manual resolved URLs JSON>
+--allow-fetch
+```
+
+Default output directory:
+
+```text
+data/football-truth/_review-queue/YYYY-MM-DD/
+```
+
+Outputs:
+
+```text
+final-result-consensus-smoke-report.json
+final-result-review-summary.json
+final-result-review-queue.json
+final-result-review-queue-day-report.json
+```
+
+The wrapper is review-queue-only: `canonicalWrites: 0`, fetch remains opt-in via explicit `--allow-fetch`, no final truth production decision, no canonical promotion, no production repair, and no fixture/history/value/details writes.
+
+Typical usage:
+
+```powershell
+node .\engine-v1\jobs\run-final-result-review-queue-day.js `
+  --date=2026-05-18 `
+  --resolved-urls-file .\data\football-truth\_diagnostics\...\filled-3-match-resolved-urls.json `
+  --output-dir .\data\football-truth\_review-queue\2026-05-18 `
+  --allow-fetch `
+  --keep-intermediate
+```
 
 ### `build-final-result-review-queue-file.js`
 
