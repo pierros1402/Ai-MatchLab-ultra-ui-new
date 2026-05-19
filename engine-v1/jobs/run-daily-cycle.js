@@ -64,33 +64,84 @@ function readCurrentDayFixtureCount(dayKey) {
   }
 }
 
+function countCanonicalFixtureRowsForDay(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+
+  if (!fs.existsSync(dir)) return 0;
+
+  let total = 0;
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+
+    try {
+      const file = resolveDataPath("canonical-fixtures", dayKey, entry.name);
+      const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.fixtures)
+          ? payload.fixtures
+          : Array.isArray(payload?.matches)
+            ? payload.matches
+            : Array.isArray(payload?.rows)
+              ? payload.rows
+              : [];
+
+      total += rows.length;
+    } catch {
+      // Keep the daily gate conservative: unreadable canonical fixture files are ignored.
+    }
+  }
+
+  return total;
+}
+
 function readCanonicalCoverageForDay(dayKey) {
   try {
     const file = resolveDataPath("coverage-reports", `${dayKey}.json`);
-    if (!fs.existsSync(file)) return null;
 
-    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
-    const coverage = payload?.coverage || null;
-    const fixtures = Number(coverage?.fixtures || 0);
-    const leagues = Number(coverage?.leagues || 0);
+    if (fs.existsSync(file)) {
+      const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+      const coverage = payload?.coverage || null;
+      const fixtures = Number(coverage?.fixtures || 0);
+      const leagues = Number(coverage?.leagues || 0);
 
-    if (!payload?.ok || fixtures <= 0) return null;
+      if (payload?.ok && fixtures > 0) {
+        return {
+          fixtures,
+          leagues,
+          source: "coverage_report",
+          reportType: payload?.type || null,
+          startedAt: payload?.startedAt || null,
+          generatedAt: payload?.generatedAt || null,
+          cursorComplete: Boolean(payload?.cursorComplete),
+          nextCursor: payload?.nextCursor ?? null,
+          leagueSeedCount: payload?.leagueSeedCount ?? null
+        };
+      }
+    }
 
-    return {
-      fixtures,
-      leagues,
-      reportType: payload?.type || null,
-      startedAt: payload?.startedAt || null,
-      finishedAt: payload?.finishedAt || null,
-      startCursor: payload?.startCursor ?? null,
-      nextCursor: payload?.nextCursor ?? null,
-      leagueSeedCount: payload?.leagueSeedCount ?? null
-    };
+    const canonicalFixtureRows = countCanonicalFixtureRowsForDay(dayKey);
+
+    if (canonicalFixtureRows > 0) {
+      return {
+        fixtures: canonicalFixtureRows,
+        leagues: 0,
+        source: "canonical_fixtures",
+        reportType: "canonical_fixture_files",
+        startedAt: null,
+        generatedAt: null,
+        cursorComplete: null,
+        nextCursor: null,
+        leagueSeedCount: null
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
 }
-
 function resolveMinTargetFixtures({ staticMinTargetFixtures, canonicalCoverage }) {
   if (!canonicalCoverage?.fixtures) {
     return {
@@ -130,7 +181,6 @@ function buildTopWrongDayLeagues(ingest) {
     .sort((a, b) => b.skippedWrongDay - a.skippedWrongDay)
     .slice(0, 25);
 }
-
 function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
   const ingest = getTargetIngestResult(discoveryWindow, dayKey);
 
