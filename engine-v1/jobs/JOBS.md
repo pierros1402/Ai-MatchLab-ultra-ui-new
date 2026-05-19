@@ -1054,3 +1054,49 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-league-context-completeness-inventory-range.js --from 2026-05-01 --to 2026-05-19
 ```
+
+### build-team-motivation-context-from-standings-file.js
+
+Builds a read-only team motivation context file from one standings JSON file.
+
+Input:
+- `--input <standings.json>`
+
+Optional:
+- `--output <motivation.json>`
+- `--league <leagueSlug>`
+- `--season-phase <early|middle|late|run_in>`
+- `--title-race-places <number>`
+- `--title-race-points-window <number>`
+- `--continental-places <number>`
+- `--continental-points-window <number>`
+- `--relegation-places <number>`
+- `--relegation-points-window <number>`
+- `--no-relegation`
+- `--enable-continental-pressure`
+- `--enable-playoff-pressure`
+
+Output:
+- one row per team with position, played, points, goal difference, season phase, motivation tags, primary motivation, motivation score, pressure components, and gaps
+
+League profile behavior:
+- generic European-style leagues keep relegation and continental pressure enabled
+- `usa.*` leagues disable relegation and generic continental pressure by default
+- playoff/promotion pressure is disabled by default unless explicitly enabled
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- no production final-truth decision
+- no canonical promotion
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-team-motivation-context-from-standings-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-team-motivation-context-from-standings-file.js --input .\data\standings\eng.1.json
+```
