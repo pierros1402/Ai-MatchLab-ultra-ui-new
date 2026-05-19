@@ -35,6 +35,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - discover-and-classify-final-result-sources-watchset-day.js: read-only combined final-result source discovery/reliability diagnostic; deploy snapshot watchset -> source/search descriptors -> source reliability tiers, canonicalWrites: 0, no fetch, no FT decision, no promotion.
 - extract-final-result-evidence-file.js: read-only final-result evidence extraction report; prepared/source rows JSON -> rawEvidenceRows, canonicalWrites: 0, no fetch, no verification, no FT decision, no promotion.
 - run-final-result-source-snapshot-evidence-diagnostic-file.js: read-only source snapshot evidence orchestrator; fetched source snapshots or validated URL resolutions -> prepare -> extract/build/verify diagnostic, canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
+- run-final-result-consensus-smoke-day.js: read-only day-level FT consensus smoke orchestrator; builds watchset -> discover/classify -> search targets -> resolution tasks, optionally validates supplied resolved URLs and runs source snapshot evidence diagnostic; canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
 - audit-fixture-coverage-contract-day.js: fixture coverage contract audit; strict locally, warn-only in workflow.
 - audit-fixture-provider-capability.js: provider capability/debt audit; strict locally, warn-only in workflow.
 - audit-snapshot-mirror-day.js: snapshot parity audit.
@@ -330,6 +331,42 @@ Guarantees:
 - no writes to fixtures/history/value/details
 
 This job only converts diagnostic source snapshots into prepared evidence rows. Use the separate extract/build/verify job for evidence extraction and verification.
+
+
+### `run-final-result-consensus-smoke-day.js`
+
+Read-only day-level final-result consensus smoke orchestrator.
+
+Pipeline:
+
+```text
+build-final-result-watchset.js
+-> discover-and-classify-final-result-sources-watchset-day.js
+-> materialize-final-result-source-search-targets-file.js
+-> materialize-final-result-source-resolution-tasks-file.js
+```
+
+Optional URL evidence path:
+
+```text
+--resolved-urls-file <file>
+-> validate-final-result-source-url-resolutions-file.js
+-> run-final-result-source-snapshot-evidence-diagnostic-file.js
+```
+
+Fetch is blocked unless `--allow-fetch` is explicitly provided. The job is diagnostic-only: `canonicalWrites: 0`, no final truth production decision, no canonical promotion, no production repair, and no fixture/history/value/details writes.
+
+Typical no-fetch shape smoke:
+
+```powershell
+node .\engine-v1\jobs\run-final-result-consensus-smoke-day.js `
+  --date=2026-05-18 `
+  --limit=5 `
+  --min-age-hours=0 `
+  --max-search-descriptors=6 `
+  --max-targets-per-match=4 `
+  --max-tasks-per-match=3
+```
 
 ### `run-final-result-source-snapshot-evidence-diagnostic-file.js`
 
