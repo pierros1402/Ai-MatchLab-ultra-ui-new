@@ -51,6 +51,69 @@ function hasReason(row, reason) {
   return asArray(row.reasons).map(String).includes(reason);
 }
 
+function buildWatchRow(row, auditType) {
+  return {
+    matchId: String(row.matchId || ""),
+    id: String(row.matchId || ""),
+    day: String(row.date || ""),
+    date: String(row.date || ""),
+    leagueSlug: String(row.league || ""),
+    homeTeam: String(row.homeTeam || ""),
+    awayTeam: String(row.awayTeam || ""),
+    status: String(row.status || ""),
+    finalResultAuditType: auditType,
+    expectedScoreKey: scoreKey(row)
+  };
+}
+
+function buildSearchDescriptors(row, auditType, valueRowsForMatch) {
+  const date = String(row.date || "");
+  const homeTeam = String(row.homeTeam || "").trim();
+  const awayTeam = String(row.awayTeam || "").trim();
+  const score = scoreKey(row);
+  const base = [homeTeam, awayTeam].filter(Boolean).join(" vs ");
+  const queryBase = [base, date, "final score"].filter(Boolean).join(" ");
+  const descriptors = [];
+
+  if (queryBase) {
+    descriptors.push({
+      type: "search_query",
+      priority: auditType === "missing_final_truth" ? 1 : 2,
+      intent: auditType,
+      query: queryBase
+    });
+  }
+
+  if (queryBase && score) {
+    descriptors.push({
+      type: "search_query",
+      priority: 1,
+      intent: auditType + "_score_crosscheck",
+      query: queryBase + " " + score
+    });
+  }
+
+  if (homeTeam && awayTeam) {
+    descriptors.push({
+      type: "search_query",
+      priority: 3,
+      intent: "official_or_trusted_final_result",
+      query: homeTeam + " " + awayTeam + " result " + date
+    });
+  }
+
+  if (valueRowsForMatch.length > 0 && queryBase) {
+    descriptors.push({
+      type: "search_query",
+      priority: 1,
+      intent: "value_settlement_final_result_verification",
+      query: queryBase + " match result"
+    });
+  }
+
+  return descriptors;
+}
+
 function classifyAuditType(row, valueRowsForMatch) {
   if (hasReason(row, 'verify_existing_final_truth')) return 'verify_existing_final_truth';
   if (valueRowsForMatch.some((valueRow) => valueRow.reason === 'settled_value_pick_requires_final_truth_verification')) return 'verify_value_settlement';
@@ -72,6 +135,8 @@ function normalizeFixtureWorksetRow(row, day, valueRowsForMatch) {
   const auditType = classifyAuditType(row, valueRowsForMatch);
   const priority = classifyPriority(row, valueRowsForMatch, auditType);
   const finalScoreKey = scoreKey(row);
+  const watchRow = buildWatchRow(row, auditType);
+  const searchDescriptors = buildSearchDescriptors(row, auditType, valueRowsForMatch);
 
   return {
     worksetId: [row.date || day.date, row.matchId || 'unknown', auditType].join('::'),
@@ -100,7 +165,9 @@ function normalizeFixtureWorksetRow(row, day, valueRowsForMatch) {
     })),
     sourceSearchNeeded: true,
     reviewRequired: true,
-    productionApproved: false
+    productionApproved: false,
+    watchRow,
+    searchDescriptors
   };
 }
 
@@ -108,6 +175,18 @@ function normalizeValueOnlyWorksetRow(valueRow, day) {
   const auditType = valueRow.reason === 'settled_value_pick_requires_final_truth_verification'
     ? 'verify_value_settlement'
     : 'missing_final_truth';
+  const pseudoRow = {
+    date: valueRow.date || day.date,
+    matchId: valueRow.matchId || '',
+    league: '',
+    homeTeam: '',
+    awayTeam: '',
+    status: valueRow.fixtureStatus || '',
+    homeScore: null,
+    awayScore: null
+  };
+  const watchRow = buildWatchRow(pseudoRow, auditType);
+  const searchDescriptors = buildSearchDescriptors(pseudoRow, auditType, [valueRow]);
 
   return {
     worksetId: [valueRow.date || day.date, valueRow.matchId || 'unknown', auditType].join('::'),
@@ -136,7 +215,9 @@ function normalizeValueOnlyWorksetRow(valueRow, day) {
     }],
     sourceSearchNeeded: true,
     reviewRequired: true,
-    productionApproved: false
+    productionApproved: false,
+    watchRow,
+    searchDescriptors
   };
 }
 
@@ -292,6 +373,8 @@ function runSelfTest() {
   if (workset.summary.highPriorityRows !== 2) throw new Error('expected 2 high priority rows');
   if (workset.guarantees.canonicalWrites !== 0) throw new Error('canonicalWrites guarantee failed');
   if (workset.guarantees.promotion !== false) throw new Error('promotion guarantee failed');
+  if (!Array.isArray(workset.rows[0].searchDescriptors) || workset.rows[0].searchDescriptors.length === 0) throw new Error('missing search descriptors');
+  if (!workset.rows[0].watchRow || !workset.rows[0].watchRow.matchId) throw new Error('missing watch row');
 
   console.log(JSON.stringify({
     ok: true,
@@ -302,7 +385,8 @@ function runSelfTest() {
     verifyExistingFinalTruthRows: workset.summary.verifyExistingFinalTruthRows,
     verifyValueSettlementRows: workset.summary.verifyValueSettlementRows,
     canonicalWrites: workset.guarantees.canonicalWrites,
-    promotion: workset.guarantees.promotion
+    promotion: workset.guarantees.promotion,
+    firstRowSearchDescriptors: workset.rows[0].searchDescriptors.length
   }, null, 2));
 }
 
