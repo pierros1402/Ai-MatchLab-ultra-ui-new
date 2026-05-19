@@ -792,3 +792,46 @@ Example:
 ```powershell
 node .\engine-v1\jobs\run-final-result-truth-audit-workset-range.js --from 2026-05-01 --to 2026-05-19
 ```
+
+### build-final-result-truth-audit-resolution-batches-file.js
+
+Builds read-only batches from final-result truth audit resolution tasks so large backfill/audit worksets can be processed safely in small chunks.
+
+Input:
+- `--input <truth-audit-resolution-tasks.json>`
+
+Optional:
+- `--output <truth-audit-resolution-batches.json>`
+- `--max-tasks <number>`
+- `--batch-size <number>`
+- `--intent <comma-separated intents>`
+- `--league <comma-separated league slugs>`
+- `--day <comma-separated YYYY-MM-DD values>`
+- `--match-id <comma-separated match IDs>`
+- `--priority <number>`
+
+Default ordering:
+- value settlement verification first
+- missing final truth
+- score crosscheck
+- verify existing final truth
+- official/trusted final result
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- `urlResolutionSideEffects:false`
+- no production final-truth decision
+- no canonical promotion
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-audit-resolution-batches-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-audit-resolution-batches-file.js --input .\data\football-truth\_diagnostics\truth-audit-range-2026-05-01_to_2026-05-19\truth-audit-resolution-tasks-2026-05-01_to_2026-05-19.json --max-tasks 100 --batch-size 25
+```
