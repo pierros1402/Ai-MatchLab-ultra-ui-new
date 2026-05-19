@@ -37,6 +37,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - run-final-result-source-snapshot-evidence-diagnostic-file.js: read-only source snapshot evidence orchestrator; fetched source snapshots or validated URL resolutions -> prepare -> extract/build/verify diagnostic, canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
 - run-final-result-consensus-smoke-day.js: read-only day-level FT consensus smoke orchestrator; builds watchset -> discover/classify -> search targets -> resolution tasks, optionally validates supplied resolved URLs and runs source snapshot evidence diagnostic; canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
 - build-final-result-resolved-url-input-template-file.js: read-only helper that converts resolution tasks into a manual resolved-URL input template with cases and urlResolutions placeholders; canonicalWrites: 0, no fetch, no validation, no production FT decision or promotion.
+- build-final-result-consensus-review-summary-file.js: read-only helper that converts a final-result smoke/wrapper report into a manual review summary grouped by verified, conflict, and needs_more_evidence cases; canonicalWrites: 0, no fetch, no validation, no production FT decision or promotion.
 - audit-fixture-coverage-contract-day.js: fixture coverage contract audit; strict locally, warn-only in workflow.
 - audit-fixture-provider-capability.js: provider capability/debt audit; strict locally, warn-only in workflow.
 - audit-snapshot-mirror-day.js: snapshot parity audit.
@@ -334,6 +335,38 @@ Guarantees:
 This job only converts diagnostic source snapshots into prepared evidence rows. Use the separate extract/build/verify job for evidence extraction and verification.
 
 
+
+
+### `build-final-result-consensus-review-summary-file.js`
+
+Read-only helper that converts a final-result smoke/wrapper report into a compact manual review summary.
+
+Input:
+
+```text
+run-final-result-consensus-smoke-day.js report
+or
+run-final-result-source-snapshot-evidence-diagnostic-file.js wrapper report
+```
+
+Output groups:
+
+```text
+verifiedCases
+conflictCases with score groups and sources
+needsMoreEvidenceCases with evidence counts and review action
+allCases
+```
+
+The helper is diagnostic-summary-only: `canonicalWrites: 0`, no fetch, no validation, no final truth production decision, no canonical promotion, no production repair, and no fixture/history/value/details writes.
+
+Typical usage:
+
+```powershell
+node .\engine-v1\jobs\build-final-result-consensus-review-summary-file.js `
+  --input .\data\football-truth\_diagnostics\...\filled-3-match-consensus-smoke-report.json `
+  --output .\data\football-truth\_diagnostics\...\filled-3-match-review-summary.json
+```
 
 ### `build-final-result-resolved-url-input-template-file.js`
 
