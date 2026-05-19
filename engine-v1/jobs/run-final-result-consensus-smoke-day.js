@@ -167,12 +167,53 @@ function compactVerification(wrapperReport) {
   const verification = wrapperReport?.reports?.verification || null;
   if (!verification) return null;
 
+  const cases = Array.isArray(verification?.cases) ? verification.cases : [];
+  const verifiedCases = cases.filter((row) => String(row?.verdict || "").toLowerCase() === "verified_final_result");
+
+  const caseScores = verifiedCases
+    .map((row) => row?.verification?.verifiedFinalResult?.score || row?.score || row?.finalScore || row?.result || null)
+    .filter(Boolean);
+
+  const scoreKeys = [...new Set(verifiedCases
+    .map((row) => String(row?.verification?.verifiedFinalResult?.scoreKey || "").trim())
+    .filter(Boolean))];
+
+  const verificationModes = [...new Set(verifiedCases
+    .map((row) => String(row?.verification?.verifiedFinalResult?.verificationMode || row?.verificationMode || row?.mode || "").trim())
+    .filter(Boolean))];
+
+  const sourceKeys = [...new Set(verifiedCases
+    .map((row) => String(row?.verification?.verifiedFinalResult?.sourceKey || "").trim())
+    .filter(Boolean))];
+
+  const sources = [...new Set(verifiedCases
+    .flatMap((row) => {
+      if (Array.isArray(row?.verification?.evidence)) return row.verification.evidence;
+      if (Array.isArray(row?.sources)) return row.sources;
+      if (Array.isArray(row?.evidenceSources)) return row.evidenceSources;
+      return [];
+    })
+    .map((source) => String(source?.sourceName || source?.name || source?.sourceKey || source?.sourceUrl || source).trim())
+    .filter(Boolean))];
+
+  const independentSourceCounts = verifiedCases
+    .map((row) => Number(row?.verification?.verifiedFinalResult?.independentSourceCount || 0))
+    .filter((count) => count > 0);
+
   return {
     ok: verification.ok ?? null,
     verdict: verification.verdict || null,
     exitCode: verification.exitCode ?? null,
-    verificationMode: verification.verificationMode || null,
-    score: verification.score || null,
+    verificationMode: verification.verificationMode || verificationModes[0] || null,
+    score: verification.score || caseScores[0] || null,
+    scoreKey: scoreKeys[0] || null,
+    verifiedCaseCount: verifiedCases.length,
+    caseScores,
+    scoreKeys,
+    verificationModes,
+    sourceKeys,
+    sources,
+    independentSourceCount: independentSourceCounts[0] || null,
     summary: verification.summary || null,
     counts: verification.counts || null
   };
