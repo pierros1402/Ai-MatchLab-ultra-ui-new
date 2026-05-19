@@ -964,3 +964,45 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-final-result-source-url-resolutions-from-review-pack-file.js --input .\data\football-truth\_diagnostics\truth-audit-resolution-review-pack-batch-0001.json
 ```
+
+### run-final-result-review-pack-url-validation-file.js
+
+Runs the read-only validation chain for a filled final-result truth audit review pack.
+
+Pipeline:
+- validate filled review pack
+- build source URL resolutions input from accepted review rows
+- validate source URL resolutions with the existing URL resolution validator
+
+Input:
+- `--input <filled-review-pack.json>`
+
+Optional:
+- `--output-dir <directory>`
+- `--allow-invalid-review-pack` to continue after review-pack validation errors for diagnostics
+
+Default behavior:
+- blocks if review-pack validation fails
+- keeps only `reviewed:true` + `acceptedForValidation:true` + `productionApproved` not true rows for URL validation input
+- does not fetch URLs
+- does not make final-truth decisions
+- does not promote canonical results
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- `urlResolutionSideEffects:false`
+- no production final-truth decision
+- no canonical promotion
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\run-final-result-review-pack-url-validation-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\run-final-result-review-pack-url-validation-file.js --input .\data\football-truth\_diagnostics\truth-audit-resolution-review-pack-batch-0001.json
+```
