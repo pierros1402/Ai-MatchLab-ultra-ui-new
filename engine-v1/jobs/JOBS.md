@@ -1100,3 +1100,44 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-team-motivation-context-from-standings-file.js --input .\data\standings\eng.1.json
 ```
+
+### build-team-motivation-context-range.js
+
+Builds read-only team motivation context files for all eligible leagues in a date range.
+
+Pipeline:
+- optionally builds league context completeness inventory for the range
+- selects leagues where `standingsAvailable:true` and `motivationContextPossible:true`
+- runs `build-team-motivation-context-from-standings-file.js` for each selected league
+- writes one motivation context file per league plus a range summary
+
+Input:
+- `--from <YYYY-MM-DD>`
+
+Optional:
+- `--to <YYYY-MM-DD>`
+- `--root <project-root>`
+- `--inventory <league-context-completeness.json>`
+- `--output-dir <directory>`
+- `--max-leagues <number>` for smoke runs
+
+Output:
+- `<leagueSlug>.motivation.json` files
+- `team-motivation-context-range-summary.json`
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- no production final-truth decision
+- no canonical promotion
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-team-motivation-context-range.js --self-test
+```
+
+Example smoke:
+```powershell
+node .\engine-v1\jobs\build-team-motivation-context-range.js --from 2026-05-01 --to 2026-05-19 --max-leagues 20
+```
