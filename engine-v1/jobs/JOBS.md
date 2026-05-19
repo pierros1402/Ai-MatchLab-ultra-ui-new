@@ -666,3 +666,44 @@ Self-test:
 ```powershell
 node .\engine-v1\jobs\build-final-result-reviewed-decision-summary-file.js --self-test
 ```
+
+### build-final-result-missing-ft-inventory-range.js
+
+Builds a read-only inventory report for missing or suspicious final-result coverage across deploy snapshots in a date range.
+
+Input:
+- `--from YYYY-MM-DD`
+- `--to YYYY-MM-DD`
+
+Optional:
+- `--snapshots-dir <data/deploy-snapshots>`
+- `--output <final-result-missing-ft-inventory.json>`
+- `--stale-live-hours <number>`
+- `--pre-after-start-hours <number>`
+- `--unknown-after-start-hours <number>`
+- `--score-without-final-hours <number>`
+
+Detects:
+- stale LIVE fixtures after threshold
+- PRE/scheduled fixtures still not final after kickoff threshold
+- unknown status after kickoff threshold
+- score present without final status
+- final status without score
+- final fixtures with unsettled value picks
+
+Safety guarantees:
+- `canonicalWrites:0`
+- no promotion
+- no production final-truth decision
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-missing-ft-inventory-range.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-final-result-missing-ft-inventory-range.js --from 2026-05-01 --to 2026-05-19
+```
