@@ -1006,3 +1006,51 @@ Example:
 ```powershell
 node .\engine-v1\jobs\run-final-result-review-pack-url-validation-file.js --input .\data\football-truth\_diagnostics\truth-audit-resolution-review-pack-batch-0001.json
 ```
+
+### build-league-context-completeness-inventory-range.js
+
+Builds a read-only league context completeness inventory across a date range by combining deploy snapshot fixtures, canonical fixtures, value picks, and standings.
+
+Input:
+- `--from <YYYY-MM-DD>`
+
+Optional:
+- `--to <YYYY-MM-DD>`
+- `--root <project-root>`
+- `--output <league-context-completeness.json>`
+
+Output per date + league:
+- `snapshotFixtureCount`
+- `canonicalFixtureCount`
+- `valuePickCount`
+- `standingsAvailable`
+- `standingsTeamCount`
+- `standingsConfidence`
+- `standingsCompleteness`
+- `snapshotTeamsMatchedInStandings`
+- `motivationContextPossible`
+- `fixtureCoverageRisk` and reasons
+- `contextDataWarning` and reasons
+- `finalTruthRisk` and reasons
+
+Risk separation:
+- `fixtureCoverageRisk` is reserved for true snapshot/canonical fixture mismatch when canonical reference exists
+- `contextDataWarning` is used for missing canonical reference, missing standings, or unavailable motivation context inputs
+- `finalTruthRisk` is used for live-like or score-present-without-final-status rows
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- no production final-truth decision
+- no canonical promotion
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-league-context-completeness-inventory-range.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-league-context-completeness-inventory-range.js --from 2026-05-01 --to 2026-05-19
+```
