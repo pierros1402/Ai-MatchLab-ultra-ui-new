@@ -109,11 +109,20 @@ function inferLeagueProfile(payload, options = {}) {
   const playoffOverride = toBool(options.enablePlayoffPressure);
 
   const noRelegationLeague = /^usa\./.test(league);
+  const continentalOrCupCompetition =
+    /^(uefa|conmebol|concacaf|afc|caf)\./.test(league) ||
+    /\.(cup|copa|trophy|supercup)$/.test(league) ||
+    /(champions|libertadores|sudamericana|europa|conference|cup|copa)/.test(league);
 
   return {
     league,
-    hasRelegationPressure: noRelegationOverride !== null ? !noRelegationOverride : !noRelegationLeague,
-    hasContinentalPressure: continentalOverride !== null ? continentalOverride : !/^usa\./.test(league),
+    profileType: continentalOrCupCompetition ? 'continental_or_cup_competition' : 'domestic_league',
+    hasRelegationPressure: noRelegationOverride !== null
+      ? !noRelegationOverride
+      : (!noRelegationLeague && !continentalOrCupCompetition),
+    hasContinentalPressure: continentalOverride !== null
+      ? continentalOverride
+      : (!/^usa\./.test(league) && !continentalOrCupCompetition),
     hasPlayoffPressure: playoffOverride === true
   };
 }
