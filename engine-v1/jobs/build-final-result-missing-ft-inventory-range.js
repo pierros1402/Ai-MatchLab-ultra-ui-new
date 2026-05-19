@@ -155,6 +155,7 @@ function classifyFixture(fixture, context) {
 
   if (isFinalStatus(status)) {
     if (!hasScore) reasons.push('final_status_without_score');
+    else if (context.includeFinalVerificationCandidates) reasons.push('verify_existing_final_truth');
   } else if (isLiveStatus(status)) {
     if (ageHours !== null && ageHours >= context.staleLiveHours) reasons.push('stale_live_after_threshold');
   } else if (isPreStatus(status)) {
@@ -211,6 +212,21 @@ function classifyValuePick(pick, fixturesById, context) {
     };
   }
 
+  if (fixture && isFinalStatus(status) && settled && context.includeFinalVerificationCandidates) {
+    return {
+      suspect: true,
+      row: {
+        date: context.dayKey,
+        matchId: id,
+        market: String(firstNonEmpty(pick.market, pick.type, pick.pickType)),
+        selection: String(firstNonEmpty(pick.selection, pick.side, pick.pick)),
+        fixtureStatus: status,
+        pickStatus: pickStatus,
+        reason: 'settled_value_pick_requires_final_truth_verification'
+      }
+    };
+  }
+
   return { suspect: false, row: null };
 }
 
@@ -229,7 +245,8 @@ function scanDay(dayKey, options) {
     staleLiveHours: options.staleLiveHours,
     preAfterStartHours: options.preAfterStartHours,
     unknownAfterStartHours: options.unknownAfterStartHours,
-    scoreWithoutFinalHours: options.scoreWithoutFinalHours
+    scoreWithoutFinalHours: options.scoreWithoutFinalHours,
+    includeFinalVerificationCandidates: options.includeFinalVerificationCandidates === true
   };
 
   const fixturesById = new Map();
@@ -259,6 +276,8 @@ function scanDay(dayKey, options) {
     valuePickCount: valuePicks.length,
     suspectFixtureCount: suspectFixtures.length,
     unsettledValuePickCount: unsettledValuePicks.length,
+    finalVerificationCandidateCount: suspectFixtures.filter((row) => row.reasons.includes('verify_existing_final_truth')).length,
+    settledValueVerificationCandidateCount: unsettledValuePicks.filter((row) => row.reason === 'settled_value_pick_requires_final_truth_verification').length,
     suspectFixtures,
     unsettledValuePicks
   };
@@ -277,6 +296,8 @@ function buildInventory(options) {
     totalValuePicks: dayReports.reduce((sum, day) => sum + day.valuePickCount, 0),
     suspectFixtures: dayReports.reduce((sum, day) => sum + day.suspectFixtureCount, 0),
     unsettledValuePicks: dayReports.reduce((sum, day) => sum + day.unsettledValuePickCount, 0),
+    finalVerificationCandidates: dayReports.reduce((sum, day) => sum + day.finalVerificationCandidateCount, 0),
+    settledValueVerificationCandidates: dayReports.reduce((sum, day) => sum + day.settledValueVerificationCandidateCount, 0),
     datesWithSuspects: dayReports.filter((day) => day.suspectFixtureCount > 0 || day.unsettledValuePickCount > 0).map((day) => day.date)
   };
 
@@ -290,7 +311,8 @@ function buildInventory(options) {
       staleLiveHours: options.staleLiveHours,
       preAfterStartHours: options.preAfterStartHours,
       unknownAfterStartHours: options.unknownAfterStartHours,
-      scoreWithoutFinalHours: options.scoreWithoutFinalHours
+      scoreWithoutFinalHours: options.scoreWithoutFinalHours,
+      includeFinalVerificationCandidates: options.includeFinalVerificationCandidates === true
     },
     guarantees: {
       canonicalWrites: 0,
@@ -339,7 +361,8 @@ function runSelfTest() {
     staleLiveHours: 2.25,
     preAfterStartHours: 4,
     unknownAfterStartHours: 4,
-    scoreWithoutFinalHours: 2.5
+    scoreWithoutFinalHours: 2.5,
+    includeFinalVerificationCandidates: false
   });
   if (report.guarantees.canonicalWrites !== 0) throw new Error('canonicalWrites guarantee failed');
   if (report.guarantees.promotion !== false) throw new Error('promotion guarantee failed');
@@ -377,7 +400,8 @@ function main() {
     staleLiveHours: Number(args['stale-live-hours'] || 2.25),
     preAfterStartHours: Number(args['pre-after-start-hours'] || 4),
     unknownAfterStartHours: Number(args['unknown-after-start-hours'] || 4),
-    scoreWithoutFinalHours: Number(args['score-without-final-hours'] || 2.5)
+    scoreWithoutFinalHours: Number(args['score-without-final-hours'] || 2.5),
+    includeFinalVerificationCandidates: args['include-final-verification-candidates'] === true
   };
 
   const report = buildInventory(options);
