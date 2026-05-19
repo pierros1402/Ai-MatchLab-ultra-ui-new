@@ -1141,3 +1141,59 @@ Example smoke:
 ```powershell
 node .\engine-v1\jobs\build-team-motivation-context-range.js --from 2026-05-01 --to 2026-05-19 --max-leagues 20
 ```
+
+### build-league-context-motivation-readiness-report-range.js
+
+Builds a read-only league context and motivation readiness report across a date range.
+
+Pipeline:
+- builds or reads league context completeness inventory
+- builds or reads team motivation context range outputs
+- groups inventory rows by league
+- classifies each league as ready, ready with warnings, or blocked
+
+Input:
+- `--from <YYYY-MM-DD>`
+
+Optional:
+- `--to <YYYY-MM-DD>`
+- `--root <project-root>`
+- `--inventory <league-context-completeness.json>`
+- `--motivation-dir <directory>`
+- `--output-dir <directory>`
+- `--output <readiness-report.json>`
+- `--max-leagues <number>` for smoke runs
+
+Readiness statuses:
+- `ready_for_context_integration`
+- `ready_with_context_warnings`
+- `blocked_final_truth_risk`
+- `blocked_fixture_coverage_risk`
+- `blocked_missing_standings`
+- `blocked_motivation_context_unavailable`
+- `blocked_motivation_output_missing`
+
+Output:
+- league-level readiness summary
+- status counts
+- fixture coverage risk reasons
+- context warning reasons
+- final truth risk reasons
+- motivation output availability and motivation summary per league
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- no production final-truth decision
+- no canonical promotion
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-league-context-motivation-readiness-report-range.js --self-test
+```
+
+Example smoke:
+```powershell
+node .\engine-v1\jobs\build-league-context-motivation-readiness-report-range.js --from 2026-05-01 --to 2026-05-19 --max-leagues 40
+```
