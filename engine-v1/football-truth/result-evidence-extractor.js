@@ -105,13 +105,50 @@ function extractScore(row) {
     null;
 }
 
+function isUnknownStatus(value) {
+  const status = cleanText(value).toUpperCase();
+  return !status || status === "UNKNOWN" || status === "N/A" || status === "NA" || status === "TBD" || status === "TBA";
+}
+function finalStatusFromText(value) {
+  const text = cleanText(value);
+  if (!text) return null;
+
+  const finalPatterns = [
+    /\bfull[ -]?time\b/i,
+    /\bfinal\s+score\b/i,
+    /\bfinal\s+result\b/i,
+    /\bmatch\s+ended\b/i,
+    /\bended\s+\d{1,2}\s*[-–—:]\s*\d{1,2}\b/i,
+    /\bwho\s+won\s+between\b/i,
+    /\bwon\s+\d{1,2}\s*[-–—]\s*\d{1,2}\s+over\b/i
+  ];
+
+  for (const pattern of finalPatterns) {
+    if (pattern.test(text)) return "FT";
+  }
+
+  return null;
+}
+
 function extractStatusText(row) {
-  return cleanText(firstNonEmpty(
+  const explicitStatus = cleanText(firstNonEmpty(
     row?.statusText,
     row?.status,
     row?.matchStatus,
     row?.state,
-    row?.phase,
+    row?.phase
+  ));
+
+  if (explicitStatus && !isUnknownStatus(explicitStatus)) return explicitStatus;
+
+  const finalStatus = finalStatusFromText(row?.scoreText) ||
+    finalStatusFromText(row?.resultText) ||
+    finalStatusFromText(row?.text) ||
+    finalStatusFromText(row?.title);
+
+  if (finalStatus) return finalStatus;
+
+  return cleanText(firstNonEmpty(
     row?.title,
     row?.text
   ));
