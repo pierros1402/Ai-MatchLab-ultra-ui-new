@@ -707,3 +707,40 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-final-result-missing-ft-inventory-range.js --from 2026-05-01 --to 2026-05-19
 ```
+
+### build-final-result-truth-audit-workset-from-inventory-file.js
+
+Builds a read-only final-result truth audit workset from a missing/suspicious FT inventory report.
+
+Input:
+- `--input <final-result-missing-ft-inventory.json>`
+
+Optional:
+- `--output <final-result-truth-audit-workset.json>`
+
+Workset audit types:
+- `missing_final_truth` for PRE/LIVE/UNKNOWN/stale rows where final truth is missing or suspicious
+- `verify_existing_final_truth` for rows that already show FT/final score but still need independent verification
+- `verify_value_settlement` for value settlement rows that need final-truth verification
+
+Priority rules:
+- high: rows with value settlement impact, stale live rows with score, or score present without final status
+- medium: existing FT/final-score verification rows, PRE after kickoff, or UNKNOWN after kickoff
+- normal: lower-risk remaining rows
+
+Safety guarantees:
+- `canonicalWrites:0`
+- no promotion
+- no production final-truth decision
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-audit-workset-from-inventory-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-audit-workset-from-inventory-file.js --input .\data\football-truth\_diagnostics\inventory-2026-05-18-with-verification.json
+```
