@@ -602,3 +602,33 @@ Self-test:
 ```powershell
 node .\engine-v1\jobs\build-final-result-review-decision-template-file.js --self-test
 ```
+
+### validate-final-result-review-decisions-file.js
+
+Validates a read-only final-result manual review decisions file before any later promotion design exists.
+
+Input:
+- `--input <final-result-review-decisions-template.json>`
+
+Optional:
+- `--output <final-result-review-decisions-validation.json>`
+
+Validation rules:
+- every row must have a non-empty `queueId`
+- every row must include `allowedDecisions`
+- `reviewerDecision`, when set, must be included in `allowedDecisions`
+- `reviewed:true` requires a non-empty `reviewerDecision`
+- `accept_score_group_read_only` requires a valid `selectedScoreKey` from the row score groups
+- `productionApproved` must remain `false` in this read-only stage
+
+Safety guarantees:
+- `canonicalWrites:0`
+- no promotion
+- no production final-truth decision
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\validate-final-result-review-decisions-file.js --self-test
+```
