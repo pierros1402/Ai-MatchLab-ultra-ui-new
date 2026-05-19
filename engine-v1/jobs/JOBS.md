@@ -1197,3 +1197,57 @@ Example smoke:
 ```powershell
 node .\engine-v1\jobs\build-league-context-motivation-readiness-report-range.js --from 2026-05-01 --to 2026-05-19 --max-leagues 40
 ```
+
+### build-league-context-readiness-priority-workset-file.js
+
+Builds a read-only priority workset from a league context motivation readiness report.
+
+Input:
+- `--input <league-context-motivation-readiness-report.json>`
+
+Optional:
+- `--output <league-context-readiness-priority-workset.json>`
+
+Priority order:
+- final-truth risk first, especially where value picks are impacted
+- missing or rebuild-needed standings
+- fixture coverage repair
+- context data warnings
+- later context integration candidates
+
+Output rows:
+- `priorityRank`
+- `priorityScore`
+- `priorityBand`
+- `actionType`
+- `leagueSlug`
+- `readinessStatus`
+- `reason`
+- `recommendedNextJob`
+- fixture/value/standings/final-truth/motivation counters
+- risk reasons copied from readiness report
+
+Action types:
+- `resolve_final_truth_risk`
+- `add_or_rebuild_standings`
+- `repair_fixture_coverage`
+- `review_context_data_warning`
+- `candidate_for_context_integration`
+- `manual_inspection`
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- no production final-truth decision
+- no canonical promotion
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-league-context-readiness-priority-workset-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-league-context-readiness-priority-workset-file.js --input .\data\league-context\_diagnostics\readiness-2026-05-01_to_2026-05-19\league-context-motivation-readiness-report.json
+```
