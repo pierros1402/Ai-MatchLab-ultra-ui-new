@@ -744,3 +744,51 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-final-result-truth-audit-workset-from-inventory-file.js --input .\data\football-truth\_diagnostics\inventory-2026-05-18-with-verification.json
 ```
+
+### run-final-result-truth-audit-workset-range.js
+
+Runs the read-only final-result truth audit range pipeline in one command.
+
+Pipeline:
+- missing/suspicious FT inventory range
+- truth audit workset
+- source search targets
+- source resolution tasks
+- wrapper summary report
+
+Input:
+- `--from YYYY-MM-DD`
+- `--to YYYY-MM-DD`
+
+Optional:
+- `--output-dir <directory>`
+- `--snapshots-dir <data/deploy-snapshots>`
+- `--max-targets-per-match <number>`
+- `--missing-only` to disable existing-final verification candidates
+
+Default behavior:
+- includes both missing FT rows and existing FT/final-score verification candidates
+- produces search targets and resolution tasks only
+- does not fetch URLs
+- does not resolve URLs with side effects
+- does not make final-truth production decisions
+- does not promote canonical results
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- `urlResolutionSideEffects:false`
+- no production final-truth decision
+- no canonical promotion
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\run-final-result-truth-audit-workset-range.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\run-final-result-truth-audit-workset-range.js --from 2026-05-01 --to 2026-05-19
+```
