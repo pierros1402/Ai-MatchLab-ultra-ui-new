@@ -835,3 +835,58 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-final-result-truth-audit-resolution-batches-file.js --input .\data\football-truth\_diagnostics\truth-audit-range-2026-05-01_to_2026-05-19\truth-audit-resolution-tasks-2026-05-01_to_2026-05-19.json --max-tasks 100 --batch-size 25
 ```
+
+### build-final-result-truth-audit-resolution-review-pack-file.js
+
+Builds a read-only manual/external review pack from one final-result truth audit resolution batch.
+
+Input:
+- `--input <truth-audit-resolution-batches.json>`
+
+Optional:
+- `--batch-id <resolution_batch_0001>`
+- `--batch-index <number>`
+- `--output <truth-audit-resolution-review-pack.json>`
+
+Review pack fields:
+- `reviewTaskId`
+- `sourceTaskId`
+- `matchId`
+- `date`
+- `leagueSlug`
+- `homeTeam`
+- `awayTeam`
+- `intent`
+- `priority`
+- `query`
+- `expectedScoreKey`
+- `manualResolvedUrl`
+- `manualSourceName`
+- `manualSourceType`
+- `manualObservedHomeScore`
+- `manualObservedAwayScore`
+- `manualObservedStatus`
+- `manualEvidenceText`
+- `reviewerNotes`
+- `reviewed:false`
+- `acceptedForValidation:false`
+- `productionApproved:false`
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- `urlResolutionSideEffects:false`
+- no production final-truth decision
+- no canonical promotion
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-audit-resolution-review-pack-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-audit-resolution-review-pack-file.js --input .\data\football-truth\_diagnostics\truth-audit-range-2026-05-01_to_2026-05-19\truth-audit-resolution-batches-value-first.json --batch-id resolution_batch_0001
+```
