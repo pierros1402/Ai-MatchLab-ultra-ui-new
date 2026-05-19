@@ -36,6 +36,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - extract-final-result-evidence-file.js: read-only final-result evidence extraction report; prepared/source rows JSON -> rawEvidenceRows, canonicalWrites: 0, no fetch, no verification, no FT decision, no promotion.
 - run-final-result-source-snapshot-evidence-diagnostic-file.js: read-only source snapshot evidence orchestrator; fetched source snapshots or validated URL resolutions -> prepare -> extract/build/verify diagnostic, canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
 - run-final-result-consensus-smoke-day.js: read-only day-level FT consensus smoke orchestrator; builds watchset -> discover/classify -> search targets -> resolution tasks, optionally validates supplied resolved URLs and runs source snapshot evidence diagnostic; canonicalWrites: 0, fetch only with explicit --allow-fetch, no production FT decision or promotion.
+- build-final-result-resolved-url-input-template-file.js: read-only helper that converts resolution tasks into a manual resolved-URL input template with cases and urlResolutions placeholders; canonicalWrites: 0, no fetch, no validation, no production FT decision or promotion.
 - audit-fixture-coverage-contract-day.js: fixture coverage contract audit; strict locally, warn-only in workflow.
 - audit-fixture-provider-capability.js: provider capability/debt audit; strict locally, warn-only in workflow.
 - audit-snapshot-mirror-day.js: snapshot parity audit.
@@ -332,6 +333,38 @@ Guarantees:
 
 This job only converts diagnostic source snapshots into prepared evidence rows. Use the separate extract/build/verify job for evidence extraction and verification.
 
+
+
+### `build-final-result-resolved-url-input-template-file.js`
+
+Read-only helper that converts `resolution-tasks.json` into a manual resolved-URL input template.
+
+Input:
+
+```text
+resolution-tasks.json from materialize-final-result-source-resolution-tasks-file.js or run-final-result-consensus-smoke-day.js intermediate output
+```
+
+Output shape:
+
+```text
+cases: copied/normalized match cases and resolutionTasks
+urlResolutions: placeholder rows where manual review fills resolvedUrl and sourceName
+```
+
+The helper also infers missing home/away teams from quoted search queries when resolution tasks do not carry explicit team fields.
+
+The job is diagnostic-template-only: `canonicalWrites: 0`, no fetch, no validation, no final truth production decision, no canonical promotion, no production repair, and no fixture/history/value/details writes.
+
+Typical usage:
+
+```powershell
+node .\engine-v1\jobs\build-final-result-resolved-url-input-template-file.js `
+  --input .\data\football-truth\_diagnostics\...\resolution-tasks.json `
+  --output .\data\football-truth\_diagnostics\...\resolved-url-input-template.json `
+  --limit-cases=5 `
+  --max-resolutions-per-match=2
+```
 
 ### `run-final-result-consensus-smoke-day.js`
 
