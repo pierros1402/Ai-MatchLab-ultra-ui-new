@@ -890,3 +890,41 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-final-result-truth-audit-resolution-review-pack-file.js --input .\data\football-truth\_diagnostics\truth-audit-range-2026-05-01_to_2026-05-19\truth-audit-resolution-batches-value-first.json --batch-id resolution_batch_0001
 ```
+
+### validate-final-result-truth-audit-resolution-review-pack-file.js
+
+Validates a read-only filled final-result truth audit resolution review pack before any source validation, final-truth decision, or promotion stage.
+
+Input:
+- `--input <truth-audit-resolution-review-pack.json>`
+
+Optional:
+- `--output <truth-audit-resolution-review-pack-validation.json>`
+
+Validation rules:
+- every row must have `reviewTaskId`, `matchId`, `date`, `intent`, and `query`
+- `manualResolvedUrl`, when set, must start with `http://` or `https://`
+- `manualSourceName` is required when `manualResolvedUrl` is set
+- observed home/away scores must be set together
+- `reviewed:true` requires `manualResolvedUrl` or reviewer notes
+- `acceptedForValidation:true` requires `reviewed:true`, URL, source name, both observed scores, and observed status
+- `productionApproved` must remain `false` in this read-only stage
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `fetch:false`
+- `urlResolutionSideEffects:false`
+- no production final-truth decision
+- no canonical promotion
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\validate-final-result-truth-audit-resolution-review-pack-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\validate-final-result-truth-audit-resolution-review-pack-file.js --input .\data\football-truth\_diagnostics\truth-audit-range-2026-05-01_to_2026-05-19\truth-audit-resolution-review-pack-batch-0001.json
+```
