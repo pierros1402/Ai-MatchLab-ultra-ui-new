@@ -632,3 +632,37 @@ Self-test:
 ```powershell
 node .\engine-v1\jobs\validate-final-result-review-decisions-file.js --self-test
 ```
+
+### build-final-result-reviewed-decision-summary-file.js
+
+Builds a read-only summary/report from final-result manual review decisions or validation output.
+
+Input:
+- `--input <final-result-review-decisions-validation.json|decisions-template.json>`
+
+Optional:
+- `--output <final-result-reviewed-decision-summary.json>`
+
+Summary output includes:
+- reviewed rows
+- unreviewed rows
+- approved verified read-only rows
+- accepted score-group read-only rows
+- add-source-required rows
+- rejected rows
+- deferred rows
+- invalid rows
+- productionApproved violations
+- read-only actionable rows
+
+Safety guarantees:
+- `canonicalWrites:0`
+- no promotion
+- no production final-truth decision
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-reviewed-decision-summary-file.js --self-test
+```
