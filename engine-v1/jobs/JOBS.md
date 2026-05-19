@@ -570,3 +570,35 @@ Guarantees:
 - no production repair
 - no writes to fixtures/history/value/details
 - fetch is blocked unless `--allow-fetch` is explicitly passed
+
+### build-final-result-review-decision-template-file.js
+
+Builds a read-only manual review decision template from a final-result review queue file.
+
+Input:
+- `--input <final-result-review-queue.json>`
+
+Optional:
+- `--output <final-result-review-decisions-template.json>`
+
+Output:
+- decision template rows with `queueId`, `matchId`, teams, current verdict, score groups, allowed decisions, empty reviewer fields, `reviewed:false`, and `productionApproved:false`.
+
+Allowed reviewer decisions:
+- `approve_verified_read_only`
+- `accept_score_group_read_only`
+- `add_source_required`
+- `reject_all`
+- `defer`
+
+Safety guarantees:
+- `canonicalWrites:0`
+- no promotion
+- no production final-truth decision
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-review-decision-template-file.js --self-test
+```
