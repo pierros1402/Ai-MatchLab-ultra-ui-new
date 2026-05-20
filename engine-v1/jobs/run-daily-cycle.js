@@ -1,4 +1,5 @@
 import fs from "fs";
+import { spawnSync } from "node:child_process";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { discoverWindow } from "./discover-window.js";
 import { discoverActiveLeagues } from "./discover-active-leagues.js";
@@ -38,6 +39,44 @@ import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
 import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
+function readJsonIfExists(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.message || String(error),
+      filePath
+    };
+  }
+}
+
+function runDailyCycleNodeJob(args, label) {
+  const result = spawnSync(globalThis.process.execPath, args, {
+    cwd: globalThis.process.cwd(),
+    encoding: "utf8",
+    windowsHide: true
+  });
+
+  if (result.stdout) {
+    for (const line of result.stdout.trim().split(/\r?\n/u).filter(Boolean)) {
+      console.log(`[daily-cycle] ${label}:stdout`, line);
+    }
+  }
+
+  if (result.stderr) {
+    for (const line of result.stderr.trim().split(/\r?\n/u).filter(Boolean)) {
+      console.warn(`[daily-cycle] ${label}:stderr`, line);
+    }
+  }
+
+  if (result.status !== 0) {
+    throw new Error(`${label} failed with exit code ${result.status}`);
+  }
+
+  return result;
+}
 function normalizePositiveIntegerOption(value, fallback) {
   if (value === Infinity) return Infinity;
 
@@ -394,6 +433,9 @@ export async function runDailyCycle(options = {}) {
   let teamNewsBuild = null;
   let finalDetailsSync = null;
   let valueCoverageReport = null;
+  let valueSettlementReport = null;
+  let valueSettlementSummary = null;
+  let valueSettlementStatistics = null;
   let deploySnapshot = null;
   let finalizedDeploySnapshot = null;
   let finalizeValueBuild = null;
@@ -819,6 +861,81 @@ export async function runDailyCycle(options = {}) {
     nullByClass: valueCoverageReport?.breakdown?.nullByClass || {}
   });
 
+  console.log("[daily-cycle] value-settlement-summary:start", { dayKey });
+
+  const valueSettlementReportPath = `data/football-truth/_diagnostics/value-settlement-daily-cycle/${dayKey}.value-settlement-report.json`;
+  const valueSettlementSummaryPath = `data/football-truth/_settlement-summaries/${dayKey}.value-settlement-summary.json`;
+  const valueSettlementStatisticsPath = `data/football-truth/_settlement-statistics/value-settlement-statistics-${dayKey}_to_${dayKey}.json`;
+
+  try {
+    runDailyCycleNodeJob([
+      "./engine-v1/jobs/build-value-settlement-from-final-results-day.js",
+      "--date",
+      dayKey,
+      "--output",
+      valueSettlementReportPath
+    ], "value-settlement-report");
+
+    valueSettlementReport = readJsonIfExists(valueSettlementReportPath);
+
+    runDailyCycleNodeJob([
+      "./engine-v1/jobs/export-value-settlement-summary-file.js",
+      "--input",
+      valueSettlementReportPath,
+      "--output",
+      valueSettlementSummaryPath
+    ], "value-settlement-summary-export");
+
+    valueSettlementSummary = readJsonIfExists(valueSettlementSummaryPath);
+
+    runDailyCycleNodeJob([
+      "./engine-v1/jobs/build-value-settlement-statistics-range.js",
+      "--start",
+      dayKey,
+      "--end",
+      dayKey,
+      "--output",
+      valueSettlementStatisticsPath
+    ], "value-settlement-statistics");
+
+    valueSettlementStatistics = readJsonIfExists(valueSettlementStatisticsPath);
+
+    console.log("[daily-cycle] value-settlement-summary:done", {
+      ok: valueSettlementSummary?.ok === true && valueSettlementStatistics?.ok === true,
+      dayKey,
+      settlementReport: valueSettlementReportPath,
+      settlementSummary: valueSettlementSummaryPath,
+      settlementStatistics: valueSettlementStatisticsPath,
+      settledRows: valueSettlementSummary?.summary?.settledRows ?? 0,
+      winRows: valueSettlementSummary?.summary?.winRows ?? 0,
+      lossRows: valueSettlementSummary?.summary?.lossRows ?? 0,
+      statisticsWinRate: valueSettlementStatistics?.summary?.winRate ?? null,
+      valueWrites: false,
+      fixtureWrites: false,
+      historyWrites: false,
+      detailsWrites: false
+    });
+  } catch (error) {
+    valueSettlementReport = {
+      ok: false,
+      dayKey,
+      error: error?.message || String(error),
+      valueWrites: false,
+      fixtureWrites: false,
+      historyWrites: false,
+      detailsWrites: false
+    };
+
+    console.warn("[daily-cycle] value-settlement-summary:warn", {
+      ok: false,
+      dayKey,
+      error: valueSettlementReport.error,
+      valueWrites: false,
+      fixtureWrites: false,
+      historyWrites: false,
+      detailsWrites: false
+    });
+  }
   console.log("[daily-cycle] final-details-sync:start", { dayKey });
 
   finalDetailsSync = await buildDetailsDay(dayKey, {
@@ -1007,6 +1124,9 @@ export async function runDailyCycle(options = {}) {
     teamNewsBuild,
     valueBuild,
     valueCoverageReport,
+    valueSettlementReport,
+    valueSettlementSummary,
+    valueSettlementStatistics,
     finalizeReadiness,
     finalDetailsSync,
     deploySnapshot,
@@ -1070,6 +1190,12 @@ if (entryUrl === import.meta.url) {
       valueCoverageReturnedCount: result?.valueCoverageReport?.counts?.valueReturned ?? 0,
       valueCoverageNullCount: result?.valueCoverageReport?.counts?.valueNull ?? 0,
       valueCoverageMinimumSampleNullCount: result?.valueCoverageReport?.counts?.minimumRecentSampleNull ?? 0,
+      valueSettlementSummaryOk: result?.valueSettlementSummary?.ok === true,
+      valueSettlementSettledRows: result?.valueSettlementSummary?.summary?.settledRows ?? 0,
+      valueSettlementWinRows: result?.valueSettlementSummary?.summary?.winRows ?? 0,
+      valueSettlementLossRows: result?.valueSettlementSummary?.summary?.lossRows ?? 0,
+      valueSettlementStatisticsWinRate: result?.valueSettlementStatistics?.summary?.winRate ?? null,
+      valueSettlementValueWrites: false,
       snapshotHash: result?.deploySnapshot?.hash || null,
       snapshotDetailsCount: result?.deploySnapshot?.counts?.details ?? 0
     });
