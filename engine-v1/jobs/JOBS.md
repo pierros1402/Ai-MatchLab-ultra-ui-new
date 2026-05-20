@@ -1403,3 +1403,17 @@ Default output:
 - data/football-truth/_settlement-statistics/value-settlement-statistics-YYYY-MM-DD_to_YYYY-MM-DD.json
 
 The range report aggregates total WIN/LOSS/VOID/unknown rows, win rate, by-date, by-market, and by-league buckets. It does not read or write ignored data/value/, fixtures, history, details, or final-result truth files.
+### validate-value-settlement-daily-cycle-output-day.js
+
+Validates daily-cycle value-settlement summary/statistics output for a single day.
+
+Default inputs:
+
+- data/football-truth/_settlement-summaries/YYYY-MM-DD.value-settlement-summary.json
+- data/football-truth/_settlement-statistics/value-settlement-statistics-YYYY-MM-DD_to_YYYY-MM-DD.json
+
+Default output:
+
+- data/football-truth/_diagnostics/value-settlement-daily-cycle/YYYY-MM-DD.value-settlement-output-validation.json
+
+The validator checks that summary/statistics artifacts exist, are schema-compatible, match counts, and remain read-only for data/value/, fixtures, history, details, and final-result truth files.
