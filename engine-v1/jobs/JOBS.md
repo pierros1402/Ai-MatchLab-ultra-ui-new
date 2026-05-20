@@ -1431,3 +1431,22 @@ Default output:
 - data/football-truth/_diagnostics/officiating-candidates/YYYY-MM-DD.officiating-candidates.json
 
 This job does not fetch sources and does not write production data/officiating/. It keeps referee and discipline candidates independent from final-result truth sources, so final-result verification can proceed even when referee/cards/penalties are missing.
+### build-season-final-truth-settlement-readiness-range.js
+
+Builds a read-only range audit for fixture ingest, verified final-result truth, value-settlement readiness, backtest eligibility, and officiating candidate coverage.
+
+Default output:
+
+- data/football-truth/_diagnostics/season-readiness/final-truth-settlement-readiness-START_to_END.json
+
+Inputs read where present:
+
+- data/deploy-snapshots/YYYY-MM-DD/fixtures.json
+- data/canonical-fixtures/YYYY-MM-DD/*.json
+- data/value/YYYY-MM-DD.json
+- data/final-results/YYYY-MM-DD/*.json
+- data/football-truth/_settlement-summaries/YYYY-MM-DD.value-settlement-summary.json
+- data/football-truth/_settlement-statistics/value-settlement-statistics-YYYY-MM-DD_to_YYYY-MM-DD.json
+- data/football-truth/_diagnostics/officiating-candidates/YYYY-MM-DD.officiating-candidates.json
+
+The job performs no source fetch, no backtest replay, and no production writes. It is intended to decide which dates/leagues/rows are safe for verified FT promotion, settlement, and later virtual value backtesting.
