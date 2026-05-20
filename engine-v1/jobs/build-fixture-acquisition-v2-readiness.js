@@ -191,7 +191,7 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
   const hasNonEspnCanonicalSource = sources.some((s) => s && !s.includes("espn"));
   const configuredProviders = providerCapabilities[slug] || [];
   const capabilitySummary = summarizeFixtureProviderCapability(slug, configuredProviders);
-  const hasValueReadyNonEspnProvider = capabilitySummary.hasValueReadyNonEspnProvider;
+  const hasValueReadyVerifiedProvider = capabilitySummary.hasValueReadyVerifiedProvider === true || capabilitySummary.hasValueReadyNonEspnProvider === true;
 
   let readiness = "ready";
   let priority = "none";
@@ -206,13 +206,13 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
   if (hasCanonicalFixtures && hasEspn && !hasNonEspnCanonicalSource) {
     readiness = "unsafe";
     priority = bucket === "must_have_for_value" ? "p0" : "p1";
-    reasons.push("espn_only_canonical_fixtures");
+    reasons.push("supplemental_only_canonical_fixtures");
   }
 
-  if (bucket === "must_have_for_value" && !hasValueReadyNonEspnProvider) {
+  if (bucket === "must_have_for_value" && !hasValueReadyVerifiedProvider) {
     if (readiness === "ready") readiness = "unsafe";
     if (priority === "none") priority = "p0";
-    reasons.push("missing_value_ready_non_espn_provider_capability");
+    reasons.push("missing_verified_fixture_provider_capability");
   }
 
   return {
@@ -234,8 +234,8 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
       providerIds: capabilitySummary.providerIds,
       providers: capabilitySummary.providers,
       hasEspnCapability: capabilitySummary.hasEspnCapability,
-      hasValueReadyNonEspnProvider,
-      valueReadyNonEspnProviderIds: capabilitySummary.valueReadyNonEspnProviderIds,
+      hasValueReadyVerifiedProvider,
+      valueReadyVerifiedProviderIds: capabilitySummary.valueReadyVerifiedProviderIds || capabilitySummary.valueReadyNonEspnProviderIds || [],
       supplementalProviderIds: capabilitySummary.supplementalProviderIds,
       diagnosticOnlyProviderIds: capabilitySummary.diagnosticOnlyProviderIds
     }
@@ -306,9 +306,9 @@ function buildReport(dayKey) {
     p0Rows: rows.filter((r) => r.priority === "p0").length,
     p1Rows: rows.filter((r) => r.priority === "p1").length,
     missingCanonicalFixtures: rows.filter((r) => r.reasons.includes("missing_canonical_fixtures")).length,
-    espnOnlyCanonicalFixtures: rows.filter((r) => r.reasons.includes("espn_only_canonical_fixtures")).length,
-    missingNonEspnProviderCapability: rows.filter((r) => r.reasons.includes("missing_value_ready_non_espn_provider_capability")).length,
-    missingValueReadyNonEspnProviderCapability: rows.filter((r) => r.reasons.includes("missing_value_ready_non_espn_provider_capability")).length
+    supplementalOnlyCanonicalFixtures: rows.filter((r) => r.reasons.includes("supplemental_only_canonical_fixtures")).length,
+    missingVerifiedProviderCapability: rows.filter((r) => r.reasons.includes("missing_verified_fixture_provider_capability")).length,
+    missingValueReadyVerifiedProviderCapability: rows.filter((r) => r.reasons.includes("missing_verified_fixture_provider_capability")).length
   };
 
   return {
@@ -336,8 +336,8 @@ function buildReport(dayKey) {
       valueWrites: false,
       detailsWrites: false,
       finalResultWrites: false,
-      espnOnlyIsUnsafeForValue: true,
-      valueRequiresVerifiedNonEspnProviderCapability: true,
+      supplementalOnlyIsUnsafeForValue: true,
+      valueRequiresVerifiedFixtureProviderCapability: true,
       marketInputIsNotRequired: true
     }
   };

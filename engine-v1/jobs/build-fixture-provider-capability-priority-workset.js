@@ -98,16 +98,16 @@ function inferPriority(row, plan, capability) {
     "saudi_arabia"
   ].includes(country);
 
-  const hasOnlyEspn =
+  const hasOnlySupplementalFeed =
     capability.hasEspnCapability === true &&
     capability.hasValueReadyNonEspnProvider !== true;
 
   if (capability.hasValueReadyNonEspnProvider) {
     return {
       priority: 0,
-      bucket: "already_value_ready_non_espn",
+      bucket: "already_value_ready_verified_provider",
       recommendedProvider: null,
-      reason: "already has explicit value-ready non-ESPN provider capability"
+      reason: "already has explicit value-ready verified fixture provider capability"
     };
   }
 
@@ -129,12 +129,12 @@ function inferPriority(row, plan, capability) {
     };
   }
 
-  if (hasOnlyEspn) {
+  if (hasOnlySupplementalFeed) {
     return {
       priority: 3,
-      bucket: "espn_supplemental_needs_second_source",
+      bucket: "supplemental_feed_needs_verified_source",
       recommendedProvider: "manual_verified_import",
-      reason: "ESPN exists only as supplemental substrate; value needs explicit verified non-ESPN confirmation"
+      reason: "current substrate is supplemental only; value needs explicit verified fixture source confirmation"
     };
   }
 
@@ -170,8 +170,8 @@ export function buildFixtureProviderCapabilityPriorityWorkset(options = {}) {
         currentProviderIds,
         currentExecution: plan?.execution || "skip",
         hasEspnCapability: capability.hasEspnCapability === true,
-        hasValueReadyNonEspnProvider: capability.hasValueReadyNonEspnProvider === true,
-        valueReadyNonEspnProviderIds: capability.valueReadyNonEspnProviderIds || [],
+        hasValueReadyVerifiedProvider: capability.hasValueReadyVerifiedProvider === true || capability.hasValueReadyNonEspnProvider === true,
+        valueReadyVerifiedProviderIds: capability.valueReadyVerifiedProviderIds || capability.valueReadyNonEspnProviderIds || [],
         supplementalProviderIds: capability.supplementalProviderIds || [],
         priority: priority.priority,
         bucket: priority.bucket,
@@ -190,10 +190,10 @@ export function buildFixtureProviderCapabilityPriorityWorkset(options = {}) {
 
   const summary = {
     declaredLeagueCount: worksetRows.length,
-    alreadyValueReadyNonEspn: worksetRows.filter((row) => row.bucket === "already_value_ready_non_espn").length,
+    alreadyValueReadyVerifiedProvider: worksetRows.filter((row) => row.bucket === "already_value_ready_verified_provider").length,
     officialCompetitionSourceFirst: worksetRows.filter((row) => row.bucket === "official_competition_source_first").length,
     majorTopTierOfficialSourceFirst: worksetRows.filter((row) => row.bucket === "major_top_tier_official_source_first").length,
-    espnSupplementalNeedsSecondSource: worksetRows.filter((row) => row.bucket === "espn_supplemental_needs_second_source").length,
+    supplementalFeedNeedsVerifiedSource: worksetRows.filter((row) => row.bucket === "supplemental_feed_needs_verified_source").length,
     noAdapterManualVerifiedPath: worksetRows.filter((row) => row.bucket === "no_adapter_manual_verified_path").length
   };
 
@@ -210,9 +210,9 @@ export function buildFixtureProviderCapabilityPriorityWorkset(options = {}) {
     grouped: {
       officialCompetitionSourceFirst: worksetRows.filter((row) => row.bucket === "official_competition_source_first"),
       majorTopTierOfficialSourceFirst: worksetRows.filter((row) => row.bucket === "major_top_tier_official_source_first"),
-      espnSupplementalNeedsSecondSource: worksetRows.filter((row) => row.bucket === "espn_supplemental_needs_second_source"),
+      supplementalFeedNeedsVerifiedSource: worksetRows.filter((row) => row.bucket === "supplemental_feed_needs_verified_source"),
       noAdapterManualVerifiedPath: worksetRows.filter((row) => row.bucket === "no_adapter_manual_verified_path"),
-      alreadyValueReadyNonEspn: worksetRows.filter((row) => row.bucket === "already_value_ready_non_espn")
+      alreadyValueReadyVerifiedProvider: worksetRows.filter((row) => row.bucket === "already_value_ready_verified_provider")
     }
   };
 

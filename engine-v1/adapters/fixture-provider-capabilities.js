@@ -86,7 +86,7 @@ export const ESPN_SUPPORTED_LEAGUES = new Set([
 const PROVIDER_DEFINITIONS = [
   {
     id: "espn",
-    label: "ESPN",
+    label: "Supplemental scoreboard feed",
     sourceType: "scoreboard_api",
     role: "supplemental",
     family: "supplemental",
@@ -281,9 +281,12 @@ export function summarizeFixtureProviderCapability(leagueSlug, configuredProvide
     providerIds: providers.map((provider) => provider.id),
     valueReadyNonEspnProviders,
     valueReadyNonEspnProviderIds: valueReadyNonEspnProviders.map((provider) => provider.id),
+    valueReadyVerifiedProviders: valueReadyNonEspnProviders,
+    valueReadyVerifiedProviderIds: valueReadyNonEspnProviders.map((provider) => provider.id),
     supplementalProviderIds: supplementalProviders.map((provider) => provider.id),
     diagnosticOnlyProviderIds: diagnosticOnlyProviders.map((provider) => provider.id),
     hasEspnCapability: providers.some((provider) => provider.id === "espn"),
-    hasValueReadyNonEspnProvider: valueReadyNonEspnProviders.length > 0
+    hasValueReadyNonEspnProvider: valueReadyNonEspnProviders.length > 0,
+    hasValueReadyVerifiedProvider: valueReadyNonEspnProviders.length > 0
   };
 }
