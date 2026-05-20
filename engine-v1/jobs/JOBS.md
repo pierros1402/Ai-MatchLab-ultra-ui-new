@@ -1450,3 +1450,5 @@ Inputs read where present:
 - data/football-truth/_diagnostics/officiating-candidates/YYYY-MM-DD.officiating-candidates.json
 
 The job performs no source fetch, no backtest replay, and no production writes. It is intended to decide which dates/leagues/rows are safe for verified FT promotion, settlement, and later virtual value backtesting.
+
+Use `--value-baseline-date YYYY-MM-DD` to keep fixture/final-truth coverage across an older range while counting value settlement/backtest scope only from the accepted clean baseline onward. Historical value rows before the baseline are reported as `ignoredHistoricalValuePicksBeforeBaseline` and excluded from value/backtest readiness counts.

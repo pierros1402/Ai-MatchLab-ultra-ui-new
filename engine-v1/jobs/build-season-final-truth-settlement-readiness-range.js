@@ -195,7 +195,10 @@ function summarizeCanonicalFixtureFiles(dayKey) {
   return { exists: true, files, rows };
 }
 
-function buildDayReadiness(dayKey) {
+function buildDayReadiness(dayKey, options = {}) {
+  const valueBaselineDate = clean(options.valueBaselineDate || '');
+  const valueInScope = !valueBaselineDate || dayKey >= valueBaselineDate;
+
   const fixturesPath = fixturesPathForDay(dayKey);
   const valuePath = valuePathForDay(dayKey);
   const settlementSummaryPath = settlementSummaryPathForDay(dayKey);
@@ -211,7 +214,8 @@ function buildDayReadiness(dayKey) {
   const canonicalFixtures = summarizeCanonicalFixtureFiles(dayKey);
 
   const fixtures = fixturesRead.ok ? normalizeRows(fixturesRead.data) : [];
-  const valuePicks = valueRead.ok ? normalizeRows(valueRead.data) : [];
+  const rawValuePicks = valueRead.ok ? normalizeRows(valueRead.data) : [];
+  const valuePicks = valueInScope ? rawValuePicks : [];
   const settlementRows = summaryRead.ok ? normalizeRows(summaryRead.data) : [];
   const statisticsRows = statisticsRead.ok ? normalizeRows(statisticsRead.data) : [];
   const officiatingRows = officiatingRead.ok ? normalizeRows(officiatingRead.data) : [];
@@ -304,6 +308,9 @@ function buildDayReadiness(dayKey) {
       fixturesExists: fixturesRead.exists,
       valuePath: repoRelative(valuePath),
       valueExists: valueRead.exists,
+      valueInScope,
+      valueBaselineDate,
+      ignoredHistoricalValuePicksBeforeBaseline: valueInScope ? 0 : rawValuePicks.length,
       finalResultsDir: repoRelative(finalResultsDirForDay(dayKey)),
       finalResultsExists: fs.existsSync(finalResultsDirForDay(dayKey)),
       settlementSummaryPath: repoRelative(settlementSummaryPath),
@@ -320,7 +327,9 @@ function buildDayReadiness(dayKey) {
       finalResults: finalResultsByMatch.size,
       verifiedFinalTruthRows: verifiedMatchIds.size,
       missingVerifiedFinalTruthRows: Math.max(0, fixtures.length - [...fixtureMatchIds].filter(matchId => verifiedMatchIds.has(matchId)).length),
+      rawValuePicks: rawValuePicks.length,
       valuePicks: valuePicks.length,
+      ignoredHistoricalValuePicksBeforeBaseline: valueInScope ? 0 : rawValuePicks.length,
       valuePicksWithVerifiedFT,
       valuePicksMissingVerifiedFT,
       settlementRows,
@@ -353,7 +362,9 @@ function aggregateDays(days) {
     canonicalFixtureRowsTotal: 0,
     verifiedFinalTruthRows: 0,
     missingVerifiedFinalTruthRows: 0,
+    rawValuePicksTotal: 0,
     valuePicksTotal: 0,
+    ignoredHistoricalValuePicksBeforeBaseline: 0,
     valuePicksWithVerifiedFT: 0,
     valuePicksMissingVerifiedFT: 0,
     settlementImpactedRows: 0,
@@ -379,7 +390,9 @@ function aggregateDays(days) {
     summary.canonicalFixtureRowsTotal += day.counts.canonicalFixtureRows;
     summary.verifiedFinalTruthRows += day.counts.verifiedFinalTruthRows;
     summary.missingVerifiedFinalTruthRows += day.counts.missingVerifiedFinalTruthRows;
+    summary.rawValuePicksTotal += day.counts.rawValuePicks;
     summary.valuePicksTotal += day.counts.valuePicks;
+    summary.ignoredHistoricalValuePicksBeforeBaseline += day.counts.ignoredHistoricalValuePicksBeforeBaseline;
     summary.valuePicksWithVerifiedFT += day.counts.valuePicksWithVerifiedFT;
     summary.valuePicksMissingVerifiedFT += day.counts.valuePicksMissingVerifiedFT;
     summary.settlementImpactedRows += day.counts.valuePicksMissingVerifiedFT;
@@ -453,9 +466,14 @@ function aggregateDays(days) {
   };
 }
 
-function buildSeasonFinalTruthSettlementReadinessRange(startDate, endDate) {
+function buildSeasonFinalTruthSettlementReadinessRange(startDate, endDate, options = {}) {
+  const valueBaselineDate = clean(options.valueBaselineDate || '');
+  if (valueBaselineDate && !isDayKey(valueBaselineDate)) {
+    throw new Error(`Invalid value baseline date: ${valueBaselineDate}`);
+  }
+
   const dayKeys = dateRange(startDate, endDate);
-  const days = dayKeys.map(buildDayReadiness);
+  const days = dayKeys.map(dayKey => buildDayReadiness(dayKey, { valueBaselineDate }));
   const aggregate = aggregateDays(days);
 
   return {
@@ -466,7 +484,9 @@ function buildSeasonFinalTruthSettlementReadinessRange(startDate, endDate) {
     range: {
       startDate,
       endDate,
-      days: dayKeys.length
+      days: dayKeys.length,
+      valueBaselineDate,
+      valueScope: valueBaselineDate ? `value_rows_on_or_after_${valueBaselineDate}` : 'all_value_rows'
     },
     summary: aggregate.summary,
     byLeague: aggregate.byLeague,
@@ -485,7 +505,8 @@ function buildSeasonFinalTruthSettlementReadinessRange(startDate, endDate) {
       officiatingWrites: false,
       sourceFetch: false,
       backtestRun: false,
-      readOnlyReadinessAudit: true
+      readOnlyReadinessAudit: true,
+      supportsValueBaselineDate: true
     }
   };
 }
@@ -498,6 +519,7 @@ function runSelfTest() {
     ok: true,
     stage: 'self_test_readiness_shape_ok',
     dayKey: day.dayKey,
+    valueInScope: day.inputs.valueInScope,
     fixtures: day.counts.fixtures,
     valuePicks: day.counts.valuePicks,
     canonicalWrites: 0,
@@ -517,6 +539,7 @@ function main() {
 
   const startDate = clean(args.start || args.startDate);
   const endDate = clean(args.end || args.endDate || startDate);
+  const valueBaselineDate = clean(args['value-baseline-date'] || args.valueBaselineDate || '');
 
   if (!isDayKey(startDate) || !isDayKey(endDate)) {
     console.error('Usage: node engine-v1/jobs/build-season-final-truth-settlement-readiness-range.js --start YYYY-MM-DD --end YYYY-MM-DD [--output <file>]');
@@ -526,7 +549,7 @@ function main() {
   const outputPath = path.resolve(args.output ? String(args.output) : defaultOutputPath(startDate, endDate));
 
   try {
-    const report = buildSeasonFinalTruthSettlementReadinessRange(startDate, endDate);
+    const report = buildSeasonFinalTruthSettlementReadinessRange(startDate, endDate, { valueBaselineDate });
     writeJson(outputPath, report);
 
     console.log(JSON.stringify({
