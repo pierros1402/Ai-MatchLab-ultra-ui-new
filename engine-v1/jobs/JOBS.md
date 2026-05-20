@@ -1334,3 +1334,18 @@ Example:
 ```powershell
 node .\engine-v1\jobs\validate-final-result-truth-promotion-plan-file.js --input .\data\football-truth\_promotion-plans\final-result-truth-promotion-plan-2026-05-18.json --output .\data\football-truth\_promotion-plans\final-result-truth-promotion-plan-2026-05-18.validation.json
 ```
+
+### write-final-result-truth-from-promotion-plan-file.js
+
+Consumes a validated final-result truth promotion plan and produces a guarded final-result truth write report.
+
+Default mode is dry-run only. The job writes no canonical final-result files unless both explicit flags are present:
+
+- --apply
+- --allow-production-writes
+
+Allowed production write target is restricted to:
+
+- data/final-results/YYYY-MM-DD/<matchId>.json
+
+The writer does not fetch URLs, does not repair production data, and does not write fixtures, history, value, or details. Value settlement remains a later guarded step.
