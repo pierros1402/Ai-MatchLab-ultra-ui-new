@@ -59,9 +59,34 @@ function isInsideRepo(filePath) {
   return Boolean(relative) && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-function isAllowedWriteTarget(filePath) {
+function isAllowedWriteTarget(filePath, options = {}) {
   const relative = repoRelative(filePath);
+
+  if (clean(options.sandboxOutputRoot)) {
+    const sandboxRoot = clean(options.sandboxOutputRoot)
+      .replaceAll('\\', '/')
+      .replace(/\/+$/u, '');
+    const escaped = sandboxRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`^${escaped}/\\d{4}-\\d{2}-\\d{2}/[^/]+\\.json$`).test(relative);
+  }
+
   return /^data\/final-results\/\d{4}-\d{2}-\d{2}\/[^/]+\.json$/.test(relative);
+}
+
+function resolveWriteTarget(row, options = {}) {
+  const writeTargetRaw = clean(row?.writeTarget);
+  const date = clean(row?.date || row?.day);
+  const matchId = clean(row?.matchId);
+
+  if (clean(options.sandboxOutputRoot)) {
+    const sandboxRoot = clean(options.sandboxOutputRoot)
+      .replaceAll('\\', '/')
+      .replace(/\/+$/u, '');
+    if (!/^\d{4}-\d{2}-\d{2}$/u.test(date) || !matchId) return '';
+    return resolveRepoPath(`${sandboxRoot}/${date}/${matchId}.json`);
+  }
+
+  return writeTargetRaw ? resolveRepoPath(writeTargetRaw) : '';
 }
 
 function normalizeScore(score) {
@@ -97,7 +122,7 @@ function validatePlanGuarantees(plan) {
   return errors;
 }
 
-function validateRow(row, index) {
+function validateRow(row, index, options = {}) {
   const errors = [];
   const matchId = clean(row?.matchId);
   const date = clean(row?.date || row?.day);
@@ -108,8 +133,7 @@ function validateRow(row, index) {
   const sourceUrls = asArray(row?.sourceUrls).map(clean).filter(Boolean);
   const sourceCount = Number(row?.sourceCount || sourceUrls.length || 0);
   const independentSourceCount = Number(row?.independentSourceCount || sourceCount || 0);
-  const writeTargetRaw = clean(row?.writeTarget);
-  const writeTarget = writeTargetRaw ? resolveRepoPath(writeTargetRaw) : '';
+  const writeTarget = resolveWriteTarget(row, options);
 
   if (!matchId) errors.push('missing_match_id');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) errors.push('invalid_or_missing_date');
@@ -125,7 +149,7 @@ function validateRow(row, index) {
   if (clean(row?.blockedReason)) errors.push('blocked_reason_present');
   if (!writeTarget) errors.push('missing_write_target');
   if (writeTarget && !isInsideRepo(writeTarget)) errors.push('write_target_outside_repo');
-  if (writeTarget && !isAllowedWriteTarget(writeTarget)) errors.push('write_target_not_allowed_final_results_path');
+  if (writeTarget && !isAllowedWriteTarget(writeTarget, options)) errors.push('write_target_not_allowed_final_results_path');
 
   return {
     index,
@@ -199,7 +223,7 @@ function buildWriteReport(plan, options = {}) {
   const mayWrite = apply && allowProductionWrites;
 
   const planErrors = validatePlanGuarantees(plan);
-  const rowResults = rows.map(validateRow);
+  const rowResults = rows.map((row, index) => validateRow(row, index, options));
   const rowErrors = rowResults.reduce((acc, row) => acc + row.errors.length, 0);
 
   const wouldWriteRows = [];
@@ -255,7 +279,8 @@ function buildWriteReport(plan, options = {}) {
     mode: {
       apply,
       allowProductionWrites,
-      dryRun: !mayWrite
+      dryRun: !mayWrite,
+      sandboxOutputRoot: clean(options.sandboxOutputRoot) || null
     },
     summary: {
       planRows: rows.length,
@@ -273,12 +298,14 @@ function buildWriteReport(plan, options = {}) {
       canonicalWrites: writtenRows.length,
       productionWrite: mayWrite,
       dryRun: !mayWrite,
+      sandboxOutputRoot: clean(options.sandboxOutputRoot) || null,
       requiresApplyFlag: true,
       requiresAllowProductionWritesFlag: true,
       fetch: false,
       urlResolutionSideEffects: false,
       productionFinalTruthDecision: mayWrite,
       canonicalPromotion: mayWrite,
+      sandboxWrite: mayWrite && Boolean(clean(options.sandboxOutputRoot)),
       productionRepair: false,
       fixtureWrites: false,
       historyWrites: false,
@@ -326,7 +353,8 @@ function runSelfTest() {
   const report = buildWriteReport(plan, {
     inputPath: 'self-test-promotion-plan.json',
     apply: false,
-    allowProductionWrites: false
+    allowProductionWrites: false,
+    sandboxOutputRoot: 'data/football-truth/_sandbox-final-results'
   });
 
   if (report.ok !== true) throw new Error('expected dry-run write report ok');
@@ -367,6 +395,7 @@ function main() {
 
   const apply = args.apply === true;
   const allowProductionWrites = args['allow-production-writes'] === true;
+  const sandboxOutputRoot = clean(args['sandbox-output-root']);
 
   if (apply && !allowProductionWrites) {
     const blocked = {
@@ -409,7 +438,8 @@ function main() {
   const report = buildWriteReport(plan, {
     inputPath,
     apply,
-    allowProductionWrites
+    allowProductionWrites,
+    sandboxOutputRoot
   });
 
   writeJson(outputPath, report);

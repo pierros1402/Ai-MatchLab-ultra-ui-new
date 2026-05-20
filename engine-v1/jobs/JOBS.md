@@ -1349,3 +1349,8 @@ Allowed production write target is restricted to:
 - data/final-results/YYYY-MM-DD/<matchId>.json
 
 The writer does not fetch URLs, does not repair production data, and does not write fixtures, history, value, or details. Value settlement remains a later guarded step.
+Sandbox smoke mode is supported with:
+
+- --sandbox-output-root data/football-truth/_sandbox-final-results
+
+When this flag is present, even --apply --allow-production-writes writes to the sandbox tree instead of data/final-results/, while preserving the final-results date/matchId layout for verification.
