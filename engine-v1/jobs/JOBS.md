@@ -1366,3 +1366,18 @@ Builds a dry-run value settlement report from verified canonical final-result tr
 - data/final-results/YYYY-MM-DD/<matchId>.json
 
 The job reads value picks from data/value/YYYY-MM-DD.json or deploy snapshot fallback and evaluates supported markets only when erifiedFinalTruth:true exists. It writes only the requested report and does not write canonical value/history/fixtures/details files.
+### write-value-settlement-from-final-results-day.js
+
+Consumes a dry-run report from uild-value-settlement-from-final-results-day.js and writes the settled value file only when explicitly requested.
+
+Default mode is dry-run. Production write requires explicit flags:
+
+- --apply
+- --allow-value-writes
+- --allow-overwrite-value when the target value file already exists
+
+Sandbox smoke mode is supported with:
+
+- --sandbox-output-root data/football-truth/_sandbox-value-settlement
+
+The writer only writes the value target/draft from the settlement report. It does not write fixtures, history, final-result truth, or details.
