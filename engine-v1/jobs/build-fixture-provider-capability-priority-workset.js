@@ -36,6 +36,39 @@ function tierOf(row) {
   const value = row?.tier ?? row?.coverageTier ?? null;
   return Number.isFinite(Number(value)) ? Number(value) : null;
 }
+function providerIdOf(value) {
+  if (!value) return null;
+  if (typeof value === "string") return value.trim() || null;
+  if (typeof value === "object") {
+    return String(value.id || value.providerId || value.name || "").trim() || null;
+  }
+  return null;
+}
+
+function uniqueNonEmpty(values) {
+  return [...new Set(values.map(providerIdOf).filter(Boolean))];
+}
+
+function providerIdsFromPlan(plan) {
+  if (!plan || typeof plan !== "object") return [];
+
+  const ids = [];
+
+  if (Array.isArray(plan.providers)) ids.push(...plan.providers);
+  if (Array.isArray(plan.supported)) ids.push(...plan.supported);
+  if (Array.isArray(plan.adapters)) ids.push(...plan.adapters);
+  if (Array.isArray(plan.fallbacks)) ids.push(...plan.fallbacks);
+  if (Array.isArray(plan.secondary)) ids.push(...plan.secondary);
+
+  if (plan.primary) ids.push(plan.primary);
+  if (plan.secondary && !Array.isArray(plan.secondary)) ids.push(plan.secondary);
+
+  return uniqueNonEmpty(ids);
+}
+
+function providerCapabilityRowsFromPlan(plan) {
+  return providerIdsFromPlan(plan).map((id) => ({ id }));
+}
 
 function inferPriority(row, plan, capability) {
   const slug = slugOf(row);
@@ -122,11 +155,10 @@ export function buildFixtureProviderCapabilityPriorityWorkset(options = {}) {
       if (!leagueSlug) return null;
 
       const plan = getFixtureProviderPlan(leagueSlug);
-      const capability = summarizeFixtureProviderCapability(leagueSlug, []);
+      const providerCapabilityRows = providerCapabilityRowsFromPlan(plan);
+      const capability = summarizeFixtureProviderCapability(leagueSlug, providerCapabilityRows);
 
-      const currentProviderIds = Array.isArray(plan?.providers)
-        ? plan.providers.map((provider) => provider.id).filter(Boolean)
-        : [];
+      const currentProviderIds = providerIdsFromPlan(plan);
 
       const priority = inferPriority(row, plan, capability);
 
