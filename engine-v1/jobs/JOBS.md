@@ -1359,3 +1359,10 @@ Overwrite guard:
 - Existing final-result target files are blocked by default during --apply.
 - To intentionally overwrite an existing target, the caller must provide --allow-overwrite-final-result.
 - This applies to sandbox writes and production writes, so repeated apply smoke runs expose accidental overwrite risk instead of silently replacing files.
+### build-value-settlement-from-final-results-day.js
+
+Builds a dry-run value settlement report from verified canonical final-result truth files under:
+
+- data/final-results/YYYY-MM-DD/<matchId>.json
+
+The job reads value picks from data/value/YYYY-MM-DD.json or deploy snapshot fallback and evaluates supported markets only when erifiedFinalTruth:true exists. It writes only the requested report and does not write canonical value/history/fixtures/details files.
