@@ -1417,3 +1417,17 @@ Default output:
 - data/football-truth/_diagnostics/value-settlement-daily-cycle/YYYY-MM-DD.value-settlement-output-validation.json
 
 The validator checks that summary/statistics artifacts exist, are schema-compatible, match counts, and remain read-only for data/value/, fixtures, history, details, and final-result truth files.
+### build-officiating-candidate-template-day.js
+
+Builds a read-only officiating/discipline candidate template for one day from fixture rows and optional verified final-result truth context.
+
+Default input:
+
+- data/deploy-snapshots/YYYY-MM-DD/fixtures.json
+- data/final-results/YYYY-MM-DD/*.json
+
+Default output:
+
+- data/football-truth/_diagnostics/officiating-candidates/YYYY-MM-DD.officiating-candidates.json
+
+This job does not fetch sources and does not write production data/officiating/. It keeps referee and discipline candidates independent from final-result truth sources, so final-result verification can proceed even when referee/cards/penalties are missing.
