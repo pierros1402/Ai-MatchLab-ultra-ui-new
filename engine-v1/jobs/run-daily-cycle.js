@@ -1263,6 +1263,34 @@ export async function runDailyCycle(options = {}) {
   };
 }
 
+export function parseDailyCycleCliArgs(argv = []) {
+  const args = Array.isArray(argv) ? argv : [];
+  const out = {
+    dayKey: athensDayKey()
+  };
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = String(args[i] || "").trim();
+
+    if (!arg) continue;
+
+    if ((arg === "--date" || arg === "--day" || arg === "--dayKey") && args[i + 1]) {
+      out.dayKey = String(args[++i] || "").trim();
+      continue;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(arg)) {
+      out.dayKey = arg;
+      continue;
+    }
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(out.dayKey || ""))) {
+    throw new Error(`invalid daily-cycle dayKey: ${out.dayKey}`);
+  }
+
+  return out;
+}
 const { pathToFileURL } = await import("node:url");
 
 const entryUrl = globalThis.process?.argv?.[1]
@@ -1270,11 +1298,11 @@ const entryUrl = globalThis.process?.argv?.[1]
   : null;
 
 if (entryUrl === import.meta.url) {
-  const cliDayKey = globalThis.process?.argv?.[2] || athensDayKey();
+  const cliOptions = parseDailyCycleCliArgs(globalThis.process?.argv?.slice(2) || []);
 
   try {
     const result = await runDailyCycle({
-      dayKey: cliDayKey
+      dayKey: cliOptions.dayKey
     });
 
     console.log("[daily-cycle] cli:done", {
