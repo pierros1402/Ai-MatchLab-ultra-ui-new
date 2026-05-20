@@ -1298,3 +1298,39 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-final-result-truth-promotion-plan-file.js --input .\data\football-truth\_review-decisions\reviewed-decisions.json --value .\data\deploy-snapshots\2026-05-18\value.json --output .\data\football-truth\_promotion-plans\final-result-truth-promotion-plan-2026-05-18.json
 ```
+
+### validate-final-result-truth-promotion-plan-file.js
+
+Validates a dry-run final-result truth promotion plan before any production writer exists.
+
+Input:
+- `--input <promotion-plan.json>`
+
+Optional:
+- `--output <validation-report.json>`
+
+Validation checks:
+- top-level dry-run guarantees
+- no write/apply intent
+- summary counts match `planRows`
+- promotion-ready rows include match/date/league/teams/write target
+- promotion-ready rows include numeric approved final score
+- promotion-ready rows include enough source support
+- blocked rows include `blockedReason`
+- affected value-pick dry-run settlements are structurally valid
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `productionWrite:false`
+- `dryRunValidation:true`
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\validate-final-result-truth-promotion-plan-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\validate-final-result-truth-promotion-plan-file.js --input .\data\football-truth\_promotion-plans\final-result-truth-promotion-plan-2026-05-18.json --output .\data\football-truth\_promotion-plans\final-result-truth-promotion-plan-2026-05-18.validation.json
+```
