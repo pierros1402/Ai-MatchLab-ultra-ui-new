@@ -1390,3 +1390,16 @@ Default output:
 - data/football-truth/_settlement-summaries/YYYY-MM-DD.value-settlement-summary.json
 
 The summary records WIN/LOSS rows backed by verified final-result truth without writing ignored data/value/, fixtures, history, or details.
+### build-value-settlement-statistics-range.js
+
+Builds read-only value settlement statistics from tracked settlement summary artifacts.
+
+Input source:
+
+- data/football-truth/_settlement-summaries/*.value-settlement-summary.json
+
+Default output:
+
+- data/football-truth/_settlement-statistics/value-settlement-statistics-YYYY-MM-DD_to_YYYY-MM-DD.json
+
+The range report aggregates total WIN/LOSS/VOID/unknown rows, win rate, by-date, by-market, and by-league buckets. It does not read or write ignored data/value/, fixtures, history, details, or final-result truth files.
