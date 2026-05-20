@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { spawnSync } from "node:child_process";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { discoverWindow } from "./discover-window.js";
@@ -50,6 +51,62 @@ function readJsonIfExists(filePath) {
       filePath
     };
   }
+}
+
+function writeJsonFile(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(value, null, 2), "utf8");
+}
+
+function writeBlockedValueFile(dayKey, reason, readinessSummary) {
+  const file = resolveDataPath(`value/${dayKey}.json`);
+  const payload = {
+    date: dayKey,
+    source: "daily-cycle-fixture-acquisition-v2-guard",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    count: 0,
+    picks: [],
+    blocked: true,
+    reason,
+    readinessSummary,
+    guarantees: {
+      fixtureAcquisitionV2Gate: true,
+      espnOnlyIsUnsafeForValue: true,
+      noValueFromUnverifiedFixtures: true
+    }
+  };
+
+  writeJsonFile(file, payload);
+  return { file, payload };
+}
+
+function fixtureAcquisitionReadyForValue(report) {
+  const summary = report?.summary || {};
+  return Boolean(report?.ok) &&
+    Number(summary.blockedRows || 0) === 0 &&
+    Number(summary.unsafeRows || 0) === 0;
+}
+
+function compactFixtureAcquisitionReadiness(report) {
+  const summary = report?.summary || {};
+  return {
+    ok: Boolean(report?.ok),
+    stage: report?.stage || null,
+    dayKey: report?.dayKey || null,
+    declaredLeagueCount: Number(summary.declaredLeagueCount || 0),
+    canonicalLeagueCount: Number(summary.canonicalLeagueCount || 0),
+    canonicalFixtureRows: Number(summary.canonicalFixtureRows || 0),
+    readyRows: Number(summary.readyRows || 0),
+    unsafeRows: Number(summary.unsafeRows || 0),
+    blockedRows: Number(summary.blockedRows || 0),
+    p0Rows: Number(summary.p0Rows || 0),
+    p1Rows: Number(summary.p1Rows || 0),
+    missingCanonicalFixtures: Number(summary.missingCanonicalFixtures || 0),
+    espnOnlyCanonicalFixtures: Number(summary.espnOnlyCanonicalFixtures || 0),
+    missingNonEspnProviderCapability: Number(summary.missingNonEspnProviderCapability || 0),
+    guarantees: report?.guarantees || null
+  };
 }
 
 function runDailyCycleNodeJob(args, label) {
@@ -432,6 +489,8 @@ export async function runDailyCycle(options = {}) {
   let teamNewsResearchReview = null;
   let teamNewsBuild = null;
   let finalDetailsSync = null;
+  let valueBuild = null;
+  let fixtureAcquisitionReadiness = null;
   let valueCoverageReport = null;
   let valueSettlementReport = null;
   let valueSettlementSummary = null;
@@ -837,15 +896,80 @@ export async function runDailyCycle(options = {}) {
     coveragePct: teamNewsBuild?.coveragePct ?? 0
   });
 
-  console.log("[daily-cycle] value-build:start", { dayKey });
+  console.log("[daily-cycle] fixture-acquisition-v2-readiness:start", { dayKey });
 
-  const valueBuild = await buildValueDay(dayKey, { rebuild: true });
+  const fixtureAcquisitionReadinessPath = resolveDataPath(
+    `football-truth/_diagnostics/fixture-acquisition-v2-readiness/${dayKey}.fixture-acquisition-v2-readiness.json`
+  );
 
-  console.log("[daily-cycle] value-build:done", {
-    ok: valueBuild?.ok,
-    date: valueBuild?.date,
-    count: valueBuild?.count ?? 0
+  const fixtureAcquisitionReadinessRun = runDailyCycleNodeJob(
+    [
+      "engine-v1/jobs/build-fixture-acquisition-v2-readiness.js",
+      "--date",
+      dayKey,
+      "--output",
+      fixtureAcquisitionReadinessPath
+    ],
+    "fixture-acquisition-v2-readiness"
+  );
+
+  fixtureAcquisitionReadiness = readJsonIfExists(fixtureAcquisitionReadinessPath) || {
+    ok: false,
+    stage: "fixture_acquisition_v2_readiness_missing_output",
+    dayKey,
+    summary: {},
+    error: fixtureAcquisitionReadinessRun?.error || null
+  };
+
+  const fixtureAcquisitionReadinessSummary = compactFixtureAcquisitionReadiness(
+    fixtureAcquisitionReadiness
+  );
+
+  console.log("[daily-cycle] fixture-acquisition-v2-readiness:done", {
+    ok: fixtureAcquisitionReadinessSummary.ok,
+    dayKey: fixtureAcquisitionReadinessSummary.dayKey,
+    canonicalFixtureRows: fixtureAcquisitionReadinessSummary.canonicalFixtureRows,
+    readyRows: fixtureAcquisitionReadinessSummary.readyRows,
+    unsafeRows: fixtureAcquisitionReadinessSummary.unsafeRows,
+    blockedRows: fixtureAcquisitionReadinessSummary.blockedRows,
+    espnOnlyCanonicalFixtures: fixtureAcquisitionReadinessSummary.espnOnlyCanonicalFixtures,
+    missingNonEspnProviderCapability: fixtureAcquisitionReadinessSummary.missingNonEspnProviderCapability
   });
+
+  if (!fixtureAcquisitionReadyForValue(fixtureAcquisitionReadiness)) {
+    const blockedValue = writeBlockedValueFile(
+      dayKey,
+      "fixture_acquisition_v2_not_ready",
+      fixtureAcquisitionReadinessSummary
+    );
+
+    valueBuild = {
+      ok: true,
+      date: dayKey,
+      count: 0,
+      blocked: true,
+      reason: "fixture_acquisition_v2_not_ready",
+      file: blockedValue.file,
+      readinessSummary: fixtureAcquisitionReadinessSummary
+    };
+
+    console.warn("[daily-cycle] value-build:blocked", {
+      dayKey,
+      reason: valueBuild.reason,
+      file: valueBuild.file,
+      readinessSummary: fixtureAcquisitionReadinessSummary
+    });
+  } else {
+    console.log("[daily-cycle] value-build:start", { dayKey });
+
+    valueBuild = await buildValueDay(dayKey, { rebuild: true });
+
+    console.log("[daily-cycle] value-build:done", {
+      ok: valueBuild?.ok,
+      date: valueBuild?.date,
+      count: valueBuild?.count ?? 0
+    });
+  }
 
   console.log("[daily-cycle] value-coverage-report:start", { dayKey });
 
@@ -1097,6 +1221,7 @@ export async function runDailyCycle(options = {}) {
     finishedAt,
     ms: finishedAt - startedAt,
     canonicalFixturesSync,
+    fixtureAcquisitionReadiness,
     discoveryWindow,
     activeLeagues,
     monitor,
