@@ -1456,3 +1456,12 @@ Use `--value-baseline-date YYYY-MM-DD` to keep fixture/final-truth coverage acro
 #### Canonical fixture fallback
 
 uild-season-final-truth-settlement-readiness-range.js supports canonical fixture fallback. When deploy snapshot fixtures are missing for a day, the job reads data/canonical-fixtures/YYYY-MM-DD/*.json and records ixtureSource: canonical_fixtures. Missing deploy snapshots with canonical fixture rows are recorded as warnings, not fixture coverage risks. This keeps baseline readiness useful for current dates where canonical ingest exists but a deploy snapshot has not been exported.
+### build-fixture-acquisition-v2-readiness.js
+
+Read-only Fixture Acquisition V2 readiness/workset builder. It compares the declared league coverage contract with canonical fixtures for a day and marks leagues as unsafe for value when they are ESPN-only, missing provider support, or missing canonical fixtures. It performs no source fetches and writes no production data.
+
+Example:
+
+```powershell
+node .\engine-v1\jobs\build-fixture-acquisition-v2-readiness.js --date 2026-05-21
+```
