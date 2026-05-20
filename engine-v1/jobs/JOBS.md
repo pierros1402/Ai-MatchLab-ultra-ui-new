@@ -1251,3 +1251,50 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-league-context-readiness-priority-workset-file.js --input .\data\league-context\_diagnostics\readiness-2026-05-01_to_2026-05-19\league-context-motivation-readiness-report.json
 ```
+
+### build-final-result-truth-promotion-plan-file.js
+
+Builds a dry-run final-result truth promotion plan from reviewed final-result decision rows.
+
+Input:
+- `--input <reviewed-decisions.json>`
+
+Optional:
+- `--value <value.json>` to estimate affected value-pick settlement impact
+- `--output <promotion-plan.json>`
+
+Output:
+- `matchId`
+- `date`
+- `leagueSlug`
+- `homeTeam`
+- `awayTeam`
+- `approvedFinalScore`
+- `sourceCount`
+- `independentSourceCount`
+- `sourceUrls`
+- `evidenceVerdict`
+- `affectedValuePicks`
+- `proposedSettlement`
+- `writeTarget`
+- `blockedReason`
+
+Safety guarantees:
+- `canonicalWrites:0`
+- `productionWrite:false`
+- `dryRun:true`
+- `fetch:false`
+- no production final-truth decision
+- no canonical promotion
+- no production repair
+- no fixture/history/value/details writes
+
+Self-test:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-promotion-plan-file.js --self-test
+```
+
+Example:
+```powershell
+node .\engine-v1\jobs\build-final-result-truth-promotion-plan-file.js --input .\data\football-truth\_review-decisions\reviewed-decisions.json --value .\data\deploy-snapshots\2026-05-18\value.json --output .\data\football-truth\_promotion-plans\final-result-truth-promotion-plan-2026-05-18.json
+```
