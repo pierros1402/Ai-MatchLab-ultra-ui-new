@@ -1465,3 +1465,17 @@ Example:
 ```powershell
 node .\engine-v1\jobs\build-fixture-acquisition-v2-readiness.js --date 2026-05-21
 ```
+
+
+### fixture-provider-capabilities.js
+
+Fixture Acquisition V2 provider capability policy module. It separates declared coverage from actual acquisition coverage and value-ready coverage.
+
+Current policy:
+
+- ESPN is supplemental and unsafe as a sole value substrate.
+- Value-ready fixture acquisition requires an explicit verified non-ESPN provider capability.
+- Official league sources and manual verified imports are provider slots only; they do not create league coverage until explicitly configured and validated.
+- Unknown configured providers are diagnostic-only and not value-ready.
+
+This module performs no fetches and no production writes.

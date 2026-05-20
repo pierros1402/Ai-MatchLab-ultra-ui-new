@@ -15,6 +15,8 @@
 import fs from "fs";
 import path from "path";
 
+import { summarizeFixtureProviderCapability } from "../adapters/fixture-provider-capabilities.js";
+
 function parseArgs(argv) {
   const args = {
     date: null,
@@ -186,9 +188,10 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
   const sources = canonicalEntry ? detectSources(canonicalEntry) : [];
   const hasCanonicalFixtures = fixtureRows > 0;
   const hasEspn = sources.some((s) => s.includes("espn"));
-  const hasNonEspn = sources.some((s) => s && !s.includes("espn"));
+  const hasNonEspnCanonicalSource = sources.some((s) => s && !s.includes("espn"));
   const configuredProviders = providerCapabilities[slug] || [];
-  const hasConfiguredNonEspnProvider = configuredProviders.some((p) => !String(p).toLowerCase().includes("espn"));
+  const capabilitySummary = summarizeFixtureProviderCapability(slug, configuredProviders);
+  const hasValueReadyNonEspnProvider = capabilitySummary.hasValueReadyNonEspnProvider;
 
   let readiness = "ready";
   let priority = "none";
@@ -200,16 +203,16 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
     reasons.push("missing_canonical_fixtures");
   }
 
-  if (hasCanonicalFixtures && hasEspn && !hasNonEspn) {
+  if (hasCanonicalFixtures && hasEspn && !hasNonEspnCanonicalSource) {
     readiness = "unsafe";
     priority = bucket === "must_have_for_value" ? "p0" : "p1";
     reasons.push("espn_only_canonical_fixtures");
   }
 
-  if (bucket === "must_have_for_value" && !hasConfiguredNonEspnProvider) {
+  if (bucket === "must_have_for_value" && !hasValueReadyNonEspnProvider) {
     if (readiness === "ready") readiness = "unsafe";
     if (priority === "none") priority = "p0";
-    reasons.push("missing_non_espn_provider_capability");
+    reasons.push("missing_value_ready_non_espn_provider_capability");
   }
 
   return {
@@ -228,7 +231,13 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
     },
     providerCapabilities: {
       configuredProviders,
-      hasConfiguredNonEspnProvider
+      providerIds: capabilitySummary.providerIds,
+      providers: capabilitySummary.providers,
+      hasEspnCapability: capabilitySummary.hasEspnCapability,
+      hasValueReadyNonEspnProvider,
+      valueReadyNonEspnProviderIds: capabilitySummary.valueReadyNonEspnProviderIds,
+      supplementalProviderIds: capabilitySummary.supplementalProviderIds,
+      diagnosticOnlyProviderIds: capabilitySummary.diagnosticOnlyProviderIds
     }
   };
 }
@@ -298,7 +307,8 @@ function buildReport(dayKey) {
     p1Rows: rows.filter((r) => r.priority === "p1").length,
     missingCanonicalFixtures: rows.filter((r) => r.reasons.includes("missing_canonical_fixtures")).length,
     espnOnlyCanonicalFixtures: rows.filter((r) => r.reasons.includes("espn_only_canonical_fixtures")).length,
-    missingNonEspnProviderCapability: rows.filter((r) => r.reasons.includes("missing_non_espn_provider_capability")).length
+    missingNonEspnProviderCapability: rows.filter((r) => r.reasons.includes("missing_value_ready_non_espn_provider_capability")).length,
+    missingValueReadyNonEspnProviderCapability: rows.filter((r) => r.reasons.includes("missing_value_ready_non_espn_provider_capability")).length
   };
 
   return {
@@ -312,7 +322,8 @@ function buildReport(dayKey) {
       registryReadError: declared.registryReadError,
       canonicalFixturesDir: canonical.dir,
       canonicalFixtureFiles: canonical.files.length,
-      providerCapabilitiesPath: providerInfo.path
+      providerCapabilitiesPath: providerInfo.path,
+      providerCapabilityPolicy: "fixture-provider-capabilities.js"
     },
     summary,
     actionRows,
@@ -326,6 +337,7 @@ function buildReport(dayKey) {
       detailsWrites: false,
       finalResultWrites: false,
       espnOnlyIsUnsafeForValue: true,
+      valueRequiresVerifiedNonEspnProviderCapability: true,
       marketInputIsNotRequired: true
     }
   };
