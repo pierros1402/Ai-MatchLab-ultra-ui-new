@@ -48,6 +48,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - normalize-team-news-source-coverage-report-day.js: normalize team-news coverage reports.
 - build-team-geo-coverage-report.js: team geo coverage report.
 - validate-leagues-coverage-contract.js: league registry/coverage validation.
+- build-fixture-coverage-reality-day.js: read-only fixture universe coverage reality audit; compares declared coverage contract with canonical fixtures and optional market/reference-board input, writes diagnostics/templates only, canonicalWrites: 0, no fetch, no canonical fixture/details/value/final-result writes.
 
 ## Candidate builders
 
