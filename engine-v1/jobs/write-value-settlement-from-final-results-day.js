@@ -154,6 +154,47 @@ function validateTarget(targetPath, options = {}) {
   return errors;
 }
 
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function materializeValueDataForWrite(valueData, options = {}) {
+  const cloned = cloneJson(valueData);
+  const dryRun = options.dryRun !== false;
+
+  if (cloned && typeof cloned === 'object' && !Array.isArray(cloned)) {
+    cloned.settlementDraft = {
+      ...(cloned.settlementDraft || {}),
+      dryRun,
+      valueWrites: !dryRun,
+      writtenBy: dryRun ? null : 'write-value-settlement-from-final-results-day',
+      writtenAt: dryRun ? null : new Date().toISOString()
+    };
+  }
+
+  const rows = Array.isArray(cloned)
+    ? cloned
+    : (Array.isArray(cloned?.picks)
+      ? cloned.picks
+      : (Array.isArray(cloned?.valuePicks)
+        ? cloned.valuePicks
+        : (Array.isArray(cloned?.rows) ? cloned.rows : [])));
+
+  for (const row of rows) {
+    if (row && typeof row === 'object' && row.settlement && typeof row.settlement === 'object') {
+      row.settlement = {
+        ...row.settlement,
+        dryRun,
+        valueWrites: !dryRun,
+        writtenBy: dryRun ? row.settlement.writtenBy : 'write-value-settlement-from-final-results-day',
+        writtenAt: dryRun ? row.settlement.writtenAt : new Date().toISOString()
+      };
+    }
+  }
+
+  return cloned;
+}
+
 function buildWriteReport(settlementReport, options = {}) {
   const apply = options.apply === true;
   const allowValueWrites = options.allowValueWrites === true;
@@ -175,10 +216,15 @@ function buildWriteReport(settlementReport, options = {}) {
   const errors = [...reportErrors, ...targetErrors];
 
   const writeTarget = targetPath ? repoRelative(targetPath) : '';
-  const draftValueData = settlementReport?.draftValueData || null;
+  const rawDraftValueData = settlementReport?.draftValueData || null;
 
   let written = false;
-  if (errors.length === 0 && mayWrite) {
+  const willWrite = errors.length === 0 && mayWrite;
+  const draftValueData = rawDraftValueData
+    ? materializeValueDataForWrite(rawDraftValueData, { dryRun: !willWrite })
+    : null;
+
+  if (willWrite) {
     writeJson(targetPath, draftValueData);
     written = true;
   }
@@ -353,5 +399,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === currentFile) {
 export {
   buildWriteReport,
   validateSettlementReport,
-  validateTarget
+  validateTarget,
+  materializeValueDataForWrite
 };
