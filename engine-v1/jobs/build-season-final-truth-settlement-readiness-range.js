@@ -178,21 +178,45 @@ function readFinalResultsByMatch(dayKey) {
   return byMatch;
 }
 
-function summarizeCanonicalFixtureFiles(dayKey) {
+function readCanonicalFixtureRows(dayKey) {
   const dir = canonicalFixturesDirForDay(dayKey);
-  if (!fs.existsSync(dir)) return { exists: false, files: 0, rows: 0 };
+  if (!fs.existsSync(dir)) {
+    return {
+      exists: false,
+      files: 0,
+      rows: 0,
+      unreadableFiles: 0,
+      fixtures: []
+    };
+  }
 
   let files = 0;
-  let rows = 0;
+  let unreadableFiles = 0;
+  const fixtures = [];
+
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (!entry.isFile() || !entry.name.endsWith('.json')) continue;
     files += 1;
-    const read = readJsonIfExists(path.join(dir, entry.name));
-    if (!read.ok) continue;
-    rows += normalizeRows(read.data).length;
+
+    const fullPath = path.join(dir, entry.name);
+    const read = readJsonIfExists(fullPath);
+    if (!read.ok) {
+      unreadableFiles += 1;
+      continue;
+    }
+
+    for (const row of normalizeRows(read.data)) {
+      fixtures.push(row);
+    }
   }
 
-  return { exists: true, files, rows };
+  return {
+    exists: true,
+    files,
+    rows: fixtures.length,
+    unreadableFiles,
+    fixtures
+  };
 }
 
 function buildDayReadiness(dayKey, options = {}) {
@@ -211,9 +235,15 @@ function buildDayReadiness(dayKey, options = {}) {
   const statisticsRead = readJsonIfExists(settlementStatisticsPath);
   const officiatingRead = readJsonIfExists(officiatingCandidatesPath);
   const finalResultsByMatch = readFinalResultsByMatch(dayKey);
-  const canonicalFixtures = summarizeCanonicalFixtureFiles(dayKey);
+  const canonicalFixtures = readCanonicalFixtureRows(dayKey);
 
-  const fixtures = fixturesRead.ok ? normalizeRows(fixturesRead.data) : [];
+  const deploySnapshotFixtures = fixturesRead.ok ? normalizeRows(fixturesRead.data) : [];
+  const fixtures = deploySnapshotFixtures.length > 0
+    ? deploySnapshotFixtures
+    : canonicalFixtures.fixtures;
+  const fixtureSource = deploySnapshotFixtures.length > 0
+    ? 'deploy_snapshot'
+    : (canonicalFixtures.rows > 0 ? 'canonical_fixtures' : 'none');
   const rawValuePicks = valueRead.ok ? normalizeRows(valueRead.data) : [];
   const valuePicks = valueInScope ? rawValuePicks : [];
   const settlementRows = summaryRead.ok ? normalizeRows(summaryRead.data) : [];
@@ -289,10 +319,31 @@ function buildDayReadiness(dayKey, options = {}) {
   };
 
   const coverageRiskReasons = [];
-  if (!fixturesRead.exists) coverageRiskReasons.push('missing_deploy_snapshot_fixtures');
-  if (fixturesRead.exists && !fixturesRead.ok) coverageRiskReasons.push('unreadable_deploy_snapshot_fixtures');
-  if (fixturesRead.ok && fixtures.length === 0) coverageRiskReasons.push('empty_deploy_snapshot_fixtures');
-  if (canonicalFixtures.exists && canonicalFixtures.rows > fixtures.length && fixtures.length > 0) {
+  const coverageWarnings = [];
+
+  if (!fixturesRead.exists && canonicalFixtures.rows > 0) {
+    coverageWarnings.push('missing_deploy_snapshot_but_canonical_fixtures_available');
+  } else if (!fixturesRead.exists) {
+    coverageRiskReasons.push('missing_deploy_snapshot_fixtures');
+  }
+
+  if (fixturesRead.exists && !fixturesRead.ok && canonicalFixtures.rows > 0) {
+    coverageWarnings.push('unreadable_deploy_snapshot_but_canonical_fixtures_available');
+  } else if (fixturesRead.exists && !fixturesRead.ok) {
+    coverageRiskReasons.push('unreadable_deploy_snapshot_fixtures');
+  }
+
+  if (fixturesRead.ok && deploySnapshotFixtures.length === 0 && canonicalFixtures.rows > 0) {
+    coverageWarnings.push('empty_deploy_snapshot_but_canonical_fixtures_available');
+  } else if (fixturesRead.ok && deploySnapshotFixtures.length === 0 && canonicalFixtures.rows === 0) {
+    coverageRiskReasons.push('empty_deploy_snapshot_fixtures');
+  }
+
+  if (canonicalFixtures.unreadableFiles > 0) {
+    coverageRiskReasons.push('unreadable_canonical_fixture_files');
+  }
+
+  if (deploySnapshotFixtures.length > 0 && canonicalFixtures.exists && canonicalFixtures.rows > deploySnapshotFixtures.length) {
     coverageRiskReasons.push('canonical_fixture_rows_exceed_deploy_snapshot_rows');
   }
   if (valuePicks.length > 0 && valuePicksMissingVerifiedFT > 0) {
@@ -306,6 +357,8 @@ function buildDayReadiness(dayKey, options = {}) {
     inputs: {
       fixturesPath: repoRelative(fixturesPath),
       fixturesExists: fixturesRead.exists,
+      deploySnapshotFixtureRows: deploySnapshotFixtures.length,
+      fixtureSource,
       valuePath: repoRelative(valuePath),
       valueExists: valueRead.exists,
       valueInScope,
@@ -324,6 +377,7 @@ function buildDayReadiness(dayKey, options = {}) {
       fixtures: fixtures.length,
       canonicalFixtureFiles: canonicalFixtures.files,
       canonicalFixtureRows: canonicalFixtures.rows,
+      canonicalFixtureUnreadableFiles: canonicalFixtures.unreadableFiles,
       finalResults: finalResultsByMatch.size,
       verifiedFinalTruthRows: verifiedMatchIds.size,
       missingVerifiedFinalTruthRows: Math.max(0, fixtures.length - [...fixtureMatchIds].filter(matchId => verifiedMatchIds.has(matchId)).length),
@@ -346,6 +400,7 @@ function buildDayReadiness(dayKey, options = {}) {
     officiatingCandidateCoverage,
     coverageRisk: coverageRiskReasons.length > 0,
     coverageRiskReasons,
+    coverageWarnings,
     sampleRows: {
       valuePicksMissingVerifiedFT: valuePicksMissingRows,
       verifiedFinalTruthNotInFixtures: verifiedButNotInFixturesRows
@@ -358,6 +413,9 @@ function aggregateDays(days) {
     days: days.length,
     daysWithFixtures: 0,
     daysMissingFixtures: 0,
+    daysUsingDeploySnapshotFixtures: 0,
+    daysUsingCanonicalFixtureFallback: 0,
+    daysWithNoFixtureSource: 0,
     fixturesTotal: 0,
     canonicalFixtureRowsTotal: 0,
     verifiedFinalTruthRows: 0,
@@ -384,7 +442,10 @@ function aggregateDays(days) {
 
   for (const day of days) {
     if (day.counts.fixtures > 0) summary.daysWithFixtures += 1;
-    if (!day.inputs.fixturesExists) summary.daysMissingFixtures += 1;
+    if (!day.inputs.fixturesExists && day.inputs.fixtureSource === 'none') summary.daysMissingFixtures += 1;
+    if (day.inputs.fixtureSource === 'deploy_snapshot') summary.daysUsingDeploySnapshotFixtures += 1;
+    if (day.inputs.fixtureSource === 'canonical_fixtures') summary.daysUsingCanonicalFixtureFallback += 1;
+    if (day.inputs.fixtureSource === 'none') summary.daysWithNoFixtureSource += 1;
 
     summary.fixturesTotal += day.counts.fixtures;
     summary.canonicalFixtureRowsTotal += day.counts.canonicalFixtureRows;
@@ -506,7 +567,8 @@ function buildSeasonFinalTruthSettlementReadinessRange(startDate, endDate, optio
       sourceFetch: false,
       backtestRun: false,
       readOnlyReadinessAudit: true,
-      supportsValueBaselineDate: true
+      supportsValueBaselineDate: true,
+      supportsCanonicalFixtureFallback: true
     }
   };
 }

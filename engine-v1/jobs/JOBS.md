@@ -1452,3 +1452,6 @@ Inputs read where present:
 The job performs no source fetch, no backtest replay, and no production writes. It is intended to decide which dates/leagues/rows are safe for verified FT promotion, settlement, and later virtual value backtesting.
 
 Use `--value-baseline-date YYYY-MM-DD` to keep fixture/final-truth coverage across an older range while counting value settlement/backtest scope only from the accepted clean baseline onward. Historical value rows before the baseline are reported as `ignoredHistoricalValuePicksBeforeBaseline` and excluded from value/backtest readiness counts.
+#### Canonical fixture fallback
+
+uild-season-final-truth-settlement-readiness-range.js supports canonical fixture fallback. When deploy snapshot fixtures are missing for a day, the job reads data/canonical-fixtures/YYYY-MM-DD/*.json and records ixtureSource: canonical_fixtures. Missing deploy snapshots with canonical fixture rows are recorded as warnings, not fixture coverage risks. This keeps baseline readiness useful for current dates where canonical ingest exists but a deploy snapshot has not been exported.
