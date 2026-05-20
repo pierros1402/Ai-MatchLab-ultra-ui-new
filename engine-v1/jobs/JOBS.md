@@ -1381,3 +1381,12 @@ Sandbox smoke mode is supported with:
 - --sandbox-output-root data/football-truth/_sandbox-value-settlement
 
 The writer only writes the value target/draft from the settlement report. It does not write fixtures, history, final-result truth, or details.
+### export-value-settlement-summary-file.js
+
+Exports a tracked settlement summary artifact from a value-settlement report.
+
+Default output:
+
+- data/football-truth/_settlement-summaries/YYYY-MM-DD.value-settlement-summary.json
+
+The summary records WIN/LOSS rows backed by verified final-result truth without writing ignored data/value/, fixtures, history, or details.
