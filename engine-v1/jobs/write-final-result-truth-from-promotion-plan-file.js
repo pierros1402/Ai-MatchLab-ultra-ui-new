@@ -150,6 +150,14 @@ function validateRow(row, index, options = {}) {
   if (!writeTarget) errors.push('missing_write_target');
   if (writeTarget && !isInsideRepo(writeTarget)) errors.push('write_target_outside_repo');
   if (writeTarget && !isAllowedWriteTarget(writeTarget, options)) errors.push('write_target_not_allowed_final_results_path');
+  if (
+    writeTarget &&
+    options.apply === true &&
+    options.allowOverwriteFinalResult !== true &&
+    fs.existsSync(writeTarget)
+  ) {
+    errors.push('write_target_exists_requires_allow_overwrite_final_result');
+  }
 
   return {
     index,
@@ -280,7 +288,8 @@ function buildWriteReport(plan, options = {}) {
       apply,
       allowProductionWrites,
       dryRun: !mayWrite,
-      sandboxOutputRoot: clean(options.sandboxOutputRoot) || null
+      sandboxOutputRoot: clean(options.sandboxOutputRoot) || null,
+      allowOverwriteFinalResult: options.allowOverwriteFinalResult === true
     },
     summary: {
       planRows: rows.length,
@@ -299,6 +308,7 @@ function buildWriteReport(plan, options = {}) {
       productionWrite: mayWrite,
       dryRun: !mayWrite,
       sandboxOutputRoot: clean(options.sandboxOutputRoot) || null,
+      allowOverwriteFinalResult: options.allowOverwriteFinalResult === true,
       requiresApplyFlag: true,
       requiresAllowProductionWritesFlag: true,
       fetch: false,
@@ -306,6 +316,7 @@ function buildWriteReport(plan, options = {}) {
       productionFinalTruthDecision: mayWrite,
       canonicalPromotion: mayWrite,
       sandboxWrite: mayWrite && Boolean(clean(options.sandboxOutputRoot)),
+      overwriteAllowed: options.allowOverwriteFinalResult === true,
       productionRepair: false,
       fixtureWrites: false,
       historyWrites: false,
@@ -354,7 +365,8 @@ function runSelfTest() {
     inputPath: 'self-test-promotion-plan.json',
     apply: false,
     allowProductionWrites: false,
-    sandboxOutputRoot: 'data/football-truth/_sandbox-final-results'
+    sandboxOutputRoot: 'data/football-truth/_sandbox-final-results',
+    allowOverwriteFinalResult: false
   });
 
   if (report.ok !== true) throw new Error('expected dry-run write report ok');
@@ -396,6 +408,7 @@ function main() {
   const apply = args.apply === true;
   const allowProductionWrites = args['allow-production-writes'] === true;
   const sandboxOutputRoot = clean(args['sandbox-output-root']);
+  const allowOverwriteFinalResult = args['allow-overwrite-final-result'] === true;
 
   if (apply && !allowProductionWrites) {
     const blocked = {
@@ -439,7 +452,8 @@ function main() {
     inputPath,
     apply,
     allowProductionWrites,
-    sandboxOutputRoot
+    sandboxOutputRoot,
+    allowOverwriteFinalResult
   });
 
   writeJson(outputPath, report);

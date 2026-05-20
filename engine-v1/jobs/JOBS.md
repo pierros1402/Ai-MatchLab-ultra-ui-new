@@ -1354,3 +1354,8 @@ Sandbox smoke mode is supported with:
 - --sandbox-output-root data/football-truth/_sandbox-final-results
 
 When this flag is present, even --apply --allow-production-writes writes to the sandbox tree instead of data/final-results/, while preserving the final-results date/matchId layout for verification.
+Overwrite guard:
+
+- Existing final-result target files are blocked by default during --apply.
+- To intentionally overwrite an existing target, the caller must provide --allow-overwrite-final-result.
+- This applies to sandbox writes and production writes, so repeated apply smoke runs expose accidental overwrite risk instead of silently replacing files.
