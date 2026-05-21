@@ -140,8 +140,68 @@ function getSlug(row) {
   return String(row?.slug || row?.leagueSlug || row?.id || "").trim();
 }
 
+function toTitleCase(value) {
+  return String(value || "")
+    .replace(/[._-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => {
+      const upper = word.toUpperCase();
+      if (["AFC", "CAF", "UEFA", "CONCACAF", "CONMEBOL", "OFC"].includes(upper)) return upper;
+      return word.slice(0, 1).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(" ");
+}
+
+function ordinalDivisionLabel(value) {
+  const division = Number.parseInt(String(value ?? ""), 10);
+  if (division === 1) return "First Division";
+  if (division === 2) return "Second Division";
+  if (division === 3) return "Third Division";
+  if (division === 4) return "Fourth Division";
+  if (division === 5) return "Fifth Division";
+  return "League";
+}
+
+function divisionNumberFromSlug(slug) {
+  const match = String(slug || "").match(/\.([1-5])$/);
+  if (!match) return null;
+  return Number.parseInt(match[1], 10);
+}
+
+function deriveDiagnosticLeagueName(row) {
+  const slug = getSlug(row);
+  const country = toTitleCase(row?.country || row?.region || "");
+  const type = String(row?.type || "").trim().toLowerCase();
+  const tier = getTier(row);
+
+  if (slug === "afc.champions") return "AFC Champions League";
+  if (slug === "caf.champions") return "CAF Champions League";
+  if (slug === "caf.nations") return "CAF Nations Cup";
+  if (slug === "uefa.champions") return "UEFA Champions League";
+  if (slug === "uefa.europa") return "UEFA Europa League";
+  if (slug === "uefa.conference") return "UEFA Conference League";
+
+  if (type === "cup" && country) {
+    return `${country} Cup`;
+  }
+
+  if (type === "continental") {
+    return toTitleCase(slug);
+  }
+
+  if (country) {
+    const divisionNumber = divisionNumberFromSlug(slug);
+    return `${country} ${ordinalDivisionLabel(divisionNumber ?? tier)}`;
+  }
+
+  return toTitleCase(slug);
+}
+
 function getName(row) {
-  return String(row?.name || row?.label || row?.leagueName || row?.competitionName || "").trim();
+  const explicitName = String(row?.name || row?.label || row?.leagueName || row?.competitionName || "").trim();
+  if (explicitName) return explicitName;
+  return deriveDiagnosticLeagueName(row);
 }
 
 function getCountry(row) {
