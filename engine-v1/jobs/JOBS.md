@@ -1609,3 +1609,48 @@ Important:
 - This job does not fetch sources.
 - This job does not write canonical fixtures, value picks, details, or production data.
 - This job validates evidence fields only; it does not promote fixtures into acquisition.
+
+### materialize-fixture-external-active-league-review-pack-file.js
+
+Read-only wrapper/materializer for Fixture Acquisition V2 external active league review packs.
+
+Purpose:
+- Orchestrate external active league discovery, resolution targets, review pack creation, and optional validation.
+- Produce small controlled diagnostic/review artifacts for manual or controlled source review.
+- Keep the whole flow provider-agnostic and read-only.
+- Avoid treating generated review packs as canonical fixture acquisition writes.
+
+Typical usage:
+
+node .\engine-v1\jobs\materialize-fixture-external-active-league-review-pack-file.js --start 2026-05-21 --days 3 --snapshot-ref origin/main --priority P2 --max-rows 5 --max-targets 10 --output-dir .\data\football-truth\_diagnostics\fixture-acquisition-stability --output-prefix 2026-05-21.external-active-league.P2.sample --validate
+
+Options:
+- --start YYYY-MM-DD
+- --days 1..14
+- --snapshot-ref origin/main
+- --priority P0|P1|P2|P3
+- --max-rows N
+- --max-targets N
+- --output-dir path
+- --output-prefix prefix
+- --validate
+
+Outputs:
+- discovery-workset.json
+- resolution-targets.json
+- review-pack.json
+- review-pack.validation.json when --validate is used
+
+Guarantees:
+- sourceFetch: false
+- discoveredExternally: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not fetch sources.
+- This job does not prove external fixture activity.
+- This job must not write canonical fixtures, value picks, details, or production data.
+- Outputs are diagnostic/review artifacts only.
