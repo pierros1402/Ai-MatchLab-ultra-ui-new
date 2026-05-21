@@ -169,8 +169,34 @@ function divisionNumberFromSlug(slug) {
   return Number.parseInt(match[1], 10);
 }
 
+const KNOWN_DIAGNOSTIC_LEAGUE_NAMES = {
+  "afc.champions": "AFC Champions League",
+  "alb.1": "Albanian Superliga",
+  "arg.1": "Argentine Primera Division",
+  "arm.1": "Armenian First League",
+  "aut.2": "Austria 2. Liga",
+  "aut.cup": "Austrian Cup",
+  "aze.1": "Azerbaijan Premier League",
+  "bel.2": "Belgian Challenger Pro League",
+  "caf.champions": "CAF Champions League",
+  "caf.nations": "Africa Cup of Nations",
+  "cyp.2": "Cypriot Second Division",
+  "cyp.cup": "Cypriot Cup",
+  "cze.1": "Czech First League",
+  "cze.2": "Czech National Football League",
+  "cze.cup": "Czech Cup",
+  "den.2": "Danish 1st Division",
+  "den.cup": "Danish Cup",
+  "eng.1": "Premier League",
+  "eng.2": "EFL Championship",
+  "eng.3": "EFL League One"
+};
+
 function deriveDiagnosticLeagueName(row) {
   const slug = getSlug(row);
+  const knownName = KNOWN_DIAGNOSTIC_LEAGUE_NAMES[slug];
+  if (knownName) return knownName;
+
   const country = toTitleCase(row?.country || row?.region || "");
   const type = String(row?.type || "").trim().toLowerCase();
   const tier = getTier(row);
