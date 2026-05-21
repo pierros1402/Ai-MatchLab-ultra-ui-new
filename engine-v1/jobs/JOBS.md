@@ -1538,3 +1538,36 @@ Important:
 - This job does not prove external fixture activity.
 - It prepares league/day rows for the next controlled source resolution stage.
 - Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
+
+### build-fixture-external-active-league-review-pack-file.js
+
+Read-only review pack builder for Fixture Acquisition V2 external league activity checks.
+
+Purpose:
+- Consume external active league resolution targets.
+- Produce a small grouped review pack for controlled/manual external activity comparison.
+- Preserve reviewFields as null/unreviewed until source evidence is manually or systematically reviewed.
+- Carry search queries, source hints, blocked source hints, and acceptance rules into each review item.
+
+Typical usage:
+
+node .\engine-v1\jobs\build-fixture-external-active-league-review-pack-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-resolution-targets.P2.sample.json --priority P2 --max-rows 5 --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-review-pack.P2.sample.json
+
+Optional filters:
+- --priority P2
+- --max-rows 50
+- --group-by league_day
+
+Guarantees:
+- sourceFetch: false
+- discoveredExternally: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not fetch sources.
+- This job does not prove external fixture activity.
+- This job must not write canonical fixtures, value picks, details, or production data.
+- Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
