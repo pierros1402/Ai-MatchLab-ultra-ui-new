@@ -99,7 +99,9 @@ function inferPriority(row, plan, capability) {
   ].includes(country);
 
   const hasOnlySupplementalFeed =
-    capability.hasEspnCapability === true &&
+    (capability.hasSupplementalScoreboardCapability === true || capability.hasEspnCapability === true) &&
+    capability.hasVerifiedFixtureProviderCapability !== true &&
+    capability.hasValueReadyVerifiedProvider !== true &&
     capability.hasValueReadyNonEspnProvider !== true;
 
   if (
