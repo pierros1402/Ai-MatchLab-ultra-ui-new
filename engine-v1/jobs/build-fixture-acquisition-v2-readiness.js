@@ -187,8 +187,13 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
   const fixtureRows = canonicalEntry?.rows?.length || 0;
   const sources = canonicalEntry ? detectSources(canonicalEntry) : [];
   const hasCanonicalFixtures = fixtureRows > 0;
-  const hasEspn = sources.some((s) => s.includes("espn"));
-  const hasNonEspnCanonicalSource = sources.some((s) => s && !s.includes("espn"));
+  const hasSupplementalScoreboardSource = sources.some((s) => s.includes("espn"));
+  const hasNonSupplementalCanonicalSource = sources.some((s) => s && !s.includes("espn"));
+
+  // Backward-compatible aliases for existing report fields while language moves
+  // toward provider-agnostic verified fixture acquisition.
+  const hasEspn = hasSupplementalScoreboardSource;
+  const hasNonEspnCanonicalSource = hasNonSupplementalCanonicalSource;
   const configuredProviders = providerCapabilities[slug] || [];
   const capabilitySummary = summarizeFixtureProviderCapability(slug, configuredProviders);
   const hasValueReadyVerifiedProvider = capabilitySummary.hasValueReadyVerifiedProvider === true || capabilitySummary.hasValueReadyNonEspnProvider === true;
@@ -203,7 +208,7 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
     reasons.push("missing_canonical_fixtures");
   }
 
-  if (hasCanonicalFixtures && hasEspn && !hasNonEspnCanonicalSource) {
+  if (hasCanonicalFixtures && hasSupplementalScoreboardSource && !hasNonSupplementalCanonicalSource) {
     readiness = "unsafe";
     priority = bucket === "must_have_for_value" ? "p0" : "p1";
     reasons.push("supplemental_only_canonical_fixtures");
