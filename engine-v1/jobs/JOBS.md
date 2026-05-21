@@ -1654,3 +1654,41 @@ Important:
 - This job does not prove external fixture activity.
 - This job must not write canonical fixtures, value picks, details, or production data.
 - Outputs are diagnostic/review artifacts only.
+
+### build-fixture-external-active-league-batch-review-groups-file.js
+
+Read-only batch grouping builder for Fixture Acquisition V2 external active league review packs.
+
+Purpose:
+- Consume an external active league review pack.
+- Group review items by day and country/region/source path.
+- Reduce manual review volume by allowing one federation/league source check to cover multiple competitions when evidence supports it.
+- Keep item-level decisions unreviewed until source evidence is reviewed.
+
+Typical usage:
+
+node .\engine-v1\jobs\build-fixture-external-active-league-batch-review-groups-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.review-pack.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.batch-review-groups.json
+
+Options:
+- --input path
+- --output path
+- --max-groups N
+- --max-items-per-group N
+
+Outputs:
+- batch-review-groups.json with groupId, country, dayKey, leagueSlugs, combinedSearchQueries, preferredBatchSourceTargets, reviewStrategy, itemDecisions, and acceptanceRules.
+
+Guarantees:
+- sourceFetch: false
+- discoveredExternally: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not fetch sources.
+- This job does not prove external fixture activity.
+- Group decisions must still be validated item-by-item before any acquisition action.
+- Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
+- Generated batch group files are diagnostic/review artifacts only.
