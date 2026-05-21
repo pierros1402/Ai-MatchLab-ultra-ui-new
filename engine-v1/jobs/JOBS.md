@@ -1479,3 +1479,30 @@ Current policy:
 - Unknown configured providers are diagnostic-only and not value-ready.
 
 This module performs no fetches and no production writes.
+
+### build-fixture-external-active-league-discovery-workset.js
+
+Read-only diagnostic/workset builder for Fixture Acquisition V2.
+
+Purpose:
+- Compare the declared league coverage map against observed deploy snapshot fixture leagues for a date window.
+- Produce provider-agnostic external activity discovery targets.
+- Separate leagues already observed in snapshots (mustHaveTargets) from declared leagues whose activity is still unknown (externalCheckTargets).
+- Highlight snapshot-active leagues with thin/missing history as P0, because they may be fixture-visible but must remain value-gated.
+
+Typical usage:
+
+node .\engine-v1\jobs\build-fixture-external-active-league-discovery-workset.js --start 2026-05-21 --days 3 --snapshot-ref origin/main --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-discovery-workset.json
+
+Guarantees:
+- sourceFetch: false
+- discoveredExternally: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not prove external fixture activity.
+- It builds search/review targets for the next controlled external activity resolution stage.
+- Scoreboard-only evidence must not be treated as value-ready verified fixture acquisition capability.
