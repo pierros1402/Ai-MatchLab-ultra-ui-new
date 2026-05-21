@@ -1571,3 +1571,41 @@ Important:
 - This job does not prove external fixture activity.
 - This job must not write canonical fixtures, value picks, details, or production data.
 - Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
+
+### validate-fixture-external-active-league-review-pack-file.js
+
+Read-only validator for filled Fixture Acquisition V2 external active league review packs.
+
+Purpose:
+- Validate review packs after manual or controlled source-resolution fields are filled.
+- Allow unreviewed rows only when they do not claim external activity.
+- Require strong fields when externallyActive=true.
+- Block scoreboard-only evidence from verifying value-ready fixture acquisition capability.
+
+Required when externallyActive=true:
+- fixtureCountFound must be a positive integer.
+- sourceUrls must contain at least one valid http/https URL.
+- sourceTypes must contain at least one source type.
+- missingFromSnapshot must be true or false.
+- sourceVerdict must be verified_active.
+- scoreboard-only source types are rejected.
+
+Typical usage:
+
+node .\engine-v1\jobs\validate-fixture-external-active-league-review-pack-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-review-pack.P2.sample.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-review-pack.P2.sample.validation.json
+
+Optional:
+- --fail-on-invalid
+
+Guarantees:
+- sourceFetch: false
+- discoveredExternally: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not fetch sources.
+- This job does not write canonical fixtures, value picks, details, or production data.
+- This job validates evidence fields only; it does not promote fixtures into acquisition.
