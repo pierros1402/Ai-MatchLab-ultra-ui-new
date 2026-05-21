@@ -1506,3 +1506,35 @@ Important:
 - This job does not prove external fixture activity.
 - It builds search/review targets for the next controlled external activity resolution stage.
 - Scoreboard-only evidence must not be treated as value-ready verified fixture acquisition capability.
+
+### build-fixture-external-active-league-resolution-targets-file.js
+
+Read-only resolution/review target builder for Fixture Acquisition V2.
+
+Purpose:
+- Consume an external active league discovery workset.
+- Expand externalCheckTargets into league/day review rows.
+- Produce concrete search/review targets for controlled external activity comparison.
+- Keep reviewFields null/unreviewed until a manual or controlled downstream source-resolution step fills them.
+
+Typical usage:
+
+node .\engine-v1\jobs\build-fixture-external-active-league-resolution-targets-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-discovery-workset.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-resolution-targets.json
+
+Optional filters:
+- --priority P2
+- --include-observed
+- --max-targets 50
+
+Guarantees:
+- sourceFetch: false
+- discoveredExternally: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not prove external fixture activity.
+- It prepares league/day rows for the next controlled source resolution stage.
+- Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
