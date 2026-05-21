@@ -102,12 +102,16 @@ function inferPriority(row, plan, capability) {
     capability.hasEspnCapability === true &&
     capability.hasValueReadyNonEspnProvider !== true;
 
-  if (capability.hasValueReadyNonEspnProvider) {
+  if (
+    capability.hasVerifiedFixtureProviderCapability === true ||
+    capability.hasValueReadyVerifiedProvider === true ||
+    capability.hasValueReadyNonEspnProvider === true
+  ) {
     return {
       priority: 0,
       bucket: "already_value_ready_verified_provider",
       recommendedProvider: null,
-      reason: "already has explicit value-ready verified fixture provider capability"
+      reason: "already has explicit verified fixture provider capability"
     };
   }
 
@@ -134,7 +138,7 @@ function inferPriority(row, plan, capability) {
       priority: 3,
       bucket: "supplemental_feed_needs_verified_source",
       recommendedProvider: "manual_verified_import",
-      reason: "current substrate is supplemental only; value needs explicit verified fixture source confirmation"
+      reason: "current fixture substrate is supplemental-only; value needs explicit verified fixture source confirmation"
     };
   }
 
@@ -169,7 +173,9 @@ export function buildFixtureProviderCapabilityPriorityWorkset(options = {}) {
         tier: tierOf(row),
         currentProviderIds,
         currentExecution: plan?.execution || "skip",
+        hasSupplementalScoreboardCapability: capability.hasSupplementalScoreboardCapability === true || capability.hasEspnCapability === true,
         hasEspnCapability: capability.hasEspnCapability === true,
+        hasVerifiedFixtureProviderCapability: capability.hasVerifiedFixtureProviderCapability === true || capability.hasValueReadyVerifiedProvider === true || capability.hasValueReadyNonEspnProvider === true,
         hasValueReadyVerifiedProvider: capability.hasValueReadyVerifiedProvider === true || capability.hasValueReadyNonEspnProvider === true,
         valueReadyVerifiedProviderIds: capability.valueReadyVerifiedProviderIds || capability.valueReadyNonEspnProviderIds || [],
         supplementalProviderIds: capability.supplementalProviderIds || [],

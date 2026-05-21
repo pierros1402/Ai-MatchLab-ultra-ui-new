@@ -4,9 +4,9 @@
  * Declared league coverage is not acquisition coverage.
  * Acquisition coverage is not value-ready coverage.
  *
- * ESPN remains available as a supplemental acquisition adapter, but ESPN-only
- * fixtures are not value-ready. Value needs an explicit verified non-ESPN
- * provider capability for the league/fixture substrate.
+ * Supplemental scoreboard feeds remain available as acquisition inputs, but a
+ * supplemental-only fixture substrate is not value-ready. Value needs an
+ * explicit verified fixture provider capability for the league/fixture substrate.
  */
 
 export const ESPN_SUPPORTED_LEAGUES = new Set([
@@ -285,8 +285,10 @@ export function summarizeFixtureProviderCapability(leagueSlug, configuredProvide
     valueReadyVerifiedProviderIds: valueReadyNonEspnProviders.map((provider) => provider.id),
     supplementalProviderIds: supplementalProviders.map((provider) => provider.id),
     diagnosticOnlyProviderIds: diagnosticOnlyProviders.map((provider) => provider.id),
+    hasSupplementalScoreboardCapability: providers.some((provider) => provider.id === "espn"),
+    hasVerifiedFixtureProviderCapability: valueReadyNonEspnProviders.length > 0,
+    hasValueReadyVerifiedProvider: valueReadyNonEspnProviders.length > 0,
     hasEspnCapability: providers.some((provider) => provider.id === "espn"),
-    hasValueReadyNonEspnProvider: valueReadyNonEspnProviders.length > 0,
-    hasValueReadyVerifiedProvider: valueReadyNonEspnProviders.length > 0
+    hasValueReadyNonEspnProvider: valueReadyNonEspnProviders.length > 0
   };
 }

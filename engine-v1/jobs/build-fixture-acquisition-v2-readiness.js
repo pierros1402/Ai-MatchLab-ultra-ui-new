@@ -6,8 +6,8 @@
  *
  * Purpose:
  * - Compare the declared league coverage contract with the canonical fixture store for one day.
- * - Mark leagues as unsafe for value when fixtures are missing, ESPN-only, or unsupported by
- *   a non-ESPN acquisition provider.
+ * - Mark leagues as unsafe for value when fixtures are missing, supplemental-only, or unsupported by
+ *   a verified fixture acquisition provider.
  * - Produce a concrete workset for Fixture Acquisition V2 without fetching sources and without
  *   writing production fixture/value/details/final-result data.
  */
@@ -233,6 +233,7 @@ function classifyLeague({ slug, canonicalEntry, providerCapabilities }) {
       configuredProviders,
       providerIds: capabilitySummary.providerIds,
       providers: capabilitySummary.providers,
+      hasSupplementalScoreboardCapability: capabilitySummary.hasSupplementalScoreboardCapability === true || capabilitySummary.hasEspnCapability === true,
       hasEspnCapability: capabilitySummary.hasEspnCapability,
       hasValueReadyVerifiedProvider,
       valueReadyVerifiedProviderIds: capabilitySummary.valueReadyVerifiedProviderIds || capabilitySummary.valueReadyNonEspnProviderIds || [],

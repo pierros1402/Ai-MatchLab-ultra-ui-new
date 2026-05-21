@@ -71,7 +71,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 
 ## Legacy / unsafe local-only jobs
 
-- reconcile-final-scores-from-event-summary-day.js: ESPN event-summary diagnostic only; ESPN must not be canonical authority.
+- reconcile-final-scores-from-event-summary-day.js: supplemental event-summary diagnostic only; no supplemental scoreboard feed must be canonical authority.
 - run-player-usage-ai-requests-day.js: API-dependent path; avoid for dependency-free production direction.
 - run-player-usage-research-day.js and run-player-usage-research-tasks-day.js: older research runners; review before use.
 - run-team-news-research-tasks-day.js: candidate/review only.
@@ -1458,7 +1458,7 @@ Use `--value-baseline-date YYYY-MM-DD` to keep fixture/final-truth coverage acro
 uild-season-final-truth-settlement-readiness-range.js supports canonical fixture fallback. When deploy snapshot fixtures are missing for a day, the job reads data/canonical-fixtures/YYYY-MM-DD/*.json and records ixtureSource: canonical_fixtures. Missing deploy snapshots with canonical fixture rows are recorded as warnings, not fixture coverage risks. This keeps baseline readiness useful for current dates where canonical ingest exists but a deploy snapshot has not been exported.
 ### build-fixture-acquisition-v2-readiness.js
 
-Read-only Fixture Acquisition V2 readiness/workset builder. It compares the declared league coverage contract with canonical fixtures for a day and marks leagues as unsafe for value when they are ESPN-only, missing provider support, or missing canonical fixtures. It performs no source fetches and writes no production data.
+Read-only Fixture Acquisition V2 readiness/workset builder. It compares the declared league coverage contract with canonical fixtures for a day and marks leagues as unsafe for value when they are supplemental-only, missing verified provider support, or missing canonical fixtures. It performs no source fetches and writes no production data.
 
 Example:
 
@@ -1473,8 +1473,8 @@ Fixture Acquisition V2 provider capability policy module. It separates declared 
 
 Current policy:
 
-- ESPN is supplemental and unsafe as a sole value substrate.
-- Value-ready fixture acquisition requires an explicit verified non-ESPN provider capability.
+- Supplemental scoreboard feeds are unsafe as a sole value substrate.
+- Value-ready fixture acquisition requires an explicit verified fixture provider capability.
 - Official league sources and manual verified imports are provider slots only; they do not create league coverage until explicitly configured and validated.
 - Unknown configured providers are diagnostic-only and not value-ready.
 
