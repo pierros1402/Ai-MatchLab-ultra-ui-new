@@ -102,16 +102,15 @@ function buildDayQueries(row, dayKey) {
   const country = countryLabel(row);
   const slug = cleanText(row?.leagueSlug);
 
-  const baseQueries = Array.isArray(row?.searchQueries) ? row.searchQueries : [];
-
   return unique([
     `"${leagueName}" fixtures ${dayKey}`,
     `"${leagueName}" schedule ${dayKey}`,
     `"${leagueName}" matches ${dayKey}`,
     country ? `${country} football "${leagueName}" fixtures ${dayKey}` : "",
     country ? `${country} "${leagueName}" schedule ${dayKey}` : "",
+    country ? `${country} soccer "${leagueName}" fixtures ${dayKey}` : "",
     slug ? `${slug} fixtures ${dayKey}` : "",
-    ...baseQueries.map((query) => `${query} ${dayKey}`)
+    slug ? `${slug} schedule ${dayKey}` : ""
   ]);
 }
 
