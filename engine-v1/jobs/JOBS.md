@@ -1786,3 +1786,51 @@ Important:
 - verified_active still requires separately reviewed date-specific evidence.
 - A league not in the review pack is not missing from coverage; it is treated as season-watch-only for that date.
 - The job writes only the requested diagnostic output file.
+
+### build-fixture-active-gap-acquisition-priority-file.js
+
+Read-only priority diagnostic for verified active fixture acquisition gaps.
+
+Purpose:
+- Consume a UEFA coverage contract report and optional external-active-league review pack.
+- Analyze verified active leagues that are marked missing from the day snapshot.
+- Check whether each gap is present in coverage, canonical fixtures, and deploy snapshot fixtures.
+- Classify the likely failure stage for each gap.
+- Prioritize acquisition repair work without writing production data.
+
+Typical usage:
+
+node .\engine-v1\jobs\build-fixture-active-gap-acquisition-priority-file.js --date 2026-05-22 --uefa-report .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.uefa-league-coverage-contract.json --review .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.external-active-league.P2.expanded-review-pack-001.review-pack.json --snapshot-ref origin/main --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.fixture-active-gap-acquisition-priority.json
+
+Output highlights:
+- inputGapCount
+- inCoverageCount
+- canonicalPresentCount
+- canonicalMissingCount
+- snapshotPresentCount
+- snapshotMissingCount
+- byStage
+- byPriority
+- priorityRows
+
+Failure stages:
+- coverage_registry_missing
+- canonical_acquisition_missing
+- deploy_snapshot_missing_for_date
+- snapshot_export_or_filter_missing
+- partial_snapshot_fixture_gap
+- no_gap_detected_in_available_local_or_ref_data
+
+Guarantees:
+- sourceFetch: false
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not fetch external sources.
+- This job does not write canonical fixtures or deploy snapshots.
+- verified_active must come from separately reviewed source evidence.
+- canonical_acquisition_missing means the league is covered and externally verified active, but no local canonical fixture rows were found for that date.
