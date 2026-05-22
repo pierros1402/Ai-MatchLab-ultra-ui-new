@@ -1746,6 +1746,40 @@ Important:
 - The job writes only diagnostic/review artifact files supplied by the caller.
 - It does not write canonical fixtures, value picks, details, or production data.
 
+### validate-fixture-external-active-source-url-resolutions-file.js
+
+Read-only validator for fixture external-active source URL resolution rows.
+
+Purpose:
+- Consume a source URL resolution task report containing urlResolutionsTemplate[] or a filled resolution file containing urlResolutions[] / resolutions[].
+- Validate resolvedUrl, sourceType, externallyActive, fixtureCountFound, and missingFromSnapshot before any fetch/evidence layer.
+- Keep empty task templates as pending_resolution.
+- Block scoreboard-only source types from value-ready verified-active evidence.
+- Emit validSourceUrlResolutions[] and readyForFetchRows[] for a later controlled fetch layer.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecision: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Example:
+
+node .\engine-v1\jobs\validate-fixture-external-active-source-url-resolutions-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-resolution-tasks.post-commit.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.validated-source-url-resolutions.json
+
+Important:
+- This job does not fetch URLs.
+- This job does not decide externallyActive.
+- This job does not fill reviewFields in the review pack.
+- This job does not write canonical fixtures.
+- Only valid rows can move to the later controlled fetch/evidence layer.
+
 ### build-fixture-external-active-source-url-resolution-tasks-file.js
 
 Read-only source URL resolution task materializer for fixture external-active review packs or UEFA review wave decision files.
