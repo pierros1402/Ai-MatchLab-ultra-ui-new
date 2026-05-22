@@ -1692,3 +1692,56 @@ Important:
 - Group decisions must still be validated item-by-item before any acquisition action.
 - Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
 - Generated batch group files are diagnostic/review artifacts only.
+
+### apply-fixture-external-active-league-review-decisions-file.js
+
+Read-only review decision applier for Fixture Acquisition V2 external active league review artifacts.
+
+Purpose:
+- Apply reviewed external active league decisions from a separate decisions JSON file.
+- Update both review-pack.json and batch-review-groups.json consistently.
+- Re-run the external active league review pack validator after applying decisions.
+- Avoid fragile ad-hoc PowerShell property edits on nested review JSON.
+
+Typical usage:
+
+node .\engine-v1\jobs\apply-fixture-external-active-league-review-decisions-file.js --review .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.review-pack.json --groups .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.batch-review-groups.json --decisions .\data\football-truth\_diagnostics\fixture-acquisition-stability\decisions.json --validation .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.review-pack.validation.json
+
+Decision file shape:
+
+{
+  "decisions": [
+    {
+      "leagueSlug": "bih.1",
+      "externallyActive": true,
+      "fixtureCountFound": 2,
+      "sourceUrls": ["https://example.com/official-source"],
+      "sourceTypes": ["official_federation_source"],
+      "sourceVerdict": "verified_active",
+      "missingFromSnapshot": true,
+      "reviewerNotes": "Official evidence note."
+    }
+  ]
+}
+
+Options:
+- --review path
+- --groups path
+- --decisions path
+- --validation path
+- --allow-overwrite
+
+Guarantees:
+- sourceFetch: false
+- discoveredExternally: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not fetch sources.
+- This job does not prove external fixture activity by itself.
+- Decisions must be based on separately reviewed source evidence.
+- The job writes only diagnostic/review artifact files supplied by the caller.
+- It does not write canonical fixtures, value picks, details, or production data.
