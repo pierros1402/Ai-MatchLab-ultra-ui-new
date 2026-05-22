@@ -1745,3 +1745,44 @@ Important:
 - Decisions must be based on separately reviewed source evidence.
 - The job writes only diagnostic/review artifact files supplied by the caller.
 - It does not write canonical fixtures, value picks, details, or production data.
+
+### build-uefa-league-coverage-contract-file.js
+
+Read-only UEFA league coverage contract diagnostic for Fixture Acquisition V2.
+
+Purpose:
+- Check the UEFA 55-country coverage contract against workers/_shared/leagues-coverage.js.
+- Verify that every UEFA country has a declared first division and second division coverage slug.
+- Join the coverage contract with an optional external-active-league review pack for a specific date.
+- Separate season/watch coverage from date-active acquisition gaps.
+- Report verified active first-division leagues missing from the day snapshot.
+- Report first divisions still unreviewed for the given date.
+- Report first divisions covered in the registry but not represented in the given review pack.
+
+Typical usage:
+
+node .\engine-v1\jobs\build-uefa-league-coverage-contract-file.js --date 2026-05-22 --review .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.external-active-league.P2.expanded-review-pack-001.review-pack.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.uefa-league-coverage-contract.json
+
+Output highlights:
+- uefaCountryCountExpected
+- coveredFirstDivisionCount
+- missingFirstDivisionCountries
+- coveredSecondDivisionCount
+- todayFirstDivisionSnapshotGaps
+- todayFirstDivisionUnreviewed
+- todayFirstDivisionNotInReviewPack
+- reviewRowsWithoutCoverage
+- duplicateCoverageSlugs
+
+Guarantees:
+- sourceFetch: false
+- canonicalWrites: 0
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Important:
+- This job does not prove fixture activity by fetching sources.
+- verified_active still requires separately reviewed date-specific evidence.
+- A league not in the review pack is not missing from coverage; it is treated as season-watch-only for that date.
+- The job writes only the requested diagnostic output file.
