@@ -1746,6 +1746,34 @@ Important:
 - The job writes only diagnostic/review artifact files supplied by the caller.
 - It does not write canonical fixtures, value picks, details, or production data.
 
+### build-verified-fixture-acquisition-proposals-file.js
+
+Read-only proposal builder for verified fixture acquisition gaps.
+
+Purpose:
+- Consume a fixture active-gap acquisition priority report.
+- Optionally merge a filled external-active-league review pack.
+- Produce guarded fixture acquisition proposals for canonical acquisition gaps.
+- Keep canonical fixture writes blocked until match-level fixture identity rows exist.
+
+Guarantees:
+- sourceFetch: false
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Example:
+
+node .\engine-v1\jobs\build-verified-fixture-acquisition-proposals-file.js --date 2026-05-22 --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.fixture-active-gap-acquisition-priority.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.verified-fixture-acquisition-proposals.json
+
+Important:
+- This job does not create canonical fixture rows by assumption.
+- League-level verified activity is not enough for production writes.
+- Concrete canonical rows require match-level identity evidence: home team, away team, kickoff time, and source URLs.
+- A later guarded writer must require explicit --apply --allow-production-writes.
+
 ### build-uefa-league-coverage-contract-file.js
 
 Read-only UEFA league coverage contract diagnostic for Fixture Acquisition V2.
