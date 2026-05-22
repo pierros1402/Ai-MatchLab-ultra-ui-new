@@ -341,63 +341,44 @@ function extractTeamNewsFromResearch(context = {}) {
 }
 
 function extractTeamNewsFromMatch(match = {}) {
-  const source2 = match?.sources?.source2 || {};
   const espn = match?.sources?.espn || {};
 
   const homeBucket = {
-    ...(source2?.teamNews?.homeTeam || {}),
     ...(espn?.teamNews?.homeTeam || {}),
     notes: [
-      ...(source2?.teamNewsHome || []),
       ...(espn?.teamNewsHome || []),
-      ...(source2?.homeTeamNews || []),
       ...(espn?.homeTeamNews || [])
     ],
     injuries: [
-      ...(source2?.injuries?.home || []),
       ...(espn?.injuries?.home || []),
-      ...(source2?.homeInjuries || []),
       ...(espn?.homeInjuries || [])
     ],
     suspensions: [
-      ...(source2?.suspensions?.home || []),
       ...(espn?.suspensions?.home || []),
-      ...(source2?.homeSuspensions || []),
       ...(espn?.homeSuspensions || [])
     ],
     missingPlayers: [
-      ...(source2?.lineups?.home?.missingPlayers || []),
       ...(espn?.lineups?.home?.missingPlayers || []),
-      ...(source2?.homeMissingPlayers || []),
       ...(espn?.homeMissingPlayers || [])
     ]
   };
 
   const awayBucket = {
-    ...(source2?.teamNews?.awayTeam || {}),
     ...(espn?.teamNews?.awayTeam || {}),
     notes: [
-      ...(source2?.teamNewsAway || []),
       ...(espn?.teamNewsAway || []),
-      ...(source2?.awayTeamNews || []),
       ...(espn?.awayTeamNews || [])
     ],
     injuries: [
-      ...(source2?.injuries?.away || []),
       ...(espn?.injuries?.away || []),
-      ...(source2?.awayInjuries || []),
       ...(espn?.awayInjuries || [])
     ],
     suspensions: [
-      ...(source2?.suspensions?.away || []),
       ...(espn?.suspensions?.away || []),
-      ...(source2?.awaySuspensions || []),
       ...(espn?.awaySuspensions || [])
     ],
     missingPlayers: [
-      ...(source2?.lineups?.away?.missingPlayers || []),
       ...(espn?.lineups?.away?.missingPlayers || []),
-      ...(source2?.awayMissingPlayers || []),
       ...(espn?.awayMissingPlayers || [])
     ]
   };

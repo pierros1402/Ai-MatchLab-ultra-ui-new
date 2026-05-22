@@ -261,14 +261,12 @@ function extractRefereeFromResearch(match = {}, context = {}) {
       normalizeName(officialObj?.name || officialObj?.displayName || officialObj?.fullName) ||
       match?.referee ||
       match?.sources?.espn?.referee ||
-      match?.sources?.source2?.referee ||
       null
   };
 }
 
 function extractRefereeFromMatch(match = {}) {
   const espn = match?.sources?.espn || {};
-  const source2 = match?.sources?.source2 || {};
 
   const localOfficiating =
     match?.sources?.localOfficiating ||
@@ -282,7 +280,6 @@ function extractRefereeFromMatch(match = {}) {
     [];
 
   const espnProfile = espn?.refereeProfile || {};
-  const source2Profile = source2?.refereeProfile || {};
   const localProfile =
     localOfficiating?.refereeProfile ||
     localOfficiating?.referee ||
@@ -290,7 +287,6 @@ function extractRefereeFromMatch(match = {}) {
     {};
 
   const espnOfficial = pickRefereeObjectFromOfficials(espn?.officials);
-  const source2Official = pickRefereeObjectFromOfficials(source2?.officials);
   const localOfficial =
     pickRefereeObjectFromOfficials(localOfficiating?.officials) ||
     pickRefereeObjectFromOfficials(localOfficiating?.payload?.officials) ||
@@ -303,11 +299,9 @@ function extractRefereeFromMatch(match = {}) {
     null;
 
   return {
-    ...(source2Official || {}),
     ...(espnOfficial || {}),
     ...(localOfficial || {}),
     ...(espnProfile || {}),
-    ...(source2Profile || {}),
     ...(localProfile || {}),
     ...(localNamed || {}),
     name:
@@ -325,13 +319,10 @@ function extractRefereeFromMatch(match = {}) {
       normalizeName(
         localNamed?.name
       ) ||
-      source2Profile?.name ||
       espnProfile?.name ||
-      normalizeName(source2Official?.name || source2Official?.displayName || source2Official?.fullName) ||
       normalizeName(espnOfficial?.name || espnOfficial?.displayName || espnOfficial?.fullName) ||
       normalizeName(match?.referee || match?.refereeName) ||
       normalizeName(espn?.referee || espn?.refereeName) ||
-      normalizeName(source2?.referee || source2?.refereeName) ||
       null
   };
 }

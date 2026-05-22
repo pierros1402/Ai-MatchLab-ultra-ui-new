@@ -55,26 +55,13 @@ function shouldAllowEmptyFallbackForLeague(activeLeagueSet, slug) {
   return activeLeagueSet.has(String(slug || "").trim());
 }
 
-function shouldSkipPrimaryOnlyLeague(providerPlan, slug, activeLeagueSet) {
-  const execution = String(providerPlan?.execution || "").trim();
-  const primaryId = String(providerPlan?.primary?.id || "").trim();
-
-  if (execution !== "primary_only") {
-    return false;
-  }
-
-  if (primaryId !== "api_football") {
-    return false;
-  }
-
-  return !activeLeagueSet.has(String(slug || "").trim());
+function shouldSkipPrimaryOnlyLeague() {
+  return false;
 }
 
 function emptyLeagueStats() {
   return {
     rawEventsEspn: 0,
-    rawEventsApiFootball: 0,
-    rawEventsSource2: 0,
     providerStats: buildProviderStatsSkeleton(),
     normalized: 0,
     inserted: 0,
@@ -99,15 +86,6 @@ function addRawEventsForAdapter(results, leagueStats, adapterId, count) {
   if (key === "espn") {
     results.rawEventsEspn += n;
     leagueStats.rawEventsEspn += n;
-    return;
-  }
-
-  if (key === "api_football" || key === "source2") {
-    results.rawEventsApiFootball += n;
-    leagueStats.rawEventsApiFootball += n;
-
-    results.rawEventsSource2 += n;
-    leagueStats.rawEventsSource2 += n;
     return;
   }
 }
@@ -468,8 +446,6 @@ export async function ingestDay(dayKey, env) {
     leagues: 0,
     rawEvents: 0,
     rawEventsEspn: 0,
-    rawEventsApiFootball: 0,
-    rawEventsSource2: 0,
     providerStats: buildProviderStatsSkeleton(),
     normalized: 0,
 

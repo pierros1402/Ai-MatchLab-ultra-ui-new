@@ -25,14 +25,6 @@ const SOURCE_PROFILE = {
     scoreReliability: 0.90
   },
 
-  api_football: {
-    priority: 90,
-    kickoffReliability: 0.88,
-    teamsReliability: 0.88,
-    statusReliability: 0.86,
-    scoreReliability: 0.86
-  },
-
   unknown: {
     priority: 10,
     kickoffReliability: 0.50,
@@ -52,7 +44,6 @@ const LIVE_STATUSES = [
 
 const SOURCE_WEIGHTS = {
   espn: 1.0,
-  api_football: 0.9,
   unknown: 0.5
 };
 
@@ -60,7 +51,6 @@ function canonicalSource(source) {
   const key = String(source || "").trim().toLowerCase();
 
   if (!key) return "unknown";
-  if (key === "source2") return "api_football";
 
   return key;
 }

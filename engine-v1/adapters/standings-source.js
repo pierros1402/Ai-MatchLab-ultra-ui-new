@@ -6,7 +6,7 @@
 import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
 
-const localPath = resolveDataPath("source2-standings.json");
+const localPath = resolveDataPath("standings-local.json");
 
 function safeArray(value) {
   return Array.isArray(value) ? value : [];

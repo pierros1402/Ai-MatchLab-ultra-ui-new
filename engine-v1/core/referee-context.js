@@ -71,10 +71,6 @@ function extractRefereeIdentity(match, officiatingSnapshot = null) {
     match?.sources?.espn?.officials || []
   );
 
-  const source2Official = pickRefereeFromOfficials(
-    match?.sources?.source2?.officials || []
-  );
-
   const directName =
     normalizeName(officiatingSnapshot?.referee?.name) ||
     normalizeName(snapshotPayload?.referee?.name) ||
@@ -83,9 +79,7 @@ function extractRefereeIdentity(match, officiatingSnapshot = null) {
     normalizeName(localOfficial?.name) ||
     normalizeName(match?.referee) ||
     normalizeName(match?.sources?.espn?.referee) ||
-    normalizeName(match?.sources?.source2?.referee) ||
     normalizeName(sourceEspnOfficial?.name) ||
-    normalizeName(source2Official?.name) ||
     null;
 
   if (!directName) return null;
@@ -97,7 +91,6 @@ function extractRefereeIdentity(match, officiatingSnapshot = null) {
       snapshotPayload?.referee?.role ||
       localOfficial?.role ||
       sourceEspnOfficial?.role ||
-      source2Official?.role ||
       "referee",
     source: officiatingSnapshot ? "local-officiating" : "match-facts"
   };

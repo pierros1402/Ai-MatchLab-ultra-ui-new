@@ -106,7 +106,6 @@ export function buildOfficiatingSnapshot(match, input = {}) {
     input?.matchOfficials ||
     match?.officials ||
     match?.sources?.espn?.officials ||
-    match?.sources?.source2?.officials ||
     []
   );
 
@@ -115,7 +114,6 @@ export function buildOfficiatingSnapshot(match, input = {}) {
     input?.refereeName ||
     match?.referee ||
     match?.sources?.espn?.referee ||
-    match?.sources?.source2?.referee ||
     null,
     officials
   );
