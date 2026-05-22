@@ -1746,6 +1746,39 @@ Important:
 - The job writes only diagnostic/review artifact files supplied by the caller.
 - It does not write canonical fixtures, value picks, details, or production data.
 
+### build-fixture-external-active-source-url-resolution-tasks-file.js
+
+Read-only source URL resolution task materializer for fixture external-active review packs or UEFA review wave decision files.
+
+Purpose:
+- Consume a fixture external-active review pack with reviewItems[] or a review wave file with decisions[].
+- Produce structured source URL resolution tasks per league/query.
+- Preserve item-specific registry-name search queries and preferred source hints.
+- Create a urlResolutionsTemplate for a later validator/fetch/review layer.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecision: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Example:
+
+node .\engine-v1\jobs\build-fixture-external-active-source-url-resolution-tasks-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.registry-names.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-resolution-tasks.json --max-queries-per-league 8
+
+Important:
+- This job does not fetch URLs.
+- This job does not fill sourceUrls/sourceTypes.
+- This job does not decide externallyActive.
+- This job does not write canonical fixtures.
+- A later validator/fetch layer must validate resolved URLs before any review decision is applied.
+
 ### build-verified-fixture-acquisition-proposals-file.js
 
 Read-only proposal builder for verified fixture acquisition gaps.
