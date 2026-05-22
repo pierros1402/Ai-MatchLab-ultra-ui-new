@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { leagueName as registryLeagueName } from "../../workers/_shared/leagues-registry.js";
 import { execFileSync } from "node:child_process";
 
 import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
@@ -194,6 +195,9 @@ const KNOWN_DIAGNOSTIC_LEAGUE_NAMES = {
 
 function deriveDiagnosticLeagueName(row) {
   const slug = getSlug(row);
+  const registryName = String(registryLeagueName(slug) || "").trim();
+  if (registryName && registryName !== slug && registryName !== "unknown") return registryName;
+
   const knownName = KNOWN_DIAGNOSTIC_LEAGUE_NAMES[slug];
   if (knownName) return knownName;
 
