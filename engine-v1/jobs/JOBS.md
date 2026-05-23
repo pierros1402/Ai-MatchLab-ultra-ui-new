@@ -1921,6 +1921,39 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### build-verified-fixture-acquisition-promotion-plan-file.js
+
+Read-only dry-run promotion planner for verified fixture acquisition rows.
+
+Purpose:
+- Consume validFixtureIdentityRows from the fixture identity validator.
+- Optionally consume verified fixture acquisition proposal rows.
+- Build proposedCanonicalFixtureRows with dry-run writeTarget paths.
+- Preserve source evidence: provider, sourceUrl, sourceSnapshotId, sourceMatchId, validation input, and proposal input.
+- Keep blocked proposal rows separate when fixture identity is still missing or deploy snapshot already has fixtures.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\build-verified-fixture-acquisition-promotion-plan-file.js --date 2026-05-22 --input <fixture-identity-validation.json> --proposals <verified-fixture-acquisition-proposals.json> --output <verified-fixture-acquisition-promotion-plan.dry-run.json>
+
+Important:
+- This job does not write canonical fixtures.
+- This job does not promote fixture truth.
+- This job only creates a dry-run plan.
+- A later writer must require explicit apply flags and consume only reviewed proposedCanonicalFixtureRows.
+
 ### validate-verified-fixture-identity-rows-file.js
 
 Read-only validator for prepared match-level fixture identity rows.
