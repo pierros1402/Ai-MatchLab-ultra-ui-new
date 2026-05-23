@@ -1888,44 +1888,6 @@ Important:
 - This job does not write canonical fixtures.
 - Output must still pass the source URL resolution validator before controlled fetch.
 
-### build-fixture-external-active-source-url-resolutions-from-league-seeds-file.js
-
-Read-only adapter from league-level source URL seeds to validator-compatible fixture external-active urlResolutions[].
-
-Purpose:
-- Consume source URL resolution tasks with cases[].
-- Without --seeds, emit leagueSeedTemplate[] with one compact fill target per league.
-- With --seeds, adapt leagueSeeds[] into urlResolutions[] accepted by validate-fixture-external-active-source-url-resolutions-file.js.
-- Reduce manual work from many query rows to reviewed league-level source seeds.
-- Preserve taskId, leagueSlug, name, country, dayKey, and primary search query context.
-
-Guarantees:
-- sourceFetch: false
-- noFetch: true
-- noUrlFetch: true
-- noReviewDecision: true
-- noCanonicalPromotion: true
-- canonicalWrites: 0
-- deploySnapshotWrites: false
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Example template generation:
-
-node .\engine-v1\jobs\build-fixture-external-active-source-url-resolutions-from-league-seeds-file.js --tasks C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-resolution-tasks.post-commit.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.league-source-seed-template.json
-
-Example with reviewed seeds:
-
-node .\engine-v1\jobs\build-fixture-external-active-source-url-resolutions-from-league-seeds-file.js --tasks <source-url-resolution-tasks.json> --seeds <league-source-seeds.json> --output <url-resolutions-from-league-seeds.json>
-
-Important:
-- This job does not fetch URLs.
-- This job does not validate source contents.
-- This job does not decide externallyActive beyond copying reviewed seed fields.
-- This job does not write canonical fixtures.
-- Output must still pass the source URL resolution validator before controlled fetch.
-
 ### build-fixture-external-active-source-url-resolution-tasks-file.js
 
 Read-only source URL resolution task materializer for fixture external-active review packs or UEFA review wave decision files.
