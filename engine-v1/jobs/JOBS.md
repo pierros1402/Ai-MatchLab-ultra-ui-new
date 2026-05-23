@@ -1746,6 +1746,43 @@ Important:
 - The job writes only diagnostic/review artifact files supplied by the caller.
 - It does not write canonical fixtures, value picks, details, or production data.
 
+### fetch-fixture-external-active-source-url-snapshots-file.js
+
+Controlled diagnostic fetcher for fixture external-active source URL snapshots.
+
+Purpose:
+- Consume a validated source URL resolution report.
+- Use only readyForFetchRows or valid rows marked readyForFetch.
+- Fetch diagnostic source snapshots only when --allow-fetch is explicitly supplied.
+- Store fetched text, HTTP metadata, final URL, content type, byte count, truncation flag, and sha256 for later evidence preparation.
+- Return zero fetched snapshots when no rows are ready for fetch.
+
+Guarantees:
+- fetchRequiresAllowFetch: true
+- noFetchWithoutAllowFetch: true unless --allow-fetch is explicitly set
+- noReviewDecision: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Example no-fetch guard check:
+
+node .\engine-v1\jobs\fetch-fixture-external-active-source-url-snapshots-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.validated-source-url-resolutions.post-push.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-snapshots.no-fetch.json
+
+Example controlled fetch:
+
+node .\engine-v1\jobs\fetch-fixture-external-active-source-url-snapshots-file.js --input <validated-source-url-resolutions.json> --output <source-url-snapshots.json> --allow-fetch --timeout-ms 8000 --max-bytes 250000
+
+Important:
+- This job does not resolve URLs.
+- This job does not prepare evidence.
+- This job does not decide externallyActive.
+- This job does not fill reviewFields in the review pack.
+- This job does not write canonical fixtures.
+
 ### validate-fixture-external-active-source-url-resolutions-file.js
 
 Read-only validator for fixture external-active source URL resolution rows.
