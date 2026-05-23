@@ -1921,6 +1921,37 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### validate-verified-fixture-identity-rows-file.js
+
+Read-only validator for prepared match-level fixture identity rows.
+
+Purpose:
+- Consume preparedFixtureIdentityRows from the fixture identity extractor diagnostic.
+- Validate leagueSlug, teams, target localDate, localTime, provider, sourceUrl, sourceSnapshotId, sourceMatchId, and duplicate keys.
+- Optionally check that leagueSlug belongs to proposal rows blocked by missing_match_level_fixture_identity_rows.
+- Split rows into validFixtureIdentityRows and rejectedFixtureIdentityRows.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Example:
+node .\engine-v1\jobs\validate-verified-fixture-identity-rows-file.js --date 2026-05-22 --input <fixture-identity-candidates.json> --proposals <verified-fixture-acquisition-proposals.json> --output <fixture-identity-validation.json>
+
+Important:
+- This job does not write canonical fixtures.
+- This job does not promote fixture truth.
+- This job only validates candidate identity rows.
+- A later guarded writer must require explicit apply flags and consume only validFixtureIdentityRows.
+
 ### prepare-verified-fixture-identity-rows-from-source-snapshots-file.js
 
 Read-only match-level fixture identity extractor from fetched source snapshots.
