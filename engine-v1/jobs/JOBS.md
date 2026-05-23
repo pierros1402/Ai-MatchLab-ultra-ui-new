@@ -1921,6 +1921,38 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### prepare-verified-fixture-identity-rows-from-source-snapshots-file.js
+
+Read-only match-level fixture identity extractor from fetched source snapshots.
+
+Purpose:
+- Consume fetched fixture external-active source snapshots.
+- Optionally filter to proposal rows blocked by missing_match_level_fixture_identity_rows.
+- Extract candidate match-level identity rows: leagueSlug, teams, source match id, local date/time, source URL, provider, and extraction method.
+- Keep only exact target-date prepared rows as ready candidates.
+- Move outside-target-date or ambiguous rows to review state.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Example:
+node .\engine-v1\jobs\prepare-verified-fixture-identity-rows-from-source-snapshots-file.js --date 2026-05-22 --proposals <verified-fixture-acquisition-proposals.json> --inputs "<snapshot-a.json>;<snapshot-b.json>" --output <fixture-identity-candidates.json>
+
+Important:
+- This job does not write canonical fixtures.
+- This job does not promote fixture truth.
+- This job does not create deploy snapshots.
+- Prepared rows must pass a separate identity validator before any guarded canonical acquisition writer is considered.
+
 ### build-verified-fixture-acquisition-proposals-file.js
 
 Read-only proposal builder for verified fixture acquisition gaps.
