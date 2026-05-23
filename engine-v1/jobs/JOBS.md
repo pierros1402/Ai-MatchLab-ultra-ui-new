@@ -1746,6 +1746,39 @@ Important:
 - The job writes only diagnostic/review artifact files supplied by the caller.
 - It does not write canonical fixtures, value picks, details, or production data.
 
+### prepare-fixture-external-active-source-evidence-file.js
+
+Read-only evidence preparer for fixture external-active source snapshots.
+
+Purpose:
+- Consume already fetched diagnostic source snapshots.
+- Prepare evidence rows with date, league, fixture-language, inactive-language, and official-context signals.
+- Mark rows as readyForReviewDecision only when snapshot text has enough basic source evidence signals.
+- Keep non-ready rows explainable with evidenceState such as missing_date_signal, missing_fixture_language, empty_snapshot_text, or http_not_ok.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecision: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+
+Example:
+
+node .\engine-v1\jobs\prepare-fixture-external-active-source-evidence-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-snapshots.post-push.no-fetch.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.prepared-source-evidence.empty.json
+
+Important:
+- This job does not fetch URLs.
+- This job does not resolve source URLs.
+- This job does not decide externallyActive.
+- This job does not fill reviewFields in the review pack.
+- This job does not write canonical fixtures.
+
 ### fetch-fixture-external-active-source-url-snapshots-file.js
 
 Controlled diagnostic fetcher for fixture external-active source URL snapshots.
