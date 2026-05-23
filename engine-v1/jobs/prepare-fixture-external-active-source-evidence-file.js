@@ -191,8 +191,58 @@ function evidenceSignals(snapshot) {
   const dateSignals = [];
   if (day && lowered.includes(day)) dateSignals.push("contains_day_key_iso");
 
+  const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
   const compactDay = day.replaceAll("-", "/");
   if (compactDay && lowered.includes(compactDay)) dateSignals.push("contains_day_key_slash");
+
+  if (dateParts) {
+    const [, year, month, date] = dateParts;
+    const monthDayDash = `${month}-${date}`;
+    const monthDaySlash = `${month}/${date}`;
+    const dateMonthSlash = `${date}/${month}`;
+    const dateMonthDash = `${date}-${month}`;
+    const yearMonthDayCompact = `${year}${month}${date}`;
+    const monthNames = [
+      "",
+      "january",
+      "february",
+      "march",
+      "april",
+      "may",
+      "june",
+      "july",
+      "august",
+      "september",
+      "october",
+      "november",
+      "december"
+    ];
+    const monthName = monthNames[Number(month)] || "";
+
+    if (lowered.includes(year) && lowered.includes(monthDayDash)) {
+      dateSignals.push("contains_year_and_month_day_dash");
+    }
+
+    if (lowered.includes(year) && lowered.includes(monthDaySlash)) {
+      dateSignals.push("contains_year_and_month_day_slash");
+    }
+
+    if (lowered.includes(dateMonthSlash)) {
+      dateSignals.push("contains_date_month_slash");
+    }
+
+    if (lowered.includes(dateMonthDash)) {
+      dateSignals.push("contains_date_month_dash");
+    }
+
+    if (lowered.includes(yearMonthDayCompact)) {
+      dateSignals.push("contains_day_key_compact");
+    }
+
+    if (monthName && lowered.includes(monthName) && lowered.includes(date)) {
+      dateSignals.push("contains_month_name_and_day");
+    }
+  }
 
   const leagueSignals = [];
   if (league && lowered.includes(league)) leagueSignals.push("contains_league_name");
