@@ -1921,6 +1921,38 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### build-fixture-identity-second-source-confirmation-tasks-file.js
+
+Read-only second-source/calendar confirmation task materializer for fixture identity rows where a checked source had no target-date fixture rows.
+
+Purpose:
+- Consume a checked_source_no_target_date fixture identity pack.
+- Optionally join prepared source evidence rows for the checked source.
+- Build one confirmation task per league.
+- Produce suggested queries and a manual review decision template.
+- Keep canonical fixture promotion blocked until independent date-specific confirmation exists.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\build-fixture-identity-second-source-confirmation-tasks-file.js --date 2026-05-22 --input <checked-source-no-target-date-pack.json> --evidence <source-evidence.json> --output <second-source-confirmation-tasks.json>
+
+Important:
+- This job does not fetch URLs.
+- This job does not confirm no-fixture by absence alone.
+- confirmed_no_fixture_on_target_date requires independent date-specific second-source/calendar evidence.
+- found_target_date_fixture must flow into match-level fixture identity extraction and validation before any guarded writer.
 ### build-verified-fixture-acquisition-promotion-plan-file.js
 
 Read-only dry-run promotion planner for verified fixture acquisition rows.
