@@ -1921,6 +1921,38 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### materialize-fixture-identity-second-source-search-targets-file.js
+
+Read-only search target materializer for fixture identity second-source/calendar confirmation tasks.
+
+Purpose:
+- Consume second-source/calendar confirmation tasks.
+- Produce one search target task per league.
+- Flatten suggested queries into search target rows.
+- Preserve checked-source host exclusion so the same source cannot be the only confirmation.
+- Prepare the next diagnostic stage for URL resolution/search automation.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\materialize-fixture-identity-second-source-search-targets-file.js --date 2026-05-22 --input <second-source-confirmation-tasks.json> --output <second-source-search-targets.json>
+
+Important:
+- This job does not search the web.
+- This job does not resolve or fetch URLs.
+- Absence of search results is not a valid no-fixture confirmation.
+- Same checked-source host is excluded as the only confirmation source.
 ### validate-fixture-identity-second-source-confirmation-review-file.js
 
 Read-only validator for manual second-source/calendar confirmation review drafts.
