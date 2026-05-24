@@ -1947,6 +1947,7 @@ Guarantees:
 
 Example:
 node .\engine-v1\jobs\build-verified-fixture-acquisition-promotion-plan-file.js --date 2026-05-22 --input <fixture-identity-validation.json> --proposals <verified-fixture-acquisition-proposals.json> --output <verified-fixture-acquisition-promotion-plan.dry-run.json>
+- validate-verified-fixture-acquisition-promotion-plan-file.js: read-only validator for verified fixture acquisition promotion plans; checks dry-run guarantees, expected counts, proposed fixture identity shape, write targets, source evidence, duplicate fixture keys, and blocked/proposed separation; canonicalWrites: 0, no fetch, no production write.
 
 Important:
 - This job does not write canonical fixtures.
