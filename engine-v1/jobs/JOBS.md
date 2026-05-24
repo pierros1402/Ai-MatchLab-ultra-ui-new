@@ -1921,6 +1921,42 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### validate-fixture-identity-second-source-confirmation-review-file.js
+
+Read-only validator for manual second-source/calendar confirmation review drafts.
+
+Purpose:
+- Validate manual review rows produced from fixture identity second-source confirmation tasks.
+- Allow pending/null decisions during draft mode with warnings.
+- Enforce strict requirements for completed decisions.
+- Prevent unsafe promotion from ambiguous or incomplete evidence.
+
+Allowed decisions:
+- confirmed_no_fixture_on_target_date
+- found_target_date_fixture
+- insufficient_evidence
+
+Decision rules:
+- confirmed_no_fixture_on_target_date requires at least one confirmationSourceUrl, reviewerNotes, targetDateFixtureCount = 0, and no targetDateFixtureRows.
+- found_target_date_fixture requires at least one confirmationSourceUrl, targetDateFixtureCount > 0, and targetDateFixtureRows with date/homeTeam/awayTeam/sourceUrl.
+- insufficient_evidence requires reviewerNotes and must not include targetDate fixture rows.
+- empty/null decisions are warnings by default and errors with --require-complete.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\validate-fixture-identity-second-source-confirmation-review-file.js --date 2026-05-22 --input <manual-review-draft.json> --output <validation.json>
 ### build-fixture-identity-second-source-confirmation-tasks-file.js
 
 Read-only second-source/calendar confirmation task materializer for fixture identity rows where a checked source had no target-date fixture rows.
