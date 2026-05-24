@@ -1921,6 +1921,42 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### build-fixture-identity-second-source-controlled-fetch-plan-file.js
+
+Read-only controlled fetch plan builder for fixture identity second-source URL validation reports.
+
+Purpose:
+- Consume validated second-source URL resolution reports.
+- Convert acceptedResolvedUrls into controlled fetch plan rows.
+- Keep pending URL resolutions blocked from fetch.
+- Keep rejected URL resolutions blocked from fetch.
+- Prepare the next explicit fetch stage without fetching anything.
+
+Rules:
+- Input validation report must have ok=true.
+- Input validation report must have errorCount=0.
+- acceptedResolvedUrls become fetchPlanRows.
+- pending_resolved_url warnings become blockedPendingRows.
+- rejectedResolutions become blockedRejectedRows.
+- Fetch remains blocked until a later fetch job is called with explicit --allow-fetch.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noUrlResolutionSideEffects: true
+- fetchRequiresAllowFetchInLaterStage: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\build-fixture-identity-second-source-controlled-fetch-plan-file.js --date 2026-05-22 --input <validated-url-resolutions.json> --output <controlled-fetch-plan.json>
 ### validate-fixture-identity-second-source-url-resolutions-file.js
 
 Read-only validator for fixture identity second-source URL resolution rows.
