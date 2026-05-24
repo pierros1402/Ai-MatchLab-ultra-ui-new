@@ -1921,6 +1921,54 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### validate-fixture-identity-second-source-url-resolutions-file.js
+
+Read-only validator for fixture identity second-source URL resolution rows.
+
+Purpose:
+- Validate URL resolution rows before any fetch/evidence extraction stage.
+- Allow pending/null resolvedUrl rows in draft mode with warnings.
+- Enforce strict resolved URL/source metadata when rows are completed.
+- Reject resolved URLs that use excluded hosts as the supposed independent source.
+- Keep canonical promotion blocked until validated evidence and review decisions exist.
+
+Allowed sourceType values:
+- official_league
+- official_federation
+- official_competition
+- official_club
+- trusted_provider
+- other
+
+Allowed resolvedBy values:
+- manual
+- external_search
+- operator
+- diagnostic
+
+Rules:
+- resolvedUrl must be valid http(s) when supplied.
+- resolvedUrl cannot use an excluded host from the matched resolution task.
+- sourceType and resolvedBy are required when resolvedUrl is supplied.
+- taskId/searchTargetId/leagueSlug/targetDate must match the resolution task.
+- pending/null resolvedUrl is a warning by default and an error with --require-complete.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noUrlResolutionSideEffects: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\validate-fixture-identity-second-source-url-resolutions-file.js --date 2026-05-22 --input <second-source-url-resolution-tasks.json> --output <validated-url-resolutions.json>
 ### materialize-fixture-identity-second-source-url-resolution-tasks-file.js
 
 Read-only URL resolution task materializer for fixture identity second-source search targets.
