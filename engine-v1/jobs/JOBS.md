@@ -1921,6 +1921,41 @@ Important:
 - This job does not write canonical fixtures.
 - A later validator/fetch layer must validate resolved URLs before any review decision is applied.
 
+### adapt-fixture-identity-second-source-url-resolutions-from-external-active-file.js
+
+Read-only adapter from validated fixture external-active source URL resolutions into fixture identity second-source URL resolution rows.
+
+Purpose:
+- Reuse already validated external-active source URL resolution reports.
+- Attach one accepted resolved URL to the first second-source URL resolution task for each target league.
+- Block any candidate whose host matches the second-source task pack excluded hosts.
+- Produce validator-ready second-source URL resolution input before any controlled fetch stage.
+
+Rules:
+- External-active input reports must have ok=true.
+- External-active input reports must not contain invalid resolutions.
+- External-active input reports must not indicate canonical or production writes.
+- One adapted row is emitted per league.
+- Duplicate external candidates are summarized, not blindly duplicated.
+- Missing leagues keep the report ok=false so the operator cannot accidentally proceed as complete.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noExternalSearch: true
+- noUrlResolutionSideEffects: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- deploySnapshotWrites: false
+- valueWrites: false
+- detailsWrites: false
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\adapt-fixture-identity-second-source-url-resolutions-from-external-active-file.js --date 2026-05-22 --tasks <second-source-url-resolution-tasks.json> --source <validated-external-active-wave-002.json> --source <validated-external-active-wave-003.json> --output <adapted-second-source-url-resolutions.json>
 ### build-fixture-identity-second-source-controlled-fetch-plan-file.js
 
 Read-only controlled fetch plan builder for fixture identity second-source URL validation reports.
