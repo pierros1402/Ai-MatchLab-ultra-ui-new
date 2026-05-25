@@ -2400,3 +2400,17 @@ Guarantees: canonicalWrites=0, productionWrite=false, deploySnapshotWrites=false
 Example command:
 
 node .\engine-v1\jobs\build-fixture-identity-second-source-remediation-summary-file.js --date 2026-05-22 --fetched <controlled-fetched-snapshots.json> --evidence <external-active-source-evidence.json> --identity <verified-fixture-identity-rows.json> --output <second-source-remediation-summary.json>
+
+### build-fixture-identity-second-source-remediation-confirmation-tasks-file.js
+
+Read-only adapter from fixture identity second-source remediation summary rows into confirmation task rows consumed by the existing second-source search-target materializer.
+
+It consumes a remediation summary with remediationRows and emits confirmationTasks with pending_second_source_or_calendar_confirmation state, canonicalPromotionState blocked, checkedSource/sourceEvidence metadata, and excluded source hosts.
+
+It does not fetch URLs, apply review decisions, promote canonical fixture identity, or write deploy/value/details outputs.
+
+Guarantees: canonicalWrites=0, productionWrite=false, deploySnapshotWrites=false, valueWrites=false, detailsWrites=false, dryRun=true.
+
+Example command:
+
+node .\engine-v1\jobs\build-fixture-identity-second-source-remediation-confirmation-tasks-file.js --date 2026-05-22 --input <second-source-remediation-summary.json> --output <second-source-remediation-confirmation-tasks.json>
