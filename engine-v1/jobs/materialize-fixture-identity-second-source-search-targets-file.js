@@ -214,7 +214,7 @@ function dateVariants(dayKey) {
   };
 }
 
-function buildFallbackQueries(task, excludedHost) {
+function buildFallbackQueries(task, primaryExcludedHost) {
   const variants = dateVariants(task.targetDate);
   const name = cleanString(task.name);
   const slug = cleanString(task.leagueSlug);
@@ -227,7 +227,7 @@ function buildFallbackQueries(task, excludedHost) {
     `"${name}" official fixtures ${variants.iso}`,
     `"${name}" schedule ${variants.iso}`,
     `${slug} football fixtures ${variants.iso}`,
-    excludedHost ? `"${name}" fixtures ${variants.iso} -site:${excludedHost}` : ""
+    primaryExcludedHost ? `"${name}" fixtures ${variants.iso} -site:${primaryExcludedHost}` : ""
   ]);
 }
 
@@ -267,9 +267,15 @@ function normalizeTask(task, index) {
   validateTask(task, index);
 
   const checkedSourceUrl = cleanString(task?.checkedSource?.url);
-  const excludedHost = cleanString(task?.sourceEvidence?.hostname) || hostFromUrl(checkedSourceUrl);
+  const excludedHosts = uniqueStrings([
+    ...asArray(task?.excludedHosts),
+    ...asArray(task?.searchPolicy?.excludedHosts),
+    cleanString(task?.sourceEvidence?.hostname),
+    hostFromUrl(checkedSourceUrl)
+  ]);
+  const primaryExcludedHost = excludedHosts[0] || "";
   const suggestedQueries = asArray(task?.suggestedQueries);
-  const fallbackQueries = buildFallbackQueries(task, excludedHost);
+  const fallbackQueries = buildFallbackQueries(task, primaryExcludedHost);
   const queries = uniqueStrings([
     ...suggestedQueries,
     ...fallbackQueries
@@ -287,7 +293,7 @@ function normalizeTask(task, index) {
     checkedSource: {
       url: checkedSourceUrl,
       provider: cleanString(task?.checkedSource?.provider),
-      excludedHost,
+      primaryExcludedHost,
       candidateCount: Number(task?.checkedSource?.candidateCount ?? 0),
       targetDateCandidateCount: Number(task?.checkedSource?.targetDateCandidateCount ?? 0),
       hasTargetDateTextSignal: Boolean(task?.checkedSource?.hasTargetDateTextSignal),
@@ -307,8 +313,8 @@ function normalizeTask(task, index) {
       sourceFetch: false,
       noFetch: true,
       noUrlFetch: true,
-      sameHostAsOnlyConfirmationBlocked: Boolean(excludedHost),
-      excludedHosts: excludedHost ? [excludedHost] : [],
+      sameHostAsOnlyConfirmationBlocked: Boolean(primaryExcludedHost),
+      excludedHosts,
       preferredSourceHints: asArray(task?.preferredSourceHints).map(cleanString).filter(Boolean),
       blockedSourceHints: asArray(task?.blockedSourceHints).map(cleanString).filter(Boolean),
       maxQueriesPerLeague: null
@@ -325,7 +331,7 @@ function normalizeTask(task, index) {
       leagueSlug: cleanString(task.leagueSlug),
       name: cleanString(task.name),
       targetDate: cleanString(task.targetDate),
-      excludedHosts: excludedHost ? [excludedHost] : [],
+      excludedHosts,
       goal: "find_independent_date_specific_second_source_or_calendar_confirmation",
       acceptedEvidenceTypes: [
         "official_league_fixtures_page",
