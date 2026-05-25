@@ -2388,3 +2388,15 @@ Important:
 - This job does not write canonical fixtures or deploy snapshots.
 - verified_active must come from separately reviewed source evidence.
 - canonical_acquisition_missing means the league is covered and externally verified active, but no local canonical fixture rows were found for that date.
+
+### build-fixture-identity-second-source-remediation-summary-file.js
+
+Read-only diagnostic summarizer for fixture identity second-source remediation. It consumes controlled fetched source snapshots, prepared external-active source evidence, and prepared/needs-review fixture identity rows, then emits a league-level remediation action list.
+
+It does not fetch URLs, apply review decisions, promote canonical fixture identity, or write deploy/value/details outputs.
+
+Guarantees: canonicalWrites=0, productionWrite=false, deploySnapshotWrites=false, valueWrites=false, detailsWrites=false, dryRun=true.
+
+Example command:
+
+node .\engine-v1\jobs\build-fixture-identity-second-source-remediation-summary-file.js --date 2026-05-22 --fetched <controlled-fetched-snapshots.json> --evidence <external-active-source-evidence.json> --identity <verified-fixture-identity-rows.json> --output <second-source-remediation-summary.json>
