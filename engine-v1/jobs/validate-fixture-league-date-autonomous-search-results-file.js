@@ -122,6 +122,66 @@ function detectManualSeedRisk(row) {
   );
 }
 
+function normalizeSearchText(value) {
+  return asText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/https?:\/\//g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function targetEvidenceTokens(row) {
+  const raw = [
+    row.query,
+    row.searchQuery,
+    row.targetQuery,
+    row.name,
+    row.competitionName
+  ].map(asText).filter(Boolean).join(" ");
+
+  const text = normalizeSearchText(raw).replace(/\b20\d{2}[ -]?\d{2}[ -]?\d{2}\b/g, " ");
+
+  const stop = new Set([
+    "what", "which", "who", "where", "when", "any", "exist", "exists",
+    "for", "from", "with", "and", "the", "on", "in", "of", "to",
+    "fixture", "fixtures", "match", "matches", "schedule", "calendar",
+    "official", "source", "sources", "football", "soccer", "club", "clubs",
+    "league", "division", "season", "date", "day", "round", "game", "games",
+    "if", "are", "is"
+  ]);
+
+  return [...new Set(
+    text
+      .split(" ")
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 4)
+      .filter((token) => !/^20\d{2}$/.test(token))
+      .filter((token) => !/^\d+$/.test(token))
+      .filter((token) => !stop.has(token))
+  )];
+}
+
+function hasTargetTextEvidence(row, candidateUrl, hostname) {
+  const tokens = targetEvidenceTokens(row);
+  if (tokens.length === 0) return true;
+
+  const evidence = normalizeSearchText([
+    row.title,
+    row.snippet,
+    row.description,
+    row.summary,
+    candidateUrl,
+    hostname
+  ].map(asText).filter(Boolean).join(" "));
+
+  if (!evidence) return false;
+
+  return tokens.some((token) => evidence.includes(token));
+}
+
 function validateOne(row, index, options = {}) {
   const errors = [];
   const warnings = [];
@@ -148,6 +208,10 @@ function validateOne(row, index, options = {}) {
 
   if (detectManualSeedRisk(row)) {
     errors.push("manual_seed_like_row_rejected");
+  }
+
+  if (!hasTargetTextEvidence(row, candidateUrl, hostname)) {
+    errors.push("target_competition_not_confirmed");
   }
 
   const rank = Number(row.rank || row.position || row.resultRank);
@@ -242,7 +306,13 @@ function buildReport(input, options = {}) {
         "searchTargetId OR query/searchQuery/targetQuery OR leagueSlug+dayKey"
       ],
       recommendedPerRow: ["title", "snippet/description", "rank/position/resultRank", "provider/resultSource/source"],
-      rejectedSignals: ["manual provider/source/mode", "manualCandidateUrlUsed=true", "manualSeed=true", "fromManualSeed=true"]
+      rejectedSignals: [
+        "manual provider/source/mode",
+        "manualCandidateUrlUsed=true",
+        "manualSeed=true",
+        "fromManualSeed=true",
+        "target competition not confirmed in title/snippet/hostname/url"
+      ]
     },
     searchResultRows: validRows,
     validSearchResultRows: validRows,
@@ -275,15 +345,29 @@ function runSelfTest() {
         snippet: "Manual candidate.",
         url: "https://manual.example/fixtures",
         provider: "manual_seed"
+      },
+      {
+        searchTargetId: "2026-05-22:bel.1:official_league_fixture_calendar:official_league:0",
+        leagueSlug: "bel.1",
+        dayKey: "2026-05-22",
+        query: "What fixtures, if any, exist for Belgian Pro League on 2026-05-22?",
+        rank: 1,
+        title: "2025 Paraguayan Primera División season",
+        snippet: "The Paraguayan Primera División season table and results.",
+        url: "https://profilbaru.com/article/2025_Paraguayan_Primera_Divisi%C3%B3n_season",
+        provider: "duckduckgo_html"
       }
     ]
   };
 
   const report = buildReport(sample);
 
-  if (report.summary.inputRowCount !== 3) throw new Error("expected 3 input rows");
+  if (report.summary.inputRowCount !== 4) throw new Error("expected 4 input rows");
   if (report.summary.validRowCount !== 1) throw new Error(`expected 1 valid row, got ${report.summary.validRowCount}`);
-  if (report.summary.rejectedRowCount !== 2) throw new Error(`expected 2 rejected rows, got ${report.summary.rejectedRowCount}`);
+  if (report.summary.rejectedRowCount !== 3) throw new Error(`expected 3 rejected rows, got ${report.summary.rejectedRowCount}`);
+  if (!report.rejectedRows.some((row) => row.errors.includes("target_competition_not_confirmed"))) {
+    throw new Error("expected off-target autonomous search row to be rejected");
+  }
   if (report.guarantees.noWebSearch !== true) throw new Error("must not web search");
   if (report.guarantees.validatesOnlyProvidedSearchResults !== true) throw new Error("must only validate provided rows");
   if (report.guarantees.inventedUrls !== false) throw new Error("must not invent URLs");
