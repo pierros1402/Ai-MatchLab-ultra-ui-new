@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { searchWeb } from "../source-discovery/web-search-provider.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -25,6 +26,9 @@ function parseArgs(argv = process.argv.slice(2)) {
     output: "",
     sourceIndex: "",
     selfTest: false,
+    allowSearch: false,
+    timeoutMs: 12000,
+    maxChars: 120000,
     limit: 0
   };
 
@@ -48,6 +52,21 @@ function parseArgs(argv = process.argv.slice(2)) {
 
     if (arg === "--source-index" && argv[i + 1]) {
       args.sourceIndex = argv[++i];
+      continue;
+    }
+
+    if (arg === "--allow-search") {
+      args.allowSearch = true;
+      continue;
+    }
+
+    if (arg === "--timeout-ms" && argv[i + 1]) {
+      args.timeoutMs = Number(argv[++i]);
+      continue;
+    }
+
+    if (arg === "--max-chars" && argv[i + 1]) {
+      args.maxChars = Number(argv[++i]);
       continue;
     }
 
@@ -303,13 +322,125 @@ function buildSourceIndexReport(targets, sourceIndexRows, options = {}) {
   };
 }
 
-function buildReport(targetInput, options = {}) {
+function rowToSearchResultFromWeb(target, row) {
+  return {
+    searchTargetId: asText(target.searchTargetId),
+    leagueSlug: asText(target.leagueSlug),
+    name: asText(target.name),
+    dayKey: asText(target.dayKey),
+    query: asText(target.query),
+    intent: asText(target.intent),
+    expectedSourceFamily: asText(target.expectedSourceFamily),
+    rank: Number(row.rank || 0),
+    title: asText(row.title),
+    snippet: asText(row.snippet),
+    url: normalizeUrl(row.url),
+    hostname: asText(row.hostname),
+    provider: asText(row.provider || row.resultSource || "autonomous_web_search"),
+    resultSource: asText(row.provider || row.resultSource || "autonomous_web_search"),
+    collectorState: "collected_from_autonomous_web_search",
+    manualCandidateUrlUsed: false,
+    inventedUrl: false,
+    fetchState: "not_fetched",
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
+async function buildWebSearchReport(targets, options = {}) {
+  const selectedTargets = Number.isFinite(options.limit) && options.limit > 0
+    ? targets.slice(0, options.limit)
+    : targets;
+
+  const searchResultRows = [];
+  const searchAttempts = [];
+  const byStatus = {};
+
+  for (const target of selectedTargets) {
+    const query = asText(target.query);
+
+    const result = await searchWeb(query, {
+      allowSearch: options.allowSearch === true,
+      timeoutMs: options.timeoutMs,
+      maxChars: options.maxChars
+    });
+
+    byStatus[result.status] = (byStatus[result.status] || 0) + 1;
+
+    searchAttempts.push({
+      searchTargetId: asText(target.searchTargetId),
+      leagueSlug: asText(target.leagueSlug),
+      dayKey: asText(target.dayKey),
+      query,
+      ok: result.ok === true,
+      status: asText(result.status),
+      resultCount: Array.isArray(result.rows) ? result.rows.length : 0,
+      attempts: result.attempts || []
+    });
+
+    for (const row of result.rows || []) {
+      const converted = rowToSearchResultFromWeb(target, row);
+      if (!converted.url) continue;
+      searchResultRows.push(converted);
+    }
+  }
+
+  return {
+    ok: searchResultRows.length > 0,
+    job: "collect-fixture-league-date-autonomous-search-results-file",
+    mode: "read_only_autonomous_web_search_results_collector",
+    generatedAt: new Date().toISOString(),
+    status: searchResultRows.length > 0 ? "web_search_collected" : "web_search_no_results_or_blocked",
+    summary: {
+      searchTargetCount: targets.length,
+      selectedSearchTargetCount: selectedTargets.length,
+      searchResultRowCount: searchResultRows.length,
+      providerConfigured: true,
+      providerMissing: false,
+      sourceIndexProvided: false,
+      manualCandidateUrlsRequired: false,
+      manualCandidateUrlsUsed: false,
+      inventedUrls: false,
+      webSearchExecuted: true,
+      sourceFetch: false,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true,
+      byStatus
+    },
+    guarantees: {
+      noFakeSearch: true,
+      noWebSearchWithoutProvider: true,
+      searchRequiresExplicitAllowSearch: true,
+      sourceFetch: false,
+      noFetch: true,
+      noUrlFetch: true,
+      manualCandidateUrlsRequired: false,
+      manualCandidateUrlsUsed: false,
+      inventedUrls: false,
+      noReviewDecisionApplied: true,
+      noCanonicalPromotion: true,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    },
+    searchAttempts,
+    searchResultRows
+  };
+}
+
+async function buildReport(targetInput, options = {}) {
   const targets = selectTargets(targetInput);
   const providers = configuredProviderState();
 
   if (options.sourceIndexInput) {
     const sourceIndexRows = selectSourceIndexRows(options.sourceIndexInput);
     return buildSourceIndexReport(targets, sourceIndexRows, options);
+  }
+
+  if (options.allowSearch === true) {
+    return buildWebSearchReport(targets, options);
   }
 
   if (providers.length === 0) {
@@ -356,7 +487,7 @@ function buildReport(targetInput, options = {}) {
   };
 }
 
-function runSelfTest() {
+async function runSelfTest() {
   const targets = {
     searchTargetRows: [
       {
@@ -371,7 +502,7 @@ function runSelfTest() {
     ]
   };
 
-  const missingReport = buildReport(targets);
+  const missingReport = await buildReport(targets);
   if (missingReport.ok !== false) throw new Error("provider-missing report must be non-ok");
   if (missingReport.status !== "provider_missing") throw new Error("expected provider_missing");
   if (missingReport.summary.searchResultRowCount !== 0) throw new Error("provider-missing must return 0 rows");
@@ -389,7 +520,7 @@ function runSelfTest() {
     ]
   };
 
-  const indexReport = buildReport(targets, { sourceIndexInput: sourceIndex });
+  const indexReport = await buildReport(targets, { sourceIndexInput: sourceIndex });
   if (indexReport.ok !== true) throw new Error("source-index report must be ok");
   if (indexReport.status !== "source_index_collected") throw new Error("expected source_index_collected");
   if (indexReport.summary.searchResultRowCount !== 1) throw new Error("expected 1 source-index row");
@@ -405,11 +536,11 @@ function runSelfTest() {
   };
 }
 
-function main() {
+async function main() {
   const args = parseArgs();
 
   if (args.selfTest) {
-    console.log(JSON.stringify(runSelfTest(), null, 2));
+    console.log(JSON.stringify(await runSelfTest(), null, 2));
     return;
   }
 
@@ -418,8 +549,11 @@ function main() {
 
   const targetInput = readJson(args.targets);
   const sourceIndexInput = args.sourceIndex ? readJson(args.sourceIndex) : null;
-  const report = buildReport(targetInput, {
+  const report = await buildReport(targetInput, {
     sourceIndexInput,
+    allowSearch: args.allowSearch,
+    timeoutMs: args.timeoutMs,
+    maxChars: args.maxChars,
     limit: args.limit
   });
 
@@ -436,5 +570,8 @@ function main() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
-  main();
+  main().catch((error) => {
+    console.error(error?.stack || error?.message || String(error));
+    process.exitCode = 1;
+  });
 }
