@@ -185,6 +185,51 @@ function quotedCompetitionPhrases(row) {
   return [...new Set(phrases.filter((phrase) => phrase.split(" ").length >= 2))];
 }
 
+function competitionAliasPhrases(row) {
+  const aliasesByLeagueSlug = {
+    "bel.1": [
+      "jupiler pro league",
+      "jupiler league",
+      "belgian first division a",
+      "first division a"
+    ]
+  };
+
+  const aliasesByCompetitionPhrase = {
+    "belgian pro league": [
+      "jupiler pro league",
+      "jupiler league",
+      "belgian first division a",
+      "first division a"
+    ]
+  };
+
+  const phrases = new Set();
+  const leagueSlug = asText(row.leagueSlug).toLowerCase();
+  for (const alias of aliasesByLeagueSlug[leagueSlug] || []) {
+    const normalized = normalizeSearchText(alias);
+    if (normalized) phrases.add(normalized);
+  }
+
+  const rawTargetText = normalizeSearchText([
+    row.query,
+    row.searchQuery,
+    row.targetQuery,
+    row.name,
+    row.competitionName
+  ].map(asText).filter(Boolean).join(" "));
+
+  for (const [phrase, aliases] of Object.entries(aliasesByCompetitionPhrase)) {
+    if (!rawTargetText.includes(normalizeSearchText(phrase))) continue;
+    for (const alias of aliases) {
+      const normalized = normalizeSearchText(alias);
+      if (normalized) phrases.add(normalized);
+    }
+  }
+
+  return [...phrases];
+}
+
 function hasTargetTextEvidence(row, candidateUrl, hostname) {
   const tokens = targetEvidenceTokens(row);
   if (tokens.length === 0) return true;
@@ -200,7 +245,11 @@ function hasTargetTextEvidence(row, candidateUrl, hostname) {
 
   if (!evidence) return false;
 
-  const phrases = quotedCompetitionPhrases(row);
+  const phrases = [
+    ...quotedCompetitionPhrases(row),
+    ...competitionAliasPhrases(row)
+  ];
+
   if (phrases.some((phrase) => evidence.includes(phrase))) {
     return true;
   }
@@ -237,7 +286,20 @@ function hasFixtureDiscoveryEvidence(row, candidateUrl, hostname) {
     "live score",
     "round",
     "game",
-    "games"
+    "games",
+    "calendar",
+    "calendrier",
+    "kalender",
+    "programma",
+    "program",
+    "programme",
+    "spielplan",
+    "calendario",
+    "calendário",
+    "calendario partite",
+    "calendrier des matchs",
+    "wedstrijden",
+    "matchen"
   ];
 
   return fixtureSignals.some((signal) => evidence.includes(normalizeSearchText(signal)));
@@ -497,14 +559,25 @@ function runSelfTest() {
         snippet: "Fixtures, match schedule and results for Belgian Pro League.",
         url: "https://www.proleague.be/en/jpl/calendar",
         provider: "duckduckgo_html"
+      },
+      {
+        searchTargetId: "2026-05-22:bel.1:official_league_fixture_calendar:official_league:0",
+        leagueSlug: "bel.1",
+        dayKey: "2026-05-22",
+        query: "Belgium football Belgian Pro League federation competition fixtures 2026-05-22",
+        rank: 4,
+        title: "Jupiler Pro League 2025/2026 Calendrier",
+        snippet: "",
+        url: "https://www.proleague.be/fr/jupliler-pro-league-20252026-kalender",
+        provider: "duckduckgo_html"
       }
     ]
   };
 
   const report = buildReport(sample);
 
-  if (report.summary.inputRowCount !== 6) throw new Error("expected 6 input rows");
-  if (report.summary.validRowCount !== 2) throw new Error(`expected 2 valid rows, got ${report.summary.validRowCount}`);
+  if (report.summary.inputRowCount !== 7) throw new Error("expected 7 input rows");
+  if (report.summary.validRowCount !== 3) throw new Error(`expected 3 valid rows, got ${report.summary.validRowCount}`);
   if (report.summary.rejectedRowCount !== 4) throw new Error(`expected 4 rejected rows, got ${report.summary.rejectedRowCount}`);
   if (!report.rejectedRows.some((row) => row.errors.includes("target_competition_not_confirmed"))) {
     throw new Error("expected off-target autonomous search row to be rejected");
