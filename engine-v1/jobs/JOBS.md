@@ -1480,482 +1480,6 @@ Current policy:
 
 This module performs no fetches and no production writes.
 
-### build-fixture-external-active-league-discovery-workset.js
-
-Read-only diagnostic/workset builder for Fixture Acquisition V2.
-
-Purpose:
-- Compare the declared league coverage map against observed deploy snapshot fixture leagues for a date window.
-- Produce provider-agnostic external activity discovery targets.
-- Separate leagues already observed in snapshots (mustHaveTargets) from declared leagues whose activity is still unknown (externalCheckTargets).
-- Highlight snapshot-active leagues with thin/missing history as P0, because they may be fixture-visible but must remain value-gated.
-
-Typical usage:
-
-node .\engine-v1\jobs\build-fixture-external-active-league-discovery-workset.js --start 2026-05-21 --days 3 --snapshot-ref origin/main --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-discovery-workset.json
-
-Guarantees:
-- sourceFetch: false
-- discoveredExternally: false
-- canonicalWrites: 0
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Important:
-- This job does not prove external fixture activity.
-- It builds search/review targets for the next controlled external activity resolution stage.
-- Scoreboard-only evidence must not be treated as value-ready verified fixture acquisition capability.
-
-### build-fixture-external-active-league-resolution-targets-file.js
-
-Read-only resolution/review target builder for Fixture Acquisition V2.
-
-Purpose:
-- Consume an external active league discovery workset.
-- Expand externalCheckTargets into league/day review rows.
-- Produce concrete search/review targets for controlled external activity comparison.
-- Keep reviewFields null/unreviewed until a manual or controlled downstream source-resolution step fills them.
-
-Typical usage:
-
-node .\engine-v1\jobs\build-fixture-external-active-league-resolution-targets-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-discovery-workset.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-resolution-targets.json
-
-Optional filters:
-- --priority P2
-- --include-observed
-- --max-targets 50
-
-Guarantees:
-- sourceFetch: false
-- discoveredExternally: false
-- canonicalWrites: 0
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Important:
-- This job does not prove external fixture activity.
-- It prepares league/day rows for the next controlled source resolution stage.
-- Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
-
-### build-fixture-external-active-league-review-pack-file.js
-
-Read-only review pack builder for Fixture Acquisition V2 external league activity checks.
-
-Purpose:
-- Consume external active league resolution targets.
-- Produce a small grouped review pack for controlled/manual external activity comparison.
-- Preserve reviewFields as null/unreviewed until source evidence is manually or systematically reviewed.
-- Carry search queries, source hints, blocked source hints, and acceptance rules into each review item.
-
-Typical usage:
-
-node .\engine-v1\jobs\build-fixture-external-active-league-review-pack-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-resolution-targets.P2.sample.json --priority P2 --max-rows 5 --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-review-pack.P2.sample.json
-
-Optional filters:
-- --priority P2
-- --max-rows 50
-- --group-by league_day
-
-Guarantees:
-- sourceFetch: false
-- discoveredExternally: false
-- canonicalWrites: 0
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Important:
-- This job does not fetch sources.
-- This job does not prove external fixture activity.
-- This job must not write canonical fixtures, value picks, details, or production data.
-- Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
-
-### validate-fixture-external-active-league-review-pack-file.js
-
-Read-only validator for filled Fixture Acquisition V2 external active league review packs.
-
-Purpose:
-- Validate review packs after manual or controlled source-resolution fields are filled.
-- Allow unreviewed rows only when they do not claim external activity.
-- Require strong fields when externallyActive=true.
-- Block scoreboard-only evidence from verifying value-ready fixture acquisition capability.
-
-Required when externallyActive=true:
-- fixtureCountFound must be a positive integer.
-- sourceUrls must contain at least one valid http/https URL.
-- sourceTypes must contain at least one source type.
-- missingFromSnapshot must be true or false.
-- sourceVerdict must be verified_active.
-- scoreboard-only source types are rejected.
-
-Typical usage:
-
-node .\engine-v1\jobs\validate-fixture-external-active-league-review-pack-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-review-pack.P2.sample.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league-review-pack.P2.sample.validation.json
-
-Optional:
-- --fail-on-invalid
-
-Guarantees:
-- sourceFetch: false
-- discoveredExternally: false
-- canonicalWrites: 0
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Important:
-- This job does not fetch sources.
-- This job does not write canonical fixtures, value picks, details, or production data.
-- This job validates evidence fields only; it does not promote fixtures into acquisition.
-
-### materialize-fixture-external-active-league-review-pack-file.js
-
-Read-only wrapper/materializer for Fixture Acquisition V2 external active league review packs.
-
-Purpose:
-- Orchestrate external active league discovery, resolution targets, review pack creation, and optional validation.
-- Produce small controlled diagnostic/review artifacts for manual or controlled source review.
-- Keep the whole flow provider-agnostic and read-only.
-- Avoid treating generated review packs as canonical fixture acquisition writes.
-
-Typical usage:
-
-node .\engine-v1\jobs\materialize-fixture-external-active-league-review-pack-file.js --start 2026-05-21 --days 3 --snapshot-ref origin/main --priority P2 --max-rows 5 --max-targets 10 --output-dir .\data\football-truth\_diagnostics\fixture-acquisition-stability --output-prefix 2026-05-21.external-active-league.P2.sample --validate
-
-Options:
-- --start YYYY-MM-DD
-- --days 1..14
-- --snapshot-ref origin/main
-- --priority P0|P1|P2|P3
-- --max-rows N
-- --max-targets N
-- --output-dir path
-- --output-prefix prefix
-- --validate
-
-Outputs:
-- discovery-workset.json
-- resolution-targets.json
-- review-pack.json
-- review-pack.validation.json when --validate is used
-
-Guarantees:
-- sourceFetch: false
-- discoveredExternally: false
-- canonicalWrites: 0
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Important:
-- This job does not fetch sources.
-- This job does not prove external fixture activity.
-- This job must not write canonical fixtures, value picks, details, or production data.
-- Outputs are diagnostic/review artifacts only.
-
-### build-fixture-external-active-league-batch-review-groups-file.js
-
-Read-only batch grouping builder for Fixture Acquisition V2 external active league review packs.
-
-Purpose:
-- Consume an external active league review pack.
-- Group review items by day and country/region/source path.
-- Reduce manual review volume by allowing one federation/league source check to cover multiple competitions when evidence supports it.
-- Keep item-level decisions unreviewed until source evidence is reviewed.
-
-Typical usage:
-
-node .\engine-v1\jobs\build-fixture-external-active-league-batch-review-groups-file.js --input .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.review-pack.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.batch-review-groups.json
-
-Options:
-- --input path
-- --output path
-- --max-groups N
-- --max-items-per-group N
-
-Outputs:
-- batch-review-groups.json with groupId, country, dayKey, leagueSlugs, combinedSearchQueries, preferredBatchSourceTargets, reviewStrategy, itemDecisions, and acceptanceRules.
-
-Guarantees:
-- sourceFetch: false
-- discoveredExternally: false
-- canonicalWrites: 0
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Important:
-- This job does not fetch sources.
-- This job does not prove external fixture activity.
-- Group decisions must still be validated item-by-item before any acquisition action.
-- Scoreboard-only evidence must not unlock value-ready fixture acquisition capability.
-- Generated batch group files are diagnostic/review artifacts only.
-
-### apply-fixture-external-active-league-review-decisions-file.js
-
-Read-only review decision applier for Fixture Acquisition V2 external active league review artifacts.
-
-Purpose:
-- Apply reviewed external active league decisions from a separate decisions JSON file.
-- Update both review-pack.json and batch-review-groups.json consistently.
-- Re-run the external active league review pack validator after applying decisions.
-- Avoid fragile ad-hoc PowerShell property edits on nested review JSON.
-
-Typical usage:
-
-node .\engine-v1\jobs\apply-fixture-external-active-league-review-decisions-file.js --review .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.review-pack.json --groups .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.batch-review-groups.json --decisions .\data\football-truth\_diagnostics\fixture-acquisition-stability\decisions.json --validation .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-21.external-active-league.P2.review-pack-001.review-pack.validation.json
-
-Decision file shape:
-
-{
-  "decisions": [
-    {
-      "leagueSlug": "bih.1",
-      "externallyActive": true,
-      "fixtureCountFound": 2,
-      "sourceUrls": ["https://example.com/official-source"],
-      "sourceTypes": ["official_federation_source"],
-      "sourceVerdict": "verified_active",
-      "missingFromSnapshot": true,
-      "reviewerNotes": "Official evidence note."
-    }
-  ]
-}
-
-Options:
-- --review path
-- --groups path
-- --decisions path
-- --validation path
-- --allow-overwrite
-
-Guarantees:
-- sourceFetch: false
-- discoveredExternally: false
-- canonicalWrites: 0
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Important:
-- This job does not fetch sources.
-- This job does not prove external fixture activity by itself.
-- Decisions must be based on separately reviewed source evidence.
-- The job writes only diagnostic/review artifact files supplied by the caller.
-- It does not write canonical fixtures, value picks, details, or production data.
-
-### prepare-fixture-external-active-source-evidence-file.js
-
-Read-only evidence preparer for fixture external-active source snapshots.
-
-Purpose:
-- Consume already fetched diagnostic source snapshots.
-- Prepare evidence rows with date, league, fixture-language, inactive-language, and official-context signals.
-- Mark rows as readyForReviewDecision only when snapshot text has enough basic source evidence signals.
-- Keep non-ready rows explainable with evidenceState such as missing_date_signal, missing_fixture_language, empty_snapshot_text, or http_not_ok.
-
-Guarantees:
-- sourceFetch: false
-- noFetch: true
-- noUrlFetch: true
-- noReviewDecision: true
-- noCanonicalPromotion: true
-- canonicalWrites: 0
-- deploySnapshotWrites: false
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Example:
-
-node .\engine-v1\jobs\prepare-fixture-external-active-source-evidence-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-snapshots.post-push.no-fetch.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.prepared-source-evidence.empty.json
-
-Important:
-- This job does not fetch URLs.
-- This job does not resolve source URLs.
-- This job does not decide externallyActive.
-- This job does not fill reviewFields in the review pack.
-- This job does not write canonical fixtures.
-
-### fetch-fixture-external-active-source-url-snapshots-file.js
-
-Controlled diagnostic fetcher for fixture external-active source URL snapshots.
-
-Purpose:
-- Consume a validated source URL resolution report.
-- Use only readyForFetchRows or valid rows marked readyForFetch.
-- Fetch diagnostic source snapshots only when --allow-fetch is explicitly supplied.
-- Store fetched text, HTTP metadata, final URL, content type, byte count, truncation flag, and sha256 for later evidence preparation.
-- Return zero fetched snapshots when no rows are ready for fetch.
-
-Guarantees:
-- fetchRequiresAllowFetch: true
-- noFetchWithoutAllowFetch: true unless --allow-fetch is explicitly set
-- noReviewDecision: true
-- noCanonicalPromotion: true
-- canonicalWrites: 0
-- deploySnapshotWrites: false
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Example no-fetch guard check:
-
-node .\engine-v1\jobs\fetch-fixture-external-active-source-url-snapshots-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.validated-source-url-resolutions.post-push.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-snapshots.no-fetch.json
-
-Example controlled fetch:
-
-node .\engine-v1\jobs\fetch-fixture-external-active-source-url-snapshots-file.js --input <validated-source-url-resolutions.json> --output <source-url-snapshots.json> --allow-fetch --timeout-ms 8000 --max-bytes 250000
-
-Important:
-- This job does not resolve URLs.
-- This job does not prepare evidence.
-- This job does not decide externallyActive.
-- This job does not fill reviewFields in the review pack.
-- This job does not write canonical fixtures.
-
-### validate-fixture-external-active-source-url-resolutions-file.js
-
-Read-only validator for fixture external-active source URL resolution rows.
-
-Purpose:
-- Consume a source URL resolution task report containing urlResolutionsTemplate[] or a filled resolution file containing urlResolutions[] / resolutions[].
-- Validate resolvedUrl, sourceType, externallyActive, fixtureCountFound, and missingFromSnapshot before any fetch/evidence layer.
-- Keep empty task templates as pending_resolution.
-- Block scoreboard-only source types from value-ready verified-active evidence.
-- Emit validSourceUrlResolutions[] and readyForFetchRows[] for a later controlled fetch layer.
-
-Guarantees:
-- sourceFetch: false
-- noFetch: true
-- noUrlFetch: true
-- noReviewDecision: true
-- noCanonicalPromotion: true
-- canonicalWrites: 0
-- deploySnapshotWrites: false
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Example:
-
-node .\engine-v1\jobs\validate-fixture-external-active-source-url-resolutions-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-resolution-tasks.post-commit.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.validated-source-url-resolutions.json
-
-Important:
-- This job does not fetch URLs.
-- This job does not decide externallyActive.
-- This job does not fill reviewFields in the review pack.
-- This job does not write canonical fixtures.
-- Only valid rows can move to the later controlled fetch/evidence layer.
-
-### build-fixture-external-active-source-url-resolutions-from-league-seeds-file.js
-
-Read-only adapter from league-level source URL seeds to validator-compatible fixture external-active urlResolutions[].
-
-Purpose:
-- Consume source URL resolution tasks with cases[].
-- Without --seeds, emit leagueSeedTemplate[] with one compact fill target per league.
-- With --seeds, adapt leagueSeeds[] into urlResolutions[] accepted by validate-fixture-external-active-source-url-resolutions-file.js.
-- Reduce manual work from many query rows to reviewed league-level source seeds.
-- Preserve taskId, leagueSlug, name, country, dayKey, and primary search query context.
-
-Guarantees:
-- sourceFetch: false
-- noFetch: true
-- noUrlFetch: true
-- noReviewDecision: true
-- noCanonicalPromotion: true
-- canonicalWrites: 0
-- deploySnapshotWrites: false
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Example template generation:
-
-node .\engine-v1\jobs\build-fixture-external-active-source-url-resolutions-from-league-seeds-file.js --tasks C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-resolution-tasks.post-commit.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.league-source-seed-template.json
-
-Example with reviewed seeds:
-
-node .\engine-v1\jobs\build-fixture-external-active-source-url-resolutions-from-league-seeds-file.js --tasks <source-url-resolution-tasks.json> --seeds <league-source-seeds.json> --output <url-resolutions-from-league-seeds.json>
-
-Important:
-- This job does not fetch URLs.
-- This job does not validate source contents.
-- This job does not decide externallyActive beyond copying reviewed seed fields.
-- This job does not write canonical fixtures.
-- Output must still pass the source URL resolution validator before controlled fetch.
-
-### build-fixture-external-active-source-url-resolution-tasks-file.js
-
-Read-only source URL resolution task materializer for fixture external-active review packs or UEFA review wave decision files.
-
-Purpose:
-- Consume a fixture external-active review pack with reviewItems[] or a review wave file with decisions[].
-- Produce structured source URL resolution tasks per league/query.
-- Preserve item-specific registry-name search queries and preferred source hints.
-- Create a urlResolutionsTemplate for a later validator/fetch/review layer.
-
-Guarantees:
-- sourceFetch: false
-- noFetch: true
-- noUrlFetch: true
-- noReviewDecision: true
-- noCanonicalPromotion: true
-- canonicalWrites: 0
-- deploySnapshotWrites: false
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-
-Example:
-
-node .\engine-v1\jobs\build-fixture-external-active-source-url-resolution-tasks-file.js --input C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.registry-names.json --output C:\Users\pierr\Ai-MatchLab-diagnostic-backups\uefa-first-division-review-waves\2026-05-22\2026-05-22.uefa-p1-review-decisions-wave-001.source-url-resolution-tasks.json --max-queries-per-league 8
-
-Important:
-- This job does not fetch URLs.
-- This job does not fill sourceUrls/sourceTypes.
-- This job does not decide externallyActive.
-- This job does not write canonical fixtures.
-- A later validator/fetch layer must validate resolved URLs before any review decision is applied.
-
-### adapt-fixture-identity-second-source-url-resolutions-from-external-active-file.js
-
-Read-only adapter from validated fixture external-active source URL resolutions into fixture identity second-source URL resolution rows.
-
-Purpose:
-- Reuse already validated external-active source URL resolution reports.
-- Attach one accepted resolved URL to the first second-source URL resolution task for each target league.
-- Block any candidate whose host matches the second-source task pack excluded hosts.
-- Produce validator-ready second-source URL resolution input before any controlled fetch stage.
-
-Rules:
-- External-active input reports must have ok=true.
-- External-active input reports must not contain invalid resolutions.
-- External-active input reports must not indicate canonical or production writes.
-- One adapted row is emitted per league.
-- Duplicate external candidates are summarized, not blindly duplicated.
-- Missing leagues keep the report ok=false so the operator cannot accidentally proceed as complete.
-
-Guarantees:
-- sourceFetch: false
-- noFetch: true
-- noUrlFetch: true
-- noExternalSearch: true
-- noUrlResolutionSideEffects: true
-- noReviewDecisionApplied: true
-- noCanonicalPromotion: true
-- canonicalWrites: 0
-- deploySnapshotWrites: false
-- valueWrites: false
-- detailsWrites: false
-- productionWrite: false
-- dryRun: true
-
-Example:
-node .\engine-v1\jobs\adapt-fixture-identity-second-source-url-resolutions-from-external-active-file.js --date 2026-05-22 --tasks <second-source-url-resolution-tasks.json> --source <validated-external-active-wave-002.json> --source <validated-external-active-wave-003.json> --output <adapted-second-source-url-resolutions.json>
 ### build-fixture-identity-second-source-controlled-fetch-plan-file.js
 
 Read-only controlled fetch plan builder for fixture identity second-source URL validation reports.
@@ -2278,7 +1802,6 @@ Read-only proposal builder for verified fixture acquisition gaps.
 
 Purpose:
 - Consume a fixture active-gap acquisition priority report.
-- Optionally merge a filled external-active-league review pack.
 - Produce guarded fixture acquisition proposals for canonical acquisition gaps.
 - Keep canonical fixture writes blocked until match-level fixture identity rows exist.
 
@@ -2307,7 +1830,6 @@ Read-only UEFA league coverage contract diagnostic for Fixture Acquisition V2.
 Purpose:
 - Check the UEFA 55-country coverage contract against workers/_shared/leagues-coverage.js.
 - Verify that every UEFA country has a declared first division and second division coverage slug.
-- Join the coverage contract with an optional external-active-league review pack for a specific date.
 - Separate season/watch coverage from date-active acquisition gaps.
 - Report verified active first-division leagues missing from the day snapshot.
 - Report first divisions still unreviewed for the given date.
@@ -2315,7 +1837,6 @@ Purpose:
 
 Typical usage:
 
-node .\engine-v1\jobs\build-uefa-league-coverage-contract-file.js --date 2026-05-22 --review .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.external-active-league.P2.expanded-review-pack-001.review-pack.json --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.uefa-league-coverage-contract.json
 
 Output highlights:
 - uefaCountryCountExpected
@@ -2346,7 +1867,6 @@ Important:
 Read-only priority diagnostic for verified active fixture acquisition gaps.
 
 Purpose:
-- Consume a UEFA coverage contract report and optional external-active-league review pack.
 - Analyze verified active leagues that are marked missing from the day snapshot.
 - Check whether each gap is present in coverage, canonical fixtures, and deploy snapshot fixtures.
 - Classify the likely failure stage for each gap.
@@ -2354,7 +1874,6 @@ Purpose:
 
 Typical usage:
 
-node .\engine-v1\jobs\build-fixture-active-gap-acquisition-priority-file.js --date 2026-05-22 --uefa-report .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.uefa-league-coverage-contract.json --review .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.external-active-league.P2.expanded-review-pack-001.review-pack.json --snapshot-ref origin/main --output .\data\football-truth\_diagnostics\fixture-acquisition-stability\2026-05-22.fixture-active-gap-acquisition-priority.json
 
 Output highlights:
 - inputGapCount
@@ -2399,7 +1918,6 @@ Guarantees: canonicalWrites=0, productionWrite=false, deploySnapshotWrites=false
 
 Example command:
 
-node .\engine-v1\jobs\build-fixture-identity-second-source-remediation-summary-file.js --date 2026-05-22 --fetched <controlled-fetched-snapshots.json> --evidence <external-active-source-evidence.json> --identity <verified-fixture-identity-rows.json> --output <second-source-remediation-summary.json>
 
 ### build-fixture-identity-second-source-remediation-confirmation-tasks-file.js
 
@@ -2414,3 +1932,34 @@ Guarantees: canonicalWrites=0, productionWrite=false, deploySnapshotWrites=false
 Example command:
 
 node .\engine-v1\jobs\build-fixture-identity-second-source-remediation-confirmation-tasks-file.js --date 2026-05-22 --input <second-source-remediation-summary.json> --output <second-source-remediation-confirmation-tasks.json>
+
+### Current fixture acquisition direction
+
+Current direction is provider-agnostic autonomous fixture acquisition.
+
+Use this chain as the active fixture acquisition discovery path:
+
+1. build-fixture-league-date-autonomous-source-discovery-workset-file.js
+2. build-fixture-league-date-autonomous-source-candidate-targets-file.js
+3. collect-fixture-league-date-autonomous-search-results-file.js
+4. validate-fixture-league-date-autonomous-search-results-file.js
+5. rank-fixture-league-date-autonomous-search-results-file.js
+
+Rules:
+
+- Search is fail-closed by default.
+- Web search requires explicit --allow-search.
+- No manual candidate URL sheets as the main solution.
+- No BetExplorer-specific or single-provider acquisition path as the main solution.
+- No canonical writes.
+- No production fixture writes.
+- No source URL fetch inside the search collector.
+- Controlled fetch/evidence/identity comes only after relevant ranked autonomous candidates.
+
+Legacy fixture acquisition detours removed from this file and from jobs:
+
+- fixture league-date source discovery review-sheet jobs
+- acquisition analyst manual review/promotion jobs
+- manual candidate URL seed application jobs
+
+If historical diagnostics are needed, use git history. Do not reintroduce these as the active direction.
