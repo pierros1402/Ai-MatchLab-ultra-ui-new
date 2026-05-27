@@ -164,6 +164,27 @@ function targetEvidenceTokens(row) {
   )];
 }
 
+function quotedCompetitionPhrases(row) {
+  const raw = [
+    row.query,
+    row.searchQuery,
+    row.targetQuery,
+    row.name,
+    row.competitionName
+  ].map(asText).filter(Boolean).join(" ");
+
+  const phrases = [];
+  for (const match of raw.matchAll(/"([^"]{4,120})"/g)) {
+    const phrase = normalizeSearchText(match[1]);
+    if (phrase) phrases.push(phrase);
+  }
+
+  const named = normalizeSearchText(row.name || row.competitionName);
+  if (named) phrases.push(named);
+
+  return [...new Set(phrases.filter((phrase) => phrase.split(" ").length >= 2))];
+}
+
 function hasTargetTextEvidence(row, candidateUrl, hostname) {
   const tokens = targetEvidenceTokens(row);
   if (tokens.length === 0) return true;
@@ -179,7 +200,95 @@ function hasTargetTextEvidence(row, candidateUrl, hostname) {
 
   if (!evidence) return false;
 
-  return tokens.some((token) => evidence.includes(token));
+  const phrases = quotedCompetitionPhrases(row);
+  if (phrases.some((phrase) => evidence.includes(phrase))) {
+    return true;
+  }
+
+  const matchedTokens = tokens.filter((token) => evidence.includes(token));
+  const requiredTokenCount = Math.min(2, tokens.length);
+  return matchedTokens.length >= requiredTokenCount;
+}
+
+function hasFixtureDiscoveryEvidence(row, candidateUrl, hostname) {
+  const evidence = normalizeSearchText([
+    row.title,
+    row.snippet,
+    row.description,
+    row.summary,
+    candidateUrl,
+    hostname
+  ].map(asText).filter(Boolean).join(" "));
+
+  if (!evidence) return false;
+
+  const fixtureSignals = [
+    "fixture",
+    "fixtures",
+    "schedule",
+    "schedules",
+    "match",
+    "matches",
+    "calendar",
+    "results",
+    "score",
+    "scores",
+    "livescore",
+    "live score",
+    "round",
+    "game",
+    "games"
+  ];
+
+  return fixtureSignals.some((signal) => evidence.includes(normalizeSearchText(signal)));
+}
+
+function isGenericCountryOrEncyclopediaResult(row, candidateUrl, hostname) {
+  const host = asText(hostname).toLowerCase();
+  const url = asText(candidateUrl).toLowerCase();
+  const title = normalizeSearchText(row.title);
+  const snippet = normalizeSearchText(row.snippet || row.description || row.summary);
+
+  const genericHosts = [
+    "wikipedia.org",
+    "britannica.com",
+    "countryreports.org",
+    "nationsonline.org",
+    "everyculture.com",
+    "eupedia.com",
+    "hellobelgium.com",
+    "visitbelgium.net"
+  ];
+
+  if (genericHosts.some((genericHost) => host === genericHost || host.endsWith(`.${genericHost}`))) {
+    return true;
+  }
+
+  if (host === "bbc.com" && url.includes("/news/world-")) {
+    return true;
+  }
+
+  if (host === "belgium.be" && !hasFixtureDiscoveryEvidence(row, candidateUrl, hostname)) {
+    return true;
+  }
+
+  const genericCountrySignals = [
+    "about belgium",
+    "belgium facts",
+    "country belgium",
+    "belgium country profile",
+    "belgian population",
+    "belgian government",
+    "belgian culture",
+    "belgian cuisine",
+    "visit belgium",
+    "tourism"
+  ];
+
+  return genericCountrySignals.some((signal) => {
+    const normalized = normalizeSearchText(signal);
+    return title.includes(normalized) || snippet.includes(normalized) || url.includes(normalized.replace(/\s+/g, "-"));
+  });
 }
 
 function validateOne(row, index, options = {}) {
@@ -212,6 +321,14 @@ function validateOne(row, index, options = {}) {
 
   if (!hasTargetTextEvidence(row, candidateUrl, hostname)) {
     errors.push("target_competition_not_confirmed");
+  }
+
+  if (!hasFixtureDiscoveryEvidence(row, candidateUrl, hostname)) {
+    errors.push("fixture_source_signal_missing");
+  }
+
+  if (isGenericCountryOrEncyclopediaResult(row, candidateUrl, hostname)) {
+    errors.push("generic_country_or_encyclopedia_result");
   }
 
   const rank = Number(row.rank || row.position || row.resultRank);
@@ -311,7 +428,9 @@ function buildReport(input, options = {}) {
         "manualCandidateUrlUsed=true",
         "manualSeed=true",
         "fromManualSeed=true",
-        "target competition not confirmed in title/snippet/hostname/url"
+        "target competition not confirmed in title/snippet/hostname/url",
+        "missing fixture/schedule/match/result evidence in title/snippet/hostname/url",
+        "generic country/encyclopedia/government/tourism page"
       ]
     },
     searchResultRows: validRows,
@@ -356,17 +475,45 @@ function runSelfTest() {
         snippet: "The Paraguayan Primera División season table and results.",
         url: "https://profilbaru.com/article/2025_Paraguayan_Primera_Divisi%C3%B3n_season",
         provider: "duckduckgo_html"
+      },
+      {
+        searchTargetId: "2026-05-22:bel.1:official_league_fixture_calendar:official_league:0",
+        leagueSlug: "bel.1",
+        dayKey: "2026-05-22",
+        query: "\"Belgian Pro League\" official fixtures schedule 2026-05-22",
+        rank: 2,
+        title: "Belgium - Encyclopedia entry",
+        snippet: "Belgian population, geography and country profile.",
+        url: "https://www.britannica.com/place/Belgium",
+        provider: "duckduckgo_html"
+      },
+      {
+        searchTargetId: "2026-05-22:bel.1:official_league_fixture_calendar:official_league:0",
+        leagueSlug: "bel.1",
+        dayKey: "2026-05-22",
+        query: "\"Belgian Pro League\" official fixtures schedule 2026-05-22",
+        rank: 3,
+        title: "Belgian Pro League official fixtures",
+        snippet: "Fixtures, match schedule and results for Belgian Pro League.",
+        url: "https://www.proleague.be/en/jpl/calendar",
+        provider: "duckduckgo_html"
       }
     ]
   };
 
   const report = buildReport(sample);
 
-  if (report.summary.inputRowCount !== 4) throw new Error("expected 4 input rows");
-  if (report.summary.validRowCount !== 1) throw new Error(`expected 1 valid row, got ${report.summary.validRowCount}`);
-  if (report.summary.rejectedRowCount !== 3) throw new Error(`expected 3 rejected rows, got ${report.summary.rejectedRowCount}`);
+  if (report.summary.inputRowCount !== 6) throw new Error("expected 6 input rows");
+  if (report.summary.validRowCount !== 2) throw new Error(`expected 2 valid rows, got ${report.summary.validRowCount}`);
+  if (report.summary.rejectedRowCount !== 4) throw new Error(`expected 4 rejected rows, got ${report.summary.rejectedRowCount}`);
   if (!report.rejectedRows.some((row) => row.errors.includes("target_competition_not_confirmed"))) {
     throw new Error("expected off-target autonomous search row to be rejected");
+  }
+  if (!report.rejectedRows.some((row) => row.errors.includes("fixture_source_signal_missing"))) {
+    throw new Error("expected non-fixture autonomous search row to be rejected");
+  }
+  if (!report.rejectedRows.some((row) => row.errors.includes("generic_country_or_encyclopedia_result"))) {
+    throw new Error("expected generic country/encyclopedia row to be rejected");
   }
   if (report.guarantees.noWebSearch !== true) throw new Error("must not web search");
   if (report.guarantees.validatesOnlyProvidedSearchResults !== true) throw new Error("must only validate provided rows");
