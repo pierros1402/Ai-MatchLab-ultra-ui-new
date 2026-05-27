@@ -62,7 +62,7 @@ function hostFromUrl(url) {
 }
 
 function targetDateFromSeed(seed = {}) {
-  return cleanString(seed.targetDate || seed.dayKey || seed.sourceTargetDate || "");
+  return String(seed.targetDate || seed.dayKey || seed.sourceTargetDate || "").trim();
 }
 
 function addLeague(map, key, seed = {}, options = {}) {
