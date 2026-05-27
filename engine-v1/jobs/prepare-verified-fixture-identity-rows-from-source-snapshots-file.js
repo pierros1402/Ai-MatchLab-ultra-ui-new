@@ -56,7 +56,7 @@ function providerFromUrl(url) {
 }
 
 function snapshotText(snapshot) {
-  return text(snapshot?.http?.text || snapshot?.text || snapshot?.body || snapshot?.html || "");
+  return text(snapshot?.http?.text || snapshot?.rawText || snapshot?.text || snapshot?.plainText || snapshot?.body || snapshot?.html || "");
 }
 
 function snapshotUrl(snapshot) {
@@ -217,7 +217,131 @@ function parseFlashscore(snapshot, sourceFile, index, dayKey) {
   return rows;
 }
 
+function decodeHtmlEntities(value) {
+  return text(value)
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function parseNextData(rawText) {
+  const match = text(rawText).match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (!match) return null;
+
+  try {
+    return JSON.parse(decodeHtmlEntities(match[1]));
+  } catch {
+    return null;
+  }
+}
+
+function collectEmbeddedMatchArrays(value, out = []) {
+  if (!value || typeof value !== "object") return out;
+
+  if (Array.isArray(value)) {
+    const fixtureLike = value.filter((row) => {
+      return row && typeof row === "object" &&
+        row.homeTeam && row.awayTeam &&
+        (row.date || row.time) &&
+        row.competition;
+    });
+
+    if (fixtureLike.length > 0) {
+      out.push(fixtureLike);
+    }
+
+    for (const item of value) collectEmbeddedMatchArrays(item, out);
+    return out;
+  }
+
+  for (const child of Object.values(value)) {
+    collectEmbeddedMatchArrays(child, out);
+  }
+
+  return out;
+}
+
+function targetCompetitionPatterns(leagueSlug) {
+  if (leagueSlug === "bel.1") {
+    return [
+      /\bJupiler\s+Pro\s+League\b/i,
+      /\bBelgian\s+Jupiler\s+Pro\s+League\b/i,
+      /\bBelgian\s+Pro\s+League\b/i,
+      /\bFirst\s+Division\s+A\b/i
+    ];
+  }
+
+  return [];
+}
+
+function matchCompetitionName(match) {
+  return clean(match?.competition?.name || match?.edition?.name || match?.competition || "");
+}
+
+function embeddedRowsFromNextData(snapshot, sourceFile, index, dayKey) {
+  const nextData = parseNextData(snapshotText(snapshot));
+  if (!nextData) return [];
+
+  const leagueSlug = text(snapshot.leagueSlug);
+  const patterns = targetCompetitionPatterns(leagueSlug);
+  const matches = collectEmbeddedMatchArrays(nextData).flat();
+
+  return matches
+    .filter((match) => {
+      const competition = matchCompetitionName(match);
+      return patterns.length === 0 || patterns.some((pattern) => pattern.test(competition));
+    })
+    .map((match, matchIndex) => {
+      const kickoffUtc = text(match?.time);
+      const localDate = text(match?.date || kickoffUtc.slice(0, 10));
+      const localTime = kickoffUtc && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(kickoffUtc)
+        ? kickoffUtc.slice(11, 16)
+        : "";
+      const homeTeam = clean(match?.homeTeam?.name || match?.homeTeam?.shortName || "");
+      const awayTeam = clean(match?.awayTeam?.name || match?.awayTeam?.shortName || "");
+
+      return {
+        leagueSlug,
+        name: text(snapshot.name),
+        country: text(snapshot.country),
+        dayKey,
+        provider: providerFromUrl(snapshotUrl(snapshot)),
+        sourceSnapshotId: sourceSnapshotId(snapshot, sourceFile, index),
+        sourceUrl: snapshotUrl(snapshot),
+        sourceMatchId: clean(match?.id || match?.matchId || match?.slug || `embedded-${matchIndex}`),
+        homeTeam,
+        awayTeam,
+        rawKickoffText: clean([match?.date, match?.time].filter(Boolean).join(" ")),
+        localDate,
+        localTime,
+        kickoffUtc,
+        dateConfidence: kickoffUtc ? "embedded_next_data_iso_kickoff" : "embedded_next_data_local_date_only",
+        competition: matchCompetitionName(match),
+        round: clean(match?.gameweek?.name || match?.gameweek?.shortName || ""),
+        venue: clean(match?.venue?.name || match?.venueName || ""),
+        homeScore: Number.isFinite(Number(match?.homeScore)) ? Number(match.homeScore) : null,
+        awayScore: Number.isFinite(Number(match?.awayScore)) ? Number(match.awayScore) : null,
+        periodType: clean(match?.period?.type || match?.period?.shortName || match?.period?.name || ""),
+        extractionMethod: "official_embedded_next_data_match_rows",
+        evidenceState: localDate && (localTime || kickoffUtc)
+          ? "fixture_identity_candidate_prepared"
+          : "fixture_identity_candidate_needs_date_review",
+        canonicalWrites: 0,
+        productionWrite: false
+      };
+    })
+    .filter((row) => row.homeTeam && row.awayTeam);
+}
+
 function parseOfficialOrOther(snapshot, sourceFile, index, dayKey) {
+  const embeddedRows = embeddedRowsFromNextData(snapshot, sourceFile, index, dayKey);
+  if (embeddedRows.length > 0) {
+    return embeddedRows.slice(0, 100);
+  }
+
   const body = clean(snapshotText(snapshot));
   const rows = [];
   const regex = /([A-ZÀ-ÿ][A-Za-zÀ-ÿ0-9 .'’&()/-]{2,80})\s+(?:v|vs|-)\s+([A-ZÀ-ÿ][A-Za-zÀ-ÿ0-9 .'’&()/-]{2,80})/gi;
@@ -403,7 +527,8 @@ function main() {
       "Diagnostic only: this file does not write canonical fixtures.",
       "BetExplorer parser extracts table-main datetime and in-match team spans.",
       "Flashscore parser extracts Livesport encoded event blocks when embedded in HTML.",
-      "Official/other parser is conservative and marks rows for review."
+      "Official/other parser is conservative and marks rows for review.",
+      "Official embedded __NEXT_DATA__ match rows are prepared as diagnostic identity candidates only."
     ]
   };
 
