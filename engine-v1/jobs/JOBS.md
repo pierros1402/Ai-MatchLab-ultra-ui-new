@@ -1963,3 +1963,164 @@ Legacy fixture acquisition detours removed from this file and from jobs:
 - manual candidate URL seed application jobs
 
 If historical diagnostics are needed, use git history. Do not reintroduce these as the active direction.
+
+## Autonomous fixture acquisition and identity diagnostics
+
+Read-only provider-agnostic fixture acquisition path. This chain is diagnostic only until a separate guarded promotion layer exists.
+
+Pipeline:
+
+    build-fixture-league-date-autonomous-source-discovery-workset-file.js
+    -> build-fixture-league-date-autonomous-source-candidate-targets-file.js
+    -> collect-fixture-league-date-autonomous-search-results-file.js
+    -> validate-fixture-league-date-autonomous-search-results-file.js
+    -> rank-fixture-league-date-autonomous-search-results-file.js
+    -> fetch-fixture-league-date-autonomous-ranked-candidate-snapshots-file.js
+    -> classify-fixture-league-date-source-candidate-snapshots-file.js
+    -> extract-fixture-league-date-source-candidate-evidence-file.js
+    -> prepare-verified-fixture-identity-rows-from-source-snapshots-file.js
+    -> verify-fixture-identity-candidates-file.js
+
+### build-fixture-league-date-autonomous-source-discovery-workset-file.js
+
+Builds league/date autonomous fixture source discovery worksets from inventory rows.
+
+Guarantees:
+- no search
+- no fetch
+- canonicalWrites: 0
+- no canonical promotion
+- no fixture/history/value/details writes
+
+### build-fixture-league-date-autonomous-source-candidate-targets-file.js
+
+Materializes autonomous search targets for official league, federation, club, and trusted listing candidates.
+
+Guarantees:
+- no fetch
+- no invented source URLs
+- canonicalWrites: 0
+- no canonical promotion
+- no fixture/history/value/details writes
+
+### collect-fixture-league-date-autonomous-search-results-file.js
+
+Collects autonomous web search results only when explicitly allowed.
+
+Guarantees:
+- search is blocked unless --allow-search is explicitly passed
+- no source URL fetch
+- canonicalWrites: 0
+- no canonical promotion
+- no fixture/history/value/details writes
+
+### validate-fixture-league-date-autonomous-search-results-file.js
+
+Validates autonomous search results. Rejects generic country, encyclopedia, tourism, government, and off-target competition pages. Supports competition aliases and multilingual fixture/calendar signals.
+
+Guarantees:
+- no fetch
+- no canonical promotion
+- canonicalWrites: 0
+- no fixture/history/value/details writes
+
+### rank-fixture-league-date-autonomous-search-results-file.js
+
+Ranks validated autonomous fixture source candidates into rankedCandidateUrlRows.
+
+Guarantees:
+- no fetch
+- no canonical promotion
+- canonicalWrites: 0
+- no fixture/history/value/details writes
+
+### fetch-fixture-league-date-autonomous-ranked-candidate-snapshots-file.js
+
+Controlled ranked-candidate source snapshot fetch diagnostic.
+
+Input:
+- rankedCandidateUrlRows
+
+Output:
+- fetchedSourceSnapshots
+
+Guarantees:
+- fetch is blocked unless --allow-fetch is explicitly passed
+- fetches only supplied ranked candidate URLs
+- no manual candidate URLs
+- no invented URLs
+- no review decision applied
+- no canonical promotion
+- canonicalWrites: 0
+- productionWrite: false
+- no fixture/history/value/details writes
+
+### classify-fixture-league-date-source-candidate-snapshots-file.js
+
+Classifies fetched fixture source candidate snapshots. Supports embedded __NEXT_DATA__ fixture evidence from official pages such as Pro League/Jupiler Pro League.
+
+Output includes diagnostic candidate classifications only.
+
+Guarantees:
+- no fetch
+- no canonical promotion
+- canonicalWrites: 0
+- productionWrite: false
+- no fixture/history/value/details writes
+
+### extract-fixture-league-date-source-candidate-evidence-file.js
+
+Extracts fixture evidence rows from fetched source snapshots, including embedded __NEXT_DATA__ match arrays with homeTeam, awayTeam, date, time, and competition.
+
+Output remains candidate evidence and needs downstream identity verification.
+
+Guarantees:
+- no fetch
+- no canonical promotion
+- canonicalWrites: 0
+- productionWrite: false
+- no fixture/history/value/details writes
+
+### prepare-verified-fixture-identity-rows-from-source-snapshots-file.js
+
+Prepares fixture identity candidate rows from fetched source snapshots. Supports official embedded __NEXT_DATA__ match rows and keeps date guards active.
+
+Behavior:
+- target-date complete rows become preparedFixtureIdentityRows
+- outside-date or incomplete rows become needsReviewFixtureIdentityRows
+- rejected snapshots are diagnostic only
+
+Guarantees:
+- no fetch
+- no verified production decision
+- no canonical promotion
+- canonicalWrites: 0
+- productionWrite: false
+- no fixture/history/value/details writes
+
+### verify-fixture-identity-candidates-file.js
+
+Read-only fixture identity verification diagnostic.
+
+Input:
+- preparedFixtureIdentityRows
+- needsReviewFixtureIdentityRows
+
+Output:
+- verifiedFixtureIdentityRows
+- needsSecondSourceFixtureIdentityRows
+- needsReviewFixtureIdentityRows
+
+Current diagnostic policy:
+- target-date candidate from known official league host can become verified_fixture_identity_diagnostic
+- target-date candidate from one non-official host requires independent second source
+- outside-date or incomplete candidates remain review rows
+- this is not canonical promotion
+
+Guarantees:
+- no canonical promotion
+- canonicalWrites: 0
+- productionWrite: false
+- no fixture/history/value/details writes
+
+Do not replace this path with manual URL sheets, single-provider fixture dependency, or legacy feed detours. The next stage after this diagnostic layer is second-source verification policy and a separately guarded canonical promotion plan, not a direct writer.
