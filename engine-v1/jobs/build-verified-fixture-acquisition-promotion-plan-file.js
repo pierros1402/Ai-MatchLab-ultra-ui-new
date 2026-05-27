@@ -77,6 +77,31 @@ function readProposalRows(proposalPath) {
   return asArray(proposal.proposals);
 }
 
+function identityKey(row) {
+  return [
+    norm(row.leagueSlug).toLowerCase(),
+    norm(row.localDate || row.dayKey),
+    norm(row.homeTeam).toLowerCase(),
+    norm(row.awayTeam).toLowerCase()
+  ].join("|");
+}
+
+function readReadinessRows(readinessPath) {
+  const readiness = readJson(readinessPath);
+  const readyRows = asArray(readiness.promotionReadyFixtureIdentityRows);
+  const blockedRows = [
+    ...asArray(readiness.promotionBlockedFixtureIdentityRows),
+    ...asArray(readiness.needsSecondSourceFixtureIdentityRows),
+    ...asArray(readiness.needsReviewFixtureIdentityRows)
+  ];
+
+  return {
+    readyRows,
+    readyKeys: new Set(readyRows.map(identityKey).filter(Boolean)),
+    blockedByKey: new Map(blockedRows.map((row) => [identityKey(row), row]).filter(([key]) => key))
+  };
+}
+
 function firstBySlug(rows) {
   const map = new Map();
   for (const row of rows) {
@@ -92,22 +117,50 @@ function main() {
   const input = text(args.input);
   const output = text(args.output);
   const proposalPath = text(args.proposals || args.proposal);
+  const readinessPath = text(args.readiness || args["readiness-input"] || args.promotionReadiness);
   const dayKey = text(args.date || args.dayKey);
 
   if (!input) throw new Error("--input is required");
   if (!output) throw new Error("--output is required");
+  if (!readinessPath) throw new Error("--readiness is required");
   if (!isDate(dayKey)) throw new Error("--date YYYY-MM-DD is required");
   if (!fs.existsSync(input)) throw new Error(`Missing validation input: ${input}`);
+  if (!fs.existsSync(readinessPath)) throw new Error(`Missing readiness input: ${readinessPath}`);
   if (proposalPath && !fs.existsSync(proposalPath)) throw new Error(`Missing proposals input: ${proposalPath}`);
 
   const validation = readJson(input);
+  const readinessRows = readReadinessRows(readinessPath);
   const proposalRows = readProposalRows(proposalPath);
   const proposalBySlug = firstBySlug(proposalRows);
 
   const validRows = asArray(validation.validFixtureIdentityRows);
   const rejectedValidationRows = asArray(validation.rejectedFixtureIdentityRows);
+  const promotionEligibleRows = validRows.filter((row) => readinessRows.readyKeys.has(identityKey(row)));
+  const readinessBlockedValidationRows = validRows
+    .filter((row) => !readinessRows.readyKeys.has(identityKey(row)))
+    .map((row) => {
+      const key = identityKey(row);
+      const blocked = readinessRows.blockedByKey.get(key) || {};
+      return {
+        leagueSlug: norm(row.leagueSlug),
+        name: norm(row.name),
+        country: norm(row.country),
+        homeTeam: norm(row.homeTeam),
+        awayTeam: norm(row.awayTeam),
+        localDate: norm(row.localDate),
+        localTime: norm(row.localTime),
+        sourceUrl: norm(row.sourceUrl),
+        sourceMatchId: norm(row.sourceMatchId),
+        identityKey: key,
+        blockedReason: norm(blocked.promotionReadinessReason) || "missing_promotion_ready_fixture_identity_row",
+        promotionReadinessState: norm(blocked.promotionReadinessState) || "fixture_identity_promotion_blocked",
+        dryRun: true,
+        productionWrite: false,
+        canonicalWrites: 0
+      };
+    });
 
-  const proposedCanonicalFixtureRows = validRows.map((row, index) => {
+  const proposedCanonicalFixtureRows = promotionEligibleRows.map((row, index) => {
     const leagueSlug = norm(row.leagueSlug);
     const proposal = proposalBySlug.get(leagueSlug) || {};
 
@@ -189,11 +242,15 @@ function main() {
     dryRun: true,
     sourceInput: {
       validationInput: input,
+      readinessInput: readinessPath,
       proposalInput: proposalPath || "",
       dayKey
     },
     summary: {
       validFixtureIdentityRowCount: validRows.length,
+      readinessPromotionReadyFixtureIdentityRowCount: readinessRows.readyRows.length,
+      readinessApprovedFixtureIdentityRowCount: promotionEligibleRows.length,
+      readinessBlockedValidationRowCount: readinessBlockedValidationRows.length,
       rejectedFixtureIdentityRowCount: rejectedValidationRows.length,
       proposedCanonicalFixtureRowCount: proposedCanonicalFixtureRows.length,
       proposedCanonicalFixtureLeagueCount: proposedLeagueSlugs.size,
@@ -218,9 +275,11 @@ function main() {
     },
     proposedCanonicalFixtureRows,
     blockedProposalRows,
+    readinessBlockedValidationRows,
     rejectedValidationRows,
     notes: [
       "Dry-run plan only: this file does not write canonical fixtures.",
+      "Promotion plan rows require an explicit promotion readiness diagnostic row in promotionReadyFixtureIdentityRows.",
       "A later guarded writer must require explicit apply flags and should consume only proposedCanonicalFixtureRows after separate review.",
       "Blocked proposal rows remain non-writable until target-date match-level identity exists or existing snapshot fixtures are reconciled."
     ]

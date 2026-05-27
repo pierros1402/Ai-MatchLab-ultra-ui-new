@@ -1699,7 +1699,7 @@ Important:
 - found_target_date_fixture must flow into match-level fixture identity extraction and validation before any guarded writer.
 ### build-verified-fixture-acquisition-promotion-plan-file.js
 
-Read-only dry-run promotion planner for verified fixture acquisition rows.
+Read-only dry-run promotion planner for verified fixture acquisition rows. Promotion plan rows must be present in the separate fixture identity promotion readiness diagnostic as `promotionReadyFixtureIdentityRows`; validated fixture identity rows alone are not sufficient for canonical promotion planning.
 
 Purpose:
 - Consume validFixtureIdentityRows from the fixture identity validator.
@@ -1722,7 +1722,7 @@ Guarantees:
 - dryRun: true
 
 Example:
-node .\engine-v1\jobs\build-verified-fixture-acquisition-promotion-plan-file.js --date 2026-05-22 --input <fixture-identity-validation.json> --proposals <verified-fixture-acquisition-proposals.json> --output <verified-fixture-acquisition-promotion-plan.dry-run.json>
+node .\engine-v1\jobs\build-verified-fixture-acquisition-promotion-plan-file.js --date 2026-05-22 --input <fixture-identity-validation.json> --readiness <fixture-identity-promotion-readiness.json> --proposals <verified-fixture-acquisition-proposals.json> --output <verified-fixture-acquisition-promotion-plan.dry-run.json>
 - validate-verified-fixture-acquisition-promotion-plan-file.js: read-only validator for verified fixture acquisition promotion plans; checks dry-run guarantees, expected counts, proposed fixture identity shape, write targets, source evidence, duplicate fixture keys, and blocked/proposed separation; canonicalWrites: 0, no fetch, no production write.
 - write-verified-fixture-acquisition-from-promotion-plan-file.js: guarded writer for verified fixture acquisition promotion plans; dry-run by default, validates promotion-plan guarantees, blocks --apply without --allow-production-writes, supports sandbox-output-root smoke writes, and writes only data/canonical-fixtures/YYYY-MM-DD/<league>.json when explicitly allowed; no fetch, no deploy snapshot write, no value/details/final-result writes.
 - verify-canonical-fixture-snapshot-source-readiness-file.js: read-only verifier that checks canonical fixture date files, expected promoted leagues/fixture counts, fixtures.json day count, and whether snapshot export would choose canonical_fixtures; no fetch, no canonical/deploy/value/details/final-result writes.
