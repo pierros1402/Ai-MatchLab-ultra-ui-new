@@ -7,6 +7,10 @@ on:
         description: "Day key to build, YYYY-MM-DD. Leave empty for Europe/Athens today."
         required: false
         default: ""
+      triggerRender:
+        description: "Manual only: trigger Render redeploy after a daily snapshot commit."
+        required: false
+        default: "false"
   schedule:
     # Multiple retry slots. GitHub scheduled workflows can start late or be dropped under load.
     # These UTC slots cover roughly 00:17-03:17 Europe/Athens across DST/standard time.
@@ -40,6 +44,7 @@ jobs:
         shell: bash
         env:
           INPUT_DAY_KEY: ${{ inputs.dayKey }}
+          INPUT_TRIGGER_RENDER: ${{ inputs.triggerRender }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           RAW_DAY_KEY="${INPUT_DAY_KEY:-}"
@@ -73,6 +78,14 @@ jobs:
           echo "SKIP_BUILD=false" >> "$GITHUB_ENV"
           echo "dayKey=$DAY_KEY" >> "$GITHUB_OUTPUT"
           echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "${INPUT_TRIGGER_RENDER:-false}" = "true" ]; then
+            echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
+            echo "Render redeploy allowed for this manual daily run."
+          else
+            echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
+            echo "Render redeploy disabled for this daily run."
+          fi
           echo "Resolved DAY_KEY=$DAY_KEY"
 
       - name: Install root dependencies
@@ -273,8 +286,12 @@ jobs:
           git push
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
 
+      - name: Skip Render redeploy for daily snapshot
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
+        run: echo "Daily snapshot committed, but Render redeploy is disabled for this run."
+
       - name: Trigger Render redeploy after daily snapshot
-        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true'
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY == 'true'
         shell: bash
         env:
           RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
