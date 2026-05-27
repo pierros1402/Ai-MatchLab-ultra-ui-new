@@ -1516,6 +1516,42 @@ Guarantees:
 
 Example:
 node .\engine-v1\jobs\build-fixture-identity-second-source-controlled-fetch-plan-file.js --date 2026-05-22 --input <validated-url-resolutions.json> --output <controlled-fetch-plan.json>
+### fetch-fixture-identity-second-source-controlled-fetch-plan-snapshots-file.js
+
+Read-only controlled fetch diagnostic for fixture identity second-source fetch plans.
+
+Purpose:
+- Consume controlled fetch plans produced from validated second-source URL resolution reports.
+- Keep URL fetch blocked by default.
+- Require explicit `--allow-fetch` before downloading any accepted second-source URL.
+- Fetch only controlled fetch plan rows, respecting `--limit`, timeout, and max-byte guards.
+- Emit fetchedSecondSourceSnapshots for later confirmation/evidence review stages.
+
+Rules:
+- Without `--allow-fetch`, every planned fetch is rejected with `blocked_fetch_requires_allow_fetch`.
+- With `--allow-fetch`, the job fetches only the requested diagnostic rows and writes only the requested output file.
+- This job does not apply review decisions.
+- This job does not write canonical fixtures.
+- This job does not promote fixture truth.
+- This job does not create deploy snapshots, value output, details, history, or production fixture data.
+
+Guarantees:
+- diagnosticOnly: true
+- fetchRequiresAllowFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\fetch-fixture-identity-second-source-controlled-fetch-plan-snapshots-file.js --input <controlled-fetch-plan.json> --output <fetched-second-source-snapshots.json> --limit 1 --allow-fetch
+
+Important:
+- This job is an explicit opt-in fetch boundary.
+- Fetched snapshots are diagnostic evidence only.
+- Fetched snapshots must still pass confirmation review / fixture identity validation before readiness or promotion planning.
+
 ### validate-fixture-identity-second-source-url-resolutions-file.js
 
 Read-only validator for fixture identity second-source URL resolution rows.
@@ -1697,6 +1733,45 @@ Important:
 - This job does not confirm no-fixture by absence alone.
 - confirmed_no_fixture_on_target_date requires independent date-specific second-source/calendar evidence.
 - found_target_date_fixture must flow into match-level fixture identity extraction and validation before any guarded writer.
+### prepare-verified-fixture-identity-rows-from-second-source-confirmation-review-file.js
+
+Read-only adapter from validated second-source confirmation review rows into fixture identity rows consumed by the verified fixture identity validator.
+
+Purpose:
+- Consume validated/manual second-source confirmation review drafts where the decision is `found_target_date_fixture`.
+- Convert targetDateFixtureRows into validator-compatible preparedFixtureIdentityRows.
+- Preserve fixture identity fields: leagueSlug, teams, localDate, localTime, sourceUrl, source type, venue, source snapshot id, and review notes.
+- Set validator-compatible `evidenceState: fixture_identity_candidate_prepared`.
+- Prepare rows for `validate-verified-fixture-identity-rows-file.js`, then promotion readiness diagnostics and dry-run promotion planning.
+
+Rules:
+- Only `found_target_date_fixture` review rows can produce prepared fixture identity rows.
+- Incomplete fixture identity rows are rejected into rejectedReviewRows.
+- This job does not fetch URLs.
+- This job does not apply review decisions.
+- This job does not write canonical fixtures.
+- This job does not promote fixture truth.
+- This job does not create deploy snapshots, value output, details, history, or production fixture data.
+
+Guarantees:
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noReviewDecisionApplied: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- productionWrite: false
+- dryRun: true
+
+Example:
+node .\engine-v1\jobs\prepare-verified-fixture-identity-rows-from-second-source-confirmation-review-file.js --date 2026-05-31 --input <validated-confirmation-review.json> --output <prepared-fixture-identity-rows.json>
+
+Important:
+- Prepared rows must still pass `validate-verified-fixture-identity-rows-file.js`.
+- Promotion readiness must still be evaluated separately.
+- A dry-run promotion plan is still not a canonical writer.
+- Any canonical writer remains a separate guarded layer and is not enabled by this adapter.
+
 ### build-verified-fixture-acquisition-promotion-plan-file.js
 
 Read-only dry-run promotion planner for verified fixture acquisition rows. Promotion plan rows must be present in the separate fixture identity promotion readiness diagnostic as `promotionReadyFixtureIdentityRows`; validated fixture identity rows alone are not sufficient for canonical promotion planning.
