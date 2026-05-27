@@ -91,7 +91,7 @@ function statusOf(snapshot) {
 }
 
 function textOf(snapshot) {
-  return asText(snapshot?.http?.text || snapshot?.text || snapshot?.bodyText || snapshot?.body || "");
+  return asText(snapshot?.http?.text || snapshot?.rawText || snapshot?.text || snapshot?.plainText || snapshot?.bodyText || snapshot?.body || "");
 }
 
 function finalUrlOf(snapshot) {
@@ -211,6 +211,103 @@ function roughTeamRowEvidence(text) {
   };
 }
 
+function decodeHtmlEntities(text) {
+  return asText(text)
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function parseNextData(rawText) {
+  const match = asText(rawText).match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (!match) return null;
+
+  try {
+    return JSON.parse(decodeHtmlEntities(match[1]));
+  } catch {
+    return null;
+  }
+}
+
+function collectEmbeddedMatchArrays(value, out = []) {
+  if (!value || typeof value !== "object") return out;
+
+  if (Array.isArray(value)) {
+    const fixtureLike = value.filter((row) => {
+      return row && typeof row === "object" &&
+        row.homeTeam && row.awayTeam &&
+        (row.date || row.time) &&
+        row.competition;
+    });
+
+    if (fixtureLike.length > 0) {
+      out.push(fixtureLike);
+    }
+
+    for (const item of value) collectEmbeddedMatchArrays(item, out);
+    return out;
+  }
+
+  for (const child of Object.values(value)) {
+    collectEmbeddedMatchArrays(child, out);
+  }
+
+  return out;
+}
+
+function competitionAliasPatterns(leagueSlug) {
+  if (leagueSlug === "bel.1") {
+    return [
+      /\bJupiler\s+Pro\s+League\b/i,
+      /\bBelgian\s+Jupiler\s+Pro\s+League\b/i,
+      /\bBelgian\s+Pro\s+League\b/i,
+      /\bFirst\s+Division\s+A\b/i
+    ];
+  }
+
+  return [];
+}
+
+function embeddedFixtureEvidenceFromNextData(rawText, dayKey, leagueSlug) {
+  const nextData = parseNextData(rawText);
+  if (!nextData) {
+    return {
+      embeddedFixtureEvidenceCount: 0,
+      embeddedTargetCompetitionMatchCount: 0,
+      embeddedTargetDateMatchCount: 0,
+      sampleEmbeddedFixtureRows: []
+    };
+  }
+
+  const patterns = competitionAliasPatterns(leagueSlug);
+  const allMatches = collectEmbeddedMatchArrays(nextData).flat();
+  const targetCompetitionMatches = allMatches.filter((match) => {
+    const competition = normalizeWhitespace(match?.competition?.name || match?.competition || match?.edition?.name || "");
+    return patterns.length === 0 || patterns.some((pattern) => pattern.test(competition));
+  });
+
+  const targetDateMatches = targetCompetitionMatches.filter((match) => {
+    return asText(match?.date || match?.time).startsWith(dayKey);
+  });
+
+  return {
+    embeddedFixtureEvidenceCount: allMatches.length,
+    embeddedTargetCompetitionMatchCount: targetCompetitionMatches.length,
+    embeddedTargetDateMatchCount: targetDateMatches.length,
+    sampleEmbeddedFixtureRows: targetCompetitionMatches.slice(0, 8).map((match) => ({
+      competition: normalizeWhitespace(match?.competition?.name || match?.edition?.name || ""),
+      homeTeam: normalizeWhitespace(match?.homeTeam?.name || match?.homeTeam?.shortName || ""),
+      awayTeam: normalizeWhitespace(match?.awayTeam?.name || match?.awayTeam?.shortName || ""),
+      date: asText(match?.date),
+      time: asText(match?.time),
+      periodType: asText(match?.period?.type || match?.period?.shortName)
+    }))
+  };
+}
+
 function classifySnapshot(snapshot) {
   const status = statusOf(snapshot);
   const rawText = textOf(snapshot);
@@ -220,6 +317,7 @@ function classifySnapshot(snapshot) {
   const fixtureLanguageVisible = hasFixtureLanguage(plainText);
   const explicitNoFixtureEvidence = hasExplicitNoFixtureLanguage(plainText);
   const rowEvidence = roughTeamRowEvidence(plainText);
+  const embeddedEvidence = embeddedFixtureEvidenceFromNextData(rawText, dayKey, asText(snapshot.leagueSlug));
 
   const base = {
     taskId: asText(snapshot.taskId),
@@ -239,7 +337,11 @@ function classifySnapshot(snapshot) {
     explicitNoFixtureEvidence,
     dashLikeRowCount: rowEvidence.dashLikeRowCount,
     timeTokenCount: rowEvidence.timeTokenCount,
+    embeddedFixtureEvidenceCount: embeddedEvidence.embeddedFixtureEvidenceCount,
+    embeddedTargetCompetitionMatchCount: embeddedEvidence.embeddedTargetCompetitionMatchCount,
+    embeddedTargetDateMatchCount: embeddedEvidence.embeddedTargetDateMatchCount,
     sampleRows: rowEvidence.sampleRows,
+    sampleEmbeddedFixtureRows: embeddedEvidence.sampleEmbeddedFixtureRows,
     evidenceTextSnippet: plainText.slice(0, 700),
     canonicalWrites: 0,
     productionWrite: false,
@@ -252,6 +354,17 @@ function classifySnapshot(snapshot) {
       classification: "rejected_candidate_http_status",
       usable: false,
       reason: `http_status_${status ?? "missing"}`
+    };
+  }
+
+  if (embeddedEvidence.embeddedTargetCompetitionMatchCount > 0) {
+    return {
+      ...base,
+      classification: "candidate_fixture_evidence_needs_validation",
+      usable: false,
+      reason: embeddedEvidence.embeddedTargetDateMatchCount > 0
+        ? "embedded_next_data_target_date_target_competition_matches_found"
+        : "embedded_next_data_target_competition_matches_found_without_target_date"
     };
   }
 
@@ -378,18 +491,43 @@ function selfTest() {
           status: 404,
           text: "not found"
         }
+      },
+      {
+        taskId: "embedded",
+        leagueSlug: "bel.1",
+        name: "Belgian Pro League",
+        dayKey: "2026-05-27",
+        resolvedUrl: "https://www.proleague.be/fr/jupliler-pro-league-20252026-kalender",
+        http: {
+          status: 200,
+          finalUrl: "https://www.proleague.be/fr/jupliler-pro-league-20252026-kalender",
+          text: "<html><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"data\":{\"matches\":[{\"competition\":{\"name\":\"Jupiler Pro League\"},\"homeTeam\":{\"name\":\"OH Leuven\"},\"awayTeam\":{\"name\":\"Royal Antwerp FC\"},\"date\":\"2026-03-22\",\"time\":\"2026-03-22T17:30:00Z\"}]}}}}</script></html>"
+        }
       }
     ]
   };
 
   const report = classify(input, { input: "self-test" });
 
-  if (report.summary.inputSnapshotCount !== 2) {
-    throw new Error(`self-test failed: expected 2 snapshots, got ${report.summary.inputSnapshotCount}`);
+  if (report.summary.inputSnapshotCount !== 3) {
+    throw new Error(`self-test failed: expected 3 snapshots, got ${report.summary.inputSnapshotCount}`);
   }
 
-  if (report.summary.candidateEvidenceNeedsValidationCount !== 1) {
-    throw new Error(`self-test failed: expected 1 candidate evidence row, got ${report.summary.candidateEvidenceNeedsValidationCount}`);
+  if (report.summary.candidateEvidenceNeedsValidationCount !== 2) {
+    throw new Error(`self-test failed: expected 2 candidate evidence rows, got ${report.summary.candidateEvidenceNeedsValidationCount}`);
+  }
+
+  const embeddedRow = report.classifiedRows.find((row) => row.taskId === "embedded");
+  if (!embeddedRow) {
+    throw new Error("self-test failed: expected embedded __NEXT_DATA__ row");
+  }
+
+  if (embeddedRow.embeddedTargetCompetitionMatchCount !== 1) {
+    throw new Error(`self-test failed: expected 1 embedded target competition match, got ${embeddedRow.embeddedTargetCompetitionMatchCount}`);
+  }
+
+  if (embeddedRow.classification !== "candidate_fixture_evidence_needs_validation") {
+    throw new Error(`self-test failed: expected embedded row candidate classification, got ${embeddedRow.classification}`);
   }
 
   if (report.summary.rejectedHttpStatusCount !== 1) {

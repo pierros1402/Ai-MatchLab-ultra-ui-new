@@ -84,7 +84,7 @@ function stripHtml(value) {
 }
 
 function textOf(snapshot) {
-  return asText(snapshot?.http?.text || snapshot?.text || snapshot?.bodyText || snapshot?.body || "");
+  return asText(snapshot?.http?.text || snapshot?.rawText || snapshot?.text || snapshot?.plainText || snapshot?.bodyText || snapshot?.body || "");
 }
 
 function statusOf(snapshot) {
@@ -202,6 +202,15 @@ function targetCompetitionPatterns(leagueSlug) {
     return [/VBET\s+UPL\b/i, /\bUkrainian\s+Premier\s+League\b/i];
   }
 
+  if (leagueSlug === "bel.1") {
+    return [
+      /\bJupiler\s+Pro\s+League\b/i,
+      /\bBelgian\s+Jupiler\s+Pro\s+League\b/i,
+      /\bBelgian\s+Pro\s+League\b/i,
+      /\bFirst\s+Division\s+A\b/i
+    ];
+  }
+
   return [];
 }
 
@@ -238,13 +247,91 @@ function parseUkrRowsFromDateBlock(block) {
   return rows;
 }
 
+function decodeHtmlEntities(text) {
+  return asText(text)
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function parseNextData(rawText) {
+  const match = asText(rawText).match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+  if (!match) return null;
+
+  try {
+    return JSON.parse(decodeHtmlEntities(match[1]));
+  } catch {
+    return null;
+  }
+}
+
+function collectEmbeddedMatchArrays(value, out = []) {
+  if (!value || typeof value !== "object") return out;
+
+  if (Array.isArray(value)) {
+    const fixtureLike = value.filter((row) => {
+      return row && typeof row === "object" &&
+        row.homeTeam && row.awayTeam &&
+        (row.date || row.time) &&
+        row.competition;
+    });
+
+    if (fixtureLike.length > 0) {
+      out.push(fixtureLike);
+    }
+
+    for (const item of value) collectEmbeddedMatchArrays(item, out);
+    return out;
+  }
+
+  for (const child of Object.values(value)) {
+    collectEmbeddedMatchArrays(child, out);
+  }
+
+  return out;
+}
+
+function parseEmbeddedFixtureRowsFromNextData(rawText) {
+  const nextData = parseNextData(rawText);
+  if (!nextData) return [];
+
+  return collectEmbeddedMatchArrays(nextData).flat().map((match) => ({
+    competition: normalizeWhitespace(match?.competition?.name || match?.edition?.name || ""),
+    round: normalizeWhitespace(match?.gameweek?.name || match?.gameweek?.shortName || ""),
+    homeTeam: normalizeWhitespace(match?.homeTeam?.name || match?.homeTeam?.shortName || ""),
+    awayTeam: normalizeWhitespace(match?.awayTeam?.name || match?.awayTeam?.shortName || ""),
+    homeScore: Number.isFinite(Number(match?.homeScore)) ? Number(match.homeScore) : null,
+    awayScore: Number.isFinite(Number(match?.awayScore)) ? Number(match.awayScore) : null,
+    date: asText(match?.date),
+    time: asText(match?.time),
+    periodType: asText(match?.period?.type || match?.period?.shortName || match?.period?.name),
+    venue: normalizeWhitespace(match?.venue?.name || match?.venueName || ""),
+    rawText: normalizeWhitespace([
+      match?.competition?.name,
+      match?.gameweek?.name,
+      match?.homeTeam?.name,
+      match?.homeScore,
+      match?.awayScore,
+      match?.awayTeam?.name,
+      match?.date,
+      match?.time,
+      match?.period?.type
+    ].filter((value) => value !== null && value !== undefined && value !== "").join(" "))
+  }));
+}
+
 function extractRows(snapshot) {
   const leagueSlug = asText(snapshot.leagueSlug);
   const dayKey = asText(snapshot.dayKey);
   const rawText = textOf(snapshot);
   const plainText = stripHtml(rawText);
   const targetBlock = extractTargetDateBlock(plainText, dayKey);
-  const allRows = leagueSlug === "ukr.1" ? parseUkrRowsFromDateBlock(targetBlock) : [];
+  const embeddedRows = parseEmbeddedFixtureRowsFromNextData(rawText);
+  const textRows = leagueSlug === "ukr.1" ? parseUkrRowsFromDateBlock(targetBlock) : [];
+  const allRows = [...embeddedRows, ...textRows];
 
   const targetPatterns = targetCompetitionPatterns(leagueSlug);
   const nonTargetPatterns = nonTargetCompetitionPatterns();
@@ -266,10 +353,12 @@ function extractRows(snapshot) {
   if (statusOf(snapshot) !== 200) {
     extractionState = "rejected_candidate_http_status";
     reason = `http_status_${statusOf(snapshot) ?? "missing"}`;
-  } else if (targetBlock && targetCompetitionRows.length > 0) {
+  } else if (targetCompetitionRows.length > 0) {
     extractionState = "candidate_target_competition_fixture_rows_needs_validation";
     acceptedForEvidence = false;
-    reason = "target_competition_rows_found_needs_validation";
+    reason = embeddedRows.length > 0
+      ? "embedded_next_data_target_competition_rows_found_needs_validation"
+      : "target_competition_rows_found_needs_validation";
   } else if (targetBlock && nonTargetCompetitionRows.length > 0) {
     extractionState = "target_date_visible_but_only_non_target_competition_rows";
     reason = "non_target_competition_rows_only";
@@ -293,6 +382,7 @@ function extractRows(snapshot) {
     reason,
     targetDateBlockFound: Boolean(targetBlock),
     targetDateBlockSnippet: targetBlock.slice(0, 1400),
+    embeddedFixtureRowCount: embeddedRows.length,
     targetCompetitionRowCount: targetCompetitionRows.length,
     nonTargetCompetitionRowCount: nonTargetCompetitionRows.length,
     targetCompetitionRows,
@@ -378,22 +468,50 @@ function selfTest() {
           finalUrl: "https://upl.ua/en/tournaments/games",
           text: "Sat, 23.05.2026 VBET UPL 30 Olexandriya 1 : 1 Kryvbas CSC U19 30 Obolon 1 : 0 LNZ TC"
         }
+      },
+      {
+        leagueSlug: "bel.1",
+        name: "Belgian Pro League",
+        dayKey: "2026-05-27",
+        resolvedUrl: "https://www.proleague.be/fr/jupliler-pro-league-20252026-kalender",
+        http: {
+          status: 200,
+          finalUrl: "https://www.proleague.be/fr/jupliler-pro-league-20252026-kalender",
+          text: "<html><script id=\"__NEXT_DATA__\" type=\"application/json\">{\"props\":{\"pageProps\":{\"data\":{\"matches\":[{\"competition\":{\"name\":\"Jupiler Pro League\"},\"gameweek\":{\"name\":\"Journée 30\"},\"homeTeam\":{\"name\":\"OH Leuven\"},\"awayTeam\":{\"name\":\"Royal Antwerp FC\"},\"homeScore\":1,\"awayScore\":0,\"date\":\"2026-03-22\",\"time\":\"2026-03-22T17:30:00Z\",\"period\":{\"type\":\"FullTime\"}}]}}}}</script></html>"
+        }
       }
     ]
   };
 
   const report = extract(input, { input: "self-test" });
 
-  if (report.summary.inputSnapshotCount !== 2) {
-    throw new Error(`self-test failed: expected 2 snapshots, got ${report.summary.inputSnapshotCount}`);
+  if (report.summary.inputSnapshotCount !== 3) {
+    throw new Error(`self-test failed: expected 3 snapshots, got ${report.summary.inputSnapshotCount}`);
   }
 
   if (report.summary.nonTargetCompetitionOnlyCount !== 1) {
     throw new Error(`self-test failed: expected 1 non-target competition row, got ${report.summary.nonTargetCompetitionOnlyCount}`);
   }
 
-  if (report.summary.targetCompetitionEvidenceCandidateCount !== 1) {
-    throw new Error(`self-test failed: expected 1 target competition evidence candidate, got ${report.summary.targetCompetitionEvidenceCandidateCount}`);
+  if (report.summary.targetCompetitionEvidenceCandidateCount !== 2) {
+    throw new Error(`self-test failed: expected 2 target competition evidence candidates, got ${report.summary.targetCompetitionEvidenceCandidateCount}`);
+  }
+
+  const embeddedRow = report.evidenceRows.find((row) => row.leagueSlug === "bel.1");
+  if (!embeddedRow) {
+    throw new Error("self-test failed: expected embedded Belgian Pro League evidence row");
+  }
+
+  if (embeddedRow.embeddedFixtureRowCount !== 1) {
+    throw new Error(`self-test failed: expected 1 embedded fixture row, got ${embeddedRow.embeddedFixtureRowCount}`);
+  }
+
+  if (embeddedRow.targetCompetitionRowCount !== 1) {
+    throw new Error(`self-test failed: expected 1 embedded target competition row, got ${embeddedRow.targetCompetitionRowCount}`);
+  }
+
+  if (embeddedRow.extractionState !== "candidate_target_competition_fixture_rows_needs_validation") {
+    throw new Error(`self-test failed: expected embedded candidate extraction state, got ${embeddedRow.extractionState}`);
   }
 
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false || report.guarantees.noFetch !== true) {
