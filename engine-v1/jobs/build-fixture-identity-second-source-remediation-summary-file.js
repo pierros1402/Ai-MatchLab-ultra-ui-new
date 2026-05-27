@@ -61,13 +61,18 @@ function hostFromUrl(url) {
   }
 }
 
-function addLeague(map, key, seed = {}) {
+function targetDateFromSeed(seed = {}) {
+  return cleanString(seed.targetDate || seed.dayKey || seed.sourceTargetDate || "");
+}
+
+function addLeague(map, key, seed = {}, options = {}) {
   const leagueSlug = String(key || seed.leagueSlug || "unknown").trim() || "unknown";
+  const seedTargetDate = targetDateFromSeed(seed);
   if (!map.has(leagueSlug)) {
     map.set(leagueSlug, {
       leagueSlug,
       name: seed.name || seed.leagueName || "",
-      targetDate: seed.targetDate || seed.dayKey || seed.sourceTargetDate || "",
+      targetDate: seedTargetDate,
       sourceUrls: new Set(),
       hosts: new Set(),
       httpStatuses: new Set(),
@@ -87,8 +92,8 @@ function addLeague(map, key, seed = {}) {
 
   const item = map.get(leagueSlug);
   if (!item.name && (seed.name || seed.leagueName)) item.name = seed.name || seed.leagueName;
-  if (!item.targetDate && (seed.targetDate || seed.dayKey || seed.sourceTargetDate)) {
-    item.targetDate = seed.targetDate || seed.dayKey || seed.sourceTargetDate;
+  if (seedTargetDate && (!item.targetDate || options.preferTargetDate === true)) {
+    item.targetDate = seedTargetDate;
   }
 
   const url = seed.resolvedUrl || seed.sourceUrl || seed.url || "";
@@ -170,12 +175,12 @@ function buildSummary({ date, fetched, evidence, identity }) {
   }
 
   for (const row of arr(identity?.preparedFixtureIdentityRows)) {
-    const item = addLeague(leagues, row.leagueSlug, row);
+    const item = addLeague(leagues, row.leagueSlug, row, { preferTargetDate: true });
     item.preparedFixtureIdentityCount += 1;
   }
 
   for (const row of arr(identity?.needsReviewFixtureIdentityRows)) {
-    const item = addLeague(leagues, row.leagueSlug, row);
+    const item = addLeague(leagues, row.leagueSlug, row, { preferTargetDate: true });
     item.needsReviewFixtureIdentityCount += 1;
     const state = pickReason(row) || "needs_review";
     incMap(item.candidateStates, state);
@@ -279,24 +284,29 @@ function buildSummary({ date, fetched, evidence, identity }) {
 function selfTest() {
   const fetched = {
     fetchedSourceSnapshots: [
-      { leagueSlug: "ok.1", name: "OK League", dayKey: "2026-05-22", resolvedUrl: "https://example.com/ok", http: { status: 200 } },
+      { leagueSlug: "ok.1", name: "OK League", dayKey: "2026-05-21", resolvedUrl: "https://example.com/ok", http: { status: 200 } },
       { leagueSlug: "bad.1", name: "Bad League", dayKey: "2026-05-22", resolvedUrl: "https://example.com/bad", http: { status: 404 } }
     ]
   };
   const evidence = {
     evidenceRows: [
-      { leagueSlug: "ok.1", name: "OK League", targetDate: "2026-05-22", readyForReviewDecision: true, evidenceState: "source_snapshot_evidence_prepared" },
+      { leagueSlug: "ok.1", name: "OK League", targetDate: "2026-05-21", readyForReviewDecision: true, evidenceState: "source_snapshot_evidence_prepared" },
       { leagueSlug: "bad.1", name: "Bad League", targetDate: "2026-05-22", readyForReviewDecision: false, evidenceState: "http_not_ok", httpStatus: 404 }
     ]
   };
   const identity = {
     preparedFixtureIdentityRows: [],
     needsReviewFixtureIdentityRows: [
-      { leagueSlug: "ok.1", name: "OK League", targetDate: "2026-05-22", homeTeam: "A", awayTeam: "B", evidenceState: "fixture_identity_candidate_needs_date_review" }
+      { leagueSlug: "ok.1", name: "OK League", dayKey: "2026-05-22", homeTeam: "A", awayTeam: "B", evidenceState: "fixture_identity_candidate_needs_date_review" }
     ],
     rejectedSnapshots: []
   };
-  return buildSummary({ date: "2026-05-22", fetched, evidence, identity });
+  const report = buildSummary({ date: "2026-05-22", fetched, evidence, identity });
+  const okRow = report.remediationRows.find((row) => row.leagueSlug === "ok.1");
+  if (!okRow || okRow.targetDate !== "2026-05-22") {
+    throw new Error("self-test failed: identity row dayKey must override stale fetched/evidence targetDate.");
+  }
+  return report;
 }
 
 async function main() {
