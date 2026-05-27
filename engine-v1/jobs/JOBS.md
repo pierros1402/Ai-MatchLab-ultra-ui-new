@@ -1980,6 +1980,7 @@ Pipeline:
     -> extract-fixture-league-date-source-candidate-evidence-file.js
     -> prepare-verified-fixture-identity-rows-from-source-snapshots-file.js
     -> verify-fixture-identity-candidates-file.js
+    -> evaluate-fixture-identity-promotion-readiness-file.js
 
 ### build-fixture-league-date-autonomous-source-discovery-workset-file.js
 
@@ -2123,4 +2124,33 @@ Guarantees:
 - productionWrite: false
 - no fixture/history/value/details writes
 
-Do not replace this path with manual URL sheets, single-provider fixture dependency, or legacy feed detours. The next stage after this diagnostic layer is second-source verification policy and a separately guarded canonical promotion plan, not a direct writer.
+### evaluate-fixture-identity-promotion-readiness-file.js
+
+Read-only fixture identity promotion readiness diagnostic.
+
+Input:
+- verifiedFixtureIdentityRows
+- needsSecondSourceFixtureIdentityRows
+- needsReviewFixtureIdentityRows
+
+Output:
+- promotionReadyFixtureIdentityRows
+- promotionBlockedFixtureIdentityRows
+- needsSecondSourceFixtureIdentityRows
+- needsReviewFixtureIdentityRows
+
+Current diagnostic policy:
+- verified diagnostic identity is not automatically promotion-ready
+- single official league source is blocked until independent second-source confirmation exists
+- non-official sources require official confirmation or a stronger explicit policy
+- promotion-ready rows still do not write canonical fixtures
+- any future canonical writer must be a separate guarded promotion layer
+
+Guarantees:
+- no canonical promotion
+- no writer
+- writerAllowedCount: 0
+- canonicalWrites: 0
+- productionWrite: false
+- no fixture/history/value/details writes
+Do not replace this path with manual URL sheets, single-provider fixture dependency, or legacy feed detours. The next stage after promotion readiness diagnostics is a separately guarded canonical promotion plan, not a direct writer.
