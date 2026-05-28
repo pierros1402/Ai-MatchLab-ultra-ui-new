@@ -2230,3 +2230,43 @@ Guarantees:
 - productionWrite: false
 - no fixture/history/value/details writes
 Do not replace this path with manual URL sheets, single-provider fixture dependency, or legacy feed detours. The next stage after promotion readiness diagnostics is a separately guarded canonical promotion plan, not a direct writer.
+
+## run-active-league-autonomous-ready-fetch-plan-file.js
+
+Read-only active-league autonomous fixture acquisition wrapper.
+
+Pipeline:
+
+- active league plan
+- autonomous discovery workset
+- autonomous source candidate targets
+- autonomous search result collection
+- autonomous search result validation
+- autonomous candidate ranking
+- ranked candidates review-row adapter
+- source candidate fetch-row materializer
+
+Purpose:
+
+- Builds a diagnostic ready-fetch plan for active leagues.
+- Stops at readyForFetchRows.
+- Does not fetch candidate URLs.
+- Does not promote canonical fixtures.
+- Does not write fixture/history/value/details/final-truth production data.
+- Treats supplemental providers such as ESPN only as crosscheck candidates when ranked policy marks them as such; they must not become fetch-ready truth sources unless explicitly classified as primary_candidate_after_fetch_evidence.
+
+Expected safety guarantees:
+
+- sourceFetch: false
+- noFetch: true
+- noUrlFetch: true
+- noCanonicalPromotion: true
+- canonicalWrites: 0
+- productionWrite: false
+- dryRun: true
+
+Typical smoke:
+
+node .\engine-v1\jobs\run-active-league-autonomous-ready-fetch-plan-file.js --date 2026-05-28 --output "$env:TEMP\aiml-ready-fetch-wrapper-real-smoke-2026-05-28.json" --limit 1 --search-limit 1 --per-target-limit 10 --per-league-limit 20 --timeout-ms 8000 --max-chars 60000 --allow-search
+
+Use --source-index <json> instead of --allow-search for deterministic offline/review smokes. Search is fail-closed unless --allow-search or --source-index is provided.
