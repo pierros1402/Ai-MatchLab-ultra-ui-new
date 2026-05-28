@@ -77,7 +77,8 @@ export const EXPECTED_COUNTRY_COVERAGE_CONTRACT = [
   { country: "uae", prefix: "uae", region: "asia", expectedDepth: 2, expectsNationalCup: true },
   { country: "australia", prefix: "aus", region: "asia", expectedDepth: 2, expectsNationalCup: true },
   { country: "egypt", prefix: "egy", region: "africa", expectedDepth: 2, expectsNationalCup: true },
-  { country: "south-africa", prefix: "rsa", region: "africa", expectedDepth: 2, expectsNationalCup: true },
+  { country: "south_africa", prefix: "rsa", region: "africa", expectedDepth: 2, expectsNationalCup: true },
+  { country: "uganda", prefix: "uga", region: "africa", expectedDepth: 2, expectsNationalCup: true },
   { country: "morocco", prefix: "mar", region: "africa", expectedDepth: 2, expectsNationalCup: true },
   { country: "tunisia", prefix: "tun", region: "africa", expectedDepth: 2, expectsNationalCup: true }
 ];
