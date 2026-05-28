@@ -361,6 +361,8 @@ export const LEAGUES_COVERAGE = [
   { slug: "uae.2", tier: 3, trust: 0.62, type: "league", region: "asia", country: "uae" },
   { slug: "qat.1", tier: 3, trust: 0.72, type: "league", region: "asia", country: "qatar" },
   { slug: "qat.2", tier: 3, trust: 0.62, type: "league", region: "asia", country: "qatar" },
+  { slug: "aus.1", tier: 3, trust: 0.72, type: "league", region: "asia", country: "australia" },
+  { slug: "aus.2", tier: 3, trust: 0.62, type: "league", region: "asia", country: "australia" },
 
   // ADDITIONAL ASIA / WORLD TARGETS
   // ----------------------------------------------------------
