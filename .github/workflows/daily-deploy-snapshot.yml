@@ -179,6 +179,12 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/audit-fixture-provider-capability.js --min-trust=0.8 --value-tier=1 --ui-tier=2 --warn-only
 
+      - name: Snapshot fixture coverage floor
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          node ./engine-v1/jobs/verify-deploy-snapshot-fixture-coverage-floor-file.js --date="$DAY_KEY" --min-fixtures=20 --min-leagues=5 --output "data/football-truth/_diagnostics/deploy-snapshot-fixture-coverage-floor/${DAY_KEY}.deploy-snapshot-fixture-coverage-floor.json"
+
       - name: Snapshot verification
         if: env.SKIP_BUILD != 'true'
         shell: bash
