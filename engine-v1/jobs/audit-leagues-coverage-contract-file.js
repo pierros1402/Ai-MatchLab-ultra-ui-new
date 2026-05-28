@@ -66,7 +66,7 @@ function byKey(rows, key) {
 const EXPECTED_CONTINENTAL_AND_GLOBAL = [
   { slug: "uefa.champions", label: "UEFA Champions League" },
   { slug: "uefa.europa", label: "UEFA Europa League" },
-  { slug: "uefa.conference", label: "UEFA Conference League" },
+  { slug: "uefa.europa.conf", label: "UEFA Conference League" },
   { slug: "uefa.super_cup", label: "UEFA Super Cup" },
   { slug: "conmebol.libertadores", label: "CONMEBOL Libertadores" },
   { slug: "conmebol.sudamericana", label: "CONMEBOL Sudamericana" },
