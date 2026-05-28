@@ -155,21 +155,157 @@ function targetTokens(target) {
   ].filter(Boolean);
 }
 
+function hostEndsWith(host, suffixes) {
+  return suffixes.some((suffix) => host === suffix || host.endsWith("." + suffix));
+}
+
+function hostIncludesAny(host, tokens) {
+  return tokens.some((token) => host.includes(token));
+}
+
+function sourcePolicyForHost(hostname) {
+  const host = normalizeToken(hostname);
+
+  const officialGoverningHosts = [
+    "premierleague.com",
+    "efl.com",
+    "thefa.com",
+    "bundesliga.com",
+    "dfb.de",
+    "laliga.com",
+    "rfef.es",
+    "legaseriea.it",
+    "figc.it",
+    "ligue1.com",
+    "fff.fr",
+    "uefa.com",
+    "fifa.com",
+    "cafonline.com",
+    "concacaf.com",
+    "conmebol.com",
+    "the-afc.com",
+    "slgr.gr"
+  ];
+
+  const trustedListingHosts = [
+    "flashscore.com",
+    "flashscore.co.uk",
+    "flashscore.co.za",
+    "soccerway.com",
+    "worldfootball.net",
+    "aiscore.com",
+    "365scores.com"
+  ];
+
+  const supplementalHosts = [
+    "espn.com",
+    "espn.co.uk",
+    "espn.in",
+    "espn.com.au"
+  ];
+
+  const lowQualityHosts = [
+    "msn.com",
+    "tribuna.com",
+    "statmuse.com",
+    "statarea.com",
+    "myfootballfacts.com",
+    "eplsoccertours.com",
+    "the-premier-league.com",
+    "fifaworldcupnews.com",
+    "wikipedia.org",
+    "facebook.com",
+    "instagram.com",
+    "twitter.com",
+    "x.com",
+    "youtube.com"
+  ];
+
+  if (!host) {
+    return {
+      sourceClass: "unknown_host",
+      truthRole: "not_truth_ready",
+      scoreAdjustment: -18,
+      sourceSignals: [],
+      riskReasons: ["risk_missing_hostname"]
+    };
+  }
+
+  if (hostEndsWith(host, officialGoverningHosts)) {
+    return {
+      sourceClass: "official_governing_or_competition_operator",
+      truthRole: "primary_candidate_after_fetch_evidence",
+      scoreAdjustment: 24,
+      sourceSignals: ["official_governing_or_competition_operator_host"],
+      riskReasons: []
+    };
+  }
+
+  if (hostEndsWith(host, trustedListingHosts)) {
+    return {
+      sourceClass: "trusted_independent_fixture_listing",
+      truthRole: "supplemental_crosscheck_only",
+      scoreAdjustment: 0,
+      sourceSignals: ["trusted_independent_fixture_listing_host"],
+      riskReasons: ["supplemental_listing_not_truth_source"]
+    };
+  }
+
+  if (hostEndsWith(host, supplementalHosts)) {
+    return {
+      sourceClass: "supplemental_scoreboard_or_media",
+      truthRole: "supplemental_crosscheck_only",
+      scoreAdjustment: -12,
+      sourceSignals: ["supplemental_scoreboard_or_media_host"],
+      riskReasons: ["supplemental_provider_not_truth_source"]
+    };
+  }
+
+  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction"])) {
+    return {
+      sourceClass: "low_priority_or_non_truth_surface",
+      truthRole: "not_truth_ready",
+      scoreAdjustment: -42,
+      sourceSignals: ["low_priority_or_non_truth_surface_host"],
+      riskReasons: ["low_priority_or_non_truth_surface"]
+    };
+  }
+
+  if (
+    host.includes("federation") ||
+    host.includes("federacao") ||
+    host.includes("federatia") ||
+    host.includes("footballassociation")
+  ) {
+    return {
+      sourceClass: "national_federation_candidate",
+      truthRole: "primary_candidate_after_fetch_evidence",
+      scoreAdjustment: 14,
+      sourceSignals: ["national_federation_candidate_host"],
+      riskReasons: []
+    };
+  }
+
+  return {
+    sourceClass: "unclassified_candidate_host",
+    truthRole: "not_truth_ready",
+    scoreAdjustment: -10,
+    sourceSignals: ["unclassified_candidate_host"],
+    riskReasons: ["unclassified_host_requires_fetch_and_second_source_review"]
+  };
+}
+
 function hostFamilySignals(hostname) {
   const host = normalizeToken(hostname);
   const signals = [];
+  const policy = sourcePolicyForHost(hostname);
 
   if (!host) return signals;
 
-  if (
-    host.includes("fifa") ||
-    host.includes("uefa") ||
-    host.includes("the-afc") ||
-    host.includes("concacaf") ||
-    host.includes("conmebol") ||
-    host.includes("cafonline")
-  ) {
-    signals.push("confederation_or_global_governing_body");
+  signals.push(...policy.sourceSignals);
+
+  if (policy.sourceClass === "official_governing_or_competition_operator") {
+    signals.push("official_source_hostname_verified");
   }
 
   if (
@@ -181,19 +317,11 @@ function hostFamilySignals(hostname) {
     host.includes("ekstraklasa") ||
     host.includes("football-league")
   ) {
-    signals.push("league_like_hostname");
-  }
-
-  if (
-    host.includes("federation") ||
-    host.includes("federacao") ||
-    host.includes("federatia") ||
-    host.includes("fa.") ||
-    host.endsWith(".fa") ||
-    host.includes("footballassociation") ||
-    host.includes("soccerway")
-  ) {
-    signals.push("federation_or_fixture_index_signal");
+    if (policy.sourceClass === "official_governing_or_competition_operator") {
+      signals.push("league_like_hostname_verified_official");
+    } else {
+      signals.push("league_like_hostname_unverified");
+    }
   }
 
   if (
@@ -206,63 +334,68 @@ function hostFamilySignals(hostname) {
     signals.push("betting_or_prediction_risk");
   }
 
-  if (
-    host.includes("wikipedia") ||
-    host.includes("facebook") ||
-    host.includes("instagram") ||
-    host.includes("twitter") ||
-    host.includes("x.com") ||
-    host.includes("youtube")
-  ) {
-    signals.push("low_fixture_evidence_surface");
-  }
-
-  return signals;
+  return [...new Set(signals)];
 }
 
 function expectedFamilyScore(expectedFamily, hostname, haystack) {
   const family = normalizeToken(expectedFamily);
-  const host = normalizeToken(hostname);
   const text = normalizeToken(haystack);
+  const policy = sourcePolicyForHost(hostname);
 
-  let score = 0;
-  const reasons = [];
+  let score = policy.scoreAdjustment;
+  const reasons = ["source_policy_" + policy.sourceClass];
 
   if (family.includes("official_league") || family.includes("competition_operator")) {
-    if (host.includes("league") || host.includes("liga") || host.includes("superliga") || host.includes("premier")) {
-      score += 22;
-      reasons.push("host_matches_league_or_competition_operator_signal");
+    if (
+      policy.sourceClass === "official_governing_or_competition_operator" ||
+      policy.sourceClass === "national_federation_candidate"
+    ) {
+      score += 30;
+      reasons.push("official_family_matches_verified_governing_or_operator_host");
+    } else {
+      score -= 26;
+      reasons.push("official_family_rejected_for_unverified_or_supplemental_host");
     }
-    if (text.includes("official")) {
+
+    if (text.includes("official") && policy.truthRole === "primary_candidate_after_fetch_evidence") {
       score += 8;
-      reasons.push("result_mentions_official");
+      reasons.push("result_mentions_official_on_primary_candidate_host");
     }
   }
 
   if (family.includes("national_federation")) {
-    if (host.includes("federation") || host.includes("federacao") || host.includes("fa.") || text.includes("federation")) {
-      score += 22;
-      reasons.push("host_or_text_matches_federation_signal");
+    if (
+      policy.sourceClass === "national_federation_candidate" ||
+      policy.sourceClass === "official_governing_or_competition_operator"
+    ) {
+      score += 24;
+      reasons.push("federation_family_matches_governing_host");
+    } else {
+      score -= 18;
+      reasons.push("federation_family_rejected_for_non_governing_host");
     }
   }
 
   if (family.includes("official_club")) {
     if (text.includes("club") || text.includes("official site") || text.includes("fixtures")) {
-      score += 10;
-      reasons.push("result_can_support_club_crosscheck");
+      score += policy.truthRole === "primary_candidate_after_fetch_evidence" ? 8 : 1;
+      reasons.push("club_family_can_support_crosscheck_only");
     }
   }
 
   if (family.includes("trusted_independent")) {
-    if (host.includes("soccerway") || host.includes("worldfootball") || host.includes("flashscore") || host.includes("aiscore")) {
-      score += 14;
+    if (policy.sourceClass === "trusted_independent_fixture_listing") {
+      score += 12;
       reasons.push("trusted_independent_fixture_index_signal");
+    } else if (policy.truthRole === "primary_candidate_after_fetch_evidence") {
+      score += 4;
+      reasons.push("trusted_family_primary_host_can_still_support_candidate");
     }
   }
 
   if (family.includes("any_relevant")) {
-    score += 4;
-    reasons.push("generic_relevance_family");
+    score += policy.sourceClass === "low_priority_or_non_truth_surface" ? -10 : 1;
+    reasons.push("generic_relevance_family_not_truth_evidence");
   }
 
   return { score, reasons };
@@ -310,6 +443,8 @@ function queryMatchScore(target, result) {
 function riskPenalty(result, hostname) {
   const haystack = textHaystack(result);
   const host = normalizeToken(hostname);
+  const policy = sourcePolicyForHost(hostname);
+
   let penalty = 0;
   const reasons = [];
 
@@ -332,11 +467,16 @@ function riskPenalty(result, hostname) {
   for (const [signal, value] of badSignals) {
     if (host.includes(signal) || haystack.includes(signal)) {
       penalty += value;
-      reasons.push(`risk_${signal}`);
+      reasons.push("risk_" + signal);
     }
   }
 
-  return { penalty, reasons };
+  if (policy.truthRole !== "primary_candidate_after_fetch_evidence") {
+    penalty += Math.abs(Math.min(0, policy.scoreAdjustment));
+    reasons.push(...policy.riskReasons);
+  }
+
+  return { penalty, reasons: [...new Set(reasons)] };
 }
 
 function resultMatchesTarget(target, result) {
@@ -389,6 +529,8 @@ function rankOne(target, result, index) {
     ok: true,
     candidateUrl,
     hostname,
+    sourceClass: sourcePolicyForHost(hostname).sourceClass,
+    truthRole: sourcePolicyForHost(hostname).truthRole,
     title: asText(result.title),
     snippet: asText(result.snippet || result.description),
     leagueSlug: asText(target.leagueSlug),
