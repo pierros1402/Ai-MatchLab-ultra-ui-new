@@ -124,6 +124,13 @@ function validateSettlementReport(report) {
     errors.push('input_report_does_not_require_verified_final_truth');
   }
 
+  if (Boolean(report?.guarantees?.strictVerifiedFinalTruthGuard) !== true) {
+    errors.push('input_report_missing_strict_verified_final_truth_guard');
+  }
+  if (clean(report?.guarantees?.acceptedFinalTruthVerdict) !== 'verified_final_result') {
+    errors.push('input_report_missing_verified_final_result_verdict_guard');
+  }
+
   return errors;
 }
 
@@ -268,6 +275,8 @@ function buildWriteReport(settlementReport, options = {}) {
       requiresAllowValueWritesFlag: true,
       requiresAllowOverwriteValueFlagWhenTargetExists: true,
       requiresVerifiedFinalTruth: true,
+      strictVerifiedFinalTruthGuard: Boolean(settlementReport?.guarantees?.strictVerifiedFinalTruthGuard) === true,
+      acceptedFinalTruthVerdict: clean(settlementReport?.guarantees?.acceptedFinalTruthVerdict),
       fixtureWrites: false,
       historyWrites: false,
       valueWrites: written,
@@ -312,6 +321,8 @@ function runSelfTest() {
       productionWrite: false,
       dryRun: true,
       requiresVerifiedFinalTruth: true,
+      strictVerifiedFinalTruthGuard: true,
+      acceptedFinalTruthVerdict: 'verified_final_result',
       valueWrites: false,
       fixtureWrites: false,
       historyWrites: false,
@@ -332,6 +343,34 @@ function runSelfTest() {
   if (dryRun.summary.writtenRows !== 0) throw new Error('expected zero written rows');
   if (dryRun.guarantees.canonicalWrites !== 0) throw new Error('canonicalWrites must be zero in dry-run');
   if (dryRun.guarantees.valueWrites !== false) throw new Error('valueWrites must be false in dry-run');
+  if (dryRun.guarantees.strictVerifiedFinalTruthGuard !== true) {
+    throw new Error('strictVerifiedFinalTruthGuard must be true in write report');
+  }
+  if (dryRun.guarantees.acceptedFinalTruthVerdict !== 'verified_final_result') {
+    throw new Error('acceptedFinalTruthVerdict must be verified_final_result in write report');
+  }
+
+  const looseReport = cloneJson(report);
+  delete looseReport.guarantees.strictVerifiedFinalTruthGuard;
+  delete looseReport.guarantees.acceptedFinalTruthVerdict;
+
+  const looseWrite = buildWriteReport(looseReport, {
+    inputPath: 'self-test-loose-settlement-report.json',
+    apply: false,
+    allowValueWrites: false,
+    allowOverwriteValue: false,
+    sandboxOutputRoot: 'data/football-truth/_sandbox-value-settlement'
+  });
+
+  if (looseWrite.ok !== false) {
+    throw new Error('loose settlement report without strict guard must be blocked');
+  }
+  if (!looseWrite.errors.includes('input_report_missing_strict_verified_final_truth_guard')) {
+    throw new Error('loose report must report missing strict verified final truth guard');
+  }
+  if (!looseWrite.errors.includes('input_report_missing_verified_final_result_verdict_guard')) {
+    throw new Error('loose report must report missing verified final result verdict guard');
+  }
 
   console.log(JSON.stringify({
     ok: true,
@@ -342,7 +381,9 @@ function runSelfTest() {
     canonicalWrites: dryRun.guarantees.canonicalWrites,
     productionWrite: dryRun.guarantees.productionWrite,
     dryRun: dryRun.guarantees.dryRun,
-    valueWrites: dryRun.guarantees.valueWrites
+    valueWrites: dryRun.guarantees.valueWrites,
+    strictVerifiedFinalTruthGuard: dryRun.guarantees.strictVerifiedFinalTruthGuard,
+    acceptedFinalTruthVerdict: dryRun.guarantees.acceptedFinalTruthVerdict
   }, null, 2));
 }
 

@@ -103,17 +103,71 @@ function loadValueData(dayKey, explicitValuePath = '') {
   };
 }
 
-function normalizeFinalResultFile(filePath) {
-  const data = readJsonSafe(filePath, null);
+function hasVerifiedFinalResultVerdict(data) {
+  const verdictCandidates = [
+    data?.verdict,
+    data?.finalTruthVerdict,
+    data?.finalResultVerdict,
+    data?.verification?.verdict,
+    data?.verification?.finalTruthVerdict,
+    data?.verification?.finalResultVerdict,
+    data?.result?.verdict,
+    data?.result?.finalTruthVerdict
+  ]
+    .map(value => clean(value).toLowerCase())
+    .filter(Boolean);
+
+  return verdictCandidates.includes('verified_final_result');
+}
+
+function hasProviderOnlyFinalTruthRisk(data) {
+  const providerCandidates = [
+    data?.provider,
+    data?.source,
+    data?.sourceName,
+    data?.verification?.provider,
+    data?.verification?.source,
+    data?.verification?.sourceName,
+    data?.sourceRow?.provider,
+    data?.sourceRow?.source,
+    data?.sourceRow?.sourceName
+  ]
+    .map(value => clean(value).toLowerCase())
+    .filter(Boolean);
+
+  const sourceRows = [
+    ...asArray(data?.sources),
+    ...asArray(data?.verification?.sources),
+    ...asArray(data?.evidenceRows),
+    ...asArray(data?.sourceRows)
+  ];
+
+  const providerText = JSON.stringify({
+    providerCandidates,
+    sourceRows
+  }).toLowerCase();
+
+  const independentSourceCount = Number(data?.verification?.independentSourceCount || data?.independentSourceCount || 0);
+
+  return providerText.includes('espn') && independentSourceCount < 1;
+}
+
+function normalizeFinalResultData(data, filePath) {
   if (!data || data.verifiedFinalTruth !== true) return null;
+  if (!hasVerifiedFinalResultVerdict(data)) return null;
+  if (hasProviderOnlyFinalTruthRisk(data)) return null;
 
   const matchId = clean(data.matchId);
   const date = clean(data.date);
   const homeScore = Number(data?.finalScore?.homeScore);
   const awayScore = Number(data?.finalScore?.awayScore);
+  const sourceCount = Number(data?.verification?.sourceCount || data?.sourceCount || 0);
+  const independentSourceCount = Number(data?.verification?.independentSourceCount || data?.independentSourceCount || 0);
 
   if (!matchId || !date) return null;
   if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) return null;
+  if (!Number.isFinite(sourceCount) || sourceCount < 1) return null;
+  if (!Number.isFinite(independentSourceCount) || independentSourceCount < 1) return null;
 
   return {
     matchId,
@@ -124,10 +178,15 @@ function normalizeFinalResultFile(filePath) {
     homeScore,
     awayScore,
     scoreKey: clean(data?.finalScore?.scoreKey || `${homeScore}-${awayScore}`),
-    sourceCount: Number(data?.verification?.sourceCount || 0),
-    independentSourceCount: Number(data?.verification?.independentSourceCount || 0),
+    sourceCount,
+    independentSourceCount,
+    finalTruthVerdict: 'verified_final_result',
     path: filePath
   };
+}
+
+function normalizeFinalResultFile(filePath) {
+  return normalizeFinalResultData(readJsonSafe(filePath, null), filePath);
 }
 
 function loadFinalResults(dayKey) {
@@ -333,6 +392,8 @@ function buildSettlementReport(dayKey, options = {}) {
       productionWrite: false,
       dryRun: true,
       requiresVerifiedFinalTruth: true,
+      strictVerifiedFinalTruthGuard: true,
+      acceptedFinalTruthVerdict: 'verified_final_result',
       fixtureWrites: false,
       historyWrites: false,
       valueWrites: false,
@@ -350,6 +411,62 @@ function runSelfTest() {
   if (report.guarantees.canonicalWrites !== 0) throw new Error('canonicalWrites must be zero');
   if (report.guarantees.productionWrite !== false) throw new Error('productionWrite must be false');
   if (report.guarantees.dryRun !== true) throw new Error('dryRun must be true');
+  if (report.guarantees.strictVerifiedFinalTruthGuard !== true) {
+    throw new Error('strictVerifiedFinalTruthGuard must be true');
+  }
+  if (report.guarantees.acceptedFinalTruthVerdict !== 'verified_final_result') {
+    throw new Error('acceptedFinalTruthVerdict must be verified_final_result');
+  }
+
+  const providerOnly = normalizeFinalResultData({
+    verifiedFinalTruth: true,
+    verdict: 'verified_final_result',
+    matchId: 'espn-only-1',
+    date: '2099-01-01',
+    finalScore: { homeScore: 2, awayScore: 1 },
+    verification: {
+      sourceCount: 1,
+      independentSourceCount: 0,
+      sourceName: 'ESPN'
+    }
+  }, resolveRepoPath('data', 'final-results', 'self-test', 'espn-only.json'));
+
+  if (providerOnly !== null) {
+    throw new Error('ESPN/provider-only final truth must not be accepted for value settlement');
+  }
+
+  const missingVerdict = normalizeFinalResultData({
+    verifiedFinalTruth: true,
+    matchId: 'missing-verdict-1',
+    date: '2099-01-01',
+    finalScore: { homeScore: 2, awayScore: 1 },
+    verification: {
+      sourceCount: 2,
+      independentSourceCount: 1
+    }
+  }, resolveRepoPath('data', 'final-results', 'self-test', 'missing-verdict.json'));
+
+  if (missingVerdict !== null) {
+    throw new Error('verifiedFinalTruth without verified_final_result verdict must not be accepted');
+  }
+
+  const validVerified = normalizeFinalResultData({
+    verifiedFinalTruth: true,
+    verdict: 'verified_final_result',
+    matchId: 'verified-1',
+    date: '2099-01-01',
+    leagueSlug: 'test.1',
+    teams: { homeTeam: 'Alpha FC', awayTeam: 'Beta FC' },
+    finalScore: { homeScore: 2, awayScore: 1 },
+    verification: {
+      sourceCount: 2,
+      independentSourceCount: 1
+    }
+  }, resolveRepoPath('data', 'final-results', 'self-test', 'verified.json'));
+
+  if (!validVerified || validVerified.matchId !== 'verified-1') {
+    throw new Error('valid verified final result should be accepted');
+  }
 
   console.log(JSON.stringify({
     ok: true,
@@ -357,7 +474,8 @@ function runSelfTest() {
     stage: report.stage,
     canonicalWrites: report.guarantees.canonicalWrites,
     productionWrite: report.guarantees.productionWrite,
-    dryRun: report.guarantees.dryRun
+    dryRun: report.guarantees.dryRun,
+    verifiedFinalTruthGuard: 'strict'
   }, null, 2));
 }
 
