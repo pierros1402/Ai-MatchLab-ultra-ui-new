@@ -111,13 +111,24 @@ function hasVerifiedFinalResultVerdict(data) {
     data?.verification?.verdict,
     data?.verification?.finalTruthVerdict,
     data?.verification?.finalResultVerdict,
+    data?.verification?.state,
+    data?.verification?.evidenceVerdict,
+    data?.settlement?.finalTruthVerdict,
+    data?.settlement?.state,
     data?.result?.verdict,
     data?.result?.finalTruthVerdict
   ]
     .map(value => clean(value).toLowerCase())
     .filter(Boolean);
 
-  return verdictCandidates.includes('verified_final_result');
+  const acceptedVerdicts = new Set([
+    'verified_final_result',
+    'verified_final_result_truth',
+    'manual_two_source_final_score_validated',
+    'manual_official_url_validated'
+  ]);
+
+  return verdictCandidates.some(value => acceptedVerdicts.has(value));
 }
 
 function hasProviderOnlyFinalTruthRisk(data) {
@@ -466,6 +477,29 @@ function runSelfTest() {
 
   if (!validVerified || validVerified.matchId !== 'verified-1') {
     throw new Error('valid verified final result should be accepted');
+  }
+
+  const legacyVerifiedState = normalizeFinalResultData({
+    verifiedFinalTruth: true,
+    matchId: 'legacy-state-1',
+    date: '2099-01-01',
+    leagueSlug: 'test.1',
+    teams: { homeTeam: 'Gamma FC', awayTeam: 'Delta FC' },
+    finalScore: { homeScore: 1, awayScore: 0 },
+    verification: {
+      state: 'verified_final_result_truth',
+      evidenceVerdict: 'manual_two_source_final_score_validated',
+      sourceCount: 2,
+      independentSourceCount: 2,
+      sourceUrls: [
+        'https://official.example/match-report',
+        'https://trusted.example/match-report'
+      ]
+    }
+  }, resolveRepoPath('data', 'final-results', 'self-test', 'legacy-state.json'));
+
+  if (!legacyVerifiedState || legacyVerifiedState.matchId !== 'legacy-state-1') {
+    throw new Error('legacy verified_final_result_truth state should be accepted');
   }
 
   console.log(JSON.stringify({
