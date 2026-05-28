@@ -13,7 +13,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     chunkSize: Number(process.env.FIXTURE_ACQ_CHUNK_SIZE || 12),
     daysBack: Number(process.env.FIXTURE_ACQ_DAYS_BACK || 1),
     daysForward: Number(process.env.FIXTURE_ACQ_DAYS_FORWARD || 14),
-    reset: false
+    reset: false,
+    fullPass: false
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -21,6 +22,11 @@ function parseArgs(argv = process.argv.slice(2)) {
 
     if (arg === "--reset") {
       out.reset = true;
+      continue;
+    }
+
+    if (arg === "--full-pass") {
+      out.fullPass = true;
       continue;
     }
 
@@ -660,10 +666,20 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     state.cursor = 0;
   }
 
-  const chunk = selectLeagueChunk({
-    cursor: state.cursor,
-    chunkSize: opts.chunkSize
-  });
+  const chunk = opts.fullPass
+    ? selectLeagueChunk({
+        cursor: 0,
+        chunkSize: Number.MAX_SAFE_INTEGER
+      })
+    : selectLeagueChunk({
+        cursor: state.cursor,
+        chunkSize: opts.chunkSize
+      });
+
+  if (opts.fullPass) {
+    chunk.startCursor = 0;
+    chunk.nextCursor = state.cursor;
+  }
 
   const dateWindow = buildDateWindow(opts.dayKey, opts.daysBack, opts.daysForward);
   const allowedDays = new Set(dateWindow);
@@ -672,7 +688,8 @@ export async function runFixtureAcquisitionChunk(options = {}) {
 
   const report = {
     ok: true,
-    type: "fixture_acquisition_chunk",
+    type: opts.fullPass ? "fixture_acquisition_full_pass" : "fixture_acquisition_chunk",
+    fullPass: Boolean(opts.fullPass),
     startedAt,
     finishedAt: null,
     baseDayKey: opts.dayKey,
@@ -680,7 +697,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     daysForward: opts.daysForward,
     dateWindow,
     leagueSeedCount: chunk.seeds.length,
-    chunkSize: opts.chunkSize,
+    chunkSize: opts.fullPass ? chunk.selected.length : opts.chunkSize,
     startCursor: chunk.startCursor,
     nextCursor: chunk.nextCursor,
     selectedLeagues: chunk.selected,
@@ -770,21 +787,25 @@ export async function runFixtureAcquisitionChunk(options = {}) {
 
   writeCoverageReport(opts.dayKey, report);
 
-  state.cursor = chunk.nextCursor;
-  state.updatedAt = report.finishedAt;
-  state.lastRun = {
-    baseDayKey: opts.dayKey,
-    chunkSize: opts.chunkSize,
-    daysBack: opts.daysBack,
-    daysForward: opts.daysForward,
-    startCursor: chunk.startCursor,
-    nextCursor: chunk.nextCursor,
-    selectedLeagues: chunk.selected,
-    summary: report.summary,
-    coverage: report.coverage
-  };
+  if (!opts.fullPass) {
+    state.cursor = chunk.nextCursor;
+    state.updatedAt = report.finishedAt;
+    state.lastRun = {
+      baseDayKey: opts.dayKey,
+      chunkSize: opts.chunkSize,
+      daysBack: opts.daysBack,
+      daysForward: opts.daysForward,
+      startCursor: chunk.startCursor,
+      nextCursor: chunk.nextCursor,
+      selectedLeagues: chunk.selected,
+      summary: report.summary,
+      coverage: report.coverage
+    };
 
-  writeState(state);
+    writeState(state);
+  } else {
+    report.stateUpdateSkipped = true;
+  }
 
   return report;
 }
@@ -804,6 +825,8 @@ if (isCli) {
     .then(report => {
       console.log(JSON.stringify({
         ok: report.ok,
+        type: report.type,
+        fullPass: report.fullPass,
         baseDayKey: report.baseDayKey,
         selectedLeagues: report.selectedLeagues,
         startCursor: report.startCursor,
