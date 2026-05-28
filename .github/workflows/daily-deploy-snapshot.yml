@@ -103,10 +103,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          for i in 1 2 3 4 5 6; do
-            echo "=== Fixture acquisition chunk $i/6 for ${DAY_KEY} ==="
-            node ./engine-v1/jobs/run-fixture-acquisition-chunk.js "$DAY_KEY" --chunk-size 12 --days-back 1 --days-forward 14
-          done
+          echo "Daily full-pass fixture acquisition"
+          node ./engine-v1/jobs/run-fixture-acquisition-chunk.js "$DAY_KEY" --full-pass --days-back 1 --days-forward 14
 
           if [ -f "data/coverage-reports/${DAY_KEY}.json" ]; then
             echo "=== Fixture acquisition coverage report ==="
