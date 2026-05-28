@@ -64,6 +64,8 @@ function selectRows(input) {
   if (Array.isArray(input)) return input;
 
   const containers = [
+    input.nextStages?.autonomousDiscoveryInputRows,
+    input.autonomousDiscoveryInputRows,
     input.inventoryRows,
     input.reviewRows,
     input.rows,
@@ -295,23 +297,36 @@ function buildReport(input, options = {}) {
 
 function runSelfTest() {
   const sample = {
+    nextStages: {
+      autonomousDiscoveryInputRows: [
+        {
+          leagueSlug: "gre.1",
+          leagueName: "Super League Greece",
+          country: "Greece",
+          targetDate: "2026-05-22",
+          acquisitionRoute: "autonomous_search_required",
+          espnRole: "not_available",
+          candidateUrl: "https://manual.example/should-not-be-used"
+        },
+        {
+          leagueSlug: "por.1",
+          name: "Primeira Liga",
+          countryName: "Portugal",
+          dayKey: "2026-05-22",
+          acquisitionRoute: "autonomous_search_with_supplemental_crosscheck",
+          espnRole: "supplemental_crosscheck_only"
+        },
+        {
+          leagueSlug: "",
+          name: "Broken League",
+          targetDate: "2026-05-22"
+        }
+      ]
+    },
     inventoryRows: [
       {
-        leagueSlug: "gre.1",
-        name: "Super League Greece",
-        country: "Greece",
-        targetDate: "2026-05-22",
-        candidateUrl: "https://manual.example/should-not-be-used"
-      },
-      {
-        leagueSlug: "por.1",
-        leagueName: "Primeira Liga",
-        countryName: "Portugal",
-        dayKey: "2026-05-22"
-      },
-      {
-        leagueSlug: "",
-        name: "Broken League",
+        leagueSlug: "should.not.use",
+        name: "Lower priority container should not be selected",
         targetDate: "2026-05-22"
       }
     ]
@@ -319,9 +334,13 @@ function runSelfTest() {
 
   const report = buildReport(sample);
 
+  if (report.summary.inputRowCount !== 3) throw new Error("expected planner autonomous input rows to be selected first");
   if (report.summary.workRowCount !== 2) throw new Error("expected 2 work rows");
   if (report.summary.rejectedRowCount !== 1) throw new Error("expected 1 rejected row");
   if (report.summary.manualUrlInputCount !== 1) throw new Error("expected 1 ignored manual URL input");
+  if (report.workRows.some((row) => row.leagueSlug === "should.not.use")) {
+    throw new Error("lower priority inventoryRows container should not be selected when planner rows exist");
+  }
   if (report.guarantees.manualCandidateUrlsUsed !== false) throw new Error("manual URLs must not be used");
 
   for (const row of report.workRows) {
