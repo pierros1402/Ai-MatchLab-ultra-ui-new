@@ -2298,3 +2298,10 @@ Safety guarantees:
 - `canonicalWrites:0`
 - `productionWrite:false`
 - `dryRun:true`
+
+Additional coverage-contract input:
+- `engine-v1/football-truth/coverage-contract/expected-country-coverage-contract.js` is the explicit expected-country contract seed used by this audit.
+- It is not a provider list and not a fixture source list.
+- It defines expected country, league prefix, region, league depth, and national-cup expectation.
+- The seed is intentionally incomplete and must be expanded in controlled waves until it represents the full intended global contract.
+- The audit now reports expected country count, covered expected countries, missing countries, missing expected league rows, and missing expected national cup rows.

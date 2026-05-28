@@ -4,6 +4,11 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { LEAGUES_COVERAGE, LEAGUE_SEEDS } from "../../workers/_shared/leagues-coverage.js";
+import {
+  EXPECTED_COUNTRY_COVERAGE_CONTRACT,
+  expectedLeagueSlugsForContractRow,
+  validateExpectedCountryCoverageContract
+} from "../football-truth/coverage-contract/expected-country-coverage-contract.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -113,6 +118,60 @@ function auditCoverage(rows = LEAGUES_COVERAGE) {
     leagueRows.map((row) => clean(row.country)).filter(Boolean)
   )].sort();
 
+  const contractValidation = validateExpectedCountryCoverageContract(EXPECTED_COUNTRY_COVERAGE_CONTRACT);
+  const expectedCountryContractRows = Array.isArray(EXPECTED_COUNTRY_COVERAGE_CONTRACT)
+    ? EXPECTED_COUNTRY_COVERAGE_CONTRACT
+    : [];
+
+  const expectedCountries = expectedCountryContractRows
+    .map((row) => clean(row.country))
+    .filter(Boolean)
+    .sort();
+
+  const coveredExpectedCountries = expectedCountries
+    .filter((country) => countriesWithLeagues.includes(country));
+
+  const missingCountries = expectedCountryContractRows
+    .filter((row) => !countriesWithLeagues.includes(clean(row.country)))
+    .map((row) => ({
+      country: clean(row.country),
+      prefix: clean(row.prefix),
+      region: clean(row.region),
+      expectedDepth: Number(row.expectedDepth),
+      expectsNationalCup: row.expectsNationalCup === true,
+      expectedLeagueSlugs: expectedLeagueSlugsForContractRow(row),
+      reason: "expected_country_missing_from_leagues_coverage"
+    }));
+
+  const missingExpectedLeagueRows = [];
+
+  for (const row of expectedCountryContractRows) {
+    const country = clean(row.country);
+    const expectedSlugs = expectedLeagueSlugsForContractRow(row);
+
+    for (const expectedSlug of expectedSlugs) {
+      if (!slugs.has(expectedSlug)) {
+        missingExpectedLeagueRows.push({
+          country,
+          prefix: clean(row.prefix),
+          region: clean(row.region),
+          expectedSlug,
+          reason: "expected_league_slug_missing_from_coverage"
+        });
+      }
+    }
+  }
+
+  const missingExpectedNationalCupRows = expectedCountryContractRows
+    .filter((row) => row.expectsNationalCup === true)
+    .filter((row) => !cupRows.some((cupRow) => clean(cupRow.country) === clean(row.country)))
+    .map((row) => ({
+      country: clean(row.country),
+      prefix: clean(row.prefix),
+      region: clean(row.region),
+      reason: "expected_country_national_cup_missing_from_coverage"
+    }));
+
   const countryDepthRows = countriesWithLeagues.map((country) => {
     const countryLeagueRows = leagueRows.filter((row) => clean(row.country) === country);
     const prefixes = [...new Set(countryLeagueRows.map((row) => clean(row.slug).split(".")[0]).filter(Boolean))];
@@ -191,6 +250,14 @@ function auditCoverage(rows = LEAGUES_COVERAGE) {
       cupCount: cupRows.length,
       continentalCount: continentalRows.length,
       countryWithLeagueCount: countriesWithLeagues.length,
+      expectedCountryContractCount: expectedCountryContractRows.length,
+      coveredExpectedCountryCount: coveredExpectedCountries.length,
+      missingCountryCount: missingCountries.length,
+      missingExpectedLeagueRowCount: missingExpectedLeagueRows.length,
+      missingExpectedNationalCupRowCount: missingExpectedNationalCupRows.length,
+      contractInvalidRowCount: contractValidation.invalidRows.length,
+      contractDuplicateCountryCount: contractValidation.duplicateCountries.length,
+      contractDuplicatePrefixCount: contractValidation.duplicatePrefixes.length,
       countryDepthGapCount: countryDepthGaps.length,
       countriesMissingNationalCupCount: countriesMissingNationalCup.length,
       missingContinentalAndGlobalCount: missingContinentalAndGlobal.length,
@@ -203,6 +270,14 @@ function auditCoverage(rows = LEAGUES_COVERAGE) {
     },
     byType: byKey(coverageRows, "type"),
     byRegion: byKey(coverageRows, "region"),
+    expectedCountryContract: {
+      validation: contractValidation,
+      expectedCountries,
+      coveredExpectedCountries
+    },
+    missingCountries,
+    missingExpectedLeagueRows,
+    missingExpectedNationalCupRows,
     missingContinentalAndGlobal,
     countryDepthRows,
     countryDepthGaps,
@@ -240,6 +315,8 @@ function runSelfTest() {
 
   if (report.summary.coverageRowCount !== 4) throw new Error("expected fixture rows");
   if (report.summary.countryDepthGapCount < 1) throw new Error("expected England depth gap");
+  if (report.summary.expectedCountryContractCount < 1) throw new Error("expected country contract rows");
+  if (report.summary.missingExpectedLeagueRowCount < 1) throw new Error("expected missing contract league diagnostics");
   if (!report.missingContinentalAndGlobal.some((row) => row.slug === "conmebol.sudamericana")) {
     throw new Error("expected missing Sudamericana diagnostic");
   }
