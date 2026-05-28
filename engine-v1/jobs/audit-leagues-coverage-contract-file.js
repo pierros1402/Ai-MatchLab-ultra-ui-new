@@ -75,9 +75,9 @@ const EXPECTED_CONTINENTAL_AND_GLOBAL = [
   { slug: "concacaf.central_american_cup", label: "CONCACAF Central American Cup" },
   { slug: "concacaf.caribbean_cup", label: "CONCACAF Caribbean Cup" },
   { slug: "afc.champions", label: "AFC Champions League Elite" },
-  { slug: "afc.champions_league_two", label: "AFC Champions League Two" },
+  { slug: "afc.cup", label: "AFC Champions League Two / AFC Cup canonical slug" },
   { slug: "caf.champions", label: "CAF Champions League" },
-  { slug: "caf.confederation", label: "CAF Confederation Cup" },
+  { slug: "caf.confed", label: "CAF Confederation Cup" },
   { slug: "ofc.champions", label: "OFC Champions League" },
   { slug: "fifa.club_world_cup", label: "FIFA Club World Cup" },
   { slug: "fifa.intercontinental_cup", label: "FIFA Intercontinental Cup" }

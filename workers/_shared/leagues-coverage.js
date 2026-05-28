@@ -327,6 +327,15 @@ export const LEAGUES_COVERAGE = [
   // CONMEBOL
   // ----------------------------------------------------------
   { slug: "conmebol.libertadores", tier: 2, trust: 0.84, type: "continental", region: "americas", country: "conmebol" },
+  { slug: "uefa.super_cup", tier: 1, trust: 0.86, type: "continental", region: "europe", country: "international" },
+  { slug: "conmebol.sudamericana", tier: 1, trust: 0.84, type: "continental", region: "south_america", country: "international" },
+  { slug: "conmebol.recopa", tier: 1, trust: 0.82, type: "continental", region: "south_america", country: "international" },
+  { slug: "concacaf.champions", tier: 1, trust: 0.84, type: "continental", region: "north_america", country: "international" },
+  { slug: "concacaf.central_american_cup", tier: 1, trust: 0.78, type: "continental", region: "north_america", country: "international" },
+  { slug: "concacaf.caribbean_cup", tier: 1, trust: 0.76, type: "continental", region: "north_america", country: "international" },
+  { slug: "ofc.champions", tier: 1, trust: 0.78, type: "continental", region: "oceania", country: "international" },
+  { slug: "fifa.club_world_cup", tier: 1, trust: 0.9, type: "global", region: "world", country: "international" },
+  { slug: "fifa.intercontinental_cup", tier: 1, trust: 0.86, type: "global", region: "world", country: "international" },
 
   // ----------------------------------------------------------
   // AMERICAS
