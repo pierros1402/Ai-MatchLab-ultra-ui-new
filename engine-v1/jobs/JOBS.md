@@ -2270,3 +2270,31 @@ Typical smoke:
 node .\engine-v1\jobs\run-active-league-autonomous-ready-fetch-plan-file.js --date 2026-05-28 --output "$env:TEMP\aiml-ready-fetch-wrapper-real-smoke-2026-05-28.json" --limit 1 --search-limit 1 --per-target-limit 10 --per-league-limit 20 --timeout-ms 8000 --max-chars 60000 --allow-search
 
 Use --source-index <json> instead of --allow-search for deterministic offline/review smokes. Search is fail-closed unless --allow-search or --source-index is provided.
+
+## audit-leagues-coverage-contract-file.js
+
+Read-only coverage contract audit for the football league coverage map.
+
+Purpose:
+- Audits `workers/_shared/leagues-coverage.js` against the intended coverage contract.
+- The contract is: global first and second divisions, England deeper coverage, Germany deeper coverage, national cups for covered countries, and UEFA/CONMEBOL/CONCACAF/AFC/CAF/OFC/FIFA club competitions.
+- Reports missing continental/global competitions, countries with league coverage but no national cup row, tier metadata warnings, invalid rows, and duplicate slugs.
+- This job is diagnostic only. It does not discover live fixtures, does not fetch URLs, does not promote canonical fixtures, and does not write production data.
+
+Example:
+
+    node .\engine-v1\jobs\audit-leagues-coverage-contract-file.js --output $env:TEMP\aiml-leagues-coverage-contract-audit.json
+
+Safety guarantees:
+- `sourceFetch:false`
+- `noFetch:true`
+- `noUrlFetch:true`
+- `noCanonicalPromotion:true`
+- `fixtureWrites:false`
+- `historyWrites:false`
+- `valueWrites:false`
+- `detailsWrites:false`
+- `finalTruthWrites:false`
+- `canonicalWrites:0`
+- `productionWrite:false`
+- `dryRun:true`
