@@ -49,6 +49,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 - build-team-geo-coverage-report.js: team geo coverage report.
 - validate-leagues-coverage-contract.js: league registry/coverage validation.
 - build-fixture-coverage-reality-day.js: read-only fixture universe coverage reality audit; compares declared coverage contract with canonical fixtures and optional market/reference-board input, writes diagnostics/templates only, canonicalWrites: 0, no fetch, no canonical fixture/details/value/final-result writes.
+- build-active-league-acquisition-plan-file.js: read-only provider-agnostic active league acquisition planner; starts from LEAGUES_COVERAGE as coverage authority, treats ESPN as supplemental crosscheck only, converts no-adapter leagues to autonomous acquisition required instead of skip, canonicalWrites: 0, no fetch, no fixture/history/value/details/final-result writes.
 
 ## Candidate builders
 
