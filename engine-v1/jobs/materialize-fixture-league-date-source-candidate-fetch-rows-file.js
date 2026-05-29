@@ -100,26 +100,38 @@ function sourceTypeForRow(row) {
 }
 
 function buildReadyRow(row, index) {
-  const resolvedUrl = normalizeUrl(row.candidateUrl);
+  const candidateUrl = normalizeUrl(row.candidateUrl || row.resolvedUrl || row.url);
+  const dayKey = asText(row.targetDate || row.dayKey);
   const leagueSlug = asText(row.leagueSlug);
-  const dayKey = asText(row.targetDate);
+  const sequence = String(index + 1).padStart(3, "0");
 
   return {
-    taskId: `fixture_league_date_source_candidate_fetch:${dayKey}:${leagueSlug}:${String(index + 1).padStart(3, "0")}`,
+    taskId: `fixture_league_date_source_candidate_fetch:${dayKey}:${leagueSlug}:${sequence}`,
     sourceReviewRowId: asText(row.reviewRowId),
     sourceCaseId: asText(row.caseId),
     discoveryTargetId: asText(row.discoveryTargetId),
     leagueSlug,
     name: asText(row.name),
-    country: "",
+    country: asText(row.country),
     dayKey,
-    searchQuery: asText(row.query),
-    resolvedUrl,
+    searchQuery: asText(row.query || row.searchQuery),
+    candidateUrl,
+    resolvedUrl: candidateUrl,
     sourceType: sourceTypeForRow(row),
-    sourceTitle: asText(row.candidateTitle || row.candidateKind || row.kind),
-    externallyActive: null,
-    fixtureCountFound: null,
-    missingFromSnapshot: null,
+    sourceTitle: asText(row.candidateTitle || row.sourceTitle),
+    candidateKind: asText(row.candidateKind || row.kind),
+    sourceClass: asText(row.sourceClass),
+    truthRole: asText(row.truthRole),
+    reviewerDecision: asText(row.reviewerDecision),
+    reviewerNotes: asText(row.reviewerNotes),
+    sourceRank: row.sourceRank ?? null,
+    compositeScore: row.compositeScore ?? null,
+    isOfficialOrPrimary: row.isOfficialOrPrimary === true,
+    isIndependentSecondSource: row.isIndependentSecondSource === true,
+    isClubFallback: row.isClubFallback === true,
+    externallyActive: row.externallyActive ?? null,
+    fixtureCountFound: row.fixtureCountFound ?? null,
+    missingFromSnapshot: row.missingFromSnapshot ?? null,
     validationState: "valid_source_url_resolution",
     readyForFetch: true,
     fetchPurpose: "fixture_league_date_candidate_url_snapshot",
@@ -230,7 +242,16 @@ function selfTest() {
         query: "site:slgr.gr Super League Greece fixtures 2026-05-22",
         candidateUrl: "https://www.slgr.gr/en/schedule/",
         candidateTitle: "Schedule - Super League Greece",
-        reviewerDecision: "candidate_official_url_pending_fetch"
+        candidateKind: "official_league",
+        sourceClass: "official_governing_or_competition_operator",
+        truthRole: "primary_candidate_after_fetch_evidence",
+        sourceRank: 1,
+        compositeScore: 100,
+        reviewerDecision: "candidate_official_url_pending_fetch",
+        reviewerNotes: "Fetch snapshot only; do not promote.",
+        isOfficialOrPrimary: true,
+        isIndependentSecondSource: false,
+        isClubFallback: false
       },
       {
         reviewRowId: "bad:excluded",
@@ -272,6 +293,30 @@ function selfTest() {
 
   if (ready.readyForFetch !== true || ready.validationState !== "valid_source_url_resolution") {
     throw new Error("self-test failed: ready row is not fetch-compatible");
+  }
+
+  if (ready.candidateUrl !== "https://www.slgr.gr/en/schedule/") {
+    throw new Error(`self-test failed: candidateUrl was not preserved: ${ready.candidateUrl}`);
+  }
+
+  if (ready.truthRole !== "primary_candidate_after_fetch_evidence") {
+    throw new Error(`self-test failed: truthRole was not preserved: ${ready.truthRole}`);
+  }
+
+  if (ready.sourceClass !== "official_governing_or_competition_operator") {
+    throw new Error(`self-test failed: sourceClass was not preserved: ${ready.sourceClass}`);
+  }
+
+  if (ready.reviewerDecision !== "candidate_official_url_pending_fetch") {
+    throw new Error(`self-test failed: reviewerDecision was not preserved: ${ready.reviewerDecision}`);
+  }
+
+  if (ready.compositeScore !== 100 || ready.sourceRank !== 1) {
+    throw new Error("self-test failed: ranking score metadata was not preserved");
+  }
+
+  if (ready.isOfficialOrPrimary !== true || ready.isIndependentSecondSource !== false || ready.isClubFallback !== false) {
+    throw new Error("self-test failed: source role booleans were not preserved");
   }
 
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false || report.guarantees.noFetch !== true) {
