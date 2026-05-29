@@ -364,6 +364,9 @@ export const LEAGUES_COVERAGE = [
   { slug: "concacaf.champions", tier: 1, trust: 0.84, type: "continental", region: "north_america", country: "international" },
   { slug: "concacaf.central_american_cup", tier: 1, trust: 0.78, type: "continental", region: "north_america", country: "international" },
   { slug: "concacaf.caribbean_cup", tier: 1, trust: 0.76, type: "continental", region: "north_america", country: "international" },
+  { slug: "fij.1", tier: 1, trust: 0.56, type: "league", region: "oceania", country: "fiji" },
+  { slug: "fij.2", tier: 2, trust: 0.46, type: "league", region: "oceania", country: "fiji" },
+  { slug: "fij.cup", tier: 3, trust: 0.62, type: "cup", region: "oceania", country: "fiji" },
   { slug: "ofc.champions", tier: 1, trust: 0.78, type: "continental", region: "oceania", country: "international" },
   { slug: "fifa.club_world_cup", tier: 1, trust: 0.9, type: "global", region: "world", country: "international" },
   { slug: "fifa.intercontinental_cup", tier: 1, trust: 0.86, type: "global", region: "world", country: "international" },
@@ -429,6 +432,12 @@ export const LEAGUES_COVERAGE = [
   { slug: "ind.1", tier: 3, trust: 0.68, type: "league", region: "asia", country: "india" },
   { slug: "ind.2", tier: 3, trust: 0.58, type: "league", region: "asia", country: "india" },
   { slug: "ind.cup", tier: 3, trust: 0.72, type: "cup", region: "asia", country: "india" },
+  { slug: "chn.1", tier: 1, trust: 0.78, type: "league", region: "asia", country: "china" },
+  { slug: "chn.2", tier: 2, trust: 0.66, type: "league", region: "asia", country: "china" },
+  { slug: "chn.cup", tier: 3, trust: 0.70, type: "cup", region: "asia", country: "china" },
+  { slug: "kuw.1", tier: 1, trust: 0.68, type: "league", region: "asia", country: "kuwait" },
+  { slug: "kuw.2", tier: 2, trust: 0.58, type: "league", region: "asia", country: "kuwait" },
+  { slug: "kuw.cup", tier: 3, trust: 0.68, type: "cup", region: "asia", country: "kuwait" },
 
   // ADDITIONAL AMERICAS TARGETS
   // ----------------------------------------------------------
@@ -450,6 +459,9 @@ export const LEAGUES_COVERAGE = [
   { slug: "egy.1", tier: 3, trust: 0.72, type: "league", region: "africa", country: "egypt" },
   { slug: "egy.2", tier: 3, trust: 0.62, type: "league", region: "africa", country: "egypt" },
   { slug: "egy.cup", tier: 3, trust: 0.72, type: "cup", region: "africa", country: "egypt" },
+  { slug: "eth.1", tier: 1, trust: 0.62, type: "league", region: "africa", country: "ethiopia" },
+  { slug: "eth.2", tier: 2, trust: 0.52, type: "league", region: "africa", country: "ethiopia" },
+  { slug: "eth.cup", tier: 3, trust: 0.66, type: "cup", region: "africa", country: "ethiopia" },
   { slug: "mar.1", tier: 3, trust: 0.72, type: "league", region: "africa", country: "morocco" },
   { slug: "mar.2", tier: 3, trust: 0.62, type: "league", region: "africa", country: "morocco" },
   { slug: "mar.cup", tier: 3, trust: 0.72, type: "cup", region: "africa", country: "morocco" },
