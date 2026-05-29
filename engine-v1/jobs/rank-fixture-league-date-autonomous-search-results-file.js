@@ -199,10 +199,16 @@ function sourcePolicyForHost(hostname) {
   ];
 
   const supplementalHosts = [
-    "espn.com",
+    "bbc.co.uk",
+    "bbc.com",
+    "cbssports.com",
     "espn.co.uk",
+    "espn.com",
+    "espn.com.au",
     "espn.in",
-    "espn.com.au"
+    "fotmob.com",
+    "skysports.com",
+    "sofascore.com"
   ];
 
   const lowQualityHosts = [
