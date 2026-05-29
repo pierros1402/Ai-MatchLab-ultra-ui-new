@@ -338,6 +338,28 @@ function buildQueryIntents(row) {
       expectedSourceFamilies: ["trusted_independent_fixture_listing"]
     },
     {
+      intent: "trusted_sports_fixture_crosscheck",
+      priority: 58,
+      query: unique([
+        quotedName,
+        searchContext,
+        "football",
+        "soccer",
+        "fixtures",
+        "matches",
+        "schedule",
+        "results",
+        dayKey,
+        searchDatePhrase,
+        "-betting",
+        "-odds",
+        "-prediction",
+        "-tips",
+        "-casino"
+      ]).join(" "),
+      expectedSourceFamilies: ["trusted_independent_fixture_listing", "supplemental_scoreboard_or_media"]
+    },
+    {
       intent: "no_fixture_adjacent_matchday_confirmation",
       priority: 55,
       query: unique([quotedName, searchContext, "fixtures", "matchday", "round", dayKey]).join(" "),
@@ -575,6 +597,21 @@ function runSelfTest() {
     }
     if (!joinedQueries.includes("schedule") || !joinedQueries.includes("matches")) {
       throw new Error(`missing schedule/matches query surface terms for ${row.leagueSlug}`);
+    }
+
+    if (!intentNames.includes("trusted_sports_fixture_crosscheck")) {
+      throw new Error(`missing trusted sports fixture crosscheck intent for ${row.leagueSlug}`);
+    }
+
+    const trustedSportsQuery = row.queryIntents.find((item) => item.intent === "trusted_sports_fixture_crosscheck")?.query || "";
+    if (!trustedSportsQuery.includes("-betting") || !trustedSportsQuery.includes("-odds") || !trustedSportsQuery.includes("-prediction")) {
+      throw new Error(`trusted sports fixture crosscheck query is missing betting/odds/prediction exclusions for ${row.leagueSlug}`);
+    }
+    if (/https?:\/\//i.test(trustedSportsQuery)) {
+      throw new Error(`trusted sports fixture crosscheck query must not contain manual URL for ${row.leagueSlug}`);
+    }
+    if (/site:/i.test(trustedSportsQuery)) {
+      throw new Error(`trusted sports fixture crosscheck query must not pin a supplemental site for ${row.leagueSlug}`);
     }
   }
 
