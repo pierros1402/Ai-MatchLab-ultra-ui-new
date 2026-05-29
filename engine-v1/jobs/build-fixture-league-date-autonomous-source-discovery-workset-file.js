@@ -132,6 +132,51 @@ function hasManualUrl(row) {
 }
 
 const KNOWN_COMPETITION_SEARCH_PHRASES = new Map([
+  ["usa.1", {
+    searchName: "Major League Soccer",
+    context: "MLS football soccer",
+    officialHostHint: "site:mlssoccer.com"
+  }],
+  ["eng.1", {
+    searchName: "Premier League",
+    context: "English Premier League football",
+    officialHostHint: "site:premierleague.com"
+  }],
+  ["eng.2", {
+    searchName: "EFL Championship",
+    context: "English Football League Championship football",
+    officialHostHint: "site:efl.com"
+  }],
+  ["esp.1", {
+    searchName: "LaLiga",
+    context: "Spanish LaLiga football",
+    officialHostHint: "site:laliga.com"
+  }],
+  ["ger.1", {
+    searchName: "Bundesliga",
+    context: "German Bundesliga football",
+    officialHostHint: "site:bundesliga.com"
+  }],
+  ["ita.1", {
+    searchName: "Serie A",
+    context: "Italian Serie A football",
+    officialHostHint: "site:legaseriea.it"
+  }],
+  ["fra.1", {
+    searchName: "Ligue 1",
+    context: "French Ligue 1 football",
+    officialHostHint: "site:ligue1.com"
+  }],
+  ["ned.1", {
+    searchName: "Eredivisie",
+    context: "Dutch Eredivisie football",
+    officialHostHint: "site:eredivisie.nl"
+  }],
+  ["bel.1", {
+    searchName: "Belgian Pro League",
+    context: "Belgian Pro League football",
+    officialHostHint: "site:proleague.be"
+  }],
   ["afc.champions", {
     searchName: "AFC Champions League Elite",
     context: "Asian Football Confederation football",
