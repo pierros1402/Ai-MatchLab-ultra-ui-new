@@ -28,7 +28,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     input: "",
     output: "",
     selfTest: false,
-    limit: 0
+    limit: 0,
+    leagueSlugs: []
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -51,6 +52,11 @@ function parseArgs(argv = process.argv.slice(2)) {
 
     if (arg === "--limit" && argv[i + 1]) {
       args.limit = Number(argv[++i]);
+      continue;
+    }
+
+    if (arg === "--league-slugs" && argv[i + 1]) {
+      args.leagueSlugs = unique(String(argv[++i]).split(","));
       continue;
     }
 
@@ -250,8 +256,24 @@ function normalizeWorkRow(row, index) {
 
 function buildReport(input, options = {}) {
   const rawRows = selectRows(input);
-  const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : rawRows.length;
-  const selectedRows = rawRows.slice(0, limit);
+  const requestedLeagueSlugs = unique(options.leagueSlugs || []).map((value) => value.toLowerCase());
+  const requestedLeagueSlugSet = new Set(requestedLeagueSlugs);
+
+  const filteredRows = requestedLeagueSlugSet.size > 0
+    ? rawRows.filter((row) => requestedLeagueSlugSet.has(asText(row.leagueSlug).toLowerCase()))
+    : rawRows;
+
+  const foundLeagueSlugSet = new Set(
+    filteredRows.map((row) => asText(row.leagueSlug).toLowerCase()).filter(Boolean)
+  );
+  const missingRequestedLeagueSlugs = requestedLeagueSlugs.filter((slug) => !foundLeagueSlugSet.has(slug));
+
+  if (missingRequestedLeagueSlugs.length > 0) {
+    throw new Error(`requested league slugs not found in input rows: ${missingRequestedLeagueSlugs.join(",")}`);
+  }
+
+  const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : filteredRows.length;
+  const selectedRows = filteredRows.slice(0, limit);
 
   const normalized = selectedRows.map((row, index) => normalizeWorkRow(row, index));
   const workRows = normalized.filter((row) => row.ok).map(({ ok, ...row }) => row);
@@ -264,6 +286,8 @@ function buildReport(input, options = {}) {
     generatedAt: new Date().toISOString(),
     summary: {
       inputRowCount: rawRows.length,
+      leagueSlugFilterCount: requestedLeagueSlugs.length,
+      filteredRowCount: filteredRows.length,
       selectedRowCount: selectedRows.length,
       workRowCount: workRows.length,
       rejectedRowCount: rejectedRows.length,
@@ -337,6 +361,22 @@ function runSelfTest() {
   if (report.summary.inputRowCount !== 3) throw new Error("expected planner autonomous input rows to be selected first");
   if (report.summary.workRowCount !== 2) throw new Error("expected 2 work rows");
   if (report.summary.rejectedRowCount !== 1) throw new Error("expected 1 rejected row");
+
+  const filteredReport = buildReport(sample, { leagueSlugs: ["por.1"] });
+  if (filteredReport.summary.inputRowCount !== 3) throw new Error("filtered report should keep original input count");
+  if (filteredReport.summary.leagueSlugFilterCount !== 1) throw new Error("expected one requested league slug");
+  if (filteredReport.summary.filteredRowCount !== 1) throw new Error("expected one filtered row");
+  if (filteredReport.summary.workRowCount !== 1) throw new Error("expected one filtered work row");
+  if (filteredReport.workRows[0].leagueSlug !== "por.1") throw new Error("expected filtered por.1 work row");
+
+  let missingSlugFailed = false;
+  try {
+    buildReport(sample, { leagueSlugs: ["missing.1"] });
+  } catch (error) {
+    missingSlugFailed = String(error.message || error).includes("requested league slugs not found");
+  }
+  if (!missingSlugFailed) throw new Error("expected missing requested league slug to fail");
+
   if (report.summary.manualUrlInputCount !== 1) throw new Error("expected 1 ignored manual URL input");
   if (report.workRows.some((row) => row.leagueSlug === "should.not.use")) {
     throw new Error("lower priority inventoryRows container should not be selected when planner rows exist");
@@ -374,7 +414,7 @@ function main() {
   if (!args.output) throw new Error("--output is required unless --self-test is used");
 
   const input = readJson(args.input);
-  const report = buildReport(input, { limit: args.limit });
+  const report = buildReport(input, { limit: args.limit, leagueSlugs: args.leagueSlugs });
   writeJson(args.output, report);
 
   console.log(JSON.stringify({

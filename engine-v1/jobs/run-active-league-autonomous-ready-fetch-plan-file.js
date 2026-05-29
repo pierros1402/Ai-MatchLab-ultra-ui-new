@@ -28,6 +28,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     output: "",
     outputDir: "",
     sourceIndex: "",
+    leagueSlugs: [],
     limit: 1,
     searchLimit: 1,
     perTargetLimit: 10,
@@ -74,6 +75,11 @@ function parseArgs(argv = process.argv.slice(2)) {
 
     if (arg === "--source-index" && argv[i + 1]) {
       args.sourceIndex = argv[++i];
+      continue;
+    }
+
+    if (arg === "--league-slugs" && argv[i + 1]) {
+      args.leagueSlugs = String(argv[++i]).split(",").map((value) => value.trim()).filter(Boolean);
       continue;
     }
 
@@ -205,6 +211,7 @@ function buildReport(args, paths, steps) {
     sourceInput: {
       sourceIndexProvided: Boolean(args.sourceIndex),
       allowSearch: args.allowSearch === true,
+      leagueSlugs: args.leagueSlugs || [],
       limit: args.limit,
       searchLimit: args.searchLimit,
       perTargetLimit: args.perTargetLimit,
@@ -266,11 +273,17 @@ function runPipeline(args) {
     "--output", paths.plan
   ], "active league plan"));
 
-  steps.push(runNodeJob("build-fixture-league-date-autonomous-source-discovery-workset-file.js", [
+  const worksetArgs = [
     "--input", paths.plan,
     "--output", paths.workset,
     "--limit", String(args.limit)
-  ], "autonomous discovery workset"));
+  ];
+
+  if (Array.isArray(args.leagueSlugs) && args.leagueSlugs.length > 0) {
+    worksetArgs.push("--league-slugs", args.leagueSlugs.join(","));
+  }
+
+  steps.push(runNodeJob("build-fixture-league-date-autonomous-source-discovery-workset-file.js", worksetArgs, "autonomous discovery workset"));
 
   steps.push(runNodeJob("build-fixture-league-date-autonomous-source-candidate-targets-file.js", [
     "--input", paths.workset,
