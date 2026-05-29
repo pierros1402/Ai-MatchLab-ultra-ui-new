@@ -89,6 +89,9 @@ function hostnameOf(value) {
 
 function arrayFromInput(input) {
   if (Array.isArray(input?.rankedCandidateUrlRows)) return input.rankedCandidateUrlRows;
+  if (Array.isArray(input?.readyForFetchRows)) {
+    return input.readyForFetchRows.filter((row) => row?.readyForFetch === true);
+  }
   if (Array.isArray(input?.candidateUrlRows)) return input.candidateUrlRows;
   if (Array.isArray(input?.rows)) return input.rows;
   return [];
@@ -158,7 +161,12 @@ function selectCandidates(input, options = {}) {
       sourceFamily: asText(row.sourceFamily || row.expectedSourceFamily),
       compositeScore: Number(row.compositeScore ?? row.score ?? 0),
       searchTargetId: asText(row.searchTargetId),
-      query: asText(row.query)
+      query: asText(row.query),
+      truthRole: asText(row.truthRole),
+      sourceClass: asText(row.sourceClass),
+      reviewerDecision: asText(row.reviewerDecision),
+      readyForFetch: row.readyForFetch === true,
+      fetchPurpose: asText(row.fetchPurpose)
     };
 
     if (!candidateUrl) {
@@ -342,6 +350,35 @@ function selfTestInput() {
   };
 }
 
+function selfTestReadyRowsInput() {
+  return {
+    readyForFetchRows: [
+      {
+        leagueSlug: "afc.champions",
+        name: "AFC Champions League Elite",
+        dayKey: "2026-05-22",
+        targetDate: "2026-05-22",
+        resolvedUrl: "https://example.test/afc-fixtures",
+        title: "AFC Champions League Elite fixtures",
+        sourceFamily: "official_league",
+        compositeScore: 100,
+        truthRole: "primary_candidate_after_fetch_evidence",
+        sourceClass: "official_governing_or_competition_operator",
+        reviewerDecision: "candidate_official_url_pending_fetch",
+        readyForFetch: true,
+        fetchPurpose: "fixture_league_date_candidate_url_snapshot"
+      },
+      {
+        leagueSlug: "bad.1",
+        name: "Bad League",
+        dayKey: "2026-05-22",
+        resolvedUrl: "https://example.test/not-ready",
+        readyForFetch: false
+      }
+    ]
+  };
+}
+
 async function selfTest() {
   const blocked = await buildReport(selfTestInput(), { allowFetch: false, limit: 1, timeoutMs: 10 });
 
@@ -356,6 +393,23 @@ async function selfTest() {
   const selected = selectCandidates(selfTestInput(), { limit: 1 });
   if (selected.selected.length !== 1) {
     throw new Error("self-test failed: expected one selected candidate");
+  }
+
+  const readySelected = selectCandidates(selfTestReadyRowsInput(), { limit: 10 });
+  if (readySelected.inputCount !== 1) {
+    throw new Error(`self-test failed: expected one ready input row, got ${readySelected.inputCount}`);
+  }
+  if (readySelected.selected.length !== 1) {
+    throw new Error("self-test failed: expected one selected ready-for-fetch row");
+  }
+  if (readySelected.selected[0].candidateUrl !== "https://example.test/afc-fixtures") {
+    throw new Error("self-test failed: expected resolvedUrl to become candidateUrl");
+  }
+  if (readySelected.selected[0].truthRole !== "primary_candidate_after_fetch_evidence") {
+    throw new Error("self-test failed: expected truthRole metadata to be preserved");
+  }
+  if (readySelected.selected[0].readyForFetch !== true) {
+    throw new Error("self-test failed: expected readyForFetch metadata to be preserved");
   }
 
   return {
