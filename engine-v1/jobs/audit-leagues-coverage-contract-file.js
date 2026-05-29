@@ -333,14 +333,20 @@ function runSelfTest() {
   if (report.summary.coverageRowCount !== 4) throw new Error("expected fixture rows");
   if (report.summary.countryDepthGapCount < 1) throw new Error("expected England depth gap");
   if (report.summary.expectedCountryContractCount < 1) throw new Error("expected country contract rows");
-  if (report.summary.contractValidationOk !== false) {
-    throw new Error("expected global contract validation to fail until expanded");
+  if (report.summary.expectedCountryContractCount < 200) {
+    throw new Error("expected expanded global country contract baseline");
   }
-  if (report.summary.contractPolicyViolationCount < 1) {
-    throw new Error("expected global contract policy violation diagnostic");
+  if (report.summary.contractValidationOk !== true) {
+    throw new Error("expected expanded global contract validation to pass");
+  }
+  if (report.summary.contractPolicyViolationCount !== 0) {
+    throw new Error("expected no global contract policy violation after baseline expansion");
+  }
+  if (report.summary.missingCountryCount < 1) {
+    throw new Error("expected missing country diagnostics until leagues coverage is expanded");
   }
   if (report.ok !== false) {
-    throw new Error("audit report must not be ok while global contract is below baseline");
+    throw new Error("audit report must not be ok while leagues coverage is missing global countries");
   }
   if (report.summary.missingExpectedLeagueRowCount < 1) throw new Error("expected missing contract league diagnostics");
   if (!report.missingContinentalAndGlobal.some((row) => row.slug === "conmebol.sudamericana")) {

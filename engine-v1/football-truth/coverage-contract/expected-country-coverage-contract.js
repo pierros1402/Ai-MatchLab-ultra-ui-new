@@ -1,3 +1,5 @@
+import { GLOBAL_ASSOCIATION_BASELINE, validateGlobalAssociationBaseline } from "./global-association-baseline.js";
+
 export const GLOBAL_COUNTRY_COVERAGE_POLICY = {
   policyName: "worldwide_first_second_tiers_and_national_cups",
   minimumExpectedCountryContractCount: 200,
@@ -13,7 +15,7 @@ export const GLOBAL_COUNTRY_COVERAGE_POLICY = {
   ]
 };
 
-export const EXPECTED_COUNTRY_COVERAGE_CONTRACT = [
+export const EXPECTED_COUNTRY_COVERAGE_CONTRACT_OVERRIDES = [
   // This is the explicit contract seed, not a provider list.
   // It must be expanded in controlled waves until it represents the full intended global coverage:
   // global 1st+2nd divisions, England depth 5, Germany depth 3, plus national cups.
@@ -97,6 +99,35 @@ export const EXPECTED_COUNTRY_COVERAGE_CONTRACT = [
   { country: "morocco", prefix: "mar", region: "africa", expectedDepth: 2, expectsNationalCup: true },
   { country: "tunisia", prefix: "tun", region: "africa", expectedDepth: 2, expectsNationalCup: true }
 ];
+
+function mergeGlobalAssociationBaselineWithOverrides(baselineRows, overrideRows) {
+  const byCountry = new Map();
+
+  for (const row of Array.isArray(baselineRows) ? baselineRows : []) {
+    const country = normalizeContractCountry(row?.country);
+    if (!country) continue;
+    byCountry.set(country, { ...row, country });
+  }
+
+  for (const row of Array.isArray(overrideRows) ? overrideRows : []) {
+    const country = normalizeContractCountry(row?.country);
+    if (!country) continue;
+    byCountry.set(country, { ...row, country });
+  }
+
+  return [...byCountry.values()].sort((a, b) => {
+    const regionCmp = String(a.region || "").localeCompare(String(b.region || ""));
+    if (regionCmp !== 0) return regionCmp;
+    return String(a.country || "").localeCompare(String(b.country || ""));
+  });
+}
+
+export const GLOBAL_ASSOCIATION_BASELINE_VALIDATION = validateGlobalAssociationBaseline(GLOBAL_ASSOCIATION_BASELINE);
+
+export const EXPECTED_COUNTRY_COVERAGE_CONTRACT = mergeGlobalAssociationBaselineWithOverrides(
+  GLOBAL_ASSOCIATION_BASELINE,
+  EXPECTED_COUNTRY_COVERAGE_CONTRACT_OVERRIDES
+);
 
 export function normalizeContractCountry(value) {
   return value == null ? "" : String(value).trim().toLowerCase();
