@@ -2305,3 +2305,31 @@ Additional coverage-contract input:
 - It defines expected country, league prefix, region, league depth, and national-cup expectation.
 - The seed is intentionally incomplete and must be expanded in controlled waves until it represents the full intended global contract.
 - The audit now reports expected country count, covered expected countries, missing countries, missing expected league rows, and missing expected national cup rows.
+
+### `run-fixture-league-date-autonomous-search-batches-file.js`
+
+Read-only batch orchestrator for autonomous fixture source search collection.
+
+Inputs:
+- `--targets <json>`: autonomous target file containing `searchTargetRows`.
+- `--output <json>`: merged search result report.
+- `--output-dir <dir>`: directory for progress and batch outputs.
+- `--source-index <json>` or explicit `--allow-search`: fail-closed search input.
+- `--limit <n>`: optional target limit for controlled smokes.
+- `--batch-size <n>`: number of search targets per batch.
+- `--batch-timeout-ms <n>`: hard timeout for each collect-job child process.
+- `--resume`: reuse already written batch outputs.
+
+Outputs:
+- merged search result report
+- `autonomous-search-batch-progress.json`
+- per-batch target files
+- per-batch search result files
+
+Guarantees:
+- read-only diagnostic/orchestration job
+- no source URL fetch
+- no canonical promotion
+- `canonicalWrites: 0`
+- `productionWrite: false`
+- resumable after partial completion
