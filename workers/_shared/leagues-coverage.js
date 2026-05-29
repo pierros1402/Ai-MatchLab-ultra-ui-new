@@ -527,6 +527,12 @@ export const LEAGUES_COVERAGE = [
   { slug: "per.1", tier: 3, trust: 0.70, type: "league", region: "americas", country: "peru" },
   { slug: "per.2", tier: 3, trust: 0.62, type: "league", region: "americas", country: "peru" },
   { slug: "per.cup", tier: 3, trust: 0.72, type: "cup", region: "americas", country: "peru" },
+  { slug: "bol.1", tier: 1, trust: 0.66, type: "league", region: "americas", country: "bolivia" },
+  { slug: "bol.2", tier: 2, trust: 0.56, type: "league", region: "americas", country: "bolivia" },
+  { slug: "bol.cup", tier: 3, trust: 0.66, type: "cup", region: "americas", country: "bolivia" },
+  { slug: "par.1", tier: 1, trust: 0.68, type: "league", region: "americas", country: "paraguay" },
+  { slug: "par.2", tier: 2, trust: 0.58, type: "league", region: "americas", country: "paraguay" },
+  { slug: "par.cup", tier: 3, trust: 0.68, type: "cup", region: "americas", country: "paraguay" },
 
   // ----------------------------------------------------------
   // ASIA / MIDDLE EAST
