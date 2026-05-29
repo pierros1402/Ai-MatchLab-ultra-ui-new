@@ -1,3 +1,18 @@
+export const GLOBAL_COUNTRY_COVERAGE_POLICY = {
+  policyName: "worldwide_first_second_tiers_and_national_cups",
+  minimumExpectedCountryContractCount: 200,
+  defaultExpectedDepth: 2,
+  englandExpectedDepth: 5,
+  germanyExpectedDepth: 3,
+  expectsNationalCup: true,
+  notes: [
+    "The expected country contract must represent worldwide football coverage, not a provider subset.",
+    "Baseline policy is 1st tier, 2nd tier, and national cup for every covered country/association where organized competitions exist.",
+    "England is expected through tier 5 and Germany through tier 3.",
+    "This minimum count is a hard guard against false-green audits while the full association list is expanded in controlled waves."
+  ]
+};
+
 export const EXPECTED_COUNTRY_COVERAGE_CONTRACT = [
   // This is the explicit contract seed, not a provider list.
   // It must be expanded in controlled waves until it represents the full intended global coverage:
@@ -128,11 +143,28 @@ export function validateExpectedCountryCoverageContract(rows = EXPECTED_COUNTRY_
     seenPrefixes.add(prefix);
   }
 
+  const policyViolations = [];
+
+  if (contractRows.length < GLOBAL_COUNTRY_COVERAGE_POLICY.minimumExpectedCountryContractCount) {
+    policyViolations.push({
+      reason: "contract_too_small_for_global_policy",
+      expectedCountryCount: contractRows.length,
+      minimumExpectedCountryContractCount: GLOBAL_COUNTRY_COVERAGE_POLICY.minimumExpectedCountryContractCount,
+      policyName: GLOBAL_COUNTRY_COVERAGE_POLICY.policyName
+    });
+  }
+
   return {
-    ok: invalidRows.length === 0 && duplicateCountries.length === 0 && duplicatePrefixes.length === 0,
+    ok: invalidRows.length === 0 &&
+      duplicateCountries.length === 0 &&
+      duplicatePrefixes.length === 0 &&
+      policyViolations.length === 0,
     expectedCountryCount: contractRows.length,
+    minimumExpectedCountryContractCount: GLOBAL_COUNTRY_COVERAGE_POLICY.minimumExpectedCountryContractCount,
+    policyName: GLOBAL_COUNTRY_COVERAGE_POLICY.policyName,
     invalidRows,
     duplicateCountries,
-    duplicatePrefixes
+    duplicatePrefixes,
+    policyViolations
   };
 }

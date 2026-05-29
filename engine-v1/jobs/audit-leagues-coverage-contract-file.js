@@ -119,6 +119,11 @@ function auditCoverage(rows = LEAGUES_COVERAGE) {
   )].sort();
 
   const contractValidation = validateExpectedCountryCoverageContract(EXPECTED_COUNTRY_COVERAGE_CONTRACT);
+  const contractPolicyViolations = Array.isArray(contractValidation.policyViolations)
+    ? contractValidation.policyViolations
+    : [];
+  const contractValidationOk = contractValidation.ok === true;
+
   const expectedCountryContractRows = Array.isArray(EXPECTED_COUNTRY_COVERAGE_CONTRACT)
     ? EXPECTED_COUNTRY_COVERAGE_CONTRACT
     : [];
@@ -233,8 +238,16 @@ function auditCoverage(rows = LEAGUES_COVERAGE) {
       reason: "league_slug_numeric_level_does_not_match_tier_metadata"
     }));
 
+  const auditOk = contractValidationOk &&
+    missingCountries.length === 0 &&
+    missingExpectedLeagueRows.length === 0 &&
+    missingExpectedNationalCupRows.length === 0 &&
+    missingContinentalAndGlobal.length === 0 &&
+    invalidRows.length === 0 &&
+    duplicateSlugs.length === 0;
+
   return {
-    ok: true,
+    ok: auditOk,
     job: "audit-leagues-coverage-contract-file",
     mode: "read_only_coverage_contract_audit",
     generatedAt: new Date().toISOString(),
@@ -255,6 +268,10 @@ function auditCoverage(rows = LEAGUES_COVERAGE) {
       missingCountryCount: missingCountries.length,
       missingExpectedLeagueRowCount: missingExpectedLeagueRows.length,
       missingExpectedNationalCupRowCount: missingExpectedNationalCupRows.length,
+      contractValidationOk,
+      contractPolicyViolationCount: contractPolicyViolations.length,
+      minimumExpectedCountryContractCount: contractValidation.minimumExpectedCountryContractCount || null,
+      policyName: contractValidation.policyName || "",
       contractInvalidRowCount: contractValidation.invalidRows.length,
       contractDuplicateCountryCount: contractValidation.duplicateCountries.length,
       contractDuplicatePrefixCount: contractValidation.duplicatePrefixes.length,
@@ -316,6 +333,15 @@ function runSelfTest() {
   if (report.summary.coverageRowCount !== 4) throw new Error("expected fixture rows");
   if (report.summary.countryDepthGapCount < 1) throw new Error("expected England depth gap");
   if (report.summary.expectedCountryContractCount < 1) throw new Error("expected country contract rows");
+  if (report.summary.contractValidationOk !== false) {
+    throw new Error("expected global contract validation to fail until expanded");
+  }
+  if (report.summary.contractPolicyViolationCount < 1) {
+    throw new Error("expected global contract policy violation diagnostic");
+  }
+  if (report.ok !== false) {
+    throw new Error("audit report must not be ok while global contract is below baseline");
+  }
   if (report.summary.missingExpectedLeagueRowCount < 1) throw new Error("expected missing contract league diagnostics");
   if (!report.missingContinentalAndGlobal.some((row) => row.slug === "conmebol.sudamericana")) {
     throw new Error("expected missing Sudamericana diagnostic");
@@ -325,6 +351,7 @@ function runSelfTest() {
   return {
     ok: true,
     selfTest: "audit-leagues-coverage-contract-file",
+    auditOk: report.ok,
     summary: report.summary,
     guarantees: report.guarantees
   };
@@ -345,7 +372,7 @@ async function main() {
   }
 
   console.log(JSON.stringify({
-    ok: true,
+    ok: report.ok,
     output: args.output || "",
     summary: report.summary,
     guarantees: report.guarantees
