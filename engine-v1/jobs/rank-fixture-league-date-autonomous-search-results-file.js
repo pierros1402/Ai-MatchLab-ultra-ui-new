@@ -184,7 +184,8 @@ function sourcePolicyForHost(hostname) {
     "concacaf.com",
     "conmebol.com",
     "the-afc.com",
-    "slgr.gr"
+    "slgr.gr",
+    "mlssoccer.com"
   ];
 
   const trustedListingHosts = [
