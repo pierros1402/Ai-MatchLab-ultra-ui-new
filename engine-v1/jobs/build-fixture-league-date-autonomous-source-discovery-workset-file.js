@@ -221,6 +221,29 @@ function buildOfficialHostHint(row) {
   return asText(known?.officialHostHint);
 }
 
+function buildSearchDatePhrase(dayKey) {
+  const match = String(dayKey || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return "";
+
+  const year = Number(match[1]);
+  const monthIndex = Number(match[2]) - 1;
+  const day = Number(match[3]);
+
+  if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || !Number.isFinite(day)) {
+    return "";
+  }
+
+  const date = new Date(Date.UTC(year, monthIndex, day));
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString("en-US", {
+    timeZone: "UTC",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+}
+
 function buildQueryIntents(row) {
   const leagueSlug = asText(row.leagueSlug);
   const name = inferName(row);
@@ -230,12 +253,25 @@ function buildQueryIntents(row) {
   const quotedName = searchName ? `"${searchName}"` : "";
   const searchContext = buildSearchContext(row, country);
   const officialHostHint = buildOfficialHostHint(row);
+  const searchDatePhrase = buildSearchDatePhrase(dayKey);
 
   return [
     {
       intent: "official_league_fixture_calendar",
       priority: 100,
       query: unique([quotedName, searchContext, "official", "fixtures", "schedule", officialHostHint, dayKey]).join(" "),
+      expectedSourceFamilies: ["official_league", "competition_operator"]
+    },
+    {
+      intent: "official_fixture_url_surface",
+      priority: 98,
+      query: unique([quotedName, searchContext, "official", "fixtures", "schedule", "matches", officialHostHint]).join(" "),
+      expectedSourceFamilies: ["official_league", "competition_operator"]
+    },
+    {
+      intent: "official_date_fixture_page",
+      priority: 96,
+      query: unique([quotedName, searchContext, "official", "fixtures", "schedule", "matches", dayKey, searchDatePhrase, officialHostHint]).join(" "),
       expectedSourceFamilies: ["official_league", "competition_operator"]
     },
     {
@@ -480,9 +516,20 @@ function runSelfTest() {
       throw new Error(`missing autonomous query intents for ${row.leagueSlug}`);
     }
 
+    const intentNames = row.queryIntents.map((item) => item.intent);
+    if (!intentNames.includes("official_fixture_url_surface")) {
+      throw new Error(`missing official fixture URL surface intent for ${row.leagueSlug}`);
+    }
+    if (!intentNames.includes("official_date_fixture_page")) {
+      throw new Error(`missing official date fixture page intent for ${row.leagueSlug}`);
+    }
+
     const joinedQueries = row.queryIntents.map((item) => item.query).join(" ");
     if (joinedQueries.includes("manual.example")) {
       throw new Error("manual URL leaked into query intents");
+    }
+    if (!joinedQueries.includes("schedule") || !joinedQueries.includes("matches")) {
+      throw new Error(`missing schedule/matches query surface terms for ${row.leagueSlug}`);
     }
   }
 
