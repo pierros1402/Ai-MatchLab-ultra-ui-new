@@ -131,49 +131,141 @@ function hasManualUrl(row) {
   ].some((value) => asText(value));
 }
 
+const KNOWN_COMPETITION_SEARCH_PHRASES = new Map([
+  ["afc.champions", {
+    searchName: "AFC Champions League Elite",
+    context: "Asian Football Confederation football",
+    officialHostHint: "site:the-afc.com"
+  }],
+  ["afc.cup", {
+    searchName: "AFC Cup AFC Champions League Two",
+    context: "Asian Football Confederation football",
+    officialHostHint: "site:the-afc.com"
+  }],
+  ["conmebol.libertadores", {
+    searchName: "Copa Libertadores",
+    context: "CONMEBOL football",
+    officialHostHint: "site:conmebol.com"
+  }],
+  ["conmebol.sudamericana", {
+    searchName: "Copa Sudamericana",
+    context: "CONMEBOL football",
+    officialHostHint: "site:conmebol.com"
+  }],
+  ["uefa.champions", {
+    searchName: "UEFA Champions League",
+    context: "UEFA football",
+    officialHostHint: "site:uefa.com"
+  }],
+  ["uefa.europa", {
+    searchName: "UEFA Europa League",
+    context: "UEFA football",
+    officialHostHint: "site:uefa.com"
+  }],
+  ["uefa.conference", {
+    searchName: "UEFA Conference League",
+    context: "UEFA football",
+    officialHostHint: "site:uefa.com"
+  }]
+]);
+
+function looksLikePlaceholderCompetitionName(name) {
+  const value = asText(name);
+  return /^[A-Z][a-z]{2}(?:\s+(?:1|2|Cup))?$/.test(value);
+}
+
+function titleCaseCountryName(value) {
+  return asText(value)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part ? `${part.slice(0, 1).toUpperCase()}${part.slice(1)}` : "")
+    .join(" ");
+}
+
+function buildCountryAwareSearchName(row, name, country) {
+  const leagueSlug = asText(row.leagueSlug).toLowerCase();
+  const known = KNOWN_COMPETITION_SEARCH_PHRASES.get(leagueSlug);
+  if (known?.searchName) return known.searchName;
+
+  if (!looksLikePlaceholderCompetitionName(name)) return name;
+
+  const countryName = titleCaseCountryName(country);
+  if (!countryName) return name;
+
+  if (leagueSlug.endsWith(".cup") || /\bCup\b/i.test(name)) {
+    return `${countryName} Cup`;
+  }
+
+  if (leagueSlug.endsWith(".2") || /\b2\b/.test(name)) {
+    return `${countryName} second division`;
+  }
+
+  if (leagueSlug.endsWith(".1") || /\b1\b/.test(name)) {
+    return `${countryName} top division`;
+  }
+
+  return `${countryName} football competition`;
+}
+
+function buildSearchContext(row, country) {
+  const leagueSlug = asText(row.leagueSlug).toLowerCase();
+  const known = KNOWN_COMPETITION_SEARCH_PHRASES.get(leagueSlug);
+  if (known?.context) return known.context;
+
+  return country ? `${country} football soccer` : "football soccer";
+}
+
+function buildOfficialHostHint(row) {
+  const leagueSlug = asText(row.leagueSlug).toLowerCase();
+  const known = KNOWN_COMPETITION_SEARCH_PHRASES.get(leagueSlug);
+  return asText(known?.officialHostHint);
+}
+
 function buildQueryIntents(row) {
   const leagueSlug = asText(row.leagueSlug);
   const name = inferName(row);
   const country = inferCountry(row);
   const dayKey = inferDayKey(row);
-  const quotedName = name ? `"${name}"` : "";
-  const countryFootball = country ? `${country} football` : "football";
+  const searchName = buildCountryAwareSearchName(row, name, country);
+  const quotedName = searchName ? `"${searchName}"` : "";
+  const searchContext = buildSearchContext(row, country);
+  const officialHostHint = buildOfficialHostHint(row);
 
   return [
     {
       intent: "official_league_fixture_calendar",
       priority: 100,
-      query: unique([quotedName, "official", "fixtures", "schedule", dayKey]).join(" "),
+      query: unique([quotedName, searchContext, "official", "fixtures", "schedule", officialHostHint, dayKey]).join(" "),
       expectedSourceFamilies: ["official_league", "competition_operator"]
     },
     {
       intent: "federation_competition_calendar",
       priority: 90,
-      query: unique([countryFootball, name, "federation", "competition", "fixtures", dayKey]).join(" "),
+      query: unique([searchContext, searchName, "federation", "competition", "fixtures", dayKey]).join(" "),
       expectedSourceFamilies: ["national_federation", "competition_operator"]
     },
     {
       intent: "official_club_fixture_crosscheck",
       priority: 80,
-      query: unique([quotedName, "club fixtures", dayKey, "official"]).join(" "),
+      query: unique([quotedName, searchContext, "club fixtures", dayKey, "official"]).join(" "),
       expectedSourceFamilies: ["official_club"]
     },
     {
       intent: "trusted_independent_fixture_listing",
       priority: 60,
-      query: unique([quotedName, "fixtures", dayKey, "soccer schedule"]).join(" "),
+      query: unique([quotedName, searchContext, "fixtures", dayKey, "soccer schedule"]).join(" "),
       expectedSourceFamilies: ["trusted_independent_fixture_listing"]
     },
     {
       intent: "no_fixture_adjacent_matchday_confirmation",
       priority: 55,
-      query: unique([quotedName, "fixtures", "matchday", "round", dayKey]).join(" "),
+      query: unique([quotedName, searchContext, "fixtures", "matchday", "round", dayKey]).join(" "),
       expectedSourceFamilies: ["official_league", "national_federation", "trusted_independent_fixture_listing"]
     },
     {
       intent: "slug_disambiguation",
       priority: 40,
-      query: unique([leagueSlug, name, country, "fixtures", dayKey]).join(" "),
+      query: unique([leagueSlug, searchName, country, searchContext, "fixtures", dayKey]).join(" "),
       expectedSourceFamilies: ["any_relevant"]
     }
   ].filter((item) => item.query);
