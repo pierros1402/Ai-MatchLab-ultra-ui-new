@@ -126,6 +126,15 @@ function batchLabel(index) {
   return String(index + 1).padStart(4, "0");
 }
 
+function logProgress(message, details = {}) {
+  const payload = {
+    at: new Date().toISOString(),
+    ...details
+  };
+
+  console.log(`[autonomous-search-batches] ${message} ${JSON.stringify(payload)}`);
+}
+
 function collectJobPath() {
   return path.join(__dirname, "collect-fixture-league-date-autonomous-search-results-file.js");
 }
@@ -230,6 +239,18 @@ function runBatchPipeline(args) {
 
   writeJson(progressOutput, buildProgressReport(state, "running"));
 
+  logProgress("started", {
+    searchTargetCount: state.searchTargetCount,
+    selectedSearchTargetCount: state.selectedSearchTargetCount,
+    batchSize: state.batchSize,
+    batchCount: state.batchCount,
+    output: state.paths.output,
+    progressOutput: state.paths.progressOutput,
+    sourceFetch: false,
+    canonicalWrites: 0,
+    productionWrite: false
+  });
+
   const mergedSearchResultRows = [];
   const mergedSearchAttempts = [];
 
@@ -238,6 +259,15 @@ function runBatchPipeline(args) {
     const batchTargets = batches[batchIndex];
     const batchTargetsPath = path.join(batchTargetsDir, `autonomous-search-targets-batch-${label}.json`);
     const batchOutputPath = path.join(batchesDir, `autonomous-search-results-batch-${label}.json`);
+
+    logProgress("batch_start", {
+      batchNumber: batchIndex + 1,
+      batchCount: batches.length,
+      selectedSearchTargetCount: batchTargets.length,
+      completedBatchCount: state.completedBatches.length,
+      resumedBatchCount: state.resumedBatches.length,
+      failedBatchCount: state.failedBatches.length
+    });
 
     writeJson(batchTargetsPath, {
       ok: true,
@@ -271,6 +301,13 @@ function runBatchPipeline(args) {
           searchResultRowCount: batchReport.summary?.searchResultRowCount || 0,
           status: asText(batchReport.status || "resumed")
         });
+
+        logProgress("batch_resume", {
+          batchNumber: batchIndex + 1,
+          batchCount: batches.length,
+          output: batchOutputPath,
+          searchResultRowCount: batchReport.summary?.searchResultRowCount || 0
+        });
       } catch {
         batchReport = null;
       }
@@ -291,6 +328,13 @@ function runBatchPipeline(args) {
       const result = runCollectJob(collectArgs, args.batchTimeoutMs);
 
       if (result.status !== 0) {
+        logProgress("batch_failed", {
+          batchNumber: batchIndex + 1,
+          batchCount: batches.length,
+          timedOut: Boolean(result.error && result.error.code === "ETIMEDOUT"),
+          error: result.error?.message || result.stderr || `collect exited ${result.status}`
+        });
+
         state.failedBatches.push({
           batchIndex,
           batchNumber: batchIndex + 1,
@@ -317,6 +361,18 @@ function runBatchPipeline(args) {
       selectedSearchTargetCount: batchReport.summary?.selectedSearchTargetCount || batchTargets.length,
       searchResultRowCount: batchReport.summary?.searchResultRowCount || 0,
       status: asText(batchReport.status)
+    });
+
+    logProgress("batch_done", {
+      batchNumber: batchIndex + 1,
+      batchCount: batches.length,
+      selectedSearchTargetCount: batchReport.summary?.selectedSearchTargetCount || batchTargets.length,
+      batchSearchResultRowCount: batchReport.summary?.searchResultRowCount || 0,
+      totalSearchResultRowCount: mergedSearchResultRows.length,
+      completedBatchCount: state.completedBatches.length,
+      resumedBatchCount: state.resumedBatches.length,
+      failedBatchCount: state.failedBatches.length,
+      output: batchOutputPath
     });
 
     writeJson(progressOutput, buildProgressReport(state, "running"));
@@ -373,6 +429,18 @@ function runBatchPipeline(args) {
 
   writeJson(path.resolve(args.output), finalReport);
   writeJson(progressOutput, buildProgressReport(state, "complete"));
+
+  logProgress("complete", {
+    status: finalReport.status,
+    selectedSearchTargetCount: finalReport.summary.selectedSearchTargetCount,
+    batchCount: finalReport.summary.batchCount,
+    completedBatchCount: finalReport.summary.completedBatchCount,
+    resumedBatchCount: finalReport.summary.resumedBatchCount,
+    failedBatchCount: finalReport.summary.failedBatchCount,
+    searchResultRowCount: finalReport.summary.searchResultRowCount,
+    output: path.resolve(args.output),
+    progressOutput
+  });
 
   return finalReport;
 }
