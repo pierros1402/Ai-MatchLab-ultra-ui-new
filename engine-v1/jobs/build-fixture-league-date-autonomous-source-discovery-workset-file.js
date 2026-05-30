@@ -152,6 +152,11 @@ const KNOWN_COMPETITION_SEARCH_PHRASES = new Map([
     context: "Spanish LaLiga football",
     officialHostHint: "site:laliga.com"
   }],
+  ["esp.2", {
+    searchName: "LaLiga Hypermotion",
+    context: "Spanish second division football LaLiga Hypermotion Segunda División",
+    officialHostHint: "site:laliga.com"
+  }],
   ["ger.1", {
     searchName: "Bundesliga",
     context: "German Bundesliga football",
@@ -173,9 +178,24 @@ const KNOWN_COMPETITION_SEARCH_PHRASES = new Map([
     officialHostHint: "site:eredivisie.nl"
   }],
   ["bel.1", {
-    searchName: "Belgian Pro League",
-    context: "Belgian Pro League football",
+    searchName: "Jupiler Pro League",
+    context: "Belgian Pro League Jupiler Pro League football",
     officialHostHint: "site:proleague.be"
+  }],
+  ["swe.1", {
+    searchName: "Allsvenskan",
+    context: "Swedish Allsvenskan football",
+    officialHostHint: "site:allsvenskan.se"
+  }],
+  ["fin.1", {
+    searchName: "Veikkausliiga",
+    context: "Finnish Veikkausliiga football",
+    officialHostHint: "site:veikkausliiga.com"
+  }],
+  ["bra.1", {
+    searchName: "Brasileirão Série A",
+    context: "Brazilian Serie A Brasileirão football",
+    officialHostHint: "site:cbf.com.br"
   }],
   ["afc.champions", {
     searchName: "AFC Champions League Elite",

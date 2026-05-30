@@ -448,6 +448,7 @@ function classify(input, options = {}) {
     byClassification,
     byLeague,
     classifiedRows,
+    fetchedSourceSnapshots: snapshots,
     guarantees: {
       sourceFetch: false,
       noFetch: true,
@@ -515,6 +516,10 @@ function selfTest() {
 
   if (report.summary.candidateEvidenceNeedsValidationCount !== 2) {
     throw new Error(`self-test failed: expected 2 candidate evidence rows, got ${report.summary.candidateEvidenceNeedsValidationCount}`);
+  }
+
+  if (!Array.isArray(report.fetchedSourceSnapshots) || report.fetchedSourceSnapshots.length !== 3) {
+    throw new Error("self-test failed: classifier report must preserve fetchedSourceSnapshots for downstream extraction");
   }
 
   const embeddedRow = report.classifiedRows.find((row) => row.taskId === "embedded");

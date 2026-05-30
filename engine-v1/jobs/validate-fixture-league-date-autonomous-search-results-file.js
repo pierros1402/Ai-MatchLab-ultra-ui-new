@@ -191,7 +191,30 @@ function competitionAliasPhrases(row) {
       "jupiler pro league",
       "jupiler league",
       "belgian first division a",
-      "first division a"
+      "first division a",
+      "belgian pro league"
+    ],
+    "esp.2": [
+      "laliga hypermotion",
+      "la liga hypermotion",
+      "segunda division",
+      "segunda división",
+      "spanish second division"
+    ],
+    "swe.1": [
+      "allsvenskan",
+      "swedish allsvenskan"
+    ],
+    "fin.1": [
+      "veikkausliiga",
+      "finnish veikkausliiga"
+    ],
+    "bra.1": [
+      "brasileirao serie a",
+      "brasileirão série a",
+      "campeonato brasileiro serie a",
+      "campeonato brasileiro série a",
+      "brazilian serie a"
     ]
   };
 
@@ -201,6 +224,21 @@ function competitionAliasPhrases(row) {
       "jupiler league",
       "belgian first division a",
       "first division a"
+    ],
+    "laliga hypermotion": [
+      "la liga hypermotion",
+      "segunda division",
+      "segunda división",
+      "spanish second division"
+    ],
+    "veikkausliiga": [
+      "finnish veikkausliiga"
+    ],
+    "brasileirão série a": [
+      "brasileirao serie a",
+      "campeonato brasileiro serie a",
+      "campeonato brasileiro série a",
+      "brazilian serie a"
     ]
   };
 
@@ -299,7 +337,18 @@ function hasFixtureDiscoveryEvidence(row, candidateUrl, hostname) {
     "calendario partite",
     "calendrier des matchs",
     "wedstrijden",
-    "matchen"
+    "matchen",
+    "matcher",
+    "spelschema",
+    "spelprogram",
+    "tabell",
+    "ottelut",
+    "otteluohjelma",
+    "sarjataulukko",
+    "jogos",
+    "partidas",
+    "rodada",
+    "tabela"
   ];
 
   return fixtureSignals.some((signal) => evidence.includes(normalizeSearchText(signal)));

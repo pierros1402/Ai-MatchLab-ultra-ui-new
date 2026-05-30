@@ -185,13 +185,22 @@ function sourcePolicyForHost(hostname) {
     "conmebol.com",
     "the-afc.com",
     "slgr.gr",
-    "mlssoccer.com"
+    "mlssoccer.com",
+    "allsvenskan.se",
+    "svenskfotboll.se",
+    "veikkausliiga.com",
+    "palloliitto.fi",
+    "proleague.be",
+    "cbf.com.br"
   ];
 
   const trustedListingHosts = [
     "flashscore.com",
     "flashscore.co.uk",
     "flashscore.co.za",
+    "flashscore.se",
+    "flashscore.com.br",
+    "flashscore.fi",
     "soccerway.com",
     "worldfootball.net",
     "aiscore.com",
@@ -208,7 +217,9 @@ function sourcePolicyForHost(hostname) {
     "espn.in",
     "fotmob.com",
     "skysports.com",
-    "sofascore.com"
+    "sofascore.com",
+    "livesport.com",
+    "fotbollskanalen.se"
   ];
 
   const lowQualityHosts = [

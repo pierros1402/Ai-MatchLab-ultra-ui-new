@@ -393,8 +393,18 @@ function extractRows(snapshot) {
   };
 }
 
+function selectSnapshotsForExtraction(input) {
+  if (Array.isArray(input?.fetchedSourceSnapshots)) return input.fetchedSourceSnapshots;
+
+  if (Array.isArray(input?.classifiedRows) && input.classifiedRows.length > 0) {
+    throw new Error("extractor input has classifiedRows but no fetchedSourceSnapshots; run classifier that preserves fetchedSourceSnapshots or pass fetched snapshots directly");
+  }
+
+  return [];
+}
+
 function extract(input, options = {}) {
-  const snapshots = Array.isArray(input.fetchedSourceSnapshots) ? input.fetchedSourceSnapshots : [];
+  const snapshots = selectSnapshotsForExtraction(input);
   const evidenceRows = snapshots.map(extractRows);
 
   const byExtractionState = {};
@@ -491,6 +501,16 @@ function selfTest() {
 
   if (report.summary.nonTargetCompetitionOnlyCount !== 1) {
     throw new Error(`self-test failed: expected 1 non-target competition row, got ${report.summary.nonTargetCompetitionOnlyCount}`);
+  }
+
+  let classifiedRowsOnlyRejected = false;
+  try {
+    extract({ classifiedRows: [{ leagueSlug: "test.1" }] }, { input: "classified-only-self-test" });
+  } catch (error) {
+    classifiedRowsOnlyRejected = /classifiedRows but no fetchedSourceSnapshots/.test(String(error?.message || error));
+  }
+  if (!classifiedRowsOnlyRejected) {
+    throw new Error("self-test failed: classifiedRows-only input must fail loudly instead of producing false zero evidence");
   }
 
   if (report.summary.targetCompetitionEvidenceCandidateCount !== 2) {
