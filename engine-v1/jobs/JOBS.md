@@ -2348,3 +2348,7 @@ League day activity is target-date scoped only. It may mark active_for_day, no_e
 ### Football truth state inventory
 
 `build-football-truth-state-inventory-file.js` is a read-only diagnostic inventory for the football truth foundation. It scans canonical fixtures, day-activity state, season-watch state, season-status state, standings, and history for a target date/season and reports which leagues need fixture acquisition, day-activity evidence, FT repair, standings refresh, or season-status evidence. It must not fetch sources, promote canonical data, or write fixture/history/value/details production data.
+
+### search-final-result-source-url-candidates-file.js
+
+Read-only adapter for final-result FT truth URL discovery. It reads `candidateSearchRows`, requires explicit `--allow-search`, calls the shared autonomous `searchWeb()` provider, and writes `candidateUrlRows` plus `urlResolutions` for later validation. Guarantees: no fetch, no URL fetch, no final truth decision, no canonical promotion, `canonicalWrites: 0`, no fixture/history/value/details writes.
