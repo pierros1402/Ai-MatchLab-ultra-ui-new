@@ -333,7 +333,8 @@ function classifyRow(row, targetDate) {
     noExpected,
     breakGap,
     nextDateCandidates,
-    evidenceSignals
+    evidenceSignals,
+    rawRow: row
   };
 }
 
@@ -354,6 +355,54 @@ function selectInputRows(input) {
   }
 
   return [];
+}
+
+function buildAcquisitionDecision(row) {
+  const activeForDay = row.activeForDay === true;
+  const noExpectedFixturesForDay = row.noExpectedFixturesForDay === true;
+  const hasRestartCandidate = Boolean(row.nextKnownFixtureDate);
+
+  let fixtureAcquisitionMode = "continue_autonomous_day_discovery";
+  let valuePipelineEligibility = "not_value_ready_for_target_date";
+  let seasonMonitoringMode = "normal_daily_monitoring";
+  let nextRequiredAction = "continue_autonomous_source_discovery";
+  let decisionReason = "day_activity_not_decisive";
+
+  if (activeForDay) {
+    fixtureAcquisitionMode = "target_date_fixture_acquisition_required";
+    valuePipelineEligibility = "target_date_value_pipeline_candidate";
+    seasonMonitoringMode = "normal_daily_monitoring";
+    nextRequiredAction = "fetch_and_verify_target_date_fixtures";
+    decisionReason = "target_date_fixture_evidence_found";
+  } else if (noExpectedFixturesForDay && hasRestartCandidate) {
+    fixtureAcquisitionMode = "no_target_date_fixture_acquisition";
+    valuePipelineEligibility = "not_value_ready_for_target_date";
+    seasonMonitoringMode = "restart_watch";
+    nextRequiredAction = "monitor_restart_date_and_continue_periodic_discovery";
+    decisionReason = "no_target_date_fixtures_with_restart_candidate";
+  } else if (noExpectedFixturesForDay) {
+    fixtureAcquisitionMode = "no_target_date_fixture_acquisition";
+    valuePipelineEligibility = "not_value_ready_for_target_date";
+    seasonMonitoringMode = "continue_daily_or_periodic_monitoring";
+    nextRequiredAction = "continue_periodic_day_activity_discovery";
+    decisionReason = "no_target_date_fixture_evidence_found";
+  } else if (hasRestartCandidate) {
+    fixtureAcquisitionMode = "continue_autonomous_day_discovery";
+    valuePipelineEligibility = "not_value_ready_for_target_date";
+    seasonMonitoringMode = "restart_watch_candidate";
+    nextRequiredAction = "confirm_restart_date_with_second_source";
+    decisionReason = "restart_candidate_found_without_target_date_fixture_evidence";
+  }
+
+  return {
+    fixtureAcquisitionMode,
+    valuePipelineEligibility,
+    seasonMonitoringMode,
+    nextRequiredAction,
+    decisionReason,
+    hardExcludedFromFutureSearch: false,
+    continueAutonomousSearch: true
+  };
 }
 
 function decideLeagueActivity(leagueSlug, rows, targetDate) {
@@ -421,6 +470,16 @@ function decideLeagueActivity(leagueSlug, rows, targetDate) {
   const sourceUrls = unique(parsed.map((row) => row.sourceUrl));
   const hosts = unique(parsed.map((row) => row.host));
 
+  const decisionBase = {
+    activeForDay,
+    noExpectedFixturesForDay,
+    outOfSeasonForDay,
+    nextKnownFixtureDate,
+    activityState,
+    dayActivityEvidenceState
+  };
+  const acquisitionDecision = buildAcquisitionDecision(decisionBase);
+
   return {
     leagueSlug,
     targetDate,
@@ -434,6 +493,13 @@ function decideLeagueActivity(leagueSlug, rows, targetDate) {
     sourceCount: sourceUrls.length,
     hostCount: hosts.length,
     activityReason,
+    fixtureAcquisitionMode: acquisitionDecision.fixtureAcquisitionMode,
+    valuePipelineEligibility: acquisitionDecision.valuePipelineEligibility,
+    seasonMonitoringMode: acquisitionDecision.seasonMonitoringMode,
+    nextRequiredAction: acquisitionDecision.nextRequiredAction,
+    decisionReason: acquisitionDecision.decisionReason,
+    hardExcludedFromFutureSearch: acquisitionDecision.hardExcludedFromFutureSearch,
+    continueAutonomousSearch: acquisitionDecision.continueAutonomousSearch,
     evidenceSignals: unique(parsed.flatMap((row) => row.evidenceSignals)),
     evidenceRows: parsed,
     canonicalWrites: 0,
@@ -490,6 +556,11 @@ function buildReport(input, options = {}) {
       outOfSeasonForDayCount: dayActivityRows.filter((row) => row.outOfSeasonForDay).length,
       nextKnownFixtureDateCount: dayActivityRows.filter((row) => row.nextKnownFixtureDate).length,
       needsMoreEvidenceCount: dayActivityRows.filter((row) => row.activityState === "needs_more_day_activity_evidence").length,
+      targetDateFixtureAcquisitionRequiredCount: dayActivityRows.filter((row) => row.fixtureAcquisitionMode === "target_date_fixture_acquisition_required").length,
+      valuePipelineCandidateCount: dayActivityRows.filter((row) => row.valuePipelineEligibility === "target_date_value_pipeline_candidate").length,
+      restartWatchCount: dayActivityRows.filter((row) => String(row.seasonMonitoringMode || "").includes("restart_watch")).length,
+      futureSearchHardExcludedCount: dayActivityRows.filter((row) => row.hardExcludedFromFutureSearch === true).length,
+      continueAutonomousSearchCount: dayActivityRows.filter((row) => row.continueAutonomousSearch === true).length,
       canonicalWrites: 0,
       productionWrite: false
     },
@@ -591,6 +662,13 @@ function run(input, options = {}) {
       sourceCount: row.sourceCount,
       hostCount: row.hostCount,
       activityReason: row.activityReason,
+      fixtureAcquisitionMode: row.fixtureAcquisitionMode,
+      valuePipelineEligibility: row.valuePipelineEligibility,
+      seasonMonitoringMode: row.seasonMonitoringMode,
+      nextRequiredAction: row.nextRequiredAction,
+      decisionReason: row.decisionReason,
+      hardExcludedFromFutureSearch: row.hardExcludedFromFutureSearch,
+      continueAutonomousSearch: row.continueAutonomousSearch,
       evidenceSignals: row.evidenceSignals,
       canonicalWrites: 0,
       productionWrite: false,
@@ -658,6 +736,22 @@ function runSelfTest() {
 
   if (!usa || usa.activityState !== "active_for_day" || usa.activeForDay !== true) {
     throw new Error("self-test failed: expected usa.1 active_for_day");
+  }
+
+  if (usa.fixtureAcquisitionMode !== "target_date_fixture_acquisition_required") {
+    throw new Error("self-test failed: active league must require target-date fixture acquisition");
+  }
+
+  if (usa.valuePipelineEligibility !== "target_date_value_pipeline_candidate") {
+    throw new Error("self-test failed: active league must be value pipeline candidate");
+  }
+
+  if (eng.hardExcludedFromFutureSearch !== false || eng.continueAutonomousSearch !== true) {
+    throw new Error("self-test failed: no league may be hard-excluded from future autonomous search");
+  }
+
+  if (eng.seasonMonitoringMode !== "restart_watch") {
+    throw new Error("self-test failed: restart candidate must enter restart watch");
   }
 
   if (!test || test.activityState !== "no_expected_fixtures_for_day" || test.noExpectedFixturesForDay !== true) {
