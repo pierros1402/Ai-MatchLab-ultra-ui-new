@@ -82,6 +82,9 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "${INPUT_TRIGGER_RENDER:-false}" = "true" ]; then
             echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
             echo "Render redeploy allowed for this manual daily run."
+          elif [ "$EVENT_NAME" = "schedule" ]; then
+            echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
+            echo "Render redeploy allowed for this scheduled daily snapshot run."
           else
             echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
             echo "Render redeploy disabled for this daily run."
