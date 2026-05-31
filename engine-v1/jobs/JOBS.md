@@ -2335,3 +2335,13 @@ Guarantees:
 - `productionWrite: false`
 - resumable after partial completion
 - evaluate-fixture-league-day-activity-evidence-file.js: read-only league day/season activity evaluator; input evidence/classified rows -> diagnostics plus data/football-truth/_state/league-day-activity/YYYY-MM-DD.json and _state/league-season-watch/league-season-watch.json; records active_for_day, no_expected_fixtures_for_day, out_of_season_for_day, nextKnownFixtureDate; canonicalWrites: 0, productionWrite: false, no promotion.
+
+
+### Season activity evidence in autonomous fixture acquisition
+
+The autonomous fixture acquisition chain can now carry season/restart/no-fixture evidence separately from same-day fixture evidence. Season activity candidate snapshots are classified and extracted as candidate_league_season_activity_evidence_needs_validation and then evaluated by evaluate-fixture-league-day-activity-evidence-file.js into league-day-activity and league-season-watch state. This remains read-only: no canonical fixture promotion, no fixture/history/value/details writes.
+
+
+### Day activity semantics guard
+
+League day activity is target-date scoped only. It may mark active_for_day, no_expected_fixtures_for_day, break_or_calendar_gap, or needs_more_day_activity_evidence for the requested date, but it must not decide season_completed or long-lived out_of_season status. Restart/calendar context and no-fixture evidence can support target-date no-fixture state only. Final standings, champion, relegation, promotion, matchday/round progress, and next-season start evidence belong in a separate season-status evidence layer before they can affect long-lived league activation or historical season state.

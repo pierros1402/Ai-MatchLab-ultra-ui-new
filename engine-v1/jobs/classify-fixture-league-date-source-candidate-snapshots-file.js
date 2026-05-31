@@ -325,6 +325,7 @@ function classifySnapshot(snapshot) {
     name: asText(snapshot.name),
     dayKey,
     sourceType: asText(snapshot.sourceType),
+    fetchPurpose: asText(snapshot.fetchPurpose || snapshot.sourceType || snapshot.purpose),
     sourceTitle: asText(snapshot.sourceTitle),
     resolvedUrl: asText(snapshot.resolvedUrl),
     finalUrl: finalUrlOf(snapshot),
@@ -354,6 +355,18 @@ function classifySnapshot(snapshot) {
       classification: "rejected_candidate_http_status",
       usable: false,
       reason: `http_status_${status ?? "missing"}`
+    };
+  }
+
+  const fetchPurpose = asText(snapshot.fetchPurpose || snapshot.sourceType || snapshot.purpose);
+  const seasonActivityCandidate = /season_activity|season|restart|calendar|no_fixture|no-fixture|schedule_release|fixtures_released/i.test(fetchPurpose);
+
+  if (seasonActivityCandidate && (fixtureLanguageVisible || explicitNoFixtureEvidence || targetDateVisible || plainText.length > 300)) {
+    return {
+      ...base,
+      classification: "candidate_league_season_activity_evidence_needs_validation",
+      usable: false,
+      reason: "season_activity_or_restart_candidate_snapshot"
     };
   }
 
@@ -438,6 +451,7 @@ function classify(input, options = {}) {
       inputSnapshotCount: snapshots.length,
       classifiedRowCount: classifiedRows.length,
       candidateEvidenceNeedsValidationCount: classifiedRows.filter((row) => row.classification === "candidate_fixture_evidence_needs_validation").length,
+      seasonActivityEvidenceNeedsValidationCount: classifiedRows.filter((row) => row.classification === "candidate_league_season_activity_evidence_needs_validation").length,
       explicitNoFixtureNeedsValidationCount: classifiedRows.filter((row) => row.classification === "candidate_explicit_no_fixture_evidence_needs_validation").length,
       rejectedHttpStatusCount: classifiedRows.filter((row) => row.classification === "rejected_candidate_http_status").length,
       fetchedButNotUsableCount: classifiedRows.filter((row) => row.classification.startsWith("fetched_but_not_usable")).length,

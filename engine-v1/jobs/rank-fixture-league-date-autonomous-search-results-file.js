@@ -598,6 +598,70 @@ function fixtureSurfaceQuality(candidateUrl, result) {
   };
 }
 
+function isSeasonRestartTarget(target) {
+  const joined = [
+    target.intent,
+    target.queryIntent,
+    target.searchTargetId,
+    target.discoveryTargetId,
+    target.expectedSourceFamily,
+    target.query
+  ].map(asText).join(" ").toLowerCase();
+
+  return joined.includes("season_restart_calendar_discovery") ||
+    joined.includes("season restart") ||
+    joined.includes("season start") ||
+    joined.includes("fixture release");
+}
+
+function seasonActivitySurfaceQuality(target, candidateUrl, result) {
+  if (!isSeasonRestartTarget(target)) return null;
+
+  const rawUrl = asText(candidateUrl);
+  const title = asText(result.title).toLowerCase();
+  const snippet = asText(result.snippet || result.description).toLowerCase();
+  const query = asText(target.query).toLowerCase();
+
+  let pathname = "";
+  let search = "";
+  try {
+    const parsed = new URL(rawUrl);
+    pathname = parsed.pathname.toLowerCase().replace(/\/+$/, "");
+    search = parsed.search.toLowerCase();
+  } catch {
+    pathname = rawUrl.toLowerCase();
+  }
+
+  const pageText = [pathname, search, title, snippet, query].join(" ");
+
+  const hasSeasonSignal =
+    /\b(2026\s*[-/]?\s*2027|2026\/27|2026-27|2026\s*27|new\s+season|next\s+season|season\s+start|season\s+starts|season\s+restart|season\s+resumes|fixture\s+release|fixtures\s+released|released\s+fixtures|calendar|schedule|fixtures?|results?)\b/.test(pageText);
+
+  const hasCompetitionSurface =
+    /\b(premier\s+league|championship|league\s+one|league\s+two|bundesliga|serie\s+a|super\s+league|efl|football\s+league)\b/.test(pageText) ||
+    /\/(premier-league|championship|league-one|league-two|bundesliga|serie-a|super-league|efl)\b/.test(pathname);
+
+  const isClearlyBad =
+    /\b(casino|betting|odds|prediction|fantasy|transfers?|tickets?|shop|video|highlights?)\b/.test(pageText) ||
+    /(^|\/)(video|videos|tickets?|shop|transfers?)(\/|$)/.test(pathname);
+
+  if (hasSeasonSignal && hasCompetitionSurface && !isClearlyBad) {
+    return {
+      state: "season_activity_calendar_candidate",
+      scoreBoost: 18,
+      scorePenalty: 0,
+      reasons: ["season_activity_calendar_surface_signal"]
+    };
+  }
+
+  return {
+    state: "unknown_season_activity_surface",
+    scoreBoost: 0,
+    scorePenalty: isClearlyBad ? 45 : 18,
+    reasons: [isClearlyBad ? "season_activity_bad_surface_signal" : "missing_season_activity_surface_signal"]
+  };
+}
+
 function rankOne(target, result, index) {
   const candidateUrl = candidateUrlFromResult(result);
   const hostname = hostnameFromUrl(candidateUrl) || asText(result.hostname).toLowerCase().replace(/^www\./, "");
@@ -615,7 +679,9 @@ function rankOne(target, result, index) {
   const queryScore = queryMatchScore(target, result);
   const familyScore = expectedFamilyScore(target.expectedSourceFamily, hostname, haystack);
   const penalty = riskPenalty(result, hostname);
-  const surfaceQuality = fixtureSurfaceQuality(candidateUrl, result);
+  const fixtureSurface = fixtureSurfaceQuality(candidateUrl, result);
+  const seasonActivitySurface = seasonActivitySurfaceQuality(target, candidateUrl, result);
+  const surfaceQuality = seasonActivitySurface || fixtureSurface;
   const hostPolicy = sourcePolicyForHost(hostname);
   const baseScore = Number(target.compositeScore) || 0;
   const resultRank = Number(result.rank || result.position || result.resultRank || index + 1);
@@ -637,9 +703,14 @@ function rankOne(target, result, index) {
     )
   );
 
-  const isFetchEligibleSurface = surfaceQuality.state === "fixture_surface_candidate";
-  const sourceClass = isFetchEligibleSurface ? hostPolicy.sourceClass : "low_priority_or_non_truth_surface";
-  const truthRole = isFetchEligibleSurface ? hostPolicy.truthRole : "not_truth_ready";
+  const isSeasonActivityCandidate = surfaceQuality.state === "season_activity_calendar_candidate";
+  const isFetchEligibleSurface = surfaceQuality.state === "fixture_surface_candidate" || isSeasonActivityCandidate;
+  const sourceClass = isSeasonActivityCandidate
+    ? "season_activity_calendar_candidate"
+    : isFetchEligibleSurface ? hostPolicy.sourceClass : "low_priority_or_non_truth_surface";
+  const truthRole = isSeasonActivityCandidate
+    ? "season_activity_candidate_after_fetch_evidence"
+    : isFetchEligibleSurface ? hostPolicy.truthRole : "not_truth_ready";
 
   return {
     ok: true,

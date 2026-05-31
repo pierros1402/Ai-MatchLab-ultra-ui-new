@@ -350,7 +350,14 @@ function extractRows(snapshot) {
   let acceptedForEvidence = false;
   let reason = "target_date_block_missing";
 
-  if (statusOf(snapshot) !== 200) {
+  const fetchPurpose = asText(snapshot.fetchPurpose || snapshot.sourceType || snapshot.purpose);
+  const seasonActivityCandidate = /season_activity|season|restart|calendar|no_fixture|no-fixture|schedule_release|fixtures_released/i.test(fetchPurpose);
+
+  if (seasonActivityCandidate && statusOf(snapshot) === 200 && plainText.length > 300) {
+    extractionState = "candidate_league_season_activity_evidence_needs_validation";
+    acceptedForEvidence = false;
+    reason = "season_activity_or_restart_candidate_snapshot";
+  } else if (statusOf(snapshot) !== 200) {
     extractionState = "rejected_candidate_http_status";
     reason = `http_status_${statusOf(snapshot) ?? "missing"}`;
   } else if (targetCompetitionRows.length > 0) {
@@ -373,10 +380,15 @@ function extractRows(snapshot) {
     name: asText(snapshot.name),
     dayKey,
     sourceType: asText(snapshot.sourceType),
+    fetchPurpose: asText(snapshot.fetchPurpose || snapshot.sourceType || snapshot.purpose),
     sourceTitle: asText(snapshot.sourceTitle),
+    sourceUrl: asText(snapshot.resolvedUrl || snapshot.finalUrl || snapshot.url || snapshot.candidateUrl),
+    host: asText(snapshot.hostname || snapshot.host),
+    hostname: asText(snapshot.hostname || snapshot.host),
     resolvedUrl: asText(snapshot.resolvedUrl),
     finalUrl: asText(snapshot?.http?.finalUrl || snapshot.finalUrl || snapshot.resolvedUrl),
     status: statusOf(snapshot),
+    evidenceTextSnippet: plainText.slice(0, 1800),
     extractionState,
     acceptedForEvidence,
     reason,
@@ -432,6 +444,7 @@ function extract(input, options = {}) {
       inputSnapshotCount: snapshots.length,
       extractedRowCount: evidenceRows.length,
       targetCompetitionEvidenceCandidateCount: evidenceRows.filter((row) => row.extractionState === "candidate_target_competition_fixture_rows_needs_validation").length,
+      seasonActivityEvidenceCandidateCount: evidenceRows.filter((row) => row.extractionState === "candidate_league_season_activity_evidence_needs_validation").length,
       nonTargetCompetitionOnlyCount: evidenceRows.filter((row) => row.extractionState === "target_date_visible_but_only_non_target_competition_rows").length,
       rejectedHttpStatusCount: evidenceRows.filter((row) => row.extractionState === "rejected_candidate_http_status").length,
       canonicalWrites: 0,

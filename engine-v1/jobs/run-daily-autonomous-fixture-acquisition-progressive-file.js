@@ -235,6 +235,7 @@ function diversifyTargetsPerLeague(rows, perLeagueLimit) {
     "official_date_fixture_page",
     "official_league_fixture_calendar",
     "trusted_independent_fixture_listing",
+    "season_restart_calendar_discovery",
     "supplemental_scoreboard_crosscheck",
     "federation_competition_calendar",
     "broad_fixture_discovery",
@@ -550,7 +551,7 @@ function runPipeline(args) {
   const waveFetchReports = [];
 
   if (args.wave === "1" || args.wave === "all") {
-    const wave1Targets = capTotalTargets(diversifyTargetsPerLeague(targetRows, 6), args);
+    const wave1Targets = capTotalTargets(diversifyTargetsPerLeague(targetRows, 7), args);
     writeJson(paths.wave1Targets, {
       ok: true,
       job: "run-daily-autonomous-fixture-acquisition-progressive-file",

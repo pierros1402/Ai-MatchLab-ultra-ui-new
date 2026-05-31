@@ -69,6 +69,11 @@ function reviewRowFromRankedCandidate(row, index) {
       sourceClass === "trusted_independent_fixture_listing" ||
       sourceClass === "supplemental_scoreboard_or_media"
     );
+  const isSeasonActivityFetchCandidate =
+    truthRole === "season_activity_candidate_after_fetch_evidence" ||
+    sourceClass === "season_activity_calendar_candidate" ||
+    asText(row.intent).toLowerCase() === "season_restart_calendar_discovery" ||
+    asText(row.discoveryTargetId || row.searchTargetId).toLowerCase().includes("season_restart_calendar_discovery");
   const dayKey = asText(row.dayKey || row.targetDate);
   const leagueSlug = asText(row.leagueSlug);
   const paddedIndex = String(index + 1).padStart(3, "0");
@@ -92,16 +97,20 @@ function reviewRowFromRankedCandidate(row, index) {
     truthRole,
     sourceRank: Number.isFinite(Number(row.sourceRank || row.rank)) ? Number(row.sourceRank || row.rank) : null,
     compositeScore: Number.isFinite(Number(row.compositeScore)) ? Number(row.compositeScore) : null,
-    reviewerDecision: isPrimary
-      ? "candidate_official_url_pending_fetch"
-      : isSupplementalFetchCandidate
-        ? "candidate_supplemental_url_pending_fetch"
-        : "ranked_candidate_not_primary_truth_role",
-    reviewerNotes: isPrimary
-      ? "Autonomous ranked source policy marked this URL as primary candidate after fetch evidence. Fetch snapshot only; do not promote."
-      : isSupplementalFetchCandidate
-        ? "Autonomous supplemental source candidate is eligible for read-only controlled fetch evidence extraction only; it is not primary truth and cannot promote canonical data by itself."
-        : "Autonomous ranked source policy did not mark this URL as fetch-eligible; keep out of fetch rows.",
+    reviewerDecision: isSeasonActivityFetchCandidate
+      ? "season_activity_calendar_candidate_pending_fetch"
+      : isPrimary
+        ? "candidate_official_url_pending_fetch"
+        : isSupplementalFetchCandidate
+          ? "candidate_supplemental_url_pending_fetch"
+          : "ranked_candidate_not_primary_truth_role",
+    reviewerNotes: isSeasonActivityFetchCandidate
+      ? "Autonomous season/restart calendar candidate is eligible for read-only season activity evidence fetch only; it is not fixture truth and cannot promote canonical data by itself."
+      : isPrimary
+        ? "Autonomous ranked source policy marked this URL as primary candidate after fetch evidence. Fetch snapshot only; do not promote."
+        : isSupplementalFetchCandidate
+          ? "Autonomous supplemental source candidate is eligible for read-only controlled fetch evidence extraction only; it is not primary truth and cannot promote canonical data by itself."
+          : "Autonomous ranked source policy did not mark this URL as fetch-eligible; keep out of fetch rows.",
     canonicalWrites: 0,
     productionWrite: false
   };

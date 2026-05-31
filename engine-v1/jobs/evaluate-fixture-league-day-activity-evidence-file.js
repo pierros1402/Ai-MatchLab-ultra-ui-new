@@ -124,6 +124,35 @@ function rowText(row) {
     .trim();
 }
 
+function seasonActivitySourceHint(row) {
+  const text = [
+    row.fetchPurpose,
+    row.sourceType,
+    row.extractionState,
+    row.classification,
+    row.reason,
+    row.sourceTitle,
+    row.title,
+    row.sourceUrl,
+    row.resolvedUrl,
+    row.finalUrl,
+    row.host,
+    row.hostname
+  ].map(asText).join(" ").toLowerCase();
+
+  return /season_activity|season|restart|calendar|no_fixture|no-fixture|schedule_release|fixtures_released|candidate_league_season_activity/.test(text);
+}
+
+function noFixtureDaySignal(text) {
+  const lower = asText(text).toLowerCase();
+  return /\b(no fixtures|no matches|no games|no scheduled matches|no scheduled fixtures|no upcoming fixtures|season has ended|season ended|end of season|league has finished|competition has finished|regular season complete|campaign concluded)\b/.test(lower);
+}
+
+function restartSignal(text) {
+  const lower = asText(text).toLowerCase();
+  return /\b(fixtures released|fixture list|schedule released|season starts|season begins|season kicks off|opening day|restart|restarts|resumes|returns|next season|new season)\b/.test(lower);
+}
+
 function parseMonthDateCandidates(text, referenceDate) {
   const lower = asText(text).toLowerCase();
   const referenceYear = Number((normalizeDate(referenceDate) || todayIsoDate()).slice(0, 4));
@@ -350,11 +379,11 @@ function decideLeagueActivity(leagueSlug, rows, targetDate) {
     restartEvidenceState = "not_applicable_active_for_day";
     activityReason = "target_date_fixture_evidence_found";
   } else if (outRows.length >= 1 && nextKnownFixtureDate) {
-    activityState = "out_of_season_for_day";
-    dayActivityEvidenceState = outRows.length >= 2 ? "season_calendar_verified" : "season_calendar_candidate";
-    outOfSeasonForDay = true;
+    activityState = "no_expected_fixtures_for_day";
+    dayActivityEvidenceState = outRows.length >= 2 ? "target_date_no_fixture_calendar_context_verified" : "target_date_no_fixture_calendar_context_candidate";
+    outOfSeasonForDay = false;
     noExpectedFixturesForDay = true;
-    activityReason = "season_or_restart_evidence_found";
+    activityReason = "target_date_no_fixture_calendar_or_restart_context_found";
   } else if (noExpectedRows.length >= 1) {
     activityState = "no_expected_fixtures_for_day";
     dayActivityEvidenceState = noExpectedRows.length >= 2 ? "no_fixture_day_verified" : "no_fixture_day_candidate";
@@ -365,6 +394,28 @@ function decideLeagueActivity(leagueSlug, rows, targetDate) {
     dayActivityEvidenceState = breakRows.length >= 2 ? "calendar_gap_verified" : "calendar_gap_candidate";
     noExpectedFixturesForDay = true;
     activityReason = "break_or_calendar_gap_evidence_found";
+  }
+
+  const seasonCandidateRows = parsed.filter((row) => seasonActivitySourceHint(row.rawRow || row) || seasonActivitySourceHint(row));
+  const noFixtureSeasonRows = seasonCandidateRows.filter((row) => noFixtureDaySignal(row.text || row.evidenceText || row.rawText || row.snippet || row.evidenceTextSnippet || row.reason));
+  const restartSeasonRows = seasonCandidateRows.filter((row) => restartSignal(row.text || row.evidenceText || row.rawText || row.snippet || row.evidenceTextSnippet || row.reason));
+
+  if (!activeForDay && seasonCandidateRows.length >= 1 && noExpectedRows.length === 0 && breakRows.length === 0) {
+    activityState = "no_expected_fixtures_for_day";
+    dayActivityEvidenceState = seasonCandidateRows.length >= 2 ? "target_date_no_fixture_context_verified" : "target_date_no_fixture_context_candidate";
+    outOfSeasonForDay = false;
+    noExpectedFixturesForDay = true;
+    activityReason = restartSeasonRows.length > 0
+      ? "target_date_no_fixture_restart_or_calendar_context_found"
+      : "target_date_no_fixture_season_context_found";
+  }
+
+  if (!activeForDay && noFixtureSeasonRows.length >= 1) {
+    activityState = "no_expected_fixtures_for_day";
+    dayActivityEvidenceState = noFixtureSeasonRows.length >= 2 ? "no_fixture_on_target_date_verified" : "no_fixture_on_target_date_candidate";
+    outOfSeasonForDay = false;
+    noExpectedFixturesForDay = true;
+    activityReason = "target_date_no_fixture_evidence_found";
   }
 
   const sourceUrls = unique(parsed.map((row) => row.sourceUrl));
@@ -409,7 +460,7 @@ function buildReport(input, options = {}) {
     .map(([leagueSlug, leagueRows]) => decideLeagueActivity(leagueSlug, leagueRows, targetDate));
 
   const seasonWatchRows = dayActivityRows
-    .filter((row) => row.outOfSeasonForDay || row.nextKnownFixtureDate)
+    .filter((row) => row.nextKnownFixtureDate)
     .map((row) => ({
       leagueSlug: row.leagueSlug,
       lastCheckedDate: targetDate,
@@ -601,8 +652,8 @@ function runSelfTest() {
   const usa = result.dayActivityRows.find((row) => row.leagueSlug === "usa.1");
   const test = result.dayActivityRows.find((row) => row.leagueSlug === "test.2");
 
-  if (!eng || eng.activityState !== "out_of_season_for_day" || eng.nextKnownFixtureDate !== "2026-08-15") {
-    throw new Error("self-test failed: expected eng.1 out_of_season_for_day with restart date 2026-08-15");
+  if (!eng || eng.activityState !== "no_expected_fixtures_for_day" || eng.outOfSeasonForDay !== false || eng.nextKnownFixtureDate !== "2026-08-15") {
+    throw new Error("self-test failed: expected eng.1 no_expected_fixtures_for_day with restart date context only");
   }
 
   if (!usa || usa.activityState !== "active_for_day" || usa.activeForDay !== true) {

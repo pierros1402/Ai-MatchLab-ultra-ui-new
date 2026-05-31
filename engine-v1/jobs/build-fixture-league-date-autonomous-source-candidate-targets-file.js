@@ -358,6 +358,68 @@ function buildFixtureSurfaceExpansionTargets(searchTargetRows) {
   return out;
 }
 
+function buildSeasonRestartLeaguePhrase(row) {
+  const candidates = [
+    row.leagueName,
+    row.leagueDisplayName,
+    row.competitionName,
+    row.competition,
+    row.name,
+    row.title,
+    row.leagueSlug
+  ];
+
+  for (const candidate of candidates) {
+    const value = asText(candidate).trim();
+    if (value) return value;
+  }
+
+  return "";
+}
+
+function buildSeasonRestartDiscoveryTargets(searchTargetRows) {
+  const targets = [];
+  const seen = new Set();
+
+  for (const base of searchTargetRows) {
+    const phrase = buildSeasonRestartLeaguePhrase(base);
+    const dayKey = asText(base.dayKey);
+    const year = Number(dayKey.slice(0, 4));
+
+    if (!phrase || !Number.isFinite(year)) continue;
+
+    const nextYearShort = String((year + 1) % 100).padStart(2, "0");
+    const seasonLabel = String(year) + "-" + nextYearShort;
+    const nextYear = String(year + 1);
+
+    const queries = [
+      "\"" + phrase + "\" " + seasonLabel + " fixtures released start date",
+      "\"" + phrase + "\" new season starts " + year + " fixtures",
+      "\"" + phrase + "\" " + year + " " + nextYear + " season start date fixtures",
+      "\"" + phrase + "\" fixture release date " + seasonLabel,
+      "\"" + phrase + "\" season ended starts resumes fixtures"
+    ];
+
+    for (const query of queries) {
+      const cleanQuery = asText(query);
+      const key = [asText(base.leagueSlug), cleanQuery.toLowerCase()].join("|");
+      if (!cleanQuery || seen.has(key)) continue;
+      seen.add(key);
+
+      targets.push(buildExpansionTarget(
+        base,
+        cleanQuery,
+        "season_restart_calendar_discovery",
+        "trusted_independent_fixture_listing",
+        99,
+        "season_restart_calendar_query"
+      ));
+    }
+  }
+
+  return targets;
+}
+
 function candidateUrlDedupeKey(base, candidateUrl, intent, family) {
   return [
     asText(base.dayKey),
@@ -502,6 +564,11 @@ function buildReport(input, options = {}) {
     ...searchTargetRows,
     ...buildFixtureSurfaceExpansionTargets(searchTargetRows)
   ]);
+  searchTargetRows = dedupeAndSortTargets([
+    ...searchTargetRows,
+    ...buildSeasonRestartDiscoveryTargets(searchTargetRows)
+  ]);
+
   searchTargetRows = dedupeAndSortTargets([
     ...searchTargetRows,
     ...buildAutonomousUrlProbeTargets(searchTargetRows)

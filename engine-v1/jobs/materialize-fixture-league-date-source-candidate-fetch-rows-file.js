@@ -89,11 +89,14 @@ function decisionLooksLikeCandidate(value) {
     "candidate_official_url_pending_fetch",
     "candidate_supplemental_url_pending_fetch",
     "candidate_independent_url_pending_fetch",
-    "candidate_club_url_pending_fetch"
+    "candidate_club_url_pending_fetch",
+    "season_activity_calendar_candidate_pending_fetch"
   ].includes(decision);
 }
 
 function sourceTypeForRow(row) {
+  const decision = asText(row.reviewerDecision);
+  if (decision === "season_activity_calendar_candidate_pending_fetch") return "league_season_activity_or_restart_candidate";
   if (row.isOfficialOrPrimary === true) return "official_or_primary_fixture_candidate";
   if (row.isIndependentSecondSource === true) return "independent_second_source_fixture_candidate";
   if (row.isClubFallback === true) return "club_fallback_fixture_candidate";
@@ -135,7 +138,9 @@ function buildReadyRow(row, index) {
     missingFromSnapshot: row.missingFromSnapshot ?? null,
     validationState: "valid_source_url_resolution",
     readyForFetch: true,
-    fetchPurpose: "fixture_league_date_candidate_url_snapshot",
+    fetchPurpose: asText(row.reviewerDecision) === "season_activity_calendar_candidate_pending_fetch"
+      ? "league_season_activity_or_restart_candidate_snapshot"
+      : "fixture_league_date_candidate_url_snapshot",
     fetchNotes: asText(row.reviewerNotes || "Candidate URL only. Fetch snapshot for later evidence extraction; do not mark as usable here."),
     canonicalWrites: 0,
     productionWrite: false
