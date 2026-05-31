@@ -1,4 +1,4 @@
-﻿name: Intraday deploy snapshot refresh
+name: Intraday deploy snapshot refresh
 
 on:
   workflow_dispatch:
@@ -8,7 +8,8 @@ on:
         required: false
         default: ""
   schedule:
-    # Live-focused intraday refresh. Guard below limits execution to 07:00-23:59 Europe/Athens.    # Two staggered schedules reduce missed/delayed GitHub scheduled runs without external paid cron.
+    # Live-focused intraday refresh. Guard below limits execution to 07:00-23:59 Europe/Athens.
+    # Two staggered schedules reduce missed/delayed GitHub scheduled runs without external paid cron.
     - cron: "*/5 * * * *"
     - cron: "2-59/5 * * * *"
 permissions:
@@ -279,7 +280,7 @@ jobs:
           git push
 
       - name: Trigger Render redeploy
-        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true'
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true' && env.ALLOW_RENDER_DEPLOY == 'true'
         shell: bash
         env:
           RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
