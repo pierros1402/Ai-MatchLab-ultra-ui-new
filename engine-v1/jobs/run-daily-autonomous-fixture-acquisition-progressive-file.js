@@ -434,8 +434,18 @@ function buildDayActivityRouting({ selectedLeagues, targetRows, paths }) {
   const routingRows = selectedLeagues.map((leagueSlug) => {
     const activity = activityByLeague.get(leagueSlug) || {};
     const targetDateFixtureAcquisitionRequired = isTargetDateFixtureAcquisitionRequired(activity);
+    const valuePipelineCandidate = asText(activity.valuePipelineEligibility) === "target_date_value_pipeline_candidate" || activity.valuePipelineCandidate === true;
+    const restartWatch = String(activity.seasonMonitoringMode || "").includes("restart_watch") || activity.restartWatch === true;
+    const futureSearchHardExcluded = activity.hardExcludedFromFutureSearch === true || activity.futureSearchHardExcluded === true;
+    const continueAutonomousSearch = activity.continueAutonomousSearch === true;
+    const routedToTargetDateFixtureSearch = targetDateFixtureAcquisitionRequired;
+    const routedToAutonomousSearch = futureSearchHardExcluded !== true && (
+      targetDateFixtureAcquisitionRequired === true ||
+      continueAutonomousSearch === true ||
+      restartWatch === true
+    );
 
-    if (targetDateFixtureAcquisitionRequired) {
+    if (routedToAutonomousSearch) {
       targetLeagueSet.add(leagueSlug);
     }
 
@@ -448,11 +458,12 @@ function buildDayActivityRouting({ selectedLeagues, targetRows, paths }) {
       nextRequiredAction: asText(activity.nextRequiredAction),
       nextKnownFixtureDate: asText(activity.nextKnownFixtureDate),
       targetDateFixtureAcquisitionRequired,
-      valuePipelineCandidate: asText(activity.valuePipelineEligibility) === "target_date_value_pipeline_candidate" || activity.valuePipelineCandidate === true,
-      restartWatch: String(activity.seasonMonitoringMode || "").includes("restart_watch") || activity.restartWatch === true,
-      futureSearchHardExcluded: activity.hardExcludedFromFutureSearch === true || activity.futureSearchHardExcluded === true,
-      continueAutonomousSearch: activity.continueAutonomousSearch === true,
-      routedToTargetDateFixtureSearch: targetDateFixtureAcquisitionRequired
+      valuePipelineCandidate,
+      restartWatch,
+      futureSearchHardExcluded,
+      continueAutonomousSearch,
+      routedToTargetDateFixtureSearch,
+      routedToAutonomousSearch
     };
   });
 
@@ -974,8 +985,13 @@ function runSelfTest() {
 
   fs.rmSync(tmpDir, { recursive: true, force: true });
 
-  if (routing.summary.selectedLeagueCountAfterRouting !== 1) {
-    throw new Error("expected routing to keep only one target-date acquisition league");
+  if (routing.summary.selectedLeagueCountAfterRouting !== 2) {
+    throw new Error("expected routing to keep target-date and restart-watch autonomous-search leagues");
+  }
+
+  const restartWatchRoutingRow = routing.routingRows.find((row) => row.leagueSlug === "b.1");
+  if (!restartWatchRoutingRow || restartWatchRoutingRow.routedToAutonomousSearch !== true) {
+    throw new Error("expected restart-watch league to remain routed to autonomous search");
   }
 
   if (routing.summary.restartWatchCount !== 1) {
