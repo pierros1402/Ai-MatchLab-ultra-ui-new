@@ -23,6 +23,7 @@ Purpose: classify engine-v1/jobs so diagnostics, candidates, production jobs, an
 
 ## Diagnostic / audit jobs
 
+- run-daily-autonomous-fixture-acquisition-progressive-file.js: read-only progressive daily autonomous fixture acquisition orchestrator; active-league-plan -> workset -> capped search waves -> ready-fetch coverage -> optional controlled fetch/classify/extract with explicit --allow-fetch; canonicalWrites: 0, productionWrite: false, no promotion.
 - audit-finalization-readiness-day.js: checks if a day is safe to finalize.
 - audit-finalization-history-range.js: read-only historical FT/value damage audit.
 - build-finalization-repair-buckets.js: read-only repair bucket planner.

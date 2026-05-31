@@ -126,6 +126,61 @@ function batchLabel(index) {
   return String(index + 1).padStart(4, "0");
 }
 
+function hostFromUrl(value) {
+  try {
+    return new URL(asText(value)).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function looksLikeAutonomousUrlProbeTarget(target) {
+  return Boolean(
+    asText(target.candidateUrl) &&
+    asText(target.resolutionMode) === "autonomous_url_surface_probe" &&
+    target.manualCandidateUrlUsed !== true
+  );
+}
+
+function buildSyntheticSearchResultRowFromUrlProbe(target, index) {
+  const candidateUrl = asText(target.candidateUrl).replace(/\/+$/, "");
+  const host = hostFromUrl(candidateUrl);
+
+  return {
+    searchResultId: [
+      asText(target.dayKey),
+      asText(target.leagueSlug),
+      "autonomous_url_surface_probe",
+      index + 1
+    ].join(":"),
+    searchTargetId: asText(target.searchTargetId),
+    leagueSlug: asText(target.leagueSlug),
+    name: asText(target.name),
+    country: asText(target.country),
+    dayKey: asText(target.dayKey),
+    query: asText(target.query || candidateUrl),
+    queryIntent: asText(target.intent),
+    intent: asText(target.intent),
+    expectedSourceFamily: asText(target.expectedSourceFamily),
+    title: `Autonomous fixture URL probe: ${candidateUrl}`,
+    snippet: `Read-only autonomous URL surface probe for ${asText(target.name)} fixtures/results/matches/schedule on ${asText(target.dayKey)}.`,
+    url: candidateUrl,
+    resolvedUrl: candidateUrl,
+    candidateUrl,
+    host,
+    hostname: host,
+    rank: 1,
+    position: 1,
+    source: "autonomous_url_surface_probe",
+    provenance: "autonomous_url_surface_probe",
+    manualCandidateUrlUsed: false,
+    sourceFetch: false,
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
 function logProgress(message, details = {}) {
   const payload = {
     at: new Date().toISOString(),
@@ -257,6 +312,8 @@ function runBatchPipeline(args) {
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
     const label = batchLabel(batchIndex);
     const batchTargets = batches[batchIndex];
+    const urlProbeTargets = batchTargets.filter(looksLikeAutonomousUrlProbeTarget);
+    const providerSearchTargets = batchTargets.filter((target) => !looksLikeAutonomousUrlProbeTarget(target));
     const batchTargetsPath = path.join(batchTargetsDir, `autonomous-search-targets-batch-${label}.json`);
     const batchOutputPath = path.join(batchesDir, `autonomous-search-results-batch-${label}.json`);
 
@@ -280,6 +337,8 @@ function runBatchPipeline(args) {
         batchCount: batches.length
       },
       searchTargetRows: batchTargets,
+      providerSearchTargetRows: providerSearchTargets,
+      autonomousUrlProbeTargetRows: urlProbeTargets,
       guarantees: {
         sourceFetch: false,
         canonicalWrites: 0,
@@ -314,20 +373,75 @@ function runBatchPipeline(args) {
     }
 
     if (!batchReport) {
-      const collectArgs = [
-        "--targets", batchTargetsPath,
-        "--output", batchOutputPath,
-        "--limit", String(batchTargets.length),
-        "--timeout-ms", String(args.timeoutMs),
-        "--max-chars", String(args.maxChars)
-      ];
+      const syntheticRows = urlProbeTargets.map(buildSyntheticSearchResultRowFromUrlProbe);
 
-      if (args.sourceIndex) collectArgs.push("--source-index", args.sourceIndex);
-      if (args.allowSearch) collectArgs.push("--allow-search");
+      if (providerSearchTargets.length === 0) {
+        batchReport = {
+          ok: syntheticRows.length > 0,
+          job: "run-fixture-league-date-autonomous-search-batches-file",
+          mode: "read_only_autonomous_url_probe_batch",
+          status: syntheticRows.length > 0 ? "completed" : "completed_no_results",
+          summary: {
+            selectedSearchTargetCount: batchTargets.length,
+            providerSearchTargetCount: providerSearchTargets.length,
+            autonomousUrlProbeTargetCount: urlProbeTargets.length,
+            searchResultRowCount: syntheticRows.length,
+            sourceFetch: false,
+            canonicalWrites: 0,
+            productionWrite: false,
+            dryRun: true
+          },
+          searchResultRows: syntheticRows,
+          searchAttempts: urlProbeTargets.map((target) => ({
+            leagueSlug: asText(target.leagueSlug),
+            query: asText(target.query || target.candidateUrl),
+            candidateUrl: asText(target.candidateUrl),
+            status: "synthetic_url_probe",
+            sourceFetch: false
+          })),
+          guarantees: {
+            sourceFetch: false,
+            canonicalWrites: 0,
+            productionWrite: false,
+            dryRun: true
+          }
+        };
+        writeJson(batchOutputPath, batchReport);
+      } else {
+        const providerBatchTargetsPath = path.join(batchTargetsDir, `autonomous-search-targets-provider-batch-${label}.json`);
+        writeJson(providerBatchTargetsPath, {
+          ok: true,
+          job: "run-fixture-league-date-autonomous-search-batches-file",
+          mode: "read_only_provider_search_batch_targets",
+          generatedAt: new Date().toISOString(),
+          batch: {
+            batchIndex,
+            batchNumber: batchIndex + 1,
+            batchCount: batches.length
+          },
+          searchTargetRows: providerSearchTargets,
+          guarantees: {
+            sourceFetch: false,
+            canonicalWrites: 0,
+            productionWrite: false,
+            dryRun: true
+          }
+        });
 
-      const result = runCollectJob(collectArgs, args.batchTimeoutMs);
+        const collectArgs = [
+          "--targets", providerBatchTargetsPath,
+          "--output", batchOutputPath,
+          "--limit", String(providerSearchTargets.length),
+          "--timeout-ms", String(args.timeoutMs),
+          "--max-chars", String(args.maxChars)
+        ];
 
-      if (result.status !== 0) {
+        if (args.sourceIndex) collectArgs.push("--source-index", args.sourceIndex);
+        if (args.allowSearch) collectArgs.push("--allow-search");
+
+        const result = runCollectJob(collectArgs, args.batchTimeoutMs);
+
+        if (result.status !== 0) {
         logProgress("batch_failed", {
           batchNumber: batchIndex + 1,
           batchCount: batches.length,
@@ -348,7 +462,35 @@ function runBatchPipeline(args) {
         continue;
       }
 
-      batchReport = readJson(batchOutputPath);
+        batchReport = readJson(batchOutputPath);
+        if (syntheticRows.length > 0) {
+          batchReport.searchResultRows = [
+            ...syntheticRows,
+            ...(Array.isArray(batchReport.searchResultRows) ? batchReport.searchResultRows : [])
+          ];
+          batchReport.searchAttempts = [
+            ...(Array.isArray(batchReport.searchAttempts) ? batchReport.searchAttempts : []),
+            ...urlProbeTargets.map((target) => ({
+              leagueSlug: asText(target.leagueSlug),
+              query: asText(target.query || target.candidateUrl),
+              candidateUrl: asText(target.candidateUrl),
+              status: "synthetic_url_probe",
+              sourceFetch: false
+            }))
+          ];
+          batchReport.summary = {
+            ...(batchReport.summary || {}),
+            providerSearchTargetCount: providerSearchTargets.length,
+            autonomousUrlProbeTargetCount: urlProbeTargets.length,
+            searchResultRowCount: batchReport.searchResultRows.length,
+            sourceFetch: false,
+            canonicalWrites: 0,
+            productionWrite: false,
+            dryRun: true
+          };
+          writeJson(batchOutputPath, batchReport);
+        }
+      }
     }
 
     for (const row of batchReport.searchResultRows || []) mergedSearchResultRows.push(row);

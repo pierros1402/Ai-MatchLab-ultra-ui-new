@@ -147,6 +147,36 @@ const KNOWN_COMPETITION_SEARCH_PHRASES = new Map([
     context: "English Football League Championship football",
     officialHostHint: "site:efl.com"
   }],
+  ["eng.3", {
+    searchName: "EFL League One",
+    context: "English Football League One EFL football",
+    officialHostHint: "site:efl.com"
+  }],
+  ["eng.4", {
+    searchName: "EFL League Two",
+    context: "English Football League Two EFL football",
+    officialHostHint: "site:efl.com"
+  }],
+  ["eng.5", {
+    searchName: "National League",
+    context: "English National League football",
+    officialHostHint: "site:thenationalleague.org.uk"
+  }],
+  ["eng.fa", {
+    searchName: "FA Cup",
+    context: "English FA Cup football",
+    officialHostHint: "site:thefa.com"
+  }],
+  ["eng.league_cup", {
+    searchName: "EFL Cup",
+    context: "English League Cup Carabao Cup EFL football",
+    officialHostHint: "site:efl.com"
+  }],
+  ["eng.trophy", {
+    searchName: "EFL Trophy",
+    context: "English Football League Trophy EFL football",
+    officialHostHint: "site:efl.com"
+  }],
   ["esp.1", {
     searchName: "LaLiga",
     context: "Spanish LaLiga football",
@@ -157,14 +187,49 @@ const KNOWN_COMPETITION_SEARCH_PHRASES = new Map([
     context: "Spanish second division football LaLiga Hypermotion Segunda División",
     officialHostHint: "site:laliga.com"
   }],
+  ["esp.copa_del_rey", {
+    searchName: "Copa del Rey",
+    context: "Spanish Copa del Rey football",
+    officialHostHint: "site:rfef.es"
+  }],
+  ["esp.super_cup", {
+    searchName: "Supercopa de España",
+    context: "Spanish Super Cup Supercopa de España football",
+    officialHostHint: "site:rfef.es"
+  }],
   ["ger.1", {
     searchName: "Bundesliga",
     context: "German Bundesliga football",
     officialHostHint: "site:bundesliga.com"
   }],
+  ["ger.2", {
+    searchName: "2. Bundesliga",
+    context: "German 2. Bundesliga football",
+    officialHostHint: "site:bundesliga.com"
+  }],
+  ["ger.3", {
+    searchName: "3. Liga",
+    context: "German 3. Liga football",
+    officialHostHint: "site:dfb.de"
+  }],
+  ["ger.dfb_pokal", {
+    searchName: "DFB Pokal",
+    context: "German DFB Pokal football",
+    officialHostHint: "site:dfb.de"
+  }],
   ["ita.1", {
     searchName: "Serie A",
     context: "Italian Serie A football",
+    officialHostHint: "site:legaseriea.it"
+  }],
+  ["ita.2", {
+    searchName: "Serie B",
+    context: "Italian Serie B football",
+    officialHostHint: "site:legab.it"
+  }],
+  ["ita.coppa_italia", {
+    searchName: "Coppa Italia",
+    context: "Italian Coppa Italia football",
     officialHostHint: "site:legaseriea.it"
   }],
   ["fra.1", {
@@ -456,6 +521,16 @@ function normalizeWorkRow(row, index) {
     name,
     country,
     dayKey,
+    coverageState: asText(row.coverageState) || "coverage_state_unset",
+    sourceDiscoveryMode: asText(row.sourceDiscoveryMode) || "enabled",
+    activityState: asText(row.activityState) || "needs_day_activity_discovery",
+    dayActivityEvidenceState: asText(row.dayActivityEvidenceState) || "unverified_for_day",
+    dayFixtureAcquisitionMode: asText(row.dayFixtureAcquisitionMode) || "discovery_only",
+    activeForDay: row.activeForDay === true,
+    noExpectedFixturesForDay: row.noExpectedFixturesForDay === true,
+    outOfSeasonForDay: row.outOfSeasonForDay === true,
+    nextKnownFixtureDate: asText(row.nextKnownFixtureDate) || null,
+    activityReason: asText(row.activityReason) || "coverage_row_requires_day_activity_verification",
     scope: asText(row.scope) || asText(row.competitionScope) || "senior_top_division",
     previousStatus: asText(row.previousAnalystStatus) || asText(row.status) || asText(row.recommendedAction),
     manualUrlPresent,

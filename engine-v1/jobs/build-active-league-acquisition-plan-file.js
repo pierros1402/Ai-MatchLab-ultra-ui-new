@@ -174,7 +174,17 @@ function buildLeaguePlanRow(row, date) {
     requiresAutonomousSearch: route.requiresAutonomousSearch,
     requiresSecondSourceConfirmation: route.requiresSecondSourceConfirmation,
     valueReadyCandidate: route.valueReadyCandidate,
+    coverageState: "coverage_supported",
+    sourceDiscoveryMode: "enabled",
+    activityState: "needs_day_activity_discovery",
+    dayActivityEvidenceState: "unverified_for_day",
+    dayFixtureAcquisitionMode: "discovery_only",
+    activeForDay: false,
+    noExpectedFixturesForDay: false,
+    outOfSeasonForDay: false,
+    nextKnownFixtureDate: null,
     reason: route.reason,
+    activityReason: "coverage_row_requires_day_activity_verification",
     nextStage: route.requiresAutonomousSearch
       ? "build_fixture_league_date_autonomous_source_discovery_workset"
       : "verified_provider_fetch_or_review_gate",
@@ -213,13 +223,15 @@ function buildReport({ date, coverageRows = LEAGUES_COVERAGE } = {}) {
   return {
     ok: true,
     job: "build-active-league-acquisition-plan-file",
-    mode: "read_only_provider_agnostic_active_league_acquisition_plan",
+    mode: "read_only_provider_agnostic_coverage_watch_and_day_activity_discovery_plan",
     generatedAt: new Date().toISOString(),
     targetDate: date,
     policy: {
       coverageAuthority: "LEAGUES_COVERAGE",
       providerPolicy:
-        "Provider output can support verification; it cannot define coverage. Coverage is defined by the active league map.",
+        "Provider output can support verification; it cannot define coverage. Coverage is defined by the coverage/watch map, not by day-active fixture availability.",
+      dayActivityPolicy:
+        "Coverage rows are watch/discovery candidates until independent official or trusted evidence proves active_for_day, no_expected_fixtures, out_of_season, season_break, or upcoming_season.",
       espnPolicy:
         "ESPN is supplemental verification/crosscheck evidence only, not an acquisition dependency and not value-ready authority.",
       noAdapterPolicy:
@@ -228,7 +240,15 @@ function buildReport({ date, coverageRows = LEAGUES_COVERAGE } = {}) {
         "Supplemental-only evidence is not value-ready without independent verified non-ESPN or official-source confirmation."
     },
     summary: {
-      totalActiveLeagues: planRows.length,
+      totalCoverageLeagues: planRows.length,
+      totalWatchDiscoveryLeagues: planRows.length,
+      activeForDayLeagues: planRows.filter((row) => row.activeForDay === true).length,
+      unknownForDayLeagues: planRows.filter((row) => row.activityState === "needs_day_activity_discovery").length,
+      noExpectedFixturesForDayLeagues: planRows.filter((row) => row.noExpectedFixturesForDay === true).length,
+      outOfSeasonForDayLeagues: planRows.filter((row) => row.outOfSeasonForDay === true).length,
+      dayActivityDiscoveryRequiredLeagues: autonomousRows.length,
+      legacyCoverageRowsPreviouslyNamedActiveLeagues: planRows.length,
+      totalActiveLeagues: planRows.filter((row) => row.activeForDay === true).length,
       invalidLeagueSeedCount: invalidLeagueSeedRows.length,
       verifiedNonEspnProviderAvailableLeagues: verifiedProviderRows.length,
       supplementalOnlyLeagues: supplementalOnlyRows.length,
@@ -270,6 +290,16 @@ function buildReport({ date, coverageRows = LEAGUES_COVERAGE } = {}) {
         name: row.leagueName,
         acquisitionRoute: row.acquisitionRoute,
         espnRole: row.espnRole,
+        coverageState: row.coverageState,
+        sourceDiscoveryMode: row.sourceDiscoveryMode,
+        activityState: row.activityState,
+        dayActivityEvidenceState: row.dayActivityEvidenceState,
+        dayFixtureAcquisitionMode: row.dayFixtureAcquisitionMode,
+        activeForDay: row.activeForDay,
+        noExpectedFixturesForDay: row.noExpectedFixturesForDay,
+        outOfSeasonForDay: row.outOfSeasonForDay,
+        nextKnownFixtureDate: row.nextKnownFixtureDate,
+        activityReason: row.activityReason,
         previousAnalystStatus: row.reason
       })),
       verifiedProviderRows
@@ -291,8 +321,16 @@ function runSelfTest() {
     coverageRows: sampleCoverageRows
   });
 
-  if (report.summary.totalActiveLeagues !== 3) {
-    throw new Error("expected 3 active leagues");
+  if (report.summary.totalCoverageLeagues !== 3) {
+    throw new Error("expected 3 coverage/watch leagues");
+  }
+
+  if (report.summary.totalActiveLeagues !== 0) {
+    throw new Error("coverage rows must not be counted as day-active leagues without evidence");
+  }
+
+  if (report.summary.dayActivityDiscoveryRequiredLeagues !== 3) {
+    throw new Error("expected 3 day-activity discovery rows");
   }
 
   const eng = report.planRows.find((row) => row.leagueSlug === "eng.1");

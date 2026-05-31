@@ -61,7 +61,14 @@ function selectRankedCandidateRows(input) {
 
 function reviewRowFromRankedCandidate(row, index) {
   const truthRole = asText(row.truthRole);
+  const sourceClass = asText(row.sourceClass);
   const isPrimary = truthRole === "primary_candidate_after_fetch_evidence";
+  const isSupplementalFetchCandidate =
+    truthRole === "supplemental_crosscheck_only" &&
+    (
+      sourceClass === "trusted_independent_fixture_listing" ||
+      sourceClass === "supplemental_scoreboard_or_media"
+    );
   const dayKey = asText(row.dayKey || row.targetDate);
   const leagueSlug = asText(row.leagueSlug);
   const paddedIndex = String(index + 1).padStart(3, "0");
@@ -75,20 +82,26 @@ function reviewRowFromRankedCandidate(row, index) {
     discoveryTargetId: asText(row.discoveryTargetId || row.searchTargetId),
     kind: asText(row.expectedSourceFamily || row.sourceClass || "autonomous_ranked_source_candidate"),
     isOfficialOrPrimary: isPrimary,
-    isIndependentSecondSource: false,
+    isIndependentSecondSource: isSupplementalFetchCandidate,
     isClubFallback: false,
     query: asText(row.query || row.searchQuery),
     candidateUrl: asText(row.candidateUrl || row.resolvedUrl || row.url),
     candidateTitle: asText(row.title || row.sourceTitle || row.expectedSourceFamily),
     candidateKind: asText(row.expectedSourceFamily || row.sourceClass || "autonomous_ranked_source_candidate"),
-    sourceClass: asText(row.sourceClass),
+    sourceClass,
     truthRole,
     sourceRank: Number.isFinite(Number(row.sourceRank || row.rank)) ? Number(row.sourceRank || row.rank) : null,
     compositeScore: Number.isFinite(Number(row.compositeScore)) ? Number(row.compositeScore) : null,
-    reviewerDecision: isPrimary ? "candidate_official_url_pending_fetch" : "ranked_candidate_not_primary_truth_role",
+    reviewerDecision: isPrimary
+      ? "candidate_official_url_pending_fetch"
+      : isSupplementalFetchCandidate
+        ? "candidate_supplemental_url_pending_fetch"
+        : "ranked_candidate_not_primary_truth_role",
     reviewerNotes: isPrimary
       ? "Autonomous ranked source policy marked this URL as primary candidate after fetch evidence. Fetch snapshot only; do not promote."
-      : "Autonomous ranked source policy did not mark this URL as primary truth candidate; keep out of fetch rows.",
+      : isSupplementalFetchCandidate
+        ? "Autonomous supplemental source candidate is eligible for read-only controlled fetch evidence extraction only; it is not primary truth and cannot promote canonical data by itself."
+        : "Autonomous ranked source policy did not mark this URL as fetch-eligible; keep out of fetch rows.",
     canonicalWrites: 0,
     productionWrite: false
   };

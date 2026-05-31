@@ -136,6 +136,16 @@ function buildSearchTarget(row, intent, family, index) {
     name: asText(row.name),
     country: asText(row.country),
     dayKey: asText(row.dayKey),
+    coverageState: asText(row.coverageState) || "coverage_state_unset",
+    sourceDiscoveryMode: asText(row.sourceDiscoveryMode) || "enabled",
+    activityState: asText(row.activityState) || "needs_day_activity_discovery",
+    dayActivityEvidenceState: asText(row.dayActivityEvidenceState) || "unverified_for_day",
+    dayFixtureAcquisitionMode: asText(row.dayFixtureAcquisitionMode) || "discovery_only",
+    activeForDay: row.activeForDay === true,
+    noExpectedFixturesForDay: row.noExpectedFixturesForDay === true,
+    outOfSeasonForDay: row.outOfSeasonForDay === true,
+    nextKnownFixtureDate: asText(row.nextKnownFixtureDate) || null,
+    activityReason: asText(row.activityReason) || "coverage_row_requires_day_activity_verification",
     scope: asText(row.scope) || "senior_top_division",
     query: asText(intent.query),
     intent: asText(intent.intent),
@@ -195,10 +205,251 @@ function normalizeRow(row, index) {
       name,
       country: asText(row.country),
       dayKey,
+      coverageState: asText(row.coverageState) || "coverage_state_unset",
+      sourceDiscoveryMode: asText(row.sourceDiscoveryMode) || "enabled",
+      activityState: asText(row.activityState) || "needs_day_activity_discovery",
+      dayActivityEvidenceState: asText(row.dayActivityEvidenceState) || "unverified_for_day",
+      dayFixtureAcquisitionMode: asText(row.dayFixtureAcquisitionMode) || "discovery_only",
+      activeForDay: row.activeForDay === true,
+      noExpectedFixturesForDay: row.noExpectedFixturesForDay === true,
+      outOfSeasonForDay: row.outOfSeasonForDay === true,
+      nextKnownFixtureDate: asText(row.nextKnownFixtureDate) || null,
+      activityReason: asText(row.activityReason) || "coverage_row_requires_day_activity_verification",
       scope: asText(row.scope) || "senior_top_division",
       queryIntents
     }
   };
+}
+
+function compactQuery(value) {
+  return asText(value).replace(/\s+/g, " ").trim();
+}
+
+function quotedPhraseFromQuery(query) {
+  const raw = asText(query);
+  const match = raw.match(/"([^"]{4,120})"/);
+  if (match) return compactQuery(match[1]);
+
+  return compactQuery(
+    raw
+      .replace(/site:[^\s]+/gi, " ")
+      .replace(/\b(20\d{2}[-/ ]?\d{2}[-/ ]?\d{2}|\d{1,2}[-/ ]?\d{1,2}[-/ ]?20\d{2})\b/g, " ")
+      .replace(/\b(fixtures?|results?|matches?|schedule|calendar|official|football|soccer|source|sources|club|clubs|federation|competition)\b/gi, " ")
+  ).split(" ").slice(0, 8).join(" ");
+}
+
+function officialSiteFromQuery(query) {
+  const match = asText(query).match(/site:([^\s]+)/i);
+  return match ? compactQuery(match[1]).replace(/^https?:\/\//i, "").replace(/\/+$/, "") : "";
+}
+
+function expansionDedupeKey(base, intent, family, query) {
+  return [
+    asText(base.dayKey),
+    asText(base.leagueSlug).toLowerCase(),
+    asText(intent).toLowerCase(),
+    normalizeFamily(family),
+    asText(query).toLowerCase().replace(/\s+/g, " ")
+  ].join("|");
+}
+
+function buildExpansionTarget(base, query, intent, family, score, reason) {
+  const cleanQuery = compactQuery(query);
+  if (!cleanQuery) return null;
+
+  return {
+    ...base,
+    searchTargetId: [
+      asText(base.dayKey),
+      asText(base.leagueSlug),
+      intent,
+      normalizeFamily(family),
+      "fixture_surface_expansion",
+      score
+    ].join(":"),
+    query: cleanQuery,
+    intent,
+    expectedSourceFamily: normalizeFamily(family),
+    priority: score,
+    sourceFamilyScore: score,
+    compositeScore: score,
+    reason: [
+      ...(
+        Array.isArray(base.reason)
+          ? base.reason.map(asText).filter(Boolean)
+          : []
+      ),
+      "fixture_surface_expansion_target",
+      reason
+    ],
+    dedupeKey: expansionDedupeKey(base, intent, family, cleanQuery),
+    candidateUrl: null,
+    manualCandidateUrlUsed: false,
+    fetchState: "not_fetched",
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
+function buildFixtureSurfaceExpansionTargets(searchTargetRows) {
+  const out = [];
+  const perLeagueCounts = new Map();
+
+  for (const base of searchTargetRows) {
+    const leagueSlug = asText(base.leagueSlug);
+    if (!leagueSlug) continue;
+
+    const currentCount = perLeagueCounts.get(leagueSlug) || 0;
+    if (currentCount >= 4) continue;
+
+    const dayKey = asText(base.dayKey);
+    const phrase = compactQuery(base.name || quotedPhraseFromQuery(base.query));
+    if (!phrase || phrase.length < 4) continue;
+
+    const site = officialSiteFromQuery(base.query);
+    const candidates = [];
+
+    if (site) {
+      candidates.push(buildExpansionTarget(
+        base,
+        `site:${site} "${phrase}" fixtures results schedule matches ${dayKey}`,
+        "official_fixture_url_surface",
+        "official_league",
+        100,
+        "official_site_fixture_surface_query"
+      ));
+
+      candidates.push(buildExpansionTarget(
+        base,
+        `site:${site} "${phrase}" fixtures results schedule matches`,
+        "official_fixture_url_surface",
+        "official_league",
+        98,
+        "official_site_fixture_path_query"
+      ));
+    }
+
+    candidates.push(buildExpansionTarget(
+      base,
+      `"${phrase}" fixtures results schedule matches ${dayKey} football`,
+      "trusted_independent_fixture_listing",
+      "trusted_independent_fixture_listing",
+      96,
+      "broad_fixture_surface_query"
+    ));
+
+    candidates.push(buildExpansionTarget(
+      base,
+      `"${phrase}" fixtures results schedule matches football`,
+      "supplemental_scoreboard_crosscheck",
+      "trusted_independent_fixture_listing",
+      94,
+      "supplemental_fixture_surface_query"
+    ));
+
+    for (const candidate of candidates.filter(Boolean)) {
+      if ((perLeagueCounts.get(leagueSlug) || 0) >= 4) break;
+      out.push(candidate);
+      perLeagueCounts.set(leagueSlug, (perLeagueCounts.get(leagueSlug) || 0) + 1);
+    }
+  }
+
+  return out;
+}
+
+function candidateUrlDedupeKey(base, candidateUrl, intent, family) {
+  return [
+    asText(base.dayKey),
+    asText(base.leagueSlug).toLowerCase(),
+    asText(intent).toLowerCase(),
+    normalizeFamily(family),
+    asText(candidateUrl).toLowerCase().replace(/\/+$/, "")
+  ].join("|");
+}
+
+function buildAutonomousUrlProbeTarget(base, candidateUrl, intent, family, score, reason) {
+  const url = asText(candidateUrl).replace(/\/+$/, "");
+  if (!url) return null;
+
+  return {
+    ...base,
+    searchTargetId: [
+      asText(base.dayKey),
+      asText(base.leagueSlug),
+      intent,
+      normalizeFamily(family),
+      "autonomous_url_surface_probe",
+      score
+    ].join(":"),
+    query: url,
+    intent,
+    expectedSourceFamily: normalizeFamily(family),
+    priority: score,
+    sourceFamilyScore: score,
+    compositeScore: score,
+    reason: [
+      ...(
+        Array.isArray(base.reason)
+          ? base.reason.map(asText).filter(Boolean)
+          : []
+      ),
+      "autonomous_url_surface_probe_target",
+      reason
+    ],
+    dedupeKey: candidateUrlDedupeKey(base, url, intent, family),
+    resolutionMode: "autonomous_url_surface_probe",
+    candidateUrl: url,
+    manualCandidateUrlUsed: false,
+    fetchState: "not_fetched",
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
+function buildAutonomousUrlProbeTargets(searchTargetRows) {
+  const out = [];
+  const perLeagueCounts = new Map();
+  const probePaths = [
+    "fixtures",
+    "results",
+    "matches",
+    "schedule",
+    "match-centre",
+    "match-center"
+  ];
+
+  for (const base of searchTargetRows) {
+    const leagueSlug = asText(base.leagueSlug);
+    if (!leagueSlug) continue;
+
+    const site = officialSiteFromQuery(base.query);
+    if (!site) continue;
+
+    const currentCount = perLeagueCounts.get(leagueSlug) || 0;
+    if (currentCount >= 6) continue;
+
+    for (const probePath of probePaths) {
+      if ((perLeagueCounts.get(leagueSlug) || 0) >= 6) break;
+
+      const candidateUrl = `https://${site}/${probePath}`;
+      const candidate = buildAutonomousUrlProbeTarget(
+        base,
+        candidateUrl,
+        "official_fixture_url_surface_probe",
+        "official_league",
+        97,
+        `official_site_${probePath}_url_probe`
+      );
+
+      if (!candidate) continue;
+      out.push(candidate);
+      perLeagueCounts.set(leagueSlug, (perLeagueCounts.get(leagueSlug) || 0) + 1);
+    }
+  }
+
+  return out;
 }
 
 function dedupeAndSortTargets(targets) {
@@ -247,6 +498,14 @@ function buildReport(input, options = {}) {
   }
 
   let searchTargetRows = dedupeAndSortTargets(rawTargets);
+  searchTargetRows = dedupeAndSortTargets([
+    ...searchTargetRows,
+    ...buildFixtureSurfaceExpansionTargets(searchTargetRows)
+  ]);
+  searchTargetRows = dedupeAndSortTargets([
+    ...searchTargetRows,
+    ...buildAutonomousUrlProbeTargets(searchTargetRows)
+  ]);
 
   if (Number.isFinite(options.perLeagueLimit) && options.perLeagueLimit > 0) {
     const byLeagueCount = new Map();
@@ -359,10 +618,10 @@ function runSelfTest() {
 
   if (report.summary.acceptedWorkRowCount !== 1) throw new Error("expected 1 accepted work row");
   if (report.summary.rejectedWorkRowCount !== 1) throw new Error("expected 1 rejected work row");
-  if (report.summary.searchTargetCount !== 3) throw new Error(`expected 3 targets, got ${report.summary.searchTargetCount}`);
+  if (report.summary.searchTargetCount < 3) throw new Error(`expected at least 3 targets, got ${report.summary.searchTargetCount}`);
   if (report.guarantees.manualCandidateUrlsUsed !== false) throw new Error("manual URLs must not be used");
   if (report.guarantees.noResolvedUrlClaim !== true) throw new Error("must not claim resolved URLs");
-  if (report.searchTargetRows.some((row) => row.candidateUrl !== null)) throw new Error("candidateUrl must remain null");
+  if (report.searchTargetRows.some((row) => row.candidateUrl && row.manualCandidateUrlUsed === true)) throw new Error("candidateUrl probes must remain autonomous, not manual");
 
   return {
     ok: true,

@@ -87,6 +87,7 @@ function decisionLooksLikeCandidate(value) {
   const decision = asText(value).toLowerCase();
   return [
     "candidate_official_url_pending_fetch",
+    "candidate_supplemental_url_pending_fetch",
     "candidate_independent_url_pending_fetch",
     "candidate_club_url_pending_fetch"
   ].includes(decision);

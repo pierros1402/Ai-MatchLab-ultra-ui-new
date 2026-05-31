@@ -514,6 +514,90 @@ function resultMatchesTarget(target, result) {
   return false;
 }
 
+function fixtureSurfaceQuality(candidateUrl, result) {
+  const rawUrl = asText(candidateUrl);
+  const title = asText(result.title).toLowerCase();
+  const snippet = asText(result.snippet || result.description).toLowerCase();
+
+  let pathname = "";
+  let search = "";
+  try {
+    const parsed = new URL(rawUrl);
+    pathname = parsed.pathname.toLowerCase().replace(/\/+$/, "");
+    search = parsed.search.toLowerCase();
+  } catch {
+    pathname = rawUrl.toLowerCase();
+  }
+
+  const pathAndQuery = [pathname, search].join(" ");
+  const titleAndSnippet = [title, snippet].join(" ");
+  const pageText = [pathAndQuery, titleAndSnippet].join(" ");
+
+  const hasFixturePathSignal =
+    /\b(fixtures?|results?|matches?|schedule|calendar|match[-_ ]?centre|match[-_ ]?center)\b/.test(pathAndQuery) ||
+    /(^|[\/_-])scores?([\/_-]|$)/.test(pathAndQuery);
+
+  const hasFixtureTextSignal =
+    /\b(fixtures?|results?|matches?|schedule|calendar|match[-_ ]?centre|match[-_ ]?center|scoreboard)\b/.test(titleAndSnippet);
+
+  const hasDateSurfaceSignal =
+    /\b(2026[-/ ]?05[-/ ]?31|31[-/ ]?05[-/ ]?2026|may\s+31\s+2026|31\s+may\s+2026)\b/.test(pageText);
+
+  const isNewsOrArticleSurface =
+    /(^|\/)news(\/|$)/.test(pathname) ||
+    /(^|\/)(article|articles|preview|previews|video|videos|highlights|transfers?|tickets?|shop)(\/|$)/.test(pathname) ||
+    /\b(news|article|preview|play-offs?|playoffs?|wembley finals?|transfers?|tickets?|shop|video|highlights?)\b/.test(titleAndSnippet);
+
+  const isHomepageLike =
+    pathname === "" ||
+    pathname === "/" ||
+    /^\/[a-z]{2}(-[a-z]{2})?$/.test(pathname);
+
+  const isGenericLeagueLanding =
+    /^\/(sport\/)?football\/[^/]+$/.test(pathname) ||
+    /^\/(football|soccer|futebol)\/(league|competition|tables?|standings?)\/[^/]+$/.test(pathname) ||
+    /\b(league landing|competition landing|homepage)\b/.test(titleAndSnippet);
+
+  const hasGenericSurfaceSignal =
+    /\/wiki\//.test(pathname) ||
+    /\b(wikipedia|standings?|tables?)\b/.test(pageText) ||
+    /\b(airport|national geographic|national car|rentals?|casino|betting|odds)\b/.test(pageText);
+
+  if (isNewsOrArticleSurface || isHomepageLike || isGenericLeagueLanding || hasGenericSurfaceSignal) {
+    return {
+      state: "generic_or_non_fixture_surface",
+      scoreBoost: 0,
+      scorePenalty: isHomepageLike || isGenericLeagueLanding ? 50 : 40,
+      reasons: [
+        isNewsOrArticleSurface ? "news_or_article_surface_not_fixture_page" : "",
+        isHomepageLike ? "homepage_like_candidate_url" : "",
+        isGenericLeagueLanding ? "generic_league_landing_candidate_url" : "",
+        hasGenericSurfaceSignal ? "generic_or_non_fixture_surface_signal" : ""
+      ].filter(Boolean)
+    };
+  }
+
+  if (hasFixturePathSignal || hasDateSurfaceSignal || hasFixtureTextSignal) {
+    return {
+      state: "fixture_surface_candidate",
+      scoreBoost: hasDateSurfaceSignal ? 16 : hasFixturePathSignal ? 12 : 6,
+      scorePenalty: 0,
+      reasons: [
+        hasFixturePathSignal ? "fixture_path_surface_signal" : "",
+        hasFixtureTextSignal ? "fixture_text_surface_signal" : "",
+        hasDateSurfaceSignal ? "target_date_surface_signal" : ""
+      ].filter(Boolean)
+    };
+  }
+
+  return {
+    state: "unknown_fixture_surface",
+    scoreBoost: 0,
+    scorePenalty: 18,
+    reasons: ["missing_fixture_surface_signal"]
+  };
+}
+
 function rankOne(target, result, index) {
   const candidateUrl = candidateUrlFromResult(result);
   const hostname = hostnameFromUrl(candidateUrl) || asText(result.hostname).toLowerCase().replace(/^www\./, "");
@@ -531,6 +615,8 @@ function rankOne(target, result, index) {
   const queryScore = queryMatchScore(target, result);
   const familyScore = expectedFamilyScore(target.expectedSourceFamily, hostname, haystack);
   const penalty = riskPenalty(result, hostname);
+  const surfaceQuality = fixtureSurfaceQuality(candidateUrl, result);
+  const hostPolicy = sourcePolicyForHost(hostname);
   const baseScore = Number(target.compositeScore) || 0;
   const resultRank = Number(result.rank || result.position || result.resultRank || index + 1);
   const rankBoost = Math.max(0, 12 - Math.min(12, resultRank));
@@ -539,16 +625,28 @@ function rankOne(target, result, index) {
     0,
     Math.min(
       100,
-      Math.round((baseScore * 0.35) + queryScore.score + familyScore.score + rankBoost - penalty.penalty)
+      Math.round(
+        (baseScore * 0.35) +
+        queryScore.score +
+        familyScore.score +
+        rankBoost +
+        surfaceQuality.scoreBoost -
+        penalty.penalty -
+        surfaceQuality.scorePenalty
+      )
     )
   );
+
+  const isFetchEligibleSurface = surfaceQuality.state === "fixture_surface_candidate";
+  const sourceClass = isFetchEligibleSurface ? hostPolicy.sourceClass : "low_priority_or_non_truth_surface";
+  const truthRole = isFetchEligibleSurface ? hostPolicy.truthRole : "not_truth_ready";
 
   return {
     ok: true,
     candidateUrl,
     hostname,
-    sourceClass: sourcePolicyForHost(hostname).sourceClass,
-    truthRole: sourcePolicyForHost(hostname).truthRole,
+    sourceClass,
+    truthRole,
     title: asText(result.title),
     snippet: asText(result.snippet || result.description),
     leagueSlug: asText(target.leagueSlug),
@@ -567,9 +665,14 @@ function rankOne(target, result, index) {
     scoreReasons: [
       ...queryScore.reasons,
       ...familyScore.reasons,
+      ...surfaceQuality.reasons,
       `result_rank_boost_${rankBoost}`
     ],
-    riskReasons: penalty.reasons,
+    surfaceQuality: surfaceQuality.state,
+    riskReasons: [
+      ...penalty.reasons,
+      ...(isFetchEligibleSurface ? [] : ["blocked_from_fetch_without_fixture_surface_signal"])
+    ],
     manualCandidateUrlUsed: false,
     resultSource: asText(result.resultSource || result.provider || result.source || "search_result_input"),
     fetchState: "not_fetched",
