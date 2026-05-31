@@ -361,6 +361,144 @@ function summarizeEvidenceCoverage(extractReport) {
   };
 }
 
+function selectDayActivityRows(input) {
+  return selectRows(input, ["leagueDayActivityRows", "dayActivityRows", "rows"]);
+}
+
+function isTargetDateFixtureAcquisitionRequired(row) {
+  const fixtureAcquisitionMode = asText(row.fixtureAcquisitionMode);
+  const valuePipelineEligibility = asText(row.valuePipelineEligibility);
+
+  return (
+    fixtureAcquisitionMode === "target_date_fixture_acquisition_required" ||
+    valuePipelineEligibility === "target_date_value_pipeline_candidate" ||
+    row.targetDateFixtureAcquisitionRequired === true ||
+    row.valuePipelineCandidate === true
+  );
+}
+
+function buildDayActivityRouting({ selectedLeagues, targetRows, paths }) {
+  const stateExists = fs.existsSync(paths.leagueDayActivityState);
+  const state = stateExists ? readJson(paths.leagueDayActivityState) : null;
+  const stateRows = state ? selectDayActivityRows(state) : [];
+
+  if (!stateRows.length) {
+    const report = {
+      ok: true,
+      job: "run-daily-autonomous-fixture-acquisition-progressive-file",
+      mode: "read_only_day_activity_routing",
+      generatedAt: new Date().toISOString(),
+      stateApplied: false,
+      statePath: paths.leagueDayActivityState,
+      summary: {
+        selectedLeagueCountBeforeRouting: selectedLeagues.length,
+        selectedLeagueCountAfterRouting: selectedLeagues.length,
+        searchTargetRowCountBeforeRouting: targetRows.length,
+        searchTargetRowCountAfterRouting: targetRows.length,
+        targetDateFixtureAcquisitionRequiredCount: 0,
+        valuePipelineCandidateCount: 0,
+        restartWatchCount: 0,
+        skippedFromTargetDateFixtureAcquisitionCount: 0,
+        futureSearchHardExcludedCount: 0,
+        continueAutonomousSearchCount: 0,
+        routingFallbackUsed: true,
+        canonicalWrites: 0,
+        productionWrite: false,
+        dryRun: true
+      },
+      guarantees: {
+        sourceFetch: false,
+        noFetch: true,
+        noUrlFetch: true,
+        noCanonicalPromotion: true,
+        canonicalWrites: 0,
+        productionWrite: false,
+        dryRun: true
+      },
+      routedTargetRows: targetRows,
+      routingRows: []
+    };
+
+    writeJson(paths.dayActivityRouting, report);
+    return report;
+  }
+
+  const activityByLeague = new Map();
+  for (const row of stateRows) {
+    const league = leagueOf(row);
+    if (!league) continue;
+    if (!activityByLeague.has(league)) activityByLeague.set(league, row);
+  }
+
+  const targetLeagueSet = new Set();
+  const routingRows = selectedLeagues.map((leagueSlug) => {
+    const activity = activityByLeague.get(leagueSlug) || {};
+    const targetDateFixtureAcquisitionRequired = isTargetDateFixtureAcquisitionRequired(activity);
+
+    if (targetDateFixtureAcquisitionRequired) {
+      targetLeagueSet.add(leagueSlug);
+    }
+
+    return {
+      leagueSlug,
+      activityState: asText(activity.activityState),
+      fixtureAcquisitionMode: asText(activity.fixtureAcquisitionMode),
+      valuePipelineEligibility: asText(activity.valuePipelineEligibility),
+      seasonMonitoringMode: asText(activity.seasonMonitoringMode),
+      nextRequiredAction: asText(activity.nextRequiredAction),
+      nextKnownFixtureDate: asText(activity.nextKnownFixtureDate),
+      targetDateFixtureAcquisitionRequired,
+      valuePipelineCandidate: asText(activity.valuePipelineEligibility) === "target_date_value_pipeline_candidate" || activity.valuePipelineCandidate === true,
+      restartWatch: String(activity.seasonMonitoringMode || "").includes("restart_watch") || activity.restartWatch === true,
+      futureSearchHardExcluded: activity.hardExcludedFromFutureSearch === true || activity.futureSearchHardExcluded === true,
+      continueAutonomousSearch: activity.continueAutonomousSearch === true,
+      routedToTargetDateFixtureSearch: targetDateFixtureAcquisitionRequired
+    };
+  });
+
+  const routedTargetRows = targetRows.filter((row) => targetLeagueSet.has(leagueOf(row)));
+  const selectedLeagueCountAfterRouting = uniqueLeagues(routedTargetRows).length;
+
+  const report = {
+    ok: true,
+    job: "run-daily-autonomous-fixture-acquisition-progressive-file",
+    mode: "read_only_day_activity_routing",
+    generatedAt: new Date().toISOString(),
+    stateApplied: true,
+    statePath: paths.leagueDayActivityState,
+    summary: {
+      selectedLeagueCountBeforeRouting: selectedLeagues.length,
+      selectedLeagueCountAfterRouting,
+      searchTargetRowCountBeforeRouting: targetRows.length,
+      searchTargetRowCountAfterRouting: routedTargetRows.length,
+      targetDateFixtureAcquisitionRequiredCount: routingRows.filter((row) => row.targetDateFixtureAcquisitionRequired === true).length,
+      valuePipelineCandidateCount: routingRows.filter((row) => row.valuePipelineCandidate === true).length,
+      restartWatchCount: routingRows.filter((row) => row.restartWatch === true).length,
+      skippedFromTargetDateFixtureAcquisitionCount: routingRows.filter((row) => row.routedToTargetDateFixtureSearch !== true).length,
+      futureSearchHardExcludedCount: routingRows.filter((row) => row.futureSearchHardExcluded === true).length,
+      continueAutonomousSearchCount: routingRows.filter((row) => row.continueAutonomousSearch === true).length,
+      routingFallbackUsed: false,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    },
+    guarantees: {
+      sourceFetch: false,
+      noFetch: true,
+      noUrlFetch: true,
+      noCanonicalPromotion: true,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    },
+    routedTargetRows,
+    routingRows
+  };
+
+  writeJson(paths.dayActivityRouting, report);
+  return report;
+}
+
 function assertReadOnly(report) {
   const summary = report.summary || {};
   const guarantees = report.guarantees || {};
@@ -396,6 +534,7 @@ function buildPaths(baseDir, date) {
     classified: path.join(baseDir, `classified-source-candidate-snapshots-${date}.json`),
     evidence: path.join(baseDir, `source-candidate-evidence-${date}.json`),
     dayActivityDir: path.join(baseDir, "day-activity"),
+    dayActivityRouting: path.join(baseDir, `day-activity-routing-${date}.json`),
     leagueDayActivityState: path.join("data", "football-truth", "_state", "league-day-activity", `${date}.json`),
     leagueSeasonWatchState: path.join("data", "football-truth", "_state", "league-season-watch", "league-season-watch.json")
   };
@@ -544,8 +683,19 @@ function runPipeline(args) {
   const workset = readJson(paths.workset);
   const allTargets = readJson(paths.allTargets);
   const workRows = selectRows(workset, ["workRows"]);
-  const selectedLeagues = uniqueLeagues(workRows);
-  const targetRows = selectRows(allTargets, ["searchTargetRows"]);
+  let selectedLeagues = uniqueLeagues(workRows);
+  const rawTargetRows = selectRows(allTargets, ["searchTargetRows"]);
+
+  const dayActivityRoutingReport = buildDayActivityRouting({
+    selectedLeagues,
+    targetRows: rawTargetRows,
+    paths
+  });
+
+  const targetRows = selectRows(dayActivityRoutingReport, ["routedTargetRows"]);
+  selectedLeagues = dayActivityRoutingReport.stateApplied
+    ? uniqueLeagues(targetRows)
+    : selectedLeagues;
 
   const waveReports = [];
   const waveFetchReports = [];
@@ -691,6 +841,17 @@ function runPipeline(args) {
     },
     summary: {
       totalEligibleLeagues: selectedLeagues.length,
+      dayActivityRoutingApplied: dayActivityRoutingReport.stateApplied === true,
+      preRoutingEligibleLeagueCount: dayActivityRoutingReport.summary?.selectedLeagueCountBeforeRouting || selectedLeagues.length,
+      postRoutingEligibleLeagueCount: dayActivityRoutingReport.summary?.selectedLeagueCountAfterRouting || selectedLeagues.length,
+      preRoutingSearchTargetRowCount: dayActivityRoutingReport.summary?.searchTargetRowCountBeforeRouting || 0,
+      postRoutingSearchTargetRowCount: dayActivityRoutingReport.summary?.searchTargetRowCountAfterRouting || targetRows.length,
+      targetDateFixtureAcquisitionRequiredCount: dayActivityRoutingReport.summary?.targetDateFixtureAcquisitionRequiredCount || 0,
+      valuePipelineCandidateCount: dayActivityRoutingReport.summary?.valuePipelineCandidateCount || 0,
+      restartWatchCount: dayActivityRoutingReport.summary?.restartWatchCount || 0,
+      skippedFromTargetDateFixtureAcquisitionCount: dayActivityRoutingReport.summary?.skippedFromTargetDateFixtureAcquisitionCount || 0,
+      futureSearchHardExcludedCount: dayActivityRoutingReport.summary?.futureSearchHardExcludedCount || 0,
+      continueAutonomousSearchCount: dayActivityRoutingReport.summary?.continueAutonomousSearchCount || 0,
       searchedLeagueCount: uniqueLeagues([
         ...selectRows(fs.existsSync(paths.wave1Targets) ? readJson(paths.wave1Targets) : {}, ["searchTargetRows"]),
         ...selectRows(fs.existsSync(paths.wave2Targets) ? readJson(paths.wave2Targets) : {}, ["searchTargetRows"])
@@ -720,6 +881,7 @@ function runPipeline(args) {
       plan: fs.existsSync(paths.plan) ? readJson(paths.plan).summary || {} : {},
       workset: fs.existsSync(paths.workset) ? readJson(paths.workset).summary || {} : {},
       targets: fs.existsSync(paths.allTargets) ? readJson(paths.allTargets).summary || {} : {},
+      dayActivityRouting: dayActivityRoutingReport.summary || {},
       fetched: fetchReport?.summary || null,
       classified: classifyReport?.summary || null,
       evidence: extractReport?.summary || null,
@@ -778,6 +940,51 @@ function runSelfTest() {
     readyForFetchRows: [{ leagueSlug: "a.1", resolvedUrl: "https://example.test/a", readyForFetch: true }],
     rejectedRows: [{ leagueSlug: "b.1", rejectionReason: "no_official_fixture_candidate" }]
   });
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-progressive-routing-"));
+  const routingPaths = {
+    dayActivityRouting: path.join(tmpDir, "routing.json"),
+    leagueDayActivityState: path.join(tmpDir, "state.json")
+  };
+
+  writeJson(routingPaths.leagueDayActivityState, {
+    leagueDayActivityRows: [
+      {
+        leagueSlug: "a.1",
+        fixtureAcquisitionMode: "target_date_fixture_acquisition_required",
+        valuePipelineEligibility: "target_date_value_pipeline_candidate",
+        seasonMonitoringMode: "normal_daily_monitoring",
+        continueAutonomousSearch: true
+      },
+      {
+        leagueSlug: "b.1",
+        fixtureAcquisitionMode: "no_target_date_fixture_acquisition",
+        valuePipelineEligibility: "not_value_ready_for_target_date",
+        seasonMonitoringMode: "restart_watch",
+        continueAutonomousSearch: true
+      }
+    ]
+  });
+
+  const routing = buildDayActivityRouting({
+    selectedLeagues: ["a.1", "b.1"],
+    targetRows: sampleTargets.searchTargetRows,
+    paths: routingPaths
+  });
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+
+  if (routing.summary.selectedLeagueCountAfterRouting !== 1) {
+    throw new Error("expected routing to keep only one target-date acquisition league");
+  }
+
+  if (routing.summary.restartWatchCount !== 1) {
+    throw new Error("expected one restart-watch league in routing summary");
+  }
+
+  if (routing.summary.futureSearchHardExcludedCount !== 0) {
+    throw new Error("expected no hard-excluded leagues in routing summary");
+  }
 
   if (coverage.readyForFetchLeagueCount !== 1) throw new Error("expected 1 ready league");
   if (coverage.zeroReadyLeagueCount !== 1) throw new Error("expected 1 zero-ready league");
