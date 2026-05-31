@@ -393,7 +393,10 @@ function buildPaths(baseDir, date) {
     mergedFetchRows: path.join(baseDir, `merged-fetch-rows-${date}.json`),
     fetched: path.join(baseDir, `fetched-source-candidate-snapshots-${date}.json`),
     classified: path.join(baseDir, `classified-source-candidate-snapshots-${date}.json`),
-    evidence: path.join(baseDir, `source-candidate-evidence-${date}.json`)
+    evidence: path.join(baseDir, `source-candidate-evidence-${date}.json`),
+    dayActivityDir: path.join(baseDir, "day-activity"),
+    leagueDayActivityState: path.join("data", "football-truth", "_state", "league-day-activity", `${date}.json`),
+    leagueSeasonWatchState: path.join("data", "football-truth", "_state", "league-season-watch", "league-season-watch.json")
   };
 }
 
@@ -628,6 +631,7 @@ function runPipeline(args) {
   let fetchReport = null;
   let classifyReport = null;
   let extractReport = null;
+  let dayActivityReport = null;
   const fetchSteps = [];
 
   if (args.allowFetch) {
@@ -652,6 +656,17 @@ function runPipeline(args) {
     fetchReport = readJson(paths.fetched);
     classifyReport = readJson(paths.classified);
     extractReport = readJson(paths.evidence);
+
+    fetchSteps.push(runNodeJob("evaluate-fixture-league-day-activity-evidence-file.js", [
+      "--input", paths.evidence,
+      "--date", args.date,
+      "--output-dir", paths.dayActivityDir,
+      "--league-day-activity-output", paths.leagueDayActivityState,
+      "--season-watch-output", paths.leagueSeasonWatchState
+    ], "evaluate league day activity evidence"));
+
+    dayActivityReport = readJson(paths.leagueDayActivityState);
+    assertReadOnly(dayActivityReport);
   }
 
   const evidenceCoverage = summarizeEvidenceCoverage(extractReport);
@@ -686,6 +701,12 @@ function runPipeline(args) {
       fixtureEvidenceLeagueCount: evidenceCoverage.fixtureEvidenceLeagueCount,
       secondSourceCandidateCount: evidenceCoverage.secondSourceCandidateCount,
       blockedEvidenceRowCount: evidenceCoverage.blockedEvidenceRowCount,
+      dayActivityLeagueCount: dayActivityReport?.summary?.leagueCount || 0,
+      activeForDayCount: dayActivityReport?.summary?.activeForDayCount || 0,
+      noExpectedFixturesForDayCount: dayActivityReport?.summary?.noExpectedFixturesForDayCount || 0,
+      outOfSeasonForDayCount: dayActivityReport?.summary?.outOfSeasonForDayCount || 0,
+      nextKnownFixtureDateCount: dayActivityReport?.summary?.nextKnownFixtureDateCount || 0,
+      needsMoreDayActivityEvidenceCount: dayActivityReport?.summary?.needsMoreEvidenceCount || 0,
       sourceFetch: args.allowFetch === true,
       canonicalWrites: 0,
       productionWrite: false,
@@ -700,7 +721,8 @@ function runPipeline(args) {
       targets: fs.existsSync(paths.allTargets) ? readJson(paths.allTargets).summary || {} : {},
       fetched: fetchReport?.summary || null,
       classified: classifyReport?.summary || null,
-      evidence: extractReport?.summary || null
+      evidence: extractReport?.summary || null,
+      dayActivity: dayActivityReport?.summary || null
     },
     executedSteps: [
       ...steps,
