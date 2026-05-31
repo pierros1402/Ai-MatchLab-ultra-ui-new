@@ -2345,3 +2345,6 @@ The autonomous fixture acquisition chain can now carry season/restart/no-fixture
 ### Day activity semantics guard
 
 League day activity is target-date scoped only. It may mark active_for_day, no_expected_fixtures_for_day, break_or_calendar_gap, or needs_more_day_activity_evidence for the requested date, but it must not decide season_completed or long-lived out_of_season status. Restart/calendar context and no-fixture evidence can support target-date no-fixture state only. Final standings, champion, relegation, promotion, matchday/round progress, and next-season start evidence belong in a separate season-status evidence layer before they can affect long-lived league activation or historical season state.
+### Football truth state inventory
+
+`build-football-truth-state-inventory-file.js` is a read-only diagnostic inventory for the football truth foundation. It scans canonical fixtures, day-activity state, season-watch state, season-status state, standings, and history for a target date/season and reports which leagues need fixture acquisition, day-activity evidence, FT repair, standings refresh, or season-status evidence. It must not fetch sources, promote canonical data, or write fixture/history/value/details production data.
