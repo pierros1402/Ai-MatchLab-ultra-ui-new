@@ -432,14 +432,16 @@ function buildDayActivityRouting({ selectedLeagues, targetRows, paths }) {
 
   const targetLeagueSet = new Set();
   const routingRows = selectedLeagues.map((leagueSlug) => {
-    const activity = activityByLeague.get(leagueSlug) || {};
+    const hasDayActivityState = activityByLeague.has(leagueSlug);
+    const activity = hasDayActivityState ? activityByLeague.get(leagueSlug) : {};
     const targetDateFixtureAcquisitionRequired = isTargetDateFixtureAcquisitionRequired(activity);
     const valuePipelineCandidate = asText(activity.valuePipelineEligibility) === "target_date_value_pipeline_candidate" || activity.valuePipelineCandidate === true;
     const restartWatch = String(activity.seasonMonitoringMode || "").includes("restart_watch") || activity.restartWatch === true;
     const futureSearchHardExcluded = activity.hardExcludedFromFutureSearch === true || activity.futureSearchHardExcluded === true;
-    const continueAutonomousSearch = activity.continueAutonomousSearch === true;
+    const continueAutonomousSearch = hasDayActivityState !== true || activity.continueAutonomousSearch === true;
     const routedToTargetDateFixtureSearch = targetDateFixtureAcquisitionRequired;
     const routedToAutonomousSearch = futureSearchHardExcluded !== true && (
+      hasDayActivityState !== true ||
       targetDateFixtureAcquisitionRequired === true ||
       continueAutonomousSearch === true ||
       restartWatch === true
@@ -457,6 +459,7 @@ function buildDayActivityRouting({ selectedLeagues, targetRows, paths }) {
       seasonMonitoringMode: asText(activity.seasonMonitoringMode),
       nextRequiredAction: asText(activity.nextRequiredAction),
       nextKnownFixtureDate: asText(activity.nextKnownFixtureDate),
+      hasDayActivityState,
       targetDateFixtureAcquisitionRequired,
       valuePipelineCandidate,
       restartWatch,
@@ -482,6 +485,7 @@ function buildDayActivityRouting({ selectedLeagues, targetRows, paths }) {
       selectedLeagueCountAfterRouting,
       searchTargetRowCountBeforeRouting: targetRows.length,
       searchTargetRowCountAfterRouting: routedTargetRows.length,
+      missingDayActivityStateCount: routingRows.filter((row) => row.hasDayActivityState !== true).length,
       targetDateFixtureAcquisitionRequiredCount: routingRows.filter((row) => row.targetDateFixtureAcquisitionRequired === true).length,
       valuePipelineCandidateCount: routingRows.filter((row) => row.valuePipelineCandidate === true).length,
       restartWatchCount: routingRows.filter((row) => row.restartWatch === true).length,
