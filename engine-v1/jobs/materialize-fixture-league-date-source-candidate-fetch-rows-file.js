@@ -83,6 +83,118 @@ function isExcludedHost(url) {
   return /(^|\.)betexplorer\.com|flashscore\.|(^|\.)soccerway\.com|(^|\.)aiscore\.com|(^|\.)sofascore\.com/.test(joined);
 }
 
+
+const COUNTRY_ALIAS_BY_PREFIX = {
+  alb: ["albania", "albanian"],
+  and: ["andorra", "andorran"],
+  arm: ["armenia", "armenian"],
+  aut: ["austria", "austrian"],
+  aze: ["azerbaijan", "azerbaijani"],
+  bel: ["belgium", "belgian"],
+  bih: ["bosnia", "herzegovina", "bosnian"],
+  bul: ["bulgaria", "bulgarian"],
+  cro: ["croatia", "croatian"],
+  cyp: ["cyprus", "cypriot"],
+  cze: ["czech", "czechia"],
+  den: ["denmark", "danish"],
+  eng: ["england", "english"],
+  est: ["estonia", "estonian"],
+  fin: ["finland", "finnish"],
+  fra: ["france", "french"],
+  ger: ["germany", "german"],
+  gre: ["greece", "greek"],
+  hun: ["hungary", "hungarian"],
+  isl: ["iceland", "icelandic"],
+  irl: ["ireland", "irish"],
+  isr: ["israel", "israeli"],
+  ita: ["italy", "italian"],
+  lat: ["latvia", "latvian"],
+  ltu: ["lithuania", "lithuanian"],
+  lux: ["luxembourg"],
+  mlt: ["malta", "maltese"],
+  ned: ["netherlands", "dutch", "holland"],
+  nir: ["northern ireland"],
+  nor: ["norway", "norwegian"],
+  pol: ["poland", "polish"],
+  por: ["portugal", "portuguese"],
+  rou: ["romania", "romanian"],
+  sco: ["scotland", "scottish"],
+  srb: ["serbia", "serbian"],
+  spa: ["spain", "spanish"],
+  swe: ["sweden", "swedish"],
+  sui: ["switzerland", "swiss"],
+  tur: ["turkey", "turkish"],
+  ukr: ["ukraine", "ukrainian"],
+  wal: ["wales", "welsh"]
+};
+
+function leaguePrefixFromSlug(value) {
+  return asText(value).split(".")[0].toLowerCase();
+}
+
+function normalizedCollisionText(row, candidateUrl) {
+  return [
+    candidateUrl,
+    asText(row.candidateTitle),
+    asText(row.sourceTitle),
+    asText(row.title),
+    asText(row.query),
+    asText(row.searchQuery),
+    asText(row.discoveryTargetId),
+    asText(row.reviewRowId)
+  ].join(" ").toLowerCase();
+}
+
+function hasCountryAlias(textValue, aliases) {
+  const normalizedText = " " + asText(textValue).toLowerCase().replace(/[-_/.:?=&]+/g, " ") + " ";
+  return aliases.some((alias) => {
+    const normalizedAlias = " " + alias.toLowerCase().replace(/[-_/]+/g, " ") + " ";
+    return normalizedText.includes(normalizedAlias);
+  });
+}
+
+
+function candidateUrlLooksNonFootballSurface(candidateUrl) {
+  const textValue = asText(candidateUrl).toLowerCase();
+  const hostValue = hostFromUrl(candidateUrl).toLowerCase();
+
+  if (/flightconnections\.com$/.test(hostValue)) return true;
+  if (/\broute-map\b|\bairline\b|\bairport\b|\bflight\b/.test(textValue)) return true;
+
+  return false;
+}
+
+function candidateUrlLooksWrongCompetitionForLeague(row, candidateUrl) {
+  const leaguePrefix = leaguePrefixFromSlug(row.leagueSlug);
+  if (!leaguePrefix) return false;
+
+  const textValue = normalizedCollisionText(row, candidateUrl);
+  const urlOnly = asText(candidateUrl).toLowerCase();
+
+  if (leaguePrefix !== "eng" && (new RegExp("english[-_\\s]+premier[-_\\s]+league|/england/premier-league\\b").test(urlOnly))) return true;
+  if (leaguePrefix !== "aut" && (new RegExp("austrian[-_\\s]+bundesliga|/austria/").test(urlOnly))) return true;
+  if (leaguePrefix !== "bih" && (new RegExp("bosnia[-_\\s]+and[-_\\s]+herzegovina|/bosnia/").test(urlOnly))) return true;
+
+  const targetAliases = COUNTRY_ALIAS_BY_PREFIX[leaguePrefix] || [];
+
+  if (targetAliases.length > 0 && hasCountryAlias(textValue, targetAliases)) {
+    return false;
+  }
+
+  for (const entry of Object.entries(COUNTRY_ALIAS_BY_PREFIX)) {
+    const prefix = entry[0];
+    const aliases = entry[1];
+    if (prefix === leaguePrefix) continue;
+    if (hasCountryAlias(textValue, aliases)) return true;
+  }
+
+  if (leaguePrefix !== "eng" && /english[-_\s]+premier[-_\s]+league|\/england\/premier-league\b/.test(textValue)) return true;
+  if (leaguePrefix !== "aut" && /austrian[-_\s]+bundesliga|\/austria\//.test(textValue)) return true;
+  if (leaguePrefix !== "bih" && /bosnia[-_\s]+and[-_\s]+herzegovina|\/bosnia\//.test(textValue)) return true;
+
+  return false;
+}
+
 function decisionLooksLikeCandidate(value) {
   const decision = asText(value).toLowerCase();
   return [
@@ -165,7 +277,11 @@ function materializeFetchRows(input, options = {}) {
 
     if (!candidateUrl) rejectionReasons.push("missing_or_invalid_candidateUrl");
     if (!decisionLooksLikeCandidate(decision)) rejectionReasons.push("reviewerDecision_not_candidate_pending_fetch");
+    if (asText(row.truthRole) === "not_truth_ready") rejectionReasons.push("truthRole_not_truth_ready");
+    if (asText(row.sourceClass) === "low_priority_or_non_truth_surface") rejectionReasons.push("sourceClass_low_priority_or_non_truth_surface");
     if (isExcludedHost(candidateUrl) || row.excludedHost === true) rejectionReasons.push("excluded_host");
+    if (candidateUrlLooksNonFootballSurface(candidateUrl)) rejectionReasons.push("non_football_utility_surface");
+    if (candidateUrlLooksWrongCompetitionForLeague(row, candidateUrl)) rejectionReasons.push("wrong_competition_country_collision");
     if (row.wrongDate === true) rejectionReasons.push("wrongDate_true");
     if (row.wrongCompetition === true) rejectionReasons.push("wrongCompetition_true");
 
