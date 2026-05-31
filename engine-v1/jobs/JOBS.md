@@ -2352,3 +2352,4 @@ League day activity is target-date scoped only. It may mark active_for_day, no_e
 ### search-final-result-source-url-candidates-file.js
 
 Read-only adapter for final-result FT truth URL discovery. It reads `candidateSearchRows`, requires explicit `--allow-search`, calls the shared autonomous `searchWeb()` provider, and writes `candidateUrlRows` plus `urlResolutions` for later validation. Guarantees: no fetch, no URL fetch, no final truth decision, no canonical promotion, `canonicalWrites: 0`, no fixture/history/value/details writes.
+- `run-daily-autonomous-fixture-acquisition-progressive-bootstrap-file.js` — read-only two-pass autonomous fixture acquisition wrapper: first bootstraps `league-day-activity/YYYY-MM-DD.json`, then reruns progressive acquisition using that state so active/value-relevant leagues are routed from evidence instead of missing-state fallback.
