@@ -228,7 +228,13 @@ function validateResolution(row, index, taskById) {
       targetId: cleanString(task.targetId),
       query: cleanString(task?.resolution?.query),
       intent: cleanString(task?.resolution?.intent),
-      resolutionState: cleanString(task?.resolution?.resolutionState)
+      resolutionState: cleanString(task?.resolution?.resolutionState),
+      homeTeam: cleanString(task?.homeTeam || task?.teams?.home || task?.watchRow?.homeTeam || task?.caseTeams?.home),
+      awayTeam: cleanString(task?.awayTeam || task?.teams?.away || task?.watchRow?.awayTeam || task?.caseTeams?.away),
+      teams: {
+        home: cleanString(task?.teams?.home || task?.homeTeam || task?.watchRow?.homeTeam || task?.caseTeams?.home),
+        away: cleanString(task?.teams?.away || task?.awayTeam || task?.watchRow?.awayTeam || task?.caseTeams?.away)
+      }
     } : null,
     warnings,
     errors,

@@ -228,6 +228,7 @@ function buildPreparedRow(snapshot, index, options = {}) {
     snapshot?.teams?.home ||
     snapshot?.watchRow?.homeTeam ||
     snapshot?.matchedTask?.homeTeam ||
+    snapshot?.matchedTask?.teams?.home ||
     snapshot?.matchedTask?.watchRow?.homeTeam
   );
   const awayTeam = cleanString(
@@ -235,6 +236,7 @@ function buildPreparedRow(snapshot, index, options = {}) {
     snapshot?.teams?.away ||
     snapshot?.watchRow?.awayTeam ||
     snapshot?.matchedTask?.awayTeam ||
+    snapshot?.matchedTask?.teams?.away ||
     snapshot?.matchedTask?.watchRow?.awayTeam
   );
   const finalSignal = inferFinalSignal(truncated.text, snapshot);
