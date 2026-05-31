@@ -139,6 +139,10 @@ function selectRows(input, keys) {
   return [];
 }
 
+function countStateRows(input) {
+  return selectRows(input, ["leagueDayActivityRows", "dayActivityRows", "rows"]).length;
+}
+
 function statePathForDate(date) {
   return path.join(repoRoot, "data", "football-truth", "_state", "league-day-activity", date + ".json");
 }
@@ -268,6 +272,11 @@ function runPipeline(args) {
   const stateExistsAfterBootstrap = fs.existsSync(statePath);
   const bootstrapState = stateExistsAfterBootstrap ? readJson(statePath) : null;
   const bootstrapStateRows = selectRows(bootstrapState, ["leagueDayActivityRows", "dayActivityRows", "rows"]);
+  const bootstrapStateSnapshotPath = path.join(outputDir, "bootstrap-league-day-activity-state-" + args.date + ".json");
+
+  if (stateExistsAfterBootstrap && bootstrapStateRows.length > 0) {
+    writeJson(bootstrapStateSnapshotPath, bootstrapState);
+  }
 
   if (!stateExistsAfterBootstrap || bootstrapStateRows.length === 0) {
     const failedReport = {
@@ -324,6 +333,18 @@ function runPipeline(args) {
   const pass1 = compactProgressiveReport(bootstrap.reportPath);
   const pass2 = compactProgressiveReport(routed.reportPath);
 
+  const stateAfterPass2 = fs.existsSync(statePath) ? readJson(statePath) : null;
+  const stateAfterPass2RowCount = countStateRows(stateAfterPass2);
+  const restoredBootstrapStateAfterPass2EmptyOverwrite =
+    bootstrapStateRows.length > 0 && stateAfterPass2RowCount === 0;
+
+  if (restoredBootstrapStateAfterPass2EmptyOverwrite) {
+    writeJson(statePath, bootstrapState);
+  }
+
+  const finalState = fs.existsSync(statePath) ? readJson(statePath) : null;
+  const finalStateRowCount = countStateRows(finalState);
+
   const report = {
     ok: true,
     job: "run-daily-autonomous-fixture-acquisition-progressive-bootstrap-file",
@@ -343,6 +364,9 @@ function runPipeline(args) {
       pass2TargetDateFixtureAcquisitionRequiredCount: pass2.summary?.targetDateFixtureAcquisitionRequiredCount || 0,
       pass2ValuePipelineCandidateCount: pass2.summary?.valuePipelineCandidateCount || 0,
       pass2ContinueAutonomousSearchCount: pass2.summary?.continueAutonomousSearchCount || 0,
+      stateAfterPass2RowCount,
+      restoredBootstrapStateAfterPass2EmptyOverwrite,
+      finalStateRowCount,
       canonicalWrites: 0,
       productionWrite: false,
       dryRun: true
@@ -351,6 +375,7 @@ function runPipeline(args) {
       outputDir,
       leagueDayActivityState: statePath,
       leagueSeasonWatchState: watchPath,
+      bootstrapStateSnapshot: bootstrapStateSnapshotPath,
       pass1Report: bootstrap.reportPath,
       pass2Report: routed.reportPath
     },
