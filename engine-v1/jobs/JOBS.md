@@ -2334,3 +2334,4 @@ Guarantees:
 - `canonicalWrites: 0`
 - `productionWrite: false`
 - resumable after partial completion
+- evaluate-fixture-league-day-activity-evidence-file.js: read-only league day/season activity evaluator; input evidence/classified rows -> diagnostics plus data/football-truth/_state/league-day-activity/YYYY-MM-DD.json and _state/league-season-watch/league-season-watch.json; records active_for_day, no_expected_fixtures_for_day, out_of_season_for_day, nextKnownFixtureDate; canonicalWrites: 0, productionWrite: false, no promotion.
