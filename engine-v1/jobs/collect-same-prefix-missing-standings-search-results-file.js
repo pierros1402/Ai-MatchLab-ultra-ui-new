@@ -251,36 +251,50 @@ function pickTaskRows(input) {
 
 function buildSearchTargets(tasks, options = {}) {
   const maxQueriesPerTask = Math.max(1, asNumber(options.queriesPerTask, 2));
-  const rows = [];
+  const targetGroups = [];
 
   for (const task of pickTaskRows(tasks)) {
     const missingLeagueSlug = asText(task.missingLeagueSlug);
     const countryPrefix = asText(task.countryPrefix);
+    const taskId = asText(task.taskId) || `same-prefix-standings-${missingLeagueSlug}`;
     const queries = Array.isArray(task.candidateSearchQueries)
       ? task.candidateSearchQueries.map(asText).filter(Boolean)
       : [];
 
     if (!missingLeagueSlug || !countryPrefix || queries.length === 0) continue;
 
-    for (const query of queries.slice(0, maxQueriesPerTask)) {
-      rows.push({
-        searchTargetId: `${asText(task.taskId) || `same-prefix-standings-${missingLeagueSlug}`}-${rows.length + 1}`,
-        taskId: asText(task.taskId),
-        missingLeagueSlug,
-        leagueSlug: missingLeagueSlug,
-        countryPrefix,
-        missingTier: task.missingTier ?? null,
-        missingTierLabel: asText(task.missingTierLabel || task.missingTier),
-        query,
-        intent: "same_prefix_missing_standings_source_discovery",
-        expectedSourceFamily: "standings_or_league_table",
-        fullFixtureSearchAllowedNow: false,
-        standingsWriteAllowedNow: false,
-        sourceFetch: false,
-        noFetch: true,
-        canonicalWrites: 0,
-        productionWrite: false
-      });
+    const group = queries.slice(0, maxQueriesPerTask).map((query, queryIndex) => ({
+      searchTargetId: `${taskId}-q${queryIndex + 1}`,
+      taskId,
+      missingLeagueSlug,
+      leagueSlug: missingLeagueSlug,
+      countryPrefix,
+      missingTier: task.missingTier ?? null,
+      missingTierLabel: asText(task.missingTierLabel || task.missingTier),
+      query,
+      queryIndex: queryIndex + 1,
+      targetSelectionStrategy: "round_robin_by_task_query_index",
+      intent: "same_prefix_missing_standings_source_discovery",
+      expectedSourceFamily: "standings_or_league_table",
+      fullFixtureSearchAllowedNow: false,
+      standingsWriteAllowedNow: false,
+      sourceFetch: false,
+      noFetch: true,
+      canonicalWrites: 0,
+      productionWrite: false
+    }));
+
+    if (group.length > 0) {
+      targetGroups.push(group);
+    }
+  }
+
+  const rows = [];
+  for (let queryIndex = 0; queryIndex < maxQueriesPerTask; queryIndex += 1) {
+    for (const group of targetGroups) {
+      if (group[queryIndex]) {
+        rows.push(group[queryIndex]);
+      }
     }
   }
 
