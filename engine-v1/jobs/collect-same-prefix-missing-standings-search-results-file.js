@@ -41,6 +41,177 @@ function normalizeUrl(value) {
   }
 }
 
+const FOOTBALL_STANDINGS_SIGNAL_TERMS = [
+  "football",
+  "soccer",
+  "standings",
+  "table",
+  "league table",
+  "ranking",
+  "rankings",
+  "tabelle",
+  "classification",
+  "fixtures",
+  "results",
+  "2. liga",
+  "challenger pro league",
+  "primera b",
+  "super league 2",
+  "j2 league",
+  "usl championship",
+  "challenge league",
+  "superettan",
+  "segunda",
+  "division"
+];
+
+const NON_FOOTBALL_COUNTRY_PAGE_TERMS = [
+  "wikipedia",
+  "britannica",
+  "tourism",
+  "travel",
+  "map",
+  "maps",
+  "embassy",
+  "visa",
+  "country profile",
+  "tripadvisor",
+  "lonely planet",
+  "wikivoyage",
+  "zhihu",
+  "baidu",
+  "countryreports",
+  "country reports",
+  "outfit",
+  "outfits",
+  "fashion",
+  "style code",
+  "herstylecode"
+];
+
+const STANDINGS_OFFICIAL_HOST_HINTS = [
+  "2liga.at",
+  "proleague.be",
+  "anfp.cl",
+  "cfa.com.cy",
+  "divisionsforeningen.dk",
+  "dbu.dk",
+  "dfb.de",
+  "sl2.gr",
+  "leagueofireland.ie",
+  "fai.ie",
+  "jleague.co",
+  "saff.com.sa",
+  "nifootballleague.com",
+  "irishfa.com",
+  "fotball.no",
+  "ligaportugal.pt",
+  "frf.ro",
+  "sfl.ch",
+  "svenskfotboll.se",
+  "tff.org",
+  "auf.org.uy",
+  "uslchampionship.com"
+];
+
+const TRUSTED_STANDINGS_HOST_HINTS = [
+  "flashscore.",
+  "sofascore.",
+  "soccerway.",
+  "worldfootball.net",
+  "livescore.",
+  "footystats.",
+  "soccerstats.",
+  "transfermarkt.",
+  "365scores."
+];
+
+const NON_FOOTBALL_HOST_NOISE_HINTS = [
+  "sfr.fr",
+  "red-by-sfr.fr",
+  "commentcamarche.net",
+  "forums.commentcamarche.net",
+  "la-communaute.sfr.fr",
+  "communaute.red-by-sfr.fr"
+];
+
+const TARGET_WRONG_RESULT_TERMS = {
+  "aut.2": ["spain", "spanish", "laliga", "la liga", "segunda division", "segunda división", "germany 2. bundesliga"],
+  "bel.2": ["tourism", "travel", "fashion", "outfit", "outfits", "style code"],
+  "chi.2": ["spain", "spanish", "laliga", "la liga", "primera division", "primera división", "bundesliga"]
+};
+
+function hasTargetWrongResultSignal(row, target) {
+  const slug = asText(target?.missingLeagueSlug || target?.leagueSlug);
+  const terms = TARGET_WRONG_RESULT_TERMS[slug] || [];
+  if (terms.length === 0) return false;
+  return includesAnyText(lowerCombinedSearchResultText(row), terms);
+}
+
+function lowerCombinedSearchResultText(row) {
+  return [
+    row.title,
+    row.snippet,
+    row.url,
+    row.hostname
+  ].map(asText).join(" ").toLowerCase();
+}
+
+function includesAnyText(text, terms) {
+  return terms.some((term) => text.includes(asText(term).toLowerCase()));
+}
+
+function hostnameHasAnyHint(row, hints) {
+  const host = asText(row.hostname).toLowerCase();
+  const url = asText(row.url).toLowerCase();
+  return hints.some((hint) => {
+    const needle = asText(hint).toLowerCase();
+    return host.includes(needle) || url.includes(needle);
+  });
+}
+
+function hasUsableStandingsSearchSignal(row, target = null) {
+  const text = lowerCombinedSearchResultText(row);
+  const officialHostSignal = hostnameHasAnyHint(row, STANDINGS_OFFICIAL_HOST_HINTS);
+  const trustedStandingsHostSignal = hostnameHasAnyHint(row, TRUSTED_STANDINGS_HOST_HINTS);
+  const nonFootballHostNoise = hostnameHasAnyHint(row, NON_FOOTBALL_HOST_NOISE_HINTS);
+  const footballStandingsSignal = includesAnyText(text, FOOTBALL_STANDINGS_SIGNAL_TERMS);
+  const countryPageNoise = includesAnyText(text, NON_FOOTBALL_COUNTRY_PAGE_TERMS);
+  const targetWrongResultSignal = hasTargetWrongResultSignal(row, target);
+
+  if (targetWrongResultSignal) return false;
+  if (officialHostSignal) return true;
+  if (nonFootballHostNoise) return false;
+  if (countryPageNoise) return false;
+  if (trustedStandingsHostSignal && footballStandingsSignal) return true;
+  if (footballStandingsSignal) return true;
+  if (footballStandingsSignal && includesAnyText(text, ["standings", "table", "ranking", "tabelle"])) return true;
+
+  return false;
+}
+
+function classifySearchBatchQuality(result) {
+  const rows = Array.isArray(result?.rows) ? result.rows : [];
+  if (rows.length === 0) {
+    return {
+      status: asText(result?.status || "no_results"),
+      usableResultCount: 0,
+      lowQualitySearchBatch: false
+    };
+  }
+
+  const usableResultCount = rows.filter(hasUsableStandingsSearchSignal).length;
+  const lowQualitySearchBatch = result?.ok === true && usableResultCount === 0;
+
+  return {
+    status: lowQualitySearchBatch
+      ? "low_quality_search_batch_needs_retry"
+      : asText(result?.status || "unknown"),
+    usableResultCount,
+    lowQualitySearchBatch
+  };
+}
+
 function parseArgs(argv) {
   const args = {
     tasks: "",
@@ -155,6 +326,9 @@ function convertSearchResult(target, row) {
 async function buildReport(tasks, options = {}) {
   const searchTargets = buildSearchTargets(tasks, options);
   const searchResultRows = [];
+  const seenSearchResultKeys = new Set();
+  let duplicateSearchResultRowCount = 0;
+  let skippedLowQualitySearchResultRowCount = 0;
   const searchAttemptRows = [];
   const bySearchStatus = {};
 
@@ -165,7 +339,8 @@ async function buildReport(tasks, options = {}) {
       maxChars: options.maxChars
     });
 
-    const status = asText(result.status || "unknown");
+    const quality = classifySearchBatchQuality(result);
+    const status = quality.status;
     bySearchStatus[status] = (bySearchStatus[status] || 0) + 1;
 
     searchAttemptRows.push({
@@ -174,20 +349,47 @@ async function buildReport(tasks, options = {}) {
       missingLeagueSlug: target.missingLeagueSlug,
       countryPrefix: target.countryPrefix,
       query: target.query,
-      ok: result.ok === true,
+      ok: result.ok === true && quality.lowQualitySearchBatch !== true,
+      providerStatus: asText(result.status || "unknown"),
       status,
       resultCount: Array.isArray(result.rows) ? result.rows.length : 0,
+      usableResultCount: quality.usableResultCount,
+      lowQualitySearchBatch: quality.lowQualitySearchBatch,
       searchExecuted: result.guarantees?.searchExecuted === true,
       attempts: result.attempts || []
     });
 
+    if (quality.lowQualitySearchBatch) {
+      continue;
+    }
+
     for (const row of result.rows || []) {
+      if (!hasUsableStandingsSearchSignal(row, target)) {
+        skippedLowQualitySearchResultRowCount += 1;
+        continue;
+      }
+
       const converted = convertSearchResult(target, row);
-      if (converted) searchResultRows.push(converted);
+      if (!converted) continue;
+
+      const dedupeKey = [
+        converted.missingLeagueSlug,
+        normalizeUrl(converted.url) || asText(converted.url).toLowerCase()
+      ].join("::");
+
+      if (seenSearchResultKeys.has(dedupeKey)) {
+        duplicateSearchResultRowCount += 1;
+        continue;
+      }
+
+      seenSearchResultKeys.add(dedupeKey);
+      searchResultRows.push(converted);
     }
   }
 
   const searchExecutedCount = searchAttemptRows.filter((row) => row.searchExecuted === true).length;
+  const lowQualitySearchBatchCount = searchAttemptRows.filter((row) => row.lowQualitySearchBatch === true).length;
+  const usableSearchBatchCount = searchAttemptRows.filter((row) => row.usableResultCount > 0).length;
 
   return {
     ok: options.allowSearch === true ? searchResultRows.length > 0 : false,
@@ -204,6 +406,10 @@ async function buildReport(tasks, options = {}) {
       searchAttemptCount: searchAttemptRows.length,
       searchExecutedCount,
       searchResultRowCount: searchResultRows.length,
+      duplicateSearchResultRowCount,
+      skippedLowQualitySearchResultRowCount,
+      lowQualitySearchBatchCount,
+      usableSearchBatchCount,
       blockedBecauseSearchNotAllowed: options.allowSearch !== true,
       fullFixtureSearchAllowedNowCount: searchTargets.filter((row) => row.fullFixtureSearchAllowedNow === true).length,
       standingsWriteAllowedNowCount: searchTargets.filter((row) => row.standingsWriteAllowedNow === true).length,
@@ -268,6 +474,76 @@ async function runSelfTest() {
   if (report.summary.standingsWriteAllowedNowCount !== 0) throw new Error("expected no standings writes");
   if (report.summary.sourceFetch !== false || report.summary.noFetch !== true) throw new Error("fetch guarantees changed");
   if (report.summary.canonicalWrites !== 0 || report.summary.productionWrite !== false) throw new Error("write guarantees changed");
+  if (typeof report.summary.duplicateSearchResultRowCount !== "number") throw new Error("duplicate result summary missing");
+  if (typeof report.summary.skippedLowQualitySearchResultRowCount !== "number") throw new Error("skipped low-quality result summary missing");
+
+  const lowQuality = classifySearchBatchQuality({
+    ok: true,
+    status: "ok",
+    rows: [
+      {
+        title: "Austria",
+        snippet: "Country profile and travel guide",
+        hostname: "en.wikipedia.org",
+        url: "https://en.wikipedia.org/wiki/Austria"
+      }
+    ]
+  });
+
+  if (lowQuality.status !== "low_quality_search_batch_needs_retry") {
+    throw new Error("expected country/travel/wiki batch to be marked low quality");
+  }
+
+  const countryReportsNoise = classifySearchBatchQuality({
+    ok: true,
+    status: "ok",
+    rows: [
+      {
+        title: "countryreports.org Austria country profile",
+        snippet: "Austria travel map country reports",
+        hostname: "countryreports.org",
+        url: "https://www.countryreports.org/country/Austria.htm"
+      }
+    ]
+  });
+
+  if (countryReportsNoise.status !== "low_quality_search_batch_needs_retry") {
+    throw new Error("expected countryreports batch to be marked low quality");
+  }
+
+  const forumNoise = classifySearchBatchQuality({
+    ok: true,
+    status: "ok",
+    rows: [
+      {
+        title: "Challenger Pro League league table standings",
+        snippet: "community forum information and television discussion",
+        hostname: "forums.commentcamarche.net",
+        url: "https://forums.commentcamarche.net/forum/"
+      }
+    ]
+  });
+
+  if (forumNoise.status !== "low_quality_search_batch_needs_retry") {
+    throw new Error("expected forum/community batch to be marked low quality");
+  }
+
+  const usableOfficial = classifySearchBatchQuality({
+    ok: true,
+    status: "ok",
+    rows: [
+      {
+        title: "Tabelle - 2. Liga",
+        snippet: "Austria 2. Liga standings",
+        hostname: "2liga.at",
+        url: "https://www.2liga.at/de/tabelle"
+      }
+    ]
+  });
+
+  if (usableOfficial.status !== "ok" || usableOfficial.usableResultCount !== 1) {
+    throw new Error("expected official standings batch to remain usable");
+  }
 
   return {
     ok: true,
