@@ -79,6 +79,50 @@ function countryDisplayName(countryPrefix) {
   return COUNTRY_NAME_MAP[prefix] || prefix.toUpperCase();
 }
 
+function escapeRegExp(value) {
+  const specialChars = new Set(["\\", "^", "$", ".", "|", "?", "*", "+", "(", ")", "[", "]", "{", "}"]);
+  return [...asText(value)].map((char) => specialChars.has(char) ? "\\" + char : char).join("");
+}
+
+const COUNTRY_DISPLAY_PREFIX_ALIASES = {
+  Austria: ["Austrian"],
+  Belgium: ["Belgian"],
+  Chile: ["Chilean"],
+  Cyprus: ["Cypriot"],
+  Denmark: ["Danish"],
+  Germany: ["German"],
+  Greece: ["Greek"],
+  Ireland: ["Irish"],
+  Japan: ["Japanese"],
+  Norway: ["Norwegian"],
+  Peru: ["Peruvian"],
+  Romania: ["Romanian"],
+  "Saudi Arabia": ["Saudi"],
+  Sweden: ["Swedish"],
+  Switzerland: ["Swiss"],
+  Turkey: ["Turkish"],
+  Uruguay: ["Uruguayan"],
+  "United States": ["US", "USA", "American"]
+};
+
+function stripCountryPrefixFromDisplayName(displayName, countryName) {
+  const name = asText(displayName);
+  const country = asText(countryName);
+  if (!name || !country) return name;
+
+  const prefixes = [country, ...(COUNTRY_DISPLAY_PREFIX_ALIASES[country] || [])];
+
+  for (const prefix of prefixes) {
+    const pattern = new RegExp("^" + escapeRegExp(prefix) + "\\s+", "i");
+    const stripped = name.replace(pattern, "").trim();
+    if (stripped !== name) {
+      return stripped || name;
+    }
+  }
+
+  return name;
+}
+
 function uniqueTexts(values) {
   return [...new Set(values.map(asText).filter(Boolean))];
 }
@@ -88,11 +132,13 @@ function makeSearchQueries(row) {
   const countryPrefix = asText(row.countryPrefix);
   const countryName = countryDisplayName(countryPrefix);
   const tier = asText(row.missingTierLabel || row.missingTier);
-  const displayName = leagueName(slug);
+  const displayName = stripCountryPrefixFromDisplayName(leagueName(slug), countryName);
   const existingStandingsSlugs = Array.isArray(row.existingStandingsSlugs)
     ? row.existingStandingsSlugs.map(asText).filter(Boolean)
     : [];
-  const existingLeagueNames = existingStandingsSlugs.map((existingSlug) => leagueName(existingSlug)).filter(Boolean);
+  const existingLeagueNames = existingStandingsSlugs
+    .map((existingSlug) => stripCountryPrefixFromDisplayName(leagueName(existingSlug), countryName))
+    .filter(Boolean);
 
   return uniqueTexts([
     `${countryName} ${displayName} standings official table`,
