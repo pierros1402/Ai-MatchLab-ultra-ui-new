@@ -5,6 +5,8 @@ import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import { leagueName } from "../../workers/_shared/leagues-registry.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..", "..");
@@ -48,17 +50,58 @@ function pickPlanRows(input) {
   return [];
 }
 
+const COUNTRY_NAME_MAP = {
+  aut: "Austria",
+  bel: "Belgium",
+  chi: "Chile",
+  cyp: "Cyprus",
+  den: "Denmark",
+  ger: "Germany",
+  gre: "Greece",
+  irl: "Ireland",
+  jpn: "Japan",
+  ksa: "Saudi Arabia",
+  nir: "Northern Ireland",
+  nor: "Norway",
+  per: "Peru",
+  por: "Portugal",
+  rou: "Romania",
+  sui: "Switzerland",
+  swe: "Sweden",
+  tur: "Turkey",
+  uru: "Uruguay",
+  usa: "United States"
+};
+
+function countryDisplayName(countryPrefix) {
+  const prefix = asText(countryPrefix).toLowerCase();
+  return COUNTRY_NAME_MAP[prefix] || prefix.toUpperCase();
+}
+
+function uniqueTexts(values) {
+  return [...new Set(values.map(asText).filter(Boolean))];
+}
+
 function makeSearchQueries(row) {
   const slug = asText(row.missingLeagueSlug);
   const countryPrefix = asText(row.countryPrefix);
+  const countryName = countryDisplayName(countryPrefix);
   const tier = asText(row.missingTierLabel || row.missingTier);
+  const displayName = leagueName(slug);
+  const existingStandingsSlugs = Array.isArray(row.existingStandingsSlugs)
+    ? row.existingStandingsSlugs.map(asText).filter(Boolean)
+    : [];
+  const existingLeagueNames = existingStandingsSlugs.map((existingSlug) => leagueName(existingSlug)).filter(Boolean);
 
-  return [
-    `${slug} standings official table`,
-    `${slug} league table standings`,
-    `${countryPrefix} ${tier} division standings official`,
-    `${countryPrefix} ${tier} tier football standings`
-  ];
+  return uniqueTexts([
+    `${displayName} standings official table`,
+    `${displayName} league table standings`,
+    `${countryName} ${displayName} standings`,
+    `${countryName} football ${displayName} table`,
+    `${countryName} ${tier} division football standings official`,
+    `${countryName} football federation ${displayName} standings`,
+    ...existingLeagueNames.map((name) => `${countryName} ${name} ${displayName} standings`)
+  ]);
 }
 
 function buildTasks(plan) {
@@ -183,6 +226,13 @@ function runSelfTest() {
   if (report.summary.standingsWriteAllowedNowCount !== 0) throw new Error("expected no standings writes");
   if (report.summary.sourceFetch !== false || report.summary.noSearch !== true || report.summary.noFetch !== true) {
     throw new Error("read-only/search-off guarantees changed");
+  }
+  const task = report.taskRows[0];
+  if (!task.candidateSearchQueries.some((query) => query.includes("Championship"))) {
+    throw new Error("expected human-readable league name in search queries");
+  }
+  if (task.candidateSearchQueries.some((query) => query.startsWith("eng.2 "))) {
+    throw new Error("expected queries not to start with raw slug");
   }
   if (report.summary.canonicalWrites !== 0 || report.summary.productionWrite !== false) {
     throw new Error("write guarantees changed");
