@@ -51,6 +51,7 @@ function pickPlanRows(input) {
 }
 
 const COUNTRY_NAME_MAP = {
+  eng: "England",
   aut: "Austria",
   bel: "Belgium",
   chi: "Chile",
@@ -94,12 +95,13 @@ function makeSearchQueries(row) {
   const existingLeagueNames = existingStandingsSlugs.map((existingSlug) => leagueName(existingSlug)).filter(Boolean);
 
   return uniqueTexts([
-    `${displayName} standings official table`,
-    `${displayName} league table standings`,
-    `${countryName} ${displayName} standings`,
+    `${countryName} ${displayName} standings official table`,
+    `${countryName} ${displayName} league table standings`,
     `${countryName} football ${displayName} table`,
     `${countryName} ${tier} division football standings official`,
     `${countryName} football federation ${displayName} standings`,
+    `${displayName} standings official table`,
+    `${displayName} league table standings`,
     ...existingLeagueNames.map((name) => `${countryName} ${name} ${displayName} standings`)
   ]);
 }
@@ -230,6 +232,9 @@ function runSelfTest() {
   const task = report.taskRows[0];
   if (!task.candidateSearchQueries.some((query) => query.includes("Championship"))) {
     throw new Error("expected human-readable league name in search queries");
+  }
+  if (task.candidateSearchQueries[0] !== "England Championship standings official table") {
+    throw new Error(`expected first query to start with country display name, got: ${task.candidateSearchQueries[0]}`);
   }
   if (task.candidateSearchQueries.some((query) => query.startsWith("eng.2 "))) {
     throw new Error("expected queries not to start with raw slug");
