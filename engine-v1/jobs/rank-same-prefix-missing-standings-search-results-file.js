@@ -3,10 +3,142 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..", "..");
+
+const COUNTRY_PREFIX_TERMS = {
+  aut: ["austria", "austrian"],
+  bel: ["belgium", "belgian"],
+  chi: ["chile", "chilean"],
+  cyp: ["cyprus", "cypriot"],
+  den: ["denmark", "danish"],
+  ger: ["germany", "german"],
+  gre: ["greece", "greek"],
+  irl: ["ireland", "irish", "league of ireland"],
+  jpn: ["japan", "japanese"],
+  ksa: ["saudi arabia", "saudi"],
+  nir: ["northern ireland", "northern irish"],
+  nor: ["norway", "norwegian"],
+  per: ["peru", "peruvian"],
+  por: ["portugal", "portuguese"],
+  rou: ["romania", "romanian"],
+  sui: ["switzerland", "swiss"],
+  swe: ["sweden", "swedish"],
+  tur: ["turkey", "turkish", "türkiye"],
+  uru: ["uruguay", "uruguayan"],
+  usa: ["united states", "usa", "us"]
+};
+
+function normalizeTerm(value) {
+  return asText(value)
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function uniqueTerms(values) {
+  const seen = new Set();
+  const rows = [];
+
+  for (const value of values.flat(Infinity)) {
+    const text = normalizeTerm(value);
+    if (!text) continue;
+
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    rows.push(text);
+  }
+
+  return rows;
+}
+
+function compactLeagueTerm(value) {
+  return normalizeTerm(value)
+    .replace(/\bfootball\b/gi, " ")
+    .replace(/\bsoccer\b/gi, " ")
+    .replace(/\bleague\b/gi, " ")
+    .replace(/\bdivision\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function termsFromCoverageCountry(country) {
+  const normalized = normalizeTerm(country);
+  if (!normalized) return [];
+
+  return uniqueTerms([
+    normalized,
+    normalized.replace(/_/g, " "),
+    normalized.replace(/_/g, "-")
+  ]);
+}
+
+const LEAGUE_COVERAGE_BY_SLUG = new Map(
+  (Array.isArray(LEAGUES_COVERAGE) ? LEAGUES_COVERAGE : [])
+    .filter((row) => asText(row && row.slug))
+    .map((row) => [asText(row.slug), row])
+);
+
+function queryCoreTerms(row, countryTerms) {
+  let query = asText(row.query)
+    .replace(/\bofficial\b/gi, " ")
+    .replace(/\bstandings\b/gi, " ")
+    .replace(/\bleague table\b/gi, " ")
+    .replace(/\btable\b/gi, " ")
+    .replace(/\branking\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!query) return [];
+
+  for (const countryTerm of countryTerms) {
+    const country = asText(countryTerm).toLowerCase();
+    if (!country) continue;
+
+    if (query.toLowerCase().startsWith(country + " ")) {
+      query = query.slice(country.length).trim();
+    }
+  }
+
+  return uniqueTerms([
+    query,
+    compactLeagueTerm(query)
+  ]).filter((term) => term.length >= 2);
+}
+
+function buildGenericRules(row) {
+  const leagueSlug = asText(row.missingLeagueSlug || row.leagueSlug);
+  const countryPrefix = asText(row.countryPrefix || leagueSlug.split(".")[0]);
+  const coverage = LEAGUE_COVERAGE_BY_SLUG.get(leagueSlug) || {};
+
+  const countryTerms = uniqueTerms([
+    countryPrefix,
+    COUNTRY_PREFIX_TERMS[countryPrefix] || [],
+    termsFromCoverageCountry(coverage.country),
+    termsFromCoverageCountry(row.country),
+    termsFromCoverageCountry(row.countryName),
+    termsFromCoverageCountry(row.countryLabel)
+  ]);
+
+  const leagueTerms = uniqueTerms([
+    queryCoreTerms(row, countryTerms),
+    asText(row.missingTierLabel),
+    asText(row.leagueName),
+    asText(row.competitionName)
+  ]).filter((term) => term && term !== leagueSlug && term !== countryPrefix);
+
+  return {
+    countryTerms,
+    leagueTerms,
+    officialHosts: [],
+    rejectTerms: []
+  };
+}
 
 const LEAGUE_RULES = {
   "aut.2": {
@@ -115,11 +247,13 @@ function combinedText(row) {
 
 function classifyRow(row) {
   const leagueSlug = asText(row.missingLeagueSlug || row.leagueSlug);
-  const rules = LEAGUE_RULES[leagueSlug] || {
-    countryTerms: [asText(row.countryPrefix)],
-    leagueTerms: [leagueSlug],
-    officialHosts: [],
-    rejectTerms: []
+  const genericRules = buildGenericRules(row);
+  const explicitRules = LEAGUE_RULES[leagueSlug] || {};
+  const rules = {
+    countryTerms: uniqueTerms([genericRules.countryTerms, explicitRules.countryTerms || []]),
+    leagueTerms: uniqueTerms([genericRules.leagueTerms, explicitRules.leagueTerms || []]),
+    officialHosts: uniqueTerms([genericRules.officialHosts, explicitRules.officialHosts || []]),
+    rejectTerms: uniqueTerms([genericRules.rejectTerms, explicitRules.rejectTerms || []])
   };
 
   const text = combinedText(row);
@@ -156,6 +290,10 @@ function classifyRow(row) {
   } else if (isOfficialHost && hasStandingsSignal && (hasLeagueSignal || hasCountrySignal)) {
     decision = "accepted";
     nextRequiredAction = "eligible_for_controlled_standings_source_snapshot_fetch";
+  } else if (isTrustedReviewHost && hasStandingsSignal && hasCountrySignal && hasLeagueSignal) {
+    decision = "accepted";
+    positiveReasons.push("trusted_high_confidence_country_league_standings_match");
+    nextRequiredAction = "eligible_for_controlled_standings_source_snapshot_fetch";
   } else if (hasStandingsSignal && hasCountrySignal && (hasLeagueSignal || isTrustedReviewHost)) {
     decision = "review";
     nextRequiredAction = "review_or_rank_before_fetch";
@@ -168,7 +306,8 @@ function classifyRow(row) {
     (hasCountrySignal ? 20 : 0) +
     (hasLeagueSignal ? 20 : 0) +
     (hasStandingsSignal ? 15 : 0) +
-    (isTrustedReviewHost ? 8 : 0) -
+    (isTrustedReviewHost ? 8 : 0) +
+    (isTrustedReviewHost && hasCountrySignal && hasLeagueSignal && hasStandingsSignal ? 25 : 0) -
     (rejectReasons.length * 60) -
     Math.max(0, asNumber(row.rank, 0) - 1);
 
@@ -283,8 +422,8 @@ function runSelfTest() {
 
   const report = buildReport(input);
 
-  if (report.summary.acceptedCandidateCount !== 1) throw new Error("expected one accepted official row");
-  if (report.summary.reviewCandidateCount !== 1) throw new Error("expected one review row");
+  if (report.summary.acceptedCandidateCount !== 2) throw new Error("expected official and trusted high-confidence accepted rows");
+  if (report.summary.reviewCandidateCount !== 0) throw new Error("expected no review rows in self-test");
   if (report.summary.rejectedCandidateCount !== 1) throw new Error("expected one rejected row");
   if (report.summary.sourceFetch !== false || report.summary.noFetch !== true) throw new Error("fetch guarantees changed");
   if (report.summary.canonicalWrites !== 0 || report.summary.productionWrite !== false) throw new Error("write guarantees changed");
