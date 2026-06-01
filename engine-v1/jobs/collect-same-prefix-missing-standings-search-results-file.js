@@ -190,7 +190,7 @@ function hasUsableStandingsSearchSignal(row, target = null) {
   return false;
 }
 
-function classifySearchBatchQuality(result) {
+function classifySearchBatchQuality(result, target = null) {
   const rows = Array.isArray(result?.rows) ? result.rows : [];
   if (rows.length === 0) {
     return {
@@ -200,7 +200,7 @@ function classifySearchBatchQuality(result) {
     };
   }
 
-  const usableResultCount = rows.filter(hasUsableStandingsSearchSignal).length;
+  const usableResultCount = rows.filter((row) => hasUsableStandingsSearchSignal(row, target)).length;
   const lowQualitySearchBatch = result?.ok === true && usableResultCount === 0;
 
   return {
@@ -327,19 +327,30 @@ async function buildReport(tasks, options = {}) {
   const searchTargets = buildSearchTargets(tasks, options);
   const searchResultRows = [];
   const seenSearchResultKeys = new Set();
+  const tasksWithUsableSearchResultKeys = new Set();
+  const tasksWithLowQualityBeforeUsableKeys = new Set();
+  const tasksWithUsableResultAfterRetryKeys = new Set();
   let duplicateSearchResultRowCount = 0;
   let skippedLowQualitySearchResultRowCount = 0;
+  let skippedSearchTargetAfterUsableTaskCount = 0;
+  let lowQualityRetryAttemptCount = 0;
   const searchAttemptRows = [];
   const bySearchStatus = {};
 
   for (const target of searchTargets) {
-    const result = await searchWeb(target.query, {
-      allowSearch: options.allowSearch === true,
+    const taskKey = asText(target.taskId || target.missingLeagueSlug || target.searchTargetId);
+
+    if (tasksWithUsableSearchResultKeys.has(taskKey)) {
+      skippedSearchTargetAfterUsableTaskCount += 1;
+      continue;
+    }
+
+    const result = await searchWeb(target.query, {      allowSearch: options.allowSearch === true,
       timeoutMs: options.timeoutMs,
       maxChars: options.maxChars
     });
 
-    const quality = classifySearchBatchQuality(result);
+    const quality = classifySearchBatchQuality(result, target);
     const status = quality.status;
     bySearchStatus[status] = (bySearchStatus[status] || 0) + 1;
 
@@ -360,11 +371,14 @@ async function buildReport(tasks, options = {}) {
     });
 
     if (quality.lowQualitySearchBatch) {
+      lowQualityRetryAttemptCount += 1;
+      tasksWithLowQualityBeforeUsableKeys.add(taskKey);
       continue;
     }
 
-    for (const row of result.rows || []) {
-      if (!hasUsableStandingsSearchSignal(row, target)) {
+    let addedSearchResultCountForTarget = 0;
+
+    for (const row of result.rows || []) {      if (!hasUsableStandingsSearchSignal(row, target)) {
         skippedLowQualitySearchResultRowCount += 1;
         continue;
       }
@@ -384,9 +398,16 @@ async function buildReport(tasks, options = {}) {
 
       seenSearchResultKeys.add(dedupeKey);
       searchResultRows.push(converted);
+      addedSearchResultCountForTarget += 1;
+    }
+
+    if (addedSearchResultCountForTarget > 0) {
+      tasksWithUsableSearchResultKeys.add(taskKey);
+      if (tasksWithLowQualityBeforeUsableKeys.has(taskKey)) {
+        tasksWithUsableResultAfterRetryKeys.add(taskKey);
+      }
     }
   }
-
   const searchExecutedCount = searchAttemptRows.filter((row) => row.searchExecuted === true).length;
   const lowQualitySearchBatchCount = searchAttemptRows.filter((row) => row.lowQualitySearchBatch === true).length;
   const usableSearchBatchCount = searchAttemptRows.filter((row) => row.usableResultCount > 0).length;
@@ -408,9 +429,12 @@ async function buildReport(tasks, options = {}) {
       searchResultRowCount: searchResultRows.length,
       duplicateSearchResultRowCount,
       skippedLowQualitySearchResultRowCount,
+      skippedSearchTargetAfterUsableTaskCount,
       lowQualitySearchBatchCount,
+      lowQualityRetryAttemptCount,
       usableSearchBatchCount,
-      blockedBecauseSearchNotAllowed: options.allowSearch !== true,
+      tasksWithUsableSearchResultCount: tasksWithUsableSearchResultKeys.size,
+      tasksWithUsableResultAfterRetryCount: tasksWithUsableResultAfterRetryKeys.size,      blockedBecauseSearchNotAllowed: options.allowSearch !== true,
       fullFixtureSearchAllowedNowCount: searchTargets.filter((row) => row.fullFixtureSearchAllowedNow === true).length,
       standingsWriteAllowedNowCount: searchTargets.filter((row) => row.standingsWriteAllowedNow === true).length,
       bySearchStatus,
@@ -476,7 +500,9 @@ async function runSelfTest() {
   if (report.summary.canonicalWrites !== 0 || report.summary.productionWrite !== false) throw new Error("write guarantees changed");
   if (typeof report.summary.duplicateSearchResultRowCount !== "number") throw new Error("duplicate result summary missing");
   if (typeof report.summary.skippedLowQualitySearchResultRowCount !== "number") throw new Error("skipped low-quality result summary missing");
-
+  if (typeof report.summary.skippedSearchTargetAfterUsableTaskCount !== "number") throw new Error("skipped after usable task summary missing");
+  if (typeof report.summary.lowQualityRetryAttemptCount !== "number") throw new Error("retry attempt summary missing");
+  if (typeof report.summary.tasksWithUsableResultAfterRetryCount !== "number") throw new Error("retry recovery summary missing");
   const lowQuality = classifySearchBatchQuality({
     ok: true,
     status: "ok",
