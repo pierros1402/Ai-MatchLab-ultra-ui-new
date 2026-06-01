@@ -514,6 +514,24 @@ function resultMatchesTarget(target, result) {
   return false;
 }
 
+
+function isKnownNonFootballSearchSurface(hostname, candidateUrl, result) {
+  const host = asText(hostname).toLowerCase();
+  const rawUrl = asText(candidateUrl).toLowerCase();
+  const title = asText(result.title).toLowerCase();
+  const snippet = asText(result.snippet || result.description).toLowerCase();
+  const evidence = [host, rawUrl, title, snippet].join(" ");
+
+  if (host === "flightconnections.com" || host === "denmark.dk") {
+    return true;
+  }
+
+  const hasNonFootballSignal = /\b(flights?|airlines?|airports?|route\s+map|destinations?|book\s+your\s+flight|people\s+and\s+culture|language|tourism|travel)\b/.test(evidence);
+  const hasFootballFixtureSignal = /\b(football|soccer|fixtures?|matches?|results?|scores?|league|cup)\b/.test(evidence);
+
+  return hasNonFootballSignal && !hasFootballFixtureSignal;
+}
+
 function fixtureSurfaceQuality(candidateUrl, result) {
   const rawUrl = asText(candidateUrl);
   const title = asText(result.title).toLowerCase();
@@ -676,6 +694,22 @@ function rankOne(target, result, index) {
   }
 
   const haystack = textHaystack(result);
+  if (isKnownNonFootballSearchSurface(hostname, candidateUrl, result)) {
+    return {
+      ok: false,
+      rejectedReason: "non_football_intent_mismatch_surface",
+      targetId: asText(target.searchTargetId),
+      resultIndex: index,
+      candidateUrl,
+      hostname,
+      title: asText(result.title),
+      snippet: asText(result.snippet || result.description),
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    };
+  }
+
   const queryScore = queryMatchScore(target, result);
   const familyScore = expectedFamilyScore(target.expectedSourceFamily, hostname, haystack);
   const penalty = riskPenalty(result, hostname);

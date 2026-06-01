@@ -402,6 +402,36 @@ function isGenericCountryOrEncyclopediaResult(row, candidateUrl, hostname) {
   });
 }
 
+
+function isNonFootballIntentMismatchResult(row, candidateUrl, hostname) {
+  const host = asText(hostname).toLowerCase();
+  const title = normalizeSearchText(row.title);
+  const snippet = normalizeSearchText(row.snippet || row.description || row.summary);
+  const url = normalizeSearchText(candidateUrl);
+  const evidence = [host, title, snippet, url].join(" ");
+
+  if (host === "flightconnections.com" || host === "denmark.dk") {
+    return true;
+  }
+
+  const nonFootballSignals = [
+    "flight", "flights", "airline", "airlines", "airport", "airports",
+    "route map", "routes", "destinations", "book your flight",
+    "language", "culture", "people and culture", "tourism", "travel",
+    "visa", "population", "government"
+  ];
+
+  const footballFixtureSignals = [
+    "football", "soccer", "fixture", "fixtures", "match", "matches",
+    "results", "scores", "league", "cup"
+  ];
+
+  const hasNonFootballSignal = nonFootballSignals.some((signal) => evidence.includes(normalizeSearchText(signal)));
+  const hasFootballFixtureSignal = footballFixtureSignals.some((signal) => evidence.includes(normalizeSearchText(signal)));
+
+  return hasNonFootballSignal && !hasFootballFixtureSignal;
+}
+
 function validateOne(row, index, options = {}) {
   const errors = [];
   const warnings = [];
@@ -440,6 +470,10 @@ function validateOne(row, index, options = {}) {
 
   if (isGenericCountryOrEncyclopediaResult(row, candidateUrl, hostname)) {
     errors.push("generic_country_or_encyclopedia_result");
+  }
+
+  if (isNonFootballIntentMismatchResult(row, candidateUrl, hostname)) {
+    errors.push("non_football_intent_mismatch_result");
   }
 
   const rank = Number(row.rank || row.position || row.resultRank);
