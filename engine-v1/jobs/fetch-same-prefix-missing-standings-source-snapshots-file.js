@@ -134,9 +134,13 @@ function pickFetchTaskRows(input) {
 }
 
 function isEligibleTask(task) {
+  const state = asText(task.fetchEligibilityState);
   return (
-    asText(task.fetchEligibilityState) === "eligible_for_controlled_standings_source_snapshot_fetch" &&
-    asText(task.url || task.sourceCandidateUrl) &&
+    (
+      state === "eligible_for_controlled_standings_source_snapshot_fetch" ||
+      state === "eligible_for_controlled_standings_second_source_snapshot_fetch"
+    ) &&
+    asText(task.url || task.sourceUrl || task.sourceCandidateUrl || task.finalUrl) &&
     asText(task.missingLeagueSlug)
   );
 }
@@ -154,7 +158,7 @@ function normalizeUrl(value) {
 }
 
 function createBlockedSnapshotRow(task, index, reason) {
-  const url = normalizeUrl(task.url || task.sourceCandidateUrl);
+  const url = normalizeUrl(task.url || task.sourceUrl || task.sourceCandidateUrl || task.finalUrl);
 
   return {
     snapshotId: [
@@ -222,7 +226,7 @@ async function fetchWithTimeout(url, options = {}) {
 }
 
 async function createFetchedSnapshotRow(task, index, options) {
-  const url = normalizeUrl(task.url || task.sourceCandidateUrl);
+  const url = normalizeUrl(task.url || task.sourceUrl || task.sourceCandidateUrl || task.finalUrl);
 
   if (!isEligibleTask(task)) {
     return createBlockedSnapshotRow(task, index, "blocked_ineligible_fetch_task");
