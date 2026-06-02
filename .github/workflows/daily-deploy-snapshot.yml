@@ -83,8 +83,8 @@ jobs:
             echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
             echo "Render redeploy allowed for this manual daily run."
           elif [ "$EVENT_NAME" = "schedule" ]; then
-            echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
-            echo "Render redeploy allowed for this scheduled daily snapshot run."
+            echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
+            echo "Render redeploy disabled for scheduled daily snapshot runs."
           else
             echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
             echo "Render redeploy disabled for this daily run."
@@ -176,7 +176,7 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: |
-          node ./engine-v1/jobs/verify-deploy-snapshot-fixture-coverage-floor-file.js --date="$DAY_KEY" --min-fixtures=20 --min-leagues=5 --output "data/football-truth/_diagnostics/deploy-snapshot-fixture-coverage-floor/${DAY_KEY}.deploy-snapshot-fixture-coverage-floor.json"
+          node ./engine-v1/jobs/verify-deploy-snapshot-fixture-coverage-floor-file.js --date="$DAY_KEY" --min-fixtures=20 --min-leagues=5 --use-manifest-min-targets --output "data/football-truth/_diagnostics/deploy-snapshot-fixture-coverage-floor/${DAY_KEY}.deploy-snapshot-fixture-coverage-floor.json"
 
       - name: Snapshot verification
         if: env.SKIP_BUILD != 'true'
