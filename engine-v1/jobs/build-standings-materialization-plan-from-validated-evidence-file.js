@@ -216,26 +216,104 @@ function expectedMinimumRowsForLeague(leagueSlug) {
   return 4;
 }
 
-function buildProposedStandingObject(leagueSlug, rows) {
+function sourceGroupKey(row) {
+  const host = asText(row.hostname) || "unknown-host";
+  const url = asText(row.sourceUrl || row.finalUrl) || "unknown-url";
+  return `${host} ${url}`;
+}
+
+function summarizeCandidateTable(leagueSlug, rows) {
   const sortedRows = [...rows].sort((a, b) => asNumber(a.rank, 0) - asNumber(b.rank, 0));
+  const warnings = detectTableWarnings(sortedRows);
+  const sourceHosts = [...new Set(sortedRows.map((row) => asText(row.hostname)).filter(Boolean))];
+  const sourceUrls = [...new Set(sortedRows.map((row) => asText(row.sourceUrl || row.finalUrl)).filter(Boolean))];
   const avgConfidence = sortedRows.length
     ? sortedRows.reduce((sum, row) => sum + normalizeEvidenceConfidence(row.confidence), 0) / sortedRows.length
     : 0;
 
-  const leagueConfidence = round3(avgConfidence);
+  return {
+    leagueSlug,
+    sourceHosts,
+    sourceUrls,
+    rowCount: sortedRows.length,
+    uniqueTeamCount: new Set(sortedRows.map((row) => asText(row.teamName).toLowerCase()).filter(Boolean)).size,
+    confidence: round3(avgConfidence),
+    warningCount: warnings.length,
+    orderingWarningCount: warnings.filter((warning) => warning.warningType === "points_increase_after_lower_rank").length,
+    duplicateRankWarningCount: warnings.filter((warning) => warning.warningType === "duplicate_rank").length,
+    duplicateTeamWarningCount: warnings.filter((warning) => warning.warningType === "duplicate_team").length,
+    warnings,
+    rows: sortedRows
+  };
+}
+
+function choosePrimaryCandidateTable(leagueSlug, rows) {
+  const bySource = groupBy(rows, (row) => sourceGroupKey(row));
+  const candidateTables = [];
+
+  for (const sourceRows of bySource.values()) {
+    if (!sourceRows.length) continue;
+    candidateTables.push(summarizeCandidateTable(leagueSlug, sourceRows));
+  }
+
+  candidateTables.sort((a, b) => {
+    const warningDelta = a.warningCount - b.warningCount;
+    if (warningDelta !== 0) return warningDelta;
+
+    const rowDelta = b.rowCount - a.rowCount;
+    if (rowDelta !== 0) return rowDelta;
+
+    const uniqueTeamDelta = b.uniqueTeamCount - a.uniqueTeamCount;
+    if (uniqueTeamDelta !== 0) return uniqueTeamDelta;
+
+    return b.confidence - a.confidence;
+  });
+
+  return {
+    primary: candidateTables[0] || summarizeCandidateTable(leagueSlug, []),
+    confirmationCandidates: candidateTables.slice(1)
+  };
+}
+
+function buildProposedStandingObject(leagueSlug, rows) {
+  const selected = choosePrimaryCandidateTable(leagueSlug, rows);
+  const primary = selected.primary;
+  const sortedRows = primary.rows;
+  const leagueConfidence = primary.confidence;
   const table = sortedRows.map((row, index) => makeCanonicalLikeTableRow(row, index, leagueConfidence));
-  const warnings = detectTableWarnings(sortedRows);
+  const warnings = primary.warnings;
   const expectedMinimumRows = expectedMinimumRowsForLeague(leagueSlug);
   const completeness = table.length >= expectedMinimumRows ? 1 : round3(table.length / expectedMinimumRows);
 
-  const sourceHosts = [...new Set(sortedRows.map((row) => asText(row.hostname)).filter(Boolean))];
-  const sourceUrls = [...new Set(sortedRows.map((row) => asText(row.sourceUrl || row.finalUrl)).filter(Boolean))];
+  const sourceHosts = primary.sourceHosts;
+  const sourceUrls = primary.sourceUrls;
+  const confirmationCandidateTables = selected.confirmationCandidates.map((candidate) => ({
+    sourceHosts: candidate.sourceHosts,
+    sourceUrls: candidate.sourceUrls,
+    rowCount: candidate.rowCount,
+    uniqueTeamCount: candidate.uniqueTeamCount,
+    confidence: candidate.confidence,
+    warningCount: candidate.warningCount,
+    orderingWarningCount: candidate.orderingWarningCount,
+    duplicateRankWarningCount: candidate.duplicateRankWarningCount,
+    duplicateTeamWarningCount: candidate.duplicateTeamWarningCount,
+    readinessState: candidate.warningCount
+      ? "confirmation_candidate_requires_review"
+      : "confirmation_candidate_available",
+    standingsWriteAllowedNow: false,
+    canonicalWrites: 0,
+    productionWrite: false
+  }));
 
   const readinessReasons = [
     "diagnostic_materialization_plan_only",
     "standings_write_requires_explicit_future_promotion_gate",
     "second_source_confirmation_not_yet_required_or_satisfied_by_this_plan"
   ];
+
+  if (selected.confirmationCandidates.length > 0) {
+    readinessReasons.push("additional_source_tables_kept_for_second_source_confirmation");
+  }
 
   if (warnings.length > 0) {
     readinessReasons.push("table_quality_warnings_require_review");
@@ -255,12 +333,19 @@ function buildProposedStandingObject(leagueSlug, rows) {
       completeness,
       sourceAudit: [
         {
-          type: "validated_source_evidence",
-          label: `validated-standings-evidence:${sourceHosts.join(",")}`,
+          type: "primary_validated_source_evidence",
+          label: `primary-validated-standings-evidence:${sourceHosts.join(",")}`,
           ok: true,
           rowCount: table.length,
           sourceHosts,
           sourceUrls
+        },
+        {
+          type: "confirmation_candidate_source_tables",
+          label: `confirmation-candidates:${confirmationCandidateTables.length}`,
+          ok: true,
+          candidateTableCount: confirmationCandidateTables.length,
+          candidateTables: confirmationCandidateTables
         },
         {
           type: "diagnostic_materialization_plan",
@@ -269,7 +354,7 @@ function buildProposedStandingObject(leagueSlug, rows) {
         },
         {
           type: "validation",
-          label: `rows:${table.length}/${table.length}`,
+          label: `primary-rows:${table.length}/${table.length}`,
           ok: warnings.length === 0
         }
       ],
@@ -287,6 +372,11 @@ function buildProposedStandingObject(leagueSlug, rows) {
       leagueSlug,
       sourceHosts,
       sourceUrls,
+      selectedPrimarySourceHost: sourceHosts[0] || "",
+      selectedPrimarySourceUrl: sourceUrls[0] || "",
+      confirmationCandidateTableCount: confirmationCandidateTables.length,
+      confirmationCandidateTables,
+      inputValidatedRowCount: rows.length,
       proposedTableRowCount: table.length,
       expectedMinimumRows,
       completeness,
