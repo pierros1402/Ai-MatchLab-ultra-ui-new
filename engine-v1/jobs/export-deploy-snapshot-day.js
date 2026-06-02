@@ -98,17 +98,49 @@ function fixturesForSnapshotDay(dayKey) {
   const fixturesPayload = readJsonSafe(resolveDataPath("fixtures.json"), { fixtures: [] });
   const fixturesFromMain = dayFixtures(fixturesPayload, dayKey);
   const fixturesFromCanonical = canonicalFixturesForDay(dayKey);
+  const canonicalFixtureCount = fixturesFromCanonical.length;
+  const fixtureJsonCount = fixturesFromMain.length;
 
   if (fixturesFromCanonical.length > fixturesFromMain.length) {
     return {
       source: "canonical_fixtures",
+      canonicalFixtureCount,
+      fixtureJsonCount,
       fixtures: fixturesFromCanonical
     };
   }
 
   return {
     source: "fixtures_json",
+    canonicalFixtureCount,
+    fixtureJsonCount,
     fixtures: fixturesFromMain
+  };
+}
+
+function resolveManifestTargetFixtureGate(fixturesSnapshot) {
+  const staticMinTargetFixtures = Number(process.env.DAILY_INGEST_MIN_TARGET_FIXTURES || 45);
+  const normalizedStaticMinTargetFixtures = Number.isFinite(staticMinTargetFixtures) && staticMinTargetFixtures > 0
+    ? staticMinTargetFixtures
+    : 45;
+  const canonicalFixtures = Number(fixturesSnapshot?.canonicalFixtureCount || 0);
+
+  if (canonicalFixtures > 0) {
+    const canonicalFloor = Math.max(1, Math.floor(canonicalFixtures * 0.95));
+
+    return {
+      staticMinTargetFixtures: normalizedStaticMinTargetFixtures,
+      minTargetFixtures: Math.min(normalizedStaticMinTargetFixtures, canonicalFloor),
+      minTargetFixtureSource: "canonical_coverage",
+      canonicalCoverageFixtureCount: canonicalFixtures
+    };
+  }
+
+  return {
+    staticMinTargetFixtures: normalizedStaticMinTargetFixtures,
+    minTargetFixtures: normalizedStaticMinTargetFixtures,
+    minTargetFixtureSource: "static",
+    canonicalCoverageFixtureCount: null
   };
 }
 
@@ -505,6 +537,7 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
   const fixturesSnapshot = fixturesForSnapshotDay(dayKey);
   const fixtures = fixturesSnapshot.fixtures;
   const fixturesSource = fixturesSnapshot.source;
+  const targetFixtureGate = resolveManifestTargetFixtureGate(fixturesSnapshot);
 
   const value = valueForDay(dayKey, { snapshotRoot, preserveValue: options?.preserveValue === true });
   const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails: options?.preserveDetails === true });
@@ -535,6 +568,12 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
     source: "local_canonical_export",
     version: "deploy-snapshot-v1",
     fixturesSource,
+    fixtureJsonCount: fixturesSnapshot.fixtureJsonCount,
+    canonicalFixtureCount: fixturesSnapshot.canonicalFixtureCount,
+    canonicalCoverageFixtureCount: targetFixtureGate.canonicalCoverageFixtureCount,
+    staticMinTargetFixtures: targetFixtureGate.staticMinTargetFixtures,
+    minTargetFixtures: targetFixtureGate.minTargetFixtures,
+    minTargetFixtureSource: targetFixtureGate.minTargetFixtureSource,
     files: {
       fixtures: "fixtures.json",
       value: "value.json",
@@ -546,6 +585,9 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
       details: detailsReport.count
     },
     coverage: {
+      minTargetFixtures: targetFixtureGate.minTargetFixtures,
+      minTargetFixtureSource: targetFixtureGate.minTargetFixtureSource,
+      canonicalCoverageFixtureCount: targetFixtureGate.canonicalCoverageFixtureCount,
       detailsWithTravel: detailsReport.summaries.filter(x => x.hasTravel).length,
       detailsWithPlayerUsage: detailsReport.summaries.filter(x => x.hasPlayerUsage).length,
       playerUsageUsableSides: detailsReport.summaries.reduce((sum, x) => sum + Number(x.playerUsageUsableSides || 0), 0),
@@ -566,6 +608,11 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
   manifest.hash = sha256Json({
     date: manifest.date,
     counts: manifest.counts,
+    fixturesSource: manifest.fixturesSource,
+    staticMinTargetFixtures: manifest.staticMinTargetFixtures,
+    minTargetFixtures: manifest.minTargetFixtures,
+    minTargetFixtureSource: manifest.minTargetFixtureSource,
+    canonicalCoverageFixtureCount: manifest.canonicalCoverageFixtureCount,
     coverage: manifest.coverage,
     sizes: manifest.sizes,
     details: manifest.details.map(x => ({
