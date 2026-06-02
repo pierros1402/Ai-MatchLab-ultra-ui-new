@@ -14,6 +14,7 @@ function parseArgs(argv) {
     outputDir: "",
     leagueDayActivityOutput: "",
     seasonWatchOutput: "",
+    writeState: false,
     selfTest: false
   };
 
@@ -42,6 +43,8 @@ function parseArgs(argv) {
       args.seasonWatchOutput = argv[++i] || "";
     } else if (arg.startsWith("--season-watch-output=")) {
       args.seasonWatchOutput = arg.slice("--season-watch-output=".length);
+    } else if (arg === "--write-state") {
+      args.writeState = true;
     } else {
       throw new Error(`unknown argument: ${arg}`);
     }
@@ -637,12 +640,18 @@ function run(input, options = {}) {
 
   const outputDir = options.outputDir || path.join("data", "football-truth", "_diagnostics", "day-activity", targetDate);
   const reportOutput = path.join(outputDir, "day-activity-evidence-report.json");
-  const leagueDayActivityOutput = options.leagueDayActivityOutput || path.join("data", "football-truth", "_state", "league-day-activity", `${targetDate}.json`);
-  const seasonWatchOutput = options.seasonWatchOutput || path.join("data", "football-truth", "_state", "league-season-watch", "league-season-watch.json");
+  const writeState = options.writeState === true;
+  const leagueDayActivityOutput = writeState
+    ? (options.leagueDayActivityOutput || path.join("data", "football-truth", "_state", "league-day-activity", `${targetDate}.json`))
+    : "";
+  const seasonWatchOutput = writeState
+    ? (options.seasonWatchOutput || path.join("data", "football-truth", "_state", "league-season-watch", "league-season-watch.json"))
+    : "";
 
   writeJson(reportOutput, report);
 
-  writeJson(leagueDayActivityOutput, {
+  if (writeState) {
+    writeJson(leagueDayActivityOutput, {
     ok: true,
     job: "league-day-activity-state",
     mode: "read_only_league_day_activity_state",
@@ -675,18 +684,20 @@ function run(input, options = {}) {
       dryRun: true
     })),
     guarantees: report.guarantees
-  });
+    });
 
-  const seasonWatch = mergeSeasonWatch(readExistingSeasonWatch(seasonWatchOutput), report.seasonWatchRows);
-  writeJson(seasonWatchOutput, seasonWatch);
+    const seasonWatch = mergeSeasonWatch(readExistingSeasonWatch(seasonWatchOutput), report.seasonWatchRows);
+    writeJson(seasonWatchOutput, seasonWatch);
+  }
 
   return {
     ...report,
     paths: {
       reportOutput,
-      leagueDayActivityOutput,
-      seasonWatchOutput
-    }
+      leagueDayActivityOutput: writeState ? leagueDayActivityOutput : null,
+      seasonWatchOutput: writeState ? seasonWatchOutput : null
+    },
+    stateWrite: writeState,
   };
 }
 
@@ -723,8 +734,34 @@ function runSelfTest() {
     date: "2026-05-31",
     outputDir: path.join(tmpRoot, "diagnostics"),
     leagueDayActivityOutput: path.join(tmpRoot, "state", "league-day-activity", "2026-05-31.json"),
-    seasonWatchOutput: path.join(tmpRoot, "state", "league-season-watch", "league-season-watch.json")
+    seasonWatchOutput: path.join(tmpRoot, "state", "league-season-watch", "league-season-watch.json"),
+    writeState: true
   });
+
+  const diagnosticOnlyStateOutput = path.join(tmpRoot, "state-default", "league-day-activity", "2026-05-31.json");
+  const diagnosticOnlySeasonWatchOutput = path.join(tmpRoot, "state-default", "league-season-watch", "league-season-watch.json");
+  const diagnosticOnlyResult = run(input, {
+    date: "2026-05-31",
+    outputDir: path.join(tmpRoot, "diagnostics-default"),
+    leagueDayActivityOutput: diagnosticOnlyStateOutput,
+    seasonWatchOutput: diagnosticOnlySeasonWatchOutput
+  });
+
+  if (diagnosticOnlyResult.stateWrite !== false) {
+    throw new Error("self-test failed: default run must not write state");
+  }
+
+  if (!fs.existsSync(diagnosticOnlyResult.paths.reportOutput)) {
+    throw new Error("self-test failed: default diagnostic report was not written");
+  }
+
+  if (diagnosticOnlyResult.paths.leagueDayActivityOutput !== null || diagnosticOnlyResult.paths.seasonWatchOutput !== null) {
+    throw new Error("self-test failed: default state paths must be null");
+  }
+
+  if (fs.existsSync(diagnosticOnlyStateOutput) || fs.existsSync(diagnosticOnlySeasonWatchOutput)) {
+    throw new Error("self-test failed: default run wrote state files without --write-state");
+  }
 
   const eng = result.dayActivityRows.find((row) => row.leagueSlug === "eng.1");
   const usa = result.dayActivityRows.find((row) => row.leagueSlug === "usa.1");
@@ -759,9 +796,13 @@ function runSelfTest() {
   }
 
   for (const filePath of Object.values(result.paths)) {
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`self-test failed: missing output file ${filePath}`);
+    if (!filePath || !fs.existsSync(filePath)) {
+      throw new Error(`self-test failed: missing explicit write-state output file ${filePath}`);
     }
+  }
+
+  if (result.stateWrite !== true) {
+    throw new Error("self-test failed: explicit write-state run did not report stateWrite true");
   }
 
   if (result.guarantees.canonicalWrites !== 0 || result.guarantees.productionWrite !== false) {
@@ -794,7 +835,8 @@ function main() {
     date: args.date,
     outputDir: args.outputDir,
     leagueDayActivityOutput: args.leagueDayActivityOutput,
-    seasonWatchOutput: args.seasonWatchOutput
+    seasonWatchOutput: args.seasonWatchOutput,
+    writeState: args.writeState
   });
 
   console.log(JSON.stringify({
@@ -802,6 +844,7 @@ function main() {
     job: result.job,
     mode: result.mode,
     date: result.date,
+    stateWrite: result.stateWrite,
     summary: result.summary,
     paths: result.paths,
     guarantees: result.guarantees
