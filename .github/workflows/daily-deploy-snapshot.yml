@@ -181,7 +181,7 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: |
-          node ./engine-v1/jobs/verify-deploy-snapshot-fixture-coverage-floor-file.js --date="$DAY_KEY" --min-fixtures=20 --min-leagues=5 --output "data/football-truth/_diagnostics/deploy-snapshot-fixture-coverage-floor/${DAY_KEY}.deploy-snapshot-fixture-coverage-floor.json"
+          node ./engine-v1/jobs/verify-deploy-snapshot-fixture-coverage-floor-file.js --date="$DAY_KEY" --min-fixtures=20 --min-leagues=5 --use-manifest-min-targets --output "data/football-truth/_diagnostics/deploy-snapshot-fixture-coverage-floor/${DAY_KEY}.deploy-snapshot-fixture-coverage-floor.json"
 
       - name: Snapshot verification
         if: env.SKIP_BUILD != 'true'
