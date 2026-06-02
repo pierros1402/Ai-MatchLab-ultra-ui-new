@@ -74,6 +74,19 @@ function safeSlug(value) {
   return asText(value).replace(/[^a-z0-9._-]+/gi, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 }
 
+function countryPrefixFromLeagueSlug(leagueSlug) {
+  const slug = asText(leagueSlug);
+  const [prefix] = slug.split(".");
+  return asText(prefix);
+}
+
+function tierFromLeagueSlug(leagueSlug) {
+  const slug = asText(leagueSlug);
+  const [, tier] = slug.split(".");
+  const numericTier = asNumber(tier, null);
+  return Number.isFinite(numericTier) ? numericTier : null;
+}
+
 function pickConfirmationTasks(input) {
   const direct = asArray(input.secondSourceConfirmationTasks);
   if (direct.length) return direct;
@@ -109,6 +122,8 @@ function normalizeSuggestedQueries(task) {
 
 function makeSearchTask(task, index) {
   const leagueSlug = asText(task.leagueSlug);
+  const countryPrefix = countryPrefixFromLeagueSlug(leagueSlug);
+  const missingTier = tierFromLeagueSlug(leagueSlug);
   const excludedHosts = asArray(task.excludedHosts).map(asText).filter(Boolean);
   const suggestedQueries = normalizeSuggestedQueries(task);
   const candidateSearchQueries = suggestedQueries.map((row) => row.query);
@@ -125,6 +140,9 @@ function makeSearchTask(task, index) {
     taskType: "standings_second_source_search",
     leagueSlug,
     missingLeagueSlug: leagueSlug,
+    countryPrefix,
+    missingTier,
+    missingTierLabel: missingTier === null ? "" : String(missingTier),
     proposedPath: asText(task.proposedPath),
     proposedTableRowCount: asNumber(task.proposedTableRowCount, 0),
     confirmationState: asText(task.confirmationState),
@@ -259,6 +277,10 @@ async function main() {
     const first = report.taskRows[0];
     if (first.leagueSlug !== "bel.2") {
       throw new Error("self-test expected bel.2 task");
+    }
+
+    if (first.countryPrefix !== "bel" || first.missingTier !== 2) {
+      throw new Error(`self-test expected bel countryPrefix and tier 2, got ${first.countryPrefix}/${first.missingTier}`);
     }
 
     if (!first.excludedHosts.includes("proleague.be")) {
