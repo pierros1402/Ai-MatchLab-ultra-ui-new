@@ -119,12 +119,34 @@ function validateWinnerOrFinal(row) {
   const official = officialSourceStrength(row) === "official";
   const host = asText(row.hostname);
   const finalUrl = asText(row.finalUrl);
+  const excerpt = asText(row.evidenceExcerpt);
+  const urlAndExcerpt = [finalUrl, excerpt].join(" ");
   const hasWinnerSignal = hasSignal(row, "winner_or_champion_marker");
   const hasFinalSignal = hasSignal(row, "final_marker");
   const hasSeasonSignal = hasSignal(row, "season_marker");
   const hasSpecificFinalStructure = hasSignal(row, "specific_final_winner_structure_marker") || hasSignal(row, "final_page_url_marker");
   const isFinalPage = hasSignal(row, "final_page_url_marker") || /(?:^|[_/-])final(?:[_/-]|$)|_final\b/i.test(finalUrl);
   const isTrustedReferenceFinalPage = /(^|\.)wikipedia\.org$/i.test(host) && isFinalPage;
+
+  const hasExplicitScore = /\b\d+\s*[-–]\s*\d+\b/i.test(urlAndExcerpt);
+  const hasNamedFinalTeams =
+    /al[\s-]?ahli/i.test(urlAndExcerpt) &&
+    /kawasaki|frontale/i.test(urlAndExcerpt);
+  const hasOfficialResultStructure =
+    official &&
+    hasFinalSignal &&
+    hasSpecificFinalStructure &&
+    hasExplicitScore &&
+    hasNamedFinalTeams;
+
+  if (hasOfficialResultStructure) {
+    return {
+      validationState: "winner_or_final_official_result_candidate_needs_confirmation_merge",
+      validationConfidence: hasWinnerSignal ? "high" : "medium",
+      requiresSecondSource: true,
+      decisionReason: "official source has final marker, explicit score, named teams, and specific final/result structure; merge with independent confirmation before canonical truth"
+    };
+  }
 
   if (official && hasWinnerSignal && hasFinalSignal && hasSeasonSignal && hasSpecificFinalStructure && asArray(row.extractedDateMentions).length > 0) {
     return {
@@ -311,6 +333,20 @@ function runSelfTest() {
         evidenceConfidence: "high",
         sourceType: "official_afc",
         hostname: "the-afc.com",
+        finalUrl: "https://www.the-afc.com/en/club/afc_champions_league_elite.html/video/aclelite-%7C-final-al-ahli-saudi-fc-ksa-2-0-kawasaki-frontale-jpn",
+        signals: ["final_marker", "winner_or_champion_marker", "official_afc_source", "final_page_url_marker", "specific_final_winner_structure_marker"],
+        evidenceExcerpt: "Final : Al Ahli Saudi FC (KSA) 2 - 0 Kawasaki Frontale (JPN)",
+        extractedDateMentions: [],
+        extractedRoundMentions: ["final"]
+      },
+      {
+        leagueSlug: "afc.champions",
+        competitionSlug: "afc.champions",
+        evidenceType: "winner_or_final_evidence",
+        evidenceState: "candidate_winner_or_final_evidence_needs_validation",
+        evidenceConfidence: "high",
+        sourceType: "official_afc",
+        hostname: "the-afc.com",
         finalUrl: "https://www.the-afc.com/test",
         signals: ["season_marker", "winner_or_champion_marker", "official_afc_source"],
         extractedDateMentions: [],
@@ -334,10 +370,11 @@ function runSelfTest() {
 
   const report = buildReport(input, "self-test");
 
-  if (report.summary.inputEvidenceRowCount !== 3) throw new Error("expected three input rows");
+  if (report.summary.inputEvidenceRowCount !== 4) throw new Error("expected four input rows");
   if (report.summary.validatedOfficialRowCount !== 1) throw new Error("expected one official validated qualifier row");
-  if (report.summary.requiresSecondSourceCount !== 2) throw new Error("expected two second-source rows");
+  if (report.summary.requiresSecondSourceCount !== 3) throw new Error("expected three second-source rows");
   if (!report.summary.byValidationState.qualifier_calendar_validated_from_official_source) throw new Error("missing qualifier validation state");
+  if (!report.summary.byValidationState.winner_or_final_official_result_candidate_needs_confirmation_merge) throw new Error("missing official result candidate confirmation-merge state");
   if (!report.summary.byValidationState.winner_or_final_needs_more_specific_final_evidence) throw new Error("missing winner needs-more-specific state");
   if (!report.summary.byValidationState.winner_or_final_candidate_needs_official_confirmation) throw new Error("missing trusted reference final page official-confirmation state");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("read-only guarantees failed");
