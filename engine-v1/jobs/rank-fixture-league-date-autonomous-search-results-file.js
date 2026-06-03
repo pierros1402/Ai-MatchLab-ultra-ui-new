@@ -516,22 +516,114 @@ function resultMatchesTarget(target, result) {
 
 
 function isKnownNonFootballSearchSurface(hostname, candidateUrl, result) {
-  const host = asText(hostname).toLowerCase();
+  const host = asText(hostname).toLowerCase().replace(/^www\./, "");
   const rawUrl = asText(candidateUrl).toLowerCase();
   const title = asText(result.title).toLowerCase();
   const snippet = asText(result.snippet || result.description).toLowerCase();
   const evidence = [host, rawUrl, title, snippet].join(" ");
 
-  if (host === "flightconnections.com" || host === "denmark.dk") {
+  const hardRejectedHosts = [
+    "flightconnections.com",
+    "denmark.dk",
+    "accounts.google.com",
+    "support.google.com",
+    "google.gp",
+    "account.microsoft.com",
+    "accounts.microsoft.com",
+    "apps.microsoft.com",
+    "mysignins.microsoft.com",
+    "connect.caf.fr",
+    "aide-sociale.fr",
+    "caf-fr-remboursement.info",
+    "fadepofatelep.hu",
+    "fagep.hu",
+    "favi.hu",
+    "dentalog.fr",
+    "forums.commentcamarche.net",
+    "frontporchforum.com",
+    "doc-suche.at",
+    "bdsmx.tube",
+    "detail.chiebukuro.yahoo.co.jp",
+    "forum.malekal.com",
+    "gdprlocal.com",
+    "agrifinance.org"
+  ];
+
+  if (hardRejectedHosts.includes(host)) {
     return true;
   }
 
-  const hasNonFootballSignal = /\b(flights?|airlines?|airports?|route\s+map|destinations?|book\s+your\s+flight|people\s+and\s+culture|language|tourism|travel)\b/.test(evidence);
-  const hasFootballFixtureSignal = /\b(football|soccer|fixtures?|matches?|results?|scores?|league|cup)\b/.test(evidence);
+  const hardRejectedHostTokens = [
+    "google.",
+    "microsoft.",
+    "caf-fr-",
+    "remboursement",
+    "aide-sociale",
+    "commentcamarche",
+    "dentalog",
+    "bdsm",
+    "frontporchforum",
+    "doc-suche",
+    "malekal"
+  ];
+
+  if (hardRejectedHostTokens.some((token) => host.includes(token))) {
+    return true;
+  }
+
+  const hasNonFootballSignal = /\b(flights?|airlines?|airports?|route\s+map|destinations?|book\s+your\s+flight|people\s+and\s+culture|language|tourism|travel|login|sign\s*in|account|support|help|forum|dental|reimbursement|remboursement|sociale|terrace|burkol|adult|tube|porn|gdpr)\b/.test(evidence);
+  const hasFootballFixtureSignal = /\b(football|soccer|fixtures?|matches?|results?|scores?|league|cup|schedule|calendar)\b/.test(evidence);
 
   return hasNonFootballSignal && !hasFootballFixtureSignal;
 }
+function strictFixtureSurfaceRejectReason(target, hostname, candidateUrl, result) {
+  const slug = asText(target.leagueSlug || target.competitionSlug).toLowerCase();
+  const host = asText(hostname).toLowerCase().replace(/^www\./, "");
+  const rawUrl = asText(candidateUrl).toLowerCase();
+  const title = asText(result.title).toLowerCase();
+  const snippet = asText(result.snippet || result.description).toLowerCase();
 
+  let pathname = "";
+  try {
+    pathname = new URL(candidateUrl).pathname.toLowerCase();
+  } catch {
+    pathname = rawUrl;
+  }
+
+  const evidence = [host, rawUrl, pathname, title, snippet].join(" ");
+
+  if (
+    /(^|\/)(watch|video|videos|live-stream|stream)(\/|$)/.test(pathname) ||
+    /\b(watch|live stream|streaming|video|highlights?)\b/.test(title)
+  ) {
+    return "media_watch_or_video_surface_not_fixture_page";
+  }
+
+  const hasChampionsLeagueSurface =
+    /\b(champions\s+league|champions-league|uefachampionsleague|uefa\.champions)\b/.test(evidence);
+  const hasEuropaLeagueSurface =
+    /\b(europa\s+league|europa-league|uefaeuropaleague|uefa\.europa)\b/.test(evidence);
+  const hasConferenceLeagueSurface =
+    /\b(conference\s+league|conference-league|uefaconferenceleague|uefa\.europa\.conf)\b/.test(evidence);
+
+  if (slug === "uefa.europa" && hasChampionsLeagueSurface && !hasEuropaLeagueSurface) {
+    return "wrong_competition_surface_champions_for_europa";
+  }
+
+  if (slug === "uefa.europa.conf" && hasChampionsLeagueSurface && !hasConferenceLeagueSurface) {
+    return "wrong_competition_surface_champions_for_conference";
+  }
+
+  if (slug === "uefa.champions" && (hasEuropaLeagueSurface || hasConferenceLeagueSurface) && !hasChampionsLeagueSurface) {
+    return "wrong_competition_surface_non_champions_for_champions";
+  }
+
+  if (slug === "ita.coppa_italia" && /\b(watch|stream|video)\b/.test(evidence)) {
+    return "coppa_italia_media_surface_not_fixture_page";
+  }
+
+  return "";
+}
 function fixtureSurfaceQuality(candidateUrl, result) {
   const rawUrl = asText(candidateUrl);
   const title = asText(result.title).toLowerCase();
@@ -559,7 +651,7 @@ function fixtureSurfaceQuality(candidateUrl, result) {
     /\b(fixtures?|results?|matches?|schedule|calendar|match[-_ ]?centre|match[-_ ]?center|scoreboard)\b/.test(titleAndSnippet);
 
   const hasDateSurfaceSignal =
-    /\b(2026[-/ ]?05[-/ ]?31|31[-/ ]?05[-/ ]?2026|may\s+31\s+2026|31\s+may\s+2026)\b/.test(pageText);
+    /\b(2026[-/ ]?06[-/ ]?03|03[-/ ]?06[-/ ]?2026|june\s+3\s+2026|3\s+june\s+2026|2026[-/ ]?05[-/ ]?31|31[-/ ]?05[-/ ]?2026|may\s+31\s+2026|31\s+may\s+2026)\b/.test(pageText);
 
   const isNewsOrArticleSurface =
     /(^|\/)news(\/|$)/.test(pathname) ||
@@ -569,17 +661,21 @@ function fixtureSurfaceQuality(candidateUrl, result) {
   const isHomepageLike =
     pathname === "" ||
     pathname === "/" ||
-    /^\/[a-z]{2}(-[a-z]{2})?$/.test(pathname);
+    /^\/[a-z]{2}(-[a-z]{2})?$/.test(pathname) ||
+    /\/home(\.html?)?$/.test(pathname);
 
   const isGenericLeagueLanding =
     /^\/(sport\/)?football\/[^/]+$/.test(pathname) ||
     /^\/(football|soccer|futebol)\/(league|competition|tables?|standings?)\/[^/]+$/.test(pathname) ||
+    /^\/[a-z]{2}\/home(\.html?)?$/.test(pathname) ||
+    /^\/[a-z]{2}\/club\/[^/]+\.html$/.test(pathname) ||
+    /^\/[^/]+\/?$/.test(pathname) ||
     /\b(league landing|competition landing|homepage)\b/.test(titleAndSnippet);
 
   const hasGenericSurfaceSignal =
     /\/wiki\//.test(pathname) ||
     /\b(wikipedia|standings?|tables?)\b/.test(pageText) ||
-    /\b(airport|national geographic|national car|rentals?|casino|betting|odds)\b/.test(pageText);
+    /\b(airport|national geographic|national car|rentals?|casino|betting|odds|google account|microsoft account|support|login|sign in|forum|adult|tube|dental|reimbursement|remboursement|aide sociale)\b/.test(pageText);
 
   if (isNewsOrArticleSurface || isHomepageLike || isGenericLeagueLanding || hasGenericSurfaceSignal) {
     return {
@@ -615,7 +711,6 @@ function fixtureSurfaceQuality(candidateUrl, result) {
     reasons: ["missing_fixture_surface_signal"]
   };
 }
-
 function isSeasonRestartTarget(target) {
   const joined = [
     target.intent,
@@ -710,6 +805,23 @@ function rankOne(target, result, index) {
     };
   }
 
+  const strictRejectReason = strictFixtureSurfaceRejectReason(target, hostname, candidateUrl, result);
+  if (strictRejectReason) {
+    return {
+      ok: false,
+      rejectedReason: strictRejectReason,
+      targetId: asText(target.searchTargetId),
+      resultIndex: index,
+      candidateUrl,
+      hostname,
+      title: asText(result.title),
+      snippet: asText(result.snippet || result.description),
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    };
+  }
+
   const queryScore = queryMatchScore(target, result);
   const familyScore = expectedFamilyScore(target.expectedSourceFamily, hostname, haystack);
   const penalty = riskPenalty(result, hostname);
@@ -745,6 +857,50 @@ function rankOne(target, result, index) {
   const truthRole = isSeasonActivityCandidate
     ? "season_activity_candidate_after_fetch_evidence"
     : isFetchEligibleSurface ? hostPolicy.truthRole : "not_truth_ready";
+
+  if (!isFetchEligibleSurface) {
+    return {
+      ok: false,
+      rejectedReason: "blocked_from_emit_without_fixture_surface_signal",
+      targetId: asText(target.searchTargetId),
+      resultIndex: index,
+      candidateUrl,
+      hostname,
+      title: asText(result.title),
+      snippet: asText(result.snippet || result.description),
+      surfaceQuality: surfaceQuality.state,
+      sourceClass,
+      truthRole,
+      compositeScore,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    };
+  }
+
+  if (truthRole === "not_truth_ready" || sourceClass === "low_priority_or_non_truth_surface" || compositeScore <= 0) {
+    return {
+      ok: false,
+      rejectedReason: truthRole === "not_truth_ready"
+        ? "blocked_from_emit_not_truth_ready"
+        : sourceClass === "low_priority_or_non_truth_surface"
+          ? "blocked_from_emit_low_priority_surface"
+          : "blocked_from_emit_zero_composite_score",
+      targetId: asText(target.searchTargetId),
+      resultIndex: index,
+      candidateUrl,
+      hostname,
+      title: asText(result.title),
+      snippet: asText(result.snippet || result.description),
+      surfaceQuality: surfaceQuality.state,
+      sourceClass,
+      truthRole,
+      compositeScore,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    };
+  }
 
   return {
     ok: true,
@@ -971,12 +1127,17 @@ function runSelfTest() {
 
   if (report.summary.searchTargetCount !== 1) throw new Error("expected 1 target");
   if (report.summary.searchResultInputCount !== 3) throw new Error("expected 3 input results");
-  if (report.summary.rawRankedCandidateUrlCount !== 2) throw new Error("expected 2 ranked URL rows");
-  if (report.summary.rejectedResultCount !== 1) throw new Error("expected 1 rejected missing-url row");
+  if (report.summary.rawRankedCandidateUrlCount !== 1) throw new Error("expected 1 ranked URL row after strict surface filtering");
+  if (report.summary.rejectedResultCount !== 2) throw new Error("expected 2 rejected rows: betting/noise plus missing-url");
   if (report.guarantees.inventedUrls !== false) throw new Error("must not invent URLs");
   if (report.guarantees.usesOnlyProvidedSearchResults !== true) throw new Error("must use only provided search results");
   if (report.rankedCandidateUrlRows[0].candidateUrl !== "https://www.slgr.gr/en/schedule/") {
     throw new Error("official fixture result should rank first");
+  }
+
+  const rejectedUrls = report.rejectedRows.map((row) => row.candidateUrl).filter(Boolean);
+  if (!rejectedUrls.includes("https://example-betting.test/super-league-greece")) {
+    throw new Error("betting/noise URL should be rejected by strict fixture surface filtering");
   }
 
   return {
@@ -986,7 +1147,6 @@ function runSelfTest() {
     guarantees: report.guarantees
   };
 }
-
 function main() {
   const args = parseArgs();
 
