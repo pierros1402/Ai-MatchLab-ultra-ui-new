@@ -117,16 +117,30 @@ function validateQualifierCalendar(row) {
 
 function validateWinnerOrFinal(row) {
   const official = officialSourceStrength(row) === "official";
+  const host = asText(row.hostname);
+  const finalUrl = asText(row.finalUrl);
   const hasWinnerSignal = hasSignal(row, "winner_or_champion_marker");
   const hasFinalSignal = hasSignal(row, "final_marker");
   const hasSeasonSignal = hasSignal(row, "season_marker");
+  const hasSpecificFinalStructure = hasSignal(row, "specific_final_winner_structure_marker") || hasSignal(row, "final_page_url_marker");
+  const isFinalPage = hasSignal(row, "final_page_url_marker") || /(?:^|[_/-])final(?:[_/-]|$)|_final\b/i.test(finalUrl);
+  const isTrustedReferenceFinalPage = /(^|\.)wikipedia\.org$/i.test(host) && isFinalPage;
 
-  if (official && hasWinnerSignal && hasFinalSignal && hasSeasonSignal && asArray(row.extractedDateMentions).length > 0) {
+  if (official && hasWinnerSignal && hasFinalSignal && hasSeasonSignal && hasSpecificFinalStructure && asArray(row.extractedDateMentions).length > 0) {
     return {
       validationState: "winner_or_final_candidate_needs_second_source",
       validationConfidence: "medium",
       requiresSecondSource: true,
-      decisionReason: "official source has winner/final/season/date signals, but winner/final truth requires second source before validation"
+      decisionReason: "official source has winner/final/season/date and specific final structure, but winner/final truth still requires second source before validation"
+    };
+  }
+
+  if (official && hasWinnerSignal && hasSeasonSignal && hasSpecificFinalStructure) {
+    return {
+      validationState: "winner_or_final_candidate_needs_second_source",
+      validationConfidence: "medium",
+      requiresSecondSource: true,
+      decisionReason: "official source has winner/champion, season, and specific final structure, but winner/final truth still requires second source before validation"
     };
   }
 
@@ -136,6 +150,15 @@ function validateWinnerOrFinal(row) {
       validationConfidence: "medium",
       requiresSecondSource: true,
       decisionReason: "official source has winner/champion and season signals but lacks specific final/winner structure"
+    };
+  }
+
+  if (isTrustedReferenceFinalPage && hasSpecificFinalStructure && (hasWinnerSignal || hasFinalSignal)) {
+    return {
+      validationState: "winner_or_final_candidate_needs_official_confirmation",
+      validationConfidence: "medium",
+      requiresSecondSource: true,
+      decisionReason: "trusted reference final page has specific final/winner structure, but official confirmation is required before winner/final validation"
     };
   }
 
@@ -292,17 +315,31 @@ function runSelfTest() {
         signals: ["season_marker", "winner_or_champion_marker", "official_afc_source"],
         extractedDateMentions: [],
         extractedRoundMentions: ["final"]
+      },
+      {
+        leagueSlug: "afc.champions",
+        competitionSlug: "afc.champions",
+        evidenceType: "winner_or_final_evidence",
+        evidenceState: "candidate_winner_or_final_evidence_needs_validation",
+        evidenceConfidence: "medium",
+        sourceType: "other_source",
+        hostname: "en.wikipedia.org",
+        finalUrl: "https://en.wikipedia.org/wiki/2025_AFC_Champions_League_Elite_final",
+        signals: ["season_marker", "final_marker", "winner_or_champion_marker", "final_page_url_marker", "specific_final_winner_structure_marker"],
+        extractedDateMentions: [],
+        extractedRoundMentions: ["final"]
       }
     ]
   };
 
   const report = buildReport(input, "self-test");
 
-  if (report.summary.inputEvidenceRowCount !== 2) throw new Error("expected two input rows");
+  if (report.summary.inputEvidenceRowCount !== 3) throw new Error("expected three input rows");
   if (report.summary.validatedOfficialRowCount !== 1) throw new Error("expected one official validated qualifier row");
-  if (report.summary.requiresSecondSourceCount !== 1) throw new Error("expected one second-source row");
+  if (report.summary.requiresSecondSourceCount !== 2) throw new Error("expected two second-source rows");
   if (!report.summary.byValidationState.qualifier_calendar_validated_from_official_source) throw new Error("missing qualifier validation state");
-  if (!report.summary.byValidationState.winner_or_final_needs_more_specific_final_evidence) throw new Error("missing winner second-source state");
+  if (!report.summary.byValidationState.winner_or_final_needs_more_specific_final_evidence) throw new Error("missing winner needs-more-specific state");
+  if (!report.summary.byValidationState.winner_or_final_candidate_needs_official_confirmation) throw new Error("missing trusted reference final page official-confirmation state");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("read-only guarantees failed");
 
   return {
