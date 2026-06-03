@@ -88,6 +88,7 @@ function hostnameOf(value) {
 }
 
 function arrayFromInput(input) {
+  if (Array.isArray(input?.fetchTaskRows)) return input.fetchTaskRows;
   if (Array.isArray(input?.rankedCandidateUrlRows)) return input.rankedCandidateUrlRows;
   if (Array.isArray(input?.readyForFetchRows)) {
     return input.readyForFetchRows.filter((row) => row?.readyForFetch === true);
@@ -96,7 +97,6 @@ function arrayFromInput(input) {
   if (Array.isArray(input?.rows)) return input.rows;
   return [];
 }
-
 function candidateUrlOf(row) {
   return normalizeUrl(row?.candidateUrl || row?.url || row?.resolvedUrl);
 }
@@ -166,7 +166,10 @@ function selectCandidates(input, options = {}) {
       sourceClass: asText(row.sourceClass),
       reviewerDecision: asText(row.reviewerDecision),
       readyForFetch: row.readyForFetch === true,
-      fetchPurpose: asText(row.fetchPurpose)
+      fetchPurpose: asText(row.fetchPurpose),
+      fetchTaskId: asText(row.fetchTaskId),
+      sourceTaskId: asText(row.sourceTaskId),
+      finalUrl: asText(row.finalUrl)
     };
 
     if (!candidateUrl) {
@@ -379,6 +382,26 @@ function selfTestReadyRowsInput() {
   };
 }
 
+function selfTestFetchTaskRowsInput() {
+  return {
+    fetchTaskRows: [
+      {
+        fetchTaskId: "uefa.champions::fixture_source_fetch::001",
+        sourceTaskId: "uefa.champions::fixture_discovery::01",
+        leagueSlug: "uefa.champions",
+        name: "UEFA Champions League",
+        dayKey: "2026-06-03",
+        candidateUrl: "https://example.test/uefa-fixtures",
+        finalUrl: "https://example.test/uefa-fixtures",
+        title: "UEFA Champions League fixtures",
+        sourceClass: "official_governing_or_competition_operator",
+        truthRole: "primary_candidate_after_fetch_evidence",
+        compositeScore: 64,
+        fetchPurpose: "fixture_discovery_source_snapshot"
+      }
+    ]
+  };
+}
 async function selfTest() {
   const blocked = await buildReport(selfTestInput(), { allowFetch: false, limit: 1, timeoutMs: 10 });
 
@@ -412,6 +435,23 @@ async function selfTest() {
     throw new Error("self-test failed: expected readyForFetch metadata to be preserved");
   }
 
+  const fetchTaskSelected = selectCandidates(selfTestFetchTaskRowsInput(), { limit: 10 });
+  if (fetchTaskSelected.inputCount !== 1) {
+    throw new Error(`self-test failed: expected one fetchTaskRows input row, got ${fetchTaskSelected.inputCount}`);
+  }
+  if (fetchTaskSelected.selected.length !== 1) {
+    throw new Error("self-test failed: expected one selected fetch task row");
+  }
+  if (fetchTaskSelected.selected[0].candidateUrl !== "https://example.test/uefa-fixtures") {
+    throw new Error("self-test failed: expected fetchTaskRows candidateUrl to be selected");
+  }
+  if (fetchTaskSelected.selected[0].fetchTaskId !== "uefa.champions::fixture_source_fetch::001") {
+    throw new Error("self-test failed: expected fetchTaskId metadata to be preserved");
+  }
+  if (fetchTaskSelected.selected[0].finalUrl !== "https://example.test/uefa-fixtures") {
+    throw new Error("self-test failed: expected finalUrl metadata to be preserved");
+  }
+
   return {
     ok: true,
     selfTest: "fetch-fixture-league-date-autonomous-ranked-candidate-snapshots-file",
@@ -419,7 +459,6 @@ async function selfTest() {
     guarantees: blocked.guarantees
   };
 }
-
 async function main() {
   const args = parseArgs();
 
