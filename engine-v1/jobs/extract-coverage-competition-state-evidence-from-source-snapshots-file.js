@@ -146,6 +146,7 @@ function detectSignals({ row, text }) {
   const lower = text.toLowerCase();
   const url = urlOf(row).toLowerCase();
   const taskType = taskTypeOf(row);
+  const evidenceKind = evidenceKindOf(row);
   const host = hostOf(row);
 
   const signals = [];
@@ -156,13 +157,44 @@ function detectSignals({ row, text }) {
     if (condition && !signals.includes(signal)) signals.push(signal);
   }
 
-  addSignal(/2025\/26|2025-26|2025 26|2025–26|2026/.test(lower) || /2025-26|2026/.test(url), "season_marker");
+  const sourceTitle = asText(row.sourceTitle || row.title).toLowerCase();
+
+  const finalPageUrl =
+    /(?:^|[_/-])final(?:[_/-]|$)/i.test(url) ||
+    /_final\b/i.test(url) ||
+    /\bfinal\b/i.test(sourceTitle);
+
+  const finalResultTerms =
+    /\b(?:winner|champion|champions|won|beat|defeated|defeat|score|result|penalt(?:y|ies)|extra time|aet|after extra time|final score|match report|report)\b/i.test(lower);
+
+  const finalStructureTerms =
+    /\b(?:v|vs|versus)\b/i.test(lower) ||
+    /\b\d+\s*[-–]\s*\d+\b/.test(lower) ||
+    /\b(?:penalt(?:y|ies)|extra time|aet|final score)\b/i.test(lower);
+
+  const genericLandingOrFeed =
+    /\/home\.html(?:$|[?#])/i.test(url) ||
+    /landing page/i.test(lower) ||
+    /vote for your assist of the season/i.test(lower) ||
+    /assist of the season/i.test(lower) ||
+    /goals of extraordinary quality/i.test(lower) ||
+    /newsletter|photo gallery|photos?|video|highlights|latest news/i.test(lower) && !finalPageUrl && !finalStructureTerms;
+
+  const specificFinalWinnerStructure =
+    finalPageUrl ||
+    (/\bfinal\b/i.test(lower) && finalResultTerms && finalStructureTerms) ||
+    (/\bchampion(?:s)?\b/i.test(lower) && /\b(?:won|beat|defeated|winner|final score|result)\b/i.test(lower));
+
+  addSignal(/2025\/26|2025-26|2025 26|2025–26|2024\/25|2024-25|2024 25|2024–25|2026|2025/.test(lower) || /2025-26|2024-25|2026|2025/.test(url), "season_marker");
   addSignal(/fixture|fixtures|schedule|calendar|dates|matchday|key dates/.test(lower) || /fixtures-results/.test(url), "calendar_or_fixture_marker");
   addSignal(/qualifying|qualifier|preliminary round|first qualifying|second qualifying|third qualifying|play-off|playoff/.test(lower) || /qualifying/.test(url), "qualifying_round_marker");
   addSignal(/draw|draws/.test(lower) || /draw/.test(url), "draw_marker");
-  addSignal(/final/.test(lower) || /final/.test(url), "final_marker");
-  addSignal(/winner|champion|champions|title holder|holders|won the/.test(lower), "winner_or_champion_marker");
+  addSignal(/\bfinal\b/.test(lower) || /\bfinal\b/.test(url), "final_marker");
+  addSignal(/winner|champion|champions|title holder|holders|won the|defeated|beat/.test(lower), "winner_or_champion_marker");
   addSignal(/format|teams|league phase|competition format/.test(lower), "format_marker");
+  addSignal(finalPageUrl, "final_page_url_marker");
+  addSignal(specificFinalWinnerStructure, "specific_final_winner_structure_marker");
+  addSignal(genericLandingOrFeed, "generic_landing_or_news_feed_marker");
   addSignal(host.endsWith("uefa.com"), "official_uefa_source");
   addSignal(host.endsWith("the-afc.com"), "official_afc_source");
 
@@ -178,17 +210,41 @@ function detectSignals({ row, text }) {
   let evidenceType = "competition_state_evidence";
   let confidence = "low";
 
-  if (taskType === "uefa_qualifier_calendar_search" || signals.includes("qualifying_round_marker")) {
+  const isWinnerOrFinalTask =
+    evidenceKind === "winner" ||
+    evidenceKind === "winner_or_final_evidence" ||
+    taskType.includes("winner_final") ||
+    taskType.includes("winner") ||
+    taskType.includes("final");
+
+  const isExplicitQualifierCalendarTask =
+    taskType === "uefa_qualifier_calendar_search" ||
+    taskType.includes("qualifier_calendar");
+
+  if (isExplicitQualifierCalendarTask || (!isWinnerOrFinalTask && signals.includes("qualifying_round_marker"))) {
     evidenceType = "qualifier_calendar_evidence";
     if (signals.includes("official_uefa_source") && signals.includes("qualifying_round_marker") && signals.includes("calendar_or_fixture_marker")) {
       evidenceState = "candidate_qualifier_calendar_evidence_needs_validation";
       confidence = dates.length > 0 || rounds.length > 0 ? "high" : "medium";
+    } else if (signals.includes("qualifying_round_marker") && signals.includes("season_marker")) {
+      evidenceState = "candidate_qualifier_calendar_evidence_needs_validation";
+      confidence = sourceTypeOf(host).startsWith("official_") ? "medium" : "low";
     }
-  } else if (signals.includes("winner_or_champion_marker") || evidenceKindOf(row) === "winner") {
+  } else if (isWinnerOrFinalTask || signals.includes("winner_or_champion_marker") || signals.includes("final_page_url_marker")) {
     evidenceType = "winner_or_final_evidence";
-    if (signals.includes("winner_or_champion_marker") && signals.includes("season_marker")) {
+
+    if (signals.includes("generic_landing_or_news_feed_marker")) {
+      evidenceState = "needs_more_specific_final_winner_evidence";
+      confidence = "low";
+    } else if (signals.includes("specific_final_winner_structure_marker") && (signals.includes("winner_or_champion_marker") || signals.includes("final_marker"))) {
       evidenceState = "candidate_winner_or_final_evidence_needs_validation";
       confidence = sourceTypeOf(host).startsWith("official_") ? "high" : "medium";
+    } else if (signals.includes("winner_or_champion_marker") && signals.includes("season_marker") && signals.includes("final_marker")) {
+      evidenceState = "candidate_winner_or_final_evidence_needs_validation";
+      confidence = sourceTypeOf(host).startsWith("official_") ? "medium" : "low";
+    } else {
+      evidenceState = "needs_more_specific_final_winner_evidence";
+      confidence = "low";
     }
   } else if (signals.includes("calendar_or_fixture_marker")) {
     evidenceType = "calendar_or_start_date_evidence";
@@ -209,7 +265,6 @@ function detectSignals({ row, text }) {
     extractedRoundMentions: rounds
   };
 }
-
 function excerptAroundSignals(text) {
   const clean = compactText(text);
   if (!clean) return "";
@@ -334,14 +389,26 @@ function runSelfTest() {
       },
       {
         leagueSlug: "afc.champions",
+        hostname: "en.wikipedia.org",
+        resolvedUrl: "https://en.wikipedia.org/wiki/2025_AFC_Champions_League_Elite_final",
+        finalUrl: "https://en.wikipedia.org/wiki/2025_AFC_Champions_League_Elite_final",
+        status: 200,
+        contentType: "text/html",
+        sourceTitle: "2025 AFC Champions League Elite final - Wikipedia",
+        taskType: "winner_final_specific_second_source_search",
+        evidenceKind: "winner_or_final_evidence",
+        rawText: "2025 AFC Champions League Elite final was contested by Al-Ahli and Kawasaki Frontale. Al-Ahli won 2-0 and became champions."
+      },
+      {
+        leagueSlug: "afc.champions",
         hostname: "www.the-afc.com",
         resolvedUrl: "https://www.the-afc.com/en/club/afc_champions_league_elite/home.html",
         finalUrl: "https://www.the-afc.com/en/club/afc_champions_league_elite/home.html",
         status: 200,
         contentType: "text/html",
-        taskType: "continental_winner_search",
-        evidenceKind: "winner",
-        rawText: "AFC Champions League Elite 2025/26 final champion winner results."
+        taskType: "winner_final_specific_second_source_search",
+        evidenceKind: "winner_or_final_evidence",
+        rawText: "AFC Champions League Elite Landing Page. Vote for your Assist of the Season. Latest news and photo gallery."
       },
       {
         leagueSlug: "bad.example",
@@ -355,10 +422,11 @@ function runSelfTest() {
 
   const report = buildReport(input, "self-test");
 
-  if (report.summary.inputSnapshotCount !== 3) throw new Error("expected three snapshots");
+  if (report.summary.inputSnapshotCount !== 4) throw new Error("expected four snapshots");
   if (report.summary.candidateEvidenceRowCount !== 2) throw new Error("expected two candidate evidence rows");
   if (!report.summary.byEvidenceState.candidate_qualifier_calendar_evidence_needs_validation) throw new Error("expected qualifier evidence candidate");
-  if (!report.summary.byEvidenceState.candidate_winner_or_final_evidence_needs_validation) throw new Error("expected winner evidence candidate");
+  if (!report.summary.byEvidenceState.candidate_winner_or_final_evidence_needs_validation) throw new Error("expected winner/final evidence candidate");
+  if (!report.summary.byEvidenceState.needs_more_specific_final_winner_evidence) throw new Error("expected generic landing to need more specific final/winner evidence");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("read-only guarantees failed");
 
   return {
@@ -367,7 +435,6 @@ function runSelfTest() {
     summary: report.summary
   };
 }
-
 function main() {
   const args = parseArgs();
 
