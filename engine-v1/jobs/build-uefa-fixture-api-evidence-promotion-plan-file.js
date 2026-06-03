@@ -204,10 +204,20 @@ function statusRank(status) {
 }
 
 function canonicalStatusFromEvidence(row) {
+  const outcomeStatus = asText(row.outcomeStatus).toUpperCase();
   const status = asText(row.status).toUpperCase();
-  if (status === "FINISHED" || status === "FT") return "FT";
-  if (status === "SCHEDULED" || status === "PRE") return "PRE";
-  return status || "UNKNOWN";
+  const decidedBy = asText(row.decidedBy);
+
+  if (outcomeStatus === "PEN" || decidedBy === "penalties") return "PEN";
+  if (outcomeStatus === "AET" || decidedBy === "extra_time") return "AET";
+  if (outcomeStatus === "FT" || status === "FINISHED" || status === "FT") return "FT";
+  if (status === "SCHEDULED" || status === "PRE" || status === "UPCOMING") return "PRE";
+  return outcomeStatus || status || "UNKNOWN";
+}
+
+function cloneOrNull(value) {
+  if (!value || typeof value !== "object") return null;
+  return JSON.parse(JSON.stringify(value));
 }
 
 function proposedFixtureFromEvidence(row, existing = null) {
@@ -233,11 +243,15 @@ function proposedFixtureFromEvidence(row, existing = null) {
     awayTeam: asText(row.awayTeam),
     scoreHome: row.scoreHome,
     scoreAway: row.scoreAway,
-    penalties: null,
-    decidedBy: null,
+    regularScore: cloneOrNull(row.regularScore),
+    halfTimeScore: cloneOrNull(row.halfTimeScore),
+    extraTimeScore: cloneOrNull(row.extraTimeScore),
+    aggregateScore: cloneOrNull(row.aggregateScore),
+    penalties: cloneOrNull(row.penaltyScore),
+    decidedBy: asText(row.decidedBy) || null,
     status: canonicalStatusFromEvidence(row),
     rawStatus: asText(row.status),
-    minute: row.status === "FINISHED" ? "FT" : "",
+    minute: ["FT", "AET", "PEN"].includes(canonicalStatusFromEvidence(row)) ? canonicalStatusFromEvidence(row) : "",
     venue: asText(row.stadiumName),
     sourceEvidence: {
       sourceType: asText(row.sourceType),
@@ -249,7 +263,16 @@ function proposedFixtureFromEvidence(row, existing = null) {
       competitionCode: asText(row.competitionCode),
       competitionId: asText(row.competitionId),
       seasonYear: asText(row.seasonYear),
-      roundName: asText(row.roundName)
+      roundName: asText(row.roundName),
+      outcomeStatus: asText(row.outcomeStatus),
+      decidedBy: asText(row.decidedBy),
+      halfTimeScoreAvailable: Boolean(row.halfTimeScoreAvailable),
+      halfTimeScoreSourceKey: asText(row.halfTimeScoreSourceKey),
+      halfTimeScoreReason: row.halfTimeScoreAvailable ? "" : "not_provided_by_uefa_match_api_score_payload",
+      matchWinnerReason: asText(row.matchWinnerReason),
+      aggregateWinnerReason: asText(row.aggregateWinnerReason),
+      matchWinnerTeamId: asText(row.matchWinnerTeamId),
+      aggregateWinnerTeamId: asText(row.aggregateWinnerTeamId)
     }
   };
 }

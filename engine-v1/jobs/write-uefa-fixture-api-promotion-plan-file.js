@@ -229,11 +229,13 @@ function mergeRows(existingRows, proposedFixtures) {
   for (const proposed of proposedFixtures) {
     const index = merged.findIndex((existing) => sameFixtureIdentity(existing, proposed));
     if (index >= 0) {
+      const existing = merged[index];
       merged[index] = {
-        ...merged[index],
+        ...existing,
         ...proposed,
+        matchKey: clean(existing?.matchKey) || clean(proposed?.matchKey),
         sourceEvidence: {
-          ...(merged[index]?.sourceEvidence || {}),
+          ...(existing?.sourceEvidence || {}),
           ...(proposed?.sourceEvidence || {})
         }
       };

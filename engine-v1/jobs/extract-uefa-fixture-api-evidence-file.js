@@ -73,12 +73,60 @@ function teamCode(team) {
   );
 }
 
+function numberOrNull(value) {
+  if (value == null || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
 function scorePart(match, side) {
   const total = match?.score?.total?.[side];
   const regular = match?.score?.regular?.[side];
+  const status = asText(match?.status).toUpperCase();
+
+  if (status === "SCHEDULED" || status === "PRE" || status === "UPCOMING") return null;
   if (Number.isFinite(Number(total))) return Number(total);
   if (Number.isFinite(Number(regular))) return Number(regular);
   return null;
+}
+
+function scorePair(match, key) {
+  const value = match?.score?.[key];
+  const home = numberOrNull(value?.home);
+  const away = numberOrNull(value?.away);
+  if (home == null && away == null) return null;
+  return { home, away };
+}
+
+function winnerTeamId(match, key) {
+  return asText(match?.winner?.[key]?.team?.id);
+}
+
+function winnerReason(match, key) {
+  return asText(match?.winner?.[key]?.reason);
+}
+
+function decidedByFromMatch(match) {
+  const matchReason = winnerReason(match, "match");
+  const aggregateReason = winnerReason(match, "aggregate");
+  const hasPenalty = Boolean(scorePair(match, "penalty") || scorePair(match, "penalties"));
+
+  if (hasPenalty || matchReason === "WIN_ON_PENALTIES") return "penalties";
+  if (matchReason === "WIN_AFTER_EXTRA_TIME") return "extra_time";
+  if (aggregateReason === "WIN_ON_AGGREGATE") return "aggregate";
+  if (matchReason === "WIN_REGULAR") return "regular";
+  if (matchReason === "DRAW") return "draw";
+  return "";
+}
+
+function evidenceStatusFromMatch(match) {
+  const rawStatus = asText(match?.status).toUpperCase();
+  const decidedBy = decidedByFromMatch(match);
+  if (rawStatus === "FINISHED" && decidedBy === "penalties") return "PEN";
+  if (rawStatus === "FINISHED" && decidedBy === "extra_time") return "AET";
+  if (rawStatus === "FINISHED") return "FT";
+  if (rawStatus === "SCHEDULED" || rawStatus === "PRE" || rawStatus === "UPCOMING") return "PRE";
+  return rawStatus || "UNKNOWN";
 }
 
 function roundName(match) {
@@ -141,8 +189,21 @@ function normalizeMatch(match, snapshot, index) {
     awayCountryCode: asText(awayTeam.countryCode),
     scoreHome: scorePart(match, "home"),
     scoreAway: scorePart(match, "away"),
-    aggregateHome: Number.isFinite(Number(match?.score?.aggregate?.home)) ? Number(match.score.aggregate.home) : null,
-    aggregateAway: Number.isFinite(Number(match?.score?.aggregate?.away)) ? Number(match.score.aggregate.away) : null,
+    regularScore: scorePair(match, "regular"),
+    halfTimeScore: scorePair(match, "halfTime") || scorePair(match, "firstHalf") || scorePair(match, "period1"),
+    extraTimeScore: scorePair(match, "extraTime"),
+    penaltyScore: scorePair(match, "penalty") || scorePair(match, "penalties"),
+    aggregateScore: scorePair(match, "aggregate"),
+    halfTimeScoreAvailable: Boolean(scorePair(match, "halfTime") || scorePair(match, "firstHalf") || scorePair(match, "period1")),
+    halfTimeScoreSourceKey: scorePair(match, "halfTime") ? "halfTime" : (scorePair(match, "firstHalf") ? "firstHalf" : (scorePair(match, "period1") ? "period1" : "")),
+    aggregateHome: numberOrNull(match?.score?.aggregate?.home),
+    aggregateAway: numberOrNull(match?.score?.aggregate?.away),
+    outcomeStatus: evidenceStatusFromMatch(match),
+    decidedBy: decidedByFromMatch(match),
+    matchWinnerReason: winnerReason(match, "match"),
+    aggregateWinnerReason: winnerReason(match, "aggregate"),
+    matchWinnerTeamId: winnerTeamId(match, "match"),
+    aggregateWinnerTeamId: winnerTeamId(match, "aggregate"),
     roundId: asText(match?.round?.id),
     roundName: roundName(match),
     roundType: asText(match?.round?.metaData?.type),
@@ -289,7 +350,8 @@ function selfTest() {
             kickOffTime: { date: "2026-05-30", dateTime: "2026-05-30T19:00:00Z", utcOffsetInHours: 2 },
             homeTeam: { id: "52747", internationalName: "Paris", teamCode: "PSG" },
             awayTeam: { id: "52280", internationalName: "Arsenal", teamCode: "ARS" },
-            score: { total: { home: 1, away: 0 } },
+            score: { total: { home: 1, away: 0 }, regular: { home: 1, away: 0 } },
+            winner: { match: { reason: "WIN_REGULAR", team: { id: "52747" } } },
             round: { id: "2002115", metaData: { name: "Final", type: "FINAL" } },
             matchday: { id: "36271", name: "MD17", type: "SINGLE" }
           }
