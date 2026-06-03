@@ -113,11 +113,11 @@ function inferSeasonStatus({ teamCount, minPlayed, maxPlayed, confidence, comple
   if (confidence < 0.35 || completeness < 0.35) {
     return {
       standingsEvidenceState: "low_confidence_standings_with_played_matches",
-      seasonStatusState: "season_status_needs_more_evidence",
-      seasonActiveCandidate: true,
+      seasonStatusState: "season_status_needs_calendar_evidence",
+      seasonActiveCandidate: false,
       seasonFinishedCandidate: false,
       breakOrCalendarGapCandidate: true,
-      nextRequiredAction: "crosscheck_standings_and_next_fixture_date",
+      nextRequiredAction: "crosscheck_standings_and_competition_calendar",
       confidence: Math.min(confidence, 0.45)
     };
   }
@@ -142,11 +142,11 @@ function inferSeasonStatus({ teamCount, minPlayed, maxPlayed, confidence, comple
 
   return {
     standingsEvidenceState: "standings_available_with_played_matches",
-    seasonStatusState: "season_in_progress_or_recently_active_candidate",
-    seasonActiveCandidate: true,
+    seasonStatusState: "standings_available_needs_calendar_evidence",
+    seasonActiveCandidate: false,
     seasonFinishedCandidate: false,
     breakOrCalendarGapCandidate: true,
-    nextRequiredAction: "discover_target_date_fixtures_or_next_fixture_date",
+    nextRequiredAction: "discover_competition_calendar_or_next_fixture_date",
     confidence
   };
 }
@@ -304,7 +304,8 @@ function runSelfTest() {
     const report = buildReport({ standingsDir: dir, targetDate: "2026-06-02" });
 
     if (report.summary.standingsFileCount !== 2) throw new Error("expected two standings files");
-    if (report.summary.seasonActiveCandidateCount !== 1) throw new Error("expected one active candidate");
+    if (report.summary.seasonActiveCandidateCount !== 0) throw new Error("standings alone must not create active season candidates");
+    if (report.summary.bySeasonStatusState.standings_available_needs_calendar_evidence !== 1) throw new Error("expected standings to require calendar evidence");
     if (report.summary.noStandingsTableCount !== 1) throw new Error("expected one empty standings row");
     if (report.summary.canonicalWrites !== 0) throw new Error("must not write canonical data");
     if (report.summary.productionWrite !== false) throw new Error("must not write production data");

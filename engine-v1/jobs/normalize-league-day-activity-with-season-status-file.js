@@ -70,8 +70,13 @@ function rowByLeague(rows) {
 
 function normalizeFromSeasonOnly({ leagueSlug, seasonRow, targetDate }) {
   const seasonStatusState = asText(seasonRow.seasonStatusState);
+  const standingsEvidenceState = asText(seasonRow.standingsEvidenceState);
   const seasonActiveCandidate = seasonRow.seasonActiveCandidate === true;
   const seasonFinishedCandidate = seasonRow.seasonFinishedCandidate === true;
+  const calendarEvidenceRequired =
+    seasonStatusState === "standings_available_needs_calendar_evidence" ||
+    seasonStatusState === "season_status_needs_calendar_evidence" ||
+    /needs_calendar_evidence/i.test(seasonStatusState);
 
   if (seasonFinishedCandidate) {
     return {
@@ -87,6 +92,27 @@ function normalizeFromSeasonOnly({ leagueSlug, seasonRow, targetDate }) {
       seasonMonitoringMode: "restart_or_next_season_watch",
       nextRequiredAction: "verify_final_table_or_next_season_restart",
       decisionReason: "no_day_activity_row_season_status_finished_candidate",
+      hardExcludedFromFutureSearch: false,
+      continueAutonomousSearch: false,
+      continueSeasonMonitoring: true
+    };
+  }
+
+  if (calendarEvidenceRequired) {
+    return {
+      leagueSlug,
+      targetDate,
+      activityState: "season_calendar_evidence_required",
+      dayActivityEvidenceState: "filled_from_standings_calendar_evidence_required",
+      standingsEvidenceState,
+      activeForDay: false,
+      noExpectedFixturesForDay: false,
+      outOfSeasonForDay: false,
+      fixtureAcquisitionMode: "calendar_evidence_required_before_day_fixture_acquisition",
+      valuePipelineEligibility: "not_value_ready_for_target_date",
+      seasonMonitoringMode: "calendar_or_restart_evidence_monitoring",
+      nextRequiredAction: seasonRow.nextRequiredAction || "discover_competition_calendar_or_next_fixture_date",
+      decisionReason: "no_day_activity_row_standings_do_not_prove_active_season",
       hardExcludedFromFutureSearch: false,
       continueAutonomousSearch: false,
       continueSeasonMonitoring: true
@@ -274,12 +300,12 @@ function runSelfTest() {
       },
       {
         leagueSlug: "eng.1",
-        seasonStatusState: "season_in_progress_or_recently_active_candidate",
+        seasonStatusState: "standings_available_needs_calendar_evidence",
         standingsEvidenceState: "standings_available_with_played_matches",
-        seasonActiveCandidate: true,
+        seasonActiveCandidate: false,
         seasonFinishedCandidate: false,
         breakOrCalendarGapCandidate: true,
-        nextRequiredAction: "discover_target_date_fixtures_or_next_fixture_date"
+        nextRequiredAction: "discover_competition_calendar_or_next_fixture_date"
       },
       {
         leagueSlug: "esp.1",
@@ -308,7 +334,8 @@ function runSelfTest() {
   if (report.summary.emptyActivityStateCount !== 0) throw new Error("expected no empty activity states");
   if (report.summary.existingDayActivityRowCount !== 1) throw new Error("expected one preserved day activity row");
   if (report.summary.filledFromSeasonStatusCount !== 3) throw new Error("expected three season-status-filled rows");
-  if (report.summary.seasonActiveNeedsDiscoveryCount !== 1) throw new Error("expected one active season needing day discovery");
+  if (report.summary.seasonActiveNeedsDiscoveryCount !== 0) throw new Error("standings-only evidence must not create active day discovery");
+  if (report.summary.byActivityState.season_calendar_evidence_required !== 1) throw new Error("expected one calendar-evidence-required row");
   if (report.summary.seasonFinishedOrOutOfSeasonCandidateCount !== 1) throw new Error("expected one finished/out-of-season candidate");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) {
     throw new Error("read-only guarantees changed");
