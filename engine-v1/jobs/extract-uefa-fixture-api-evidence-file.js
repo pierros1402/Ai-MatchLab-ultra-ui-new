@@ -98,6 +98,78 @@ function scorePair(match, key) {
   return { home, away };
 }
 
+function firstPlayerEventBag(match) {
+  const playerEvents = match?.playerEvents;
+
+  if (Array.isArray(playerEvents)) {
+    return playerEvents[0] && typeof playerEvents[0] === "object" ? playerEvents[0] : {};
+  }
+
+  if (playerEvents && typeof playerEvents === "object") {
+    return playerEvents;
+  }
+
+  return {};
+}
+
+function scorerTeamId(scorer) {
+  return asText(scorer?.teamId || scorer?.team?.id);
+}
+
+function isOwnGoalScorer(scorer) {
+  const goalType = asText(scorer?.goalType).toUpperCase();
+  const type = asText(scorer?.type).toUpperCase();
+  return scorer?.ownGoal === true || goalType === "OWN_GOAL" || type === "OWN_GOAL";
+}
+
+function deriveHalfTimeScoreFromScorers(match) {
+  const bag = firstPlayerEventBag(match);
+  const scorers = Array.isArray(bag?.scorers) ? bag.scorers : [];
+  const firstHalfScorers = scorers.filter((scorer) => asText(scorer?.phase).toUpperCase() === "FIRST_HALF");
+
+  if (firstHalfScorers.length === 0) return null;
+
+  const homeId = asText(match?.homeTeam?.id);
+  const awayId = asText(match?.awayTeam?.id);
+
+  if (!homeId || !awayId) return null;
+
+  let home = 0;
+  let away = 0;
+
+  for (const scorer of firstHalfScorers) {
+    const teamId = scorerTeamId(scorer);
+    const ownGoal = isOwnGoalScorer(scorer);
+
+    if (teamId === homeId) {
+      if (ownGoal) away += 1;
+      else home += 1;
+    } else if (teamId === awayId) {
+      if (ownGoal) home += 1;
+      else away += 1;
+    }
+  }
+
+  return { home, away };
+}
+
+function halfTimeScore(match) {
+  return (
+    scorePair(match, "halfTime") ||
+    scorePair(match, "firstHalf") ||
+    scorePair(match, "period1") ||
+    deriveHalfTimeScoreFromScorers(match)
+  );
+}
+
+function halfTimeScoreSourceKey(match) {
+  if (scorePair(match, "halfTime")) return "score.halfTime";
+  if (scorePair(match, "firstHalf")) return "score.firstHalf";
+  if (scorePair(match, "period1")) return "score.period1";
+  if (deriveHalfTimeScoreFromScorers(match)) return "playerEvents.scorers";
+  return "";
+}
+
 function winnerTeamId(match, key) {
   return asText(match?.winner?.[key]?.team?.id);
 }
@@ -190,12 +262,12 @@ function normalizeMatch(match, snapshot, index) {
     scoreHome: scorePart(match, "home"),
     scoreAway: scorePart(match, "away"),
     regularScore: scorePair(match, "regular"),
-    halfTimeScore: scorePair(match, "halfTime") || scorePair(match, "firstHalf") || scorePair(match, "period1"),
+    halfTimeScore: halfTimeScore(match),
     extraTimeScore: scorePair(match, "extraTime"),
     penaltyScore: scorePair(match, "penalty") || scorePair(match, "penalties"),
     aggregateScore: scorePair(match, "aggregate"),
-    halfTimeScoreAvailable: Boolean(scorePair(match, "halfTime") || scorePair(match, "firstHalf") || scorePair(match, "period1")),
-    halfTimeScoreSourceKey: scorePair(match, "halfTime") ? "halfTime" : (scorePair(match, "firstHalf") ? "firstHalf" : (scorePair(match, "period1") ? "period1" : "")),
+    halfTimeScoreAvailable: Boolean(halfTimeScore(match)),
+    halfTimeScoreSourceKey: halfTimeScoreSourceKey(match),
     aggregateHome: numberOrNull(match?.score?.aggregate?.home),
     aggregateAway: numberOrNull(match?.score?.aggregate?.away),
     outcomeStatus: evidenceStatusFromMatch(match),
