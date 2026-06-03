@@ -283,6 +283,59 @@ function competitionStateOverlay(row) {
   };
 }
 
+function dateText(value) {
+  const text = asText(value);
+  if (!text) return "";
+  const match = text.match(/\b(20\d{2}-\d{2}-\d{2})\b/);
+  return match ? match[1] : "";
+}
+
+function firstDateCandidate(row, keys) {
+  if (!row) return "";
+  for (const key of keys) {
+    const direct = dateText(row[key]);
+    if (direct) return direct;
+  }
+
+  const evidence = row.sourceEvidence || row.evidence || row.calendarEvidence || row.restartEvidence;
+  if (evidence && typeof evidence === "object") {
+    for (const key of keys) {
+      const nested = dateText(evidence[key]);
+      if (nested) return nested;
+    }
+  }
+
+  return "";
+}
+
+function calendarEvidenceNeedFor({ family, season, overlay, nextAction }) {
+  const action = asText(nextAction || season?.nextAction);
+  const state = asText(season?.seasonState);
+
+  if (/restart/i.test(action) || /finished|out_of_season/i.test(state)) return "next_season_restart";
+  if (/next_fixture/i.test(action) || state === "active_or_day_activity_unknown_needs_fixture_discovery") return "next_fixture_date";
+  if (family === "domestic_league" && season?.needsStandings) return "standings_and_competition_calendar";
+  if (overlay?.upcomingKnown) return "materialize_known_calendar_or_start_date";
+  if (family === "cup_or_knockout") return "competition_calendar_or_winner_final";
+  if (family === "continental_or_global") return "continental_calendar_or_start_date";
+  return "competition_calendar";
+}
+
+function restartEvidenceFor({ restartDate, startDate, nextKnownFixtureDate, seasonRow, competitionStateRow, calendarEvidenceNeed }) {
+  const date = restartDate || startDate || nextKnownFixtureDate;
+  if (!date) return null;
+
+  const source = competitionStateRow || seasonRow || {};
+  return {
+    date,
+    evidenceNeed: calendarEvidenceNeed,
+    sourceUrl: asText(source.sourceUrl || source.finalUrl || source.url),
+    sourceHost: asText(source.sourceHost || source.hostname || source.host),
+    evidenceType: asText(source.evidenceType || source.validationState || source.confirmationState || source.state),
+    confidence: source.confidence == null ? null : Number(source.confidence)
+  };
+}
+
 function mergeRow({ coverageRow, seasonRow, competitionStateRow, targetDate }) {
   const family = familyOf(coverageRow);
   const season = stateFromSeasonRouting(seasonRow, family);
@@ -295,6 +348,29 @@ function mergeRow({ coverageRow, seasonRow, competitionStateRow, targetDate }) {
   if (family !== "domestic_league" && !overlay.winnerFinalKnown && season.seasonState !== "active_or_day_activity_unknown_needs_fixture_discovery") {
     nextAction = overlay.competitionStateNextAction;
   }
+
+  const nextKnownFixtureDate =
+    firstDateCandidate(seasonRow, ["nextKnownFixtureDate", "nextFixtureDate", "fixtureDate", "date"]) ||
+    firstDateCandidate(competitionStateRow, ["nextKnownFixtureDate", "nextFixtureDate", "fixtureDate", "date"]);
+
+  const startDate =
+    firstDateCandidate(competitionStateRow, ["startDate", "seasonStartDate", "nextSeasonStartDate"]) ||
+    firstDateCandidate(seasonRow, ["startDate", "seasonStartDate", "nextSeasonStartDate"]);
+
+  const restartDate =
+    firstDateCandidate(competitionStateRow, ["restartDate", "nextSeasonRestartDate", "seasonRestartDate"]) ||
+    firstDateCandidate(seasonRow, ["restartDate", "nextSeasonRestartDate", "seasonRestartDate"]);
+
+  const hasKnownCalendarDate = Boolean(nextKnownFixtureDate || startDate || restartDate);
+  const calendarEvidenceNeed = calendarEvidenceNeedFor({ family, season, overlay, nextAction });
+  const restartEvidence = restartEvidenceFor({
+    restartDate,
+    startDate,
+    nextKnownFixtureDate,
+    seasonRow,
+    competitionStateRow,
+    calendarEvidenceNeed
+  });
 
   return {
     competitionSlug: coverageRow.competitionSlug,
@@ -315,7 +391,13 @@ function mergeRow({ coverageRow, seasonRow, competitionStateRow, targetDate }) {
     needsStandings: season.needsStandings,
     needsHistoricalResults: season.needsHistoricalResults,
     needsWinnerFinal,
-    needsStartDate: season.needsStartDate,
+    needsStartDate: season.needsStartDate && !hasKnownCalendarDate,
+
+    nextKnownFixtureDate,
+    startDate,
+    restartDate,
+    calendarEvidenceNeed,
+    restartEvidence,
 
     hasSeasonRoutingEvidence: Boolean(seasonRow),
     hasCompetitionStateEvidence: Boolean(competitionStateRow),
@@ -389,8 +471,12 @@ function buildReport({
       needsHistoricalResultsCount: rows.filter((row) => row.needsHistoricalResults).length,
       needsWinnerFinalCount: rows.filter((row) => row.needsWinnerFinal).length,
       needsStartDateCount: rows.filter((row) => row.needsStartDate).length,
+      restartDateKnownCount: rows.filter((row) => row.restartDate).length,
+      startDateKnownCount: rows.filter((row) => row.startDate).length,
+      nextKnownFixtureDateCount: rows.filter((row) => row.nextKnownFixtureDate).length,
       winnerFinalKnownCount: rows.filter((row) => row.winnerFinalKnown).length,
       upcomingKnownCount: rows.filter((row) => row.upcomingKnown).length,
+      byCalendarEvidenceNeed: countBy(rows, "calendarEvidenceNeed"),
       byCompetitionFamily: countBy(rows, "competitionFamily"),
       bySeasonState: countBy(rows, "seasonState"),
       byNextAction: countBy(rows, "nextAction"),
@@ -480,6 +566,8 @@ function runSelfTest() {
   if (report.summary.withCompetitionStateEvidenceCount !== 1) throw new Error("expected 1 competition-state row");
   if (report.summary.winnerFinalKnownCount !== 1) throw new Error("expected 1 known winner/final");
   if (report.summary.needsWinnerFinalCount !== 1) throw new Error("expected 1 cup still needing winner/final");
+  if (!report.summary.byCalendarEvidenceNeed) throw new Error("expected calendar evidence need summary");
+  if (report.globalSeasonStateRows.some((row) => !row.calendarEvidenceNeed)) throw new Error("expected calendarEvidenceNeed on every inventory row");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("read-only guarantees failed");
 
   return {

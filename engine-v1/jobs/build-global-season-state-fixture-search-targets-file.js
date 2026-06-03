@@ -79,6 +79,37 @@ function buildQueries(row) {
   const slug = asText(row.competitionSlug);
   const date = targetDateOf(row);
   const kind = competitionKind(row);
+  const bucket = asText(row.worksetBucket);
+  const evidenceNeed = asText(row.calendarEvidenceNeed || row.evidenceNeed || row.nextAction);
+
+  if (bucket === "needsStartDate") {
+    const base = [
+      `${name} official fixtures calendar`,
+      `${name} next fixture date`,
+      `${name} season start date`,
+      `${name} restart date`,
+      `${name} schedule ${date}`
+    ];
+
+    if (/restart/i.test(evidenceNeed)) {
+      base.push(`${name} next season restart`);
+      base.push(`${name} 2026 2027 fixtures`);
+    } else if (/next_fixture/i.test(evidenceNeed)) {
+      base.push(`${name} next match`);
+      base.push(`${name} upcoming fixtures`);
+    } else if (kind === "continental") {
+      base.push(`${name} qualifying calendar`);
+      base.push(`${name} official competition calendar`);
+    } else if (kind === "cup") {
+      base.push(`${name} round dates`);
+      base.push(`${name} official cup calendar`);
+    } else {
+      base.push(`${name} ${slug} fixture calendar`);
+      base.push(`${name} ${slug} season start`);
+    }
+
+    return Array.from(new Set(base.map((query) => query.replace(/\s+/g, " ").trim()).filter(Boolean)));
+  }
 
   const base = [
     `${name} fixtures ${date}`,
@@ -103,11 +134,19 @@ function targetRowsFor(row) {
   const slug = asText(row.competitionSlug);
   const date = targetDateOf(row);
   const queries = buildQueries(row);
+  const bucket = asText(row.worksetBucket) || "needsFixtures";
+  const isStartDateBucket = bucket === "needsStartDate";
+  const targetType = isStartDateBucket
+    ? "global-season-state-calendar-restart-discovery"
+    : "global-season-state-fixture-discovery";
+  const intent = isStartDateBucket
+    ? "calendar_restart_discovery"
+    : "fixture_discovery";
 
   return queries.map((query, index) => ({
-    searchTargetId: `${slug}::fixture_discovery::${String(index + 1).padStart(2, "0")}`,
-    targetType: "global-season-state-fixture-discovery",
-    worksetBucket: "needsFixtures",
+    searchTargetId: `${slug}::${isStartDateBucket ? "calendar_restart_discovery" : "fixture_discovery"}::${String(index + 1).padStart(2, "0")}`,
+    targetType,
+    worksetBucket: bucket,
     leagueSlug: slug,
     competitionSlug: slug,
     competitionName: normalizedName(row),
@@ -117,19 +156,31 @@ function targetRowsFor(row) {
     region: asText(row.region),
     tier: Number(row.tier || 0),
     targetDate: date,
+    nextKnownFixtureDate: asText(row.nextKnownFixtureDate),
+    startDate: asText(row.startDate),
+    restartDate: asText(row.restartDate),
+    calendarEvidenceNeed: asText(row.calendarEvidenceNeed),
     query,
-    intent: "fixture_discovery",
-    expectedEvidence: [
-      "fixture list",
-      "match schedule",
-      "official or trusted competition page",
-      "target date or next fixture date"
-    ],
+    intent,
+    expectedEvidence: isStartDateBucket
+      ? [
+        "official competition calendar",
+        "next fixture date",
+        "season start or restart date",
+        "official or trusted competition page"
+      ]
+      : [
+        "fixture list",
+        "match schedule",
+        "official or trusted competition page",
+        "target date or next fixture date"
+      ],
     sourcePolicy: {
       preferOfficial: true,
       allowTrustedSportsFixtures: true,
       rejectUnrelatedCompetition: true,
-      rejectOldSeasonOnly: true
+      rejectOldSeasonOnly: true,
+      requireCalendarOrFixtureSignal: isStartDateBucket
     },
     sourceFetch: false,
     canonicalWrites: 0,
@@ -209,6 +260,36 @@ function runSelfTest() {
           tier: 1,
           trust: 1
         }
+      ],
+      needsStartDate: [
+        {
+          worksetBucket: "needsStartDate",
+          competitionSlug: "eng.1",
+          competitionName: "Premier League",
+          competitionFamily: "domestic_league",
+          competitionType: "league",
+          country: "England",
+          targetDate: "2026-06-03",
+          calendarEvidenceNeed: "standings_and_competition_calendar",
+          nextAction: "discover_competition_calendar_or_next_fixture_date",
+          needsStartDate: true,
+          tier: 1,
+          trust: 1
+        },
+        {
+          worksetBucket: "needsStartDate",
+          competitionSlug: "eng.fa",
+          competitionName: "FA Cup",
+          competitionFamily: "cup_or_knockout",
+          competitionType: "cup",
+          country: "England",
+          targetDate: "2026-06-03",
+          calendarEvidenceNeed: "competition_calendar_or_winner_final",
+          nextAction: "discover_or_validate_competition_state_evidence",
+          needsStartDate: true,
+          tier: 1,
+          trust: 1
+        }
       ]
     }
   };
@@ -220,6 +301,14 @@ function runSelfTest() {
   if (!report.summary.byCompetitionFamily.continental_or_global) throw new Error("expected continental targets");
   if (!report.summary.byCompetitionFamily.domestic_league) throw new Error("expected domestic targets");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("read-only guarantees failed");
+
+  const startDateReport = buildReport(input, { inputPath: "self-test", bucket: "needsStartDate" });
+  if (startDateReport.summary.inputWorkRowCount !== 2) throw new Error("expected two start-date input work rows");
+  if (startDateReport.summary.searchTargetCount < 10) throw new Error("expected restart/calendar search targets");
+  if (!startDateReport.searchTargetRows.every((row) => row.targetType === "global-season-state-calendar-restart-discovery")) {
+    throw new Error("expected calendar restart target type");
+  }
+  if (startDateReport.guarantees.canonicalWrites !== 0 || startDateReport.guarantees.productionWrite !== false) throw new Error("restart target read-only guarantees failed");
 
   return {
     ok: true,

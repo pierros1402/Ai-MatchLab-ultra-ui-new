@@ -112,6 +112,11 @@ function workRow(row, bucket) {
     needsHistoricalResults: row.needsHistoricalResults === true,
     needsWinnerFinal: row.needsWinnerFinal === true,
     needsStartDate: row.needsStartDate === true,
+    nextKnownFixtureDate: asText(row.nextKnownFixtureDate),
+    startDate: asText(row.startDate),
+    restartDate: asText(row.restartDate),
+    calendarEvidenceNeed: asText(row.calendarEvidenceNeed),
+    restartEvidence: row.restartEvidence || null,
     hasSeasonRoutingEvidence: row.hasSeasonRoutingEvidence === true,
     hasCompetitionStateEvidence: row.hasCompetitionStateEvidence === true,
     canonicalWrites: 0,
@@ -165,6 +170,7 @@ function buildReport(input, { inputPath = "", limitPerBucket = 0 } = {}) {
       byBucket: countBy(allWorkRows, "worksetBucket"),
       byCompetitionFamily: countBy(allWorkRows, "competitionFamily"),
       byNextAction: countBy(allWorkRows, "nextAction"),
+      byCalendarEvidenceNeed: countBy(allWorkRows, "calendarEvidenceNeed"),
       sourceFetch: false,
       canonicalWrites: 0,
       productionWrite: false,
@@ -199,6 +205,7 @@ function runSelfTest() {
         targetDate: "2026-06-03",
         seasonState: "needs_standings_or_calendar_evidence",
         nextAction: "discover_standings_and_competition_calendar",
+        calendarEvidenceNeed: "standings_and_competition_calendar",
         needsStandings: true,
         needsHistoricalResults: true,
         needsStartDate: true
@@ -226,6 +233,7 @@ function runSelfTest() {
         targetDate: "2026-06-03",
         seasonState: "needs_calendar_or_competition_state_evidence",
         nextAction: "discover_or_validate_competition_state_evidence",
+        calendarEvidenceNeed: "competition_calendar_or_winner_final",
         needsWinnerFinal: true,
         needsHistoricalResults: true,
         needsStartDate: true
@@ -241,6 +249,10 @@ function runSelfTest() {
   if (report.summary.needsHistoricalResultsWorkRowCount !== 3) throw new Error("expected three historical rows");
   if (report.summary.needsWinnerFinalWorkRowCount !== 1) throw new Error("expected one winner/final row");
   if (report.summary.needsStartDateWorkRowCount !== 2) throw new Error("expected two start-date rows");
+  if (!report.summary.byCalendarEvidenceNeed) throw new Error("expected calendar evidence need summary");
+  if (report.globalSeasonStateWorkRows.filter((row) => row.worksetBucket === "needsStartDate").some((row) => !row.calendarEvidenceNeed)) {
+    throw new Error("expected calendarEvidenceNeed on start-date work rows");
+  }
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("read-only guarantees failed");
 
   const limited = buildReport(input, { inputPath: "self-test", limitPerBucket: 1 });
