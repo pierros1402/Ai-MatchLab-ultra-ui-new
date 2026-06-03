@@ -4,6 +4,8 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
+import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
+import { leagueName } from "../../workers/_shared/leagues-registry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -131,6 +133,54 @@ function parseArgs(argv) {
   return args;
 }
 
+function scanCoverageContract(rows = LEAGUES_COVERAGE) {
+  const result = new Map();
+
+  for (const row of rows || []) {
+    const leagueSlug = asText(row && (row.slug || row.leagueSlug || row.competitionSlug));
+    if (!leagueSlug || result.has(leagueSlug)) continue;
+
+    result.set(leagueSlug, {
+      leagueSlug,
+      leagueName: asText(row && row.name) || leagueName(leagueSlug),
+      coverageType: asText(row && row.type),
+      coverageRegion: asText(row && row.region),
+      coverageCountry: asText(row && row.country),
+      coverageTier: Number(row && row.tier || 0),
+      coverageTrust: Number(row && row.trust || 0)
+    });
+  }
+
+  return result;
+}
+
+function phaseTableRowCount(phaseTables) {
+  if (!phaseTables || typeof phaseTables !== "object") return 0;
+
+  let count = 0;
+  for (const value of Object.values(phaseTables)) {
+    if (Array.isArray(value)) count += value.length;
+    else if (value && typeof value === "object") {
+      if (Array.isArray(value.table)) count += value.table.length;
+      else if (Array.isArray(value.rows)) count += value.rows.length;
+      else if (Array.isArray(value.standings)) count += value.standings.length;
+    }
+  }
+
+  return count;
+}
+
+function freshnessFromStandings(row, seasonKey) {
+  if (!row || row.standingsFileExists !== true) return "missing";
+  const tableCount = Number(row.standingsTableCount || 0);
+  const phaseCount = Number(row.standingsPhaseTableRowCount || 0);
+  if (tableCount <= 0 && phaseCount <= 0) return "file_exists_empty";
+  const season = asText(row.standingsSeason);
+  if (!season) return "file_exists_season_unknown";
+  if (season === seasonKey) return "current_season";
+  return "season_mismatch";
+}
+
 function fixtureRows(json) {
   if (Array.isArray(json)) return json;
   if (Array.isArray(json && json.fixtures)) return json.fixtures;
@@ -224,11 +274,13 @@ function scanStandings(dataRoot) {
     const table = asArray((json && json.table) || (json && json.rows) || (json && json.standings));
     const phaseTables = json && typeof json.phaseTables === "object" && json.phaseTables ? json.phaseTables : {};
     const phaseKeys = Object.keys(phaseTables);
+    const phaseRowCount = phaseTableRowCount(phaseTables);
 
     result.set(leagueSlug, {
       standingsFileExists: true,
       standingsSeason: asText((json && (json.season || json.seasonKey)) || ""),
       standingsTableCount: table.length,
+      standingsPhaseTableRowCount: phaseRowCount,
       standingsPhaseKeys: phaseKeys,
       standingsMtime: fs.statSync(filePath).mtime.toISOString()
     });
@@ -421,6 +473,7 @@ function minDate(values) {
 }
 
 function buildInventory(args) {
+  const coverage = scanCoverageContract();
   const canonical = scanCanonicalFixtures(args.dataRoot);
   const standings = scanStandings(args.dataRoot);
   const history = scanHistory(args.dataRoot, args.seasonKey);
@@ -429,13 +482,14 @@ function buildInventory(args) {
   const seasonStatus = scanSeasonStatus(args.dataRoot, args.seasonKey);
 
   const leagueSlugs = new Set();
-  for (const map of [canonical, standings, history, dayActivity, seasonWatch, seasonStatus]) {
+  for (const map of [coverage, canonical, standings, history, dayActivity, seasonWatch, seasonStatus]) {
     for (const leagueSlug of map.keys()) leagueSlugs.add(leagueSlug);
   }
 
   const windowEnd = addDays(args.date, args.daysAhead);
 
   const inventoryRows = Array.from(leagueSlugs).sort().map((leagueSlug) => {
+    const cov = coverage.get(leagueSlug) || {};
     const c = canonical.get(leagueSlug) || {};
     const s = standings.get(leagueSlug) || {};
     const h = history.get(leagueSlug) || {};
@@ -466,7 +520,10 @@ function buildInventory(args) {
     const needsFixtureAcquisition = canonicalFixtureCountToday === 0 && dayState !== "no_expected_fixtures_for_day";
     const needsDayActivityEvidence = !dayState;
     const needsFTRepair = missingFTCount > 0;
-    const needsStandingsRefresh = !standingsExists || Number(s.standingsTableCount || 0) === 0;
+    const standingsPhaseTableRowCount = Number(s.standingsPhaseTableRowCount || 0);
+    const standingsFreshness = freshnessFromStandings(s, args.seasonKey);
+    const seasonWatchState = asText(w.seasonWatchReason) || (asText(w.seasonWatchNextKnownFixtureDate) ? "has_next_known_fixture_date" : "");
+    const needsStandingsRefresh = !standingsExists || (Number(s.standingsTableCount || 0) === 0 && standingsPhaseTableRowCount === 0);
     const needsSeasonStatus = !seasonStatusExists;
 
     let priority = "monitor";
@@ -478,11 +535,17 @@ function buildInventory(args) {
 
     return {
       leagueSlug,
-      leagueName: asText(c.leagueName),
+      leagueName: asText(c.leagueName || cov.leagueName) || leagueName(leagueSlug),
+      coverageType: asText(cov.coverageType),
+      coverageRegion: asText(cov.coverageRegion),
+      coverageCountry: asText(cov.coverageCountry),
+      coverageTier: Number(cov.coverageTier || 0),
+      coverageTrust: Number(cov.coverageTrust || 0),
       targetDate: args.date,
       seasonKey: args.seasonKey,
       canonicalFixtureCountToday,
       canonicalFixtureCountNextWindow: nextWindowCount,
+      canonicalFixtureCountNext7Days: nextWindowCount,
       canonicalFixtureCountTotal: Number(c.canonicalFixtureCountTotal || 0),
       lastKnownFixtureDate: maxDate(dates.filter((date) => date <= args.date)),
       nextKnownCanonicalFixtureDate: minDate(dates.filter((date) => date > args.date)),
@@ -491,14 +554,18 @@ function buildInventory(args) {
       missingFTCount,
       standingsFileExists: standingsExists,
       standingsSeason: asText(s.standingsSeason),
+      standingsFreshness,
       standingsTableCount: Number(s.standingsTableCount || 0),
+      standingsPhaseTableRowCount,
       standingsPhaseKeys: asArray(s.standingsPhaseKeys),
+      standingsMtime: asText(s.standingsMtime),
       historyRowsCount: Number(h.historyRowsCount || 0),
       historyFinalRowsCount: Number(h.historyFinalRowsCount || 0),
       lastHistoryDate: maxDate(asArray(h.historyDates)),
       dayActivityState: dayState,
       dayActivityEvidenceState: asText(d.dayActivityEvidenceState),
       dayActivityNextKnownFixtureDate: asText(d.dayActivityNextKnownFixtureDate),
+      seasonWatchState,
       seasonWatchNextKnownFixtureDate: asText(w.seasonWatchNextKnownFixtureDate),
       seasonStatusStateExists: seasonStatusExists,
       seasonStatus: asText(ss.seasonStatus),
@@ -526,9 +593,13 @@ function buildInventory(args) {
       targetDate: args.date,
       seasonKey: args.seasonKey,
       daysAhead: args.daysAhead,
+      coverageContractLeagueCount: coverage.size,
       leagueCount: inventoryRows.length,
+      coverageBackedLeagueCount: inventoryRows.filter((row) => coverage.has(row.leagueSlug)).length,
+      nonCoverageObservedLeagueCount: inventoryRows.filter((row) => !coverage.has(row.leagueSlug)).length,
       canonicalFixtureTodayLeagueCount: inventoryRows.filter((row) => row.canonicalFixtureCountToday > 0).length,
       canonicalFixtureNextWindowLeagueCount: inventoryRows.filter((row) => row.canonicalFixtureCountNextWindow > 0).length,
+      canonicalFixtureNext7DaysLeagueCount: inventoryRows.filter((row) => row.canonicalFixtureCountNext7Days > 0).length,
       missingFTLeagueCount: inventoryRows.filter((row) => row.needsFTRepair).length,
       standingsFileCount: inventoryRows.filter((row) => row.standingsFileExists).length,
       historyLeagueCount: inventoryRows.filter((row) => row.historyRowsCount > 0).length,
@@ -611,6 +682,9 @@ function runSelfTest() {
   if (!swe) throw new Error("self-test failed: missing swe.1");
   if (eng.dayActivityState !== "no_expected_fixtures_for_day") throw new Error("self-test failed: day activity not loaded");
   if (!eng.standingsFileExists) throw new Error("self-test failed: standings not loaded");
+  if (!eng.standingsFreshness) throw new Error("self-test failed: standings freshness missing");
+  if (!Object.prototype.hasOwnProperty.call(eng, "canonicalFixtureCountNext7Days")) throw new Error("self-test failed: next7 alias missing");
+  if (!Object.prototype.hasOwnProperty.call(eng, "seasonWatchState")) throw new Error("self-test failed: season watch state missing");
   if (eng.missingFTCount !== 1) throw new Error("self-test failed: expected missing FT count 1");
   if (swe.canonicalFixtureCountToday !== 1) throw new Error("self-test failed: expected swe today fixture count 1");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("self-test failed: guarantees");
