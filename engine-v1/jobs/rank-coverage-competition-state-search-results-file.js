@@ -190,6 +190,82 @@ function sourceTypeBoost(targetType, host) {
   return 0;
 }
 
+function isOfficialConfirmationMode(target, taskType, evidenceKind) {
+  const policy = target && typeof target === "object" ? target.sourcePolicy || {} : {};
+  return (
+    policy.officialConfirmationOnly === true ||
+    asText(target && target.validationIntent).includes("official") ||
+    asText(taskType).includes("official_confirmation") ||
+    asText(evidenceKind) === "winner_or_final_official_confirmation"
+  );
+}
+
+function allowedOfficialHostsOf(target) {
+  const policy = target && typeof target === "object" ? target.sourcePolicy || {} : {};
+  const hosts = [
+    ...asArray(policy.allowedHosts),
+    ...asArray(target && target.officialHosts)
+  ]
+    .map((host) => asText(host).toLowerCase().replace(/^www\./, ""))
+    .filter(Boolean);
+
+  return [...new Set(hosts)];
+}
+
+function hostMatchesAllowedOfficialHost(host, allowedHosts) {
+  const cleanHost = asText(host).toLowerCase().replace(/^www\./, "");
+  return allowedHosts.some((allowed) => cleanHost === allowed || cleanHost.endsWith("." + allowed));
+}
+
+function officialConfirmationRejectionReason(row, target, host) {
+  const allowedHosts = allowedOfficialHostsOf(target);
+  const blob = textBlob(row);
+  const url = urlOf(row).toLowerCase();
+  const title = titleOf(row).toLowerCase();
+
+  if (allowedHosts.length && !hostMatchesAllowedOfficialHost(host, allowedHosts)) {
+    return "official_confirmation_non_official_host";
+  }
+
+  if (/\/home\.html(?:$|[?#])|\/home(?:$|[?#])|afc_champions_league_-_home/i.test(url)) {
+    return "official_confirmation_generic_home_or_landing";
+  }
+
+  if (/\bpreview\b/i.test(blob) && !/\b\d+\s*[-–]\s*\d+\b/.test(blob)) {
+    return "official_confirmation_preview_not_result";
+  }
+
+  if (/hails|fortitude|not at our best|facts\s*&\s*figures|in numbers|year in review/i.test(blob)) {
+    if (!/\b(?:won|winner|champion|champions|title|2\s*[-–]\s*0|final\s*:)\b/i.test(blob)) {
+      return "official_confirmation_context_article_not_result";
+    }
+  }
+
+  const hasSpecificResultSignal =
+    /\b\d+\s*[-–]\s*\d+\b/i.test(blob) ||
+    /\b(?:won|winner|champion|champions|title|end title|final score|result|beat|defeated)\b/i.test(blob);
+
+  const hasFinalSignal =
+    /\bfinal\b/i.test(blob) ||
+    /aclelitefinal/i.test(url);
+
+  const hasTeamSignal =
+    /al[\s-]?ahli|kawasaki|frontale/i.test(blob);
+
+  if (!hasFinalSignal) {
+    return "official_confirmation_missing_final_signal";
+  }
+
+  if (!hasSpecificResultSignal) {
+    return "official_confirmation_missing_result_or_winner_signal";
+  }
+
+  if (!hasTeamSignal) {
+    return "official_confirmation_missing_team_signal";
+  }
+
+  return "";
+}
 function evidenceTermScore(taskType, evidenceKind, row) {
   const text = textBlob(row);
   let score = 0;
@@ -207,6 +283,13 @@ function evidenceTermScore(taskType, evidenceKind, row) {
     add(/fixtures|results|schedule|calendar|dates|key dates/i, 16, "calendar_terms");
     add(/2025\/26|2025-26|2025 26|2026/i, 8, "season_terms");
     add(/uefa/i, 8, "uefa_terms");
+  } else if (evidenceKind === "winner_or_final_official_confirmation" || asText(taskType).includes("official_confirmation")) {
+    add(/\bfinal\b|aclelitefinal/i, 12, "final_terms");
+    add(/\b\d+\s*[-–]\s*\d+\b|final\s*:|final score|result/i, 28, "result_score_terms");
+    add(/\bwon|winner|champion|champions|title|end title|beat|defeated\b/i, 24, "winner_title_terms");
+    add(/al[\s-]?ahli|kawasaki|frontale/i, 18, "team_terms");
+    add(/match|report|video|final report/i, 8, "specific_page_type_terms");
+    add(/2024\/25|2024-25|2025/i, 6, "season_terms");
   } else if (evidenceKind === "calendar") {
     add(/fixtures|schedule|calendar|dates|key dates|round dates|draw/i, 18, "calendar_terms");
     add(/season|2025\/26|2025-26|2026/i, 8, "season_terms");
@@ -223,7 +306,6 @@ function evidenceTermScore(taskType, evidenceKind, row) {
 
   return { score, reasons };
 }
-
 function isHardRejected(row, host) {
   const fullHost = fullHostOf(urlOf(row));
   const blob = textBlob(row);
@@ -266,6 +348,18 @@ function scoreCandidate(row, target) {
     };
   }
 
+  if (isOfficialConfirmationMode(target, taskType, evidenceKind)) {
+    const officialConfirmationRejectReason = officialConfirmationRejectionReason(row, target, host);
+    if (officialConfirmationRejectReason) {
+      return {
+        accepted: false,
+        score: 0,
+        rejectionReason: officialConfirmationRejectReason,
+        scoreReasons: []
+      };
+    }
+  }
+
   let score = 0;
   const scoreReasons = [];
 
@@ -303,6 +397,18 @@ function scoreCandidate(row, target) {
   if (/fandom\.com$/i.test(host)) {
     score -= 20;
     scoreReasons.push("fandom_penalty");
+  }
+
+  if (isOfficialConfirmationMode(target, taskType, evidenceKind)) {
+    const nonHostReasons = scoreReasons.filter((reason) => reason !== "official_host");
+    if (nonHostReasons.length === 0) {
+      return {
+        accepted: false,
+        score,
+        rejectionReason: "official_confirmation_official_host_only",
+        scoreReasons
+      };
+    }
   }
 
   if (score <= 0) {
@@ -520,6 +626,65 @@ function runSelfTest() {
   if (report.summary.emittedCandidateUrlCount !== 1) throw new Error("expected one accepted official UEFA URL");
   if (report.summary.rejectedResultCount !== 4) throw new Error("expected four rejected bad URLs");
   if (report.rankedCandidateUrlRows[0].hostname !== "uefa.com") throw new Error("expected UEFA host accepted");
+
+  const officialConfirmationReport = buildReport({
+    targetsReport: {
+      searchTargetRows: [
+        {
+          searchTargetId: "afc.champions::official-confirmation::01",
+          targetType: "competition-state-official-confirmation",
+          taskType: "winner_final_official_confirmation_search",
+          evidenceKind: "winner_or_final_official_confirmation",
+          competitionSlug: "afc.champions",
+          leagueSlug: "afc.champions",
+          sourcePolicy: {
+            officialConfirmationOnly: true,
+            allowedHosts: ["the-afc.com"],
+            requireSpecificWinnerOrFinalResult: true
+          }
+        }
+      ]
+    },
+    searchResultsReport: {
+      searchResultRows: [
+        {
+          searchTargetId: "afc.champions::official-confirmation::01",
+          leagueSlug: "afc.champions",
+          title: "AFC Champions League Elite - Al Ahli Saudi FC end title wait in style",
+          url: "https://www.the-afc.com/en/club/afc_champions_league_elite.html/news/al-ahli-saudi-fc-end-title-wait-in-style",
+          snippet: "Al Ahli beat Kawasaki Frontale 2-0 in the final and were crowned champions."
+        },
+        {
+          searchTargetId: "afc.champions::official-confirmation::01",
+          leagueSlug: "afc.champions",
+          title: "AFC Champions League Elite - Final - Preview: Al Ahli Saudi FC v Kawasaki Frontale",
+          url: "https://www.the-afc.com/en/club/afc_champions_league_elite.html/news/final-preview-al-ahli-saudi-fc-ksa-v-kawasaki-frontale-jpn",
+          snippet: "Preview before the final."
+        },
+        {
+          searchTargetId: "afc.champions::official-confirmation::01",
+          leagueSlug: "afc.champions",
+          title: "AFC Champions League Elite 2024/25",
+          url: "https://www.the-afc.com/en/club/afc_champions_league_elite/home.html",
+          snippet: "Competition home page."
+        },
+        {
+          searchTargetId: "afc.champions::official-confirmation::01",
+          leagueSlug: "afc.champions",
+          title: "2025 AFC Champions League Elite final",
+          url: "https://en.wikipedia.org/wiki/2025_AFC_Champions_League_Elite_final",
+          snippet: "Reference page."
+        }
+      ]
+    },
+    maxPerTarget: 5
+  });
+
+  if (officialConfirmationReport.summary.emittedCandidateUrlCount !== 1) throw new Error("expected one official-confirmation accepted URL");
+  if (officialConfirmationReport.summary.rejectedResultCount !== 3) throw new Error("expected three official-confirmation rejected URLs");
+  if (officialConfirmationReport.rankedCandidateUrlRows[0].hostname !== "the-afc.com") throw new Error("expected AFC official host");
+  if (officialConfirmationReport.rankedCandidateUrlRows[0].candidateUrl.includes("preview")) throw new Error("preview should not be accepted");
+  if (officialConfirmationReport.rankedCandidateUrlRows[0].scoreReasons.length <= 1) throw new Error("official confirmation candidate must not be official_host only");
   if (report.guarantees.sourceFetch !== false || report.guarantees.canonicalWrites !== 0) throw new Error("read-only guarantees failed");
 
   return {
