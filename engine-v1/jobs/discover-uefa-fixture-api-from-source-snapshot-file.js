@@ -168,14 +168,14 @@ function discoverForSnapshot(snapshot, index) {
   if (matchApiUrl && competitionId && currentSeason) {
     addCandidate(
       "match-api-competition-season-matches",
-      makeUrl(matchApiUrl, `/v5/matches?competitionId=${encodeURIComponent(competitionId)}&seasonYear=${encodeURIComponent(currentSeason)}`),
+      makeUrl(matchApiUrl, `/v5/matches?competitionId=${encodeURIComponent(competitionId)}&seasonYear=${encodeURIComponent(currentSeason)}&offset=0&limit=100`),
       "speculative_high",
       "matchApiUrl plus competitionId/currentSeason discovered in UEFA page"
     );
 
     addCandidate(
       "match-api-competition-season-fixtures",
-      makeUrl(matchApiUrl, `/v5/fixtures?competitionId=${encodeURIComponent(competitionId)}&seasonYear=${encodeURIComponent(currentSeason)}`),
+      makeUrl(matchApiUrl, `/v5/fixtures?competitionId=${encodeURIComponent(competitionId)}&seasonYear=${encodeURIComponent(currentSeason)}&offset=0&limit=100`),
       "speculative_medium",
       "matchApiUrl plus fixture-page context discovered in UEFA page"
     );
