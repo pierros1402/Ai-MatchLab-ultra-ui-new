@@ -242,7 +242,9 @@ function sourcePolicyForHost(hostname) {
     "netflix.com",
     "premierinn.com",
     "france.tv",
-    "premier-ba.com"
+    "premier-ba.com",
+    "transfermarkt.com",
+    "transfermarkt.de"
   ];
 
   if (!host) {
@@ -285,7 +287,7 @@ function sourcePolicyForHost(hostname) {
     };
   }
 
-  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction", "kladionica", "bookmaker", "bookie", "hotel", "inn"])) {
+  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction", "kladionica", "bookmaker", "bookie", "hotel", "inn", "transfermarkt"])) {
     return {
       sourceClass: "low_priority_or_non_truth_surface",
       truthRole: "not_truth_ready",
