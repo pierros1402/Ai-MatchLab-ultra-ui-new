@@ -584,6 +584,72 @@ function isKnownNonFootballSearchSurface(hostname, candidateUrl, result) {
 
   return hasNonFootballSignal && !hasFootballFixtureSignal;
 }
+function detectedCountryTokenFromListingPath(evidence) {
+  const text = normalizeToken(evidence);
+
+  const countryTokenGroups = [
+    { country: "england", tokens: ["england", "inglaterra", "angleterre"] },
+    { country: "germany", tokens: ["germany", "deutschland", "alemania", "allemagne", "germania"] },
+    { country: "italy", tokens: ["italy", "italia", "italija", "italie"] },
+    { country: "spain", tokens: ["spain", "espana", "españa", "spanien", "espagne"] },
+    { country: "france", tokens: ["france", "francia", "frankreich"] },
+    { country: "greece", tokens: ["greece", "grecia", "griechenland", "ellada"] },
+    { country: "bosnia and herzegovina", tokens: ["bosnia-and-herzegovina", "bosnia herzegovina", "bosna", "bih", "wwin liga bih"] }
+  ];
+
+  for (const group of countryTokenGroups) {
+    if (group.tokens.some((token) => text.includes(token))) {
+      return group.country;
+    }
+  }
+
+  return "";
+}
+
+function expectedCountryToken(target) {
+  const country = normalizeToken(target?.country);
+  const slug = normalizeToken(target?.leagueSlug || target?.competitionSlug);
+
+  if (country) {
+    if (country.includes("england")) return "england";
+    if (country.includes("germany")) return "germany";
+    if (country.includes("italy")) return "italy";
+    if (country.includes("spain")) return "spain";
+    if (country.includes("france")) return "france";
+    if (country.includes("greece")) return "greece";
+    if (country.includes("bosnia")) return "bosnia and herzegovina";
+  }
+
+  if (slug.startsWith("eng.")) return "england";
+  if (slug.startsWith("ger.")) return "germany";
+  if (slug.startsWith("ita.")) return "italy";
+  if (slug.startsWith("esp.")) return "spain";
+  if (slug.startsWith("fra.")) return "france";
+  if (slug.startsWith("gre.")) return "greece";
+
+  return "";
+}
+
+function countryPathMismatchRejectReason(target, hostname, evidence) {
+  const host = normalizeToken(hostname);
+  const policy = sourcePolicyForHost(hostname);
+
+  if (
+    policy.sourceClass !== "trusted_independent_fixture_listing" &&
+    !host.includes("flashscore") &&
+    !host.includes("rezultati") &&
+    !host.includes("livesport")
+  ) {
+    return "";
+  }
+
+  const expected = expectedCountryToken(target);
+  const detected = detectedCountryTokenFromListingPath(evidence);
+
+  if (!expected || !detected || expected === detected) return "";
+
+  return `country_path_mismatch_expected_${expected.replace(/\s+/g, "_")}_detected_${detected.replace(/\s+/g, "_")}`;
+}
 function strictFixtureSurfaceRejectReason(target, hostname, candidateUrl, result) {
   const slug = asText(target.leagueSlug || target.competitionSlug).toLowerCase();
   const host = asText(hostname).toLowerCase().replace(/^www\./, "");
@@ -599,6 +665,8 @@ function strictFixtureSurfaceRejectReason(target, hostname, candidateUrl, result
   }
 
   const evidence = [host, rawUrl, pathname, title, snippet].join(" ");
+  const countryMismatchReason = countryPathMismatchRejectReason(target, hostname, evidence);
+  if (countryMismatchReason) return countryMismatchReason;
 
   if (
     /(^|\/)(watch|video|videos|live-stream|stream)(\/|$)/.test(pathname) ||
