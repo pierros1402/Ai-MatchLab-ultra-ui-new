@@ -105,6 +105,33 @@ function hostnameOf(url) {
     return "";
   }
 }
+const AUTHORITY_RULES = [
+  { prefix: "eng.1", hosts: [/premierleague\.com$/i] },
+  { prefix: "eng.2", hosts: [/efl\.com$/i] },
+  { prefix: "eng.3", hosts: [/efl\.com$/i] },
+  { prefix: "eng.4", hosts: [/efl\.com$/i] },
+  { prefix: "eng.league_cup", hosts: [/efl\.com$/i] },
+  { prefix: "ger.1", hosts: [/bundesliga\.com$/i] },
+  { prefix: "ger.2", hosts: [/bundesliga\.com$/i] },
+  { prefix: "gre.1", hosts: [/slgr\.gr$/i] }
+];
+
+function authorityRuleForLeagueSlug(slug) {
+  const value = asText(slug).toLowerCase();
+  return AUTHORITY_RULES
+    .filter((rule) => value === rule.prefix || value.startsWith(rule.prefix + "."))
+    .sort((a, b) => b.prefix.length - a.prefix.length)[0] || null;
+}
+
+function isAuthorityHostForLeague(row) {
+  const leagueSlug = asText(row.leagueSlug || row.competitionSlug);
+  const candidateUrl = asText(row.candidateUrl || row.url);
+  const hostname = (asText(row.hostname) || hostnameOf(candidateUrl)).toLowerCase().replace(/^www\./, "");
+  const rule = authorityRuleForLeagueSlug(leagueSlug);
+
+  if (!rule) return false;
+  return rule.hosts.some((pattern) => pattern.test(hostname));
+}
 
 function fetchRow(row, index) {
   const leagueSlug = asText(row.leagueSlug || row.competitionSlug);
@@ -162,7 +189,10 @@ function buildReport(input, { inputPath = "", perLeagueLimit = 3, officialOnly =
     if (asText(row.truthRole) === "not_truth_ready") return false;
     if (asText(row.sourceClass) === "low_priority_or_non_truth_surface") return false;
     if (Number(row.compositeScore || 0) <= 0) return false;
-    if (officialOnly && asText(row.sourceClass) !== "official_governing_or_competition_operator") return false;
+    if (officialOnly) {
+      if (asText(row.sourceClass) !== "official_governing_or_competition_operator") return false;
+      if (!isAuthorityHostForLeague(row)) return false;
+    }
     return true;
   });
 
@@ -234,6 +264,17 @@ function runSelfTest() {
         productionWrite: false
       },
       {
+        leagueSlug: "eng.1",
+        candidateUrl: "https://www.slgr.gr/el/schedule/",
+        hostname: "slgr.gr",
+        sourceClass: "official_governing_or_competition_operator",
+        truthRole: "primary_candidate_after_fetch_evidence",
+        compositeScore: 70,
+        sourceFetch: false,
+        canonicalWrites: 0,
+        productionWrite: false
+      },
+      {
         leagueSlug: "bad.1",
         candidateUrl: "https://example.test/noise",
         hostname: "example.test",
@@ -248,7 +289,7 @@ function runSelfTest() {
   };
 
   const report = buildReport(input, { inputPath: "self-test", perLeagueLimit: 2 });
-  if (report.summary.rankedCandidateInputCount !== 3) throw new Error("expected 3 ranked input rows");
+  if (report.summary.rankedCandidateInputCount !== 4) throw new Error("expected 4 ranked input rows");
   if (report.summary.eligibleFetchCandidateCount !== 2) throw new Error("expected 2 eligible rows");
   if (report.summary.fetchTaskCount !== 2) throw new Error("expected 2 fetch tasks");
   if (report.guarantees.sourceFetch !== false || report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) {
@@ -297,3 +338,4 @@ if (path.resolve(process.argv[1] || "") === __filename) {
 }
 
 export { buildReport };
+
