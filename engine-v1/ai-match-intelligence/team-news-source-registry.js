@@ -564,6 +564,101 @@ const LEAGUE_SOURCE_REGISTRY = {
         ];
       }
     }
+  ],
+
+  "bel.1": [
+    {
+      id: "bel-1-proleague-be-league-news",
+      label: "Belgian Pro League official league source",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.proleague.be/fr/jupliler-pro-league-20252026-kalender"
+        ];
+      }
+    }
+  ],
+
+  "cro.1": [
+    {
+      id: "cro-1-hnl-com-hr-league-news",
+      label: "HNL official league source",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://hnl.com.hr/"
+        ];
+      }
+    },
+    {
+      id: "cro-1-hns-family-league-news",
+      label: "HNL official league source",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://hns.family/natjecanja/supersport-hnl/"
+        ];
+      }
+    }
+  ],
+
+  "cyp.1": [
+    {
+      id: "cyp-1-cfa-com-cy-league-news",
+      label: "Cyprus First Division official league source",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.cfa.com.cy/En/competitions/65403824"
+        ];
+      }
+    }
+  ],
+
+  "fra.coupe_de_france": [
+    {
+      id: "fra-coupe-de-france-fff-fr-competition-news",
+      label: "Coupe de France official competition source",
+      type: "competition_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.fff.fr/competition/engagement/420183-coupe-de-france/phase/2/index.html"
+        ];
+      }
+    }
+  ],
+
+  "ger.dfb_pokal": [
+    {
+      id: "ger-dfb-pokal-bundesliga-com-competition-news",
+      label: "DFB Pokal official competition source",
+      type: "competition_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.bundesliga.com/en/dfb-cup/matchday"
+        ];
+      }
+    }
+  ],
+
+  "nor.1": [
+    {
+      id: "nor-1-fotball-no-league-news",
+      label: "Eliteserien official league source",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.fotball.no/turneringer/eliteserien/"
+        ];
+      }
+    }
   ]
 };
 
