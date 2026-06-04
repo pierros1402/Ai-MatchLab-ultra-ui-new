@@ -91,7 +91,7 @@ function hostClass(hostname) {
 }
 
 function hasCalendarSignal(row) {
-  const text = `${asText(row.query)} ${asText(row.title)} ${asText(row.snippet)} ${asText(row.url || row.candidateUrl)}`.toLowerCase();
+  const text = `${asText(row.query)} ${asText(row.title)} ${asText(row.snippet)} ${asText(row.plainText)} ${asText(row.rawText)} ${asText(row.url || row.candidateUrl || row.finalUrl || row.resolvedUrl)}`.toLowerCase();
 
   return (
     text.includes("fixture") ||
@@ -110,7 +110,7 @@ function hasCalendarSignal(row) {
 
 function hasCompetitionSignal(row) {
   const slug = asText(row.leagueSlug);
-  const text = `${asText(row.query)} ${asText(row.title)} ${asText(row.snippet)} ${asText(row.url || row.candidateUrl)}`.toLowerCase();
+  const text = `${asText(row.query)} ${asText(row.title)} ${asText(row.snippet)} ${asText(row.plainText)} ${asText(row.rawText)} ${asText(row.url || row.candidateUrl || row.finalUrl || row.resolvedUrl)}`.toLowerCase();
 
   const signalsBySlug = {
     "eng.1": ["premier league", "english premier league", "eng.1"],
@@ -189,9 +189,16 @@ function evidenceNeed(row) {
 
 function sourceDecision(row, sourceSet) {
   const cls = hostClass(row.hostname);
+  const sourceClass = asText(row.sourceClass);
+  const truthRole = asText(row.truthRole);
   const calendarSignal = hasCalendarSignal(row);
   const competitionSignal = hasCompetitionSignal(row);
-  const officialOrTrusted = [
+  const sourceClassOfficialOrTrusted = (
+    sourceClass === "official_governing_or_competition_operator" ||
+    sourceClass === "trusted_independent_fixture_listing" ||
+    truthRole === "primary_candidate_after_fetch_evidence"
+  );
+  const officialOrTrusted = sourceClassOfficialOrTrusted || [
     "official_competition",
     "trusted_sports_media",
     "trusted_fixture_aggregator",
@@ -212,6 +219,8 @@ function sourceDecision(row, sourceSet) {
       state: sourceSet === "rejectedRows" ? "rescued_calendar_restart_candidate" : "accepted_calendar_restart_candidate",
       reasons: [
         `hostClass:${cls}`,
+        sourceClass ? `sourceClass:${sourceClass}` : "",
+        truthRole ? `truthRole:${truthRole}` : "",
         calendarSignal ? "calendar_signal_present" : "",
         competitionSignal ? "competition_signal_present" : "",
         sourceSet === "rejectedRows" ? "rescued_from_fixture_validator_rejection" : ""
@@ -225,9 +234,11 @@ function sourceDecision(row, sourceSet) {
       state: "needs_fetch_confirmation",
       reasons: [
         `hostClass:${cls}`,
+        sourceClass ? `sourceClass:${sourceClass}` : "",
+        truthRole ? `truthRole:${truthRole}` : "",
         "calendar_signal_present",
         "competition_signal_not_confirmed_from_search_surface"
-      ]
+      ].filter(Boolean)
     };
   }
 
@@ -243,7 +254,7 @@ function sourceDecision(row, sourceSet) {
 }
 
 function normalizeRow(row, sourceSet, index) {
-  const url = asText(row.url || row.candidateUrl);
+  const url = asText(row.url || row.candidateUrl || row.finalUrl || row.resolvedUrl);
   const dates = extractExplicitDates(row);
   const decision = sourceDecision(row, sourceSet);
   const need = evidenceNeed(row);
@@ -276,6 +287,9 @@ function normalizeRow(row, sourceSet, index) {
       hostname: asText(row.hostname),
       provider: asText(row.provider),
       hostClass: hostClass(row.hostname),
+      sourceClass: asText(row.sourceClass),
+      truthRole: asText(row.truthRole),
+      fetchTaskId: asText(row.fetchTaskId),
       sourceSet
     },
     decisionReasons: decision.reasons,
@@ -290,10 +304,17 @@ function normalizeRow(row, sourceSet, index) {
 
 function buildReport(input, options = {}) {
   const validRows = Array.isArray(input.validSearchResultRows) ? input.validSearchResultRows : [];
+  const fetchedSnapshotRows = Array.isArray(input.fetchedSourceSnapshots) ? input.fetchedSourceSnapshots : [];
   const rejectedRows = Array.isArray(input.rejectedRows) ? input.rejectedRows : [];
 
   const normalized = [
     ...validRows.map((row, index) => normalizeRow(row, "validSearchResultRows", index)),
+    ...fetchedSnapshotRows.map((row, index) => normalizeRow({
+      ...row,
+      url: row.finalUrl || row.resolvedUrl || row.candidateUrl || row.url,
+      title: row.title || row.name || row.competitionName || "",
+      snippet: row.snippet || row.plainText || row.rawText || ""
+    }, "fetchedSourceSnapshots", index)),
     ...rejectedRows.map((row, index) => normalizeRow(row, "rejectedRows", index))
   ];
 
@@ -313,6 +334,7 @@ function buildReport(input, options = {}) {
     inputPath: options.inputPath || "",
     summary: {
       inputValidSearchResultRowCount: validRows.length,
+      inputFetchedSourceSnapshotCount: fetchedSnapshotRows.length,
       inputRejectedRowCount: rejectedRows.length,
       calendarRestartEvidenceRowCount: normalized.length,
       acceptedForFetchPlanningCount: accepted.length,
@@ -356,6 +378,20 @@ function runSelfTest() {
         provider: "self"
       }
     ],
+    fetchedSourceSnapshots: [
+      {
+        fetchTaskId: "eng.1::fixture_source_fetch::001",
+        leagueSlug: "eng.1",
+        competitionName: "Premier League",
+        finalUrl: "https://www.premierleague.com/en/matches/premier-league",
+        hostname: "premierleague.com",
+        sourceClass: "official_governing_or_competition_operator",
+        truthRole: "primary_candidate_after_fetch_evidence",
+        rawText: "Premier League Fixtures, Results & Live Matches on TV Season 2025/26. View the Premier League fixtures for season 2025/26.",
+        plainText: "Premier League Fixtures, Results & Live Matches on TV Season 2025/26. View the Premier League fixtures for season 2025/26.",
+        provider: "self"
+      }
+    ],
     rejectedRows: [
       {
         searchTargetId: "eng.1::calendar_restart_discovery::03",
@@ -382,11 +418,14 @@ function runSelfTest() {
 
   const report = buildReport(input, { inputPath: "self-test" });
 
-  if (report.summary.calendarRestartEvidenceRowCount !== 3) throw new Error("expected 3 evidence rows");
-  if (report.summary.acceptedForFetchPlanningCount !== 2) throw new Error("expected 2 accepted rows");
+  if (report.summary.calendarRestartEvidenceRowCount !== 4) throw new Error("expected 4 evidence rows");
+  if (report.summary.acceptedForFetchPlanningCount !== 3) throw new Error("expected 3 accepted rows");
   if (report.summary.rescuedFromFixtureValidatorCount !== 1) throw new Error("expected 1 rescued official row");
   if (report.summary.exactDateCandidateCount !== 1) throw new Error("expected 1 exact date candidate");
-  if (report.summary.needsFetchConfirmationCount !== 1) throw new Error("expected 1 needs fetch confirmation row");
+  if (report.summary.needsFetchConfirmationCount !== 2) throw new Error("expected 2 needs fetch confirmation rows");
+  if (!report.calendarRestartEvidenceRows.some((row) => row.source.sourceSet === "fetchedSourceSnapshots" && row.leagueSlug === "eng.1")) {
+    throw new Error("expected fetched source snapshot to be accepted");
+  }
   if (report.guarantees.sourceFetch !== false || report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) {
     throw new Error("read-only guarantees failed");
   }
