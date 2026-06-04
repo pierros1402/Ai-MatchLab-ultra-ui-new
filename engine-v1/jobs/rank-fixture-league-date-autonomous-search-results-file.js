@@ -236,7 +236,13 @@ function sourcePolicyForHost(hostname) {
     "instagram.com",
     "twitter.com",
     "x.com",
-    "youtube.com"
+    "youtube.com",
+    "rottentomatoes.com",
+    "imdb.com",
+    "netflix.com",
+    "premierinn.com",
+    "france.tv",
+    "premier-ba.com"
   ];
 
   if (!host) {
@@ -279,7 +285,7 @@ function sourcePolicyForHost(hostname) {
     };
   }
 
-  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction"])) {
+  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction", "kladionica", "bookmaker", "bookie", "hotel", "inn"])) {
     return {
       sourceClass: "low_priority_or_non_truth_surface",
       truthRole: "not_truth_ready",
