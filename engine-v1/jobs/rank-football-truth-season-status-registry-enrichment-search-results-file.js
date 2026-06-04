@@ -285,6 +285,7 @@ function crossCompetitionMismatch(target, host, text) {
   if (!slug.startsWith("bel.") && /proleague\.be$/i.test(host)) return "proleague_only_valid_for_belgium";
   if (!slug.startsWith("cro.") && (/hns\.family$/i.test(host) || /hnl\.com\.hr$/i.test(host))) return "croatian_host_mismatch";
   if (!slug.startsWith("nor.") && (/eliteserien\.no$/i.test(host) || /fotball\.no$/i.test(host))) return "norwegian_host_mismatch";
+  if (slug === "usa.1" && /mlsnextpro\.com$/i.test(host)) return "mls_next_pro_is_not_mls";
 
   if (country === "romania" && /(spain|laliga|liga portugal|portugal|la liga)/i.test(text)) return "country_competition_mismatch_romania";
   if (country === "austria" && /german bundesliga|bundesliga\.com\/en\/bundesliga/i.test(text)) return "country_competition_mismatch_austria_germany";
@@ -292,21 +293,43 @@ function crossCompetitionMismatch(target, host, text) {
   return "";
 }
 
+function urlPathSurfaceSignal(row) {
+  try {
+    const parsed = new URL(urlOf(row));
+    const path = `${parsed.pathname || ""}${parsed.search || ""}`.toLowerCase();
+
+    if (!path || path === "/" || /^\/[a-z]{2}(-[a-z]{2})?\/?$/i.test(path)) return false;
+
+    return /(fixtures?|calendar|calendrier|kalender|schedule|terminliste|results?|resultats?|standings?|table|tabell|tablica|classement|classification|competitions?|competition|natjecanja|turneringer|matches?|matchday|league-two|dfb-cup|copa|cup|pokal|liga|ligue|serie|division)/i.test(path);
+  } catch {
+    return false;
+  }
+}
+
+function isLocaleOrHomepageUrl(row) {
+  try {
+    const parsed = new URL(urlOf(row));
+    const path = (parsed.pathname || "").toLowerCase();
+    return !path || path === "/" || /^\/[a-z]{2}(-[a-z]{2})?\/?$/i.test(path);
+  } catch {
+    return false;
+  }
+}
+
 function urlClassFor(row) {
   const text = textOf(row).toLowerCase();
 
-  if (/(fixtures?|calendar|calendrier|kalender|schedule|terminliste|results?|resultats?|standings?|table|tabell|tablica|classement|classification|competitions?|natjecanja|turneringer|matches?)/i.test(text)) {
+  if (urlPathSurfaceSignal(row)) {
     return "fixture_calendar_or_competition_specific";
   }
 
-  if (/(news|nieuws|nyheter|noticias|actualites|notizie|media|press)/i.test(text)) return "news_or_media";
+  if (isLocaleOrHomepageUrl(row)) return "homepage";
 
-  try {
-    const url = new URL(urlOf(row));
-    if (url.pathname === "/" || url.pathname === "") return "homepage";
-  } catch {
-    // ignored
+  if (/(fixtures?|calendar|calendrier|kalender|schedule|terminliste|results?|resultats?|standings?|table|tabell|tablica|classement|classification|competitions?|natjecanja|turneringer|matches?)/i.test(text)) {
+    return "generic_official_page";
   }
+
+  if (/(news|nieuws|nyheter|noticias|actualites|notizie|media|press)/i.test(text)) return "news_or_media";
 
   return "generic_official_page";
 }
@@ -337,6 +360,10 @@ function scoreCandidate(target, result) {
 
   if (urlClass !== "fixture_calendar_or_competition_specific") {
     rejectReasons.push("not_fixture_calendar_or_competition_specific_url");
+  }
+
+  if (!urlPathSurfaceSignal(result)) {
+    rejectReasons.push("missing_specific_url_path_surface");
   }
 
   let score = 0;
