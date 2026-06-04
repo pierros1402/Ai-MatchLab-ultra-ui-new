@@ -287,7 +287,7 @@ function sourcePolicyForHost(hostname) {
     };
   }
 
-  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction", "kladionica", "bookmaker", "bookie", "hotel", "inn", "transfermarkt", "leagueofgraphs", "leagueoflegends", "riotgames", "lolesports", "op.gg", "u.gg", "poki", "play.cz", "rozhlas", "o2.cz", "wiktionary", "newworldencyclopedia", "praha2.cz"])) {
+  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction", "kladionica", "bookmaker", "bookie", "hotel", "inn", "transfermarkt", "leagueofgraphs", "leagueoflegends", "riotgames", "lolesports", "op.gg", "u.gg", "poki", "play.cz", "rozhlas", "o2.cz", "wiktionary", "newworldencyclopedia", "praha2.cz", "super.cz", "stream.cz", "superhry.cz", "superzoo.cz", "super.com", "jingyan.baidu"])) {
     return {
       sourceClass: "low_priority_or_non_truth_surface",
       truthRole: "not_truth_ready",
@@ -575,6 +575,12 @@ function isKnownNonFootballSearchSurface(hostname, candidateUrl, result) {
     "wiktionary",
     "newworldencyclopedia",
     "praha2.cz",
+    "super.cz",
+    "stream.cz",
+    "superhry.cz",
+    "superzoo.cz",
+    "super.com",
+    "jingyan.baidu",
     "google.",
     "microsoft.",
     "caf-fr-",
