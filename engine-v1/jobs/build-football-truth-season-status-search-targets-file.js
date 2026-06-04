@@ -213,6 +213,8 @@ function baseTarget(row) {
     inventoryPriority: asText(row.inventoryPriority || row.priority),
     expectedEvidence: expectedEvidenceFor(row),
     validationIntent: "verify_football_truth_season_status",
+    sourceType: "season_status_official_primary",
+    fetchPurpose: "season_activity_status_calendar",
     sourceFetch: false,
     canonicalWrites: 0,
     productionWrite: false,
@@ -229,6 +231,7 @@ function targetsForRow(row) {
       ...baseTarget(row),
       searchTargetId: `${slug}::season_status::official-primary`,
       targetType: "official-primary",
+      sourceType: "season_status_official_primary",
       query: officialQuery(row),
       intent: "season_status_official_primary",
       sourcePolicy: sourcePolicyFor("official-primary")
@@ -237,6 +240,7 @@ function targetsForRow(row) {
       ...baseTarget(row),
       searchTargetId: `${slug}::season_status::calendar-status`,
       targetType: "calendar-status",
+      sourceType: "season_status_calendar",
       query: calendarQuery(row),
       intent: "season_calendar_and_phase_status",
       sourcePolicy: sourcePolicyFor("calendar-status")
@@ -245,6 +249,7 @@ function targetsForRow(row) {
       ...baseTarget(row),
       searchTargetId: `${slug}::season_status::trusted-crosscheck`,
       targetType: "trusted-crosscheck",
+      sourceType: "season_status_trusted_crosscheck",
       query: crosscheckQuery(row),
       intent: "season_status_trusted_crosscheck",
       sourcePolicy: sourcePolicyFor("trusted-crosscheck")
