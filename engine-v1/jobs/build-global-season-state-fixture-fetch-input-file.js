@@ -113,7 +113,8 @@ const AUTHORITY_RULES = [
   { prefix: "eng.league_cup", hosts: [/efl\.com$/i] },
   { prefix: "ger.1", hosts: [/bundesliga\.com$/i] },
   { prefix: "ger.2", hosts: [/bundesliga\.com$/i] },
-  { prefix: "gre.1", hosts: [/slgr\.gr$/i] }
+  { prefix: "gre.1", hosts: [/slgr\.gr$/i] },
+  { prefix: "uefa.champions", hosts: [/uefa\.com$/i] }
 ];
 
 function authorityRuleForLeagueSlug(slug) {
@@ -290,14 +291,17 @@ function runSelfTest() {
 
   const report = buildReport(input, { inputPath: "self-test", perLeagueLimit: 2 });
   if (report.summary.rankedCandidateInputCount !== 4) throw new Error("expected 4 ranked input rows");
-  if (report.summary.eligibleFetchCandidateCount !== 2) throw new Error("expected 2 eligible rows");
-  if (report.summary.fetchTaskCount !== 2) throw new Error("expected 2 fetch tasks");
+  if (report.summary.eligibleFetchCandidateCount !== 3) throw new Error("expected 3 eligible rows");
+  if (report.summary.fetchTaskCount !== 3) throw new Error("expected 3 fetch tasks");
   if (report.guarantees.sourceFetch !== false || report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) {
     throw new Error("read-only guarantees failed");
   }
 
   const officialOnly = buildReport(input, { inputPath: "self-test", perLeagueLimit: 2, officialOnly: true });
   if (officialOnly.summary.fetchTaskCount !== 1) throw new Error("expected 1 official-only fetch task");
+  if (officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "eng.1" && row.hostname === "slgr.gr")) {
+    throw new Error("wrong-league official host must be blocked");
+  }
 
   return {
     ok: true,
@@ -338,4 +342,3 @@ if (path.resolve(process.argv[1] || "") === __filename) {
 }
 
 export { buildReport };
-
