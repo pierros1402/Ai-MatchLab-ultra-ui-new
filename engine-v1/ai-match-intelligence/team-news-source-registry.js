@@ -659,6 +659,20 @@ const LEAGUE_SOURCE_REGISTRY = {
         ];
       }
     }
+  ],
+
+  "eng.4": [
+    {
+      id: "eng-4-efl-com-league-news",
+      label: "League Two official league source",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.efl.com/competitions/efl-league-two/"
+        ];
+      }
+    }
   ]
 };
 
