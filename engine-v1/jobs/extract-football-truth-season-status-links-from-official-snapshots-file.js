@@ -268,6 +268,10 @@ function isBlockedExpandedUrl(url) {
   if (!host || !pathname) return true;
 
   if (/^(editorial|img)\.uefa\.com$/i.test(host)) return true;
+  if (/^assets\.the-afc\.com$/i.test(host)) return true;
+  if (/^api\.premierleague\.com$/i.test(host)) return true;
+  if (/^checkout\.plplus\.premierleague\.com$/i.test(host)) return true;
+  if (/^redirect\.bundesliga\.com$/i.test(host)) return true;
   if (/^images\.mlssoccer\.com$/i.test(host)) return true;
   if (/^streams\.cdn\.bundesliga\.at$/i.test(host)) return true;
   if (/^akkreditering\.superliga\.dk$/i.test(host)) return true;
