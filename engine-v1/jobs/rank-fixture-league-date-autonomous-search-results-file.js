@@ -287,7 +287,7 @@ function sourcePolicyForHost(hostname) {
     };
   }
 
-  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction", "kladionica", "bookmaker", "bookie", "hotel", "inn", "transfermarkt"])) {
+  if (hostEndsWith(host, lowQualityHosts) || hostIncludesAny(host, ["bet", "odds", "casino", "tip", "prediction", "kladionica", "bookmaker", "bookie", "hotel", "inn", "transfermarkt", "leagueofgraphs", "leagueoflegends", "riotgames", "lolesports", "op.gg", "u.gg", "poki", "play.cz", "rozhlas", "o2.cz", "wiktionary", "newworldencyclopedia", "praha2.cz"])) {
     return {
       sourceClass: "low_priority_or_non_truth_surface",
       truthRole: "not_truth_ready",
@@ -562,6 +562,19 @@ function isKnownNonFootballSearchSurface(hostname, candidateUrl, result) {
   }
 
   const hardRejectedHostTokens = [
+    "leagueofgraphs",
+    "leagueoflegends",
+    "riotgames",
+    "lolesports",
+    "op.gg",
+    "u.gg",
+    "poki",
+    "play.cz",
+    "rozhlas",
+    "o2.cz",
+    "wiktionary",
+    "newworldencyclopedia",
+    "praha2.cz",
     "google.",
     "microsoft.",
     "caf-fr-",
@@ -650,6 +663,26 @@ function countryPathMismatchRejectReason(target, hostname, evidence) {
 
   return `country_path_mismatch_expected_${expected.replace(/\s+/g, "_")}_detected_${detected.replace(/\s+/g, "_")}`;
 }
+function officialHostCompetitionMismatchRejectReason(target, hostname, candidateUrl, result) {
+  const slug = asText(target?.leagueSlug || target?.competitionSlug).toLowerCase();
+  const host = asText(hostname).toLowerCase().replace(/^www\./, "");
+  const rawUrl = asText(candidateUrl).toLowerCase();
+  const title = asText(result?.title).toLowerCase();
+  const snippet = asText(result?.snippet || result?.description).toLowerCase();
+  const evidence = [host, rawUrl, title, snippet].join(" ");
+
+  if (host === "premierleague.com" || host.endsWith(".premierleague.com")) {
+    if (slug && slug !== "eng.1") {
+      return "official_host_competition_mismatch_premierleague_only_valid_for_eng_1";
+    }
+  }
+
+  if ((slug === "eng.2" || slug === "eng.3" || slug === "eng.4") && evidence.includes("premier league") && !evidence.includes("efl")) {
+    return "official_host_competition_mismatch_efl_division_needs_efl_surface";
+  }
+
+  return "";
+}
 function strictFixtureSurfaceRejectReason(target, hostname, candidateUrl, result) {
   const slug = asText(target.leagueSlug || target.competitionSlug).toLowerCase();
   const host = asText(hostname).toLowerCase().replace(/^www\./, "");
@@ -665,6 +698,9 @@ function strictFixtureSurfaceRejectReason(target, hostname, candidateUrl, result
   }
 
   const evidence = [host, rawUrl, pathname, title, snippet].join(" ");
+  const officialMismatchReason = officialHostCompetitionMismatchRejectReason(target, hostname, candidateUrl, result);
+  if (officialMismatchReason) return officialMismatchReason;
+
   const countryMismatchReason = countryPathMismatchRejectReason(target, hostname, evidence);
   if (countryMismatchReason) return countryMismatchReason;
 
