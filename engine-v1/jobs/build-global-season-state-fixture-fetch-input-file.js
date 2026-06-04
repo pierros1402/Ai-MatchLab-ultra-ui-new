@@ -191,7 +191,6 @@ function buildReport(input, { inputPath = "", perLeagueLimit = 3, officialOnly =
     if (asText(row.sourceClass) === "low_priority_or_non_truth_surface") return false;
     if (Number(row.compositeScore || 0) <= 0) return false;
     if (officialOnly) {
-      if (asText(row.sourceClass) !== "official_governing_or_competition_operator") return false;
       if (!isAuthorityHostForLeague(row)) return false;
     }
     return true;
@@ -276,6 +275,17 @@ function runSelfTest() {
         productionWrite: false
       },
       {
+        leagueSlug: "ger.1",
+        candidateUrl: "https://www.bundesliga.com/en/bundesliga",
+        hostname: "bundesliga.com",
+        sourceClass: "season_activity_calendar_candidate",
+        truthRole: "season_activity_candidate_after_fetch_evidence",
+        compositeScore: 58,
+        sourceFetch: false,
+        canonicalWrites: 0,
+        productionWrite: false
+      },
+      {
         leagueSlug: "bad.1",
         candidateUrl: "https://example.test/noise",
         hostname: "example.test",
@@ -290,17 +300,20 @@ function runSelfTest() {
   };
 
   const report = buildReport(input, { inputPath: "self-test", perLeagueLimit: 2 });
-  if (report.summary.rankedCandidateInputCount !== 4) throw new Error("expected 4 ranked input rows");
-  if (report.summary.eligibleFetchCandidateCount !== 3) throw new Error("expected 3 eligible rows");
-  if (report.summary.fetchTaskCount !== 3) throw new Error("expected 3 fetch tasks");
+  if (report.summary.rankedCandidateInputCount !== 5) throw new Error("expected 5 ranked input rows");
+  if (report.summary.eligibleFetchCandidateCount !== 4) throw new Error("expected 4 eligible rows");
+  if (report.summary.fetchTaskCount !== 4) throw new Error("expected 4 fetch tasks");
   if (report.guarantees.sourceFetch !== false || report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) {
     throw new Error("read-only guarantees failed");
   }
 
   const officialOnly = buildReport(input, { inputPath: "self-test", perLeagueLimit: 2, officialOnly: true });
-  if (officialOnly.summary.fetchTaskCount !== 1) throw new Error("expected 1 official-only fetch task");
+  if (officialOnly.summary.fetchTaskCount !== 2) throw new Error("expected 2 official-only fetch tasks");
   if (officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "eng.1" && row.hostname === "slgr.gr")) {
     throw new Error("wrong-league official host must be blocked");
+  }
+  if (!officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "ger.1" && row.hostname === "bundesliga.com")) {
+    throw new Error("authority-host season activity candidate must pass official-only");
   }
 
   return {
