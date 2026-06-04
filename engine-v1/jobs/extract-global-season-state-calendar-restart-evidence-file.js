@@ -40,7 +40,7 @@ function parseArgs(argv) {
 }
 
 function hostClass(hostname) {
-  const host = asText(hostname).toLowerCase();
+  const host = asText(hostname).toLowerCase().replace(/^www\./, "");
 
   if (!host) return "unknown";
   if (
@@ -196,7 +196,9 @@ function sourceDecision(row, sourceSet) {
   const sourceClassOfficialOrTrusted = (
     sourceClass === "official_governing_or_competition_operator" ||
     sourceClass === "trusted_independent_fixture_listing" ||
-    truthRole === "primary_candidate_after_fetch_evidence"
+    sourceClass === "season_activity_calendar_candidate" ||
+    truthRole === "primary_candidate_after_fetch_evidence" ||
+    truthRole === "season_activity_candidate_after_fetch_evidence"
   );
   const officialOrTrusted = sourceClassOfficialOrTrusted || [
     "official_competition",
@@ -247,9 +249,11 @@ function sourceDecision(row, sourceSet) {
     state: "rejected_weak_calendar_restart_signal",
     reasons: [
       `hostClass:${cls}`,
+      sourceClass ? `sourceClass:${sourceClass}` : "",
+      truthRole ? `truthRole:${truthRole}` : "",
       calendarSignal ? "calendar_signal_present" : "calendar_signal_missing",
       competitionSignal ? "competition_signal_present" : "competition_signal_missing"
-    ]
+    ].filter(Boolean)
   };
 }
 
