@@ -2392,3 +2392,12 @@ node engine-v1/jobs/build-football-truth-finished-offseason-action-split-file.js
   --inventory data/football-truth/_diagnostics/easy-first-action-batches-2026-06-05/football-truth-state-inventory-2026-06-05.json `
   --workset data/football-truth/_diagnostics/easy-first-action-batches-2026-06-05/football-truth-season-state-easy-first-workset-2026-06-05.json `
   --output data/football-truth/_diagnostics/easy-first-action-batches-2026-06-05/finished-offseason-action-split-source-job-2026-06-05.json
+```
+
+Current 2026-06-05 Batch B diagnostic result:
+
+- 56 finished/offseason candidate rows
+- 56 `needs_ft_repair_first`
+- 43 with standings/history/final-history but still requiring FT repair
+- 13 without standings/history and requiring FT repair
+- 0 ready for final/offseason verification before FT repair
