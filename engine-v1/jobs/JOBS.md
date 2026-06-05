@@ -2488,3 +2488,56 @@ Current 2026-06-05 history-backed FT repair plan result:
 - 15 `high_volume_history_backed_ft_repair`
 - 12 `standard_history_backed_ft_repair`
 - 16 `small_gap_history_backed_ft_repair`
+
+### build-football-truth-operational-readiness-board-file.js
+
+Read-only operational readiness board for deciding the next allowed action per league/date.
+
+Purpose:
+
+- centralizes fixture truth, season state, standings state, history completeness, FT repair gate, and AI/value gate
+- prevents running daily fixture acquisition before league season state is known
+- prevents FT repair before fixture truth and season state gates are satisfied
+- prevents AI/value analysis until all readiness gates are satisfied
+
+Input:
+
+- `--inventory <path>` or `--input <path>`: output from `build-football-truth-state-inventory-file.js`
+- `--output <path>`: readiness board path
+
+Output:
+
+- `readinessRows`
+- `summary.byFixtureTruthState`
+- `summary.bySeasonState`
+- `summary.byStandingsState`
+- `summary.byHistoryCompletenessState`
+- `summary.byFtRepairGate`
+- `summary.byAiValueGate`
+- `summary.byPrimaryNextAction`
+
+Primary gate order:
+
+1. season/calendar evidence
+2. daily fixture truth only for active leagues
+3. standings and history completeness
+4. FT repair only after fixture truth is verified
+5. AI/value only after all gates are ready
+
+Guarantees:
+
+- no web search
+- no URL fetch
+- no canonical promotion
+- no fixture/history/value/details writes
+- `canonicalWrites: 0`
+- `productionWrite: false`
+
+Current 2026-06-05 board result:
+
+- 660 readiness rows
+- 660 `unknown_needs_calendar_evidence`
+- 660 `deferred_until_season_state_known` for fixture truth
+- 660 `run_season_calendar_evidence` as primary next action
+- 660 AI/value blocked
+- 56 FT repair blocked
