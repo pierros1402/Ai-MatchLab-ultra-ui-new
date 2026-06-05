@@ -2353,3 +2353,44 @@ League day activity is target-date scoped only. It may mark active_for_day, no_e
 
 Read-only adapter for final-result FT truth URL discovery. It reads `candidateSearchRows`, requires explicit `--allow-search`, calls the shared autonomous `searchWeb()` provider, and writes `candidateUrlRows` plus `urlResolutions` for later validation. Guarantees: no fetch, no URL fetch, no final truth decision, no canonical promotion, `canonicalWrites: 0`, no fixture/history/value/details writes.
 - `run-daily-autonomous-fixture-acquisition-progressive-bootstrap-file.js` — read-only two-pass autonomous fixture acquisition wrapper: first bootstraps `league-day-activity/YYYY-MM-DD.json`, then reruns progressive acquisition using that state so active/value-relevant leagues are routed from evidence instead of missing-state fallback.
+
+### build-football-truth-finished-offseason-action-split-file.js
+
+Read-only diagnostic job for the finished/offseason candidate lane from the easy-first season-state workset.
+
+Inputs:
+
+- --inventory <path>: output from uild-football-truth-state-inventory-file.js
+- --workset <path> or --easy-first <path>: output from uild-football-truth-season-state-easy-first-workset-file.js
+- --output <path>: diagnostic report path
+
+Output:
+
+- splitRows
+- summary.byBatchBLane
+- summary.byStandingHistoryShape
+
+Primary lanes:
+
+- 
+eeds_ft_repair_first
+- 
+eeds_standings_or_history_backfill
+- eady_for_final_or_offseason_verification
+
+Guarantees:
+
+- no web search
+- no URL fetch
+- no canonical promotion
+- no fixture/history/value/details writes
+- canonicalWrites: 0
+- productionWrite: false
+
+Example:
+
+`powershell
+node engine-v1/jobs/build-football-truth-finished-offseason-action-split-file.js 
+  --inventory data/football-truth/_diagnostics/easy-first-action-batches-2026-06-05/football-truth-state-inventory-2026-06-05.json 
+  --workset data/football-truth/_diagnostics/easy-first-action-batches-2026-06-05/football-truth-season-state-easy-first-workset-2026-06-05.json 
+  --output data/football-truth/_diagnostics/easy-first-action-batches-2026-06-05/finished-offseason-action-split-source-job-2026-06-05.json
