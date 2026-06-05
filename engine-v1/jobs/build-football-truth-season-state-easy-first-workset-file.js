@@ -31,6 +31,8 @@ function asText(value) {
 function rowsFrom(input) {
   if (Array.isArray(input.rows)) return input.rows;
   if (Array.isArray(input.boardRows)) return input.boardRows;
+  if (Array.isArray(input.inventoryRows)) return input.inventoryRows;
+  if (Array.isArray(input.footballTruthStateInventoryRows)) return input.footballTruthStateInventoryRows;
   return [];
 }
 
@@ -50,6 +52,85 @@ function isDomesticTopOrSecondTier(slug) {
   return /^[a-z]{3}\.[12]$/i.test(asText(slug));
 }
 
+function routeRow(row) {
+  const explicitStatusBucket = asText(row.statusBucket);
+  const selectedCalendarEvidenceCount = Number(row.selectedCalendarEvidenceCount || 0);
+  const standingsFileExists = boolValue(row.standingsFileExists);
+  const needsFTRepair = boolValue(row.needsFTRepair);
+  const needsFixtureAcquisition = boolValue(row.needsFixtureAcquisition);
+  const needsDayActivityEvidence = boolValue(row.needsDayActivityEvidence);
+  const needsSeasonStatus = boolValue(row.needsSeasonStatus);
+  const needsStandingsRefresh = boolValue(row.needsStandingsRefresh);
+  const slug = asText(row.leagueSlug || row.competitionSlug);
+
+  if (selectedCalendarEvidenceCount > 0) {
+    return {
+      lane: "calendar_evidence_ready",
+      nextBulkAction: "classify_season_state_from_selected_official_calendar_evidence"
+    };
+  }
+
+  if (explicitStatusBucket === "FINISHED_OR_OFFSEASON_CANDIDATE" || needsFTRepair) {
+    return {
+      lane: "finished_or_offseason_candidate",
+      nextBulkAction: "verify_finished_or_offseason_and_ft_repair_if_needed"
+    };
+  }
+
+  if (explicitStatusBucket === "NEEDS_SEASON_CALENDAR") {
+    return {
+      lane: "needs_calendar_authority_seed",
+      nextBulkAction: "acquire_or_discover_official_authority_seed_then_run_calendar_evidence_pipeline"
+    };
+  }
+
+  if (explicitStatusBucket === "UNKNOWN_NEEDS_DAY_ACTIVITY_DISCOVERY") {
+    if (standingsFileExists) {
+      return {
+        lane: "unknown_with_local_standings",
+        nextBulkAction: "classify_from_local_standings_or_day_activity_probe"
+      };
+    }
+
+    if (isContinentalOrGlobal(slug) || isDomesticTopOrSecondTier(slug) || isCupLike(slug)) {
+      return {
+        lane: "priority_acquisition_candidate",
+        nextBulkAction: "bulk_fixture_or_standings_acquisition_then_state_routing"
+      };
+    }
+
+    return {
+      lane: "deferred_acquisition_candidate",
+      nextBulkAction: "defer_until_priority_competitions_are_resolved"
+    };
+  }
+
+  if (needsSeasonStatus && standingsFileExists) {
+    return {
+      lane: "unknown_with_local_standings",
+      nextBulkAction: "classify_from_local_standings_or_day_activity_probe"
+    };
+  }
+
+  if (needsFixtureAcquisition || needsDayActivityEvidence || needsStandingsRefresh || needsSeasonStatus) {
+    if (isContinentalOrGlobal(slug) || isDomesticTopOrSecondTier(slug) || isCupLike(slug)) {
+      return {
+        lane: "priority_acquisition_candidate",
+        nextBulkAction: "bulk_fixture_or_standings_acquisition_then_state_routing"
+      };
+    }
+
+    return {
+      lane: "deferred_acquisition_candidate",
+      nextBulkAction: "defer_until_priority_competitions_are_resolved"
+    };
+  }
+
+  return {
+    lane: "unclassified_deferred",
+    nextBulkAction: "inspect_unexpected_status_bucket_or_inventory_flags"
+  };
+}
 function project(row, lane, nextBulkAction) {
   return {
     leagueSlug: asText(row.leagueSlug || row.competitionSlug),
@@ -80,70 +161,35 @@ function buildReport(input, { inputPath = "" } = {}) {
   const deferredAcquisitionRows = [];
 
   for (const row of boardRows) {
-    const slug = asText(row.leagueSlug || row.competitionSlug);
-    const statusBucket = asText(row.statusBucket);
-    const standingsFileExists = boolValue(row.standingsFileExists);
-    const selectedCalendarEvidenceCount = Number(row.selectedCalendarEvidenceCount || 0);
+    const route = routeRow(row);
+    const projected = project(row, route.lane, route.nextBulkAction);
 
-    if (selectedCalendarEvidenceCount > 0) {
-      calendarEvidenceReadyRows.push(project(
-        row,
-        "calendar_evidence_ready",
-        "classify_season_state_from_selected_official_calendar_evidence"
-      ));
+    if (route.lane === "calendar_evidence_ready") {
+      calendarEvidenceReadyRows.push(projected);
       continue;
     }
 
-    if (statusBucket === "FINISHED_OR_OFFSEASON_CANDIDATE") {
-      finishedOrOffseasonRows.push(project(
-        row,
-        "finished_or_offseason_candidate",
-        "verify_finished_or_offseason_and_ft_repair_if_needed"
-      ));
+    if (route.lane === "finished_or_offseason_candidate") {
+      finishedOrOffseasonRows.push(projected);
       continue;
     }
 
-    if (statusBucket === "NEEDS_SEASON_CALENDAR") {
-      needsCalendarAuthorityRows.push(project(
-        row,
-        "needs_calendar_authority_seed",
-        "acquire_or_discover_official_authority_seed_then_run_calendar_evidence_pipeline"
-      ));
+    if (route.lane === "needs_calendar_authority_seed") {
+      needsCalendarAuthorityRows.push(projected);
       continue;
     }
 
-    if (statusBucket === "UNKNOWN_NEEDS_DAY_ACTIVITY_DISCOVERY") {
-      if (standingsFileExists) {
-        localStandingsUnknownRows.push(project(
-          row,
-          "unknown_with_local_standings",
-          "classify_from_local_standings_or_day_activity_probe"
-        ));
-        continue;
-      }
-
-      if (isContinentalOrGlobal(slug) || isDomesticTopOrSecondTier(slug) || isCupLike(slug)) {
-        priorityAcquisitionRows.push(project(
-          row,
-          "priority_acquisition_candidate",
-          "bulk_fixture_or_standings_acquisition_then_state_routing"
-        ));
-        continue;
-      }
-
-      deferredAcquisitionRows.push(project(
-        row,
-        "deferred_acquisition_candidate",
-        "defer_until_priority_competitions_are_resolved"
-      ));
+    if (route.lane === "unknown_with_local_standings") {
+      localStandingsUnknownRows.push(projected);
       continue;
     }
 
-    deferredAcquisitionRows.push(project(
-      row,
-      "unclassified_deferred",
-      "inspect_unexpected_status_bucket"
-    ));
+    if (route.lane === "priority_acquisition_candidate") {
+      priorityAcquisitionRows.push(projected);
+      continue;
+    }
+
+    deferredAcquisitionRows.push(projected);
   }
 
   const easyFirstRows = [
@@ -246,6 +292,29 @@ function runSelfTest() {
     ]
   };
 
+  const inventoryInput = {
+    inventoryRows: [
+      {
+        leagueSlug: "uefa.europa",
+        needsSeasonStatus: true,
+        standingsFileExists: true
+      },
+      {
+        leagueSlug: "fra.cup",
+        needsFixtureAcquisition: true,
+        needsDayActivityEvidence: true,
+        standingsFileExists: false
+      },
+      {
+        leagueSlug: "zzz.misc",
+        needsSeasonStatus: true,
+        standingsFileExists: false
+      }
+    ]
+  };
+
+  const inventoryReport = buildReport(inventoryInput, { inputPath: "self-test-inventory" });
+
   const report = buildReport(input, { inputPath: "self-test" });
 
   if (report.summary.boardRowCount !== 6) throw new Error("expected 6 board rows");
@@ -256,6 +325,9 @@ function runSelfTest() {
   if (report.summary.priorityAcquisitionCandidateCount !== 1) throw new Error("expected 1 priority acquisition row");
   if (report.summary.deferredAcquisitionCandidateCount !== 1) throw new Error("expected 1 deferred acquisition row");
   if (report.summary.easyFirstCount !== 4) throw new Error("expected 4 easy-first rows");
+  if (inventoryReport.summary.localStandingsUnknownCount !== 1) throw new Error("expected inventory local standings row");
+  if (inventoryReport.summary.priorityAcquisitionCandidateCount !== 1) throw new Error("expected inventory priority acquisition row");
+  if (inventoryReport.summary.deferredAcquisitionCandidateCount !== 1) throw new Error("expected inventory deferred acquisition row");
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) {
     throw new Error("read-only guarantees failed");
   }
