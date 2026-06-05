@@ -2449,3 +2449,42 @@ Current 2026-06-05 Batch B diagnostic result:
 - 28 `normal`
 - 15 `high_missing_ft_volume`
 - 13 `bootstrap_context_first`
+
+### build-football-truth-ft-repair-with-history-plan-file.js
+
+Read-only diagnostic job for planning the history-backed FT repair sub-lane from FT repair bucket rows.
+
+Input:
+
+- `--buckets <path>` or `--input <path>`: output from `build-football-truth-ft-repair-lane-buckets-file.js`
+- `--output <path>`: diagnostic report path
+
+Output:
+
+- `repairPlanRows`
+- `summary.byRepairPlanLane`
+- `summary.byPriority`
+
+Repair plan lanes:
+
+- `high_volume_history_backed_ft_repair`
+- `standard_history_backed_ft_repair`
+- `small_gap_history_backed_ft_repair`
+
+Guarantees:
+
+- no web search
+- no URL fetch
+- no canonical promotion
+- no fixture/history/value/details writes
+- `canonicalWrites: 0`
+- `productionWrite: false`
+
+Current 2026-06-05 history-backed FT repair plan result:
+
+- 43 history-backed FT repair rows
+- 360 total missing FT rows
+- 32 max missing FT rows in one league
+- 15 `high_volume_history_backed_ft_repair`
+- 12 `standard_history_backed_ft_repair`
+- 16 `small_gap_history_backed_ft_repair`
