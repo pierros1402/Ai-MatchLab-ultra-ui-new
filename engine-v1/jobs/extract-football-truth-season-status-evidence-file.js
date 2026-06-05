@@ -57,13 +57,16 @@ function statusOf(snapshot) {
 
 function textOf(snapshot) {
   return asText(
-    snapshot?.plainText ||
-    snapshot?.text ||
-    snapshot?.bodyText ||
-    snapshot?.body ||
+    snapshot?.rawText ||
+    snapshot?.rawHtml ||
+    snapshot?.rawBody ||
     snapshot?.html ||
     snapshot?.http?.body ||
-    snapshot?.http?.text
+    snapshot?.http?.text ||
+    snapshot?.bodyText ||
+    snapshot?.body ||
+    snapshot?.text ||
+    snapshot?.plainText
   );
 }
 
@@ -165,38 +168,128 @@ function signalFlags(plainText) {
   };
 }
 
-function evidenceRow(row, snapshot) {
-  const plainText = stripHtml(textOf(snapshot));
-  const signals = signalFlags(plainText);
-  const status = statusOf(snapshot);
-  const sourceUrl = sourceUrlOf(row, snapshot);
 
+function normalizeHtmlForFixtureParsing(value) {
+  return asText(value)
+    .replace(/\\"/g, '"')
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\n")
+    .replace(/\\t/g, "\t")
+    .replace(/&quot;/gi, '"')
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&#xE5;/gi, "å")
+    .replace(/&#xE6;/gi, "æ")
+    .replace(/&#xF8;/gi, "ø")
+    .replace(/&#229;/gi, "å")
+    .replace(/&#230;/gi, "æ")
+    .replace(/&#248;/gi, "ø");
+}
+
+function stripFixtureHtml(value) {
+  return normalizeWhitespace(
+    normalizeHtmlForFixtureParsing(value)
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+  );
+}
+
+function fieldFromHtml(block, regex) {
+  const match = block.match(regex);
+  return match ? match[1] || "" : "";
+}
+
+function extractEliteserienOfficialScheduleRows(row, snapshot, rawText) {
+  const host = hostnameOf(row, snapshot).toLowerCase();
+  if (!host.includes("eliteserien.no")) return [];
+
+  const html = normalizeHtmlForFixtureParsing(rawText);
+  const rowRegex = /<tr[^>]*class=["'][^"']*future__match__terminlist[^"']*schedule__match[^"']*["'][^>]*>([\s\S]*?)<\/tr>/gi;
+  const rowBlocks = Array.from(html.matchAll(rowRegex)).map((match) => match[1] || "");
+
+  const out = [];
+
+  for (const block of rowBlocks) {
+    const round = stripFixtureHtml(fieldFromHtml(block, /schedule__match__item--round[\s\S]*?<span>\s*#?([^<]+)<\/span>/i));
+
+    const teamsBlock = fieldFromHtml(block, /schedule__match__item--teams[^>]*>([\s\S]*?)<\/td>/i);
+    const teamsText = stripFixtureHtml(teamsBlock);
+    const teamsParts = teamsText
+      .replace(/\s+/g, " ")
+      .split(/\s+-\s+/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+    const dateMatch = block.match(/<span>\s*(\d{2})\.(\d{2})\.<span[^>]*schedule__match__item--date__year[^>]*>(\d{4})<\/span>\s*<\/span>\s*<span[^>]*schedule__time[^>]*>([\s\S]*?)<\/span>/i);
+    const venue = stripFixtureHtml(fieldFromHtml(block, /schedule__match__item--date[\s\S]*?<br\s*\/?>\s*([^<\n\r]+)/i));
+
+    const day = dateMatch?.[1] || "";
+    const month = dateMatch?.[2] || "";
+    const year = dateMatch?.[3] || "";
+    const time = stripFixtureHtml(dateMatch?.[4] || "").replace(/\*/g, "").trim();
+
+    const parsedRow = {
+      date: year && month && day ? `${year}-${month}-${day}` : "",
+      localTime: time,
+      round,
+      homeTeam: teamsParts[0] || "",
+      awayTeam: teamsParts[1] || "",
+      venue
+    };
+
+    if (parsedRow.date && parsedRow.homeTeam && parsedRow.awayTeam) out.push(parsedRow);
+  }
+
+  return out;
+}
+
+function extractStructuredFixtureCalendar(row, snapshot, rawText) {
+  const parsedRows = extractEliteserienOfficialScheduleRows(row, snapshot, rawText);
+  const dates = parsedRows.map((item) => item.date).filter(Boolean).sort();
+  const rounds = Array.from(new Set(parsedRows.map((item) => item.round).filter(Boolean))).sort((a, b) => Number(a) - Number(b));
+
+  return {
+    structuredFixtureCalendarVisible: parsedRows.length > 0,
+    parsedFixtureRowCount: parsedRows.length,
+    parsedFixtureFirstDate: dates[0] || "",
+    parsedFixtureLastDate: dates[dates.length - 1] || "",
+    parsedFixtureRoundCount: rounds.length,
+    parsedFixtureFirstRows: parsedRows.slice(0, 10),
+    fixtureSignalText: parsedRows.length > 0
+      ? "official league fixtures calendar schedule matches matchday rounds season competition"
+      : ""
+  };
+}
+function evidenceRow(row, snapshot) {
+  const rawEvidenceText = textOf(snapshot);
+  const plainText = stripHtml(rawEvidenceText);
+  const structuredFixtureCalendar = extractStructuredFixtureCalendar(row, snapshot, rawEvidenceText);
+  const signals = signalFlags(`${plainText} ${structuredFixtureCalendar.fixtureSignalText}`);
+  const status = statusOf(snapshot);
   const extractionState = status && status >= 400
     ? "rejected_candidate_http_status"
-    : signals.signalScore >= 2
+    : signals.signalScore > 0
       ? "candidate_season_status_calendar_evidence_needs_validation"
       : "season_status_snapshot_needs_manual_review";
 
   return {
-    taskId: asText(row.taskId || snapshot.taskId),
-    leagueSlug: asText(row.leagueSlug || row.competitionSlug || snapshot.leagueSlug || snapshot.competitionSlug),
-    competitionSlug: asText(row.competitionSlug || row.leagueSlug || snapshot.competitionSlug || snapshot.leagueSlug),
-    name: asText(row.name || row.competitionName || snapshot.name || snapshot.competitionName),
-    competitionName: asText(row.competitionName || row.name || snapshot.competitionName || snapshot.name),
-    competitionFamily: asText(row.competitionFamily || snapshot.competitionFamily),
-    targetDate: asText(row.targetDate || row.dayKey || snapshot.targetDate || snapshot.dayKey),
-    dayKey: asText(row.dayKey || row.targetDate || snapshot.dayKey || snapshot.targetDate),
-    seasonKey: asText(row.seasonKey || snapshot.seasonKey),
-    sourceType: asText(row.sourceType || snapshot.sourceType),
-    fetchPurpose: asText(row.fetchPurpose || snapshot.fetchPurpose || row.sourceType || snapshot.sourceType),
-    validationIntent: asText(row.validationIntent || snapshot.validationIntent),
-    classification: asText(row.classification),
-    sourceUrl,
-    finalUrl: sourceUrlOf(row, snapshot),
+    taskId: asText(row.taskId || snapshot?.taskId),
+    leagueSlug: asText(row.leagueSlug || row.competitionSlug || snapshot?.leagueSlug || snapshot?.competitionSlug),
+    competitionSlug: asText(row.competitionSlug || row.leagueSlug || snapshot?.competitionSlug || snapshot?.leagueSlug),
+    name: asText(row.name || row.competitionName || snapshot?.name || snapshot?.competitionName),
+    competitionName: asText(row.competitionName || row.name || snapshot?.competitionName || snapshot?.name),
+    dayKey: asText(row.dayKey || row.targetDate || snapshot?.dayKey || snapshot?.targetDate),
+    targetDate: asText(row.targetDate || row.dayKey || snapshot?.targetDate || snapshot?.dayKey),
+    seasonKey: asText(row.seasonKey || snapshot?.seasonKey),
+    sourceType: asText(row.sourceType || snapshot?.sourceType),
+    sourceClass: asText(row.sourceClass || snapshot?.sourceClass),
+    fetchPurpose: asText(row.fetchPurpose || snapshot?.fetchPurpose),
     hostname: hostnameOf(row, snapshot),
+    sourceUrl: sourceUrlOf(row, snapshot),
+    finalUrl: sourceUrlOf(row, snapshot),
     status,
-    contentType: asText(row.contentType || snapshot.contentType || snapshot.http?.contentType),
-    bytes: Number(row.bytes || snapshot.bytes || snapshot.http?.bytes || 0),
+    classification: asText(row.classification),
     fixtureLanguageVisible: row.fixtureLanguageVisible === true,
     targetDateVisible: row.targetDateVisible === true,
     explicitNoFixtureEvidence: row.explicitNoFixtureEvidence === true,
@@ -207,19 +300,24 @@ function evidenceRow(row, snapshot) {
     noFixtureSignal: signals.noFixtureSignal,
     officialCompetitionSignal: signals.officialCompetitionSignal,
     signalScore: signals.signalScore,
-    evidenceTextSnippet: signals.bestEvidenceSnippet.slice(0, 900),
-    acceptedForSeasonStatusEvidence: false,
+    evidenceTextSnippet: signals.evidenceTextSnippet,
+    structuredFixtureCalendarVisible: structuredFixtureCalendar.structuredFixtureCalendarVisible,
+    parsedFixtureRowCount: structuredFixtureCalendar.parsedFixtureRowCount,
+    parsedFixtureFirstDate: structuredFixtureCalendar.parsedFixtureFirstDate,
+    parsedFixtureLastDate: structuredFixtureCalendar.parsedFixtureLastDate,
+    parsedFixtureRoundCount: structuredFixtureCalendar.parsedFixtureRoundCount,
+    parsedFixtureFirstRows: structuredFixtureCalendar.parsedFixtureFirstRows,
     validationState: extractionState,
     extractionState,
     reason: extractionState === "candidate_season_status_calendar_evidence_needs_validation"
       ? "season_calendar_or_activity_signals_found_needs_validation"
       : extractionState === "rejected_candidate_http_status"
-        ? `http_status_${status ?? "missing"}`
-        : "insufficient_season_status_signals_needs_manual_review",
+        ? "candidate source returned rejected http status"
+        : "season status snapshot needs manual review",
+    acceptedForSeasonStatusEvidence: false,
     sourceFetch: false,
     canonicalWrites: 0,
-    productionWrite: false,
-    dryRun: true
+    productionWrite: false
   };
 }
 
@@ -306,10 +404,29 @@ function selfTest() {
         targetDate: "2026-06-03",
         seasonKey: "2025-2026",
         sourceType: "season_status_official_primary",
+        sourceClass: "official_governing_or_competition_operator",
         fetchPurpose: "season_activity_status_calendar",
         classification: "candidate_league_season_activity_evidence_needs_validation",
         finalUrl: "https://www.uefa.com/uefaeuropaleague/fixtures-results/",
         hostname: "uefa.com",
+        status: 200,
+        fixtureLanguageVisible: true
+      },
+      {
+        taskId: "nor",
+        leagueSlug: "nor.1",
+        competitionSlug: "nor.1",
+        name: "Eliteserien",
+        competitionName: "Eliteserien",
+        dayKey: "2026-06-05",
+        targetDate: "2026-06-05",
+        seasonKey: "2026",
+        sourceType: "season_status_official_primary",
+        sourceClass: "official_governing_or_competition_operator",
+        fetchPurpose: "season_activity_status_calendar",
+        classification: "candidate_league_season_activity_evidence_needs_validation",
+        finalUrl: "https://www.eliteserien.no/terminliste",
+        hostname: "www.eliteserien.no",
         status: 200,
         fixtureLanguageVisible: true
       },
@@ -328,6 +445,7 @@ function selfTest() {
         dayKey: "2026-06-03",
         seasonKey: "2025-2026",
         sourceType: "season_status_official_primary",
+        sourceClass: "official_governing_or_competition_operator",
         fetchPurpose: "season_activity_status_calendar",
         candidateUrl: "https://www.uefa.com/uefaeuropaleague/fixtures-results/",
         hostname: "uefa.com",
@@ -338,16 +456,42 @@ function selfTest() {
           contentType: "text/html"
         },
         plainText: "Fixtures & results UEFA Europa League 2025/26 official competition calendar matchday schedule qualifying season."
+      },
+      {
+        taskId: "nor",
+        leagueSlug: "nor.1",
+        competitionSlug: "nor.1",
+        name: "Eliteserien",
+        dayKey: "2026-06-05",
+        seasonKey: "2026",
+        sourceType: "season_status_official_primary",
+        sourceClass: "official_governing_or_competition_operator",
+        fetchPurpose: "season_activity_status_calendar",
+        candidateUrl: "https://www.eliteserien.no/terminliste",
+        hostname: "www.eliteserien.no",
+        http: {
+          status: 200,
+          finalUrl: "https://www.eliteserien.no/terminliste",
+          bytes: 1200,
+          contentType: "text/html"
+        },
+        rawText: "<tr class=\"future__match__terminlist schedule__match\"><td class=\"schedule__match__item schedule__match__item--round\"><span>#13</span></td><td class=\"schedule__match__item schedule__match__item--teams\">Aalesund - <span class=\"schedule__team--opponent\">Molde</span></td><td class=\"schedule__match__item schedule__match__item--date\"><span>11.07.<span class=\"schedule__match__item--date__year\">2026</span></span> <span class=\"schedule__time\">16:00 </span><span class=\"schedule__match__item--match-round-number\">#13</span><br />Color Line Stadion</td></tr>"
       }
     ]
   };
 
   const report = buildReport(input, { input: "self-test" });
 
-  if (report.summary.inputClassifiedRowCount !== 2) throw new Error("expected two classified input rows");
-  if (report.summary.selectedSeasonActivityRowCount !== 1) throw new Error("expected one selected season activity row");
-  if (report.summary.candidateSeasonStatusEvidenceCount !== 1) throw new Error("expected one candidate season status evidence row");
+  if (report.summary.inputClassifiedRowCount !== 3) throw new Error("expected three classified input rows");
+  if (report.summary.selectedSeasonActivityRowCount !== 2) throw new Error("expected two selected season activity rows");
+  if (report.summary.candidateSeasonStatusEvidenceCount !== 2) throw new Error("expected two candidate season status evidence rows");
   if (report.summary.acceptedForSeasonStatusEvidenceCount !== 0) throw new Error("expected no accepted final review decision");
+
+  const norRow = report.seasonStatusEvidenceRows.find((row) => row.leagueSlug === "nor.1");
+  if (!norRow) throw new Error("expected Eliteserien extracted evidence row");
+  if (norRow.parsedFixtureRowCount !== 1) throw new Error("expected one parsed Eliteserien fixture row");
+  if (norRow.structuredFixtureCalendarVisible !== true) throw new Error("expected structured fixture calendar visible");
+
   if (report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) throw new Error("read-only guarantees failed");
 
   return {

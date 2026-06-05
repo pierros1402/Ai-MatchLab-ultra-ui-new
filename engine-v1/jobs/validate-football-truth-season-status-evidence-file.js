@@ -67,13 +67,15 @@ function countBy(rows, key) {
 }
 
 function officialSourceStrength(row) {
-  const sourceType = asText(row.sourceType);
-  const fetchPurpose = asText(row.fetchPurpose);
+  const sourceType = asText(row.sourceType).toLowerCase();
+  const sourceClass = asText(row.sourceClass).toLowerCase();
+  const fetchPurpose = asText(row.fetchPurpose).toLowerCase();
   const host = asText(row.hostname).replace(/^www\./, "");
 
   if (sourceType.startsWith("season_status_official") || sourceType.startsWith("official_")) return "official";
-  if (fetchPurpose === "season_activity_status_calendar" && /uefa\.com$|fifa\.com$|the-afc\.com$|cafonline\.com$|concacaf\.com$|conmebol\.com$/i.test(host)) return "official";
-  if (/uefa\.com$|fifa\.com$|the-afc\.com$|cafonline\.com$|concacaf\.com$|conmebol\.com$/i.test(host)) return "official";
+  if (sourceClass.includes("official") || sourceClass.includes("competition_operator") || sourceClass.includes("governing")) return "official";
+  if (fetchPurpose === "season_activity_status_calendar" && /uefa\.com$|fifa\.com$|the-afc\.com$|cafonline\.com$|concacaf\.com$|conmebol\.com$|eliteserien\.no$|fotball\.no$|premierleague\.com$/i.test(host)) return "official";
+  if (/uefa\.com$|fifa\.com$|the-afc\.com$|cafonline\.com$|concacaf\.com$|conmebol\.com$|eliteserien\.no$|fotball\.no$|premierleague\.com$/i.test(host)) return "official";
   return "non_official";
 }
 
@@ -194,6 +196,7 @@ function buildReport(input, inputPath = "") {
       dryRun: true
     },
     seasonStatusValidationRows: validationRows,
+    validatedSeasonStatusEvidenceRows: validationRows,
     validatedSeasonStatusRows: validatedRows,
     secondSourceRequiredRows: secondSourceRows,
     guarantees: {
