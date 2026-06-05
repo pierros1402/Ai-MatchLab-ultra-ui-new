@@ -2401,3 +2401,51 @@ Current 2026-06-05 Batch B diagnostic result:
 - 43 with standings/history/final-history but still requiring FT repair
 - 13 without standings/history and requiring FT repair
 - 0 ready for final/offseason verification before FT repair
+
+### build-football-truth-ft-repair-lane-buckets-file.js
+
+Read-only diagnostic job for converting finished/offseason `needs_ft_repair_first` rows into FT repair buckets.
+
+Input:
+
+- `--split <path>` or `--input <path>`: output from `build-football-truth-finished-offseason-action-split-file.js`
+- `--output <path>`: diagnostic report path
+
+Output:
+
+- `bucketRows`
+- `summary.byBucket`
+- `summary.byPriority`
+- `summary.byContextShape`
+
+Primary buckets:
+
+- `repair_ft_with_standings_and_history`
+- `repair_ft_without_standings_or_history`
+- `repair_ft_with_standings_without_history`
+- `repair_ft_with_history_without_standings`
+
+Priority labels:
+
+- `normal`
+- `high_missing_ft_volume`
+- `bootstrap_context_first`
+
+Guarantees:
+
+- no web search
+- no URL fetch
+- no canonical promotion
+- no fixture/history/value/details writes
+- `canonicalWrites: 0`
+- `productionWrite: false`
+
+Current 2026-06-05 Batch B diagnostic result:
+
+- 56 FT repair rows
+- 407 total missing FT rows
+- 43 `repair_ft_with_standings_and_history`
+- 13 `repair_ft_without_standings_or_history`
+- 28 `normal`
+- 15 `high_missing_ft_volume`
+- 13 `bootstrap_context_first`
