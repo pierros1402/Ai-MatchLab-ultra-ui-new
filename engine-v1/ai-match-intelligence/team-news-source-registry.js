@@ -566,6 +566,19 @@ const LEAGUE_SOURCE_REGISTRY = {
     }
   ],
 
+  "aut.1": [
+    {
+      id: "aut-1-bundesliga-at-league-news",
+      label: "Austrian Bundesliga official league source",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.bundesliga.at/de/spielplan/saison-2025-2026"
+        ];
+      }
+    }
+  ],
   "bel.1": [
     {
       id: "bel-1-proleague-be-league-news",
