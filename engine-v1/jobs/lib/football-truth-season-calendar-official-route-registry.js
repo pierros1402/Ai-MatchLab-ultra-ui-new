@@ -220,7 +220,7 @@ const officialRouteRegistry = {
   "chn.2": { hosts: ["thecfa.cn"], routes: ["/competition", "/match"] },
   "aus.1": { hosts: ["aleagues.com.au"], routes: ["/a-league-men/fixtures", "/a-league-men/standings"] },
   "aus.2": { hosts: ["aleagues.com.au"], routes: ["/a-league-men/fixtures", "/a-league-men/standings"] },
-  "aus.cup": { hosts: ["footballaustralia.com.au"], routes: ["/australia-cup/fixtures", "/australia-cup"] },
+  "aus.cup": { hosts: ["footballaustralia.com.au"], routes: ["/australia-cup/fixtures", "/australia-cup", "/fixtures"] },
   "nzl.1": { hosts: ["nzfootball.co.nz"], routes: ["/national-league", "/fixtures", "/standings"] },
   "nzl.2": { hosts: ["nzfootball.co.nz"], routes: ["/national-league", "/fixtures"] },
   "nzl.cup": { hosts: ["nzfootball.co.nz"], routes: ["/chatham-cup", "/fixtures"] }
