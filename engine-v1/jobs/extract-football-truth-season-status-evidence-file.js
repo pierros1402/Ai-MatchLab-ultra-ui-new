@@ -319,8 +319,50 @@ function extractEliteserienOfficialScheduleRows(row, snapshot, rawText) {
   return out;
 }
 
+function extractBundesligaAtOfficialScheduleRows(row, snapshot, rawText) {
+  const host = hostnameOf(row, snapshot).toLowerCase();
+  if (!host.includes("bundesliga.at")) return [];
+
+  const plain = stripFixtureHtml(rawText);
+  const out = [];
+
+  const matchRegex = /(\d{1,2})\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{2}:\d{2})\s+([A-ZÄÖÜ]{2,4})\s+(.+?)\s+([A-ZÄÖÜ]{2,4})\s+(.+?)\s+(\d+\s*:\s*\d+(?:\s*\(\d+\s*:\s*\d+\))?)/g;
+
+  for (const match of plain.matchAll(matchRegex)) {
+    const round = match[1] || "";
+    const dateText = match[2] || "";
+    const time = match[3] || "";
+    const homeCode = match[4] || "";
+    const homeTeam = normalizeWhitespace(match[5] || "");
+    const awayCode = match[6] || "";
+    const awayTeam = normalizeWhitespace(match[7] || "");
+    const score = normalizeWhitespace(match[8] || "");
+
+    const dateParts = dateText.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+    const date = dateParts ? `${dateParts[3]}-${dateParts[2]}-${dateParts[1]}` : "";
+
+    if (!round || !date || !time || !homeTeam || !awayTeam) continue;
+
+    out.push({
+      round,
+      date,
+      time,
+      homeCode,
+      homeTeam,
+      awayCode,
+      awayTeam,
+      score,
+      source: "bundesliga.at_plain_text_schedule"
+    });
+  }
+
+  return out;
+}
 function extractStructuredFixtureCalendar(row, snapshot, rawText) {
-  const parsedRows = extractEliteserienOfficialScheduleRows(row, snapshot, rawText);
+  const parsedRows = [
+    ...extractEliteserienOfficialScheduleRows(row, snapshot, rawText),
+    ...extractBundesligaAtOfficialScheduleRows(row, snapshot, rawText)
+  ];
   const dates = parsedRows.map((item) => item.date).filter(Boolean).sort();
   const rounds = Array.from(new Set(parsedRows.map((item) => item.round).filter(Boolean))).sort((a, b) => Number(a) - Number(b));
 
