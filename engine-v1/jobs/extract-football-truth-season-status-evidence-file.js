@@ -111,9 +111,84 @@ function classifiedKey(row) {
   ].join("::");
 }
 
+function snapshotLooksLikeSeasonStatusRegistryCandidate(snapshot) {
+  const fetchPurpose = asText(snapshot?.fetchPurpose);
+  const reviewerDecision = asText(snapshot?.reviewerDecision);
+  const sourceClass = asText(snapshot?.sourceClass);
+  const sourceFamily = asText(snapshot?.sourceFamily);
+
+  return (
+    fetchPurpose === "season_status_official_registry_candidate_snapshot" ||
+    reviewerDecision === "candidate_official_url_pending_fetch" ||
+    sourceClass.includes("official") ||
+    sourceFamily === "official_league"
+  );
+}
+
+function classifiedRowFromFetchedSnapshot(snapshot) {
+  if (!snapshotLooksLikeSeasonStatusRegistryCandidate(snapshot)) return null;
+
+  const leagueSlug = asText(snapshot?.leagueSlug || snapshot?.competitionSlug);
+  if (!leagueSlug) return null;
+
+  return {
+    taskId: asText(snapshot?.fetchTaskId || snapshot?.sourceTaskId || snapshot?.taskId),
+    leagueSlug,
+    competitionSlug: asText(snapshot?.competitionSlug || snapshot?.leagueSlug),
+    name: asText(snapshot?.name || snapshot?.competitionName),
+    competitionName: asText(snapshot?.competitionName || snapshot?.name),
+    dayKey: asText(snapshot?.dayKey || snapshot?.targetDate),
+    targetDate: asText(snapshot?.targetDate || snapshot?.dayKey),
+    seasonKey: asText(snapshot?.seasonKey),
+    sourceType: "season_status_official_primary",
+    sourceClass: asText(snapshot?.sourceClass || "official_governing_or_competition_operator"),
+    fetchPurpose: "season_activity_status_calendar",
+    classification: "candidate_league_season_activity_evidence_needs_validation",
+    finalUrl: sourceUrlOf({}, snapshot),
+    resolvedUrl: asText(snapshot?.resolvedUrl || snapshot?.finalUrl || snapshot?.candidateUrl),
+    candidateUrl: asText(snapshot?.candidateUrl || snapshot?.finalUrl || snapshot?.resolvedUrl),
+    hostname: hostnameOf({}, snapshot),
+    status: statusOf(snapshot),
+    readyForFetch: snapshot?.readyForFetch === true,
+    sourceFetch: false,
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
+function dedupeRows(rows) {
+  const seen = new Set();
+  const out = [];
+
+  for (const row of rows) {
+    const key = [
+      asText(row?.taskId),
+      asText(row?.leagueSlug || row?.competitionSlug),
+      asText(row?.finalUrl || row?.resolvedUrl || row?.candidateUrl || row?.sourceUrl),
+      asText(row?.dayKey || row?.targetDate)
+    ].join("::");
+
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(row);
+  }
+
+  return out;
+}
+
 function selectRows(input) {
-  const rows = Array.isArray(input?.classifiedRows) ? input.classifiedRows : [];
-  return rows.filter((row) => row.classification === "candidate_league_season_activity_evidence_needs_validation");
+  const classifiedRows = Array.isArray(input?.classifiedRows) ? input.classifiedRows : [];
+  const selectedClassifiedRows = classifiedRows.filter((row) => row.classification === "candidate_league_season_activity_evidence_needs_validation");
+
+  const snapshotRows = (Array.isArray(input?.fetchedSourceSnapshots) ? input.fetchedSourceSnapshots : [])
+    .map(classifiedRowFromFetchedSnapshot)
+    .filter(Boolean);
+
+  return dedupeRows([
+    ...selectedClassifiedRows,
+    ...snapshotRows
+  ]);
 }
 
 function snapshotsByKey(input) {
