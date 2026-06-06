@@ -20,7 +20,8 @@ function parseArgs(argv) {
   const out = {
     selfTest: false,
     board: "",
-    output: ""
+    output: "",
+    topLimit: 0
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -39,6 +40,12 @@ function parseArgs(argv) {
 
     if (arg === "--output") {
       out.output = argv[i + 1] || "";
+      i += 1;
+      continue;
+    }
+
+    if (arg === "--top-limit") {
+      out.topLimit = Number(argv[i + 1] || 0);
       i += 1;
       continue;
     }
@@ -174,12 +181,31 @@ function buildPlan(board, options = {}) {
     };
   });
 
+  const topLimit = Number(options.topLimit || 0);
+  const actionBatchRows = topLimit > 0 ? planRows.slice(0, topLimit) : [];
+  const actionBatchByBatch = Array.from(new Map(
+    actionBatchRows.map((row) => [row.recommendedBatch, row.recommendedBatch])
+  ).values()).map((batchName) => {
+    const rows = actionBatchRows.filter((row) => row.recommendedBatch === batchName);
+
+    return {
+      batchName,
+      rowCount: rows.length,
+      sampleLeagueSlugs: rows.slice(0, 40).map((row) => row.leagueSlug),
+      maxPriorityScore: rows.length ? Math.max(...rows.map((row) => row.priorityScore)) : 0,
+      minPriorityScore: rows.length ? Math.min(...rows.map((row) => row.priorityScore)) : 0
+    };
+  });
+
   const summary = {
     ok: true,
     date: options.date || "",
     inputBoardRowCount: boardRows.length,
     registryMissingRowCount: missingRows.length,
     plannedRegistryExpansionRowCount: planRows.length,
+    actionBatchLimit: topLimit,
+    actionBatchRowCount: actionBatchRows.length,
+    actionBatchByBatch,
     batchCount: batchRows.length,
     byBatch: batchRows,
     topPrioritySample: planRows.slice(0, 80).map((row) => ({
@@ -205,6 +231,7 @@ function buildPlan(board, options = {}) {
   return {
     ok: true,
     summary,
+    actionBatchRows,
     planRows
   };
 }
@@ -262,7 +289,7 @@ function main() {
   if (!args.board) throw new Error("Missing required --board <path>");
   if (!args.output) throw new Error("Missing required --output <path>");
 
-  const plan = buildPlan(readJson(args.board));
+  const plan = buildPlan(readJson(args.board), { topLimit: args.topLimit });
   writeJson(args.output, plan);
 
   console.log(JSON.stringify({
