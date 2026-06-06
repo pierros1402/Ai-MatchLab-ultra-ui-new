@@ -2,6 +2,10 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import {
+  getDefaultRouteTemplates,
+  getOfficialRouteEntry
+} from "./lib/football-truth-season-calendar-official-route-registry.js";
 
 function asText(value) {
   return value === null || value === undefined ? "" : String(value).trim();
@@ -66,107 +70,25 @@ function parseArgs(argv) {
   return out;
 }
 
-const officialHostRegistry = {
-  "bel.1": ["proleague.be"],
-  "ita.1": ["legaseriea.it", "seriea.com"],
-  "ger.1": ["bundesliga.com"],
-  "swe.1": ["allsvenskan.se", "svenskfotboll.se"],
-  "uefa.champions": ["uefa.com"],
-  "uefa.europa.conf": ["uefa.com"],
-  "uefa.super_cup": ["uefa.com"],
-  "fifa.club_world_cup": ["fifa.com"],
-  "conmebol.sudamericana": ["conmebol.com"],
-  "ofc.champions": ["oceaniafootball.com", "ofcfootball.com"],
-  "esp.2": ["laliga.com"],
-  "ned.1": ["eredivisie.com", "eredivisie.nl"],
-  "concacaf.champions": ["concacaf.com"],
-  "nor.1": ["eliteserien.no", "fotball.no"],
-  "eng.1": ["premierleague.com"],
-  "eng.2": ["efl.com"],
-  "usa.1": ["mlssoccer.com"],
-  "esp.1": ["laliga.com"]
-};
+function officialRouteProbeConfigForLeague(leagueSlug) {
+  const entry = getOfficialRouteEntry(leagueSlug);
 
-const routeRegistry = {
-  default: [
-    "/fixtures",
-    "/fixtures-results",
-    "/matches",
-    "/schedule",
-    "/calendar",
-    "/results",
-    "/standings",
-    "/competition"
-  ],
-  "bel.1": [
-    "/en/jupiler-pro-league/calendar",
-    "/en/jupiler-pro-league/fixtures",
-    "/en/jupiler-pro-league/results",
-    "/en/competitions/jupiler-pro-league/calendar",
-    "/calendar",
-    "/fixtures"
-  ],
-  "ita.1": [
-    "/en/serie-a/calendar-and-results",
-    "/en/serie-a/fixtures",
-    "/en/serie-a/schedule",
-    "/en/serie-a/matches",
-    "/it/serie-a/calendario-e-risultati",
-    "/en"
-  ],
-  "ger.1": [
-    "/en/bundesliga/matchday",
-    "/en/bundesliga/matches",
-    "/en/bundesliga/fixtures",
-    "/en/bundesliga/table",
-    "/en/bundesliga"
-  ],
-  "swe.1": [
-    "/matcher",
-    "/spelschema",
-    "/resultat",
-    "/tabell",
-    "/allsvenskan"
-  ],
-  "uefa.champions": [
-    "/uefachampionsleague/fixtures-results/",
-    "/uefachampionsleague/matches/",
-    "/uefachampionsleague/standings/"
-  ],
-  "uefa.europa.conf": [
-    "/uefaconferenceleague/fixtures-results/",
-    "/uefaconferenceleague/matches/",
-    "/uefaconferenceleague/standings/"
-  ],
-  "uefa.super_cup": [
-    "/uefasupercup/fixtures-results/",
-    "/uefasupercup/matches/"
-  ],
-  "fifa.club_world_cup": [
-    "/en/tournaments/mens/club-world-cup/usa-2025/scores-fixtures",
-    "/en/tournaments/mens/club-world-cup/usa-2025/standings",
-    "/en/tournaments/mens/club-world-cup"
-  ],
-  "conmebol.sudamericana": [
-    "/sudamericana/fixtures/",
-    "/sudamericana/resultados/",
-    "/sudamericana/",
-    "/en/sudamericana/fixtures/"
-  ],
-  "ofc.champions": [
-    "/ofc-mens-champions-league/",
-    "/ofc-mens-champions-league/fixtures/",
-    "/competitions/ofc-mens-champions-league/",
-    "/fixtures/"
-  ],
-  "esp.2": [
-    "/en-GB/laliga-hypermotion/results",
-    "/en-GB/laliga-hypermotion/calendar",
-    "/en-GB/laliga-hypermotion/standing",
-    "/en-GB/laliga-hypermotion"
-  ]
-};
+  if (!entry) {
+    return {
+      hosts: [],
+      routes: []
+    };
+  }
 
+  const hosts = Array.isArray(entry.hosts) ? entry.hosts : [];
+  const specificRoutes = Array.isArray(entry.routes) ? entry.routes : [];
+  const defaultRoutes = getDefaultRouteTemplates();
+
+  return {
+    hosts,
+    routes: Array.from(new Set([...specificRoutes, ...defaultRoutes]))
+  };
+}
 function highConfidenceAcceptedLeagueSet(validationRows) {
   return new Set(
     validationRows
@@ -214,8 +136,9 @@ function buildReport(input, options = {}) {
   const seen = new Set();
 
   for (const leagueSlug of candidateLeagueSlugs) {
-    const hosts = officialHostRegistry[leagueSlug] || [];
-    const routes = Array.from(new Set([...(routeRegistry[leagueSlug] || []), ...routeRegistry.default]));
+    const probeConfig = officialRouteProbeConfigForLeague(leagueSlug);
+    const hosts = probeConfig.hosts;
+    const routes = probeConfig.routes;
     const meta = metaByLeague.get(leagueSlug) || validationRows.find((row) => asText(row.leagueSlug) === leagueSlug) || {};
 
     for (const host of hosts) {
