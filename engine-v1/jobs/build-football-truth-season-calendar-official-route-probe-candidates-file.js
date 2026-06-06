@@ -35,6 +35,7 @@ function parseArgs(argv) {
     selfTest: false,
     strictRank: "",
     strictValidation: "",
+    selectedTargets: "",
     output: ""
   };
 
@@ -54,6 +55,12 @@ function parseArgs(argv) {
 
     if (arg === "--strict-validation") {
       out.strictValidation = argv[i + 1] || "";
+      i += 1;
+      continue;
+    }
+
+    if (arg === "--selected-targets") {
+      out.selectedTargets = argv[i + 1] || "";
       i += 1;
       continue;
     }
@@ -89,6 +96,23 @@ function officialRouteProbeConfigForLeague(leagueSlug) {
     routes: Array.from(new Set([...specificRoutes, ...defaultRoutes]))
   };
 }
+function selectedTargetLeagueSlugs(selectedTargetsInput) {
+  if (!selectedTargetsInput) return [];
+
+  const rows = Array.isArray(selectedTargetsInput.selectedSearchTargetRows)
+    ? selectedTargetsInput.selectedSearchTargetRows
+    : Array.isArray(selectedTargetsInput.searchTargetRows)
+      ? selectedTargetsInput.searchTargetRows
+      : Array.isArray(selectedTargetsInput.rows)
+        ? selectedTargetsInput.rows
+        : [];
+
+  return Array.from(new Set(
+    rows
+      .map((row) => asText(row.leagueSlug || row.competitionSlug || row.slug))
+      .filter(Boolean)
+  ));
+}
 function highConfidenceAcceptedLeagueSet(validationRows) {
   return new Set(
     validationRows
@@ -114,6 +138,9 @@ function buildReport(input, options = {}) {
       : [];
 
   const accepted = highConfidenceAcceptedLeagueSet(validationRows);
+  const selectedTargetsInput = input.selectedTargetsInput || null;
+  const selectedRegistryCandidates = selectedTargetLeagueSlugs(selectedTargetsInput)
+    .filter((leagueSlug) => !accepted.has(leagueSlug) && getOfficialRouteEntry(leagueSlug));
 
   const needsMore = validationRows
     .filter((row) => !accepted.has(asText(row.leagueSlug)))
@@ -121,6 +148,7 @@ function buildReport(input, options = {}) {
     .filter(Boolean);
 
   const candidateLeagueSlugs = Array.from(new Set([
+    ...selectedRegistryCandidates,
     ...needsMore,
     ...strictCandidates.map((row) => asText(row.leagueSlug)).filter((slug) => slug && !accepted.has(slug))
   ]));
@@ -214,12 +242,14 @@ function buildReport(input, options = {}) {
     mode: "read_only_route_probe_candidate_derivation",
     input: {
       strictRankPath: options.strictRankPath || "",
-      strictValidationPath: options.strictValidationPath || ""
+      strictValidationPath: options.strictValidationPath || "",
+      selectedTargetsPath: options.selectedTargetsPath || ""
     },
     summary: {
       strictCandidateCount: strictCandidates.length,
       validationRowCount: validationRows.length,
       acceptedLeagueCount: accepted.size,
+      registryFirstSelectedLeagueCount: selectedRegistryCandidates.length,
       probeLeagueCount: Object.keys(byLeague).length,
       probeCandidateCount: limited.length,
       byLeague,
@@ -324,16 +354,19 @@ function main() {
 
   const strictRank = readJson(args.strictRank);
   const strictValidation = readJson(args.strictValidation);
+  const selectedTargets = args.selectedTargets ? readJson(args.selectedTargets) : null;
 
   const report = buildReport(
     {
       rankedCandidateUrlRows: strictRank.rankedCandidateUrlRows || [],
-      validatedSeasonStatusEvidenceRows: strictValidation.validatedSeasonStatusEvidenceRows || strictValidation.seasonStatusValidationRows || []
+      validatedSeasonStatusEvidenceRows: strictValidation.validatedSeasonStatusEvidenceRows || strictValidation.seasonStatusValidationRows || [],
+      selectedTargetsInput: selectedTargets
     },
     {
       strictRankPath: args.strictRank,
       strictValidationPath: args.strictValidation,
-      limit: 180
+      selectedTargetsPath: args.selectedTargets || "",
+      limit: 1800
     }
   );
 
