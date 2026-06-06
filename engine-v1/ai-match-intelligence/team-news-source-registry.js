@@ -895,32 +895,6 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
     }
   ],
 
-  "eng.league_cup": [
-    {
-      id: "eng-league_cup-propagated-official-route",
-      label: "EFL Cup propagated official route",
-      type: "league_news",
-      trustTier: "league",
-      buildUrls() {
-        return [
-          "https://www.efl.com/competitions/carabao-cup/"
-        ];
-      }
-    }
-  ],
-  "eng.trophy": [
-    {
-      id: "eng-trophy-propagated-official-route",
-      label: "EFL Trophy propagated official route",
-      type: "league_news",
-      trustTier: "league",
-      buildUrls() {
-        return [
-          "https://www.efl.com/competitions/vertu-trophy/"
-        ];
-      }
-    }
-  ],
   "esp.1": [
     {
       id: "marca-news",
@@ -2107,18 +2081,7 @@ const EUROPE_MEDIA_SOURCE_REGISTRY = {
         return ["https://www.cdcastellon.com/"];
       }
     }
-  ,
-    {
-      id: "esp-2-propagated-official-route",
-      label: "LaLiga 2 propagated official route",
-      type: "league_news",
-      trustTier: "league",
-      buildUrls() {
-        return [
-          "https://www.laliga.com/en-GB/laliga-hypermotion"
-        ];
-      }
-    }],
+  ],
 
   "tur.1": [
     {
