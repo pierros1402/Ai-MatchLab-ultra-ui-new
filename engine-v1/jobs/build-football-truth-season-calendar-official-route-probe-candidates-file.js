@@ -89,7 +89,7 @@ function officialRouteProbeConfigForLeague(leagueSlug) {
 
   const hosts = Array.isArray(entry.hosts) ? entry.hosts : [];
   const specificRoutes = Array.isArray(entry.routes) ? entry.routes : [];
-  const defaultRoutes = getDefaultRouteTemplates();
+  const defaultRoutes = entry.includeDefaultRoutes === true ? getDefaultRouteTemplates() : [];
 
   return {
     hosts,
