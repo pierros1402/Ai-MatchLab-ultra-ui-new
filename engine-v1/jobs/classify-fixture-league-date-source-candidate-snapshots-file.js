@@ -359,6 +359,8 @@ function classifySnapshot(snapshot) {
   }
 
   const fetchPurpose = asText(snapshot.fetchPurpose || snapshot.sourceType || snapshot.purpose);
+  const sourceCandidateType = asText(snapshot.sourceCandidateType || snapshot.type || snapshot.sourceId || snapshot.trustTier);
+  const explicitOfficialRouteCandidate = /explicit_route_registry_seed|official_route|official_registry|season_status|season_activity/i.test(`${fetchPurpose} ${sourceCandidateType}`);
   const seasonActivityCandidate = /season_activity|season|restart|calendar|no_fixture|no-fixture|schedule_release|fixtures_released/i.test(fetchPurpose);
 
   if (seasonActivityCandidate && (fixtureLanguageVisible || explicitNoFixtureEvidence || targetDateVisible || plainText.length > 300)) {
@@ -400,6 +402,15 @@ function classifySnapshot(snapshot) {
   }
 
   if (fixtureLanguageVisible && !targetDateVisible) {
+    if (explicitOfficialRouteCandidate) {
+      return {
+        ...base,
+        classification: "candidate_league_season_activity_evidence_needs_validation",
+        usable: false,
+        reason: "explicit_official_route_fixture_language_without_target_date"
+      };
+    }
+
     return {
       ...base,
       classification: "fetched_but_not_usable_missing_target_date",
