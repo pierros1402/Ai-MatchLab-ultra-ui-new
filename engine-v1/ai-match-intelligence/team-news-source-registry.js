@@ -632,6 +632,19 @@ const LEAGUE_SOURCE_REGISTRY = {
     }
   ],
 
+  "esp.2": [
+    {
+      id: "esp-2-propagated-official-route",
+      label: "LaLiga 2 propagated official route",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.laliga.com/en-GB/laliga-hypermotion"
+        ];
+      }
+    }
+  ],
   "fra.coupe_de_france": [
     {
       id: "fra-coupe-de-france-fff-fr-competition-news",
@@ -674,6 +687,32 @@ const LEAGUE_SOURCE_REGISTRY = {
     }
   ],
 
+  "eng.league_cup": [
+    {
+      id: "eng-league_cup-propagated-official-route",
+      label: "EFL Cup propagated official route",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.efl.com/competitions/carabao-cup/"
+        ];
+      }
+    }
+  ],
+  "eng.trophy": [
+    {
+      id: "eng-trophy-propagated-official-route",
+      label: "EFL Trophy propagated official route",
+      type: "league_news",
+      trustTier: "league",
+      buildUrls() {
+        return [
+          "https://www.efl.com/competitions/vertu-trophy/"
+        ];
+      }
+    }
+  ],
   "eng.4": [
     {
       id: "eng-4-efl-com-league-news",
