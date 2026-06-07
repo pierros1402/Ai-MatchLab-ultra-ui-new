@@ -3,6 +3,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { getOfficialRouteEntry } from "./lib/football-truth-season-calendar-official-route-registry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,7 +57,7 @@ function parseArgs(argv = process.argv.slice(2)) {
 
 function rankedRowsOf(input) {
   if (Array.isArray(input)) return input;
-  for (const key of ["rankedCandidateUrlRows", "candidateUrlRows", "rows", "items"]) {
+  for (const key of ["rankedCandidateRows", "rankedCandidateUrlRows", "candidateUrlRows", "rows", "items"]) {
     if (Array.isArray(input && input[key])) return input[key];
   }
   return [];
@@ -75,9 +76,9 @@ function sourcePriority(row) {
 function sortRows(rows) {
   return [...rows].sort((a, b) =>
     sourcePriority(a) - sourcePriority(b) ||
-    Number(b.compositeScore || 0) - Number(a.compositeScore || 0) ||
+    candidateScoreFor(b) - candidateScoreFor(a) ||
     asText(a.leagueSlug).localeCompare(asText(b.leagueSlug)) ||
-    asText(a.candidateUrl).localeCompare(asText(b.candidateUrl))
+    candidateUrlFor(a).localeCompare(candidateUrlFor(b))
   );
 }
 
@@ -105,6 +106,15 @@ function hostnameOf(url) {
     return "";
   }
 }
+
+function candidateUrlFor(row) {
+  return asText(row.candidateUrl || row.url || row.sourceUrl || row.resolvedUrl || row.finalUrl);
+}
+
+function candidateScoreFor(row) {
+  const value = Number(row.compositeScore ?? row.score ?? row.strictScore ?? row.officialHostScore ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
 const AUTHORITY_RULES = [
   { prefix: "eng.1", hosts: [/premierleague\.com$/i] },
   { prefix: "eng.2", hosts: [/efl\.com$/i] },
@@ -124,19 +134,30 @@ function authorityRuleForLeagueSlug(slug) {
     .sort((a, b) => b.prefix.length - a.prefix.length)[0] || null;
 }
 
+function officialRouteHostsForLeagueSlug(slug) {
+  const entry = getOfficialRouteEntry(slug);
+  if (!entry || !Array.isArray(entry.hosts)) return [];
+  return entry.hosts.map((host) => asText(host).toLowerCase().replace(/^www\./, "")).filter(Boolean);
+}
+
 function isAuthorityHostForLeague(row) {
   const leagueSlug = asText(row.leagueSlug || row.competitionSlug);
-  const candidateUrl = asText(row.candidateUrl || row.url);
+  const candidateUrl = candidateUrlFor(row);
   const hostname = (asText(row.hostname) || hostnameOf(candidateUrl)).toLowerCase().replace(/^www\./, "");
-  const rule = authorityRuleForLeagueSlug(leagueSlug);
 
+  const registryHosts = officialRouteHostsForLeagueSlug(leagueSlug);
+  if (registryHosts.length > 0) {
+    return registryHosts.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+  }
+
+  const rule = authorityRuleForLeagueSlug(leagueSlug);
   if (!rule) return false;
   return rule.hosts.some((pattern) => pattern.test(hostname));
 }
 
 function fetchRow(row, index) {
   const leagueSlug = asText(row.leagueSlug || row.competitionSlug);
-  const candidateUrl = asText(row.candidateUrl || row.url);
+  const candidateUrl = candidateUrlFor(row);
   const hostname = asText(row.hostname) || hostnameOf(candidateUrl);
 
   return {
@@ -153,7 +174,7 @@ function fetchRow(row, index) {
     hostname,
     sourceClass: asText(row.sourceClass),
     truthRole: asText(row.truthRole),
-    compositeScore: Number(row.compositeScore || 0),
+    compositeScore: candidateScoreFor(row),
     surfaceQuality: asText(row.surfaceQuality),
     sourceSignals: row.sourceSignals || [],
     scoreReasons: row.scoreReasons || row.rankReasons || [],
@@ -184,12 +205,12 @@ function buildReport(input, { inputPath = "", perLeagueLimit = 3, officialOnly =
   const rankedRows = rankedRowsOf(input);
 
   const eligibleRows = rankedRows.filter((row) => {
-    const candidateUrl = asText(row.candidateUrl || row.url);
+    const candidateUrl = candidateUrlFor(row);
     if (!candidateUrl) return false;
     if (row.sourceFetch === true || row.canonicalWrites > 0 || row.productionWrite === true) return false;
     if (asText(row.truthRole) === "not_truth_ready") return false;
     if (asText(row.sourceClass) === "low_priority_or_non_truth_surface") return false;
-    if (Number(row.compositeScore || 0) <= 0) return false;
+    if (candidateScoreFor(row) <= 0) return false;
     if (officialOnly) {
       if (!isAuthorityHostForLeague(row)) return false;
     }
@@ -295,25 +316,53 @@ function runSelfTest() {
         sourceFetch: false,
         canonicalWrites: 0,
         productionWrite: false
+      },
+      {
+        leagueSlug: "bel.2",
+        candidateUrl: "https://www.proleague.be/cpl-kalender",
+        hostname: "proleague.be",
+        sourceClass: "official_governing_or_competition_operator",
+        truthRole: "primary_candidate_after_fetch_evidence",
+        compositeScore: 72,
+        sourceFetch: false,
+        canonicalWrites: 0,
+        productionWrite: false
+      },
+      {
+        leagueSlug: "aut.2",
+        candidateUrl: "https://www.laliga.com/en-GB/laliga-hypermotion/calendar",
+        hostname: "laliga.com",
+        sourceClass: "official_governing_or_competition_operator",
+        truthRole: "primary_candidate_after_fetch_evidence",
+        compositeScore: 80,
+        sourceFetch: false,
+        canonicalWrites: 0,
+        productionWrite: false
       }
     ]
   };
 
   const report = buildReport(input, { inputPath: "self-test", perLeagueLimit: 2 });
-  if (report.summary.rankedCandidateInputCount !== 5) throw new Error("expected 5 ranked input rows");
-  if (report.summary.eligibleFetchCandidateCount !== 4) throw new Error("expected 4 eligible rows");
-  if (report.summary.fetchTaskCount !== 4) throw new Error("expected 4 fetch tasks");
+  if (report.summary.rankedCandidateInputCount !== 7) throw new Error("expected 7 ranked input rows");
+  if (report.summary.eligibleFetchCandidateCount !== 6) throw new Error("expected 6 eligible rows");
+  if (report.summary.fetchTaskCount !== 6) throw new Error("expected 6 fetch tasks");
   if (report.guarantees.sourceFetch !== false || report.guarantees.canonicalWrites !== 0 || report.guarantees.productionWrite !== false) {
     throw new Error("read-only guarantees failed");
   }
 
   const officialOnly = buildReport(input, { inputPath: "self-test", perLeagueLimit: 2, officialOnly: true });
-  if (officialOnly.summary.fetchTaskCount !== 2) throw new Error("expected 2 official-only fetch tasks");
+  if (officialOnly.summary.fetchTaskCount !== 3) throw new Error("expected 3 official-only fetch tasks");
   if (officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "eng.1" && row.hostname === "slgr.gr")) {
     throw new Error("wrong-league official host must be blocked");
   }
   if (!officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "ger.1" && row.hostname === "bundesliga.com")) {
     throw new Error("authority-host season activity candidate must pass official-only");
+  }
+  if (!officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "bel.2" && row.hostname === "proleague.be")) {
+    throw new Error("official route registry host must pass official-only");
+  }
+  if (officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "aut.2" && row.hostname === "laliga.com")) {
+    throw new Error("wrong registry authority host must be blocked");
   }
 
   return {
