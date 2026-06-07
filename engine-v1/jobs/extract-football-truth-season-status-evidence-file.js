@@ -221,12 +221,12 @@ function signalFlags(plainText) {
   const text = normalizeWhitespace(plainText);
   const lower = text.toLowerCase();
 
-  const fixturesSignal = /\b(fixtures?|matches|schedule|games|results)\b/i.test(text);
-  const calendarSignal = /\b(calendar|dates?|matchday|round|qualifying|qualification|draw)\b/i.test(text);
-  const seasonLabelVisible = /\b20\d{2}\s*[-/]\s*\d{2,4}\b|\bseason\b/i.test(text);
-  const restartSignal = /\b(restart|starts?|begins?|opening match|kick-?off|commences|returns)\b/i.test(text);
-  const noFixtureSignal = /\b(no fixtures?|no matches?|not scheduled|schedule not available|fixtures? to be confirmed)\b/i.test(text);
-  const officialCompetitionSignal = /\b(official|competition|league|cup|champions league|europa league|fixtures? & results)\b/i.test(text);
+  const fixturesSignal = /\b(fixtures?|matches|schedule|games|results|standings|tables?|fixtures? & results|kampe|kamp|stilling|stillinger|zapasy|zapas|tabulka|tabulky|terminarz|tabela|wyniki|ottelut|tulokset|sarjataulukko|calendario|calendário|classificacao|classificação|resultados|jornada|raspored|tablica|utakmice|rezultati|leikir|urslit|úrslit|stada|staða|fikstur|puan|maclar|maçlar|sonuclar|sonuçlar)\b/i.test(text);
+  const calendarSignal = /\b(calendar|dates?|matchday|round|qualifying|qualification|draw|program|programme|schedule|fixture list|match calendar|kampprogram|terminliste|turnering|turneringer|souteze|soutěže|rozgrywki|moot|mót|lig|liga|sezon|season)\b/i.test(text);
+  const seasonLabelVisible = /\b20\d{2}\s*[-/]\s*\d{2,4}\b|\bseason\b|\bsezon\b|\bsæson\b|\bkausi\b|\btemporada\b|\bsezona\b/i.test(text);
+  const restartSignal = /\b(restart|starts?|begins?|opening match|kick-?off|commences|returns|startuje|inicia|başlıyor|begynder|alkaa)\b/i.test(text);
+  const noFixtureSignal = /\b(no fixtures?|no matches?|not scheduled|schedule not available|fixtures? to be confirmed|to be confirmed|tbc)\b/i.test(text);
+  const officialCompetitionSignal = /\b(official|competition|league|cup|champions league|europa league|fixtures? & results|superliga|super lig|ekstraklasa|veikkausliiga|hnl|prva nl|fnliga|1\. liga|liga portugal|primeira liga|taca|taça|pokal|beker|cup|liga|lig|süper lig|ziraat)\b/i.test(text);
 
   return {
     fixturesSignal,
@@ -417,7 +417,7 @@ function evidenceRow(row, snapshot) {
     noFixtureSignal: signals.noFixtureSignal,
     officialCompetitionSignal: signals.officialCompetitionSignal,
     signalScore: signals.signalScore,
-    evidenceTextSnippet: signals.evidenceTextSnippet,
+    evidenceTextSnippet: signals.bestEvidenceSnippet,
     structuredFixtureCalendarVisible: structuredFixtureCalendar.structuredFixtureCalendarVisible,
     parsedFixtureRowCount: structuredFixtureCalendar.parsedFixtureRowCount,
     parsedFixtureFirstDate: structuredFixtureCalendar.parsedFixtureFirstDate,
