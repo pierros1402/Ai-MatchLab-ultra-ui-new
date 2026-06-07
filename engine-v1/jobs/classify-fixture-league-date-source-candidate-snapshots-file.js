@@ -6,7 +6,8 @@ function parseArgs(argv = process.argv) {
   const args = {
     input: "",
     output: "",
-    selfTest: false
+    selfTest: false,
+    allowSeasonRouteEvidence: false
   };
 
   for (let i = 2; i < argv.length; i += 1) {
@@ -17,6 +18,10 @@ function parseArgs(argv = process.argv) {
       continue;
     }
 
+    if (arg === "--allow-season-route-evidence") {
+      args.allowSeasonRouteEvidence = true;
+      continue;
+    }
     if (arg === "--input" && argv[i + 1]) {
       args.input = String(argv[++i] || "").trim();
       continue;
@@ -308,7 +313,7 @@ function embeddedFixtureEvidenceFromNextData(rawText, dayKey, leagueSlug) {
   };
 }
 
-function classifySnapshot(snapshot) {
+function classifySnapshot(snapshot, options = {}) {
   const status = statusOf(snapshot);
   const rawText = textOf(snapshot);
   const plainText = stripHtml(rawText);
@@ -363,7 +368,18 @@ function classifySnapshot(snapshot) {
   const explicitOfficialRouteCandidate = /explicit_route_registry_seed|official_route|official_registry|season_status|season_activity/i.test(`${fetchPurpose} ${sourceCandidateType}`);
   const seasonActivityCandidate = /season_activity|season|restart|calendar|no_fixture|no-fixture|schedule_release|fixtures_released/i.test(fetchPurpose);
 
-  if (seasonActivityCandidate && (fixtureLanguageVisible || explicitNoFixtureEvidence || targetDateVisible || plainText.length > 300)) {
+
+  const allowSeasonRouteEvidence = options.allowSeasonRouteEvidence === true;
+  const seasonRouteSignalVisible = /fixture|fixtures|schedule|calendar|match|matches|result|results|standings|table|season|competition|cup|league|round|matchday|ottelut|tulokset|sarjataulukko|kalenteri|kalender|calendrier|calendario|calendário|raspored|natjecanja|taça|taca|kup|cup/i.test(plainText);
+
+  if (allowSeasonRouteEvidence && explicitOfficialRouteCandidate && (seasonRouteSignalVisible || fixtureLanguageVisible || explicitNoFixtureEvidence || targetDateVisible || plainText.length > 300)) {
+    return {
+      ...base,
+      classification: "candidate_league_season_activity_evidence_needs_validation",
+      usable: false,
+      reason: "explicit_official_route_season_evidence_allowed_without_target_date"
+    };
+  }if (seasonActivityCandidate && (fixtureLanguageVisible || explicitNoFixtureEvidence || targetDateVisible || plainText.length > 300)) {
     return {
       ...base,
       classification: "candidate_league_season_activity_evidence_needs_validation",
@@ -432,7 +448,7 @@ function classify(input, options = {}) {
     ? input.fetchedSourceSnapshots
     : [];
 
-  const classifiedRows = snapshots.map(classifySnapshot);
+  const classifiedRows = snapshots.map((snapshot) => classifySnapshot(snapshot, options));
 
   const byClassification = {};
   const byLeague = {};
@@ -586,7 +602,10 @@ async function main() {
   }
 
   const input = readJson(args.input, "input");
-  const report = classify(input, { input: args.input });
+  const report = classify(input, {
+    input: args.input,
+    allowSeasonRouteEvidence: args.allowSeasonRouteEvidence
+  });
 
   writeJson(args.output, report);
 
