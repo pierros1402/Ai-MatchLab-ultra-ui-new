@@ -174,6 +174,10 @@ function fetchRow(row, index) {
     hostname,
     sourceClass: asText(row.sourceClass),
     truthRole: asText(row.truthRole),
+    sourceId: asText(row.sourceId || `${leagueSlug}::registry_authority_fetch_input::${hostname}`),
+    sourceCandidateType: asText(row.sourceCandidateType || row.type || "explicit_route_registry_seed"),
+    type: asText(row.type || row.sourceCandidateType || "explicit_route_registry_seed"),
+    trustTier: asText(row.trustTier || "league"),
     compositeScore: candidateScoreFor(row),
     surfaceQuality: asText(row.surfaceQuality),
     sourceSignals: row.sourceSignals || [],
@@ -363,6 +367,9 @@ function runSelfTest() {
   }
   if (officialOnly.fetchTaskRows.some((row) => row.leagueSlug === "aut.2" && row.hostname === "laliga.com")) {
     throw new Error("wrong registry authority host must be blocked");
+  }
+  if (!officialOnly.fetchTaskRows.every((row) => row.sourceCandidateType === "explicit_route_registry_seed" && row.type === "explicit_route_registry_seed" && row.trustTier)) {
+    throw new Error("official-only registry authority rows must carry explicit route metadata");
   }
 
   return {
