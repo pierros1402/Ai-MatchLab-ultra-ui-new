@@ -111,6 +111,13 @@ function validateRow(row) {
       requiresSecondSource: false,
       decisionReason: "official source has season/calendar or fixture/result signals sufficient for season-status validation"
     };
+  } else if (official && extractionState === "candidate_season_status_calendar_evidence_needs_validation" && hasSignals && signalScore >= 2) {
+    decision = {
+      validationState: "season_calendar_validated_from_official_source",
+      validationConfidence: "medium",
+      requiresSecondSource: false,
+      decisionReason: "official governing/operator source has two independent season/calendar or fixture/result signals sufficient for route-surface validation"
+    };
   } else if (official && hasSignals) {
     decision = {
       validationState: "season_calendar_candidate_needs_more_specific_evidence",
@@ -243,6 +250,21 @@ function runSelfTest() {
         evidenceTextSnippet: "Fixtures & results UEFA Europa League 2025/26 official competition calendar."
       },
       {
+        leagueSlug: "cro.1",
+        competitionSlug: "cro.1",
+        competitionName: "SuperSport HNL",
+        sourceType: "season_status_official_primary",
+        sourceClass: "official_governing_or_competition_operator",
+        fetchPurpose: "season_activity_status_calendar",
+        hostname: "hnl.hr",
+        finalUrl: "https://hnl.hr/raspored/",
+        extractionState: "candidate_season_status_calendar_evidence_needs_validation",
+        fixturesSignal: true,
+        officialCompetitionSignal: true,
+        signalScore: 2,
+        evidenceTextSnippet: "SuperSport HNL Raspored i rezultati Ljestvica official competition route surface."
+      },
+      {
         leagueSlug: "eng.1",
         competitionSlug: "eng.1",
         competitionName: "Premier League",
@@ -266,10 +288,13 @@ function runSelfTest() {
 
   const report = buildReport(input, "self-test");
 
-  if (report.summary.inputEvidenceRowCount !== 3) throw new Error("expected three input evidence rows");
-  if (report.summary.validationRowCount !== 3) throw new Error("expected three validation rows");
-  if (report.summary.validatedOfficialRowCount !== 1) throw new Error("expected one official validated season calendar row");
+  if (report.summary.inputEvidenceRowCount !== 4) throw new Error("expected four input evidence rows");
+  if (report.summary.validationRowCount !== 4) throw new Error("expected four validation rows");
+  if (report.summary.validatedOfficialRowCount !== 2) throw new Error("expected two official validated season calendar rows");
   if (report.summary.requiresSecondSourceCount !== 2) throw new Error("expected two second-source rows");
+  const twoSignalOfficialRow = report.validatedSeasonStatusRows.find((row) => row.leagueSlug === "cro.1");
+  if (!twoSignalOfficialRow) throw new Error("missing official two-signal validated row");
+  if (twoSignalOfficialRow.validationConfidence !== "medium") throw new Error("expected official two-signal row to validate with medium confidence");
   if (!report.summary.byValidationState.season_calendar_validated_from_official_source) throw new Error("missing official validated state");
   if (!report.summary.byValidationState.season_calendar_candidate_needs_official_confirmation) throw new Error("missing official-confirmation state");
   if (!report.summary.byValidationState.season_status_needs_more_specific_evidence) throw new Error("missing needs-more-specific state");
