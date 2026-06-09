@@ -460,5 +460,3 @@ try {
   console.error(error && error.stack ? error.stack : String(error));
   process.exitCode = 1;
 }
-
-
