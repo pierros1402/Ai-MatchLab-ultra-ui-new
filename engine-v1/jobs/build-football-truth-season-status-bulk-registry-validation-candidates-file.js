@@ -82,6 +82,14 @@ const SURFACE_PATH_PATTERNS = [
 ];
 
 const COMPETITION_HOSTS = [
+  { prefix: "eng.1", hosts: [/premierleague\.com$/i] },
+  { prefix: "eng.2", hosts: [/efl\.com$/i] },
+  { prefix: "eng.3", hosts: [/efl\.com$/i] },
+  { prefix: "eng.4", hosts: [/efl\.com$/i] },
+  { prefix: "eng.5", hosts: [/nationalleague\.org\.uk$/i] },
+  { prefix: "eng.fa", hosts: [/thefa\.com$/i] },
+  { prefix: "eng.league_cup", hosts: [/efl\.com$/i] },
+  { prefix: "eng.trophy", hosts: [/efl\.com$/i] },
   { prefix: "eng.", hosts: [/efl\.com$/i, /thefa\.com$/i, /premierleague\.com$/i] },
   { prefix: "esp.", hosts: [/laliga\.com$/i, /rfef\.es$/i] },
   { prefix: "ita.", hosts: [/legaseriea\.it$/i, /figc\.it$/i, /legab\.it$/i] },
@@ -90,7 +98,7 @@ const COMPETITION_HOSTS = [
   { prefix: "por.", hosts: [/ligaportugal\.pt$/i, /fpf\.pt$/i] },
   { prefix: "aut.", hosts: [/bundesliga\.at$/i, /oefbl\.at$/i] },
   { prefix: "den.", hosts: [/superliga\.dk$/i, /dbu\.dk$/i] },
-  { prefix: "ned.", hosts: [/eredivisie\.eu$/i, /knvb\.nl$/i] },
+  { prefix: "ned.", hosts: [/eredivisie\.eu$/i, /eredivisie\.com$/i, /knvb\.nl$/i] },
   { prefix: "sco.", hosts: [/spfl\.co\.uk$/i, /scottishfa\.co\.uk$/i] },
   { prefix: "swe.", hosts: [/allsvenskan\.se$/i, /svenskfotboll\.se$/i] },
   { prefix: "nor.", hosts: [/fotball\.no$/i, /eliteserien\.no$/i] },
@@ -277,7 +285,10 @@ function hasSurfacePath(url) {
 }
 
 function expectedHostForSlug(slug, host) {
-  const item = COMPETITION_HOSTS.find((entry) => slug.startsWith(entry.prefix));
+  const item = COMPETITION_HOSTS
+    .filter((entry) => slug.startsWith(entry.prefix))
+    .sort((a, b) => b.prefix.length - a.prefix.length)[0];
+
   if (!item) return false;
   return item.hosts.some((rx) => rx.test(host));
 }
@@ -558,6 +569,13 @@ function runSelfTest() {
         title: "England team news World Cup",
         url: "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/teams/england/team-news",
         hostname: "fifa.com"
+      },
+      {
+        searchTargetId: "eng.3::official",
+        rank: 1,
+        title: "Premier League homepage",
+        url: "https://www.premierleague.com/",
+        hostname: "premierleague.com"
       }
     ]
   };
@@ -575,6 +593,9 @@ const LEAGUE_SOURCE_REGISTRY = {
   if (report.rankedCandidateUrlRows[0].leagueSlug !== "eng.4") throw new Error("expected eng.4 accepted");
   if (!report.rejectedCandidateUrlRows.find((row) => row.leagueSlug === "eng.fa" && row.rejectionReasons.includes("fifa_team_page_not_english_cup"))) {
     throw new Error("expected FIFA FA Cup mismatch rejection");
+  }
+  if (!report.rejectedCandidateUrlRows.find((row) => row.leagueSlug === "eng.3" && row.hostname === "premierleague.com" && row.rejectionReasons.includes("host_not_expected_for_slug"))) {
+    throw new Error("expected Premier League host rejection for League One");
   }
   if (report.guarantees.noRegistryWrites !== true || report.guarantees.canonicalWrites !== 0) throw new Error("read-only guarantees failed");
 
