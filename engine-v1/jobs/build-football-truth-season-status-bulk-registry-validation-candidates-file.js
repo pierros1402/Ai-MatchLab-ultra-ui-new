@@ -531,7 +531,16 @@ function buildReport(targetInput, searchInput, registryText, options = {}) {
 function runSelfTest() {
   const targets = {
     searchTargetRows: [
-      {
+            {
+        searchTargetId: "eng.3::official",
+        competitionSlug: "eng.3",
+        competitionName: "League One",
+        country: "england",
+        region: "europe",
+        competitionFamily: "domestic_league",
+        competitionType: "league",
+        tier: "1"
+      },{
         searchTargetId: "eng.4::official",
         competitionSlug: "eng.4",
         competitionName: "League Two",
