@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
 
 function asText(value) {
   return value == null ? "" : String(value).trim();
@@ -355,3 +355,4 @@ try {
   console.error(error && error.stack ? error.stack : String(error));
   process.exitCode = 1;
 }
+
