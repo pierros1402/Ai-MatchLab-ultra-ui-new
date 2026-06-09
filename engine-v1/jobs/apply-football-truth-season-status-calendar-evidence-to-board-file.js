@@ -35,6 +35,11 @@ function arrayFrom(value) {
 function selectedRowsFrom(input) {
   if (Array.isArray(input.selectedRows)) return input.selectedRows;
   if (Array.isArray(input.rows)) return input.rows;
+  if (Array.isArray(input.selectedEvidenceRows)) return input.selectedEvidenceRows;
+  if (Array.isArray(input.selectedCalendarEvidenceRows)) return input.selectedCalendarEvidenceRows;
+  if (Array.isArray(input.seasonStatusValidationRows)) return input.seasonStatusValidationRows;
+  if (Array.isArray(input.validatedSeasonStatusRows)) return input.validatedSeasonStatusRows;
+  if (Array.isArray(input.validatedSeasonStatusEvidenceRows)) return input.validatedSeasonStatusEvidenceRows;
   return [];
 }
 
