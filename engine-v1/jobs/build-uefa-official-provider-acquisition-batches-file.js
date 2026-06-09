@@ -125,6 +125,101 @@ function routeSurfaceHints(row) {
   return ["official competition route"];
 }
 
+function providerFamilyFor(countryKey) {
+  const key = asText(countryKey);
+
+  if (key === "uefa") return "uefa_official_competition_routes";
+
+  if ([
+    "aut", "bel", "cro", "cyp", "cze", "den", "fra", "gre",
+    "irl", "isl", "ita", "ned", "nor", "sco", "swe", "tur"
+  ].includes(key)) {
+    return "national_federation_or_league_official_routes";
+  }
+
+  return "official_provider_routes_required";
+}
+
+function taskTypeFor(row) {
+  const type = asText(row.competitionType);
+
+  if (type === "continental") {
+    return "find_official_uefa_calendar_phase_route";
+  }
+
+  if (type === "league") {
+    return "find_official_league_calendar_standings_results_route";
+  }
+
+  return "find_official_competition_route";
+}
+
+function requiredOutputsFor(row) {
+  const type = asText(row.competitionType);
+
+  if (type === "continental") {
+    return [
+      "officialCompetitionUrl",
+      "officialMatchesOrCalendarUrl",
+      "seasonOrEditionMarker",
+      "phaseStartDateOrFixtureEvidence",
+      "routeValidationStatus"
+    ];
+  }
+
+  if (type === "league") {
+    return [
+      "officialCompetitionUrl",
+      "officialFixturesUrl",
+      "officialStandingsUrl",
+      "officialResultsUrl",
+      "seasonMarker",
+      "currentFinishedUpcomingState",
+      "routeValidationStatus"
+    ];
+  }
+
+  return [
+    "officialCompetitionUrl",
+    "routeValidationStatus"
+  ];
+}
+
+function buildTaskRows(batches) {
+  const taskRows = [];
+
+  for (const batch of batches) {
+    const countryKey = asText(batch.countryKey);
+    const acquisitionRows = asArray(batch.acquisitionRows);
+
+    for (const row of acquisitionRows) {
+      taskRows.push({
+        taskId: `${batch.batchId}::${row.competitionSlug}`,
+        batchId: asText(batch.batchId),
+        countryKey,
+        providerFamily: providerFamilyFor(countryKey),
+        competitionSlug: asText(row.competitionSlug),
+        competitionName: asText(row.competitionName),
+        competitionType: asText(row.competitionType),
+        acquisitionMode: asText(row.acquisitionMode),
+        taskType: taskTypeFor(row),
+        requiredEvidence: asArray(row.requiredEvidence),
+        requiredOutputs: requiredOutputsFor(row),
+        routeSurfaceHints: asArray(row.routeSurfaceHints),
+        sourceStrategy: "official_routes_only_no_generic_search",
+        status: "pending_official_route_acquisition",
+        blocker: "",
+        sourceFetch: false,
+        canonicalWrites: 0,
+        productionWrite: false,
+        dryRun: true
+      });
+    }
+  }
+
+  return taskRows;
+}
+
 function normalizeRow(row) {
   const countryKey = asText(row.countryKey || asText(row.competitionSlug).split(".")[0]);
   const competitionType = asText(row.competitionType);
@@ -222,6 +317,8 @@ function buildBatches(input, options = {}) {
     };
   });
 
+  const taskRows = buildTaskRows(batches);
+
   return {
     ok: true,
     job: "build-uefa-official-provider-acquisition-batches-file",
@@ -236,6 +333,7 @@ function buildBatches(input, options = {}) {
       sourceActionableRowCount: actionableRows.length,
       selectedCountryCount: selectedCountryKeys.length,
       selectedAcquisitionRowCount: selectedRows.length,
+      taskCount: taskRows.length,
       batchCount: batches.length,
       byCompetitionType: countBy(selectedRows, "competitionType"),
       byPriorityTier: countBy(selectedRows, (row) => String(row.priorityTier || "unknown")),
@@ -248,6 +346,7 @@ function buildBatches(input, options = {}) {
     },
     batches,
     acquisitionRows: selectedRows,
+    taskRows,
     guarantees: {
       sourceFetch: false,
       noSearch: true,
@@ -311,6 +410,12 @@ function runSelfTest() {
   if (report.summary.batchCount !== 2) {
     throw new Error(`expected 2 batches, got ${report.summary.batchCount}`);
   }
+  if (report.summary.taskCount !== 2 || report.taskRows.length !== 2) {
+    throw new Error(`expected 2 task rows, got ${report.summary.taskCount}`);
+  }
+  if (report.taskRows.some((row) => !row.taskId || !row.requiredOutputs.length)) {
+    throw new Error("task rows must include taskId and requiredOutputs");
+  }
   if (report.acquisitionRows.some((row) => row.competitionSlug === "bel.cup")) {
     throw new Error("closed rows must be excluded");
   }
@@ -355,4 +460,5 @@ try {
   console.error(error && error.stack ? error.stack : String(error));
   process.exitCode = 1;
 }
+
 
