@@ -40,6 +40,7 @@ function selectedRowsFrom(input) {
 
 function boardRowsFrom(input) {
   if (Array.isArray(input.rows)) return input.rows;
+  if (Array.isArray(input.readinessRows)) return input.readinessRows;
   if (Array.isArray(input.boardRows)) return input.boardRows;
   return [];
 }

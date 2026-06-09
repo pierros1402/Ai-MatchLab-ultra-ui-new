@@ -55,7 +55,7 @@ function parseArgs(argv = process.argv.slice(2)) {
 
 function inventoryRowsOf(json) {
   if (Array.isArray(json)) return json;
-  for (const key of ["rows", "inventoryRows", "footballTruthStateRows", "items"]) {
+  for (const key of ["rows", "readinessRows", "boardRows", "inventoryRows", "footballTruthStateRows", "items"]) {
     if (Array.isArray(json?.[key])) return json[key];
   }
   return [];
