@@ -440,4 +440,3 @@ if (path.resolve(process.argv[1] || "") === __filename) {
 }
 
 export { buildWriteReport, buildCanonicalRecord };
-
