@@ -195,20 +195,22 @@
         "ger.1",
         "ger.2"
       ],
-      "capabilityStatus": "normalized_partial_not_promoted",
+      "capabilityStatus": "standings_promoted_fixture_not_promoted",
       "capabilities": {
-        "fixtures": "unknown_or_partial",
-        "results": "unknown_or_partial",
-        "standings": "provider_table_rows_extracted",
-        "seasonState": "unknown",
+        "fixtures": "legacy_or_partial_local_only",
+        "results": "legacy_or_partial_local_only",
+        "standings": "canonical_official_standings_written",
+        "seasonState": "completed_or_results_only_from_local_canonical_context",
         "cupWinner": "not_applicable"
       },
       "sourceJobs": [
-        "engine-v1/jobs/build-official-route-table-parser-provider-evidence-file.js"
+        "engine-v1/jobs/build-official-route-table-parser-provider-evidence-file.js",
+        "engine-v1/jobs/build-official-route-standings-evidence-promotion-plan-file.js",
+        "engine-v1/jobs/write-official-route-standings-evidence-promotion-plan-file.js"
       ],
-      "allowedRunnerPolicy": "standings_contract_review_before_promotion",
-      "promotionStatus": "not_promoted",
-      "notes": "36 standings rows extracted; needs explicit standings promotion contract review."
+      "allowedRunnerPolicy": "standings_promoted_no_fixture_promotion_without_official_fixture_contract",
+      "promotionStatus": "standings_written_fixture_not_promoted",
+      "notes": "Bundesliga official standings promoted to canonical for ger.1 and ger.2 at commit 7b215e44; fixtures/results remain legacy_or_partial_local_only and must not be treated as official fixture promotion."
     },
     {
       "providerId": "laliga_official",
@@ -278,7 +280,7 @@
     "productionWrite": false,
     "sourceFetch": false
   },
-  "lastUpdated": "2026-06-10",
+  "lastUpdated": "2026-06-10T17:24:48.312Z",
   "notes": [
     "2026-06-10: Updated norway_ntf_official after canonical official-route fixture/result promotion."
   ]
