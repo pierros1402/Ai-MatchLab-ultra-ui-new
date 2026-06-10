@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
 
 const JOB = "build-official-route-standings-evidence-promotion-plan-file";
 const ALLOWED_COMPETITIONS = new Set(["ger.1", "ger.2"]);
@@ -479,3 +479,4 @@ function main() {
 }
 
 main();
+
