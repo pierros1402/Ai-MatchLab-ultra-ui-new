@@ -450,4 +450,3 @@ console.log(JSON.stringify({
 if (falseIrl2Fixtures.length > 0) {
   throw new Error(`false irl.2 Premier fixture rows leaked into normalized output: ${falseIrl2Fixtures.length}`);
 }
-
