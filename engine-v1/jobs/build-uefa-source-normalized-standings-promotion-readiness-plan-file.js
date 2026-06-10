@@ -86,6 +86,22 @@ function planObjectsOf(plan) {
     : {};
 }
 
+function planFilesByLeague(plan) {
+  const out = new Map();
+  for (const row of asArray(plan?.proposedStandingsFiles)) {
+    const leagueSlug = asText(row.leagueSlug);
+    if (leagueSlug) out.set(leagueSlug, row);
+  }
+  return out;
+}
+
+function firstDefined(...values) {
+  for (const value of values) {
+    if (value !== undefined && value !== null) return value;
+  }
+  return undefined;
+}
+
 function validateInputPlan(plan, inputPath) {
   const failures = [];
 
@@ -114,18 +130,21 @@ function sourceFamilyForLeague(leagueSlug, obj) {
   return sourceHost || "unknown";
 }
 
-function promotionReadinessRowFor({ leagueSlug, obj, inputPath, rowIndex }) {
+function promotionReadinessRowFor({ leagueSlug, obj, metadata, inputPath, rowIndex }) {
   const table = asArray(obj.table);
   const expectedRows = EXPECTED_TABLE_ROWS[leagueSlug] || null;
   const warnings = [];
+  const readinessBlocked = firstDefined(obj.readinessBlocked, metadata?.readinessBlocked, true);
+  const standingsWriteAllowedNow = firstDefined(obj.standingsWriteAllowedNow, metadata?.standingsWriteAllowedNow, false);
+  const proposedPath = asText(obj.proposedPath || metadata?.proposedPath) || `data/standings/${leagueSlug}.json`;
 
   if (!expectedRows) warnings.push("league_not_in_expected_set");
   if (expectedRows && table.length !== expectedRows) {
     warnings.push(`unexpected_table_row_count:${table.length}:expected:${expectedRows}`);
   }
 
-  if (obj.readinessBlocked !== true) warnings.push("input_materialization_plan_not_blocked_as_expected");
-  if (obj.standingsWriteAllowedNow !== false) warnings.push("input_standings_write_allowed_unexpectedly");
+  if (readinessBlocked !== true) warnings.push("input_materialization_plan_not_blocked_as_expected");
+  if (standingsWriteAllowedNow !== false) warnings.push("input_standings_write_allowed_unexpectedly");
 
   const hasValidRows = table.every((row, index) =>
     asNumber(row.rank || row.position, 0) === index + 1 &&
@@ -150,7 +169,7 @@ function promotionReadinessRowFor({ leagueSlug, obj, inputPath, rowIndex }) {
     proposedCanonicalState: promotionPlanReady
       ? "standings_table_ready_pending_guarded_writer"
       : "standings_table_promotion_plan_blocked",
-    proposedPath: `data/standings/${leagueSlug}.json`,
+    proposedPath,
     proposedCanonicalPayload: {
       leagueSlug,
       table,
@@ -171,11 +190,14 @@ function promotionReadinessRowFor({ leagueSlug, obj, inputPath, rowIndex }) {
       requiresSeparateWriter: true,
       requiresExplicitPromotionApprovalFlag: true,
       requiresDryRunWriterFirst: true,
-      standingsWriteAllowedNow: false
+      standingsWriteAllowedNow: false,
+      inputReadinessBlocked: readinessBlocked,
+      inputStandingsWriteAllowedNow: standingsWriteAllowedNow
     },
     evidence: {
       inputPath,
       sourceFamily: sourceFamilyForLeague(leagueSlug, obj),
+      inputReadinessState: asText(metadata?.readinessState || obj.readinessState),
       firstRow: table[0] || null,
       lastRow: table[table.length - 1] || null
     },
@@ -201,12 +223,13 @@ function buildReportFromPlans(plansWithPaths) {
 
   for (const { plan, inputPath } of plansWithPaths) {
     const objects = planObjectsOf(plan);
+    const metadataByLeague = planFilesByLeague(plan);
     for (const [leagueSlug, obj] of Object.entries(objects)) {
       if (!EXPECTED_LEAGUES.includes(leagueSlug)) continue;
       if (byLeagueObject.has(leagueSlug)) {
         throw new Error(`duplicate proposed standings object for ${leagueSlug}`);
       }
-      byLeagueObject.set(leagueSlug, { obj, inputPath });
+      byLeagueObject.set(leagueSlug, { obj, metadata: metadataByLeague.get(leagueSlug) || {}, inputPath });
     }
   }
 
@@ -220,6 +243,7 @@ function buildReportFromPlans(plansWithPaths) {
     return promotionReadinessRowFor({
       leagueSlug,
       obj: entry.obj,
+      metadata: entry.metadata,
       inputPath: entry.inputPath,
       rowIndex: index
     });
