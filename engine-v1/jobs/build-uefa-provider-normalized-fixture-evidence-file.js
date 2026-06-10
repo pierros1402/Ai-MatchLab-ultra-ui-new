@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 const JOB = "build-uefa-provider-normalized-fixture-evidence-file";
 
@@ -448,6 +448,4 @@ function main() {
   }, null, 2));
 }
 
-if (require.main === module) {
-  main();
-}
+main();
