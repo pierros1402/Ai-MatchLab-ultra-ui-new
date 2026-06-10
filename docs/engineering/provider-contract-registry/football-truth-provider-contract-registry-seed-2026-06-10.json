@@ -1,0 +1,279 @@
+{
+  "ok": true,
+  "generatedAt": "2026-06-10T15:30:00.246Z",
+  "purpose": "Seed Provider Contract Registry for Football Truth intelligence engine. This is a governance/design manifest, not an execution job.",
+  "rules": [
+    "No provider acquisition/search/fetch runner may run unless a provider contract row allows it.",
+    "No promotion adapter may be used outside its exact schema contract.",
+    "Provider normalizers are reusable only when registered here with capability, source job, and promotion path.",
+    "Blocked providers must remain blocked until a contract repair proves normalized rows.",
+    "Canonical writes require known provider contract, dry-run, zero blocked rows, zero plan errors, and explicit production flags."
+  ],
+  "providerContracts": [
+    {
+      "providerId": "sportomedia_sweden_official",
+      "competitions": [
+        "swe.1",
+        "swe.2"
+      ],
+      "capabilityStatus": "proven_promoted",
+      "capabilities": {
+        "fixtures": "proven_promoted",
+        "results": "proven_promoted",
+        "standings": "proven_promoted",
+        "seasonState": "partial_from_fixture_calendar",
+        "cupWinner": "not_applicable"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-uefa-sportomedia-normalized-rows-file.js",
+        "engine-v1/jobs/build-uefa-provider-normalized-fixture-evidence-promotion-plan-file.js",
+        "engine-v1/jobs/write-uefa-fixture-api-promotion-plan-file.js"
+      ],
+      "allowedRunnerPolicy": "normalizer_and_guarded_writer_only",
+      "promotionStatus": "canonical_written",
+      "notes": "Sweden fixtures/results and standings already promoted. Keep as proven contract reference."
+    },
+    {
+      "providerId": "spfl_opta_official",
+      "competitions": [
+        "sco.1",
+        "sco.2"
+      ],
+      "capabilityStatus": "partial_promoted_blocked_fixture_identity",
+      "capabilities": {
+        "fixtures": "blocked_identity_map",
+        "results": "blocked_identity_map",
+        "standings": "proven_promoted",
+        "seasonState": "partial",
+        "cupWinner": "not_applicable"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-uefa-spfl-opta-widget-mapping-file.js",
+        "engine-v1/jobs/build-uefa-spfl-opta-normalized-rows-file.js",
+        "engine-v1/jobs/build-uefa-source-normalized-standings-promotion-readiness-plan-file.js",
+        "engine-v1/jobs/write-uefa-standings-promotion-plan-file.js"
+      ],
+      "allowedRunnerPolicy": "standings_path_only_until_safe_id_name_map",
+      "promotionStatus": "standings_written_fixture_blocked",
+      "notes": "Do not promote SPFL fixtures until safe official id-to-team-name map exists."
+    },
+    {
+      "providerId": "loi_ajax_official",
+      "competitions": [
+        "irl.1",
+        "irl.2"
+      ],
+      "capabilityStatus": "partial_promoted",
+      "capabilities": {
+        "fixtures": "irl.1_proven_promoted__irl.2_blocked_fixture_endpoint",
+        "results": "proven_promoted_partial_for_irl2",
+        "standings": "unknown",
+        "seasonState": "partial",
+        "cupWinner": "not_applicable"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-uefa-loi-ajax-normalized-rows-file.js",
+        "engine-v1/jobs/build-uefa-provider-normalized-fixture-evidence-promotion-plan-file.js",
+        "engine-v1/jobs/write-uefa-fixture-api-promotion-plan-file.js"
+      ],
+      "allowedRunnerPolicy": "irl1_full_fixture_path_and_irl2_partial_results_only",
+      "promotionStatus": "canonical_written_partial",
+      "notes": "IRL2 is explicitly partial results-only; no complete fixture calendar claim."
+    },
+    {
+      "providerId": "palloliitto_torneopal_official",
+      "competitions": [
+        "fin.1",
+        "fin.2",
+        "fin.cup"
+      ],
+      "capabilityStatus": "proven_promoted_partial_standings",
+      "capabilities": {
+        "fixtures": "proven_promoted_for_fin1_fin2",
+        "results": "proven_promoted_for_fin1_fin2",
+        "standings": "derived_only_not_canonical_ready",
+        "seasonState": "partial",
+        "cupWinner": "proven_promoted_for_fin_cup"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-uefa-torneopal-normalized-rows-file.js",
+        "engine-v1/jobs/build-uefa-provider-normalized-fixture-evidence-promotion-plan-file.js",
+        "engine-v1/jobs/build-uefa-cup-winner-final-promotion-plan-file.js"
+      ],
+      "allowedRunnerPolicy": "fixtures_and_cup_winner_only_until_official_standings",
+      "promotionStatus": "fixtures_and_cup_winner_written",
+      "notes": "Finland standings remain derived-only unless official standings are found/accepted."
+    },
+    {
+      "providerId": "rbfa_official",
+      "competitions": [
+        "bel.cup"
+      ],
+      "capabilityStatus": "proven_promoted",
+      "capabilities": {
+        "fixtures": "not_required",
+        "results": "cup_final_result_proven",
+        "standings": "not_applicable",
+        "seasonState": "completed_cup",
+        "cupWinner": "proven_promoted"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-uefa-rbfa-normalized-rows-file.js",
+        "engine-v1/jobs/build-uefa-cup-winner-final-promotion-plan-file.js"
+      ],
+      "allowedRunnerPolicy": "cup_winner_final_only",
+      "promotionStatus": "canonical_written",
+      "notes": "Belgian cup winner/final canonical state written."
+    },
+    {
+      "providerId": "hns_semafor_official",
+      "competitions": [
+        "cro.cup"
+      ],
+      "capabilityStatus": "proven_promoted",
+      "capabilities": {
+        "fixtures": "not_required",
+        "results": "cup_final_result_proven",
+        "standings": "not_applicable",
+        "seasonState": "completed_cup",
+        "cupWinner": "proven_promoted"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-uefa-semafor-normalized-rows-file.js",
+        "engine-v1/jobs/build-uefa-cup-winner-final-promotion-plan-file.js"
+      ],
+      "allowedRunnerPolicy": "cup_winner_final_only",
+      "promotionStatus": "canonical_written",
+      "notes": "Croatian cup winner/final canonical state written."
+    },
+    {
+      "providerId": "fpf_portugal_official",
+      "competitions": [
+        "por.taca.portugal"
+      ],
+      "capabilityStatus": "blocked",
+      "capabilities": {
+        "fixtures": "sample_only",
+        "results": "sample_only",
+        "standings": "not_applicable",
+        "seasonState": "unknown",
+        "cupWinner": "sample_only_not_promotion_ready"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-uefa-fpf-normalized-rows-file.js"
+      ],
+      "allowedRunnerPolicy": "blocked_no_full_fetch_no_promotion",
+      "promotionStatus": "blocked",
+      "notes": "Full fetch blocked by 429/403; do not promote from sample."
+    },
+    {
+      "providerId": "norway_ntf_official",
+      "competitions": [
+        "nor.1",
+        "nor.2"
+      ],
+      "capabilityStatus": "normalized_rows_proven_promotion_contract_missing",
+      "capabilities": {
+        "fixtures": "normalized_rows_proven",
+        "results": "normalized_rows_proven",
+        "standings": "unknown",
+        "seasonState": "partial_from_calendar",
+        "cupWinner": "not_applicable"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-official-route-norway-fixture-evidence-file.js"
+      ],
+      "allowedRunnerPolicy": "do_not_use_uefa_fixture_api_promotion_builder",
+      "promotionStatus": "not_promoted_waiting_generic_official_route_fixture_promotion_contract",
+      "notes": "480 official rows proven. Promotion is blocked until generic official-route fixture promotion contract exists."
+    },
+    {
+      "providerId": "bundesliga_official",
+      "competitions": [
+        "ger.1",
+        "ger.2"
+      ],
+      "capabilityStatus": "normalized_partial_not_promoted",
+      "capabilities": {
+        "fixtures": "unknown_or_partial",
+        "results": "unknown_or_partial",
+        "standings": "provider_table_rows_extracted",
+        "seasonState": "unknown",
+        "cupWinner": "not_applicable"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-official-route-table-parser-provider-evidence-file.js"
+      ],
+      "allowedRunnerPolicy": "standings_contract_review_before_promotion",
+      "promotionStatus": "not_promoted",
+      "notes": "36 standings rows extracted; needs explicit standings promotion contract review."
+    },
+    {
+      "providerId": "laliga_official",
+      "competitions": [
+        "esp.1",
+        "esp.2"
+      ],
+      "capabilityStatus": "partial_evidence_not_promoted",
+      "capabilities": {
+        "fixtures": "partial_fixture_rows_only",
+        "results": "partial_result_rows_only",
+        "standings": "unknown",
+        "seasonState": "unknown",
+        "cupWinner": "not_applicable"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-official-route-table-parser-provider-evidence-file.js"
+      ],
+      "allowedRunnerPolicy": "no_promotion_from_partial_rows",
+      "promotionStatus": "not_promoted",
+      "notes": "12 partial fixture/result rows only; not complete fixture calendar."
+    },
+    {
+      "providerId": "spfl_challenge_cup_official",
+      "competitions": [
+        "sco.challenge"
+      ],
+      "capabilityStatus": "partial_evidence_not_promoted",
+      "capabilities": {
+        "fixtures": "partial_cup_rows_only",
+        "results": "partial_cup_rows_only",
+        "standings": "not_applicable",
+        "seasonState": "unknown",
+        "cupWinner": "unknown"
+      },
+      "sourceJobs": [
+        "engine-v1/jobs/build-official-route-table-parser-provider-evidence-file.js"
+      ],
+      "allowedRunnerPolicy": "no_promotion_from_partial_rows",
+      "promotionStatus": "not_promoted",
+      "notes": "Partial cup evidence only; not winner/final promotion-ready."
+    }
+  ],
+  "nextArchitecture": {
+    "requiredEngine": "FootballTruthIntelligenceEngine",
+    "requiredInputs": [
+      "Provider Contract Registry",
+      "Competition inventory",
+      "Canonical coverage state",
+      "Governed job inventory",
+      "Promotion gate policy"
+    ],
+    "requiredOutputs": [
+      "competitionStateBoard",
+      "missingDataBoard",
+      "nextBatchActionPlan",
+      "blockedProviderBoard",
+      "promotionReadinessBoard"
+    ],
+    "hardStop": "Do not run provider acquisition or promotion paths manually outside registry policy."
+  },
+  "guarantees": {
+    "noFetch": true,
+    "noSearch": true,
+    "noCanonicalWrites": true,
+    "canonicalWrites": 0,
+    "productionWrite": false,
+    "sourceFetch": false
+  }
+}
