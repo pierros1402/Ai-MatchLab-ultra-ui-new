@@ -161,7 +161,7 @@ function sourceUrlFor(slug, row) {
   if (explicit) return explicit;
 
   if (slug === "fin.1" || slug === "fin.2") return "https://tulospalvelu.palloliitto.fi/";
-  if (slug === "irl.1") return "https://www.leagueofireland.ie/";
+  if (slug === "irl.1" || slug === "irl.2") return "https://www.leagueofireland.ie/";
 
   return "";
 }
