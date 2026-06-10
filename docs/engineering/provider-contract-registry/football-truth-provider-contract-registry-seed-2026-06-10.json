@@ -172,20 +172,22 @@
         "nor.1",
         "nor.2"
       ],
-      "capabilityStatus": "normalized_rows_proven_promotion_contract_missing",
+      "capabilityStatus": "canonical_written",
       "capabilities": {
-        "fixtures": "normalized_rows_proven",
-        "results": "normalized_rows_proven",
+        "fixtures": "canonical_written_official_route",
+        "results": "canonical_written_official_route",
         "standings": "unknown",
         "seasonState": "partial_from_calendar",
         "cupWinner": "not_applicable"
       },
       "sourceJobs": [
-        "engine-v1/jobs/build-official-route-norway-fixture-evidence-file.js"
+        "engine-v1/jobs/build-official-route-norway-fixture-evidence-file.js",
+        "engine-v1/jobs/build-official-route-fixture-evidence-promotion-plan-file.js",
+        "engine-v1/jobs/write-official-route-fixture-evidence-promotion-plan-file.js"
       ],
-      "allowedRunnerPolicy": "do_not_use_uefa_fixture_api_promotion_builder",
-      "promotionStatus": "not_promoted_waiting_generic_official_route_fixture_promotion_contract",
-      "notes": "480 official rows proven. Promotion is blocked until generic official-route fixture promotion contract exists."
+      "allowedRunnerPolicy": "official_route_fixture_evidence_promoted_guarded_writer_apply_only_after_dry_run",
+      "promotionStatus": "canonical_written",
+      "notes": "Norway official-route canonical fixtures/results promoted on 2026-06-10: nor.1 240 rows (89 finished, 151 scheduled), nor.2 240 rows (80 finished, 160 scheduled), 130 canonical files. Promotion used generic official-route fixture evidence plan + guarded writer with dry-run first and explicit --apply --allow-production-writes. Existing 27 ESPN nor.1 rows remain as local legacy coverage alongside official rows."
     },
     {
       "providerId": "bundesliga_official",
@@ -275,5 +277,9 @@
     "canonicalWrites": 0,
     "productionWrite": false,
     "sourceFetch": false
-  }
+  },
+  "lastUpdated": "2026-06-10",
+  "notes": [
+    "2026-06-10: Updated norway_ntf_official after canonical official-route fixture/result promotion."
+  ]
 }

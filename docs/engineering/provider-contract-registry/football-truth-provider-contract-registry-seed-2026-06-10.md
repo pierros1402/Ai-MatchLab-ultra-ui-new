@@ -33,3 +33,27 @@ The next source work must be an intelligence/orchestration layer that consumes t
 ## Hard Stop
 
 Do not run provider acquisition or promotion paths manually outside registry policy.
+
+<!-- norway_ntf_official_2026_06_10_update:start -->
+### Norway NTF official-route promotion update — 2026-06-10
+
+Provider: `norway_ntf_official`
+
+Current registry status:
+- `capabilityStatus: canonical_written`
+- `promotionStatus: canonical_written`
+- fixtures/results: `canonical_written_official_route`
+- standings: `unknown`
+- allowed runner policy: `official_route_fixture_evidence_promoted_guarded_writer_apply_only_after_dry_run`
+
+Promotion result:
+- `nor.1`: 240 official-route rows, 89 finished, 151 scheduled.
+- `nor.2`: 240 official-route rows, 80 finished, 160 scheduled.
+- 130 canonical fixture files written.
+- Existing 27 ESPN `nor.1` rows remain as local legacy coverage alongside official rows.
+- Promotion used:
+  - `engine-v1/jobs/build-official-route-norway-fixture-evidence-file.js`
+  - `engine-v1/jobs/build-official-route-fixture-evidence-promotion-plan-file.js`
+  - `engine-v1/jobs/write-official-route-fixture-evidence-promotion-plan-file.js`
+- The writer was validated with dry-run first, then applied only with explicit `--apply --allow-production-writes`.
+<!-- norway_ntf_official_2026_06_10_update:end -->
