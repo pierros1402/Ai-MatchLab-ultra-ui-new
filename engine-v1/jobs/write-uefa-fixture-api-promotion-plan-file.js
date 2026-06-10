@@ -181,7 +181,39 @@ function validateInputPlan(plan) {
   }
   if (Boolean(plan?.guarantees?.noFetch) !== true) errors.push("input_plan_no_fetch_not_true");
   if (Boolean(plan?.guarantees?.noUrlFetch) !== true) errors.push("input_plan_no_url_fetch_not_true");
-  if (Number(plan?.summary?.promotionPlanRowCount || 0) !== planRowsOf(plan).length) {
+  const writablePlanRowCount = asArray(plan?.proposedUpdateRows).length + asArray(plan?.proposedInsertRows).length;
+  const duplicateNoActionRowCount = asArray(plan?.duplicateNoActionRows).length;
+  const rejectedRowCount = asArray(plan?.rejectedRows).length;
+  const summary = plan?.summary || {};
+  const summaryPromotionPlanRowCount = Number(summary.promotionPlanRowCount || 0);
+
+  const hasWritableSummaryCounts =
+    Object.prototype.hasOwnProperty.call(summary, "proposedUpdateRowCount") ||
+    Object.prototype.hasOwnProperty.call(summary, "proposedInsertRowCount");
+
+  const hasDuplicateSummaryCount =
+    Object.prototype.hasOwnProperty.call(summary, "duplicateNoActionRowCount");
+
+  const hasRejectedSummaryCount =
+    Object.prototype.hasOwnProperty.call(summary, "rejectedRowCount");
+
+  if (hasWritableSummaryCounts) {
+    const summaryWritablePlanRowCount =
+      Number(summary.proposedUpdateRowCount || 0) + Number(summary.proposedInsertRowCount || 0);
+    if (summaryWritablePlanRowCount !== writablePlanRowCount) {
+      errors.push("writable_plan_row_count_mismatch");
+    }
+  }
+
+  if (hasDuplicateSummaryCount && Number(summary.duplicateNoActionRowCount || 0) !== duplicateNoActionRowCount) {
+    errors.push("duplicate_no_action_row_count_mismatch");
+  }
+
+  if (hasRejectedSummaryCount && Number(summary.rejectedRowCount || 0) !== rejectedRowCount) {
+    errors.push("rejected_row_count_mismatch");
+  }
+
+  if (summaryPromotionPlanRowCount !== writablePlanRowCount + duplicateNoActionRowCount + rejectedRowCount) {
     errors.push("promotion_plan_row_count_mismatch");
   }
 

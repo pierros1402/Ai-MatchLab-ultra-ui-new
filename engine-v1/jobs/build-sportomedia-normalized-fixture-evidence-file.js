@@ -127,6 +127,8 @@ function toEvidenceRow(row, index) {
     sourceProvider: "sportomedia",
     sourceKind: asText(row.sourceKind),
     sourceFamily: asText(row.sourceFamily),
+    sourceUrl: leagueSlug === "swe.1" ? "https://allsvenskan.se/" : leagueSlug === "swe.2" ? "https://superettan.se/" : "",
+    fetchedAt: asText(row.fetchedAt || row.generatedAt),
     sourceMatchId: matchId,
     rawStatus: asText(row.statusRaw),
     canonicalWrites: 0,
