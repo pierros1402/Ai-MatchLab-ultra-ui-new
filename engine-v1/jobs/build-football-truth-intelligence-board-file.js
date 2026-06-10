@@ -116,6 +116,82 @@ function statusBucket(row) {
   return "unknown";
 }
 
+function sourceValue(row) {
+  return asText(
+    row.source ||
+    row.sourceId ||
+    row.sourceUrl ||
+    row.evidence?.source ||
+    row.evidence?.sourceUrl ||
+    row.provenance?.source ||
+    row.provenance?.sourceUrl ||
+    row.provider ||
+    row.sourceProvider ||
+    "unknown"
+  ) || "unknown";
+}
+
+function hasProviderPromotedStatus(provider) {
+  const status = `${provider.capabilityStatus || ""} ${provider.promotionStatus || ""}`.toLowerCase();
+
+  return (
+    status.includes("canonical_written") ||
+    status.includes("proven_promoted") ||
+    status.includes("fixtures_and_cup_winner_written") ||
+    status.includes("standings_written")
+  );
+}
+
+function hasProviderBlockedStatus(provider) {
+  const status = `${provider.capabilityStatus || ""} ${provider.promotionStatus || ""}`.toLowerCase();
+  return status.includes("blocked");
+}
+
+function hasGenericPromotionContractMissing(provider) {
+  const status = `${provider.capabilityStatus || ""} ${provider.promotionStatus || ""}`.toLowerCase();
+  return status.includes("promotion_contract_missing");
+}
+
+function isCupCompetition(competitionSlug) {
+  return (
+    competitionSlug.includes(".cup") ||
+    competitionSlug.includes("taca") ||
+    competitionSlug.includes("challenge")
+  );
+}
+
+function coverageStatusFor({ competitionSlug, provider, fixtureCoverage, standingsCoverage, winnerFinalCoverage }) {
+  const hasFixtureCoverage = Boolean(fixtureCoverage);
+  const hasStandingsCoverage = Boolean(standingsCoverage);
+  const hasWinnerCoverage = Boolean(winnerFinalCoverage);
+
+  if (!hasFixtureCoverage && !hasStandingsCoverage && !hasWinnerCoverage) {
+    return "no_local_canonical_coverage";
+  }
+
+  if (hasProviderPromotedStatus(provider)) {
+    if (hasProviderBlockedStatus(provider)) {
+      return "provider_partially_promoted_with_blocked_capability";
+    }
+
+    return "provider_promoted_or_partially_promoted_with_local_coverage";
+  }
+
+  const fixtureSources = Object.keys(fixtureCoverage?.sourceCounts || {});
+  const standingsSources = Object.keys(standingsCoverage?.sourceCounts || {});
+  const sources = [...new Set([...fixtureSources, ...standingsSources])];
+
+  if (sources.includes("espn")) {
+    return "local_canonical_coverage_from_non_registry_source";
+  }
+
+  if (!sources.length || sources.every((source) => source === "unknown")) {
+    return "local_canonical_coverage_source_unknown";
+  }
+
+  return "local_canonical_coverage_source_mixed_or_unclear";
+}
+
 function buildFixtureCoverage(canonicalFixturesRoot, registeredCompetitions) {
   const byCompetition = new Map();
 
@@ -137,7 +213,8 @@ function buildFixtureCoverage(canonicalFixturesRoot, registeredCompetitions) {
         finishedRows: 0,
         scheduledRows: 0,
         liveRows: 0,
-        unknownStatusRows: 0
+        unknownStatusRows: 0,
+        sourceCounts: {}
       });
     }
 
@@ -155,6 +232,9 @@ function buildFixtureCoverage(canonicalFixturesRoot, registeredCompetitions) {
       else if (bucket === "scheduled") item.scheduledRows += 1;
       else if (bucket === "live") item.liveRows += 1;
       else item.unknownStatusRows += 1;
+
+      const source = sourceValue(row);
+      item.sourceCounts[source] = (item.sourceCounts[source] || 0) + 1;
     }
   }
 
@@ -171,11 +251,19 @@ function buildStandingsCoverage(standingsRoot, registeredCompetitions) {
     const json = readJson(file);
     const tableRows = rowsOf(json);
 
+    const sourceCounts = {};
+
+    for (const row of tableRows) {
+      const source = sourceValue(row);
+      sourceCounts[source] = (sourceCounts[source] || 0) + 1;
+    }
+
     rows.push({
       competitionSlug: slug,
       file,
       rowPath: rowPathOf(json),
       rowCount: tableRows.length,
+      sourceCounts,
       sampleKeys: tableRows[0] && typeof tableRows[0] === "object" ? Object.keys(tableRows[0]) : []
     });
   }
@@ -277,11 +365,27 @@ function missingDataFor({ competitionSlug, provider, fixtureCoverage, standingsC
   return missing;
 }
 
-function nextAllowedActionFor({ provider, missingData }) {
+function nextAllowedActionFor({ provider, missingData, canonicalCoverageStatus }) {
   const status = `${provider.capabilityStatus || ""} ${provider.promotionStatus || ""}`.toLowerCase();
+
+  if (status.includes("blocked") && status.includes("standings_written")) {
+    return "capability_scoped_blocked_review";
+  }
 
   if (status.includes("blocked")) return "blocked_no_action";
   if (missingData.includes("genericPromotionContract")) return "provider_contract_repair";
+
+  if (
+    missingData.length === 0 &&
+    (
+      canonicalCoverageStatus === "local_canonical_coverage_from_non_registry_source" ||
+      canonicalCoverageStatus === "local_canonical_coverage_source_unknown" ||
+      canonicalCoverageStatus === "local_canonical_coverage_source_mixed_or_unclear"
+    )
+  ) {
+    return "local_canonical_coverage_review";
+  }
+
   if (status.includes("not_promoted") || status.includes("partial")) return "registry_only_review";
   if (missingData.length === 0) return "no_action_covered";
 
@@ -339,7 +443,14 @@ function buildReport(options) {
         standingsCoverage: standings,
         winnerFinalCoverage: winner
       });
-      const nextAllowedAction = nextAllowedActionFor({ provider, missingData });
+      const canonicalCoverageStatus = coverageStatusFor({
+        competitionSlug,
+        provider,
+        fixtureCoverage: fixture,
+        standingsCoverage: standings,
+        winnerFinalCoverage: winner
+      });
+      const nextAllowedAction = nextAllowedActionFor({ provider, missingData, canonicalCoverageStatus });
       const seasonState = inferSeasonState({
         fixtureCoverage: fixture,
         provider,
@@ -357,6 +468,9 @@ function buildReport(options) {
         hasCanonicalStandings: Boolean(standings),
         canonicalStandingsRows: standings?.rowCount || 0,
         hasCupWinnerFinalState: Boolean(winner),
+        canonicalCoverageStatus,
+        canonicalFixtureSourceCounts: fixture?.sourceCounts || {},
+        canonicalStandingsSourceCounts: standings?.sourceCounts || {},
         providerCapabilityStatus: provider.capabilityStatus,
         providerPromotionStatus: provider.promotionStatus,
         nextAllowedAction
@@ -367,9 +481,14 @@ function buildReport(options) {
         providerId: provider.providerId,
         missingData,
         nextAllowedAction,
+        canonicalCoverageStatus,
         reason: missingData.length
           ? "missing_or_blocked_items_detected_from_registry_and_local_coverage"
-          : "covered_by_current_registry_and_local_canonical_state"
+          : canonicalCoverageStatus === "local_canonical_coverage_from_non_registry_source"
+            ? "local_canonical_coverage_exists_but_not_provider_contract_promoted"
+            : canonicalCoverageStatus === "local_canonical_coverage_source_unknown"
+              ? "local_canonical_coverage_exists_but_source_unknown"
+              : "covered_by_current_registry_and_local_canonical_state"
       });
 
       promotionReadinessBoard.push({
@@ -412,7 +531,14 @@ function buildReport(options) {
       providerIds: [...new Set(missingDataBoard
         .filter((row) => row.nextAllowedAction === actionType)
         .map((row) => row.providerId))].sort(),
-      allowedNow: ["no_action_covered", "registry_only_review", "provider_contract_repair", "blocked_no_action"].includes(actionType),
+      allowedNow: [
+        "no_action_covered",
+        "registry_only_review",
+        "provider_contract_repair",
+        "blocked_no_action",
+        "capability_scoped_blocked_review",
+        "local_canonical_coverage_review"
+      ].includes(actionType),
       productionWritesAllowed: false
     }));
 
