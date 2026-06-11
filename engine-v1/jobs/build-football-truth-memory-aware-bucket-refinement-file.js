@@ -31,9 +31,14 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, JSON.stringify(value, null, 2) + "\n", "utf8");
 }
 
+function effectiveActionBucket(row) {
+  return row.memoryAwareActionBucket || row.actionBucket || row.originalActionBucket || "unknown";
+}
+
 function classifyExecution(row) {
-  const bucket = row.memoryAwareActionBucket || row.actionBucket;
+  const bucket = effectiveActionBucket(row);
   const overlay = row.memoryOverlayStatus || "no_memory_overlay";
+  const allowedNow = row.memoryAwareAllowedNow ?? row.allowedNow ?? true;
 
   if (bucket === "memory_recorded_no_review_repeat") {
     return {
@@ -54,8 +59,48 @@ function classifyExecution(row) {
   if (bucket === "standings_provider_batch_needed") {
     return {
       executionBucket: "provider_repair_batch_candidate",
-      actionableNow: true,
-      reason: "Remaining gap requires provider/parser/registry repair planning as a batch, not repeated Truth/Memory review."
+      actionableNow: Boolean(allowedNow),
+      reason: "Trusted standings provider/source signal exists; route to provider/parser/registry repair planning as a full-map batch."
+    };
+  }
+
+  if (bucket === "standings_discovery_or_provider_validation_needed") {
+    return {
+      executionBucket: "provider_discovery_validation_batch_candidate",
+      actionableNow: Boolean(allowedNow),
+      reason: "Canonical standings are missing but provider signals are absent or untrusted/noisy; route to provider discovery/validation before parser repair."
+    };
+  }
+
+  if (bucket === "fixture_or_result_provider_batch_needed") {
+    return {
+      executionBucket: "provider_repair_batch_candidate",
+      actionableNow: Boolean(allowedNow),
+      reason: "Fixture/result provider gap requires provider/parser/registry repair planning as a batch."
+    };
+  }
+
+  if (bucket === "cup_winner_final_state_needed") {
+    return {
+      executionBucket: "cup_final_winner_evidence_batch_candidate",
+      actionableNow: Boolean(allowedNow),
+      reason: "Cup final/winner state needs evidence acquisition and validation before promotion."
+    };
+  }
+
+  if (bucket === "registry_gap_review_needed") {
+    return {
+      executionBucket: "registry_gap_review_candidate",
+      actionableNow: Boolean(allowedNow),
+      reason: "Registry gap requires league discovery map / registry review, not standings provider repair."
+    };
+  }
+
+  if (bucket === "truth_review_signal_batch_needed") {
+    return {
+      executionBucket: "truth_review_batch_candidate",
+      actionableNow: Boolean(allowedNow),
+      reason: "Competition has signals but not enough trusted canonical coverage; route to Truth review batch."
     };
   }
 
@@ -75,31 +120,48 @@ function classifyExecution(row) {
     };
   }
 
+  if (bucket === "discovered_no_actionable_signal") {
+    return {
+      executionBucket: "discovered_no_action",
+      actionableNow: false,
+      reason: "Competition is discovered but has no actionable signal in this pass."
+    };
+  }
+
   return {
     executionBucket: overlay === "no_memory_overlay" ? "unclassified_no_memory_overlay" : "unclassified_memory_overlay",
     actionableNow: false,
     reason: `No explicit memory-aware refinement rule for bucket: ${bucket}`
   };
 }
-
 function buildMemoryAwareRefinement(memoryAwareBoard) {
   const rows = (memoryAwareBoard.rows || []).map((row) => {
+    const actionBucket = effectiveActionBucket(row);
     const execution = classifyExecution(row);
 
     return {
       competitionSlug: row.competitionSlug,
+      competitionType: row.competitionType,
       providerId: row.providerId,
+      providers: row.providers || [],
+      trustedProviderIds: row.trustedProviderIds || [],
+      noisyProviderSignals: row.noisyProviderSignals || [],
+      rawProviderSignals: row.rawProviderSignals || [],
       seasonState: row.seasonState,
-      originalActionBucket: row.originalActionBucket || row.actionBucket,
-      memoryOverlayStatus: row.memoryOverlayStatus,
-      memoryAwareActionBucket: row.memoryAwareActionBucket,
-      memoryAwareAllowedNow: row.memoryAwareAllowedNow,
+      priority: row.priority,
+      confidence: row.confidence,
+      actionBucket,
+      originalActionBucket: row.originalActionBucket || row.actionBucket || actionBucket,
+      memoryOverlayStatus: row.memoryOverlayStatus || "no_memory_overlay",
+      memoryAwareActionBucket: row.memoryAwareActionBucket || actionBucket,
+      memoryAwareAllowedNow: row.memoryAwareAllowedNow ?? row.allowedNow ?? true,
       executionBucket: execution.executionBucket,
       actionableNow: execution.actionableNow,
       executionReason: execution.reason,
-      memoryAwareReason: row.memoryAwareReason,
+      memoryAwareReason: row.memoryAwareReason || row.reason,
       memoryRecords: row.memoryRecords || [],
       requiredData: row.requiredData || [],
+      intentNeed: row.intentNeed,
       sourceBasis: row.sourceBasis || {},
       canonicalWrites: 0,
       productionWrite: false
@@ -118,17 +180,42 @@ function buildMemoryAwareRefinement(memoryAwareBoard) {
       row.executionBucket === "memory_recorded_blocked_until_evidence";
   });
 
-  const nextRecommendedBatch = (() => {
-    const providerRepair = rows
-      .filter((row) => row.executionBucket === "provider_repair_batch_candidate")
-      .map((row) => row.competitionSlug);
+  const executionPriority = [
+    {
+      bucket: "provider_discovery_validation_batch_candidate",
+      reason: "Start with full-map provider discovery/validation for missing standings where current signals are absent or untrusted/noisy."
+    },
+    {
+      bucket: "provider_repair_batch_candidate",
+      reason: "Trusted provider/source signals exist; plan provider/parser/registry repair as a full-map batch."
+    },
+    {
+      bucket: "truth_review_batch_candidate",
+      reason: "Run Truth review over competitions with signals but insufficient trusted canonical coverage."
+    },
+    {
+      bucket: "registry_gap_review_candidate",
+      reason: "Resolve registry gaps through League Discovery Map / registry review."
+    },
+    {
+      bucket: "cup_final_winner_evidence_batch_candidate",
+      reason: "Acquire and validate final/winner evidence for cup competitions."
+    }
+  ];
 
-    if (providerRepair.length > 0) {
-      return {
-        first: "provider_repair_batch_candidate",
-        reason: "After committed memory suppression, the remaining non-covered work is provider/parser/registry repair planning for standings gaps as a batch.",
-        competitions: providerRepair
-      };
+  const nextRecommendedBatch = (() => {
+    for (const candidate of executionPriority) {
+      const competitions = rows
+        .filter((row) => row.executionBucket === candidate.bucket && row.actionableNow)
+        .map((row) => row.competitionSlug);
+
+      if (competitions.length > 0) {
+        return {
+          first: candidate.bucket,
+          reason: candidate.reason,
+          competitions
+        };
+      }
     }
 
     return {
@@ -148,9 +235,14 @@ function buildMemoryAwareRefinement(memoryAwareBoard) {
       executionBucketCount: Object.keys(executionBuckets).length,
       actionableNowCount: actionableRows.length,
       memorySuppressedCount: memorySuppressedRows.length,
+      providerDiscoveryValidationBatchCandidateCount: executionBuckets.provider_discovery_validation_batch_candidate?.length || 0,
       providerRepairBatchCandidateCount: executionBuckets.provider_repair_batch_candidate?.length || 0,
+      truthReviewBatchCandidateCount: executionBuckets.truth_review_batch_candidate?.length || 0,
+      registryGapReviewCandidateCount: executionBuckets.registry_gap_review_candidate?.length || 0,
+      cupFinalWinnerEvidenceBatchCandidateCount: executionBuckets.cup_final_winner_evidence_batch_candidate?.length || 0,
       coveredNoActionCount: executionBuckets.covered_no_action?.length || 0,
       blockedMemoryOrProviderContractCount: executionBuckets.blocked_memory_or_provider_contract?.length || 0,
+      unclassifiedCount: (executionBuckets.unclassified_no_memory_overlay?.length || 0) + (executionBuckets.unclassified_memory_overlay?.length || 0),
       canonicalWrites: 0,
       productionWrite: false,
       dryRun: true
@@ -159,15 +251,16 @@ function buildMemoryAwareRefinement(memoryAwareBoard) {
     nextRecommendedBatch,
     rows,
     policy: {
-      purpose: "Refine memory-aware autonomy board into execution buckets so recorded memory gaps are not selected repeatedly.",
-      inputContract: "Consumes memory-aware autonomy board only.",
+      purpose: "Refine memory-aware/full-map autonomy board into execution buckets so recorded memory gaps and full-map action lanes are selected as coherent batches.",
+      inputContract: "Consumes memory-aware or full-map autonomy board rows.",
       noFetch: true,
       noSearch: true,
       noActualWrites: true,
       noCanonicalWrites: true,
       noPromotionWrites: true,
       noEndpointChasing: true,
-      noSingleLeagueDrift: true
+      noSingleLeagueDrift: true,
+      fullMapScope: true
     },
     guarantees: {
       noFetch: true,
@@ -181,10 +274,9 @@ function buildMemoryAwareRefinement(memoryAwareBoard) {
     }
   };
 }
-
 function runSelfTest() {
   const memoryAwareBoard = {
-    summary: { competitionCount: 6 },
+    summary: { competitionCount: 11 },
     rows: [
       {
         competitionSlug: "esp.1",
@@ -204,17 +296,42 @@ function runSelfTest() {
       {
         competitionSlug: "fin.1",
         memoryOverlayStatus: "no_memory_overlay",
-        memoryAwareActionBucket: "standings_provider_batch_needed"
+        actionBucket: "standings_provider_batch_needed"
+      },
+      {
+        competitionSlug: "nor.2",
+        memoryOverlayStatus: "no_memory_overlay",
+        actionBucket: "standings_discovery_or_provider_validation_needed"
+      },
+      {
+        competitionSlug: "bbb.cup",
+        memoryOverlayStatus: "no_memory_overlay",
+        actionBucket: "cup_winner_final_state_needed"
+      },
+      {
+        competitionSlug: "ggg.gap",
+        memoryOverlayStatus: "no_memory_overlay",
+        actionBucket: "registry_gap_review_needed"
+      },
+      {
+        competitionSlug: "fff.cup",
+        memoryOverlayStatus: "no_memory_overlay",
+        actionBucket: "truth_review_signal_batch_needed"
+      },
+      {
+        competitionSlug: "zzz.1",
+        memoryOverlayStatus: "no_memory_overlay",
+        actionBucket: "discovered_no_actionable_signal"
       },
       {
         competitionSlug: "nor.1",
         memoryOverlayStatus: "no_memory_overlay",
-        memoryAwareActionBucket: "no_action_covered"
+        actionBucket: "no_action_covered"
       },
       {
         competitionSlug: "sco.1",
         memoryOverlayStatus: "no_memory_overlay",
-        memoryAwareActionBucket: "blocked_no_action"
+        actionBucket: "blocked_no_action"
       }
     ]
   };
@@ -231,17 +348,35 @@ function runSelfTest() {
   if (bySlug["fin.1"].executionBucket !== "provider_repair_batch_candidate") {
     throw new Error("fin.1 should be provider repair candidate");
   }
+  if (bySlug["nor.2"].executionBucket !== "provider_discovery_validation_batch_candidate") {
+    throw new Error("nor.2 should be provider discovery/validation candidate");
+  }
+  if (bySlug["bbb.cup"].executionBucket !== "cup_final_winner_evidence_batch_candidate") {
+    throw new Error("bbb.cup should be cup final/winner evidence candidate");
+  }
+  if (bySlug["ggg.gap"].executionBucket !== "registry_gap_review_candidate") {
+    throw new Error("ggg.gap should be registry gap review candidate");
+  }
+  if (bySlug["fff.cup"].executionBucket !== "truth_review_batch_candidate") {
+    throw new Error("fff.cup should be truth review candidate");
+  }
+  if (bySlug["zzz.1"].executionBucket !== "discovered_no_action") {
+    throw new Error("zzz.1 should be discovered no-action");
+  }
   if (bySlug["nor.1"].executionBucket !== "covered_no_action") {
     throw new Error("nor.1 should remain covered");
   }
   if (bySlug["sco.1"].executionBucket !== "blocked_memory_or_provider_contract") {
     throw new Error("sco.1 should remain blocked");
   }
-  if (report.nextRecommendedBatch.first !== "provider_repair_batch_candidate") {
-    throw new Error("next recommended batch should be provider repair");
+  if (report.nextRecommendedBatch.first !== "provider_discovery_validation_batch_candidate") {
+    throw new Error("next recommended batch should be provider discovery/validation");
   }
   if (report.summary.memorySuppressedCount !== 3) {
     throw new Error(`expected 3 suppressed rows, got ${report.summary.memorySuppressedCount}`);
+  }
+  if (report.summary.unclassifiedCount !== 0) {
+    throw new Error(`expected 0 unclassified rows in self-test, got ${report.summary.unclassifiedCount}`);
   }
   if (report.guarantees.actualWrites !== 0 || report.guarantees.canonicalWrites !== 0) {
     throw new Error("read-only guarantees failed");
@@ -256,7 +391,6 @@ function runSelfTest() {
     guarantees: report.guarantees
   }, null, 2));
 }
-
 function main() {
   const args = parseArgs();
 
