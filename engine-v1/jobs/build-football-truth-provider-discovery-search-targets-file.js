@@ -1,5 +1,7 @@
 import fs from "fs";
 import path from "path";
+import { leagueName } from "../../workers/_shared/leagues-registry.js";
+import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
 
 function parseArgs(argv) {
   const args = {
@@ -55,6 +57,75 @@ function countBy(rows, getKey) {
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
+}
+
+const COVERAGE_BY_SLUG = new Map(
+  (Array.isArray(LEAGUES_COVERAGE) ? LEAGUES_COVERAGE : [])
+    .map((row) => [row.slug || row.leagueSlug || row.competitionSlug, row])
+    .filter(([slug]) => Boolean(slug))
+);
+
+function coverageForSlug(slug) {
+  return COVERAGE_BY_SLUG.get(slug) || {};
+}
+
+function humanizeCountry(value) {
+  return asText(value)
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function isFallbackRegistryName(slug, value) {
+  const name = asText(value);
+  const cleanSlug = asText(slug);
+
+  if (!name || name === cleanSlug) return true;
+  if (/^[A-Z][a-z]{2}\s+\d+$/u.test(name)) return true;
+  if (/^[A-Z][a-z]{2}\s+(Cup|Gap)$/u.test(name)) return true;
+
+  return false;
+}
+
+function usefulRegistryName(slug) {
+  const name = leagueName(slug);
+  return isFallbackRegistryName(slug, name) ? "" : name;
+}
+
+function tierDescriptor(row, coverage) {
+  const slug = asText(row.competitionSlug || row.leagueSlug);
+  const suffix = slug.split(".").at(-1);
+  const tier = Number(coverage.tier ?? row.tier ?? 0);
+
+  if (suffix === "1") return "top division";
+  if (suffix === "2") return "second division";
+  if (suffix === "3") return "third division";
+  if (Number.isFinite(tier) && tier > 0) return `tier ${tier}`;
+  return "league";
+}
+
+function searchMetadataFor(row) {
+  const slug = asText(row.competitionSlug || row.leagueSlug);
+  const coverage = coverageForSlug(slug);
+  const registryName = usefulRegistryName(slug);
+  const country = humanizeCountry(coverage.country || row.country || "");
+  const region = asText(coverage.region || row.region);
+  const type = asText(coverage.type || row.competitionType || "competition");
+  const tier = coverage.tier ?? row.tier ?? null;
+  const trust = coverage.trust ?? row.trust ?? null;
+  const tierText = tierDescriptor(row, coverage);
+
+  return {
+    slug,
+    registryName,
+    country,
+    region,
+    type,
+    tier,
+    trust,
+    tierText,
+    hasUsefulRegistryName: Boolean(registryName),
+    displayName: registryName || slug
+  };
 }
 
 function looksLikeHost(value) {
@@ -159,23 +230,43 @@ function targetIntent(row) {
 }
 
 function querySetFor(row) {
-  const slug = row.competitionSlug;
-  const type = row.competitionType || "competition";
+  const meta = searchMetadataFor(row);
+  const slug = meta.slug;
   const statePhrase = row.seasonState === "active" ? "current season" : "season";
   const hintHosts = officialHintHosts(row);
 
-  const baseQueries = [
-    `${slug} official ${type} standings table`,
-    `${slug} official league table ${statePhrase}`,
-    `${slug} football federation official standings`,
-    `${slug} soccer official standings`
-  ];
+  const identityTerms = meta.hasUsefulRegistryName
+    ? [meta.registryName, `${meta.country} ${meta.registryName}`]
+    : [
+        `${meta.country} football ${meta.tierText}`,
+        `${meta.country} football league`,
+        `${meta.country} football federation`
+      ];
 
-  const hostQueries = hintHosts.slice(0, 4).map((host) => {
-    return `site:${host} ${slug} standings table`;
+  const hostQueries = hintHosts.slice(0, 4).flatMap((host) => {
+    return identityTerms.slice(0, 2).map((term) => `site:${host} ${term} standings table`);
   });
 
-  return unique([...hostQueries, ...baseQueries]).slice(0, 8);
+  const nameQueries = meta.hasUsefulRegistryName
+    ? [
+        `${meta.registryName} official standings table`,
+        `${meta.registryName} official league table ${statePhrase}`,
+        `${meta.country} ${meta.registryName} official standings`,
+        `${meta.country} football federation ${meta.registryName} standings`
+      ]
+    : [
+        `${meta.country} football federation official standings`,
+        `${meta.country} ${meta.tierText} football league standings`,
+        `${meta.country} official league table ${statePhrase}`,
+        `${meta.country} football association league standings`,
+        `${meta.country} soccer federation standings`
+      ];
+
+  const slugFallbackQueries = [
+    `${slug} official standings table`
+  ];
+
+  return unique([...hostQueries, ...nameQueries, ...slugFallbackQueries]).slice(0, 8);
 }
 
 function buildSearchTarget(row, index, batchId) {
@@ -183,6 +274,7 @@ function buildSearchTarget(row, index, batchId) {
   const hintHosts = officialHintHosts(row);
   const queries = querySetFor(row);
   const primaryQuery = queries[0];
+  const searchMeta = searchMetadataFor(row);
 
   return {
     searchTargetId: `${batchId}:${leagueSlug}:official-standings-provider-discovery:${String(index + 1).padStart(3, "0")}`,
@@ -190,9 +282,15 @@ function buildSearchTarget(row, index, batchId) {
     searchMode: "official_provider_discovery",
     leagueSlug,
     competitionSlug: leagueSlug,
-    competitionName: row.competitionName || row.name || leagueSlug,
-    name: row.competitionName || row.name || leagueSlug,
-    competitionType: row.competitionType || "unknown",
+    competitionName: searchMeta.displayName,
+    name: searchMeta.displayName,
+    registryName: searchMeta.registryName,
+    hasUsefulRegistryName: searchMeta.hasUsefulRegistryName,
+    country: searchMeta.country,
+    region: searchMeta.region,
+    coverageTier: searchMeta.tier,
+    coverageTrust: searchMeta.trust,
+    competitionType: row.competitionType || searchMeta.type || "unknown",
     seasonState: row.seasonState || "unknown",
     priorityBand: row.priorityBand || "unknown",
     priority: row.priority ?? null,
@@ -337,7 +435,7 @@ function runSelfTest() {
     batchGroups: [
       {
         batchId: "provider-discovery-validation-0001",
-        competitions: ["nor.2", "afg.1"]
+        competitions: ["nor.2", "afg.1", "alb.2"]
       }
     ],
     discoveryValidationRows: [
@@ -368,6 +466,19 @@ function runSelfTest() {
         providerSignalClass: "has_noisy_provider_signal",
         rawProviderSignals: ["unknown"],
         noisyProviderSignals: ["facebook.com"]
+      },
+      {
+        competitionSlug: "alb.2",
+        competitionType: "league",
+        seasonState: "unknown",
+        priorityBand: "p3_broad_map",
+        priority: 999,
+        confidence: 0.7,
+        intentNeed: "official_standings",
+        executionBucket: "provider_discovery_validation_batch_candidate",
+        providerSignalClass: "has_noisy_provider_signal",
+        rawProviderSignals: [],
+        noisyProviderSignals: []
       }
     ]
   };
@@ -376,8 +487,8 @@ function runSelfTest() {
     batchId: "provider-discovery-validation-0001"
   });
 
-  if (report.summary.searchTargetCount !== 2) {
-    throw new Error("Self-test expected 2 search targets");
+  if (report.summary.searchTargetCount !== 3) {
+    throw new Error("Self-test expected 3 search targets");
   }
 
   const nor = report.searchTargetRows.find((row) => row.leagueSlug === "nor.2");
@@ -399,8 +510,38 @@ function runSelfTest() {
     throw new Error("Self-test expected generic noisy host to be rejected");
   }
 
-  if (nor.query !== "site:fotball.no nor.2 standings table") {
-    throw new Error(`Self-test expected fotball.no first query, got: ${nor.query}`);
+  if (nor.query !== "site:fotball.no OBOS-ligaen standings table") {
+    throw new Error(`Self-test expected fotball.no + OBOS-ligaen first query, got: ${nor.query}`);
+  }
+
+  if (nor.query.includes("nor.2")) {
+    throw new Error(`Self-test must not use raw slug for nor.2 after registry enrichment, got: ${nor.query}`);
+  }
+
+  const afg = report.searchTargetRows.find((row) => row.leagueSlug === "afg.1");
+  if (!afg) throw new Error("Self-test expected afg.1 target");
+
+  if (afg.hasUsefulRegistryName !== false) {
+    throw new Error("Self-test expected fallback registry name for afg.1 to be rejected");
+  }
+
+  if (!afg.query.includes("Afghanistan football federation")) {
+    throw new Error(`Self-test expected Afghanistan federation query, got: ${afg.query}`);
+  }
+
+  if (afg.query.includes("Afg 1")) {
+    throw new Error("Self-test must not query fallback registry name Afg 1");
+  }
+
+  const alb = report.searchTargetRows.find((row) => row.leagueSlug === "alb.2");
+  if (!alb) throw new Error("Self-test expected alb.2 target");
+
+  if (alb.registryName !== "Albanian First Division") {
+    throw new Error(`Self-test expected explicit registry name for alb.2, got: ${alb.registryName}`);
+  }
+
+  if (!alb.query.includes("Albanian First Division")) {
+    throw new Error(`Self-test expected Albanian First Division query, got: ${alb.query}`);
   }
 
   if (report.guarantees.noSearch !== true || report.guarantees.canonicalWrites !== 0) {
