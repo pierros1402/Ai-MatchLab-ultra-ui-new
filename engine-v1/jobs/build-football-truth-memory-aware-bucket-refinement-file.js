@@ -41,7 +41,41 @@ const LOW_VALUE_COMPETITION_SUPPRESSION_POLICY = {
   executionBucket: "suppressed_low_value_no_active_work",
   countryCodes: [
     "afg",
-    "pak"
+    "bru",
+    "cay",
+    "cok",
+    "com",
+    "dji",
+    "dma",
+    "eri",
+    "gum",
+    "lbr",
+    "lca",
+    "les",
+    "mac",
+    "mdv",
+    "mng",
+    "msr",
+    "nep",
+    "pak",
+    "png",
+    "sam",
+    "sey",
+    "skn",
+    "sol",
+    "som",
+    "sri",
+    "ssd",
+    "stp",
+    "tca",
+    "tga",
+    "tkm",
+    "tls",
+    "van",
+    "vgb",
+    "vin",
+    "vir",
+    "yem",
   ],
   countries: [
     "afghanistan",
@@ -55,7 +89,9 @@ const LOW_VALUE_COMPETITION_SUPPRESSION_POLICY = {
   ],
   notes: [
     "This is a policy overlay, not physical deletion from the league map.",
-    "Small countries are not suppressed automatically; suppression requires explicit policy membership."
+    "Small countries are not suppressed automatically; suppression requires explicit policy membership.",
+    "The v4 expansion uses country-code prefix membership for selected very low-value federations because domestic leagues, cups, and future domestic rows for these countries are expected to remain low-reliability/high-cost.",
+    "Named leagues, prior official-route candidates, Europe/Americas protected rows, and meaningful-market countries remain excluded from this suppression policy."
   ]
 };
 
