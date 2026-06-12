@@ -62,12 +62,29 @@ function targetsById(targetReport) {
   return map;
 }
 
-function classifyHost({ hostname, title, url }) {
+function classifyHost({ hostname, title, url, countryKey }) {
   const hostLower = asText(hostname).toLowerCase();
   const titleLower = asText(title).toLowerCase();
   const urlLower = asText(url).toLowerCase();
+  const countryKeyLower = asText(countryKey).toLowerCase();
 
-  if (/(sofascore|footystats|fcstats|betimate|tribuna|livescore|flashscore|soccerway|transfermarkt)/u.test(hostLower)) {
+  if (
+    countryKeyLower === "niger" &&
+    (
+      hostLower.includes("thenff.com") ||
+      titleLower.includes("nigeria football federation") ||
+      titleLower.includes("the nff official website")
+    )
+  ) {
+    return {
+      classification: "wrong_country_identity",
+      acceptAsOfficialHost: false,
+      confidence: 0.05,
+      reason: "Host/title points to Nigeria Football Federation while target country is Niger."
+    };
+  }
+
+  if (/(sofascore|footystats|fcstats|betimate|tribuna|livescore|flashscore|soccerway|transfermarkt|globalsportsarchive)/u.test(hostLower)) {
     return {
       classification: "aggregator_or_stats",
       acceptAsOfficialHost: false,
@@ -153,7 +170,8 @@ function classifyOfficialHostSearchResults(targetReport, smokeReport) {
     const verdict = classifyHost({
       hostname: row.hostname,
       title: row.title,
-      url: row.url
+      url: row.url,
+      countryKey: target.countryKey
     });
 
     return {
