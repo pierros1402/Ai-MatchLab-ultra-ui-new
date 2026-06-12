@@ -1,18 +1,63 @@
 {
   "ok": true,
-  "job": "league-season-watch-state",
-  "mode": "read_only_league_restart_watch_state",
-  "generatedAt": "2026-05-31T18:23:58.123Z",
+  "job": "write-football-truth-isl1-activity-state-canonical-file",
+  "mode": "canonical_league_season_watch_state",
+  "generatedAt": "2026-06-12T18:50:34.372Z",
   "summary": {
-    "watchedLeagueCount": 0,
-    "nextKnownFixtureDateCount": 0,
-    "canonicalWrites": 0,
-    "productionWrite": false
+    "rowCount": 1,
+    "canonicalWrites": 1,
+    "productionWrite": true,
+    "dryRun": false
   },
-  "rows": [],
+  "rows": [
+    {
+      "canonicalRecordType": "league_season_watch_activity_state",
+      "canonicalKey": "isl.1::activity_state::2026",
+      "competitionSlug": "isl.1",
+      "leagueSlug": "isl.1",
+      "season": "2026",
+      "seasonState": "active",
+      "activityState": "active_current_season",
+      "fixtureTruthState": "fixtures_available",
+      "standingsState": "official_standings_available",
+      "dailyFixtureGateState": "eligible_after_explicit_truth_approval",
+      "sourceFamily": "ksi_tournament_route",
+      "sourceUrl": "https://www.ksi.is/oll-mot/mot?id=7025510",
+      "tournamentId": "7025510",
+      "firstFixtureDate": "2026-06-14",
+      "lastFixtureDate": "2026-06-16",
+      "standingsRowCount": 12,
+      "fixtureRowCount": 5,
+      "writerState": "canonical_written",
+      "provenance": {
+        "generatedBy": "write-football-truth-isl1-activity-state-canonical-file",
+        "inputPlan": "data/football-truth/_diagnostics/isl1-activity-state-writer-dry-run-plan-2026-06-12/isl1-activity-state-writer-dry-run-plan-2026-06-12.json",
+        "writtenAt": "2026-06-12T18:50:34.372Z",
+        "dryRunAt": null
+      },
+      "writeGuards": {
+        "explicitIsl1Only": true,
+        "requiresApply": true,
+        "requiresAllowProductionWrites": true,
+        "requiresConfirmIsl1ActivityStateWrite": true,
+        "sourceFetch": false,
+        "noSearch": true,
+        "noFetch": true,
+        "noUrlFetch": true,
+        "fixtureWrites": false,
+        "resultWrites": false,
+        "standingsWrites": false,
+        "sourceReliabilityWrites": false
+      }
+    }
+  ],
   "guarantees": {
-    "canonicalWrites": 0,
-    "productionWrite": false,
-    "noCanonicalPromotion": true
-  }
+    "noSearch": true,
+    "noFetch": true,
+    "noUrlFetch": true,
+    "canonicalWrites": 1,
+    "productionWrite": true,
+    "dryRun": false
+  },
+  "updatedAt": "2026-06-12T18:50:34.372Z"
 }
