@@ -322,6 +322,208 @@ function buildSourceIndexReport(targets, sourceIndexRows, options = {}) {
   };
 }
 
+
+const PROVIDER_DISCOVERY_NON_OFFICIAL_OR_NOISE_HOST_HINTS = [
+  "facebook.com",
+  "inside.fifa.com",
+  "fifa.com",
+  "wikipedia.org",
+  "footystats.",
+  "betimate.",
+  "bbc.",
+  "soccerstats.",
+  "sofascore.",
+  "flashscore.",
+  "aiscore.",
+  "livesport.",
+  "soccerway."
+];
+
+const PROVIDER_DISCOVERY_STANDINGS_SURFACE_TERMS = [
+  "standings",
+  "standing",
+  "table",
+  "league table",
+  "points",
+  "ranking",
+  "rankings",
+  "tabellen",
+  "tabelle",
+  "classement",
+  "classification",
+  "ladder"
+];
+
+function lowerText(value) {
+  return asText(value).toLowerCase();
+}
+
+function hostnameWithoutWww(value) {
+  return lowerText(value).replace(/^www\./, "");
+}
+
+function hostnameOfSearchRow(row) {
+  const explicit = hostnameWithoutWww(row?.hostname || row?.host);
+  if (explicit) return explicit;
+
+  const rawUrl = asText(row?.url || row?.link || row?.href || row?.sourceUrl || row?.resultUrl);
+  if (!rawUrl) return "";
+
+  try {
+    return hostnameWithoutWww(new URL(rawUrl).hostname);
+  } catch {
+    return "";
+  }
+}
+
+function textHasAny(text, terms) {
+  const haystack = lowerText(text);
+  return terms.some((term) => haystack.includes(lowerText(term)));
+}
+
+function hostHasAnyHint(host, hints) {
+  const normalizedHost = hostnameWithoutWww(host);
+  return hints.some((hint) => {
+    const normalizedHint = hostnameWithoutWww(hint);
+    return normalizedHint && (
+      normalizedHost === normalizedHint ||
+      normalizedHost.endsWith(`.${normalizedHint}`) ||
+      normalizedHost.includes(normalizedHint)
+    );
+  });
+}
+
+function targetOfficialHintHosts(target) {
+  const raw = [
+    ...(Array.isArray(target?.officialHintHosts) ? target.officialHintHosts : []),
+    ...(Array.isArray(target?.officialRegistryHostnames) ? target.officialRegistryHostnames : []),
+    target?.officialHintHost,
+    target?.officialHost,
+    target?.officialProviderHost,
+    target?.hostname
+  ];
+
+  return raw.map(hostnameWithoutWww).filter(Boolean);
+}
+
+function searchRowSurfaceText(row) {
+  return [
+    row?.title,
+    row?.snippet,
+    row?.description,
+    row?.text,
+    row?.url
+  ].map(asText).join(" ");
+}
+
+function isProviderDiscoveryNoiseHost(row) {
+  return hostHasAnyHint(
+    hostnameOfSearchRow(row),
+    PROVIDER_DISCOVERY_NON_OFFICIAL_OR_NOISE_HOST_HINTS
+  );
+}
+
+function hasProviderDiscoveryStandingsSurface(row) {
+  return textHasAny(searchRowSurfaceText(row), PROVIDER_DISCOVERY_STANDINGS_SURFACE_TERMS);
+}
+
+function isUsableProviderDiscoverySearchResult(row, target = null) {
+  const host = hostnameOfSearchRow(row);
+  if (!host) return false;
+  if (isProviderDiscoveryNoiseHost(row)) return false;
+
+  const officialHints = targetOfficialHintHosts(target);
+  const officialHostSignal = officialHints.length > 0 && hostHasAnyHint(host, officialHints);
+  const standingsSurfaceSignal = hasProviderDiscoveryStandingsSurface(row);
+
+  return officialHostSignal && standingsSurfaceSignal;
+}
+
+function providerAttemptFailureProfile(result) {
+  const providerAttempts = Array.isArray(result?.attempts) ? result.attempts : [];
+  let providerBlockedAttemptCount = 0;
+  let providerZeroResultAttemptCount = 0;
+
+  for (const attempt of providerAttempts) {
+    const status = Number(attempt?.status);
+    const failureReason = lowerText(attempt?.failureReason);
+    const resultCount = Number(attempt?.resultCount || 0);
+
+    if (
+      status === 403 ||
+      status === 429 ||
+      status === 503 ||
+      failureReason.includes("403") ||
+      failureReason.includes("429") ||
+      failureReason.includes("blocked") ||
+      failureReason.includes("captcha")
+    ) {
+      providerBlockedAttemptCount += 1;
+    }
+
+    if ((status === 200 || status === 202) && resultCount === 0) {
+      providerZeroResultAttemptCount += 1;
+    }
+  }
+
+  return {
+    providerAttemptCount: providerAttempts.length,
+    providerBlockedAttemptCount,
+    providerZeroResultAttemptCount
+  };
+}
+
+function classifyProviderDiscoverySearchBatchQuality(result, target = null) {
+  const rows = Array.isArray(result?.rows) ? result.rows : [];
+  const usableResultCount = rows.filter((row) => isUsableProviderDiscoverySearchResult(row, target)).length;
+  const profile = providerAttemptFailureProfile(result);
+
+  if (rows.length === 0) {
+    if (profile.providerBlockedAttemptCount > 0) {
+      return {
+        status: "provider_blocked_or_zero_results_needs_retry",
+        providerStatus: asText(result?.status || "unknown"),
+        usableResultCount,
+        lowQualitySearchBatch: false,
+        retryNeeded: true,
+        ...profile
+      };
+    }
+
+    if (profile.providerZeroResultAttemptCount > 0) {
+      return {
+        status: "parser_zero_results_needs_retry",
+        providerStatus: asText(result?.status || "unknown"),
+        usableResultCount,
+        lowQualitySearchBatch: false,
+        retryNeeded: true,
+        ...profile
+      };
+    }
+
+    return {
+      status: asText(result?.status || "no_results"),
+      providerStatus: asText(result?.status || "unknown"),
+      usableResultCount,
+      lowQualitySearchBatch: false,
+      retryNeeded: false,
+      ...profile
+    };
+  }
+
+  const lowQualitySearchBatch = result?.ok === true && usableResultCount === 0;
+
+  return {
+    status: lowQualitySearchBatch
+      ? "low_quality_search_batch_needs_review"
+      : asText(result?.status || "unknown"),
+    providerStatus: asText(result?.status || "unknown"),
+    usableResultCount,
+    lowQualitySearchBatch,
+    retryNeeded: lowQualitySearchBatch,
+    ...profile
+  };
+}
 function rowToSearchResultFromWeb(target, row) {
   return {
     searchTargetId: asText(target.searchTargetId),
@@ -356,6 +558,12 @@ async function buildWebSearchReport(targets, options = {}) {
   const searchResultRows = [];
   const searchAttempts = [];
   const byStatus = {};
+  let usableSearchBatchCount = 0;
+  let lowQualitySearchBatchCount = 0;
+  let lowQualityRetryAttemptCount = 0;
+  let providerBlockedAttemptCount = 0;
+  let parserZeroResultAttemptCount = 0;
+  let realNoResultAttemptCount = 0;
 
   for (const target of selectedTargets) {
     const query = asText(target.query);
@@ -366,16 +574,41 @@ async function buildWebSearchReport(targets, options = {}) {
       maxChars: options.maxChars
     });
 
-    byStatus[result.status] = (byStatus[result.status] || 0) + 1;
+    const quality = classifyProviderDiscoverySearchBatchQuality(result, target);
+    const status = quality.status;
+
+    byStatus[status] = (byStatus[status] || 0) + 1;
+
+    if (quality.usableResultCount > 0) usableSearchBatchCount += 1;
+    if (quality.lowQualitySearchBatch) lowQualitySearchBatchCount += 1;
+    if (quality.retryNeeded) lowQualityRetryAttemptCount += 1;
+    if (quality.providerBlockedAttemptCount > 0) providerBlockedAttemptCount += 1;
+    if (status === "parser_zero_results_needs_retry") parserZeroResultAttemptCount += 1;
+    if (
+      Array.isArray(result.rows) &&
+      result.rows.length === 0 &&
+      quality.retryNeeded !== true &&
+      quality.providerBlockedAttemptCount === 0 &&
+      quality.providerZeroResultAttemptCount === 0
+    ) {
+      realNoResultAttemptCount += 1;
+    }
 
     searchAttempts.push({
       searchTargetId: asText(target.searchTargetId),
       leagueSlug: asText(target.leagueSlug),
       dayKey: asText(target.dayKey),
       query,
-      ok: result.ok === true,
-      status: asText(result.status),
+      ok: result.ok === true && quality.lowQualitySearchBatch !== true && quality.retryNeeded !== true,
+      providerStatus: quality.providerStatus,
+      status,
       resultCount: Array.isArray(result.rows) ? result.rows.length : 0,
+      usableResultCount: quality.usableResultCount,
+      lowQualitySearchBatch: quality.lowQualitySearchBatch,
+      retryNeeded: quality.retryNeeded,
+      providerAttemptCount: quality.providerAttemptCount,
+      providerBlockedAttemptCount: quality.providerBlockedAttemptCount,
+      providerZeroResultAttemptCount: quality.providerZeroResultAttemptCount,
       attempts: result.attempts || []
     });
 
@@ -396,6 +629,13 @@ async function buildWebSearchReport(targets, options = {}) {
       searchTargetCount: targets.length,
       selectedSearchTargetCount: selectedTargets.length,
       searchResultRowCount: searchResultRows.length,
+      searchAttemptCount: searchAttempts.length,
+      usableSearchBatchCount,
+      lowQualitySearchBatchCount,
+      lowQualityRetryAttemptCount,
+      providerBlockedAttemptCount,
+      parserZeroResultAttemptCount,
+      realNoResultAttemptCount,
       providerConfigured: true,
       providerMissing: false,
       sourceIndexProvided: false,
@@ -526,6 +766,66 @@ async function runSelfTest() {
   if (indexReport.summary.searchResultRowCount !== 1) throw new Error("expected 1 source-index row");
   if (indexReport.searchResultRows[0].url !== "https://www.slgr.gr/en/schedule/") throw new Error("unexpected collected URL");
   if (indexReport.guarantees.usesOnlyProvidedSourceIndexRows !== true) throw new Error("must use only source index rows");
+  const qualityOfficial = classifyProviderDiscoverySearchBatchQuality({
+    ok: true,
+    status: "ok",
+    rows: [
+      {
+        title: "OBOS-ligaen 2025 - Norges Fotballforbund",
+        url: "https://www.fotball.no/fotballdata/turnering/hjem/?fiksId=199422&underside=tabellen",
+        hostname: "fotball.no"
+      }
+    ],
+    attempts: [{ provider: "self_test", status: 200, resultCount: 1 }]
+  }, { officialHintHosts: ["fotball.no"] });
+
+  if (qualityOfficial.status !== "ok" || qualityOfficial.usableResultCount !== 1) {
+    throw new Error("expected official standings search result to be usable");
+  }
+
+  const qualityNoise = classifyProviderDiscoverySearchBatchQuality({
+    ok: true,
+    status: "ok",
+    rows: [
+      {
+        title: "League table by aggregator",
+        url: "https://www.sofascore.com/football/tournament/test",
+        hostname: "sofascore.com"
+      }
+    ],
+    attempts: [{ provider: "self_test", status: 200, resultCount: 1 }]
+  }, { officialHintHosts: ["official.example"] });
+
+  if (qualityNoise.status !== "low_quality_search_batch_needs_review") {
+    throw new Error("expected non-official aggregator result to require review");
+  }
+
+  const qualityZero = classifyProviderDiscoverySearchBatchQuality({
+    ok: false,
+    status: "no_results_or_blocked",
+    rows: [],
+    attempts: [
+      { provider: "duckduckgo_html", status: 202, resultCount: 0 },
+      { provider: "bing_html", status: 200, resultCount: 0 }
+    ]
+  }, { officialHintHosts: ["official.example"] });
+
+  if (qualityZero.status !== "parser_zero_results_needs_retry" || qualityZero.retryNeeded !== true) {
+    throw new Error("expected provider 200/202 zero-result batch to need retry");
+  }
+
+  const qualityBlocked = classifyProviderDiscoverySearchBatchQuality({
+    ok: false,
+    status: "no_results_or_blocked",
+    rows: [],
+    attempts: [
+      { provider: "duckduckgo_html", status: 403, resultCount: 0, failureReason: "http_403" }
+    ]
+  }, { officialHintHosts: ["official.example"] });
+
+  if (qualityBlocked.status !== "provider_blocked_or_zero_results_needs_retry" || qualityBlocked.retryNeeded !== true) {
+    throw new Error("expected blocked provider batch to need retry");
+  }
 
   return {
     ok: true,
