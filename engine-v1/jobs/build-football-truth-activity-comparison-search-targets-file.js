@@ -113,7 +113,7 @@ function titleCaseCountry(value) {
 
 function buildQuery(target, name, coverage) {
   const layer = asText(target.comparisonLayer);
-  const country = titleCaseCountry(coverage?.country || target.countryCode);
+  const country = titleCaseCountry(coverage?.country || target.countryName || target.countryCode);
   const countryPart = country ? ` ${country}` : "";
   const display = name || asText(target.competitionSlug);
 
@@ -126,7 +126,7 @@ function buildQuery(target, name, coverage) {
 
 function buildRunnerTarget(target, index, registry, coverageMap) {
   const slug = asText(target.competitionSlug);
-  const name = registry.get(slug) || slug;
+  const name = registry.get(slug) || asText(target.displayName || target.name || target.searchName) || slug;
   const coverage = coverageMap.get(slug) || null;
   const layer = asText(target.comparisonLayer);
 
@@ -141,10 +141,10 @@ function buildRunnerTarget(target, index, registry, coverageMap) {
     leagueSlug: slug,
     competitionType: asText(target.competitionType || coverage?.type),
     countryCode: asText(target.countryCode),
-    countryName: titleCaseCountry(coverage?.country || target.countryCode),
-    region: asText(coverage?.region),
-    tier: coverage?.tier ?? null,
-    trust: coverage?.trust ?? null,
+    countryName: titleCaseCountry(coverage?.country || target.countryName || target.countryCode),
+    region: asText(coverage?.region || target.region),
+    tier: coverage?.tier ?? target.tier ?? null,
+    trust: coverage?.trust ?? target.trust ?? null,
     displayName: name,
     name,
     comparisonLayer: layer,
