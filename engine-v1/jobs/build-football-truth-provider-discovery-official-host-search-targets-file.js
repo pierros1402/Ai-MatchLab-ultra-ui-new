@@ -9,6 +9,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     input: "",
     output: "",
     limitCountries: 0,
+    countryStartIndex: 0,
     queriesPerCountry: 4,
     includeRowsWithExistingHints: false
   };
@@ -20,6 +21,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     else if (arg === "--input") args.input = argv[++index];
     else if (arg === "--output") args.output = argv[++index];
     else if (arg === "--limit-countries") args.limitCountries = Number(argv[++index]);
+    else if (arg === "--country-start-index") args.countryStartIndex = Number(argv[++index]);
     else if (arg === "--queries-per-country") args.queriesPerCountry = Number(argv[++index]);
     else if (arg === "--include-rows-with-existing-hints") args.includeRowsWithExistingHints = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -27,6 +29,10 @@ function parseArgs(argv = process.argv.slice(2)) {
 
   if (!Number.isInteger(args.limitCountries) || args.limitCountries < 0) {
     throw new Error(`Invalid --limit-countries: ${args.limitCountries}`);
+  }
+
+  if (!Number.isInteger(args.countryStartIndex) || args.countryStartIndex < 0) {
+    throw new Error(`Invalid --country-start-index: ${args.countryStartIndex}`);
   }
 
   if (!Number.isInteger(args.queriesPerCountry) || args.queriesPerCountry <= 0) {
@@ -227,9 +233,11 @@ function buildOfficialHostSearchTargets(input, options = {}) {
     includeRowsWithExistingHints: options.includeRowsWithExistingHints === true
   });
 
+  const countryStartIndex = options.countryStartIndex || 0;
+  const remainingGroups = allGroups.slice(countryStartIndex);
   const selectedGroups = options.limitCountries > 0
-    ? allGroups.slice(0, options.limitCountries)
-    : allGroups;
+    ? remainingGroups.slice(0, options.limitCountries)
+    : remainingGroups;
 
   const queriesPerCountry = options.queriesPerCountry || 4;
   const searchTargetRows = [];
@@ -250,6 +258,7 @@ function buildOfficialHostSearchTargets(input, options = {}) {
     inputSummary: input.summary || {},
     selection: {
       requestedLimitCountries: options.limitCountries || 0,
+      countryStartIndex: options.countryStartIndex || 0,
       queriesPerCountry,
       includeRowsWithExistingHints: options.includeRowsWithExistingHints === true,
       selectedCountryCount: selectedGroups.length,
@@ -355,6 +364,7 @@ function runSelfTest() {
 
   const report = buildOfficialHostSearchTargets(input, {
     limitCountries: 2,
+    countryStartIndex: 1,
     queriesPerCountry: 3
   });
 
@@ -374,8 +384,8 @@ function runSelfTest() {
     throw new Error(`Self-test expected 2 country groups without hints, got ${report.summary.countryGroupCount}`);
   }
 
-  if (report.summary.searchTargetCount !== 6) {
-    throw new Error(`Self-test expected 6 search targets, got ${report.summary.searchTargetCount}`);
+  if (report.summary.searchTargetCount !== 3) {
+    throw new Error(`Self-test expected 3 search targets after countryStartIndex offset, got ${report.summary.searchTargetCount}`);
   }
 
   const first = report.searchTargetRows[0];
@@ -419,6 +429,7 @@ function main() {
   const input = readJson(args.input);
   const report = buildOfficialHostSearchTargets(input, {
     limitCountries: args.limitCountries,
+    countryStartIndex: args.countryStartIndex,
     queriesPerCountry: args.queriesPerCountry,
     includeRowsWithExistingHints: args.includeRowsWithExistingHints
   });
