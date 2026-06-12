@@ -9,7 +9,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     input: "",
     output: "",
     limitCompetitions: 0,
-    queriesPerCompetition: 3
+    queriesPerCompetition: 3,
+    queryStartIndex: 0
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -20,6 +21,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     else if (arg === "--output") args.output = argv[++index];
     else if (arg === "--limit-competitions") args.limitCompetitions = Number(argv[++index]);
     else if (arg === "--queries-per-competition") args.queriesPerCompetition = Number(argv[++index]);
+    else if (arg === "--query-start-index") args.queryStartIndex = Number(argv[++index]);
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
@@ -29,6 +31,10 @@ function parseArgs(argv = process.argv.slice(2)) {
 
   if (!Number.isInteger(args.queriesPerCompetition) || args.queriesPerCompetition <= 0) {
     throw new Error(`Invalid --queries-per-competition: ${args.queriesPerCompetition}`);
+  }
+
+  if (!Number.isInteger(args.queryStartIndex) || args.queryStartIndex < 0) {
+    throw new Error(`Invalid --query-start-index: ${args.queryStartIndex}`);
   }
 
   return args;
@@ -154,13 +160,15 @@ function buildProviderDiscoveryRetrySearchTargets(input, options = {}) {
     : allRetryRows;
 
   const queriesPerCompetition = options.queriesPerCompetition || 3;
+  const queryStartIndex = options.queryStartIndex || 0;
   const searchTargetRows = [];
 
   for (const row of selectedRetryRows) {
-    const queries = rowQueryList(row).slice(0, queriesPerCompetition);
+    const allQueries = rowQueryList(row);
+    const queries = allQueries.slice(queryStartIndex, queryStartIndex + queriesPerCompetition);
 
     for (let queryIndex = 0; queryIndex < queries.length; queryIndex += 1) {
-      searchTargetRows.push(buildRetrySearchTarget(row, queries[queryIndex], queryIndex));
+      searchTargetRows.push(buildRetrySearchTarget(row, queries[queryIndex], queryStartIndex + queryIndex));
     }
   }
 
@@ -174,6 +182,7 @@ function buildProviderDiscoveryRetrySearchTargets(input, options = {}) {
       requestedLimitCompetitions: options.limitCompetitions || 0,
       selectedCompetitionCount: selectedRetryRows.length,
       queriesPerCompetition,
+      queryStartIndex,
       expandedSearchTargetCount: searchTargetRows.length
     },
     summary: {
@@ -185,6 +194,7 @@ function buildProviderDiscoveryRetrySearchTargets(input, options = {}) {
       byNameConfidence: countBy(searchTargetRows, (row) => row.nameConfidence),
       byRegion: countBy(searchTargetRows, (row) => row.region),
       totalQueryCount: searchTargetRows.length,
+      queryStartIndex,
       sourceFetch: false,
       noSearch: true,
       noFetch: true,
@@ -269,7 +279,8 @@ function runSelfTest() {
 
   const report = buildProviderDiscoveryRetrySearchTargets(input, {
     limitCompetitions: 1,
-    queriesPerCompetition: 2
+    queriesPerCompetition: 2,
+    queryStartIndex: 1
   });
 
   if (report.summary.inputRetryRowCount !== 2) {
@@ -289,8 +300,12 @@ function runSelfTest() {
     throw new Error("Self-test expected ang.1 first target");
   }
 
-  if (first.query !== "Angola football federation official standings") {
-    throw new Error(`Self-test unexpected first query: ${first.query}`);
+  if (first.query !== "\"Angola top division\" official standings") {
+    throw new Error(`Self-test unexpected first query after query-start-index: ${first.query}`);
+  }
+
+  if (!first.searchTargetId.endsWith(":002")) {
+    throw new Error(`Self-test expected query-start-index to preserve original query ordinal in id, got: ${first.searchTargetId}`);
   }
 
   if (first.queries.length !== 1) {
@@ -329,7 +344,8 @@ function main() {
   const input = readJson(args.input);
   const report = buildProviderDiscoveryRetrySearchTargets(input, {
     limitCompetitions: args.limitCompetitions,
-    queriesPerCompetition: args.queriesPerCompetition
+    queriesPerCompetition: args.queriesPerCompetition,
+    queryStartIndex: args.queryStartIndex
   });
 
   writeJson(args.output, report);
