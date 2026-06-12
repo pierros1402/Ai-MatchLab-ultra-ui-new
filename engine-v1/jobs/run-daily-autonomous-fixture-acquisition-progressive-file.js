@@ -530,6 +530,7 @@ function buildPaths(baseDir, date) {
     plan: path.join(baseDir, `active-league-plan-${date}.json`),
     workset: path.join(baseDir, `autonomous-workset-${date}.json`),
     allTargets: path.join(baseDir, `autonomous-targets-all-${date}.json`),
+    dailyActivityLearningPlan: path.join(baseDir, `daily-league-activity-learning-plan-${date}.json`),
     wave1Targets: path.join(baseDir, `wave1-targets-${date}.json`),
     wave1Search: path.join(baseDir, `wave1-search-results-${date}.json`),
     wave1SearchDir: path.join(baseDir, "wave1-search-batches"),
@@ -695,8 +696,90 @@ function runPipeline(args) {
     "--output", paths.allTargets
   ], "autonomous source candidate targets"));
 
+  steps.push(runNodeJob("build-football-truth-daily-league-activity-learning-plan-file.js", [
+    "--workset", paths.workset,
+    "--targets", paths.allTargets,
+    "--date", args.date,
+    "--output", paths.dailyActivityLearningPlan
+  ], "daily league activity learning plan"));
+
   const workset = readJson(paths.workset);
   const allTargets = readJson(paths.allTargets);
+  const dailyActivityLearningPlan = readJson(paths.dailyActivityLearningPlan);
+  const readyForTargetDateFixtureAcquisitionLeagueCount =
+    dailyActivityLearningPlan.summary?.readyForTargetDateFixtureAcquisitionLeagueCount || 0;
+
+  if (readyForTargetDateFixtureAcquisitionLeagueCount < 1) {
+    const outputPath = args.output
+      ? path.resolve(args.output)
+      : path.join(outputDir, `daily-autonomous-fixture-acquisition-progressive-${args.date}.json`);
+
+    const report = {
+      ok: true,
+      job: "run-daily-autonomous-fixture-acquisition-progressive-file",
+      mode: "read_only_daily_activity_learning_blocked_before_fixture_acquisition",
+      generatedAt: new Date().toISOString(),
+      date: args.date,
+      wave: args.wave,
+      sourceInput: {
+        inputPlanProvided: Boolean(args.inputPlan),
+        sourceIndexProvided: Boolean(args.sourceIndex),
+        allowSearch: args.allowSearch === true,
+        allowFetch: false
+      },
+      summary: {
+        selectedLeagueCount: dailyActivityLearningPlan.summary?.inputWorkRowCount || 0,
+        activityLearningLeagueCount: dailyActivityLearningPlan.summary?.activityLearningLeagueCount || 0,
+        fixtureAcquisitionBlockedLeagueCount: dailyActivityLearningPlan.summary?.fixtureAcquisitionBlockedLeagueCount || 0,
+        readyForTargetDateFixtureAcquisitionLeagueCount,
+        activityLearningTargetRowCount: dailyActivityLearningPlan.summary?.activityLearningTargetRowCount || 0,
+        blockedBeforeSearchWave: true,
+        blockedBeforeFetch: true,
+        requiredBeforeFixtureFetch: "learn_day_activity_or_season_state",
+        searchExecuted: false,
+        fetchExecuted: false,
+        sourceFetch: false,
+        canonicalWrites: 0,
+        productionWrite: false,
+        dryRun: true
+      },
+      policy: {
+        fixtureAcquisitionRequiresKnownDayActivityState: true,
+        missingDayActivityDoesNotMeanActive: true,
+        missingDayActivityDoesNotMeanNoFixtures: true,
+        noSearchWaveWhenAllSelectedLeaguesNeedActivityLearning: true,
+        noCanonicalPromotionFromActivityLearningPlan: true
+      },
+      paths: {
+        outputDir,
+        ...paths,
+        output: outputPath
+      },
+      dailyActivityLearningPlan: {
+        summary: dailyActivityLearningPlan.summary,
+        policy: dailyActivityLearningPlan.policy,
+        activityLearningRows: dailyActivityLearningPlan.activityLearningRows,
+        fixtureAcquisitionBlockedRows: dailyActivityLearningPlan.fixtureAcquisitionBlockedRows,
+        readyForTargetDateFixtureAcquisitionRows: dailyActivityLearningPlan.readyForTargetDateFixtureAcquisitionRows
+      },
+      executedSteps: steps,
+      guarantees: {
+        searchRequiresExplicitAllowSearchOrSourceIndex: true,
+        fetchRequiresExplicitAllowFetch: true,
+        sourceFetch: false,
+        noFetch: true,
+        noUrlFetch: true,
+        noCanonicalPromotion: true,
+        canonicalWrites: 0,
+        productionWrite: false,
+        dryRun: true
+      }
+    };
+
+    writeJson(outputPath, report);
+    return { report, outputPath };
+  }
+
   const workRows = selectRows(workset, ["workRows"]);
   let selectedLeagues = uniqueLeagues(workRows);
   const rawTargetRows = selectRows(allTargets, ["searchTargetRows"]);
