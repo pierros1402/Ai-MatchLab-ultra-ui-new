@@ -203,6 +203,98 @@ function runCollectJob(args, timeoutMs) {
   });
 }
 
+function buildSearchHealthAssessment({
+  selectedSearchTargetCount,
+  searchResultRowCount,
+  searchAttempts,
+  failedBatchCount
+}) {
+  const attempts = Array.isArray(searchAttempts) ? searchAttempts : [];
+  const selectedCount = Number(selectedSearchTargetCount || 0);
+  const resultRowCount = Number(searchResultRowCount || 0);
+  const failedCount = Number(failedBatchCount || 0);
+
+  const retryNeededAttemptCount = attempts.filter((attempt) => attempt.retryNeeded === true).length;
+  const parserZeroResultAttemptCount = attempts.filter((attempt) => asText(attempt.status) === "parser_zero_results_needs_retry").length;
+  const providerBlockedOrZeroAttemptCount = attempts.filter((attempt) => asText(attempt.status) === "provider_blocked_or_zero_results_needs_retry").length;
+  const lowQualitySearchBatchCount = attempts.filter((attempt) => asText(attempt.status) === "low_quality_search_batch_needs_review").length;
+  const realNoResultAttemptCount = attempts.filter((attempt) => {
+    const status = asText(attempt.status);
+    return attempt.retryNeeded !== true &&
+      attempt.providerBlockedAttemptCount === 0 &&
+      attempt.providerZeroResultAttemptCount === 0 &&
+      (status === "no_results" || status === "web_search_no_results_or_blocked");
+  }).length;
+
+  const retryDominatedAttemptCount =
+    retryNeededAttemptCount +
+    parserZeroResultAttemptCount +
+    providerBlockedOrZeroAttemptCount +
+    lowQualitySearchBatchCount;
+
+  const attemptCount = attempts.length;
+  const retryRate = attemptCount > 0 ? retryDominatedAttemptCount / attemptCount : 0;
+
+  const allAttemptsNeedRetry =
+    attemptCount > 0 &&
+    retryNeededAttemptCount === attemptCount &&
+    realNoResultAttemptCount === 0;
+
+  const zeroRowsFromRetryOnly =
+    resultRowCount === 0 &&
+    attemptCount > 0 &&
+    retryDominatedAttemptCount > 0 &&
+    realNoResultAttemptCount === 0;
+
+  const bulkRetryDominated =
+    selectedCount >= 20 &&
+    attemptCount > 0 &&
+    retryRate >= 0.8;
+
+  const zeroRowsWithoutAttemptTelemetry =
+    resultRowCount === 0 &&
+    attemptCount === 0;
+
+  const searchProviderBulkStateTrusted =
+    failedCount === 0 &&
+    zeroRowsFromRetryOnly !== true &&
+    bulkRetryDominated !== true &&
+    allAttemptsNeedRetry !== true &&
+    zeroRowsWithoutAttemptTelemetry !== true;
+
+  const status = searchProviderBulkStateTrusted
+    ? "trusted"
+    : "untrusted_search_health_needs_retry_or_provider_repair";
+
+  const reasons = [];
+  if (failedCount > 0) reasons.push("batch_failures_present");
+  if (zeroRowsFromRetryOnly) reasons.push("zero_rows_from_retry_or_blocked_attempts_only");
+  if (bulkRetryDominated) reasons.push("bulk_retry_dominated_attempts");
+  if (allAttemptsNeedRetry) reasons.push("all_attempts_need_retry");
+  if (zeroRowsWithoutAttemptTelemetry) reasons.push("zero_rows_without_attempt_telemetry");
+
+  return {
+    status,
+    searchProviderBulkStateTrusted,
+    selectedSearchTargetCount: selectedCount,
+    searchResultRowCount: resultRowCount,
+    searchAttemptCount: attemptCount,
+    retryNeededAttemptCount,
+    retryDominatedAttemptCount,
+    parserZeroResultAttemptCount,
+    providerBlockedOrZeroAttemptCount,
+    lowQualitySearchBatchCount,
+    realNoResultAttemptCount,
+    retryRate,
+    failedBatchCount: failedCount,
+    allAttemptsNeedRetry,
+    zeroRowsFromRetryOnly,
+    bulkRetryDominated,
+    zeroRowsWithoutAttemptTelemetry,
+    zeroResultDoesNotImplyAbsence: searchProviderBulkStateTrusted !== true,
+    reasons
+  };
+}
 function buildProgressReport(state, status) {
   const searchResultRowCount = state.completedBatches.reduce(
     (sum, row) => sum + Number(row.searchResultRowCount || 0),
@@ -526,14 +618,26 @@ function runBatchPipeline(args) {
     byStatus[key] = (byStatus[key] || 0) + 1;
   }
 
+  const searchHealth = buildSearchHealthAssessment({
+    selectedSearchTargetCount: selectedTargets.length,
+    searchResultRowCount: mergedSearchResultRows.length,
+    searchAttempts: mergedSearchAttempts,
+    failedBatchCount: state.failedBatches.length
+  });
+
+  const finalStatus = state.failedBatches.length > 0
+    ? "completed_with_batch_failures"
+    : (
+      searchHealth.searchProviderBulkStateTrusted !== true
+        ? "completed_untrusted_search_health"
+        : (mergedSearchResultRows.length > 0 ? "completed" : "completed_no_results")
+    );
   const finalReport = {
     ok: state.failedBatches.length === 0 && mergedSearchResultRows.length > 0,
     job: "run-fixture-league-date-autonomous-search-batches-file",
     mode: "read_only_autonomous_search_batch_orchestrator",
     generatedAt: new Date().toISOString(),
-    status: state.failedBatches.length > 0
-      ? "completed_with_batch_failures"
-      : (mergedSearchResultRows.length > 0 ? "completed" : "completed_no_results"),
+    status: finalStatus,
     summary: {
       searchTargetCount: allTargets.length,
       selectedSearchTargetCount: selectedTargets.length,
@@ -547,6 +651,7 @@ function runBatchPipeline(args) {
       canonicalWrites: 0,
       productionWrite: false,
       dryRun: true,
+      searchHealth,
       byStatus
     },
     guarantees: {
