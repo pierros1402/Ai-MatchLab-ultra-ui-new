@@ -226,11 +226,13 @@ function buildSearchHealthAssessment({
       (status === "no_results" || status === "web_search_no_results_or_blocked");
   }).length;
 
-  const retryDominatedAttemptCount =
-    retryNeededAttemptCount +
-    parserZeroResultAttemptCount +
-    providerBlockedOrZeroAttemptCount +
-    lowQualitySearchBatchCount;
+  const retryDominatedAttemptCount = attempts.filter((attempt) => {
+    const status = asText(attempt.status);
+    return attempt.retryNeeded === true ||
+      status === "parser_zero_results_needs_retry" ||
+      status === "provider_blocked_or_zero_results_needs_retry" ||
+      status === "low_quality_search_batch_needs_review";
+  }).length;
 
   const attemptCount = attempts.length;
   const retryRate = attemptCount > 0 ? retryDominatedAttemptCount / attemptCount : 0;
