@@ -98,6 +98,7 @@ const FAMILY_CONFIGS = {
     rawSourceAllowlistHints: ["loi", "ajax", "league-of-ireland", "irl.1", "irl.2"],
     selectors: {
       fixtureResultRows: [
+        "normalizedRows",
         "fixtures",
         "fixtureRows",
         "resultRows",
@@ -110,6 +111,7 @@ const FAMILY_CONFIGS = {
         "response.matches"
       ],
       standingsRows: [
+        "normalizedRows",
         "standings",
         "standingsRows",
         "tableRows",
