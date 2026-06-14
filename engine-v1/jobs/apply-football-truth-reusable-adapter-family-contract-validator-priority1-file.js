@@ -141,22 +141,41 @@ function collectArraysAndScalars(root) {
   return { arrays, scalars };
 }
 
-function arrayLooksLikeFixtureOrResult(arrayEntry) {
-  const p = arrayEntry.path.toLowerCase();
-  if (!/(fixture|fixtures|match|matches|result|results)/i.test(p)) return false;
-  if (arrayEntry.length === 0) return false;
+function selectorPathMatches(arrayPath, selectorPaths = []) {
+  const normalizedArrayPath = String(arrayPath).toLowerCase();
 
-  const text = JSON.stringify(arrayEntry.sample).toLowerCase();
-  return /date|time|kickoff|home|away|team|score|status|fixture|match|result/.test(text);
+  return selectorPaths.some((selectorPath) => {
+    const normalizedSelector = String(selectorPath).toLowerCase();
+    return (
+      normalizedArrayPath === normalizedSelector ||
+      normalizedArrayPath.endsWith(`.${normalizedSelector}`) ||
+      normalizedArrayPath.includes(`.${normalizedSelector}.`) ||
+      normalizedArrayPath.includes(`${normalizedSelector}[`) ||
+      normalizedArrayPath.endsWith(`.${normalizedSelector.replaceAll(".", ".")}`)
+    );
+  });
 }
 
-function arrayLooksLikeStandings(arrayEntry) {
+function arrayLooksLikeFixtureOrResult(arrayEntry, selectorPaths = []) {
   const p = arrayEntry.path.toLowerCase();
-  if (!/(standing|standings|table|rank|leagueTable|classification)/i.test(p)) return false;
+  const selectorMatched = selectorPathMatches(arrayEntry.path, selectorPaths);
+
+  if (!selectorMatched && !/(fixture|fixtures|match|matches|result|results|games)/i.test(p)) return false;
   if (arrayEntry.length === 0) return false;
 
   const text = JSON.stringify(arrayEntry.sample).toLowerCase();
-  return /rank|position|team|played|points|pts|won|draw|lost|goaldifference|goal/.test(text);
+  return /date|time|kickoff|home|away|team|score|status|fixture|match|result|game/.test(text);
+}
+
+function arrayLooksLikeStandings(arrayEntry, selectorPaths = []) {
+  const p = arrayEntry.path.toLowerCase();
+  const selectorMatched = selectorPathMatches(arrayEntry.path, selectorPaths);
+
+  if (!selectorMatched && !/(standing|standings|table|rank|leaguetable|classification|sarjataulukko|seriestable)/i.test(p)) return false;
+  if (arrayEntry.length === 0) return false;
+
+  const text = JSON.stringify(arrayEntry.sample).toLowerCase();
+  return /rank|position|team|played|points|pts|won|draw|lost|goaldifference|goal|club|name/.test(text);
 }
 
 function extractDateCandidatesFromValue(value) {
@@ -171,11 +190,11 @@ function dateCmp(a, b) {
   return String(a).localeCompare(String(b));
 }
 
-function collectDateSignals(arrays, scalars, targetDate) {
+function collectDateSignals(arrays, scalars, targetDate, fixtureSelectorPaths = []) {
   const dates = new Set();
 
   for (const arrayEntry of arrays) {
-    if (!arrayLooksLikeFixtureOrResult(arrayEntry)) continue;
+    if (!arrayLooksLikeFixtureOrResult(arrayEntry, fixtureSelectorPaths)) continue;
     for (const date of extractDateCandidatesFromValue(arrayEntry.sample)) dates.add(date);
   }
 
@@ -199,7 +218,7 @@ function collectDateSignals(arrays, scalars, targetDate) {
   };
 }
 
-function extractSeasonStateCandidate(scalars) {
+function extractSeasonStateCandidate(scalars, seasonStateSelectorPaths = []) {
   const candidates = [];
 
   for (const scalar of scalars) {
@@ -215,6 +234,7 @@ function extractSeasonStateCandidate(scalars) {
       ((/fixture|match|result/i.test(p)) && /\.status$/i.test(p));
 
     const isSeasonLevelStatePath =
+      selectorPathMatches(p, seasonStateSelectorPaths) ||
       /seasonState|seasonStatus|competitionPhase|season\.state|season\.status|competition\.state|competition\.status/i.test(p);
 
     const valueLooksLikeState =
@@ -269,16 +289,24 @@ function validateCompetitionFromFiles({ row, allFiles, targetDate }) {
     hasFutureDateSignal: false
   };
 
+  const fixtureSelectorPaths = row.selectors?.fixtureResultRows || [];
+  const standingsSelectorPaths = row.selectors?.standingsRows || [];
+  const seasonStateSelectorPaths = row.selectors?.seasonState || [];
+
   for (const filePath of candidateFiles) {
     const json = readJsonIfPossible(filePath);
     if (!json) continue;
 
     const { arrays, scalars } = collectArraysAndScalars(json);
 
-    const fixtureArrays = arrays.filter(arrayLooksLikeFixtureOrResult);
-    const standingsArrays = arrays.filter(arrayLooksLikeStandings);
-    const dateSignals = collectDateSignals(arrays, scalars, targetDate);
-    const seasonStateCandidate = extractSeasonStateCandidate(scalars);
+    const fixtureArrays = arrays.filter((arrayEntry) =>
+      arrayLooksLikeFixtureOrResult(arrayEntry, fixtureSelectorPaths)
+    );
+    const standingsArrays = arrays.filter((arrayEntry) =>
+      arrayLooksLikeStandings(arrayEntry, standingsSelectorPaths)
+    );
+    const dateSignals = collectDateSignals(arrays, scalars, targetDate, fixtureSelectorPaths);
+    const seasonStateCandidate = extractSeasonStateCandidate(scalars, seasonStateSelectorPaths);
 
     if (fixtureArrays.length > 0) structuredFixtureOrResultRowsPresent = true;
     if (standingsArrays.length > 0) structuredStandingsRowsPresent = true;
