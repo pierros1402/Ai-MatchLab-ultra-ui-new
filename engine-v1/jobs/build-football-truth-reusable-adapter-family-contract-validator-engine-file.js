@@ -45,9 +45,12 @@ const FAMILY_CONFIGS = {
     rawSourceAllowlistHints: ["torneopal", "palloliitto", "fin.1", "fin.2"],
     selectors: {
       fixtureResultRows: [
+        "matches",
+        "normalizedFixtureRows",
+        "normalizedResultRows",
+        "normalizedScheduledRows",
         "fixtureRows",
         "resultRows",
-        "matches",
         "fixtures",
         "games",
         "data.matches",
@@ -145,7 +148,17 @@ const FAMILY_CONFIGS = {
     rawSourceAllowlistHints: ["spfl", "opta", "sco.1", "sco.2"],
     selectors: {
       fixtureResultRows: ["fixtureRows", "resultRows", "matches", "fixtures"],
-      standingsRows: ["standingsRows", "tableRows", "leagueTable"],
+      standingsRows: [
+        "standingsRows",
+        "validatedStandingsEvidenceRows",
+        "proposedStandingsFiles",
+        "proposedStandingsObjects.sco.1.phaseTables.regular",
+        "proposedStandingsObjects.sco.1.table",
+        "proposedStandingsObjects.sco.2.phaseTables.regular",
+        "proposedStandingsObjects.sco.2.table",
+        "tableRows",
+        "leagueTable"
+      ],
       seasonState: [
         "seasonState",
         "seasonStatus",
