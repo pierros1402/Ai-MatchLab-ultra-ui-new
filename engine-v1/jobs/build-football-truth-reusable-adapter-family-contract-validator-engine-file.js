@@ -44,26 +44,100 @@ const FAMILY_CONFIGS = {
     competitions: ["fin.1", "fin.2"],
     rawSourceAllowlistHints: ["torneopal", "palloliitto", "fin.1", "fin.2"],
     selectors: {
-      fixtureResultRows: ["fixtureRows", "resultRows", "matches", "fixtures"],
-      standingsRows: ["standingsRows", "tableRows", "leagueTable"],
-      seasonState: ["seasonState", "seasonStatus", "competitionPhase"],
+      fixtureResultRows: [
+        "fixtureRows",
+        "resultRows",
+        "matches",
+        "fixtures",
+        "games",
+        "data.matches",
+        "data.fixtures"
+      ],
+      standingsRows: [
+        "standings",
+        "standingsRows",
+        "tableRows",
+        "leagueTable",
+        "seriesTable",
+        "sarjataulukko",
+        "data.standings",
+        "data.table",
+        "payload.standings",
+        "payload.table"
+      ],
+      seasonState: [
+        "seasonState",
+        "seasonStatus",
+        "competitionPhase",
+        "season.state",
+        "season.status",
+        "competition.state",
+        "competition.status",
+        "series.status",
+        "tournament.status",
+        "metadata.seasonStatus"
+      ],
       restartDate: ["nextSeasonStartDate", "nextSeasonRestartDate", "restartDate", "seasonStartDate"]
     },
     stateLevelOnlySelectorHints: ["seasonState", "seasonStatus", "competitionPhase"],
-    forbiddenSeasonStateSelectorHints: ["fixtureRows.status", "matches.status", "resultRows.status"]
+    forbiddenSeasonStateSelectorHints: [
+      "fixtures.status",
+      "fixtureRows.status",
+      "matches.status",
+      "matchRows.status",
+      "results.status",
+      "resultRows.status"
+    ]
   },
   loi_ajax: {
     priority: 1,
     competitions: ["irl.1", "irl.2"],
     rawSourceAllowlistHints: ["loi", "ajax", "league-of-ireland", "irl.1", "irl.2"],
     selectors: {
-      fixtureResultRows: ["fixtureRows", "resultRows", "matches", "fixtures"],
-      standingsRows: ["standingsRows", "tableRows", "leagueTable"],
-      seasonState: ["seasonState", "seasonStatus", "competitionPhase"],
+      fixtureResultRows: [
+        "fixtures",
+        "fixtureRows",
+        "resultRows",
+        "matches",
+        "data.fixtures",
+        "data.matches",
+        "payload.fixtures",
+        "payload.matches",
+        "response.fixtures",
+        "response.matches"
+      ],
+      standingsRows: [
+        "standings",
+        "standingsRows",
+        "tableRows",
+        "leagueTable",
+        "data.standings",
+        "data.table",
+        "payload.standings",
+        "payload.table",
+        "response.standings",
+        "response.table"
+      ],
+      seasonState: [
+        "seasonState",
+        "seasonStatus",
+        "competitionPhase",
+        "season.state",
+        "season.status",
+        "competition.state",
+        "competition.status"
+      ],
       restartDate: ["nextSeasonStartDate", "nextSeasonRestartDate", "restartDate", "seasonStartDate"]
     },
     stateLevelOnlySelectorHints: ["seasonState", "seasonStatus", "competitionPhase"],
-    forbiddenSeasonStateSelectorHints: ["fixtureRows.status", "matches.status", "resultRows.status"]
+    forbiddenSeasonStateSelectorHints: [
+      "fixtures.status",
+      "fixtureRows.status",
+      "matches.status",
+      "matchRows.status",
+      "results.status",
+      "resultRows.status"
+    ]
   },
   spfl_opta: {
     priority: 1,
@@ -72,11 +146,31 @@ const FAMILY_CONFIGS = {
     selectors: {
       fixtureResultRows: ["fixtureRows", "resultRows", "matches", "fixtures"],
       standingsRows: ["standingsRows", "tableRows", "leagueTable"],
-      seasonState: ["seasonState", "seasonStatus", "competitionPhase"],
+      seasonState: [
+        "seasonState",
+        "seasonStatus",
+        "competitionPhase",
+        "competition.currentSeasonStatus",
+        "competition.seasonStatus",
+        "competition.status",
+        "season.status",
+        "season.state",
+        "calendar.currentSeason",
+        "calendar.seasonStatus",
+        "metadata.seasonStatus",
+        "metadata.competitionStatus"
+      ],
       restartDate: ["nextSeasonStartDate", "nextSeasonRestartDate", "restartDate", "seasonStartDate"]
     },
     stateLevelOnlySelectorHints: ["seasonState", "seasonStatus", "competitionPhase"],
-    forbiddenSeasonStateSelectorHints: ["fixtureRows.status", "matches.status", "resultRows.status"],
+    forbiddenSeasonStateSelectorHints: [
+      "fixtures.status",
+      "fixtureRows.status",
+      "matches.status",
+      "matchRows.status",
+      "results.status",
+      "resultRows.status"
+    ],
     learnedGuardrails: [
       "SPFL debugging proved derived diagnostics can self-contaminate validation.",
       "SPFL debugging proved fixtureRows.status=finished is match state, not season state.",
