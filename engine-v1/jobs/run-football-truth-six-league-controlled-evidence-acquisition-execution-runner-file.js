@@ -19,6 +19,8 @@ const outDir = path.join(
   "six-league-controlled-evidence-acquisition-execution-runner-2026-06-15"
 );
 
+const rawOutDir = path.join(outDir, "raw-payloads");
+
 const outputPath = path.join(
   outDir,
   "six-league-controlled-evidence-acquisition-execution-runner-2026-06-15.json"
@@ -238,22 +240,29 @@ function snippet(text) {
     .trim();
 }
 
-async function fetchWithTimeout(url, timeoutMs = 25000) {
+function safeName(value) {
+  return String(value)
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+async function fetchWithTimeout(route, rawPayloadPath, timeoutMs = 25000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(route.url, {
       method: "GET",
       signal: controller.signal,
       headers: {
         "user-agent":
-          "Ai-MatchLab-Football-Truth-Controlled-Evidence-Acquisition/1.0 (+no-search; diagnostics-only)",
+          "Ai-MatchLab-Football-Truth-Controlled-Evidence-Acquisition/1.1 (+no-search; diagnostics-only; raw-payload-capture)",
         "accept": "text/html,application/json,text/plain;q=0.9,*/*;q=0.8"
       }
     });
 
     const rawText = await response.text();
+    fs.writeFileSync(rawPayloadPath, rawText, "utf8");
 
     return {
       fetchedOk: true,
@@ -262,6 +271,8 @@ async function fetchWithTimeout(url, timeoutMs = 25000) {
       httpOk: response.ok,
       contentType: response.headers.get("content-type") || null,
       responseRawTextLength: rawText.length,
+      rawPayloadPath: rawPayloadPath.replace(/\\/g, "/"),
+      rawPayloadPersisted: true,
       responseSnippet: snippet(rawText),
       evidenceSignals: detectEvidenceSignals(rawText)
     };
@@ -273,6 +284,8 @@ async function fetchWithTimeout(url, timeoutMs = 25000) {
       httpOk: false,
       contentType: null,
       responseRawTextLength: 0,
+      rawPayloadPath: rawPayloadPath.replace(/\\/g, "/"),
+      rawPayloadPersisted: false,
       responseSnippet: null,
       evidenceSignals: {
         hasStandingsSignal: false,
@@ -321,6 +334,8 @@ if (JSON.stringify(approvedExecutionGroups) !== JSON.stringify(routeExecutionGro
   );
 }
 
+fs.mkdirSync(rawOutDir, { recursive: true });
+
 const fetchRows = [];
 
 for (const group of routePlan) {
@@ -331,7 +346,12 @@ for (const group of routePlan) {
   }
 
   for (const route of group.routes) {
-    const result = await fetchWithTimeout(route.url);
+    const rawPayloadPath = path.join(
+      rawOutDir,
+      `${String(fetchRows.length + 1).padStart(2, "0")}-${safeName(route.competitionSlug)}-${safeName(route.routePurpose)}.txt`
+    );
+
+    const result = await fetchWithTimeout(route, rawPayloadPath);
 
     fetchRows.push({
       fetchRowId: `six_league_controlled_evidence_fetch_${String(fetchRows.length + 1).padStart(2, "0")}`,
@@ -354,6 +374,8 @@ function countWhere(rows, predicate) {
   return rows.filter(predicate).length;
 }
 
+const persistedRawPayloadRows = fetchRows.filter((row) => row.rawPayloadPersisted);
+
 const summary = {
   sixLeagueControlledEvidenceAcquisitionExecutionRunnerReadCount: 1,
   approvedRunnerTargetCount: approvedRows.length,
@@ -375,6 +397,9 @@ const summary = {
   fetchErrorCount: countWhere(fetchRows, (row) => !row.fetchedOk),
   httpOkCount: countWhere(fetchRows, (row) => row.httpOk),
   httpNotOkCount: countWhere(fetchRows, (row) => row.fetchedOk && !row.httpOk),
+
+  rawPayloadPersistedCount: persistedRawPayloadRows.length,
+  rawPayloadMissingCount: fetchRows.length - persistedRawPayloadRows.length,
 
   laligaFetchExecutedCount: countWhere(fetchRows, (row) => row.family === "laliga"),
   norwayNtfFetchExecutedCount: countWhere(fetchRows, (row) => row.family === "norway_ntf"),
@@ -406,7 +431,7 @@ const artifact = {
   job: "run-football-truth-six-league-controlled-evidence-acquisition-execution-runner-file",
   date: DATE,
   generatedAt: new Date().toISOString(),
-  mode: "actual_controlled_fetch_execution_diagnostics_only",
+  mode: "actual_controlled_fetch_execution_diagnostics_only_with_raw_payload_capture",
   dryRun: false,
   inputs: {
     sixLeagueControlledEvidenceAcquisitionApprovalGate: inputPath
@@ -414,6 +439,7 @@ const artifact = {
   policy: {
     approvedTargetsOnly: true,
     explicitAllowFetchFlagRequired: true,
+    persistFullRawPayloadsToDiagnosticsOnly: true,
     noSearch: true,
     noBroadSearch: true,
     noClassifierExecution: true,
@@ -425,9 +451,11 @@ const artifact = {
   routePlan,
   summary,
   fetchRows,
+  rawPayloadDirectory: rawOutDir.replace(/\\/g, "/"),
   blockedRows: [],
   guardrails: [
     { name: "fetch_only_approved_controlled_routes", allowed: true, executed: true },
+    { name: "persist_raw_payloads_diagnostics_only", allowed: true, executed: true },
     { name: "no_search", allowed: false, executed: false },
     { name: "no_broad_search", allowed: false, executed: false },
     { name: "no_classifier", allowed: false, executed: false },
