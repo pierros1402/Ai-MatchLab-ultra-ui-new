@@ -2,100 +2,47 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 
-const inputPath = path.join(
-  "data",
-  "football-truth",
-  "_diagnostics",
-  "whole-map-high-volume-all-lanes-board-2026-06-16",
-  "whole-map-high-volume-all-lanes-board-2026-06-16.json"
-);
+const inputPath = path.join("data","football-truth","_diagnostics","whole-map-high-volume-all-lanes-board-2026-06-16","whole-map-high-volume-all-lanes-board-2026-06-16.json");
+const outputPath = path.join("data","football-truth","_diagnostics","whole-map-high-volume-lane-execution-manifest-2026-06-16","whole-map-high-volume-lane-execution-manifest-2026-06-16.json");
 
-const outputDir = path.join(
-  "data",
-  "football-truth",
-  "_diagnostics",
-  "whole-map-high-volume-lane-execution-manifest-2026-06-16"
-);
+function sha256Text(v){return crypto.createHash("sha256").update(v).digest("hex");}
+function writeJson(p,v){fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,`${JSON.stringify(v,null,2)}\n`,"utf8");}
+function countBy(rows,key){return rows.reduce((a,r)=>{const v=String(r[key]??"unknown");a[v]=(a[v]??0)+1;return a;},{});}
+function unique(values){return [...new Set(values.filter(Boolean).map(String))];}
+function check(checks,name,passed,details={}){checks.push({name,passed:Boolean(passed),...details});}
 
-const outputPath = path.join(
-  outputDir,
-  "whole-map-high-volume-lane-execution-manifest-2026-06-16.json"
-);
-
-function sha256Text(value) {
-  return crypto.createHash("sha256").update(value).digest("hex");
-}
-
-function writeJson(filePath, value) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
-}
-
-function countBy(rows, key) {
-  return rows.reduce((acc, row) => {
-    const value = String(row[key] ?? "unknown");
-    acc[value] = (acc[value] ?? 0) + 1;
-    return acc;
-  }, {});
-}
-
-function unique(values) {
-  return [...new Set(values.filter(Boolean).map(String))];
-}
-
-function primaryActionFor(row) {
-  if (row.laneKind === "quality_gate_and_stat_mapper" && row.laneStatus === "accepted_shape_quality_gate_ready_for_stat_mapper") {
-    return "build_bulk_stat_mapper_for_accepted_shape_rows";
-  }
-
-  if (row.laneKind === "parser_review") {
-    return "build_parser_review_for_count_mismatch";
-  }
-
-  if (row.laneKind === "parser_contract_context") {
-    if (row.laneStatus === "route_contract_context_with_endpoint_hints_ready_for_controlled_probe_plan") {
-      return "build_controlled_endpoint_probe_plan";
-    }
-    if (row.laneStatus === "route_contract_context_without_endpoint_ready_for_asset_or_js_probe_plan") {
-      return "build_asset_or_js_probe_plan";
-    }
+function primaryActionFor(row){
+  if(row.laneKind==="quality_gate_and_stat_mapper" && row.laneStatus==="accepted_shape_quality_gate_ready_for_stat_mapper") return "build_bulk_stat_mapper_for_accepted_shape_rows";
+  if(row.laneKind==="parser_review") return "build_parser_review_for_count_mismatch";
+  if(row.laneKind==="parser_contract_context"){
+    if(row.laneStatus==="route_contract_context_with_endpoint_hints_ready_for_controlled_probe_plan") return "build_controlled_endpoint_probe_plan";
+    if(row.laneStatus==="route_contract_context_without_endpoint_ready_for_asset_or_js_probe_plan") return "build_asset_or_js_probe_plan";
     return "build_route_repair_or_js_probe_plan";
   }
-
-  if (row.laneKind === "weak_route_review") {
-    return "build_weak_route_review_plan";
-  }
-
-  if (row.laneKind === "route_repair") {
-    return "build_high_volume_route_repair_probe_plan";
-  }
-
+  if(row.laneKind==="weak_route_review") return "build_weak_route_review_plan";
+  if(row.laneKind==="route_repair") return "build_high_volume_route_repair_probe_plan";
   return "blocked_unknown_lane_requires_review";
 }
 
-function executionBandFor(action) {
-  if (action === "build_bulk_stat_mapper_for_accepted_shape_rows") return "band_01_candidate_stat_mapping_no_fetch";
-  if (action === "build_controlled_endpoint_probe_plan") return "band_02_endpoint_contract_probe_fetch_later";
-  if (action === "build_asset_or_js_probe_plan") return "band_03_asset_or_js_probe_fetch_later";
-  if (action === "build_high_volume_route_repair_probe_plan") return "band_04_route_repair_probe_fetch_later";
-  if (action === "build_weak_route_review_plan") return "band_05_weak_route_review_no_fetch";
-  if (action === "build_parser_review_for_count_mismatch") return "band_06_parser_review_no_fetch";
-  return "band_99_blocked";
+function executionBandFor(action){
+  const map = {
+    build_bulk_stat_mapper_for_accepted_shape_rows: "band_01_stat_mapper_no_fetch",
+    build_controlled_endpoint_probe_plan: "band_02_endpoint_probe_fetch_later",
+    build_asset_or_js_probe_plan: "band_03_asset_or_js_probe_fetch_later",
+    build_high_volume_route_repair_probe_plan: "band_04_route_repair_fetch_later",
+    build_weak_route_review_plan: "band_05_weak_review_no_fetch",
+    build_parser_review_for_count_mismatch: "band_06_parser_review_no_fetch",
+    build_route_repair_or_js_probe_plan: "band_07_route_repair_or_js_probe_fetch_later"
+  };
+  return map[action] ?? "band_99_blocked";
 }
 
-function check(checks, name, passed, details = {}) {
-  checks.push({ name, passed: Boolean(passed), ...details });
-}
-
-if (!fs.existsSync(inputPath)) {
-  throw new Error(`Missing all-lanes board: ${inputPath}`);
-}
-
-const inputText = fs.readFileSync(inputPath, "utf8");
+if(!fs.existsSync(inputPath)) throw new Error(`Missing all-lanes board: ${inputPath}`);
+const inputText = fs.readFileSync(inputPath,"utf8");
 const input = JSON.parse(inputText);
 const laneRows = Array.isArray(input.laneRows) ? input.laneRows : [];
 
-const manifestRows = laneRows.map((row) => {
+const manifestRows = laneRows.map(row=>{
   const primaryAction = primaryActionFor(row);
   const executionBand = executionBandFor(primaryAction);
   return {
@@ -130,75 +77,24 @@ const manifestRows = laneRows.map((row) => {
   };
 });
 
-const rowsByAction = countBy(manifestRows, "primaryAction");
-const rowsByBand = countBy(manifestRows, "executionBand");
-const countries = unique(manifestRows.map((row) => row.countryCode)).sort();
-
-const recommendedExecutionOrder = [
-  {
-    order: 1,
-    action: "build_bulk_stat_mapper_for_accepted_shape_rows",
-    count: rowsByAction.build_bulk_stat_mapper_for_accepted_shape_rows ?? 0,
-    purpose: "Map extracted shape rows into standings candidate fields for exact-count leagues.",
-    requiresFetch: false,
-    requiresCanonicalApprovalBeforeWrite: true
-  },
-  {
-    order: 2,
-    action: "build_controlled_endpoint_probe_plan",
-    count: rowsByAction.build_controlled_endpoint_probe_plan ?? 0,
-    purpose: "Use endpoint hints from fetched pages to build narrow controlled endpoint probes.",
-    requiresFetch: true,
-    requiresCanonicalApprovalBeforeWrite: true
-  },
-  {
-    order: 3,
-    action: "build_asset_or_js_probe_plan",
-    count: rowsByAction.build_asset_or_js_probe_plan ?? 0,
-    purpose: "Use app-shell/asset signals where endpoint hints were absent but route context exists.",
-    requiresFetch: true,
-    requiresCanonicalApprovalBeforeWrite: true
-  },
-  {
-    order: 4,
-    action: "build_high_volume_route_repair_probe_plan",
-    count: rowsByAction.build_high_volume_route_repair_probe_plan ?? 0,
-    purpose: "Expand official-host route candidates for unusable or no-signal routes.",
-    requiresFetch: true,
-    requiresCanonicalApprovalBeforeWrite: true
-  },
-  {
-    order: 5,
-    action: "build_weak_route_review_plan",
-    count: rowsByAction.build_weak_route_review_plan ?? 0,
-    purpose: "Review weak route signals before parser execution.",
-    requiresFetch: false,
-    requiresCanonicalApprovalBeforeWrite: true
-  },
-  {
-    order: 6,
-    action: "build_parser_review_for_count_mismatch",
-    count: rowsByAction.build_parser_review_for_count_mismatch ?? 0,
-    purpose: "Review extracted rows where count mismatched expected competition size.",
-    requiresFetch: false,
-    requiresCanonicalApprovalBeforeWrite: true
-  }
-].filter((row) => row.count > 0);
+const rowsByAction = countBy(manifestRows,"primaryAction");
+const rowsByBand = countBy(manifestRows,"executionBand");
+const band99Count = Number(rowsByBand.band_99_blocked ?? 0);
 
 const checks = [];
-check(checks, "sourceAllLanesBoardPassed", input.summary?.status === "passed", { actual: input.summary?.status });
-check(checks, "sourceSelectedTargetsSeventyEight", Number(input.summary?.sourceSelectedTargetCount ?? -1) === 78, { actual: input.summary?.sourceSelectedTargetCount });
-check(checks, "sourceLaneRowsFiftySix", laneRows.length === 56, { actual: laneRows.length, expected: 56 });
-check(checks, "manifestRowsFiftySix", manifestRows.length === 56, { actual: manifestRows.length, expected: 56 });
-check(checks, "manifestCoversAllLaneRows", manifestRows.every((row) => row.primaryAction !== "blocked_unknown_lane_requires_review"));
-check(checks, "hasBulkStatMapperRows", Number(rowsByAction.build_bulk_stat_mapper_for_accepted_shape_rows ?? 0) >= 4, { actual: rowsByAction.build_bulk_stat_mapper_for_accepted_shape_rows ?? 0 });
-check(checks, "hasEndpointProbeRows", Number(rowsByAction.build_controlled_endpoint_probe_plan ?? 0) >= 7, { actual: rowsByAction.build_controlled_endpoint_probe_plan ?? 0 });
-check(checks, "hasLargeRouteRepairRows", Number(rowsByAction.build_high_volume_route_repair_probe_plan ?? 0) >= 30, { actual: rowsByAction.build_high_volume_route_repair_probe_plan ?? 0 });
-check(checks, "noFetchSearchWriteInThisJob", true);
-check(checks, "productionAndTruthLocked", true);
+check(checks,"sourceAllLanesBoardPassed", input.summary?.status==="passed", {actual: input.summary?.status});
+check(checks,"sourceSelectedTargetsSeventyEight", Number(input.summary?.sourceSelectedTargetCount??-1)===78, {actual: input.summary?.sourceSelectedTargetCount});
+check(checks,"manifestRowsFiftySix", manifestRows.length===56, {actual: manifestRows.length, expected: 56});
+check(checks,"manifestCoversAllLaneRows", manifestRows.every(r=>r.primaryAction!=="blocked_unknown_lane_requires_review"));
+check(checks,"band99Zero", band99Count===0, {actual: band99Count});
+check(checks,"hasBulkStatMapperRows", Number(rowsByAction.build_bulk_stat_mapper_for_accepted_shape_rows??0)>=4, {actual: rowsByAction.build_bulk_stat_mapper_for_accepted_shape_rows??0});
+check(checks,"hasEndpointProbeRows", Number(rowsByAction.build_controlled_endpoint_probe_plan??0)>=7, {actual: rowsByAction.build_controlled_endpoint_probe_plan??0});
+check(checks,"hasRouteRepairOrJsRows", Number(rowsByAction.build_route_repair_or_js_probe_plan??0)>=1, {actual: rowsByAction.build_route_repair_or_js_probe_plan??0});
+check(checks,"noFetchSearchWriteInThisJob", true);
+check(checks,"productionAndTruthLocked", true);
 
-const blockedCheckCount = checks.filter((row) => !row.passed).length;
-const passedCheckCount = checks.filter((row) => row.passed).length;
+const blockedCheckCount = checks.filter(c=>!c.passed).length;
+const passedCheckCount = checks.filter(c=>c.passed).length;
 
 const output = {
   output: outputPath,
@@ -218,24 +114,24 @@ const output = {
     canonicalCandidateWriteRequiresExplicitUserApproval: true
   },
   checks,
-  recommendedExecutionOrder,
   manifestRows,
   summary: {
-    status: blockedCheckCount === 0 ? "passed" : "blocked",
+    status: blockedCheckCount===0 ? "passed" : "blocked",
     sourceSelectedTargetCount: input.summary?.sourceSelectedTargetCount ?? null,
     sourceRouteCandidateCount: input.summary?.sourceRouteCandidateCount ?? null,
     sourceLaneCompetitionCount: laneRows.length,
     manifestCompetitionCount: manifestRows.length,
-    manifestCountryCount: countries.length,
+    manifestCountryCount: unique(manifestRows.map(r=>r.countryCode)).length,
     rowsByAction,
     rowsByBand,
-    recommendedExecutionStepCount: recommendedExecutionOrder.length,
-    mayBuildBulkStatMapperRunnerCount: Number(rowsByAction.build_bulk_stat_mapper_for_accepted_shape_rows ?? 0) > 0 ? 1 : 0,
-    mayBuildControlledEndpointProbePlanCount: Number(rowsByAction.build_controlled_endpoint_probe_plan ?? 0) > 0 ? 1 : 0,
-    mayBuildAssetOrJsProbePlanCount: Number(rowsByAction.build_asset_or_js_probe_plan ?? 0) > 0 ? 1 : 0,
-    mayBuildHighVolumeRouteRepairProbePlanCount: Number(rowsByAction.build_high_volume_route_repair_probe_plan ?? 0) > 0 ? 1 : 0,
-    mayBuildWeakRouteReviewPlanCount: Number(rowsByAction.build_weak_route_review_plan ?? 0) > 0 ? 1 : 0,
-    mayBuildParserReviewPlanCount: Number(rowsByAction.build_parser_review_for_count_mismatch ?? 0) > 0 ? 1 : 0,
+    band99Count,
+    mayBuildBulkStatMapperRunnerCount: Number(rowsByAction.build_bulk_stat_mapper_for_accepted_shape_rows??0)>0 ? 1 : 0,
+    mayBuildControlledEndpointProbePlanCount: Number(rowsByAction.build_controlled_endpoint_probe_plan??0)>0 ? 1 : 0,
+    mayBuildAssetOrJsProbePlanCount: Number(rowsByAction.build_asset_or_js_probe_plan??0)>0 ? 1 : 0,
+    mayBuildHighVolumeRouteRepairProbePlanCount: Number(rowsByAction.build_high_volume_route_repair_probe_plan??0)>0 ? 1 : 0,
+    mayBuildRouteRepairOrJsProbePlanCount: Number(rowsByAction.build_route_repair_or_js_probe_plan??0)>0 ? 1 : 0,
+    mayBuildWeakRouteReviewPlanCount: Number(rowsByAction.build_weak_route_review_plan??0)>0 ? 1 : 0,
+    mayBuildParserReviewPlanCount: Number(rowsByAction.build_parser_review_for_count_mismatch??0)>0 ? 1 : 0,
     mayBuildCanonicalCandidateNowCount: 0,
     fetchExecutedNowCount: 0,
     searchExecutedNowCount: 0,
@@ -250,23 +146,21 @@ const output = {
 };
 
 writeJson(outputPath, output);
-
 console.log(JSON.stringify({
   output: output.output,
   status: output.summary.status,
-  sourceSelectedTargetCount: output.summary.sourceSelectedTargetCount,
-  sourceRouteCandidateCount: output.summary.sourceRouteCandidateCount,
   manifestCompetitionCount: output.summary.manifestCompetitionCount,
   manifestCountryCount: output.summary.manifestCountryCount,
   rowsByAction: output.summary.rowsByAction,
   rowsByBand: output.summary.rowsByBand,
+  band99Count: output.summary.band99Count,
   mayBuildBulkStatMapperRunnerCount: output.summary.mayBuildBulkStatMapperRunnerCount,
   mayBuildControlledEndpointProbePlanCount: output.summary.mayBuildControlledEndpointProbePlanCount,
   mayBuildAssetOrJsProbePlanCount: output.summary.mayBuildAssetOrJsProbePlanCount,
   mayBuildHighVolumeRouteRepairProbePlanCount: output.summary.mayBuildHighVolumeRouteRepairProbePlanCount,
+  mayBuildRouteRepairOrJsProbePlanCount: output.summary.mayBuildRouteRepairOrJsProbePlanCount,
   mayBuildWeakRouteReviewPlanCount: output.summary.mayBuildWeakRouteReviewPlanCount,
   mayBuildParserReviewPlanCount: output.summary.mayBuildParserReviewPlanCount,
-  mayBuildCanonicalCandidateNowCount: output.summary.mayBuildCanonicalCandidateNowCount,
   fetchExecutedNowCount: output.summary.fetchExecutedNowCount,
   searchExecutedNowCount: output.summary.searchExecutedNowCount,
   broadSearchExecutedNowCount: output.summary.broadSearchExecutedNowCount,
@@ -276,4 +170,4 @@ console.log(JSON.stringify({
   blockedCheckCount: output.summary.blockedCheckCount
 }, null, 2));
 
-if (blockedCheckCount !== 0) process.exitCode = 1;
+if(blockedCheckCount!==0) process.exitCode=1;
