@@ -266,16 +266,18 @@ function parseHnl(target, rendered) {
     const grid = tableGrid(table).filter((r) => r.length >= 3);
     if (grid.length < 5) continue;
 
-    let headerIndex = grid.findIndex((r) => r.some((c) => /klub|momčad|momcad|team|club|bod|pts|utak|odigr|pobj|ner|poraz|gol/i.test(c)));
-    if (headerIndex < 0) headerIndex = 0;
+    const headerIndex = grid.findIndex((r) => r.some((c) => /klub|momčad|momcad|team|club|bod|pts|uk|utak|odigr|pob|pobj|ner|por|poraz|g\+|g-|gol|gr/i.test(c)));
+    if (headerIndex < 0) continue;
 
     const headers = grid[headerIndex];
+    const gfI = headers.findIndex((h) => String(h).trim().toLowerCase() === "g+");
+    const gaI = headers.findIndex((h) => String(h).trim().toLowerCase() === "g-");
     const teamI = indexOfHeader(headers, ["klub", "momcad", "momčad", "team", "club"]);
     const posI = indexOfHeader(headers, ["#", "poz", "pos", "position"]);
-    const playedI = indexOfHeader(headers, ["ut", "odigrano", "played", "matches", "o"]);
+    const playedI = indexOfHeader(headers, ["uk", "ut", "odigrano", "played", "matches", "o"]);
     const wonI = indexOfHeader(headers, ["pobjede", "pob", "won", "wins"]);
     const drawnI = indexOfHeader(headers, ["nerijeseno", "neriješeno", "ner", "draw", "drawn"]);
-    const lostI = indexOfHeader(headers, ["porazi", "poraz", "izgubljeno", "lost", "losses"]);
+    const lostI = indexOfHeader(headers, ["por", "porazi", "poraz", "izgubljeno", "lost", "losses"]);
     const ptsI = indexOfHeader(headers, ["bodovi", "bod", "points", "pts"]);
     const gdI = indexOfHeader(headers, ["gr", "golrazlika", "gol razlika", "gd"]);
     const gfgaI = indexOfHeader(headers, ["golovi", "goals"]);
@@ -306,8 +308,8 @@ function parseHnl(target, rendered) {
         won: wonI >= 0 ? num(r[wonI]) : (afterTeamNums[1]?.value ?? null),
         drawn: drawnI >= 0 ? num(r[drawnI]) : (afterTeamNums[2]?.value ?? null),
         lost: lostI >= 0 ? num(r[lostI]) : (afterTeamNums[3]?.value ?? null),
-        goalsFor: splitGoals.goalsFor,
-        goalsAgainst: splitGoals.goalsAgainst,
+        goalsFor: gfI >= 0 ? num(r[gfI]) : splitGoals.goalsFor,
+        goalsAgainst: gaI >= 0 ? num(r[gaI]) : splitGoals.goalsAgainst,
         goalDifference: gdI >= 0 ? num(r[gdI]) : null,
         points: ptsI >= 0 ? num(r[ptsI]) : (afterTeamNums.at(-1)?.value ?? null)
       };
@@ -319,13 +321,14 @@ function parseHnl(target, rendered) {
     const rows = dedupeRows(parsed).slice(0, target.expectedRows);
     if (rows.length >= 4) {
       const ar = arithmetic(rows);
-      candidates.push({ rows, arithmetic: ar, tableLength: table.length, gridRowCount: grid.length });
+      candidates.push({ rows, arithmetic: ar, tableLength: table.length, gridRowCount: grid.length, header: headers });
     }
   }
 
   candidates.sort((a, b) =>
     (b.arithmetic.status === "passed" ? 1 : 0) - (a.arithmetic.status === "passed" ? 1 : 0) ||
     b.rows.length - a.rows.length ||
+    ((b.header || []).join("|").includes("Klub") ? 1 : 0) - ((a.header || []).join("|").includes("Klub") ? 1 : 0) ||
     b.tableLength - a.tableLength
   );
 
