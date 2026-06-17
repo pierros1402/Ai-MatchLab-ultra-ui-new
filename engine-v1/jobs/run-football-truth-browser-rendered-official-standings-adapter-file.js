@@ -56,6 +56,13 @@ const targets = [
     sourceHost: "bundesliga.com"
   },
   {
+    competitionSlug: "ger.3",
+    expectedRows: 20,
+    adapter: "dfb_3_liga_rendered_table",
+    sourceUrl: "https://www.dfb.de/3-liga/tabelle/",
+    sourceHost: "dfb.de"
+  },
+  {
     competitionSlug: "cro.1",
     expectedRows: 10,
     adapter: "hnl_rendered_table",
@@ -324,6 +331,82 @@ function indexOfHeader(headers, wanted) {
   return -1;
 }
 
+function parseDfb3Liga(target, rendered) {
+  const tables = rendered.html.match(/<table[\s\S]*?<\/table>/gi) || [];
+  const candidates = [];
+
+  for (const table of tables) {
+    const grid = tableGrid(table).filter((r) => r.length >= 3);
+    if (grid.length < 10) continue;
+
+    const headerIndex = grid.findIndex((r) => {
+      const joined = r.map(norm).join("|");
+      return joined.includes("platz") && joined.includes("mannschaft") && joined.includes("sp") && joined.includes("pkt");
+    });
+    if (headerIndex < 0) continue;
+
+    const headers = grid[headerIndex].map((h) => String(h).trim());
+    const exactHeaderIndex = (values) => {
+      const ns = values.map(norm);
+      return headers.findIndex((h) => ns.includes(norm(h)));
+    };
+
+    const positionI = exactHeaderIndex(["Platz"]);
+    const teamI = exactHeaderIndex(["Mannschaft"]);
+    const playedI = exactHeaderIndex(["SP"]);
+    const wonI = exactHeaderIndex(["G"]);
+    const drawnI = exactHeaderIndex(["U"]);
+    const lostI = exactHeaderIndex(["V"]);
+    const goalsI = exactHeaderIndex(["Tore"]);
+    const gdI = exactHeaderIndex(["Diff.", "Diff"]);
+    const ptsI = exactHeaderIndex(["Pkt.", "Pkt"]);
+
+    const parsed = [];
+    for (const r of grid.slice(headerIndex + 1)) {
+      if (teamI < 0 || r.length <= teamI) continue;
+      const splitGoals = splitGoalCell(goalsI >= 0 ? r[goalsI] : "");
+      const row = {
+        competitionSlug: target.competitionSlug,
+        provider: "browser_rendered_official",
+        sourceHost: target.sourceHost,
+        sourceUrl: target.sourceUrl,
+        extractionAdapter: target.adapter,
+        position: positionI >= 0 ? num(r[positionI]) : num(r[0]),
+        teamName: String(r[teamI] || "").trim(),
+        played: playedI >= 0 ? num(r[playedI]) : null,
+        won: wonI >= 0 ? num(r[wonI]) : null,
+        drawn: drawnI >= 0 ? num(r[drawnI]) : null,
+        lost: lostI >= 0 ? num(r[lostI]) : null,
+        goalsFor: splitGoals.goalsFor,
+        goalsAgainst: splitGoals.goalsAgainst,
+        goalDifference: gdI >= 0 ? num(r[gdI]) : null,
+        points: ptsI >= 0 ? num(r[ptsI]) : null
+      };
+
+      const completeNumeric = [row.position, row.played, row.won, row.drawn, row.lost, row.goalsFor, row.goalsAgainst, row.goalDifference, row.points].every((v) => v !== null);
+      if (row.teamName && completeNumeric) parsed.push(row);
+    }
+
+    const rows = dedupeRows(parsed).slice(0, target.expectedRows);
+    if (rows.length >= 10) {
+      const ar = arithmetic(rows);
+      candidates.push({ rows, arithmetic: ar, tableLength: table.length, gridRowCount: grid.length, header: headers });
+    }
+  }
+
+  candidates.sort((a, b) =>
+    (b.arithmetic.status === "passed" ? 1 : 0) - (a.arithmetic.status === "passed" ? 1 : 0) ||
+    b.rows.length - a.rows.length ||
+    b.tableLength - a.tableLength
+  );
+
+  return {
+    tableCount: tables.length,
+    bestCandidate: candidates[0] || null,
+    rows: candidates[0]?.rows || []
+  };
+}
+
 function parseHnl(target, rendered) {
   const tables = rendered.html.match(/<table[\s\S]*?<\/table>/gi) || [];
   const candidates = [];
@@ -408,6 +491,7 @@ function parseHnl(target, rendered) {
 function parseTarget(target, rendered) {
   if (target.adapter === "laliga_rendered_text") return parseLaLiga(target, rendered);
   if (target.adapter === "bundesliga_rendered_text") return parseBundesliga(target, rendered);
+  if (target.adapter === "dfb_3_liga_rendered_table") return parseDfb3Liga(target, rendered);
   if (target.adapter === "hnl_rendered_table") return parseHnl(target, rendered);
   throw new Error(`Unknown adapter: ${target.adapter}`);
 }
