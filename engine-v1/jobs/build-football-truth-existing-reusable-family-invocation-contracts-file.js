@@ -346,7 +346,7 @@ const summary = {
   blockedFetchSurfaceCount: flatJobs.filter((job) => job.status === "blocked_fetch_surface").length,
   blockedCanonicalWriteSurfaceCount: flatJobs.filter((job) => job.status === "blocked_canonical_write_surface").length,
   blockedProductionWriteSurfaceCount: flatJobs.filter((job) => job.status === "blocked_production_write_surface").length,
-  recommendedNextLane: "execute_ready_no_fetch_no_search_no_write_contracts_in_bulk_then_recompute_yield"
+  recommendedNextLane: flatJobs.filter((job) => job.status === "ready_for_no_fetch_no_search_no_write_contract_execution").length > 0 ? "execute_ready_no_fetch_no_search_no_write_contracts_in_bulk_then_recompute_yield" : "no_ready_contracts_build_artifact_only_blocked_surface_interpreter_for_existing_reusable_families"
 };
 
 const output = {
@@ -392,4 +392,6 @@ console.log(JSON.stringify({
   compactOutput: relPath(compactPath),
   summary
 }, null, 2));
+
+
 
