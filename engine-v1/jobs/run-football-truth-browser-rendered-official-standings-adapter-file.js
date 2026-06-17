@@ -42,6 +42,20 @@ const targets = [
     sourceHost: "laliga.com"
   },
   {
+    competitionSlug: "ger.1",
+    expectedRows: 18,
+    adapter: "bundesliga_rendered_text",
+    sourceUrl: "https://www.bundesliga.com/en/bundesliga/table",
+    sourceHost: "bundesliga.com"
+  },
+  {
+    competitionSlug: "ger.2",
+    expectedRows: 18,
+    adapter: "bundesliga_rendered_text",
+    sourceUrl: "https://www.bundesliga.com/en/2bundesliga/table",
+    sourceHost: "bundesliga.com"
+  },
+  {
     competitionSlug: "cro.1",
     expectedRows: 10,
     adapter: "hnl_rendered_table",
@@ -228,6 +242,58 @@ function parseLaLiga(target, rendered) {
   };
 }
 
+function cleanBundesligaTeamName(raw) {
+  const words = String(raw || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length <= 1) return String(raw || "").trim();
+  for (let split = Math.min(3, words.length - 1); split >= 1; split--) {
+    const prefix = words.slice(0, split).join(" ");
+    const rest = words.slice(split).join(" ");
+    if (!rest) continue;
+    if (norm(rest).includes(norm(prefix)) || norm(prefix) === norm(rest)) return rest;
+  }
+  return words.join(" ");
+}
+
+function parseBundesliga(target, rendered) {
+  const plain = htmlToPlain(rendered.html);
+  const marker = "Club P Won-Draw-Lost W-D-L G +/- Pts";
+  const idx = plain.indexOf(marker);
+  const segment = idx >= 0 ? plain.slice(idx + marker.length, idx + marker.length + 12000) : plain;
+
+  const rowRegex = /(\d{1,2})\s+([A-Z0-9]{2,4})\s+(.+?)\s+(\d{1,2})\s+(\d{1,2})-(\d{1,2})-(\d{1,2})\s+(\d{1,3}):(\d{1,3})\s+([+-]?\d+)\s+(\d{1,3})(?=\s+\d{1,2}\s+[A-Z0-9]{2,4}\s+|\s+(?:UEFA|Promotion|Relegation|P Played|MORE BUNDESLIGA)|$)/g;
+
+  const rawRows = [];
+  for (const m of segment.matchAll(rowRegex)) {
+    const teamNameRaw = m[3].trim();
+    rawRows.push({
+      competitionSlug: target.competitionSlug,
+      provider: "browser_rendered_official",
+      sourceHost: target.sourceHost,
+      sourceUrl: target.sourceUrl,
+      extractionAdapter: target.adapter,
+      position: num(m[1]),
+      teamCode: m[2],
+      teamName: cleanBundesligaTeamName(teamNameRaw),
+      teamNameRaw,
+      played: num(m[4]),
+      won: num(m[5]),
+      drawn: num(m[6]),
+      lost: num(m[7]),
+      goalsFor: num(m[8]),
+      goalsAgainst: num(m[9]),
+      goalDifference: num(m[10]),
+      points: num(m[11])
+    });
+  }
+
+  const rows = dedupeRows(rawRows).slice(0, target.expectedRows);
+  return {
+    markerFound: idx >= 0,
+    rawParsedRowCount: rawRows.length,
+    rows
+  };
+}
+
 function splitGoalCell(value) {
   const s = String(value || "");
   const m = s.match(/(\d+)\s*[:\-]\s*(\d+)/);
@@ -341,6 +407,7 @@ function parseHnl(target, rendered) {
 
 function parseTarget(target, rendered) {
   if (target.adapter === "laliga_rendered_text") return parseLaLiga(target, rendered);
+  if (target.adapter === "bundesliga_rendered_text") return parseBundesliga(target, rendered);
   if (target.adapter === "hnl_rendered_table") return parseHnl(target, rendered);
   throw new Error(`Unknown adapter: ${target.adapter}`);
 }
