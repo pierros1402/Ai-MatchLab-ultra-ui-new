@@ -1,0 +1,6509 @@
+{
+  "generatedAtUtc": "2026-06-17T09:26:22.706Z",
+  "status": "passed",
+  "inputPath": "data/football-truth/_diagnostics/bulk-same-host-endpoint-shape-probe-2026-06-17/bulk-same-host-endpoint-shape-probe-2026-06-17.json",
+  "summary": {
+    "status": "passed",
+    "inputEndpointCandidateRows": 51,
+    "inputEndpointCandidateSlugs": 13,
+    "dryExtractAttemptCount": 102,
+    "bestQualityPassedSlugCount": 0,
+    "bestReviewRequiredSlugCount": 0,
+    "bestHygieneBlockedSlugCount": 3,
+    "bestZeroBlockedSlugCount": 0,
+    "bestOtherBlockedSlugCount": 10,
+    "bestRowsByStatus": [
+      {
+        "status": "blocked_endpoint_dry_extract_quality_failed",
+        "count": 10
+      },
+      {
+        "status": "blocked_endpoint_route_hygiene_failed",
+        "count": 3
+      }
+    ],
+    "attemptRowsByStatus": [
+      {
+        "status": "blocked_endpoint_route_hygiene_failed",
+        "count": 44
+      },
+      {
+        "status": "blocked_endpoint_dry_extract_quality_failed",
+        "count": 58
+      }
+    ],
+    "qualityPassedSlugs": [],
+    "reviewRequiredSlugs": [],
+    "blockedSlugs": [
+      "arg.1",
+      "arg.2",
+      "aus.1",
+      "aus.2",
+      "col.1",
+      "col.2",
+      "den.2",
+      "eng.4",
+      "fra.1",
+      "ksa.2",
+      "per.1",
+      "usa.1",
+      "usa.2"
+    ],
+    "fetchExecutedNowCount": 0,
+    "searchExecutedNowCount": 0,
+    "broadSearchExecutedNowCount": 0,
+    "standingsExtractionExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0
+  },
+  "attempts": [
+    {
+      "competitionSlug": "fra.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "ligue1.com",
+      "url": "https://ligue1.com/competitions/ligue1mcdonalds/general%20standings.%20Click%20to%20choose%20another%20standings",
+      "effectiveUrl": "https://ligue1.com/competitions/ligue1mcdonalds/general%20standings.%20Click%20to%20choose%20another%20standings",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "fra.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "ligue1.com",
+      "url": "https://ligue1.com/competitions/ligue1mcdonalds/general%20standings.%20Click%20to%20choose%20another%20standings",
+      "effectiveUrl": "https://ligue1.com/competitions/ligue1mcdonalds/general%20standings.%20Click%20to%20choose%20another%20standings",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "afa.com.ar",
+      "url": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "effectiveUrl": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "afa.com.ar",
+      "url": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "effectiveUrl": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/torneo/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/torneo/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/competicion/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/competicion/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 5,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 5,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/manifest.json",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/manifest.json",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 7,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/torneo/Tabla%20General",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 7,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/torneo/Tabla%20General",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/competicion/Tabla%20General",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/es/competicion/Tabla%20General",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://www.mlssoccer.com/standings/2026/conference",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/2026/conference",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://www.mlssoccer.com/standings/2026/conference",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/2026/conference",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://www.mlssoccer.com/standings/#season=MLS-SEA-0001KA&live=false",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://www.mlssoccer.com/standings/#season=MLS-SEA-0001KA&live=false",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://mlssoccer.com/standings/conference/index",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/conference/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://mlssoccer.com/standings/conference/index",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/conference/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 5,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://mlssoccer.com/standings/2026/supporters-shield",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/2026/supporters-shield",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 5,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://mlssoccer.com/standings/2026/supporters-shield",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/2026/supporters-shield",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://mlssoccer.com/standings/form-guide/index",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/form-guide/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://mlssoccer.com/standings/form-guide/index",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/form-guide/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "aus.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "aleagues.com.au",
+      "url": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "effectiveUrl": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "aus.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "aleagues.com.au",
+      "url": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "effectiveUrl": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "den.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "divisionsforeningen.dk",
+      "url": "https://divisionsforeningen.dk/tifo-standard/",
+      "effectiveUrl": "https://divisionsforeningen.dk/tifo-standard/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "den.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "divisionsforeningen.dk",
+      "url": "https://divisionsforeningen.dk/tifo-standard/",
+      "effectiveUrl": "https://divisionsforeningen.dk/tifo-standard/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "den.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "divisionsforeningen.dk",
+      "url": "https://divisionsforeningen.dk/feed/",
+      "effectiveUrl": "https://divisionsforeningen.dk/feed/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "den.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "divisionsforeningen.dk",
+      "url": "https://divisionsforeningen.dk/feed/",
+      "effectiveUrl": "https://divisionsforeningen.dk/feed/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "den.2",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "divisionsforeningen.dk",
+      "url": "https://divisionsforeningen.dk/wp-json/",
+      "effectiveUrl": "https://divisionsforeningen.dk/wp-json/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "den.2",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "divisionsforeningen.dk",
+      "url": "https://divisionsforeningen.dk/wp-json/",
+      "effectiveUrl": "https://divisionsforeningen.dk/wp-json/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "afa.com.ar",
+      "url": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "effectiveUrl": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "afa.com.ar",
+      "url": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "effectiveUrl": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/fixture-table-df",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/manifest.json",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/manifest.json",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/Tabla%20General",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://afa.com.ar/Tabla%20General",
+      "effectiveUrl": "https://www.afa.com.ar/es/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 5,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/posts/argentina-de-america-1993-capitulo-14",
+      "effectiveUrl": "https://www.afa.com.ar/es/posts/argentina-de-america-1993-capitulo-14",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 5,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/posts/argentina-de-america-1993-capitulo-14",
+      "effectiveUrl": "https://www.afa.com.ar/es/posts/argentina-de-america-1993-capitulo-14",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/posts/argentina-de-america-1991-capitulo-13",
+      "effectiveUrl": "https://www.afa.com.ar/es/posts/argentina-de-america-1991-capitulo-13",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/posts/argentina-de-america-1991-capitulo-13",
+      "effectiveUrl": "https://www.afa.com.ar/es/posts/argentina-de-america-1991-capitulo-13",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 7,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/puntapie-inicial-de-la-gloria-juvenil",
+      "effectiveUrl": "https://www.afa.com.ar/es/puntapie-inicial-de-la-gloria-juvenil",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 7,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/puntapie-inicial-de-la-gloria-juvenil",
+      "effectiveUrl": "https://www.afa.com.ar/es/puntapie-inicial-de-la-gloria-juvenil",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/posts/argentina-de-america-1959-capitulo-12",
+      "effectiveUrl": "https://www.afa.com.ar/es/posts/argentina-de-america-1959-capitulo-12",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "afa.com.ar",
+      "url": "https://www.afa.com.ar/es/posts/argentina-de-america-1959-capitulo-12",
+      "effectiveUrl": "https://www.afa.com.ar/es/posts/argentina-de-america-1959-capitulo-12",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "uslsoccer.com",
+      "url": "https://uslsoccer.com/usl-standings",
+      "effectiveUrl": "https://www.uslsoccer.com/usl-standings",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "uslsoccer.com",
+      "url": "https://uslsoccer.com/usl-standings",
+      "effectiveUrl": "https://www.uslsoccer.com/usl-standings",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/league-table",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/league-table",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/league-table",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/league-table",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/LeagueTableWidget",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/LeagueTableWidget",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/LeagueTableWidget",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/LeagueTableWidget",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 3,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/data-v-71e77aac%3ELeague%20Table%3C/h2%3E%20%3C!----%3E%20%3C!----%3E%3C/div%3E%3C/section%3E%3Csection%20id=",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/data-v-71e77aac%3ELeague%20Table%3C/h2%3E%20%3C!----%3E%20%3C!----%3E%3C/div%3E%3C/section%3E%3Csection%20id=",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_html_fragment",
+        "encoded_long_text_fragment",
+        "html_or_css_token_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_html_fragment",
+            "encoded_long_text_fragment",
+            "html_or_css_token_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 3,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/data-v-71e77aac%3ELeague%20Table%3C/h2%3E%20%3C!----%3E%20%3C!----%3E%3C/div%3E%3C/section%3E%3Csection%20id=",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/data-v-71e77aac%3ELeague%20Table%3C/h2%3E%20%3C!----%3E%20%3C!----%3E%3C/div%3E%3C/section%3E%3Csection%20id=",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_html_fragment",
+        "encoded_long_text_fragment",
+        "html_or_css_token_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_html_fragment",
+            "encoded_long_text_fragment",
+            "html_or_css_token_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 4,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/%3E%20%20%3Chead%3E%20%20%20%20%3Ctitle%3EEFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League%3C/title%3E%3Cmeta%20data-n-head=",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/%3E%20%20%3Chead%3E%20%20%20%20%3Ctitle%3EEFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League%3C/title%3E%3Cmeta%20data-n-head=",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_html_fragment",
+        "encoded_long_text_fragment",
+        "html_or_css_token_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_html_fragment",
+            "encoded_long_text_fragment",
+            "html_or_css_token_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 4,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/%3E%20%20%3Chead%3E%20%20%20%20%3Ctitle%3EEFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League%3C/title%3E%3Cmeta%20data-n-head=",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/%3E%20%20%3Chead%3E%20%20%20%20%3Ctitle%3EEFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League%3C/title%3E%3Cmeta%20data-n-head=",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_html_fragment",
+        "encoded_long_text_fragment",
+        "html_or_css_token_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_html_fragment",
+            "encoded_long_text_fragment",
+            "html_or_css_token_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 5,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/League%20Table",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/League%20Table",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 5,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/League%20Table",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/League%20Table",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 6,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/League%20Two%20table,%20results,%20fixtures,%20stats",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/League%20Two%20table,%20results,%20fixtures,%20stats",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 6,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/League%20Two%20table,%20results,%20fixtures,%20stats",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/League%20Two%20table,%20results,%20fixtures,%20stats",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 7,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 7,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats%20-%20The%20English%20Football%20League",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 8,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 8,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/EFL%20Sky%20Bet%20League%20Two%20table,%20results,%20fixtures,%20stats",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "aus.2",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "aleagues.com.au",
+      "url": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "effectiveUrl": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "aus.2",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "aleagues.com.au",
+      "url": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "effectiveUrl": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "ksa.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "saff.com.sa",
+      "url": "https://saff.com.sa/championship.php?id=333#standing",
+      "effectiveUrl": "https://saff.com.sa/championship.php?id=333",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "ksa.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "saff.com.sa",
+      "url": "https://saff.com.sa/championship.php?id=333#standing",
+      "effectiveUrl": "https://saff.com.sa/championship.php?id=333",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "ksa.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "saff.com.sa",
+      "url": "https://saff.com.sa/championship.php?id=334#standing",
+      "effectiveUrl": "https://saff.com.sa/championship.php?id=334",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "ksa.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "saff.com.sa",
+      "url": "https://saff.com.sa/championship.php?id=334#standing",
+      "effectiveUrl": "https://saff.com.sa/championship.php?id=334",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&#038;format=xml",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&#038;format=xml",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#blogposting",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#blogposting",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#webpage",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#webpage",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "per.1",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "liga1.pe",
+      "url": "https://liga1.pe/tabla-de-posiciones/",
+      "effectiveUrl": "https://liga1.pe/tabla-de-posiciones/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "per.1",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "liga1.pe",
+      "url": "https://liga1.pe/tabla-de-posiciones/",
+      "effectiveUrl": "https://liga1.pe/tabla-de-posiciones/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "per.1",
+      "endpointRank": 7,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "liga1.pe",
+      "url": "https://liga1.pe/tabla-de-posiciones/#breadcrumb",
+      "effectiveUrl": "https://liga1.pe/tabla-de-posiciones/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "per.1",
+      "endpointRank": 7,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "liga1.pe",
+      "url": "https://liga1.pe/tabla-de-posiciones/#breadcrumb",
+      "effectiveUrl": "https://liga1.pe/tabla-de-posiciones/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "per.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "liga1.pe",
+      "url": "https://liga1.pe/Tabla%20de%20posiciones",
+      "effectiveUrl": "https://liga1.pe/Tabla%20de%20posiciones/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "per.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "liga1.pe",
+      "url": "https://liga1.pe/Tabla%20de%20posiciones",
+      "effectiveUrl": "https://liga1.pe/Tabla%20de%20posiciones/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&#038;format=xml",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 2,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&#038;format=xml",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F&",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 3,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#blogposting",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#blogposting",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#webpage",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/#webpage",
+      "effectiveUrl": "https://dimayor.com.co/2020/04/26/tabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay/",
+      "extractMethod": "html_table",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "dated_article_route",
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "dated_article_route",
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    }
+  ],
+  "bestRows": [
+    {
+      "competitionSlug": "arg.1",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "afa.com.ar",
+      "url": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "effectiveUrl": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "arg.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "afa.com.ar",
+      "url": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "effectiveUrl": "https://assets1.afa.com.ar/.statics/json/futbol/mundial/posiciones.json",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "aus.1",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "aleagues.com.au",
+      "url": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "effectiveUrl": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "aus.2",
+      "endpointRank": 6,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "aleagues.com.au",
+      "url": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "effectiveUrl": "https://aleagues.com.au/a-league-men/isuzu-ute-a-league-men-team-rankings/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.1",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "col.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "dimayor.com.co",
+      "url": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "effectiveUrl": "https://dimayor.com.co/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdimayor.com.co%2F2020%2F04%2F26%2Ftabla-de-posiciones-fecha-1-grupo-a-eliga-dimayor-stayandplay%2F",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "non_standings_content_route"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "non_standings_content_route"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "den.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "divisionsforeningen.dk",
+      "url": "https://divisionsforeningen.dk/tifo-standard/",
+      "effectiveUrl": "https://divisionsforeningen.dk/tifo-standard/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "eng.4",
+      "endpointRank": 1,
+      "endpointProbeStatus": "review_endpoint_2xx_weak_shape",
+      "host": "efl.com",
+      "url": "https://www.efl.com/competitions/efl-league-two/league-table",
+      "effectiveUrl": "https://www.efl.com/competitions/efl-league-two/league-table",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "fra.1",
+      "endpointRank": 8,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "ligue1.com",
+      "url": "https://ligue1.com/competitions/ligue1mcdonalds/general%20standings.%20Click%20to%20choose%20another%20standings",
+      "effectiveUrl": "https://ligue1.com/competitions/ligue1mcdonalds/general%20standings.%20Click%20to%20choose%20another%20standings",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [
+        "encoded_long_text_fragment"
+      ],
+      "dryExtractStatus": "blocked_endpoint_route_hygiene_failed",
+      "metrics": {
+        "rowCount": 0
+      },
+      "checks": [
+        {
+          "name": "routeHygieneOk",
+          "passed": false,
+          "reasons": [
+            "encoded_long_text_fragment"
+          ]
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "ksa.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "saff.com.sa",
+      "url": "https://saff.com.sa/championship.php?id=333#standing",
+      "effectiveUrl": "https://saff.com.sa/championship.php?id=333",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "per.1",
+      "endpointRank": 4,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "liga1.pe",
+      "url": "https://liga1.pe/tabla-de-posiciones/",
+      "effectiveUrl": "https://liga1.pe/tabla-de-posiciones/",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "endpointRank": 2,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "mlssoccer.com",
+      "url": "https://www.mlssoccer.com/standings/2026/conference",
+      "effectiveUrl": "https://www.mlssoccer.com/standings/2026/conference",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.2",
+      "endpointRank": 1,
+      "endpointProbeStatus": "L4_endpoint_shape_candidate_requires_parser_contract",
+      "host": "uslsoccer.com",
+      "url": "https://uslsoccer.com/usl-standings",
+      "effectiveUrl": "https://www.uslsoccer.com/usl-standings",
+      "extractMethod": "embedded_json",
+      "rowCount": 0,
+      "rows": [],
+      "hygieneReasons": [],
+      "dryExtractStatus": "blocked_endpoint_dry_extract_quality_failed",
+      "metrics": {
+        "rowCount": 0,
+        "uniqueTeamCount": 0,
+        "totalPlayed": 0,
+        "totalPoints": 0,
+        "maxPlayed": 0,
+        "maxPoints": 0,
+        "allZeroTable": false,
+        "wdlRows": 0,
+        "wdlOk": 0,
+        "ptsRows": 0,
+        "ptsOk": 0,
+        "gdRows": 0,
+        "gdOk": 0
+      },
+      "checks": [
+        {
+          "name": "plausibleRowCount",
+          "passed": false,
+          "actual": 0
+        },
+        {
+          "name": "uniqueTeamsOk",
+          "passed": false,
+          "uniqueTeamCount": 0,
+          "rowCount": 0
+        },
+        {
+          "name": "coreFieldsOk",
+          "passed": true
+        },
+        {
+          "name": "nonEmptyActiveTable",
+          "passed": false,
+          "totalPlayed": 0,
+          "totalPoints": 0,
+          "maxPlayed": 0,
+          "maxPoints": 0,
+          "allZeroTable": false
+        },
+        {
+          "name": "pointsOrderOk",
+          "passed": true
+        },
+        {
+          "name": "arithmeticStrong",
+          "passed": false,
+          "wdlRows": 0,
+          "wdlOk": 0,
+          "ptsRows": 0,
+          "ptsOk": 0
+        },
+        {
+          "name": "goalDifferenceStrong",
+          "passed": true,
+          "gdRows": 0,
+          "gdOk": 0
+        }
+      ],
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    }
+  ],
+  "policy": {
+    "localEndpointSnapshotsOnly": true,
+    "noFetch": true,
+    "noSearch": true,
+    "noCanonicalCandidateWrite": true,
+    "noProductionTruth": true,
+    "routeHygieneBlocksMalformedAndStaleCandidates": true,
+    "zeroTableBlocked": true,
+    "nextAllowedAction": "bulk_reconcile_endpoint_quality_passed_only"
+  }
+}
