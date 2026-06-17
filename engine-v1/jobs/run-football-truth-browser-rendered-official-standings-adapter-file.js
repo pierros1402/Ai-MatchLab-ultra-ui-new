@@ -26,50 +26,37 @@ const browserCandidates = [
 const browser = browserCandidates.find((p) => fs.existsSync(p));
 if (!browser) throw new Error("No Chrome/Edge executable found for browser-rendered official standings adapter");
 
-const targets = [
-  {
-    competitionSlug: "esp.1",
-    expectedRows: 20,
-    adapter: "laliga_rendered_text",
-    sourceUrl: "https://www.laliga.com/en-GB/laliga-easports/standing",
-    sourceHost: "laliga.com"
-  },
-  {
-    competitionSlug: "esp.2",
-    expectedRows: 22,
-    adapter: "laliga_rendered_text",
-    sourceUrl: "https://www.laliga.com/en-GB/laliga-hypermotion/standing",
-    sourceHost: "laliga.com"
-  },
-  {
-    competitionSlug: "ger.1",
-    expectedRows: 18,
-    adapter: "bundesliga_rendered_text",
-    sourceUrl: "https://www.bundesliga.com/en/bundesliga/table",
-    sourceHost: "bundesliga.com"
-  },
-  {
-    competitionSlug: "ger.2",
-    expectedRows: 18,
-    adapter: "bundesliga_rendered_text",
-    sourceUrl: "https://www.bundesliga.com/en/2bundesliga/table",
-    sourceHost: "bundesliga.com"
-  },
-  {
-    competitionSlug: "ger.3",
-    expectedRows: 20,
-    adapter: "dfb_3_liga_rendered_table",
-    sourceUrl: "https://www.dfb.de/3-liga/tabelle/",
-    sourceHost: "dfb.de"
-  },
-  {
-    competitionSlug: "cro.1",
-    expectedRows: 10,
-    adapter: "hnl_rendered_table",
-    sourceUrl: "https://hnl.hr/supersport-hnl/ljestvica/",
-    sourceHost: "hnl.hr"
+const routeConfigArgIndex = argv.indexOf("--route-config");
+const routeConfigPath = routeConfigArgIndex >= 0
+  ? path.resolve(ROOT, argv[routeConfigArgIndex + 1])
+  : path.join(ROOT, "engine-v1", "config", "football-truth-browser-rendered-official-route-families.json");
+
+if (!fs.existsSync(routeConfigPath)) throw new Error(`Missing route family config: ${routeConfigPath}`);
+
+const routeConfig = JSON.parse(fs.readFileSync(routeConfigPath, "utf8"));
+if (!Array.isArray(routeConfig.families)) throw new Error("Route family config must contain families[]");
+
+const targets = routeConfig.families.flatMap((family) => {
+  if (!family.familyId || !family.sourceHost || !family.adapter || !Array.isArray(family.competitions)) {
+    throw new Error(`Invalid route family config entry: ${JSON.stringify(family)}`);
   }
-];
+  return family.competitions.map((competition) => ({
+    familyId: family.familyId,
+    routeType: family.routeType || "official_browser_rendered",
+    competitionSlug: competition.competitionSlug,
+    expectedRows: competition.expectedRows,
+    adapter: competition.adapter || family.adapter,
+    sourceUrl: competition.sourceUrl,
+    sourceHost: competition.sourceHost || family.sourceHost
+  }));
+});
+
+for (const target of targets) {
+  if (!target.competitionSlug || !target.expectedRows || !target.adapter || !target.sourceUrl || !target.sourceHost) {
+    throw new Error(`Invalid rendered route target: ${JSON.stringify(target)}`);
+  }
+}
+
 
 function sha256(text) {
   return crypto.createHash("sha256").update(text).digest("hex");
@@ -187,6 +174,8 @@ function renderDom(target) {
 
   return {
     browser,
+  routeConfigPath: rel(routeConfigPath),
+  routeFamilyCount: routeConfig.families.length,
     competitionSlug: target.competitionSlug,
     sourceUrl: target.sourceUrl,
     exitCode: result.status,
@@ -528,6 +517,8 @@ for (const target of targets) {
 
   const competition = {
     competitionSlug: target.competitionSlug,
+    familyId: target.familyId,
+    routeType: target.routeType,
     adapter: target.adapter,
     sourceHost: target.sourceHost,
     sourceUrl: target.sourceUrl,
