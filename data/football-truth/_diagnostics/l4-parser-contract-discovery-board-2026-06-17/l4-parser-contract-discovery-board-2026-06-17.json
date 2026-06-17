@@ -1,0 +1,355 @@
+{
+  "generatedAtUtc": "2026-06-17T08:44:05.412Z",
+  "status": "passed",
+  "inputPath": "data/football-truth/_diagnostics/l4-standings-shape-probe-local-2026-06-17/l4-standings-shape-probe-local-2026-06-17.json",
+  "summary": {
+    "status": "passed",
+    "inputL4ShapeCandidateSlugCount": 3,
+    "parserContractReadySlugCount": 1,
+    "parserContractReviewRequiredCount": 1,
+    "blockedCount": 1,
+    "statusCounts": [
+      {
+        "status": "L4_parser_contract_review_required_shape_only",
+        "count": 1
+      },
+      {
+        "status": "L4_parser_contract_ready_html_table_requires_dry_extract",
+        "count": 1
+      },
+      {
+        "status": "blocked_no_parser_contract_discovered",
+        "count": 1
+      }
+    ],
+    "methodCounts": [
+      {
+        "method": "shape_only_review",
+        "count": 1
+      },
+      {
+        "method": "html_table",
+        "count": 1
+      },
+      {
+        "method": "none",
+        "count": 1
+      }
+    ],
+    "readySlugs": [
+      "ksa.1"
+    ],
+    "reviewRequiredSlugs": [
+      "aus.1"
+    ],
+    "blockedSlugs": [
+      "usa.1"
+    ],
+    "fetchExecutedNowCount": 0,
+    "searchExecutedNowCount": 0,
+    "broadSearchExecutedNowCount": 0,
+    "standingsExtractionExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0
+  },
+  "rows": [
+    {
+      "competitionSlug": "aus.1",
+      "source": "strict_review_carry_forward",
+      "host": "aleagues.com.au",
+      "url": "https://aleagues.com.au",
+      "effectiveUrl": "https://aleagues.com.au/",
+      "snapshotBody": "data\\football-truth\\_diagnostics\\controlled-l2-to-l3-source-contract-fetch-gate-fixed-2026-06-17\\snapshots\\aus_1.body.txt",
+      "inputShapeScore": 240,
+      "parserContractDiscoveryStatus": "L4_parser_contract_review_required_shape_only",
+      "parserMethod": "shape_only_review",
+      "htmlTableCount": 2,
+      "bestTable": {
+        "tableIndex": 0,
+        "trCount": 13,
+        "parsedRowCount": 13,
+        "dataRowCount": 13,
+        "header": [
+          "Ladder",
+          "P",
+          "W",
+          "D",
+          "L",
+          "PTS"
+        ],
+        "headerHits": [
+          "pts"
+        ],
+        "statHits": [
+          "pts",
+          "v",
+          "e",
+          "d"
+        ],
+        "sampleRows": [
+          [
+            "1 Newcastle Jets FC",
+            "26",
+            "15",
+            "3",
+            "8",
+            "48"
+          ],
+          [
+            "2 Adelaide United FC",
+            "26",
+            "12",
+            "7",
+            "7",
+            "43"
+          ],
+          [
+            "3 Auckland FC",
+            "26",
+            "11",
+            "9",
+            "6",
+            "42"
+          ],
+          [
+            "4 Melbourne Victory",
+            "26",
+            "11",
+            "7",
+            "8",
+            "40"
+          ],
+          [
+            "5 Sydney FC",
+            "26",
+            "11",
+            "6",
+            "9",
+            "39"
+          ]
+        ],
+        "score": 104
+      },
+      "jsonSignals": {
+        "keyHits": [
+          "table",
+          "position"
+        ],
+        "nextDataCount": 0,
+        "scriptJsonCount": 2,
+        "objectWithPointsCount": 4,
+        "arrayWithTeamsCount": 1,
+        "score": 81
+      },
+      "visibleStatHits": [
+        "played",
+        "mp",
+        "pts",
+        "v",
+        "e",
+        "d"
+      ],
+      "standingsWordCount": 0,
+      "dryExtractAllowed": false,
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "ksa.1",
+      "source": "strict_review_carry_forward",
+      "host": "spl.com.sa",
+      "url": "https://spl.com.sa",
+      "effectiveUrl": "https://www.spl.com.sa:443/",
+      "snapshotBody": "data\\football-truth\\_diagnostics\\controlled-l2-to-l3-source-contract-fetch-gate-fixed-2026-06-17\\snapshots\\ksa_1.body.txt",
+      "inputShapeScore": 245,
+      "parserContractDiscoveryStatus": "L4_parser_contract_ready_html_table_requires_dry_extract",
+      "parserMethod": "html_table",
+      "htmlTableCount": 1,
+      "bestTable": {
+        "tableIndex": 0,
+        "trCount": 19,
+        "parsedRowCount": 19,
+        "dataRowCount": 19,
+        "header": [
+          "POS POSITION",
+          "CLUB",
+          "PLAYED P PLAYED",
+          "WON W WON",
+          "DRAWN D DRAWN",
+          "LOST L LOST",
+          "GF Goals For",
+          "GA Goals Against",
+          "GD Goal Difference",
+          "POINTS PTS POINTS",
+          "FORM"
+        ],
+        "headerHits": [
+          "club",
+          "position",
+          "pos",
+          "played",
+          "won",
+          "drawn",
+          "lost",
+          "gd",
+          "points",
+          "pts"
+        ],
+        "statHits": [
+          "played",
+          "won",
+          "drawn",
+          "lost",
+          "goals for",
+          "goals against",
+          "goal difference",
+          "gd",
+          "points",
+          "pts",
+          "e",
+          "d"
+        ],
+        "sampleRows": [
+          [
+            "1",
+            "Al Ittihad",
+            "34",
+            "26",
+            "5",
+            "3",
+            "79",
+            "35",
+            "+44",
+            "83",
+            "W W W W W"
+          ],
+          [
+            "2",
+            "Al Hilal",
+            "34",
+            "23",
+            "6",
+            "5",
+            "95",
+            "41",
+            "+54",
+            "75",
+            "W W W D W"
+          ],
+          [
+            "3",
+            "Al Nassr",
+            "34",
+            "20",
+            "7",
+            "6",
+            "80",
+            "38",
+            "+42",
+            "70",
+            "L W D W L"
+          ],
+          [
+            "4",
+            "Al Qadsiah",
+            "34",
+            "21",
+            "5",
+            "8",
+            "53",
+            "31",
+            "+22",
+            "68",
+            "W W W W L"
+          ],
+          [
+            "5",
+            "Al Ahli",
+            "34",
+            "21",
+            "4",
+            "9",
+            "69",
+            "36",
+            "+33",
+            "67",
+            "W L W L W"
+          ]
+        ],
+        "score": 276
+      },
+      "jsonSignals": {
+        "keyHits": [],
+        "nextDataCount": 0,
+        "scriptJsonCount": 0,
+        "objectWithPointsCount": 1,
+        "arrayWithTeamsCount": 0,
+        "score": 4
+      },
+      "visibleStatHits": [
+        "played",
+        "mp",
+        "won",
+        "drawn",
+        "lost",
+        "goals for",
+        "goals against",
+        "goal difference",
+        "gd",
+        "points",
+        "pts",
+        "v",
+        "e",
+        "d"
+      ],
+      "standingsWordCount": 5,
+      "dryExtractAllowed": true,
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    },
+    {
+      "competitionSlug": "usa.1",
+      "source": "route_selection",
+      "host": "mlssoccer.com",
+      "url": "https://www.mlssoccer.com/competitions/index",
+      "effectiveUrl": "https://www.mlssoccer.com/competitions/",
+      "snapshotBody": "data\\football-truth\\_diagnostics\\controlled-l3-route-selection-fetch-gate-2026-06-17\\snapshots\\usa_1_r1.body.txt",
+      "inputShapeScore": 125,
+      "parserContractDiscoveryStatus": "blocked_no_parser_contract_discovered",
+      "parserMethod": "none",
+      "htmlTableCount": 0,
+      "bestTable": null,
+      "jsonSignals": {
+        "keyHits": [
+          "position",
+          "club"
+        ],
+        "nextDataCount": 0,
+        "scriptJsonCount": 0,
+        "objectWithPointsCount": 3,
+        "arrayWithTeamsCount": 0,
+        "score": 42
+      },
+      "visibleStatHits": [
+        "mp",
+        "v",
+        "e",
+        "d"
+      ],
+      "standingsWordCount": 3,
+      "dryExtractAllowed": false,
+      "canonicalCandidateWriteAllowed": false,
+      "productionTruthAllowed": false
+    }
+  ],
+  "policy": {
+    "localSnapshotsOnly": true,
+    "noFetch": true,
+    "noSearch": true,
+    "noStandingsExtraction": true,
+    "noCanonicalCandidateWrite": true,
+    "noProductionTruth": true,
+    "nextAllowedAction": "dry_extract_parser_contract_ready_only"
+  }
+}
