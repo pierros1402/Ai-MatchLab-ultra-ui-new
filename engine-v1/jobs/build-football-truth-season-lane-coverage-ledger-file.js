@@ -170,7 +170,25 @@ const latestRowsPath = latestBrowserRowsPath;
 const latestSummaryPath = latestBrowserSummaryPath;
 const latestBrowserRows = latestBrowserRowsPath ? parseJsonlSafe(latestBrowserRowsPath) : [];
 const latestOfficialApiRows = latestOfficialApiRowsPath ? parseJsonlSafe(latestOfficialApiRowsPath) : [];
-const latestRows = [...latestBrowserRows, ...latestOfficialApiRows];
+function latestFile(pattern, root = path.join(process.cwd(), "data", "football-truth", "_diagnostics")) {
+  const found = [];
+  const stack = [root];
+  while (stack.length) {
+    const dir = stack.pop();
+    if (!fs.existsSync(dir)) continue;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) stack.push(full);
+      else if (pattern.test(full)) found.push(full);
+    }
+  }
+  found.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  return found[0] || null;
+}
+
+const latestCurrentOrNewProofRowsPath = latestFile(/georgia-current-season-table-proof-v2-rows-\d{4}-\d{2}-\d{2}\.jsonl$/);
+const currentOrNewProofRows = latestCurrentOrNewProofRowsPath ? parseJsonlSafe(latestCurrentOrNewProofRowsPath) : [];
+const latestRows = [...latestBrowserRows, ...latestOfficialApiRows, ...currentOrNewProofRows];
 
 const latestSummary = latestBrowserSummaryPath ? readJsonSafe(latestBrowserSummaryPath) : null;
 const latestOfficialApiSummary = latestOfficialApiSummaryPath ? readJsonSafe(latestOfficialApiSummaryPath) : null;
@@ -266,7 +284,7 @@ for (const slug of leagueSlugs) {
   );
 
   const currentRows = rows.filter((r) =>
-    ["current_active", "new_not_started"].includes(r.seasonScope) &&
+    ["current_active", "new_not_started", "current_or_new"].includes(r.seasonScope) &&
     r.qualityGateStatus === "verified" &&
     r.validationStatus === "passed"
   );
@@ -374,6 +392,8 @@ const summary = {
   latestBrowserSummaryPath: latestSummaryPath ? rel(latestSummaryPath) : null,
   latestOfficialApiRowsPath: latestOfficialApiRowsPath ? rel(latestOfficialApiRowsPath) : null,
   latestOfficialApiSummaryPath: latestOfficialApiSummaryPath ? rel(latestOfficialApiSummaryPath) : null,
+  latestCurrentOrNewProofRowsPath: latestCurrentOrNewProofRowsPath ? rel(latestCurrentOrNewProofRowsPath) : null,
+  currentOrNewProofRowsCount: currentOrNewProofRows.length,
   standingsSourceSummaryCount: sourceSummaries.length,
   searchExecutedNowCount: 0,
   fetchExecutedNowCount: 0,
