@@ -118,16 +118,48 @@ const immediateOfficialRenderedFamilyTargets = [
   { familyId: "serie_a_official_rendered", slugs: ["ita.1"], reason: "official rendered table exists but likely new-season zero table; requires currentness gate" }
 ];
 
-const sourceFamilyExpansionBoard = immediateOfficialRenderedFamilyTargets.map((family) => ({
-  ...family,
-  targetCount: family.slugs.length,
-  lifecycleTasks: family.slugs.flatMap((slug) => accepted.filter((r) => r.competitionSlug === slug)),
-  blockedUntilInspected: ["eredivisie_official_rendered","premierleague_official_rendered","serie_a_official_rendered"].includes(family.familyId),
-  recommendedAction:
-    family.familyId === "spfl_official_rendered"
-      ? "add_family_to_browser_rendered_config_and_run_expected_rows_gate"
-      : "inspect_rendered_table_cells_before_config_acceptance"
-}));
+const standingsExpansionSlugSet = new Set(standingsExpansionTargets.map((r) => r.competitionSlug));
+const blockedOfficialRenderedFamilyIds = new Set(["premierleague_official_rendered","serie_a_official_rendered"]);
+
+const sourceFamilyExpansionBoard = immediateOfficialRenderedFamilyTargets
+  .map((family) => {
+    const lifecycleTasks = family.slugs.flatMap((slug) => accepted.filter((r) => r.competitionSlug === slug));
+    const standingsLifecycleTasks = lifecycleTasks.filter((task) => task.taskType === "acquire_previous_completed_standings");
+    const startDateLifecycleTasks = lifecycleTasks.filter((task) => task.taskType === "acquire_next_season_start_date");
+    const standingTargetSlugs = family.slugs.filter((slug) => standingsExpansionSlugSet.has(slug));
+    const blockedUntilInspected = blockedOfficialRenderedFamilyIds.has(family.familyId);
+    const excludedFromStandingsExpansion = standingTargetSlugs.length === 0;
+    const exclusionReason =
+      excludedFromStandingsExpansion && lifecycleTasks.length > 0
+        ? "previous_completed_standings_already_satisfied_only_non_standings_lifecycle_tasks_remain"
+        : excludedFromStandingsExpansion
+          ? "no_active_previous_completed_standings_task_for_family"
+          : null;
+    return {
+      ...family,
+      originalSlugs: family.slugs,
+      slugs: standingTargetSlugs,
+      targetCount: standingTargetSlugs.length,
+      lifecycleTasks,
+      standingsLifecycleTasks,
+      startDateLifecycleTasks,
+      excludedFromStandingsExpansion,
+      exclusionReason,
+      blockedUntilInspected,
+      recommendedAction:
+        blockedUntilInspected
+          ? "inspect_rendered_table_cells_before_config_acceptance"
+          : "add_family_to_browser_rendered_config_and_run_expected_rows_gate"
+    };
+  })
+  .filter((family) => !family.excludedFromStandingsExpansion);
+
+const recommendedNextLane =
+  sourceFamilyExpansionBoard.some((family) => !family.blockedUntilInspected)
+    ? "add_next_unblocked_official_rendered_family_to_config_then_run_expected_rows_gate"
+    : sourceFamilyExpansionBoard.some((family) => family.blockedUntilInspected)
+      ? "inspect_blocked_official_rendered_table_cells_before_config_acceptance"
+      : "mine_additional_official_api_or_provider_source_families_for_standings_expansion";
 
 const summary = {
   status: "passed",
@@ -149,7 +181,7 @@ const summary = {
   highValueAcceptedTaskCount: accepted.filter((r) => r.highValuePrefix).length,
   uefaLikeAcceptedTaskCount: accepted.filter((r) => r.uefaLikePrefix).length,
   immediateOfficialRenderedFamilyTargetCount: sourceFamilyExpansionBoard.length,
-  recommendedNextLane: "add_spfl_official_rendered_family_to_config_then_run_browser_rendered_adapter_expected_rows_gate"
+  recommendedNextLane
 };
 
 const outPath = path.join(OUT_DIR, `prioritized-lifecycle-execution-board-${DATE}.json`);
@@ -169,3 +201,4 @@ console.log(JSON.stringify({
   sourceFamilyExpansionBoardOutput: rel(familyBoardPath),
   summary
 }, null, 2));
+
