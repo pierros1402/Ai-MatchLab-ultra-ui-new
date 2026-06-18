@@ -492,7 +492,136 @@ function parseHnl(target, rendered) {
   };
 }
 
+
+
+function spflCleanText(html) {
+  return String(html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function spflParseInt(text) {
+  const t = String(text || "").replace(/,/g, "").trim();
+  if (!/^-?\d+$/.test(t)) return null;
+  return Number(t);
+}
+
+function parseSpflRenderedCells(rowHtml) {
+  return [...String(rowHtml || "").matchAll(/<(td|th)\b[^>]*>([\s\S]*?)<\/\1>/gi)]
+    .map((m) => spflCleanText(m[2]))
+    .map((x) => x.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+function parseSpfl(target, rendered) {
+  const html = String(rendered.html || rendered.dom || rendered.text || rendered.stdout || "");
+  const tables = html.match(/<table\b[\s\S]*?<\/table>/gi) || [];
+  const candidates = [];
+
+  for (let tableIndex = 0; tableIndex < tables.length; tableIndex++) {
+    const table = tables[tableIndex];
+    const rowBlocks = table.match(/<tr\b[\s\S]*?<\/tr>/gi) || [];
+    const rows = [];
+
+    for (const rowHtml of rowBlocks) {
+      const cells = parseSpflRenderedCells(rowHtml);
+      if (cells.length < 8) continue;
+
+      const position = spflParseInt(cells[0]);
+      if (!Number.isInteger(position) || position < 1 || position > 30) continue;
+
+      let teamIndex = -1;
+      for (let i = 1; i < cells.length; i++) {
+        if (/[A-Za-zÀ-ž]/.test(cells[i]) && spflParseInt(cells[i]) === null) {
+          teamIndex = i;
+          break;
+        }
+      }
+      if (teamIndex < 0) continue;
+
+      const teamName = cells[teamIndex].replace(/\s+/g, " ").trim();
+      const nums = cells.slice(teamIndex + 1).map(spflParseInt).filter((n) => Number.isInteger(n));
+      if (nums.length < 6) continue;
+
+      const played = nums[0];
+      const won = nums[1];
+      const drawn = nums[2];
+      const lost = nums[3];
+      const goalDifference = nums[nums.length - 2];
+      const points = nums[nums.length - 1];
+
+      rows.push({
+        competitionSlug: target.competitionSlug,
+        seasonScope: target.seasonScope,
+        seasonLabel: target.seasonLabel,
+        seasonStartDate: target.seasonStartDate || null,
+        seasonEndDate: target.seasonEndDate || null,
+        nextSeasonStartDate: target.nextSeasonStartDate || null,
+        provider: "browser_rendered_official",
+        teamName,
+        position,
+        played,
+        won,
+        drawn,
+        lost,
+        goalsFor: null,
+        goalsAgainst: null,
+        goalDifference,
+        points,
+        sourceUrl: target.sourceUrl,
+        sourceHost: target.sourceHost,
+        extractionAdapter: "spfl_rendered_table",
+        familyId: target.familyId,
+        routeType: target.routeType,
+        teamNameRaw: teamName
+      });
+    }
+
+    const ar = arithmetic(rows);
+    const signals = Array.isArray(target.expectedTeamSignals) ? target.expectedTeamSignals : [];
+    const teamText = rows.map((r) => r.teamName).join(" | ").toLowerCase();
+    const expectedTeamSignalCount = signals.filter((team) => teamText.includes(String(team).toLowerCase())).length;
+    const expectedRowsMatch = rows.length === target.expectedRows;
+    const selectionScore = (ar.status === "passed" ? 100000 : 0) + (expectedRowsMatch ? 10000 : 0) + expectedTeamSignalCount * 100 + rows.length;
+
+    candidates.push({
+      tableIndex,
+      rows,
+      arithmetic: ar,
+      tableLength: table.length,
+      gridRowCount: rowBlocks.length,
+      expectedRowsMatch,
+      expectedTeamSignalCount,
+      selectionScore,
+      header: parseSpflRenderedCells(rowBlocks[0] || "").slice(0, 12)
+    });
+  }
+
+  candidates.sort((a, b) => b.selectionScore - a.selectionScore || b.rows.length - a.rows.length || b.tableLength - a.tableLength);
+
+  return {
+    tableCount: tables.length,
+    bestCandidate: candidates[0] || null,
+    rows: candidates[0]?.rows || []
+  };
+}
+
+
 function parseTarget(target, rendered) {
+  if (target.adapter === "spfl_rendered_table") return parseSpfl(target, rendered);
   if (target.adapter === "laliga_rendered_text") return parseLaLiga(target, rendered);
   if (target.adapter === "bundesliga_rendered_text") return parseBundesliga(target, rendered);
   if (target.adapter === "dfb_3_liga_rendered_table") return parseDfb3Liga(target, rendered);
