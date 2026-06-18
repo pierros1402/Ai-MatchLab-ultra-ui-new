@@ -188,7 +188,9 @@ function latestFile(pattern, root = path.join(process.cwd(), "data", "football-t
 
 const latestCurrentOrNewProofRowsPath = latestFile(/georgia-current-season-table-proof-v2-rows-\d{4}-\d{2}-\d{2}\.jsonl$/);
 const currentOrNewProofRows = latestCurrentOrNewProofRowsPath ? parseJsonlSafe(latestCurrentOrNewProofRowsPath) : [];
-const latestRows = [...latestBrowserRows, ...latestOfficialApiRows, ...currentOrNewProofRows];
+const latestOfficialHtmlRowsPath = latestFile(/jleague-official-html-standings-proof-rows-\d{4}-\d{2}-\d{2}\.jsonl$/);
+const officialHtmlProofRows = latestOfficialHtmlRowsPath ? parseJsonlSafe(latestOfficialHtmlRowsPath) : [];
+const latestRows = [...latestBrowserRows, ...latestOfficialApiRows, ...currentOrNewProofRows, ...officialHtmlProofRows];
 
 const latestSummary = latestBrowserSummaryPath ? readJsonSafe(latestBrowserSummaryPath) : null;
 const latestOfficialApiSummary = latestOfficialApiSummaryPath ? readJsonSafe(latestOfficialApiSummaryPath) : null;
@@ -233,6 +235,17 @@ for (const row of latestRows) {
   if (!rowsBySlug.has(row.competitionSlug)) rowsBySlug.set(row.competitionSlug, []);
   rowsBySlug.get(row.competitionSlug).push(row);
 }
+
+const verifiedPreviousCompletedRowSlugs = new Set(
+  latestRows
+    .filter((row) =>
+      row.competitionSlug &&
+      row.seasonScope === "previous_completed" &&
+      row.qualityGateStatus === "verified" &&
+      row.validationStatus === "passed"
+    )
+    .map((row) => row.competitionSlug)
+);
 
 function hasDate(value) {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -291,8 +304,10 @@ for (const slug of leagueSlugs) {
 
   const previousCompletedSatisfied =
     previousRows.length > 0 &&
-    verifiedCompetitionSlugs.has(slug) &&
-    comp?.qualityGateStatus === "verified";
+    (
+      (verifiedCompetitionSlugs.has(slug) && comp?.qualityGateStatus === "verified") ||
+      verifiedPreviousCompletedRowSlugs.has(slug)
+    );
 
   const acceptedStartDateEvidence = acceptedStartDateEvidenceBySlug.get(slug) || null;
 
@@ -394,6 +409,8 @@ const summary = {
   latestOfficialApiSummaryPath: latestOfficialApiSummaryPath ? rel(latestOfficialApiSummaryPath) : null,
   latestCurrentOrNewProofRowsPath: latestCurrentOrNewProofRowsPath ? rel(latestCurrentOrNewProofRowsPath) : null,
   currentOrNewProofRowsCount: currentOrNewProofRows.length,
+  latestOfficialHtmlRowsPath: latestOfficialHtmlRowsPath ? rel(latestOfficialHtmlRowsPath) : null,
+  officialHtmlProofRowsCount: officialHtmlProofRows.length,
   standingsSourceSummaryCount: sourceSummaries.length,
   searchExecutedNowCount: 0,
   fetchExecutedNowCount: 0,
