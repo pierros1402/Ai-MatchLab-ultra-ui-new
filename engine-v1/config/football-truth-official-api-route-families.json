@@ -1,0 +1,40 @@
+{
+  "contractVersion": 1,
+  "description": "Official API standings extraction families. Separate from browser-rendered official routes. Previous-completed API rows must satisfy expected row count, expected team signals, arithmetic, and non-trivial non-zero gates.",
+  "families": [
+    {
+      "familyId": "superliga_official_api",
+      "adapter": "official_api_standings_array",
+      "sourceHost": "api.superliga.dk",
+      "routeType": "official_api",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2025-2026",
+      "competitions": [
+        {
+          "competitionSlug": "den.1",
+          "competitionName": "Superliga",
+          "country": "Denmark",
+          "sourceUrl": "https://api.superliga.dk/tournaments/46/standings?appName=superligadk&access_token=5b6ab6f5eb84c60031bbbd24&env=production&locale=da&addResults=true&resultsLimit=999&type=&form=last&stageId=395",
+          "endpointUrl": "https://api.superliga.dk/tournaments/46/standings?appName=superligadk&access_token=5b6ab6f5eb84c60031bbbd24&env=production&locale=da&addResults=true&resultsLimit=999&type=&form=last&stageId=395",
+          "expectedRows": 12,
+          "minimumExpectedTeamSignalCount": 5,
+          "expectedTeamSignals": ["FC København", "København", "FC Midtjylland", "Midtjylland", "Brøndby", "AGF", "Randers", "Silkeborg", "Nordsjælland", "Viborg", "Sønderjyske", "OB", "Vejle", "Fredericia"],
+          "requiredNonTrivialPreviousCompleted": true,
+          "fields": {
+            "position": "rank",
+            "teamName": "teamName",
+            "points": "points",
+            "goalsFor": "goalsScored",
+            "goalsAgainst": "goalsConceded",
+            "played": "matchesPlayed",
+            "won": "matchesWon",
+            "lost": "matchesLost",
+            "drawn": "matchesDraw",
+            "stageId": "tournamentStageId",
+            "stageName": "tournamentStageName"
+          }
+        }
+      ]
+    }
+  ]
+}
