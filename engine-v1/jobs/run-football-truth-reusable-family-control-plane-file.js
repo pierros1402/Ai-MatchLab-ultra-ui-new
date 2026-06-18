@@ -78,7 +78,7 @@ const familyJobs = [
     familyGroup: "browser_rendered_official",
     label: "central_browser_rendered_official_standings",
     script: "engine-v1/jobs/run-football-truth-browser-rendered-official-standings-adapter-file.js",
-    args: [],
+    args: ["--allow-render"],
     mode: "required",
     expectedOutputRegex: /browser-rendered-official-standings-adapter-\d{4}-\d{2}-\d{2}\.json$/
   },
@@ -102,7 +102,7 @@ const familyJobs = [
     familyGroup: "current_or_new_proof",
     label: "georgia_current_or_new_proof_v2",
     script: "engine-v1/jobs/build-football-truth-georgia-current-season-table-proof-v2-file.js",
-    args: [],
+    args: ["--allow-fetch"],
     mode: "temporary_proof_source",
     expectedOutputRegex: /georgia-current-season-table-proof-v2-\d{4}-\d{2}-\d{2}\.json$/
   }
@@ -253,6 +253,8 @@ console.log(JSON.stringify({
   blockersOutput: rel(blockersPath),
   summary
 }, null, 2));
+
+
 
 
 
