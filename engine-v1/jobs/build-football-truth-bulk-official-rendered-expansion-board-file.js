@@ -262,7 +262,42 @@ const grouped = Object.values(rows.reduce((acc, row) => {
   return acc;
 }, {})).sort((a, b) => b.targetCount - a.targetCount || a.familyId.localeCompare(b.familyId));
 
-const inspectionPack = rows.slice(0, 24).map((r, i) => ({
+const bestBySlug = new Map();
+for (const row of rows) {
+  const slug = row.competitionSlug;
+  if (!slug) continue;
+  const url = String(row.sourceUrl || "");
+  const urlPenalty =
+    /archive|news|article|fixture|fixtures|match|matches|ticket|tickets|shop|video/i.test(url) ? 50000 : 0;
+  const urlBoost =
+    /(standing|standings|table|tabelle|classement|ranking|classificacao|stilling|tabela|stand\/|stand$)/i.test(url) ? 50000 : 0;
+  const candidateScore = Number(row.priorityScore || 0) + urlBoost - urlPenalty;
+  const candidate = { ...row, candidateScore };
+  const prev = bestBySlug.get(slug);
+  if (!prev || candidateScore > prev.candidateScore) bestBySlug.set(slug, candidate);
+}
+
+const countrySeen = new Map();
+const uniqueRows = [...bestBySlug.values()].sort((a, b) => b.candidateScore - a.candidateScore || a.competitionSlug.localeCompare(b.competitionSlug));
+const diversifiedRows = [];
+for (const row of uniqueRows) {
+  const country = String(row.competitionSlug || "").split(".")[0];
+  const seen = countrySeen.get(country) || 0;
+  if (seen >= 2) continue;
+  countrySeen.set(country, seen + 1);
+  diversifiedRows.push(row);
+  if (diversifiedRows.length >= 24) break;
+}
+
+if (diversifiedRows.length < 24) {
+  for (const row of uniqueRows) {
+    if (diversifiedRows.some((x) => x.competitionSlug === row.competitionSlug)) continue;
+    diversifiedRows.push(row);
+    if (diversifiedRows.length >= 24) break;
+  }
+}
+
+const inspectionPack = diversifiedRows.slice(0, 24).map((r, i) => ({
   rank: i + 1,
   ...r,
   recommendedAction: "render_and_capture_table_cell_shapes_before_parser_acceptance"
@@ -280,6 +315,7 @@ const summary = {
   candidateRowCount: rows.length,
   groupedFamilyCount: grouped.length,
   inspectionPackCount: inspectionPack.length,
+  inspectionPackUniqueSlugCount: new Set(inspectionPack.map((r) => r.competitionSlug)).size,
   recommendedNextLane: "run_bulk_rendered_table_cell_shape_inspection_pack_then_accept_parser_families_in_batches"
 };
 
