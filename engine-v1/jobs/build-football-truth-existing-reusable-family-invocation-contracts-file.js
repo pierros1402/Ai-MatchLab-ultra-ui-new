@@ -9,114 +9,17 @@ const ROOT = path.resolve(__dirname, "..", "..");
 const DATE = new Date().toISOString().slice(0, 10);
 const OUT_DIR = path.join(ROOT, "data", "football-truth", "_diagnostics", `existing-reusable-family-invocation-contracts-${DATE}`);
 
-const FAMILY_SPECS = [
-  {
-    familyId: "central_browser_rendered_official",
-    expectedSlugs: ["esp.1","esp.2","ger.1","ger.2","ger.3","cro.1","sco.1","sco.2","ned.1"],
-    exactRunner: "engine-v1/jobs/run-football-truth-browser-rendered-official-standings-adapter-file.js",
-    config: "engine-v1/config/football-truth-browser-rendered-official-route-families.json",
-    requiredArgs: ["--allow-render"],
-    expectedOutputRegex: "browser-rendered-official-standings-adapter-YYYY-MM-DD.json",
-    lane: "previous_completed"
-  },
-  {
-    familyId: "central_official_api",
-    expectedSlugs: ["den.1"],
-    exactRunner: "engine-v1/jobs/run-football-truth-official-api-standings-adapter-file.js",
-    config: "engine-v1/config/football-truth-official-api-route-families.json",
-    requiredArgs: ["--allow-fetch"],
-    expectedOutputRegex: "official-api-standings-adapter-YYYY-MM-DD.json",
-    lane: "previous_completed"
-  },
-  {
-    familyId: "jleague_official_html_proof",
-    expectedSlugs: ["jpn.1"],
-    exactRunner: "engine-v1/jobs/build-football-truth-jleague-official-html-standings-proof-file.js",
-    config: null,
-    requiredArgs: [],
-    expectedOutputRegex: "jleague-official-html-standings-proof-YYYY-MM-DD.json",
-    lane: "previous_completed"
-  },
-  {
-    familyId: "georgia_current_or_new_proof_v2",
-    expectedSlugs: ["geo.1"],
-    exactRunner: "engine-v1/jobs/build-football-truth-georgia-current-season-table-proof-v2-file.js",
-    config: null,
-    requiredArgs: ["--allow-fetch"],
-    expectedOutputRegex: "georgia-current-season-table-proof-v2-YYYY-MM-DD.json",
-    lane: "current_or_new"
-  },
-  {
-    familyId: "norway_ntf",
-    expectedSlugs: ["nor.1","nor.2"],
-    filenameHints: [/ntf/i, /norway/i, /eliteserien/i],
-    strongFilenameHints: [/standings/i, /extract/i, /parser/i, /runner/i, /canonical/i, /quality/i],
-    excludeHints: [/team-geo/i, /wikidata/i, /news/i, /fixture/i],
-    lane: "previous_completed"
-  },
-  {
-    familyId: "sportomedia_sef",
-    expectedSlugs: ["swe.1","swe.2"],
-    filenameHints: [/sportomedia/i, /\bsef\b/i, /allsvenskan/i, /superettan/i],
-    strongFilenameHints: [/standings/i, /extract/i, /route-contract/i, /local-context/i, /runner/i, /validation/i],
-    excludeHints: [/fixture/i, /news/i],
-    lane: "previous_completed"
-  },
-  {
-    familyId: "torneopal",
-    expectedSlugs: ["fin.1","fin.2"],
-    filenameHints: [/torneopal/i, /veikkaus/i, /finland/i],
-    strongFilenameHints: [/standings/i, /extract/i, /adapter/i, /runner/i, /validation/i],
-    excludeHints: [/fixture/i, /news/i],
-    lane: "previous_completed"
-  },
-  {
-    familyId: "ksi",
-    expectedSlugs: ["isl.1","isl.2"],
-    filenameHints: [/\bksi\b/i, /iceland/i, /isl/i],
-    strongFilenameHints: [/standings/i, /stada/i, /extract/i, /adapter/i, /runner/i],
-    excludeHints: [/team-geo/i, /wikidata/i, /news/i],
-    lane: "previous_completed"
-  },
-  {
-    familyId: "loi_ajax",
-    expectedSlugs: ["irl.1","irl.2"],
-    filenameHints: [/leagueofireland/i, /\bloi\b/i, /ajax/i, /ireland/i],
-    strongFilenameHints: [/standings/i, /extract/i, /ajax/i, /adapter/i, /runner/i],
-    excludeHints: [/fixture/i, /news/i],
-    lane: "previous_completed"
-  },
-  {
-    familyId: "cfa_cyprus_html",
-    expectedSlugs: ["cyp.1","cyp.2"],
-    filenameHints: [/cyprus/i, /\bcfa\b/i, /cyp/i],
-    strongFilenameHints: [/standings/i, /html/i, /extract/i, /adapter/i, /runner/i],
-    excludeHints: [/team-geo/i, /wikidata/i, /news/i],
-    lane: "previous_completed"
-  }
-];
-
 function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
 function rel(p) { return path.relative(ROOT, p).replaceAll("\\", "/"); }
+function abs(p) { return p ? path.join(ROOT, p) : null; }
+function exists(p) { return Boolean(p && fs.existsSync(abs(p))); }
+function read(p) { try { return fs.readFileSync(abs(p), "utf8"); } catch { return ""; } }
 function sha(v) { return crypto.createHash("sha256").update(String(v)).digest("hex"); }
-function exists(relPath) { return relPath && fs.existsSync(path.join(ROOT, relPath)); }
-function read(relPath) {
-  try { return fs.readFileSync(path.join(ROOT, relPath), "utf8"); } catch { return ""; }
-}
-function walk(dir) {
-  if (!fs.existsSync(dir)) return [];
-  const out = [];
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, e.name);
-    if (e.isDirectory() && !/node_modules|\.git|_diagnostics|dist|build|coverage/i.test(full)) out.push(...walk(full));
-    else if (e.isFile() && /\.(js|mjs|cjs|ts|json)$/i.test(e.name)) out.push(full);
-  }
-  return out;
-}
-function inspectRunner(relPath) {
-  const text = read(relPath);
+
+function inspectRunner(runner) {
+  const text = read(runner);
   return {
-    fileExists: exists(relPath),
+    fileExists: exists(runner),
     fileSha256: text ? sha(text) : null,
     requiresAllowFetch: /--allow-fetch/.test(text),
     requiresAllowRender: /--allow-render/.test(text),
@@ -135,114 +38,202 @@ function inspectRunner(relPath) {
     hasBrowserRender: /puppeteer|playwright|chrome|allow-render|browserRender/i.test(text)
   };
 }
-function scoreCandidate(file, spec) {
-  const r = rel(file);
-  const base = path.basename(r);
-  let score = 0;
-  for (const p of spec.filenameHints || []) if (p.test(r)) score += 20;
-  for (const p of spec.strongFilenameHints || []) if (p.test(r)) score += 8;
-  for (const p of spec.excludeHints || []) if (p.test(r)) score -= 25;
-  if (/engine-v1\/jobs\//.test(r)) score += 10;
-  if (/adapter|runner|extractor|extract|proof|validation|quality|canonical/i.test(base)) score += 8;
-  if (/board|plan|search|targets|inventory|compiler|review/i.test(base)) score -= 8;
-  const text = read(r);
-  for (const slug of spec.expectedSlugs || []) if (text.includes(slug)) score += 4;
-  if (/seasonScope/.test(text)) score += 5;
-  if (/qualityGateStatus|validationStatus/.test(text)) score += 5;
-  if (/canonicalWriteExecutedNowCount|productionWriteExecutedNowCount|rawPayloadWriteExecutedNowCount/.test(text)) score += 2;
-  return score;
+
+function gateCount(i) {
+  if (!i) return 0;
+  return [
+    i.emitsSeasonScope,
+    i.emitsSeasonLabel,
+    i.hasExpectedRowsGate,
+    i.hasTeamSignalGate,
+    i.hasArithmeticGate,
+    i.hasNonTrivialGate,
+    i.hasDuplicateGate,
+    i.hasQualityGateStatus,
+    i.hasValidationStatus
+  ].filter(Boolean).length;
 }
 
 ensureDir(OUT_DIR);
 
-const allFiles = [
-  ...walk(path.join(ROOT, "engine-v1", "jobs")),
-  ...walk(path.join(ROOT, "engine-v1", "config"))
+const CONTRACT_SPECS = [
+  {
+    familyId: "central_browser_rendered_official",
+    expectedSlugs: ["esp.1","esp.2","ger.1","ger.2","ger.3","cro.1","sco.1","sco.2","ned.1"],
+    lane: "previous_completed",
+    contractClass: "executable_contract",
+    runner: "engine-v1/jobs/run-football-truth-browser-rendered-official-standings-adapter-file.js",
+    config: "engine-v1/config/football-truth-browser-rendered-official-route-families.json",
+    requiredArgs: ["--allow-render"],
+    expectedOutputRegex: "browser-rendered-official-standings-adapter-YYYY-MM-DD.json"
+  },
+  {
+    familyId: "central_official_api",
+    expectedSlugs: ["den.1"],
+    lane: "previous_completed",
+    contractClass: "executable_contract",
+    runner: "engine-v1/jobs/run-football-truth-official-api-standings-adapter-file.js",
+    config: "engine-v1/config/football-truth-official-api-route-families.json",
+    requiredArgs: ["--allow-fetch"],
+    expectedOutputRegex: "official-api-standings-adapter-YYYY-MM-DD.json"
+  },
+  {
+    familyId: "jleague_official_html_proof",
+    expectedSlugs: ["jpn.1"],
+    lane: "previous_completed",
+    contractClass: "executable_contract",
+    runner: "engine-v1/jobs/build-football-truth-jleague-official-html-standings-proof-file.js",
+    config: null,
+    requiredArgs: [],
+    expectedOutputRegex: "jleague-official-html-standings-proof-YYYY-MM-DD.json"
+  },
+  {
+    familyId: "georgia_current_or_new_proof_v2",
+    expectedSlugs: ["geo.1"],
+    lane: "current_or_new",
+    contractClass: "executable_contract",
+    runner: "engine-v1/jobs/build-football-truth-georgia-current-season-table-proof-v2-file.js",
+    config: null,
+    requiredArgs: ["--allow-fetch"],
+    expectedOutputRegex: "georgia-current-season-table-proof-v2-YYYY-MM-DD.json"
+  },
+  {
+    familyId: "norway_ntf",
+    expectedSlugs: ["nor.1","nor.2"],
+    lane: "previous_completed",
+    contractClass: "refreshable_needs_gate_audit",
+    runner: "engine-v1/jobs/run-football-truth-norway-ntf-canonical-candidate-proposal-quality-gate-file.js",
+    config: null,
+    requiredArgs: ["--allow-fetch"],
+    expectedOutputRegex: null,
+    blockerReason: "legacy canonical-candidate runner needs modern seasonScope/row-output/gate audit before truth-row acceptance"
+  },
+  {
+    familyId: "sportomedia_sef",
+    expectedSlugs: ["swe.1","swe.2"],
+    lane: "previous_completed",
+    contractClass: "refreshable_needs_gate_audit",
+    runner: "engine-v1/jobs/run-football-truth-controlled-sportomedia-exact-graphql-standings-extraction-runner-file.js",
+    config: null,
+    requiredArgs: ["--allow-fetch"],
+    expectedOutputRegex: null,
+    blockerReason: "legacy GraphQL extraction runner needs modern seasonScope/row-output/gate audit before truth-row acceptance"
+  },
+  {
+    familyId: "loi_ajax",
+    expectedSlugs: ["irl.1","irl.2"],
+    lane: "previous_completed",
+    contractClass: "refreshable_needs_gate_audit",
+    runner: "engine-v1/jobs/build-uefa-loi-ajax-normalized-rows-file.js",
+    config: null,
+    requiredArgs: [],
+    expectedOutputRegex: null,
+    blockerReason: "normalized-row helper needs route identity, expected-row, arithmetic and season-scope audit before truth-row acceptance"
+  },
+  {
+    familyId: "torneopal",
+    expectedSlugs: ["fin.1","fin.2"],
+    lane: "previous_completed",
+    contractClass: "blocked_exact_runner_contract_missing",
+    runner: null,
+    config: null,
+    requiredArgs: [],
+    expectedOutputRegex: null,
+    blockerReason: "no exact Torneopal/Veikkausliiga family runner contract identified; must not borrow central rendered runner"
+  },
+  {
+    familyId: "ksi",
+    expectedSlugs: ["isl.1","isl.2"],
+    lane: "previous_completed",
+    contractClass: "blocked_exact_runner_contract_missing",
+    runner: null,
+    config: null,
+    requiredArgs: [],
+    expectedOutputRegex: null,
+    blockerReason: "no exact KSI family runner contract identified; must not borrow central rendered runner"
+  },
+  {
+    familyId: "cfa_cyprus_html",
+    expectedSlugs: ["cyp.1","cyp.2"],
+    lane: "previous_completed",
+    contractClass: "blocked_exact_runner_contract_missing",
+    runner: null,
+    config: null,
+    requiredArgs: [],
+    expectedOutputRegex: null,
+    blockerReason: "no exact CFA Cyprus HTML family runner contract identified; must not borrow J.League proof runner"
+  }
 ];
 
-const contracts = [];
-for (const spec of FAMILY_SPECS) {
-  let runner = spec.exactRunner || null;
-  let candidateRunners = [];
-  if (!runner) {
-    candidateRunners = allFiles
-      .filter((f) => /engine-v1[\\/]jobs[\\/]/.test(f))
-      .map((f) => ({ file: rel(f), score: scoreCandidate(f, spec) }))
-      .filter((r) => r.score > 0)
-      .sort((a, b) => b.score - a.score || a.file.localeCompare(b.file))
-      .slice(0, 12);
-    runner = candidateRunners[0]?.score >= 35 ? candidateRunners[0].file : null;
-  }
-
-  const runnerInspection = runner ? inspectRunner(runner) : null;
+const contracts = CONTRACT_SPECS.map((spec) => {
+  const runnerInspection = spec.runner ? inspectRunner(spec.runner) : null;
   const configInspection = spec.config ? { fileExists: exists(spec.config), fileSha256: sha(read(spec.config)) } : null;
 
-  const requiredArgs = spec.requiredArgs || [];
-  if (runnerInspection?.requiresAllowFetch && !requiredArgs.includes("--allow-fetch")) requiredArgs.push("--allow-fetch");
-  if (runnerInspection?.requiresAllowRender && !requiredArgs.includes("--allow-render")) requiredArgs.push("--allow-render");
+  let contractStatus = spec.contractClass;
+  const validationErrors = [];
 
-  const gateCount = runnerInspection ? [
-    runnerInspection.emitsSeasonScope,
-    runnerInspection.emitsSeasonLabel,
-    runnerInspection.hasExpectedRowsGate,
-    runnerInspection.hasTeamSignalGate,
-    runnerInspection.hasArithmeticGate,
-    runnerInspection.hasNonTrivialGate,
-    runnerInspection.hasDuplicateGate,
-    runnerInspection.hasQualityGateStatus,
-    runnerInspection.hasValidationStatus
-  ].filter(Boolean).length : 0;
+  if (spec.runner && !runnerInspection?.fileExists) validationErrors.push("runner_missing");
+  if (spec.config && !configInspection?.fileExists) validationErrors.push("config_missing");
 
-  let contractStatus = "blocked_no_runner";
-  if (runner && runnerInspection?.fileExists && spec.config && !configInspection?.fileExists) contractStatus = "blocked_missing_config";
-  else if (runner && runnerInspection?.fileExists && gateCount >= 5) contractStatus = "executable_contract";
-  else if (runner && runnerInspection?.fileExists) contractStatus = "refreshable_needs_gate_audit";
+  if (spec.contractClass === "executable_contract") {
+    if (validationErrors.length) contractStatus = "blocked_invalid_executable_contract";
+    if (runnerInspection?.requiresAllowFetch && !spec.requiredArgs.includes("--allow-fetch")) validationErrors.push("missing_required_allow_fetch_arg");
+    if (runnerInspection?.requiresAllowRender && !spec.requiredArgs.includes("--allow-render")) validationErrors.push("missing_required_allow_render_arg");
+    if (runnerInspection?.hasCanonicalWrite || runnerInspection?.hasProductionWrite) validationErrors.push("runner_has_write_surface_requires_manual_review");
+  }
 
-  contracts.push({
+  return {
     familyId: spec.familyId,
     expectedSlugs: spec.expectedSlugs,
     lane: spec.lane,
-    runner,
-    config: spec.config || null,
-    requiredArgs,
-    expectedOutputRegex: spec.expectedOutputRegex || null,
+    runner: spec.runner,
+    config: spec.config,
+    requiredArgs: spec.requiredArgs,
+    expectedOutputRegex: spec.expectedOutputRegex,
     contractStatus,
-    gateCount,
+    gateCount: gateCount(runnerInspection),
     runnerInspection,
     configInspection,
-    candidateRunners,
-    commandTemplate: runner ? `node ${runner}${requiredArgs.length ? " " + requiredArgs.join(" ") : ""}` : null,
+    validationErrors,
+    commandTemplate: spec.runner ? `node ${spec.runner}${spec.requiredArgs.length ? " " + spec.requiredArgs.join(" ") : ""}` : null,
     promotionAllowed: contractStatus === "executable_contract",
-    promotionRule: "only accepted rows emitted by this runner may feed ledger; review/candidate outputs remain diagnostic"
-  });
-}
+    blockerReason: spec.blockerReason || null,
+    promotionRule: "only exact family contracts can emit truth rows; never substitute unrelated runner based on keyword match"
+  };
+});
 
 const executableContracts = contracts.filter((c) => c.contractStatus === "executable_contract");
 const refreshableContracts = contracts.filter((c) => c.contractStatus === "refreshable_needs_gate_audit");
 const blockedContracts = contracts.filter((c) => c.contractStatus.startsWith("blocked"));
 
+const falseExecutableFamilies = ["torneopal", "ksi", "cfa_cyprus_html"];
+const falseExecutableLeaks = executableContracts.filter((c) => falseExecutableFamilies.includes(c.familyId));
+if (falseExecutableLeaks.length) throw new Error(`False executable families leaked through whitelist: ${falseExecutableLeaks.map((c) => c.familyId).join(", ")}`);
+
 const summary = {
   status: "passed",
   runner: "existing_reusable_family_invocation_contracts",
-  contractVersion: 1,
-  purpose: "convert noisy reusable-family inventory into precise invocation contracts with exact runner, args, outputs and gate audit",
+  contractVersion: 2,
+  purpose: "strict invocation whitelist with exact runner/config contracts; no keyword-based runner substitution",
   searchExecutedNowCount: 0,
   fetchExecutedNowCount: 0,
   browserRenderExecutedNowCount: 0,
   canonicalWriteExecutedNowCount: 0,
   productionWriteExecutedNowCount: 0,
   rawPayloadWriteExecutedNowCount: 0,
-  familySpecCount: FAMILY_SPECS.length,
+  familySpecCount: CONTRACT_SPECS.length,
   executableContractCount: executableContracts.length,
   refreshableNeedsGateAuditCount: refreshableContracts.length,
   blockedContractCount: blockedContracts.length,
   executableSlugCount: new Set(executableContracts.flatMap((c) => c.expectedSlugs)).size,
   refreshableSlugCount: new Set(refreshableContracts.flatMap((c) => c.expectedSlugs)).size,
+  blockedSlugCount: new Set(blockedContracts.flatMap((c) => c.expectedSlugs)).size,
   executableFamilies: executableContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, commandTemplate: c.commandTemplate, gateCount: c.gateCount })),
-  refreshableFamilies: refreshableContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, runner: c.runner, gateCount: c.gateCount })),
-  blockedFamilies: blockedContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, status: c.contractStatus, topCandidate: c.candidateRunners?.[0] || null })),
-  hardRule: "run executable contracts first; refreshable contracts require gate audit before truth rows can be accepted",
-  recommendedNextLane: "run_safety_wrapped_executable_contracts_and_report_refreshable_blockers"
+  refreshableFamilies: refreshableContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, runner: c.runner, gateCount: c.gateCount, blockerReason: c.blockerReason })),
+  blockedFamilies: blockedContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, status: c.contractStatus, blockerReason: c.blockerReason })),
+  falseExecutableFamiliesBlocked: falseExecutableFamilies,
+  hardRule: "run executable contracts only; refreshable and blocked contracts cannot emit truth rows",
+  recommendedNextLane: "run_safety_wrapped_executable_contracts_then_gate_audit_refreshable_contracts"
 };
 
 const outPath = path.join(OUT_DIR, `existing-reusable-family-invocation-contracts-${DATE}.json`);
