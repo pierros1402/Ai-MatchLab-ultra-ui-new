@@ -51,6 +51,21 @@ const targets = routeConfig.families.flatMap((family) => {
   }));
 });
 
+const seasonMetaBySlug = new Map((routeConfig.families || []).flatMap((family) =>
+  (family.competitions || []).map((competition) => [competition.competitionSlug, {
+    seasonScope: competition.seasonScope || family.seasonScope || "unknown_needs_evidence",
+    seasonLabel: competition.seasonLabel || family.seasonLabel || null,
+    seasonStartDate: competition.seasonStartDate ?? family.seasonStartDate ?? null,
+    seasonEndDate: competition.seasonEndDate ?? family.seasonEndDate ?? null,
+    nextSeasonStartDate: competition.nextSeasonStartDate ?? family.nextSeasonStartDate ?? null,
+    seasonStateEvidence: competition.seasonStateEvidence || family.seasonStateEvidence || null
+  }])
+));
+
+for (const target of targets) {
+  Object.assign(target, seasonMetaBySlug.get(target.competitionSlug) || {});
+}
+
 for (const target of targets) {
   if (!target.competitionSlug || !target.expectedRows || !target.adapter || !target.sourceUrl || !target.sourceHost) {
     throw new Error(`Invalid rendered route target: ${JSON.stringify(target)}`);
@@ -563,7 +578,46 @@ const summary = {
     : "inspect_browser_rendered_official_adapter_failures"
 };
 
-const report = { summary, renderedTargets, competitions, rows: allRows };
+const sourceObservedAt = new Date().toISOString();
+const targetBySlug = new Map(targets.map((target) => [target.competitionSlug, target]));
+const seasonScopedAllRows = allRows.map((row) => {
+  const target = targetBySlug.get(row.competitionSlug) || {};
+  return {
+    competitionSlug: row.competitionSlug,
+    seasonScope: target.seasonScope || "unknown_needs_evidence",
+    seasonLabel: target.seasonLabel || null,
+    seasonStartDate: target.seasonStartDate ?? null,
+    seasonEndDate: target.seasonEndDate ?? null,
+    nextSeasonStartDate: target.nextSeasonStartDate ?? null,
+    provider: row.provider,
+    teamName: row.teamName,
+    position: row.position,
+    played: row.played,
+    won: row.won,
+    drawn: row.drawn,
+    lost: row.lost,
+    goalsFor: row.goalsFor,
+    goalsAgainst: row.goalsAgainst,
+    goalDifference: row.goalDifference,
+    points: row.points,
+    sourceUrl: row.sourceUrl,
+    sourceHost: row.sourceHost,
+    sourceObservedAt,
+    qualityGateStatus: row.qualityGateStatus,
+    validationStatus: row.validationStatus,
+    extractionAdapter: row.extractionAdapter,
+    familyId: row.familyId || target.familyId || null,
+    routeType: row.routeType || target.routeType || null,
+    seasonStateEvidence: target.seasonStateEvidence || null,
+    teamCode: row.teamCode,
+    teamNameRaw: row.teamNameRaw
+  };
+});
+
+summary.acceptedRowsCount = seasonScopedAllRows.length;
+summary.seasonScopedRowsContractVersion = 1;
+
+const report = { summary, renderedTargets, competitions, rows: seasonScopedAllRows };
 const outPath = path.join(OUT_DIR, `browser-rendered-official-standings-adapter-${DATE}.json`);
 const compactPath = path.join(OUT_DIR, `browser-rendered-official-standings-adapter-summary-${DATE}.json`);
 const rowsPath = path.join(OUT_DIR, `browser-rendered-official-standings-adapter-rows-${DATE}.jsonl`);
@@ -574,7 +628,7 @@ fs.writeFileSync(compactPath, `${JSON.stringify({
   competitions,
   renderedTargets
 }, null, 2)}\n`, "utf8");
-fs.writeFileSync(rowsPath, allRows.map((row) => JSON.stringify(row)).join("\n") + (allRows.length ? "\n" : ""), "utf8");
+fs.writeFileSync(rowsPath, seasonScopedAllRows.map((row) => JSON.stringify(row)).join("\n") + (seasonScopedAllRows.length ? "\n" : ""), "utf8");
 
 console.log(JSON.stringify({
   output: rel(outPath),
