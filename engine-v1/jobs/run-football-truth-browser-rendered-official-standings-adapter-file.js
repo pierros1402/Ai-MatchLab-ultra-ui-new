@@ -620,7 +620,187 @@ function parseSpfl(target, rendered) {
 }
 
 
+
+const GENERIC_RENDERED_TABLE_SCHEMA_REGISTRY = {
+  "ned.1": {
+    schemaId: "eredivisie_official_rendered_split_table_index_map_v2_logical_cells",
+    cellNormalization: "split_pipe_logical_cells",
+    expectedRows: 18,
+    requiredLogicalColumnCount: 9,
+    columns: {
+      position: 0,
+      team: 1,
+      played: 2,
+      won: 3,
+      lost: 4,
+      drawn: 5,
+      goals: 6,
+      goalDifference: 7,
+      points: 8
+    }
+  }
+};
+
+function genericRenderedTableCleanText(html) {
+  return String(html || "")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function genericRenderedTableInt(text) {
+  const t = String(text || "").replace(/[^0-9+-]/g, "").replace(/^\+/, "").trim();
+  if (!/^-?\d+$/.test(t)) return null;
+  return Number(t);
+}
+
+function genericRenderedTableGoalPair(text) {
+  const m = String(text || "").match(/(\d+)\s*[-:]\s*(\d+)/);
+  if (!m) return { goalsFor: null, goalsAgainst: null, goalDifference: null };
+  const goalsFor = Number(m[1]);
+  const goalsAgainst = Number(m[2]);
+  return { goalsFor, goalsAgainst, goalDifference: goalsFor - goalsAgainst };
+}
+
+function genericRenderedTablePhysicalCells(rowHtml) {
+  return [...String(rowHtml || "").matchAll(/<(td|th)\b[^>]*>([\s\S]*?)<\/\1>/gi)]
+    .map((m) => genericRenderedTableCleanText(m[2]).replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+function genericRenderedTableLogicalCells(cells, schema) {
+  const out = [];
+  for (const cell of cells) {
+    const parts = schema?.cellNormalization === "split_pipe_logical_cells"
+      ? String(cell).split(/\s*\|\s*/).map((x) => x.trim()).filter(Boolean)
+      : [cell];
+    out.push(...parts);
+  }
+  return out;
+}
+
+function genericRenderedTableParseTables(html, schema) {
+  const tables = String(html || "").match(/<table\b[\s\S]*?<\/table>/gi) || [];
+  return tables.map((table, tableIndex) => {
+    const rowBlocks = table.match(/<tr\b[\s\S]*?<\/tr>/gi) || [];
+    const physicalGrid = rowBlocks.map(genericRenderedTablePhysicalCells).filter((row) => row.length);
+    const logicalGrid = physicalGrid.map((row) => genericRenderedTableLogicalCells(row, schema)).filter((row) => row.length);
+    return { tableIndex, tableLength: table.length, physicalGrid, grid: logicalGrid };
+  });
+}
+
+function parseGenericRenderedTableByIndexMap(target, rendered) {
+  const schema = target.renderedTableSchema || target.tableSchema || target.parserSchema || GENERIC_RENDERED_TABLE_SCHEMA_REGISTRY[target.competitionSlug] || {};
+  const columns = schema.columns || {};
+  const expectedRows = Number(target.expectedRows || target.expectedRowCount || schema.expectedRows || 0);
+  const html = String(rendered.html || rendered.dom || rendered.text || rendered.stdout || "");
+  const tables = genericRenderedTableParseTables(html, schema);
+  const columnIndexes = Object.values(columns).filter(Number.isInteger);
+  const requiredMaxIndex = columnIndexes.length ? Math.max(...columnIndexes) : 9999;
+  const tableCandidates = [];
+  const allRows = [];
+
+  for (const table of tables) {
+    const rows = [];
+    for (const cells of table.grid) {
+      if (cells.length <= requiredMaxIndex) continue;
+
+      const position = genericRenderedTableInt(cells[columns.position]);
+      const teamName = cells[columns.team];
+      if (!Number.isInteger(position) || !teamName) continue;
+
+      const goals = Number.isInteger(columns.goals)
+        ? genericRenderedTableGoalPair(cells[columns.goals])
+        : { goalsFor: null, goalsAgainst: null, goalDifference: null };
+
+      const row = {
+        competitionSlug: target.competitionSlug,
+        seasonScope: target.seasonScope,
+        seasonLabel: target.seasonLabel,
+        seasonStartDate: target.seasonStartDate || null,
+        seasonEndDate: target.seasonEndDate || null,
+        nextSeasonStartDate: target.nextSeasonStartDate || null,
+        provider: "browser_rendered_official",
+        teamName,
+        position,
+        played: genericRenderedTableInt(cells[columns.played]),
+        won: genericRenderedTableInt(cells[columns.won]),
+        drawn: genericRenderedTableInt(cells[columns.drawn]),
+        lost: genericRenderedTableInt(cells[columns.lost]),
+        goalsFor: goals.goalsFor,
+        goalsAgainst: goals.goalsAgainst,
+        goalDifference: Number.isInteger(columns.goalDifference) ? genericRenderedTableInt(cells[columns.goalDifference]) : goals.goalDifference,
+        points: genericRenderedTableInt(cells[columns.points]),
+        sourceUrl: target.sourceUrl,
+        sourceHost: target.sourceHost,
+        extractionAdapter: "generic_rendered_table_by_index_map",
+        familyId: target.familyId,
+        routeType: target.routeType,
+        teamNameRaw: teamName
+      };
+
+      if (![row.played, row.won, row.drawn, row.lost, row.points].every(Number.isInteger)) continue;
+      rows.push(row);
+    }
+
+    if (rows.length) {
+      tableCandidates.push({
+        tableIndex: table.tableIndex,
+        tableLength: table.tableLength,
+        physicalGridRowCount: table.physicalGrid.length,
+        logicalGridRowCount: table.grid.length,
+        physicalColumnCountMax: Math.max(0, ...table.physicalGrid.map((r) => r.length)),
+        logicalColumnCountMax: Math.max(0, ...table.grid.map((r) => r.length)),
+        parsedRowCount: rows.length,
+        firstRows: table.grid.slice(0, 10)
+      });
+      allRows.push(...rows);
+    }
+  }
+
+  const byPosition = new Map();
+  for (const row of allRows) if (!byPosition.has(row.position)) byPosition.set(row.position, row);
+  const rows = [...byPosition.values()].sort((a, b) => a.position - b.position);
+
+  const ar = arithmetic(rows);
+  const signals = Array.isArray(target.expectedTeamSignals) ? target.expectedTeamSignals : [];
+  const teamText = rows.map((r) => r.teamName).join(" | ").toLowerCase();
+  const expectedTeamSignalCount = signals.filter((team) => teamText.includes(String(team).toLowerCase())).length;
+  const expectedRowsMatch = expectedRows > 0 ? rows.length === expectedRows : false;
+
+  return {
+    tableCount: tables.length,
+    tableCandidates,
+    bestCandidate: {
+      tableIndex: null,
+      schemaId: schema.schemaId || null,
+      expectedRowsMatch,
+      expectedTeamSignalCount,
+      arithmetic: ar,
+      parsedRowCount: rows.length,
+      splitTableCount: tableCandidates.length,
+      header: tableCandidates[0]?.firstRows?.[0] || [],
+      firstRows: tableCandidates.flatMap((c) => c.firstRows || []).slice(0, 20)
+    },
+    rows
+  };
+}
+
+
 function parseTarget(target, rendered) {
+  if (target.adapter === "generic_rendered_table_by_index_map") return parseGenericRenderedTableByIndexMap(target, rendered);
   if (target.adapter === "spfl_rendered_table") return parseSpfl(target, rendered);
   if (target.adapter === "laliga_rendered_text") return parseLaLiga(target, rendered);
   if (target.adapter === "bundesliga_rendered_text") return parseBundesliga(target, rendered);
