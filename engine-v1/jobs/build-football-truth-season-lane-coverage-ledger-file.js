@@ -153,6 +153,29 @@ const verifiedCompetitionSlugs = new Set(latestSummary?.summary?.verifiedCompeti
 const competitionSummaryBySlug = new Map((latestSummary?.competitions || []).map((c) => [c.competitionSlug, c]));
 const routeTargetBySlug = new Map(routeTargets.map((t) => [t.competitionSlug, t]));
 
+const acceptedStartDateEvidenceBySlug = new Map();
+const startDateEvidenceStateFiles = walk(path.join(DATA_ROOT, "_state", "season-start-date-evidence"))
+  .filter((f) => /accepted-season-start-date-evidence-\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f))
+  .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+
+for (const file of startDateEvidenceStateFiles) {
+  for (const evidence of parseJsonlSafe(file)) {
+    if (
+      evidence.competitionSlug &&
+      hasDate(evidence.nextSeasonStartDate) &&
+      evidence.qualityGateStatus === "verified" &&
+      evidence.validationStatus === "passed"
+    ) {
+      if (!acceptedStartDateEvidenceBySlug.has(evidence.competitionSlug)) {
+        acceptedStartDateEvidenceBySlug.set(evidence.competitionSlug, {
+          ...evidence,
+          evidenceStatePath: rel(file)
+        });
+      }
+    }
+  }
+}
+
 const rowsBySlug = new Map();
 for (const row of latestRows) {
   if (!row.competitionSlug) continue;
@@ -220,7 +243,10 @@ for (const slug of leagueSlugs) {
     verifiedCompetitionSlugs.has(slug) &&
     comp?.qualityGateStatus === "verified";
 
+  const acceptedStartDateEvidence = acceptedStartDateEvidenceBySlug.get(slug) || null;
+
   const nextSeasonStartDate =
+    acceptedStartDateEvidence?.nextSeasonStartDate ||
     rows.find((r) => hasDate(r.nextSeasonStartDate))?.nextSeasonStartDate ||
     (hasDate(routeTarget?.nextSeasonStartDate) ? routeTarget.nextSeasonStartDate : null);
 
@@ -252,6 +278,10 @@ for (const slug of leagueSlugs) {
     currentOrNewSeasonRowCount: currentRows.length,
     nextSeasonStartDateSatisfied,
     nextSeasonStartDate,
+    nextSeasonStartDateEvidenceStatus: acceptedStartDateEvidence?.evidenceStatus || null,
+    nextSeasonStartDateEvidenceHost: acceptedStartDateEvidence?.evidenceHost || null,
+    nextSeasonStartDateEvidenceUrl: acceptedStartDateEvidence?.evidenceUrl || null,
+    nextSeasonStartDateEvidenceStatePath: acceptedStartDateEvidence?.evidenceStatePath || null,
     strictAllThreeLaneSatisfied,
     practicalFullCoverageSatisfied,
     missingLanes,
@@ -321,6 +351,8 @@ const summary = {
   previousCompletedVerifiedRowsCount: latestRows.filter((r) => r.seasonScope === "previous_completed" && r.qualityGateStatus === "verified").length,
   currentOrNewSeasonSatisfiedCount,
   nextSeasonStartDateSatisfiedCount,
+  acceptedStartDateEvidenceStateCount: acceptedStartDateEvidenceBySlug.size,
+  acceptedStartDateEvidenceStateSlugs: [...acceptedStartDateEvidenceBySlug.keys()].sort(),
   strictAllThreeLaneSatisfiedCount,
   practicalFullCoverageSatisfiedCount,
   missingPreviousCompletedCount: ledgerRows.length - previousCompletedSatisfiedCount,
