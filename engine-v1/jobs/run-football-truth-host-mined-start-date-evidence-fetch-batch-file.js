@@ -261,6 +261,15 @@ function rowRelevance(target, row) {
   return score;
 }
 
+function isKnownOfficialHostForTarget(slug, host) {
+  return (knownOfficialHosts[slug] || []).some((officialHost) => {
+    if (!host || !officialHost) return false;
+    host = String(host).replace(/^www\./, "").toLowerCase();
+    officialHost = String(officialHost).replace(/^www\./, "").toLowerCase();
+    return host === officialHost || host.endsWith(`.${officialHost}`);
+  });
+}
+
 function buildHostCandidates(target, previousRows) {
   const scores = new Map();
 
@@ -287,14 +296,24 @@ function buildHostCandidates(target, previousRows) {
     if (/\bfixture|calendar|schedule|matchday\b/i.test(`${row.title} ${row.snippet} ${row.url}`)) add(host, 10, "prior_result_fixture_calendar");
   }
 
-  return [...scores.values()].sort((a, b) => b.score - a.score || a.host.localeCompare(b.host)).slice(0, 3);
+  return [...scores.values()].sort((a, b) => {
+    const aKnown = isKnownOfficialHostForTarget(target.competitionSlug, a.host) ? 1 : 0;
+    const bKnown = isKnownOfficialHostForTarget(target.competitionSlug, b.host) ? 1 : 0;
+    return bKnown - aKnown || b.score - a.score || a.host.localeCompare(b.host);
+  }).slice(0, 3);
 }
 
 function buildQueries(target, hostCandidates) {
   const name = targetName(target);
   const qs = [];
 
-  for (const cand of hostCandidates) {
+  const orderedHostCandidates = [...hostCandidates].sort((a, b) => {
+    const aKnown = isKnownOfficialHostForTarget(target.competitionSlug, a.host) ? 1 : 0;
+    const bKnown = isKnownOfficialHostForTarget(target.competitionSlug, b.host) ? 1 : 0;
+    return bKnown - aKnown || b.score - a.score || a.host.localeCompare(b.host);
+  });
+
+  for (const cand of orderedHostCandidates) {
     const host = cand.host;
     qs.push(`site:${host} "${name}" "2026/27" fixtures`);
     qs.push(`site:${host} "${name}" "2026-27" calendar`);
@@ -302,6 +321,8 @@ function buildQueries(target, hostCandidates) {
     qs.push(`site:${host} "${name}" "fixture release"`);
     qs.push(`site:${host} "${name}" "first match" "2026"`);
     qs.push(`site:${host} "${name}" "schedule" "2026"`);
+    qs.push(`site:${host} "${name}" "starts on" "2026"`);
+    qs.push(`site:${host} "${name}" "will start" "2026"`);
   }
 
   return [...new Set(qs)].slice(0, queriesPerTarget);
