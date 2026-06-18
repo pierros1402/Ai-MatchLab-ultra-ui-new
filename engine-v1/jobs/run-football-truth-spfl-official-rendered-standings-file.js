@@ -19,7 +19,8 @@ const targets = [
     seasonLabel: "2025-2026",
     sourceHost: "spfl.co.uk",
     sourceUrl: "https://spfl.co.uk/league/premiership/table",
-    expectedRowCount: 12
+    expectedRowCount: 12,
+    expectedTeamSignals: ["Celtic", "Rangers", "Heart of Midlothian", "Motherwell", "Hibernian", "Aberdeen"]
   },
   {
     competitionSlug: "sco.2",
@@ -28,7 +29,8 @@ const targets = [
     seasonLabel: "2025-2026",
     sourceHost: "spfl.co.uk",
     sourceUrl: "https://spfl.co.uk/league/championship/table",
-    expectedRowCount: 10
+    expectedRowCount: 10,
+    expectedTeamSignals: ["St. Johnstone", "Partick Thistle", "Raith Rovers", "Ayr United", "Dunfermline", "Queen's Park", "Greenock Morton", "Ross County", "Arbroath", "Airdrieonians"]
   }
 ];
 
@@ -210,7 +212,18 @@ function parseTableRowsFromDom(dom, target) {
     });
   }
 
-  candidateTables.sort((a, b) => b.parsedRowCount - a.parsedRowCount || a.tableIndex - b.tableIndex);
+  for (const table of candidateTables) {
+    const teamText = table.parsedRows.map((r) => r.teamName).join(" | ").toLowerCase();
+    const signals = Array.isArray(target.expectedTeamSignals) ? target.expectedTeamSignals : [];
+    table.expectedRowCountMatch = table.parsedRowCount === target.expectedRowCount;
+    table.expectedTeamSignalCount = signals.filter((team) => teamText.includes(String(team).toLowerCase())).length;
+    table.selectionScore =
+      (table.expectedRowCountMatch ? 10000 : 0) +
+      table.expectedTeamSignalCount * 100 +
+      Math.min(table.parsedRowCount, 50);
+  }
+
+  candidateTables.sort((a, b) => b.selectionScore - a.selectionScore || b.parsedRowCount - a.parsedRowCount || a.tableIndex - b.tableIndex);
   return candidateTables;
 }
 
@@ -292,6 +305,15 @@ for (const target of targets) {
     tableCount: candidateTables.length,
     bestTableIndex: bestTable.tableIndex,
     bestTableParsedRowCount: bestTable.parsedRowCount,
+    allTableShapePreview: candidateTables.map((t) => ({
+      tableIndex: t.tableIndex,
+      parsedRowCount: t.parsedRowCount,
+      expectedRowCountMatch: t.expectedRowCountMatch || false,
+      expectedTeamSignalCount: t.expectedTeamSignalCount || 0,
+      selectionScore: t.selectionScore || 0,
+      firstTeams: t.parsedRows.slice(0, 12).map((r) => r.teamName),
+      tableTextPreview: t.tableTextPreview.slice(0, 500)
+    })),
     verification,
     bestTablePreview: bestTable.tableTextPreview,
     bestRowsPreview: bestTable.parsedRows.slice(0, 15)
