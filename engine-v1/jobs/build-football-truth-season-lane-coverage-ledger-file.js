@@ -107,33 +107,33 @@ for (const file of jsonFiles) {
   recursivelyCollectCompetitionMeta(j, metaBySlug);
 }
 
-const routeConfigPath = path.join(ROOT, "engine-v1", "config", "football-truth-browser-rendered-official-route-families.json");
-const routeConfig = fs.existsSync(routeConfigPath) ? readJsonSafe(routeConfigPath) : null;
+const browserRouteConfigPath = path.join(ROOT, "engine-v1", "config", "football-truth-browser-rendered-official-route-families.json");
+const officialApiRouteConfigPath = path.join(ROOT, "engine-v1", "config", "football-truth-official-api-route-families.json");
+const browserRouteConfig = fs.existsSync(browserRouteConfigPath) ? readJsonSafe(browserRouteConfigPath) : null;
+const officialApiRouteConfig = fs.existsSync(officialApiRouteConfigPath) ? readJsonSafe(officialApiRouteConfigPath) : null;
 const routeTargets = [];
 
-if (routeConfig?.families) {
-  for (const family of routeConfig.families) {
+function appendRouteTargetsFromConfig(routeConfig, sourceLane) {
+  if (!routeConfig?.families) return;
+  for (const family of routeConfig.families || []) {
     for (const competition of family.competitions || []) {
-      if (competition.competitionSlug) {
-        slugSet.add(competition.competitionSlug);
-        routeTargets.push({
-          competitionSlug: competition.competitionSlug,
-          familyId: family.familyId,
-          sourceHost: competition.sourceHost || family.sourceHost,
-          sourceUrl: competition.sourceUrl,
-          adapter: competition.adapter || family.adapter,
-          seasonScope: competition.seasonScope || family.seasonScope || null,
-          seasonLabel: competition.seasonLabel || family.seasonLabel || null,
-          seasonStartDate: competition.seasonStartDate ?? family.seasonStartDate ?? null,
-          seasonEndDate: competition.seasonEndDate ?? family.seasonEndDate ?? null,
-          nextSeasonStartDate: competition.nextSeasonStartDate ?? family.nextSeasonStartDate ?? null,
-          seasonStateEvidence: competition.seasonStateEvidence || family.seasonStateEvidence || null
-        });
-      }
+      if (!competition.competitionSlug) continue;
+      routeTargets.push({
+        competitionSlug: competition.competitionSlug,
+        sourceUrl: competition.sourceUrl || competition.endpointUrl,
+        adapter: competition.adapter || family.adapter,
+        sourceLane,
+        routeType: competition.routeType || family.routeType || sourceLane,
+        seasonScope: competition.seasonScope || family.seasonScope || null,
+        seasonLabel: competition.seasonLabel || family.seasonLabel || null,
+        seasonStartDate: competition.seasonStartDate ?? family.seasonStartDate ?? null
+      });
     }
   }
 }
 
+appendRouteTargetsFromConfig(browserRouteConfig, "browser_rendered_official");
+appendRouteTargetsFromConfig(officialApiRouteConfig, "official_api");
 const routeConfiguredLeagueSlugs = new Set(routeTargets.map((t) => t.competitionSlug).filter((s) => /^[a-z]{3}\.\d+$/.test(s)));
 const stateStartDateSlugs = new Set();
 
@@ -149,19 +149,40 @@ const leagueSlugs = stableSort([...authoritativeLeagueSlugsForLedger].filter((s)
 const cupSlugs = stableSort([...slugSet].filter((s) => /^[a-z]{3}\.cup$/.test(s)));
 
 const diagnosticsRoot = path.join(DATA_ROOT, "_diagnostics");
-const rowFiles = walk(diagnosticsRoot).filter((f) => /browser-rendered-official-standings-adapter-rows-\d{4}-\d{2}-\d{2}\.jsonl$/.test(f));
-rowFiles.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+const browserRowFiles = walk(diagnosticsRoot).filter((f) => /browser-rendered-official-standings-adapter-rows-\d{4}-\d{2}-\d{2}\.jsonl$/.test(f));
+browserRowFiles.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
 
-const summaryFiles = walk(diagnosticsRoot).filter((f) => /browser-rendered-official-standings-adapter-summary-\d{4}-\d{2}-\d{2}\.json$/.test(f));
-summaryFiles.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+const browserSummaryFiles = walk(diagnosticsRoot).filter((f) => /browser-rendered-official-standings-adapter-summary-\d{4}-\d{2}-\d{2}\.json$/.test(f));
+browserSummaryFiles.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
 
-const latestRowsPath = rowFiles[0] || null;
-const latestSummaryPath = summaryFiles[0] || null;
-const latestRows = latestRowsPath ? parseJsonlSafe(latestRowsPath) : [];
-const latestSummary = latestSummaryPath ? readJsonSafe(latestSummaryPath) : null;
+const officialApiRowFiles = walk(diagnosticsRoot).filter((f) => /official-api-standings-adapter-rows-\d{4}-\d{2}-\d{2}\.jsonl$/.test(f));
+officialApiRowFiles.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
 
-const verifiedCompetitionSlugs = new Set(latestSummary?.summary?.verifiedCompetitionSlugs || []);
-const competitionSummaryBySlug = new Map((latestSummary?.competitions || []).map((c) => [c.competitionSlug, c]));
+const officialApiSummaryFiles = walk(diagnosticsRoot).filter((f) => /official-api-standings-adapter-summary-\d{4}-\d{2}-\d{2}\.json$/.test(f));
+officialApiSummaryFiles.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+
+const latestBrowserRowsPath = browserRowFiles[0] || null;
+const latestBrowserSummaryPath = browserSummaryFiles[0] || null;
+const latestOfficialApiRowsPath = officialApiRowFiles[0] || null;
+const latestOfficialApiSummaryPath = officialApiSummaryFiles[0] || null;
+
+const latestRowsPath = latestBrowserRowsPath;
+const latestSummaryPath = latestBrowserSummaryPath;
+const latestBrowserRows = latestBrowserRowsPath ? parseJsonlSafe(latestBrowserRowsPath) : [];
+const latestOfficialApiRows = latestOfficialApiRowsPath ? parseJsonlSafe(latestOfficialApiRowsPath) : [];
+const latestRows = [...latestBrowserRows, ...latestOfficialApiRows];
+
+const latestSummary = latestBrowserSummaryPath ? readJsonSafe(latestBrowserSummaryPath) : null;
+const latestOfficialApiSummary = latestOfficialApiSummaryPath ? readJsonSafe(latestOfficialApiSummaryPath) : null;
+const sourceSummaries = [latestSummary, latestOfficialApiSummary].filter(Boolean);
+
+const verifiedCompetitionSlugs = new Set(sourceSummaries.flatMap((summary) => summary?.summary?.verifiedCompetitionSlugs || []));
+const competitionSummaryBySlug = new Map();
+for (const sourceSummary of sourceSummaries) {
+  for (const competition of sourceSummary?.competitions || []) {
+    if (competition?.competitionSlug) competitionSummaryBySlug.set(competition.competitionSlug, competition);
+  }
+}
 const routeTargetBySlug = new Map(routeTargets.map((t) => [t.competitionSlug, t]));
 
 const acceptedStartDateEvidenceBySlug = new Map();
@@ -351,6 +372,9 @@ const summary = {
   runner: "season_lane_coverage_ledger",
   latestBrowserRowsPath: latestRowsPath ? rel(latestRowsPath) : null,
   latestBrowserSummaryPath: latestSummaryPath ? rel(latestSummaryPath) : null,
+  latestOfficialApiRowsPath: latestOfficialApiRowsPath ? rel(latestOfficialApiRowsPath) : null,
+  latestOfficialApiSummaryPath: latestOfficialApiSummaryPath ? rel(latestOfficialApiSummaryPath) : null,
+  standingsSourceSummaryCount: sourceSummaries.length,
   searchExecutedNowCount: 0,
   fetchExecutedNowCount: 0,
   browserRenderExecutedNowCount: 0,
@@ -404,3 +428,4 @@ console.log(JSON.stringify({
   startDateBatchesOutput: rel(startDateBatchesPath),
   summary
 }, null, 2));
+
