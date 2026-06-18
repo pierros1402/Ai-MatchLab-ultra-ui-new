@@ -1,397 +1,267 @@
-#!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import crypto from "node:crypto";
 
-const ROOT = process.cwd();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT = path.resolve(__dirname, "..", "..");
 const DATE = new Date().toISOString().slice(0, 10);
 const OUT_DIR = path.join(ROOT, "data", "football-truth", "_diagnostics", `existing-reusable-family-invocation-contracts-${DATE}`);
-fs.mkdirSync(OUT_DIR, { recursive: true });
 
-const families = [
+const FAMILY_SPECS = [
   {
-    family: "laliga",
-    slugs: ["esp.1", "esp.2"],
-    keywords: ["laliga", "esp.1", "esp.2"],
-    jobs: [
-      "engine-v1/jobs/build-football-truth-laliga-full-table-canonical-candidate-proposal-file.js",
-      "engine-v1/jobs/run-football-truth-laliga-full-table-candidate-quality-gate-file.js",
-      "engine-v1/jobs/run-football-truth-laliga-full-table-extraction-expansion-runner-file.js"
-    ]
+    familyId: "central_browser_rendered_official",
+    expectedSlugs: ["esp.1","esp.2","ger.1","ger.2","ger.3","cro.1","sco.1","sco.2","ned.1"],
+    exactRunner: "engine-v1/jobs/run-football-truth-browser-rendered-official-standings-adapter-file.js",
+    config: "engine-v1/config/football-truth-browser-rendered-official-route-families.json",
+    requiredArgs: ["--allow-render"],
+    expectedOutputRegex: "browser-rendered-official-standings-adapter-YYYY-MM-DD.json",
+    lane: "previous_completed"
   },
   {
-    family: "bundesliga",
-    slugs: ["ger.1", "ger.2"],
-    keywords: ["bundesliga", "ger.1", "ger.2"],
-    jobs: [
-      "engine-v1/jobs/build-football-truth-bundesliga-family-local-contract-mapper-file.js",
-      "engine-v1/jobs/build-football-truth-bundesliga-exact-route-quality-gate-and-canonical-write-plan-file.js",
-      "engine-v1/jobs/run-football-truth-bundesliga-canonical-candidate-write-file.js"
-    ]
+    familyId: "central_official_api",
+    expectedSlugs: ["den.1"],
+    exactRunner: "engine-v1/jobs/run-football-truth-official-api-standings-adapter-file.js",
+    config: "engine-v1/config/football-truth-official-api-route-families.json",
+    requiredArgs: ["--allow-fetch"],
+    expectedOutputRegex: "official-api-standings-adapter-YYYY-MM-DD.json",
+    lane: "previous_completed"
   },
   {
-    family: "norway_ntf",
-    slugs: ["nor.1", "nor.2"],
-    keywords: ["norway-ntf", "norway_ntf", "nor.1", "nor.2", "eliteserien", "obos"],
-    jobs: [
-      "engine-v1/jobs/build-football-truth-norway-ntf-canonical-candidate-proposal-file.js",
-      "engine-v1/jobs/run-football-truth-norway-ntf-standing-candidate-quality-gate-file.js",
-      "engine-v1/jobs/run-football-truth-norway-ntf-controlled-html-table-parser-runner-file.js"
-    ]
+    familyId: "jleague_official_html_proof",
+    expectedSlugs: ["jpn.1"],
+    exactRunner: "engine-v1/jobs/build-football-truth-jleague-official-html-standings-proof-file.js",
+    config: null,
+    requiredArgs: [],
+    expectedOutputRegex: "jleague-official-html-standings-proof-YYYY-MM-DD.json",
+    lane: "previous_completed"
   },
   {
-    family: "sportomedia_sef",
-    slugs: ["swe.1", "swe.2"],
-    keywords: ["sportomedia", "sef", "swe.1", "swe.2", "allsvenskan", "superettan"],
-    jobs: [
-      "engine-v1/jobs/build-sportomedia-normalized-standings-evidence-file.js",
-      "engine-v1/jobs/build-uefa-sportomedia-normalized-rows-file.js",
-      "engine-v1/jobs/build-football-truth-controlled-sportomedia-standings-extraction-quality-gate-file.js",
-      "engine-v1/jobs/run-football-truth-controlled-sportomedia-standings-extraction-runner-file.js"
-    ]
+    familyId: "georgia_current_or_new_proof_v2",
+    expectedSlugs: ["geo.1"],
+    exactRunner: "engine-v1/jobs/build-football-truth-georgia-current-season-table-proof-v2-file.js",
+    config: null,
+    requiredArgs: ["--allow-fetch"],
+    expectedOutputRegex: "georgia-current-season-table-proof-v2-YYYY-MM-DD.json",
+    lane: "current_or_new"
   },
   {
-    family: "torneopal",
-    slugs: ["fin.1", "fin.2", "por.taca.portugal"],
-    keywords: ["torneopal", "fin.1", "fin.2", "por.taca.portugal", "veikkausliiga"],
-    jobs: [
-      "engine-v1/jobs/build-uefa-torneopal-normalized-rows-file.js"
-    ]
+    familyId: "norway_ntf",
+    expectedSlugs: ["nor.1","nor.2"],
+    filenameHints: [/ntf/i, /norway/i, /eliteserien/i],
+    strongFilenameHints: [/standings/i, /extract/i, /parser/i, /runner/i, /canonical/i, /quality/i],
+    excludeHints: [/team-geo/i, /wikidata/i, /news/i, /fixture/i],
+    lane: "previous_completed"
   },
   {
-    family: "ksi",
-    slugs: ["isl.1"],
-    keywords: ["ksi", "isl.1", "iceland"],
-    jobs: [
-      "engine-v1/jobs/build-uefa-ksi-tournament-normalized-season-state-file.js"
-    ]
+    familyId: "sportomedia_sef",
+    expectedSlugs: ["swe.1","swe.2"],
+    filenameHints: [/sportomedia/i, /\bsef\b/i, /allsvenskan/i, /superettan/i],
+    strongFilenameHints: [/standings/i, /extract/i, /route-contract/i, /local-context/i, /runner/i, /validation/i],
+    excludeHints: [/fixture/i, /news/i],
+    lane: "previous_completed"
   },
   {
-    family: "loi_ajax",
-    slugs: ["irl.1", "irl.2"],
-    keywords: ["loi", "ajax", "irl.1", "irl.2", "ireland"],
-    jobs: [
-      "engine-v1/jobs/build-uefa-loi-ajax-normalized-rows-file.js"
-    ]
+    familyId: "torneopal",
+    expectedSlugs: ["fin.1","fin.2"],
+    filenameHints: [/torneopal/i, /veikkaus/i, /finland/i],
+    strongFilenameHints: [/standings/i, /extract/i, /adapter/i, /runner/i, /validation/i],
+    excludeHints: [/fixture/i, /news/i],
+    lane: "previous_completed"
   },
   {
-    family: "spfl_opta",
-    slugs: ["sco.1", "sco.2"],
-    keywords: ["spfl", "opta", "sco.1", "sco.2", "scotland"],
-    jobs: [
-      "engine-v1/jobs/build-uefa-spfl-opta-normalized-rows-file.js",
-      "engine-v1/jobs/build-spfl-official-html-standings-evidence-file.js"
-    ]
+    familyId: "ksi",
+    expectedSlugs: ["isl.1","isl.2"],
+    filenameHints: [/\bksi\b/i, /iceland/i, /isl/i],
+    strongFilenameHints: [/standings/i, /stada/i, /extract/i, /adapter/i, /runner/i],
+    excludeHints: [/team-geo/i, /wikidata/i, /news/i],
+    lane: "previous_completed"
   },
   {
-    family: "cfa_cyprus_html",
-    slugs: ["cyp.1"],
-    keywords: ["cfa", "cyprus", "cyp.1"],
-    jobs: []
+    familyId: "loi_ajax",
+    expectedSlugs: ["irl.1","irl.2"],
+    filenameHints: [/leagueofireland/i, /\bloi\b/i, /ajax/i, /ireland/i],
+    strongFilenameHints: [/standings/i, /extract/i, /ajax/i, /adapter/i, /runner/i],
+    excludeHints: [/fixture/i, /news/i],
+    lane: "previous_completed"
+  },
+  {
+    familyId: "cfa_cyprus_html",
+    expectedSlugs: ["cyp.1","cyp.2"],
+    filenameHints: [/cyprus/i, /\bcfa\b/i, /cyp/i],
+    strongFilenameHints: [/standings/i, /html/i, /extract/i, /adapter/i, /runner/i],
+    excludeHints: [/team-geo/i, /wikidata/i, /news/i],
+    lane: "previous_completed"
   }
 ];
 
-function sha256(text) {
-  return crypto.createHash("sha256").update(text).digest("hex");
+function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
+function rel(p) { return path.relative(ROOT, p).replaceAll("\\", "/"); }
+function sha(v) { return crypto.createHash("sha256").update(String(v)).digest("hex"); }
+function exists(relPath) { return relPath && fs.existsSync(path.join(ROOT, relPath)); }
+function read(relPath) {
+  try { return fs.readFileSync(path.join(ROOT, relPath), "utf8"); } catch { return ""; }
 }
-
-function safeReadText(filePath) {
-  try {
-    return fs.readFileSync(filePath, "utf8");
-  } catch {
-    return "";
-  }
-}
-
-function safeReadJson(filePath) {
-  try {
-    return JSON.parse(safeReadText(filePath));
-  } catch {
-    return null;
-  }
-}
-
-function walkFiles(dir, out = []) {
-  if (!fs.existsSync(dir)) return out;
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) walkFiles(full, out);
-    else if (entry.isFile()) out.push(full);
+function walk(dir) {
+  if (!fs.existsSync(dir)) return [];
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, e.name);
+    if (e.isDirectory() && !/node_modules|\.git|_diagnostics|dist|build|coverage/i.test(full)) out.push(...walk(full));
+    else if (e.isFile() && /\.(js|mjs|cjs|ts|json)$/i.test(e.name)) out.push(full);
   }
   return out;
 }
-
-function relPath(absPath) {
-  return path.relative(ROOT, absPath).replaceAll("\\", "/");
-}
-
-function extractFlags(sourceText) {
-  return [...new Set([...sourceText.matchAll(/--[a-z0-9][a-z0-9-]*/gi)].map((m) => m[0]))].sort();
-}
-
-function extractRequiredFlags(sourceText) {
-  const flags = new Set();
-
-  for (const m of sourceText.matchAll(/(?:Missing required|missing|required)\s+(--[a-z0-9-]+)/gi)) {
-    flags.add(m[1]);
-  }
-
-  const common = [
-    ["--input", /\bargs\.input\b|\bconst\s+input\b|getArg\(["']--input["']\)|--input\b/i],
-    ["--output", /\bargs\.output\b|\bconst\s+output\b|getArg\(["']--output["']\)|--output\b/i],
-    ["--script-fetch-out", /\bscriptFetchOut\b|--script-fetch-out\b/i],
-    ["--targets", /\bargs\.targets\b|getArg\(["']--targets["']\)|--targets\b/i]
-  ];
-
-  for (const [flag, regex] of common) {
-    if (regex.test(sourceText)) flags.add(flag);
-  }
-
-  return [...flags].sort();
-}
-
-function hasUnsafeExecutionSurface(sourceText) {
+function inspectRunner(relPath) {
+  const text = read(relPath);
   return {
-    mentionsFetch: /\bfetch\s*\(|\bcurl\b|https?:\/\//i.test(sourceText),
-    mentionsSearch: /searchExecutedNow|allow-search|broad-search|system1|search query/i.test(sourceText),
-    mentionsCanonicalWrite: /canonical.*write|write.*canonical|canonical-standings-candidates/i.test(sourceText),
-    mentionsProductionWrite: /production.*write|write.*production|truth.*write/i.test(sourceText),
-    mentionsAllowFlags: /allow-fetch|allow-search|allow-canonical-write|allow-production-write|allow-write/i.test(sourceText)
+    fileExists: exists(relPath),
+    fileSha256: text ? sha(text) : null,
+    requiresAllowFetch: /--allow-fetch/.test(text),
+    requiresAllowRender: /--allow-render/.test(text),
+    emitsSeasonScope: /seasonScope/.test(text),
+    emitsSeasonLabel: /seasonLabel/.test(text),
+    hasExpectedRowsGate: /expectedRowCount|expectedRows|expected row/i.test(text),
+    hasTeamSignalGate: /teamSignals|expectedTeamSignals|team signal/i.test(text),
+    hasArithmeticGate: /arithmetic|won\s*\+\s*drawn\s*\+\s*lost|points\s*===|w\s*\*\s*3/i.test(text),
+    hasNonTrivialGate: /nonTrivial|totalPlayed|totalPoints|max points|maxPoints/i.test(text),
+    hasDuplicateGate: /duplicate|signature/i.test(text),
+    hasQualityGateStatus: /qualityGateStatus/.test(text),
+    hasValidationStatus: /validationStatus/.test(text),
+    hasCanonicalWrite: /canonicalWrite|canonical candidate|canonical-candidate/i.test(text),
+    hasProductionWrite: /productionWrite|production write/i.test(text),
+    hasFetch: /\bfetch\s*\(|allow-fetch|fetchExecutedNowCount/i.test(text),
+    hasBrowserRender: /puppeteer|playwright|chrome|allow-render|browserRender/i.test(text)
   };
 }
-
-function scoreArtifact(filePath, family, purpose) {
-  const rel = relPath(filePath).toLowerCase();
-  const name = path.basename(filePath).toLowerCase();
-  const text = safeReadText(filePath);
-  const lower = `${rel}\n${text.slice(0, 100000).toLowerCase()}`;
-
+function scoreCandidate(file, spec) {
+  const r = rel(file);
+  const base = path.basename(r);
   let score = 0;
-  for (const keyword of family.keywords) {
-    if (lower.includes(String(keyword).toLowerCase())) score += 25;
-  }
-  for (const slug of family.slugs) {
-    if (lower.includes(slug.toLowerCase())) score += 40;
-  }
-
-  if (purpose === "--input") {
-    if (/candidate|proposal|standings|normalized|evidence|parser|quality|contract|mapping|snapshot|selectedrows/i.test(lower)) score += 25;
-    if (/canonical-candidate|standings-candidates|normalized-rows|standing-candidate|table-parser|payload|extraction/i.test(lower)) score += 35;
-  }
-
-  if (purpose === "--script-fetch-out") {
-    if (/script-fetch|widget|asset|runtime|main\.js|bundle/i.test(lower)) score += 80;
-  }
-
-  if (purpose === "--targets") {
-    if (/target|input|plan|manifest/i.test(lower)) score += 50;
-  }
-
-  if (name.endsWith(".json")) score += 8;
-  if (rel.includes("_diagnostics")) score += 5;
-  if (rel.includes("_state/canonical-standings-candidates")) score += 15;
-
-  const stat = fs.statSync(filePath);
-  const recentBoost = Math.max(0, Math.min(25, Math.floor((stat.mtimeMs - new Date("2026-06-01").getTime()) / (1000 * 60 * 60 * 24))));
-  score += recentBoost;
-
-  return { score, text, stat };
+  for (const p of spec.filenameHints || []) if (p.test(r)) score += 20;
+  for (const p of spec.strongFilenameHints || []) if (p.test(r)) score += 8;
+  for (const p of spec.excludeHints || []) if (p.test(r)) score -= 25;
+  if (/engine-v1\/jobs\//.test(r)) score += 10;
+  if (/adapter|runner|extractor|extract|proof|validation|quality|canonical/i.test(base)) score += 8;
+  if (/board|plan|search|targets|inventory|compiler|review/i.test(base)) score -= 8;
+  const text = read(r);
+  for (const slug of spec.expectedSlugs || []) if (text.includes(slug)) score += 4;
+  if (/seasonScope/.test(text)) score += 5;
+  if (/qualityGateStatus|validationStatus/.test(text)) score += 5;
+  if (/canonicalWriteExecutedNowCount|productionWriteExecutedNowCount|rawPayloadWriteExecutedNowCount/.test(text)) score += 2;
+  return score;
 }
 
-function findArtifactsForFlag(flag, family, allFiles) {
-  if (flag === "--output") {
-    return [{
-      rel: `data/football-truth/_diagnostics/existing-reusable-family-contract-execution-${DATE}/${family.family}-output.json`,
-      role: "planned_output",
-      score: 999999,
-      exists: false
-    }];
-  }
-
-  const allowedExt = new Set([".json", ".txt", ".html", ".htm", ".ndjson"]);
-  const candidates = [];
-
-  for (const filePath of allFiles) {
-    const ext = path.extname(filePath).toLowerCase();
-    if (!allowedExt.has(ext)) continue;
-
-    const rel = relPath(filePath);
-    if (!rel.startsWith("data/football-truth/")) continue;
-
-    const scored = scoreArtifact(filePath, family, flag);
-    if (scored.score < 50) continue;
-
-    candidates.push({
-      rel,
-      sha256: sha256(scored.text),
-      bytes: Buffer.byteLength(scored.text, "utf8"),
-      mtime: scored.stat.mtime.toISOString(),
-      score: scored.score,
-      exists: true
-    });
-  }
-
-  return candidates
-    .sort((a, b) => b.score - a.score || b.mtime.localeCompare(a.mtime))
-    .slice(0, 8);
-}
-
-function loadBulkYield() {
-  const dir = path.join(ROOT, "data", "football-truth", "_diagnostics", `existing-reusable-family-bulk-yield-runner-${DATE}`);
-  const file = path.join(dir, `existing-reusable-family-bulk-yield-summary-${DATE}.json`);
-  const json = safeReadJson(file);
-  return json ? { rel: relPath(file), json } : { rel: null, json: null };
-}
+ensureDir(OUT_DIR);
 
 const allFiles = [
-  ...walkFiles(path.join(ROOT, "data", "football-truth", "_diagnostics")),
-  ...walkFiles(path.join(ROOT, "data", "football-truth", "_state"))
+  ...walk(path.join(ROOT, "engine-v1", "jobs")),
+  ...walk(path.join(ROOT, "engine-v1", "config"))
 ];
 
-const bulkYield = loadBulkYield();
-const contractFamilies = [];
-
-for (const family of families) {
-  const jobContracts = [];
-
-  for (const jobRel of family.jobs) {
-    const abs = path.join(ROOT, jobRel);
-    const exists = fs.existsSync(abs);
-    const sourceText = exists ? safeReadText(abs) : "";
-    const allFlags = exists ? extractFlags(sourceText) : [];
-    const requiredFlags = exists ? extractRequiredFlags(sourceText) : [];
-    const unsafeSurface = exists ? hasUnsafeExecutionSurface(sourceText) : {
-      mentionsFetch: false,
-      mentionsSearch: false,
-      mentionsCanonicalWrite: false,
-      mentionsProductionWrite: false,
-      mentionsAllowFlags: false
-    };
-
-    const flagBindings = {};
-    for (const flag of requiredFlags) {
-      flagBindings[flag] = findArtifactsForFlag(flag, family, allFiles);
-    }
-
-    const unresolvedRequiredFlags = requiredFlags.filter((flag) => (flagBindings[flag] || []).length === 0);
-    const allRequiredFlagsBound = unresolvedRequiredFlags.length === 0;
-
-    const directExecutionAllowedByContract =
-      exists &&
-      allRequiredFlagsBound &&
-      !unsafeSurface.mentionsSearch &&
-      !unsafeSurface.mentionsProductionWrite &&
-      !unsafeSurface.mentionsCanonicalWrite &&
-      !unsafeSurface.mentionsFetch;
-
-    jobContracts.push({
-      job: jobRel,
-      exists,
-      allFlags,
-      requiredFlags,
-      unresolvedRequiredFlags,
-      allRequiredFlagsBound,
-      unsafeSurface,
-      directExecutionAllowedByContract,
-      status:
-        !exists ? "missing_job" :
-        !allRequiredFlagsBound ? "blocked_missing_required_bindings" :
-        unsafeSurface.mentionsSearch ? "blocked_search_surface" :
-        unsafeSurface.mentionsProductionWrite ? "blocked_production_write_surface" :
-        unsafeSurface.mentionsCanonicalWrite ? "blocked_canonical_write_surface" :
-        unsafeSurface.mentionsFetch ? "blocked_fetch_surface" :
-        "ready_for_no_fetch_no_search_no_write_contract_execution",
-      flagBindings
-    });
+const contracts = [];
+for (const spec of FAMILY_SPECS) {
+  let runner = spec.exactRunner || null;
+  let candidateRunners = [];
+  if (!runner) {
+    candidateRunners = allFiles
+      .filter((f) => /engine-v1[\\/]jobs[\\/]/.test(f))
+      .map((f) => ({ file: rel(f), score: scoreCandidate(f, spec) }))
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score || a.file.localeCompare(b.file))
+      .slice(0, 12);
+    runner = candidateRunners[0]?.score >= 35 ? candidateRunners[0].file : null;
   }
 
-  const yieldFamily = bulkYield.json?.families?.find((x) => x.family === family.family) || null;
-  contractFamilies.push({
-    family: family.family,
-    slugs: family.slugs,
-    yieldSnapshot: yieldFamily ? {
-      extractedSlugCount: yieldFamily.extractedSlugCount,
-      currentSeasonExtractedSlugCount: yieldFamily.currentSeasonExtractedSlugCount,
-      canonicalCandidateEligibleSlugCount: yieldFamily.canonicalCandidateEligibleSlugCount,
-      byCompetition: yieldFamily.byCompetition
-    } : null,
-    jobCount: family.jobs.length,
-    existingJobCount: jobContracts.filter((job) => job.exists).length,
-    readyNoFetchNoSearchNoWriteContractCount: jobContracts.filter((job) => job.status === "ready_for_no_fetch_no_search_no_write_contract_execution").length,
-    blockedMissingBindingsCount: jobContracts.filter((job) => job.status === "blocked_missing_required_bindings").length,
-    blockedUnsafeSurfaceCount: jobContracts.filter((job) => job.status.startsWith("blocked_") && job.status !== "blocked_missing_required_bindings").length,
-    jobs: jobContracts
+  const runnerInspection = runner ? inspectRunner(runner) : null;
+  const configInspection = spec.config ? { fileExists: exists(spec.config), fileSha256: sha(read(spec.config)) } : null;
+
+  const requiredArgs = spec.requiredArgs || [];
+  if (runnerInspection?.requiresAllowFetch && !requiredArgs.includes("--allow-fetch")) requiredArgs.push("--allow-fetch");
+  if (runnerInspection?.requiresAllowRender && !requiredArgs.includes("--allow-render")) requiredArgs.push("--allow-render");
+
+  const gateCount = runnerInspection ? [
+    runnerInspection.emitsSeasonScope,
+    runnerInspection.emitsSeasonLabel,
+    runnerInspection.hasExpectedRowsGate,
+    runnerInspection.hasTeamSignalGate,
+    runnerInspection.hasArithmeticGate,
+    runnerInspection.hasNonTrivialGate,
+    runnerInspection.hasDuplicateGate,
+    runnerInspection.hasQualityGateStatus,
+    runnerInspection.hasValidationStatus
+  ].filter(Boolean).length : 0;
+
+  let contractStatus = "blocked_no_runner";
+  if (runner && runnerInspection?.fileExists && spec.config && !configInspection?.fileExists) contractStatus = "blocked_missing_config";
+  else if (runner && runnerInspection?.fileExists && gateCount >= 5) contractStatus = "executable_contract";
+  else if (runner && runnerInspection?.fileExists) contractStatus = "refreshable_needs_gate_audit";
+
+  contracts.push({
+    familyId: spec.familyId,
+    expectedSlugs: spec.expectedSlugs,
+    lane: spec.lane,
+    runner,
+    config: spec.config || null,
+    requiredArgs,
+    expectedOutputRegex: spec.expectedOutputRegex || null,
+    contractStatus,
+    gateCount,
+    runnerInspection,
+    configInspection,
+    candidateRunners,
+    commandTemplate: runner ? `node ${runner}${requiredArgs.length ? " " + requiredArgs.join(" ") : ""}` : null,
+    promotionAllowed: contractStatus === "executable_contract",
+    promotionRule: "only accepted rows emitted by this runner may feed ledger; review/candidate outputs remain diagnostic"
   });
 }
 
-const flatJobs = contractFamilies.flatMap((family) => family.jobs.map((job) => ({ family: family.family, ...job })));
+const executableContracts = contracts.filter((c) => c.contractStatus === "executable_contract");
+const refreshableContracts = contracts.filter((c) => c.contractStatus === "refreshable_needs_gate_audit");
+const blockedContracts = contracts.filter((c) => c.contractStatus.startsWith("blocked"));
 
 const summary = {
   status: "passed",
-  board: "existing_reusable_family_explicit_invocation_contracts",
-  sourceBulkYield: bulkYield.rel,
+  runner: "existing_reusable_family_invocation_contracts",
+  contractVersion: 1,
+  purpose: "convert noisy reusable-family inventory into precise invocation contracts with exact runner, args, outputs and gate audit",
   searchExecutedNowCount: 0,
-  broadSearchExecutedNowCount: 0,
   fetchExecutedNowCount: 0,
+  browserRenderExecutedNowCount: 0,
   canonicalWriteExecutedNowCount: 0,
   productionWriteExecutedNowCount: 0,
-  childJobExecutedNowCount: 0,
-  familyCount: families.length,
-  competitionCount: families.reduce((sum, family) => sum + family.slugs.length, 0),
-  jobContractCount: flatJobs.length,
-  existingJobContractCount: flatJobs.filter((job) => job.exists).length,
-  readyNoFetchNoSearchNoWriteContractCount: flatJobs.filter((job) => job.status === "ready_for_no_fetch_no_search_no_write_contract_execution").length,
-  blockedMissingBindingsCount: flatJobs.filter((job) => job.status === "blocked_missing_required_bindings").length,
-  blockedSearchSurfaceCount: flatJobs.filter((job) => job.status === "blocked_search_surface").length,
-  blockedFetchSurfaceCount: flatJobs.filter((job) => job.status === "blocked_fetch_surface").length,
-  blockedCanonicalWriteSurfaceCount: flatJobs.filter((job) => job.status === "blocked_canonical_write_surface").length,
-  blockedProductionWriteSurfaceCount: flatJobs.filter((job) => job.status === "blocked_production_write_surface").length,
-  recommendedNextLane: flatJobs.filter((job) => job.status === "ready_for_no_fetch_no_search_no_write_contract_execution").length > 0 ? "execute_ready_no_fetch_no_search_no_write_contracts_in_bulk_then_recompute_yield" : "no_ready_contracts_build_artifact_only_blocked_surface_interpreter_for_existing_reusable_families"
-};
-
-const output = {
-  summary,
-  families: contractFamilies
+  rawPayloadWriteExecutedNowCount: 0,
+  familySpecCount: FAMILY_SPECS.length,
+  executableContractCount: executableContracts.length,
+  refreshableNeedsGateAuditCount: refreshableContracts.length,
+  blockedContractCount: blockedContracts.length,
+  executableSlugCount: new Set(executableContracts.flatMap((c) => c.expectedSlugs)).size,
+  refreshableSlugCount: new Set(refreshableContracts.flatMap((c) => c.expectedSlugs)).size,
+  executableFamilies: executableContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, commandTemplate: c.commandTemplate, gateCount: c.gateCount })),
+  refreshableFamilies: refreshableContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, runner: c.runner, gateCount: c.gateCount })),
+  blockedFamilies: blockedContracts.map((c) => ({ familyId: c.familyId, expectedSlugs: c.expectedSlugs, status: c.contractStatus, topCandidate: c.candidateRunners?.[0] || null })),
+  hardRule: "run executable contracts first; refreshable contracts require gate audit before truth rows can be accepted",
+  recommendedNextLane: "run_safety_wrapped_executable_contracts_and_report_refreshable_blockers"
 };
 
 const outPath = path.join(OUT_DIR, `existing-reusable-family-invocation-contracts-${DATE}.json`);
-const compactPath = path.join(OUT_DIR, `existing-reusable-family-invocation-contracts-summary-${DATE}.json`);
+const contractsPath = path.join(OUT_DIR, `existing-reusable-family-invocation-contracts-rows-${DATE}.jsonl`);
+const executablePath = path.join(OUT_DIR, `existing-reusable-family-executable-contracts-${DATE}.jsonl`);
+const refreshablePath = path.join(OUT_DIR, `existing-reusable-family-refreshable-contracts-${DATE}.jsonl`);
+const blockedPath = path.join(OUT_DIR, `existing-reusable-family-blocked-contracts-${DATE}.jsonl`);
 
-fs.writeFileSync(outPath, JSON.stringify(output, null, 2), "utf8");
-fs.writeFileSync(compactPath, JSON.stringify({
-  summary,
-  families: contractFamilies.map((family) => ({
-    family: family.family,
-    slugs: family.slugs,
-    yieldSnapshot: family.yieldSnapshot ? {
-      extractedSlugCount: family.yieldSnapshot.extractedSlugCount,
-      currentSeasonExtractedSlugCount: family.yieldSnapshot.currentSeasonExtractedSlugCount,
-      canonicalCandidateEligibleSlugCount: family.yieldSnapshot.canonicalCandidateEligibleSlugCount
-    } : null,
-    jobCount: family.jobCount,
-    existingJobCount: family.existingJobCount,
-    readyNoFetchNoSearchNoWriteContractCount: family.readyNoFetchNoSearchNoWriteContractCount,
-    blockedMissingBindingsCount: family.blockedMissingBindingsCount,
-    blockedUnsafeSurfaceCount: family.blockedUnsafeSurfaceCount,
-    jobs: family.jobs.map((job) => ({
-      job: job.job,
-      status: job.status,
-      requiredFlags: job.requiredFlags,
-      unresolvedRequiredFlags: job.unresolvedRequiredFlags,
-      directExecutionAllowedByContract: job.directExecutionAllowedByContract,
-      bestBindings: Object.fromEntries(Object.entries(job.flagBindings).map(([flag, candidates]) => [
-        flag,
-        candidates.slice(0, 3).map((candidate) => candidate.rel)
-      ]))
-    }))
-  }))
-}, null, 2), "utf8");
+fs.writeFileSync(outPath, JSON.stringify({ summary, contracts, executableContracts, refreshableContracts, blockedContracts }, null, 2) + "\n", "utf8");
+fs.writeFileSync(contractsPath, contracts.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf8");
+fs.writeFileSync(executablePath, executableContracts.map((r) => JSON.stringify(r)).join("\n") + (executableContracts.length ? "\n" : ""), "utf8");
+fs.writeFileSync(refreshablePath, refreshableContracts.map((r) => JSON.stringify(r)).join("\n") + (refreshableContracts.length ? "\n" : ""), "utf8");
+fs.writeFileSync(blockedPath, blockedContracts.map((r) => JSON.stringify(r)).join("\n") + (blockedContracts.length ? "\n" : ""), "utf8");
 
 console.log(JSON.stringify({
-  output: relPath(outPath),
-  compactOutput: relPath(compactPath),
+  output: rel(outPath),
+  contractsOutput: rel(contractsPath),
+  executableContractsOutput: rel(executablePath),
+  refreshableContractsOutput: rel(refreshablePath),
+  blockedContractsOutput: rel(blockedPath),
   summary
 }, null, 2));
-
-
-
