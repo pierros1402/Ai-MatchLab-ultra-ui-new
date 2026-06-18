@@ -1,0 +1,90 @@
+{
+  "status": "active",
+  "version": 1,
+  "purpose": "Football Truth must collect season-scoped coverage, not only whichever standings table is visible today.",
+  "requiredCoverageLanes": [
+    {
+      "laneId": "previous_completed_season_standings",
+      "requiredFor": "all_league_competitions",
+      "purpose": "Historical/statistical modelling and backtests",
+      "required": true,
+      "minimumEvidence": [
+        "seasonLabel",
+        "sourceUrl",
+        "sourceHost",
+        "standingsRows",
+        "expectedRowsGate",
+        "arithmeticGate",
+        "seasonCompletedOrLatestCompletedEvidence"
+      ]
+    },
+    {
+      "laneId": "current_or_new_season_standings",
+      "requiredFor": "active_or_started_league_competitions",
+      "purpose": "Current standings during active season",
+      "required": true,
+      "minimumEvidence": [
+        "seasonLabel",
+        "sourceUrl",
+        "sourceHost",
+        "standingsRowsIfStarted",
+        "zeroRowAllowedOnlyWithFutureStartDateEvidence",
+        "expectedRowsGateWhenRowsExist",
+        "arithmeticGateWhenRowsExist"
+      ]
+    },
+    {
+      "laneId": "next_season_start_date",
+      "requiredFor": "all_league_competitions",
+      "purpose": "Scheduling refreshes and avoiding blind daily checks for inactive/completed leagues",
+      "required": true,
+      "minimumEvidence": [
+        "nextSeasonLabel",
+        "nextSeasonStartDate",
+        "sourceUrl",
+        "sourceHost",
+        "dateEvidenceText",
+        "confidence"
+      ]
+    }
+  ],
+  "rowFields": [
+    "competitionSlug",
+    "seasonScope",
+    "seasonLabel",
+    "seasonStartDate",
+    "seasonEndDate",
+    "nextSeasonStartDate",
+    "provider",
+    "teamName",
+    "position",
+    "played",
+    "won",
+    "drawn",
+    "lost",
+    "goalsFor",
+    "goalsAgainst",
+    "goalDifference",
+    "points",
+    "sourceUrl",
+    "sourceHost",
+    "sourceObservedAt",
+    "qualityGateStatus",
+    "validationStatus"
+  ],
+  "seasonScopes": [
+    "previous_completed",
+    "current_active",
+    "new_not_started",
+    "unknown_needs_evidence"
+  ],
+  "hardRules": [
+    "Do not treat zero-row new season tables as usable previous-season statistics.",
+    "Do not overwrite previous completed season standings with new empty tables.",
+    "A future/new season table with all zeroes is start-date evidence only if paired with an official date or fixture evidence.",
+    "Completed or inactive leagues must carry nextSeasonStartDate or unresolved reason.",
+    "Source-family routes must declare which season scope they are extracting.",
+    "Coverage is counted only after expected-row and arithmetic gates pass for standings rows.",
+    "Start dates require official fixture/schedule/competition evidence, not inference from table existence."
+  ]
+}
