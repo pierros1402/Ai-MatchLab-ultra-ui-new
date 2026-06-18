@@ -134,7 +134,18 @@ if (routeConfig?.families) {
   }
 }
 
-const leagueSlugs = stableSort([...slugSet].filter((s) => /^[a-z]{3}\.\d+$/.test(s)));
+const routeConfiguredLeagueSlugs = new Set(routeTargets.map((t) => t.competitionSlug).filter((s) => /^[a-z]{3}\.\d+$/.test(s)));
+const stateStartDateSlugs = new Set();
+
+const authoritativeLeagueSlugsForLedger = new Set(
+  [...slugSet].filter((s) => /^[a-z]{3}\.\d+$/.test(s))
+);
+
+const knownNoisePrefixesForLedger = new Set(["www", "klo", "abc", "bad"]);
+const leagueSlugs = stableSort([...authoritativeLeagueSlugsForLedger].filter((s) => {
+  const prefix = String(s).split(".")[0];
+  return !knownNoisePrefixesForLedger.has(prefix);
+}));
 const cupSlugs = stableSort([...slugSet].filter((s) => /^[a-z]{3}\.cup$/.test(s)));
 
 const diagnosticsRoot = path.join(DATA_ROOT, "_diagnostics");
@@ -155,7 +166,7 @@ const routeTargetBySlug = new Map(routeTargets.map((t) => [t.competitionSlug, t]
 
 const acceptedStartDateEvidenceBySlug = new Map();
 const startDateEvidenceStateFiles = walk(path.join(DATA_ROOT, "_state", "season-start-date-evidence"))
-  .filter((f) => /accepted-season-start-date-evidence-\\d{4}-\\d{2}-\\d{2}\\.jsonl$/.test(f))
+  .filter((f) => /accepted-season-start-date-evidence-\d{4}-\d{2}-\d{2}\.jsonl$/.test(f))
   .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
 
 for (const file of startDateEvidenceStateFiles) {
@@ -167,6 +178,7 @@ for (const file of startDateEvidenceStateFiles) {
       evidence.validationStatus === "passed"
     ) {
       if (!acceptedStartDateEvidenceBySlug.has(evidence.competitionSlug)) {
+        stateStartDateSlugs.add(evidence.competitionSlug);
         acceptedStartDateEvidenceBySlug.set(evidence.competitionSlug, {
           ...evidence,
           evidenceStatePath: rel(file)
@@ -346,6 +358,8 @@ const summary = {
   productionWriteExecutedNowCount: 0,
   discoveredCompetitionSlugCount: leagueSlugs.length + cupSlugs.length,
   leagueCompetitionCount: leagueSlugs.length,
+  routeConfiguredLeagueSlugCount: routeConfiguredLeagueSlugs.size,
+  stateStartDateSlugCount: stateStartDateSlugs.size,
   cupCompetitionCount: cupSlugs.length,
   previousCompletedSatisfiedCount,
   previousCompletedVerifiedRowsCount: latestRows.filter((r) => r.seasonScope === "previous_completed" && r.qualityGateStatus === "verified").length,
