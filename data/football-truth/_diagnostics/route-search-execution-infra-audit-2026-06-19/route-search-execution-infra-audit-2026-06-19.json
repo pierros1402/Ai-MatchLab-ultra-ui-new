@@ -1,0 +1,2512 @@
+{
+  "status": "passed",
+  "runner": "route_search_execution_infra_audit",
+  "contractVersion": 1,
+  "purpose": "Diagnostic-only audit of existing search execution infrastructure before writing a high-yield previous_completed route-search executor.",
+  "output": "data/football-truth/_diagnostics/route-search-execution-infra-audit-2026-06-19/route-search-execution-infra-audit-2026-06-19.json",
+  "rowsOutput": "data/football-truth/_diagnostics/route-search-execution-infra-audit-2026-06-19/route-search-execution-infra-audit-rows-2026-06-19.jsonl",
+  "guardrails": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false
+  },
+  "summary": {
+    "scannedFileCount": 833,
+    "matchingFileCount": 430,
+    "allowSearchGateFileCount": 59,
+    "nodeFetchPatternFileCount": 55,
+    "rssPatternFileCount": 21,
+    "recommendedReuseFiles": [
+      "engine-v1/jobs/run-football-truth-enriched-start-date-evidence-rss-search-batch-file.js",
+      "engine-v1/jobs/run-football-truth-bulk-high-value-source-discovery-wave-file.js",
+      "engine-v1/jobs/run-football-truth-enhanced-bulk-high-value-source-discovery-waves-file.js",
+      "engine-v1/jobs/run-football-truth-prioritized-start-date-evidence-rss-search-batch-file.js",
+      "engine-v1/jobs/run-football-truth-host-mined-start-date-evidence-fetch-batch-file.js",
+      "engine-v1/jobs/run-football-truth-prioritized-start-date-evidence-search-batch-file.js",
+      "engine-v1/jobs/run-football-truth-whole-map-high-volume-official-search-wave-frontier-file.js",
+      "engine-v1/jobs/bootstrap-team-geo-from-wikidata.js",
+      "engine-v1/jobs/run-football-truth-source-agnostic-standings-discovery-file.js",
+      "engine-v1/jobs/build-football-truth-whole-map-official-host-search-runner-adapter-file.js",
+      "engine-v1/jobs/run-football-truth-source-agnostic-standings-discovery-v2-file.js",
+      "engine-v1/jobs/run-football-truth-controlled-real-acquisition-smoke-runner-file.js"
+    ]
+  },
+  "recommendedNextStep": "Use the highest-ranked gated search runner patterns to create a search-only executor for high-yield previous_completed route search batch 01. Do not fetch result pages, do not canonical-write, do not truth-assert.",
+  "topRows": [
+    {
+      "path": "engine-v1/jobs/run-football-truth-enriched-start-date-evidence-rss-search-batch-file.js",
+      "size": 20862,
+      "sha256": "6e4039b947d248488adae05370a73350f08f6d9574d8ae3f755dd5e81ee59024",
+      "score": 77,
+      "roles": [
+        "existing_start_date_search_runner",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "rss_search_pattern",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 34,
+      "topHits": [
+        {
+          "line": 9,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = argv.includes(\"--allow-search\");"
+        },
+        {
+          "line": 12,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queriesPerTarget = Number(argv[argv.indexOf(\"--queries-per-target\") + 1] || 4);"
+        },
+        {
+          "line": 19,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const OUT_DIR = path.join(DATA_ROOT, \"_diagnostics\", `enriched-start-date-evidence-rss-search-${DATE}`);"
+        },
+        {
+          "line": 170,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function buildQueries(target) {"
+        },
+        {
+          "line": 186,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return [...new Set(qs)].slice(0, queriesPerTarget);"
+        },
+        {
+          "line": 214,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "function parseRssItems(xml) {"
+        },
+        {
+          "line": 232,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "parser: \"bing_rss_enriched\""
+        },
+        {
+          "line": 239,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "async function searchBingRss(query) {"
+        },
+        {
+          "line": 243,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const url = `https://www.bing.com/search?format=rss&q=${encodeURIComponent(query)}&count=10&setlang=en`;"
+        },
+        {
+          "line": 244,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const res = await fetch(url, {"
+        },
+        {
+          "line": 248,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "\"accept\": \"application/rss+xml,text/xml,application/xml,text/plain,*/*\""
+        },
+        {
+          "line": 257,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "results: parseRssItems(text),"
+        },
+        {
+          "line": 331,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries: buildQueries(target)"
+        },
+        {
+          "line": 334,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "let searchExecutedNowCount = 0;"
+        },
+        {
+          "line": 341,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "mode: \"bing_rss_enriched_name_aware\","
+        },
+        {
+          "line": 342,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearch,"
+        },
+        {
+          "line": 345,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queriesPerTarget,"
+        },
+        {
+          "line": 348,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "sampleTargets: targets.slice(0, 12).map((t) => ({ competitionSlug: t.competitionSlug, enrichedCompetitionName: t.enrichedCompetitionName, queries: t.queries }))"
+        },
+        {
+          "line": 351,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if (allowSearch) {"
+        },
+        {
+          "line": 353,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = (target.queries || []).slice(0, queriesPerTarget);"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-bulk-high-value-source-discovery-wave-file.js",
+      "size": 14277,
+      "sha256": "9d3db281932abd8e28732bb8f10ae38689babc31934c7a16fa9430d718b97d80",
+      "score": 76,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "rss_search_pattern",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 38,
+      "topHits": [
+        {
+          "line": 14,
+          "matchedTerms": [
+            "--allow-search"
+          ],
+          "text": "if (!args.has(\"--allow-search\")) {"
+        },
+        {
+          "line": 15,
+          "matchedTerms": [
+            "--allow-search",
+            "rss"
+          ],
+          "text": "throw new Error(\"Refusing web/RSS search without --allow-search\");"
+        },
+        {
+          "line": 20,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const MAX_QUERIES_PER_TASK = Number(process.env.BULK_MAX_QUERIES_PER_TASK || \"3\");"
+        },
+        {
+          "line": 116,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function buildQueries(task, lifecycleBySlug) {"
+        },
+        {
+          "line": 123,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = [];"
+        },
+        {
+          "line": 125,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`\"${base}\" official ${seasonLabel} season start date`);"
+        },
+        {
+          "line": 126,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`\"${base}\" ${seasonLabel} fixtures start`);"
+        },
+        {
+          "line": 127,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "if (host) queries.push(`site:${host} \"${seasonLabel}\" \"start\" \"${name}\"`);"
+        },
+        {
+          "line": 128,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "else queries.push(`\"${base}\" \"${seasonLabel}\" \"will start\"`);"
+        },
+        {
+          "line": 130,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`\"${base}\" official standings 2025 2026`);"
+        },
+        {
+          "line": 131,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`\"${base}\" league table 2025-2026 official`);"
+        },
+        {
+          "line": 132,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "if (host) queries.push(`site:${host} standings table 2025 2026`);"
+        },
+        {
+          "line": 133,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "else queries.push(`\"${base}\" standings table official`);"
+        },
+        {
+          "line": 135,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return [...new Set(queries)].slice(0, MAX_QUERIES_PER_TASK);"
+        },
+        {
+          "line": 167,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "function parseRssItems(xml) {"
+        },
+        {
+          "line": 183,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "async function rssSearch(query) {"
+        },
+        {
+          "line": 184,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const url = `https://www.bing.com/search?q=${encodeURIComponent(query)}&format=rss`;"
+        },
+        {
+          "line": 185,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const response = await fetch(url, {"
+        },
+        {
+          "line": 187,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "\"accept\": \"application/rss+xml,application/xml,text/xml,*/*\","
+        },
+        {
+          "line": 196,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "itemCount: parseRssItems(text).length,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-enhanced-bulk-high-value-source-discovery-waves-file.js",
+      "size": 16731,
+      "sha256": "ef8bd3bf0ca2ca2762341843f1066253095a15f0670a7bc27e6e4ba7868374f2",
+      "score": 75,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "rss_search_pattern",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 37,
+      "topHits": [
+        {
+          "line": 14,
+          "matchedTerms": [
+            "--allow-search",
+            "rss"
+          ],
+          "text": "if (!args.has(\"--allow-search\")) throw new Error(\"Refusing RSS search without --allow-search\");"
+        },
+        {
+          "line": 18,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const MAX_QUERIES_PER_TASK = Number(process.env.BULK_MAX_QUERIES_PER_TASK || \"3\");"
+        },
+        {
+          "line": 162,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function buildQueries(task, lifecycleBySlug) {"
+        },
+        {
+          "line": 168,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = [];"
+        },
+        {
+          "line": 170,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${base} official 2026 2027 fixtures start date`);"
+        },
+        {
+          "line": 171,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${base} official website 2026 2027 season start`);"
+        },
+        {
+          "line": 172,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "if (host) queries.push(`site:${host} 2026 2027 fixtures start`);"
+        },
+        {
+          "line": 173,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "else queries.push(`${base} league official site fixtures calendar 2026 2027`);"
+        },
+        {
+          "line": 175,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${base} official standings 2025 2026`);"
+        },
+        {
+          "line": 176,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${base} official league table 2025 2026`);"
+        },
+        {
+          "line": 177,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "if (host) queries.push(`site:${host} standings 2025 2026`);"
+        },
+        {
+          "line": 178,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "else queries.push(`${base} official site standings table`);"
+        },
+        {
+          "line": 180,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return [...new Set(queries)].slice(0, MAX_QUERIES_PER_TASK);"
+        },
+        {
+          "line": 217,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "function parseRssItems(xml) {"
+        },
+        {
+          "line": 232,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "async function rssSearch(query) {"
+        },
+        {
+          "line": 233,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const url = `https://www.bing.com/search?q=${encodeURIComponent(query)}&format=rss`;"
+        },
+        {
+          "line": 234,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const response = await fetch(url, {"
+        },
+        {
+          "line": 236,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "\"accept\": \"application/rss+xml,application/xml,text/xml,*/*\","
+        },
+        {
+          "line": 245,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "items: parseRssItems(text).slice(0, 10)"
+        },
+        {
+          "line": 269,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "const queryRows = [];"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-prioritized-start-date-evidence-rss-search-batch-file.js",
+      "size": 13847,
+      "sha256": "8a36c57e06e0e36206665a2583299f248e3ac95620116d2d2294b58b10ddb301",
+      "score": 74,
+      "roles": [
+        "existing_start_date_search_runner",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "rss_search_pattern",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 31,
+      "topHits": [
+        {
+          "line": 9,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = argv.includes(\"--allow-search\");"
+        },
+        {
+          "line": 12,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queriesPerTarget = Number(argv[argv.indexOf(\"--queries-per-target\") + 1] || 3);"
+        },
+        {
+          "line": 19,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const OUT_DIR = path.join(DATA_ROOT, \"_diagnostics\", `prioritized-start-date-evidence-rss-search-${DATE}`);"
+        },
+        {
+          "line": 115,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "function parseRssItems(xml) {"
+        },
+        {
+          "line": 133,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "parser: \"bing_rss\""
+        },
+        {
+          "line": 140,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "async function searchBingRss(query) {"
+        },
+        {
+          "line": 144,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const url = `https://www.bing.com/search?format=rss&q=${encodeURIComponent(query)}&count=10&setlang=en`;"
+        },
+        {
+          "line": 145,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const res = await fetch(url, {"
+        },
+        {
+          "line": 148,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "\"user-agent\": \"Mozilla/5.0 FootballTruthStartDateEvidenceRSS/1.0\","
+        },
+        {
+          "line": 149,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "\"accept\": \"application/rss+xml,text/xml,application/xml,text/plain,*/*\""
+        },
+        {
+          "line": 158,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "results: parseRssItems(text),"
+        },
+        {
+          "line": 225,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "let searchExecutedNowCount = 0;"
+        },
+        {
+          "line": 232,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "mode: \"bing_rss\","
+        },
+        {
+          "line": 233,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearch,"
+        },
+        {
+          "line": 236,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queriesPerTarget,"
+        },
+        {
+          "line": 241,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if (allowSearch) {"
+        },
+        {
+          "line": 243,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = (target.queries || []).slice(0, queriesPerTarget);"
+        },
+        {
+          "line": 244,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "target._searchedQueryCount = queries.length;"
+        },
+        {
+          "line": 246,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (const query of queries) {"
+        },
+        {
+          "line": 248,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount++;"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-host-mined-start-date-evidence-fetch-batch-file.js",
+      "size": 25733,
+      "sha256": "6608e3991c93a96463083159ac3e122a44413c86b9b63fc2db8cd32a2cc051be",
+      "score": 66,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "rss_search_pattern",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 28,
+      "topHits": [
+        {
+          "line": 9,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = argv.includes(\"--allow-search\");"
+        },
+        {
+          "line": 13,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queriesPerTarget = Number(argv[argv.indexOf(\"--queries-per-target\") + 1] || 6);"
+        },
+        {
+          "line": 21,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const ENRICHED_DIR = path.join(DATA_ROOT, \"_diagnostics\", `enriched-start-date-evidence-rss-search-${DATE}`);"
+        },
+        {
+          "line": 23,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const ENRICHED_RESULTS_PATH = path.join(ENRICHED_DIR, `enriched-start-date-evidence-rss-search-results-${DATE}.jsonl`);"
+        },
+        {
+          "line": 178,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "function parseRssItems(xml) {"
+        },
+        {
+          "line": 193,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "parser: \"bing_rss_host_mined\""
+        },
+        {
+          "line": 199,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "async function searchBingRss(query) {"
+        },
+        {
+          "line": 203,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "const url = `https://www.bing.com/search?format=rss&q=${encodeURIComponent(query)}&count=10&setlang=en`;"
+        },
+        {
+          "line": 204,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const res = await fetch(url, {"
+        },
+        {
+          "line": 208,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "\"accept\": \"application/rss+xml,text/xml,application/xml,text/plain,*/*\""
+        },
+        {
+          "line": 212,
+          "matchedTerms": [
+            "rss"
+          ],
+          "text": "return { status: res.status, itemCount: (text.match(/<item\\b/gi) || []).length, results: parseRssItems(text) };"
+        },
+        {
+          "line": 222,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const res = await fetch(url, {"
+        },
+        {
+          "line": 306,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function buildQueries(target, hostCandidates) {"
+        },
+        {
+          "line": 328,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return [...new Set(qs)].slice(0, queriesPerTarget);"
+        },
+        {
+          "line": 369,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries: buildQueries(target, hostCandidates)"
+        },
+        {
+          "line": 373,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "let searchExecutedNowCount = 0;"
+        },
+        {
+          "line": 382,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearch,"
+        },
+        {
+          "line": 387,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queriesPerTarget,"
+        },
+        {
+          "line": 395,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries: t.queries"
+        },
+        {
+          "line": 399,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if (allowSearch) {"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-prioritized-start-date-evidence-search-batch-file.js",
+      "size": 12722,
+      "sha256": "b3213cafa813b001985447aadaa20df9e5e7672bcfb29e50969db13310d35ad8",
+      "score": 53,
+      "roles": [
+        "existing_start_date_search_runner",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 15,
+      "topHits": [
+        {
+          "line": 9,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = argv.includes(\"--allow-search\");"
+        },
+        {
+          "line": 12,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queriesPerTarget = Number(argv[argv.indexOf(\"--queries-per-target\") + 1] || 2);"
+        },
+        {
+          "line": 148,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const res = await fetch(url, {"
+        },
+        {
+          "line": 228,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "let searchExecutedNowCount = 0;"
+        },
+        {
+          "line": 234,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearch,"
+        },
+        {
+          "line": 237,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queriesPerTarget,"
+        },
+        {
+          "line": 242,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if (allowSearch) {"
+        },
+        {
+          "line": 244,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = (target.queries || []).slice(0, queriesPerTarget);"
+        },
+        {
+          "line": 245,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "target._searchedQueryCount = queries.length;"
+        },
+        {
+          "line": 247,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (const query of queries) {"
+        },
+        {
+          "line": 249,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount++;"
+        },
+        {
+          "line": 275,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "console.error(`PROGRESS targets=${index + 1}/${targets.length} searches=${searchExecutedNowCount} results=${searchRows.length} failures=${failures.length}`);"
+        },
+        {
+          "line": 296,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearch,"
+        },
+        {
+          "line": 297,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount,"
+        },
+        {
+          "line": 325,
+          "matchedTerms": [
+            "searchResults"
+          ],
+          "text": "searchResultsOutput: rel(rowsPath),"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-whole-map-high-volume-official-search-wave-frontier-file.js",
+      "size": 8316,
+      "sha256": "417e57aa0c1e541d370ccc5a12458411e231adc3d3b6a4f06c2d32b3b881dd38",
+      "score": 46,
+      "roles": [
+        "existing_official_search_runner_or_builder",
+        "existing_frontier_search_runner_or_builder",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 13,
+      "topHits": [
+        {
+          "line": 8,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = args.has(\"--allow-search\");"
+        },
+        {
+          "line": 9,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const maxQueries = Number(process.argv.find(a=>a.startsWith(\"--max-queries=\"))?.split(\"=\")[1] ?? 308);"
+        },
+        {
+          "line": 32,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for(const q of target.queries ?? []){"
+        },
+        {
+          "line": 61,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "}).slice(0,maxQueries);"
+        },
+        {
+          "line": 73,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "check(checks,\"allowSearchFlagPresent\",allowSearch);"
+        },
+        {
+          "line": 83,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if(preflightBlockedCount || !allowExecute || !allowSearch){"
+        },
+        {
+          "line": 84,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "const output={output:outputPath,job:\"run-football-truth-whole-map-high-volume-official-search-wave-frontier-file\",status:\"blocked_preflight\",checks,summary:{status:\"blocked_preflight\",plannedSearchQueryCount:targets.length,searchExecutedNowCount:0,fetchExecutedNowCount:0,broadSearchExecutedNowCount:"
+        },
+        {
+          "line": 90,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "writeJson(targetsPath,{fileType:\"runner_compatible_official_search_targets\",generatedAtUtc:new Date().toISOString(),sourcePackPath:packPath,sourcePackSha256:sha256Text(packText),targets,summary:{targetCompetitionCount:uniq(targets.map(r=>r.competitionSlug)).length,searchQueryCount:targets.length,que"
+        },
+        {
+          "line": 96,
+          "matchedTerms": [
+            "--allow-search"
+          ],
+          "text": "\"--allow-search\","
+        },
+        {
+          "line": 145,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "queryRowsBySearchClass:countBy(targets,\"searchClass\"),"
+        },
+        {
+          "line": 151,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount:targets.length,"
+        },
+        {
+          "line": 153,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount:0,"
+        },
+        {
+          "line": 164,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "if(output.summary.searchExecutedNowCount!==targets.length || output.summary.fetchExecutedNowCount!==0 || output.summary.canonicalWriteExecutedNowCount!==0 || output.summary.productionWriteExecutedNowCount!==0 || output.summary.truthAssertionExecutedNowCount!==0) process.exitCode=1;"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/bootstrap-team-geo-from-wikidata.js",
+      "size": 64214,
+      "sha256": "5e289689159ffa1cc23b8840cf1fcae77d88cb443f987424f86cbe7d9cbf9af0",
+      "score": 44,
+      "roles": [
+        "uses_node_fetch_or_fetch_api"
+      ],
+      "hitCount": 39,
+      "topHits": [
+        {
+          "line": 457,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "response = await fetch(url, {"
+        },
+        {
+          "line": 673,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function buildVenueSearchQueries(teamName, expectedCountry, teamLabel = \"\") {"
+        },
+        {
+          "line": 683,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = [];"
+        },
+        {
+          "line": 686,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${name} stadium`);"
+        },
+        {
+          "line": 687,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${name} football stadium`);"
+        },
+        {
+          "line": 690,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${name} ${expectedCountry} stadium`);"
+        },
+        {
+          "line": 694,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return [...new Set(queries.map(q => normalizeText(q)).filter(Boolean))].slice(0, 4);"
+        },
+        {
+          "line": 737,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = buildVenueSearchQueries(teamName, expectedCountry, teamLabel);"
+        },
+        {
+          "line": 742,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (const query of queries.slice(0, 4)) {"
+        },
+        {
+          "line": 750,
+          "matchedTerms": [
+            "searchResults"
+          ],
+          "text": "const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];"
+        },
+        {
+          "line": 752,
+          "matchedTerms": [
+            "searchResults"
+          ],
+          "text": "for (const item of searchResults) {"
+        },
+        {
+          "line": 855,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function buildCitySearchQueries(teamName, expectedCountry, teamLabel = \"\") {"
+        },
+        {
+          "line": 886,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = [];"
+        },
+        {
+          "line": 890,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`${name} ${expectedCountry}`);"
+        },
+        {
+          "line": 893,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(name);"
+        },
+        {
+          "line": 896,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return [...new Set(queries.map(q => normalizeText(q)).filter(Boolean))].slice(0, 6);"
+        },
+        {
+          "line": 941,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = buildCitySearchQueries(teamName, expectedCountry, teamLabel);"
+        },
+        {
+          "line": 946,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (const query of queries.slice(0, 4)) {"
+        },
+        {
+          "line": 954,
+          "matchedTerms": [
+            "searchResults"
+          ],
+          "text": "const searchResults = Array.isArray(searchData?.search) ? searchData.search : [];"
+        },
+        {
+          "line": 956,
+          "matchedTerms": [
+            "searchResults"
+          ],
+          "text": "for (const item of searchResults) {"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-source-agnostic-standings-discovery-file.js",
+      "size": 22918,
+      "sha256": "337a1edb7c625589a585e938f29638010f5eef1afced34bbd662df2c1a46782f",
+      "score": 44,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 11,
+      "topHits": [
+        {
+          "line": 9,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = argv.includes(\"--allow-search\");"
+        },
+        {
+          "line": 15,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "if (!allowSearch) throw new Error(\"Refusing source discovery without --allow-search\");"
+        },
+        {
+          "line": 41,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 92,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const r = await fetch(url, {"
+        },
+        {
+          "line": 169,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "stats.searchExecutedNowCount += 2;"
+        },
+        {
+          "line": 407,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const searchQueries = querySet(target);"
+        },
+        {
+          "line": 409,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (const q of searchQueries) {"
+        },
+        {
+          "line": 466,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "searchQueries,"
+        },
+        {
+          "line": 489,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "searchQueries,"
+        },
+        {
+          "line": 523,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: stats.searchExecutedNowCount,"
+        },
+        {
+          "line": 524,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: stats.searchExecutedNowCount,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-football-truth-whole-map-official-host-search-runner-adapter-file.js",
+      "size": 16434,
+      "sha256": "cb3881b45732acb31dd1b5a3b8257c05305860125aed1b36cea8f57b06ac41ab",
+      "score": 43,
+      "roles": [
+        "existing_official_search_runner_or_builder",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 19,
+      "topHits": [
+        {
+          "line": 118,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = Array.isArray(row.queries)"
+        },
+        {
+          "line": 119,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "? row.queries.map((q) => typeof q === \"string\" ? q : q.query).filter(Boolean)"
+        },
+        {
+          "line": 130,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queryCount: queries.length,"
+        },
+        {
+          "line": 131,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries,"
+        },
+        {
+          "line": 132,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "searchQueries: queries.map((query, queryIndex) => ({"
+        },
+        {
+          "line": 143,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearchOnlyWithExplicitAllowSearchFlag: true,"
+        },
+        {
+          "line": 175,
+          "matchedTerms": [
+            "--allow-search"
+          ],
+          "text": "\"--allow-search\","
+        },
+        {
+          "line": 189,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "hasAllowSearchGate: runnerText.includes(\"--allow-search\") || runnerText.includes(\"allowSearch\"),"
+        },
+        {
+          "line": 194,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "hasQueryTextReferences: /queries|searchQueries|query/.test(runnerText),"
+        },
+        {
+          "line": 262,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "nextRunnerMustUseExplicitAllowSearchFlag: true"
+        },
+        {
+          "line": 310,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "check(checks, \"runnerHasAllowSearchGate\", compatibility.hasAllowSearchGate, compatibility);"
+        },
+        {
+          "line": 314,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "check(checks, \"adaptedAllTargetsHaveQueries\", adaptedAllTargets.every((row) => row.queryCount > 0));"
+        },
+        {
+          "line": 362,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunOfficialHostSearchWave01WithExplicitAllowSearchFlagCount: wave01Rows.length >= 20 ? 1 : 0,"
+        },
+        {
+          "line": 367,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 369,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: 0,"
+        },
+        {
+          "line": 397,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "hasAllowSearchGate: compatibility.hasAllowSearchGate,"
+        },
+        {
+          "line": 403,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunOfficialHostSearchWave01WithExplicitAllowSearchFlagCount: report.summary.mayRunOfficialHostSearchWave01WithExplicitAllowSearchFlagCount,"
+        },
+        {
+          "line": 408,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: report.summary.searchExecutedNowCount,"
+        },
+        {
+          "line": 410,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: report.summary.broadSearchExecutedNowCount,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-source-agnostic-standings-discovery-v2-file.js",
+      "size": 27979,
+      "sha256": "83be91bd06d91bab5440aaaabb3cfb18db2aad768e6fb3adcf852f300df30cb8",
+      "score": 43,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 10,
+      "topHits": [
+        {
+          "line": 9,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = argv.includes(\"--allow-search\");"
+        },
+        {
+          "line": 15,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "if (!allowSearch) throw new Error(\"Refusing search without --allow-search\");"
+        },
+        {
+          "line": 40,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "const stats = { searchExecutedNowCount: 0, fetchExecutedNowCount: 0 };"
+        },
+        {
+          "line": 157,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const r = await fetch(url, {"
+        },
+        {
+          "line": 176,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "stats.searchExecutedNowCount += urls.length;"
+        },
+        {
+          "line": 398,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function queriesFor(t) {"
+        },
+        {
+          "line": 409,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = queriesFor(target);"
+        },
+        {
+          "line": 411,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (const q of queries) {"
+        },
+        {
+          "line": 586,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: stats.searchExecutedNowCount,"
+        },
+        {
+          "line": 587,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: stats.searchExecutedNowCount,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-controlled-real-acquisition-smoke-runner-file.js",
+      "size": 21670,
+      "sha256": "9d93d4241cdee10d24891a3b533532d3f166d30be353c51f9635d4df3f8ab027",
+      "score": 41,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 13,
+      "topHits": [
+        {
+          "line": 8,
+          "matchedTerms": [
+            "ALLOW_SEARCH",
+            "--allow-search"
+          ],
+          "text": "const ALLOW_SEARCH = process.argv.includes(\"--allow-search\");"
+        },
+        {
+          "line": 141,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const response = await fetch(url, {"
+        },
+        {
+          "line": 230,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "\"searchExecutedNowCount\","
+        },
+        {
+          "line": 231,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "\"broadSearchExecutedNowCount\","
+        },
+        {
+          "line": 261,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "\"searchExecutedNowCount\","
+        },
+        {
+          "line": 262,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "\"broadSearchExecutedNowCount\","
+        },
+        {
+          "line": 285,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "\"searchExecutedNowCount\","
+        },
+        {
+          "line": 286,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "\"broadSearchExecutedNowCount\","
+        },
+        {
+          "line": 299,
+          "matchedTerms": [
+            "ALLOW_SEARCH",
+            "--allow-search"
+          ],
+          "text": "if (!ALLOW_SEARCH) throw new Error(\"Refusing smoke runner without --allow-search\");"
+        },
+        {
+          "line": 454,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearchFlagPresent: true,"
+        },
+        {
+          "line": 488,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: controlledSearchAttemptRows.length,"
+        },
+        {
+          "line": 489,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: 0,"
+        },
+        {
+          "line": 512,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "explicitAllowSearchRequired: true,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-whole-map-high-volume-official-search-wave-file.js",
+      "size": 8252,
+      "sha256": "c1ccc6ba247e737b341411b80acfeb70cd8567bb55a55f39140a7b831527307e",
+      "score": 41,
+      "roles": [
+        "existing_official_search_runner_or_builder",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 13,
+      "topHits": [
+        {
+          "line": 8,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "const allowSearch = args.has(\"--allow-search\");"
+        },
+        {
+          "line": 9,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const maxQueries = Number(process.argv.find(a=>a.startsWith(\"--max-queries=\"))?.split(\"=\")[1] ?? 308);"
+        },
+        {
+          "line": 32,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for(const q of target.queries ?? []){"
+        },
+        {
+          "line": 61,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "}).slice(0,maxQueries);"
+        },
+        {
+          "line": 73,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "check(checks,\"allowSearchFlagPresent\",allowSearch);"
+        },
+        {
+          "line": 83,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if(preflightBlockedCount || !allowExecute || !allowSearch){"
+        },
+        {
+          "line": 84,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "const output={output:outputPath,job:\"run-football-truth-whole-map-high-volume-official-search-wave-file\",status:\"blocked_preflight\",checks,summary:{status:\"blocked_preflight\",plannedSearchQueryCount:targets.length,searchExecutedNowCount:0,fetchExecutedNowCount:0,broadSearchExecutedNowCount:0,canonic"
+        },
+        {
+          "line": 90,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "writeJson(targetsPath,{fileType:\"runner_compatible_official_search_targets\",generatedAtUtc:new Date().toISOString(),sourcePackPath:packPath,sourcePackSha256:sha256Text(packText),targets,summary:{targetCompetitionCount:uniq(targets.map(r=>r.competitionSlug)).length,searchQueryCount:targets.length,que"
+        },
+        {
+          "line": 96,
+          "matchedTerms": [
+            "--allow-search"
+          ],
+          "text": "\"--allow-search\","
+        },
+        {
+          "line": 145,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "queryRowsBySearchClass:countBy(targets,\"searchClass\"),"
+        },
+        {
+          "line": 151,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount:targets.length,"
+        },
+        {
+          "line": 153,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount:0,"
+        },
+        {
+          "line": 164,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "if(output.summary.searchExecutedNowCount!==targets.length || output.summary.fetchExecutedNowCount!==0 || output.summary.canonicalWriteExecutedNowCount!==0 || output.summary.productionWriteExecutedNowCount!==0 || output.summary.truthAssertionExecutedNowCount!==0) process.exitCode=1;"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-football-truth-whole-map-official-host-search-targets-file.js",
+      "size": 14772,
+      "sha256": "495d5fc816225e621808d81fa3c9461918bdcb9dbf5d635e0c0ff5c019ccbf39",
+      "score": 40,
+      "roles": [
+        "existing_official_search_runner_or_builder",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 16,
+      "topHits": [
+        {
+          "line": 128,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = Array.isArray(row.officialHostSearchQueries)"
+        },
+        {
+          "line": 129,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "? row.officialHostSearchQueries"
+        },
+        {
+          "line": 132,
+          "matchedTerms": [
+            "queryRow",
+            "queries"
+          ],
+          "text": "const queryRows = queries"
+        },
+        {
+          "line": 133,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": ".map((queryRow) => normalizeQuery(queryRow.query))"
+        },
+        {
+          "line": 142,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "queryCount: queryRows.length,"
+        },
+        {
+          "line": 143,
+          "matchedTerms": [
+            "queryRow",
+            "queries"
+          ],
+          "text": "queries: queryRows.map((query, index) => ({"
+        },
+        {
+          "line": 150,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunControlledSearchWithExplicitAllowSearchFlag: true,"
+        },
+        {
+          "line": 215,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "searchRunnerMustUseExplicitAllowSearchFlag: true,"
+        },
+        {
+          "line": 256,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "check(checks, \"searchQueriesAtLeastTwoHundred\", totalQueryCount >= 200, { actual: totalQueryCount });"
+        },
+        {
+          "line": 259,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "check(checks, \"allSearchRowsRequireExplicitSearchFlag\", searchRows.every((row) => row.nextAllowedAction.mayRunControlledSearchWithExplicitAllowSearchFlag === true));"
+        },
+        {
+          "line": 302,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunControlledOfficialHostSearchWithExplicitAllowSearchFlagCount: searchRows.length > 0 ? 1 : 0,"
+        },
+        {
+          "line": 307,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 309,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: 0,"
+        },
+        {
+          "line": 333,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunControlledOfficialHostSearchWithExplicitAllowSearchFlagCount: output.summary.mayRunControlledOfficialHostSearchWithExplicitAllowSearchFlagCount,"
+        },
+        {
+          "line": 338,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: output.summary.searchExecutedNowCount,"
+        },
+        {
+          "line": 340,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: output.summary.broadSearchExecutedNowCount,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/collect-same-prefix-missing-standings-search-results-file.js",
+      "size": 20355,
+      "sha256": "64482cb1f06acb3b764c2b381dfa1f7776ecba88a192e4e026600bb6f1464bd0",
+      "score": 40,
+      "roles": [
+        "has_allow_search_gate"
+      ],
+      "hitCount": 35,
+      "topHits": [
+        {
+          "line": 193,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "function classifySearchBatchQuality(result, target = null) {"
+        },
+        {
+          "line": 199,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "lowQualitySearchBatch: false"
+        },
+        {
+          "line": 204,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "const lowQualitySearchBatch = result?.ok === true && usableResultCount === 0;"
+        },
+        {
+          "line": 207,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "status: lowQualitySearchBatch"
+        },
+        {
+          "line": 211,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "lowQualitySearchBatch"
+        },
+        {
+          "line": 219,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "allowSearch: false,"
+        },
+        {
+          "line": 221,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queriesPerTask: 2,"
+        },
+        {
+          "line": 233,
+          "matchedTerms": [
+            "allowSearch",
+            "--allow-search"
+          ],
+          "text": "else if (arg === \"--allow-search\") args.allowSearch = true;"
+        },
+        {
+          "line": 235,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "else if (arg === \"--queries-per-task\") args.queriesPerTask = Number(argv[++index]);"
+        },
+        {
+          "line": 253,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const maxQueriesPerTask = Math.max(1, asNumber(options.queriesPerTask, 2));"
+        },
+        {
+          "line": 260,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = Array.isArray(task.candidateSearchQueries)"
+        },
+        {
+          "line": 261,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "? task.candidateSearchQueries.map(asText).filter(Boolean)"
+        },
+        {
+          "line": 264,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "if (!missingLeagueSlug || !countryPrefix || queries.length === 0) continue;"
+        },
+        {
+          "line": 266,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const group = queries.slice(0, maxQueriesPerTask).map((query, queryIndex) => ({"
+        },
+        {
+          "line": 293,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (let queryIndex = 0; queryIndex < maxQueriesPerTask; queryIndex += 1) {"
+        },
+        {
+          "line": 362,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "const result = await searchWeb(target.query, {      allowSearch: options.allowSearch === true,"
+        },
+        {
+          "line": 367,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "const quality = classifySearchBatchQuality(result, target);"
+        },
+        {
+          "line": 377,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "ok: result.ok === true && quality.lowQualitySearchBatch !== true,"
+        },
+        {
+          "line": 382,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "lowQualitySearchBatch: quality.lowQualitySearchBatch,"
+        },
+        {
+          "line": 387,
+          "matchedTerms": [
+            "searchBatch"
+          ],
+          "text": "if (quality.lowQualitySearchBatch) {"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-football-truth-high-yield-previous-completed-official-route-search-batches-file.js",
+      "size": 8563,
+      "sha256": "5d60d560c7c8a5ec357fbcb22e78826ba9e24ffff5bfb2d9ba359c84ce1a5c58",
+      "score": 39,
+      "roles": [
+        "existing_official_search_runner_or_builder",
+        "existing_route_search_runner_or_builder",
+        "tracks_search_executed_count",
+        "jsonl_rows_pattern",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 10,
+      "topHits": [
+        {
+          "line": 86,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function buildQueries(row) {"
+        },
+        {
+          "line": 91,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = ["
+        },
+        {
+          "line": 99,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`site:${host} \"${meta.league}\" standings 2025`);"
+        },
+        {
+          "line": 100,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "queries.push(`site:${host} table \"${seasonLabels[1]}\"`);"
+        },
+        {
+          "line": 103,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return queries.map((query, index) => ({"
+        },
+        {
+          "line": 140,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "rows: buildQueries(target)"
+        },
+        {
+          "line": 143,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "const queryRows = targetQueryGroups.flatMap(group => group.rows);"
+        },
+        {
+          "line": 169,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 185,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "queryRowCount: queryRows.length,"
+        },
+        {
+          "line": 195,
+          "matchedTerms": [
+            "queryRow"
+          ],
+          "text": "await fs.writeFile(rowsOutputPath, queryRows.map(row => JSON.stringify(row)).join(\"\\n\") + \"\\n\", \"utf8\");"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/build-football-truth-whole-map-official-host-search-wave-runner-compatible-targets-file.js",
+      "size": 9304,
+      "sha256": "241dbac6d57e3d16d2443773eff9a310882f0f7b4ec53d6ab9722a2097a1554a",
+      "score": 39,
+      "roles": [
+        "existing_official_search_runner_or_builder",
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 15,
+      "topHits": [
+        {
+          "line": 51,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "function extractQueries(target) {"
+        },
+        {
+          "line": 52,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "if (Array.isArray(target.queries)) {"
+        },
+        {
+          "line": 53,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return target.queries"
+        },
+        {
+          "line": 60,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "if (Array.isArray(target.searchQueries)) {"
+        },
+        {
+          "line": 61,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "return target.searchQueries"
+        },
+        {
+          "line": 87,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "const queries = unique(extractQueries(target));"
+        },
+        {
+          "line": 88,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "for (const [queryIndex, query] of queries.entries()) {"
+        },
+        {
+          "line": 130,
+          "matchedTerms": [
+            "queries"
+          ],
+          "text": "check(checks, \"ger3QueriesPresent\", compatibleRows.filter((row) => row.competitionSlug === \"ger.3\").length >= 5, { actual: compatibleRows.filter((row) => row.competitionSlug === \"ger.3\").length });"
+        },
+        {
+          "line": 159,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunControlledSearchWithExplicitAllowSearchFlagCount: compatibleRows.length === 80 ? 1 : 0"
+        },
+        {
+          "line": 180,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunControlledSearchWithExplicitAllowSearchFlagCount: compatibleRows.length === 80 ? 1 : 0,"
+        },
+        {
+          "line": 184,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 186,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: 0,"
+        },
+        {
+          "line": 207,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "mayRunControlledSearchWithExplicitAllowSearchFlagCount: report.summary.mayRunControlledSearchWithExplicitAllowSearchFlagCount,"
+        },
+        {
+          "line": 211,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: report.summary.searchExecutedNowCount,"
+        },
+        {
+          "line": 213,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: report.summary.broadSearchExecutedNowCount,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-controlled-sportomedia-graphql-payload-acquisition-execution-file.js",
+      "size": 20418,
+      "sha256": "00b1471c533757799f4c0d5b7b320f20edfb935b456f17dc0388287c16fed656",
+      "score": 39,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 11,
+      "topHits": [
+        {
+          "line": 79,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "assertSummary(s, \"finalRunWouldAllowSearchCount\", 0);"
+        },
+        {
+          "line": 87,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"searchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 88,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"broadSearchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 115,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if (row.finalRunWouldAllowSearch !== false) throw new Error(row.competitionSlug + \": search must be forbidden.\");"
+        },
+        {
+          "line": 135,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"searchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 136,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"broadSearchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 219,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const response = await fetch(url, {"
+        },
+        {
+          "line": 365,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 366,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: 0,"
+        },
+        {
+          "line": 418,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: output.summary.searchExecutedNowCount,"
+        },
+        {
+          "line": 419,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: output.summary.broadSearchExecutedNowCount,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-controlled-sportomedia-graphql-query-body-recovery-execution-file.js",
+      "size": 28147,
+      "sha256": "ddc119f5f87966231c45f133f889caa7344780dd69995b644f3d6e84fdab42b0",
+      "score": 38,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 10,
+      "topHits": [
+        {
+          "line": 83,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "assertSummary(s, \"finalRunWouldAllowSearchCount\", 0);"
+        },
+        {
+          "line": 100,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"searchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 101,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"broadSearchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 137,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if (row.finalRunWouldAllowSearch !== false || row.finalRunWouldAllowBroadSearch !== false) {"
+        },
+        {
+          "line": 383,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const response = await fetch(url, { ...options, signal: controller.signal });"
+        },
+        {
+          "line": 430,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "finalRunWouldAllowSearch: row.finalRunWouldAllowSearch,"
+        },
+        {
+          "line": 598,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 599,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: 0,"
+        },
+        {
+          "line": 667,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: output.summary.searchExecutedNowCount,"
+        },
+        {
+          "line": 668,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: output.summary.broadSearchExecutedNowCount,"
+        }
+      ]
+    },
+    {
+      "path": "engine-v1/jobs/run-football-truth-controlled-sportomedia-graphql-query-body-recovery-refined-candidate-execution-file.js",
+      "size": 31501,
+      "sha256": "68b5cf337765b746934378682f6d96d4c80f36e667a761d975c07fcc4c6833b5",
+      "score": 38,
+      "roles": [
+        "has_allow_search_gate",
+        "tracks_search_executed_count",
+        "uses_node_fetch_or_fetch_api",
+        "tracks_write_guardrails"
+      ],
+      "hitCount": 10,
+      "topHits": [
+        {
+          "line": 88,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "assertSummary(s, \"finalRunWouldAllowSearchCount\", 0);"
+        },
+        {
+          "line": 105,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"searchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 106,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "assertSummary(s, \"broadSearchExecutedNowCount\", 0);"
+        },
+        {
+          "line": 150,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "if (row.finalRunWouldAllowSearch !== false || row.finalRunWouldAllowBroadSearch !== false) {"
+        },
+        {
+          "line": 430,
+          "matchedTerms": [
+            "fetch("
+          ],
+          "text": "const response = await fetch(url, { ...options, signal: controller.signal });"
+        },
+        {
+          "line": 483,
+          "matchedTerms": [
+            "allowSearch"
+          ],
+          "text": "finalRunWouldAllowSearch: row.finalRunWouldAllowSearch,"
+        },
+        {
+          "line": 651,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: 0,"
+        },
+        {
+          "line": 652,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: 0,"
+        },
+        {
+          "line": 720,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "searchExecutedNowCount: output.summary.searchExecutedNowCount,"
+        },
+        {
+          "line": 721,
+          "matchedTerms": [
+            "searchExecutedNowCount"
+          ],
+          "text": "broadSearchExecutedNowCount: output.summary.broadSearchExecutedNowCount,"
+        }
+      ]
+    }
+  ]
+}
