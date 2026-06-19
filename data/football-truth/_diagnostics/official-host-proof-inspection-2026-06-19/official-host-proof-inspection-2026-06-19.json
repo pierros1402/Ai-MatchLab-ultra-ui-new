@@ -1,0 +1,885 @@
+{
+  "status": "passed",
+  "runner": "official_host_proof_inspection",
+  "contractVersion": 1,
+  "purpose": "Bounded proof inspection of selected official-host proof targets. Stores only bounded metadata/snippets/endpoints, never full raw payloads, and performs no acceptance.",
+  "inputProofPath": "data/football-truth/_diagnostics/official-host-proof-target-board-2026-06-19/official-host-proof-target-board-2026-06-19.json",
+  "inputProofRowsPath": "data/football-truth/_diagnostics/official-host-proof-target-board-2026-06-19/official-host-proof-target-board-rows-2026-06-19.jsonl",
+  "inputProofSha256": "a2f31893e085e3300fc4d438e0a4c403001aa12a857020d3fdca5a0250acd07d",
+  "inputProofRowsSha256": "156529d99ba14c84266526dd6f3902a86bbd591dbad76beb46c8f2baae42fe3e",
+  "output": "data/football-truth/_diagnostics/official-host-proof-inspection-2026-06-19/official-host-proof-inspection-2026-06-19.json",
+  "rowsOutput": "data/football-truth/_diagnostics/official-host-proof-inspection-2026-06-19/official-host-proof-inspection-rows-2026-06-19.jsonl",
+  "guardrails": {
+    "allowFetch": true,
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 21,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false,
+    "fullRawPayloadWritten": false
+  },
+  "sourceProofSummary": {
+    "minedCandidateRowCount": 953,
+    "reviewedUniqueCandidateCount": 953,
+    "sourceMinerActionableCandidateCount": 570,
+    "proofCandidateCount": 215,
+    "proofCandidateSlugCount": 10,
+    "seasonRouteExtractionProbeCount": 4,
+    "standingsScriptEndpointProbeCount": 6,
+    "standingsRouteRenderProbeCount": 204,
+    "rankApiProbeCount": 1,
+    "parkedNoiseCount": 738,
+    "selectedProofTargetCount": 21,
+    "selectedProofSlugCount": 10,
+    "selectedProofTargets": [
+      {
+        "slug": "aut.1",
+        "sourceLeague": "Austrian Bundesliga",
+        "proofType": "season_route_extraction_probe",
+        "candidateUrl": "https://www.bundesliga.at/tabelle/saison-2024-2025/",
+        "proofScore": 105,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "season_2025_in_url"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "aut.1",
+        "sourceLeague": "Austrian Bundesliga",
+        "proofType": "season_route_extraction_probe",
+        "candidateUrl": "https://www.bundesliga.at/tabelle/saison-2025-2026/",
+        "proofScore": 105,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "season_2025_in_url"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "aut.2",
+        "sourceLeague": "2. Liga Austria",
+        "proofType": "season_route_extraction_probe",
+        "candidateUrl": "https://www.2liga.at/tabelle/saison-2024-2025/",
+        "proofScore": 105,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "season_2025_in_url"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "aut.2",
+        "sourceLeague": "2. Liga Austria",
+        "proofType": "season_route_extraction_probe",
+        "candidateUrl": "https://www.2liga.at/tabelle/saison-2025-2026/",
+        "proofScore": 105,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "season_2025_in_url"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "aut.1",
+        "sourceLeague": "Austrian Bundesliga",
+        "proofType": "standings_script_endpoint_probe",
+        "candidateUrl": "https://www.bundesliga.at/_next/static/chunks/app/%5Blang%5D/(runOfSite)/(leaguesOnly)/tabelle/page-68c828919f69a321.js",
+        "proofScore": 115,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "standings_script_asset"
+        ],
+        "minerCandidateType": "script_asset_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "aut.2",
+        "sourceLeague": "2. Liga Austria",
+        "proofType": "standings_script_endpoint_probe",
+        "candidateUrl": "https://www.2liga.at/_next/static/chunks/app/%5Blang%5D/(runOfSite)/(leaguesOnly)/tabelle/page-68c828919f69a321.js",
+        "proofScore": 115,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "standings_script_asset"
+        ],
+        "minerCandidateType": "script_asset_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "nor.1",
+        "sourceLeague": "Eliteserien",
+        "proofType": "standings_script_endpoint_probe",
+        "candidateUrl": "https://www.eliteserien.no/_/service/no.seeds.app.football/asset/0000019e64166da0/js/embed-league-table.js",
+        "proofScore": 115,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "standings_script_asset"
+        ],
+        "minerCandidateType": "script_asset_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "pol.1",
+        "sourceLeague": "Ekstraklasa",
+        "proofType": "standings_script_endpoint_probe",
+        "candidateUrl": "https://www.ekstraklasa.org/tabela/main.daa97c722400eadc.js",
+        "proofScore": 115,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "standings_script_asset"
+        ],
+        "minerCandidateType": "script_asset_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "pol.1",
+        "sourceLeague": "Ekstraklasa",
+        "proofType": "standings_script_endpoint_probe",
+        "candidateUrl": "https://www.ekstraklasa.org/tabela/polyfills.16deddbcbeac2449.js",
+        "proofScore": 115,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term",
+          "standings_script_asset"
+        ],
+        "minerCandidateType": "script_asset_candidate",
+        "minerScore": 72
+      },
+      {
+        "slug": "aus.1",
+        "sourceLeague": "A-League Men",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://aleagues.com.au/ladders/a-league-men/",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "aus.1",
+        "sourceLeague": "A-League Men",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://aleagues.com.au/ladders/a-league-women/",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "ksa.1",
+        "sourceLeague": "Saudi Pro League",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://www.spl.com.sa/en/table",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "ksa.1",
+        "sourceLeague": "Saudi Pro League",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://www.spl.com.sa/table",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "mex.1",
+        "sourceLeague": "Liga MX",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://ligamx.net/cancha/estadisticahistorica",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "mex.1",
+        "sourceLeague": "Liga MX",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://ligamx.net/cancha/estadisticahistorica/1/",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "nor.1",
+        "sourceLeague": "Eliteserien",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://www.eliteserien.no/tabell",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "pol.1",
+        "sourceLeague": "Ekstraklasa",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://www.ekstraklasa.org/tabela",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "sui.1",
+        "sourceLeague": "Swiss Super League",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://sfl.ch/superleague-classement",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "route_candidate",
+        "minerScore": 60
+      },
+      {
+        "slug": "usa.1",
+        "sourceLeague": "Major League Soccer",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://www.mlssoccer.com/standings/#",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "api_or_json_candidate",
+        "minerScore": 90
+      },
+      {
+        "slug": "usa.1",
+        "sourceLeague": "Major League Soccer",
+        "proofType": "standings_route_render_probe",
+        "candidateUrl": "https://www.mlssoccer.com/standings/#chevron-down",
+        "proofScore": 80,
+        "proofSignals": [
+          "same_official_host_family",
+          "standings_route_term"
+        ],
+        "minerCandidateType": "api_or_json_candidate",
+        "minerScore": 90
+      },
+      {
+        "slug": "kor.1",
+        "sourceLeague": "K League 1",
+        "proofType": "rank_api_probe",
+        "candidateUrl": "https://www.kleague.com/api/clubRank.do",
+        "proofScore": 75,
+        "proofSignals": [
+          "same_official_host_family",
+          "rank_or_table_api_endpoint"
+        ],
+        "minerCandidateType": "api_or_json_candidate",
+        "minerScore": 55
+      }
+    ],
+    "acceptedNowCount": 0
+  },
+  "summary": {
+    "selectedProofTargetCount": 21,
+    "inspectedTargetCount": 21,
+    "inspectedSlugCount": 10,
+    "fetched2xxCount": 18,
+    "fetchFailedCount": 3,
+    "htmlTableExtractionCandidateCount": 8,
+    "jsonRankTableCandidateCount": 1,
+    "scriptEndpointFollowupCandidateCount": 1,
+    "browserRenderRequiredCount": 5,
+    "parkedCount": 6,
+    "acceptedNowCount": 0,
+    "nextExtractionTargets": [
+      {
+        "slug": "aut.1",
+        "sourceLeague": "Austrian Bundesliga",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://www.bundesliga.at/de/tabelle/saison-2024-2025",
+        "status": 200,
+        "title": "Bundesliga.at",
+        "tableTagCount": 6,
+        "rowTagCount": 42,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "aut.1",
+        "sourceLeague": "Austrian Bundesliga",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://www.bundesliga.at/de/tabelle/saison-2025-2026",
+        "status": 200,
+        "title": "Bundesliga.at",
+        "tableTagCount": 6,
+        "rowTagCount": 42,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "aut.2",
+        "sourceLeague": "2. Liga Austria",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://www.2liga.at/de/tabelle/saison-2024-2025",
+        "status": 200,
+        "title": "2Liga.at",
+        "tableTagCount": 3,
+        "rowTagCount": 51,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "aut.2",
+        "sourceLeague": "2. Liga Austria",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://www.2liga.at/de/tabelle/saison-2025-2026",
+        "status": 200,
+        "title": "2Liga.at",
+        "tableTagCount": 3,
+        "rowTagCount": 51,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "aus.1",
+        "sourceLeague": "A-League Men",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://aleagues.com.au/ladders/a-league-men/",
+        "status": 200,
+        "title": "A-League Men Ladder | Latest Standings on A-League Men Table",
+        "tableTagCount": 2,
+        "rowTagCount": 26,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "mex.1",
+        "sourceLeague": "Liga MX",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://ligamx.net/cancha/estadisticahistorica",
+        "status": 200,
+        "title": "LIGA MX | Liga MX - Fútbol Profesional",
+        "tableTagCount": 6,
+        "rowTagCount": 62,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "mex.1",
+        "sourceLeague": "Liga MX",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://ligamx.net/cancha/estadisticahistorica/1/",
+        "status": 200,
+        "title": "LIGA MX | Liga MX - Fútbol Profesional",
+        "tableTagCount": 6,
+        "rowTagCount": 62,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "nor.1",
+        "sourceLeague": "Eliteserien",
+        "proofOutcome": "html_table_extraction_candidate",
+        "candidateUrl": "https://www.eliteserien.no/tabell",
+        "status": 200,
+        "title": "Tabell Eliteserien / Eliteserien",
+        "tableTagCount": 1,
+        "rowTagCount": 17,
+        "standingsLikeArrayCount": 0
+      },
+      {
+        "slug": "kor.1",
+        "sourceLeague": "K League 1",
+        "proofOutcome": "json_rank_table_candidate",
+        "candidateUrl": "https://www.kleague.com/api/clubRank.do",
+        "status": 200,
+        "title": "",
+        "tableTagCount": 0,
+        "rowTagCount": 0,
+        "standingsLikeArrayCount": 2
+      }
+    ],
+    "nextScriptEndpointTargets": [
+      {
+        "slug": "nor.1",
+        "sourceLeague": "Eliteserien",
+        "scriptUrl": "https://www.eliteserien.no/_/service/no.seeds.app.football/asset/0000019e64166da0/js/embed-league-table.js",
+        "endpointCandidateCount": 7,
+        "highValueEndpointCandidateCount": 7,
+        "endpoints": [
+          {
+            "candidateUrl": ".embed-league-table",
+            "score": 50,
+            "signals": [
+              "standings_or_rank_path",
+              "same_or_relative_host"
+            ]
+          },
+          {
+            "candidateUrl": "table",
+            "score": 50,
+            "signals": [
+              "standings_or_rank_path",
+              "same_or_relative_host"
+            ]
+          },
+          {
+            "candidateUrl": "table__header",
+            "score": 50,
+            "signals": [
+              "standings_or_rank_path",
+              "same_or_relative_host"
+            ]
+          },
+          {
+            "candidateUrl": "table__typo--full",
+            "score": 50,
+            "signals": [
+              "standings_or_rank_path",
+              "same_or_relative_host"
+            ]
+          },
+          {
+            "candidateUrl": "table__typo--short",
+            "score": 50,
+            "signals": [
+              "standings_or_rank_path",
+              "same_or_relative_host"
+            ]
+          },
+          {
+            "candidateUrl": "table--persist-area table table--league-neutral",
+            "score": 50,
+            "signals": [
+              "standings_or_rank_path",
+              "same_or_relative_host"
+            ]
+          },
+          {
+            "candidateUrl": "table--persist-area-header",
+            "score": 50,
+            "signals": [
+              "standings_or_rank_path",
+              "same_or_relative_host"
+            ]
+          }
+        ]
+      }
+    ],
+    "nextBrowserRenderTargets": [
+      {
+        "slug": "ksa.1",
+        "sourceLeague": "Saudi Pro League",
+        "candidateUrl": "https://www.spl.com.sa/en/table",
+        "status": 200,
+        "title": "2025/26 League Table | Live Standings, Rankings & Stats | Saudi Pro League"
+      },
+      {
+        "slug": "pol.1",
+        "sourceLeague": "Ekstraklasa",
+        "candidateUrl": "https://www.ekstraklasa.org/tabela/",
+        "status": 200,
+        "title": "PKO BP Ekstraklasa - Strona oficjalna | Tabela"
+      },
+      {
+        "slug": "sui.1",
+        "sourceLeague": "Swiss Super League",
+        "candidateUrl": "https://sfl.ch/superleague-classement",
+        "status": 200,
+        "title": ""
+      },
+      {
+        "slug": "usa.1",
+        "sourceLeague": "Major League Soccer",
+        "candidateUrl": "https://www.mlssoccer.com/standings/",
+        "status": 200,
+        "title": "Conference Standings | MLSsoccer.com"
+      },
+      {
+        "slug": "usa.1",
+        "sourceLeague": "Major League Soccer",
+        "candidateUrl": "https://www.mlssoccer.com/standings/",
+        "status": 200,
+        "title": "Conference Standings | MLSsoccer.com"
+      }
+    ]
+  },
+  "recommendation": {
+    "nextLane": "Run exact extraction/validation for nextExtractionTargets first, then script endpoint follow-up, then browser render for browserRenderRequired targets. Still no canonical/truth/production writes until validation passes and explicit approval is given."
+  },
+  "bySlug": {
+    "aus.1": {
+      "inspectedTargetCount": 2,
+      "fetched2xxCount": 2,
+      "htmlTableExtractionCandidateCount": 1,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 0,
+      "parkedCount": 1,
+      "topRows": [
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://aleagues.com.au/ladders/a-league-men/",
+          "status": 200,
+          "title": "A-League Men Ladder | Latest Standings on A-League Men Table",
+          "tableTagCount": 2,
+          "rowTagCount": 26,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "park",
+          "candidateUrl": "https://aleagues.com.au/ladders/a-league-women/",
+          "status": 200,
+          "title": "A-League Women Ladder | Latest Standings on A-League Women Table",
+          "tableTagCount": 2,
+          "rowTagCount": 2,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "aut.1": {
+      "inspectedTargetCount": 3,
+      "fetched2xxCount": 3,
+      "htmlTableExtractionCandidateCount": 2,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 0,
+      "parkedCount": 1,
+      "topRows": [
+        {
+          "proofType": "season_route_extraction_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://www.bundesliga.at/tabelle/saison-2024-2025/",
+          "status": 200,
+          "title": "Bundesliga.at",
+          "tableTagCount": 6,
+          "rowTagCount": 42,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "season_route_extraction_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://www.bundesliga.at/tabelle/saison-2025-2026/",
+          "status": 200,
+          "title": "Bundesliga.at",
+          "tableTagCount": 6,
+          "rowTagCount": 42,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_script_endpoint_probe",
+          "proofOutcome": "park",
+          "candidateUrl": "https://www.bundesliga.at/_next/static/chunks/app/%5Blang%5D/(runOfSite)/(leaguesOnly)/tabelle/page-68c828919f69a321.js",
+          "status": 200,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "aut.2": {
+      "inspectedTargetCount": 3,
+      "fetched2xxCount": 3,
+      "htmlTableExtractionCandidateCount": 2,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 0,
+      "parkedCount": 1,
+      "topRows": [
+        {
+          "proofType": "season_route_extraction_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://www.2liga.at/tabelle/saison-2024-2025/",
+          "status": 200,
+          "title": "2Liga.at",
+          "tableTagCount": 3,
+          "rowTagCount": 51,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "season_route_extraction_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://www.2liga.at/tabelle/saison-2025-2026/",
+          "status": 200,
+          "title": "2Liga.at",
+          "tableTagCount": 3,
+          "rowTagCount": 51,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_script_endpoint_probe",
+          "proofOutcome": "park",
+          "candidateUrl": "https://www.2liga.at/_next/static/chunks/app/%5Blang%5D/(runOfSite)/(leaguesOnly)/tabelle/page-68c828919f69a321.js",
+          "status": 200,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "kor.1": {
+      "inspectedTargetCount": 1,
+      "fetched2xxCount": 1,
+      "htmlTableExtractionCandidateCount": 0,
+      "jsonRankTableCandidateCount": 1,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 0,
+      "parkedCount": 0,
+      "topRows": [
+        {
+          "proofType": "rank_api_probe",
+          "proofOutcome": "json_rank_table_candidate",
+          "candidateUrl": "https://www.kleague.com/api/clubRank.do",
+          "status": 200,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 2
+        }
+      ]
+    },
+    "ksa.1": {
+      "inspectedTargetCount": 2,
+      "fetched2xxCount": 1,
+      "htmlTableExtractionCandidateCount": 0,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 1,
+      "parkedCount": 1,
+      "topRows": [
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "browser_render_required",
+          "candidateUrl": "https://www.spl.com.sa/en/table",
+          "status": 200,
+          "title": "2025/26 League Table | Live Standings, Rankings & Stats | Saudi Pro League",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "park",
+          "candidateUrl": "https://www.spl.com.sa/table",
+          "status": 404,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "mex.1": {
+      "inspectedTargetCount": 2,
+      "fetched2xxCount": 2,
+      "htmlTableExtractionCandidateCount": 2,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 0,
+      "parkedCount": 0,
+      "topRows": [
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://ligamx.net/cancha/estadisticahistorica",
+          "status": 200,
+          "title": "LIGA MX | Liga MX - Fútbol Profesional",
+          "tableTagCount": 6,
+          "rowTagCount": 62,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://ligamx.net/cancha/estadisticahistorica/1/",
+          "status": 200,
+          "title": "LIGA MX | Liga MX - Fútbol Profesional",
+          "tableTagCount": 6,
+          "rowTagCount": 62,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "nor.1": {
+      "inspectedTargetCount": 2,
+      "fetched2xxCount": 2,
+      "htmlTableExtractionCandidateCount": 1,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 1,
+      "browserRenderRequiredCount": 0,
+      "parkedCount": 0,
+      "topRows": [
+        {
+          "proofType": "standings_script_endpoint_probe",
+          "proofOutcome": "script_endpoint_followup_candidate",
+          "candidateUrl": "https://www.eliteserien.no/_/service/no.seeds.app.football/asset/0000019e64166da0/js/embed-league-table.js",
+          "status": 200,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 7,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "html_table_extraction_candidate",
+          "candidateUrl": "https://www.eliteserien.no/tabell",
+          "status": 200,
+          "title": "Tabell Eliteserien / Eliteserien",
+          "tableTagCount": 1,
+          "rowTagCount": 17,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "pol.1": {
+      "inspectedTargetCount": 3,
+      "fetched2xxCount": 1,
+      "htmlTableExtractionCandidateCount": 0,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 1,
+      "parkedCount": 2,
+      "topRows": [
+        {
+          "proofType": "standings_script_endpoint_probe",
+          "proofOutcome": "park",
+          "candidateUrl": "https://www.ekstraklasa.org/tabela/main.daa97c722400eadc.js",
+          "status": 404,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_script_endpoint_probe",
+          "proofOutcome": "park",
+          "candidateUrl": "https://www.ekstraklasa.org/tabela/polyfills.16deddbcbeac2449.js",
+          "status": 404,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "browser_render_required",
+          "candidateUrl": "https://www.ekstraklasa.org/tabela",
+          "status": 200,
+          "title": "PKO BP Ekstraklasa - Strona oficjalna | Tabela",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "sui.1": {
+      "inspectedTargetCount": 1,
+      "fetched2xxCount": 1,
+      "htmlTableExtractionCandidateCount": 0,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 1,
+      "parkedCount": 0,
+      "topRows": [
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "browser_render_required",
+          "candidateUrl": "https://sfl.ch/superleague-classement",
+          "status": 200,
+          "title": "",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    },
+    "usa.1": {
+      "inspectedTargetCount": 2,
+      "fetched2xxCount": 2,
+      "htmlTableExtractionCandidateCount": 0,
+      "jsonRankTableCandidateCount": 0,
+      "scriptEndpointFollowupCandidateCount": 0,
+      "browserRenderRequiredCount": 2,
+      "parkedCount": 0,
+      "topRows": [
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "browser_render_required",
+          "candidateUrl": "https://www.mlssoccer.com/standings/#",
+          "status": 200,
+          "title": "Conference Standings | MLSsoccer.com",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        },
+        {
+          "proofType": "standings_route_render_probe",
+          "proofOutcome": "browser_render_required",
+          "candidateUrl": "https://www.mlssoccer.com/standings/#chevron-down",
+          "status": 200,
+          "title": "Conference Standings | MLSsoccer.com",
+          "tableTagCount": 0,
+          "rowTagCount": 0,
+          "endpointCandidateCount": 0,
+          "standingsLikeArrayCount": 0
+        }
+      ]
+    }
+  }
+}
