@@ -73,29 +73,10 @@ async function fetchText(url, timeoutMs = 9000) {
     });
     const text = await res.text();
     clearTimeout(timer);
-    return {
-      url,
-      finalUrl: res.url,
-      status: res.status,
-      ok: res.ok,
-      contentType: res.headers.get("content-type") ?? "",
-      bytes: Buffer.byteLength(text),
-      elapsedMs: Date.now() - started,
-      text
-    };
+    return { url, finalUrl: res.url, status: res.status, ok: res.ok, contentType: res.headers.get("content-type") ?? "", bytes: Buffer.byteLength(text), elapsedMs: Date.now() - started, text };
   } catch (error) {
     clearTimeout(timer);
-    return {
-      url,
-      finalUrl: url,
-      status: 0,
-      ok: false,
-      contentType: "",
-      bytes: 0,
-      elapsedMs: Date.now() - started,
-      error: error.name === "AbortError" ? "timeout" : error.message,
-      text: ""
-    };
+    return { url, finalUrl: url, status: 0, ok: false, contentType: "", bytes: 0, elapsedMs: Date.now() - started, error: error.name === "AbortError" ? "timeout" : error.message, text: "" };
   }
 }
 
@@ -106,8 +87,7 @@ function extractLinks(html, baseUrl, family) {
   while ((m = re.exec(html))) {
     const u = normalizeUrl(m[1], baseUrl);
     if (!u) continue;
-    const h = hostOf(u);
-    if (!family.hosts.includes(h)) continue;
+    if (!family.hosts.includes(hostOf(u))) continue;
     links.push(u);
   }
   return [...new Set(links)];
@@ -124,18 +104,17 @@ function scoreUrl(url, family) {
   return score;
 }
 
-function analyzeFetch(row, familyId, family) {
+function analyze(row, familyId, family) {
   const html = row.text ?? "";
-  const text = stripHtml(html).slice(0, 2000);
-  const lower = `${row.url}\n${row.finalUrl}\n${html.slice(0, 120000)}`.toLowerCase();
+  const lower = `${row.url}\n${row.finalUrl}\n${html.slice(0, 140000)}`.toLowerCase();
+  const textPreview = stripHtml(html).slice(0, 700);
   const routeWordHits = family.routeWords.filter(w => lower.includes(w.toLowerCase()));
   const tableTagCount = (html.match(/<table\b/gi) ?? []).length;
   const trTagCount = (html.match(/<tr\b/gi) ?? []).length;
-  const jsonScriptCount = (html.match(/application\/ld\+json|__next_data__|window\.__|dataLayer|json/gi) ?? []).length;
+  const jsonScriptCount = (html.match(/application\/ld\+json|__next_data__|window\.__|dataLayer|json|api|ajax/gi) ?? []).length;
   const standingSignals = ["standings", "standing", "table", "classification", "ranking", "sarjataulukko", "taulukko", "staða", "stada", "βαθμο"].filter(w => lower.includes(w));
-  const statSignals = ["played", "won", "drawn", "lost", "points", "pts", "goals", "position", "rank"].filter(w => lower.includes(w));
+  const statSignals = ["played", "won", "drawn", "lost", "points", "pts", "goals", "position", "rank", "matches"].filter(w => lower.includes(w));
   const fixtureSignals = ["fixtures", "results", "schedule", "match", "matches", "urslit", "úrslit"].filter(w => lower.includes(w));
-  const sameHost = family.hosts.includes(hostOf(row.finalUrl || row.url));
   let score = 0;
   if (row.ok) score += 20;
   score += routeWordHits.length * 15;
@@ -144,7 +123,7 @@ function analyzeFetch(row, familyId, family) {
   score += Math.min(tableTagCount, 10) * 15;
   score += Math.min(trTagCount, 40) * 2;
   if (jsonScriptCount) score += 10;
-  if (!sameHost) score -= 60;
+  if (!family.hosts.includes(hostOf(row.finalUrl || row.url))) score -= 60;
   return {
     familyId,
     competitionSlugs: family.competitionSlugs,
@@ -166,11 +145,11 @@ function analyzeFetch(row, familyId, family) {
     trTagCount,
     jsonScriptCount,
     score,
-    textPreview: text.slice(0, 800)
+    textPreview
   };
 }
 
-async function runPool(items, limit, fn) {
+async function pool(items, limit, fn) {
   const out = [];
   let i = 0;
   async function worker() {
@@ -188,23 +167,20 @@ const familyResults = [];
 
 for (const [familyId, family] of Object.entries(FAMILIES)) {
   const seedUrls = [...new Set(family.seeds)];
-  const seedFetches = await runPool(seedUrls, 8, u => fetchText(u));
-  fetchRows.push(...seedFetches.map(r => ({ familyId, phase: "seed", ...analyzeFetch(r, familyId, family) })));
+  const seedFetches = await pool(seedUrls, 8, u => fetchText(u));
+  fetchRows.push(...seedFetches.map(r => ({ familyId, phase: "seed", ...analyze(r, familyId, family) })));
 
   const discovered = [];
-  for (const row of seedFetches) {
-    if (!row.ok || !row.text) continue;
-    discovered.push(...extractLinks(row.text, row.finalUrl || row.url, family));
-  }
+  for (const row of seedFetches) if (row.ok && row.text) discovered.push(...extractLinks(row.text, row.finalUrl || row.url, family));
 
-  const rankedDiscovered = [...new Set(discovered)]
+  const ranked = [...new Set(discovered)]
     .map(url => ({ url, score: scoreUrl(url, family) }))
     .filter(x => x.score > 0)
     .sort((a, b) => b.score - a.score || a.url.localeCompare(b.url))
-    .slice(0, 48);
+    .slice(0, 72);
 
-  const discoveredFetches = await runPool(rankedDiscovered.map(x => x.url), 12, u => fetchText(u));
-  fetchRows.push(...discoveredFetches.map(r => ({ familyId, phase: "discovered", discoveryUrlScore: rankedDiscovered.find(x => x.url === r.url)?.score ?? 0, ...analyzeFetch(r, familyId, family) })));
+  const discoveredFetches = await pool(ranked.map(x => x.url), 16, u => fetchText(u));
+  fetchRows.push(...discoveredFetches.map(r => ({ familyId, phase: "discovered", discoveryUrlScore: ranked.find(x => x.url === r.url)?.score ?? 0, ...analyze(r, familyId, family) })));
 
   const familyFetchRows = fetchRows.filter(r => r.familyId === familyId);
   const strongCandidates = familyFetchRows
@@ -216,7 +192,7 @@ for (const [familyId, family] of Object.entries(FAMILIES)) {
     familyId,
     competitionSlugs: family.competitionSlugs,
     seedUrlCount: seedUrls.length,
-    discoveredCandidateUrlCount: rankedDiscovered.length,
+    discoveredCandidateUrlCount: ranked.length,
     fetchedUrlCount: familyFetchRows.length,
     fetched2xxCount: familyFetchRows.filter(r => r.ok).length,
     strongCandidateCount: strongCandidates.length,
@@ -233,9 +209,7 @@ for (const [familyId, family] of Object.entries(FAMILIES)) {
       routeWordHits: r.routeWordHits,
       textPreview: r.textPreview
     })),
-    recommendedNext: strongCandidates.length
-      ? "build_exact_route_table_or_json_shape_probe_for_top_strong_candidates"
-      : "no_strong_official_route_candidate_from_seed_and_same_host_link_fetch"
+    recommendedNext: strongCandidates.length ? "build_exact_route_table_or_json_shape_probe_for_top_strong_candidates" : "no_strong_official_route_candidate_from_seed_and_same_host_link_fetch"
   });
 }
 
@@ -244,18 +218,18 @@ const summary = {
   runner: "blocked_families_controlled_official_source_discovery",
   contractVersion: 1,
   generatedAtUtc: new Date().toISOString(),
-  purpose: "bulk controlled official-host discovery for blocked exact-runner-missing families; save metadata/signals only, not raw payloads",
+  purpose: "bulk controlled official-host discovery for blocked exact-runner-missing families; metadata/signals only, no raw payload commit",
   familyCount: Object.keys(FAMILIES).length,
   fetchExecutedNowCount: fetchRows.length,
   fetched2xxCount: fetchRows.filter(r => r.ok).length,
   strongCandidateFamilyCount: familyResults.filter(f => f.strongCandidateCount > 0).length,
   totalStrongCandidateCount: familyResults.reduce((a, f) => a + f.strongCandidateCount, 0),
   familyResults,
-  fetchRows: fetchRows.map(({ textPreview, ...r }) => ({ ...r, textPreview: textPreview?.slice(0, 500) ?? "" })),
+  fetchRows: fetchRows.map(r => ({ ...r, textPreview: r.textPreview?.slice(0, 500) ?? "" })),
   nextRecommendedLane: {
     lane: "exact_route_shape_probe_for_strong_candidates",
     orderedFamilies: familyResults.slice().sort((a, b) => b.strongCandidateCount - a.strongCandidateCount).map(f => f.familyId),
-    rule: "only continue to a proof runner after source route identity, row shape, season scope, expected rows/team signals, arithmetic, non-triviality and duplicate guard are explicit"
+    rule: "only continue to proof runner after exact route identity, row shape, season scope, expected rows/team signals, arithmetic, non-triviality and duplicate guard are explicit"
   },
   policy: {
     searchExecutedNowCount: 0,
