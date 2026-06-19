@@ -1,0 +1,129 @@
+{
+  "status": "partial_verified_current_or_new_diagnostic_only",
+  "runner": "modern_norway_ntf_current_or_new_proof",
+  "contractVersion": 1,
+  "generatedAtUtc": "2026-06-19T07:34:32.494Z",
+  "purpose": "modern isolated Norway NTF current_or_new proof from legacy quality-gated HTML table rows; diagnostic rows only",
+  "inputPaths": {
+    "standingQuality": "data/football-truth/_diagnostics/norway-ntf-standing-candidate-quality-gate-2026-06-15/norway-ntf-standing-candidate-quality-gate-2026-06-15.json",
+    "canonicalQuality": "data/football-truth/_diagnostics/norway-ntf-canonical-candidate-proposal-quality-gate-2026-06-15/norway-ntf-canonical-candidate-proposal-quality-gate-2026-06-15.json",
+    "executionApproval": "data/football-truth/_diagnostics/norway-ntf-canonical-candidate-execution-approval-gate-2026-06-15/norway-ntf-canonical-candidate-execution-approval-gate-2026-06-15.json"
+  },
+  "inputChecks": {
+    "standingQualityGateStatus": "passed",
+    "canonicalQualityGateStatus": "passed",
+    "executionApprovalGateStatus": "passed",
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "browserExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0
+  },
+  "summary": {
+    "targetSeasonScope": "current_or_new",
+    "targetSeasonLabel": "2026",
+    "validationGroupCount": 2,
+    "verifiedGroupCount": 1,
+    "acceptedRowCount": 16,
+    "acceptedRowsByCompetition": {
+      "nor.1": 16,
+      "nor.2": 0
+    },
+    "blockedGroupCount": 1
+  },
+  "gates": {
+    "exactSourceFamilyIdentity": "providerFamily=norway_ntf plus sourceKind=official_ntf_html_table_standings",
+    "exactCompetitionIdentity": "nor.1 eliteserien.no/tabell and nor.2 obos-ligaen.no/tabell",
+    "rowCount": "16 per competition",
+    "explicitSeasonScope": "current_or_new injected by modern contract from active 2026 standings evidence",
+    "explicitSeasonLabel": "2026",
+    "teamSignalGate": "unique teamName plus linked legacy quality/execution rows",
+    "wdlArithmetic": "played=won+drawn+lost",
+    "pointsArithmetic": "points=3*won+drawn",
+    "goalDifferenceArithmetic": "goalDifference=goalsFor-goalsAgainst using rawCells 6/7/8",
+    "nonTrivialCurrentOrNewGate": "totalPlayed,totalPoints,maxPlayed,maxPoints all > 0",
+    "duplicateSharedTableGuard": "per-competition row signature hash must not be shared",
+    "proofOnly": true
+  },
+  "validations": [
+    {
+      "competitionSlug": "nor.1",
+      "status": "verified_current_or_new_diagnostic_only",
+      "passed": true,
+      "rowCount": 16,
+      "expectedRowCount": 16,
+      "seasonScope": "current_or_new",
+      "seasonLabel": "2026",
+      "sourceHost": "eliteserien.no",
+      "officialRoute": "https://www.eliteserien.no/tabell",
+      "totalPlayed": 178,
+      "totalPoints": 249,
+      "maxPlayed": 13,
+      "maxPoints": 27,
+      "duplicateGuardHash": "0732f82d2b9e2dd14c9098cc",
+      "teamSignals": [
+        "Viking",
+        "Tromsø",
+        "Bodø/Glimt",
+        "Lillestrøm",
+        "Molde",
+        "HamKam",
+        "Sarpsborg 08",
+        "Sandefjord Fotball"
+      ],
+      "blocks": [],
+      "warnings": []
+    },
+    {
+      "competitionSlug": "nor.2",
+      "status": "blocked",
+      "passed": false,
+      "rowCount": 16,
+      "expectedRowCount": 16,
+      "seasonScope": "current_or_new",
+      "seasonLabel": "2026",
+      "sourceHost": "obos-ligaen.no",
+      "officialRoute": "https://www.obos-ligaen.no/tabell",
+      "totalPlayed": 176,
+      "totalPoints": 250,
+      "maxPlayed": 11,
+      "maxPoints": 26,
+      "duplicateGuardHash": "23767bd89d9b78c7717e6726",
+      "teamSignals": [
+        "Strømsgodset",
+        "Kongsvinger",
+        "Haugesund",
+        "Odd",
+        "Stabæk",
+        "Ranheim TF",
+        "Moss",
+        "Hødd"
+      ],
+      "blocks": [
+        "Åsane_points_arithmetic_failed"
+      ],
+      "warnings": []
+    }
+  ],
+  "outputs": {
+    "summary": "data/football-truth/_diagnostics/modern-norway-ntf-current-or-new-proof-2026-06-19/modern-norway-ntf-current-or-new-proof-2026-06-19.json",
+    "rows": "data/football-truth/_diagnostics/modern-norway-ntf-current-or-new-proof-2026-06-19/modern-norway-ntf-current-or-new-proof-rows-2026-06-19.jsonl",
+    "contract": "engine-v1/config/football-truth-modern-norway-ntf-current-or-new-proof-contract.json"
+  },
+  "policy": {
+    "searchAllowed": false,
+    "fetchAllowed": false,
+    "browserAllowed": false,
+    "canonicalWriteAllowed": false,
+    "productionWriteAllowed": false,
+    "truthAssertionAllowed": false,
+    "rawPayloadCommitAllowed": false
+  },
+  "searchExecutedNowCount": 0,
+  "fetchExecutedNowCount": 0,
+  "browserExecutedNowCount": 0,
+  "canonicalWriteExecutedNowCount": 0,
+  "productionWriteExecutedNowCount": 0,
+  "truthAssertionExecutedNowCount": 0
+}
