@@ -2,10 +2,10 @@
   "status": "passed",
   "runner": "verify_sportomedia_sef_previous_completed_proof_output",
   "contractVersion": 1,
-  "mode": "self_test",
+  "mode": "proof_verification",
   "contractPath": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-proof-verifier-contract-2026-06-19/sportomedia-sef-previous-completed-proof-verifier-contract-2026-06-19.json",
   "contractSha256": "d41595081d3954f7aed6cf4b80dee548d1ae5cdabf8aefe13b88ee5d67215e21",
-  "proofPath": null,
+  "proofPath": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-diagnostic-proof-2026-06-19/sportomedia-sef-previous-completed-diagnostic-proof-2026-06-19.json",
   "output": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-proof-output-verification-2026-06-19/sportomedia-sef-previous-completed-proof-output-verification-2026-06-19.json",
   "rowsOutput": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-proof-output-verification-2026-06-19/sportomedia-sef-previous-completed-proof-output-verification-rows-2026-06-19.jsonl",
   "guardrails": {
@@ -21,50 +21,89 @@
   },
   "verification": {
     "status": "passed",
-    "mode": "self_test",
-    "validFixtureStatus": "passed",
-    "invalidFixtureStatus": "failed",
-    "validFixtureSummary": {
+    "mode": "proof_verification",
+    "proofPath": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-diagnostic-proof-2026-06-19/sportomedia-sef-previous-completed-diagnostic-proof-2026-06-19.json",
+    "proofSha256": "de0059b571c8ede50331ea1ff73da6b789c26ea60b2ddb920b3d13a7dc41ba0e",
+    "contractBlocks": [],
+    "proofBlocks": [],
+    "rowReports": [
+      {
+        "slug": "swe.1",
+        "league": "Allsvenskan",
+        "status": "passed",
+        "blocks": [],
+        "metrics": {
+          "extractedRowCount": 16,
+          "standingsRowCount": 16,
+          "maxPlayed": 30,
+          "playedPassCount": 16,
+          "pointsPassCount": 16,
+          "gdPassCount": 16,
+          "nonTrivialCount": 16,
+          "computedTeamSignalHits": [
+            "Malmö FF",
+            "Hammarby",
+            "AIK",
+            "Djurgården",
+            "Mjällby",
+            "Elfsborg"
+          ],
+          "suppliedTeamSignalHits": [
+            "Malmö FF",
+            "Hammarby",
+            "AIK",
+            "Djurgården",
+            "Mjällby",
+            "Elfsborg"
+          ]
+        },
+        "acceptedNow": false,
+        "acceptanceAllowedNow": false,
+        "reviewOnly": true
+      },
+      {
+        "slug": "swe.2",
+        "league": "Superettan",
+        "status": "passed",
+        "blocks": [],
+        "metrics": {
+          "extractedRowCount": 16,
+          "standingsRowCount": 16,
+          "maxPlayed": 30,
+          "playedPassCount": 16,
+          "pointsPassCount": 16,
+          "gdPassCount": 16,
+          "nonTrivialCount": 16,
+          "computedTeamSignalHits": [
+            "Degerfors",
+            "Öster",
+            "Landskrona",
+            "Helsingborg",
+            "Sandviken",
+            "Brage"
+          ],
+          "suppliedTeamSignalHits": [
+            "Degerfors",
+            "Öster",
+            "Landskrona",
+            "Helsingborg",
+            "Sandviken",
+            "Brage"
+          ]
+        },
+        "acceptedNow": false,
+        "acceptanceAllowedNow": false,
+        "reviewOnly": true
+      }
+    ],
+    "summary": {
       "targetCount": 2,
       "passedRowCount": 2,
       "failedRowCount": 0,
       "writeGuardrailsHeld": true,
       "rawPayloadGuardrailsHeld": true,
       "acceptedNowCount": 0
-    },
-    "invalidFixtureSummary": {
-      "targetCount": 2,
-      "passedRowCount": 1,
-      "failedRowCount": 1,
-      "writeGuardrailsHeld": true,
-      "rawPayloadGuardrailsHeld": true,
-      "acceptedNowCount": 0
-    },
-    "invalidFixtureBlocks": [
-      "season_label_mismatch"
-    ],
-    "contractBlocks": [],
-    "proofBlocks": [],
-    "rowReports": [
-      {
-        "fixture": "valid",
-        "targetCount": 2,
-        "passedRowCount": 2,
-        "failedRowCount": 0,
-        "writeGuardrailsHeld": true,
-        "rawPayloadGuardrailsHeld": true,
-        "acceptedNowCount": 0
-      },
-      {
-        "fixture": "invalid",
-        "targetCount": 2,
-        "passedRowCount": 1,
-        "failedRowCount": 1,
-        "writeGuardrailsHeld": true,
-        "rawPayloadGuardrailsHeld": true,
-        "acceptedNowCount": 0
-      }
-    ]
+    }
   },
   "conclusion": "Sportomedia/SEF previous_completed proof output verifier passed. It accepts valid fixed 2024 diagnostic-only proof shape and rejects invalid season scope/label.",
   "blocks": []
