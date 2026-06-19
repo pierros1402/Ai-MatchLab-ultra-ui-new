@@ -9,16 +9,16 @@
     "browserRenderExecutedNowCount": 0,
     "canonicalWriteExecutedNowCount": 0,
     "productionWriteExecutedNowCount": 0,
-    "inputDueTaskCount": 889,
-    "acceptedExecutableTaskCount": 875,
+    "inputDueTaskCount": 887,
+    "acceptedExecutableTaskCount": 873,
     "rejectedTaskCount": 14,
     "rejectedInvalidSlugCount": 0,
     "rejectedSuppressedLowValueCount": 14,
-    "standingsExpansionTargetCount": 433,
+    "standingsExpansionTargetCount": 431,
     "startDateEvidenceTargetCount": 442,
-    "highValueAcceptedTaskCount": 129,
-    "uefaLikeAcceptedTaskCount": 203,
-    "immediateOfficialRenderedFamilyTargetCount": 2,
+    "highValueAcceptedTaskCount": 128,
+    "uefaLikeAcceptedTaskCount": 202,
+    "immediateOfficialRenderedFamilyTargetCount": 1,
     "recommendedNextLane": "inspect_blocked_official_rendered_table_cells_before_config_acceptance",
     "currentOrNewSeasonSatisfiedCount": 9,
     "currentOrNewDiagnosticStateSatisfiedCount": 8,
@@ -34,65 +34,16 @@
       "nor.1",
       "swe.1",
       "swe.2"
+    ],
+    "previousCompletedSatisfiedCount": 1,
+    "previousCompletedVerifiedRowsCount": 20,
+    "previousCompletedDiagnosticProofSatisfiedCount": 1,
+    "previousCompletedDiagnosticProofVerifiedRowsCount": 20,
+    "previousCompletedDiagnosticProofSlugs": [
+      "eng.1"
     ]
   },
   "sourceFamilyExpansionBoard": [
-    {
-      "familyId": "premierleague_official_rendered",
-      "slugs": [
-        "eng.1"
-      ],
-      "reason": "official rendered table exists but likely new-season zero table; requires currentness gate",
-      "originalSlugs": [
-        "eng.1"
-      ],
-      "targetCount": 1,
-      "lifecycleTasks": [
-        {
-          "competitionSlug": "eng.1",
-          "taskType": "acquire_previous_completed_standings",
-          "priority": 50,
-          "reason": "missing_previous_completed_standings",
-          "sourceHostHint": null,
-          "validSlug": true,
-          "suppressedLowValue": false,
-          "highValuePrefix": true,
-          "uefaLikePrefix": true,
-          "lifecycleState": "next_start_known_missing_previous_completed",
-          "previousCompletedStandingsSatisfied": false,
-          "nextSeasonStartDateSatisfied": true,
-          "currentOrNewSeasonStandingsSatisfied": false,
-          "sourceHost": null,
-          "score": 68000,
-          "executionLane": "official_rendered_or_provider_standings_expansion"
-        }
-      ],
-      "standingsLifecycleTasks": [
-        {
-          "competitionSlug": "eng.1",
-          "taskType": "acquire_previous_completed_standings",
-          "priority": 50,
-          "reason": "missing_previous_completed_standings",
-          "sourceHostHint": null,
-          "validSlug": true,
-          "suppressedLowValue": false,
-          "highValuePrefix": true,
-          "uefaLikePrefix": true,
-          "lifecycleState": "next_start_known_missing_previous_completed",
-          "previousCompletedStandingsSatisfied": false,
-          "nextSeasonStartDateSatisfied": true,
-          "currentOrNewSeasonStandingsSatisfied": false,
-          "sourceHost": null,
-          "score": 68000,
-          "executionLane": "official_rendered_or_provider_standings_expansion"
-        }
-      ],
-      "startDateLifecycleTasks": [],
-      "excludedFromStandingsExpansion": false,
-      "exclusionReason": null,
-      "blockedUntilInspected": true,
-      "recommendedAction": "inspect_rendered_table_cells_before_config_acceptance"
-    },
     {
       "familyId": "serie_a_official_rendered",
       "slugs": [
@@ -1702,24 +1653,6 @@
       "lifecycleState": "missing_previous_completed_and_next_start",
       "previousCompletedStandingsSatisfied": false,
       "nextSeasonStartDateSatisfied": false,
-      "currentOrNewSeasonStandingsSatisfied": false,
-      "sourceHost": null,
-      "score": 68000,
-      "executionLane": "official_rendered_or_provider_standings_expansion"
-    },
-    {
-      "competitionSlug": "eng.1",
-      "taskType": "acquire_previous_completed_standings",
-      "priority": 50,
-      "reason": "missing_previous_completed_standings",
-      "sourceHostHint": null,
-      "validSlug": true,
-      "suppressedLowValue": false,
-      "highValuePrefix": true,
-      "uefaLikePrefix": true,
-      "lifecycleState": "next_start_known_missing_previous_completed",
-      "previousCompletedStandingsSatisfied": false,
-      "nextSeasonStartDateSatisfied": true,
       "currentOrNewSeasonStandingsSatisfied": false,
       "sourceHost": null,
       "score": 68000,
@@ -4892,6 +4825,25 @@
       "sourceHost": null,
       "score": 63000,
       "executionLane": "official_start_date_evidence_discovery"
+    },
+    {
+      "competitionSlug": "mng.1",
+      "taskType": "acquire_next_season_start_date",
+      "priority": 60,
+      "reason": "missing_verified_next_season_start_date",
+      "targetSeasonLabel": "next",
+      "sourceHostHint": null,
+      "validSlug": true,
+      "suppressedLowValue": false,
+      "highValuePrefix": false,
+      "uefaLikePrefix": false,
+      "lifecycleState": "missing_previous_completed_and_next_start",
+      "previousCompletedStandingsSatisfied": false,
+      "nextSeasonStartDateSatisfied": false,
+      "currentOrNewSeasonStandingsSatisfied": false,
+      "sourceHost": null,
+      "score": 63000,
+      "executionLane": "official_start_date_evidence_discovery"
     }
   ],
   "currentOrNewDiagnosticState": {
@@ -4939,6 +4891,69 @@
     "currentOrNewSeasonSatisfiedCount": 9,
     "currentOrNewDiagnosticStateSatisfiedCount": 8,
     "currentOrNewDiagnosticStateVerifiedRowsCount": 108,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0
+  },
+  "previousCompletedDiagnosticProofState": {
+    "latestRowsPath": "data/football-truth/_diagnostics/eng1-ita1-previous-completed-extractor-proof-2026-06-19/eng1-ita1-previous-completed-extractor-proof-rows-2026-06-19.jsonl",
+    "verifiedPreviousCompletedProofSlugCount": 1,
+    "verifiedPreviousCompletedProofRowCount": 20,
+    "verifiedPreviousCompletedProofSlugs": [
+      "eng.1"
+    ],
+    "groupSummaries": [
+      {
+        "competitionSlug": "eng.1",
+        "rowCount": 20,
+        "seasonLabels": [
+          "2025-2026"
+        ],
+        "sourceFamilies": [
+          "premierleague_official_rendered_previous_completed"
+        ],
+        "totalPlayed": 760,
+        "totalPoints": 1036,
+        "maxPlayed": 38,
+        "maxPoints": 85,
+        "teamSignals": [
+          "Arsenal",
+          "Manchester City",
+          "Manchester United",
+          "Aston Villa",
+          "Liverpool",
+          "Bournemouth",
+          "Sunderland",
+          "Brighton and Hove Albion",
+          "Brentford",
+          "Chelsea"
+        ],
+        "expectedSignals": [
+          "Arsenal",
+          "Manchester City",
+          "Manchester United",
+          "Liverpool",
+          "Chelsea",
+          "Aston Villa"
+        ],
+        "missingSignals": [],
+        "duplicateGuardHash": "e25d8042e49fbc90394d69de",
+        "validationStatus": "passed",
+        "blocks": []
+      }
+    ],
+    "validationStatus": "passed",
+    "blocks": []
+  },
+  "previousCompletedLifecycleIntegration": {
+    "status": "applied",
+    "mode": "post_run_diagnostic_proof_overlay",
+    "loaderModule": "engine-v1/lib/football-truth-previous-completed-diagnostic-proof-loader.js",
+    "artifact": "data/football-truth/_diagnostics/prioritized-lifecycle-execution-board-2026-06-19/prioritized-lifecycle-execution-board-2026-06-19.json",
+    "previousCompletedSatisfiedCount": 1,
+    "previousCompletedVerifiedRowsCount": 20,
+    "previousCompletedDiagnosticProofSatisfiedCount": 1,
+    "previousCompletedDiagnosticProofVerifiedRowsCount": 20,
     "canonicalWriteExecutedNowCount": 0,
     "productionWriteExecutedNowCount": 0,
     "truthAssertionExecutedNowCount": 0
