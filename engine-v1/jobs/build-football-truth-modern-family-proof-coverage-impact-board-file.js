@@ -13,13 +13,17 @@ function abs(rel) {
   return path.join(ROOT, rel);
 }
 
+function exists(rel) {
+  return fs.existsSync(abs(rel));
+}
+
 function readJson(rel) {
-  if (!fs.existsSync(abs(rel))) return null;
+  if (!exists(rel)) return null;
   return JSON.parse(fs.readFileSync(abs(rel), "utf8"));
 }
 
 function readJsonl(rel) {
-  if (!fs.existsSync(abs(rel))) return [];
+  if (!exists(rel)) return [];
   return fs.readFileSync(abs(rel), "utf8").split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line));
 }
 
@@ -34,26 +38,48 @@ function walk(rel, out = []) {
   for (const ent of fs.readdirSync(p, { withFileTypes: true })) {
     if ([".git", "node_modules", ".next", "dist", "build", "coverage"].includes(ent.name)) continue;
     const child = path.join(rel, ent.name).replace(/\\/g, "/");
-    if (ent.isDirectory()) walk(child, out);
-    else if (/\.json$/i.test(ent.name)) out.push(child);
+    if (ent.isDirectory()) {
+      walk(child, out);
+    } else if (/\.json$/i.test(ent.name)) {
+      out.push(child);
+    }
   }
   return out;
 }
 
-function latestMatchingJson(pattern) {
-  const files = walk("data/football-truth/_diagnostics")
-    .filter(rel => pattern.test(rel))
-    .map(rel => ({ rel, mtime: fs.statSync(abs(rel)).mtimeMs }))
-    .sort((a, b) => b.mtime - a.mtime);
-  return files[0]?.rel ?? null;
+function getAllNumbersByKey(x, key, out = []) {
+  if (!x || typeof x !== "object") return out;
+  if (Array.isArray(x)) {
+    for (const item of x) getAllNumbersByKey(item, key, out);
+    return out;
+  }
+  if (Object.prototype.hasOwnProperty.call(x, key)) {
+    const n = Number(x[key]);
+    if (Number.isFinite(n)) out.push(n);
+  }
+  for (const v of Object.values(x)) getAllNumbersByKey(v, key, out);
+  return out;
 }
 
-function arrayify(x) {
-  return Array.isArray(x) ? x : [];
+function getMaxNumber(x, keys, fallback = 0) {
+  const vals = [];
+  for (const key of keys) vals.push(...getAllNumbersByKey(x, key));
+  return vals.length ? Math.max(...vals) : fallback;
 }
 
 function slugSetFromAny(value, mode) {
   const out = new Set();
+
+  function addFromArrayKey(obj, keys) {
+    for (const key of keys) {
+      const val = obj?.[key];
+      if (Array.isArray(val)) {
+        for (const slug of val) {
+          if (typeof slug === "string" && /^[a-z]{3}\.\d+$/i.test(slug)) out.add(slug);
+        }
+      }
+    }
+  }
 
   function scan(x) {
     if (!x || typeof x !== "object") return;
@@ -62,36 +88,22 @@ function slugSetFromAny(value, mode) {
       return;
     }
 
-    const slug = x.competitionSlug || x.leagueSlug || x.slug || x.normalizedCompetitionSlug;
-    const seasonScope = x.seasonScope || x.scope || x.lane || x.seasonLane;
-    const quality = x.qualityGateStatus || x.validationStatus || x.status;
+    if (mode === "current_or_new") {
+      addFromArrayKey(x, ["currentOrNewSeasonSatisfiedSlugs", "currentOrNewSatisfiedSlugs", "acceptedCurrentOrNewSeasonSlugs"]);
+    }
+    if (mode === "previous_completed") {
+      addFromArrayKey(x, ["previousCompletedSatisfiedSlugs", "acceptedPreviousCompletedSlugs", "verifiedPreviousCompletedSlugs"]);
+    }
+    if (mode === "start_date") {
+      addFromArrayKey(x, ["acceptedStartDateEvidenceStateSlugs", "nextSeasonStartDateSatisfiedSlugs", "acceptedStartDateSlugs"]);
+    }
 
-    if (slug && typeof slug === "string") {
-      const text = JSON.stringify(x);
-      if (mode === "previous_completed") {
-        if (
-          seasonScope === "previous_completed" ||
-          text.includes("previous_completed") ||
-          text.includes("previousCompleted")
-        ) out.add(slug);
-      }
-      if (mode === "current_or_new") {
-        if (
-          seasonScope === "current_or_new" ||
-          text.includes("current_or_new") ||
-          text.includes("currentOrNew")
-        ) out.add(slug);
-      }
-      if (mode === "start_date") {
-        if (
-          text.includes("nextSeasonStartDate") ||
-          text.includes("startDate") ||
-          text.includes("nextSeasonStartDateSatisfied")
-        ) out.add(slug);
-      }
-      if (quality === "verified" || quality === "passed") {
-        if (mode === "any_verified") out.add(slug);
-      }
+    const slug = x.competitionSlug || x.leagueSlug || x.slug || x.normalizedCompetitionSlug;
+    const txt = JSON.stringify(x);
+    if (typeof slug === "string" && /^[a-z]{3}\.\d+$/i.test(slug)) {
+      if (mode === "current_or_new" && (x.seasonScope === "current_or_new" || txt.includes("current_or_new") || txt.includes("currentOrNew"))) out.add(slug);
+      if (mode === "previous_completed" && (x.seasonScope === "previous_completed" || txt.includes("previous_completed") || txt.includes("previousCompleted"))) out.add(slug);
+      if (mode === "start_date" && (txt.includes("nextSeasonStartDate") || txt.includes("startDateEvidence"))) out.add(slug);
     }
 
     for (const v of Object.values(x)) scan(v);
@@ -101,13 +113,46 @@ function slugSetFromAny(value, mode) {
   return out;
 }
 
-const latestSeasonLedgerPath = latestMatchingJson(/season-lane-coverage-ledger.*\.json$/i);
-const latestLifecyclePath = latestMatchingJson(/permanent-lifecycle.*planner.*\.json$/i);
-const latestPrioritizedBoardPath = latestMatchingJson(/prioritized.*lifecycle.*board.*\.json$/i);
+function chooseBestJsonFile(kind) {
+  const files = walk("data/football-truth/_diagnostics")
+    .filter(rel => {
+      const name = rel.toLowerCase();
+      if (kind === "season") return name.includes("season-lane-coverage-ledger");
+      if (kind === "lifecycle") return name.includes("permanent-lifecycle");
+      if (kind === "prioritized") return name.includes("prioritized") && name.includes("lifecycle");
+      return false;
+    })
+    .map(rel => {
+      try {
+        const stat = fs.statSync(abs(rel));
+        if (stat.size > 4_000_000) return null;
+        const json = readJson(rel);
+        if (!json) return null;
+        let score = 0;
+        if (kind === "season") {
+          score += getAllNumbersByKey(json, "previousCompletedSatisfiedCount").length ? 50 : 0;
+          score += getAllNumbersByKey(json, "currentOrNewSeasonSatisfiedCount").length ? 50 : 0;
+          score += getAllNumbersByKey(json, "nextSeasonStartDateSatisfiedCount").length ? 50 : 0;
+        }
+        if (kind === "lifecycle") {
+          score += getAllNumbersByKey(json, "permanentDueTaskCount").length ? 50 : 0;
+          score += getAllNumbersByKey(json, "duePreviousCompletedStandingsCount").length ? 50 : 0;
+        }
+        if (kind === "prioritized") {
+          score += getAllNumbersByKey(json, "acceptedExecutableTaskCount").length ? 50 : 0;
+          score += getAllNumbersByKey(json, "standingsExpansionTargetCount").length ? 50 : 0;
+        }
+        return { rel, json, score, mtime: stat.mtimeMs };
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score || b.mtime - a.mtime);
 
-const seasonLedger = latestSeasonLedgerPath ? readJson(latestSeasonLedgerPath) : null;
-const lifecycle = latestLifecyclePath ? readJson(latestLifecyclePath) : null;
-const prioritizedBoard = latestPrioritizedBoardPath ? readJson(latestPrioritizedBoardPath) : null;
+  return files[0] ?? null;
+}
 
 const sportSummary = readJson(MODERN_SPORTOMEDIA_SUMMARY);
 const sportRows = readJsonl(MODERN_SPORTOMEDIA_ROWS);
@@ -118,6 +163,18 @@ if (!sportSummary || sportSummary.status !== "passed_verified_current_or_new_dia
 if (sportRows.length !== 32) {
   throw new Error(`Expected 32 modern Sportomedia rows, got ${sportRows.length}`);
 }
+
+const seasonCandidate = chooseBestJsonFile("season");
+const lifecycleCandidate = chooseBestJsonFile("lifecycle");
+const prioritizedCandidate = chooseBestJsonFile("prioritized");
+
+const seasonLedger = seasonCandidate?.json ?? null;
+const lifecycle = lifecycleCandidate?.json ?? null;
+const prioritizedBoard = prioritizedCandidate?.json ?? null;
+
+const currentOrNewSet = seasonLedger ? slugSetFromAny(seasonLedger, "current_or_new") : new Set();
+const previousCompletedSet = seasonLedger ? slugSetFromAny(seasonLedger, "previous_completed") : new Set();
+const startDateSet = seasonLedger ? slugSetFromAny(seasonLedger, "start_date") : new Set();
 
 const modernRowsBySlug = {};
 for (const row of sportRows) {
@@ -131,46 +188,55 @@ const modernVerifiedCurrentOrNewSlugs = Object.keys(modernRowsBySlug).filter(slu
     rows.every(r => r.seasonScope === "current_or_new" && r.seasonLabel === "2026" && r.qualityGateStatus === "verified" && r.validationStatus === "passed");
 });
 
-const ledgerCurrentOrNewSet = seasonLedger ? slugSetFromAny(seasonLedger, "current_or_new") : new Set();
-const ledgerPreviousCompletedSet = seasonLedger ? slugSetFromAny(seasonLedger, "previous_completed") : new Set();
+const newCurrentOrNewSlugs = modernVerifiedCurrentOrNewSlugs.filter(slug => !currentOrNewSet.has(slug));
+const alreadyCurrentOrNewSlugs = modernVerifiedCurrentOrNewSlugs.filter(slug => currentOrNewSet.has(slug));
 
-const newCurrentOrNewSlugs = modernVerifiedCurrentOrNewSlugs.filter(slug => !ledgerCurrentOrNewSet.has(slug));
-const alreadyCurrentOrNewSlugs = modernVerifiedCurrentOrNewSlugs.filter(slug => ledgerCurrentOrNewSet.has(slug));
+const baseline = {
+  seasonLedgerCurrentOrNewSatisfiedCount: getMaxNumber(seasonLedger, ["currentOrNewSeasonSatisfiedCount", "currentOrNewSatisfiedCount"], currentOrNewSet.size),
+  seasonLedgerCurrentOrNewVerifiedRowsCount: getMaxNumber(seasonLedger, ["currentOrNewSeasonVerifiedRowsCount", "currentOrNewVerifiedRowsCount"], 0),
+  seasonLedgerPreviousCompletedSatisfiedCount: getMaxNumber(seasonLedger, ["previousCompletedSatisfiedCount"], previousCompletedSet.size),
+  seasonLedgerPreviousCompletedVerifiedRowsCount: getMaxNumber(seasonLedger, ["previousCompletedVerifiedRowsCount"], 0),
+  seasonLedgerNextSeasonStartDateSatisfiedCount: getMaxNumber(seasonLedger, ["nextSeasonStartDateSatisfiedCount"], startDateSet.size),
+  lifecyclePermanentDueTaskCount: getMaxNumber(lifecycle, ["permanentDueTaskCount"], 0),
+  lifecycleDuePreviousCompletedStandingsCount: getMaxNumber(lifecycle, ["duePreviousCompletedStandingsCount"], 0),
+  lifecycleDueNextSeasonStartDateCount: getMaxNumber(lifecycle, ["dueNextSeasonStartDateCount"], 0),
+  prioritizedAcceptedExecutableTaskCount: getMaxNumber(prioritizedBoard, ["acceptedExecutableTaskCount"], 0),
+  prioritizedStandingsExpansionTargetCount: getMaxNumber(prioritizedBoard, ["standingsExpansionTargetCount"], 0),
+  prioritizedStartDateEvidenceTargetCount: getMaxNumber(prioritizedBoard, ["startDateEvidenceTargetCount"], 0)
+};
 
-const seasonLedgerSummary = seasonLedger?.summary ?? seasonLedger ?? {};
-const lifecycleSummary = lifecycle?.summary ?? lifecycle ?? {};
-const prioritizedSummary = prioritizedBoard?.summary ?? prioritizedBoard ?? {};
-
-const beforeCurrentOrNewSatisfied =
-  Number(seasonLedgerSummary.currentOrNewSeasonSatisfiedCount ?? seasonLedgerSummary.current_or_new_satisfied_count ?? ledgerCurrentOrNewSet.size ?? 0);
-
-const beforePreviousCompletedSatisfied =
-  Number(seasonLedgerSummary.previousCompletedSatisfiedCount ?? ledgerPreviousCompletedSet.size ?? 0);
-
-const beforeCurrentOrNewVerifiedRows =
-  Number(seasonLedgerSummary.currentOrNewSeasonVerifiedRowsCount ?? seasonLedgerSummary.currentOrNewVerifiedRowsCount ?? 0);
+const wouldAddRows = newCurrentOrNewSlugs.reduce((sum, slug) => sum + modernRowsBySlug[slug].length, 0);
 
 const impact = {
   wouldAddCurrentOrNewSatisfiedCount: newCurrentOrNewSlugs.length,
-  wouldAddCurrentOrNewVerifiedRowsCount: newCurrentOrNewSlugs.reduce((sum, slug) => sum + modernRowsBySlug[slug].length, 0),
-  projectedCurrentOrNewSatisfiedCount: beforeCurrentOrNewSatisfied + newCurrentOrNewSlugs.length,
-  projectedCurrentOrNewVerifiedRowsCount: beforeCurrentOrNewVerifiedRows + newCurrentOrNewSlugs.reduce((sum, slug) => sum + modernRowsBySlug[slug].length, 0),
-  previousCompletedSatisfiedCountUnchanged: beforePreviousCompletedSatisfied,
-  nextSeasonStartDateSatisfiedCountUnchanged: Number(seasonLedgerSummary.nextSeasonStartDateSatisfiedCount ?? 0)
+  wouldAddCurrentOrNewVerifiedRowsCount: wouldAddRows,
+  projectedCurrentOrNewSatisfiedCount: baseline.seasonLedgerCurrentOrNewSatisfiedCount + newCurrentOrNewSlugs.length,
+  projectedCurrentOrNewVerifiedRowsCount: baseline.seasonLedgerCurrentOrNewVerifiedRowsCount + wouldAddRows,
+  previousCompletedSatisfiedCountUnchanged: baseline.seasonLedgerPreviousCompletedSatisfiedCount,
+  previousCompletedVerifiedRowsCountUnchanged: baseline.seasonLedgerPreviousCompletedVerifiedRowsCount,
+  nextSeasonStartDateSatisfiedCountUnchanged: baseline.seasonLedgerNextSeasonStartDateSatisfiedCount
 };
 
 const board = {
   status: "passed",
   runner: "modern_family_proof_coverage_impact_board",
-  contractVersion: 1,
-  purpose: "measure diagnostic-only lifecycle impact of modern family proof rows without canonical writes, production writes, or truth assertions",
+  contractVersion: 2,
+  purpose: "measure diagnostic-only lifecycle impact of modern family proof rows with robust baseline discovery; no canonical writes, production writes, or truth assertions",
   generatedAtUtc: new Date().toISOString(),
   inputs: {
     modernSportomediaSummary: MODERN_SPORTOMEDIA_SUMMARY,
     modernSportomediaRows: MODERN_SPORTOMEDIA_ROWS,
-    latestSeasonLedgerPath,
-    latestLifecyclePath,
-    latestPrioritizedBoardPath
+    latestSeasonLedgerPath: seasonCandidate?.rel ?? null,
+    latestLifecyclePath: lifecycleCandidate?.rel ?? null,
+    latestPrioritizedBoardPath: prioritizedCandidate?.rel ?? null
+  },
+  baselineDiscovery: {
+    seasonCandidateScore: seasonCandidate?.score ?? 0,
+    lifecycleCandidateScore: lifecycleCandidate?.score ?? 0,
+    prioritizedCandidateScore: prioritizedCandidate?.score ?? 0,
+    currentOrNewSlugSetSize: currentOrNewSet.size,
+    previousCompletedSlugSetSize: previousCompletedSet.size,
+    startDateSlugSetSize: startDateSet.size
   },
   modernProofs: [
     {
@@ -186,13 +252,7 @@ const board = {
       alreadyCurrentOrNewSlugs
     }
   ],
-  baseline: {
-    seasonLedgerCurrentOrNewSatisfiedCount: beforeCurrentOrNewSatisfied,
-    seasonLedgerPreviousCompletedSatisfiedCount: beforePreviousCompletedSatisfied,
-    seasonLedgerNextSeasonStartDateSatisfiedCount: Number(seasonLedgerSummary.nextSeasonStartDateSatisfiedCount ?? 0),
-    lifecyclePermanentDueTaskCount: Number(lifecycleSummary.permanentDueTaskCount ?? 0),
-    prioritizedAcceptedExecutableTaskCount: Number(prioritizedSummary.acceptedExecutableTaskCount ?? 0)
-  },
+  baseline,
   impact,
   recommendation: newCurrentOrNewSlugs.length > 0
     ? "next_build_modern_proof_lane_materialization_gate_for_current_or_new_rows_without_truth_or_canonical_writes"
@@ -215,11 +275,17 @@ const board = {
   truthAssertionExecutedNowCount: 0
 };
 
+if (baseline.seasonLedgerPreviousCompletedSatisfiedCount < 11) {
+  board.status = "blocked_baseline_discovery_failed";
+  board.recommendation = "repair_baseline_discovery_before_materialization_gate";
+}
+
 writeJson(OUT, board);
 
 console.log(JSON.stringify({
   status: board.status,
-  modernProofFamily: "sportomedia_sef",
+  inputs: board.inputs,
+  baseline,
   modernVerifiedCurrentOrNewSlugs,
   newCurrentOrNewSlugs,
   alreadyCurrentOrNewSlugs,
@@ -233,3 +299,7 @@ console.log(JSON.stringify({
   productionWriteExecutedNowCount: 0,
   truthAssertionExecutedNowCount: 0
 }, null, 2));
+
+if (board.status !== "passed") {
+  process.exit(1);
+}
