@@ -1,0 +1,223 @@
+{
+  "status": "passed",
+  "runner": "sportomedia_sef_current_active_restart_proof_plan",
+  "contractVersion": 1,
+  "purpose": "Plan current-active 2026 Sportomedia/SEF proof for swe.1/swe.2: current standings, current fixtures/matchdays, and restart date after World Cup break. No fetch/search/canonical/lifecycle/production/truth writes.",
+  "previousCandidateBoardPath": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-candidate-files-2026-06-19/sportomedia-sef-previous-completed-candidate-files-2026-06-19.json",
+  "previousCandidateBoardSha256": "746680615e6a219e2ee796005396539a3daa968ff89a18b12e8e76ce6a3fc705",
+  "previousCandidateVerificationPath": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-candidate-files-verification-2026-06-19/sportomedia-sef-previous-completed-candidate-files-verification-2026-06-19.json",
+  "previousCandidateVerificationSha256": "80f31287035ce98cb3c44d8e353cb734f17ce6f097d16f98ffa675d271a1036a",
+  "graphqlContractPath": "data/football-truth/_diagnostics/sportomedia-sef-graphql-request-contract-2026-06-19/sportomedia-sef-graphql-request-contract-2026-06-19.json",
+  "graphqlContractSha256": "cb42e0943d031c5ef07367c0a26db1f8b8a066a74c6e9cbde3094e3e92e67921",
+  "output": "data/football-truth/_diagnostics/sportomedia-sef-current-active-restart-proof-plan-2026-06-19/sportomedia-sef-current-active-restart-proof-plan-2026-06-19.json",
+  "rowsOutput": "data/football-truth/_diagnostics/sportomedia-sef-current-active-restart-proof-plan-2026-06-19/sportomedia-sef-current-active-restart-proof-plan-rows-2026-06-19.jsonl",
+  "guardrails": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "providerFetchExecutedNowCount": 0,
+    "standingsFetchExecutedNowCount": 0,
+    "fixtureFetchExecutedNowCount": 0,
+    "restartDateFetchExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "lifecycleWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false,
+    "fullRawPayloadWritten": false
+  },
+  "summary": {
+    "targetCount": 2,
+    "targetSlugs": [
+      "swe.1",
+      "swe.2"
+    ],
+    "sourceFamily": "sportomedia_sef",
+    "currentSeasonScope": "current_active",
+    "currentSeasonLabel": "2026",
+    "expectedTeamsPerTarget": 16,
+    "previousCompletedCandidateAlreadyWrittenCount": 2,
+    "currentActiveFollowupRequired": true,
+    "requiredProofLanes": [
+      "current_active_season_standings",
+      "current_active_season_fixtures_or_matchdays",
+      "restart_date_after_world_cup_break"
+    ],
+    "restartDateRequired": true,
+    "plannedFetchAllowedOnlyInNextRunnerWithAllowFetch": true,
+    "canonicalWriteAllowedNow": false,
+    "lifecycleWriteAllowedNow": false,
+    "productionWriteAllowedNow": false,
+    "truthAssertionAllowedNow": false,
+    "acceptedNowCount": 0,
+    "recommendedNextLane": "build bounded diagnostic-only current-active proof runner for Sportomedia swe.1/swe.2 2026; fetch official standings plus fixture/matchday data and verify restart date"
+  },
+  "rows": [
+    {
+      "slug": "swe.1",
+      "league": "Allsvenskan",
+      "country": "Sweden",
+      "sourceFamily": "sportomedia_sef",
+      "currentSeasonScope": "current_active",
+      "currentSeasonLabel": "2026",
+      "configLeagueName": "allsvenskan",
+      "officialTableUrl": "https://allsvenskan.se/tabell",
+      "expectedTeams": 16,
+      "teamSignalTerms": [
+        "Malmö FF",
+        "Hammarby",
+        "AIK",
+        "Djurgården",
+        "Mjällby",
+        "Elfsborg"
+      ],
+      "requiredProofLanes": [
+        "current_active_season_standings",
+        "current_active_season_fixtures_or_matchdays",
+        "restart_date_after_world_cup_break"
+      ],
+      "endpoint": "https://gql.sportomedia.se/graphql",
+      "plannedGraphqlOperations": [
+        {
+          "purpose": "current_active_standings",
+          "operationName": "StandingsForLeague",
+          "variables": {
+            "configLeagueName": "allsvenskan",
+            "configSeasonStartYear": 2026,
+            "type": "total"
+          },
+          "expectedShape": "data.standingsForLeague.standings[]"
+        },
+        {
+          "purpose": "current_active_fixtures_or_matchdays_and_restart_date",
+          "operationName": "to_be_extracted_from_existing_sportomedia_runner_or_page_runtime",
+          "variables": {
+            "configLeagueName": "allsvenskan",
+            "configSeasonStartYear": 2026
+          },
+          "expectedShape": "official future fixture/matchday rows with startDate"
+        }
+      ],
+      "requiredValidationGates": [
+        "source_family_identity_must_be_sportomedia_sef",
+        "slug_must_match_target",
+        "seasonScope_must_equal_current_active",
+        "seasonLabel_must_equal_2026",
+        "expected_team_count_must_match_16",
+        "current_table_must_be_non_empty",
+        "played_values_must_be_non_negative",
+        "played_arithmetic_must_pass_for_all_rows",
+        "points_arithmetic_must_pass_for_all_rows",
+        "goal_difference_arithmetic_must_pass_for_all_rows",
+        "team_signal_minimum_must_pass",
+        "fixture_or_matchday_rows_must_exist_for_2026",
+        "restart_date_must_be_selected_from_official_future_fixture_after_current_break",
+        "restart_date_must_not_be_article_date_or_fetch_date",
+        "no_canonical_write_without_explicit_approval",
+        "no_lifecycle_production_write",
+        "no_truth_assertion",
+        "raw_payload_must_not_be_committed"
+      ],
+      "proofPlanStatus": "planned_not_executed",
+      "currentActiveFollowupFromPreviousCompletedCandidate": true,
+      "restartDateRequired": true,
+      "restartDatePolicy": {
+        "mustComeFromOfficialFixtureOrMatchday": true,
+        "mustBeFutureRestartAfterWorldCupBreak": true,
+        "mustNotUseFetchDate": true,
+        "mustNotUseArticleDate": true
+      },
+      "mayFetchNextWithExplicitAllowFetch": true,
+      "mayWriteCanonicalNow": false,
+      "mayWriteLifecycleNow": false,
+      "mayWriteProductionNow": false,
+      "mayAssertTruthNow": false,
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    },
+    {
+      "slug": "swe.2",
+      "league": "Superettan",
+      "country": "Sweden",
+      "sourceFamily": "sportomedia_sef",
+      "currentSeasonScope": "current_active",
+      "currentSeasonLabel": "2026",
+      "configLeagueName": "superettan",
+      "officialTableUrl": "https://superettan.se/tabell",
+      "expectedTeams": 16,
+      "teamSignalTerms": [
+        "Degerfors",
+        "Öster",
+        "Landskrona",
+        "Helsingborg",
+        "Sandviken",
+        "Brage"
+      ],
+      "requiredProofLanes": [
+        "current_active_season_standings",
+        "current_active_season_fixtures_or_matchdays",
+        "restart_date_after_world_cup_break"
+      ],
+      "endpoint": "https://gql.sportomedia.se/graphql",
+      "plannedGraphqlOperations": [
+        {
+          "purpose": "current_active_standings",
+          "operationName": "StandingsForLeague",
+          "variables": {
+            "configLeagueName": "superettan",
+            "configSeasonStartYear": 2026,
+            "type": "total"
+          },
+          "expectedShape": "data.standingsForLeague.standings[]"
+        },
+        {
+          "purpose": "current_active_fixtures_or_matchdays_and_restart_date",
+          "operationName": "to_be_extracted_from_existing_sportomedia_runner_or_page_runtime",
+          "variables": {
+            "configLeagueName": "superettan",
+            "configSeasonStartYear": 2026
+          },
+          "expectedShape": "official future fixture/matchday rows with startDate"
+        }
+      ],
+      "requiredValidationGates": [
+        "source_family_identity_must_be_sportomedia_sef",
+        "slug_must_match_target",
+        "seasonScope_must_equal_current_active",
+        "seasonLabel_must_equal_2026",
+        "expected_team_count_must_match_16",
+        "current_table_must_be_non_empty",
+        "played_values_must_be_non_negative",
+        "played_arithmetic_must_pass_for_all_rows",
+        "points_arithmetic_must_pass_for_all_rows",
+        "goal_difference_arithmetic_must_pass_for_all_rows",
+        "team_signal_minimum_must_pass",
+        "fixture_or_matchday_rows_must_exist_for_2026",
+        "restart_date_must_be_selected_from_official_future_fixture_after_current_break",
+        "restart_date_must_not_be_article_date_or_fetch_date",
+        "no_canonical_write_without_explicit_approval",
+        "no_lifecycle_production_write",
+        "no_truth_assertion",
+        "raw_payload_must_not_be_committed"
+      ],
+      "proofPlanStatus": "planned_not_executed",
+      "currentActiveFollowupFromPreviousCompletedCandidate": true,
+      "restartDateRequired": true,
+      "restartDatePolicy": {
+        "mustComeFromOfficialFixtureOrMatchday": true,
+        "mustBeFutureRestartAfterWorldCupBreak": true,
+        "mustNotUseFetchDate": true,
+        "mustNotUseArticleDate": true
+      },
+      "mayFetchNextWithExplicitAllowFetch": true,
+      "mayWriteCanonicalNow": false,
+      "mayWriteLifecycleNow": false,
+      "mayWriteProductionNow": false,
+      "mayAssertTruthNow": false,
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    }
+  ],
+  "blocks": []
+}
