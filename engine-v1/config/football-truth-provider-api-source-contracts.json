@@ -1,0 +1,181 @@
+{
+  "contractVersion": 1,
+  "purpose": "Provider API source contracts for Football Truth. Inspired by BetHistorian provider abstraction, but adapted to lifecycle lanes and strict validation gates.",
+  "globalPolicy": {
+    "directImportFromBetHistorian": false,
+    "genericCrawlerReplacement": true,
+    "providerTruthWithoutValidationAllowed": false,
+    "canonicalWriteAllowedByThisConfig": false,
+    "productionWriteAllowedByThisConfig": false,
+    "truthAssertionAllowedByThisConfig": false,
+    "requiredApprovalBeforeCanonicalCandidateWrite": true,
+    "requiredFields": [
+      "slug",
+      "providerFamily",
+      "providerLeagueId",
+      "providerSeasonParam",
+      "seasonLabel",
+      "seasonScope",
+      "expectedRows",
+      "teamSignalTerms",
+      "endpoint",
+      "rateLimitPolicy",
+      "cachePolicy",
+      "authorityPolicy",
+      "licensePolicy"
+    ],
+    "validationGates": [
+      "provider response status ok",
+      "standings array found",
+      "expected row count",
+      "team identity signals",
+      "played = wins + draws + losses",
+      "points = 3*wins + draws unless governed exception",
+      "goal difference = goalsFor - goalsAgainst",
+      "non-trivial table",
+      "duplicate guard",
+      "season label matches requested season",
+      "season scope is explicit"
+    ]
+  },
+  "providerFamilies": [
+    {
+      "providerFamily": "api_football",
+      "baseUrl": "https://v3.football.api-sports.io",
+      "auth": {
+        "type": "header",
+        "headerName": "x-apisports-key",
+        "envVar": "API_FOOTBALL_KEY"
+      },
+      "rateLimitPolicy": {
+        "freeTierAssumption": "100 requests/day; must be treated as constrained until confirmed by account",
+        "maxBulkMode": "mapping/proof only unless explicit key and explicit allow-fetch"
+      },
+      "cachePolicy": {
+        "enabled": true,
+        "ttlHours": 24,
+        "cacheKeyFields": ["providerFamily", "endpoint", "providerLeagueId", "providerSeasonParam"]
+      },
+      "endpoints": {
+        "standings": "/standings?league={providerLeagueId}&season={providerSeasonParam}",
+        "fixtures": "/fixtures?league={providerLeagueId}&season={providerSeasonParam}",
+        "leagues": "/leagues"
+      },
+      "rowMapping": {
+        "rank": "rank",
+        "team": "team.name",
+        "teamId": "team.id",
+        "played": "all.played",
+        "wins": "all.win",
+        "draws": "all.draw",
+        "losses": "all.lose",
+        "goalsFor": "all.goals.for",
+        "goalsAgainst": "all.goals.against",
+        "goalDifference": "goalsDiff",
+        "points": "points"
+      },
+      "authorityPolicy": "provider_api_secondary_source_until_governed_against_official_or_verified_lifecycle",
+      "licensePolicy": "requires account/tos review before production use"
+    },
+    {
+      "providerFamily": "thesportsdb",
+      "baseUrl": "https://www.thesportsdb.com/api/v1/json/{apiKey}",
+      "auth": {
+        "type": "path_key",
+        "envVar": "THESPORTSDB_KEY",
+        "testKeyAllowedOnlyForLocalDiagnostics": true
+      },
+      "rateLimitPolicy": {
+        "freeTierAssumption": "30 requests/minute for test/demo usage; verify before bulk",
+        "maxBulkMode": "fallback proof only"
+      },
+      "cachePolicy": {
+        "enabled": true,
+        "ttlHours": 24,
+        "cacheKeyFields": ["providerFamily", "endpoint", "providerLeagueId", "providerSeasonParam"]
+      },
+      "endpoints": {
+        "standings": "/lookuptable.php?l={providerLeagueId}&s={providerSeasonParam}",
+        "eventsSeason": "/eventsseason.php?id={providerLeagueId}&s={providerSeasonParam}",
+        "teams": "/lookup_all_teams.php?id={providerLeagueId}"
+      },
+      "rowMapping": {
+        "rank": "intRank",
+        "team": "strTeam",
+        "teamId": "idTeam",
+        "played": "intPlayed",
+        "wins": "intWin",
+        "draws": "intDraw",
+        "losses": "intLoss",
+        "goalsFor": "intGoalsFor",
+        "goalsAgainst": "intGoalsAgainst",
+        "goalDifference": "intGoalDifference",
+        "points": "intPoints"
+      },
+      "authorityPolicy": "provider_api_fallback_source_until_governed_against_official_or_verified_lifecycle",
+      "licensePolicy": "requires key/tos review before production use"
+    }
+  ],
+  "initialMappingTargets": [
+    {
+      "slug": "eng.1",
+      "league": "Premier League",
+      "country": "England",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2025-2026",
+      "expectedRows": 20,
+      "teamSignalTerms": ["Arsenal", "Manchester City", "Manchester United", "Liverpool", "Chelsea", "Aston Villa"],
+      "purpose": "known verified control target"
+    },
+    {
+      "slug": "esp.1",
+      "league": "LaLiga",
+      "country": "Spain",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2025-2026",
+      "expectedRows": 20,
+      "teamSignalTerms": ["Barcelona", "Real Madrid", "Atlético", "Athletic", "Villarreal", "Valencia"],
+      "purpose": "known verified control target"
+    },
+    {
+      "slug": "ger.1",
+      "league": "Bundesliga",
+      "country": "Germany",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2025-2026",
+      "expectedRows": 18,
+      "teamSignalTerms": ["Bayern", "Dortmund", "Leverkusen", "Leipzig", "Frankfurt", "Stuttgart"],
+      "purpose": "known verified control target"
+    },
+    {
+      "slug": "sco.1",
+      "league": "Scottish Premiership",
+      "country": "Scotland",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2025-2026",
+      "expectedRows": 12,
+      "teamSignalTerms": ["Celtic", "Rangers", "Aberdeen", "Hearts", "Hibernian", "Dundee"],
+      "purpose": "known verified control target"
+    },
+    {
+      "slug": "swe.1",
+      "league": "Allsvenskan",
+      "country": "Sweden",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2025",
+      "expectedRows": 16,
+      "teamSignalTerms": ["Malmö", "AIK", "Djurgården", "Hammarby", "Göteborg", "Elfsborg"],
+      "purpose": "current/new family candidate that needs previous_completed provider proof"
+    },
+    {
+      "slug": "fin.1",
+      "league": "Veikkausliiga",
+      "country": "Finland",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2025",
+      "expectedRows": 12,
+      "teamSignalTerms": ["HJK", "KuPS", "Ilves", "Inter Turku", "SJK", "VPS"],
+      "purpose": "current/new family candidate that needs previous_completed provider proof"
+    }
+  ]
+}
