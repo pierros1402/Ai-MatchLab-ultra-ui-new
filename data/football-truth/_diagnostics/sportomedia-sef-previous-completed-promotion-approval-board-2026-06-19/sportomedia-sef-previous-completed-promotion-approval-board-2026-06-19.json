@@ -1,0 +1,171 @@
+{
+  "status": "passed",
+  "runner": "sportomedia_sef_previous_completed_promotion_approval_board",
+  "contractVersion": 1,
+  "purpose": "Approval-gate board for promoting verified Sportomedia/SEF previous_completed diagnostic proof to canonical/lifecycle candidate files. This job performs no canonical, lifecycle, production, or truth writes.",
+  "proofPath": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-diagnostic-proof-2026-06-19/sportomedia-sef-previous-completed-diagnostic-proof-2026-06-19.json",
+  "proofSha256": "de0059b571c8ede50331ea1ff73da6b789c26ea60b2ddb920b3d13a7dc41ba0e",
+  "verificationPath": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-proof-output-verification-2026-06-19/sportomedia-sef-previous-completed-proof-output-verification-2026-06-19.json",
+  "verificationSha256": "36be2d04990ee601e8af6cc168e20f197ae7104b1863018e27734d2cd1b517b0",
+  "output": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-promotion-approval-board-2026-06-19/sportomedia-sef-previous-completed-promotion-approval-board-2026-06-19.json",
+  "rowsOutput": "data/football-truth/_diagnostics/sportomedia-sef-previous-completed-promotion-approval-board-2026-06-19/sportomedia-sef-previous-completed-promotion-approval-board-rows-2026-06-19.jsonl",
+  "guardrails": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "providerFetchExecutedNowCount": 0,
+    "standingsFetchExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "lifecycleWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false,
+    "fullRawPayloadWritten": false
+  },
+  "sourceProofSummary": {
+    "targetCount": 2,
+    "targetSlugs": [
+      "swe.1",
+      "swe.2"
+    ],
+    "targetSeasonScope": "previous_completed",
+    "targetSeasonLabel": "2024",
+    "endpoint": "https://gql.sportomedia.se/graphql",
+    "operationName": "StandingsForLeague",
+    "exactVariablesUsed": [
+      {
+        "slug": "swe.1",
+        "configLeagueName": "allsvenskan",
+        "configSeasonStartYear": 2024,
+        "type": "total"
+      },
+      {
+        "slug": "swe.2",
+        "configLeagueName": "superettan",
+        "configSeasonStartYear": 2024,
+        "type": "total"
+      }
+    ],
+    "requestAttemptCount": 2,
+    "validationPassedRowCount": 2,
+    "validationFailedRowCount": 0,
+    "acceptedNowCount": 0,
+    "canonicalCandidateWriteAllowed": false,
+    "productionWriteAllowed": false,
+    "truthAssertionAllowed": false,
+    "rawPayloadWritten": false,
+    "readyForVerifier": true
+  },
+  "sourceVerificationSummary": {
+    "targetCount": 2,
+    "passedRowCount": 2,
+    "failedRowCount": 0,
+    "writeGuardrailsHeld": true,
+    "rawPayloadGuardrailsHeld": true,
+    "acceptedNowCount": 0
+  },
+  "summary": {
+    "targetCount": 2,
+    "targetSlugs": [
+      "swe.1",
+      "swe.2"
+    ],
+    "targetSeasonScope": "previous_completed",
+    "targetSeasonLabel": "2024",
+    "eligibleAfterExplicitApprovalCount": 2,
+    "blockedCount": 0,
+    "canonicalCandidateWriteAllowedNow": false,
+    "lifecycleWriteAllowedNow": false,
+    "productionWriteAllowedNow": false,
+    "truthAssertionAllowedNow": false,
+    "explicitUserApprovalRequiredBeforeCanonicalCandidateWrite": true,
+    "acceptedNowCount": 0,
+    "recommendedNextLane": "ask for explicit user approval before writing Sportomedia previous_completed canonical/lifecycle candidate files for swe.1 and swe.2"
+  },
+  "rows": [
+    {
+      "slug": "swe.1",
+      "league": "Allsvenskan",
+      "country": "Sweden",
+      "sourceFamily": "sportomedia_sef",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2024",
+      "sourceUrl": "https://allsvenskan.se/tabell",
+      "endpoint": "https://gql.sportomedia.se/graphql",
+      "operationName": "StandingsForLeague",
+      "variables": {
+        "configLeagueName": "allsvenskan",
+        "configSeasonStartYear": 2024,
+        "type": "total"
+      },
+      "responseSha256": "4d379ba561bd0d2af5fdb353ffea8dd8485cae12f7541a5f276c55bf6cb5f345",
+      "expectedRows": 16,
+      "extractedRowCount": 16,
+      "maxPlayed": 30,
+      "playedPassCount": 16,
+      "pointsPassCount": 16,
+      "gdPassCount": 16,
+      "nonTrivialCount": 16,
+      "teamSignalHits": [
+        "Malmö FF",
+        "Hammarby",
+        "AIK",
+        "Djurgården",
+        "Mjällby",
+        "Elfsborg"
+      ],
+      "promotionEligibilityStatus": "eligible_after_explicit_user_approval",
+      "promotionEligibilityBlocks": [],
+      "explicitUserApprovalRequiredBeforeCanonicalCandidateWrite": true,
+      "mayWriteCanonicalCandidateNow": false,
+      "mayWriteLifecycleNow": false,
+      "mayWriteProductionNow": false,
+      "mayAssertTruthNow": false,
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    },
+    {
+      "slug": "swe.2",
+      "league": "Superettan",
+      "country": "Sweden",
+      "sourceFamily": "sportomedia_sef",
+      "seasonScope": "previous_completed",
+      "seasonLabel": "2024",
+      "sourceUrl": "https://superettan.se/tabell",
+      "endpoint": "https://gql.sportomedia.se/graphql",
+      "operationName": "StandingsForLeague",
+      "variables": {
+        "configLeagueName": "superettan",
+        "configSeasonStartYear": 2024,
+        "type": "total"
+      },
+      "responseSha256": "8eff4a0aac02312bde8feebf852cffeb57d82f3ec38e2c1696b6782548edc205",
+      "expectedRows": 16,
+      "extractedRowCount": 16,
+      "maxPlayed": 30,
+      "playedPassCount": 16,
+      "pointsPassCount": 16,
+      "gdPassCount": 16,
+      "nonTrivialCount": 16,
+      "teamSignalHits": [
+        "Degerfors",
+        "Öster",
+        "Landskrona",
+        "Helsingborg",
+        "Sandviken",
+        "Brage"
+      ],
+      "promotionEligibilityStatus": "eligible_after_explicit_user_approval",
+      "promotionEligibilityBlocks": [],
+      "explicitUserApprovalRequiredBeforeCanonicalCandidateWrite": true,
+      "mayWriteCanonicalCandidateNow": false,
+      "mayWriteLifecycleNow": false,
+      "mayWriteProductionNow": false,
+      "mayAssertTruthNow": false,
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    }
+  ],
+  "blocks": []
+}
