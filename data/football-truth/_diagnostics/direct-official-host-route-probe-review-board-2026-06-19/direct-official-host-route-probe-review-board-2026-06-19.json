@@ -1,0 +1,2327 @@
+{
+  "status": "passed",
+  "runner": "direct_official_host_route_probe_review_board",
+  "contractVersion": 1,
+  "purpose": "Strict review board over direct official-host route probe results. Separates actionable explicit route candidates from broad homepage false positives. No new fetch/search/write execution.",
+  "inputPath": "data/football-truth/_diagnostics/direct-official-host-previous-completed-route-probe-2026-06-19/direct-official-host-previous-completed-route-probe-2026-06-19.json",
+  "inputRowsPath": "data/football-truth/_diagnostics/direct-official-host-previous-completed-route-probe-2026-06-19/direct-official-host-previous-completed-route-probe-rows-2026-06-19.jsonl",
+  "inputSha256": "fb3c303d3e761e922901cce475f5070ccedcd8f51b2532c67bff4490b7cb8500",
+  "inputRowsSha256": "bf9bf6f5d7b73c53835dc5bb30158a1cc82cecb8a0c91349b7f3e774d70dede4",
+  "output": "data/football-truth/_diagnostics/direct-official-host-route-probe-review-board-2026-06-19/direct-official-host-route-probe-review-board-2026-06-19.json",
+  "rowsOutput": "data/football-truth/_diagnostics/direct-official-host-route-probe-review-board-2026-06-19/direct-official-host-route-probe-review-board-rows-2026-06-19.jsonl",
+  "guardrails": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false,
+    "fullRawPayloadWritten": false
+  },
+  "sourceProbeSummary": {
+    "selectedTargetCount": 24,
+    "probeRowCount": 864,
+    "fetched2xxCount": 103,
+    "routeProbeCandidateCount": 103,
+    "reviewOnly": true,
+    "selectedSlugs": [
+      "arg.1",
+      "aus.1",
+      "aut.1",
+      "bel.1",
+      "bra.1",
+      "fra.1",
+      "gre.1",
+      "kor.1",
+      "ksa.1",
+      "mex.1",
+      "nor.1",
+      "pol.1",
+      "por.1",
+      "sui.1",
+      "swe.1",
+      "tur.1",
+      "usa.1",
+      "arg.2",
+      "aus.2",
+      "aut.2",
+      "bel.2",
+      "bra.2",
+      "cro.2",
+      "den.2"
+    ]
+  },
+  "summary": {
+    "reviewedRawRowCount": 864,
+    "reviewedUniqueUrlCount": 491,
+    "originalBroadRouteProbeCandidateCount": 103,
+    "strictActionableRouteCandidateCount": 8,
+    "strictActionableSlugCount": 6,
+    "htmlExtractorProbeCandidateCount": 3,
+    "browserRenderProbeCandidateCount": 5,
+    "homepageEmbeddedReviewOnlyCount": 5,
+    "acceptedNowCount": 0,
+    "selectedExtractorTargets": [
+      {
+        "slug": "aut.1",
+        "league": "Austrian Bundesliga",
+        "action": "html_extractor_probe_candidate",
+        "url": "https://www.bundesliga.at/de/tabelle",
+        "strictScore": 178,
+        "title": "Tabelle - Bundesliga",
+        "tableTagCount": 6,
+        "rowTagCount": 42,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "season_2025",
+          "table_and_row_evidence",
+          "strong_table_and_row_evidence",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "aut.2",
+        "league": "2. Liga Austria",
+        "action": "html_extractor_probe_candidate",
+        "url": "https://www.2liga.at/de/tabelle",
+        "strictScore": 178,
+        "title": "Tabelle - 2. Liga",
+        "tableTagCount": 3,
+        "rowTagCount": 51,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "season_2025",
+          "table_and_row_evidence",
+          "strong_table_and_row_evidence",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "mex.1",
+        "league": "Liga MX",
+        "action": "html_extractor_probe_candidate",
+        "url": "https://ligamx.net/cancha/estadisticahistorica",
+        "strictScore": 168,
+        "title": "LIGA MX | Liga MX - Fútbol Profesional",
+        "tableTagCount": 6,
+        "rowTagCount": 62,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "table_and_row_evidence",
+          "strong_table_and_row_evidence",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "usa.1",
+        "league": "Major League Soccer",
+        "action": "browser_render_probe_candidate",
+        "url": "https://www.mlssoccer.com/standings/",
+        "strictScore": 133,
+        "title": "Conference Standings | MLSsoccer.com",
+        "tableTagCount": 0,
+        "rowTagCount": 0,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "pol.1",
+        "league": "Ekstraklasa",
+        "action": "browser_render_probe_candidate",
+        "url": "https://www.ekstraklasa.org/tabela/",
+        "strictScore": 128,
+        "title": "PKO BP Ekstraklasa - Strona oficjalna | Tabela",
+        "tableTagCount": 0,
+        "rowTagCount": 0,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "season_2025",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "arg.2",
+        "league": "Primera Nacional",
+        "action": "browser_render_probe_candidate",
+        "url": "https://www.afa.com.ar/standings/",
+        "strictScore": 120,
+        "title": "Bienvenido | Sitio Oficial de la Asociación del Fútbol Argentino",
+        "tableTagCount": 1,
+        "rowTagCount": 2,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "season_2025"
+        ]
+      }
+    ]
+  },
+  "recommendation": {
+    "nextLane": "Build a controlled extractor/render probe only for selectedExtractorTargets. Do not continue search-engine batches. Do not accept rows until exact competition identity, previous_completed season label, expected row count, team signals, arithmetic, non-trivial, and duplicate gates pass.",
+    "selectedExtractorTargets": [
+      {
+        "slug": "aut.1",
+        "league": "Austrian Bundesliga",
+        "action": "html_extractor_probe_candidate",
+        "url": "https://www.bundesliga.at/de/tabelle",
+        "strictScore": 178,
+        "title": "Tabelle - Bundesliga",
+        "tableTagCount": 6,
+        "rowTagCount": 42,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "season_2025",
+          "table_and_row_evidence",
+          "strong_table_and_row_evidence",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "aut.2",
+        "league": "2. Liga Austria",
+        "action": "html_extractor_probe_candidate",
+        "url": "https://www.2liga.at/de/tabelle",
+        "strictScore": 178,
+        "title": "Tabelle - 2. Liga",
+        "tableTagCount": 3,
+        "rowTagCount": 51,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "season_2025",
+          "table_and_row_evidence",
+          "strong_table_and_row_evidence",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "mex.1",
+        "league": "Liga MX",
+        "action": "html_extractor_probe_candidate",
+        "url": "https://ligamx.net/cancha/estadisticahistorica",
+        "strictScore": 168,
+        "title": "LIGA MX | Liga MX - Fútbol Profesional",
+        "tableTagCount": 6,
+        "rowTagCount": 62,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "table_and_row_evidence",
+          "strong_table_and_row_evidence",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "usa.1",
+        "league": "Major League Soccer",
+        "action": "browser_render_probe_candidate",
+        "url": "https://www.mlssoccer.com/standings/",
+        "strictScore": 133,
+        "title": "Conference Standings | MLSsoccer.com",
+        "tableTagCount": 0,
+        "rowTagCount": 0,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "standing_word",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "pol.1",
+        "league": "Ekstraklasa",
+        "action": "browser_render_probe_candidate",
+        "url": "https://www.ekstraklasa.org/tabela/",
+        "strictScore": 128,
+        "title": "PKO BP Ekstraklasa - Strona oficjalna | Tabela",
+        "tableTagCount": 0,
+        "rowTagCount": 0,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "season_2025",
+          "multi_term_hit"
+        ]
+      },
+      {
+        "slug": "arg.2",
+        "league": "Primera Nacional",
+        "action": "browser_render_probe_candidate",
+        "url": "https://www.afa.com.ar/standings/",
+        "strictScore": 120,
+        "title": "Bienvenido | Sitio Oficial de la Asociación del Fútbol Argentino",
+        "tableTagCount": 1,
+        "rowTagCount": 2,
+        "strictSignals": [
+          "http_2xx",
+          "expected_official_host",
+          "explicit_standings_route_path",
+          "season_2025"
+        ]
+      }
+    ]
+  },
+  "bySlug": {
+    "aut.1": {
+      "reviewedUniqueUrlCount": 10,
+      "actionableRouteCount": 2,
+      "extractorCandidateCount": 1,
+      "browserRenderCandidateCount": 1,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "html_extractor_probe_candidate",
+          "url": "https://www.bundesliga.at/de/tabelle",
+          "status": 200,
+          "title": "Tabelle - Bundesliga",
+          "strictScore": 178,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "season_2025",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit"
+          ],
+          "tableTagCount": 6,
+          "rowTagCount": 42
+        },
+        {
+          "action": "browser_render_probe_candidate",
+          "url": "https://www.bundesliga.at/de/bundesliga/tabelle",
+          "status": 200,
+          "title": "",
+          "strictScore": 133,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.bundesliga.at/de",
+          "status": 200,
+          "title": "Bundesliga.at",
+          "strictScore": 53,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.bundesliga.at/de/classement",
+          "status": 404,
+          "title": "Bundesliga.at",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.bundesliga.at/de/ladder",
+          "status": 404,
+          "title": "Bundesliga.at",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "aut.2": {
+      "reviewedUniqueUrlCount": 9,
+      "actionableRouteCount": 1,
+      "extractorCandidateCount": 1,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 1,
+      "topRows": [
+        {
+          "action": "html_extractor_probe_candidate",
+          "url": "https://www.2liga.at/de/tabelle",
+          "status": 200,
+          "title": "Tabelle - 2. Liga",
+          "strictScore": 178,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "season_2025",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit"
+          ],
+          "tableTagCount": 3,
+          "rowTagCount": 51
+        },
+        {
+          "action": "homepage_embedded_table_review_only",
+          "url": "https://www.2liga.at/de",
+          "status": 200,
+          "title": "2Liga.at",
+          "strictScore": 98,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "season_2025",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 4,
+          "rowTagCount": 44
+        },
+        {
+          "action": "park",
+          "url": "https://www.2liga.at/de/classement",
+          "status": 404,
+          "title": "2Liga.at",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.2liga.at/de/ladder",
+          "status": 404,
+          "title": "2Liga.at",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.2liga.at/de/ranking",
+          "status": 404,
+          "title": "2Liga.at",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "mex.1": {
+      "reviewedUniqueUrlCount": 34,
+      "actionableRouteCount": 1,
+      "extractorCandidateCount": 1,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 2,
+      "topRows": [
+        {
+          "action": "html_extractor_probe_candidate",
+          "url": "https://ligamx.net/cancha/estadisticahistorica",
+          "status": 200,
+          "title": "LIGA MX | Liga MX - Fútbol Profesional",
+          "strictScore": 168,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit"
+          ],
+          "tableTagCount": 6,
+          "rowTagCount": 62
+        },
+        {
+          "action": "homepage_embedded_table_review_only",
+          "url": "https://ligamx.net/",
+          "status": 200,
+          "title": "LIGA MX | Liga MX - Fútbol Profesional",
+          "strictScore": 98,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "season_2025",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 2,
+          "rowTagCount": 22
+        },
+        {
+          "action": "homepage_embedded_table_review_only",
+          "url": "https://www.ligamx.net/",
+          "status": 200,
+          "title": "LIGA MX | Liga MX - Fútbol Profesional",
+          "strictScore": 98,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "season_2025",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 2,
+          "rowTagCount": 22
+        },
+        {
+          "action": "park",
+          "url": "https://ligamx.net/cancha/tablaGeneral",
+          "status": 500,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://ligamx.net/classement",
+          "status": 404,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "usa.1": {
+      "reviewedUniqueUrlCount": 16,
+      "actionableRouteCount": 1,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 1,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "browser_render_probe_candidate",
+          "url": "https://www.mlssoccer.com/standings/",
+          "status": 200,
+          "title": "Conference Standings | MLSsoccer.com",
+          "strictScore": 133,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.mlssoccer.com/classement",
+          "status": 404,
+          "title": "Page Not Found | MLSsoccer.com",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.mlssoccer.com/classement/",
+          "status": 404,
+          "title": "Page Not Found | MLSsoccer.com",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.mlssoccer.com/ladder",
+          "status": 404,
+          "title": "Page Not Found | MLSsoccer.com",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.mlssoccer.com/ladder/",
+          "status": 404,
+          "title": "Page Not Found | MLSsoccer.com",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "pol.1": {
+      "reviewedUniqueUrlCount": 18,
+      "actionableRouteCount": 1,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 1,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "browser_render_probe_candidate",
+          "url": "https://www.ekstraklasa.org/tabela/",
+          "status": 200,
+          "title": "PKO BP Ekstraklasa - Strona oficjalna | Tabela",
+          "strictScore": 128,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "multi_term_hit"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ekstraklasa.org/",
+          "status": 200,
+          "title": "PKO BP Ekstraklasa - Strona oficjalna",
+          "strictScore": 48,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "season_2025",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ekstraklasa.org/classement",
+          "status": 404,
+          "title": "PKO BP Ekstraklasa - Strona oficjalna",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ekstraklasa.org/classement/",
+          "status": 404,
+          "title": "PKO BP Ekstraklasa - Strona oficjalna",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ekstraklasa.org/ladder",
+          "status": 404,
+          "title": "PKO BP Ekstraklasa - Strona oficjalna",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "arg.2": {
+      "reviewedUniqueUrlCount": 18,
+      "actionableRouteCount": 2,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 2,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "browser_render_probe_candidate",
+          "url": "https://www.afa.com.ar/standings/",
+          "status": 200,
+          "title": "Bienvenido | Sitio Oficial de la Asociación del Fútbol Argentino",
+          "strictScore": 120,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025"
+          ],
+          "tableTagCount": 1,
+          "rowTagCount": 2
+        },
+        {
+          "action": "browser_render_probe_candidate",
+          "url": "https://www.afa.com.ar/es/",
+          "status": 200,
+          "title": "Bienvenido | Sitio Oficial de la Asociación del Fútbol Argentino",
+          "strictScore": 85,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 1,
+          "rowTagCount": 2
+        },
+        {
+          "action": "park",
+          "url": "https://www.afa.com.ar/classement",
+          "status": 429,
+          "title": "Just a moment...",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.afa.com.ar/classement/",
+          "status": 429,
+          "title": "Just a moment...",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.afa.com.ar/ladder",
+          "status": 502,
+          "title": "afa.com.ar | 502: Bad gateway",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "nor.1": {
+      "reviewedUniqueUrlCount": 17,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 1,
+      "topRows": [
+        {
+          "action": "homepage_embedded_table_review_only",
+          "url": "https://www.eliteserien.no/",
+          "status": 200,
+          "title": "Eliteserien",
+          "strictScore": 88,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 2,
+          "rowTagCount": 33
+        },
+        {
+          "action": "park",
+          "url": "https://www.eliteserien.no/classement",
+          "status": 404,
+          "title": "OFFSIDE! BALLEN BLE SPILT PÅ FEIL SIDE (404) / Eliteserien",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.eliteserien.no/classement/",
+          "status": 404,
+          "title": "OFFSIDE! BALLEN BLE SPILT PÅ FEIL SIDE (404) / Eliteserien",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.eliteserien.no/ladder",
+          "status": 404,
+          "title": "OFFSIDE! BALLEN BLE SPILT PÅ FEIL SIDE (404) / Eliteserien",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.eliteserien.no/ladder/",
+          "status": 404,
+          "title": "OFFSIDE! BALLEN BLE SPILT PÅ FEIL SIDE (404) / Eliteserien",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "aus.1": {
+      "reviewedUniqueUrlCount": 33,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 1,
+      "topRows": [
+        {
+          "action": "homepage_embedded_table_review_only",
+          "url": "https://aleagues.com.au/",
+          "status": 200,
+          "title": "Latest A-League & Football News | Scores, Fixtures & More",
+          "strictScore": 83,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "season_2025",
+            "table_and_row_evidence",
+            "strong_table_and_row_evidence",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 2,
+          "rowTagCount": 25
+        },
+        {
+          "action": "park",
+          "url": "https://aleagues.com.au/a-league-men/ladder/",
+          "status": 404,
+          "title": "Page not found - A-Leagues",
+          "strictScore": 53,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://aleagues.com.au/classement",
+          "status": 404,
+          "title": "Page not found - A-Leagues",
+          "strictScore": 53,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://aleagues.com.au/classement/",
+          "status": 404,
+          "title": "Page not found - A-Leagues",
+          "strictScore": 53,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://aleagues.com.au/ladder",
+          "status": 404,
+          "title": "Page not found - A-Leagues",
+          "strictScore": 53,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "ksa.1": {
+      "reviewedUniqueUrlCount": 17,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://www.spl.com.sa/",
+          "status": 200,
+          "title": "Saudi Pro League Football News, Fixtures, Scores & Results",
+          "strictScore": 83,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "season_2025",
+            "table_and_row_evidence",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 1,
+          "rowTagCount": 19
+        },
+        {
+          "action": "park",
+          "url": "https://www.spl.com.sa/classement",
+          "status": 404,
+          "title": "Home | Saudi Pro League",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.spl.com.sa/classement/",
+          "status": 404,
+          "title": "Home | Saudi Pro League",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.spl.com.sa/ladder",
+          "status": 404,
+          "title": "Home | Saudi Pro League",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.spl.com.sa/ladder/",
+          "status": 404,
+          "title": "Home | Saudi Pro League",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "sui.1": {
+      "reviewedUniqueUrlCount": 10,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://sfl.ch/",
+          "status": 200,
+          "title": "",
+          "strictScore": 83,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "season_2025",
+            "table_and_row_evidence",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 1,
+          "rowTagCount": 11
+        },
+        {
+          "action": "park",
+          "url": "https://sfl.ch/classement",
+          "status": 404,
+          "title": "",
+          "strictScore": 43,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://sfl.ch/en/superleague/table",
+          "status": 404,
+          "title": "",
+          "strictScore": 43,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://sfl.ch/ladder",
+          "status": 404,
+          "title": "",
+          "strictScore": 43,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://sfl.ch/ranking",
+          "status": 404,
+          "title": "",
+          "strictScore": 43,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "gre.1": {
+      "reviewedUniqueUrlCount": 17,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://www.slgr.gr/el/",
+          "status": 200,
+          "title": "Super League",
+          "strictScore": 63,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "season_2025",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://slgr.gr/classement/",
+          "status": 404,
+          "title": "Super League",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://slgr.gr/ladder/",
+          "status": 404,
+          "title": "Super League",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://slgr.gr/ranking/",
+          "status": 404,
+          "title": "Super League",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://slgr.gr/rankings/",
+          "status": 404,
+          "title": "Super League",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "kor.1": {
+      "reviewedUniqueUrlCount": 17,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://www.kleague.com/index.do",
+          "status": 200,
+          "title": "K LEAGUE",
+          "strictScore": 63,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "standing_word",
+            "season_2025",
+            "multi_term_hit",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 2,
+          "rowTagCount": 3
+        },
+        {
+          "action": "park",
+          "url": "https://www.kleague.com/classement",
+          "status": 404,
+          "title": "K LEAGUE",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.kleague.com/classement/",
+          "status": 404,
+          "title": "K LEAGUE",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.kleague.com/ladder",
+          "status": 404,
+          "title": "K LEAGUE",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.kleague.com/ladder/",
+          "status": 404,
+          "title": "K LEAGUE",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "arg.1": {
+      "reviewedUniqueUrlCount": 17,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://www.ligaprofesional.ar/classement",
+          "status": 404,
+          "title": "No se encontró la página &#8211; Liga Profesional de Fútbol de AFA",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaprofesional.ar/classement/",
+          "status": 404,
+          "title": "No se encontró la página &#8211; Liga Profesional de Fútbol de AFA",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaprofesional.ar/ladder",
+          "status": 404,
+          "title": "No se encontró la página &#8211; Liga Profesional de Fútbol de AFA",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaprofesional.ar/ladder/",
+          "status": 404,
+          "title": "No se encontró la página &#8211; Liga Profesional de Fútbol de AFA",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaprofesional.ar/ranking",
+          "status": 404,
+          "title": "No se encontró la página &#8211; Liga Profesional de Fútbol de AFA",
+          "strictScore": 58,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "multi_term_hit",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "por.1": {
+      "reviewedUniqueUrlCount": 34,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://www.ligaportugal.pt/classement",
+          "status": 404,
+          "title": "",
+          "strictScore": 50,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaportugal.pt/classement/",
+          "status": 404,
+          "title": "",
+          "strictScore": 50,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaportugal.pt/en/liga/classificacao",
+          "status": 404,
+          "title": "",
+          "strictScore": 50,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaportugal.pt/ranking",
+          "status": 404,
+          "title": "",
+          "strictScore": 50,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://www.ligaportugal.pt/ranking/",
+          "status": 404,
+          "title": "",
+          "strictScore": 50,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "standing_word",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "aus.2": {
+      "reviewedUniqueUrlCount": 17,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://footballaustralia.com.au/classement",
+          "status": 404,
+          "title": "Page not found | Football Australia",
+          "strictScore": 45,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://footballaustralia.com.au/classement/",
+          "status": 404,
+          "title": "Page not found | Football Australia",
+          "strictScore": 45,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://footballaustralia.com.au/ladder",
+          "status": 404,
+          "title": "Page not found | Football Australia",
+          "strictScore": 45,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://footballaustralia.com.au/ladder/",
+          "status": 404,
+          "title": "Page not found | Football Australia",
+          "strictScore": 45,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://footballaustralia.com.au/ranking",
+          "status": 404,
+          "title": "Page not found | Football Australia",
+          "strictScore": 45,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "season_2025",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "bel.1": {
+      "reviewedUniqueUrlCount": 26,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://www.proleague.be/",
+          "status": 200,
+          "title": "Pro League | Official Website",
+          "strictScore": 40,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "season_2025",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/classement",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/classement/",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/ladder",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/ladder/",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "bel.2": {
+      "reviewedUniqueUrlCount": 26,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://www.proleague.be/",
+          "status": 200,
+          "title": "Pro League | Official Website",
+          "strictScore": 40,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "season_2025",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/classement",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/classement/",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/ladder",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://proleague.be/ladder/",
+          "status": 0,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "cro.2": {
+      "reviewedUniqueUrlCount": 9,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://hns.family/",
+          "status": 200,
+          "title": "Hrvatski nogometni savez",
+          "strictScore": 40,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "season_2025",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://hns.family/classement/",
+          "status": 404,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://hns.family/ladder/",
+          "status": 404,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://hns.family/ranking/",
+          "status": 404,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://hns.family/rankings/",
+          "status": 404,
+          "title": "",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "den.2": {
+      "reviewedUniqueUrlCount": 17,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://divisionsforeningen.dk/",
+          "status": 200,
+          "title": "divisionsforeningen.dk &#8211; Divisionsforeningen",
+          "strictScore": 40,
+          "strictSignals": [
+            "http_2xx",
+            "expected_official_host",
+            "season_2025",
+            "homepage_penalty"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://divisionsforeningen.dk/classement",
+          "status": 404,
+          "title": "Side ikke fundet &#8211; divisionsforeningen.dk",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://divisionsforeningen.dk/classement/",
+          "status": 404,
+          "title": "Side ikke fundet &#8211; divisionsforeningen.dk",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://divisionsforeningen.dk/ladder",
+          "status": 404,
+          "title": "Side ikke fundet &#8211; divisionsforeningen.dk",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://divisionsforeningen.dk/ladder/",
+          "status": 404,
+          "title": "Side ikke fundet &#8211; divisionsforeningen.dk",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "fra.1": {
+      "reviewedUniqueUrlCount": 9,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://ligue1.com/classement",
+          "status": 500,
+          "title": "500: Internal Server Error",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://ligue1.com/ladder",
+          "status": 500,
+          "title": "500: Internal Server Error",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://ligue1.com/ranking",
+          "status": 500,
+          "title": "500: Internal Server Error",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://ligue1.com/rankings",
+          "status": 500,
+          "title": "500: Internal Server Error",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://ligue1.com/standings",
+          "status": 500,
+          "title": "500: Internal Server Error",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "swe.1": {
+      "reviewedUniqueUrlCount": 18,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://allsvenskan.se/classement",
+          "status": 404,
+          "title": "Allsvenskan",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://allsvenskan.se/classement/",
+          "status": 404,
+          "title": "Allsvenskan",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://allsvenskan.se/ladder",
+          "status": 404,
+          "title": "Allsvenskan",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://allsvenskan.se/ladder/",
+          "status": 404,
+          "title": "Allsvenskan",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://allsvenskan.se/ranking",
+          "status": 404,
+          "title": "Allsvenskan",
+          "strictScore": 35,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "bra.1": {
+      "reviewedUniqueUrlCount": 34,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/classement",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/classement/",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/ladder",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/ladder/",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/ranking",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "bra.2": {
+      "reviewedUniqueUrlCount": 34,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/classement",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/classement/",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/ladder",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/ladder/",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://cbf.com.br/ranking",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    },
+    "tur.1": {
+      "reviewedUniqueUrlCount": 34,
+      "actionableRouteCount": 0,
+      "extractorCandidateCount": 0,
+      "browserRenderCandidateCount": 0,
+      "homepageEmbeddedReviewOnlyCount": 0,
+      "topRows": [
+        {
+          "action": "park",
+          "url": "https://tff.org/classement",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://tff.org/classement/",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://tff.org/ladder",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://tff.org/ladder/",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        },
+        {
+          "action": "park",
+          "url": "https://tff.org/ranking",
+          "status": 0,
+          "title": "",
+          "strictScore": 10,
+          "strictSignals": [
+            "expected_official_host",
+            "explicit_standings_route_path",
+            "host_fetch_blocked_or_zero_status_family",
+            "not_http_2xx"
+          ],
+          "tableTagCount": 0,
+          "rowTagCount": 0
+        }
+      ]
+    }
+  }
+}
