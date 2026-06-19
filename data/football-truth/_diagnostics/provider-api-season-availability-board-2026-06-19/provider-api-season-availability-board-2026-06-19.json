@@ -1,0 +1,904 @@
+{
+  "status": "passed",
+  "runner": "provider_api_season_availability_board",
+  "contractVersion": 1,
+  "purpose": "Summarize provider season availability after mapping/proof/sweep/adjudication. No fetch/search/canonical/truth/production writes.",
+  "contractRowsPath": "data/football-truth/_diagnostics/provider-api-source-contract-board-2026-06-19/provider-api-source-contract-board-rows-2026-06-19.jsonl",
+  "mappingReviewPath": "data/football-truth/_diagnostics/provider-api-league-mapping-review-board-2026-06-19/provider-api-league-mapping-review-board-2026-06-19.json",
+  "mappingReviewRowsPath": "data/football-truth/_diagnostics/provider-api-league-mapping-review-board-2026-06-19/provider-api-league-mapping-review-board-rows-2026-06-19.jsonl",
+  "sweepPath": "data/football-truth/_diagnostics/provider-api-season-param-sweep-2026-06-19/provider-api-season-param-sweep-2026-06-19.json",
+  "adjudicationPath": "data/football-truth/_diagnostics/provider-api-season-scope-adjudication-board-2026-06-19/provider-api-season-scope-adjudication-board-2026-06-19.json",
+  "contractRowsSha256": "a7ce1bd61c64defe14b65266cc1e34c9efd8992b78fac30a91f25c33368c263b",
+  "mappingReviewSha256": "16f03eb5e3e1583ad934cf964a9d1f8244bdabf9d8719430f3dd914ade67dd60",
+  "mappingReviewRowsSha256": "1e7f3aa0bc7fe046438ccd71b3f36074a498d29a2c1e2edadda809f452b81d77",
+  "sweepSha256": "1ad6c02691b395473851b2266de490ae42421fccf3190a30eab570f19fec18d1",
+  "adjudicationSha256": "d9d534c0557d9a9908ac11210169fe63015a8893b9d8fc3e8fe9069a7562af86",
+  "output": "data/football-truth/_diagnostics/provider-api-season-availability-board-2026-06-19/provider-api-season-availability-board-2026-06-19.json",
+  "rowsOutput": "data/football-truth/_diagnostics/provider-api-season-availability-board-2026-06-19/provider-api-season-availability-board-rows-2026-06-19.jsonl",
+  "guardrails": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "providerFetchExecutedNowCount": 0,
+    "standingsFetchExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false,
+    "fullRawPayloadWritten": false
+  },
+  "sourceMappingSummary": {
+    "reviewRowCount": 12,
+    "providerFamilies": [
+      "api_football",
+      "thesportsdb"
+    ],
+    "singleStrongMappingCandidateRowCount": 5,
+    "ambiguousMappingCandidateRowCount": 3,
+    "weakMappingCandidateRowCount": 2,
+    "noCandidateRowCount": 2,
+    "strongMappingCandidates": [
+      {
+        "slug": "eng.1",
+        "league": "Premier League",
+        "providerFamily": "api_football",
+        "providerLeagueId": 39,
+        "providerLeagueName": "Premier League",
+        "providerCountry": "England",
+        "strictScore": 295,
+        "topCandidateMargin": 85
+      },
+      {
+        "slug": "ger.1",
+        "league": "Bundesliga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "providerLeagueName": "Bundesliga",
+        "providerCountry": "Germany",
+        "strictScore": 295,
+        "topCandidateMargin": 85
+      },
+      {
+        "slug": "swe.1",
+        "league": "Allsvenskan",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "providerLeagueName": "Allsvenskan",
+        "providerCountry": "Sweden",
+        "strictScore": 345,
+        "topCandidateMargin": 105
+      },
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 244,
+        "providerLeagueName": "Veikkausliiga",
+        "providerCountry": "Finland",
+        "strictScore": 345,
+        "topCandidateMargin": 345
+      },
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "thesportsdb",
+        "providerLeagueId": "4636",
+        "providerLeagueName": "Finnish Veikkausliiga",
+        "providerCountry": "Finland",
+        "strictScore": 235,
+        "topCandidateMargin": 135
+      }
+    ],
+    "acceptedNowCount": 0,
+    "recommendedNextLane": "If strong candidates exist, build a provider standings proof plan for those exact mappings only; still no canonical write."
+  },
+  "sourceSweepSummary": {
+    "strongMappingInputCount": 5,
+    "seasonSweepRowCount": 20,
+    "providerFetchExecutedNowCount": 20,
+    "standingsFetchExecutedNowCount": 20,
+    "skippedNoKeyCount": 0,
+    "failedFetchCount": 2,
+    "fetchedAndValidatedRowCount": 18,
+    "validationPassedRowCount": 5,
+    "validationPassedRows": [
+      {
+        "slug": "eng.1",
+        "league": "Premier League",
+        "providerFamily": "api_football",
+        "providerLeagueId": 39,
+        "providerLeagueName": "Premier League",
+        "providerSeasonParam": "2024",
+        "contractSeasonLabel": "2025-2026",
+        "contractSeasonScope": "previous_completed",
+        "expectedRows": 20,
+        "extractedRowCount": 20,
+        "teamSignalCount": 6,
+        "playedArithmeticPassCount": 20,
+        "pointsArithmeticPassCount": 20,
+        "gdArithmeticPassCount": 20
+      },
+      {
+        "slug": "ger.1",
+        "league": "Bundesliga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "providerLeagueName": "Bundesliga",
+        "providerSeasonParam": "2023",
+        "contractSeasonLabel": "2025-2026",
+        "contractSeasonScope": "previous_completed",
+        "expectedRows": 18,
+        "extractedRowCount": 18,
+        "teamSignalCount": 6,
+        "playedArithmeticPassCount": 18,
+        "pointsArithmeticPassCount": 18,
+        "gdArithmeticPassCount": 18
+      },
+      {
+        "slug": "ger.1",
+        "league": "Bundesliga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "providerLeagueName": "Bundesliga",
+        "providerSeasonParam": "2024",
+        "contractSeasonLabel": "2025-2026",
+        "contractSeasonScope": "previous_completed",
+        "expectedRows": 18,
+        "extractedRowCount": 18,
+        "teamSignalCount": 6,
+        "playedArithmeticPassCount": 18,
+        "pointsArithmeticPassCount": 18,
+        "gdArithmeticPassCount": 18
+      },
+      {
+        "slug": "swe.1",
+        "league": "Allsvenskan",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "providerLeagueName": "Allsvenskan",
+        "providerSeasonParam": "2023",
+        "contractSeasonLabel": "2025",
+        "contractSeasonScope": "previous_completed",
+        "expectedRows": 16,
+        "extractedRowCount": 16,
+        "teamSignalCount": 3,
+        "playedArithmeticPassCount": 16,
+        "pointsArithmeticPassCount": 16,
+        "gdArithmeticPassCount": 16
+      },
+      {
+        "slug": "swe.1",
+        "league": "Allsvenskan",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "providerLeagueName": "Allsvenskan",
+        "providerSeasonParam": "2024",
+        "contractSeasonLabel": "2025",
+        "contractSeasonScope": "previous_completed",
+        "expectedRows": 16,
+        "extractedRowCount": 16,
+        "teamSignalCount": 3,
+        "playedArithmeticPassCount": 16,
+        "pointsArithmeticPassCount": 16,
+        "gdArithmeticPassCount": 16
+      }
+    ],
+    "nonZeroRows": [
+      {
+        "slug": "eng.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 39,
+        "providerSeasonParam": "2023",
+        "rawStandingRowCount": 20,
+        "mappedStandingRowCount": 20,
+        "expectedRows": 20,
+        "validationPassed": false,
+        "teamSignalCount": 6,
+        "failedGates": [
+          "points_arithmetic"
+        ]
+      },
+      {
+        "slug": "eng.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 39,
+        "providerSeasonParam": "2024",
+        "rawStandingRowCount": 20,
+        "mappedStandingRowCount": 20,
+        "expectedRows": 20,
+        "validationPassed": true,
+        "teamSignalCount": 6,
+        "failedGates": []
+      },
+      {
+        "slug": "ger.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "providerSeasonParam": "2023",
+        "rawStandingRowCount": 18,
+        "mappedStandingRowCount": 18,
+        "expectedRows": 18,
+        "validationPassed": true,
+        "teamSignalCount": 6,
+        "failedGates": []
+      },
+      {
+        "slug": "ger.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "providerSeasonParam": "2024",
+        "rawStandingRowCount": 18,
+        "mappedStandingRowCount": 18,
+        "expectedRows": 18,
+        "validationPassed": true,
+        "teamSignalCount": 6,
+        "failedGates": []
+      },
+      {
+        "slug": "swe.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "providerSeasonParam": "2023",
+        "rawStandingRowCount": 16,
+        "mappedStandingRowCount": 16,
+        "expectedRows": 16,
+        "validationPassed": true,
+        "teamSignalCount": 3,
+        "failedGates": []
+      },
+      {
+        "slug": "swe.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "providerSeasonParam": "2024",
+        "rawStandingRowCount": 16,
+        "mappedStandingRowCount": 16,
+        "expectedRows": 16,
+        "validationPassed": true,
+        "teamSignalCount": 3,
+        "failedGates": []
+      },
+      {
+        "slug": "fin.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 244,
+        "providerSeasonParam": "2023",
+        "rawStandingRowCount": 24,
+        "mappedStandingRowCount": 24,
+        "expectedRows": 12,
+        "validationPassed": false,
+        "teamSignalCount": 5,
+        "failedGates": [
+          "expected_rows"
+        ]
+      },
+      {
+        "slug": "fin.1",
+        "providerFamily": "api_football",
+        "providerLeagueId": 244,
+        "providerSeasonParam": "2024",
+        "rawStandingRowCount": 24,
+        "mappedStandingRowCount": 24,
+        "expectedRows": 12,
+        "validationPassed": false,
+        "teamSignalCount": 6,
+        "failedGates": [
+          "expected_rows"
+        ]
+      },
+      {
+        "slug": "fin.1",
+        "providerFamily": "thesportsdb",
+        "providerLeagueId": "4636",
+        "providerSeasonParam": "2024",
+        "rawStandingRowCount": 5,
+        "mappedStandingRowCount": 5,
+        "expectedRows": 12,
+        "validationPassed": false,
+        "teamSignalCount": 4,
+        "failedGates": [
+          "expected_rows"
+        ]
+      },
+      {
+        "slug": "fin.1",
+        "providerFamily": "thesportsdb",
+        "providerLeagueId": "4636",
+        "providerSeasonParam": "2025",
+        "rawStandingRowCount": 5,
+        "mappedStandingRowCount": 5,
+        "expectedRows": 12,
+        "validationPassed": false,
+        "teamSignalCount": 5,
+        "failedGates": [
+          "expected_rows"
+        ]
+      }
+    ],
+    "acceptedNowCount": 0
+  },
+  "sourceAdjudicationSummary": {
+    "sweepRowCount": 20,
+    "validationPassedBeforeSeasonAdjudicationCount": 5,
+    "targetContractValidationPassedCount": 0,
+    "wrongOrOlderSeasonValidationPassedCount": 5,
+    "competitionScopeOrPhaseMismatchCount": 4,
+    "noRowsCount": 10,
+    "targetContractEligibleRows": [],
+    "wrongOrOlderSeasonCapabilityRows": [
+      {
+        "slug": "eng.1",
+        "league": "Premier League",
+        "providerFamily": "api_football",
+        "providerLeagueId": 39,
+        "providerSeasonParam": "2024",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "contractSeasonLabel": "2025-2026",
+        "expectedRows": 20,
+        "extractedRowCount": 20,
+        "teamSignalCount": 6
+      },
+      {
+        "slug": "ger.1",
+        "league": "Bundesliga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "providerSeasonParam": "2023",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "contractSeasonLabel": "2025-2026",
+        "expectedRows": 18,
+        "extractedRowCount": 18,
+        "teamSignalCount": 6
+      },
+      {
+        "slug": "ger.1",
+        "league": "Bundesliga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "providerSeasonParam": "2024",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "contractSeasonLabel": "2025-2026",
+        "expectedRows": 18,
+        "extractedRowCount": 18,
+        "teamSignalCount": 6
+      },
+      {
+        "slug": "swe.1",
+        "league": "Allsvenskan",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "providerSeasonParam": "2023",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "contractSeasonLabel": "2025",
+        "expectedRows": 16,
+        "extractedRowCount": 16,
+        "teamSignalCount": 3
+      },
+      {
+        "slug": "swe.1",
+        "league": "Allsvenskan",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "providerSeasonParam": "2024",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "contractSeasonLabel": "2025",
+        "expectedRows": 16,
+        "extractedRowCount": 16,
+        "teamSignalCount": 3
+      }
+    ],
+    "phaseOrScopeMismatchRows": [
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 244,
+        "providerSeasonParam": "2023",
+        "rawStandingRowCount": 24,
+        "expectedRows": 12,
+        "teamSignalCount": 5
+      },
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 244,
+        "providerSeasonParam": "2024",
+        "rawStandingRowCount": 24,
+        "expectedRows": 12,
+        "teamSignalCount": 6
+      },
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "thesportsdb",
+        "providerLeagueId": "4636",
+        "providerSeasonParam": "2024",
+        "rawStandingRowCount": 5,
+        "expectedRows": 12,
+        "teamSignalCount": 4
+      },
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "thesportsdb",
+        "providerLeagueId": "4636",
+        "providerSeasonParam": "2025",
+        "rawStandingRowCount": 5,
+        "expectedRows": 12,
+        "teamSignalCount": 5
+      }
+    ],
+    "acceptedNowCount": 0,
+    "recommendedNextLane": "No provider standings rows are eligible unless targetContractValidationPassedCount is non-zero. For current output, treat passing rows as older-season capability evidence only."
+  },
+  "summary": {
+    "strongMappingCount": 5,
+    "targetContractSeasonAvailableAndValidatedCount": 0,
+    "providerCapableButTargetSeasonUnavailableOrWrongCount": 3,
+    "providerRowsButScopeOrPhaseMismatchCount": 2,
+    "providerNoRowsForSweptParamsCount": 0,
+    "targetProviderSeasonAvailableInHintsCount": 4,
+    "availabilityRows": [
+      {
+        "slug": "eng.1",
+        "league": "Premier League",
+        "providerFamily": "api_football",
+        "providerLeagueId": 39,
+        "contractSeasonLabel": "2025-2026",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "providerSeasonHints": [
+          "2010",
+          "2011",
+          "2012",
+          "2013",
+          "2014",
+          "2015",
+          "2016",
+          "2017",
+          "2018",
+          "2019",
+          "2020",
+          "2021",
+          "2022",
+          "2023",
+          "2024",
+          "2025"
+        ],
+        "targetProviderSeasonAvailableInHints": true,
+        "nonZeroSeasonParams": [
+          "2023",
+          "2024"
+        ],
+        "validationPassedSeasonParams": [
+          "2024"
+        ],
+        "availabilityStatus": "provider_capable_but_target_contract_season_unavailable_or_wrong",
+        "nextAction": "use only as capability evidence; do not count as current target coverage"
+      },
+      {
+        "slug": "ger.1",
+        "league": "Bundesliga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 78,
+        "contractSeasonLabel": "2025-2026",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "providerSeasonHints": [
+          "2010",
+          "2011",
+          "2012",
+          "2013",
+          "2014",
+          "2015",
+          "2016",
+          "2017",
+          "2018",
+          "2019",
+          "2020",
+          "2021",
+          "2022",
+          "2023",
+          "2024",
+          "2025"
+        ],
+        "targetProviderSeasonAvailableInHints": true,
+        "nonZeroSeasonParams": [
+          "2023",
+          "2024"
+        ],
+        "validationPassedSeasonParams": [
+          "2023",
+          "2024"
+        ],
+        "availabilityStatus": "provider_capable_but_target_contract_season_unavailable_or_wrong",
+        "nextAction": "use only as capability evidence; do not count as current target coverage"
+      },
+      {
+        "slug": "swe.1",
+        "league": "Allsvenskan",
+        "providerFamily": "api_football",
+        "providerLeagueId": 113,
+        "contractSeasonLabel": "2025",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "providerSeasonHints": [
+          "2016",
+          "2017",
+          "2018",
+          "2019",
+          "2020",
+          "2021",
+          "2022",
+          "2023",
+          "2024",
+          "2025",
+          "2026"
+        ],
+        "targetProviderSeasonAvailableInHints": true,
+        "nonZeroSeasonParams": [
+          "2023",
+          "2024"
+        ],
+        "validationPassedSeasonParams": [
+          "2023",
+          "2024"
+        ],
+        "availabilityStatus": "provider_capable_but_target_contract_season_unavailable_or_wrong",
+        "nextAction": "use only as capability evidence; do not count as current target coverage"
+      },
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "api_football",
+        "providerLeagueId": 244,
+        "contractSeasonLabel": "2025",
+        "expectedProviderSeasonParams": [
+          "2025"
+        ],
+        "providerSeasonHints": [
+          "2012",
+          "2013",
+          "2014",
+          "2015",
+          "2016",
+          "2017",
+          "2018",
+          "2019",
+          "2020",
+          "2021",
+          "2022",
+          "2023",
+          "2024",
+          "2025",
+          "2026"
+        ],
+        "targetProviderSeasonAvailableInHints": true,
+        "nonZeroSeasonParams": [
+          "2023",
+          "2024"
+        ],
+        "validationPassedSeasonParams": [],
+        "availabilityStatus": "provider_has_rows_but_scope_or_phase_mismatch",
+        "nextAction": "requires governed phase/scope parser before any acceptance"
+      },
+      {
+        "slug": "fin.1",
+        "league": "Veikkausliiga",
+        "providerFamily": "thesportsdb",
+        "providerLeagueId": "4636",
+        "contractSeasonLabel": "2025",
+        "expectedProviderSeasonParams": [
+          "2025",
+          "2025"
+        ],
+        "providerSeasonHints": [],
+        "targetProviderSeasonAvailableInHints": false,
+        "nonZeroSeasonParams": [
+          "2024",
+          "2025"
+        ],
+        "validationPassedSeasonParams": [],
+        "availabilityStatus": "provider_has_rows_but_scope_or_phase_mismatch",
+        "nextAction": "requires governed phase/scope parser before any acceptance"
+      }
+    ],
+    "acceptedNowCount": 0,
+    "recommendedNextLane": "If target contract seasons are unavailable, do not pursue provider canonicalization. Use provider lane only for season availability refresh or older-season backfill with explicitly corrected season contracts."
+  },
+  "rows": [
+    {
+      "slug": "eng.1",
+      "league": "Premier League",
+      "providerFamily": "api_football",
+      "providerLeagueId": 39,
+      "providerLeagueName": "Premier League",
+      "providerCountry": "England",
+      "contractSeasonLabel": "2025-2026",
+      "contractSeasonScope": "previous_completed",
+      "expectedRows": 20,
+      "expectedProviderSeasonParams": [
+        "2025"
+      ],
+      "providerSeasonHints": [
+        "2010",
+        "2011",
+        "2012",
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "targetProviderSeasonAvailableInHints": true,
+      "sweptSeasonParams": [
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "nonZeroSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "validationPassedSeasonParams": [
+        "2024"
+      ],
+      "wrongOrOlderSeasonParams": [
+        "2024"
+      ],
+      "phaseMismatchSeasonParams": [],
+      "noRowSeasonParams": [
+        "2025",
+        "2026"
+      ],
+      "targetEligibleSeasonParams": [],
+      "availabilityStatus": "provider_capable_but_target_contract_season_unavailable_or_wrong",
+      "nextAction": "use only as capability evidence; do not count as current target coverage",
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    },
+    {
+      "slug": "ger.1",
+      "league": "Bundesliga",
+      "providerFamily": "api_football",
+      "providerLeagueId": 78,
+      "providerLeagueName": "Bundesliga",
+      "providerCountry": "Germany",
+      "contractSeasonLabel": "2025-2026",
+      "contractSeasonScope": "previous_completed",
+      "expectedRows": 18,
+      "expectedProviderSeasonParams": [
+        "2025"
+      ],
+      "providerSeasonHints": [
+        "2010",
+        "2011",
+        "2012",
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "targetProviderSeasonAvailableInHints": true,
+      "sweptSeasonParams": [
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "nonZeroSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "validationPassedSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "wrongOrOlderSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "phaseMismatchSeasonParams": [],
+      "noRowSeasonParams": [
+        "2025",
+        "2026"
+      ],
+      "targetEligibleSeasonParams": [],
+      "availabilityStatus": "provider_capable_but_target_contract_season_unavailable_or_wrong",
+      "nextAction": "use only as capability evidence; do not count as current target coverage",
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    },
+    {
+      "slug": "swe.1",
+      "league": "Allsvenskan",
+      "providerFamily": "api_football",
+      "providerLeagueId": 113,
+      "providerLeagueName": "Allsvenskan",
+      "providerCountry": "Sweden",
+      "contractSeasonLabel": "2025",
+      "contractSeasonScope": "previous_completed",
+      "expectedRows": 16,
+      "expectedProviderSeasonParams": [
+        "2025"
+      ],
+      "providerSeasonHints": [
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "targetProviderSeasonAvailableInHints": true,
+      "sweptSeasonParams": [
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "nonZeroSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "validationPassedSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "wrongOrOlderSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "phaseMismatchSeasonParams": [],
+      "noRowSeasonParams": [
+        "2025",
+        "2026"
+      ],
+      "targetEligibleSeasonParams": [],
+      "availabilityStatus": "provider_capable_but_target_contract_season_unavailable_or_wrong",
+      "nextAction": "use only as capability evidence; do not count as current target coverage",
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    },
+    {
+      "slug": "fin.1",
+      "league": "Veikkausliiga",
+      "providerFamily": "api_football",
+      "providerLeagueId": 244,
+      "providerLeagueName": "Veikkausliiga",
+      "providerCountry": "Finland",
+      "contractSeasonLabel": "2025",
+      "contractSeasonScope": "previous_completed",
+      "expectedRows": 12,
+      "expectedProviderSeasonParams": [
+        "2025"
+      ],
+      "providerSeasonHints": [
+        "2012",
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "targetProviderSeasonAvailableInHints": true,
+      "sweptSeasonParams": [
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "nonZeroSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "validationPassedSeasonParams": [],
+      "wrongOrOlderSeasonParams": [],
+      "phaseMismatchSeasonParams": [
+        "2023",
+        "2024"
+      ],
+      "noRowSeasonParams": [
+        "2025",
+        "2026"
+      ],
+      "targetEligibleSeasonParams": [],
+      "availabilityStatus": "provider_has_rows_but_scope_or_phase_mismatch",
+      "nextAction": "requires governed phase/scope parser before any acceptance",
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    },
+    {
+      "slug": "fin.1",
+      "league": "Veikkausliiga",
+      "providerFamily": "thesportsdb",
+      "providerLeagueId": "4636",
+      "providerLeagueName": "Finnish Veikkausliiga",
+      "providerCountry": "Finland",
+      "contractSeasonLabel": "2025",
+      "contractSeasonScope": "previous_completed",
+      "expectedRows": 12,
+      "expectedProviderSeasonParams": [
+        "2025",
+        "2025"
+      ],
+      "providerSeasonHints": [],
+      "targetProviderSeasonAvailableInHints": false,
+      "sweptSeasonParams": [
+        "2024",
+        "2024-2025",
+        "2025",
+        "2025-2026"
+      ],
+      "nonZeroSeasonParams": [
+        "2024",
+        "2025"
+      ],
+      "validationPassedSeasonParams": [],
+      "wrongOrOlderSeasonParams": [],
+      "phaseMismatchSeasonParams": [
+        "2024",
+        "2025"
+      ],
+      "noRowSeasonParams": [
+        "2024-2025",
+        "2025-2026"
+      ],
+      "targetEligibleSeasonParams": [],
+      "availabilityStatus": "provider_has_rows_but_scope_or_phase_mismatch",
+      "nextAction": "requires governed phase/scope parser before any acceptance",
+      "acceptedNow": false,
+      "acceptanceAllowedNow": false,
+      "reviewOnly": true
+    }
+  ]
+}
