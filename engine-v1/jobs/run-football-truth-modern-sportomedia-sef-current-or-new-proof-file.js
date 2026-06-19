@@ -186,8 +186,8 @@ function validateSlug(slug, extractionRows, qualityRows) {
     if (row.goalDifference !== row.goalsFor - row.goalsAgainst) blocks.push(`goal_difference_failed_${normTeam(row.teamName)}`);
     if (row.points !== row.wins * 3 + row.draws) blocks.push(`points_arithmetic_failed_${normTeam(row.teamName)}`);
 
-    if (row.providerFamily !== "sportomedia_sef") blocks.push(`provider_family_mismatch_${normTeam(row.teamName)}`);
-    if (row.sourceKind !== "official_graphql_standings") blocks.push(`source_kind_mismatch_${normTeam(row.teamName)}`);
+    if (row.providerFamily !== "sportomedia") blocks.push(`provider_family_mismatch_${normTeam(row.teamName)}`);
+    if (row.sourceKind !== "official_sportomedia_graphql_standingsForLeague") blocks.push(`source_kind_mismatch_${normTeam(row.teamName)}`);
     if (row.officialRoute !== exp.officialRoute) blocks.push(`official_route_mismatch_${normTeam(row.teamName)}`);
     if (Number(row.seasonStartYear) !== Number(exp.seasonLabel)) blocks.push(`season_start_year_mismatch_${normTeam(row.teamName)}`);
     if (row.league !== exp.league) blocks.push(`league_variable_mismatch_${normTeam(row.teamName)}`);
@@ -244,7 +244,7 @@ const acceptedRows = accepted.flatMap(v => v.rows.map(row => ({
   seasonScope: v.seasonScope,
   seasonLabel: v.seasonLabel,
   sourceFamily: v.sourceFamily,
-  sourceKind: "official_graphql_standings",
+  sourceKind: "official_sportomedia_graphql_standingsForLeague",
   sourceHost: v.sourceHost,
   sourceUrl: row.sourceUrl,
   officialRoute: row.officialRoute,
@@ -318,7 +318,7 @@ const summary = {
     blockedGroupCount: validations.length - finalAccepted.length
   },
   gates: {
-    exactSourceFamilyIdentity: "providerFamily=sportomedia_sef plus sourceKind=official_graphql_standings",
+    exactSourceFamilyIdentity: "providerFamily=sportomedia plus sourceKind=official_sportomedia_graphql_standingsForLeague",
     exactCompetitionIdentity: "swe.1 allsvenskan/allsvenskan.se and swe.2 superettan/superettan.se",
     rowCount: "16 per competition",
     explicitSeasonScope: "current_or_new injected by modern contract from active 2026 season evidence",
@@ -412,3 +412,4 @@ console.log(JSON.stringify({
   productionWriteExecutedNowCount: 0,
   truthAssertionExecutedNowCount: 0
 }, null, 2));
+
