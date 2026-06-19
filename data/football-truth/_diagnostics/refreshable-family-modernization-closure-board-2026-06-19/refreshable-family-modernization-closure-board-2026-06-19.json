@@ -1,0 +1,164 @@
+{
+  "status": "passed",
+  "runner": "refreshable_family_modernization_closure_board",
+  "contractVersion": 1,
+  "generatedAtUtc": "2026-06-19T07:40:57.375Z",
+  "purpose": "close the refreshable family standings modernization pass and establish the next safe execution lane without canonical writes, production writes, or truth assertions",
+  "inputs": {
+    "refreshableAudit": "data/football-truth/_diagnostics/refreshable-family-gate-audit-2026-06-18/refreshable-family-gate-audit-2026-06-18.json",
+    "modernProofHarness": "data/football-truth/_diagnostics/modern-family-adapter-proof-harness-2026-06-19/modern-family-adapter-proof-harness-2026-06-19.json",
+    "sportomediaProof": "data/football-truth/_diagnostics/modern-sportomedia-sef-current-or-new-proof-2026-06-19/modern-sportomedia-sef-current-or-new-proof-2026-06-19.json",
+    "sportomediaApprovalGate": "data/football-truth/_diagnostics/modern-current-or-new-materialization-approval-gate-2026-06-19/modern-current-or-new-materialization-approval-gate-2026-06-19.json",
+    "norwayProof": "data/football-truth/_diagnostics/modern-norway-ntf-current-or-new-proof-2026-06-19/modern-norway-ntf-current-or-new-proof-2026-06-19.json",
+    "aggregateCoverageBoard": "data/football-truth/_diagnostics/modern-current-or-new-proof-coverage-board-2026-06-19/modern-current-or-new-proof-coverage-board-2026-06-19.json",
+    "aggregateApprovalGate": "data/football-truth/_diagnostics/modern-aggregate-current-or-new-materialization-approval-gate-2026-06-19/modern-aggregate-current-or-new-materialization-approval-gate-2026-06-19.json",
+    "loiBlocker": "data/football-truth/_diagnostics/loi-ajax-modernization-blocker-board-2026-06-19/loi-ajax-modernization-blocker-board-2026-06-19.json",
+    "seasonLedger": "data/football-truth/_diagnostics/season-lane-coverage-ledger-2026-06-18/season-lane-coverage-ledger-2026-06-18.json",
+    "prioritizedBoard": "data/football-truth/_diagnostics/prioritized-lifecycle-execution-board-2026-06-18/prioritized-lifecycle-execution-board-2026-06-18.json"
+  },
+  "baseline": {
+    "previousCompletedSatisfiedCount": 11,
+    "previousCompletedVerifiedRowsCount": 180,
+    "currentOrNewSatisfiedCount": 1,
+    "nextSeasonStartDateSatisfiedCount": 2,
+    "prioritizedAcceptedExecutableTaskCount": 875,
+    "prioritizedStandingsExpansionTargetCount": 433,
+    "prioritizedStartDateEvidenceTargetCount": 442
+  },
+  "familyOutcomes": [
+    {
+      "familyId": "sportomedia_sef",
+      "competitionSlugs": [
+        "swe.1",
+        "swe.2"
+      ],
+      "modernizationStatus": "verified_current_or_new_proof_ready_for_explicit_materialization_approval",
+      "seasonScope": "current_or_new",
+      "seasonLabel": "2026",
+      "verifiedSlugs": [
+        "swe.1",
+        "swe.2"
+      ],
+      "verifiedRowCount": 32,
+      "blockedSlugs": [],
+      "summaryPath": "data/football-truth/_diagnostics/modern-sportomedia-sef-current-or-new-proof-2026-06-19/modern-sportomedia-sef-current-or-new-proof-2026-06-19.json",
+      "approvalGatePath": "data/football-truth/_diagnostics/modern-current-or-new-materialization-approval-gate-2026-06-19/modern-current-or-new-materialization-approval-gate-2026-06-19.json",
+      "canonicalWriteExecutedNowCount": 0,
+      "productionWriteExecutedNowCount": 0,
+      "truthAssertionExecutedNowCount": 0
+    },
+    {
+      "familyId": "norway_ntf",
+      "competitionSlugs": [
+        "nor.1",
+        "nor.2"
+      ],
+      "modernizationStatus": "partial_verified_current_or_new_proof",
+      "seasonScope": "current_or_new",
+      "seasonLabel": "2026",
+      "verifiedSlugs": [
+        "nor.1"
+      ],
+      "verifiedRowCount": 16,
+      "blockedSlugs": [
+        "nor.2"
+      ],
+      "blockReasons": {
+        "nor.2": [
+          "Åsane_points_arithmetic_failed",
+          "needs_explicit_governed_point_deduction_evidence_before_acceptance"
+        ]
+      },
+      "summaryPath": "data/football-truth/_diagnostics/modern-norway-ntf-current-or-new-proof-2026-06-19/modern-norway-ntf-current-or-new-proof-2026-06-19.json",
+      "canonicalWriteExecutedNowCount": 0,
+      "productionWriteExecutedNowCount": 0,
+      "truthAssertionExecutedNowCount": 0
+    },
+    {
+      "familyId": "loi_ajax",
+      "competitionSlugs": [
+        "irl.1",
+        "irl.2"
+      ],
+      "modernizationStatus": "blocked_not_a_standings_family_from_existing_artifacts",
+      "seasonScope": null,
+      "seasonLabel": null,
+      "verifiedSlugs": [],
+      "verifiedRowCount": 0,
+      "blockedSlugs": [
+        "irl.1",
+        "irl.2"
+      ],
+      "blockReasons": {
+        "irl.1": [
+          "loi_ajax_outputs_fixture_result_rows_only"
+        ],
+        "irl.2": [
+          "loi_ajax_outputs_fixture_result_rows_only",
+          "irl2_fixture_endpoint_also_not_safe_from_existing_repair_probe"
+        ]
+      },
+      "summaryPath": "data/football-truth/_diagnostics/loi-ajax-modernization-blocker-board-2026-06-19/loi-ajax-modernization-blocker-board-2026-06-19.json",
+      "canonicalWriteExecutedNowCount": 0,
+      "productionWriteExecutedNowCount": 0,
+      "truthAssertionExecutedNowCount": 0
+    }
+  ],
+  "aggregateCurrentOrNewCandidate": {
+    "status": "passed_ready_for_explicit_materialization_approval",
+    "verifiedNewCurrentOrNewSlugs": [
+      "nor.1",
+      "swe.1",
+      "swe.2"
+    ],
+    "verifiedRowCount": 48,
+    "projectedCurrentOrNewSatisfiedCount": 4,
+    "projectedCurrentOrNewVerifiedRowsCount": 48,
+    "approvalRequired": true,
+    "approvedNow": false,
+    "payloadSha256": "fa80b8c5e64bf7051d7205ba7eda78b287d0e113472dd0b5d53a31c6e3b1e368",
+    "payloadPath": "data/football-truth/_diagnostics/modern-aggregate-current-or-new-materialization-approval-gate-2026-06-19/modern-aggregate-current-or-new-materialization-candidate-payload-2026-06-19.json",
+    "rowsPath": "data/football-truth/_diagnostics/modern-aggregate-current-or-new-materialization-approval-gate-2026-06-19/modern-aggregate-current-or-new-materialization-candidate-rows-2026-06-19.jsonl"
+  },
+  "refreshableSetClosure": {
+    "exactRefreshableFamilyCount": 3,
+    "fullyVerifiedFamilyCount": 1,
+    "partiallyVerifiedFamilyCount": 1,
+    "blockedForStandingsFamilyCount": 1,
+    "verifiedCurrentOrNewSlugCount": 3,
+    "verifiedCurrentOrNewRowCount": 48,
+    "previousCompletedAddedCount": 0,
+    "startDatesAddedCount": 0,
+    "truthOrCanonicalWritesExecuted": false
+  },
+  "nextRecommendedLane": {
+    "lane": "blocked_exact_runner_missing_family_contract_discovery",
+    "reason": "Refreshable standings modernization now has a safe closure board. The remaining earlier blocked families are not executable and need exact runner/source contracts before any proof runner: torneopal(fin.1/fin.2), ksi(isl.1/isl.2), cfa_cyprus_html(cyp.1/cyp.2).",
+    "firstAction": "inspect_blocked_exact_runner_missing_family_artifacts_and_build_source_contract_discovery_board",
+    "mustNotDo": [
+      "do_not_borrow_unrelated_central_or_jleague_runner",
+      "do_not_promote_review_candidates_directly",
+      "do_not_write_canonical_or_truth_without_explicit_approval"
+    ]
+  },
+  "policy": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "browserExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "stateLaneWriteExecutedNowCount": 0,
+    "approvalGateOnly": false,
+    "proofOnly": true
+  },
+  "blocks": [],
+  "warnings": [],
+  "searchExecutedNowCount": 0,
+  "fetchExecutedNowCount": 0,
+  "browserExecutedNowCount": 0,
+  "canonicalWriteExecutedNowCount": 0,
+  "productionWriteExecutedNowCount": 0,
+  "truthAssertionExecutedNowCount": 0,
+  "stateLaneWriteExecutedNowCount": 0
+}
