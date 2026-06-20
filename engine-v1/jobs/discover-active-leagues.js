@@ -4,9 +4,11 @@ import * as config from "../config.js";
 import { fetchLeagueFixtures } from "../adapters/espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { athensDayKey } from "../core/daykey.js";
+import { shouldSkipEspn } from "../source-discovery/league-awareness-service.js";
+import { getSummary } from "../storage/league-memory-db.js";
 
 const LEAGUE_SEEDS = config.LEAGUE_SEEDS || [];
-const leagueName = config.leagueName;
+const leagueName   = config.leagueName;
 
 const dataDir = getDataRoot();
 const outPath = resolveDataPath("active-leagues.json");
@@ -27,19 +29,36 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
     createdAt: Date.now(),
     dayKey,
     leaguesScanned: 0,
+    leaguesSkippedByMemory: 0,
     activeLeagueCount: 0,
     totalMatches: 0,
     leagues: []
   };
+
+  // ── League Memory filter ──────────────────────────────────────────────────
+  // Before hitting ESPN, check if we know this league is paused/finished.
+  // This saves unnecessary API calls (e.g. during World Cup break).
+
+  let memorySummary = null;
+  try {
+    memorySummary = getSummary();
+  } catch {
+    // Memory not initialised yet — proceed normally
+  }
 
   const activeFromMatches = new Map();
 
   for (const slug of LEAGUE_SEEDS) {
     result.leaguesScanned++;
 
-    const data = await fetchLeagueFixtures(slug, dayKey);
-    const events = Array.isArray(data?.events) ? data.events : [];
+    // Skip ESPN if league memory says pause/finished with high confidence
+    if (shouldSkipEspn(slug)) {
+      result.leaguesSkippedByMemory++;
+      continue;
+    }
 
+    const data   = await fetchLeagueFixtures(slug, dayKey);
+    const events = Array.isArray(data?.events) ? data.events : [];
     const matches = [];
 
     for (const event of events) {
@@ -48,12 +67,12 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
       if (normalized.dayKey !== dayKey) continue;
 
       matches.push({
-        matchId: normalized.matchId,
+        matchId:    normalized.matchId,
         kickoffUtc: normalized.kickoffUtc,
-        homeTeam: normalized.homeTeam,
-        awayTeam: normalized.awayTeam,
-        status: normalized.status,
-        rawStatus: normalized.rawStatus
+        homeTeam:   normalized.homeTeam,
+        awayTeam:   normalized.awayTeam,
+        status:     normalized.status,
+        rawStatus:  normalized.rawStatus
       });
     }
 
@@ -62,7 +81,7 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
         slug,
         leagueName: leagueName(slug),
         matchCount: matches.length,
-        matchIds: matches.map(x => x.matchId),
+        matchIds:   matches.map(x => x.matchId),
         matches
       });
 
@@ -70,19 +89,19 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
     }
   }
 
-  const historyPath = resolveDataPath("history/2025-2026.json");
+  // ── History fallback (unchanged) ──────────────────────────────────────────
+
+  const historyPath      = resolveDataPath("history/2025-2026.json");
   const activeFromHistory = new Set();
 
   try {
-    const history = JSON.parse(fs.readFileSync(historyPath, "utf8"));
-    const days = Array.isArray(history?.days) ? history.days : [];
+    const history    = JSON.parse(fs.readFileSync(historyPath, "utf8"));
+    const days       = Array.isArray(history?.days) ? history.days : [];
     const recentDays = days.slice(-7);
 
     for (const day of recentDays) {
       for (const row of day.rows || []) {
-        if (row?.leagueSlug) {
-          activeFromHistory.add(row.leagueSlug);
-        }
+        if (row?.leagueSlug) activeFromHistory.add(row.leagueSlug);
       }
     }
   } catch (err) {
@@ -104,13 +123,14 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
         slug,
         leagueName: leagueName(slug),
         matchCount: 0,
-        matchIds: [],
-        matches: []
+        matchIds:   [],
+        matches:    []
       });
     }
   }
 
   result.activeLeagueCount = result.leagues.length;
+  result.memorySummary     = memorySummary;
 
   writeActiveLeagues(result);
   return result;
