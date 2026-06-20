@@ -6,6 +6,7 @@ const root = process.cwd();
 const today = new Date().toISOString().slice(0, 10);
 const batchId = process.argv.find(arg => arg.startsWith("--batch-id="))?.split("=")[1] || "global-macro-official-host-wave-001";
 
+const planPath = path.join(root, "data", "football-truth", "_diagnostics", `football-truth-global-macro-official-host-wave-plan-${today}`, `football-truth-global-macro-official-host-wave-plan-${today}.json`);
 const reportPath = path.join(root, "data", "football-truth", "_diagnostics", `football-truth-global-macro-official-host-wave-${batchId}-${today}`, `football-truth-global-macro-official-host-wave-${batchId}-${today}.json`);
 const rowsPath = path.join(root, "data", "football-truth", "_diagnostics", `football-truth-global-macro-official-host-wave-${batchId}-${today}`, `football-truth-global-macro-official-host-wave-${batchId}-rows-${today}.jsonl`);
 const verificationDir = path.join(root, "data", "football-truth", "_diagnostics", `football-truth-global-macro-official-host-wave-${batchId}-verification-${today}`);
@@ -18,15 +19,19 @@ function parseJsonl(text) { return text.trim().split(/\r?\n/).filter(Boolean).ma
 await fs.mkdir(verificationDir, { recursive: true });
 
 const blocks = [];
+const plan = JSON.parse(await fs.readFile(planPath, "utf8"));
 const report = JSON.parse(await fs.readFile(reportPath, "utf8"));
 const rows = parseJsonl(await fs.readFile(rowsPath, "utf8"));
+const expectedBatch = plan.batches?.find(batch => batch.batchId === batchId);
 
+if (!expectedBatch) blocks.push("expected_batch_missing_from_plan");
 if (report.status !== "passed") blocks.push("report_not_passed");
 if (report.runner !== "football_truth_global_macro_official_host_wave_batch") blocks.push("runner_mismatch");
 if (report.batchId !== batchId) blocks.push("batch_id_mismatch");
 if (report.summary?.targetCount !== rows.length) blocks.push("row_count_mismatch");
-if (report.summary?.targetCount !== 100) blocks.push("target_count_not_100");
+if (expectedBatch && report.summary?.targetCount !== expectedBatch.targetCount) blocks.push("target_count_does_not_match_plan");
 if (report.summary?.attemptedFetchCount !== report.guardrails?.fetchExecutedNowCount) blocks.push("fetch_count_mismatch");
+if (expectedBatch && report.summary?.attemptedFetchCount !== expectedBatch.plannedUrlCount) blocks.push("attempted_fetch_count_does_not_match_plan_url_count");
 
 for (const row of rows) {
   if (!row.slug) blocks.push("row_missing_slug");
@@ -52,7 +57,7 @@ if (guardrails.fullRawPayloadWritten !== false) blocks.push("full_raw_payload_wr
 const verification = {
   status: blocks.length ? "failed" : "passed",
   runner: "verify_football_truth_global_macro_official_host_wave_batch",
-  contractVersion: 1,
+  contractVersion: 2,
   batchId,
   reportPath: rel(reportPath),
   rowsPath: rel(rowsPath),
@@ -60,10 +65,15 @@ const verification = {
   reportSha256: await sha256(reportPath),
   rowsSha256: await sha256(rowsPath),
   verified: {
+    expectedBatch: expectedBatch ? {
+      batchId: expectedBatch.batchId,
+      targetCount: expectedBatch.targetCount,
+      plannedUrlCount: expectedBatch.plannedUrlCount
+    } : null,
     summary: report.summary,
     guardrailsHeld: blocks.length === 0
   },
-  conclusion: "Global macro official-host wave batch is verified. It runs one full macro batch through controlled official-host fetch, route scoring, extraction, salvage, and classification without canonical/lifecycle/production/truth write.",
+  conclusion: "Global macro official-host wave batch is verified against the dynamic batch target from the macro plan. It performs controlled official-host fetch, route scoring, extraction, salvage, and classification without canonical/lifecycle/production/truth write.",
   blocks
 };
 
