@@ -1,0 +1,247 @@
+{
+  "counts": {
+    "previousCompletedVerifiedProof": 14,
+    "countableCoverageNow": 14,
+    "reviewOnlyCandidateEligibleAfterExplicitApproval": 1,
+    "zeroPlayedStartDateMissing": 2,
+    "batch3ProofShapePassedNonzeroNeedsSeasonReview": 3,
+    "batch3ExtractionReviewRequired": 4,
+    "batch3NoExtractableTable": 1,
+    "batch3RenderedOrApiRequired": 17,
+    "batch3HtmlTableSurfaceReviewRequired": 3,
+    "batch3IdentityReviewRequired": 4,
+    "batch3RouteNeedsReview": 4,
+    "batch3RouteNotFound": 4,
+    "sameSourceSameRowsCollisionGroups": 2
+  },
+  "lanes": {
+    "previousCompletedVerifiedProofSlugs": [
+      "esp.1",
+      "esp.2",
+      "ger.1",
+      "ger.2",
+      "ger.3",
+      "cro.1",
+      "sco.1",
+      "sco.2",
+      "ned.1",
+      "den.1",
+      "jpn.1",
+      "eng.1",
+      "swe.1",
+      "swe.2"
+    ],
+    "currentRestartSchedulerCandidateSlugs": [
+      "swe.1",
+      "swe.2"
+    ],
+    "reviewOnlyCandidateEligibleAfterExplicitApprovalSlugs": [
+      "ksa.1"
+    ],
+    "zeroPlayedStartDateMissingSlugs": [
+      "jpn.2",
+      "srb.1"
+    ],
+    "batch3RoutePassedCandidateSlugs": [
+      "bol.1",
+      "bol.2",
+      "can.1",
+      "chi.1",
+      "chi.2",
+      "col.1",
+      "col.2",
+      "crc.1",
+      "ecu.1",
+      "ecu.2",
+      "gua.1",
+      "gua.2",
+      "ind.1",
+      "ind.2",
+      "mys.1",
+      "nzl.1",
+      "nzl.2",
+      "pan.1",
+      "pan.2",
+      "par.1",
+      "par.2",
+      "per.1",
+      "per.2",
+      "tha.1",
+      "tha.2",
+      "uru.1",
+      "uru.2",
+      "ven.1",
+      "ven.2",
+      "vie.1",
+      "vie.2",
+      "wal.2"
+    ],
+    "batch3RouteNeedsReviewSlugs": [
+      "can.2",
+      "hon.1",
+      "slv.1",
+      "slv.2"
+    ],
+    "batch3RouteNotFoundSlugs": [
+      "crc.2",
+      "hon.2",
+      "idn.1",
+      "idn.2"
+    ],
+    "batch3HtmlTableExtractionProbeReadySlugs": [
+      "col.1",
+      "crc.1",
+      "gua.1",
+      "ind.2",
+      "pan.1",
+      "pan.2",
+      "ven.1",
+      "ven.2"
+    ],
+    "batch3RenderedOrApiRequiredSlugs": [
+      "bol.1",
+      "bol.2",
+      "can.1",
+      "chi.1",
+      "chi.2",
+      "ecu.1",
+      "ecu.2",
+      "gua.2",
+      "ind.1",
+      "nzl.1",
+      "nzl.2",
+      "par.1",
+      "par.2",
+      "per.1",
+      "uru.1",
+      "uru.2",
+      "wal.2"
+    ],
+    "batch3HtmlTableReviewRequiredSlugs": [
+      "col.2",
+      "vie.1",
+      "vie.2"
+    ],
+    "batch3IdentityReviewRequiredSlugs": [
+      "mys.1",
+      "per.2",
+      "tha.1",
+      "tha.2"
+    ],
+    "batch3ProofShapePassedNonzeroNeedsSeasonReviewSlugs": [
+      "crc.1",
+      "ven.1",
+      "ven.2"
+    ],
+    "batch3ProofShapePassedZeroPlayedSlugs": [],
+    "batch3ExtractionReviewRequiredSlugs": [
+      "col.1",
+      "gua.1",
+      "pan.1",
+      "pan.2"
+    ],
+    "batch3NoExtractableTableSlugs": [
+      "ind.2"
+    ],
+    "sameSourceSameRowsCollisionGroups": [
+      [
+        "ven.1",
+        "ven.2"
+      ],
+      [
+        "pan.1",
+        "pan.2"
+      ]
+    ],
+    "sameSourceSameRowsCollisionSlugs": [
+      "pan.1",
+      "pan.2",
+      "ven.1",
+      "ven.2"
+    ],
+    "knownBlockedOrAvoidBlindRetrySlugs": [
+      "ita.1",
+      "nor.2",
+      "cyp.2"
+    ]
+  },
+  "priorityOrder": [
+    {
+      "bucket": "candidate_after_explicit_approval",
+      "slugs": [
+        "ksa.1"
+      ],
+      "action": "only after explicit approval; still no production write"
+    },
+    {
+      "bucket": "proof_shape_nonzero_needs_season_and_league_review",
+      "slugs": [
+        "crc.1",
+        "ven.1",
+        "ven.2"
+      ],
+      "action": "resolve season/league identity and collision flags before candidate write"
+    },
+    {
+      "bucket": "html_extraction_review_required",
+      "slugs": [
+        "col.1",
+        "col.2",
+        "gua.1",
+        "pan.1",
+        "pan.2",
+        "vie.1",
+        "vie.2"
+      ],
+      "action": "custom parser/review only if enough value"
+    },
+    {
+      "bucket": "rendered_or_api_factory_planning",
+      "slugs": [
+        "bol.1",
+        "bol.2",
+        "can.1",
+        "chi.1",
+        "chi.2",
+        "ecu.1",
+        "ecu.2",
+        "gua.2",
+        "ind.1",
+        "nzl.1",
+        "nzl.2",
+        "par.1",
+        "par.2",
+        "per.1",
+        "uru.1",
+        "uru.2",
+        "wal.2"
+      ],
+      "action": "group by host family and build rendered/API adapters, not one-off probes"
+    },
+    {
+      "bucket": "zero_played_start_date_missing",
+      "slugs": [
+        "jpn.2",
+        "srb.1"
+      ],
+      "action": "bounded start-date evidence refresh only"
+    },
+    {
+      "bucket": "park_or_low_priority",
+      "slugs": [
+        "can.2",
+        "crc.2",
+        "cyp.2",
+        "hon.1",
+        "hon.2",
+        "idn.1",
+        "idn.2",
+        "ita.1",
+        "nor.2",
+        "slv.1",
+        "slv.2"
+      ],
+      "action": "park unless high value or new official route evidence exists"
+    }
+  ]
+}
