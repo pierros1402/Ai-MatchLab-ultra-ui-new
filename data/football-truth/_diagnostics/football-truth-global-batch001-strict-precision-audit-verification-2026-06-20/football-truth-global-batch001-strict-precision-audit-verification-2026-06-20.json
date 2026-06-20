@@ -1,0 +1,60 @@
+{
+  "status": "passed",
+  "runner": "verify_global_batch001_strict_precision_audit",
+  "contractVersion": 1,
+  "auditPath": "data/football-truth/_diagnostics/football-truth-global-batch001-strict-precision-audit-2026-06-20/football-truth-global-batch001-strict-precision-audit-2026-06-20.json",
+  "rowsPath": "data/football-truth/_diagnostics/football-truth-global-batch001-strict-precision-audit-2026-06-20/football-truth-global-batch001-strict-precision-audit-rows-2026-06-20.jsonl",
+  "verificationPath": "data/football-truth/_diagnostics/football-truth-global-batch001-strict-precision-audit-verification-2026-06-20/football-truth-global-batch001-strict-precision-audit-verification-2026-06-20.json",
+  "auditSha256": "288c1e18045f656268f2122fa7feb9547ba2c965b4808f18c9a55ce6f06f702e",
+  "rowsSha256": "44c2f9c94b59ba8e5264d1f07b130a1809533e61bb37a5bea5672279e2b8ee2e",
+  "verified": {
+    "targetCount": 80,
+    "inputInflatedPassCount": 74,
+    "strictAcceptedForNextGateCount": 7,
+    "strictRejectedOrReviewCount": 73,
+    "strictLaneCounts": {
+      "strict_official_route_candidate_needs_identity_surface_gate": 7,
+      "strict_rejected_wrong_country_or_contaminant_host": 58,
+      "input_not_found_or_failed": 4,
+      "strict_rejected_non_official_or_media": 5,
+      "strict_review_official_host_low_value_surface": 2,
+      "strict_review_official_host_wrong_league_or_level": 2,
+      "input_needs_review_not_accepted": 2
+    },
+    "strictAcceptedSlugs": [
+      "arg.1",
+      "aut.1",
+      "bel.1",
+      "cyp.1",
+      "aut.2",
+      "ind.2",
+      "irl.1"
+    ],
+    "topSelectedHostFrequency": {
+      "the-aiff.com": 52,
+      "efl.com": 6,
+      "leagueofireland.ie": 2,
+      "lequipe.fr": 2,
+      "slgr.gr": 2,
+      "laliga.com": 2,
+      "afa.com.ar": 1,
+      "bundesliga.at": 1,
+      "proleague.be": 1,
+      "cfa.com.cy": 1,
+      "ole.com.ar": 1,
+      "2liga.at": 1,
+      "semafor.hns.family": 1,
+      "espn.nl": 1,
+      "caykurrizespor.org.tr": 1,
+      "alfayhasc.com": 1,
+      "liga1.pe": 1,
+      "skysports.com": 1,
+      "fai.ie": 1,
+      "supersport.com": 1
+    },
+    "falsePositiveInflationDetected": true,
+    "guardrailsHeld": true
+  },
+  "conclusion": "Strict precision audit is verified. It downgrades the inflated batch001 local-evidence passes by applying official-host, country, contaminant-host, non-official media, fetch-status, and league-level checks. No fetch/search/write/truth action was executed.",
+  "blocks": []
+}
