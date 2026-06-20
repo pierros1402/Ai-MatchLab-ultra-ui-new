@@ -1,0 +1,163 @@
+{
+  "status": "passed",
+  "runner": "football_truth_post_rollup_action_batch",
+  "contractVersion": 1,
+  "generatedAt": "2026-06-20T09:56:37.338Z",
+  "output": "data/football-truth/_diagnostics/football-truth-post-rollup-action-batch-2026-06-20/football-truth-post-rollup-action-batch-2026-06-20.json",
+  "rowsOutput": "data/football-truth/_diagnostics/football-truth-post-rollup-action-batch-2026-06-20/football-truth-post-rollup-action-batch-rows-2026-06-20.jsonl",
+  "inputs": {
+    "rollupPath": "data/football-truth/_diagnostics/football-truth-global-macro-official-host-wave-rollup-2026-06-20/football-truth-global-macro-official-host-wave-rollup-2026-06-20.json",
+    "rollupRowsPath": "data/football-truth/_diagnostics/football-truth-global-macro-official-host-wave-rollup-2026-06-20/football-truth-global-macro-official-host-wave-rollup-rows-2026-06-20.jsonl"
+  },
+  "summary": {
+    "actionTargetCount": 10,
+    "actionLaneCounts": {
+      "proof_shape_needs_season_league_review": 2,
+      "zero_played_start_date_lane": 1,
+      "rendered_or_api_required": 4,
+      "extraction_review_required": 3
+    },
+    "proofShapeNeedsSeasonLeagueReviewSlugs": [
+      "bih.2",
+      "mne.2"
+    ],
+    "zeroPlayedStartDateLaneSlugs": [
+      "ned.2"
+    ],
+    "renderedOrApiRequiredSlugs": [
+      "eng.4",
+      "eng.5",
+      "gha.2",
+      "irl.2"
+    ],
+    "extractionReviewRequiredSlugs": [
+      "arm.2",
+      "egy.2",
+      "qat.2"
+    ],
+    "suppressedLongTailCount": 284,
+    "candidateAlreadyWrittenReviewOnlySlugs": [
+      "bih.1",
+      "ita.2",
+      "mne.1"
+    ],
+    "acceptedNowCount": 0,
+    "nextRecommendedLane": "run rendered/API extraction for renderedOrApiRequiredSlugs or start-date evidence for zeroPlayedStartDateLane; no more blind long-tail fetches"
+  },
+  "decision": {
+    "blindLongTailFetchesStopped": true,
+    "immediateNextBestLane": "rendered_or_api_required",
+    "immediateNextBestSlugs": [
+      "eng.4",
+      "eng.5",
+      "gha.2",
+      "irl.2"
+    ],
+    "reason": "proof-shape review candidates require human approval/review; rendered/API queue may produce additional proof-shape rows without expanding long-tail allowlists"
+  },
+  "guardrails": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "reviewOnlyCandidateWriteExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "lifecycleWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false,
+    "fullRawPayloadWritten": false
+  },
+  "rows": [
+    {
+      "slug": "bih.2",
+      "actionLane": "proof_shape_needs_season_league_review",
+      "executionClass": "review_board_only",
+      "immediateAction": "eligible for future review-only candidate write only after season/league identity review",
+      "sourceRollupLane": "macro_proof_shape_nonzero_needs_season_league_review",
+      "priority": 1,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "mne.2",
+      "actionLane": "proof_shape_needs_season_league_review",
+      "executionClass": "review_board_only",
+      "immediateAction": "eligible for future review-only candidate write only after season/league identity review",
+      "sourceRollupLane": "macro_proof_shape_nonzero_needs_season_league_review",
+      "priority": 1,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "ned.2",
+      "actionLane": "zero_played_start_date_lane",
+      "executionClass": "start_date_evidence_required",
+      "immediateAction": "needs governed start-date evidence before lifecycle/current-season handling",
+      "sourceRollupLane": "zero_played_start_date_lane",
+      "priority": 2,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "eng.4",
+      "actionLane": "rendered_or_api_required",
+      "executionClass": "rendered_api_route_planning",
+      "immediateAction": "requires browser/API extraction path, not static HTML",
+      "sourceRollupLane": "macro_rendered_or_api_required",
+      "priority": 3,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "eng.5",
+      "actionLane": "rendered_or_api_required",
+      "executionClass": "rendered_api_route_planning",
+      "immediateAction": "requires browser/API extraction path, not static HTML",
+      "sourceRollupLane": "macro_rendered_or_api_required",
+      "priority": 3,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "gha.2",
+      "actionLane": "rendered_or_api_required",
+      "executionClass": "rendered_api_route_planning",
+      "immediateAction": "requires browser/API extraction path, not static HTML",
+      "sourceRollupLane": "macro_rendered_or_api_required",
+      "priority": 3,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "irl.2",
+      "actionLane": "rendered_or_api_required",
+      "executionClass": "rendered_api_route_planning",
+      "immediateAction": "requires browser/API extraction path, not static HTML",
+      "sourceRollupLane": "macro_rendered_or_api_required",
+      "priority": 3,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "arm.2",
+      "actionLane": "extraction_review_required",
+      "executionClass": "parser_improvement_backlog",
+      "immediateAction": "park for later parser improvement; not immediate production lane",
+      "sourceRollupLane": "macro_extraction_review_required",
+      "priority": 4,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "egy.2",
+      "actionLane": "extraction_review_required",
+      "executionClass": "parser_improvement_backlog",
+      "immediateAction": "park for later parser improvement; not immediate production lane",
+      "sourceRollupLane": "macro_extraction_review_required",
+      "priority": 4,
+      "writeNowAllowed": false
+    },
+    {
+      "slug": "qat.2",
+      "actionLane": "extraction_review_required",
+      "executionClass": "parser_improvement_backlog",
+      "immediateAction": "park for later parser improvement; not immediate production lane",
+      "sourceRollupLane": "macro_extraction_review_required",
+      "priority": 4,
+      "writeNowAllowed": false
+    }
+  ],
+  "rowSetSha256": "1824adf99f1167e27069508732f39868c07ff5fc85618641f85ccbde420f7c76",
+  "blocks": []
+}

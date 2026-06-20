@@ -1,0 +1,61 @@
+{
+  "status": "passed",
+  "runner": "verify_football_truth_post_rollup_action_batch",
+  "contractVersion": 1,
+  "reportPath": "data/football-truth/_diagnostics/football-truth-post-rollup-action-batch-2026-06-20/football-truth-post-rollup-action-batch-2026-06-20.json",
+  "rowsPath": "data/football-truth/_diagnostics/football-truth-post-rollup-action-batch-2026-06-20/football-truth-post-rollup-action-batch-rows-2026-06-20.jsonl",
+  "verificationPath": "data/football-truth/_diagnostics/football-truth-post-rollup-action-batch-verification-2026-06-20/football-truth-post-rollup-action-batch-verification-2026-06-20.json",
+  "reportSha256": "02398cb2cbb6ef9d2fb630dc0aca701ffacf67999344a1b30ba07eb1f12e166d",
+  "rowsSha256": "542b94c8606f0559b22aa272f2d7f09aba78fb691869a1d0dcbb4fcb45952d84",
+  "verified": {
+    "summary": {
+      "actionTargetCount": 10,
+      "actionLaneCounts": {
+        "proof_shape_needs_season_league_review": 2,
+        "zero_played_start_date_lane": 1,
+        "rendered_or_api_required": 4,
+        "extraction_review_required": 3
+      },
+      "proofShapeNeedsSeasonLeagueReviewSlugs": [
+        "bih.2",
+        "mne.2"
+      ],
+      "zeroPlayedStartDateLaneSlugs": [
+        "ned.2"
+      ],
+      "renderedOrApiRequiredSlugs": [
+        "eng.4",
+        "eng.5",
+        "gha.2",
+        "irl.2"
+      ],
+      "extractionReviewRequiredSlugs": [
+        "arm.2",
+        "egy.2",
+        "qat.2"
+      ],
+      "suppressedLongTailCount": 284,
+      "candidateAlreadyWrittenReviewOnlySlugs": [
+        "bih.1",
+        "ita.2",
+        "mne.1"
+      ],
+      "acceptedNowCount": 0,
+      "nextRecommendedLane": "run rendered/API extraction for renderedOrApiRequiredSlugs or start-date evidence for zeroPlayedStartDateLane; no more blind long-tail fetches"
+    },
+    "decision": {
+      "blindLongTailFetchesStopped": true,
+      "immediateNextBestLane": "rendered_or_api_required",
+      "immediateNextBestSlugs": [
+        "eng.4",
+        "eng.5",
+        "gha.2",
+        "irl.2"
+      ],
+      "reason": "proof-shape review candidates require human approval/review; rendered/API queue may produce additional proof-shape rows without expanding long-tail allowlists"
+    },
+    "guardrailsHeld": true
+  },
+  "conclusion": "Post-rollup action batch is verified. It consolidates the remaining useful queue after long-tail suppression without fetch/search/write/truth action, and selects rendered/API as the next immediate lane.",
+  "blocks": []
+}
