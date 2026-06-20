@@ -1,0 +1,52 @@
+{
+  "status": "passed",
+  "runner": "diagnostic_cooccurrence_hygiene_policy",
+  "contractVersion": 1,
+  "output": "data/football-truth/_diagnostics/diagnostic-cooccurrence-hygiene-policy-2026-06-20/diagnostic-cooccurrence-hygiene-policy-2026-06-20.json",
+  "purpose": "Prevent old aggregate diagnostics from reintroducing false source-family/route assignments through co-occurrence.",
+  "ruleSet": {
+    "historicalDiagnosticsAreAuditOnly": true,
+    "aggregateDiagnosticsCannotAssignSourceFamily": true,
+    "aggregateDiagnosticsCannotAssignOfficialRoute": true,
+    "aggregateDiagnosticsCannotPromoteSlugFamilyPairs": true,
+    "familyAssignmentRequiresPerSlugRouteEvidence": true,
+    "perSlugRouteEvidenceMustBeSameRowOrSameObject": true,
+    "sourceFamilyMustBeExplicitFieldNotTextCooccurrence": true,
+    "routeUrlMustBeExplicitFieldNotTextCooccurrence": true,
+    "oldDiagnosticsMayOnlyContributeLiteralSlugPresence": true,
+    "oldDiagnosticsMayContributePriorRunStatusOnlyWhenStatusFieldIsExplicit": true,
+    "selfGeneratedPlannerFilesMustNotBeUsedAsEvidence": true,
+    "productionOrTruthInferenceFromDiagnosticsForbidden": true
+  },
+  "bannedEvidencePatterns": [
+    "family assigned because slug and family keyword appear somewhere in same large JSON file",
+    "source route assigned because slug and official domain appear in different rows of same diagnostic",
+    "safe runner inferred because historical runner name appears in same directory",
+    "current planner output used as its own evidence",
+    "aggregate inventory file used as per-slug source authority"
+  ],
+  "allowedEvidencePatterns": [
+    "same JSON object has slug plus explicit sourceFamily plus explicit routeUrl",
+    "same JSONL row has slug plus explicit sourceFamily plus explicit routeUrl",
+    "verified proof output has slug plus validated row counts and guardrails",
+    "approval board row has slug plus eligible status after verified proof",
+    "candidate file has slug plus provenance hashes to verified proof and approval board"
+  ],
+  "requiredFuturePlannerAssertions": {
+    "noFamilyClaimWithoutPerSlugRouteEvidence": true,
+    "cooccurrenceDiagnosticsExcludedFromFamilyAttribution": true,
+    "oldDiagnosticsNotDeletedBecauseAuditTrail": true,
+    "diagnosticsQuarantinedForAttribution": true
+  },
+  "guardrails": {
+    "searchExecutedNowCount": 0,
+    "fetchExecutedNowCount": 0,
+    "canonicalWriteExecutedNowCount": 0,
+    "lifecycleWriteExecutedNowCount": 0,
+    "productionWriteExecutedNowCount": 0,
+    "truthAssertionExecutedNowCount": 0,
+    "rawPayloadCommitted": false,
+    "fullRawPayloadWritten": false
+  },
+  "policySha256": "902749c8e44b1576052582cb6becb2a327c46aa009994d9db3d5c1d599467839"
+}
