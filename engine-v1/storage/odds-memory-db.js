@@ -191,6 +191,48 @@ export function getOddsForDay(dayKey) {
   return { ok: true, dayKey: dayKey || null, count: matches.length, matches };
 }
 
+// ─── Deployed artifact readers (what the committed snapshot serves) ─────────────
+// In production the hourly workflow commits only deploy-snapshots/{day}/odds.json
+// (not the live capture store), so the served endpoints read from THAT file and
+// fall back to the live store locally.
+
+function readDeployedOddsFile(dayKey) {
+  try {
+    return JSON.parse(fs.readFileSync(resolveDataPath("deploy-snapshots", dayKey, "odds.json"), "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+export function getDeployedOddsDay(dayKey) {
+  const snap = readDeployedOddsFile(dayKey);
+  if (snap && Array.isArray(snap.matches)) {
+    return { ok: true, dayKey, count: snap.count ?? snap.matches.length, matches: snap.matches, source: "deploy_snapshot" };
+  }
+  return { ...getOddsForDay(dayKey), source: "live_store" };
+}
+
+// Per-match snapshot (frontend shape) sourced from the deployed day file, with a
+// fallback to the live store. Matches by our matchId.
+export function getDeployedOddsSnapshot(matchId, market = "1X2", dayKey) {
+  const id = String(matchId);
+  const days = dayKey ? [dayKey] : [];
+  for (const d of days) {
+    const snap = readDeployedOddsFile(d);
+    const m = snap?.matches?.find(x => String(x.matchId) === id);
+    if (m?.market) {
+      const rows = Object.keys(m.market.current).map(sel => ({
+        selection: sel, open: m.market.open[sel], current: m.market.current[sel], delta: m.market.delta[sel]
+      }));
+      return { ok: true, matchId: id, market, snapshot: { "Market": rows }, aiAssessment: m.aiAssessment || null };
+    }
+  }
+  // fallback to live store
+  const live = getOddsSnapshot(id, market);
+  const full = readOdds(id);
+  return { ...live, aiAssessment: full?.aiAssessment || null };
+}
+
 export function getOddsSummary() {
   let total = 0;
   let markets = 0;
