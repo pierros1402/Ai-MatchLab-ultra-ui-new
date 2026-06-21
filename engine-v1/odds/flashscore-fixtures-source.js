@@ -58,6 +58,9 @@ export function parseFlashscoreFeed(text) {
     if (f.AA && f.AE && f.AF) {
       const ts = Number(f.AD);
       const kickoffUtc = Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null;
+      // AG/AH = current/final scores; AB = status code (3 = finished on Flashscore).
+      const sh = f.AG !== undefined && f.AG !== "" ? Number(f.AG) : null;
+      const sa = f.AH !== undefined && f.AH !== "" ? Number(f.AH) : null;
       out.push({
         matchId: f.AA,
         leaguePath: path,
@@ -66,7 +69,11 @@ export function parseFlashscoreFeed(text) {
         home: f.AE.trim(),
         away: f.AF.trim(),
         kickoffUtc,
-        kickoffTs: Number.isFinite(ts) ? ts : null
+        kickoffTs: Number.isFinite(ts) ? ts : null,
+        scoreHome: Number.isFinite(sh) ? sh : null,
+        scoreAway: Number.isFinite(sa) ? sa : null,
+        statusCode: f.AB || null,
+        finished: f.AB === "3"
       });
     }
   }
