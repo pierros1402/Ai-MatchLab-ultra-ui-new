@@ -57,7 +57,10 @@
 
       if (matches.length) {
         window.AIML_LIVE_SCORES = matches;
-        emit("live:update", { matches: matches });
+        const payload = { date: new Date().toISOString().slice(0, 10), matches: matches, total: matches.length };
+        // Become the single live source the panels boot-replay from.
+        window.__AIML_LAST_LIVE = payload;
+        emit("live:update", payload);
       }
     } catch (err) {
       /* network blip — next poll retries */
