@@ -71,8 +71,8 @@ export function marketProbabilities(lambdaHome, lambdaAway) {
   }
 
   let pHome = 0, pDraw = 0, pAway = 0;
-  let pOver25 = 0, pUnder25 = 0;
-  let pBttsYes = 0, pBttsNo = 0;
+  let pOver15 = 0, pOver25 = 0, pOver35 = 0;
+  let pBttsYes = 0;
 
   for (let h = 0; h <= MAX_GOALS; h++) {
     for (let a = 0; a <= MAX_GOALS; a++) {
@@ -83,17 +83,26 @@ export function marketProbabilities(lambdaHome, lambdaAway) {
       else if (h === a) pDraw += p;
       else pAway += p;
 
-      if (h + a > 2.5) pOver25 += p; else pUnder25 += p;
-      if (h > 0 && a > 0) pBttsYes += p; else pBttsNo += p;
+      const tot = h + a;
+      if (tot > 1.5) pOver15 += p;
+      if (tot > 2.5) pOver25 += p;
+      if (tot > 3.5) pOver35 += p;
+      if (h > 0 && a > 0) pBttsYes += p;
     }
   }
 
-  // Normalise away the negligible mass beyond the grid.
+  // Normalise the 1X2 mass (negligible tail beyond the grid).
   const total = pHome + pDraw + pAway || 1;
+  const home = pHome / total, draw = pDraw / total, away = pAway / total;
+
   return {
-    "1X2":   { home: pHome / total, draw: pDraw / total, away: pAway / total },
-    "OU2.5": { over: pOver25, under: pUnder25 },
-    "BTTS":  { yes: pBttsYes, no: pBttsNo }
+    // UI market keys: 1X2, DC, OU15, OU25, OU35, BTTS
+    "1X2":  { home, draw, away },
+    "DC":   { "1X": home + draw, "12": home + away, "X2": draw + away },
+    "OU15": { over: pOver15, under: 1 - pOver15 },
+    "OU25": { over: pOver25, under: 1 - pOver25 },
+    "OU35": { over: pOver35, under: 1 - pOver35 },
+    "BTTS": { yes: pBttsYes, no: 1 - pBttsYes }
   };
 }
 
