@@ -15,7 +15,7 @@
 
 import express from "express";
 import { athensDayKey } from "../core/daykey.js";
-import { getOddsSnapshot, getOddsForDay, readOdds } from "../storage/odds-memory-db.js";
+import { getDeployedOddsSnapshot, getDeployedOddsDay } from "../storage/odds-memory-db.js";
 
 const app = express();
 const PORT = process.env.ODDS_PORT || 3020;
@@ -29,15 +29,14 @@ app.use((req, res, next) => {
 function oddsHandler(req, res) {
   const matchId = String(req.query.matchId || req.query.id || "");
   const market = String(req.query.market || "1X2");
+  const date = String(req.query.date || athensDayKey());
   if (!matchId) return res.status(400).json({ ok: false, error: "missing_matchId" });
-  const snap = getOddsSnapshot(matchId, market);
-  const full = readOdds(matchId);
-  res.json({ ...snap, aiAssessment: full?.aiAssessment || null });
+  res.json(getDeployedOddsSnapshot(matchId, market, date));
 }
 
 app.get("/odds", oddsHandler);
 app.get("/api/odds", oddsHandler);
-app.get("/odds/day", (req, res) => res.json(getOddsForDay(String(req.query.date || athensDayKey()))));
+app.get("/odds/day", (req, res) => res.json(getDeployedOddsDay(String(req.query.date || athensDayKey()))));
 app.get("/health", (_req, res) => res.json({ ok: true, service: "odds-server", today: athensDayKey() }));
 
 app.listen(PORT, "0.0.0.0", () => {
