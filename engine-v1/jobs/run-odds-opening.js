@@ -31,6 +31,7 @@ import { resolveInternational } from "../odds/international-competitions.js";
 import { recordOddsSnapshot, getOddsSummary } from "../storage/odds-memory-db.js";
 import { readStandings } from "../storage/standings-memory-db.js";
 import { readLeagueState } from "../storage/league-memory-db.js";
+import { teamFormRates } from "../storage/results-memory-db.js";
 
 function log(...a) { console.log("[run-odds-opening]", ...a); }
 
@@ -196,7 +197,12 @@ async function main() {
     // Our AI assessment for domestic matches with standings.
     let aiAssessment = null;
     if (!isIntl && home && away) {
-      const p = priceMatchFromStandings(home, away, { leagueAvgGoalsPerTeam: league.leagueAvg });
+      // Recent form (from accumulated results, keyed by Flashscore team names).
+      const homeForm = teamFormRates(slug, fx.home);
+      const awayForm = teamFormRates(slug, fx.away);
+      const p = priceMatchFromStandings(home, away, {
+        leagueAvgGoalsPerTeam: league.leagueAvg, homeForm, awayForm
+      });
       // All markets the UI offers: 1X2, DC, OU15, OU25, OU35, BTTS.
       aiAssessment = { model: p.model, markets: p.markets };
       stats.withAiAssessment++;
