@@ -347,7 +347,10 @@ async function loadLive(dateYmd) {
     window.__AIML_LAST_LIVE = payload;
 
     if (typeof window.emit === "function") {
-      window.emit("live:update", payload);
+      // live:update is now driven solely by live-overlay.js (worker). Emitting
+      // here would clobber it with fixtures-derived (SCHEDULED) data → flicker.
+      // window.emit("live:update", payload);
+      void payload;
     }
 
     liveLog("[LIVE] today-derived snapshot", mergedLiveMatches.length);
@@ -366,7 +369,10 @@ async function loadLive(dateYmd) {
     window.__AIML_LAST_LIVE = payload;
 
     if (typeof window.emit === "function") {
-      window.emit("live:update", payload);
+      // live:update is now driven solely by live-overlay.js (worker). Emitting
+      // here would clobber it with fixtures-derived (SCHEDULED) data → flicker.
+      // window.emit("live:update", payload);
+      void payload;
     }
 
     return payload;
@@ -406,7 +412,9 @@ async function loadLive(dateYmd) {
       window.__AIML_LAST_LIVE = livePayload;
 
       if (typeof window.emit === "function") {
-        window.emit("live:update", livePayload);
+        // live:update is now driven solely by live-overlay.js (worker).
+        // window.emit("live:update", livePayload);
+        void livePayload;
       }
 
     } catch (e) {
