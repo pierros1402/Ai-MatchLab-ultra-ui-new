@@ -24,7 +24,7 @@ import { getOddsForDay } from "../storage/odds-memory-db.js";
 function contentHash(matches) {
   const stable = matches.map(m => ({
     matchId: m.matchId, leagueSlug: m.leagueSlug, competition: m.competition,
-    home: m.home, away: m.away, dayKey: m.dayKey, kickoffLocal: m.kickoffLocal,
+    home: m.home, away: m.away, dayKey: m.dayKey, kickoffUtc: m.kickoffUtc || m.kickoffLocal,
     market: m.market, ai: m.aiAssessment?.odds || null
   }));
   return crypto.createHash("sha1").update(JSON.stringify(stable)).digest("hex");

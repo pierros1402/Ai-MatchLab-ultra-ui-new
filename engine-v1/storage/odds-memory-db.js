@@ -177,9 +177,10 @@ export function getOddsForDay(dayKey) {
         home: d.home,
         away: d.away,
         dayKey: d.dayKey,
-        kickoffLocal: d.kickoffLocal,
+        kickoffUtc: d.kickoffUtc || null,
+        kickoffLocal: d.kickoffLocal || null,
         source: d.source || null,
-        market: m1x2 ? { open: m1x2.open, current: m1x2.current, delta: m1x2.delta } : null,
+        market: (m1x2 && m1x2.open) ? { open: m1x2.open, current: m1x2.current, delta: m1x2.delta } : null,
         aiAssessment: d.aiAssessment || null,
         updatedAt: d.updatedAt
       });
@@ -187,7 +188,7 @@ export function getOddsForDay(dayKey) {
   } catch {
     // dir not created yet
   }
-  matches.sort((a, b) => String(a.kickoffLocal || "").localeCompare(String(b.kickoffLocal || "")));
+  matches.sort((a, b) => String(a.kickoffUtc || a.kickoffLocal || "").localeCompare(String(b.kickoffUtc || b.kickoffLocal || "")));
   return { ok: true, dayKey: dayKey || null, count: matches.length, matches };
 }
 
