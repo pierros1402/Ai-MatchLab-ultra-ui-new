@@ -28,10 +28,13 @@
     const mk = m.market || {};
     const ai = (m.aiAssessment && m.aiAssessment.odds) || {};
     const comp = m.competition || m.leagueSlug || "";
+    const ko = m.kickoffUtc
+      ? new Date(m.kickoffUtc).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : (m.kickoffLocal ? m.kickoffLocal.slice(11) : "");
     return `<tr>
       <td style="text-align:left">
         <strong>${m.home || "?"}</strong> v <strong>${m.away || "?"}</strong>
-        <div style="opacity:.6;font-size:11px">${comp}${m.kickoffLocal ? " · " + m.kickoffLocal.slice(11) : ""}</div>
+        <div style="opacity:.6;font-size:11px">${comp}${ko ? " · " + ko : ""}</div>
       </td>
       <td>${mk.open ? driftCell(mk.open.home, mk.current.home, mk.delta.home) : "–"}</td>
       <td>${mk.open ? driftCell(mk.open.draw, mk.current.draw, mk.delta.draw) : "–"}</td>

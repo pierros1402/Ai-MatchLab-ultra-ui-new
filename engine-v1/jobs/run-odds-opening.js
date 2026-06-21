@@ -1,23 +1,21 @@
 /**
  * run-odds-opening.js
  *
- * Fully autonomous fixtures + odds capture. NO ESPN, NO odds API — everything is
- * read from the open web (BetExplorer static HTML), exactly the way an analyst
- * would read a screen.
+ * Fully autonomous fixtures + odds capture. NO ESPN, NO odds API.
  *
- * How a scraped match is attributed to one of our leagues WITHOUT any fixtures
- * feed: the validated standings tables (Part 1) double as a team→league index.
- * If both teams of a scraped match appear in the SAME active league's standings,
- * that match belongs to that league — and we already hold its stats.
+ *   FIXTURES (driver):   the whole day's matches across every league from the
+ *                        Flashscore public feed (hundreds of matches) — wide
+ *                        coverage + accurate kickoff times.
+ *   ODDS (displayed):    real 1X2 bookmaker odds from BetExplorer, matched to each
+ *                        fixture by team names; OPENING frozen on first capture,
+ *                        drift on later runs.
+ *   ASSESSMENT (details):our Poisson fair odds over the standings, as aiAssessment.
  *
- *   PRIMARY (displayed):  real 1X2 odds; OPENING frozen on first capture, drift
- *                         shown on every later run.
- *   SECONDARY (details):  our AI assessment (Poisson fair odds over the standings)
- *                         attached per match as `aiAssessment`.
+ * Attribution to one of our leagues uses the validated standings as a team→league
+ * index (both teams in the same active league's table), plus the international
+ * competition resolver for World Cup / qualifiers.
  *
- * Usage:
- *   node engine-v1/jobs/run-odds-opening.js [--summary]
- *
+ * Usage: node engine-v1/jobs/run-odds-opening.js [--summary]
  * Guardrails: canonicalWrites 0, productionWrite false (reads public web only).
  */
 
@@ -27,6 +25,7 @@ import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { fetchMarketOdds } from "../odds/betexplorer-odds-source.js";
+import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { priceMatchFromStandings } from "../odds/ai-odds-model.js";
 import { resolveInternational } from "../odds/international-competitions.js";
 import { recordOddsSnapshot, getOddsSummary } from "../storage/odds-memory-db.js";
@@ -106,11 +105,36 @@ function attributeMatch(home, away, leagues) {
   return best;
 }
 
-function matchId(eventId, slug, home, away) {
-  if (eventId) return `be_${eventId}`;
-  const h = normalizeTeam(home).replace(/\s+/g, "-");
-  const a = normalizeTeam(away).replace(/\s+/g, "-");
-  return `be_${slug}_${h}__${a}`;
+// Athens (Europe/Athens) day key for an absolute UTC instant.
+const ATHENS_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Europe/Athens", year: "numeric", month: "2-digit", day: "2-digit"
+});
+function athensDayKeyFromUtc(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : ATHENS_FMT.format(d);
+}
+
+// BetExplorer odds pool indexed by normalized "home|away" for fast lookup.
+function buildOddsPool(rows) {
+  const map = new Map();
+  for (const r of rows) {
+    map.set(`${normalizeTeam(r.home)}|${normalizeTeam(r.away)}`, r);
+  }
+  return { rows, map };
+}
+
+function lookupOdds(home, away, pool) {
+  const key = `${normalizeTeam(home)}|${normalizeTeam(away)}`;
+  if (pool.map.has(key)) return pool.map.get(key);
+  // fuzzy fallback
+  let best = null, bestScore = 0;
+  for (const r of pool.rows) {
+    const s = (tokenJaccard(normalizeTeam(home), normalizeTeam(r.home)) +
+               tokenJaccard(normalizeTeam(away), normalizeTeam(r.away))) / 2;
+    if (s > bestScore) { bestScore = s; best = r; }
+  }
+  return bestScore >= 0.6 ? best : null;
 }
 
 async function main() {
@@ -120,54 +144,55 @@ async function main() {
     return;
   }
 
-  // Athens-anchored capture window: today + next N days ("fixtures της ημέρας
-  // και των επόμενων ημερών").
   const today = athensDayKey();
-  const windowDays = [today, shiftDay(today, 1), shiftDay(today, 2)];
-  const windowSet = new Set(windowDays);
+  const windowSet = new Set([today, shiftDay(today, 1), shiftDay(today, 2)]);
 
   const leagues = buildLeagueIndex();
-  log("league-index", { activeLeaguesWithStandings: leagues.length, window: windowDays });
+  log("league-index", { activeLeaguesWithStandings: leagues.length, window: [...windowSet] });
 
-  log("fetching market odds (BetExplorer, no API)…");
+  // Fixtures: the whole day's football (wide coverage).
+  const fixtures = await fetchFlashscoreFixtures({ offsets: [0, 1, 2] });
+  log("fixtures:fetched", { rows: fixtures.rows.length, attempts: fixtures.attempts.map(a => `${a.offset}:${a.rows}`) });
+
+  // Odds: BetExplorer market line, matched to fixtures by team names.
   const market = await fetchMarketOdds();
-  log("market-odds:fetched", {
-    rows: market.rows.length,
-    attempts: market.attempts.map(a => `${a.status}:${a.rows}`)
-  });
+  const oddsPool = buildOddsPool(market.rows);
+  log("market-odds:fetched", { rows: market.rows.length });
 
   const stats = {
     today,
-    marketRows: market.rows.length,
-    inWindow: 0, attributed: 0, international: 0, openedMarkets: 0, movedMarkets: 0,
-    withAiAssessment: 0, byLeague: {}, byDay: {}
+    fixtures: fixtures.rows.length,
+    inWindow: 0, attributed: 0, international: 0, withOdds: 0,
+    openedMarkets: 0, movedMarkets: 0, withAiAssessment: 0, byLeague: {}, byDay: {}
   };
 
-  for (const m of market.rows) {
-    // Keep only fixtures within the Athens window (skip rows with no/old date).
-    if (m.dayKey && !windowSet.has(m.dayKey)) continue;
+  for (const fx of fixtures.rows) {
+    const dayKey = athensDayKeyFromUtc(fx.kickoffUtc);
+    if (dayKey && !windowSet.has(dayKey)) continue;
     stats.inWindow++;
 
-    // 1) International competitions (World Cup, qualifiers, UEFA cup qualifying):
-    //    attributed by the competition label, not by club standings.
-    const intl = resolveInternational(m.competition, m.country);
+    // Attribution: international by competition, else domestic via standings.
+    const intl = resolveInternational(fx.leagueName, fx.country);
     let slug, home, away, league = null, isIntl = false;
 
     if (intl) {
       slug = intl.slug;
       isIntl = true;
     } else {
-      // 2) Domestic: attribute via the league whose standings hold both teams.
-      const hit = attributeMatch(m.home, m.away, leagues);
-      if (!hit) continue;
+      const hit = attributeMatch(fx.home, fx.away, leagues);
+      if (!hit) continue;            // not in a league we hold stats for → skip
       slug = hit.league.slug;
       home = hit.home; away = hit.away; league = hit.league;
     }
 
-    const id = matchId(m.eventId, slug, m.home, m.away);
+    const id = `fs_${fx.matchId}`;
 
-    // AI assessment only for domestic matches with standings (national teams have
-    // no club table; their assessment is a later refinement).
+    // Real market odds (if BetExplorer lists this match).
+    const odds = lookupOdds(fx.home, fx.away, oddsPool);
+    const markets = odds ? { "1X2": { odds: odds.odds, oddsMax: odds.oddsMax } } : {};
+    if (odds) stats.withOdds++;
+
+    // Our AI assessment for domestic matches with standings.
     let aiAssessment = null;
     if (!isIntl && home && away) {
       const p = priceMatchFromStandings(home, away, { leagueAvgGoalsPerTeam: league.leagueAvg });
@@ -177,29 +202,26 @@ async function main() {
 
     const result = recordOddsSnapshot(id, {
       leagueSlug: slug,
-      competition: isIntl ? intl.label : null,
-      home: m.home,
-      away: m.away,
-      dayKey: m.dayKey,
-      kickoffLocal: m.kickoffLocal,
-      source: "betexplorer",
+      competition: isIntl ? intl.label : (fx.leagueName || null),
+      home: fx.home,
+      away: fx.away,
+      dayKey,
+      kickoffUtc: fx.kickoffUtc,
+      source: odds ? "flashscore+betexplorer" : "flashscore",
       aiAssessment
-    }, { markets: { "1X2": { odds: m.odds, oddsMax: m.oddsMax } } });
+    }, { markets });
 
     stats.attributed++;
     if (isIntl) stats.international++;
     stats.openedMarkets += result.opened.length;
     stats.movedMarkets += result.moved.length;
     stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
-    if (m.dayKey) stats.byDay[m.dayKey] = (stats.byDay[m.dayKey] || 0) + 1;
+    if (dayKey) stats.byDay[dayKey] = (stats.byDay[dayKey] || 0) + 1;
   }
 
   log("done", {
-    marketRows: stats.marketRows,
-    attributed: stats.attributed,
-    openedMarkets: stats.openedMarkets,
-    movedMarkets: stats.movedMarkets,
-    leagues: Object.keys(stats.byLeague).length
+    fixtures: stats.fixtures, attributed: stats.attributed,
+    withOdds: stats.withOdds, leagues: Object.keys(stats.byLeague).length
   });
 
   console.log(JSON.stringify({

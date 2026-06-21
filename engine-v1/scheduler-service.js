@@ -28,7 +28,7 @@ async function maybeUpdateOdds(today) {
   const kickoffsUtc = [];
   for (const d of days) {
     for (const m of getOddsForDay(d).matches) {
-      const ko = kickoffToUtcMs(m.kickoffLocal);
+      const ko = m.kickoffUtc ? Date.parse(m.kickoffUtc) : kickoffToUtcMs(m.kickoffLocal);
       if (ko) kickoffsUtc.push(ko);
     }
   }
