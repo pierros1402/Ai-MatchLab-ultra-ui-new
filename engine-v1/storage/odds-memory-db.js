@@ -80,6 +80,7 @@ export function recordOddsSnapshot(matchId, meta, pricing) {
     cur.aiAssessment = meta.aiAssessment;
   }
   if (meta.source !== undefined) cur.source = meta.source;
+  if (meta.oddsBook !== undefined) cur.oddsBook = meta.oddsBook;
 
   const opened = [], moved = [], unchanged = [];
 
@@ -180,6 +181,7 @@ export function getOddsForDay(dayKey) {
         kickoffUtc: d.kickoffUtc || null,
         kickoffLocal: d.kickoffLocal || null,
         source: d.source || null,
+        oddsBook: d.oddsBook || null,
         market: (m1x2 && m1x2.open) ? { open: m1x2.open, current: m1x2.current, delta: m1x2.delta } : null,
         aiAssessment: d.aiAssessment || null,
         updatedAt: d.updatedAt
