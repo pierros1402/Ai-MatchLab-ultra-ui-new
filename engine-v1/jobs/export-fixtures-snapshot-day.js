@@ -35,12 +35,12 @@ function athensDayKeyFromUtc(iso) {
   return Number.isNaN(d.getTime()) ? null : ATHENS_FMT.format(d);
 }
 
-// Pre-kickoff status only (display). Live status/score is a later refinement; the
-// canonical pipeline still owns authoritative live/final state for its fixtures.
-function deriveStatus(kickoffUtc) {
-  const ko = Date.parse(kickoffUtc);
-  if (!Number.isFinite(ko)) return "PRE";
-  return Date.now() < ko ? "PRE" : "LIVE_OR_DONE";
+// A fixtures snapshot is a SCHEDULE — it must never assert live/finished state
+// (it goes stale the moment it's built). The real-time status comes from the
+// live worker via live:update. We therefore always emit "SCHEDULED"; the panels
+// treat it as upcoming, and a match only flips to LIVE/FT when the worker says so.
+function deriveStatus() {
+  return "SCHEDULED";
 }
 
 function contentHash(matches) {

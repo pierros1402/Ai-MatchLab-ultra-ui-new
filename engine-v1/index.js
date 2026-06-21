@@ -966,7 +966,10 @@ function mergeFlashscoreFixtures(result, requestedDay) {
     const key = `${fxNormTeam(m.home)}|${fxNormTeam(m.away)}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    extra.push(m);
+    // A snapshot is a schedule — never assert live/finished here (the live worker
+    // owns real-time status). Force SCHEDULED so old/derived statuses like
+    // "LIVE_OR_DONE" can't make finished matches look live.
+    extra.push({ ...m, status: "SCHEDULED", statusType: "SCHEDULED", live: false, isLive: false });
   }
   if (!extra.length) return result;
 
