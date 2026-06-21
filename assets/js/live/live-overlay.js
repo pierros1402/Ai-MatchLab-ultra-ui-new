@@ -27,13 +27,19 @@
     return {
       matchId: m.matchId,
       id: m.matchId,
+      home: m.home,
+      away: m.away,
+      homeTeam: m.home,
+      awayTeam: m.away,
+      leagueName: m.leagueName || "",
       scoreHome: m.scoreHome,
       scoreAway: m.scoreAway,
       status: m.status,
       statusType: m.status,
       isLive: isLive,
       live: isLive,
-      minute: m.minute || null
+      minute: m.minute != null ? m.minute : null,
+      kickoff_ms: m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0
     };
   }
 
