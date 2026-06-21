@@ -19,6 +19,7 @@ import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload } from "./api/details.js";
 import { resolveDataPath } from "./storage/data-root.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
+import { getOddsSnapshot, getOddsForDay, readOdds } from "./storage/odds-memory-db.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1333,6 +1334,29 @@ app.get("/match", (req, res) => {
     ok: true,
     match
   });
+});
+
+// ─── Odds (autonomous AI capture: real bookmaker odds + our assessment) ──────────
+
+// Per-match snapshot in the shape the frontend odds bridge expects.
+function oddsHandler(req, res) {
+  const matchId = String(req.query.matchId || req.query.id || "");
+  const market = String(req.query.market || "1X2");
+  if (!matchId) {
+    res.status(400).json({ ok: false, error: "missing_matchId" });
+    return;
+  }
+  const snap = getOddsSnapshot(matchId, market);
+  const full = readOdds(matchId);
+  res.json({ ...snap, aiAssessment: full?.aiAssessment || null });
+}
+app.get("/odds", oddsHandler);
+app.get("/api/odds", oddsHandler);
+
+// Whole-day picture: every captured fixture with market odds + AI assessment.
+app.get("/odds/day", (req, res) => {
+  const date = String(req.query.date || athensDayKey());
+  res.json(getOddsForDay(date));
 });
 
 app.get("/match-intelligence", async (req, res) => {
