@@ -197,7 +197,8 @@ async function main() {
     let aiAssessment = null;
     if (!isIntl && home && away) {
       const p = priceMatchFromStandings(home, away, { leagueAvgGoalsPerTeam: league.leagueAvg });
-      aiAssessment = { market: "1X2", model: p.model, odds: p.markets["1X2"].odds, probs: p.markets["1X2"].probs };
+      // All markets the UI offers: 1X2, DC, OU15, OU25, OU35, BTTS.
+      aiAssessment = { model: p.model, markets: p.markets };
       stats.withAiAssessment++;
     }
 
