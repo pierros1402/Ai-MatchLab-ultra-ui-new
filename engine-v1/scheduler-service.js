@@ -5,6 +5,10 @@ import { discoverActiveLeagues } from "./jobs/discover-active-leagues.js";
 import { monitorActiveLeagues } from "./jobs/monitor-active-leagues.js";
 import { runDailyCycle } from "./jobs/run-daily-cycle.js";
 import { buildStandingsDay } from "./jobs/build-standings-day.js";
+import { runOddsOpening } from "./jobs/run-odds-opening.js";
+import { exportOddsSnapshotDay } from "./jobs/export-odds-snapshot-day.js";
+import { getOddsForDay } from "./storage/odds-memory-db.js";
+import { oddsUpdateDecision, kickoffToUtcMs } from "./odds/odds-schedule.js";
 
 const STARTUP_DELAY_MS = 10 * 1000;
 const TICK_MS = 2 * 60 * 1000;
@@ -16,6 +20,28 @@ let tickCount = 0;
 let lastRun = null;
 let lastSeenToday = null;
 let rolloverBootstrapDoneForDay = null;
+let lastOddsScrapeAt = null;
+
+// Odds refresh policy: every 8h, and hourly in the last 4h before any kickoff.
+async function maybeUpdateOdds(today) {
+  const days = [today, shiftDay(today, 1), shiftDay(today, 2)];
+  const kickoffsUtc = [];
+  for (const d of days) {
+    for (const m of getOddsForDay(d).matches) {
+      const ko = kickoffToUtcMs(m.kickoffLocal);
+      if (ko) kickoffsUtc.push(ko);
+    }
+  }
+
+  const decision = oddsUpdateDecision({ lastScrapeAt: lastOddsScrapeAt, kickoffsUtc });
+  log("odds-schedule", { due: decision.due, reason: decision.reason, hoursSinceLast: decision.hoursSinceLast, tracked: kickoffsUtc.length });
+
+  if (!decision.due) return;
+
+  await safeStep(`odds-update:${today}`, async () => runOddsOpening());
+  await safeStep(`odds-snapshot:${today}`, async () => exportOddsSnapshotDay(today));
+  lastOddsScrapeAt = Date.now();
+}
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -155,6 +181,9 @@ async function runTick() {
 
     // 2) monitor με auto-recovery
     await safeStep(`monitor:${today}`, async () => monitorWithRecovery(today));
+
+    // 2b) autonomous odds refresh (real bookmaker odds; 8h baseline + hourly < 4h)
+    await maybeUpdateOdds(today);
 
     // 3) finalize χθεσινής μόνο αν είναι safe
     await safeStep(`finalize:${yesterday}`, async () => finalizeDayIfSafe(yesterday));
