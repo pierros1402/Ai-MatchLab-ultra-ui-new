@@ -32,7 +32,7 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const existing = readExistingSnapshot(dayKey);
   const lastScrapeAt = existing?.generatedAt ? Date.parse(existing.generatedAt) : null;
   const kickoffsUtc = (existing?.matches || [])
-    .map(m => kickoffToUtcMs(m.kickoffLocal))
+    .map(m => m.kickoffUtc ? Date.parse(m.kickoffUtc) : kickoffToUtcMs(m.kickoffLocal))
     .filter(Boolean);
 
   const decision = opts.force
