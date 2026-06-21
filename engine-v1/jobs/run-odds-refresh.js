@@ -18,6 +18,7 @@ import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { runOddsOpening } from "./run-odds-opening.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
+import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { oddsUpdateDecision, kickoffToUtcMs } from "../odds/odds-schedule.js";
 
 function readExistingSnapshot(dayKey) {
@@ -39,14 +40,23 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     ? { due: true, reason: "forced", hoursSinceLast: null }
     : oddsUpdateDecision({ lastScrapeAt, kickoffsUtc });
 
+  // Fixtures snapshot refreshes on every gated run (cheap; new fixtures appear).
+  let fixturesChanged = false;
+  try {
+    const fx = await exportFixturesSnapshotDay(dayKey);
+    fixturesChanged = fx.changed;
+  } catch (err) {
+    console.warn("[run-odds-refresh] fixtures export failed", String(err?.message || err));
+  }
+
   if (!decision.due) {
-    return { ok: true, dayKey, due: false, reason: decision.reason, changed: false };
+    return { ok: true, dayKey, due: false, reason: decision.reason, changed: fixturesChanged, fixturesChanged };
   }
 
   await runOddsOpening();
   const snap = exportOddsSnapshotDay(dayKey);
 
-  return { ok: true, dayKey, due: true, reason: decision.reason, changed: snap.changed, count: snap.count };
+  return { ok: true, dayKey, due: true, reason: decision.reason, changed: snap.changed || fixturesChanged, fixturesChanged, count: snap.count };
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
