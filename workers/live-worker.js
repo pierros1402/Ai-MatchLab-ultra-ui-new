@@ -20,32 +20,65 @@ const FEED = "https://2.flashscore.ninja/2/x/feed/f_1_0_3_en_1";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
 const CACHE_TTL = 30; // seconds
 
-function statusFromCode(ab) {
-  // Flashscore: 1 = scheduled, 3 = finished, anything else = live (HT/1H/2H/ET…).
-  if (ab === "1") return "PRE";
+const LIVE_WINDOW_SEC = 3.5 * 3600; // a match can't be "live" longer than this
+
+// Robust status: never let an old/finished match linger as LIVE. AB=3 is the
+// reliable finished flag; AB=1 / no score is scheduled; in-play only if it has a
+// score, isn't finished, and kicked off recently. Unknown codes (postponed,
+// abandoned, after-ET, feed lag) fall through to FT/PRE — NOT LIVE.
+function mapStatus(ab, hasScore, kickoffSec, nowSec) {
   if (ab === "3") return "FT";
-  return "LIVE";
+  if (ab === "1" || !hasScore) return "PRE";
+  if (kickoffSec && nowSec - kickoffSec > LIVE_WINDOW_SEC) return "FT"; // too old to be live
+  if (ab === "2") return "LIVE";          // in-play
+  return hasScore ? "FT" : "PRE";         // any other code with a score = finished
+}
+
+// Approximate live minute from kickoff (the feed has no clean minute field).
+// Crude HT handling: clamp around 45' and subtract the ~15' break in 2nd half.
+function liveMinute(kickoffSec, nowSec) {
+  if (!kickoffSec) return null;
+  let el = Math.floor((nowSec - kickoffSec) / 60);
+  if (el < 0) return null;
+  if (el > 60) el -= 15;
+  else if (el > 45) el = 45;
+  return Math.max(1, Math.min(el, 130));
+}
+
+function cleanLeague(za) {
+  const i = String(za || "").indexOf(":");
+  return i >= 0 ? za.slice(i + 1).trim() : String(za || "").trim();
 }
 
 function parseFeed(text) {
   const out = [];
+  const nowSec = Date.now() / 1000;
+  let league = null;
   for (const rec of String(text || "").split("~")) {
     const f = {};
     for (const kv of rec.split("¬")) {
       const i = kv.indexOf("÷");
       if (i > 0) f[kv.slice(0, i)] = kv.slice(i + 1);
     }
+    if (f.ZA) league = cleanLeague(f.ZA);
     if (!f.AA || !f.AE || !f.AF) continue;
     const sh = f.AG !== undefined && f.AG !== "" ? Number(f.AG) : null;
     const sa = f.AH !== undefined && f.AH !== "" ? Number(f.AH) : null;
+    const hasScore = Number.isFinite(sh) && Number.isFinite(sa);
+    const ko = Number(f.AD);
+    const koSec = Number.isFinite(ko) ? ko : null;
+    const status = mapStatus(f.AB, hasScore, koSec, nowSec);
     out.push({
       matchId: `fs_${f.AA}`,
       home: f.AE,
       away: f.AF,
+      leagueName: league,
       scoreHome: Number.isFinite(sh) ? sh : null,
       scoreAway: Number.isFinite(sa) ? sa : null,
       statusCode: f.AB || null,
-      status: statusFromCode(f.AB)
+      status,
+      minute: status === "LIVE" ? liveMinute(koSec, nowSec) : null,
+      kickoffUtc: koSec ? new Date(koSec * 1000).toISOString() : null
     });
   }
   return out;
