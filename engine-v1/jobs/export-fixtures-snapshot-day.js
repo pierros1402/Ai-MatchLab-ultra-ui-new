@@ -24,6 +24,7 @@ import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveSlug } from "../odds/flashscore-league-map.js";
+import { resolveInternational } from "../odds/international-competitions.js";
 
 const ATHENS_FMT = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Athens", year: "numeric", month: "2-digit", day: "2-digit"
@@ -56,14 +57,17 @@ export async function exportFixturesSnapshotDay(dayKey = athensDayKey()) {
     const dk = athensDayKeyFromUtc(fx.kickoffUtc);
     if (dk && !windowSet.has(dk)) continue;
 
-    const slug = resolveSlug(fx.country, fx.leagueName);
-    if (!slug) continue;           // only leagues in our coverage map
+    // International competitions (World Cup, qualifiers, UEFA cup qualifying)
+    // first, then our domestic leagues.
+    const intl = resolveInternational(fx.leagueName, fx.country);
+    const slug = intl ? intl.slug : resolveSlug(fx.country, fx.leagueName);
+    if (!slug) continue;           // only leagues in our coverage map + internationals
 
     matches.push({
       id: `fs_${fx.matchId}`,
       home: fx.home,
       away: fx.away,
-      leagueName: fx.leagueName,
+      leagueName: intl ? intl.label : fx.leagueName,
       leagueSlug: slug,
       country: fx.country,
       kickoffUtc: fx.kickoffUtc,
