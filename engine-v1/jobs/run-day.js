@@ -19,6 +19,7 @@ import { classifyAllByCalendar } from "../source-discovery/league-awareness-serv
 import { runOddsOpening } from "./run-odds-opening.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
+import { buildCoverageReport } from "./build-coverage-report.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -40,6 +41,10 @@ export async function runDay() {
   // 3) Write the deployable odds artifact (data/deploy-snapshots/{day}/odds.json).
   const snap = exportOddsSnapshotDay(today);
   log("odds-snapshot", { count: snap.count, file: snap.file });
+
+  // 4) Refresh the coverage report so data gaps stay explicit (not discovered late).
+  const cov = buildCoverageReport(today);
+  log("coverage", { ...cov.totals, missingStandingsForFixtures: cov.gaps.fixtureLeaguesMissingStandings.length });
 
   log("done", { today });
   return { ok: true, today, oddsCount: snap.count };
