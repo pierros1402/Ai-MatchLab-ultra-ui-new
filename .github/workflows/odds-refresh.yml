@@ -84,11 +84,13 @@ jobs:
           git restore --staged . || true
 
           ODDS_FILE="data/deploy-snapshots/${DAY_KEY}/odds.json"
+          FIXTURES_FILE="data/deploy-snapshots/${DAY_KEY}/fixtures-all.json"
           [ -f "$ODDS_FILE" ] && git add "$ODDS_FILE"
+          [ -f "$FIXTURES_FILE" ] && git add "$FIXTURES_FILE"
 
           if git diff --cached --quiet; then
-            echo "No odds changes to commit."
+            echo "No odds/fixtures changes to commit."
           else
-            git commit -m "Refresh odds snapshot for ${DAY_KEY}"
+            git commit -m "Refresh odds + fixtures snapshot for ${DAY_KEY}"
             git push
           fi
