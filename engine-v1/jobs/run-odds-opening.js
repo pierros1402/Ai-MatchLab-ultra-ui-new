@@ -24,7 +24,7 @@ import { pathToFileURL } from "node:url";
 
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
-import { fetchMarketOdds } from "../odds/betexplorer-odds-source.js";
+import { fetchOddsResilient } from "../odds/odds-providers.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { priceMatchFromStandings } from "../odds/ai-odds-model.js";
 import { resolveInternational } from "../odds/international-competitions.js";
@@ -154,10 +154,11 @@ async function main() {
   const fixtures = await fetchFlashscoreFixtures({ offsets: [0, 1, 2] });
   log("fixtures:fetched", { rows: fixtures.rows.length, attempts: fixtures.attempts.map(a => `${a.offset}:${a.rows}`) });
 
-  // Odds: BetExplorer market line, matched to fixtures by team names.
-  const market = await fetchMarketOdds();
+  // Odds: resilient multi-provider gather (no single-source dependency),
+  // matched to fixtures by team names; each price carries its source/book.
+  const market = await fetchOddsResilient();
   const oddsPool = buildOddsPool(market.rows);
-  log("market-odds:fetched", { rows: market.rows.length });
+  log("market-odds:fetched", { rows: market.rows.length, providers: market.providers });
 
   const stats = {
     today,
@@ -207,7 +208,8 @@ async function main() {
       away: fx.away,
       dayKey,
       kickoffUtc: fx.kickoffUtc,
-      source: odds ? "flashscore+betexplorer" : "flashscore",
+      source: odds ? `flashscore+${odds.provider}` : "flashscore",
+      oddsBook: odds ? odds.book : null,
       aiAssessment
     }, { markets });
 
