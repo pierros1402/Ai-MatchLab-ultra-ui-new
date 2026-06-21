@@ -937,6 +937,42 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "engine-v1" });
 });
 
+// ── Autonomous fixtures merge (DISPLAY ONLY) ────────────────────────────────────
+// Appends our comprehensive Flashscore fixtures (data/deploy-snapshots/{today}/
+// fixtures-all.json, which carries the 3-day window) to the runtime response,
+// deduped against canonical matches by team names. This NEVER writes to the
+// canonical json-db / details, so the value engine and its prerequisites are
+// untouched — these rows are tagged source:"flashscore" for the UI only.
+function fxNormTeam(s) {
+  return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "").trim();
+}
+function readFixturesAllSnapshot() {
+  try {
+    return JSON.parse(fs.readFileSync(resolveDataPath("deploy-snapshots", athensDayKey(), "fixtures-all.json"), "utf8"));
+  } catch {
+    return null;
+  }
+}
+function mergeFlashscoreFixtures(result, requestedDay) {
+  const snap = readFixturesAllSnapshot();
+  if (!snap || !Array.isArray(snap.matches)) return result;
+
+  const base = Array.isArray(result.matches) ? result.matches : [];
+  const seen = new Set(base.map(m => `${fxNormTeam(m.home ?? m.homeTeam)}|${fxNormTeam(m.away ?? m.awayTeam)}`));
+
+  const extra = [];
+  for (const m of snap.matches) {
+    if (m.dayKey !== requestedDay) continue;
+    const key = `${fxNormTeam(m.home)}|${fxNormTeam(m.away)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    extra.push(m);
+  }
+  if (!extra.length) return result;
+
+  return { ...result, matches: [...base, ...extra], count: base.length + extra.length, flashscoreAdded: extra.length };
+}
+
 app.get("/fixtures-runtime", (req, res) => {
   try {
     const mode = String(req.query.mode || "today");
@@ -946,21 +982,21 @@ app.get("/fixtures-runtime", (req, res) => {
       const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
 
       if (snapshotResult.ok) {
-        res.json(snapshotResult);
+        res.json(mergeFlashscoreFixtures(snapshotResult, dayKey));
         return;
       }
     }
 
     const rows = buildFixturesRuntime(mode, dayKey);
 
-    res.json({
+    res.json(mergeFlashscoreFixtures({
       ok: true,
       mode,
       date: dayKey,
       count: rows.length,
       matches: rows,
       source: "runtime"
-    });
+    }, dayKey));
   } catch (err) {
     console.error("[fixtures-runtime] failed", err?.message || err);
 
@@ -970,7 +1006,7 @@ app.get("/fixtures-runtime", (req, res) => {
       const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
 
       if (snapshotResult.ok) {
-        res.json(snapshotResult);
+        res.json(mergeFlashscoreFixtures(snapshotResult, dayKey));
         return;
       }
     }

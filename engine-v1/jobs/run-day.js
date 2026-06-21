@@ -18,6 +18,7 @@ import { athensDayKey } from "../core/daykey.js";
 import { classifyAllByCalendar } from "../source-discovery/league-awareness-service.js";
 import { runOddsOpening } from "./run-odds-opening.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
+import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -28,6 +29,10 @@ export async function runDay() {
   // 1) Deterministic awareness refresh (which leagues are active today).
   const awareness = classifyAllByCalendar();
   log("awareness", { active: awareness.summary?.activeCount, offseason: awareness.summary?.finishedCount });
+
+  // 1b) Comprehensive fixtures snapshot (display) for our coverage leagues.
+  const fxSnap = await exportFixturesSnapshotDay(today);
+  log("fixtures-snapshot", { count: fxSnap.count });
 
   // 2) Fixtures + real odds + AI assessment for the Athens window.
   await runOddsOpening();
