@@ -1,0 +1,90 @@
+name: Daily autonomous run
+
+# Fully automatic day-rollover run (~02:00 Europe/Athens): awareness refresh,
+# results accumulation (form), comprehensive fixtures, odds opening + drift, and
+# the coverage report. No ESPN, no odds API, nothing manual. Commits the snapshots
+# + memory so the deployed engine serves them. Render redeploy stays manual.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dayKey:
+        description: "Day key, YYYY-MM-DD. Empty = Europe/Athens today."
+        required: false
+        default: ""
+  schedule:
+    # 23:00 and 00:00 UTC cover ~02:00 Athens across DST/standard; the guard pins it.
+    - cron: "0 23,0 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-autonomous
+  cancel-in-progress: false
+
+jobs:
+  run-day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Resolve day key + Athens 02:00 guard
+        shell: bash
+        env:
+          INPUT_DAY_KEY: ${{ inputs.dayKey }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          ATHENS_HOUR_NUM=$((10#$(TZ=Europe/Athens date +%H)))
+          if [ "$EVENT_NAME" = "schedule" ] && [ "$ATHENS_HOUR_NUM" -gt 4 ]; then
+            echo "Not the early-morning rollover window (Athens $ATHENS_HOUR_NUM); skipping."
+            echo "SKIP=true" >> "$GITHUB_ENV"; exit 0
+          fi
+          DAY_KEY="$(printf "%s" "${INPUT_DAY_KEY:-}" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n1 || true)"
+          [ -z "$DAY_KEY" ] && DAY_KEY="$(TZ=Europe/Athens date +%F)"
+          echo "SKIP=false" >> "$GITHUB_ENV"
+          echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        if: env.SKIP != 'true'
+        run: npm install --no-audit --no-fund
+
+      - name: Run the autonomous day
+        if: env.SKIP != 'true'
+        run: node ./engine-v1/jobs/run-day.js "$DAY_KEY"
+
+      - name: Commit snapshots + memory
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git restore --staged . || true
+
+          [ -f "data/deploy-snapshots/${DAY_KEY}/odds.json" ] && git add "data/deploy-snapshots/${DAY_KEY}/odds.json"
+          [ -f "data/deploy-snapshots/${DAY_KEY}/fixtures-all.json" ] && git add "data/deploy-snapshots/${DAY_KEY}/fixtures-all.json"
+          [ -d "data/league-memory" ] && git add data/league-memory
+          [ -d "data/odds-memory" ] && git add data/odds-memory
+
+          # Only our autonomous artifacts may be staged.
+          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/)' || true)"
+          if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Daily autonomous run for ${DAY_KEY}"
+            git push
+          fi
