@@ -23,6 +23,7 @@ import { accumulateResults } from "./accumulate-results-day.js";
 import { accumulateDiscipline } from "./run-discipline-day.js";
 import { deriveStandingsFromResults } from "./derive-standings-from-results.js";
 import { refreshRefereeStats } from "./run-referee-stats.js";
+import { settleAssessments } from "./settle-assessments-day.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -41,6 +42,10 @@ export async function runDay(dayKey) {
   // 2b) Accumulate yesterday's discipline (cards/fouls/penalties) for referee/value.
   const discipline = await accumulateDiscipline({ max: 300 });
   log("discipline-accumulate", { stored: discipline.stored, withStats: discipline.withStats, totalMatches: discipline.discipline.matches });
+
+  // 2b2) Verify past assessments against final scores (yes/no per market).
+  const settled = await settleAssessments();
+  log("settle-assessments", { finished: settled.finished, settled: settled.settled });
 
   // 2c) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
   const derived = deriveStandingsFromResults();

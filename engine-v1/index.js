@@ -19,7 +19,7 @@ import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload, enrichSnapshotWithAssessment } from "./api/details.js";
 import { resolveDataPath } from "./storage/data-root.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
-import { getDeployedOddsSnapshot, getDeployedOddsDay } from "./storage/odds-memory-db.js";
+import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1323,6 +1323,70 @@ if (format !== "csv") {
     `attachment; filename="value-picks-${from}_to_${to}.csv"`
   );
 
+  res.send(lines.join("\n"));
+});
+
+// Export OUR AI assessment (form-aware fair odds) per match × market, with the
+// yes/no verification from settlement — independent of the value run.
+app.get("/assessment-export/range", async (req, res) => {
+  const from = String(req.query.from || athensDayKey());
+  const to = String(req.query.to || from);
+  const format = String(req.query.format || "csv").toLowerCase();
+  const days = dateRange(from, to);
+
+  const rows = [];
+  for (const date of days) {
+    for (const r of getAssessmentRows(date)) rows.push(r);
+  }
+
+  if (format === "json") {
+    return res.json({ ok: true, from, to, count: rows.length, rows });
+  }
+
+  if (format === "xlsx") {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("AI Assessment");
+    sheet.columns = [
+      { header: "Date", key: "date", width: 14 },
+      { header: "Kickoff", key: "kickoff", width: 22 },
+      { header: "League", key: "league", width: 14 },
+      { header: "Home", key: "home", width: 24 },
+      { header: "Away", key: "away", width: 24 },
+      { header: "Market", key: "market", width: 10 },
+      { header: "Pick", key: "pick", width: 10 },
+      { header: "Odds", key: "odds", width: 10 },
+      { header: "Prob", key: "prob", width: 10 },
+      { header: "Actual", key: "actual", width: 10 },
+      { header: "Verified", key: "verified", width: 10 }
+    ];
+    for (const row of rows) {
+      sheet.addRow({
+        date: row.date, kickoff: row.kickoff, league: row.league,
+        home: row.home, away: row.away, market: row.market, pick: row.pick,
+        odds: row.odds != null ? Number(row.odds) : "",
+        prob: row.prob != null ? Number(row.prob) : "",
+        actual: row.actual || "", verified: row.verified || ""
+      });
+    }
+    sheet.getRow(1).font = { bold: true };
+    sheet.views = [{ state: "frozen", ySplit: 1 }];
+    sheet.autoFilter = { from: "A1", to: "K1" };
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="ai-assessment-${from}_to_${to}.xlsx"`);
+    await workbook.xlsx.write(res);
+    return res.end();
+  }
+
+  const header = ["date", "kickoff", "league", "home", "away", "market", "pick", "odds", "prob", "actual", "verified"];
+  const lines = [header.join(",")];
+  for (const row of rows) {
+    lines.push([
+      row.date, row.kickoff, row.league, csvEscape(row.home), csvEscape(row.away),
+      row.market, row.pick, row.odds ?? "", row.prob ?? "", row.actual || "", row.verified || ""
+    ].join(","));
+  }
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="ai-assessment-${from}_to_${to}.csv"`);
   res.send(lines.join("\n"));
 });
 

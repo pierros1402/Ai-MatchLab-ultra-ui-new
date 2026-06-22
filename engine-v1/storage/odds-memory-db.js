@@ -33,6 +33,38 @@ export function readOdds(matchId) {
   }
 }
 
+/**
+ * Settle a priced match against its final score: which selection our assessment
+ * favoured per market, the actual outcome, and whether it hit (verification yes/no).
+ * Stored on the record as `settlement`. Returns true if written.
+ */
+export function recordSettlement(matchId, scoreHome, scoreAway) {
+  const rec = readOdds(matchId);
+  if (!rec || !rec.aiAssessment?.markets) return false;
+  if (scoreHome == null || scoreAway == null) return false;
+  const h = Number(scoreHome), a = Number(scoreAway);
+  if (!Number.isFinite(h) || !Number.isFinite(a)) return false;
+
+  const probs = m => rec.aiAssessment.markets[m]?.probs || {};
+  const argmax = o => Object.keys(o).reduce((b, k) => (o[k] > (o[b] ?? -1) ? k : b), null);
+
+  const actual1x2 = h > a ? "home" : h < a ? "away" : "draw";
+  const actualOU = (h + a) > 2.5 ? "over" : "under";
+  const actualBtts = (h > 0 && a > 0) ? "yes" : "no";
+
+  const markets = {};
+  const p1x2 = argmax(probs("1X2"));
+  if (p1x2) markets["1X2"] = { pick: p1x2, actual: actual1x2, hit: p1x2 === actual1x2 };
+  const pou = argmax(probs("OU25"));
+  if (pou) markets["OU25"] = { pick: pou, actual: actualOU, hit: pou === actualOU };
+  const pbtts = argmax(probs("BTTS"));
+  if (pbtts) markets["BTTS"] = { pick: pbtts, actual: actualBtts, hit: pbtts === actualBtts };
+
+  rec.settlement = { scoreHome: h, scoreAway: a, settledAt: new Date().toISOString(), markets };
+  fs.writeFileSync(fileFor(matchId), JSON.stringify(rec, null, 2), "utf8");
+  return true;
+}
+
 function normTeamKey(s) {
   return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -256,6 +288,43 @@ export function getDeployedOddsSnapshot(matchId, market = "1X2", dayKey) {
   const live = getOddsSnapshot(id, market);
   const full = readOdds(id);
   return { ...live, aiAssessment: full?.aiAssessment || null };
+}
+
+/**
+ * Flattened assessment rows for a day (one per match × market) for the export:
+ * our pick + odds/prob + verification (yes/no/"" pending) from settlement.
+ */
+export function getAssessmentRows(dayKey) {
+  const rows = [];
+  const argmax = o => Object.keys(o).reduce((b, k) => (o[k] > (o[b] ?? -1) ? k : b), null);
+  try {
+    for (const f of fs.readdirSync(DIR)) {
+      if (!f.endsWith(".json")) continue;
+      const d = readOdds(f.replace(/\.json$/, ""));
+      if (!d || d.dayKey !== dayKey || !d.aiAssessment?.markets) continue;
+      const settle = d.settlement?.markets || {};
+      for (const mk of ["1X2", "OU25", "BTTS"]) {
+        const m = d.aiAssessment.markets[mk];
+        if (!m?.probs) continue;
+        const pick = argmax(m.probs);
+        const s = settle[mk];
+        rows.push({
+          date: dayKey,
+          kickoff: d.kickoffUtc || null,
+          league: d.leagueSlug || null,
+          home: d.home || null,
+          away: d.away || null,
+          market: mk,
+          pick,
+          odds: m.odds?.[pick] ?? null,
+          prob: m.probs[pick] ?? null,
+          actual: s?.actual ?? "",
+          verified: s ? (s.hit ? "yes" : "no") : ""
+        });
+      }
+    }
+  } catch { /* none */ }
+  return rows;
 }
 
 export function getOddsSummary() {
