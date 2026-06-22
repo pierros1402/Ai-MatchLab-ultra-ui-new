@@ -69,6 +69,30 @@ export function recordMatchResult(slug, m) {
   return changed;
 }
 
+/**
+ * Recent-form scoring rates for a team from accumulated results.
+ * @returns {{sample, gfRate, gaRate, ppg}} averages over the last `window` games.
+ */
+export function teamFormRates(slug, teamName, window = 6) {
+  const data = readResults(slug);
+  const list = (data.teams && data.teams[teamName]) ? data.teams[teamName].slice(0, window) : [];
+  if (!list.length) return { sample: 0, gfRate: null, gaRate: null, ppg: null };
+
+  let gf = 0, ga = 0, pts = 0;
+  for (const r of list) {
+    gf += Number(r.gf) || 0;
+    ga += Number(r.ga) || 0;
+    pts += r.res === "W" ? 3 : r.res === "D" ? 1 : 0;
+  }
+  const n = list.length;
+  return {
+    sample: n,
+    gfRate: gf / n,
+    gaRate: ga / n,
+    ppg: pts / n
+  };
+}
+
 export function getResultsSummary() {
   let leagues = 0, teams = 0, results = 0;
   try {
