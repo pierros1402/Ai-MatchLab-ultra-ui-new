@@ -25,7 +25,7 @@ export function readReferees(slug) {
 }
 
 /** Replace a league's referee table for a season. Returns count stored. */
-export function recordRefereeStats(slug, season, referees) {
+export function recordRefereeStats(slug, season, referees, competition) {
   if (!Array.isArray(referees) || !referees.length) return 0;
   ensureDir(DIR);
   const map = {};
@@ -40,7 +40,7 @@ export function recordRefereeStats(slug, season, referees) {
     };
   }
   fs.writeFileSync(fileFor(slug), JSON.stringify({
-    slug, season, referees: map, updatedAt: new Date().toISOString()
+    slug, season, competition: competition || null, referees: map, updatedAt: new Date().toISOString()
   }, null, 2), "utf8");
   return referees.length;
 }

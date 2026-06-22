@@ -17,25 +17,58 @@ const HEADERS = {
   "accept-language": "en-US,en;q=0.9"
 };
 
-// Our league slug → Transfermarkt competition code + URL slug (major leagues where
-// referee data is meaningful; extend as needed).
+// Our league slug → Transfermarkt competition CODE. The URL works with any slug as
+// long as the code is right (code-only `/x/...`), so we only need the code. Codes
+// span the leagues TM provides referee data for; the competition NAME is returned
+// so a wrong mapping is visible (and prunable) rather than silently wrong.
 export const TM_COMPETITIONS = {
-  "eng.1": { code: "GB1", slug: "premier-league" },
-  "esp.1": { code: "ES1", slug: "laliga" },
-  "ita.1": { code: "IT1", slug: "serie-a" },
-  "ger.1": { code: "L1",  slug: "bundesliga" },
-  "fra.1": { code: "FR1", slug: "ligue-1" },
-  "ned.1": { code: "NL1", slug: "eredivisie" },
-  "por.1": { code: "PO1", slug: "liga-portugal" },
-  "bel.1": { code: "BE1", slug: "jupiler-pro-league" },
-  "tur.1": { code: "TR1", slug: "super-lig" },
-  "sco.1": { code: "SC1", slug: "scottish-premiership" },
-  "bra.1": { code: "BRA1", slug: "campeonato-brasileiro-serie-a" },
-  "bra.2": { code: "BRA2", slug: "campeonato-brasileiro-serie-b" },
-  "arg.1": { code: "AR1N", slug: "liga-profesional-de-futbol" },
-  "usa.1": { code: "MLS1", slug: "major-league-soccer" },
-  "mex.1": { code: "MEX1", slug: "liga-mx-apertura" }
+  // England
+  "eng.1": "GB1", "eng.2": "GB2", "eng.3": "GB3", "eng.4": "GB4",
+  // Spain / Italy / Germany / France
+  "esp.1": "ES1", "esp.2": "ES2",
+  "ita.1": "IT1", "ita.2": "IT2",
+  "ger.1": "L1", "ger.2": "L2", "ger.3": "L3",
+  "fra.1": "FR1", "fra.2": "FR2",
+  // Low countries / Iberia / Belgium
+  "ned.1": "NL1", "ned.2": "NL2",
+  "por.1": "PO1", "por.2": "PO2",
+  "bel.1": "BE1", "bel.2": "BE2",
+  // Turkey / Scotland / Greece
+  "tur.1": "TR1", "tur.2": "TR2",
+  "sco.1": "SC1", "sco.2": "SC2",
+  "gre.1": "GR1", "gre.2": "GR2",
+  // Eastern Europe
+  "rus.1": "RU1", "rus.2": "RU2", "ukr.1": "UKR1",
+  "pol.1": "PL1", "cze.1": "TS1", "cro.1": "KR1", "srb.1": "SER1",
+  "rou.1": "RO1", "bul.1": "BU1", "hun.1": "UNG1",
+  "svk.1": "SLO1", "svn.1": "SL1",
+  // Alpine / Nordics
+  "aut.1": "A1", "aut.2": "A2", "sui.1": "C1", "sui.2": "C2",
+  "den.1": "DK1", "den.2": "DK2", "nor.1": "NO1", "nor.2": "NO2",
+  "swe.1": "SE1", "swe.2": "SE2", "fin.1": "FI1",
+  // British Isles / small UEFA
+  "irl.1": "IR1", "nir.1": "NIR1", "wal.1": "WAL1",
+  "isr.1": "ISR1", "cyp.1": "ZYP1",
+  // South America
+  "bra.1": "BRA1", "bra.2": "BRA2", "arg.1": "AR1N",
+  "chi.1": "CLPD", "uru.1": "URU1", "col.1": "COL1",
+  // North America / Asia / Africa majors
+  "usa.1": "MLS1", "mex.1": "MEX1",
+  "jpn.1": "JAP1", "kor.1": "RSK1", "aus.1": "AUS1", "ksa.1": "SA1",
+  "egy.1": "EGY1", "rsa.1": "SFA1"
 };
+
+function tmUrl(code, path, qs) {
+  return `https://www.transfermarkt.com/x/schiedsrichter/wettbewerb/${code}${path}${qs || ""}`;
+}
+
+function parseCompetitionName(html) {
+  // The <title> carries the competition name ("Premier League - Referees | ...");
+  // the <h1> is just "Referees {season}", useless for verifying the mapping.
+  const t = html.match(/<title>([\s\S]*?)<\/title>/);
+  if (t) return t[1].replace(/\s*[-|]\s*Referees.*$/i, "").replace(/\s+/g, " ").trim();
+  return null;
+}
 
 const num = v => {
   const s = String(v ?? "").replace(/\./g, "").replace(",", ".").trim();
@@ -91,16 +124,19 @@ function parseRefereeTable(html) {
  * @returns {{ok, slug, season, referees:[...]}}
  */
 export async function fetchCompetitionReferees(slug, saisonId) {
-  const tm = TM_COMPETITIONS[slug];
-  if (!tm) return { ok: false, slug, reason: "no_tm_mapping", referees: [] };
+  const code = TM_COMPETITIONS[slug];
+  if (!code) return { ok: false, slug, reason: "no_tm_mapping", referees: [] };
 
-  const url = `https://www.transfermarkt.com/${tm.slug}/schiedsrichter/wettbewerb/${tm.code}/plus/?saison_id=${saisonId}`;
+  const url = tmUrl(code, "/plus/", `?saison_id=${saisonId}`);
   try {
     const r = await fetch(url, { headers: HEADERS });
     if (!r.ok) return { ok: false, slug, season: saisonId, reason: `http_${r.status}`, referees: [] };
     const html = await r.text();
     const referees = parseRefereeTable(html);
-    return { ok: referees.length > 0, slug, season: saisonId, tmCode: tm.code, referees, url };
+    return {
+      ok: referees.length > 0, slug, season: saisonId, tmCode: code,
+      competition: parseCompetitionName(html), referees, url
+    };
   } catch (err) {
     return { ok: false, slug, season: saisonId, reason: String(err?.message || err), referees: [] };
   }

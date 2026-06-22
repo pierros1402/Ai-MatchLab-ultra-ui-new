@@ -41,10 +41,10 @@ function parseMatchday(html) {
  * @returns {{ok, slug, fixtures:[{home,away,refereeId,refereeName}]}}
  */
 export async function fetchMatchdayReferees(slug) {
-  const tm = TM_COMPETITIONS[slug];
-  if (!tm) return { ok: false, slug, reason: "no_tm_mapping", fixtures: [] };
+  const code = TM_COMPETITIONS[slug];
+  if (!code) return { ok: false, slug, reason: "no_tm_mapping", fixtures: [] };
 
-  const url = `https://www.transfermarkt.com/${tm.slug}/spieltag/wettbewerb/${tm.code}`;
+  const url = `https://www.transfermarkt.com/x/spieltag/wettbewerb/${code}`;
   try {
     const r = await fetch(url, { headers: HEADERS });
     if (!r.ok) return { ok: false, slug, reason: `http_${r.status}`, fixtures: [] };

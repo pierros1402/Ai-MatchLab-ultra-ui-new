@@ -13,12 +13,22 @@
 import { pathToFileURL } from "node:url";
 import { fetchCompetitionReferees, TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
 import { recordRefereeStats, getRefereeSummary } from "../storage/referee-memory-db.js";
+import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
+import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
+import { readLeagueState } from "../storage/league-memory-db.js";
 
 function log(...a) { console.log("[run-referee-stats]", ...a); }
 
+// Transfermarkt saison_id = the starting year of the season. currentSeasonLabel
+// already returns the in-progress season for ACTIVE leagues (so we get their data
+// "up to now") and the just-finished one for OFF-SEASON leagues.
+function saisonIdFor(slug) {
+  const label = currentSeasonLabel(slug, getLeagueMeta(slug));
+  const y = parseInt(String(label).slice(0, 4), 10);
+  return Number.isFinite(y) ? y : 2025;
+}
+
 export async function refreshRefereeStats({ season } = {}) {
-  // Default to the most recent completed season (June 2026 → 2025-26 = saison 2025).
-  const base = season || 2025;
   const stats = { leagues: 0, stored: 0, byLeague: {} };
 
   let first = true;
@@ -27,14 +37,21 @@ export async function refreshRefereeStats({ season } = {}) {
     first = false;
     stats.leagues++;
 
+    // Try the current season and the previous one, keep the MORE COMPLETE table.
+    // For active leagues this is the current season so far (or last season if richer);
+    // for off-season leagues it lands on the last completed season's full table.
+    const base = season || saisonIdFor(slug);
     let res = await fetchCompetitionReferees(slug, base);
-    if (!res.ok) res = await fetchCompetitionReferees(slug, base - 1);   // fallback one year
+    await new Promise(r => setTimeout(r, 700));
+    const prev = await fetchCompetitionReferees(slug, base - 1);
+    if (prev.ok && prev.referees.length > (res.referees?.length || 0)) res = prev;
     if (!res.ok) { log("league", { slug, ok: false, reason: res.reason }); continue; }
 
-    const n = recordRefereeStats(slug, res.season, res.referees);
+    const n = recordRefereeStats(slug, res.season, res.referees, res.competition);
     stats.stored += n;
     stats.byLeague[slug] = n;
-    log("league", { slug, season: res.season, referees: n });
+    // competition NAME is logged so a wrong slug→code mapping is visible, not silent.
+    log("league", { slug, code: res.tmCode, competition: res.competition, season: res.season, referees: n });
   }
 
   return { ok: true, ...stats, referees: getRefereeSummary() };
