@@ -11,12 +11,7 @@
  */
 
 import { TM_COMPETITIONS } from "./transfermarkt-referee-source.js";
-
-const HEADERS = {
-  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-  "accept": "text/html,application/xhtml+xml",
-  "accept-language": "en-US,en;q=0.9"
-};
+import { tmFetch } from "./transfermarkt-fetch.js";
 
 // In TM's matchday layout the referee is rendered inside the HOME team's cell, so
 // only the home club is adjacent. That's enough: one home fixture per team per
@@ -44,12 +39,12 @@ export async function fetchMatchdayReferees(slug) {
   const code = TM_COMPETITIONS[slug];
   if (!code) return { ok: false, slug, reason: "no_tm_mapping", fixtures: [] };
 
-  const url = `https://www.transfermarkt.com/x/spieltag/wettbewerb/${code}`;
+  const path = `/x/spieltag/wettbewerb/${code}`;
   try {
-    const r = await fetch(url, { headers: HEADERS });
+    const r = await tmFetch(path);
     if (!r.ok) return { ok: false, slug, reason: `http_${r.status}`, fixtures: [] };
     const fixtures = parseMatchday(await r.text());
-    return { ok: fixtures.length > 0, slug, fixtures, url };
+    return { ok: fixtures.length > 0, slug, fixtures, url: path };
   } catch (err) {
     return { ok: false, slug, reason: String(err?.message || err), fixtures: [] };
   }
