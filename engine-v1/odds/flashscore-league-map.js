@@ -48,17 +48,40 @@ function jaccard(a, b) {
   return inter / new Set([...a, ...b]).size;
 }
 
-// country -> [{ slug, tokens }]
+// country -> [{ slug, tier, tokens, placeholder }]
 const COUNTRY_INDEX = (() => {
   const idx = new Map();
   for (const entry of LEAGUES_COVERAGE) {
     if (entry.type !== "league") continue;
     const c = entry.country;
     if (!idx.has(c)) idx.set(c, []);
-    idx.get(c).push({ slug: entry.slug, tier: entry.tier, tokens: nameTokens(leagueName(entry.slug), c) });
+    const nm = leagueName(entry.slug);
+    idx.get(c).push({
+      slug: entry.slug,
+      tier: tierOf(entry.slug, entry.tier),
+      tokens: nameTokens(nm, c),
+      // Placeholder registry names like "Hon 1" / "Fij 2" carry no real league name
+      // to match against, so name-jaccard can't work for them.
+      placeholder: /^[a-z]{2,4}\s*\d+$/i.test(String(nm || "").trim())
+    });
   }
   return idx;
 })();
+
+// Division/tier from our slug suffix (e.g. "hon.2" -> 2), falling back to registry.
+function tierOf(slug, regTier) {
+  const m = String(slug).match(/\.(\d+)$/);
+  return m ? Number(m[1]) : (Number(regTier) || 1);
+}
+
+// Infer a Flashscore competition's tier from common multilingual second/third-tier
+// markers. Defaults to 1 (top flight) when no lower-tier marker is present.
+function inferFlashscoreTier(name) {
+  const n = String(name || "").toLowerCase();
+  if (/\b(third|tercera|terceira|serie c|3\.?\s*(liga|division|divisione|lig)|league two|3a)\b/.test(n)) return 3;
+  if (/\b(second|segunda|segona|serie b|2\.?\s*(liga|division|divisione|bundesliga|lig)|ligue 2|liga 2|championship|primera b|ascenso|eerste|superettan|obos|challenger|smartbank|2nd)\b/.test(n)) return 2;
+  return 1;
+}
 
 const learned = new Map(); // "country|leaguename" -> slug|null
 
@@ -83,6 +106,15 @@ export function resolveSlug(country, leagueName_) {
       if (s > best) { best = s; slug = cand.slug; }
     }
     if (best < MATCH_THRESHOLD) slug = null;
+
+    // Fallback ONLY when name-matching found nothing (so existing mappings never
+    // change): for countries whose registry names are placeholders, match by
+    // country + inferred tier. Unique tier match only, to avoid ambiguity.
+    if (!slug && candidates.some(x => x.placeholder)) {
+      const wantTier = inferFlashscoreTier(leagueName_);
+      const sameTier = candidates.filter(x => x.tier === wantTier);
+      if (sameTier.length === 1) slug = sameTier[0].slug;
+    }
   }
 
   learned.set(key, slug);

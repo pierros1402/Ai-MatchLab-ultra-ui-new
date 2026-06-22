@@ -20,6 +20,8 @@ import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { buildCoverageReport } from "./build-coverage-report.js";
 import { accumulateResults } from "./accumulate-results-day.js";
+import { accumulateDiscipline } from "./run-discipline-day.js";
+import { deriveStandingsFromResults } from "./derive-standings-from-results.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -34,6 +36,14 @@ export async function runDay(dayKey) {
   // 2) Accumulate yesterday's finished results into form memory (no gaps over time).
   const results = await accumulateResults();
   log("results-accumulate", { stored: results.stored, leagues: Object.keys(results.byLeague).length, totalResults: results.results.results });
+
+  // 2b) Accumulate yesterday's discipline (cards/fouls/penalties) for referee/value.
+  const discipline = await accumulateDiscipline({ max: 300 });
+  log("discipline-accumulate", { stored: discipline.stored, withStats: discipline.withStats, totalMatches: discipline.discipline.matches });
+
+  // 2c) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
+  const derived = deriveStandingsFromResults();
+  log("derive-standings", { derived: derived.derived, leagues: Object.keys(derived.byLeague) });
 
   // 1b) Comprehensive fixtures snapshot (display) for our coverage leagues.
   const fxSnap = await exportFixturesSnapshotDay(today);
