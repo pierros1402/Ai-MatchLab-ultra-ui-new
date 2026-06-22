@@ -33,6 +33,28 @@ export function readOdds(matchId) {
   }
 }
 
+function normTeamKey(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Find an odds record by team names — for matches whose UI/canonical id differs
+ * from our Flashscore `fs_` id (same fixture, different id space).
+ */
+export function findOddsByTeams(home, away) {
+  const nh = normTeamKey(home), na = normTeamKey(away);
+  if (!nh || !na) return null;
+  try {
+    for (const f of fs.readdirSync(DIR)) {
+      if (!f.endsWith(".json")) continue;
+      const d = readOdds(f.replace(/\.json$/, ""));
+      if (d && normTeamKey(d.home) === nh && normTeamKey(d.away) === na) return d;
+    }
+  } catch { /* none */ }
+  return null;
+}
+
 function deltaMap(open, current) {
   const out = {};
   for (const sel of Object.keys(current)) {

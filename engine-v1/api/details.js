@@ -3,13 +3,12 @@ import { getFixtureById } from "../storage/json-db.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { buildDetailsForMatch } from "../jobs/build-details-day.js";
-import { readOdds } from "../storage/odds-memory-db.js";
+import { readOdds, findOddsByTeams } from "../storage/odds-memory-db.js";
 import { teamDisciplineRates } from "../storage/discipline-memory-db.js";
 
 // Map our appointed-referee tendencies (from aiAssessment.referee) to the shape the
 // details panel already renders: { name, style, stats:{avgCards, avgPenalties} }.
-function refereeForDetails(matchId) {
-  const r = readOdds(matchId)?.aiAssessment?.referee;
+function mapReferee(r) {
   if (!r || !r.name) return null;
   const cards = (Number(r.yellowPerGame) || 0) + (Number(r.redPerGame) || 0);
   const round2 = v => (v == null ? null : Math.round(v * 100) / 100);
@@ -53,9 +52,10 @@ function readValueForMatch(dayKey, matchId) {
  */
 export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, homeTeam, awayTeam) {
   const out = snapshot || {};
-  const rec = readOdds(String(matchId));
+  // Match by our id, else by team names (canonical/UI id differs from our fs_ id).
+  const rec = readOdds(String(matchId)) || findOddsByTeams(homeTeam, awayTeam);
 
-  const referee = refereeForDetails(matchId);
+  const referee = mapReferee(rec?.aiAssessment?.referee);
   if (referee && (!out.referee || !out.referee.name)) out.referee = referee;
 
   if (rec?.aiAssessment && !out.assessment) {
