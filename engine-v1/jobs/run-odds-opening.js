@@ -32,6 +32,8 @@ import { recordOddsSnapshot, getOddsSummary } from "../storage/odds-memory-db.js
 import { readStandings } from "../storage/standings-memory-db.js";
 import { readLeagueState } from "../storage/league-memory-db.js";
 import { teamFormRates } from "../storage/results-memory-db.js";
+import { buildRefereeLookup, lookupReferee } from "../odds/referee-enrichment.js";
+import { TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
 
 function log(...a) { console.log("[run-odds-opening]", ...a); }
 
@@ -161,6 +163,11 @@ async function main() {
   const oddsPool = buildOddsPool(market.rows);
   log("market-odds:fetched", { rows: market.rows.length, providers: market.providers });
 
+  // Appointed referees (+ their card/penalty tendencies) for upcoming fixtures,
+  // for the leagues we map to Transfermarkt. Built once; joined per match below.
+  const refereeLookup = await buildRefereeLookup(Object.keys(TM_COMPETITIONS));
+  log("referees:fetched", { leagues: refereeLookup.size });
+
   const stats = {
     today,
     fixtures: fixtures.rows.length,
@@ -205,6 +212,9 @@ async function main() {
       });
       // All markets the UI offers: 1X2, DC, OU15, OU25, OU35, BTTS.
       aiAssessment = { model: p.model, markets: p.markets };
+      // Appointed referee + tendencies (cards/penalties) for the details panel.
+      const referee = lookupReferee(refereeLookup, slug, fx.home);
+      if (referee) { aiAssessment.referee = referee; stats.withReferee = (stats.withReferee || 0) + 1; }
       stats.withAiAssessment++;
     }
 

@@ -63,18 +63,15 @@ function parseRefereeTable(html) {
     const end = i + 1 < anchors.length ? anchors[i + 1].index : scope.length;
     const slice = scope.slice(start, end);
 
-    const cents = [...slice.matchAll(/<td class="zentriert"[^>]*>([\s\S]*?)<\/td>/g)]
+    // Column layout varies by league (Appearances isn't always class="zentriert"),
+    // so read ALL cells and keep the pure-integer ones in order. The name/birthplace
+    // are text and Debut is a date, so the integers are exactly the 5 stat columns:
+    // Appearances, Yellow, Second-yellow, Red, Penalty kicks.
+    const cells = [...slice.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)]
       .map(m => m[1].replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").trim());
-    if (cents.length < 5) continue;
-
-    // The last five centered cells are the stats, in order:
-    // Appearances, Yellow, Second-yellow, Red, Penalty kicks (Debut precedes them).
-    const tail = cents.slice(-5);
-    const appearances = num(tail[0]) || 0;
-    const yellow = num(tail[1]) || 0;
-    const secondYellow = num(tail[2]) || 0;
-    const red = num(tail[3]) || 0;
-    const penalties = num(tail[4]) || 0;
+    const ints = cells.filter(c => /^\d+$/.test(c)).map(Number);
+    if (ints.length < 5) continue;
+    const [appearances, yellow, secondYellow, red, penalties] = ints.slice(0, 5);
     if (!appearances) continue;
 
     out.push({
