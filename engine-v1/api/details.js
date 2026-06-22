@@ -3,6 +3,24 @@ import { getFixtureById } from "../storage/json-db.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { buildDetailsForMatch } from "../jobs/build-details-day.js";
+import { readOdds } from "../storage/odds-memory-db.js";
+
+// Map our appointed-referee tendencies (from aiAssessment.referee) to the shape the
+// details panel already renders: { name, style, stats:{avgCards, avgPenalties} }.
+function refereeForDetails(matchId) {
+  const r = readOdds(matchId)?.aiAssessment?.referee;
+  if (!r || !r.name) return null;
+  const cards = (Number(r.yellowPerGame) || 0) + (Number(r.redPerGame) || 0);
+  const round2 = v => (v == null ? null : Math.round(v * 100) / 100);
+  const style = cards >= 4.5 ? "strict" : cards <= 2.5 ? "lenient" : "balanced";
+  return {
+    name: r.name,
+    style,
+    stats: { avgCards: round2(cards), avgPenalties: round2(r.penPerGame) },
+    appearances: r.appearances ?? null,
+    source: r.source || "transfermarkt"
+  };
+}
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -27,7 +45,25 @@ function readValueForMatch(dayKey, matchId) {
 }
 
 export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
-  const match = getFixtureById(String(matchId));
+  let match = getFixtureById(String(matchId));
+
+  // Our autonomous Flashscore matches (fs_*) live in odds-memory, not the canonical
+  // json-db, so fall back to that record for the match basics.
+  if (!match) {
+    const odds = readOdds(String(matchId));
+    if (odds) {
+      match = {
+        matchId: String(matchId),
+        leagueSlug: odds.leagueSlug || null,
+        leagueName: odds.competition || null,
+        homeTeam: odds.home || null,
+        awayTeam: odds.away || null,
+        kickoffUtc: odds.kickoffUtc || null,
+        dayKey: odds.dayKey || null,
+        status: "SCHEDULED"
+      };
+    }
+  }
 
   if (!match) {
     return { ok: false, error: "match_not_found", matchId: String(matchId) };
@@ -44,8 +80,21 @@ export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
   let snapshot = readJsonSafe(detailsFile, null);
 
   if (!snapshot || rebuild) {
-    const built = await buildDetailsForMatch(match.matchId, { rebuild });
-    snapshot = built?.details || null;
+    try {
+      const built = await buildDetailsForMatch(match.matchId, { rebuild });
+      snapshot = built?.details || null;
+    } catch {
+      // Builder only knows canonical matches; ours still get the referee merge below.
+      snapshot = snapshot || null;
+    }
+  }
+
+  // Merge our appointed referee + tendencies (from odds-memory) into the snapshot,
+  // without clobbering any referee the platform builder already produced.
+  const referee = refereeForDetails(match.matchId);
+  if (referee) {
+    snapshot = snapshot || {};
+    if (!snapshot.referee || !snapshot.referee.name) snapshot.referee = referee;
   }
 
   const value = readValueForMatch(dayKey, match.matchId);
