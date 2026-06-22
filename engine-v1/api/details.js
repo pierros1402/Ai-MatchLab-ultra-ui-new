@@ -4,6 +4,7 @@ import { athensDayFromKickoff } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { buildDetailsForMatch } from "../jobs/build-details-day.js";
 import { readOdds } from "../storage/odds-memory-db.js";
+import { teamDisciplineRates } from "../storage/discipline-memory-db.js";
 
 // Map our appointed-referee tendencies (from aiAssessment.referee) to the shape the
 // details panel already renders: { name, style, stats:{avgCards, avgPenalties} }.
@@ -97,6 +98,26 @@ export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
     if (!snapshot.referee || !snapshot.referee.name) snapshot.referee = referee;
   }
 
+  // Our own AI assessment (form-aware fair odds) — shown for EVERY match we priced,
+  // independent of the value run. Plus per-team discipline (cards/fouls/penalties).
+  const oddsRec = readOdds(String(match.matchId));
+  const assessment = oddsRec?.aiAssessment
+    ? { model: oddsRec.aiAssessment.model || null, markets: oddsRec.aiAssessment.markets || null }
+    : null;
+  const slug = match.leagueSlug;
+  const discipline = slug ? {
+    home: teamDisciplineRates(slug, match.homeTeam),
+    away: teamDisciplineRates(slug, match.awayTeam)
+  } : null;
+
+  // Also expose on the snapshot so the existing detailed render (which reads `snap`)
+  // can surface them without threading the whole payload through.
+  if (assessment || discipline) {
+    snapshot = snapshot || {};
+    if (assessment && !snapshot.assessment) snapshot.assessment = assessment;
+    if (discipline && !snapshot.discipline) snapshot.discipline = discipline;
+  }
+
   const value = readValueForMatch(dayKey, match.matchId);
 
   return {
@@ -118,9 +139,12 @@ export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
       venue: match.venue || null
     },
     value,
+    assessment,
+    discipline,
     snapshot,
     meta: {
       hasSnapshot: !!snapshot,
+      hasAssessment: !!assessment,
       hasValue: value.length > 0,
       isLive: String(match.status || "").toUpperCase() === "LIVE",
       isFinal: String(match.status || "").toUpperCase() === "FT",

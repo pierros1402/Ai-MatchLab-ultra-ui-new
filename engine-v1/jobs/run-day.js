@@ -22,6 +22,7 @@ import { buildCoverageReport } from "./build-coverage-report.js";
 import { accumulateResults } from "./accumulate-results-day.js";
 import { accumulateDiscipline } from "./run-discipline-day.js";
 import { deriveStandingsFromResults } from "./derive-standings-from-results.js";
+import { refreshRefereeStats } from "./run-referee-stats.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -44,6 +45,15 @@ export async function runDay(dayKey) {
   // 2c) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
   const derived = deriveStandingsFromResults();
   log("derive-standings", { derived: derived.derived, leagues: Object.keys(derived.byLeague) });
+
+  // 2d) Weekly (Mondays): refresh per-referee tendencies — slow-changing, and TM
+  // is reachable via the proxy. Done before odds so the enrichment uses fresh data.
+  if (new Date(`${today}T12:00:00Z`).getUTCDay() === 1) {
+    try {
+      const refs = await refreshRefereeStats();
+      log("referee-stats-refresh", { leagues: refs.leagues, referees: refs.referees?.referees });
+    } catch (e) { log("referee-stats-refresh:skip", String(e?.message || e)); }
+  }
 
   // 1b) Comprehensive fixtures snapshot (display) for our coverage leagues.
   const fxSnap = await exportFixturesSnapshotDay(today);

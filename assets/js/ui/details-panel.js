@@ -1614,6 +1614,30 @@ async function renderLocal(match, mountEl) {
         <div style="margin-top:6px;">Total Teams: <b>${esc(totalTeams)}</b></div>
       </div>
 
+      ${(() => {
+        const a = snap.assessment;
+        if (!a || !a.markets) return "";
+        const od = k => (a.markets[k] && a.markets[k].odds) || {};
+        const x = od("1X2"), ou = od("OU25"), btts = od("BTTS");
+        const form = a.model && a.model.formUsed ? " · form-aware" : "";
+        const d = snap.discipline || {};
+        const num = v => (typeof v === "number" ? v : null);
+        const yc = t => (num(d[t] && d[t].yellowPerGame) != null ? d[t].yellowPerGame.toFixed(2) : "—");
+        const fl = t => (num(d[t] && d[t].foulsPerGame) != null ? d[t].foulsPerGame.toFixed(1) : "—");
+        const hasDisc = (d.home && d.home.sample) || (d.away && d.away.sample);
+        return `
+        <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="font-weight:900;margin-bottom:8px;">AI MatchLab Estimate<span style="opacity:.6;font-weight:600;">${form}</span></div>
+          <div>1 / X / 2: <b>${esc(x.home ?? "—")}</b> / <b>${esc(x.draw ?? "—")}</b> / <b>${esc(x.away ?? "—")}</b></div>
+          ${ou.over != null ? `<div style="margin-top:6px;">O/U 2.5: <b>${esc(ou.over)}</b> / <b>${esc(ou.under)}</b></div>` : ``}
+          ${btts.yes != null ? `<div style="margin-top:6px;">BTTS Yes/No: <b>${esc(btts.yes)}</b> / <b>${esc(btts.no)}</b></div>` : ``}
+          ${hasDisc ? `
+            <div style="margin-top:8px;font-weight:800;">Discipline (avg/game)</div>
+            <div style="margin-top:4px;">${esc(home)}: YC <b>${yc("home")}</b> · Fouls <b>${fl("home")}</b></div>
+            <div style="margin-top:2px;">${esc(away)}: YC <b>${yc("away")}</b> · Fouls <b>${fl("away")}</b></div>` : ``}
+        </div>`;
+      })()}
+
       ${renderPlayerUsageIntelBlock(snap)}
 
       ${valueHtml}
