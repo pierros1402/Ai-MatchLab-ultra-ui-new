@@ -11,11 +11,7 @@
  *   page: /{slug}/schiedsrichter/wettbewerb/{TM_CODE}/plus/?saison_id={YYYY}
  */
 
-const HEADERS = {
-  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-  "accept": "text/html,application/xhtml+xml",
-  "accept-language": "en-US,en;q=0.9"
-};
+import { tmFetch } from "./transfermarkt-fetch.js";
 
 // Our league slug → Transfermarkt competition CODE. The URL works with any slug as
 // long as the code is right (code-only `/x/...`), so we only need the code. Codes
@@ -57,10 +53,6 @@ export const TM_COMPETITIONS = {
   "jpn.1": "JAP1", "kor.1": "RSK1", "aus.1": "AUS1", "ksa.1": "SA1",
   "egy.1": "EGY1", "rsa.1": "SFA1"
 };
-
-function tmUrl(code, path, qs) {
-  return `https://www.transfermarkt.com/x/schiedsrichter/wettbewerb/${code}${path}${qs || ""}`;
-}
 
 function parseCompetitionName(html) {
   // The <title> carries the competition name ("Premier League - Referees | ...");
@@ -127,15 +119,15 @@ export async function fetchCompetitionReferees(slug, saisonId) {
   const code = TM_COMPETITIONS[slug];
   if (!code) return { ok: false, slug, reason: "no_tm_mapping", referees: [] };
 
-  const url = tmUrl(code, "/plus/", `?saison_id=${saisonId}`);
+  const path = `/x/schiedsrichter/wettbewerb/${code}/plus/?saison_id=${saisonId}`;
   try {
-    const r = await fetch(url, { headers: HEADERS });
+    const r = await tmFetch(path);
     if (!r.ok) return { ok: false, slug, season: saisonId, reason: `http_${r.status}`, referees: [] };
     const html = await r.text();
     const referees = parseRefereeTable(html);
     return {
       ok: referees.length > 0, slug, season: saisonId, tmCode: code,
-      competition: parseCompetitionName(html), referees, url
+      competition: parseCompetitionName(html), referees, url: path
     };
   } catch (err) {
     return { ok: false, slug, season: saisonId, reason: String(err?.message || err), referees: [] };

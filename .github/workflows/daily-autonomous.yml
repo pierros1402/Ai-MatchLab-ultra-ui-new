@@ -62,6 +62,9 @@ jobs:
 
       - name: Run the autonomous day
         if: env.SKIP != 'true'
+        env:
+          # Route Transfermarkt through the CF proxy (TM blocks the runner's IP).
+          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
         run: node ./engine-v1/jobs/run-day.js "$DAY_KEY"
 
       - name: Commit snapshots + memory
