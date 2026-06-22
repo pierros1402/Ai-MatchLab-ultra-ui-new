@@ -1450,6 +1450,14 @@ app.get("/details", async (req, res) => {
         return;
       }
 
+      // No pre-built snapshot detail (our autonomous fs_* matches) — serve the
+      // odds-memory-based assessment / referee / discipline instead of 404.
+      const fallback = await getDetailsPayload(id, { rebuild: false });
+      if (fallback?.ok) {
+        res.json({ ...fallback, source: "odds-memory" });
+        return;
+      }
+
       res.status(404).json(snapshotResult);
       return;
     }
