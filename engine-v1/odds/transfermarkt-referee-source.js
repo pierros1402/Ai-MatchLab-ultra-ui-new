@@ -46,7 +46,7 @@ export const TM_COMPETITIONS = {
   "irl.1": "IR1", "nir.1": "NIR1", "wal.1": "WAL1",
   "isr.1": "ISR1", "cyp.1": "ZYP1",
   // South America
-  "bra.1": "BRA1", "bra.2": "BRA2", "arg.1": "AR1N",
+  "bra.1": "BRA1", "bra.2": "BRA2", "arg.1": "ARG1",
   "chi.1": "CLPD", "uru.1": "URU1", "col.1": "COL1",
   // North America / Asia / Africa majors
   "usa.1": "MLS1", "mex.1": "MEX1",
