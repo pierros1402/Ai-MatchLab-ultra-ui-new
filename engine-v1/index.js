@@ -16,7 +16,7 @@ import { buildFixturesRuntime } from "./api/fixtures-runtime.js";
 import { getFixtureById } from "./storage/json-db.js";
 import { buildValueDay } from "./core/build-value-day.js";
 import { buildDetailsDay } from "./jobs/build-details-day.js";
-import { getDetailsPayload } from "./api/details.js";
+import { getDetailsPayload, enrichSnapshotWithAssessment } from "./api/details.js";
 import { resolveDataPath } from "./storage/data-root.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay } from "./storage/odds-memory-db.js";
@@ -1446,6 +1446,11 @@ app.get("/details", async (req, res) => {
       const snapshotResult = snapshotDetailsResponse(id, date);
 
       if (snapshotResult.ok) {
+        // Enrich the pre-built snapshot with our assessment/referee/discipline too.
+        snapshotResult.snapshot = enrichSnapshotWithAssessment(
+          snapshotResult.snapshot, id,
+          snapshotResult.basic?.leagueSlug, snapshotResult.basic?.homeTeam, snapshotResult.basic?.awayTeam
+        );
         res.json(snapshotResult);
         return;
       }
@@ -1466,6 +1471,10 @@ app.get("/details", async (req, res) => {
       const snapshotResult = snapshotDetailsResponse(id, date);
 
       if (snapshotResult.ok) {
+        snapshotResult.snapshot = enrichSnapshotWithAssessment(
+          snapshotResult.snapshot, id,
+          snapshotResult.basic?.leagueSlug, snapshotResult.basic?.homeTeam, snapshotResult.basic?.awayTeam
+        );
         res.json(snapshotResult);
         return;
       }
