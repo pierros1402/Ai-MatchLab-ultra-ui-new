@@ -188,7 +188,7 @@ if (!exportMenu) return;
       </div>
 
       <div class="menu-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="export-fixtures" class="menu-btn">Fixtures</button>
+        <button id="export-assessment" class="menu-btn">Assessment</button>
         <button id="export-value" class="menu-btn">Value</button>
       </div>
     `;
@@ -351,10 +351,10 @@ btnToday.addEventListener("click", () => setInputs(today, today));
         ? window.AIML_LIVE_CFG.fixturesBase
         : "http://localhost:3010";
 
-    exportMenu.querySelector("#export-fixtures")?.addEventListener("click", () => {
+    exportMenu.querySelector("#export-assessment")?.addEventListener("click", () => {
       const r = getRange();
       const token = getAdminToken();
-      const url = `${MAIN_BASE}/fixtures-export/range?from=${encodeURIComponent(r.from)}&to=${encodeURIComponent(r.to)}&format=xlsx&token= ${encodeURIComponent(token)}`;
+      const url = `${MAIN_BASE}/assessment-export/range?from=${encodeURIComponent(r.from)}&to=${encodeURIComponent(r.to)}&format=xlsx&token=${encodeURIComponent(token)}`;
       window.open(url, "_blank");
     });
 
