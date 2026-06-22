@@ -45,6 +45,34 @@ function readValueForMatch(dayKey, matchId) {
   return picks.filter(p => String(p?.matchId) === String(matchId));
 }
 
+/**
+ * Merge our odds-memory data (form-aware assessment + appointed referee + per-team
+ * discipline) into a details snapshot — used by BOTH the runtime payload and the
+ * production snapshot path, so our estimates show whether or not a pre-built
+ * snapshot exists. Never clobbers fields the platform builder already produced.
+ */
+export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, homeTeam, awayTeam) {
+  const out = snapshot || {};
+  const rec = readOdds(String(matchId));
+
+  const referee = refereeForDetails(matchId);
+  if (referee && (!out.referee || !out.referee.name)) out.referee = referee;
+
+  if (rec?.aiAssessment && !out.assessment) {
+    out.assessment = {
+      model: rec.aiAssessment.model || null,
+      markets: rec.aiAssessment.markets || null
+    };
+  }
+  if (leagueSlug && !out.discipline) {
+    out.discipline = {
+      home: teamDisciplineRates(leagueSlug, homeTeam),
+      away: teamDisciplineRates(leagueSlug, awayTeam)
+    };
+  }
+  return out;
+}
+
 export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
   let match = getFixtureById(String(matchId));
 
@@ -90,33 +118,13 @@ export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
     }
   }
 
-  // Merge our appointed referee + tendencies (from odds-memory) into the snapshot,
-  // without clobbering any referee the platform builder already produced.
-  const referee = refereeForDetails(match.matchId);
-  if (referee) {
-    snapshot = snapshot || {};
-    if (!snapshot.referee || !snapshot.referee.name) snapshot.referee = referee;
-  }
-
-  // Our own AI assessment (form-aware fair odds) — shown for EVERY match we priced,
-  // independent of the value run. Plus per-team discipline (cards/fouls/penalties).
-  const oddsRec = readOdds(String(match.matchId));
-  const assessment = oddsRec?.aiAssessment
-    ? { model: oddsRec.aiAssessment.model || null, markets: oddsRec.aiAssessment.markets || null }
-    : null;
-  const slug = match.leagueSlug;
-  const discipline = slug ? {
-    home: teamDisciplineRates(slug, match.homeTeam),
-    away: teamDisciplineRates(slug, match.awayTeam)
-  } : null;
-
-  // Also expose on the snapshot so the existing detailed render (which reads `snap`)
-  // can surface them without threading the whole payload through.
-  if (assessment || discipline) {
-    snapshot = snapshot || {};
-    if (assessment && !snapshot.assessment) snapshot.assessment = assessment;
-    if (discipline && !snapshot.discipline) snapshot.discipline = discipline;
-  }
+  // Merge our assessment / referee / discipline (form-aware fair odds for EVERY
+  // priced match, independent of the value run) into the snapshot.
+  snapshot = enrichSnapshotWithAssessment(
+    snapshot, match.matchId, match.leagueSlug, match.homeTeam, match.awayTeam
+  );
+  const assessment = snapshot?.assessment || null;
+  const discipline = snapshot?.discipline || null;
 
   const value = readValueForMatch(dayKey, match.matchId);
 
