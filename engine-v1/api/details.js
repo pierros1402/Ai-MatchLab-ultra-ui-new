@@ -184,6 +184,25 @@ export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, home
       if (parts.length >= 2) { const s = parts.join(". ") + "."; out.analysis = { summary: { en: s, el: s } }; }
     }
   }
+
+  // AI Tasks status board — reflect what WE actually gathered (so the panel shows
+  // done/pending per capability instead of all "unknown") when the platform's
+  // research-plan output is absent (our fs_ matches).
+  if (!out.ai || !Array.isArray(out.ai.tasks) || !out.ai.tasks.length) {
+    const t = (key, ok, data) => ({ key, status: ok ? "ready" : "pending", ok: !!ok, data: ok ? (data || {}) : null });
+    out.ai = out.ai || {};
+    out.ai.tasks = [
+      t("competition_context", !!out.context?.table, out.context?.table
+        ? { importance: out.context?.importance || "normal", pressure: [], stakes: [out.context?.motivation].filter(Boolean) } : null),
+      t("form_guide", !!out.formGuide, out.formGuide),
+      t("value_context", !!out.assessment, out.assessment ? { source: "ai_assessment_poisson" } : null),
+      t("referee_profile", !!out.referee?.name, out.referee),
+      t("expected_lineups", !!out.playerUsageIntel?.home, out.playerUsageIntel?.home),
+      t("travel_context", out.travel?.distanceKm != null, out.travel),
+      t("head_to_head", false, null),
+      t("team_news", false, null)
+    ];
+  }
   return out;
 }
 
