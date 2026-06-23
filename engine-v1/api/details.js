@@ -8,6 +8,9 @@ import { teamDisciplineRates } from "../storage/discipline-memory-db.js";
 import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
 import { readStandings } from "../storage/standings-memory-db.js";
 import { buildTravelContext } from "../core/travel-context.js";
+import { teamFormRates } from "../storage/results-memory-db.js";
+
+const r1 = v => (v == null ? null : Math.round(v * 10) / 10);
 
 function normName(s) {
   return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -139,6 +142,46 @@ export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, home
     if (h || a) {
       const prev = out.playerUsageIntel || {};
       out.playerUsageIntel = { home: h || prev.home || null, away: a || prev.away || null };
+    }
+  }
+
+  // Motivation inferred from table position (no platform competition-state needed).
+  const tbl = out.context?.table;
+  if (tbl && tbl.totalTeams && (!out.context.motivation || out.context.motivation === "unknown")) {
+    const band = Math.max(2, Math.ceil(tbl.totalTeams * 0.22));
+    const zone = pos => !pos ? null
+      : pos <= band ? "europe_race"
+      : pos > tbl.totalTeams - band ? "relegation_battle" : "mid_table";
+    const h = zone(tbl.homePosition), a = zone(tbl.awayPosition);
+    out.context.motivation =
+      (h === "relegation_battle" || a === "relegation_battle") ? "relegation_battle"
+      : (h === "europe_race" || a === "europe_race") ? "europe_race" : "mid_table";
+    out.context.importance = out.context.motivation === "mid_table" ? "normal" : "high";
+  }
+
+  // Form guide from accumulated results + a plain Match-Analysis summary, so the
+  // panel isn't blank for our matches even before the platform builder runs.
+  if (leagueSlug) {
+    const hf = teamFormRates(leagueSlug, homeTeam), af = teamFormRates(leagueSlug, awayTeam);
+    if (!out.formGuide && (hf.sample || af.sample)) {
+      out.formGuide = {
+        home: hf.sample ? { ppg: r1(hf.ppg), gfPerGame: r1(hf.gfRate), gaPerGame: r1(hf.gaRate), sample: hf.sample } : null,
+        away: af.sample ? { ppg: r1(af.ppg), gfPerGame: r1(af.gfRate), gaPerGame: r1(af.gaRate), sample: af.sample } : null
+      };
+    }
+    if (!out.analysis?.summary) {
+      const parts = [];
+      if (out.basic?.leagueName) parts.push(out.basic.leagueName);
+      if (tbl?.homePosition && tbl?.awayPosition) parts.push(`${homeTeam} #${tbl.homePosition} vs ${awayTeam} #${tbl.awayPosition} of ${tbl.totalTeams}`);
+      if (hf.sample) parts.push(`${homeTeam} ${r1(hf.ppg)} ppg (last ${hf.sample})`);
+      if (af.sample) parts.push(`${awayTeam} ${r1(af.ppg)} ppg (last ${af.sample})`);
+      const pr = out.assessment?.markets?.["1X2"]?.probs;
+      if (pr) {
+        const fav = pr.home >= pr.draw && pr.home >= pr.away ? homeTeam
+          : pr.away >= pr.draw && pr.away >= pr.home ? awayTeam : "the draw";
+        parts.push(`AI lean: ${fav}`);
+      }
+      if (parts.length >= 2) { const s = parts.join(". ") + "."; out.analysis = { summary: { en: s, el: s } }; }
     }
   }
   return out;
