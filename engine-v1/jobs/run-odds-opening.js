@@ -61,9 +61,11 @@ function tokenJaccard(a, b) {
 }
 
 // ─── Global team → league index from accepted standings ─────────────────────────
-// Only ACTIVE leagues that have validated standings are indexed.
+// Domestic attribution indexes ACTIVE leagues; the cross-league index (for UEFA
+// qualifiers / cups, where the two clubs come from DIFFERENT — and often off-season
+// — leagues) includes every league that has an accepted table (last-season included).
 
-function buildLeagueIndex() {
+function buildLeagueIndex({ activeOnly = true } = {}) {
   const dir = resolveDataPath("league-memory", "standings");
   const leagues = [];
 
@@ -72,7 +74,7 @@ function buildLeagueIndex() {
 
   for (const file of files) {
     const slug = file.replace(/\.json$/, "");
-    if (readLeagueState(slug)?.state !== "active") continue;
+    if (activeOnly && readLeagueState(slug)?.state !== "active") continue;
 
     const rows = readStandings(slug)?.accepted?.rows;
     if (!Array.isArray(rows) || rows.length < 4) continue;
@@ -94,6 +96,18 @@ function findTeam(name, teams) {
     if (s > bestScore) { bestScore = s; best = t; }
   }
   return bestScore >= 0.6 ? best : null;
+}
+
+// Find one team in ANY league (for cross-league cup / UEFA-qualifier matches).
+function findTeamAnyLeague(name, allLeagues) {
+  let best = null, bestScore = 0;
+  for (const lg of allLeagues) {
+    const t = findTeam(name, lg.teams);
+    if (!t) continue;
+    const s = tokenJaccard(normalizeTeam(name), t.norm);
+    if (s > bestScore) { bestScore = s; best = { slug: lg.slug, row: t.row, leagueAvg: lg.leagueAvg }; }
+  }
+  return best;
 }
 
 // Attribute a scraped match to the league whose standings contain BOTH teams.
@@ -152,7 +166,8 @@ async function main() {
   const windowSet = new Set([today, shiftDay(today, 1), shiftDay(today, 2)]);
 
   const leagues = buildLeagueIndex();
-  log("league-index", { activeLeaguesWithStandings: leagues.length, window: [...windowSet] });
+  const allLeagues = buildLeagueIndex({ activeOnly: false });   // for cross-league cups/qualifiers
+  log("league-index", { activeLeaguesWithStandings: leagues.length, allLeaguesWithStandings: allLeagues.length, window: [...windowSet] });
 
   // Fixtures: the whole day's football (wide coverage).
   const fixtures = await fetchFlashscoreFixtures({ offsets: [0, 1, 2] });
@@ -184,15 +199,29 @@ async function main() {
     // Attribution: international by competition, else domestic via standings.
     const intl = resolveInternational(fx.leagueName, fx.country);
     let slug, home, away, league = null, isIntl = false;
+    let homeSlug = null, awaySlug = null, leagueAvg = 1.35, crossLeague = false;
 
     if (intl) {
       slug = intl.slug;
       isIntl = true;
+      // CLUB qualifiers / cups are cross-league: resolve EACH team in its own
+      // (possibly off-season) domestic table so we can still price them.
+      if (intl.type === "club") {
+        const h = findTeamAnyLeague(fx.home, allLeagues);
+        const a = findTeamAnyLeague(fx.away, allLeagues);
+        if (h && a) {
+          home = h.row; away = a.row;
+          homeSlug = h.slug; awaySlug = a.slug;
+          leagueAvg = (h.leagueAvg + a.leagueAvg) / 2;
+          crossLeague = true;
+        }
+      }
     } else {
       const hit = attributeMatch(fx.home, fx.away, leagues);
       if (!hit) continue;            // not in a league we hold stats for → skip
       slug = hit.league.slug;
       home = hit.home; away = hit.away; league = hit.league;
+      homeSlug = awaySlug = slug; leagueAvg = league.leagueAvg;
     }
 
     const id = `fs_${fx.matchId}`;
@@ -202,21 +231,20 @@ async function main() {
     const markets = odds ? { "1X2": { odds: odds.odds, oddsMax: odds.oddsMax } } : {};
     if (odds) stats.withOdds++;
 
-    // Our AI assessment for domestic matches with standings.
+    // AI assessment whenever both teams resolved to a standings row — domestic OR
+    // cross-league (UEFA qualifiers / cups). Form & xG use each team's own league.
     let aiAssessment = null;
-    if (!isIntl && home && away) {
-      // Recent form (from accumulated results, keyed by Flashscore team names).
-      const homeForm = teamFormRates(slug, fx.home);
-      const awayForm = teamFormRates(slug, fx.away);
-      const homeXg = teamXgRates(slug, fx.home);
-      const awayXg = teamXgRates(slug, fx.away);
+    if (home && away) {
+      const homeForm = teamFormRates(homeSlug, fx.home);
+      const awayForm = teamFormRates(awaySlug, fx.away);
+      const homeXg = teamXgRates(homeSlug, fx.home);
+      const awayXg = teamXgRates(awaySlug, fx.away);
       const p = priceMatchFromStandings(home, away, {
-        leagueAvgGoalsPerTeam: league.leagueAvg, homeForm, awayForm, homeXg, awayXg
+        leagueAvgGoalsPerTeam: leagueAvg, homeForm, awayForm, homeXg, awayXg
       });
-      // All markets the UI offers: 1X2, DC, OU15, OU25, OU35, BTTS.
       aiAssessment = { model: p.model, markets: p.markets };
-      // Appointed referee + tendencies (cards/penalties) for the details panel.
-      const referee = lookupReferee(refereeLookup, slug, fx.home);
+      if (crossLeague) aiAssessment.crossLeague = { home: homeSlug, away: awaySlug };
+      const referee = lookupReferee(refereeLookup, homeSlug, fx.home);
       if (referee) { aiAssessment.referee = referee; stats.withReferee = (stats.withReferee || 0) + 1; }
       stats.withAiAssessment++;
     }
