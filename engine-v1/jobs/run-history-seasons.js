@@ -71,13 +71,14 @@ function leaguesWithCurrentStandings() {
 }
 
 function parseArgs(argv) {
-  const out = { allowSearch: false, seasons: 5, max: 60, summary: false };
+  const out = { allowSearch: false, seasons: 5, max: 60, summary: false, slugs: null };
   for (let i = 0; i < argv.length; i++) {
     const a = String(argv[i] || "").trim();
     if (a === "--allow-search") out.allowSearch = true;
     else if (a === "--summary") out.summary = true;
     else if (a === "--seasons" && argv[i + 1]) { const n = parseInt(argv[++i], 10); if (n > 0) out.seasons = n; }
     else if (a === "--max" && argv[i + 1]) { const n = parseInt(argv[++i], 10); if (n > 0) out.max = n; }
+    else if (a === "--slugs" && argv[i + 1]) { out.slugs = String(argv[++i]).split(",").map(s => s.trim()).filter(Boolean); }
   }
   return out;
 }
@@ -89,7 +90,7 @@ async function main() {
     return;
   }
 
-  const slugs = leaguesWithCurrentStandings();
+  const slugs = opts.slugs && opts.slugs.length ? opts.slugs : leaguesWithCurrentStandings();
   const stats = { leaguesConsidered: slugs.length, fetched: 0, accepted: 0, skipped: 0, needsReview: 0, results: [] };
 
   outer:
