@@ -6,6 +6,16 @@ import { buildDetailsForMatch } from "../jobs/build-details-day.js";
 import { readOdds, findOddsByTeams } from "../storage/odds-memory-db.js";
 import { teamDisciplineRates } from "../storage/discipline-memory-db.js";
 import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
+import { readStandings } from "../storage/standings-memory-db.js";
+import { buildTravelContext } from "../core/travel-context.js";
+
+function normName(s) {
+  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+function findStandingRow(rows, team) {
+  const n = normName(team);
+  return rows.find(r => { const x = normName(r.teamName); return x === n || x.includes(n) || n.includes(x); }) || null;
+}
 
 // Map our appointed-referee tendencies (from aiAssessment.referee) to the shape the
 // details panel already renders: { name, style, stats:{avgCards, avgPenalties} }.
@@ -51,10 +61,46 @@ function readValueForMatch(dayKey, matchId) {
  * production snapshot path, so our estimates show whether or not a pre-built
  * snapshot exists. Never clobbers fields the platform builder already produced.
  */
-export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, homeTeam, awayTeam) {
+export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, homeTeam, awayTeam, leagueName) {
   const out = snapshot || {};
   // Match by our id, else by team names (canonical/UI id differs from our fs_ id).
   const rec = readOdds(String(matchId)) || findOddsByTeams(homeTeam, awayTeam);
+
+  // Basic context (competition + teams) so the panel shows them for our fs_ matches.
+  if (!out.basic || !out.basic.leagueName) {
+    out.basic = {
+      ...(out.basic || {}),
+      leagueName: out.basic?.leagueName || leagueName || rec?.competition || null,
+      leagueSlug: out.basic?.leagueSlug || leagueSlug || null,
+      homeTeam: out.basic?.homeTeam || homeTeam || null,
+      awayTeam: out.basic?.awayTeam || awayTeam || null
+    };
+  }
+  if (!out.leagueName) out.leagueName = leagueName || rec?.competition || null;
+
+  // Table context (positions) from our standings.
+  if (leagueSlug && (!out.context || !out.context.table)) {
+    const rows = readStandings(leagueSlug)?.accepted?.rows;
+    if (Array.isArray(rows) && rows.length) {
+      const h = findStandingRow(rows, homeTeam), a = findStandingRow(rows, awayTeam);
+      if (h || a) {
+        out.context = out.context || {};
+        out.context.table = {
+          homePosition: h?.position ?? null, awayPosition: a?.position ?? null, totalTeams: rows.length
+        };
+      }
+    }
+  }
+
+  // Travel (distance / impact) from team-geo — reuse the platform's builder.
+  if (!out.travel || out.travel.status === "empty") {
+    const tc = buildTravelContext({ homeTeam, awayTeam });
+    if (tc && tc.status !== "empty" && tc.data) {
+      out.travel = { status: tc.status, ...tc.data };
+      out.context = out.context || {};
+      if (tc.data.impact && !out.context.travelImpact) out.context.travelImpact = tc.data.impact;
+    }
+  }
 
   const referee = mapReferee(rec?.aiAssessment?.referee);
   if (referee && (!out.referee || !out.referee.name)) out.referee = referee;
@@ -146,7 +192,7 @@ export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
   // Merge our assessment / referee / discipline (form-aware fair odds for EVERY
   // priced match, independent of the value run) into the snapshot.
   snapshot = enrichSnapshotWithAssessment(
-    snapshot, match.matchId, match.leagueSlug, match.homeTeam, match.awayTeam
+    snapshot, match.matchId, match.leagueSlug, match.homeTeam, match.awayTeam, match.leagueName
   );
   const assessment = snapshot?.assessment || null;
   const discipline = snapshot?.discipline || null;
