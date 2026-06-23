@@ -15,6 +15,7 @@ import { pathToFileURL } from "node:url";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveSlug } from "../odds/flashscore-league-map.js";
 import { fetchMatchLineups } from "../odds/flashscore-lineups.js";
+import { fetchEspnMatchData } from "../odds/espn-match-source.js";
 import { recordMatchLineups, readLineups, getLineupsSummary } from "../storage/lineups-memory-db.js";
 
 function alreadyHave(slug, matchId, home) {
@@ -41,7 +42,17 @@ export async function accumulateLineups({ max = 120 } = {}) {
     stats.fetched++;
     await new Promise(r => setTimeout(r, 400 + Math.random() * 500));
 
-    const lu = await fetchMatchLineups(m.matchId);
+    // Cascade: primary Flashscore, else fill from ESPN (a fixture missing on one
+    // source is found on the next).
+    let lu = await fetchMatchLineups(m.matchId);
+    if (!lu) {
+      const dateYmd = (m.kickoffUtc || "").slice(0, 10);
+      const e = await fetchEspnMatchData(slug, m.home, m.away, dateYmd);
+      if (e && (e.lineups.home.length || e.lineups.away.length)) {
+        lu = { home: { starters: e.lineups.home, formation: null }, away: { starters: e.lineups.away, formation: null } };
+        stats.fromEspn = (stats.fromEspn || 0) + 1;
+      }
+    }
     if (!lu) continue;
     stats.withLineups++;
 
