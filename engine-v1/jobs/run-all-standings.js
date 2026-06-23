@@ -22,6 +22,7 @@ import { researchStandings } from "../source-discovery/standings-researcher.js";
 import { getLeagueMeta, getAllKnownSlugs } from "../source-discovery/league-awareness-service.js";
 import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
 import { readLeagueState } from "../storage/league-memory-db.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import {
   recordStandingsResult, hasAcceptedStandings, getStandingsSummary
 } from "../storage/standings-memory-db.js";
@@ -52,6 +53,7 @@ async function main() {
 
   for (const slug of slugs) {
     if (stats.processed >= opts.max) break;
+    if (isDisabledLeague(slug)) continue;   // deactivated: never searched
 
     const state = readLeagueState(slug)?.state || "unknown";
     if (opts.state && state !== opts.state) continue;
