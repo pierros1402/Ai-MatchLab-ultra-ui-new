@@ -33,6 +33,7 @@ import { readStandings } from "../storage/standings-memory-db.js";
 import { readLeagueState } from "../storage/league-memory-db.js";
 import { teamFormRates } from "../storage/results-memory-db.js";
 import { teamXgRates } from "../storage/discipline-memory-db.js";
+import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 import { buildRefereeLookup, lookupReferee } from "../odds/referee-enrichment.js";
 import { TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
 
@@ -79,7 +80,15 @@ function buildLeagueIndex({ activeOnly = true } = {}) {
     const rows = readStandings(slug)?.accepted?.rows;
     if (!Array.isArray(rows) || rows.length < 4) continue;
 
-    const teams = rows.map(r => ({ norm: normalizeTeam(r.teamName), row: r })).filter(t => t.norm);
+    // Index each team under its name AND its aliases (Wikidata/manual), so feeds
+    // that name the club differently still match.
+    const teams = [];
+    for (const r of rows) {
+      for (const cand of resolveAliasCandidates(slug, r.teamName)) {
+        const n = normalizeTeam(cand);
+        if (n) teams.push({ norm: n, row: r });
+      }
+    }
     let gf = 0, pld = 0;
     for (const r of rows) { gf += Number(r.goalsFor) || 0; pld += Number(r.played) || 0; }
     leagues.push({ slug, teams, leagueAvg: pld > 0 ? gf / pld : 1.35 });
