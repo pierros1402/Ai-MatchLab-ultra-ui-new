@@ -1513,7 +1513,8 @@ app.get("/details", async (req, res) => {
         // Enrich the pre-built snapshot with our assessment/referee/discipline too.
         snapshotResult.snapshot = enrichSnapshotWithAssessment(
           snapshotResult.snapshot, id,
-          snapshotResult.basic?.leagueSlug, snapshotResult.basic?.homeTeam, snapshotResult.basic?.awayTeam
+          snapshotResult.basic?.leagueSlug, snapshotResult.basic?.homeTeam, snapshotResult.basic?.awayTeam,
+          snapshotResult.basic?.leagueName
         );
         res.json(snapshotResult);
         return;
@@ -1537,7 +1538,8 @@ app.get("/details", async (req, res) => {
       if (snapshotResult.ok) {
         snapshotResult.snapshot = enrichSnapshotWithAssessment(
           snapshotResult.snapshot, id,
-          snapshotResult.basic?.leagueSlug, snapshotResult.basic?.homeTeam, snapshotResult.basic?.awayTeam
+          snapshotResult.basic?.leagueSlug, snapshotResult.basic?.homeTeam, snapshotResult.basic?.awayTeam,
+          snapshotResult.basic?.leagueName
         );
         res.json(snapshotResult);
         return;
