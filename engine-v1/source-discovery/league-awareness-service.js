@@ -9,6 +9,7 @@ import {
 
 import { checkLeaguePulse } from "./league-pulse-checker.js";
 import { isInSeason, nextSeasonStart } from "./season-calendar.js";
+import { isDisabledLeague } from "./disabled-leagues.js";
 
 import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
 import { leagueName } from "../../workers/_shared/leagues-registry.js";
@@ -151,6 +152,16 @@ function combineState(cal, pulse) {
 
 export async function updateLeaguePulse(slug, options = {}) {
   const meta = getLeagueMeta(slug);
+
+  // Deactivated leagues: stay on the map, never searched, no pulse.
+  if (isDisabledLeague(slug)) {
+    writeLeagueState(slug, {
+      state: "disabled", confidence: 1, resumeDate: null, recheckAfter: null,
+      decisionReason: "deactivated_no_data", disabled: true, lastPulseAt: new Date().toISOString()
+    });
+    return { state: "disabled", confidence: 1, disabled: true, decisionReason: "deactivated_no_data" };
+  }
+
   const allowSearch = options.allowSearch === true;
   const now = new Date();
 
@@ -263,6 +274,17 @@ export function classifyAllByCalendar(options = {}) {
 
   for (const slug of slugs) {
     const meta = getLeagueMeta(slug);
+
+    // Deactivated leagues stay on the map but are marked disabled (never active).
+    if (isDisabledLeague(slug)) {
+      writeLeagueState(slug, {
+        state: "disabled", confidence: 1, resumeDate: null, recheckAfter: null,
+        decisionReason: "deactivated_no_data", disabled: true, lastCalendarAt: now.toISOString()
+      });
+      results.push({ slug, state: "disabled", inSeason: false });
+      continue;
+    }
+
     const cal = isInSeason(slug, meta, now);
 
     // Calendar-only ⇒ no search signal; combineState treats this as the floor.

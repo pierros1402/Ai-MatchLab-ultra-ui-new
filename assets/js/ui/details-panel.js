@@ -1619,7 +1619,10 @@ async function renderLocal(match, mountEl) {
         if (!a || !a.markets) return "";
         const od = k => (a.markets[k] && a.markets[k].odds) || {};
         const x = od("1X2"), ou = od("OU25"), btts = od("BTTS");
-        const form = a.model && a.model.formUsed ? " · form-aware" : "";
+        const tags = [];
+        if (a.model && a.model.formUsed) tags.push("form");
+        if (a.model && a.model.xgUsed) tags.push("xG");
+        const form = tags.length ? " · " + tags.join("+") + "-aware" : "";
         const d = snap.discipline || {};
         const num = v => (typeof v === "number" ? v : null);
         const yc = t => (num(d[t] && d[t].yellowPerGame) != null ? d[t].yellowPerGame.toFixed(2) : "—");
