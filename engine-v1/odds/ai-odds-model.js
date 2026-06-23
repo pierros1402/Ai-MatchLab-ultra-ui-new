@@ -27,6 +27,8 @@ function poissonPmf(k, lambda) {
 
 const FORM_WEIGHT = 0.4;       // max weight on recent form vs season averages
 const FORM_FULL_SAMPLE = 6;    // form reaches full weight at this many games
+const XG_WEIGHT = 0.35;        // max weight on xG (a stronger signal than raw goals)
+const XG_FULL_SAMPLE = 6;
 
 // Blend a season rate with a recent-form rate, weighted by how much form data we
 // have (so a team with 1 result barely shifts; 6+ results gets full FORM_WEIGHT).
@@ -34,6 +36,13 @@ function blendForm(season, form, key) {
   if (!form || !Number.isFinite(form[key]) || !form.sample) return season;
   const w = FORM_WEIGHT * Math.min(1, form.sample / FORM_FULL_SAMPLE);
   return (1 - w) * season + w * form[key];
+}
+
+// Blend in expected-goals (xG) — a more reliable attack/defence estimate.
+function blendXg(base, xg, key) {
+  if (!xg || !Number.isFinite(xg[key]) || !xg.sample) return base;
+  const w = XG_WEIGHT * Math.min(1, xg.sample / XG_FULL_SAMPLE);
+  return (1 - w) * base + w * xg[key];
 }
 
 /**
@@ -54,11 +63,11 @@ export function lambdasFromStandings(home, away, options = {}) {
     return val / played;
   };
 
-  // Season rates, then blend in recent form where we have it.
-  const homeAtt = blendForm(rate(home, "goalsFor"),     opts.homeForm, "gfRate");
-  const homeDef = blendForm(rate(home, "goalsAgainst"), opts.homeForm, "gaRate");
-  const awayAtt = blendForm(rate(away, "goalsFor"),     opts.awayForm, "gfRate");
-  const awayDef = blendForm(rate(away, "goalsAgainst"), opts.awayForm, "gaRate");
+  // Season rates → blend recent form → blend xG (each where available).
+  const homeAtt = blendXg(blendForm(rate(home, "goalsFor"),     opts.homeForm, "gfRate"), opts.homeXg, "xgForRate");
+  const homeDef = blendXg(blendForm(rate(home, "goalsAgainst"), opts.homeForm, "gaRate"), opts.homeXg, "xgAgainstRate");
+  const awayAtt = blendXg(blendForm(rate(away, "goalsFor"),     opts.awayForm, "gfRate"), opts.awayXg, "xgForRate");
+  const awayDef = blendXg(blendForm(rate(away, "goalsAgainst"), opts.awayForm, "gaRate"), opts.awayXg, "xgAgainstRate");
 
   // A team's expected goals = blend of its attack and the opponent's defence.
   const lambdaHome = ((homeAtt + awayDef) / 2) * HOME_ADVANTAGE;
@@ -67,7 +76,8 @@ export function lambdasFromStandings(home, away, options = {}) {
   return {
     lambdaHome: clamp(lambdaHome, 0.15, 5),
     lambdaAway: clamp(lambdaAway, 0.15, 5),
-    formUsed: !!(opts.homeForm?.sample || opts.awayForm?.sample)
+    formUsed: !!(opts.homeForm?.sample || opts.awayForm?.sample),
+    xgUsed: !!(opts.homeXg?.sample || opts.awayXg?.sample)
   };
 }
 
@@ -147,10 +157,12 @@ function round2(v) {
 export function priceMatchFromStandings(home, away, options = {}) {
   const margin = options.margin ?? DEFAULT_MARGIN;
 
-  const { lambdaHome, lambdaAway, formUsed } = lambdasFromStandings(home, away, {
+  const { lambdaHome, lambdaAway, formUsed, xgUsed } = lambdasFromStandings(home, away, {
     leagueAvgGoalsPerTeam: options.leagueAvgGoalsPerTeam ?? 1.35,
     homeForm: options.homeForm || null,
-    awayForm: options.awayForm || null
+    awayForm: options.awayForm || null,
+    homeXg: options.homeXg || null,
+    awayXg: options.awayXg || null
   });
   const probs = marketProbabilities(lambdaHome, lambdaAway);
 
@@ -168,9 +180,12 @@ export function priceMatchFromStandings(home, away, options = {}) {
       lambdaAway: round3(lambdaAway),
       margin,
       formUsed: !!formUsed,
+      xgUsed: !!xgUsed,
       homeFormSample: options.homeForm?.sample || 0,
       awayFormSample: options.awayForm?.sample || 0,
-      source: formUsed ? "ai_poisson_standings_plus_form" : "ai_poisson_from_standings"
+      homeXgSample: options.homeXg?.sample || 0,
+      awayXgSample: options.awayXg?.sample || 0,
+      source: xgUsed ? "ai_poisson_standings_form_xg" : (formUsed ? "ai_poisson_standings_plus_form" : "ai_poisson_from_standings")
     },
     markets
   };

@@ -25,6 +25,7 @@ import { pathToFileURL } from "node:url";
 
 import { resolveDataPath } from "../storage/data-root.js";
 import { researchStandings } from "../source-discovery/standings-researcher.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
 import { readLeagueState } from "../storage/league-memory-db.js";
@@ -54,22 +55,30 @@ function recentCompletedSeasons(slug, meta, state, n) {
   return out;
 }
 
-// Leagues that currently hold an accepted table (i.e. a source exists for them).
+// Leagues that currently hold an ACCEPTED table (a source exists). Stub/needs_review
+// files are skipped so the job doesn't grind the long-tail and never reach the
+// big leagues that actually have history.
 function leaguesWithCurrentStandings() {
   const dir = resolveDataPath("league-memory", "standings");
   let files = [];
   try { files = fs.readdirSync(dir).filter(f => f.endsWith(".json")); } catch { /* none */ }
-  return files.map(f => f.replace(/\.json$/, ""));
+  return files
+    .filter(f => {
+      try { return !!JSON.parse(fs.readFileSync(resolveDataPath("league-memory", "standings", f), "utf8")).accepted; }
+      catch { return false; }
+    })
+    .map(f => f.replace(/\.json$/, ""));
 }
 
 function parseArgs(argv) {
-  const out = { allowSearch: false, seasons: 5, max: 60, summary: false };
+  const out = { allowSearch: false, seasons: 5, max: 60, summary: false, slugs: null };
   for (let i = 0; i < argv.length; i++) {
     const a = String(argv[i] || "").trim();
     if (a === "--allow-search") out.allowSearch = true;
     else if (a === "--summary") out.summary = true;
     else if (a === "--seasons" && argv[i + 1]) { const n = parseInt(argv[++i], 10); if (n > 0) out.seasons = n; }
     else if (a === "--max" && argv[i + 1]) { const n = parseInt(argv[++i], 10); if (n > 0) out.max = n; }
+    else if (a === "--slugs" && argv[i + 1]) { out.slugs = String(argv[++i]).split(",").map(s => s.trim()).filter(Boolean); }
   }
   return out;
 }
@@ -81,11 +90,12 @@ async function main() {
     return;
   }
 
-  const slugs = leaguesWithCurrentStandings();
+  const slugs = opts.slugs && opts.slugs.length ? opts.slugs : leaguesWithCurrentStandings();
   const stats = { leaguesConsidered: slugs.length, fetched: 0, accepted: 0, skipped: 0, needsReview: 0, results: [] };
 
   outer:
   for (const slug of slugs) {
+    if (isDisabledLeague(slug)) continue;   // deactivated: never searched
     const meta = getLeagueMeta(slug);
     if (!meta?.name) continue;
     const state = readLeagueState(slug)?.state || "unknown";

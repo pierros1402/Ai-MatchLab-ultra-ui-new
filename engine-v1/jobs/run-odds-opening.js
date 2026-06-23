@@ -32,6 +32,7 @@ import { recordOddsSnapshot, getOddsSummary } from "../storage/odds-memory-db.js
 import { readStandings } from "../storage/standings-memory-db.js";
 import { readLeagueState } from "../storage/league-memory-db.js";
 import { teamFormRates } from "../storage/results-memory-db.js";
+import { teamXgRates } from "../storage/discipline-memory-db.js";
 import { buildRefereeLookup, lookupReferee } from "../odds/referee-enrichment.js";
 import { TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
 
@@ -207,8 +208,10 @@ async function main() {
       // Recent form (from accumulated results, keyed by Flashscore team names).
       const homeForm = teamFormRates(slug, fx.home);
       const awayForm = teamFormRates(slug, fx.away);
+      const homeXg = teamXgRates(slug, fx.home);
+      const awayXg = teamXgRates(slug, fx.away);
       const p = priceMatchFromStandings(home, away, {
-        leagueAvgGoalsPerTeam: league.leagueAvg, homeForm, awayForm
+        leagueAvgGoalsPerTeam: league.leagueAvg, homeForm, awayForm, homeXg, awayXg
       });
       // All markets the UI offers: 1X2, DC, OU15, OU25, OU35, BTTS.
       aiAssessment = { model: p.model, markets: p.markets };

@@ -13,6 +13,7 @@
 
 import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
 import { leagueName } from "../../workers/_shared/leagues-registry.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 
 const MATCH_THRESHOLD = 0.45;
 
@@ -116,6 +117,9 @@ export function resolveSlug(country, leagueName_) {
       if (sameTier.length === 1) slug = sameTier[0].slug;
     }
   }
+
+  // Deactivated leagues stay on the map but are never attributed/fetched.
+  if (slug && isDisabledLeague(slug)) slug = null;
 
   learned.set(key, slug);
   return slug;

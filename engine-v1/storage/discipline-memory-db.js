@@ -53,15 +53,18 @@ export function recordMatchDiscipline(slug, m, d) {
 
   const before = JSON.stringify(data.teams[m.home] || []) + JSON.stringify(data.teams[m.away] || []);
 
+  const xg = d.xg || { home: null, away: null };
   data.teams[m.home] = pushEntry(data.teams[m.home] || [], {
     matchId: d.matchId, date, opp: m.away, ha: "H",
     yellow: d.yellow.home, red: d.red.home, fouls: d.fouls.home,
-    penFor: d.penalties.home, penAgainst: d.penalties.away
+    penFor: d.penalties.home, penAgainst: d.penalties.away,
+    xgFor: xg.home, xgAgainst: xg.away
   });
   data.teams[m.away] = pushEntry(data.teams[m.away] || [], {
     matchId: d.matchId, date, opp: m.home, ha: "A",
     yellow: d.yellow.away, red: d.red.away, fouls: d.fouls.away,
-    penFor: d.penalties.away, penAgainst: d.penalties.home
+    penFor: d.penalties.away, penAgainst: d.penalties.home,
+    xgFor: xg.away, xgAgainst: xg.home
   });
 
   const changed = (JSON.stringify(data.teams[m.home]) + JSON.stringify(data.teams[m.away])) !== before;
@@ -99,6 +102,25 @@ export function teamDisciplineRates(slug, teamName, window = 10) {
     penForPerGame: pf / n,
     penAgainstPerGame: pa / n
   };
+}
+
+/**
+ * Expected-goals (xG) rates for a team over its last `window` matches — a stronger
+ * attack/defence signal than raw goals, used to sharpen the assessment.
+ * @returns {{sample, xgForRate, xgAgainstRate}}
+ */
+export function teamXgRates(slug, teamName, window = 10) {
+  const data = readDiscipline(slug);
+  const list = (data.teams && data.teams[teamName]) ? data.teams[teamName].slice(0, window) : [];
+  let f = 0, a = 0, n = 0;
+  for (const e of list) {
+    if (e.xgFor == null || e.xgAgainst == null) continue;
+    f += Number(e.xgFor) || 0;
+    a += Number(e.xgAgainst) || 0;
+    n++;
+  }
+  if (!n) return { sample: 0, xgForRate: null, xgAgainstRate: null };
+  return { sample: n, xgForRate: f / n, xgAgainstRate: a / n };
 }
 
 export function getDisciplineSummary() {
