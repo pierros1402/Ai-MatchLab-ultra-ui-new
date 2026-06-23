@@ -24,6 +24,7 @@ import { accumulateDiscipline } from "./run-discipline-day.js";
 import { deriveStandingsFromResults } from "./derive-standings-from-results.js";
 import { refreshRefereeStats } from "./run-referee-stats.js";
 import { buildTeamGeoSparql } from "./build-team-geo-sparql.js";
+import { buildTeamAliasesSparql } from "./build-team-aliases-sparql.js";
 import { settleAssessments } from "./settle-assessments-day.js";
 import { accumulateLineups } from "./run-lineups-day.js";
 
@@ -68,6 +69,10 @@ export async function runDay(dayKey) {
       const geo = await buildTeamGeoSparql();   // newly-promoted teams pick up coords
       log("team-geo-sparql", { matched: geo.matched, written: geo.written });
     } catch (e) { log("team-geo-sparql:skip", String(e?.message || e)); }
+    try {
+      const al = await buildTeamAliasesSparql();  // alternate names for cross-source matching
+      log("team-aliases-sparql", { matched: al.matched, aliasesWritten: al.aliasesWritten });
+    } catch (e) { log("team-aliases-sparql:skip", String(e?.message || e)); }
   }
 
   // 1b) Comprehensive fixtures snapshot (display) for our coverage leagues.
