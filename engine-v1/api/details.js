@@ -5,6 +5,7 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { buildDetailsForMatch } from "../jobs/build-details-day.js";
 import { readOdds, findOddsByTeams } from "../storage/odds-memory-db.js";
 import { teamDisciplineRates } from "../storage/discipline-memory-db.js";
+import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
 
 // Map our appointed-referee tendencies (from aiAssessment.referee) to the shape the
 // details panel already renders: { name, style, stats:{avgCards, avgPenalties} }.
@@ -69,6 +70,30 @@ export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, home
       home: teamDisciplineRates(leagueSlug, homeTeam),
       away: teamDisciplineRates(leagueSlug, awayTeam)
     };
+  }
+
+  // Player usage (expected XI from accumulated lineups) — fills the details
+  // panel's "Player Usage Intel" when the platform's gated subsystem has none.
+  if (leagueSlug) {
+    const usageFor = (team, side) => {
+      const u = teamPlayerUsage(leagueSlug, team);
+      if (!u.sample) return null;
+      return {
+        team, side, leagueSlug, status: "available",
+        sampleMatches: u.sample,
+        confidence: Math.min(0.9, 0.4 + u.sample * 0.06),
+        expectedStarters: u.expectedStarters.map(p => ({ name: p.name, frequency: p.freq })),
+        coreStarters: u.coreStarters,
+        confirmedAbsences: [], inferredAbsences: [],
+        source: "flashscore-lineups"
+      };
+    };
+    const h = usageFor(homeTeam, "home");
+    const a = usageFor(awayTeam, "away");
+    if (h || a) {
+      const prev = out.playerUsageIntel || {};
+      out.playerUsageIntel = { home: h || prev.home || null, away: a || prev.away || null };
+    }
   }
   return out;
 }
