@@ -9,12 +9,21 @@
   };
 
   var MARKET_LEGS = {
-    "1X2":  ["1", "X", "2"],
-    "DC":   ["1X", "12", "X2"],
-    "BTTS": ["GG", "NG"],
-    "OU15": ["O1.5", "U1.5"],
-    "OU25": ["O2.5", "U2.5"],
-    "OU35": ["O3.5", "U3.5"]
+    "1X2":  ["home", "draw", "away"],
+    "HTFT": ["home", "draw", "away"],
+    "BTTS": ["no",   "yes"],
+    "OU25": ["over", "under"],
+    "OU15": ["over", "under"],
+    "OU35": ["over", "under"],
+    "DC":   ["1X",   "12",   "X2"],
+  };
+
+  // Display labels (what users see in column headers)
+  var LEG_LABELS = {
+    home: "1", draw: "X", away: "2",
+    over: "O", under: "U",
+    yes: "GG", no: "NG",
+    "1X": "1X", "12": "12", "X2": "X2",
   };
 
   // ─── Bookmaker classification (for aggregate/legacy snapshot) ──────────────
@@ -72,7 +81,7 @@
 
     var head = el("div", "oic-odds-header");
     head.appendChild(el("div", "oic-book", ""));
-    legs.forEach(function (l) { head.appendChild(el("div", "oic-head", l)); });
+    legs.forEach(function (l) { head.appendChild(el("div", "oic-head", LEG_LABELS[l] || l)); });
     table.appendChild(head);
 
     books.forEach(function (book) {

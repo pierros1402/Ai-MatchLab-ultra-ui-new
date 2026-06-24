@@ -123,12 +123,17 @@ async function apiGet(path) {
 // in one call, then extract per-market below.
 
 // Known market definitions: marketId → { key, legs: [{outcomeId, label}] }
+// Verified empirically from OddsPapi response (Swiss vs Canada, 2026-06-24):
+//   101 = 1X2:  outcomes 101=Home, 102=Draw, 103=Away
+//   104 = OU2.5: outcomes 104=Over(1.80), 105=Under(1.95)  [balanced WC match]
+//   108 = BTTS: outcomes 108=NG/No(1.33), 109=GG/Yes(3.40)
+//   10208 = HT 1X2: 3-way half-time result (3.00/2.10/3.60)
+// DC is NOT available as standalone market in OddsPapi — skipped.
 const MARKET_DEFS = {
-  "101": { key: "1X2",  legs: [{ id: "101", label: "home" }, { id: "102", label: "draw" }, { id: "103", label: "away" }] },
-  // IDs below are inferred — will be confirmed/corrected from Render logs
-  "102": { key: "DC",   legs: [{ id: "101", label: "1X" },  { id: "102", label: "12" },   { id: "103", label: "X2" }] },
-  "5":   { key: "OU25", legs: [{ id: "101", label: "over" }, { id: "102", label: "under" }] },
-  "8":   { key: "OU25", legs: [{ id: "101", label: "over" }, { id: "102", label: "under" }] },
+  "101":   { key: "1X2",   legs: [{ id: "101", label: "home" }, { id: "102", label: "draw" }, { id: "103", label: "away" }] },
+  "104":   { key: "OU25",  legs: [{ id: "104", label: "over" }, { id: "105", label: "under" }] },
+  "108":   { key: "BTTS",  legs: [{ id: "108", label: "no" },   { id: "109", label: "yes" }] },
+  "10208": { key: "HTFT",  legs: [{ id: "101", label: "home" }, { id: "102", label: "draw" }, { id: "103", label: "away" }] },
 };
 
 function price(outs, outcomeId) {

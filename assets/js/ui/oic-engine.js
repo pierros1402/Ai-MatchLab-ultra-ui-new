@@ -32,6 +32,7 @@
     if (raw === "OU25") return "OU25";
     if (raw === "OU35") return "OU35";
     if (raw === "DNB") return "DNB";
+    if (raw === "HTFT") return "HTFT";
 
     if (raw === "Double Chance") return "DC";
     if (raw === "Draw No Bet") return "DNB";
@@ -47,14 +48,15 @@
 
   function clampMarket(m) {
     m = normalizeMarket(m);
-    var ok = { 
-      "1X2": 1, 
-      "DC": 1, 
-      "BTTS": 1, 
-      "OU15": 1, 
-      "OU25": 1, 
-      "OU35": 1, 
-      "DNB": 1 
+    var ok = {
+      "1X2": 1,
+      "DC": 1,
+      "BTTS": 1,
+      "OU15": 1,
+      "OU25": 1,
+      "OU35": 1,
+      "DNB": 1,
+      "HTFT": 1
     };
     return ok[m] ? m : DEFAULT_MARKET;
   }
