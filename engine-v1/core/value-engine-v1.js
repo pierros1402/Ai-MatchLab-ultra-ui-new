@@ -219,7 +219,7 @@ function normalizeLeagueName(value) {
     .trim();
 }
 
-function normalizeTeamTokens(value) {
+function normalizeOddsMarketName(value) {
   let s = basicNormalizeText(value)
     .replace(/\bparis sg\b/g, " paris saint germain ")
     .replace(/\bpsg\b/g, " paris saint germain ")

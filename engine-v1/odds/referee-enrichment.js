@@ -10,12 +10,7 @@ import { fetchMatchdayReferees } from "./transfermarkt-fixtures-referee-source.j
 import { TM_COMPETITIONS } from "./transfermarkt-referee-source.js";
 import { readReferees } from "../storage/referee-memory-db.js";
 
-function normTeam(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/\b(fc|cf|sc|ac|ec|se|ca|cd|club|futebol|foot|ball|de|do|da|e|regatas|sport)\b/g, " ")
-    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-}
+import { normalizeTeamTokens as normTeam } from "../core/normalize.js";
 
 // Short flashscore name vs long TM name → containment (intersection / smaller set).
 function containment(a, b) {
