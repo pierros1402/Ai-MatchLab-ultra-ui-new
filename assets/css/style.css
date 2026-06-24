@@ -453,6 +453,78 @@ body{
    - Hard lock: no wrapping ever
 ===================================================== */
 
+/* ─── DATE NAVIGATION STRIP ──────────────────────────────────────────────── */
+
+#date-nav {
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+
+#date-nav .date-nav-inner {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 2px;
+  padding: 6px 8px;
+}
+
+#date-nav .date-nav-inner::-webkit-scrollbar { display: none; }
+
+#date-nav .date-pill {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+
+#date-nav .date-pill:hover {
+  background: rgba(255,255,255,.08);
+  color: var(--text-primary);
+}
+
+#date-nav .date-pill-today {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+#date-nav .date-pill-active {
+  background: var(--accent) !important;
+  color: #000 !important;
+  border-color: var(--accent) !important;
+  font-weight: 700;
+}
+
+html[data-theme="light"] #date-nav .date-pill {
+  border-color: rgba(0,0,0,.15);
+  color: var(--text-secondary);
+}
+
+html[data-theme="light"] #date-nav .date-pill:hover {
+  background: rgba(0,0,0,.06);
+}
+
+html[data-theme="light"] #date-nav .date-pill-active {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+
+/* Match score badge (past dates) */
+#matches-list .match-score {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 36px;
+  text-align: center;
+}
+
 /* LEAGUE HEADERS */
 #matches-list .match-league {
   display: block;

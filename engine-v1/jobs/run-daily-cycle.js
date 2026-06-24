@@ -1,4 +1,6 @@
 import fs from "fs";
+import path from "path";
+import { spawnSync } from "node:child_process";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { discoverWindow } from "./discover-window.js";
 import { discoverActiveLeagues } from "./discover-active-leagues.js";
@@ -33,11 +35,107 @@ import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
+import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./fetch-multi-bookmaker-odds.js";
+import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
 import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
+function readJsonIfExists(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (error) {
+    return {
+      ok: false,
+      error: error?.message || String(error),
+      filePath
+    };
+  }
+}
+
+function writeJsonFile(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(value, null, 2), "utf8");
+}
+
+function writeBlockedValueFile(dayKey, reason, readinessSummary) {
+  const file = resolveDataPath(`value/${dayKey}.json`);
+  const payload = {
+    date: dayKey,
+    source: "daily-cycle-fixture-acquisition-v2-guard",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    count: 0,
+    picks: [],
+    blocked: true,
+    reason,
+    readinessSummary,
+    guarantees: {
+      fixtureAcquisitionV2Gate: true,
+      espnOnlyIsUnsafeForValue: true,
+      noValueFromUnverifiedFixtures: true
+    }
+  };
+
+  writeJsonFile(file, payload);
+  return { file, payload };
+}
+
+function fixtureAcquisitionReadyForValue(report) {
+  const summary = report?.summary || {};
+  return Boolean(report?.ok) &&
+    Number(summary.blockedRows || 0) === 0 &&
+    Number(summary.unsafeRows || 0) === 0;
+}
+
+function compactFixtureAcquisitionReadiness(report) {
+  const summary = report?.summary || {};
+  return {
+    ok: Boolean(report?.ok),
+    stage: report?.stage || null,
+    dayKey: report?.dayKey || null,
+    declaredLeagueCount: Number(summary.declaredLeagueCount || 0),
+    canonicalLeagueCount: Number(summary.canonicalLeagueCount || 0),
+    canonicalFixtureRows: Number(summary.canonicalFixtureRows || 0),
+    readyRows: Number(summary.readyRows || 0),
+    unsafeRows: Number(summary.unsafeRows || 0),
+    blockedRows: Number(summary.blockedRows || 0),
+    p0Rows: Number(summary.p0Rows || 0),
+    p1Rows: Number(summary.p1Rows || 0),
+    missingCanonicalFixtures: Number(summary.missingCanonicalFixtures || 0),
+    espnOnlyCanonicalFixtures: Number(summary.espnOnlyCanonicalFixtures || 0),
+    missingNonEspnProviderCapability: Number(summary.missingNonEspnProviderCapability || 0),
+    guarantees: report?.guarantees || null
+  };
+}
+
+function runDailyCycleNodeJob(args, label) {
+  const result = spawnSync(globalThis.process.execPath, args, {
+    cwd: globalThis.process.cwd(),
+    encoding: "utf8",
+    windowsHide: true
+  });
+
+  if (result.stdout) {
+    for (const line of result.stdout.trim().split(/\r?\n/u).filter(Boolean)) {
+      console.log(`[daily-cycle] ${label}:stdout`, line);
+    }
+  }
+
+  if (result.stderr) {
+    for (const line of result.stderr.trim().split(/\r?\n/u).filter(Boolean)) {
+      console.warn(`[daily-cycle] ${label}:stderr`, line);
+    }
+  }
+
+  if (result.status !== 0) {
+    throw new Error(`${label} failed with exit code ${result.status}`);
+  }
+
+  return result;
+}
 function normalizePositiveIntegerOption(value, fallback) {
   if (value === Infinity) return Infinity;
 
@@ -64,33 +162,84 @@ function readCurrentDayFixtureCount(dayKey) {
   }
 }
 
+function countCanonicalFixtureRowsForDay(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+
+  if (!fs.existsSync(dir)) return 0;
+
+  let total = 0;
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+
+    try {
+      const file = resolveDataPath("canonical-fixtures", dayKey, entry.name);
+      const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.fixtures)
+          ? payload.fixtures
+          : Array.isArray(payload?.matches)
+            ? payload.matches
+            : Array.isArray(payload?.rows)
+              ? payload.rows
+              : [];
+
+      total += rows.length;
+    } catch {
+      // Keep the daily gate conservative: unreadable canonical fixture files are ignored.
+    }
+  }
+
+  return total;
+}
+
 function readCanonicalCoverageForDay(dayKey) {
   try {
     const file = resolveDataPath("coverage-reports", `${dayKey}.json`);
-    if (!fs.existsSync(file)) return null;
 
-    const payload = JSON.parse(fs.readFileSync(file, "utf8"));
-    const coverage = payload?.coverage || null;
-    const fixtures = Number(coverage?.fixtures || 0);
-    const leagues = Number(coverage?.leagues || 0);
+    if (fs.existsSync(file)) {
+      const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+      const coverage = payload?.coverage || null;
+      const fixtures = Number(coverage?.fixtures || 0);
+      const leagues = Number(coverage?.leagues || 0);
 
-    if (!payload?.ok || fixtures <= 0) return null;
+      if (payload?.ok && fixtures > 0) {
+        return {
+          fixtures,
+          leagues,
+          source: "coverage_report",
+          reportType: payload?.type || null,
+          startedAt: payload?.startedAt || null,
+          generatedAt: payload?.generatedAt || null,
+          cursorComplete: Boolean(payload?.cursorComplete),
+          nextCursor: payload?.nextCursor ?? null,
+          leagueSeedCount: payload?.leagueSeedCount ?? null
+        };
+      }
+    }
 
-    return {
-      fixtures,
-      leagues,
-      reportType: payload?.type || null,
-      startedAt: payload?.startedAt || null,
-      finishedAt: payload?.finishedAt || null,
-      startCursor: payload?.startCursor ?? null,
-      nextCursor: payload?.nextCursor ?? null,
-      leagueSeedCount: payload?.leagueSeedCount ?? null
-    };
+    const canonicalFixtureRows = countCanonicalFixtureRowsForDay(dayKey);
+
+    if (canonicalFixtureRows > 0) {
+      return {
+        fixtures: canonicalFixtureRows,
+        leagues: 0,
+        source: "canonical_fixtures",
+        reportType: "canonical_fixture_files",
+        startedAt: null,
+        generatedAt: null,
+        cursorComplete: null,
+        nextCursor: null,
+        leagueSeedCount: null
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
 }
-
 function resolveMinTargetFixtures({ staticMinTargetFixtures, canonicalCoverage }) {
   if (!canonicalCoverage?.fixtures) {
     return {
@@ -130,7 +279,6 @@ function buildTopWrongDayLeagues(ingest) {
     .sort((a, b) => b.skippedWrongDay - a.skippedWrongDay)
     .slice(0, 25);
 }
-
 function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
   const ingest = getTargetIngestResult(discoveryWindow, dayKey);
 
@@ -343,7 +491,12 @@ export async function runDailyCycle(options = {}) {
   let teamNewsResearchReview = null;
   let teamNewsBuild = null;
   let finalDetailsSync = null;
+  let valueBuild = null;
+  let fixtureAcquisitionReadiness = null;
   let valueCoverageReport = null;
+  let valueSettlementReport = null;
+  let valueSettlementSummary = null;
+  let valueSettlementStatistics = null;
   let deploySnapshot = null;
   let finalizedDeploySnapshot = null;
   let finalizeValueBuild = null;
@@ -745,15 +898,80 @@ export async function runDailyCycle(options = {}) {
     coveragePct: teamNewsBuild?.coveragePct ?? 0
   });
 
-  console.log("[daily-cycle] value-build:start", { dayKey });
+  console.log("[daily-cycle] fixture-acquisition-v2-readiness:start", { dayKey });
 
-  const valueBuild = await buildValueDay(dayKey, { rebuild: true });
+  const fixtureAcquisitionReadinessPath = resolveDataPath(
+    `football-truth/_diagnostics/fixture-acquisition-v2-readiness/${dayKey}.fixture-acquisition-v2-readiness.json`
+  );
 
-  console.log("[daily-cycle] value-build:done", {
-    ok: valueBuild?.ok,
-    date: valueBuild?.date,
-    count: valueBuild?.count ?? 0
+  const fixtureAcquisitionReadinessRun = runDailyCycleNodeJob(
+    [
+      "engine-v1/jobs/build-fixture-acquisition-v2-readiness.js",
+      "--date",
+      dayKey,
+      "--output",
+      fixtureAcquisitionReadinessPath
+    ],
+    "fixture-acquisition-v2-readiness"
+  );
+
+  fixtureAcquisitionReadiness = readJsonIfExists(fixtureAcquisitionReadinessPath) || {
+    ok: false,
+    stage: "fixture_acquisition_v2_readiness_missing_output",
+    dayKey,
+    summary: {},
+    error: fixtureAcquisitionReadinessRun?.error || null
+  };
+
+  const fixtureAcquisitionReadinessSummary = compactFixtureAcquisitionReadiness(
+    fixtureAcquisitionReadiness
+  );
+
+  console.log("[daily-cycle] fixture-acquisition-v2-readiness:done", {
+    ok: fixtureAcquisitionReadinessSummary.ok,
+    dayKey: fixtureAcquisitionReadinessSummary.dayKey,
+    canonicalFixtureRows: fixtureAcquisitionReadinessSummary.canonicalFixtureRows,
+    readyRows: fixtureAcquisitionReadinessSummary.readyRows,
+    unsafeRows: fixtureAcquisitionReadinessSummary.unsafeRows,
+    blockedRows: fixtureAcquisitionReadinessSummary.blockedRows,
+    espnOnlyCanonicalFixtures: fixtureAcquisitionReadinessSummary.espnOnlyCanonicalFixtures,
+    missingNonEspnProviderCapability: fixtureAcquisitionReadinessSummary.missingNonEspnProviderCapability
   });
+
+  if (!fixtureAcquisitionReadyForValue(fixtureAcquisitionReadiness)) {
+    const blockedValue = writeBlockedValueFile(
+      dayKey,
+      "fixture_acquisition_v2_not_ready",
+      fixtureAcquisitionReadinessSummary
+    );
+
+    valueBuild = {
+      ok: true,
+      date: dayKey,
+      count: 0,
+      blocked: true,
+      reason: "fixture_acquisition_v2_not_ready",
+      file: blockedValue.file,
+      readinessSummary: fixtureAcquisitionReadinessSummary
+    };
+
+    console.warn("[daily-cycle] value-build:blocked", {
+      dayKey,
+      reason: valueBuild.reason,
+      file: valueBuild.file,
+      readinessSummary: fixtureAcquisitionReadinessSummary
+    });
+  } else {
+    console.log("[daily-cycle] value-build:start", { dayKey });
+
+    valueBuild = await buildValueDay(dayKey, { rebuild: true });
+
+    console.log("[daily-cycle] value-build:done", {
+      ok: valueBuild?.ok,
+      date: valueBuild?.date,
+      count: valueBuild?.count ?? 0
+    });
+  }
 
   console.log("[daily-cycle] value-coverage-report:start", { dayKey });
 
@@ -769,6 +987,81 @@ export async function runDailyCycle(options = {}) {
     nullByClass: valueCoverageReport?.breakdown?.nullByClass || {}
   });
 
+  console.log("[daily-cycle] value-settlement-summary:start", { dayKey });
+
+  const valueSettlementReportPath = `data/football-truth/_diagnostics/value-settlement-daily-cycle/${dayKey}.value-settlement-report.json`;
+  const valueSettlementSummaryPath = `data/football-truth/_settlement-summaries/${dayKey}.value-settlement-summary.json`;
+  const valueSettlementStatisticsPath = `data/football-truth/_settlement-statistics/value-settlement-statistics-${dayKey}_to_${dayKey}.json`;
+
+  try {
+    runDailyCycleNodeJob([
+      "./engine-v1/jobs/build-value-settlement-from-final-results-day.js",
+      "--date",
+      dayKey,
+      "--output",
+      valueSettlementReportPath
+    ], "value-settlement-report");
+
+    valueSettlementReport = readJsonIfExists(valueSettlementReportPath);
+
+    runDailyCycleNodeJob([
+      "./engine-v1/jobs/export-value-settlement-summary-file.js",
+      "--input",
+      valueSettlementReportPath,
+      "--output",
+      valueSettlementSummaryPath
+    ], "value-settlement-summary-export");
+
+    valueSettlementSummary = readJsonIfExists(valueSettlementSummaryPath);
+
+    runDailyCycleNodeJob([
+      "./engine-v1/jobs/build-value-settlement-statistics-range.js",
+      "--start",
+      dayKey,
+      "--end",
+      dayKey,
+      "--output",
+      valueSettlementStatisticsPath
+    ], "value-settlement-statistics");
+
+    valueSettlementStatistics = readJsonIfExists(valueSettlementStatisticsPath);
+
+    console.log("[daily-cycle] value-settlement-summary:done", {
+      ok: valueSettlementSummary?.ok === true && valueSettlementStatistics?.ok === true,
+      dayKey,
+      settlementReport: valueSettlementReportPath,
+      settlementSummary: valueSettlementSummaryPath,
+      settlementStatistics: valueSettlementStatisticsPath,
+      settledRows: valueSettlementSummary?.summary?.settledRows ?? 0,
+      winRows: valueSettlementSummary?.summary?.winRows ?? 0,
+      lossRows: valueSettlementSummary?.summary?.lossRows ?? 0,
+      statisticsWinRate: valueSettlementStatistics?.summary?.winRate ?? null,
+      valueWrites: false,
+      fixtureWrites: false,
+      historyWrites: false,
+      detailsWrites: false
+    });
+  } catch (error) {
+    valueSettlementReport = {
+      ok: false,
+      dayKey,
+      error: error?.message || String(error),
+      valueWrites: false,
+      fixtureWrites: false,
+      historyWrites: false,
+      detailsWrites: false
+    };
+
+    console.warn("[daily-cycle] value-settlement-summary:warn", {
+      ok: false,
+      dayKey,
+      error: valueSettlementReport.error,
+      valueWrites: false,
+      fixtureWrites: false,
+      historyWrites: false,
+      detailsWrites: false
+    });
+  }
   console.log("[daily-cycle] final-details-sync:start", { dayKey });
 
   finalDetailsSync = await buildDetailsDay(dayKey, {
@@ -794,6 +1087,26 @@ export async function runDailyCycle(options = {}) {
     coverage: deploySnapshot?.coverage
   });
 
+  // Per-bookmaker odds (EU/Asian/Betfair panels + partial Greek via OddsPapi).
+  // Runs after deploy snapshot so our match list is available for team matching.
+  try {
+    const multiOdds = await fetchMultiBookmakerOdds(dayKey);
+    console.log("[daily-cycle] multi-bookmaker-odds", { fetched: multiOdds.fetched, total: multiOdds.total });
+  } catch (e) { console.log("[daily-cycle] multi-bookmaker-odds:skip", String(e?.message || e)); }
+
+  // Prefetch odds for the next 6 days so "opening" is captured days before the match.
+  // Uses canonical-fixtures (available for future dates). First capture per match = open{}.
+  try {
+    const prefetch = await prefetchUpcomingOdds(dayKey, 6);
+    console.log("[daily-cycle] prefetch-upcoming-odds", { fetched: prefetch.fetched });
+  } catch (e) { console.log("[daily-cycle] prefetch-upcoming-odds:skip", String(e?.message || e)); }
+
+  // Greek panel supplement via OddsPortal (stoiximan/vistabet).
+  // Geo-blocked from GR IPs — silently skips when not on Render.
+  try {
+    const opOdds = await fetchOddsPortalGreekOdds(dayKey);
+    console.log("[daily-cycle] oddsportal-greek-odds", { fetched: opOdds.fetched });
+  } catch (e) { console.log("[daily-cycle] oddsportal-greek-odds:skip", String(e?.message || e)); }
 
   if (doFinalize) {
     console.log("[daily-cycle] finalize-live-status-refresh:start", { finalizeDayKey });
@@ -930,6 +1243,7 @@ export async function runDailyCycle(options = {}) {
     finishedAt,
     ms: finishedAt - startedAt,
     canonicalFixturesSync,
+    fixtureAcquisitionReadiness,
     discoveryWindow,
     activeLeagues,
     monitor,
@@ -957,6 +1271,9 @@ export async function runDailyCycle(options = {}) {
     teamNewsBuild,
     valueBuild,
     valueCoverageReport,
+    valueSettlementReport,
+    valueSettlementSummary,
+    valueSettlementStatistics,
     finalizeReadiness,
     finalDetailsSync,
     deploySnapshot,
@@ -968,6 +1285,34 @@ export async function runDailyCycle(options = {}) {
   };
 }
 
+export function parseDailyCycleCliArgs(argv = []) {
+  const args = Array.isArray(argv) ? argv : [];
+  const out = {
+    dayKey: athensDayKey()
+  };
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = String(args[i] || "").trim();
+
+    if (!arg) continue;
+
+    if ((arg === "--date" || arg === "--day" || arg === "--dayKey") && args[i + 1]) {
+      out.dayKey = String(args[++i] || "").trim();
+      continue;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(arg)) {
+      out.dayKey = arg;
+      continue;
+    }
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(out.dayKey || ""))) {
+    throw new Error(`invalid daily-cycle dayKey: ${out.dayKey}`);
+  }
+
+  return out;
+}
 const { pathToFileURL } = await import("node:url");
 
 const entryUrl = globalThis.process?.argv?.[1]
@@ -975,11 +1320,11 @@ const entryUrl = globalThis.process?.argv?.[1]
   : null;
 
 if (entryUrl === import.meta.url) {
-  const cliDayKey = globalThis.process?.argv?.[2] || athensDayKey();
+  const cliOptions = parseDailyCycleCliArgs(globalThis.process?.argv?.slice(2) || []);
 
   try {
     const result = await runDailyCycle({
-      dayKey: cliDayKey
+      dayKey: cliOptions.dayKey
     });
 
     console.log("[daily-cycle] cli:done", {
@@ -1020,6 +1365,12 @@ if (entryUrl === import.meta.url) {
       valueCoverageReturnedCount: result?.valueCoverageReport?.counts?.valueReturned ?? 0,
       valueCoverageNullCount: result?.valueCoverageReport?.counts?.valueNull ?? 0,
       valueCoverageMinimumSampleNullCount: result?.valueCoverageReport?.counts?.minimumRecentSampleNull ?? 0,
+      valueSettlementSummaryOk: result?.valueSettlementSummary?.ok === true,
+      valueSettlementSettledRows: result?.valueSettlementSummary?.summary?.settledRows ?? 0,
+      valueSettlementWinRows: result?.valueSettlementSummary?.summary?.winRows ?? 0,
+      valueSettlementLossRows: result?.valueSettlementSummary?.summary?.lossRows ?? 0,
+      valueSettlementStatisticsWinRate: result?.valueSettlementStatistics?.summary?.winRate ?? null,
+      valueSettlementValueWrites: false,
       snapshotHash: result?.deploySnapshot?.hash || null,
       snapshotDetailsCount: result?.deploySnapshot?.counts?.details ?? 0
     });
