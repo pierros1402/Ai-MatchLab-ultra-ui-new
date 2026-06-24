@@ -74,6 +74,15 @@ jobs:
           [ "${{ inputs.force }}" = "true" ] && FORCE_FLAG="--force"
           node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY" $FORCE_FLAG | tee odds-refresh-result.json
 
+      - name: Trigger Render multi-odds prefetch
+        if: env.SKIP != 'true'
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -s -X POST \
+            "https://ai-matchlab-engine.onrender.com/api/refresh-multi-odds" \
+            -H "X-Cron-Secret: $CRON_SECRET" || true
+
       - name: Commit odds snapshot if changed
         if: env.SKIP != 'true'
         shell: bash
