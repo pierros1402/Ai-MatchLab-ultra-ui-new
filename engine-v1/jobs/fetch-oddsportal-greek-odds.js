@@ -281,7 +281,7 @@ async function _findMatchUrlInPage(leaguePath, homeTeam, awayTeam) {
 // ─── Load matches: snapshot (today/past) or canonical-fixtures (future) ───────
 
 function loadMatchesForDate(date) {
-  // 1. Try deploy snapshot first (has real matchIds for today/past)
+  // 1. Try deploy snapshot for this specific date
   try {
     const p = resolveDataPath("deploy-snapshots", date, "odds.json");
     const j = JSON.parse(fs.readFileSync(p, "utf8"));
@@ -294,7 +294,7 @@ function loadMatchesForDate(date) {
     if (ms.length) return ms;
   } catch { /**/ }
 
-  // 2. Fallback: canonical-fixtures (future dates)
+  // 2. Canonical-fixtures (future dates where daily cycle ran ahead)
   try {
     const dir = resolveDataPath("canonical-fixtures", date);
     const files = fs.readdirSync(dir).filter(f => f.endsWith(".json"));
@@ -307,8 +307,26 @@ function loadMatchesForDate(date) {
         }
       }
     }
-    return ms;
-  } catch { return []; }
+    if (ms.length) return ms;
+  } catch { /**/ }
+
+  // 3. fixtures-all.json from today's snapshot (3-day window: today + D+1 + D+2)
+  try {
+    const todayKey = athensDayKey();
+    const p = resolveDataPath("deploy-snapshots", todayKey, "fixtures-all.json");
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    const ms = (j.matches || [])
+      .filter(m => m.dayKey === date && m.homeTeam && m.awayTeam && m.matchId)
+      .map(m => ({
+        matchId:    String(m.matchId || m.id || ""),
+        homeTeam:   m.home || m.homeTeam || "",
+        awayTeam:   m.away || m.awayTeam || "",
+        leagueSlug: m.leagueSlug || "",
+      })).filter(m => m.matchId);
+    if (ms.length) return ms;
+  } catch { /**/ }
+
+  return [];
 }
 
 // ─── Classify a bookmaker name into a panel ───────────────────────────────────
