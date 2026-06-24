@@ -1462,6 +1462,11 @@ app.get("/api/odds", oddsHandler);
 // Afternoon refresh: re-fetch OddsPapi odds to capture line movement / delta.
 // Called by Render cron at ~14:00 Athens time (before most EU evening matches).
 app.post("/api/refresh-multi-odds", async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    const provided = req.headers["x-cron-secret"] || req.query.secret;
+    if (provided !== secret) return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
   const date = String(req.query.date || athensDayKey());
   try {
     const r1 = await fetchMultiBookmakerOdds(date);
