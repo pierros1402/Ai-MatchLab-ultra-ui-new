@@ -97,10 +97,13 @@ const TARGET_SLUGS = [
   "uefa.cl","uefa.el","uefa.conference.league","uefa.super_cup",
   "conmebol.sudamericana","conmebol.libertadores",
   // Domestic cups (European — ESPN has these)
-  "eng.league_cup","ger.dfb_pokal","ita.coppa_italia","fra.coupe_de_france",
+  "eng.fa_cup","eng.league_cup","ger.dfb_pokal","ita.coppa_italia","fra.coupe_de_france",
+  "esp.copa_del_rey","ned.knvb_beker","por.taça_de_portugal","bel.cup","sco.fa_cup",
   // Continental club cups
   "concacaf.champions",   // CONCACAF Champions Cup — relevant for usa/can/mex/crc clubs
   "afc.champions",        // AFC Champions League — relevant for jpn/kor/chn clubs
+  // Americas domestic cups
+  "bra.copa_brasil","arg.copa.argentina","chi.1.cup","ven.1.cup","col.cup",
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
