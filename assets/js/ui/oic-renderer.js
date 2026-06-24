@@ -223,6 +223,37 @@
     });
   }
 
+  // ─── Best odds highlighter ────────────────────────────────────────────────
+  // Adds .oic-best class to the highest odds cell in each column per panel.
+
+  function highlightBestOdds(container, books, panelData) {
+    if (!container || !books.length) return;
+    var legs = ["home", "draw", "away"];
+
+    legs.forEach(function (leg, colIdx) {
+      var best = -Infinity;
+      books.forEach(function (book) {
+        var v = panelData[book] && panelData[book][leg];
+        if (typeof v === "number" && v > best) best = v;
+      });
+      if (!isFinite(best)) return;
+
+      var rows = container.querySelectorAll(".oic-odds-row");
+      rows.forEach(function (row) {
+        var book = row.getAttribute("data-book");
+        var v = panelData[book] && panelData[book][leg];
+        var cells = row.querySelectorAll(".oic-odd-cell");
+        var curEl = cells[colIdx] && cells[colIdx].querySelector(".oic-odd-current");
+        if (!curEl) return;
+        if (typeof v === "number" && v === best) {
+          curEl.classList.add("oic-best");
+        } else {
+          curEl.classList.remove("oic-best");
+        }
+      });
+    });
+  }
+
   // ─── renderMulti — per-bookmaker OddsPapi data ────────────────────────────
 
   function renderMulti(payload) {
@@ -238,6 +269,7 @@
       if (!books.length) { emptyPanel(TARGETS[panel], "—"); return; }
       buildTable(TARGETS[panel], books, legs);
       fillMultiSection(TARGETS[panel], books, panelData, payload);
+      if (marketKey === "1X2") highlightBestOdds(TARGETS[panel], books, panelData);
     });
   }
 
