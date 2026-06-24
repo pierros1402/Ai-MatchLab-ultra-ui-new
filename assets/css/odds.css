@@ -236,6 +236,148 @@
 }
 
 /* ============================================================
+   OPENING TRACKER PANEL
+============================================================ */
+
+#oic-opener .opener-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#oic-opener .opener-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent) !important;
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+#oic-opener .opener-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+#oic-opener .opener-select {
+  height: 26px;
+  padding: 2px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(17,26,42,0.92);
+  color: var(--text-primary) !important;
+  outline: none;
+  cursor: pointer;
+}
+
+#oic-opener .opener-select option {
+  background-color: #ffffff !important;
+  color: #0b1220 !important;
+}
+
+/* Empty/loading state */
+#oic-opener .opener-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+/* Match group */
+#oic-opener .opener-match {
+  margin-bottom: 12px;
+}
+
+#oic-opener .opener-match-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: rgba(255,255,255,.05);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary) !important;
+}
+
+#oic-opener .opener-match-time {
+  font-size: 11px;
+  opacity: .6;
+  font-weight: 400;
+}
+
+#oic-opener .opener-match-open-age {
+  font-size: 11px;
+  color: var(--accent) !important;
+  opacity: .85;
+}
+
+/* Odds rows */
+#oic-opener .opener-odds-header,
+#oic-opener .opener-odds-row {
+  display: grid;
+  grid-template-columns: 130px repeat(var(--opener-cols, 3), minmax(0,1fr));
+  column-gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+#oic-opener .opener-odds-header {
+  opacity: .6;
+  font-weight: 600;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+#oic-opener .opener-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+#oic-opener .opener-curr {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+}
+
+#oic-opener .opener-open {
+  font-size: 10px;
+  opacity: .55;
+  color: var(--text-secondary) !important;
+}
+
+#oic-opener .opener-delta {
+  font-size: 10px;
+  opacity: .75;
+}
+
+#oic-opener .opener-delta.delta-up   { color: #4ade80 !important; opacity: 1; }
+#oic-opener .opener-delta.delta-down { color: #f87171 !important; opacity: 1; }
+
+/* Separator between matches */
+#oic-opener .opener-match + .opener-match {
+  border-top: 1px solid rgba(255,255,255,.06);
+  padding-top: 10px;
+}
+
+html[data-theme="light"] #oic-opener .opener-select {
+  background: rgba(255,255,255,0.90);
+  border: 1px solid rgba(0,0,0,0.15);
+  color: #0b1220 !important;
+}
+
+html[data-theme="light"] #oic-opener .opener-match-title {
+  background: rgba(0,0,0,.04);
+}
+
+/* ============================================================
    SAFETY
 ============================================================ */
 

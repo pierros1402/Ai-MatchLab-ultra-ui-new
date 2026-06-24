@@ -1532,6 +1532,20 @@ app.get("/api/matches-for-date", (req, res) => {
   }
 });
 
+// All prefetched/fetched odds for a date — used by Opening Tracker panel.
+// Returns { date, updatedAt, matches: { matchId: { home, away, openedAt, fetchedAt, markets } } }
+app.get("/api/multi-odds-day", (req, res) => {
+  const date = String(req.query.date || athensDayKey()).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
+  try {
+    const p = resolveDataPath("multi-odds", `${date}.json`);
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    res.json({ ok: true, ...j });
+  } catch {
+    res.json({ ok: true, date, matches: {} });
+  }
+});
+
 // Per-bookmaker multi-source odds: { greek, european, asian, betfair } panels
 app.get("/api/multi-odds", (req, res) => {
   const matchId = String(req.query.matchId || req.query.id || "");

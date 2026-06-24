@@ -362,9 +362,11 @@ export async function fetchMultiBookmakerOdds(date) {
 
     cache[matchId] = {
       oddspapiFixtureId: fixtureId,
+      home:      home,
+      away:      away,
       fetchedAt: Date.now(),
-      openedAt: cache[matchId]?.openedAt || Date.now(),
-      markets: mergedMarkets,
+      openedAt:  cache[matchId]?.openedAt || Date.now(),
+      markets:   mergedMarkets,
     };
     fetched++;
   }
@@ -436,9 +438,9 @@ export async function prefetchUpcomingOdds(startDate, daysAhead = 6) {
     for (const m of ourMatches) {
       const cached = cache[m.matchId];
 
-      // If already has openedAt from a prefetch AND fetched within 20h → skip
-      // (avoid re-fetching the same day; daily cycle will update via refresh)
-      const PREFETCH_REFRESH_MS = 20 * 60 * 60 * 1000;
+      // If already has openedAt from a prefetch AND fetched within 50min → skip
+      // (hourly cron: re-fetch every ~1h to track intraday movement)
+      const PREFETCH_REFRESH_MS = 50 * 60 * 1000;
       if (cached?.openedAt && (Date.now() - (cached.fetchedAt || 0)) < PREFETCH_REFRESH_MS) {
         skipped++;
         continue;
@@ -473,8 +475,10 @@ export async function prefetchUpcomingOdds(startDate, daysAhead = 6) {
 
       cache[m.matchId] = {
         oddspapiFixtureId: opFix.fixtureId,
+        home:      m.homeTeam,
+        away:      m.awayTeam,
         fetchedAt: Date.now(),
-        openedAt:  cached?.openedAt || Date.now(), // freeze opening timestamp
+        openedAt:  cached?.openedAt || Date.now(),
         markets:   mergedMarkets,
       };
       fetched++;
