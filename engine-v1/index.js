@@ -1472,8 +1472,11 @@ app.post("/api/refresh-multi-odds", async (req, res) => {
   try {
     const r1 = await fetchMultiBookmakerOdds(date);
     const r2 = await fetchOddsPortalGreekOdds(date);
-    const r3 = doPrefetch ? await prefetchUpcomingOdds(date, 6) : null;
-    res.json({ ok: true, date, oddspapi: r1, oddsportal: r2, prefetch: r3 });
+    // Fire-and-forget: OddsPortal prefetch can take minutes (many pages), don't block response
+    if (doPrefetch) {
+      prefetchUpcomingOdds(date, 6).catch(e => console.error("[prefetch] error:", e?.message || e));
+    }
+    res.json({ ok: true, date, oddspapi: r1, oddsportal: r2, prefetch: { ok: true, started: doPrefetch } });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
