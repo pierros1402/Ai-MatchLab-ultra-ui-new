@@ -8,6 +8,8 @@
 
   var BASE = (window.AIML && window.AIML.config && window.AIML.config.apiBase)
     ? window.AIML.config.apiBase
+    : (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
+    ? window.AIML_LIVE_CFG.fixturesBase
     : "";
 
   function emit(ev, detail) {
