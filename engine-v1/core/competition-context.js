@@ -1,6 +1,7 @@
 import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
+import { normalizeTeamTokens } from "./normalize.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {

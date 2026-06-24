@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { resolveDataPath } from "../storage/data-root.js";
+import { normalizeTeamTokens } from "./normalize.js";
 
 const CURRENT_HISTORY_DIR = resolveDataPath("history");
 const ARCHIVE_HISTORY_DIR = resolveDataPath("history-archive");

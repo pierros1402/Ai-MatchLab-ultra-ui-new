@@ -15,6 +15,7 @@ import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { readStandings } from "../storage/standings-memory-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
+import { normalizeTeamTokens } from "../core/normalize.js";
 
 const SPARQL = "https://query.wikidata.org/sparql";
 const QUERY = `SELECT ?clubLabel ?alt ?countryLabel WHERE {
@@ -30,10 +31,7 @@ function countryMatch(a, b) {
   if (!x || !y) return true;                 // unknown country → don't block
   return x === y || (UK.has(x) && UK.has(y));
 }
-function norm(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-}
+
 
 async function fetchAliasGroups() {
   const r = await fetch(`${SPARQL}?format=json&query=${encodeURIComponent(QUERY)}`, {
@@ -41,14 +39,14 @@ async function fetchAliasGroups() {
   });
   if (!r.ok) throw new Error(`sparql_http_${r.status}`);
   const j = await r.json();
-  const groups = new Map();   // norm(clubLabel) -> { label, country, alts:Set }
+  const groups = new Map();   // normalizeTeamTokens(clubLabel) -> { label, country, alts:Set }
   for (const b of (j.results?.bindings || [])) {
     const label = b.clubLabel?.value, alt = b.alt?.value;
     if (!label || !alt) continue;
-    const key = norm(label);
+    const key = normalizeTeamTokens(label);
     if (!key) continue;
     if (!groups.has(key)) groups.set(key, { label, country: b.countryLabel?.value || null, alts: new Set() });
-    if (norm(alt) !== key) groups.get(key).alts.add(alt.trim());
+    if (normalizeTeamTokens(alt) !== key) groups.get(key).alts.add(alt.trim());
   }
   return groups;
 }
@@ -76,7 +74,7 @@ export async function buildTeamAliasesSparql() {
       const team = row.teamName;
       if (!team) continue;
       stats.teams++;
-      const g = groups.get(norm(team));
+      const g = groups.get(normalizeTeamTokens(team));
       if (!g || !g.alts.size) continue;
       if (g.country && country && !countryMatch(g.country, country)) continue;
       stats.matched++;

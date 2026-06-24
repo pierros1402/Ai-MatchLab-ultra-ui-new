@@ -1,4 +1,5 @@
 import fs from "fs";
+import { normalizeTeamKey } from "../core/normalize.js";
 import { getFixtureById } from "../storage/json-db.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";

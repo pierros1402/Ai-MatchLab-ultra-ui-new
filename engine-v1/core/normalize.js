@@ -22,18 +22,30 @@ function repairTeamDisplayName(name = "") {
   return TEAM_NAME_REPAIRS.get(raw) || raw;
 }
 
-function normalizeTeamKey(name = "") {
+// ─── Canonical team-name normalization (single source of truth) ─────────────────
+// Strips ONLY generic football affixes/connectives — never distinctive identity
+// words (real, atletico, sporting, deportivo, racing…) so Real Madrid and Atlético
+// Madrid stay distinct. normalizeTeamTokens keeps spaces (token Jaccard);
+// normalizeTeamKey removes them (exact-equality keys / dedup).
+const TEAM_AFFIX_RE =
+  /\b(fc|afc|cf|sc|ac|cd|ca|ec|se|ad|sv|fk|if|bk|aif|club|calcio|fodbold|futebol|footballclub|dos|das|de|do|da|e)\b/g;
+
+export function normalizeTeamTokens(name = "") {
   return String(name || "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-
-    // 🔥 NEW — remove common suffixes
-    .replace(/\b(fc|cf|sc|if|ac|afc|club|footballclub|fodbold|fk)\b/g, "")
-
-    .replace(/[^a-z0-9]/g, "")
+    .replace(/&/g, " and ")
+    .replace(/[.'`’]/g, "")            // collapse dotted abbreviations: f.c. → fc
+    .replace(TEAM_AFFIX_RE, " ")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
+
+export function normalizeTeamKey(name = "") {
+  return normalizeTeamTokens(name).replace(/ /g, "");
+}
+
 
 function roundKickoffTo10Min(utc) {
   const ts = new Date(utc || 0).getTime();

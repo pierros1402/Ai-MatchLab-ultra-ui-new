@@ -36,21 +36,9 @@ import { teamXgRates } from "../storage/discipline-memory-db.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 import { buildRefereeLookup, lookupReferee } from "../odds/referee-enrichment.js";
 import { TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
+import { normalizeTeamKey as normalizeTeam } from "../core/normalize.js";
 
 function log(...a) { console.log("[run-odds-opening]", ...a); }
-
-// ─── Team-name normalisation ────────────────────────────────────────────────────
-
-function normalizeTeam(name) {
-  return String(name || "")
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")  // strip diacritics
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/\b(afc|fc|cf|sc|ac|cd|ca|ec|se|ad|club|atletico|deportivo|sporting|real)\b/g, " ")
-    .replace(/[^a-z0-9 ]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function tokenJaccard(a, b) {
   const A = new Set(a.split(" ").filter(Boolean));

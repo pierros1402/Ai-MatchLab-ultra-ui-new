@@ -17,6 +17,7 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { readStandings } from "../storage/standings-memory-db.js";
 import { readTeamGeoRecord, writeTeamGeoRecord } from "../storage/team-geo-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
+import { normalizeTeamTokens } from "../core/normalize.js";
 
 const UK = new Set(["united kingdom", "england", "scotland", "wales", "northern ireland"]);
 function countryMatch(a, b) {
@@ -36,13 +37,7 @@ const QUERY = `SELECT ?clubLabel ?lat ?lon ?countryLabel WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
 } LIMIT 60000`;
 
-function norm(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/\b(fc|afc|cf|sc|ac|cd|ca|ec|se|ad|sv|fk|if|bk|club|futebol|foot|ball)\b/g, " ")
-    .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-}
-const tok = s => new Set(norm(s).split(" ").filter(Boolean));
+const tok = s => new Set(normalizeTeamTokens(s).split(" ").filter(Boolean));
 
 async function fetchClubs() {
   const r = await fetch(`${SPARQL}?format=json&query=${encodeURIComponent(QUERY)}`, {
@@ -61,7 +56,7 @@ export async function buildTeamGeoSparql() {
   const clubs = await fetchClubs();
   // Exact-normalized index + token sets for fuzzy fallback.
   const exact = new Map();
-  for (const c of clubs) { const n = norm(c.label); if (n && !exact.has(n)) exact.set(n, c); }
+  for (const c of clubs) { const n = normalizeTeamTokens(c.label); if (n && !exact.has(n)) exact.set(n, c); }
 
   const dir = resolveDataPath("league-memory", "standings");
   let files = [];
@@ -82,7 +77,7 @@ export async function buildTeamGeoSparql() {
       stats.teams++;
       if (readTeamGeoRecord(team)) { stats.alreadyHadGeo++; continue; }
 
-      const n = norm(team);
+      const n = normalizeTeamTokens(team);
       // Exact-normalized: trust if same country (or country agrees / unknown).
       let hit = exact.get(n);
       if (hit && leagueCountry && hit.country && !countryMatch(hit.country, leagueCountry)) hit = null;
