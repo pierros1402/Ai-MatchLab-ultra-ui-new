@@ -59,6 +59,42 @@ function readValueForMatch(dayKey, matchId) {
   return picks.filter(p => String(p?.matchId) === String(matchId));
 }
 
+// Friendly labels for pick keys across all markets.
+const PICK_LABELS = {
+  home: "Home", draw: "Draw", away: "Away",
+  "1": "Home", x: "Draw", "2": "Away",
+  "12": "Home/Away", "1X": "Home/Draw", "X2": "Draw/Away",
+  over: "Over", under: "Under",
+  yes: "Both Score", no: "Clean Sheet"
+};
+
+function assessmentToValuePicks(aiAssessment, homeTeam, awayTeam) {
+  const markets = aiAssessment?.markets || {};
+  const picks = [];
+  for (const [marketName, mkt] of Object.entries(markets)) {
+    const probs = mkt.probs || {};
+    const entries = Object.entries(probs).filter(([, v]) => Number.isFinite(Number(v)));
+    if (!entries.length) continue;
+    entries.sort((a, b) => Number(b[1]) - Number(a[1]));
+    const [bestKey, bestProb] = entries[0];
+    const secondProb = entries[1] ? Number(entries[1][1]) : 0;
+    const label = PICK_LABELS[bestKey] ?? bestKey;
+    const pickLabel = marketName === "1X2"
+      ? (bestKey === "home" ? homeTeam : bestKey === "away" ? awayTeam : "Draw")
+      : label;
+    picks.push({
+      marketName,
+      pick: pickLabel,
+      score: Math.round(Number(bestProb) * 1000) / 1000,
+      confidence: Math.round((Number(bestProb) - secondProb) * 1000) / 1000,
+      fairOdds: mkt.odds?.[bestKey] ? Math.round(Number(mkt.odds[bestKey]) * 100) / 100 : null,
+      result: "PENDING",
+      source: "ai_assessment"
+    });
+  }
+  return picks;
+}
+
 /**
  * Merge our odds-memory data (form-aware assessment + appointed referee + per-team
  * discipline) into a details snapshot — used by BOTH the runtime payload and the
@@ -189,6 +225,13 @@ export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, home
       }
       if (parts.length >= 2) { const s = parts.join(". ") + "."; out.analysis = { summary: { en: s, el: s } }; }
     }
+  }
+
+  // Value picks — synthesise from our aiAssessment when canonical value engine
+  // has not produced picks for this match (covers all fs_* matches + canonical
+  // matches not yet processed by build-value-day).
+  if ((!Array.isArray(out.value) || !out.value.length) && rec?.aiAssessment?.markets) {
+    out.value = assessmentToValuePicks(rec.aiAssessment, homeTeam, awayTeam);
   }
 
   // AI Tasks status board — reflect what WE actually gathered (so the panel shows

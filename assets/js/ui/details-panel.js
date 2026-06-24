@@ -1466,15 +1466,17 @@ async function renderLocal(match, mountEl) {
                   <div style="font-weight:800;">${esc(v.marketName || v.market || "Market")}</div>
                   <div style="margin-top:4px;">
                     Pick: <b>${esc(v.pick || "—")}</b>
-                    <span style="margin-left:10px;">Score: <b>${esc(
-                      v.score != null ? Number(v.score).toFixed(3) : "—"
+                    ${v.fairOdds != null ? `<span style="margin-left:10px;">Fair odds: <b>${esc(v.fairOdds)}</b></span>` : ""}
+                    <span style="margin-left:10px;">Prob: <b>${esc(
+                      v.score != null ? (Number(v.score) * 100).toFixed(1) + "%" : "—"
                     )}</b></span>
-                    <span style="margin-left:10px;">Confidence: <b>${esc(
-                      v.confidence != null ? Number(v.confidence).toFixed(3) : "—"
+                    <span style="margin-left:10px;">Edge: <b>${esc(
+                      v.confidence != null ? (Number(v.confidence) * 100).toFixed(1) + "%" : "—"
                     )}</b></span>
                   </div>
                   <div style="margin-top:4px;">
                     Result: <b>${esc(v.result || "PENDING")}</b>
+                    ${v.source === "ai_assessment" ? `<span style="margin-left:8px;opacity:0.5;font-size:11px;">AI Estimate</span>` : ""}
                   </div>
                 </div>
               `
