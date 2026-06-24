@@ -27,6 +27,7 @@ import { buildTeamGeoSparql } from "./build-team-geo-sparql.js";
 import { buildTeamAliasesSparql } from "./build-team-aliases-sparql.js";
 import { settleAssessments } from "./settle-assessments-day.js";
 import { accumulateLineups } from "./run-lineups-day.js";
+import { accumulateH2H } from "./accumulate-h2h.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -53,6 +54,11 @@ export async function runDay(dayKey) {
   // 2b3) Accumulate starting XIs (player-usage / expected lineups).
   const lineups = await accumulateLineups({ max: 200 });
   log("lineups-accumulate", { stored: lineups.stored, withLineups: lineups.withLineups, totalMatches: lineups.lineups.matches });
+
+  // 2b4) Accumulate H2H for ALL completed matches (no league filter) — builds
+  //      head-to-head history even for leagues without standings coverage.
+  const h2h = await accumulateH2H();
+  log("h2h-accumulate", { stored: h2h.stored, finished: h2h.finished, scanned: h2h.scanned });
 
   // 2c) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
   const derived = deriveStandingsFromResults();
