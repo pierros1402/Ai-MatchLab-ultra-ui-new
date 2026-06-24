@@ -1485,11 +1485,35 @@ app.get("/api/matches-for-date", (req, res) => {
   const date = String(req.query.date || athensDayKey()).slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
 
+  // Load AI assessments for this date (if available) — keyed by matchId
+  let assessmentMap = {};
+  try {
+    const ap = resolveDataPath("assessments", `${date}.json`);
+    assessmentMap = JSON.parse(fs.readFileSync(ap, "utf8")).matches || {};
+  } catch { /**/ }
+
+  function attachAssessment(m) {
+    const a = assessmentMap[String(m.matchId)] || null;
+    if (!a) return m;
+    return {
+      ...m,
+      assessment: {
+        openedAt:          a.openedAt,
+        assessedAt:        a.assessedAt,
+        revised:           a.revised || false,
+        openAssessment:    a.openAssessment,    // { home, draw, away } probs at first capture
+        currentAssessment: a.currentAssessment, // { home, draw, away } probs now
+        markets:           a.markets,           // all markets (1X2, OU25, BTTS…)
+        model:             a.model,
+      }
+    };
+  }
+
   // 1. Try deploy snapshot (has scores for past matches)
   try {
     const p = resolveDataPath("deploy-snapshots", date, "odds.json");
     const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    const matches = (j.matches || []).map(m => ({
+    const matches = (j.matches || []).map(m => attachAssessment({
       matchId:    m.matchId,
       homeTeam:   m.homeTeam || m.home || "",
       awayTeam:   m.awayTeam || m.away || "",
@@ -1512,7 +1536,7 @@ app.get("/api/matches-for-date", (req, res) => {
       .flatMap(f => {
         try {
           const j = JSON.parse(fs.readFileSync(path.join(resolveDataPath("canonical-fixtures", date), f), "utf8"));
-          return (j.fixtures || []).map(m => ({
+          return (j.fixtures || []).map(m => attachAssessment({
             matchId:    String(m.matchId || ""),
             homeTeam:   m.homeTeam || "",
             awayTeam:   m.awayTeam || "",

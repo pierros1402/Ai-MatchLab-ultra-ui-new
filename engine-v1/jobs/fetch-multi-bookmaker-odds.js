@@ -16,6 +16,7 @@ import path from "path";
 import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import { buildAssessmentDay } from "./build-assessment-day.js";
 
 const BASE   = "https://api.oddspapi.io/v4";
 const KEY    = process.env.ODDSPAPI_KEY || "";
@@ -490,6 +491,14 @@ export async function prefetchUpcomingOdds(startDate, daysAhead = 6) {
 
     const out = { date, updatedAt: Date.now(), matches: cache };
     fs.writeFileSync(outFile, JSON.stringify(out, null, 2), "utf8");
+
+    // AI assessment for this date (runs after odds write so assessment is independent)
+    try {
+      const ar = await buildAssessmentDay(date);
+      log(`  ${date}: assessment ${ar.assessed} matches, ${ar.revised || 0} revised`);
+    } catch (e) {
+      log(`  ${date}: assessment failed — ${e?.message || e}`);
+    }
   }
 
   log(`prefetch done: ${totalFetched} new fetches, ${totalSkipped} skipped`);

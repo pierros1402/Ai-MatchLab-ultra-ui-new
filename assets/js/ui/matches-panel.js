@@ -12,6 +12,36 @@
 
   let matches = [];
   let activeLeague = null;
+  let activeDate = null;
+
+  function todayStr() {
+    return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+  }
+
+  function isFutureDate(date) {
+    return date && date > todayStr();
+  }
+
+  function fmt(p) { return p != null ? (Math.round(p * 100)) + "%" : "–"; }
+
+  function assessmentHtml(a) {
+    if (!a) return "";
+    const p = a.currentAssessment || a.openAssessment || {};
+    const revisedBadge = a.revised
+      ? `<span class="assess-revised">REVISED</span>`
+      : "";
+    return `
+      <div class="match-assess">
+        ${revisedBadge}
+        <span class="assess-cell assess-home">${fmt(p.home)}</span>
+        <span class="assess-label">1</span>
+        <span class="assess-cell assess-draw">${fmt(p.draw)}</span>
+        <span class="assess-label">X</span>
+        <span class="assess-cell assess-away">${fmt(p.away)}</span>
+        <span class="assess-label">2</span>
+      </div>
+    `;
+  }
 
   function renderEmpty() {
     root.innerHTML = `
@@ -26,6 +56,8 @@
       renderEmpty();
       return;
     }
+
+    const isFuture = isFutureDate(activeDate);
 
     const rows = matches
       .map((m) => {
@@ -42,8 +74,10 @@
           ? `<span class="match-score">${scoreHome}–${scoreAway}</span>`
           : "";
 
+        const extraHtml = isFuture ? assessmentHtml(m.assessment) : "";
+
         return `
-          <button class="match-row" data-mid="${id}">
+          <button class="match-row${isFuture ? " match-row-future" : ""}" data-mid="${id}">
             <div class="match-row-main">
               <div class="match-teams">
                 <span class="team home">${home}</span>
@@ -55,6 +89,7 @@
                 <span class="match-status">${status}</span>
               </div>
             </div>
+            ${extraHtml}
           </button>
         `;
       })
@@ -99,7 +134,12 @@
   // Incoming matches list (existing style)
   on("matches:set", (payload) => {
     matches = (payload && payload.matches) ? payload.matches : (Array.isArray(payload) ? payload : []);
+    if (payload && payload.date) activeDate = payload.date;
     renderList();
+  });
+
+  window.addEventListener("date:change", (e) => {
+    activeDate = e.detail?.date || null;
   });
 
   // If league changes, you may receive an event (keep compatible)
