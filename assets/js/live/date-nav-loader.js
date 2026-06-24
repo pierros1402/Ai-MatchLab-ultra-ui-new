@@ -49,7 +49,8 @@
         };
       });
 
-      emit("matches:set", { matches: matches, date: date });
+      // Feed Active Leagues panel (not Matches — that stays on today's live data)
+      window.dispatchEvent(new CustomEvent("active-leagues:updated", { detail: { matches: matches, date: date } }));
       emit("date-matches:loaded", { date: date, count: matches.length, source: j.source });
       console.log("[date-nav-loader]", date, matches.length, "matches from", j.source);
     } catch (e) {
