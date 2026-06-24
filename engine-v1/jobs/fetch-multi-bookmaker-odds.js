@@ -441,7 +441,7 @@ export async function prefetchUpcomingOdds(startDate, daysAhead = 6) {
 
       // If already has openedAt from a prefetch AND fetched within 50min → skip
       // (hourly cron: re-fetch every ~1h to track intraday movement)
-      const PREFETCH_REFRESH_MS = 50 * 60 * 1000;
+      const PREFETCH_REFRESH_MS = 8 * 60 * 60 * 1000; // 8h — max 3 fetches/day per match (100 req/day budget)
       if (cached?.openedAt && (Date.now() - (cached.fetchedAt || 0)) < PREFETCH_REFRESH_MS) {
         skipped++;
         continue;
