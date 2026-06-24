@@ -34,9 +34,21 @@
   }
 
   let ALL_LEAGUES = [];
+  let _dynamicLeagues = null;  // cache of /api/leagues response
+
+  async function fetchDynamicLeagues() {
+    if (_dynamicLeagues) return _dynamicLeagues;
+    try {
+      const base = window.__AIML_ENGINE_BASE || "";
+      const r = await fetch(`${base}/api/leagues`, { cache: "no-store" });
+      if (r.ok) { _dynamicLeagues = await r.json(); return _dynamicLeagues; }
+    } catch (_) { /* fall through to static */ }
+    return null;
+  }
 
   window.loadNavigation = async function(){
     ALL_LEAGUES = [];
+    const dynamic = await fetchDynamicLeagues();
 
     const continents = await fetchJson(URL_CONTINENTS);
     const list = el("continents-list");
@@ -44,14 +56,10 @@
 
     for (const c of continents){
       list.appendChild(item(c.name,()=>onContinent(c)));
-
-      const data = await fetchJson(CONTINENT_DATA[c.code]);
-      data.forEach(ct=>{
+      const data = dynamic?.[c.code] || await fetchJson(CONTINENT_DATA[c.code]).catch(()=>[]);
+      (Array.isArray(data)?data:[]).forEach(ct=>{
         (ct.leagues||[]).forEach(lg=>{
-          ALL_LEAGUES.push({
-            id: lg.league_id,
-            name: lg.display_name || lg.league_id
-          });
+          ALL_LEAGUES.push({ id: lg.league_id, name: lg.display_name || lg.league_id });
         });
       });
     }
@@ -62,7 +70,8 @@
   async function onContinent(c){
     const list = el("countries-list");
     list.innerHTML="Loading…";
-    const data = await fetchJson(CONTINENT_DATA[c.code]);
+    const dynamic = await fetchDynamicLeagues();
+    const data = dynamic?.[c.code] || await fetchJson(CONTINENT_DATA[c.code]).catch(()=>[]);
     list.innerHTML="";
     data.forEach(ct=>list.appendChild(item(ct.country_name,()=>onCountry(ct))));
     safeOpen("panel-countries");
