@@ -112,60 +112,95 @@ async function apiGet(path) {
   return r.json();
 }
 
-// ─── OddsPapi odds parsing ─────────────────────────────────────────────────────
+// ─── OddsPapi market parsing ───────────────────────────────────────────────────
+//
+// OddsPapi market IDs (discovered empirically from logs):
+//   101 = 1X2  (outcomes 101=Home, 102=Draw, 103=Away)
+//   102 = Double Chance (outcomes: see MARKET_DEFS below when confirmed)
+//   Various = Over/Under lines
+//
+// We fetch ALL markets per fixture (no &marketId filter) so we get everything
+// in one call, then extract per-market below.
 
-// Market 101 = 1X2: outcome 101=Home, 102=Draw, 103=Away
-function parse1X2(bookmakerOdds) {
-  const result = { greek: {}, european: {}, asian: {}, betfair: {} };
+// Known market definitions: marketId → { key, legs: [{outcomeId, label}] }
+const MARKET_DEFS = {
+  "101": { key: "1X2",  legs: [{ id: "101", label: "home" }, { id: "102", label: "draw" }, { id: "103", label: "away" }] },
+  // IDs below are inferred — will be confirmed/corrected from Render logs
+  "102": { key: "DC",   legs: [{ id: "101", label: "1X" },  { id: "102", label: "12" },   { id: "103", label: "X2" }] },
+  "5":   { key: "OU25", legs: [{ id: "101", label: "over" }, { id: "102", label: "under" }] },
+  "8":   { key: "OU25", legs: [{ id: "101", label: "over" }, { id: "102", label: "under" }] },
+};
+
+function price(outs, outcomeId) {
+  const p = outs?.[outcomeId]?.players?.["0"]?.price;
+  return (p != null && Number.isFinite(+p)) ? +Number(p).toFixed(3) : null;
+}
+
+// Returns { "1X2": {greek:{},european:{},asian:{},betfair:{}}, "DC": {...}, ... }
+function parseAllMarkets(bookmakerOdds) {
+  const result = {};
+  // Collect unique market IDs seen across bookmakers (for discovery logging)
+  const seen = new Set();
 
   for (const [bk, bdata] of Object.entries(bookmakerOdds || {})) {
     if (!bdata?.bookmakerIsActive) continue;
-    const m = bdata?.markets?.["101"];
-    if (!m?.marketActive) continue;
+    const bmarkets = bdata?.markets || {};
 
-    const outs = m.outcomes || {};
-    const home  = outs["101"]?.players?.["0"]?.price;
-    const draw  = outs["102"]?.players?.["0"]?.price;
-    const away  = outs["103"]?.players?.["0"]?.price;
+    for (const [mid, mdata] of Object.entries(bmarkets)) {
+      seen.add(mid);
+      if (!mdata?.marketActive) continue;
 
-    if (!home || !draw || !away) continue;
-    if (!Number.isFinite(home) || !Number.isFinite(draw) || !Number.isFinite(away)) continue;
+      const def = MARKET_DEFS[mid];
+      if (!def) continue; // unknown market — still tracked in `seen` for logging
 
-    const panel = classifyBook(bk);
-    result[panel][bk] = { home: +home.toFixed(3), draw: +draw.toFixed(3), away: +away.toFixed(3) };
+      const outs = mdata.outcomes || {};
+      const vals = {};
+      let valid = true;
+
+      for (const leg of def.legs) {
+        const p = price(outs, leg.id);
+        if (p == null) { valid = false; break; }
+        vals[leg.label] = p;
+      }
+      if (!valid) continue;
+
+      if (!result[def.key]) result[def.key] = { greek: {}, european: {}, asian: {}, betfair: {} };
+      result[def.key][classifyBook(bk)][bk] = vals;
+    }
   }
 
-  return result;
+  return { markets: result, seenMarketIds: [...seen].sort() };
 }
 
 // Merge fresh odds with existing (preserves opening line, computes delta).
-// existing1X2: the stored "1X2" markets object (may have open/delta already)
-// fresh1X2:    newly parsed odds (flat home/draw/away per bookmaker)
-function mergeWithDelta(existing1X2, fresh1X2) {
+// Works for any market: legs are the keys of each bookmaker's odds object.
+// existingPanel: the stored panel object (may have open/delta already), or null
+// freshPanel:    newly parsed panel { greek:{}, european:{}, asian:{}, betfair:{} }
+function mergeWithDelta(existingPanel, freshPanel) {
   const merged = { greek: {}, european: {}, asian: {}, betfair: {} };
 
   for (const panel of ["greek", "european", "asian", "betfair"]) {
-    for (const [bk, fOdds] of Object.entries(fresh1X2[panel] || {})) {
-      const prev = existing1X2?.[panel]?.[bk];
+    for (const [bk, fOdds] of Object.entries(freshPanel?.[panel] || {})) {
+      const prev = existingPanel?.[panel]?.[bk];
+      const legs = Object.keys(fOdds);
 
       if (!prev) {
-        // First time seeing this bookmaker — freeze opening
-        merged[panel][bk] = {
-          home: fOdds.home, draw: fOdds.draw, away: fOdds.away,
-          open: { home: fOdds.home, draw: fOdds.draw, away: fOdds.away },
-        };
+        merged[panel][bk] = { ...fOdds, open: { ...fOdds } };
       } else {
-        // Subsequent fetch — keep frozen open, update current, calc delta
-        const open = prev.open || { home: prev.home, draw: prev.draw, away: prev.away };
-        const dh = +(fOdds.home - open.home).toFixed(3);
-        const dd = +(fOdds.draw - open.draw).toFixed(3);
-        const da = +(fOdds.away - open.away).toFixed(3);
+        const open = prev.open || Object.fromEntries(legs.map(l => [l, prev[l]]));
+        const delta = {};
+        let anyMoved = false;
+        for (const l of legs) {
+          if (open[l] != null && fOdds[l] != null) {
+            const d = +(fOdds[l] - open[l]).toFixed(3);
+            delta[l] = d;
+            if (d !== 0) anyMoved = true;
+          }
+        }
         merged[panel][bk] = {
-          home: fOdds.home, draw: fOdds.draw, away: fOdds.away,
+          ...fOdds,
           open,
-          ...(dh !== 0 || dd !== 0 || da !== 0
-            ? { delta: { home: dh, draw: dd, away: da } }
-            : {}),
+          ...(anyMoved ? { delta } : {}),
         };
       }
     }
@@ -260,32 +295,45 @@ export async function fetchMultiBookmakerOdds(date) {
 
   log(`matched ${toFetch.length}/${ourMatches.length} fixtures`);
 
-  // 5) Fetch odds for each matched fixture
+  // 5) Fetch ALL markets per fixture (no marketId filter = full response)
   let fetched = 0;
+  const allSeenMarketIds = new Set();
+
   for (const { matchId, fixtureId, home, away, isRefresh } of toFetch) {
     await sleep(DELAY_MS);
 
-    const oddsJ = await apiGet(`/odds?fixtureId=${encodeURIComponent(fixtureId)}&marketId=101`);
+    const oddsJ = await apiGet(`/odds?fixtureId=${encodeURIComponent(fixtureId)}`);
     if (!oddsJ?.bookmakerOdds) {
       log(`  skip ${home} vs ${away}: no bookmakerOdds`);
       continue;
     }
 
-    const fresh1X2 = parse1X2(oddsJ.bookmakerOdds);
-    const existing1X2 = cache[matchId]?.markets?.["1X2"] || null;
-    const merged1X2 = mergeWithDelta(existing1X2, fresh1X2);
+    const { markets: freshMarkets, seenMarketIds } = parseAllMarkets(oddsJ.bookmakerOdds);
+    seenMarketIds.forEach(id => allSeenMarketIds.add(id));
 
-    const totalBooks = Object.values(merged1X2).reduce((s, g) => s + Object.keys(g).length, 0);
-    const moved = Object.values(merged1X2).flatMap(g => Object.values(g)).filter(b => b.delta).length;
-    log(`  ${home} vs ${away}: ${totalBooks} bookmakers${isRefresh ? ` (refresh, ${moved} moved)` : ""}`);
+    // Merge each market with delta tracking
+    const existingMarkets = cache[matchId]?.markets || {};
+    const mergedMarkets = {};
+    for (const [mk, fresh] of Object.entries(freshMarkets)) {
+      mergedMarkets[mk] = mergeWithDelta(existingMarkets[mk] || null, fresh);
+    }
+
+    const totalBooks = Object.values(mergedMarkets["1X2"] || {}).reduce((s, g) => s + Object.keys(g).length, 0);
+    const moved = Object.values(mergedMarkets["1X2"] || {}).flatMap(g => Object.values(g)).filter(b => b.delta).length;
+    const mkKeys = Object.keys(mergedMarkets).join(",");
+    log(`  ${home} vs ${away}: ${totalBooks} books [${mkKeys}]${isRefresh ? ` (refresh, ${moved} moved)` : ""}`);
 
     cache[matchId] = {
       oddspapiFixtureId: fixtureId,
       fetchedAt: Date.now(),
       openedAt: cache[matchId]?.openedAt || Date.now(),
-      markets: { "1X2": merged1X2 },
+      markets: mergedMarkets,
     };
     fetched++;
+  }
+
+  if (allSeenMarketIds.size) {
+    log("market IDs seen across all fixtures:", [...allSeenMarketIds].join(", "));
   }
 
   // 6) Persist

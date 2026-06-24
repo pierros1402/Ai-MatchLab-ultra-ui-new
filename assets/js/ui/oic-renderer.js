@@ -148,7 +148,7 @@
   // ─── Fill multi-bookmaker snapshot (new OddsPapi format) ──────────────────
   // markets["1X2"][panel][bookmakerName] = { home, draw, away }
 
-  function fillMultiSection(container, panelBooks, marketData, matchPayload) {
+  function fillMultiSection(container, panelBooks, marketData, matchPayload, legKeys) {
     if (!container) return;
 
     panelBooks.forEach(function (book) {
@@ -159,24 +159,22 @@
       if (!odds) return;
 
       var cells = row.querySelectorAll(".oic-odd-cell");
-      var curVals   = [odds.home,              odds.draw,              odds.away];
-      var openVals  = odds.open  ? [odds.open.home,  odds.open.draw,  odds.open.away]  : [];
-      var deltaVals = odds.delta ? [odds.delta.home, odds.delta.draw, odds.delta.away] : [];
 
-      curVals.forEach(function (val, i) {
+      legKeys.forEach(function (leg, i) {
         if (!cells[i]) return;
         var curEl = cells[i].querySelector(".oic-odd-current");
         var delEl = cells[i].querySelector(".oic-odd-delta");
+        var val   = odds[leg];
+        var dv    = odds.delta && odds.delta[leg];
+        var hasOpen = odds.open && odds.open[leg] != null;
 
         if (curEl) curEl.textContent = fmt(val);
 
         if (delEl) {
-          var dv = deltaVals[i];
           if (typeof dv === "number" && dv !== 0) {
             delEl.textContent = (dv > 0 ? "+" : "") + dv.toFixed(2);
             delEl.className   = "oic-odd-delta " + (dv > 0 ? "delta-up" : "delta-down");
-          } else if (openVals[i] != null) {
-            // Has opening line but no movement yet
+          } else if (hasOpen) {
             delEl.textContent = "—";
             delEl.className   = "oic-odd-delta";
           } else {
@@ -256,19 +254,31 @@
 
   // ─── renderMulti — per-bookmaker OddsPapi data ────────────────────────────
 
+  // Derive leg keys from the first bookmaker's odds object (generic — works for
+  // 1X2, DC, OU25, etc.) filtering out meta keys like 'open' and 'delta'.
+  var META_KEYS = { open: 1, delta: 1 };
+  function getLegKeys(panelData, legDefs) {
+    var books = Object.keys(panelData);
+    if (!books.length) return legDefs;
+    var sample = panelData[books[0]] || {};
+    var fromData = Object.keys(sample).filter(function (k) { return !META_KEYS[k]; });
+    return fromData.length ? fromData : legDefs;
+  }
+
   function renderMulti(payload) {
     payload = payload || {};
     var markets   = payload.markets || {};
     var marketKey = normalizeMarket(payload.market || "1X2");
-    var legs      = MARKET_LEGS[marketKey] || MARKET_LEGS["1X2"];
+    var legDefs   = MARKET_LEGS[marketKey] || MARKET_LEGS["1X2"];
     var mdata     = markets[marketKey] || {};
 
     ["greek", "european", "asian", "betfair"].forEach(function (panel) {
       var panelData = mdata[panel] || {};
       var books     = Object.keys(panelData).sort();
       if (!books.length) { emptyPanel(TARGETS[panel], "—"); return; }
-      buildTable(TARGETS[panel], books, legs);
-      fillMultiSection(TARGETS[panel], books, panelData, payload);
+      var legKeys = getLegKeys(panelData, legDefs);
+      buildTable(TARGETS[panel], books, legKeys);
+      fillMultiSection(TARGETS[panel], books, panelData, payload, legKeys);
       if (marketKey === "1X2") highlightBestOdds(TARGETS[panel], books, panelData);
     });
   }
