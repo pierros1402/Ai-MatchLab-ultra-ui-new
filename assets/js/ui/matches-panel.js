@@ -35,12 +35,19 @@
         const status = m.status || m.state || m.shortStatus || "";
         const time = m.kickoff || m.kickoffTime || m.time || "";
 
+        const scoreHome = m.scoreHome;
+        const scoreAway = m.scoreAway;
+        const hasScore  = scoreHome != null && scoreAway != null;
+        const scoreHtml = hasScore
+          ? `<span class="match-score">${scoreHome}–${scoreAway}</span>`
+          : "";
+
         return `
           <button class="match-row" data-mid="${id}">
             <div class="match-row-main">
               <div class="match-teams">
                 <span class="team home">${home}</span>
-                <span class="vs">vs</span>
+                ${hasScore ? scoreHtml : `<span class="vs">vs</span>`}
                 <span class="team away">${away}</span>
               </div>
               <div class="match-meta">
@@ -60,7 +67,12 @@
       btn.addEventListener("click", () => {
         const mid = btn.getAttribute("data-mid");
         const match = matches.find((x) => String(x.id || x.matchId) === String(mid));
-        if (match) selectMatch(match);
+        if (match) {
+          // Attach the active date so multi-odds-loader uses the right date file
+          const enriched = Object.assign({}, match);
+          if (!enriched.date && window.DateNav) enriched.date = window.DateNav.getActiveDate();
+          selectMatch(enriched);
+        }
       });
     });
   }

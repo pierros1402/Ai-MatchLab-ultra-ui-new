@@ -214,20 +214,52 @@ function mergeWithDelta(existingPanel, freshPanel) {
   return merged;
 }
 
-// ─── Deploy snapshot reader ────────────────────────────────────────────────────
+// ─── Date helpers ─────────────────────────────────────────────────────────────
 
-function loadTodayMatches(date) {
+function addDays(dateStr, n) {
+  return new Date(new Date(dateStr + "T12:00:00Z").getTime() + n * 86400000)
+    .toISOString().slice(0, 10);
+}
+
+// ─── Match list loaders ────────────────────────────────────────────────────────
+
+// Read matches from canonical-fixtures dir (works for past and future dates)
+function loadMatchesFromCanonical(date) {
+  try {
+    const dir = resolveDataPath("canonical-fixtures", date);
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .flatMap(f => {
+        try {
+          const j = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+          return (j.fixtures || [])
+            .map(m => ({
+              matchId:  String(m.matchId || ""),
+              homeTeam: m.homeTeam || "",
+              awayTeam: m.awayTeam || "",
+            }))
+            .filter(m => m.matchId && m.homeTeam && m.awayTeam);
+        } catch { return []; }
+      });
+  } catch { return []; }
+}
+
+// Load matches for any date: deploy snapshot first, canonical fallback
+function loadMatchesForDate(date) {
   try {
     const p = resolveDataPath("deploy-snapshots", date, "odds.json");
     const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    return (j.matches || [])
+    const fromSnapshot = (j.matches || [])
       .map(m => ({
         matchId:  m.matchId,
         homeTeam: m.homeTeam || m.home || "",
         awayTeam: m.awayTeam || m.away || "",
       }))
       .filter(m => m.homeTeam && m.awayTeam && m.matchId);
-  } catch { return []; }
+    if (fromSnapshot.length) return fromSnapshot;
+  } catch { /**/ }
+  return loadMatchesFromCanonical(date);
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -246,14 +278,14 @@ export async function fetchMultiBookmakerOdds(date) {
   try { existing = JSON.parse(fs.readFileSync(outFile, "utf8")); } catch { /**/ }
   const cache = existing.matches || {};
 
-  // 1) Load our matches for today
-  const ourMatches = loadTodayMatches(date);
+  // 1) Load our matches for the given date (deploy snapshot → canonical fallback)
+  const ourMatches = loadMatchesForDate(date);
   log(`our matches: ${ourMatches.length}`);
   if (!ourMatches.length) return { ok: false, reason: "no_fixtures" };
 
   // 2) Fetch OddsPapi fixtures for today (not-started = pre-match).
   //    Using from=today&to=tomorrow because same-day queries return fewer results.
-  const nextDay = new Date(new Date(date + "T12:00:00Z").getTime() + 86400000).toISOString().slice(0, 10);
+  const nextDay = addDays(date, 1);
   await sleep(DELAY_MS);
   const fixJ = await apiGet(`/fixtures?sportId=10&statusId=0&from=${date}&to=${nextDay}`);
   const opFixtures = Array.isArray(fixJ?.data || fixJ) ? (fixJ?.data || fixJ) : [];
@@ -349,11 +381,128 @@ export async function fetchMultiBookmakerOdds(date) {
   return { ok: true, date, fetched, total: Object.keys(cache).length };
 }
 
+// ─── Prefetch upcoming odds (D+1 to D+daysAhead) ─────────────────────────────
+//
+// Runs during daily cycle to capture opening lines days before match day.
+// Writes to the same multi-odds/{matchDate}.json files (same matchId keys),
+// so fetchMultiBookmakerOdds on match day inherits the frozen open{} via
+// mergeWithDelta — delta = match-day current minus pre-fetched opening.
+
+export async function prefetchUpcomingOdds(startDate, daysAhead = 6) {
+  if (!KEY) { log("prefetch: no ODDSPAPI_KEY — skip"); return { ok: false }; }
+
+  startDate = startDate || athensDayKey();
+  const endDate = addDays(startDate, daysAhead + 1); // exclusive end for OddsPapi
+
+  log(`prefetch: ${startDate} → ${addDays(startDate, daysAhead)} (${daysAhead} days ahead)`);
+
+  // Single OddsPapi fixtures call for the whole range
+  await sleep(DELAY_MS);
+  const fixJ = await apiGet(`/fixtures?sportId=10&statusId=0&from=${startDate}&to=${endDate}`);
+  const allFix = (Array.isArray(fixJ?.data || fixJ) ? (fixJ?.data || fixJ) : []).filter(x => x.hasOdds);
+  log(`prefetch: ${allFix.length} OddsPapi fixtures with odds in range`);
+
+  // Build lookup index: normalized pair key → fixture (covers entire range)
+  const fixIndex  = new Map();
+  const fixIndexR = new Map();
+  for (const f of allFix) {
+    fixIndex.set(pairKey(f.participant1Name, f.participant2Name), f);
+    fixIndexR.set(pairKey(f.participant2Name, f.participant1Name), f);
+  }
+
+  const outDir = ensureDir(resolveDataPath("multi-odds"));
+  let totalFetched = 0;
+  let totalSkipped = 0;
+
+  // Process each future date independently
+  for (let d = 1; d <= daysAhead; d++) {
+    const date = addDays(startDate, d);
+
+    // Load our matches from canonical-fixtures for this date
+    const ourMatches = loadMatchesFromCanonical(date);
+    if (!ourMatches.length) { log(`  ${date}: no canonical fixtures`); continue; }
+
+    // Load existing odds file (may have prior prefetch data)
+    const outFile = path.join(outDir, `${date}.json`);
+    let existing = {};
+    try { existing = JSON.parse(fs.readFileSync(outFile, "utf8")); } catch { /**/ }
+    const cache = existing.matches || {};
+
+    // Filter OddsPapi fixtures to this specific date
+    const dateFix = allFix.filter(f => (f.startTime || "").slice(0, 10) === date);
+
+    let fetched = 0, skipped = 0;
+
+    for (const m of ourMatches) {
+      const cached = cache[m.matchId];
+
+      // If already has openedAt from a prefetch AND fetched within 20h → skip
+      // (avoid re-fetching the same day; daily cycle will update via refresh)
+      const PREFETCH_REFRESH_MS = 20 * 60 * 60 * 1000;
+      if (cached?.openedAt && (Date.now() - (cached.fetchedAt || 0)) < PREFETCH_REFRESH_MS) {
+        skipped++;
+        continue;
+      }
+
+      // Find matching OddsPapi fixture by team name
+      const fwd = pairKey(m.homeTeam, m.awayTeam);
+      let opFix = fixIndex.get(fwd) || fixIndexR.get(fwd);
+      if (!opFix) {
+        opFix = dateFix.find(f =>
+          namesMatch(m.homeTeam, f.participant1Name) && namesMatch(m.awayTeam, f.participant2Name)
+        ) || dateFix.find(f =>
+          namesMatch(m.homeTeam, f.participant2Name) && namesMatch(m.awayTeam, f.participant1Name)
+        );
+      }
+      if (!opFix) { skipped++; continue; }
+
+      await sleep(DELAY_MS);
+      const oddsJ = await apiGet(`/odds?fixtureId=${encodeURIComponent(opFix.fixtureId)}`);
+      if (!oddsJ?.bookmakerOdds) { skipped++; continue; }
+
+      const { markets: freshMarkets } = parseAllMarkets(oddsJ.bookmakerOdds);
+      const existingMarkets = cached?.markets || {};
+      const mergedMarkets = {};
+      for (const [mk, fresh] of Object.entries(freshMarkets)) {
+        mergedMarkets[mk] = mergeWithDelta(existingMarkets[mk] || null, fresh);
+      }
+
+      const books1X2 = Object.values(mergedMarkets["1X2"] || {}).reduce((s, g) => s + Object.keys(g).length, 0);
+      const daysUntil = d;
+      log(`  prefetch ${date}: ${m.homeTeam} vs ${m.awayTeam} — ${books1X2} books (D-${daysUntil})`);
+
+      cache[m.matchId] = {
+        oddspapiFixtureId: opFix.fixtureId,
+        fetchedAt: Date.now(),
+        openedAt:  cached?.openedAt || Date.now(), // freeze opening timestamp
+        markets:   mergedMarkets,
+      };
+      fetched++;
+    }
+
+    log(`  ${date}: prefetched ${fetched}, skipped ${skipped} / ${ourMatches.length} canonical matches`);
+    totalFetched += fetched;
+    totalSkipped += skipped;
+
+    const out = { date, updatedAt: Date.now(), matches: cache };
+    fs.writeFileSync(outFile, JSON.stringify(out, null, 2), "utf8");
+  }
+
+  log(`prefetch done: ${totalFetched} new fetches, ${totalSkipped} skipped`);
+  return { ok: true, startDate, daysAhead, fetched: totalFetched };
+}
+
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (entryUrl === import.meta.url) {
   const arg = process.argv.slice(2).find(a => /^\d{4}-\d{2}-\d{2}$/.test(a));
-  fetchMultiBookmakerOdds(arg).then(r => console.log(JSON.stringify(r, null, 2)))
-    .catch(e => { console.error(e.message); process.exitCode = 1; });
+  const isPrefetch = process.argv.includes("--prefetch");
+  if (isPrefetch) {
+    prefetchUpcomingOdds(arg).then(r => console.log(JSON.stringify(r, null, 2)))
+      .catch(e => { console.error(e.message); process.exitCode = 1; });
+  } else {
+    fetchMultiBookmakerOdds(arg).then(r => console.log(JSON.stringify(r, null, 2)))
+      .catch(e => { console.error(e.message); process.exitCode = 1; });
+  }
 }

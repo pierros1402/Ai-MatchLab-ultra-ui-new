@@ -22,7 +22,7 @@ import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
-import { fetchMultiBookmakerOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
+import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
 import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
 import 'dotenv/config';
 
@@ -1468,10 +1468,65 @@ app.post("/api/refresh-multi-odds", async (req, res) => {
     if (provided !== secret) return res.status(401).json({ ok: false, error: "unauthorized" });
   }
   const date = String(req.query.date || athensDayKey());
+  const doPrefetch = req.query.prefetch !== "0"; // default: also prefetch next 6 days
   try {
     const r1 = await fetchMultiBookmakerOdds(date);
     const r2 = await fetchOddsPortalGreekOdds(date);
-    res.json({ ok: true, date, oddspapi: r1, oddsportal: r2 });
+    const r3 = doPrefetch ? await prefetchUpcomingOdds(date, 6) : null;
+    res.json({ ok: true, date, oddspapi: r1, oddsportal: r2, prefetch: r3 });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
+// Matches for any date: deploy snapshot → canonical-fixtures fallback.
+// Returns { date, matches: [{ matchId, homeTeam, awayTeam, kickoffUtc, status, leagueSlug, scoreHome, scoreAway }] }
+app.get("/api/matches-for-date", (req, res) => {
+  const date = String(req.query.date || athensDayKey()).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
+
+  // 1. Try deploy snapshot (has scores for past matches)
+  try {
+    const p = resolveDataPath("deploy-snapshots", date, "odds.json");
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    const matches = (j.matches || []).map(m => ({
+      matchId:    m.matchId,
+      homeTeam:   m.homeTeam || m.home || "",
+      awayTeam:   m.awayTeam || m.away || "",
+      kickoffUtc: m.kickoffUtc || m.kickoff || "",
+      status:     m.status || "PRE",
+      leagueSlug: m.leagueSlug || "",
+      leagueName: m.leagueName || "",
+      scoreHome:  m.scoreHome ?? null,
+      scoreAway:  m.scoreAway ?? null,
+    })).filter(m => m.matchId && m.homeTeam);
+    if (matches.length) return res.json({ ok: true, date, source: "snapshot", matches });
+  } catch { /**/ }
+
+  // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
+  try {
+    const dir = resolveDataPath("canonical-fixtures", date);
+    if (!fs.existsSync(dir)) return res.json({ ok: true, date, source: "none", matches: [] });
+    const matches = fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .flatMap(f => {
+        try {
+          const j = JSON.parse(fs.readFileSync(path.join(resolveDataPath("canonical-fixtures", date), f), "utf8"));
+          return (j.fixtures || []).map(m => ({
+            matchId:    String(m.matchId || ""),
+            homeTeam:   m.homeTeam || "",
+            awayTeam:   m.awayTeam || "",
+            kickoffUtc: m.kickoffUtc || "",
+            status:     m.status || "PRE",
+            leagueSlug: m.leagueSlug || "",
+            leagueName: m.leagueName || "",
+            scoreHome:  null,
+            scoreAway:  null,
+          })).filter(m => m.matchId && m.homeTeam);
+        } catch { return []; }
+      })
+      .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+    return res.json({ ok: true, date, source: "canonical", matches });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e?.message || e) });
   }

@@ -35,7 +35,7 @@ import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
-import { fetchMultiBookmakerOdds } from "./fetch-multi-bookmaker-odds.js";
+import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./fetch-multi-bookmaker-odds.js";
 import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
@@ -1093,6 +1093,13 @@ export async function runDailyCycle(options = {}) {
     const multiOdds = await fetchMultiBookmakerOdds(dayKey);
     console.log("[daily-cycle] multi-bookmaker-odds", { fetched: multiOdds.fetched, total: multiOdds.total });
   } catch (e) { console.log("[daily-cycle] multi-bookmaker-odds:skip", String(e?.message || e)); }
+
+  // Prefetch odds for the next 6 days so "opening" is captured days before the match.
+  // Uses canonical-fixtures (available for future dates). First capture per match = open{}.
+  try {
+    const prefetch = await prefetchUpcomingOdds(dayKey, 6);
+    console.log("[daily-cycle] prefetch-upcoming-odds", { fetched: prefetch.fetched });
+  } catch (e) { console.log("[daily-cycle] prefetch-upcoming-odds:skip", String(e?.message || e)); }
 
   // Greek panel supplement via OddsPortal (stoiximan/vistabet).
   // Geo-blocked from GR IPs — silently skips when not on Render.
