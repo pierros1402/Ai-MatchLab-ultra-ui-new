@@ -103,9 +103,24 @@
 
     state.loading = (async () => {
       try {
+        // Prefer live /api/leagues (disabled-filtered, newly-promoted included).
+        let dynamic = null;
+        try {
+          const base = window.__AIML_ENGINE_BASE || "";
+          const r = await fetch(`${base}/api/leagues`, { cache: "no-store" });
+          if (r.ok) dynamic = await r.json();
+        } catch (_) { /* fall through to static */ }
+
         for (let i = 0; i < codes.length; i++) {
-          const data = await fetchJson(CONTINENT_DATA[codes[i]]);
-          ingestContinentDataset(codes[i], Array.isArray(data) ? data : []);
+          const code = codes[i];
+          const data = dynamic?.[code] || await fetchJson(CONTINENT_DATA[code]).catch(()=>[]);
+          ingestContinentDataset(code, Array.isArray(data) ? data : []);
+        }
+        // If dynamic: ingest all continents (not just preload) for full slug coverage.
+        if (dynamic) {
+          for (const [code, arr] of Object.entries(dynamic)) {
+            if (!codes.includes(code)) ingestContinentDataset(code, arr);
+          }
         }
         state.ready = true;
         if (window.emit) window.emit("league-binding:ready", { preload: codes.slice() });
