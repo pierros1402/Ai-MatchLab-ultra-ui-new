@@ -1,0 +1,730 @@
+#!/usr/bin/env node
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+
+function asText(value) {
+  return value == null ? "" : String(value).trim();
+}
+
+function readJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function writeJson(filePath, value) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+function parseArgs(argv = process.argv.slice(2)) {
+  const args = {
+    input: "",
+    output: "",
+    selfTest: false,
+    limit: 0,
+    perLeagueLimit: 0
+  };
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+
+    if (arg === "--self-test") {
+      args.selfTest = true;
+      continue;
+    }
+
+    if (arg === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+      continue;
+    }
+
+    if (arg === "--output" && argv[i + 1]) {
+      args.output = argv[++i];
+      continue;
+    }
+
+    if (arg === "--limit" && argv[i + 1]) {
+      args.limit = Number(argv[++i]);
+      continue;
+    }
+
+    if (arg === "--per-league-limit" && argv[i + 1]) {
+      args.perLeagueLimit = Number(argv[++i]);
+      continue;
+    }
+
+    throw new Error(`unknown or incomplete argument: ${arg}`);
+  }
+
+  return args;
+}
+
+function selectWorkRows(input) {
+  if (Array.isArray(input)) return input;
+
+  const candidates = [
+    input.workRows,
+    input.discoveryWorkRows,
+    input.rows,
+    input.items
+  ];
+
+  for (const value of candidates) {
+    if (Array.isArray(value) && value.length > 0) return value;
+  }
+
+  return [];
+}
+
+function normalizeFamily(value) {
+  return asText(value).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+function scoreIntent(intent) {
+  const priority = Number(intent?.priority);
+  if (Number.isFinite(priority)) return Math.max(0, Math.min(100, priority));
+
+  const name = asText(intent?.intent);
+  if (name.includes("official_league")) return 100;
+  if (name.includes("federation")) return 90;
+  if (name.includes("club")) return 80;
+  if (name.includes("trusted")) return 60;
+  if (name.includes("no_fixture")) return 55;
+  return 40;
+}
+
+function scoreFamily(family) {
+  const normalized = normalizeFamily(family);
+
+  if (normalized === "official_league") return 100;
+  if (normalized === "competition_operator") return 95;
+  if (normalized === "national_federation") return 90;
+  if (normalized === "official_club") return 75;
+  if (normalized === "trusted_independent_fixture_listing") return 55;
+  if (normalized === "any_relevant") return 35;
+
+  return 20;
+}
+
+function buildDedupeKey(row, intent, family) {
+  return [
+    asText(row.dayKey),
+    asText(row.leagueSlug).toLowerCase(),
+    asText(intent.intent).toLowerCase(),
+    normalizeFamily(family),
+    asText(intent.query).toLowerCase().replace(/\s+/g, " ")
+  ].join("|");
+}
+
+function buildSearchTarget(row, intent, family, index) {
+  const intentScore = scoreIntent(intent);
+  const familyScore = scoreFamily(family);
+  const compositeScore = Math.round((intentScore * 0.65) + (familyScore * 0.35));
+
+  return {
+    searchTargetId: [
+      asText(row.dayKey),
+      asText(row.leagueSlug),
+      asText(intent.intent),
+      normalizeFamily(family),
+      index
+    ].join(":"),
+    leagueSlug: asText(row.leagueSlug),
+    name: asText(row.name),
+    country: asText(row.country),
+    dayKey: asText(row.dayKey),
+    coverageState: asText(row.coverageState) || "coverage_state_unset",
+    sourceDiscoveryMode: asText(row.sourceDiscoveryMode) || "enabled",
+    activityState: asText(row.activityState) || "needs_day_activity_discovery",
+    dayActivityEvidenceState: asText(row.dayActivityEvidenceState) || "unverified_for_day",
+    dayFixtureAcquisitionMode: asText(row.dayFixtureAcquisitionMode) || "discovery_only",
+    activeForDay: row.activeForDay === true,
+    noExpectedFixturesForDay: row.noExpectedFixturesForDay === true,
+    outOfSeasonForDay: row.outOfSeasonForDay === true,
+    nextKnownFixtureDate: asText(row.nextKnownFixtureDate) || null,
+    activityReason: asText(row.activityReason) || "coverage_row_requires_day_activity_verification",
+    scope: asText(row.scope) || "senior_top_division",
+    query: asText(intent.query),
+    intent: asText(intent.intent),
+    expectedSourceFamily: normalizeFamily(family),
+    priority: Number(intent.priority) || intentScore,
+    sourceFamilyScore: familyScore,
+    compositeScore,
+    resolutionMode: "search_provider_required",
+    candidateUrl: null,
+    manualCandidateUrlUsed: false,
+    fetchState: "not_fetched",
+    reason: [
+      "built_from_autonomous_query_intent",
+      `intent_score_${intentScore}`,
+      `source_family_score_${familyScore}`,
+      "no_manual_url_input"
+    ],
+    dedupeKey: buildDedupeKey(row, intent, family),
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
+function normalizeRow(row, index) {
+  const leagueSlug = asText(row.leagueSlug);
+  const name = asText(row.name);
+  const dayKey = asText(row.dayKey);
+  const queryIntents = Array.isArray(row.queryIntents) ? row.queryIntents : [];
+
+  if (!leagueSlug || !name || !dayKey) {
+    return {
+      ok: false,
+      rejectedReason: "missing_required_work_row_identity",
+      sourceIndex: index,
+      leagueSlug,
+      name,
+      dayKey
+    };
+  }
+
+  if (queryIntents.length === 0) {
+    return {
+      ok: false,
+      rejectedReason: "missing_query_intents",
+      sourceIndex: index,
+      leagueSlug,
+      name,
+      dayKey
+    };
+  }
+
+  return {
+    ok: true,
+    row: {
+      leagueSlug,
+      name,
+      country: asText(row.country),
+      dayKey,
+      coverageState: asText(row.coverageState) || "coverage_state_unset",
+      sourceDiscoveryMode: asText(row.sourceDiscoveryMode) || "enabled",
+      activityState: asText(row.activityState) || "needs_day_activity_discovery",
+      dayActivityEvidenceState: asText(row.dayActivityEvidenceState) || "unverified_for_day",
+      dayFixtureAcquisitionMode: asText(row.dayFixtureAcquisitionMode) || "discovery_only",
+      activeForDay: row.activeForDay === true,
+      noExpectedFixturesForDay: row.noExpectedFixturesForDay === true,
+      outOfSeasonForDay: row.outOfSeasonForDay === true,
+      nextKnownFixtureDate: asText(row.nextKnownFixtureDate) || null,
+      activityReason: asText(row.activityReason) || "coverage_row_requires_day_activity_verification",
+      scope: asText(row.scope) || "senior_top_division",
+      queryIntents
+    }
+  };
+}
+
+function compactQuery(value) {
+  return asText(value).replace(/\s+/g, " ").trim();
+}
+
+function quotedPhraseFromQuery(query) {
+  const raw = asText(query);
+  const match = raw.match(/"([^"]{4,120})"/);
+  if (match) return compactQuery(match[1]);
+
+  return compactQuery(
+    raw
+      .replace(/site:[^\s]+/gi, " ")
+      .replace(/\b(20\d{2}[-/ ]?\d{2}[-/ ]?\d{2}|\d{1,2}[-/ ]?\d{1,2}[-/ ]?20\d{2})\b/g, " ")
+      .replace(/\b(fixtures?|results?|matches?|schedule|calendar|official|football|soccer|source|sources|club|clubs|federation|competition)\b/gi, " ")
+  ).split(" ").slice(0, 8).join(" ");
+}
+
+function officialSiteFromQuery(query) {
+  const match = asText(query).match(/site:([^\s]+)/i);
+  return match ? compactQuery(match[1]).replace(/^https?:\/\//i, "").replace(/\/+$/, "") : "";
+}
+
+function expansionDedupeKey(base, intent, family, query) {
+  return [
+    asText(base.dayKey),
+    asText(base.leagueSlug).toLowerCase(),
+    asText(intent).toLowerCase(),
+    normalizeFamily(family),
+    asText(query).toLowerCase().replace(/\s+/g, " ")
+  ].join("|");
+}
+
+function buildExpansionTarget(base, query, intent, family, score, reason) {
+  const cleanQuery = compactQuery(query);
+  if (!cleanQuery) return null;
+
+  return {
+    ...base,
+    searchTargetId: [
+      asText(base.dayKey),
+      asText(base.leagueSlug),
+      intent,
+      normalizeFamily(family),
+      "fixture_surface_expansion",
+      score
+    ].join(":"),
+    query: cleanQuery,
+    intent,
+    expectedSourceFamily: normalizeFamily(family),
+    priority: score,
+    sourceFamilyScore: score,
+    compositeScore: score,
+    reason: [
+      ...(
+        Array.isArray(base.reason)
+          ? base.reason.map(asText).filter(Boolean)
+          : []
+      ),
+      "fixture_surface_expansion_target",
+      reason
+    ],
+    dedupeKey: expansionDedupeKey(base, intent, family, cleanQuery),
+    candidateUrl: null,
+    manualCandidateUrlUsed: false,
+    fetchState: "not_fetched",
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
+function buildFixtureSurfaceExpansionTargets(searchTargetRows) {
+  const out = [];
+  const perLeagueCounts = new Map();
+
+  for (const base of searchTargetRows) {
+    const leagueSlug = asText(base.leagueSlug);
+    if (!leagueSlug) continue;
+
+    const currentCount = perLeagueCounts.get(leagueSlug) || 0;
+    if (currentCount >= 4) continue;
+
+    const dayKey = asText(base.dayKey);
+    const phrase = compactQuery(base.name || quotedPhraseFromQuery(base.query));
+    if (!phrase || phrase.length < 4) continue;
+
+    const site = officialSiteFromQuery(base.query);
+    const candidates = [];
+
+    if (site) {
+      candidates.push(buildExpansionTarget(
+        base,
+        `site:${site} "${phrase}" fixtures results schedule matches ${dayKey}`,
+        "official_fixture_url_surface",
+        "official_league",
+        100,
+        "official_site_fixture_surface_query"
+      ));
+
+      candidates.push(buildExpansionTarget(
+        base,
+        `site:${site} "${phrase}" fixtures results schedule matches`,
+        "official_fixture_url_surface",
+        "official_league",
+        98,
+        "official_site_fixture_path_query"
+      ));
+    }
+
+    candidates.push(buildExpansionTarget(
+      base,
+      `"${phrase}" fixtures results schedule matches ${dayKey} football`,
+      "trusted_independent_fixture_listing",
+      "trusted_independent_fixture_listing",
+      96,
+      "broad_fixture_surface_query"
+    ));
+
+    candidates.push(buildExpansionTarget(
+      base,
+      `"${phrase}" fixtures results schedule matches football`,
+      "supplemental_scoreboard_crosscheck",
+      "trusted_independent_fixture_listing",
+      94,
+      "supplemental_fixture_surface_query"
+    ));
+
+    for (const candidate of candidates.filter(Boolean)) {
+      if ((perLeagueCounts.get(leagueSlug) || 0) >= 4) break;
+      out.push(candidate);
+      perLeagueCounts.set(leagueSlug, (perLeagueCounts.get(leagueSlug) || 0) + 1);
+    }
+  }
+
+  return out;
+}
+
+function buildSeasonRestartLeaguePhrase(row) {
+  const candidates = [
+    row.leagueName,
+    row.leagueDisplayName,
+    row.competitionName,
+    row.competition,
+    row.name,
+    row.title,
+    row.leagueSlug
+  ];
+
+  for (const candidate of candidates) {
+    const value = asText(candidate).trim();
+    if (value) return value;
+  }
+
+  return "";
+}
+
+function buildSeasonRestartDiscoveryTargets(searchTargetRows) {
+  const targets = [];
+  const seen = new Set();
+
+  for (const base of searchTargetRows) {
+    const phrase = buildSeasonRestartLeaguePhrase(base);
+    const dayKey = asText(base.dayKey);
+    const year = Number(dayKey.slice(0, 4));
+
+    if (!phrase || !Number.isFinite(year)) continue;
+
+    const nextYearShort = String((year + 1) % 100).padStart(2, "0");
+    const seasonLabel = String(year) + "-" + nextYearShort;
+    const nextYear = String(year + 1);
+
+    const queries = [
+      "\"" + phrase + "\" " + seasonLabel + " fixtures released start date",
+      "\"" + phrase + "\" new season starts " + year + " fixtures",
+      "\"" + phrase + "\" " + year + " " + nextYear + " season start date fixtures",
+      "\"" + phrase + "\" fixture release date " + seasonLabel,
+      "\"" + phrase + "\" season ended starts resumes fixtures"
+    ];
+
+    for (const query of queries) {
+      const cleanQuery = asText(query);
+      const key = [asText(base.leagueSlug), cleanQuery.toLowerCase()].join("|");
+      if (!cleanQuery || seen.has(key)) continue;
+      seen.add(key);
+
+      targets.push(buildExpansionTarget(
+        base,
+        cleanQuery,
+        "season_restart_calendar_discovery",
+        "trusted_independent_fixture_listing",
+        99,
+        "season_restart_calendar_query"
+      ));
+    }
+  }
+
+  return targets;
+}
+
+function candidateUrlDedupeKey(base, candidateUrl, intent, family) {
+  return [
+    asText(base.dayKey),
+    asText(base.leagueSlug).toLowerCase(),
+    asText(intent).toLowerCase(),
+    normalizeFamily(family),
+    asText(candidateUrl).toLowerCase().replace(/\/+$/, "")
+  ].join("|");
+}
+
+function buildAutonomousUrlProbeTarget(base, candidateUrl, intent, family, score, reason) {
+  const url = asText(candidateUrl).replace(/\/+$/, "");
+  if (!url) return null;
+
+  return {
+    ...base,
+    searchTargetId: [
+      asText(base.dayKey),
+      asText(base.leagueSlug),
+      intent,
+      normalizeFamily(family),
+      "autonomous_url_surface_probe",
+      score
+    ].join(":"),
+    query: url,
+    intent,
+    expectedSourceFamily: normalizeFamily(family),
+    priority: score,
+    sourceFamilyScore: score,
+    compositeScore: score,
+    reason: [
+      ...(
+        Array.isArray(base.reason)
+          ? base.reason.map(asText).filter(Boolean)
+          : []
+      ),
+      "autonomous_url_surface_probe_target",
+      reason
+    ],
+    dedupeKey: candidateUrlDedupeKey(base, url, intent, family),
+    resolutionMode: "autonomous_url_surface_probe",
+    candidateUrl: url,
+    manualCandidateUrlUsed: false,
+    fetchState: "not_fetched",
+    canonicalWrites: 0,
+    productionWrite: false,
+    dryRun: true
+  };
+}
+
+function buildAutonomousUrlProbeTargets(searchTargetRows) {
+  const out = [];
+  const perLeagueCounts = new Map();
+  const probePaths = [
+    "fixtures",
+    "results",
+    "matches",
+    "schedule",
+    "match-centre",
+    "match-center"
+  ];
+
+  for (const base of searchTargetRows) {
+    const leagueSlug = asText(base.leagueSlug);
+    if (!leagueSlug) continue;
+
+    const site = officialSiteFromQuery(base.query);
+    if (!site) continue;
+
+    const currentCount = perLeagueCounts.get(leagueSlug) || 0;
+    if (currentCount >= 6) continue;
+
+    for (const probePath of probePaths) {
+      if ((perLeagueCounts.get(leagueSlug) || 0) >= 6) break;
+
+      const candidateUrl = `https://${site}/${probePath}`;
+      const candidate = buildAutonomousUrlProbeTarget(
+        base,
+        candidateUrl,
+        "official_fixture_url_surface_probe",
+        "official_league",
+        97,
+        `official_site_${probePath}_url_probe`
+      );
+
+      if (!candidate) continue;
+      out.push(candidate);
+      perLeagueCounts.set(leagueSlug, (perLeagueCounts.get(leagueSlug) || 0) + 1);
+    }
+  }
+
+  return out;
+}
+
+function dedupeAndSortTargets(targets) {
+  const seen = new Set();
+  const out = [];
+
+  for (const target of targets) {
+    if (seen.has(target.dedupeKey)) continue;
+    seen.add(target.dedupeKey);
+    out.push(target);
+  }
+
+  out.sort((a, b) => {
+    if (b.compositeScore !== a.compositeScore) return b.compositeScore - a.compositeScore;
+    if (a.leagueSlug !== b.leagueSlug) return a.leagueSlug.localeCompare(b.leagueSlug);
+    return a.query.localeCompare(b.query);
+  });
+
+  return out;
+}
+
+function buildReport(input, options = {}) {
+  const rawRows = selectWorkRows(input);
+  const limit = Number.isFinite(options.limit) && options.limit > 0 ? options.limit : rawRows.length;
+  const selectedRows = rawRows.slice(0, limit);
+  const normalized = selectedRows.map((row, index) => normalizeRow(row, index));
+
+  const workRows = normalized.filter((item) => item.ok).map((item) => item.row);
+  const rejectedRows = normalized.filter((item) => !item.ok);
+
+  const rawTargets = [];
+
+  for (const row of workRows) {
+    let index = 0;
+
+    for (const intent of row.queryIntents) {
+      const families = Array.isArray(intent.expectedSourceFamilies) && intent.expectedSourceFamilies.length > 0
+        ? intent.expectedSourceFamilies
+        : ["any_relevant"];
+
+      for (const family of families) {
+        rawTargets.push(buildSearchTarget(row, intent, family, index));
+        index += 1;
+      }
+    }
+  }
+
+  let searchTargetRows = dedupeAndSortTargets(rawTargets);
+  searchTargetRows = dedupeAndSortTargets([
+    ...searchTargetRows,
+    ...buildFixtureSurfaceExpansionTargets(searchTargetRows)
+  ]);
+  searchTargetRows = dedupeAndSortTargets([
+    ...searchTargetRows,
+    ...buildSeasonRestartDiscoveryTargets(searchTargetRows)
+  ]);
+
+  searchTargetRows = dedupeAndSortTargets([
+    ...searchTargetRows,
+    ...buildAutonomousUrlProbeTargets(searchTargetRows)
+  ]);
+
+  if (Number.isFinite(options.perLeagueLimit) && options.perLeagueLimit > 0) {
+    const byLeagueCount = new Map();
+    searchTargetRows = searchTargetRows.filter((row) => {
+      const key = row.leagueSlug;
+      const count = byLeagueCount.get(key) || 0;
+      if (count >= options.perLeagueLimit) return false;
+      byLeagueCount.set(key, count + 1);
+      return true;
+    });
+  }
+
+  const byLeague = {};
+  for (const row of searchTargetRows) {
+    if (!byLeague[row.leagueSlug]) {
+      byLeague[row.leagueSlug] = {
+        name: row.name,
+        dayKey: row.dayKey,
+        searchTargetCount: 0,
+        topCompositeScore: row.compositeScore,
+        expectedSourceFamilies: []
+      };
+    }
+
+    byLeague[row.leagueSlug].searchTargetCount += 1;
+
+    if (!byLeague[row.leagueSlug].expectedSourceFamilies.includes(row.expectedSourceFamily)) {
+      byLeague[row.leagueSlug].expectedSourceFamilies.push(row.expectedSourceFamily);
+    }
+  }
+
+  return {
+    ok: true,
+    job: "build-fixture-league-date-autonomous-source-candidate-targets-file",
+    mode: "read_only_autonomous_fixture_source_candidate_targets",
+    generatedAt: new Date().toISOString(),
+    summary: {
+      inputWorkRowCount: rawRows.length,
+      selectedWorkRowCount: selectedRows.length,
+      acceptedWorkRowCount: workRows.length,
+      rejectedWorkRowCount: rejectedRows.length,
+      rawSearchTargetCount: rawTargets.length,
+      searchTargetCount: searchTargetRows.length,
+      resolutionMode: "search_provider_required",
+      manualCandidateUrlsRequired: false,
+      manualCandidateUrlsUsed: false,
+      sourceFetch: false,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true,
+      byLeague
+    },
+    guarantees: {
+      sourceFetch: false,
+      noFetch: true,
+      noUrlFetch: true,
+      noResolvedUrlClaim: true,
+      manualCandidateUrlsRequired: false,
+      manualCandidateUrlsUsed: false,
+      noReviewDecisionApplied: true,
+      noCanonicalPromotion: true,
+      canonicalWrites: 0,
+      productionWrite: false,
+      dryRun: true
+    },
+    notes: [
+      "This job does not resolve URLs and does not pretend a source was found.",
+      "It converts autonomous query intents into ranked search-provider-ready targets.",
+      "A later resolver must use a real search provider or maintained source index to convert these targets into candidate URLs."
+    ],
+    searchTargetRows,
+    rejectedRows
+  };
+}
+
+function runSelfTest() {
+  const sample = {
+    workRows: [
+      {
+        leagueSlug: "gre.1",
+        name: "Super League Greece",
+        country: "Greece",
+        dayKey: "2026-05-22",
+        scope: "senior_top_division",
+        queryIntents: [
+          {
+            intent: "official_league_fixture_calendar",
+            priority: 100,
+            query: "\"Super League Greece\" official fixtures schedule 2026-05-22",
+            expectedSourceFamilies: ["official_league", "competition_operator"]
+          },
+          {
+            intent: "federation_competition_calendar",
+            priority: 90,
+            query: "Greece football Super League Greece federation competition fixtures 2026-05-22",
+            expectedSourceFamilies: ["national_federation"]
+          }
+        ]
+      },
+      {
+        leagueSlug: "bad.1",
+        name: "Bad League",
+        dayKey: "2026-05-22",
+        queryIntents: []
+      }
+    ]
+  };
+
+  const report = buildReport(sample);
+
+  if (report.summary.acceptedWorkRowCount !== 1) throw new Error("expected 1 accepted work row");
+  if (report.summary.rejectedWorkRowCount !== 1) throw new Error("expected 1 rejected work row");
+  if (report.summary.searchTargetCount < 3) throw new Error(`expected at least 3 targets, got ${report.summary.searchTargetCount}`);
+  if (report.guarantees.manualCandidateUrlsUsed !== false) throw new Error("manual URLs must not be used");
+  if (report.guarantees.noResolvedUrlClaim !== true) throw new Error("must not claim resolved URLs");
+  if (report.searchTargetRows.some((row) => row.candidateUrl && row.manualCandidateUrlUsed === true)) throw new Error("candidateUrl probes must remain autonomous, not manual");
+
+  return {
+    ok: true,
+    selfTest: "build-fixture-league-date-autonomous-source-candidate-targets-file",
+    summary: report.summary,
+    guarantees: report.guarantees
+  };
+}
+
+function main() {
+  const args = parseArgs();
+
+  if (args.selfTest) {
+    console.log(JSON.stringify(runSelfTest(), null, 2));
+    return;
+  }
+
+  if (!args.input) throw new Error("--input is required unless --self-test is used");
+  if (!args.output) throw new Error("--output is required unless --self-test is used");
+
+  const input = readJson(args.input);
+  const report = buildReport(input, {
+    limit: args.limit,
+    perLeagueLimit: args.perLeagueLimit
+  });
+
+  writeJson(args.output, report);
+
+  console.log(JSON.stringify({
+    ok: true,
+    output: args.output,
+    summary: report.summary,
+    guarantees: report.guarantees
+  }, null, 2));
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename)) {
+  main();
+}
