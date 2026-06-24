@@ -316,11 +316,11 @@ function loadMatchesForDate(date) {
     const p = resolveDataPath("deploy-snapshots", todayKey, "fixtures-all.json");
     const j = JSON.parse(fs.readFileSync(p, "utf8"));
     const ms = (j.matches || [])
-      .filter(m => m.dayKey === date && m.homeTeam && m.awayTeam && m.matchId)
+      .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.away || m.awayTeam) && (m.id || m.matchId))
       .map(m => ({
         matchId:    String(m.matchId || m.id || ""),
-        homeTeam:   m.home || m.homeTeam || "",
-        awayTeam:   m.away || m.awayTeam || "",
+        homeTeam:   m.homeTeam || m.home || "",
+        awayTeam:   m.awayTeam || m.away || "",
         leagueSlug: m.leagueSlug || "",
       })).filter(m => m.matchId);
     if (ms.length) return ms;
