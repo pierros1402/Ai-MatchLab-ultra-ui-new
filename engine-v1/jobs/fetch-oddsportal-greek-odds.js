@@ -1,19 +1,19 @@
 /**
  * fetch-oddsportal-greek-odds.js
  *
- * Fetches per-bookmaker 1X2 odds from OddsPortal for today's matches,
- * specifically to populate the Greek bookmakers panel (stoiximan, betano,
- * vistabet, pamestoixima.gr) which are under-covered by OddsPapi.
+ * Fetches per-bookmaker 1X2 odds from OddsPortal for any date's matches.
+ * Captures ALL bookmakers and classifies them into Greek / European / Asian /
+ * Betfair panels — no OddsPapi API needed, no request limits.
  *
  * ⚠️  GEO-BLOCK: OddsPortal blocks Greek IPs. This job ONLY works from
  *     Render (US/EU server) — it will return empty results when run locally
  *     from Greece. This is expected behaviour, not a bug.
  *
  * Flow:
- *   1. Load today's deploy snapshot → get match list with league slugs
- *   2. For each unique league, fetch OddsPortal league page → discover match URLs
- *   3. For each matched URL, fetch match page → extract __NEXT_DATA__ JSON
- *   4. Parse per-bookmaker odds → store Greek panel data in multi-odds file
+ *   1. Load matches: deploy snapshot (today/past) or canonical-fixtures (future)
+ *   2. For each match: find URL on OddsPortal league page
+ *   3. Fetch match page → extract __NEXT_DATA__ JSON
+ *   4. Classify all bookmakers into panels → write to multi-odds/{date}.json
  *
  * Usage: node engine-v1/jobs/fetch-oddsportal-greek-odds.js [YYYY-MM-DD]
  */
@@ -27,11 +27,21 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 const OP_BASE  = "https://www.oddsportal.com";
 const DELAY_MS = 3000;
 
-// ─── Greek bookmakers to extract ──────────────────────────────────────────────
+// ─── Bookmaker panel classification ───────────────────────────────────────────
 const GREEK_BOOKS = new Set([
   "stoiximan", "vistabet", "pamestoixima.gr", "betano", "novibet",
   "netbet.gr", "sportingbet.gr",
 ]);
+const ASIAN_BOOKS = new Set([
+  "pinnacle", "singbet", "18bet", "isport",
+  "betisn", "ibc", "sbotop", "1xbet", "marathonbet",
+]);
+const BETFAIR_BOOKS = new Set([
+  "betfair", "betfair exchange", "smarkets", "matchbook",
+]);
+// All others → european
+
+const REFRESH_MS = 8 * 60 * 60 * 1000; // 8h gate — same as prefetch budget
 
 // ─── League slug → OddsPortal path mapping ────────────────────────────────────
 // Format: our slug → path string OR array of paths to try in order
@@ -268,124 +278,149 @@ async function _findMatchUrlInPage(leaguePath, homeTeam, awayTeam) {
   return null;
 }
 
-// ─── Load deploy snapshot ─────────────────────────────────────────────────────
+// ─── Load matches: snapshot (today/past) or canonical-fixtures (future) ───────
 
-function loadTodayMatches(date) {
+function loadMatchesForDate(date) {
+  // 1. Try deploy snapshot first (has real matchIds for today/past)
   try {
     const p = resolveDataPath("deploy-snapshots", date, "odds.json");
     const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    return (j.matches || []).map(m => ({
-      matchId:   m.matchId,
-      homeTeam:  m.homeTeam || m.home || "",
-      awayTeam:  m.awayTeam || m.away || "",
+    const ms = (j.matches || []).map(m => ({
+      matchId:    m.matchId,
+      homeTeam:   m.homeTeam || m.home || "",
+      awayTeam:   m.awayTeam || m.away || "",
       leagueSlug: m.leagueSlug || "",
     })).filter(m => m.homeTeam && m.awayTeam && m.matchId);
+    if (ms.length) return ms;
+  } catch { /**/ }
+
+  // 2. Fallback: canonical-fixtures (future dates)
+  try {
+    const dir = resolveDataPath("canonical-fixtures", date);
+    const files = fs.readdirSync(dir).filter(f => f.endsWith(".json"));
+    const ms = [];
+    for (const f of files) {
+      const j = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+      for (const m of (j.fixtures || [])) {
+        if (m.homeTeam && m.awayTeam && m.matchId) {
+          ms.push({ matchId: String(m.matchId), homeTeam: m.homeTeam, awayTeam: m.awayTeam, leagueSlug: m.leagueSlug || "" });
+        }
+      }
+    }
+    return ms;
   } catch { return []; }
+}
+
+// ─── Classify a bookmaker name into a panel ───────────────────────────────────
+
+function classifyBook(name) {
+  const n = name.toLowerCase();
+  if (GREEK_BOOKS.has(n))   return "greek";
+  if (BETFAIR_BOOKS.has(n)) return "betfair";
+  if (ASIAN_BOOKS.has(n))   return "asian";
+  return "european";
+}
+
+// ─── Core: fetch all bookmaker odds for one match ─────────────────────────────
+
+async function fetchMatchAllOdds(m, existingEntry) {
+  const opPath = LEAGUE_MAP[m.leagueSlug];
+  if (!opPath) { log(`  skip ${m.leagueSlug}: no OddsPortal mapping`); return null; }
+
+  // 8h refresh gate — skip if recently fetched
+  const lastFetch = existingEntry?.oddsPortalFetchedAt || 0;
+  if (Date.now() - lastFetch < REFRESH_MS) {
+    log(`  skip ${m.homeTeam} vs ${m.awayTeam}: fresh (<8h)`);
+    return "skip";
+  }
+
+  log(`  fetching ${m.homeTeam} vs ${m.awayTeam} [${m.leagueSlug}]`);
+  await sleep(DELAY_MS);
+
+  const matchUrl = await findMatchUrl(opPath, m.homeTeam, m.awayTeam);
+  if (!matchUrl) { log(`  not found on league page`); return null; }
+  log(`  url: ${matchUrl.slice(OP_BASE.length)}`);
+
+  await sleep(DELAY_MS);
+  const html = await fetchPage(matchUrl);
+  if (!html) return null;
+
+  const oddsData = parseMatchOdds(html);
+  if (!oddsData) { log(`  could not parse __NEXT_DATA__`); return null; }
+
+  // Classify all bookmakers into panels
+  const panels = { greek: {}, european: {}, asian: {}, betfair: {} };
+  const bookList = Array.isArray(oddsData) ? oddsData : Object.values(oddsData);
+  for (const bk of bookList) {
+    const name = (bk?.bookmaker || bk?.name || bk?.id || "").toLowerCase();
+    if (!name) continue;
+    const odds = bk?.odds || bk?.prices || {};
+    const home = Number(odds?.["1"] || odds?.home || odds?.[0]);
+    const draw = Number(odds?.["X"] || odds?.draw || odds?.[1]);
+    const away = Number(odds?.["2"] || odds?.away || odds?.[2]);
+    if (!isFinite(home) || !isFinite(draw) || !isFinite(away)) continue;
+    const panel = classifyBook(name);
+    panels[panel][name] = { home: +home.toFixed(3), draw: +draw.toFixed(3), away: +away.toFixed(3) };
+  }
+
+  const total = Object.values(panels).reduce((s, p) => s + Object.keys(p).length, 0);
+  log(`  ✓ ${total} books (gr:${Object.keys(panels.greek).length} eu:${Object.keys(panels.european).length} as:${Object.keys(panels.asian).length} bf:${Object.keys(panels.betfair).length})`);
+  return panels;
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export async function fetchOddsPortalGreekOdds(date) {
+export async function fetchOddsPortalAllOdds(date) {
   date = date || athensDayKey();
   log("start", { date });
 
   const outFile = path.join(ensureDir(resolveDataPath("multi-odds")), `${date}.json`);
-
-  // Load existing multi-odds for this day
   let existing = {};
   try { existing = JSON.parse(fs.readFileSync(outFile, "utf8")); } catch { /**/ }
-  const matches = existing.matches || {};
+  const cache = existing.matches || {};
 
-  const ourMatches = loadTodayMatches(date);
-  log(`our matches: ${ourMatches.length}`);
-  if (!ourMatches.length) return { ok: false, reason: "no_fixtures" };
+  const ourMatches = loadMatchesForDate(date);
+  log(`matches: ${ourMatches.length}`);
+  if (!ourMatches.length) return { ok: true, date, fetched: 0, reason: "no_fixtures" };
 
-  let fetched = 0;
+  let fetched = 0, skipped = 0;
 
   for (const m of ourMatches) {
-    const opPath = LEAGUE_MAP[m.leagueSlug];
-    if (!opPath) {
-      log(`  skip ${m.leagueSlug}: no OddsPortal mapping`);
-      continue;
-    }
+    const existing_entry = cache[m.matchId] || null;
+    const panels = await fetchMatchAllOdds(m, existing_entry);
+    if (panels === "skip") { skipped++; continue; }
+    if (!panels) continue;
 
-    // Check if we already have Greek data for this match
-    const existingGreek = matches[m.matchId]?.markets?.["1X2"]?.greek || {};
-    if (Object.keys(existingGreek).length > 0) {
-      log(`  skip ${m.homeTeam} vs ${m.awayTeam}: already has greek data`);
-      continue;
-    }
+    if (!cache[m.matchId]) cache[m.matchId] = {};
+    cache[m.matchId].home = m.homeTeam;
+    cache[m.matchId].away = m.awayTeam;
+    cache[m.matchId].oddsPortalFetchedAt = Date.now();
+    // Freeze openedAt on first fetch
+    if (!cache[m.matchId].openedAt) cache[m.matchId].openedAt = Date.now();
 
-    log(`  trying ${m.homeTeam} vs ${m.awayTeam} [${m.leagueSlug}]`);
-    await sleep(DELAY_MS);
-
-    // 1. Find match URL from league page
-    const matchUrl = await findMatchUrl(opPath, m.homeTeam, m.awayTeam);
-    if (!matchUrl) {
-      log(`  not found on league page`);
-      continue;
-    }
-    log(`  found: ${matchUrl.slice(OP_BASE.length)}`);
-
-    await sleep(DELAY_MS);
-
-    // 2. Fetch match page
-    const matchHtml = await fetchPage(matchUrl);
-    if (!matchHtml) continue;
-
-    // 3. Parse odds
-    const oddsData = parseMatchOdds(matchHtml);
-    if (!oddsData) {
-      log(`  could not parse odds from match page`);
-      continue;
-    }
-
-    // 4. Extract Greek bookmakers
-    const greek = {};
-    const bookmakerList = Array.isArray(oddsData) ? oddsData : Object.values(oddsData);
-    for (const bk of bookmakerList) {
-      const name = (bk?.bookmaker || bk?.name || bk?.id || "").toLowerCase();
-      if (!GREEK_BOOKS.has(name)) continue;
-
-      const odds = bk?.odds || bk?.prices || {};
-      const home = Number(odds?.["1"] || odds?.home || odds?.[0]);
-      const draw = Number(odds?.["X"] || odds?.draw || odds?.[1]);
-      const away = Number(odds?.["2"] || odds?.away || odds?.[2]);
-
-      if (isFinite(home) && isFinite(draw) && isFinite(away)) {
-        greek[name] = { home: +home.toFixed(3), draw: +draw.toFixed(3), away: +away.toFixed(3) };
-      }
-    }
-
-    if (Object.keys(greek).length === 0) {
-      log(`  no Greek bookmakers found in odds data`);
-      continue;
-    }
-
-    // 5. Merge into existing multi-odds entry
-    if (!matches[m.matchId]) matches[m.matchId] = {};
-    if (!matches[m.matchId].markets) matches[m.matchId].markets = {};
-    if (!matches[m.matchId].markets["1X2"]) matches[m.matchId].markets["1X2"] = { greek: {}, european: {}, asian: {}, betfair: {} };
-    Object.assign(matches[m.matchId].markets["1X2"].greek, greek);
-    matches[m.matchId].oddsPortalFetchedAt = Date.now();
-
-    log(`  ✓ ${Object.keys(greek).join(", ")} for ${m.homeTeam} vs ${m.awayTeam}`);
+    if (!cache[m.matchId].markets)        cache[m.matchId].markets = {};
+    if (!cache[m.matchId].markets["1X2"]) cache[m.matchId].markets["1X2"] = { greek: {}, european: {}, asian: {}, betfair: {} };
+    Object.assign(cache[m.matchId].markets["1X2"].greek,    panels.greek);
+    Object.assign(cache[m.matchId].markets["1X2"].european, panels.european);
+    Object.assign(cache[m.matchId].markets["1X2"].asian,    panels.asian);
+    Object.assign(cache[m.matchId].markets["1X2"].betfair,  panels.betfair);
     fetched++;
   }
 
-  // Persist
-  fs.writeFileSync(outFile, JSON.stringify({ ...existing, updatedAt: Date.now(), matches }, null, 2), "utf8");
-  log("done", { fetched, file: outFile });
-
-  return { ok: true, date, fetched };
+  fs.writeFileSync(outFile, JSON.stringify({ date, updatedAt: Date.now(), matches: cache }, null, 2), "utf8");
+  log("done", { fetched, skipped });
+  return { ok: true, date, fetched, skipped };
 }
+
+// Backward-compatible alias (called from index.js + run-daily-cycle.js)
+export const fetchOddsPortalGreekOdds = fetchOddsPortalAllOdds;
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (entryUrl === import.meta.url) {
   const arg = process.argv.slice(2).find(a => /^\d{4}-\d{2}-\d{2}$/.test(a));
-  fetchOddsPortalGreekOdds(arg)
+  fetchOddsPortalAllOdds(arg)
     .then(r => console.log(JSON.stringify(r, null, 2)))
     .catch(e => { console.error(e.message); process.exitCode = 1; });
 }
