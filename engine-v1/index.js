@@ -1457,6 +1457,22 @@ function oddsHandler(req, res) {
 app.get("/odds", oddsHandler);
 app.get("/api/odds", oddsHandler);
 
+// Per-bookmaker multi-source odds: { greek, european, asian, betfair } panels
+app.get("/api/multi-odds", (req, res) => {
+  const matchId = String(req.query.matchId || req.query.id || "");
+  const date    = String(req.query.date || athensDayKey());
+  if (!matchId) return res.status(400).json({ ok: false, error: "missing_matchId" });
+  try {
+    const p = resolveDataPath("multi-odds", `${date}.json`);
+    const daily = JSON.parse(fs.readFileSync(p, "utf8"));
+    const rec = daily?.matches?.[matchId] || null;
+    if (!rec) return res.json({ ok: false, matchId, date, reason: "not_found" });
+    res.json({ ok: true, matchId, date, ...rec });
+  } catch {
+    res.json({ ok: false, matchId, date, reason: "not_found" });
+  }
+});
+
 // Dynamic league catalogue — same format as the static AI-MATCHLAB-DATA JSON files
 // but built live from league-awareness (disabled leagues filtered, newly-promoted
 // leagues included automatically). UI navigation + league-binding prefer this.

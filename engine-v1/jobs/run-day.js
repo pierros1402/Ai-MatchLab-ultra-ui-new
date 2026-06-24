@@ -28,6 +28,8 @@ import { buildTeamAliasesSparql } from "./build-team-aliases-sparql.js";
 import { settleAssessments } from "./settle-assessments-day.js";
 import { accumulateLineups } from "./run-lineups-day.js";
 import { accumulateH2H } from "./accumulate-h2h.js";
+import { fetchMultiBookmakerOdds } from "./fetch-multi-bookmaker-odds.js";
+import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -91,6 +93,19 @@ export async function runDay(dayKey) {
   // 3) Write the deployable odds artifact (data/deploy-snapshots/{day}/odds.json).
   const snap = exportOddsSnapshotDay(today);
   log("odds-snapshot", { count: snap.count, file: snap.file });
+
+  // 3b) Per-bookmaker odds from OddsPapi (EU/Asian/Betfair panels + partial Greek).
+  try {
+    const multiOdds = await fetchMultiBookmakerOdds(today);
+    log("multi-bookmaker-odds", { fetched: multiOdds.fetched, total: multiOdds.total });
+  } catch (e) { log("multi-bookmaker-odds:skip", String(e?.message || e)); }
+
+  // 3c) Greek panel supplement from OddsPortal (stoiximan/vistabet).
+  //     Only works on Render (US IP) — silently skips when geo-blocked from Greece.
+  try {
+    const opOdds = await fetchOddsPortalGreekOdds(today);
+    log("oddsportal-greek-odds", { fetched: opOdds.fetched });
+  } catch (e) { log("oddsportal-greek-odds:skip", String(e?.message || e)); }
 
   // 4) Refresh the coverage report so data gaps stay explicit (not discovered late).
   const cov = buildCoverageReport(today);

@@ -14,8 +14,17 @@
  */
 
 import express from "express";
+import fs from "fs";
+import path from "path";
 import { athensDayKey } from "../core/daykey.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay } from "../storage/odds-memory-db.js";
+import { resolveDataPath } from "../storage/data-root.js";
+
+function loadMultiOdds(date) {
+  try {
+    return JSON.parse(fs.readFileSync(resolveDataPath("multi-odds", `${date}.json`), "utf8"));
+  } catch { return null; }
+}
 
 const app = express();
 const PORT = process.env.ODDS_PORT || 3020;
@@ -37,6 +46,20 @@ function oddsHandler(req, res) {
 app.get("/odds", oddsHandler);
 app.get("/api/odds", oddsHandler);
 app.get("/odds/day", (req, res) => res.json(getDeployedOddsDay(String(req.query.date || athensDayKey()))));
+
+// Per-bookmaker multi-source odds: { greek, european, asian, betfair } panels
+app.get("/api/multi-odds", (req, res) => {
+  const matchId = String(req.query.matchId || req.query.id || "");
+  const date    = String(req.query.date || athensDayKey());
+  if (!matchId) return res.status(400).json({ ok: false, error: "missing_matchId" });
+
+  const daily = loadMultiOdds(date);
+  const rec   = daily?.matches?.[matchId] || null;
+  if (!rec) return res.json({ ok: false, matchId, date, reason: "not_found" });
+
+  res.json({ ok: true, matchId, date, ...rec });
+});
+
 app.get("/health", (_req, res) => res.json({ ok: true, service: "odds-server", today: athensDayKey() }));
 
 app.listen(PORT, "0.0.0.0", () => {
