@@ -20,6 +20,8 @@ import { getDetailsPayload, enrichSnapshotWithAssessment } from "./api/details.j
 import { resolveDataPath } from "./storage/data-root.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
+import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
+import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1454,6 +1456,40 @@ function oddsHandler(req, res) {
 }
 app.get("/odds", oddsHandler);
 app.get("/api/odds", oddsHandler);
+
+// Dynamic league catalogue — same format as the static AI-MATCHLAB-DATA JSON files
+// but built live from league-awareness (disabled leagues filtered, newly-promoted
+// leagues included automatically). UI navigation + league-binding prefer this.
+const REGION_TO_CONTINENT = {
+  europe: "EU", africa: "AF", asia: "AS",
+  concacaf: "NA", americas: "SA", oceania: "OC", international: "IN"
+};
+app.get("/api/leagues", (_req, res) => {
+  try {
+    const meta = getLeagueMetaMap();
+    // Group by continent → country → leagues.
+    const byContinent = {};
+    for (const [slug, m] of Object.entries(meta)) {
+      if (isDisabledLeague(slug)) continue;
+      const continent = REGION_TO_CONTINENT[m.region] || "EU";
+      const country = m.country || "Unknown";
+      if (!byContinent[continent]) byContinent[continent] = {};
+      if (!byContinent[continent][country]) byContinent[continent][country] = [];
+      byContinent[continent][country].push({ league_id: slug, display_name: m.name || slug, tier: m.tier || null });
+    }
+    // Shape into the array format navigation.js expects.
+    const result = {};
+    for (const [continent, countries] of Object.entries(byContinent)) {
+      result[continent] = Object.entries(countries).map(([country_name, leagues]) => ({
+        country_name,
+        leagues: leagues.sort((a, b) => (a.tier || 99) - (b.tier || 99))
+      })).sort((a, b) => a.country_name.localeCompare(b.country_name));
+    }
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: String(e?.message || e) });
+  }
+});
 
 // Whole-day picture: every captured fixture with market odds + AI assessment.
 app.get("/odds/day", (req, res) => {
