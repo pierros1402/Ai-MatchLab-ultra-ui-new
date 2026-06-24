@@ -29,6 +29,7 @@ import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { priceMatchFromStandings } from "../odds/ai-odds-model.js";
 import { resolveInternational } from "../odds/international-competitions.js";
 import { recordOddsSnapshot, getOddsSummary } from "../storage/odds-memory-db.js";
+import { patchFixtureAssessment } from "../storage/json-db.js";
 import { readStandings } from "../storage/standings-memory-db.js";
 import { readLeagueState } from "../storage/league-memory-db.js";
 import { teamFormRates } from "../storage/results-memory-db.js";
@@ -257,6 +258,12 @@ async function main() {
       oddsBook: odds ? odds.book : null,
       aiAssessment
     }, { markets });
+
+    // Bridge to canonical store: write assessment under the ESPN/canonical id too,
+    // so /details finds it by matchId directly (no findOddsByTeams fallback needed).
+    if (aiAssessment && dayKey) {
+      patchFixtureAssessment(fx.home, fx.away, dayKey, aiAssessment);
+    }
 
     stats.attributed++;
     if (isIntl) stats.international++;
