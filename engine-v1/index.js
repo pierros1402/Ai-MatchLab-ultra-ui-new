@@ -22,6 +22,8 @@ import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
+import { fetchMultiBookmakerOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
+import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1456,6 +1458,19 @@ function oddsHandler(req, res) {
 }
 app.get("/odds", oddsHandler);
 app.get("/api/odds", oddsHandler);
+
+// Afternoon refresh: re-fetch OddsPapi odds to capture line movement / delta.
+// Called by Render cron at ~14:00 Athens time (before most EU evening matches).
+app.post("/api/refresh-multi-odds", async (req, res) => {
+  const date = String(req.query.date || athensDayKey());
+  try {
+    const r1 = await fetchMultiBookmakerOdds(date);
+    const r2 = await fetchOddsPortalGreekOdds(date);
+    res.json({ ok: true, date, oddspapi: r1, oddsportal: r2 });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
 
 // Per-bookmaker multi-source odds: { greek, european, asian, betfair } panels
 app.get("/api/multi-odds", (req, res) => {

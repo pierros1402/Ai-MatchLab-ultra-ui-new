@@ -159,14 +159,31 @@
       if (!odds) return;
 
       var cells = row.querySelectorAll(".oic-odd-cell");
-      var legs  = [odds.home, odds.draw, odds.away];
+      var curVals   = [odds.home,              odds.draw,              odds.away];
+      var openVals  = odds.open  ? [odds.open.home,  odds.open.draw,  odds.open.away]  : [];
+      var deltaVals = odds.delta ? [odds.delta.home, odds.delta.draw, odds.delta.away] : [];
 
-      legs.forEach(function (val, i) {
+      curVals.forEach(function (val, i) {
         if (!cells[i]) return;
         var curEl = cells[i].querySelector(".oic-odd-current");
         var delEl = cells[i].querySelector(".oic-odd-delta");
+
         if (curEl) curEl.textContent = fmt(val);
-        if (delEl) delEl.textContent = ""; // no open line delta for OddsPapi data yet
+
+        if (delEl) {
+          var dv = deltaVals[i];
+          if (typeof dv === "number" && dv !== 0) {
+            delEl.textContent = (dv > 0 ? "+" : "") + dv.toFixed(2);
+            delEl.className   = "oic-odd-delta " + (dv > 0 ? "delta-up" : "delta-down");
+          } else if (openVals[i] != null) {
+            // Has opening line but no movement yet
+            delEl.textContent = "—";
+            delEl.className   = "oic-odd-delta";
+          } else {
+            delEl.textContent = "";
+            delEl.className   = "oic-odd-delta";
+          }
+        }
       });
     });
   }

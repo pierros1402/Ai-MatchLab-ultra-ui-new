@@ -35,6 +35,8 @@ import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
+import { fetchMultiBookmakerOdds } from "./fetch-multi-bookmaker-odds.js";
+import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
 import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
@@ -1085,6 +1087,19 @@ export async function runDailyCycle(options = {}) {
     coverage: deploySnapshot?.coverage
   });
 
+  // Per-bookmaker odds (EU/Asian/Betfair panels + partial Greek via OddsPapi).
+  // Runs after deploy snapshot so our match list is available for team matching.
+  try {
+    const multiOdds = await fetchMultiBookmakerOdds(dayKey);
+    console.log("[daily-cycle] multi-bookmaker-odds", { fetched: multiOdds.fetched, total: multiOdds.total });
+  } catch (e) { console.log("[daily-cycle] multi-bookmaker-odds:skip", String(e?.message || e)); }
+
+  // Greek panel supplement via OddsPortal (stoiximan/vistabet).
+  // Geo-blocked from GR IPs — silently skips when not on Render.
+  try {
+    const opOdds = await fetchOddsPortalGreekOdds(dayKey);
+    console.log("[daily-cycle] oddsportal-greek-odds", { fetched: opOdds.fetched });
+  } catch (e) { console.log("[daily-cycle] oddsportal-greek-odds:skip", String(e?.message || e)); }
 
   if (doFinalize) {
     console.log("[daily-cycle] finalize-live-status-refresh:start", { finalizeDayKey });

@@ -138,6 +138,42 @@ function parse1X2(bookmakerOdds) {
   return result;
 }
 
+// Merge fresh odds with existing (preserves opening line, computes delta).
+// existing1X2: the stored "1X2" markets object (may have open/delta already)
+// fresh1X2:    newly parsed odds (flat home/draw/away per bookmaker)
+function mergeWithDelta(existing1X2, fresh1X2) {
+  const merged = { greek: {}, european: {}, asian: {}, betfair: {} };
+
+  for (const panel of ["greek", "european", "asian", "betfair"]) {
+    for (const [bk, fOdds] of Object.entries(fresh1X2[panel] || {})) {
+      const prev = existing1X2?.[panel]?.[bk];
+
+      if (!prev) {
+        // First time seeing this bookmaker — freeze opening
+        merged[panel][bk] = {
+          home: fOdds.home, draw: fOdds.draw, away: fOdds.away,
+          open: { home: fOdds.home, draw: fOdds.draw, away: fOdds.away },
+        };
+      } else {
+        // Subsequent fetch — keep frozen open, update current, calc delta
+        const open = prev.open || { home: prev.home, draw: prev.draw, away: prev.away };
+        const dh = +(fOdds.home - open.home).toFixed(3);
+        const dd = +(fOdds.draw - open.draw).toFixed(3);
+        const da = +(fOdds.away - open.away).toFixed(3);
+        merged[panel][bk] = {
+          home: fOdds.home, draw: fOdds.draw, away: fOdds.away,
+          open,
+          ...(dh !== 0 || dd !== 0 || da !== 0
+            ? { delta: { home: dh, draw: dd, away: da } }
+            : {}),
+        };
+      }
+    }
+  }
+
+  return merged;
+}
+
 // ─── Deploy snapshot reader ────────────────────────────────────────────────────
 
 function loadTodayMatches(date) {
@@ -194,16 +230,20 @@ export async function fetchMultiBookmakerOdds(date) {
     reverseIndex.set(rev, f);
   }
 
-  // 4) Match our fixtures to OddsPapi fixtures
+  // 4) Match our fixtures to OddsPapi fixtures.
+  //    Re-fetch if last fetch was >3h ago (to capture line movement / delta).
+  const REFRESH_MS = 3 * 60 * 60 * 1000;
+  const now = Date.now();
   const toFetch = [];
   for (const m of ourMatches) {
-    if (cache[m.matchId]) continue; // already fetched today
+    const cached = cache[m.matchId];
+    const needsRefresh = !cached || (now - (cached.fetchedAt || 0)) > REFRESH_MS;
+    if (!needsRefresh) continue;
 
     const fwd = pairKey(m.homeTeam, m.awayTeam);
     let opFix = exactIndex.get(fwd) || reverseIndex.get(fwd);
 
     if (!opFix) {
-      // Fuzzy: scan all opWithOdds
       opFix = opWithOdds.find(f =>
         namesMatch(m.homeTeam, f.participant1Name) &&
         namesMatch(m.awayTeam, f.participant2Name)
@@ -214,7 +254,7 @@ export async function fetchMultiBookmakerOdds(date) {
     }
 
     if (opFix) {
-      toFetch.push({ matchId: m.matchId, fixtureId: opFix.fixtureId, home: m.homeTeam, away: m.awayTeam });
+      toFetch.push({ matchId: m.matchId, fixtureId: opFix.fixtureId, home: m.homeTeam, away: m.awayTeam, isRefresh: !!cached });
     }
   }
 
@@ -222,7 +262,7 @@ export async function fetchMultiBookmakerOdds(date) {
 
   // 5) Fetch odds for each matched fixture
   let fetched = 0;
-  for (const { matchId, fixtureId, home, away } of toFetch) {
+  for (const { matchId, fixtureId, home, away, isRefresh } of toFetch) {
     await sleep(DELAY_MS);
 
     const oddsJ = await apiGet(`/odds?fixtureId=${encodeURIComponent(fixtureId)}&marketId=101`);
@@ -231,14 +271,19 @@ export async function fetchMultiBookmakerOdds(date) {
       continue;
     }
 
-    const parsed1X2 = parse1X2(oddsJ.bookmakerOdds);
-    const totalBooks = Object.values(parsed1X2).reduce((s, g) => s + Object.keys(g).length, 0);
-    log(`  ${home} vs ${away}: ${totalBooks} bookmakers`);
+    const fresh1X2 = parse1X2(oddsJ.bookmakerOdds);
+    const existing1X2 = cache[matchId]?.markets?.["1X2"] || null;
+    const merged1X2 = mergeWithDelta(existing1X2, fresh1X2);
+
+    const totalBooks = Object.values(merged1X2).reduce((s, g) => s + Object.keys(g).length, 0);
+    const moved = Object.values(merged1X2).flatMap(g => Object.values(g)).filter(b => b.delta).length;
+    log(`  ${home} vs ${away}: ${totalBooks} bookmakers${isRefresh ? ` (refresh, ${moved} moved)` : ""}`);
 
     cache[matchId] = {
       oddspapiFixtureId: fixtureId,
       fetchedAt: Date.now(),
-      markets: { "1X2": parsed1X2 },
+      openedAt: cache[matchId]?.openedAt || Date.now(),
+      markets: { "1X2": merged1X2 },
     };
     fetched++;
   }
