@@ -1617,6 +1617,62 @@ async function renderLocal(match, mountEl) {
       </div>
 
       ${(() => {
+        const h2h = snap.h2h;
+        if (!h2h || !h2h.all?.length) return "";
+        const homeRaw = m.home || m.homeTeam || "";
+        const awayRaw = m.away || m.awayTeam || "";
+        const views = [
+          { key: "all",    label: "All",                  matches: h2h.all,    sum: h2h.summary?.all },
+          { key: "atHome", label: `At ${esc(homeRaw)}`,   matches: h2h.atHome, sum: h2h.summary?.atHome },
+          { key: "atAway", label: `At ${esc(awayRaw)}`,   matches: h2h.atAway, sum: h2h.summary?.atAway },
+        ];
+        const uid = "aiml-h2h-" + (Math.random().toString(36).slice(2));
+        const renderMatches = (matches) => {
+          if (!matches?.length) return `<div style="opacity:.5;font-size:12px;margin-top:6px;">No matches in this filter.</div>`;
+          return matches.slice(0, 10).map(hm => {
+            const isHomeWin  = hm.scoreHome > hm.scoreAway;
+            const isAwayWin  = hm.scoreHome < hm.scoreAway;
+            const isDraw     = hm.scoreHome === hm.scoreAway;
+            const homeIsHome = (hm.homeTeam || "").toLowerCase().includes((homeRaw || "").toLowerCase().split(" ")[0]);
+            const col = homeIsHome ? (isHomeWin ? "#4caf50" : isAwayWin ? "#f44336" : "#aaa") :
+                                     (isAwayWin ? "#4caf50" : isHomeWin ? "#f44336" : "#aaa");
+            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:12px;">
+              <span style="opacity:.7;">${esc(hm.date?.slice(0,10) || "—")}</span>
+              <span style="flex:1;text-align:center;">${esc(hm.homeTeam)} <b style="color:${col};">${hm.scoreHome}–${hm.scoreAway}</b> ${esc(hm.awayTeam)}</span>
+              <span style="opacity:.5;font-size:11px;">${esc(hm.competition || "")}</span>
+            </div>`;
+          }).join("");
+        };
+        const renderSummary = (sum, home) => {
+          if (!sum) return "";
+          return `<div style="display:flex;gap:16px;font-size:12px;margin-bottom:8px;flex-wrap:wrap;">
+            <span>${esc(home)}: <b style="color:#4caf50">${sum.wins}W</b> <b style="color:#aaa">${sum.draws}D</b> <b style="color:#f44336">${sum.losses}L</b></span>
+            <span>Avg: <b>${sum.gfPerGame}–${sum.gaPerGame}</b></span>
+            <span style="opacity:.6;">${sum.sample} matches</span>
+          </div>`;
+        };
+        const tabsHtml = views.map((v, i) =>
+          `<button onclick="(function(el){var p=el.closest('[data-h2h]');p.querySelectorAll('[data-h2hv]').forEach(function(x){x.style.display='none';});p.querySelectorAll('[data-h2htab]').forEach(function(x){x.style.fontWeight='600';x.style.opacity='.6';});p.querySelector('[data-h2hv=${v.key}]').style.display='block';el.style.fontWeight='900';el.style.opacity='1';})(this)"
+            data-h2htab="${v.key}"
+            style="padding:4px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:inherit;cursor:pointer;font-size:12px;font-weight:${i===0?'900':'600'};opacity:${i===0?'1':'.6'};">
+            ${v.label}${v.matches?.length ? ` (${v.matches.length})` : ""}
+          </button>`
+        ).join("");
+        const panelsHtml = views.map((v, i) =>
+          `<div data-h2hv="${v.key}" style="display:${i===0?'block':'none'};">
+            ${renderSummary(v.sum, homeRaw)}
+            ${renderMatches(v.matches)}
+          </div>`
+        ).join("");
+        return `
+        <div data-h2h="1" style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="font-weight:900;margin-bottom:10px;">Head to Head</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">${tabsHtml}</div>
+          ${panelsHtml}
+        </div>`;
+      })()}
+
+      ${(() => {
         const a = snap.assessment;
         if (!a || !a.markets) return "";
         const od = k => (a.markets[k] && a.markets[k].odds) || {};

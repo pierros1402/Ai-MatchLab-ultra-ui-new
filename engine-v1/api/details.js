@@ -5,6 +5,7 @@ import { athensDayFromKickoff } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { buildDetailsForMatch } from "../jobs/build-details-day.js";
 import { readOdds, findOddsByTeams } from "../storage/odds-memory-db.js";
+import { getH2HForMatch } from "../storage/h2h-memory-db.js";
 import { teamDisciplineRates } from "../storage/discipline-memory-db.js";
 import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
 import { readStandings } from "../storage/standings-memory-db.js";
@@ -225,6 +226,12 @@ export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, home
       }
       if (parts.length >= 2) { const s = parts.join(". ") + "."; out.analysis = { summary: { en: s, el: s } }; }
     }
+  }
+
+  // H2H history (league-agnostic, built from all accumulated Flashscore results).
+  if (!out.h2h && homeTeam && awayTeam) {
+    const h2hData = getH2HForMatch(homeTeam, awayTeam);
+    if (h2hData) out.h2h = h2hData;
   }
 
   // Value picks — synthesise from our aiAssessment when canonical value engine
