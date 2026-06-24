@@ -10,13 +10,9 @@
  *   summary:    /apis/site/v2/sports/soccer/{slug}/summary?event={id}
  */
 
+import { normalizeTeamKey as norm } from "../core/normalize.js";
 const BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const HEADERS = { "user-agent": "Mozilla/5.0 Chrome/120", "accept": "application/json" };
-
-function norm(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toLowerCase().replace(/[^a-z0-9]/g, "");
-}
 function teamMatch(a, b) {
   const x = norm(a), y = norm(b);
   if (!x || !y) return false;

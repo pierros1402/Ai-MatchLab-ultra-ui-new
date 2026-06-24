@@ -12,6 +12,7 @@
 
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
+import { normalizeTeamKey as normTeamKey } from "../core/normalize.js";
 
 const DIR = resolveDataPath("odds-memory");
 const HISTORY_CAP = 50;
@@ -65,10 +66,6 @@ export function recordSettlement(matchId, scoreHome, scoreAway) {
   return true;
 }
 
-function normTeamKey(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toLowerCase().replace(/[^a-z0-9]/g, "");
-}
 
 /**
  * Find an odds record by team names — for matches whose UI/canonical id differs
