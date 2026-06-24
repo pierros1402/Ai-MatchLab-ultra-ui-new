@@ -67,8 +67,13 @@ function readValueForMatch(dayKey, matchId) {
  */
 export function enrichSnapshotWithAssessment(snapshot, matchId, leagueSlug, homeTeam, awayTeam, leagueName) {
   const out = snapshot || {};
-  // Match by our id, else by team names (canonical/UI id differs from our fs_ id).
-  const rec = readOdds(String(matchId)) || findOddsByTeams(homeTeam, awayTeam);
+  // 1. Try our fs_* store directly (autonomous matches).
+  // 2. Try canonical fixture (assessment patched in by run-odds-opening via patchFixtureAssessment).
+  // 3. Fallback: team-name scan across all fs_* records (covers edge cases).
+  const canonicalFixture = !String(matchId).startsWith("fs_") ? getFixtureById(String(matchId)) : null;
+  const rec = readOdds(String(matchId))
+    || (canonicalFixture?.aiAssessment ? { ...canonicalFixture, aiAssessment: canonicalFixture.aiAssessment } : null)
+    || findOddsByTeams(homeTeam, awayTeam);
 
   // Basic context (competition + teams) so the panel shows them for our fs_ matches.
   if (!out.basic || !out.basic.leagueName) {

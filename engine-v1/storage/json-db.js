@@ -358,3 +358,22 @@ export function upsertFixtureWithMeta(row) {
 
   return action;
 }
+/**
+ * Patch the aiAssessment field on a canonical fixture, looked up by team names
+ * + dayKey. Called by run-odds-opening after building our Poisson assessment, so
+ * the canonical id and our fs_* id both carry the same assessment — no more
+ * findOddsByTeams fallback needed in the details route.
+ */
+export function patchFixtureAssessment(homeTeam, awayTeam, dayKey, aiAssessment) {
+  if (!aiAssessment || !homeTeam || !awayTeam || !dayKey) return false;
+  const db = readDb();
+  const nh = normalizeTeamKey(homeTeam), na = normalizeTeamKey(awayTeam);
+  const idx = db.fixtures.findIndex(x => {
+    if (x.dayKey !== dayKey) return false;
+    return normalizeTeamKey(x.homeTeam) === nh && normalizeTeamKey(x.awayTeam) === na;
+  });
+  if (idx === -1) return false;
+  db.fixtures[idx] = { ...db.fixtures[idx], aiAssessment, aiAssessmentAt: new Date().toISOString() };
+  writeDb(db);
+  return true;
+}
