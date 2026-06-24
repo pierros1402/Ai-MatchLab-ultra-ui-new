@@ -6,7 +6,8 @@
   var state = {
     market: DEFAULT_MARKET,
     match: null,
-    snapshotByMatchId: Object.create(null)
+    snapshotByMatchId: Object.create(null),
+    multiByMatchId: Object.create(null)
   };
 
   function on(ev, fn) {
@@ -31,6 +32,7 @@
     if (raw === "OU25") return "OU25";
     if (raw === "OU35") return "OU35";
     if (raw === "DNB") return "DNB";
+    if (raw === "HTFT") return "HTFT";
 
     if (raw === "Double Chance") return "DC";
     if (raw === "Draw No Bet") return "DNB";
@@ -46,14 +48,15 @@
 
   function clampMarket(m) {
     m = normalizeMarket(m);
-    var ok = { 
-      "1X2": 1, 
-      "DC": 1, 
-      "BTTS": 1, 
-      "OU15": 1, 
-      "OU25": 1, 
-      "OU35": 1, 
-      "DNB": 1 
+    var ok = {
+      "1X2": 1,
+      "DC": 1,
+      "BTTS": 1,
+      "OU15": 1,
+      "OU25": 1,
+      "OU35": 1,
+      "DNB": 1,
+      "HTFT": 1
     };
     return ok[m] ? m : DEFAULT_MARKET;
   }
@@ -79,14 +82,31 @@
     return state.snapshotByMatchId[state.match.id] || null;
   }
 
-  function render() {
-    if (!window.OICRenderer || typeof window.OICRenderer.renderAll !== "function") return;
+  function currentMulti() {
+    if (!state.match) return null;
+    return state.multiByMatchId[state.match.id] || null;
+  }
 
-    window.OICRenderer.renderAll({
-      market: state.market,
-      match: state.match,
-      snapshot: currentSnapshot()
-    });
+  function render() {
+    if (!window.OICRenderer) return;
+
+    var multiSnap = currentMulti();
+    if (multiSnap && typeof window.OICRenderer.renderMulti === "function") {
+      window.OICRenderer.renderMulti({
+        market: state.market,
+        match:  state.match,
+        markets: multiSnap
+      });
+      return;
+    }
+
+    if (typeof window.OICRenderer.renderAll === "function") {
+      window.OICRenderer.renderAll({
+        market:   state.market,
+        match:    state.match,
+        snapshot: currentSnapshot()
+      });
+    }
   }
 
   function setMarket(m, source) {
@@ -123,14 +143,17 @@
 
   function upsertSnapshot(payload) {
     if (!payload) return;
-
     var matchId = payload.matchId || payload.id || (payload.match && payload.match.id);
     var snap = payload.snapshot || payload;
     if (!matchId) return;
-
     state.snapshotByMatchId[String(matchId)] = snap;
-
     if (state.match && String(matchId) === state.match.id) render();
+  }
+
+  function upsertMulti(payload) {
+    if (!payload || !payload.matchId || !payload.markets) return;
+    state.multiByMatchId[String(payload.matchId)] = payload.markets;
+    if (state.match && String(payload.matchId) === state.match.id) render();
   }
 
   function bindUI() {
@@ -152,6 +175,7 @@
     on("match-selected", setMatch);
     on("odds-snapshot:core", upsertSnapshot);
     on("odds-snapshot:canonical", upsertSnapshot);
+    on("odds-snapshot:multi", upsertMulti);
 
     updateActiveMatchUI(null);
     render();

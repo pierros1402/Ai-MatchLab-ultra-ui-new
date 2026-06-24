@@ -224,6 +224,7 @@
           <div class="panel-header">
             <div class="panel-title">Matches</div>
           </div>
+          <div id="date-nav"></div>
           <div class="panel-body">
             <div id="matches-list"></div>
           </div>
@@ -245,6 +246,9 @@
          ODDS INTELLIGENCE CENTER (DIV-BASED – FINAL)
     ====================================================== -->
     <section id="odds-intelligence-center">
+
+      <!-- ===== AUTONOMOUS ODDS DAY VIEW (real market odds + AI assessment) ===== -->
+      <div id="ai-odds-day"></div>
 
       <!-- ===== STICKY HEADER (ΔΕΝ SCROLLΑΡΕΙ) ===== -->
       <header class="oic-header">
@@ -268,12 +272,12 @@
           <div class="oic-market-control">
             <select id="oic-market" class="oic-market-select">
               <option value="1X2">1X2</option>
-              <option value="DC">Double Chance</option>
+              <option value="OU25">Over/Under 2.5</option>
               <option value="BTTS">BTTS</option>
-              <option value="OU15">Over / Under 1.5</option>
-              <option value="OU25">Over / Under 2.5</option>
-              <option value="OU35">Over / Under 3.5</option>
-              
+              <option value="HTFT">Half Time</option>
+              <option value="DC">Double Chance</option>
+              <option value="OU15">Over/Under 1.5</option>
+              <option value="OU35">Over/Under 3.5</option>
             </select>
           </div>
 
@@ -307,14 +311,22 @@
           <div class="oic-card-body" id="betfair-odds-body"></div>
         </section>
 
-        <!-- MATCH DETAILS -->
-        <section class="oic-card match-details" id="oic-details">
-          <div class="oic-card-header oic-details-header">
-            <span>Match Details</span>
-            <button class="oic-details-open">Open</button>
+        <!-- OPENING TRACKER -->
+        <section class="oic-card" id="oic-opener">
+          <div class="oic-card-header opener-header">
+            <span class="opener-title">Opening Tracker</span>
+            <div class="opener-controls">
+              <select id="opener-date" class="opener-select" title="Date"></select>
+              <select id="opener-market" class="opener-select" title="Market">
+                <option value="1X2">1X2</option>
+                <option value="OU25">O/U 2.5</option>
+                <option value="BTTS">BTTS</option>
+                <option value="HTFT">Half Time</option>
+              </select>
+            </div>
           </div>
-          <div class="oic-card-body">
-            Select a match to view details.
+          <div class="oic-card-body" id="opener-body">
+            <div class="opener-empty">Loading upcoming odds…</div>
           </div>
         </section>
 
@@ -449,6 +461,8 @@
 <script src="assets/js/ui/today-panel.js?v=3"></script>
 <script src="assets/js/ui/active-leagues-panel.js?v=3"></script>
 <script src="assets/js/ui/matches-panel.js"></script>
+<script src="assets/js/ui/date-nav.js"></script>
+<script src="assets/js/ui/opener-panel.js"></script>
 <script src="assets/js/ui/saved-store.js"></script>
 <script src="assets/js/ui/saved-panel.js"></script>
 
@@ -466,7 +480,10 @@
      ODDS DATA PIPELINE
 ===================================================== -->
 <script src="assets/js/odds/odds-canonical-batch-to-core.js"></script>
+<script src="assets/js/odds/ai-odds-day.js?v=1"></script>
 <script src="assets/js/live/odds-loader.js?v=3"></script>
+<script src="assets/js/live/multi-odds-loader.js?v=2"></script>
+<script src="assets/js/live/date-nav-loader.js"></script>
 <script src="assets/js/live/live-overlay.js?v=3"></script>
 
 

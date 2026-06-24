@@ -22,6 +22,8 @@ import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
+import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
+import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1456,6 +1458,109 @@ function oddsHandler(req, res) {
 }
 app.get("/odds", oddsHandler);
 app.get("/api/odds", oddsHandler);
+
+// Afternoon refresh: re-fetch OddsPapi odds to capture line movement / delta.
+// Called by Render cron at ~14:00 Athens time (before most EU evening matches).
+app.post("/api/refresh-multi-odds", async (req, res) => {
+  const secret = process.env.CRON_SECRET;
+  if (secret) {
+    const provided = req.headers["x-cron-secret"] || req.query.secret;
+    if (provided !== secret) return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+  const date = String(req.query.date || athensDayKey());
+  const doPrefetch = req.query.prefetch !== "0"; // default: also prefetch next 6 days
+  try {
+    const r1 = await fetchMultiBookmakerOdds(date);
+    const r2 = await fetchOddsPortalGreekOdds(date);
+    const r3 = doPrefetch ? await prefetchUpcomingOdds(date, 6) : null;
+    res.json({ ok: true, date, oddspapi: r1, oddsportal: r2, prefetch: r3 });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
+// Matches for any date: deploy snapshot → canonical-fixtures fallback.
+// Returns { date, matches: [{ matchId, homeTeam, awayTeam, kickoffUtc, status, leagueSlug, scoreHome, scoreAway }] }
+app.get("/api/matches-for-date", (req, res) => {
+  const date = String(req.query.date || athensDayKey()).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
+
+  // 1. Try deploy snapshot (has scores for past matches)
+  try {
+    const p = resolveDataPath("deploy-snapshots", date, "odds.json");
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    const matches = (j.matches || []).map(m => ({
+      matchId:    m.matchId,
+      homeTeam:   m.homeTeam || m.home || "",
+      awayTeam:   m.awayTeam || m.away || "",
+      kickoffUtc: m.kickoffUtc || m.kickoff || "",
+      status:     m.status || "PRE",
+      leagueSlug: m.leagueSlug || "",
+      leagueName: m.leagueName || "",
+      scoreHome:  m.scoreHome ?? null,
+      scoreAway:  m.scoreAway ?? null,
+    })).filter(m => m.matchId && m.homeTeam);
+    if (matches.length) return res.json({ ok: true, date, source: "snapshot", matches });
+  } catch { /**/ }
+
+  // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
+  try {
+    const dir = resolveDataPath("canonical-fixtures", date);
+    if (!fs.existsSync(dir)) return res.json({ ok: true, date, source: "none", matches: [] });
+    const matches = fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .flatMap(f => {
+        try {
+          const j = JSON.parse(fs.readFileSync(path.join(resolveDataPath("canonical-fixtures", date), f), "utf8"));
+          return (j.fixtures || []).map(m => ({
+            matchId:    String(m.matchId || ""),
+            homeTeam:   m.homeTeam || "",
+            awayTeam:   m.awayTeam || "",
+            kickoffUtc: m.kickoffUtc || "",
+            status:     m.status || "PRE",
+            leagueSlug: m.leagueSlug || "",
+            leagueName: m.leagueName || "",
+            scoreHome:  null,
+            scoreAway:  null,
+          })).filter(m => m.matchId && m.homeTeam);
+        } catch { return []; }
+      })
+      .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+    return res.json({ ok: true, date, source: "canonical", matches });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e?.message || e) });
+  }
+});
+
+// All prefetched/fetched odds for a date — used by Opening Tracker panel.
+// Returns { date, updatedAt, matches: { matchId: { home, away, openedAt, fetchedAt, markets } } }
+app.get("/api/multi-odds-day", (req, res) => {
+  const date = String(req.query.date || athensDayKey()).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
+  try {
+    const p = resolveDataPath("multi-odds", `${date}.json`);
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    res.json({ ok: true, ...j });
+  } catch {
+    res.json({ ok: true, date, matches: {} });
+  }
+});
+
+// Per-bookmaker multi-source odds: { greek, european, asian, betfair } panels
+app.get("/api/multi-odds", (req, res) => {
+  const matchId = String(req.query.matchId || req.query.id || "");
+  const date    = String(req.query.date || athensDayKey());
+  if (!matchId) return res.status(400).json({ ok: false, error: "missing_matchId" });
+  try {
+    const p = resolveDataPath("multi-odds", `${date}.json`);
+    const daily = JSON.parse(fs.readFileSync(p, "utf8"));
+    const rec = daily?.matches?.[matchId] || null;
+    if (!rec) return res.json({ ok: false, matchId, date, reason: "not_found" });
+    res.json({ ok: true, matchId, date, ...rec });
+  } catch {
+    res.json({ ok: false, matchId, date, reason: "not_found" });
+  }
+});
 
 // Dynamic league catalogue — same format as the static AI-MATCHLAB-DATA JSON files
 // but built live from league-awareness (disabled leagues filtered, newly-promoted
