@@ -957,6 +957,12 @@ function readFixturesAllSnapshot() {
     return null;
   }
 }
+// Slug aliases: old BetExplorer slugs that map to ESPN canonical slugs
+const FX_SLUG_ALIASES = {
+  "fifa.world_cup":      "fifa.world",
+  "fifa.world_cup_qual": "fifa.world_qual",
+};
+
 function mergeFlashscoreFixtures(result, requestedDay) {
   const snap = readFixturesAllSnapshot();
   if (!snap || !Array.isArray(snap.matches)) return result;
@@ -964,9 +970,27 @@ function mergeFlashscoreFixtures(result, requestedDay) {
   const base = Array.isArray(result.matches) ? result.matches : [];
   const seen = new Set(base.map(m => `${fxNormTeam(m.home ?? m.homeTeam)}|${fxNormTeam(m.away ?? m.awayTeam)}`));
 
+  // Build set of league slugs already in the canonical response (both ESPN and BetExplorer names)
+  const baseSlugs = new Set();
+  for (const m of base) {
+    const s = String(m.leagueSlug || "");
+    baseSlugs.add(s);
+    const alias = FX_SLUG_ALIASES[s];
+    if (alias) baseSlugs.add(alias);
+    // Reverse: if canonical is in base, also block old alias
+    for (const [old, canonical] of Object.entries(FX_SLUG_ALIASES)) {
+      if (canonical === s) baseSlugs.add(old);
+    }
+  }
+
   const extra = [];
   for (const m of snap.matches) {
     if (m.dayKey !== requestedDay) continue;
+    // Skip if this league is already covered by the canonical response
+    const slug = String(m.leagueSlug || "");
+    const canonical = FX_SLUG_ALIASES[slug] || slug;
+    if (baseSlugs.has(slug) || baseSlugs.has(canonical)) continue;
+    // Skip if team pair already seen
     const key = `${fxNormTeam(m.home)}|${fxNormTeam(m.away)}`;
     if (seen.has(key)) continue;
     seen.add(key);
