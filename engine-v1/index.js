@@ -1533,30 +1533,53 @@ app.get("/api/matches-for-date", (req, res) => {
   // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
   try {
     const dir = resolveDataPath("canonical-fixtures", date);
-    if (!fs.existsSync(dir)) return res.json({ ok: true, date, source: "none", matches: [] });
-    const matches = fs.readdirSync(dir)
-      .filter(f => f.endsWith(".json"))
-      .flatMap(f => {
-        try {
-          const j = JSON.parse(fs.readFileSync(path.join(resolveDataPath("canonical-fixtures", date), f), "utf8"));
-          return (j.fixtures || []).map(m => attachAssessment({
-            matchId:    String(m.matchId || ""),
-            homeTeam:   m.homeTeam || "",
-            awayTeam:   m.awayTeam || "",
-            kickoffUtc: m.kickoffUtc || "",
-            status:     m.status || "PRE",
-            leagueSlug: m.leagueSlug || "",
-            leagueName: m.leagueName || "",
-            scoreHome:  null,
-            scoreAway:  null,
-          })).filter(m => m.matchId && m.homeTeam);
-        } catch { return []; }
-      })
+    if (fs.existsSync(dir)) {
+      const matches = fs.readdirSync(dir)
+        .filter(f => f.endsWith(".json"))
+        .flatMap(f => {
+          try {
+            const j = JSON.parse(fs.readFileSync(path.join(resolveDataPath("canonical-fixtures", date), f), "utf8"));
+            return (j.fixtures || []).map(m => attachAssessment({
+              matchId:    String(m.matchId || ""),
+              homeTeam:   m.homeTeam || "",
+              awayTeam:   m.awayTeam || "",
+              kickoffUtc: m.kickoffUtc || "",
+              status:     m.status || "PRE",
+              leagueSlug: m.leagueSlug || "",
+              leagueName: m.leagueName || "",
+              scoreHome:  null,
+              scoreAway:  null,
+            })).filter(m => m.matchId && m.homeTeam);
+          } catch { return []; }
+        })
+        .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+      if (matches.length) return res.json({ ok: true, date, source: "canonical", matches });
+    }
+  } catch { /**/ }
+
+  // 3. Fallback: fixtures-all.json from the latest snapshot (covers D+1 / D+2 gap)
+  try {
+    const todayKey = athensDayKey();
+    const p = resolveDataPath("deploy-snapshots", todayKey, "fixtures-all.json");
+    const j = JSON.parse(fs.readFileSync(p, "utf8"));
+    const matches = (j.matches || [])
+      .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.id || m.matchId))
+      .map(m => attachAssessment({
+        matchId:    String(m.matchId || m.id || ""),
+        homeTeam:   m.home || m.homeTeam || "",
+        awayTeam:   m.away || m.awayTeam || "",
+        kickoffUtc: m.kickoffUtc || m.kickoff || "",
+        status:     m.status || "PRE",
+        leagueSlug: m.leagueSlug || "",
+        leagueName: m.leagueName || m.competition || "",
+        scoreHome:  m.scoreHome ?? null,
+        scoreAway:  m.scoreAway ?? null,
+      })).filter(m => m.matchId && m.homeTeam)
       .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
-    return res.json({ ok: true, date, source: "canonical", matches });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: String(e?.message || e) });
-  }
+    if (matches.length) return res.json({ ok: true, date, source: "fixtures-all", matches });
+  } catch { /**/ }
+
+  return res.json({ ok: true, date, source: "none", matches: [] });
 });
 
 // All prefetched/fetched odds for a date — used by Opening Tracker panel.
