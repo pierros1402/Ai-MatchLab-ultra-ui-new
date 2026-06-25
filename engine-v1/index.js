@@ -1512,10 +1512,18 @@ app.get("/api/matches-for-date", (req, res) => {
     };
   }
 
-  // 1. Try fixtures.json (has ESPN scores/FT status) + supplement with odds.json for extra leagues
+  // 1. fixtures.json (ESPN scores/FT) + odds.json supplement for leagues not in fixtures.
+  //    fixtures.json uses ESPN slugs (e.g. "fifa.world"), odds.json uses BetExplorer slugs
+  //    (e.g. "fifa.world_cup") — matchIds differ, so dedup by league slug + known aliases.
   {
+    // Map old BetExplorer slugs → canonical ESPN slugs (same competition, different naming)
+    const SLUG_ALIASES = {
+      "fifa.world_cup": "fifa.world",
+      "fifa.world_cup_qual": "fifa.world_qual",
+    };
+
     let fixtureMatches = [];
-    let oddsMatches = [];
+    let fixtureSlugs = new Set();
 
     try {
       const fp = resolveDataPath("deploy-snapshots", date, "fixtures.json");
@@ -1532,12 +1540,22 @@ app.get("/api/matches-for-date", (req, res) => {
           scoreHome:  m.scoreHome ?? null,
           scoreAway:  m.scoreAway ?? null,
         })).filter(m => m.matchId && m.homeTeam);
+      // Build set of all slugs already covered by fixtures.json (both directions of aliases)
+      for (const m of fixtureMatches) {
+        const s = m.leagueSlug;
+        fixtureSlugs.add(s);
+        // Add reverse alias: if "fifa.world" is in fixtures, also block "fifa.world_cup" from odds
+        for (const [alias, canonical] of Object.entries(SLUG_ALIASES)) {
+          if (canonical === s) fixtureSlugs.add(alias);
+          if (alias === s) fixtureSlugs.add(canonical);
+        }
+      }
     } catch { /**/ }
 
+    let oddsMatches = [];
     try {
       const op = resolveDataPath("deploy-snapshots", date, "odds.json");
       const oj = JSON.parse(fs.readFileSync(op, "utf8"));
-      const seenIds = new Set(fixtureMatches.map(m => String(m.matchId)));
       oddsMatches = (oj.matches || [])
         .map(m => attachAssessment({
           matchId:    String(m.matchId || ""),
@@ -1550,7 +1568,13 @@ app.get("/api/matches-for-date", (req, res) => {
           scoreHome:  m.scoreHome ?? null,
           scoreAway:  m.scoreAway ?? null,
         }))
-        .filter(m => m.matchId && m.homeTeam && !seenIds.has(String(m.matchId)));
+        // Exclude any league already covered by fixtures.json (same or aliased slug)
+        .filter(m => {
+          if (!m.matchId || !m.homeTeam) return false;
+          const slug = m.leagueSlug;
+          const canonical = SLUG_ALIASES[slug] || slug;
+          return !fixtureSlugs.has(slug) && !fixtureSlugs.has(canonical);
+        });
     } catch { /**/ }
 
     const merged = [...fixtureMatches, ...oddsMatches]
