@@ -141,7 +141,7 @@ export async function buildPlayerUsageManualDraftsDay(dayKey, options = {}) {
   const workset = readJsonLoose(worksetPath(safeDayKey), null);
 
   if (!workset || !Array.isArray(workset.teams)) {
-    throw new Error(`player-usage workset not found or invalid: ${worksetPath(safeDayKey)}`);
+    return { ok: true, dayKey: safeDayKey, drafted: 0, skipped: true, reason: "no_workset" };
   }
 
   const existingManualKeys = readExistingManualKeys(safeDayKey);

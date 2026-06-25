@@ -492,7 +492,7 @@ export async function buildTeamNewsResearchTasksDay(dayKey, { maxTeams = Infinit
   const workset = readJsonSafe(worksetPath, null);
 
   if (!workset || !Array.isArray(workset?.needsAcquisition)) {
-    throw new Error(`team-news workset not found or invalid: ${worksetPath}`);
+    return { ok: true, dayKey: safeDayKey, taskCount: 0, skipped: true, reason: "no_workset" };
   }
 
   const fixtures = getFixturesByDay(safeDayKey) || [];
