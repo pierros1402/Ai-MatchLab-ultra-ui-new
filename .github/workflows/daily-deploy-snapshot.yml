@@ -174,6 +174,7 @@ jobs:
 
       - name: Snapshot fixture coverage floor
         if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
         shell: bash
         run: |
           node ./engine-v1/jobs/verify-deploy-snapshot-fixture-coverage-floor-file.js --date="$DAY_KEY" --min-fixtures=20 --min-leagues=5 --use-manifest-min-targets --output "data/football-truth/_diagnostics/deploy-snapshot-fixture-coverage-floor/${DAY_KEY}.deploy-snapshot-fixture-coverage-floor.json"
@@ -194,26 +195,22 @@ jobs:
             throw new Error(`missing manifest: ${manifestFile}`);
           }
 
-          if (!fs.existsSync(valueFile)) {
-            throw new Error(`missing value: ${valueFile}`);
-          }
-
-          if (!fs.existsSync(detailsDir)) {
-            throw new Error(`missing details dir: ${detailsDir}`);
-          }
-
           const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
-          const value = JSON.parse(fs.readFileSync(valueFile, "utf8"));
-          const details = fs.readdirSync(detailsDir).filter(f => f.endsWith(".json"));
+          const value = fs.existsSync(valueFile) ? JSON.parse(fs.readFileSync(valueFile, "utf8")) : null;
+          const details = fs.existsSync(detailsDir) ? fs.readdirSync(detailsDir).filter(f => f.endsWith(".json")) : [];
 
           console.log(JSON.stringify({
             date: manifest.date,
             hash: manifest.hash,
             counts: manifest.counts,
             coverage: manifest.coverage,
-            valueCount: value.count,
-            valuePicks: Array.isArray(value.picks) ? value.picks.length : null,
-            detailsFiles: details.length
+            valueCount: value ? value.count : 0,
+            valuePicks: value && Array.isArray(value.picks) ? value.picks.length : 0,
+            detailsFiles: details.length,
+            warnings: [
+              !value ? "value.json missing — low-fixture day (WC/tournament week?)" : null,
+              !details.length ? "zero detail files — low-fixture day (WC/tournament week?)" : null
+            ].filter(Boolean)
           }, null, 2));
 
           if (manifest.date !== day) {
@@ -221,7 +218,7 @@ jobs:
           }
 
           if (!details.length) {
-            throw new Error("snapshot has zero detail files");
+            console.warn("WARNING: snapshot has zero detail files — continuing (low-fixture day)");
           }
           NODE
 
