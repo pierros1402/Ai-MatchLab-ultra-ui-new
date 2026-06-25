@@ -566,6 +566,11 @@ export async function runDailyCycle(options = {}) {
     skipped: detailsBuild?.skipped ?? 0
   });
 
+  // ── Enrichment block: player-usage + team-news ───────────────────────────────
+  // These steps depend on details/canonical fixtures existing for the day.
+  // On World Cup days (or any day with no canonical fixtures), they skip gracefully.
+  try {
+
   console.log("[daily-cycle] player-usage-workset:start", { dayKey });
 
   playerUsageWorkset = await buildPlayerUsageWorksetDay(dayKey);
@@ -897,6 +902,11 @@ export async function runDailyCycle(options = {}) {
     missingCount: teamNewsBuild?.missingCount ?? 0,
     coveragePct: teamNewsBuild?.coveragePct ?? 0
   });
+
+  } catch (enrichErr) {
+    console.warn("[daily-cycle] enrichment-block:skipped", enrichErr?.message || enrichErr);
+  }
+  // ── End enrichment block ─────────────────────────────────────────────────────
 
   console.log("[daily-cycle] fixture-acquisition-v2-readiness:start", { dayKey });
 
