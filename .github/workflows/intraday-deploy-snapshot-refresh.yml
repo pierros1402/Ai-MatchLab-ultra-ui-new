@@ -280,7 +280,7 @@ jobs:
           git push
 
       - name: Trigger Render redeploy
-        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true' && env.ALLOW_RENDER_DEPLOY == 'true'
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true'
         shell: bash
         env:
           RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
