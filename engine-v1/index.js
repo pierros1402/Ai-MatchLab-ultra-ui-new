@@ -1557,27 +1557,30 @@ app.get("/api/matches-for-date", (req, res) => {
     }
   } catch { /**/ }
 
-  // 3. Fallback: fixtures-all.json from the latest snapshot (covers D+1 / D+2 gap)
-  try {
-    const todayKey = athensDayKey();
-    const p = resolveDataPath("deploy-snapshots", todayKey, "fixtures-all.json");
-    const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    const matches = (j.matches || [])
-      .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.id || m.matchId))
-      .map(m => attachAssessment({
-        matchId:    String(m.matchId || m.id || ""),
-        homeTeam:   m.home || m.homeTeam || "",
-        awayTeam:   m.away || m.awayTeam || "",
-        kickoffUtc: m.kickoffUtc || m.kickoff || "",
-        status:     m.status || "PRE",
-        leagueSlug: m.leagueSlug || "",
-        leagueName: m.leagueName || m.competition || "",
-        scoreHome:  m.scoreHome ?? null,
-        scoreAway:  m.scoreAway ?? null,
-      })).filter(m => m.matchId && m.homeTeam)
-      .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
-    if (matches.length) return res.json({ ok: true, date, source: "fixtures-all", matches });
-  } catch { /**/ }
+  // 3. Fallback: fixtures-all.json — try today then yesterday (covers D+0 when today's snapshot not yet created)
+  for (let offset = 0; offset <= 1; offset++) {
+    try {
+      const d = new Date(); d.setDate(d.getDate() - offset);
+      const key = d.toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+      const p = resolveDataPath("deploy-snapshots", key, "fixtures-all.json");
+      const j = JSON.parse(fs.readFileSync(p, "utf8"));
+      const matches = (j.matches || [])
+        .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.id || m.matchId))
+        .map(m => attachAssessment({
+          matchId:    String(m.matchId || m.id || ""),
+          homeTeam:   m.home || m.homeTeam || "",
+          awayTeam:   m.away || m.awayTeam || "",
+          kickoffUtc: m.kickoffUtc || m.kickoff || "",
+          status:     m.status || "PRE",
+          leagueSlug: m.leagueSlug || "",
+          leagueName: m.leagueName || m.competition || "",
+          scoreHome:  m.scoreHome ?? null,
+          scoreAway:  m.scoreAway ?? null,
+        })).filter(m => m.matchId && m.homeTeam)
+        .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+      if (matches.length) return res.json({ ok: true, date, source: "fixtures-all", matches });
+    } catch { /**/ }
+  }
 
   return res.json({ ok: true, date, source: "none", matches: [] });
 });
