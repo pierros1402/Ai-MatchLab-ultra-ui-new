@@ -44,11 +44,12 @@ function resolveDetailsDirForDay(dayKey) {
     };
   }
 
-  throw new Error(`details dir not found: ${canonicalDir} or ${snapshotDir}`);
+  return null; // no details for this day — caller handles gracefully
 }
 
 function readDetailsForDay(dayKey) {
   const resolved = resolveDetailsDirForDay(dayKey);
+  if (!resolved) return { details: [], detailsSource: "none" };
   const dir = resolved.dir;
 
   const files = fs.readdirSync(dir)
