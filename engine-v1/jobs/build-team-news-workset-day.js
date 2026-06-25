@@ -212,9 +212,7 @@ export async function buildTeamNewsWorksetDay(dayKey) {
         : null;
 
     if (!selectedDetailsDir) {
-      throw new Error(
-        `no runtime file, details directory, or deploy snapshot details found for dayKey ${safeDayKey}`
-      );
+      return { ok: true, dayKey: safeDayKey, taskCount: 0, existingCanonicalCount: 0, missingCanonicalCount: 0, file: null, skipped: true, reason: "no_details" };
     }
 
     sourceMode = selectedDetailsDir === detailsDir

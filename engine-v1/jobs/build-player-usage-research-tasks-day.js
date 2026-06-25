@@ -99,7 +99,7 @@ export async function buildPlayerUsageResearchTasksDay(dayKey) {
   const worksetPath = getWorksetPath(dayKey);
 
   if (!fs.existsSync(worksetPath)) {
-    throw new Error(`workset not found: ${worksetPath}`);
+    return { ok: true, dayKey, taskCount: 0, skipped: true, reason: "no_workset" };
   }
 
   const workset = readJsonSafe(worksetPath, null);

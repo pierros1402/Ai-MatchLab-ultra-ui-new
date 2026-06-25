@@ -274,7 +274,7 @@ export async function buildPlayerUsageAiCandidateReviewDay(dayKey) {
   const workset = readJsonLoose(worksetPath(safeDayKey), null);
 
   if (!workset || workset.__readError || !Array.isArray(workset.teams)) {
-    throw new Error(`player-usage workset not found or invalid: ${worksetPath(safeDayKey)}`);
+    return { ok: true, dayKey: safeDayKey, reviewed: 0, skipped: true, reason: "no_workset" };
   }
 
   const files = listCandidateFiles(safeDayKey);
