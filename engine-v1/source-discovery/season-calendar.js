@@ -31,7 +31,11 @@ function normCountry(country) {
 const SLUG_WINDOWS = {
   // Mexico runs Apertura (Jul–Dec) + Clausura (Jan–May): effectively Jul–May.
   "mex.1": { start: 7, end: 5 },
-  "mex.2": { start: 7, end: 5 }
+  "mex.2": { start: 7, end: 5 },
+
+  // FIFA World Cup: always held in June–July (2026, 2030, …).
+  // Off-years → ESPN returns 0 fixtures harmlessly.
+  "fifa.world_cup": { start: 6, end: 7 }
 };
 
 // ─── Per-country overrides ──────────────────────────────────────────────────────

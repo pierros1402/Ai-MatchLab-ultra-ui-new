@@ -2,6 +2,8 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import { ESPN_BASE, LEAGUE_SEEDS, leagueName } from "../config.js";
+import { LEAGUES_BY_SLUG } from "../../workers/_shared/leagues-coverage.js";
+import { isInSeason } from "../source-discovery/season-calendar.js";
 import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
@@ -111,14 +113,29 @@ function buildDateWindow(dayKey, daysBack, daysForward) {
   return days;
 }
 
-function selectLeagueChunk({ cursor, chunkSize }) {
-  const seeds = Array.isArray(LEAGUE_SEEDS)
+function inSeasonForWindow(slug, dateWindow) {
+  const meta = LEAGUES_BY_SLUG[slug] || {};
+  return dateWindow.some(d => {
+    const date = new Date(d + "T12:00:00Z");
+    return isInSeason(slug, meta, date).inSeason;
+  });
+}
+
+function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
+  const allSeeds = Array.isArray(LEAGUE_SEEDS)
     ? LEAGUE_SEEDS.map(x => String(x || "").trim()).filter(Boolean)
     : [];
+
+  // Filter to leagues that are in-season for at least one date in the window.
+  // This prevents querying off-season leagues (e.g. Premier League in June).
+  const seeds = dateWindow && dateWindow.length
+    ? allSeeds.filter(slug => inSeasonForWindow(slug, dateWindow))
+    : allSeeds;
 
   if (seeds.length === 0) {
     return {
       seeds,
+      allSeeds,
       selected: [],
       startCursor: 0,
       nextCursor: 0
@@ -136,6 +153,7 @@ function selectLeagueChunk({ cursor, chunkSize }) {
 
   return {
     seeds,
+    allSeeds,
     selected,
     startCursor,
     nextCursor
@@ -469,10 +487,12 @@ function existingCanonicalIdsForDay(dayKey) {
 }
 
 async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
+  const dateWindowArr = [...allowedDays];
   const targetSeedSet = new Set(
     (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
       .map(x => String(x || "").trim())
       .filter(Boolean)
+      .filter(slug => inSeasonForWindow(slug, dateWindowArr))
   );
 
   const stats = {
@@ -668,23 +688,25 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     state.cursor = 0;
   }
 
+  const dateWindow = buildDateWindow(opts.dayKey, opts.daysBack, opts.daysForward);
+  const allowedDays = new Set(dateWindow);
+
   const chunk = opts.fullPass
     ? selectLeagueChunk({
         cursor: 0,
-        chunkSize: Number.MAX_SAFE_INTEGER
+        chunkSize: Number.MAX_SAFE_INTEGER,
+        dateWindow
       })
     : selectLeagueChunk({
         cursor: state.cursor,
-        chunkSize: opts.chunkSize
+        chunkSize: opts.chunkSize,
+        dateWindow
       });
 
   if (opts.fullPass) {
     chunk.startCursor = 0;
     chunk.nextCursor = state.cursor;
   }
-
-  const dateWindow = buildDateWindow(opts.dayKey, opts.daysBack, opts.daysForward);
-  const allowedDays = new Set(dateWindow);
 
   const startedAt = new Date().toISOString();
 
@@ -698,6 +720,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     daysBack: opts.daysBack,
     daysForward: opts.daysForward,
     dateWindow,
+    totalSeedCount: chunk.allSeeds ? chunk.allSeeds.length : chunk.seeds.length,
     leagueSeedCount: chunk.seeds.length,
     chunkSize: opts.fullPass ? chunk.selected.length : opts.chunkSize,
     startCursor: chunk.startCursor,
