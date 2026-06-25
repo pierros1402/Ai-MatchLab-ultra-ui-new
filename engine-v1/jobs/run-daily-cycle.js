@@ -131,7 +131,8 @@ function runDailyCycleNodeJob(args, label) {
   }
 
   if (result.status !== 0) {
-    throw new Error(`${label} failed with exit code ${result.status}`);
+    console.warn(`[daily-cycle] ${label}:failed exit code ${result.status} — skipping`);
+    return { status: result.status, error: `exit code ${result.status}` };
   }
 
   return result;
