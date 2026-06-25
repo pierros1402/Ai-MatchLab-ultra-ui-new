@@ -306,7 +306,7 @@ export const LEAGUES_COVERAGE = [
   // ----------------------------------------------------------
   // FIFA WORLD COMPETITIONS (active during summer — added for WC 2026 support)
   // ----------------------------------------------------------
-  { slug: "fifa.world_cup", tier: 1, trust: 0.95, type: "national", region: "world", country: "fifa" },
+  { slug: "fifa.world", tier: 1, trust: 0.95, type: "national", region: "world", country: "fifa" },
 
   // ----------------------------------------------------------
   // UEFA

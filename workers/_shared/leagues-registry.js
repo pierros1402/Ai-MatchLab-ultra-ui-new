@@ -257,7 +257,7 @@ const EXPLICIT_NAME_MAP = {
   "smr.1": "Campionato Sammarinese",
   "smr.2": "San Marino Second Level",
   // FIFA
-  "fifa.world_cup": "FIFA World Cup",
+  "fifa.world": "FIFA World Cup",
 
   // UEFA
   "uefa.champions": "UEFA Champions League",

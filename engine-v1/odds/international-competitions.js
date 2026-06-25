@@ -16,7 +16,7 @@
 const RULES = [
   // FIFA World Cup (the 2026 finals, currently in progress) + qualifiers
   { re: /world\s*cup\s*qualif|world\s*championship\s*qualif|wc\s*qualif/i, slug: "fifa.world_cup_qual", label: "World Cup Qualification", type: "national" },
-  { re: /world\s*cup|world\s*championship/i, slug: "fifa.world_cup", label: "FIFA World Cup", type: "national" },
+  { re: /world\s*cup|world\s*championship/i, slug: "fifa.world", label: "FIFA World Cup", type: "national" },
 
   // UEFA national-team competitions
   { re: /european\s*championship\s*qualif|euro\s*qualif/i, slug: "uefa.euro_qual", label: "Euro Qualification", type: "national" },
