@@ -310,21 +310,24 @@ function loadMatchesForDate(date) {
     if (ms.length) return ms;
   } catch { /**/ }
 
-  // 3. fixtures-all.json from today's snapshot (3-day window: today + D+1 + D+2)
-  try {
-    const todayKey = athensDayKey();
-    const p = resolveDataPath("deploy-snapshots", todayKey, "fixtures-all.json");
-    const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    const ms = (j.matches || [])
-      .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.away || m.awayTeam) && (m.id || m.matchId))
-      .map(m => ({
-        matchId:    String(m.matchId || m.id || ""),
-        homeTeam:   m.homeTeam || m.home || "",
-        awayTeam:   m.awayTeam || m.away || "",
-        leagueSlug: m.leagueSlug || "",
-      })).filter(m => m.matchId);
-    if (ms.length) return ms;
-  } catch { /**/ }
+  // 3. fixtures-all.json — try today's snapshot, then yesterday's (covers D+0 when snapshot not yet created)
+  for (let offset = 0; offset <= 1; offset++) {
+    try {
+      const d = new Date(); d.setDate(d.getDate() - offset);
+      const key = d.toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+      const p = resolveDataPath("deploy-snapshots", key, "fixtures-all.json");
+      const j = JSON.parse(fs.readFileSync(p, "utf8"));
+      const ms = (j.matches || [])
+        .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.away || m.awayTeam) && (m.id || m.matchId))
+        .map(m => ({
+          matchId:    String(m.matchId || m.id || ""),
+          homeTeam:   m.homeTeam || m.home || "",
+          awayTeam:   m.awayTeam || m.away || "",
+          leagueSlug: m.leagueSlug || "",
+        })).filter(m => m.matchId);
+      if (ms.length) return ms;
+    } catch { /**/ }
+  }
 
   return [];
 }
