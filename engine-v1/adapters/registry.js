@@ -62,17 +62,36 @@ const ESPN_SUPPORTED = new Set([
   "conmebol.libertadores",
 
   "usa.1",
+  "usa.2",
   "arg.1",
+  "arg.2",
   "bra.1",
+  "bra.2",
   "mex.1",
+  "mex.2",
   "uru.1",
   "col.1",
   "chi.1",
   "per.1",
 
   "jpn.1",
+  "jpn.2",
+  "kor.1",
+  "kor.2",
   "ksa.1",
-  "rsa.1"
+  "rsa.1",
+
+  // Summer-active European leagues (Nordic, Irish)
+  "swe.2",
+  "nor.2",
+  "den.2",
+  "fin.1",
+  "fin.2",
+  "irl.1",
+  "irl.2",
+
+  // FIFA World competitions (WC 2026 in progress Jun–Jul)
+  "fifa.world_cup"
 ]);
 
 const FIXTURE_ADAPTERS = [

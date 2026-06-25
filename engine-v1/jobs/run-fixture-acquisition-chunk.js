@@ -545,6 +545,8 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
 
       if (!targetSeedSet.has(slug)) {
         stats.skippedOutOfTargetSeeds++;
+        if (!stats.skippedSlugSample) stats.skippedSlugSample = {};
+        stats.skippedSlugSample[slug] = (stats.skippedSlugSample[slug] || 0) + 1;
         continue;
       }
 
@@ -757,6 +759,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     skippedOtherDay: supplemental.skippedOtherDay,
     skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
     skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
+    skippedSlugSample: supplemental.skippedSlugSample,
     byLeague: supplemental.byLeague
   });
 
@@ -778,6 +781,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     skippedOtherDay: supplemental.skippedOtherDay,
     skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
     skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
+    skippedSlugSample: supplemental.skippedSlugSample,
     byLeague: supplemental.byLeague,
     error: supplemental.error
   };

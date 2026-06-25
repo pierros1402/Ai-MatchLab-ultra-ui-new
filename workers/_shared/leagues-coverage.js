@@ -304,6 +304,11 @@ export const LEAGUES_COVERAGE = [
   { slug: "smr.1", tier: 3, trust: 0.60, type: "league", region: "europe", country: "san_marino" },
   { slug: "smr.2", tier: 3, trust: 0.52, type: "league", region: "europe", country: "san_marino" },
   // ----------------------------------------------------------
+  // FIFA WORLD COMPETITIONS (active during summer — added for WC 2026 support)
+  // ----------------------------------------------------------
+  { slug: "fifa.world_cup", tier: 1, trust: 0.95, type: "national", region: "world", country: "fifa" },
+
+  // ----------------------------------------------------------
   // UEFA
   // ----------------------------------------------------------
   { slug: "uefa.champions", tier: 1, trust: 1.00, type: "continental", region: "europe", country: "uefa" },
