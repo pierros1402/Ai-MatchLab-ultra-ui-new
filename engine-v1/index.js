@@ -1512,23 +1512,51 @@ app.get("/api/matches-for-date", (req, res) => {
     };
   }
 
-  // 1. Try deploy snapshot (has scores for past matches)
-  try {
-    const p = resolveDataPath("deploy-snapshots", date, "odds.json");
-    const j = JSON.parse(fs.readFileSync(p, "utf8"));
-    const matches = (j.matches || []).map(m => attachAssessment({
-      matchId:    m.matchId,
-      homeTeam:   m.homeTeam || m.home || "",
-      awayTeam:   m.awayTeam || m.away || "",
-      kickoffUtc: m.kickoffUtc || m.kickoff || "",
-      status:     m.status || "PRE",
-      leagueSlug: m.leagueSlug || "",
-      leagueName: m.leagueName || "",
-      scoreHome:  m.scoreHome ?? null,
-      scoreAway:  m.scoreAway ?? null,
-    })).filter(m => m.matchId && m.homeTeam);
-    if (matches.length) return res.json({ ok: true, date, source: "snapshot", matches });
-  } catch { /**/ }
+  // 1. Try fixtures.json (has ESPN scores/FT status) + supplement with odds.json for extra leagues
+  {
+    let fixtureMatches = [];
+    let oddsMatches = [];
+
+    try {
+      const fp = resolveDataPath("deploy-snapshots", date, "fixtures.json");
+      const fj = JSON.parse(fs.readFileSync(fp, "utf8"));
+      fixtureMatches = (Array.isArray(fj) ? fj : (fj.fixtures || fj.matches || []))
+        .map(m => attachAssessment({
+          matchId:    String(m.matchId || m.id || ""),
+          homeTeam:   m.homeTeam || m.home || "",
+          awayTeam:   m.awayTeam || m.away || "",
+          kickoffUtc: m.kickoffUtc || m.kickoff || "",
+          status:     m.status || "PRE",
+          leagueSlug: m.leagueSlug || "",
+          leagueName: m.leagueName || "",
+          scoreHome:  m.scoreHome ?? null,
+          scoreAway:  m.scoreAway ?? null,
+        })).filter(m => m.matchId && m.homeTeam);
+    } catch { /**/ }
+
+    try {
+      const op = resolveDataPath("deploy-snapshots", date, "odds.json");
+      const oj = JSON.parse(fs.readFileSync(op, "utf8"));
+      const seenIds = new Set(fixtureMatches.map(m => String(m.matchId)));
+      oddsMatches = (oj.matches || [])
+        .map(m => attachAssessment({
+          matchId:    String(m.matchId || ""),
+          homeTeam:   m.homeTeam || m.home || "",
+          awayTeam:   m.awayTeam || m.away || "",
+          kickoffUtc: m.kickoffUtc || m.kickoff || "",
+          status:     m.status || "PRE",
+          leagueSlug: m.leagueSlug || "",
+          leagueName: m.leagueName || "",
+          scoreHome:  m.scoreHome ?? null,
+          scoreAway:  m.scoreAway ?? null,
+        }))
+        .filter(m => m.matchId && m.homeTeam && !seenIds.has(String(m.matchId)));
+    } catch { /**/ }
+
+    const merged = [...fixtureMatches, ...oddsMatches]
+      .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+    if (merged.length) return res.json({ ok: true, date, source: "snapshot", matches: merged });
+  }
 
   // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
   try {
