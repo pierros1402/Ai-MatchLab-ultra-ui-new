@@ -7,6 +7,7 @@ import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { buildAiDetailsBlock } from "../ai-match-intelligence/build-ai-details-block.js";
 import { buildRefereeContext } from "../core/referee-context.js";
 import { readPlayerUsageRecord } from "../storage/player-usage-db.js";
+import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
 import { readTeamGeoRecord } from "../storage/team-geo-db.js";
 import { inferAbsencesFromUsage } from "../ai-match-intelligence/player-usage/absence-inference.js";
 
@@ -1410,6 +1411,27 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       updatedAt: awayUsage?.updatedAt || null
     }
   };
+
+  // Fallback: derive expected starters from accumulated lineups in league-memory
+  // when the platform's player-usage-db is empty (data/player-usage/ not populated).
+  if (match.leagueSlug) {
+    for (const [side, teamName] of [["home", match.homeTeam], ["away", match.awayTeam]]) {
+      if (playerUsageIntel[side]?.status !== "unavailable") continue;
+      const u = teamPlayerUsage(match.leagueSlug, teamName);
+      if (!u.sample) continue;
+      playerUsageIntel[side] = {
+        ...playerUsageIntel[side],
+        status: "available",
+        source: "flashscore-lineups",
+        sampleMatches: u.sample,
+        confidence: Math.min(0.9, 0.4 + u.sample * 0.06),
+        expectedStarters: u.expectedStarters.map(p => ({ name: p.name, frequency: p.freq })),
+        coreStarters: u.coreStarters,
+        confirmedAbsences: [],
+        inferredAbsences: [],
+      };
+    }
+  }
 
   return {
     matchId: String(match.matchId),
