@@ -43,7 +43,7 @@ const SLUG_WINDOWS = {
 // Keyed by normalized country (underscores). Anything not listed falls back to
 // the regional/hemisphere default below.
 const COUNTRY_WINDOWS = {
-  // Nordic / Baltic / Ireland — European summer calendar (spring→autumn)
+  // Nordic / Baltic / Ireland / Post-Soviet summer leagues (spring→autumn)
   sweden:        { start: 3, end: 11 },
   norway:        { start: 3, end: 12 },
   finland:       { start: 4, end: 11 },
@@ -53,6 +53,13 @@ const COUNTRY_WINDOWS = {
   latvia:        { start: 3, end: 11 },
   lithuania:     { start: 3, end: 11 },
   faroe_islands: { start: 3, end: 11 },
+  kazakhstan:    { start: 3, end: 11 },
+  moldova:       { start: 3, end: 11 },
+  belarus:       { start: 3, end: 11 },
+  ukraine:       { start: 3, end: 11 },  // limited — season paused but window kept open
+  georgia:       { start: 3, end: 11 },
+  armenia:       { start: 3, end: 11 },
+  azerbaijan:    { start: 3, end: 11 },
 
   // North America
   usa:    { start: 2, end: 11 },
