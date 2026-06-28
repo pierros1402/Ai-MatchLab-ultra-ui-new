@@ -62,10 +62,28 @@ jobs:
 
       - name: Run the autonomous day
         if: env.SKIP != 'true'
+        id: run_day
         env:
           # Route Transfermarkt through the CF proxy (TM blocks the runner's IP).
           TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
         run: node ./engine-v1/jobs/run-day.js "$DAY_KEY"
+
+      - name: Verify results gap check
+        if: env.SKIP != 'true'
+        shell: bash
+        run: |
+          YESTERDAY="$(TZ=Europe/Athens date -d 'yesterday' +%F 2>/dev/null || TZ=Europe/Athens date -v-1d +%F)"
+          VER="data/verification/${YESTERDAY}.json"
+          if [ -f "$VER" ]; then
+            MISSING="$(node -e "const d=JSON.parse(require('fs').readFileSync('$VER','utf8')); console.log(d.missing||0);")"
+            echo "Verification: $MISSING missing matches for ${YESTERDAY}"
+            if [ "$MISSING" -gt 0 ]; then
+              echo "::error::${MISSING} result(s) not collected for ${YESTERDAY} — check data/verification/${YESTERDAY}.json"
+              exit 1
+            fi
+          else
+            echo "No verification file for ${YESTERDAY} (first run or no expected record yet)"
+          fi
 
       - name: Commit snapshots + memory
         if: env.SKIP != 'true'
@@ -80,9 +98,11 @@ jobs:
           [ -f "data/deploy-snapshots/${DAY_KEY}/fixtures-all.json" ] && git add "data/deploy-snapshots/${DAY_KEY}/fixtures-all.json"
           [ -d "data/league-memory" ] && git add data/league-memory
           [ -d "data/odds-memory" ] && git add data/odds-memory
+          [ -d "data/expected-matches" ] && git add data/expected-matches
+          [ -d "data/verification" ] && git add data/verification
 
           # Only our autonomous artifacts may be staged.
-          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/)' || true)"
+          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/)' || true)"
           if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi
 
           if git diff --cached --quiet; then

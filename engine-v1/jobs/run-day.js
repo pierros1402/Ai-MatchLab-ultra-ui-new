@@ -1,15 +1,17 @@
 /**
  * run-day.js
  *
- * The autonomous daily run — no ESPN, no odds API. One self-contained pass that
- * runs at day rollover and leaves no gaps / nothing manual:
- *   1. refresh league awareness from the season calendar (active / offseason),
- *   2. accumulate yesterday's results into form memory (history-index builder),
- *   3. comprehensive fixtures snapshot (display) for our coverage leagues,
- *   4. real bookmaker odds (opening frozen + drift) + our AI assessment,
- *   5. coverage report so any data gap is explicit.
+ * The autonomous daily run — self-contained, multi-source, self-learning:
+ *   1. Calendar awareness (floor — observation will override when data exists)
+ *   2. Accumulate yesterday's results, discipline, lineups, H2H
+ *   3. Observation-driven league state (overrides calendar with real evidence)
+ *   4. Verify yesterday's expected matches were actually collected (multi-source)
+ *   5. Record today's expected matches (for tomorrow's verification)
+ *   6. Derive standings from results (no Wikipedia needed for active leagues)
+ *   7. Comprehensive fixtures snapshot + odds + AI assessment
+ *   8. Coverage report (gaps stay explicit, not discovered late)
  *
- * Usage: node engine-v1/jobs/run-day.js
+ * Usage: node engine-v1/jobs/run-day.js [YYYY-MM-DD]
  */
 
 import { pathToFileURL } from "node:url";
@@ -28,6 +30,9 @@ import { buildTeamAliasesSparql } from "./build-team-aliases-sparql.js";
 import { settleAssessments } from "./settle-assessments-day.js";
 import { accumulateLineups } from "./run-lineups-day.js";
 import { accumulateH2H } from "./accumulate-h2h.js";
+import { updateLeagueStateFromResults } from "./update-league-state-from-results.js";
+import { recordExpectedDay } from "./record-expected-day.js";
+import { verifyResultsDay } from "./verify-results-day.js";
 
 function log(...a) { console.log("[run-day]", ...a); }
 
@@ -35,9 +40,14 @@ export async function runDay(dayKey) {
   const today = dayKey || athensDayKey();
   log("start", { today });
 
-  // 1) Deterministic awareness refresh (which leagues are active today).
+  // yesterday's date — used for verification (accumulate always runs for yesterday)
+  const yesterdayDate = new Date(`${today}T12:00:00Z`);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = yesterdayDate.toISOString().slice(0, 10);
+
+  // 1) Calendar awareness — floor classification (observation will upgrade/override below).
   const awareness = classifyAllByCalendar();
-  log("awareness", { active: awareness.summary?.activeCount, offseason: awareness.summary?.finishedCount });
+  log("awareness:calendar", { active: awareness.summary?.activeCount, offseason: awareness.summary?.finishedCount });
 
   // 2) Accumulate yesterday's finished results into form memory (no gaps over time).
   const results = await accumulateResults();
@@ -60,7 +70,38 @@ export async function runDay(dayKey) {
   const h2h = await accumulateH2H();
   log("h2h-accumulate", { stored: h2h.stored, finished: h2h.finished, scanned: h2h.scanned });
 
-  // 2c) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
+  // 2c) Observation-driven league state — overrides calendar with real evidence.
+  //     Runs AFTER accumulation so yesterday's results are already in league-memory.
+  //     Leagues with a result in the last 14 days → "active" regardless of calendar.
+  const observed = updateLeagueStateFromResults();
+  log("awareness:observation", {
+    updated: observed.updated,
+    overriddenCalendar: observed.overriddenCalendar,
+    active: observed.byObservedState?.active?.length,
+    break: observed.byObservedState?.break?.length,
+    finished: observed.byObservedState?.finished?.length,
+  });
+
+  // 2d) Verify yesterday's expected matches were actually collected (multi-source check).
+  //     Primary: league-memory/results (Flashscore).  Secondary: ESPN fixtures.json.
+  //     Exits with a non-zero summary (but does NOT abort the day) — the workflow
+  //     reads the exit code separately to decide whether to send an alert.
+  const verification = verifyResultsDay(yesterday);
+  log("verify-results", {
+    date: yesterday,
+    expected: verification.expected,
+    foundPrimary: verification.foundPrimary,
+    foundSecondary: verification.foundSecondary,
+    missing: verification.missing,
+    ok: verification.ok,
+  });
+
+  // 2e) Record TODAY's scheduled matches now (before they kick off) so that
+  //     tomorrow's verification cycle can check them.
+  const expected = recordExpectedDay(today);
+  log("record-expected", { date: today, matchCount: expected.matchCount });
+
+  // 2f) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
   const derived = deriveStandingsFromResults();
   log("derive-standings", { derived: derived.derived, leagues: Object.keys(derived.byLeague) });
 
@@ -96,8 +137,9 @@ export async function runDay(dayKey) {
   const cov = buildCoverageReport(today);
   log("coverage", { ...cov.totals, missingStandingsForFixtures: cov.gaps.fixtureLeaguesMissingStandings.length });
 
-  log("done", { today });
-  return { ok: true, today, oddsCount: snap.count };
+  const verificationOk = verification.skipped || verification.ok;
+  log("done", { today, oddsCount: snap.count, verificationOk, missingResults: verification.missing ?? 0 });
+  return { ok: true, today, oddsCount: snap.count, verificationOk, missingResults: verification.missing ?? 0 };
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
