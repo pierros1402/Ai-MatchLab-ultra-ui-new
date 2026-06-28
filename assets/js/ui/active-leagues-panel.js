@@ -52,6 +52,11 @@
     );
   }
 
+  function isLiveStatus(status) {
+    const s = normStatus(status);
+    return s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") || s.includes("HALFTIME") || s.includes("INPROGRESS");
+  }
+
   function isPostponedOrCanceled(status) {
     const s = normStatus(status);
     return (
@@ -171,8 +176,15 @@
 
           const h = m.scoreHome ?? 0;
           const a = m.scoreAway ?? 0;
-
           info.textContent = `FT ${h}-${a}`;
+
+        } else if (isLiveStatus(status)) {
+
+          const h = m.scoreHome ?? 0;
+          const a = m.scoreAway ?? 0;
+          const min = m.minute ? `${m.minute}'` : "LIVE";
+          info.textContent = `${min} ${h}-${a}`;
+          info.style.color = "#ff6b35";
 
         } else {
 
