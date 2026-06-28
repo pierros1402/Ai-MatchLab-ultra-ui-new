@@ -14,12 +14,9 @@ import { teamFormRates } from "../storage/results-memory-db.js";
 
 const r1 = v => (v == null ? null : Math.round(v * 10) / 10);
 
-function normName(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-}
 function findStandingRow(rows, team) {
-  const n = normName(team);
-  return rows.find(r => { const x = normName(r.teamName); return x === n || x.includes(n) || n.includes(x); }) || null;
+  const n = normalizeTeamKey(team);
+  return rows.find(r => { const x = normalizeTeamKey(r.teamName); return x === n || x.includes(n) || n.includes(x); }) || null;
 }
 
 // Map our appointed-referee tendencies (from aiAssessment.referee) to the shape the
