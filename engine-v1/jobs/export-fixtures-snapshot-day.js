@@ -23,7 +23,7 @@ import { pathToFileURL } from "node:url";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
-import { resolveSlug } from "../odds/flashscore-league-map.js";
+import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
 import { resolveInternational } from "../odds/international-competitions.js";
 
 const ATHENS_FMT = new Intl.DateTimeFormat("en-CA", {
@@ -57,11 +57,15 @@ export async function exportFixturesSnapshotDay(dayKey = athensDayKey()) {
     const dk = athensDayKeyFromUtc(fx.kickoffUtc);
     if (dk && !windowSet.has(dk)) continue;
 
-    // International competitions (World Cup, qualifiers, UEFA cup qualifying)
-    // first, then our domestic leagues.
+    // Resolution order:
+    //   1. resolveInternational — legacy name-based international lookup
+    //   2. resolveSlugFromPath — deterministic path→slug for cups/continental/qualifiers
+    //   3. resolveSlug — fuzzy name match for domestic leagues
     const intl = resolveInternational(fx.leagueName, fx.country);
-    const slug = intl ? intl.slug : resolveSlug(fx.country, fx.leagueName);
-    if (!slug) continue;           // only leagues in our coverage map + internationals
+    const slug = intl?.slug
+      || resolveSlugFromPath(fx.leaguePath)
+      || resolveSlug(fx.country, fx.leagueName);
+    if (!slug) continue;
 
     matches.push({
       id: `fs_${fx.matchId}`,

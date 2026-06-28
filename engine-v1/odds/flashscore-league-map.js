@@ -128,3 +128,98 @@ export function resolveSlug(country, leagueName_) {
 export function coverageCountries() {
   return new Set(COUNTRY_INDEX.keys());
 }
+
+/**
+ * Deterministic leaguePath → slug lookup for cups, continental competitions,
+ * and qualifiers — competitions that resolveSlug() explicitly rejects via
+ * REJECT_RE (cup/pokal/coupe/trophy) or has no country index for (UEFA/CAF etc.).
+ *
+ * Paths are stable Flashscore URL segments; this is the single source of truth
+ * for non-domestic-league competitions.  New paths can be added as they appear
+ * in the feed.  Returns null for unknown paths (treated as untracked).
+ */
+const PATH_SLUG_MAP = {
+  // ── UEFA main competitions ────────────────────────────────────────────────
+  "/football/europe/champions-league/":                         "uefa.champions",
+  "/football/europe/champions-league-qualification/":           "ucl.q",
+  "/football/europe/europa-league/":                            "uefa.europa",
+  "/football/europe/europa-league-qualification/":              "uel.q",
+  "/football/europe/europa-conference-league/":                 "uefa.europa.conf",
+  "/football/europe/europa-conference-league-qualification/":   "uecl.q",
+  "/football/europe/super-cup/":                                "uefa.super_cup",
+  "/football/europe/nations-league/":                           "uefa.nations",
+  "/football/europe/euro/":                                     "uefa.euro",
+  "/football/europe/euro-qualification/":                       "uefa.euro.qual",
+  // ── FIFA ─────────────────────────────────────────────────────────────────
+  "/football/world/world-championship/":                        "fifa.world",
+  "/football/world/club-world-cup/":                            "fifa.club_world",
+  // ── CONMEBOL ─────────────────────────────────────────────────────────────
+  "/football/south-america/copa-libertadores/":                 "conmebol.libertadores",
+  "/football/south-america/copa-sudamericana/":                 "conmebol.sudamericana",
+  "/football/south-america/copa-america/":                      "conmebol.copa_america",
+  // ── CONCACAF ─────────────────────────────────────────────────────────────
+  "/football/world/concacaf-champions-cup/":                    "concacaf.champions",
+  "/football/concacaf/concacaf-champions-cup/":                 "concacaf.champions",
+  "/football/concacaf/nations-league/":                         "concacaf.nations",
+  // ── AFC ──────────────────────────────────────────────────────────────────
+  "/football/asia/afc-champions-league-elite/":                 "afc.champions",
+  "/football/asia/afc-champions-league/":                       "afc.champions",
+  "/football/asia/afc-cup/":                                    "afc.cup",
+  "/football/asia/afc-asian-cup/":                              "afc.asian_cup",
+  // ── CAF ──────────────────────────────────────────────────────────────────
+  "/football/africa/caf-champions-league/":                     "caf.champions",
+  "/football/africa/caf-confederation-cup/":                    "caf.confed",
+  "/football/africa/africa-cup-of-nations/":                    "caf.nations",
+  "/football/africa/africa-cup-of-nations-qualification/":      "caf.nations",
+  // ── England cups ─────────────────────────────────────────────────────────
+  "/football/england/fa-cup/":                                  "eng.fa",
+  "/football/england/league-cup/":                              "eng.league_cup",
+  "/football/england/football-league-trophy/":                  "eng.trophy",
+  // ── Germany ──────────────────────────────────────────────────────────────
+  "/football/germany/dfb-pokal/":                               "ger.dfb_pokal",
+  // ── Spain ────────────────────────────────────────────────────────────────
+  "/football/spain/copa-del-rey/":                              "esp.copa_del_rey",
+  "/football/spain/super-cup/":                                 "esp.super_cup",
+  // ── Italy ────────────────────────────────────────────────────────────────
+  "/football/italy/coppa-italia/":                              "ita.coppa_italia",
+  // ── France ───────────────────────────────────────────────────────────────
+  "/football/france/coupe-de-france/":                          "fra.coupe_de_france",
+  "/football/france/trophee-des-champions/":                    "fra.super_cup",
+  "/football/france/trophy-champions/":                         "fra.super_cup",
+  // ── Netherlands ──────────────────────────────────────────────────────────
+  "/football/netherlands/knvb-cup/":                            "ned.cup",
+  // ── Portugal ─────────────────────────────────────────────────────────────
+  "/football/portugal/taca-de-portugal/":                       "por.taca.portugal",
+  // ── Scotland ─────────────────────────────────────────────────────────────
+  "/football/scotland/challenge-cup/":                          "sco.challenge",
+  "/football/scotland/scottish-cup/":                           "sco.tennents",
+  // ── Other European cups ───────────────────────────────────────────────────
+  "/football/greece/cup/":                                      "gre.cup",
+  "/football/cyprus/cup/":                                      "cyp.cup",
+  "/football/turkey/cup/":                                      "tur.cup",
+  "/football/switzerland/cup/":                                 "sui.cup",
+  "/football/austria/cup/":                                     "aut.cup",
+  "/football/denmark/cup/":                                     "den.cup",
+  "/football/sweden/cup/":                                      "swe.cup",
+  "/football/norway/cup/":                                      "nor.cup",
+  "/football/poland/cup/":                                      "pol.cup",
+  "/football/czech-republic/cup/":                              "cze.cup",
+  "/football/romania/cup/":                                     "rou.cup",
+  "/football/serbia/cup/":                                      "srb.cup",
+  "/football/croatia/cup/":                                     "cro.cup",
+  "/football/hungary/cup/":                                     "hun.cup",
+  "/football/bulgaria/cup/":                                    "bul.cup",
+  "/football/ukraine/cup/":                                     "ukr.cup",
+};
+
+export function resolveSlugFromPath(leaguePath) {
+  if (!leaguePath) return null;
+  const slug = PATH_SLUG_MAP[leaguePath] || null;
+  if (slug && isDisabledLeague(slug)) return null;
+  return slug;
+}
+
+/** All leaguePaths we have an explicit mapping for. */
+export function knownLeaguePaths() {
+  return Object.keys(PATH_SLUG_MAP);
+}

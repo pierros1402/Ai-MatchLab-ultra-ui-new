@@ -6,13 +6,14 @@
  * results memory. Covers ALL leagues that Flashscore provides, not just those
  * pre-registered in LEAGUES_COVERAGE.
  *
- * Slug resolution (two-pass, no manual list needed):
- *   1. resolveSlug(country, leagueName) — our coverage map (fast, known leagues)
- *   2. Cross-reference matchId with recent fixtures-all.json snapshots — these
- *      already have resolved slugs for EVERY league the feed exports.  This is
- *      free (data already on disk) and expands coverage automatically as new
- *      leagues appear in the Flashscore feed.
+ * Slug resolution (three-pass, full coverage):
+ *   1. resolveSlug(country, leagueName) — fuzzy name match for domestic leagues
+ *   2. resolveSlugFromPath(leaguePath) — deterministic path lookup for cups,
+ *      continental competitions, and qualifiers (UCL Q, UEL Q, Copa del Rey…)
+ *   3. fixtures-all cross-reference by matchId — picks up any league that
+ *      recently appeared in fixtures-all.json (already has resolved slugs)
  *
+ * This covers every competition type with no manual additions needed.
  * Guardrails: canonicalWrites 0 (writes only to league-memory/results).
  */
 
@@ -20,7 +21,7 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "node:url";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
-import { resolveSlug } from "../odds/flashscore-league-map.js";
+import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
 import { recordMatchResult, getResultsSummary } from "../storage/results-memory-db.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
@@ -63,7 +64,7 @@ export async function accumulateResults() {
   const stats = {
     scanned: 0, finished: 0, attributed: 0, stored: 0,
     byLeague: {},
-    resolvedBy: { coverageMap: 0, fixturesAll: 0 },
+    resolvedBy: { coverageMap: 0, pathMap: 0, fixturesAll: 0 },
   };
 
   for (const m of feed.rows) {
@@ -71,14 +72,20 @@ export async function accumulateResults() {
     if (m.scoreHome == null || m.scoreAway == null) continue;  // not finished
     stats.finished++;
 
-    // Pass 1: registered coverage map (resolveSlug).
+    // Pass 1: fuzzy name match for domestic leagues.
     let slug = resolveSlug(m.country, m.leagueName);
     if (slug) {
       stats.resolvedBy.coverageMap++;
     } else {
-      // Pass 2: fixtures-all cross-reference by matchId.
-      slug = fixturesAllIndex.get(String(m.matchId)) || null;
-      if (slug) stats.resolvedBy.fixturesAll++;
+      // Pass 2: deterministic path lookup (cups, continental, qualifiers).
+      slug = resolveSlugFromPath(m.leaguePath) || null;
+      if (slug) {
+        stats.resolvedBy.pathMap++;
+      } else {
+        // Pass 3: fixtures-all cross-reference by matchId.
+        slug = fixturesAllIndex.get(String(m.matchId)) || null;
+        if (slug) stats.resolvedBy.fixturesAll++;
+      }
     }
 
     if (!slug) continue;  // league not in our feed window at all — skip
