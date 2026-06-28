@@ -52,7 +52,7 @@
       });
 
       // Feed both panels — Active Leagues (compact) and Matches & Details (with assessments)
-      window.dispatchEvent(new CustomEvent("active-leagues:updated", { detail: { matches: matches, date: date } }));
+      document.dispatchEvent(new CustomEvent("active-leagues:updated", { detail: { matches: matches, date: date } }));
       emit("matches:set", { matches: matches, date: date });
       emit("date-matches:loaded", { date: date, count: matches.length, source: j.source });
       console.log("[date-nav-loader]", date, matches.length, "matches from", j.source);
