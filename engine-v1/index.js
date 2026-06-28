@@ -1614,7 +1614,51 @@ app.get("/api/matches-for-date", (req, res) => {
         });
     } catch { /**/ }
 
-    const merged = [...fixtureMatches, ...oddsMatches]
+    // 1c. fixtures-all.json — supplement with active leagues not covered by
+    //     fixtures.json or odds.json (e.g. swe.2, kaz.1, est.1, isl.1…).
+    //     Dedup by slug AND by normalised team pair to avoid duplicates.
+    let fixturesAllMatches = [];
+    try {
+      // fixtures-all.json lives in TODAY's snapshot dir (rolling 3-day window).
+      const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+      for (const key of [todayKey, (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toLocaleDateString("en-CA", { timeZone: "Europe/Athens" }); })()] ) {
+        const fap = resolveDataPath("deploy-snapshots", key, "fixtures-all.json");
+        if (!fs.existsSync(fap)) continue;
+        const faj = JSON.parse(fs.readFileSync(fap, "utf8"));
+        const leagueState = readLeagueState();
+        const seenTeams = new Set([...fixtureMatches, ...oddsMatches].map(m =>
+          `${fxNormTeam(m.homeTeam)}|${fxNormTeam(m.awayTeam)}`
+        ));
+        fixturesAllMatches = (faj.matches || [])
+          .filter(m => {
+            if (m.dayKey !== date) return false;
+            const slug = String(m.leagueSlug || "");
+            const canonical = SLUG_ALIASES[slug] || slug;
+            if (fixtureSlugs.has(slug) || fixtureSlugs.has(canonical)) return false;
+            const st = leagueState[slug] || leagueState[canonical];
+            if (st && (st.state === "finished" || st.state === "disabled")) return false;
+            const teamKey = `${fxNormTeam(m.home)}|${fxNormTeam(m.away)}`;
+            if (seenTeams.has(teamKey)) return false;
+            seenTeams.add(teamKey);
+            fixtureSlugs.add(slug);
+            return true;
+          })
+          .map(m => attachAssessment({
+            matchId:    String(m.id || m.matchId || ""),
+            homeTeam:   m.home || m.homeTeam || "",
+            awayTeam:   m.away || m.awayTeam || "",
+            kickoffUtc: m.kickoffUtc || "",
+            status:     "PRE",
+            leagueSlug: m.leagueSlug || "",
+            leagueName: m.leagueName || m.competition || "",
+            scoreHome:  null,
+            scoreAway:  null,
+          })).filter(m => m.matchId && m.homeTeam);
+        break;
+      }
+    } catch { /**/ }
+
+    const merged = [...fixtureMatches, ...oddsMatches, ...fixturesAllMatches]
       .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
     if (merged.length) return res.json({ ok: true, date, source: "snapshot", matches: merged });
   }
