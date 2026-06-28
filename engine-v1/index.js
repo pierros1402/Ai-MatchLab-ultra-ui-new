@@ -1855,6 +1855,32 @@ app.get("/details", async (req, res) => {
         return;
       }
 
+      // Last resort: match exists in fixtures-all.json but has no odds-memory record yet.
+      // Return basic match info so the details panel shows something instead of 404.
+      const fixturesAllSnap = readFixturesAllSnapshot();
+      if (fixturesAllSnap) {
+        const fxMatch = (fixturesAllSnap.matches || []).find(m => String(m.id || m.matchId) === id);
+        if (fxMatch) {
+          return res.json({
+            ok: true,
+            matchId: id,
+            source: "fixtures-all",
+            dayKey: fxMatch.dayKey || null,
+            basic: {
+              matchId: id,
+              homeTeam: fxMatch.home || fxMatch.homeTeam || "",
+              awayTeam: fxMatch.away || fxMatch.awayTeam || "",
+              leagueSlug: fxMatch.leagueSlug || "",
+              leagueName: fxMatch.leagueName || fxMatch.competition || "",
+              kickoffUtc: fxMatch.kickoffUtc || "",
+              status: fxMatch.status || "PRE",
+            },
+            assessment: null,
+            snapshot: null,
+          });
+        }
+      }
+
       res.status(404).json(snapshotResult);
       return;
     }
