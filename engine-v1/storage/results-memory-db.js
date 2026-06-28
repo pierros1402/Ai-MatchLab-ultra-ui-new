@@ -14,8 +14,8 @@ import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
 
 const DIR = resolveDataPath("league-memory", "results");
-const PER_TEAM_CAP = 15;
-const MAX_AGE_DAYS = 70;
+const PER_TEAM_CAP = 250;   // ~5 seasons of weekly league play per team
+const MAX_AGE_DAYS = 1825;  // 5 years
 
 function fileFor(slug) {
   return resolveDataPath("league-memory", "results", `${slug}.json`);
