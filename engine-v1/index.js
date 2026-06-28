@@ -957,6 +957,13 @@ function readFixturesAllSnapshot() {
     return null;
   }
 }
+function readLeagueState() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "league-memory", "state.json"), "utf8"));
+  } catch {
+    return {};
+  }
+}
 // Slug aliases: old BetExplorer slugs that map to ESPN canonical slugs
 const FX_SLUG_ALIASES = {
   "fifa.world_cup":      "fifa.world",
@@ -983,6 +990,9 @@ function mergeFlashscoreFixtures(result, requestedDay) {
     }
   }
 
+  // Read league state once; skip leagues the calendar classifies as finished/disabled
+  const leagueState = readLeagueState();
+
   const extra = [];
   for (const m of snap.matches) {
     if (m.dayKey !== requestedDay) continue;
@@ -990,6 +1000,9 @@ function mergeFlashscoreFixtures(result, requestedDay) {
     const slug = String(m.leagueSlug || "");
     const canonical = FX_SLUG_ALIASES[slug] || slug;
     if (baseSlugs.has(slug) || baseSlugs.has(canonical)) continue;
+    // Skip if league-memory says the league is finished or disabled
+    const st = leagueState[slug] || leagueState[canonical];
+    if (st && (st.state === "finished" || st.state === "disabled")) continue;
     // Skip if team pair already seen
     const key = `${fxNormTeam(m.home)}|${fxNormTeam(m.away)}`;
     if (seen.has(key)) continue;
