@@ -224,10 +224,19 @@
     }
   }
 
-  document.addEventListener("active-leagues:updated", function (e) {
+  // Track which date the user has navigated to (null = today)
+  let viewingDate = null;
 
+  function todayKey() {
+    return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+  }
+
+  document.addEventListener("active-leagues:updated", function (e) {
     try {
-      render(e?.detail || null);
+      const detail = e?.detail || null;
+      // Record which date is being viewed so snapshot:update knows to back off
+      viewingDate = (detail && detail.date && detail.date !== todayKey()) ? detail.date : null;
+      render(detail);
     } catch (err) {
       console.error("[active-leagues-panel] render error:", err);
     }
@@ -251,6 +260,9 @@ if (window.on) {
   on("snapshot:update", snap => {
 
     try {
+      // If user has navigated to a non-today date, don't let the live
+      // snapshot override their selected date's data.
+      if (viewingDate) return;
 
       let matches = [];
 
