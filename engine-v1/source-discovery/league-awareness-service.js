@@ -48,10 +48,12 @@ function hemisphereForCountry(country) {
   return SOUTHERN_COUNTRIES.has(key) ? "southern" : "northern";
 }
 
-// Build the domestic-league universe from the coverage registry.
+// All competition types: leagues, cups, continental, national.
+// Cups and continental competitions have different season patterns but the same
+// observation logic — if we see them in the feed they're active.
 const LEAGUE_META = Object.fromEntries(
   LEAGUES_COVERAGE
-    .filter(entry => entry.type === "league")
+    .filter(entry => ["league", "cup", "continental", "national"].includes(entry.type))
     .map(entry => {
       const country = titleCase(entry.country);
       return [entry.slug, {
@@ -60,6 +62,7 @@ const LEAGUE_META = Object.fromEntries(
         tier:       entry.tier,
         region:     entry.region,
         trust:      entry.trust,
+        type:       entry.type,
         hemisphere: hemisphereForCountry(entry.country)
       }];
     })

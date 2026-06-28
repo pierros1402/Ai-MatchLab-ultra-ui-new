@@ -304,34 +304,52 @@ export const LEAGUES_COVERAGE = [
   { slug: "smr.1", tier: 3, trust: 0.60, type: "league", region: "europe", country: "san_marino" },
   { slug: "smr.2", tier: 3, trust: 0.52, type: "league", region: "europe", country: "san_marino" },
   // ----------------------------------------------------------
-  // FIFA WORLD COMPETITIONS (active during summer — added for WC 2026 support)
+  // FIFA WORLD COMPETITIONS
   // ----------------------------------------------------------
-  { slug: "fifa.world", tier: 1, trust: 0.95, type: "national", region: "world", country: "fifa" },
+  { slug: "fifa.world",        tier: 1, trust: 0.98, type: "national",    region: "world",    country: "fifa"  },
+  { slug: "fifa.world.qual",   tier: 1, trust: 0.88, type: "continental", region: "world",    country: "fifa"  },
+  { slug: "fifa.club_world",   tier: 1, trust: 0.90, type: "continental", region: "world",    country: "fifa"  },
 
   // ----------------------------------------------------------
-  // UEFA
+  // UEFA — main competitions
   // ----------------------------------------------------------
-  { slug: "uefa.champions", tier: 1, trust: 1.00, type: "continental", region: "europe", country: "uefa" },
-  { slug: "uefa.europa", tier: 1, trust: 0.96, type: "continental", region: "europe", country: "uefa" },
-  { slug: "uefa.europa.conf", tier: 2, trust: 0.90, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uefa.champions",      tier: 1, trust: 1.00, type: "continental", region: "europe", country: "uefa" },
+  { slug: "ucl.q",               tier: 1, trust: 0.92, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uefa.europa",         tier: 1, trust: 0.96, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uel.q",               tier: 1, trust: 0.88, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uefa.europa.conf",    tier: 2, trust: 0.90, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uecl.q",              tier: 2, trust: 0.82, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uefa.super_cup",      tier: 1, trust: 0.92, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uefa.nations",        tier: 1, trust: 0.92, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uefa.euro",           tier: 1, trust: 0.96, type: "continental", region: "europe", country: "uefa" },
+  { slug: "uefa.euro.qual",      tier: 1, trust: 0.88, type: "continental", region: "europe", country: "uefa" },
 
   // ----------------------------------------------------------
   // AFC
   // ----------------------------------------------------------
-  { slug: "afc.champions", tier: 2, trust: 0.84, type: "continental", region: "asia", country: "afc" },
-  { slug: "afc.cup", tier: 3, trust: 0.76, type: "continental", region: "asia", country: "afc" },
+  { slug: "afc.champions",   tier: 2, trust: 0.84, type: "continental", region: "asia", country: "afc" },
+  { slug: "afc.cup",         tier: 3, trust: 0.76, type: "continental", region: "asia", country: "afc" },
+  { slug: "afc.asian_cup",   tier: 1, trust: 0.88, type: "continental", region: "asia", country: "afc" },
 
   // ----------------------------------------------------------
   // CAF
   // ----------------------------------------------------------
-  { slug: "caf.champions", tier: 2, trust: 0.82, type: "continental", region: "africa", country: "caf" },
-  { slug: "caf.confed", tier: 3, trust: 0.74, type: "continental", region: "africa", country: "caf" },
-  { slug: "caf.nations", tier: 2, trust: 0.80, type: "continental", region: "africa", country: "caf" },
+  { slug: "caf.champions",   tier: 2, trust: 0.82, type: "continental", region: "africa", country: "caf" },
+  { slug: "caf.confed",      tier: 3, trust: 0.74, type: "continental", region: "africa", country: "caf" },
+  { slug: "caf.nations",     tier: 1, trust: 0.88, type: "continental", region: "africa", country: "caf" },
 
   // ----------------------------------------------------------
   // CONMEBOL
   // ----------------------------------------------------------
-  { slug: "conmebol.libertadores", tier: 2, trust: 0.84, type: "continental", region: "americas", country: "conmebol" },
+  { slug: "conmebol.libertadores",   tier: 1, trust: 0.88, type: "continental", region: "americas", country: "conmebol" },
+  { slug: "conmebol.sudamericana",   tier: 2, trust: 0.82, type: "continental", region: "americas", country: "conmebol" },
+  { slug: "conmebol.copa_america",   tier: 1, trust: 0.92, type: "continental", region: "americas", country: "conmebol" },
+
+  // ----------------------------------------------------------
+  // CONCACAF
+  // ----------------------------------------------------------
+  { slug: "concacaf.champions",      tier: 2, trust: 0.80, type: "continental", region: "americas", country: "concacaf" },
+  { slug: "concacaf.nations",        tier: 2, trust: 0.78, type: "continental", region: "americas", country: "concacaf" },
 
   // ----------------------------------------------------------
   // AMERICAS

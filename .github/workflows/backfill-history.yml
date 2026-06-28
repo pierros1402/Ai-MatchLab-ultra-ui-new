@@ -1,0 +1,72 @@
+name: Backfill historical results
+
+# One-shot (re-runnable) job that downloads football-data.co.uk CSVs for the
+# past N seasons and populates league-memory/results with historical form data.
+# Run manually; safe to trigger multiple times (progress is tracked, duplicates
+# are skipped).  Does NOT touch canonical fixtures — only results memory.
+
+on:
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: "Number of past seasons to backfill (default: 5)"
+        required: false
+        default: "5"
+      slug:
+        description: "Single league slug to backfill (e.g. eng.1). Empty = all."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run historical backfill
+        env:
+          SEASONS: ${{ inputs.seasons }}
+          SLUG:    ${{ inputs.slug }}
+        run: |
+          ARGS="--seasons=${SEASONS:-5}"
+          [ -n "${SLUG:-}" ] && ARGS="$ARGS --slug=${SLUG}"
+          node engine-v1/jobs/backfill-historical-results.js $ARGS
+
+      - name: Commit results
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git restore --staged . || true
+
+          [ -d "data/league-memory/results" ] && git add data/league-memory/results
+          [ -f "data/backfill-progress.json" ] && git add data/backfill-progress.json
+          [ -f "data/league-memory/state.json" ] && git add data/league-memory/state.json
+
+          BAD="$(git diff --cached --name-only | grep -Ev '^(data/league-memory/|data/backfill-progress\.json)' || true)"
+          if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi
+
+          if git diff --cached --quiet; then
+            echo "No new results to commit."
+          else
+            SEASON="${SEASONS:-5}"
+            git commit -m "Historical backfill: ${SEASON} seasons via football-data.co.uk"
+            git push
+          fi
