@@ -254,38 +254,30 @@
     syncSaved(window.getSavedMatches ? window.getSavedMatches() : []);
   } catch {}
 // --------------------------------------------------
-// GLOBAL SNAPSHOT SYNC (LIVE + TODAY DATASET)
+// LIVE SCORE SYNC
 // --------------------------------------------------
 if (window.on) {
-  on("snapshot:update", snap => {
-
+  on("live:update", payload => {
     try {
-      // If user has navigated to a non-today date, don't let the live
-      // snapshot override their selected date's data.
+      // Don't update live scores when viewing a past/future date
       if (viewingDate) return;
+      if (!payload?.matches?.length) return;
 
-      let matches = [];
+      const map = new Map(LAST_MATCHES.map(m => [String(m.id ?? m.matchId), m]));
 
-      // PRIORITY → active snapshot
-      if (snap?.active?.matches?.length) {
-        matches = snap.active.matches;
+      for (const m of payload.matches) {
+        const existing = map.get(String(m.id || m.matchId));
+        if (!existing) continue;
+        existing.status    = m.status;
+        existing.scoreHome = m.scoreHome;
+        existing.scoreAway = m.scoreAway;
+        existing.minute    = m.minute;
       }
 
-      // fallback → last active
-      if (!matches.length) {
-        matches = LAST_MATCHES || [];
-      }
-
-      const payload = { matches };
-
-      window.__AIML_LAST_ACTIVE = payload;
-
-      render(payload);
-
+      render({ matches: Array.from(map.values()) });
     } catch (err) {
-      console.error("[active snapshot sync]", err);
+      console.error("[active-leagues-panel] live:update error:", err);
     }
-
   });
 }
   if (window.__AIML_LAST_ACTIVE) {
