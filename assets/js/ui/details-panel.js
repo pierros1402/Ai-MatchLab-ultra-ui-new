@@ -1810,12 +1810,9 @@ async function renderLocal(match, mountEl) {
   const buildUrl = (mode) => {
     const p = new URLSearchParams();
     p.set("id", matchId);
-    p.set("league", leagueSlug);
-    p.set("season", season);
-    if (mode === "check") p.set("check", "1");
-    if (mode === "refresh") p.set("refresh", "1");
+    if (mode === "refresh") p.set("rebuild", "1");
     p.set("v", String(Date.now()));
-    return `${detailsBase()}/v1/match/details?${p.toString()}`;
+    return `${detailsBase()}/details?${p.toString()}`;
   };
 
   async function run(mode) {

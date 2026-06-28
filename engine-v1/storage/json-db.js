@@ -1,6 +1,7 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "node:url";
+import { normalizeTeamKey } from "../core/normalize.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,17 +12,6 @@ const dbPath = path.join(dataDir, "fixtures.json");
 const dbTmpPath = path.join(dataDir, "fixtures.json.tmp");
 const dbBakPath = path.join(dataDir, "fixtures.json.bak");
 const lockDir = path.join(dataDir, ".fixtures.lock");
-
-// 🔥 ADD THIS EXACTLY HERE
-function normalizeTeamKey(name = "") {
-  return String(name || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\b(fc|cf|sc|if|ac|afc|club|footballclub|fodbold|fk|nk|hnk)\b/g, "")
-    .replace(/[^a-z0-9]/g, "")
-    .trim();
-}
 
 function sleepSync(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
