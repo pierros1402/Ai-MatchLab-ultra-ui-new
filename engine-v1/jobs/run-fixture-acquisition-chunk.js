@@ -6,6 +6,8 @@ import { LEAGUES_BY_SLUG } from "../../workers/_shared/leagues-coverage.js";
 import { isInSeason } from "../source-discovery/season-calendar.js";
 import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
 import { normalizeFixture } from "../core/normalize.js";
+import { buildCanonicalId } from "../core/canonical-id.js";
+import { registerMatch } from "../storage/canonical-match-registry.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
@@ -271,7 +273,29 @@ function mergeCanonicalFixtures(existing, incoming) {
 }
 
 function serializeFixture(normalized, adapterId, fetchedDayKey) {
+  const canonicalId = normalized.canonicalId
+    || buildCanonicalId(
+        normalized.leagueSlug,
+        normalized.homeTeam,
+        normalized.awayTeam,
+        normalized.kickoffUtc
+      );
+
+  // Register in the canonical registry so any layer can resolve source ID → canonical ID
+  if (canonicalId && normalized.dayKey) {
+    registerMatch(normalized.dayKey, {
+      canonicalId,
+      leagueSlug: normalized.leagueSlug,
+      homeTeam: normalized.homeTeam,
+      awayTeam: normalized.awayTeam,
+      kickoffUtc: normalized.kickoffUtc,
+      source: normalized.source || adapterId,
+      sourceId: normalized.sourceId || normalized.sourceMatchId || normalized.matchId
+    });
+  }
+
   return {
+    canonicalId,
     matchId: normalized.matchId,
     matchKey: normalized.matchKey,
     source: normalized.source || adapterId,

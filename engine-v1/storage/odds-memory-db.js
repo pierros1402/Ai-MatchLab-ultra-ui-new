@@ -115,6 +115,7 @@ export function recordOddsSnapshot(matchId, meta, pricing) {
   };
 
   cur.matchId    = String(matchId);
+  cur.canonicalId = meta.canonicalId ?? cur.canonicalId ?? null;
   cur.leagueSlug = meta.leagueSlug ?? cur.leagueSlug ?? null;
   cur.competition = meta.competition ?? cur.competition ?? null;
   cur.home       = meta.home ?? cur.home ?? null;
@@ -224,6 +225,7 @@ export function getOddsForDay(dayKey) {
       const m1x2 = d.markets?.["1X2"];
       matches.push({
         matchId: d.matchId,
+        canonicalId: d.canonicalId || null,
         leagueSlug: d.leagueSlug,
         competition: d.competition || null,
         home: d.home,

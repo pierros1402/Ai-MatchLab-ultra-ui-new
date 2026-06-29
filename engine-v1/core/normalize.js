@@ -1,6 +1,7 @@
 import { LEAGUE_NAME_MAP } from "../config.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { mapStatus } from "./status-map.js";
+import { buildCanonicalId } from "./canonical-id.js";
 
 function parseScore(value) {
   if (value === undefined || value === null || value === "") {
@@ -114,8 +115,13 @@ export function normalizeFixture(event, slug) {
     kickoffUtc: kickoff
   });
 
+  const canonicalId = buildCanonicalId(slug, homeTeam, awayTeam, kickoff);
+
   return {
-    matchId: String(event.id), // κρατιέται προσωρινά για backward compatibility
+    // canonicalId is the primary stable key — provider-agnostic
+    canonicalId,
+    // matchId kept for backward compatibility; equals espn sourceId for now
+    matchId: String(event.id),
     matchKey,
     source: "espn",
     sourceId: String(event.id),

@@ -941,6 +941,29 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "engine-v1" });
 });
 
+app.get("/system-health", (req, res) => {
+  try {
+    const day = String(req.query.day || athensDayKey());
+    const file = resolveDataPath("deploy-snapshots", day, "invariant-report.json");
+    if (!fs.existsSync(file)) {
+      return res.json({
+        ok: true,
+        valueSafe: true,
+        autoFixed: [],
+        warnings: [],
+        blocked: [],
+        checkedAt: null,
+        dayKey: day,
+        status: "no_report"
+      });
+    }
+    const report = JSON.parse(fs.readFileSync(file, "utf8"));
+    res.json(report);
+  } catch (err) {
+    res.status(500).json({ ok: false, error: String(err?.message || err) });
+  }
+});
+
 // ── Autonomous fixtures merge (DISPLAY ONLY) ────────────────────────────────────
 // Appends our comprehensive Flashscore fixtures (data/deploy-snapshots/{today}/
 // fixtures-all.json, which carries the 3-day window) to the runtime response,

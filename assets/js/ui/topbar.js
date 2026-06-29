@@ -381,41 +381,13 @@ btnToday.addEventListener("click", () => setInputs(today, today));
   // -------------------------------------------------------
   // Admin unlock (local only)
   // -------------------------------------------------------
-  const ADMIN_PIN = "1234";
-  const ADMIN_KEY = "aiml_admin_enabled";
-
   function enableAdmin() {
     document.body.classList.add("aiml-admin");
     document.documentElement.classList.add("aiml-admin");
-    localStorage.setItem(ADMIN_KEY, "1");
   }
 
-  function disableAdmin() {
-    document.body.classList.remove("aiml-admin");
-    document.documentElement.classList.remove("aiml-admin");
-    localStorage.removeItem(ADMIN_KEY);
-  }
-
-  // Always enable admin tools
+  // Admin mode is permanently active — this is a single-operator platform.
   enableAdmin();
-
-  // Ctrl+Shift+E toggles admin (safe single handler)
-  window.addEventListener("keydown", (e) => {
-    const isCombo = e.ctrlKey && e.shiftKey && (e.key && e.key.toLowerCase() === "e");
-    if (!isCombo) return;
-
-    e.preventDefault();
-
-    const already = localStorage.getItem(ADMIN_KEY) === "1";
-    if (already) {
-      if (confirm("Disable ADMIN MODE?")) disableAdmin();
-      return;
-    }
-
-    const pin = prompt("Enter ADMIN PIN:");
-    if (pin === ADMIN_PIN) enableAdmin();
-    else if (pin !== null) alert("Wrong PIN");
-  });
 
 })();
 

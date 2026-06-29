@@ -1,9 +1,13 @@
-﻿import { spawnSync } from "child_process";
+﻿import fs from "fs";
+import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import path from "path";
 
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
+import { deriveValueFromOdds } from "./derive-value-from-odds.js";
+import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
+import { resolveDataPath } from "../storage/data-root.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -66,6 +70,69 @@ function parseArgs(argv = []) {
   return out;
 }
 
+// Patch only the mutable status fields in an existing details file.
+// This avoids a full rebuild while keeping details.basic in sync with
+// the canonical fixture status after each live refresh cycle.
+function patchDetailsBasic(dayKey, changedFixtures = []) {
+  let patched = 0;
+  let skipped = 0;
+
+  for (const row of changedFixtures) {
+    const id = row?.canonicalId || row?.matchId;
+    if (!id || !dayKey) { skipped++; continue; }
+
+    const file = resolveDataPath("details", dayKey, `${id}.json`);
+    if (!fs.existsSync(file)) { skipped++; continue; }
+
+    let detail;
+    try {
+      detail = JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      skipped++;
+      continue;
+    }
+
+    if (!detail?.basic) { skipped++; continue; }
+
+    const before = JSON.stringify({
+      status: detail.basic.status,
+      rawStatus: detail.basic.rawStatus,
+      minute: detail.basic.minute,
+      scoreHome: detail.basic.scoreHome,
+      scoreAway: detail.basic.scoreAway
+    });
+
+    // Only overwrite fields that have a meaningful incoming value
+    if (row.status)    detail.basic.status    = row.status;
+    if (row.rawStatus) detail.basic.rawStatus = row.rawStatus;
+    detail.basic.minute    = row.minute    ?? detail.basic.minute ?? null;
+    detail.basic.scoreHome = row.scoreHome ?? detail.basic.scoreHome ?? null;
+    detail.basic.scoreAway = row.scoreAway ?? detail.basic.scoreAway ?? null;
+
+    const after = JSON.stringify({
+      status: detail.basic.status,
+      rawStatus: detail.basic.rawStatus,
+      minute: detail.basic.minute,
+      scoreHome: detail.basic.scoreHome,
+      scoreAway: detail.basic.scoreAway
+    });
+
+    if (before === after) { skipped++; continue; }
+
+    // Record the patch timestamp so we can audit drift later
+    detail.basic.lastStatusPatchedAt = new Date().toISOString();
+
+    try {
+      fs.writeFileSync(file, JSON.stringify(detail, null, 2), "utf8");
+      patched++;
+    } catch {
+      skipped++;
+    }
+  }
+
+  return { patched, skipped, total: changedFixtures.length };
+}
+
 export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   const safeDayKey = normalizeText(dayKey);
 
@@ -95,7 +162,6 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   const thisFile = fileURLToPath(import.meta.url);
   const jobsDir = path.dirname(thisFile);
   const acquisitionScript = path.join(jobsDir, "run-fixture-acquisition-chunk.js");
-  const liveStatusScript = path.join(jobsDir, "run-live-status-refresh-day.js");
 
   if (chunks > 0) {
     for (let i = 1; i <= chunks; i += 1) {
@@ -123,8 +189,22 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   }
 
   console.log("[intraday-snapshot-refresh] live-status-refresh:start", { dayKey: safeDayKey });
-  runNodeScript(liveStatusScript, [safeDayKey]);
-  console.log("[intraday-snapshot-refresh] live-status-refresh:done", { dayKey: safeDayKey });
+  const { runLiveStatusRefreshDay } = await import("./run-live-status-refresh-day.js");
+  const liveStats = await runLiveStatusRefreshDay(safeDayKey);
+  console.log("[intraday-snapshot-refresh] live-status-refresh:done", {
+    dayKey: safeDayKey,
+    changedRows: liveStats.changedRows,
+    changedFixtures: liveStats.changedFixtures?.length ?? 0
+  });
+
+  // Patch details.basic for every match that changed status this cycle.
+  // This is the targeted fix for the SECOND_HALF vs FT inconsistency — we
+  // update only the 5 mutable status fields without a full details rebuild.
+  const patchStats = patchDetailsBasic(safeDayKey, liveStats.changedFixtures ?? []);
+  console.log("[intraday-snapshot-refresh] patch-details-basic:done", {
+    dayKey: safeDayKey,
+    ...patchStats
+  });
 
   console.log("[intraday-snapshot-refresh] sync-canonical-fixtures:start", { dayKey: safeDayKey });
   const sync = syncCanonicalFixturesToJsonDbDay(safeDayKey, { write: true });
@@ -156,6 +236,14 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     reason: details.reason
   });
 
+  // Re-derive value picks (intraday odds may have been updated)
+  try {
+    const vResult = deriveValueFromOdds(safeDayKey);
+    console.log("[intraday-snapshot-refresh] value-derive:done", { count: vResult.count });
+  } catch (e) {
+    console.error("[intraday-snapshot-refresh] value-derive:error", e?.message);
+  }
+
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
   const snapshot = exportDeploySnapshotDay(safeDayKey, { preserveDetails: true, preserveValue: true });
   console.log("[intraday-snapshot-refresh] export-snapshot:done", {
@@ -166,6 +254,18 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     value: snapshot?.value,
     detailsDir: snapshot?.detailsDir
   });
+
+  // Invariant check after snapshot
+  try {
+    const invariant = runSnapshotInvariantCheck(safeDayKey);
+    console.log("[intraday-snapshot-refresh] invariant-check:done", {
+      blocked: invariant.blocked?.length ?? 0,
+      autoFixed: invariant.autoFixed?.length ?? 0,
+      valueSafe: invariant.valueSafe
+    });
+  } catch (e) {
+    console.error("[intraday-snapshot-refresh] invariant-check:error", e?.message);
+  }
 
   return {
     ok: true,
