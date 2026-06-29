@@ -374,6 +374,8 @@ export const LEAGUES_COVERAGE = [
   // ----------------------------------------------------------
   // ASIA / MIDDLE EAST
   // ----------------------------------------------------------
+  { slug: "chn.1", tier: 2, trust: 0.82, type: "league", region: "asia", country: "china" },
+  { slug: "chn.2", tier: 3, trust: 0.66, type: "league", region: "asia", country: "china" },
   { slug: "jpn.1", tier: 2, trust: 0.88, type: "league", region: "asia", country: "japan" },
   { slug: "jpn.2", tier: 3, trust: 0.74, type: "league", region: "asia", country: "japan" },
   { slug: "kor.1", tier: 2, trust: 0.84, type: "league", region: "asia", country: "south_korea" },
