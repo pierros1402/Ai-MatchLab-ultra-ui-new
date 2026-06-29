@@ -38,6 +38,7 @@ import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 import { buildRefereeLookup, lookupReferee } from "../odds/referee-enrichment.js";
 import { TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
 import { normalizeTeamKey as normalizeTeam } from "../core/normalize.js";
+import { buildCanonicalId } from "../core/canonical-id.js";
 
 function log(...a) { console.log("[run-odds-opening]", ...a); }
 
@@ -222,7 +223,9 @@ async function main() {
       homeSlug = awaySlug = slug; leagueAvg = league.leagueAvg;
     }
 
-    const id = `fs_${fx.matchId}`;
+    // Use canonicalId as the stable key; fall back to fs_ prefix for backward compat
+    const canonicalId = buildCanonicalId(slug, fx.home, fx.away, fx.kickoffUtc);
+    const id = canonicalId || `fs_${fx.matchId}`;
 
     // Real market odds (if BetExplorer lists this match).
     const odds = lookupOdds(fx.home, fx.away, oddsPool);
@@ -248,6 +251,7 @@ async function main() {
     }
 
     const result = recordOddsSnapshot(id, {
+      canonicalId,
       leagueSlug: slug,
       competition: isIntl ? intl.label : (fx.leagueName || null),
       home: fx.home,

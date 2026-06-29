@@ -35,6 +35,8 @@ import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
+import { deriveValueFromOdds } from "./derive-value-from-odds.js";
+import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./fetch-multi-bookmaker-odds.js";
 import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
@@ -1088,6 +1090,17 @@ export async function runDailyCycle(options = {}) {
 
   console.log("[daily-cycle] deploy-snapshot-export:start", { dayKey });
 
+  // Derive value picks from AI model (odds → value bridge)
+  try {
+    const valueResult = deriveValueFromOdds(dayKey);
+    console.log("[daily-cycle] value-derive:done", {
+      count: valueResult.count, withMarket: valueResult.withMarket,
+      modelOnly: valueResult.modelOnly, highConfidence: valueResult.highConfidence
+    });
+  } catch (e) {
+    console.error("[daily-cycle] value-derive:error", e?.message);
+  }
+
   deploySnapshot = await Promise.resolve(exportDeploySnapshotDay(dayKey));
 
   console.log("[daily-cycle] deploy-snapshot-export:done", {
@@ -1097,6 +1110,19 @@ export async function runDailyCycle(options = {}) {
     counts: deploySnapshot?.counts,
     coverage: deploySnapshot?.coverage
   });
+
+  // Invariant check — runs after deploy snapshot so all artifacts exist
+  try {
+    const invariant = runSnapshotInvariantCheck(dayKey);
+    console.log("[daily-cycle] invariant-check:done", {
+      blocked: invariant.blocked?.length ?? 0,
+      autoFixed: invariant.autoFixed?.length ?? 0,
+      warnings: invariant.warnings?.length ?? 0,
+      valueSafe: invariant.valueSafe
+    });
+  } catch (e) {
+    console.error("[daily-cycle] invariant-check:error", e?.message);
+  }
 
   // Per-bookmaker odds (EU/Asian/Betfair panels + partial Greek via OddsPapi).
   // Runs after deploy snapshot so our match list is available for team matching.

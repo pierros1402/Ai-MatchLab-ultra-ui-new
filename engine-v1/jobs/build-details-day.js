@@ -10,6 +10,7 @@ import { readPlayerUsageRecord } from "../storage/player-usage-db.js";
 import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
 import { readTeamGeoRecord } from "../storage/team-geo-db.js";
 import { inferAbsencesFromUsage } from "../ai-match-intelligence/player-usage/absence-inference.js";
+import { buildCanonicalId } from "../core/canonical-id.js";
 
 const DETAILS_SCHEMA_VERSION = "details-snapshot-v3";
 const DETAILS_BUILDER_VERSION = "2026-05-01-player-usage-travel-geo-signature";
@@ -1438,6 +1439,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     dayKey: kickoffDay(match),
     generatedAt: new Date().toISOString(),
     basic: {
+      canonicalId: match.canonicalId || buildCanonicalId(match.leagueSlug, match.homeTeam, match.awayTeam, match.kickoffUtc) || String(match.matchId),
       matchId: String(match.matchId),
       leagueSlug: match.leagueSlug || null,
       leagueName: match.leagueName || null,
@@ -1564,8 +1566,11 @@ function readCanonicalFixturesForDay(dayKey) {
   });
 }
 
-function detailsFilePath(dayKey, matchId) {
-  return resolveDataPath("details", dayKey, `${matchId}.json`);
+function detailsFilePath(dayKey, match) {
+  // Key on canonicalId when available — provider-agnostic stable filename.
+  // Falls back to matchId for any legacy records that predate canonical IDs.
+  const id = match?.canonicalId || match?.matchId || String(match || "");
+  return resolveDataPath("details", dayKey, `${id}.json`);
 }
 
 export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
@@ -1579,7 +1584,7 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
     return { ok: false, error: "missing_day_key", matchId: String(matchId) };
   }
 
-  const file = detailsFilePath(dayKey, match.matchId);
+  const file = detailsFilePath(dayKey, match);
   const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
   const valuePicksByMatch = buildValuePicksByMatch(dayKey);
@@ -1722,10 +1727,11 @@ for (const match of rows) {
     awayTeam: match?.awayTeam
   });
 
-  const file = detailsFilePath(dayKey, match.matchId);
+  const file = detailsFilePath(dayKey, match);
   const existing = fs.existsSync(file) ? readJsonSafe(file, null) : null;
 
-  const valuePicks = valuePicksByMatch.get(String(match.matchId)) || [];
+  const canonicalKey = match.canonicalId || String(match.matchId);
+  const valuePicks = valuePicksByMatch.get(canonicalKey) || valuePicksByMatch.get(String(match.matchId)) || [];
 
   const aiBlocks = await buildAiDetailsBlock(match, {
     dayKey,

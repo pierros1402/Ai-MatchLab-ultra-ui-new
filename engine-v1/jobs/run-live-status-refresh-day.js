@@ -276,7 +276,9 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     changedRows: 0,
     writtenLeagueCount: 0,
     byLeague: [],
-    errors: []
+    errors: [],
+    // Fixtures whose status changed this run — used by intraday to patch details.basic
+    changedFixtures: []
   };
 
   for (const target of targetLeagues) {
@@ -329,6 +331,8 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           changed = true;
           leagueStats.changedRows++;
           stats.changedRows++;
+          // Record the full updated row so intraday can patch details.basic
+          stats.changedFixtures.push(merged);
         }
 
         return merged;

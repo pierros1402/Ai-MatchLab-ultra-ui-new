@@ -358,7 +358,8 @@ function isUsablePlayerUsageSide(side) {
 }
 
 function summarizeDetail(detail) {
-  const matchId = normalizeMatchId(detail?.matchId || detail?.basic?.matchId || detail?.fixture?.matchId);
+  const canonicalId = detail?.basic?.canonicalId || null;
+  const matchId = canonicalId || normalizeMatchId(detail?.matchId || detail?.basic?.matchId || detail?.fixture?.matchId);
 
   const hasTravel =
     Boolean(detail?.travelContext) ||
@@ -384,13 +385,14 @@ function summarizeDetail(detail) {
     ...(Array.isArray(detail?.valueSummary?.picks) ? detail.valueSummary.picks : [])
   ];
 
+  // hasValue = true only when there are actual picks with real signal.
+  // Presence of valueSummary/meta alone is NOT sufficient — those can exist
+  // even when count=0, causing false-positive detailsWithValue in the manifest.
   const hasValue =
     valueRows.length > 0 ||
-    Boolean(detail?.value) ||
-    Boolean(detail?.valuePicks) ||
-    Boolean(detail?.valueSummary) ||
-    Boolean(detail?.meta?.valueSynced) ||
-    Boolean(detail?.meta?.matchProfileApplied);
+    (Array.isArray(detail?.value) && detail.value.length > 0) ||
+    (Array.isArray(detail?.valuePicks) && detail.valuePicks.length > 0) ||
+    (Number.isFinite(detail?.valueSummary?.count) && detail.valueSummary.count > 0);
 
   const valueHasMatchProfile = valueRows.some(row =>
     row?.matchProfileApplied === true ||
@@ -415,6 +417,7 @@ function summarizeDetail(detail) {
     hasValue;
 
   return {
+    canonicalId,
     matchId,
     hasTravel,
     hasPlayerUsage,
@@ -452,7 +455,10 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
     const detail = readJsonSafe(src, null);
     if (!detail || typeof detail !== "object") continue;
 
+    // Prefer canonicalId for the filename — stable across provider changes.
+    // Falls back to matchId for legacy detail files that predate canonical IDs.
     const matchId =
+      detail?.basic?.canonicalId ||
       normalizeMatchId(detail?.matchId || detail?.basic?.matchId || detail?.fixture?.matchId) ||
       path.basename(src, ".json");
 

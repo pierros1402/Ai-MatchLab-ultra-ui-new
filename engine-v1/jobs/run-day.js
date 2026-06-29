@@ -19,6 +19,7 @@ import { athensDayKey } from "../core/daykey.js";
 import { classifyAllByCalendar } from "../source-discovery/league-awareness-service.js";
 import { runOddsOpening } from "./run-odds-opening.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
+import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { buildCoverageReport } from "./build-coverage-report.js";
 import { accumulateResults } from "./accumulate-results-day.js";
@@ -133,13 +134,22 @@ export async function runDay(dayKey) {
   const snap = exportOddsSnapshotDay(today);
   log("odds-snapshot", { count: snap.count, file: snap.file });
 
+  // 3b) Derive value picks from odds AI assessment → value.json
+  const value = deriveValueFromOdds(today);
+  log("value-derive", {
+    count: value.count,
+    withMarket: value.withMarket,
+    modelOnly: value.modelOnly,
+    highConfidence: value.highConfidence
+  });
+
   // 4) Refresh the coverage report so data gaps stay explicit (not discovered late).
   const cov = buildCoverageReport(today);
   log("coverage", { ...cov.totals, missingStandingsForFixtures: cov.gaps.fixtureLeaguesMissingStandings.length });
 
   const verificationOk = verification.skipped || verification.ok;
-  log("done", { today, oddsCount: snap.count, verificationOk, missingResults: verification.missing ?? 0 });
-  return { ok: true, today, oddsCount: snap.count, verificationOk, missingResults: verification.missing ?? 0 };
+  log("done", { today, oddsCount: snap.count, valuePicks: value.count, verificationOk, missingResults: verification.missing ?? 0 });
+  return { ok: true, today, oddsCount: snap.count, valuePicks: value.count, verificationOk, missingResults: verification.missing ?? 0 };
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;

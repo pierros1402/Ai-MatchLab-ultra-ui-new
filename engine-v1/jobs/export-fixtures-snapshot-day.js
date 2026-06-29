@@ -25,6 +25,8 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
 import { resolveInternational } from "../odds/international-competitions.js";
+import { buildCanonicalId } from "../core/canonical-id.js";
+import { registerMatch } from "../storage/canonical-match-registry.js";
 
 const ATHENS_FMT = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Athens", year: "numeric", month: "2-digit", day: "2-digit"
@@ -67,8 +69,26 @@ export async function exportFixturesSnapshotDay(dayKey = athensDayKey()) {
       || resolveSlug(fx.country, fx.leagueName);
     if (!slug) continue;
 
+    const canonicalId = buildCanonicalId(slug, fx.home, fx.away, fx.kickoffUtc);
+    if (!canonicalId) continue;
+
+    // Register in the canonical registry so other layers can look up by source ID
+    registerMatch(dk, {
+      canonicalId,
+      leagueSlug: slug,
+      homeTeam: fx.home,
+      awayTeam: fx.away,
+      kickoffUtc: fx.kickoffUtc,
+      source: "flashscore",
+      sourceId: fx.matchId
+    });
+
     matches.push({
-      id: `fs_${fx.matchId}`,
+      // canonicalId is the stable primary key — replaces fs_* prefix
+      id: canonicalId,
+      canonicalId,
+      sourceId: fx.matchId,
+      source: "flashscore",
       home: fx.home,
       away: fx.away,
       leagueName: intl ? intl.label : fx.leagueName,
@@ -77,8 +97,7 @@ export async function exportFixturesSnapshotDay(dayKey = athensDayKey()) {
       kickoffUtc: fx.kickoffUtc,
       kickoff_ms: Date.parse(fx.kickoffUtc) || 0,
       dayKey: dk,
-      status: deriveStatus(fx.kickoffUtc),
-      source: "flashscore"
+      status: deriveStatus(fx.kickoffUtc)
     });
   }
   matches.sort((a, b) => a.kickoff_ms - b.kickoff_ms);
