@@ -53,6 +53,34 @@ const FD_MAP = {
   "sco.1": "SC0", "sco.2": "SC1",
 };
 
+// ── football-data.co.uk "extra/new leagues" mapping ─────────────────────────
+// Different product from the mmz4281 set above: ONE CSV per country holding ALL
+// seasons since ~2012 (13+ years) at https://www.football-data.co.uk/new/{CODE}.csv
+// Columns: Country,League,Season,Date(DD/MM/YYYY),Time,Home,Away,HG,AG,Res,...
+// Several files carry more than one division/cup, so we match on the trimmed
+// `League` column to attribute each row to the right slug (cups are simply not
+// listed here, so they fall through and are ignored). Covers the worldwide
+// leagues the mmz4281 European set misses — Argentina, Brazil, USA, Japan… —
+// giving them real retroactive depth instead of play-forward only.
+const FD_NEW_MAP = {
+  ARG: [{ slug: "arg.1", league: "Liga Profesional" }],
+  BRA: [{ slug: "bra.1", league: "Serie A" }],
+  CHN: [{ slug: "chn.1", league: "Super League" }],
+  JPN: [{ slug: "jpn.1", league: "J1 League" }],
+  USA: [{ slug: "usa.1", league: "MLS" }],
+  MEX: [{ slug: "mex.1", league: "Liga MX" }],
+  RUS: [{ slug: "rus.1", league: "Premier League" }],
+  AUT: [{ slug: "aut.1", league: "Bundesliga" }],
+  DNK: [{ slug: "den.1", league: "Superliga" }],
+  NOR: [{ slug: "nor.1", league: "Eliteserien" }],
+  SWE: [{ slug: "swe.1", league: "Allsvenskan" }],
+  FIN: [{ slug: "fin.1", league: "Veikkausliiga" }],
+  POL: [{ slug: "pol.1", league: "Ekstraklasa" }],
+  ROU: [{ slug: "rou.1", league: "Superliga" }],
+  IRL: [{ slug: "irl.1", league: "Premier Division" }],
+  SWZ: [{ slug: "sui.1", league: "Super League" }, { slug: "sui.2", league: "Challenge League" }],
+};
+
 // Build list of seasons to backfill (most recent first).
 // Format: { code: "2526", label: "2025-26", start: 2025 }
 function buildSeasons(count = 5) {
@@ -133,6 +161,62 @@ function parseFdCsv(text, slug, seasonLabel) {
   return results;
 }
 
+/**
+ * Parse a football-data.co.uk "/new/" CSV, keeping only rows whose trimmed
+ * `League` column equals leagueName.  Date format is DD/MM/YYYY; Time is local
+ * "HH:MM" (used as-is for kickoff, approximate).  The first ten columns
+ * (Country…Res) never contain commas, so a naive split is safe.
+ */
+function parseFdNewCsv(text, slug, leagueName) {
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map(h => h.trim());
+  const col = name => headers.indexOf(name);
+
+  const iLeague = col("League");
+  const iDate   = col("Date");
+  const iTime   = col("Time");
+  const iHome   = col("Home");
+  const iAway   = col("Away");
+  const iHG     = col("HG");
+  const iAG     = col("AG");
+
+  if ([iLeague, iDate, iHome, iAway, iHG, iAG].some(i => i < 0)) return [];
+
+  const results = [];
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].split(",");
+    if ((parts[iLeague] || "").trim() !== leagueName) continue;
+
+    const rawDate = parts[iDate]?.trim();
+    const home    = parts[iHome]?.trim();
+    const away    = parts[iAway]?.trim();
+    const hg      = parseInt(parts[iHG], 10);
+    const ag      = parseInt(parts[iAG], 10);
+    if (!rawDate || !home || !away || isNaN(hg) || isNaN(ag)) continue;
+
+    const dp = rawDate.split("/");
+    if (dp.length !== 3) continue;
+    let [dd, mm, yy] = dp;
+    if (yy.length === 2) yy = (parseInt(yy, 10) < 50 ? "20" : "19") + yy;
+    const isoDate = `${yy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) continue;
+
+    const time = /^\d{1,2}:\d{2}$/.test(parts[iTime]?.trim() || "") ? parts[iTime].trim() : "15:00";
+    const matchId = `fdn_${slug}_${isoDate}_${home.replace(/\s+/g, "")}_${away.replace(/\s+/g, "")}`.toLowerCase().replace(/[^a-z0-9_]/g, "");
+
+    results.push({
+      matchId,
+      home,
+      away,
+      scoreHome: hg,
+      scoreAway: ag,
+      kickoffUtc: `${isoDate}T${time.padStart(5, "0")}:00Z`,
+    });
+  }
+  return results;
+}
+
 function loadProgress() {
   try { return JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf8")); }
   catch { return { completed: [] }; }
@@ -197,6 +281,41 @@ export async function backfillHistoricalResults(options = {}) {
       saveProgress({ completed: [...completedSet], updatedAt: new Date().toISOString() });
       await sleep(DELAY_MS);
     }
+  }
+
+  // ── Second source block: football-data.co.uk "/new/" extra leagues ────────
+  // One CSV per country, all seasons in a single file — the DB caps trim to 5y
+  // automatically, so no per-season slicing is needed here.
+  for (const [code, entries] of Object.entries(FD_NEW_MAP)) {
+    // Progress is keyed per slug so a partial (--slug) run never marks the whole
+    // file done and starves the other divisions sharing that CSV.
+    const wanted = (slugFilter ? entries.filter(e => e.slug === slugFilter) : entries)
+      .filter(e => !completedSet.has(`new:${code}:${e.slug}`));
+    if (!wanted.length) continue;
+
+    const url = `https://www.football-data.co.uk/new/${code}.csv`;
+    log(`fetch new:${code}  →  ${url}`);
+    const csv = await fetchCsv(url);
+
+    if (!csv || csv.length < 100) {
+      log(`  → no data (${csv?.length || 0} bytes)`);
+      stats.errors++;
+      await sleep(DELAY_MS);
+      continue;
+    }
+
+    stats.fetched++;
+    for (const { slug, league } of wanted) {
+      const rows = parseFdNewCsv(csv, slug, league);
+      let stored = 0;
+      for (const row of rows) if (recordMatchResult(slug, row)) stored++;
+      stats.stored += stored;
+      log(`  → ${slug} (${league}): ${rows.length} parsed, ${stored} new`);
+      completedSet.add(`new:${code}:${slug}`);
+    }
+
+    saveProgress({ completed: [...completedSet], updatedAt: new Date().toISOString() });
+    await sleep(DELAY_MS);
   }
 
   return { ok: true, ...stats, results: getResultsSummary() };

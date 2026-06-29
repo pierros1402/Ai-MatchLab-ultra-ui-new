@@ -295,6 +295,8 @@ const EXPLICIT_NAME_MAP = {
   "ecu.1": "LigaPro Ecuador",
   "ecu.2": "Ecuador Serie B",
   // ASIA / MIDDLE EAST
+  "chn.1": "Chinese Super League",
+  "chn.2": "China League One",
   "idn.1": "Indonesian Super League",
   "idn.2": "Indonesian Second Division",
   "mys.1": "Malaysian Super League",
