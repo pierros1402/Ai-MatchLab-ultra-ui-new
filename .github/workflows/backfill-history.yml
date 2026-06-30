@@ -60,6 +60,10 @@ jobs:
           [ -f "data/backfill-progress.json" ] && git add data/backfill-progress.json
           [ -f "data/league-memory/state.json" ] && git add data/league-memory/state.json
 
+          node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=backfill-history \
+            --allow='^(data/league-memory/|data/backfill-progress\.json$)'
+
           BAD="$(git diff --cached --name-only | grep -Ev '^(data/league-memory/|data/backfill-progress\.json)' || true)"
           if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi
 
