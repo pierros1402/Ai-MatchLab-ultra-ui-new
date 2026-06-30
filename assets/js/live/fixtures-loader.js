@@ -233,7 +233,11 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
           st: normalizeStatus(m),
           min: m?.minute ?? m?.status?.displayClock ?? "",
           sh: m?.scoreHome ?? null,
-          sa: m?.scoreAway ?? null
+          sa: m?.scoreAway ?? null,
+          ph: m?.penalties?.home ?? null,
+          pa: m?.penalties?.away ?? null,
+          db: m?.decidedBy ?? null,
+          raw: m?.rawStatus ?? null
         }))
       );
     } catch {
