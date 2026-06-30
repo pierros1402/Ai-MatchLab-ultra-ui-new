@@ -43,10 +43,15 @@
           kickoff:  m.kickoffUtc ? m.kickoffUtc.slice(11, 16) : "",
           kickoffUtc: m.kickoffUtc || "",
           status:   m.status || "PRE",
+          rawStatus: m.rawStatus || "",
+          statusType: m.statusType || "",
+          statusName: m.statusName || "",
           leagueSlug: m.leagueSlug || "",
           leagueName: m.leagueName || "",
           scoreHome: m.scoreHome,
           scoreAway: m.scoreAway,
+          penalties: m.penalties || null,
+          decidedBy: m.decidedBy || null,
           date:     date,
         };
       });

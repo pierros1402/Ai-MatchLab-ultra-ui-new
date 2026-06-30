@@ -67,6 +67,25 @@
     );
   }
 
+  function formatFinalScore(m, h, a) {
+    const penHome = m?.penalties?.home ?? m?.penaltyHome ?? m?.pensHome ?? m?.shootoutHome;
+    const penAway = m?.penalties?.away ?? m?.penaltyAway ?? m?.pensAway ?? m?.shootoutAway;
+    const raw = normStatus(m);
+    const decidedByPens =
+      String(m?.decidedBy || "").toLowerCase().includes("pen") ||
+      raw.includes("PEN");
+
+    if (decidedByPens && penHome != null && penAway != null) {
+      return "FT " + h + "-" + a + " (" + penHome + "-" + penAway + " pens)";
+    }
+
+    if (raw.includes("AET") || String(m?.decidedBy || "").toLowerCase().includes("aet")) {
+      return "AET " + h + "-" + a;
+    }
+
+    return "FT " + h + "-" + a;
+  }
+
   function sortMatches(a, b) {
 
     const aFinal = isFinalStatus(a);
@@ -118,7 +137,7 @@
           : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0)
     }));
 
-    const sig = matches.map(m => m.id + ":" + m.status).join("|");
+    const sig = matches.map(m => [m.id, m.status, m.rawStatus, m.minute, m.scoreHome, m.scoreAway, m?.penalties?.home, m?.penalties?.away, m.decidedBy].join(":")).join("|");
     if (sig === LAST_SIG) return;
 
     LAST_SIG = sig;
@@ -176,7 +195,7 @@
 
           const h = m.scoreHome ?? 0;
           const a = m.scoreAway ?? 0;
-          info.textContent = `FT ${h}-${a}`;
+          info.textContent = formatFinalScore(m, h, a);
 
         } else if (isLiveStatus(status)) {
 
@@ -281,8 +300,13 @@ if (window.on) {
         const existing = map.get(String(m.id || m.matchId));
         if (!existing) continue;
         existing.status    = m.status;
+        existing.rawStatus = m.rawStatus;
+        existing.statusType = m.statusType;
+        existing.statusName = m.statusName;
         existing.scoreHome = m.scoreHome;
         existing.scoreAway = m.scoreAway;
+        existing.penalties = m.penalties;
+        existing.decidedBy = m.decidedBy;
         existing.minute    = m.minute;
       }
 
