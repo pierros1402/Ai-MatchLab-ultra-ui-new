@@ -54,7 +54,34 @@
 
   function isLiveStatus(status) {
     const s = normStatus(status);
-    return s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") || s.includes("HALFTIME") || s.includes("INPROGRESS");
+    if (s.includes("STALE_LIVE")) return false;
+    return s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") || s.includes("HALFTIME") || s.includes("HALF_TIME") || s.includes("INPROGRESS") || s.includes("IN_PROGRESS") || s.includes("EXTRA_TIME");
+  }
+
+  function isPreStatus(status) {
+    const s = normStatus(status);
+    return s === "PRE" || s.includes("SCHEDULED") || s.includes("NOT_STARTED");
+  }
+
+  function todayKey() {
+    return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+  }
+
+  function isActiveDisplayMatch(m, viewedDate) {
+    const status = normStatus(m);
+
+    if (isFinalStatus(status) || isPostponedOrCanceled(status)) return true;
+    if (isLiveStatus(status)) return false;
+    if (!isPreStatus(status)) return false;
+
+    // Past-date PRE rows are stale/missing-final states. Do not render them as valid active rows.
+    if (viewedDate && viewedDate < todayKey()) return false;
+
+    const kickoffMs = Number(m.kickoff_ms || 0);
+    if (!kickoffMs) return true;
+
+    // Once kickoff has passed, PRE is stale. The row should become LIVE/FT or disappear from Active.
+    return kickoffMs > Date.now();
   }
 
   function isPostponedOrCanceled(status) {
@@ -126,6 +153,8 @@
 
     const rawMatches = Array.isArray(payload?.matches) ? payload.matches : [];
 
+    const viewedDate = payload?.date || null;
+
     const matches = rawMatches.map(m => ({
       ...m,
       id: m.id ?? m.matchId,
@@ -135,7 +164,7 @@
         m.kickoff_ms != null
           ? Number(m.kickoff_ms)
           : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0)
-    }));
+    })).filter(m => isActiveDisplayMatch(m, viewedDate));
 
     const sig = matches.map(m => [m.id, m.status, m.rawStatus, m.minute, m.scoreHome, m.scoreAway, m?.penalties?.home, m?.penalties?.away, m.decidedBy].join(":")).join("|");
     if (sig === LAST_SIG) return;
@@ -257,10 +286,6 @@
 
   // Track which date the user has navigated to (null = today)
   let viewingDate = null;
-
-  function todayKey() {
-    return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
-  }
 
   document.addEventListener("active-leagues:updated", function (e) {
     try {
