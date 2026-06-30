@@ -20,15 +20,7 @@ function isLiveLike(status) {
 }
 
 function isPreLike(status) {
-  const s = String(status || "").toUpperCase();
-  return (
-    s === "PRE" ||
-    s === "SCHEDULED" ||
-    s === "STATUS_SCHEDULED" ||
-    s === "NOT_STARTED" ||
-    s.includes("SCHEDULED") ||
-    s.includes("NOT_STARTED")
-  );
+  return String(status || "").toUpperCase() === "PRE";
 }
 
 function isFinalLike(status) {

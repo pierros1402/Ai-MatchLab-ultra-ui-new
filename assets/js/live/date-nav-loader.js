@@ -25,59 +25,6 @@
   var activeDate = null;
   var loading = false;
 
-  function todayKey() {
-    return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
-  }
-
-  function statusText(m) {
-    return [m.status, m.rawStatus, m.statusType, m.statusName]
-      .filter(Boolean)
-      .map(function (x) { return String(x).toUpperCase(); })
-      .join(" ");
-  }
-
-  function isFinalStatus(m) {
-    var s = statusText(m);
-    return s === "FT" || s.indexOf("FULL_TIME") >= 0 || s.indexOf("FINAL") >= 0 ||
-      s.indexOf("AET") >= 0 || s.indexOf("PEN") >= 0 || s.indexOf("COMPLETE") >= 0;
-  }
-
-  function isSpecialStatus(m) {
-    var s = statusText(m);
-    return s.indexOf("POSTPON") >= 0 || s.indexOf("CANCEL") >= 0 ||
-      s.indexOf("ABANDON") >= 0 || s.indexOf("SUSPEND") >= 0;
-  }
-
-  function isLiveStatus(m) {
-    var s = statusText(m);
-    if (s.indexOf("STALE_LIVE") >= 0) return false;
-    return s.indexOf("LIVE") >= 0 || s.indexOf("FIRST_HALF") >= 0 ||
-      s.indexOf("SECOND_HALF") >= 0 || s.indexOf("HALF_TIME") >= 0 ||
-      s.indexOf("HALFTIME") >= 0 || s.indexOf("IN_PROGRESS") >= 0 ||
-      s.indexOf("INPROGRESS") >= 0 || s.indexOf("EXTRA_TIME") >= 0;
-  }
-
-  function isPreStatus(m) {
-    var s = statusText(m);
-    return s === "PRE" || s.indexOf("SCHEDULED") >= 0 || s.indexOf("NOT_STARTED") >= 0;
-  }
-
-  function isActiveDisplayMatch(m, date) {
-    if (isFinalStatus(m) || isSpecialStatus(m)) return true;
-    if (isLiveStatus(m)) return false;
-
-    if (!isPreStatus(m)) return false;
-
-    // Past-date PRE is a stale/missing-final state. Do not feed it to Active Leagues.
-    if (date && date < todayKey()) return false;
-
-    var kickoffMs = Date.parse(m.kickoffUtc || "");
-    if (!Number.isFinite(kickoffMs)) return true;
-
-    // PRE belongs in Active only before kickoff. After kickoff it should become LIVE or FT.
-    return kickoffMs > Date.now();
-  }
-
   async function loadMatchesForDate(date) {
     if (loading) return;
     loading = true;
@@ -109,10 +56,8 @@
         };
       });
 
-      var activeMatches = matches.filter(function (m) { return isActiveDisplayMatch(m, date); });
-
-      // Feed panels separately. Active Leagues is PRE+FT only; Matches & Details keeps the full date payload.
-      document.dispatchEvent(new CustomEvent("active-leagues:updated", { detail: { matches: activeMatches, date: date } }));
+      // Feed both panels — Active Leagues (compact) and Matches & Details (with assessments)
+      document.dispatchEvent(new CustomEvent("active-leagues:updated", { detail: { matches: matches, date: date } }));
       emit("matches:set", { matches: matches, date: date });
       emit("date-matches:loaded", { date: date, count: matches.length, source: j.source });
       console.log("[date-nav-loader]", date, matches.length, "matches from", j.source);
