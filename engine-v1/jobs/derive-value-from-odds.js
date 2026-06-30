@@ -143,6 +143,7 @@ function evaluate1X2(match, bookOdds1X2) {
     if (!qualifies) continue;
 
     picks.push({
+      type: impP !== null ? "verified_value" : "model_lean",
       market: "1X2",
       pick: sel,
       modelProb: round3(modelP),
@@ -186,6 +187,7 @@ function evaluateOU25(match) {
     if (isCrossLeague) flags.push("cross_league");
 
     picks.push({
+      type: "model_lean",
       market: "OU25",
       pick: sel,
       modelProb: round3(modelP),
@@ -224,6 +226,7 @@ function evaluateBTTS(match) {
     if (formUsed) flags.push("form_used");
 
     picks.push({
+      type: "model_lean",
       market: "BTTS",
       pick: sel,
       modelProb: round3(modelP),
@@ -265,7 +268,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey()) {
     if (!match.aiAssessment?.markets) continue;
 
     const canonicalId = match.canonicalId
-      || buildCanonicalId(match.leagueSlug, match.home, match.away, match.kickoffUtc)
+      || buildCanonicalId(match.leagueSlug, match.home, match.away, match.dayKey || match.kickoffUtc)
       || match.matchId;
 
     const matchMeta = {
@@ -306,8 +309,11 @@ export function deriveValueFromOdds(dayKey = athensDayKey()) {
     generatedAt: new Date().toISOString(),
     count: picks.length,
     source: "derive-value-from-odds",
-    withMarket:    picks.filter(p => p.basis === "model+market").length,
-    modelOnly:     picks.filter(p => p.basis === "model_only").length,
+    // Type breakdown — "verified_value" has bookmaker odds + edge; "model_lean" is model-only
+    verifiedValue:  picks.filter(p => p.type === "verified_value").length,
+    modelLean:      picks.filter(p => p.type === "model_lean").length,
+    withMarket:     picks.filter(p => p.basis === "model+market").length,
+    modelOnly:      picks.filter(p => p.basis === "model_only").length,
     highConfidence: picks.filter(p => p.confidence === "high").length,
     picks
   };

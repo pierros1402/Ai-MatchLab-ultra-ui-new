@@ -169,7 +169,7 @@ const FIXTURE_ADAPTERS = [
         || resolveSlug(fx.country, fx.leagueName)
         || slug;
 
-      const canonicalId = buildCanonicalId(leagueSlug, fx.home, fx.away, fx.kickoffUtc);
+      const canonicalId = buildCanonicalId(leagueSlug, fx.home, fx.away, fx.dayKey || fx.kickoffUtc);
       if (!canonicalId) return null;
 
       return {

@@ -278,7 +278,7 @@ function serializeFixture(normalized, adapterId, fetchedDayKey) {
         normalized.leagueSlug,
         normalized.homeTeam,
         normalized.awayTeam,
-        normalized.kickoffUtc
+        normalized.dayKey || fetchedDayKey || normalized.kickoffUtc
       );
 
   // Register in the canonical registry so any layer can resolve source ID → canonical ID

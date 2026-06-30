@@ -115,7 +115,9 @@ export function normalizeFixture(event, slug) {
     kickoffUtc: kickoff
   });
 
-  const canonicalId = buildCanonicalId(slug, homeTeam, awayTeam, kickoff);
+  // Pass the dayKey (from caller context) if available; otherwise the normalizer
+  // falls back to UTC kickoff date — acceptable for ESPN where UTC≈Athens day.
+  const canonicalId = buildCanonicalId(slug, homeTeam, awayTeam, event.dayKey || kickoff);
 
   return {
     // canonicalId is the primary stable key — provider-agnostic

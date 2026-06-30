@@ -98,7 +98,7 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
 
   // ── CHECK 1: status agreement between fixtures and details ───────────────
   for (const fx of fixtureList) {
-    const cid = fx.canonicalId || buildCanonicalId(fx.leagueSlug, fx.homeTeam || fx.home, fx.awayTeam || fx.away, fx.kickoffUtc);
+    const cid = fx.canonicalId || buildCanonicalId(fx.leagueSlug, fx.homeTeam || fx.home, fx.awayTeam || fx.away, fx.dayKey || fx.kickoffUtc);
     if (!cid) continue;
 
     const detailFile = path.join(detailsDir, `${cid}.json`);

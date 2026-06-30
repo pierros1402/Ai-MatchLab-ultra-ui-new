@@ -69,7 +69,7 @@ export async function exportFixturesSnapshotDay(dayKey = athensDayKey()) {
       || resolveSlug(fx.country, fx.leagueName);
     if (!slug) continue;
 
-    const canonicalId = buildCanonicalId(slug, fx.home, fx.away, fx.kickoffUtc);
+    const canonicalId = buildCanonicalId(slug, fx.home, fx.away, fx.dayKey || fx.kickoffUtc);
     if (!canonicalId) continue;
 
     // Register in the canonical registry so other layers can look up by source ID

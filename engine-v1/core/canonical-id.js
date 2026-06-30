@@ -28,27 +28,36 @@ function leagueToken(slug) {
     .replace(/[^a-z0-9]/g, "");
 }
 
-function dayToken(kickoffUtc) {
-  const d = new Date(kickoffUtc || 0);
+function dayToken(dayKeyOrKickoff) {
+  // Prefer explicit dayKey (YYYY-MM-DD) over UTC kickoff to avoid timezone drift
+  // for matches after midnight UTC that belong to the Athens next-day slot.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(dayKeyOrKickoff || ""))) {
+    return dayKeyOrKickoff.replace(/-/g, "");
+  }
+  // Fallback: parse as kickoffUtc
+  const d = new Date(dayKeyOrKickoff || 0);
   if (Number.isNaN(d.getTime())) return "0";
-  // Use UTC date — consistent across timezones for storage keys
   return d.toISOString().slice(0, 10).replace(/-/g, "");
 }
 
 /**
  * Build a stable canonical match ID from match metadata.
  *
+ * IMPORTANT: pass dayKey (YYYY-MM-DD, the Athens calendar day the match belongs to)
+ * as the 4th argument, NOT kickoffUtc. Kickoff times after 22:00 UTC belong to the
+ * next Athens day and would produce the wrong date token if UTC date were used.
+ *
  * @param {string} leagueSlug  e.g. "bra.2"
  * @param {string} homeTeam    display name, will be normalized
  * @param {string} awayTeam    display name, will be normalized
- * @param {string} kickoffUtc  ISO datetime string
+ * @param {string} dayKey      Athens calendar day "YYYY-MM-DD" (preferred) or kickoffUtc fallback
  * @returns {string}           e.g. "cid_bra2_fortaleza_sport_20260629"
  */
-export function buildCanonicalId(leagueSlug, homeTeam, awayTeam, kickoffUtc) {
+export function buildCanonicalId(leagueSlug, homeTeam, awayTeam, dayKey) {
   const league = leagueToken(leagueSlug);
   const home   = normalizeTeamKey(homeTeam);
   const away   = normalizeTeamKey(awayTeam);
-  const day    = dayToken(kickoffUtc);
+  const day    = dayToken(dayKey);
 
   if (!league || !home || !away || day === "0") return null;
 
