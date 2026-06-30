@@ -116,20 +116,3 @@ jobs:
             git commit -m "Daily autonomous run for ${DAY_KEY}"
             git push
           fi
-
-      # After committing fresh data, tell Render to redeploy so the engine actually
-      # serves it (the engine reads snapshots from its deployed filesystem). Fully
-      # automatic once RENDER_DEPLOY_HOOK is set; harmless no-op if it isn't.
-      - name: Trigger Render redeploy (engine)
-        if: env.SKIP != 'true'
-        shell: bash
-        env:
-          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
-        run: |
-          if [ -n "${HOOK:-}" ]; then
-            curl -fsS -X POST "$HOOK" >/dev/null \
-              && echo "Render redeploy triggered." \
-              || echo "Deploy-hook call failed (non-fatal)."
-          else
-            echo "RENDER_DEPLOY_HOOK secret not set — skipping auto-redeploy."
-          fi
