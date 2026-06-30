@@ -169,6 +169,11 @@ jobs:
           printf "%s\n" "$STAGED"
 
           if [ -n "$STAGED" ]; then
+            node engine-v1/jobs/guard-staged-data-boundary.js \
+              --label=intraday-deploy-snapshot-refresh \
+              --dayKey="${DAY_KEY}" \
+              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/)"
+
             BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
