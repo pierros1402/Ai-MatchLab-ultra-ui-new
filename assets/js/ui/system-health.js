@@ -7,6 +7,14 @@
 
   function el(id) { return document.getElementById(id); }
 
+  function engineUrl(path) {
+    const base =
+      (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL) ||
+      window.__AIML_ENGINE_BASE ||
+      "https://ai-matchlab-engine.onrender.com";
+    return String(base).replace(/\/+$/, "") + path;
+  }
+
   function statusColor(report) {
     if (!report) return "#6b7280";               // fetch failed — gray
     if (report.status === "no_report") return "#f59e0b"; // no report = UNKNOWN, treat as warning
@@ -147,7 +155,7 @@
 
   async function fetchReport() {
     try {
-      const res = await fetch("/system-health");
+      const res = await fetch(engineUrl("/system-health"));
       if (!res.ok) return null;
       return await res.json();
     } catch { return null; }
