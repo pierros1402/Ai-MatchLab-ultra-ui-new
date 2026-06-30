@@ -987,191 +987,6 @@ function readLeagueState() {
     return {};
   }
 }
-
-function normalizeScoreValue(value) {
-  if (value == null || value === "") return null;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : null;
-}
-
-function matchDayKeyFromIso(value) {
-  const d = new Date(value || "");
-  if (!Number.isFinite(d.getTime())) return "";
-  return athensDayKey(d);
-}
-
-function resultCandidateSlugs(slug) {
-  const raw = String(slug || "");
-  const canonical = FX_SLUG_ALIASES[raw] || raw;
-  return Array.from(new Set([raw, canonical].filter(Boolean)));
-}
-
-function readResultsMemoryFile(slug, cache) {
-  const key = String(slug || "");
-  if (!key) return null;
-  if (cache.has(key)) return cache.get(key);
-
-  try {
-    const p = resolveDataPath("league-memory", "results", `${key}.json`);
-    const data = JSON.parse(fs.readFileSync(p, "utf8"));
-    cache.set(key, data);
-    return data;
-  } catch {
-    cache.set(key, null);
-    return null;
-  }
-}
-
-function resultEntryMatchesFixture(entry, fixture, requestedDay, expectedHa) {
-  if (!entry || !fixture) return false;
-  if (String(entry.ha || "").toUpperCase() !== expectedHa) return false;
-  if (requestedDay && matchDayKeyFromIso(entry.date) !== requestedDay) return false;
-
-  const oppNorm = fxNormTeam(entry.opp);
-  const expectedOpp = expectedHa === "H" ? fixture.awayTeam : fixture.homeTeam;
-  if (!oppNorm || !expectedOpp) return false;
-
-  return oppNorm === fxNormTeam(expectedOpp);
-}
-
-function findResultForFixture(fixture, requestedDay, cache) {
-  const homeNorm = fxNormTeam(fixture?.homeTeam);
-  const awayNorm = fxNormTeam(fixture?.awayTeam);
-  if (!homeNorm || !awayNorm) return null;
-
-  for (const slug of resultCandidateSlugs(fixture?.leagueSlug)) {
-    const data = readResultsMemoryFile(slug, cache);
-    if (!data || !data.teams) continue;
-
-    for (const [teamName, entries] of Object.entries(data.teams)) {
-      if (!Array.isArray(entries)) continue;
-      const teamNorm = fxNormTeam(teamName);
-
-      if (teamNorm === homeNorm) {
-        for (const entry of entries) {
-          if (!resultEntryMatchesFixture(entry, fixture, requestedDay, "H")) continue;
-          const scoreHome = normalizeScoreValue(entry.gf);
-          const scoreAway = normalizeScoreValue(entry.ga);
-          if (scoreHome == null || scoreAway == null) continue;
-          return {
-            matchId: entry.matchId || fixture.matchId,
-            scoreHome,
-            scoreAway,
-            resultDate: entry.date || null,
-            source: "league-memory/results",
-          };
-        }
-      }
-
-      if (teamNorm === awayNorm) {
-        for (const entry of entries) {
-          if (!resultEntryMatchesFixture(entry, fixture, requestedDay, "A")) continue;
-          const awayGoals = normalizeScoreValue(entry.gf);
-          const homeGoals = normalizeScoreValue(entry.ga);
-          if (homeGoals == null || awayGoals == null) continue;
-          return {
-            matchId: entry.matchId || fixture.matchId,
-            scoreHome: homeGoals,
-            scoreAway: awayGoals,
-            resultDate: entry.date || null,
-            source: "league-memory/results",
-          };
-        }
-      }
-    }
-  }
-
-  return null;
-}
-
-function overlayTruthResults(matches, requestedDay) {
-  const cache = new Map();
-
-  return (Array.isArray(matches) ? matches : []).map(match => {
-    const truth = findResultForFixture(match, requestedDay, cache);
-    if (!truth) return match;
-
-    return {
-      ...match,
-      status: "FT",
-      rawStatus: match.rawStatus || match.status || "",
-      statusType: match.statusType || "FT",
-      scoreHome: truth.scoreHome,
-      scoreAway: truth.scoreAway,
-      truthSource: truth.source,
-      truthMatchId: truth.matchId,
-      truthDate: truth.resultDate,
-    };
-  });
-}
-
-function dateMatchStatusRank(match) {
-  const s = String([
-    match?.status,
-    match?.rawStatus,
-    match?.statusType,
-    match?.statusName,
-  ].filter(Boolean).join(" ")).toUpperCase();
-
-  if (s === "FT" || s.includes("FULL_TIME") || s.includes("FINAL") || s.includes("AET") || s.includes("PEN")) return 50;
-  if (s.includes("POSTPON") || s.includes("CANCEL") || s.includes("ABANDON") || s.includes("SUSPEND")) return 40;
-  if (s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") || s.includes("HALF_TIME") || s.includes("IN_PROGRESS")) return 30;
-  if (s === "PRE" || s.includes("SCHEDULED") || s.includes("NOT_STARTED")) return 20;
-  return 10;
-}
-
-function hasDateMatchScore(match) {
-  return match?.scoreHome != null && match?.scoreAway != null;
-}
-
-function dateMatchDedupeKey(match, requestedDay) {
-  const slug = FX_SLUG_ALIASES[String(match?.leagueSlug || "")] || String(match?.leagueSlug || "");
-  const home = fxNormTeam(match?.homeTeam);
-  const away = fxNormTeam(match?.awayTeam);
-  const kickoff = String(match?.kickoffUtc || "");
-  const kickoffMinute = kickoff ? kickoff.slice(0, 16) : "";
-  const day = matchDayKeyFromIso(kickoff) || requestedDay || "";
-  return `${slug}|${home}|${away}|${day}|${kickoffMinute}`;
-}
-
-function compareDateMatchQuality(a, b) {
-  const ar = dateMatchStatusRank(a);
-  const br = dateMatchStatusRank(b);
-  if (ar !== br) return br - ar;
-
-  const as = hasDateMatchScore(a) ? 1 : 0;
-  const bs = hasDateMatchScore(b) ? 1 : 0;
-  if (as !== bs) return bs - as;
-
-  const at = a?.truthSource ? 1 : 0;
-  const bt = b?.truthSource ? 1 : 0;
-  if (at !== bt) return bt - at;
-
-  const al = a?.leagueName ? 1 : 0;
-  const bl = b?.leagueName ? 1 : 0;
-  if (al !== bl) return bl - al;
-
-  return 0;
-}
-
-function dedupeDateMatches(matches, requestedDay) {
-  const best = new Map();
-
-  for (const match of Array.isArray(matches) ? matches : []) {
-    if (!match?.matchId || !match?.homeTeam) continue;
-    const key = dateMatchDedupeKey(match, requestedDay);
-    const existing = best.get(key);
-    if (!existing || compareDateMatchQuality(existing, match) > 0) {
-      best.set(key, match);
-    }
-  }
-
-  return Array.from(best.values()).sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
-}
-
-function reconcileDateMatchesForDisplay(matches, requestedDay) {
-  return dedupeDateMatches(overlayTruthResults(matches, requestedDay), requestedDay);
-}
 // Slug aliases: old BetExplorer slugs that map to ESPN canonical slugs
 const FX_SLUG_ALIASES = {
   "fifa.world_cup":      "fifa.world",
@@ -1866,11 +1681,8 @@ app.get("/api/matches-for-date", (req, res) => {
       }
     } catch { /**/ }
 
-    const merged = reconcileDateMatchesForDisplay([
-      ...fixtureMatches,
-      ...oddsMatches,
-      ...fixturesAllMatches
-    ], date);
+    const merged = [...fixtureMatches, ...oddsMatches, ...fixturesAllMatches]
+      .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
     if (merged.length) return res.json({ ok: true, date, source: "snapshot", matches: merged });
   }
 
@@ -1895,9 +1707,9 @@ app.get("/api/matches-for-date", (req, res) => {
               scoreAway:  null,
             })).filter(m => m.matchId && m.homeTeam);
           } catch { return []; }
-        });
-      const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return res.json({ ok: true, date, source: "canonical", matches: reconciled });
+        })
+        .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+      if (matches.length) return res.json({ ok: true, date, source: "canonical", matches });
     }
   } catch { /**/ }
 
@@ -1920,9 +1732,9 @@ app.get("/api/matches-for-date", (req, res) => {
           leagueName: m.leagueName || m.competition || "",
           scoreHome:  m.scoreHome ?? null,
           scoreAway:  m.scoreAway ?? null,
-        })).filter(m => m.matchId && m.homeTeam);
-      const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return res.json({ ok: true, date, source: "fixtures-all", matches: reconciled });
+        })).filter(m => m.matchId && m.homeTeam)
+        .sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+      if (matches.length) return res.json({ ok: true, date, source: "fixtures-all", matches });
     } catch { /**/ }
   }
 
