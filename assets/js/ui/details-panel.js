@@ -1329,7 +1329,8 @@ function startIntelWatcher(matchId, rerenderFn) {
           <span style="margin-left:8px;">Sample: <b>${esc(String(side?.sampleMatches ?? 0))}</b></span>
         </div>
         ${
-          side?.reason
+          // Only show reason code when NOT ready — if starters are present, reason is noise
+          (!ready && side?.reason)
             ? `<div class="muted" style="margin-top:6px;font-size:12px;">${esc(side.reason)}</div>`
             : ``
         }
