@@ -414,7 +414,15 @@ export const LEAGUES_COVERAGE = [
   { slug: "mar.1", tier: 3, trust: 0.72, type: "league", region: "africa", country: "morocco" },
   { slug: "mar.2", tier: 3, trust: 0.62, type: "league", region: "africa", country: "morocco" },
   { slug: "tun.1", tier: 3, trust: 0.70, type: "league", region: "africa", country: "tunisia" },
-  { slug: "tun.2", tier: 3, trust: 0.60, type: "league", region: "africa", country: "tunisia" }
+  { slug: "tun.2", tier: 3, trust: 0.60, type: "league", region: "africa", country: "tunisia" },
+  // display-only until Sofascore backfill confirms history availability
+  { slug: "moz.1", tier: 4, trust: 0.50, type: "league", region: "africa",  country: "mozambique" },
+
+  // ----------------------------------------------------------
+  // MONGOLIA
+  // ----------------------------------------------------------
+  // display-only until Sofascore backfill confirms history availability
+  { slug: "mng.1", tier: 4, trust: 0.50, type: "league", region: "asia",   country: "mongolia" }
 ];
 
 const CLEAN_LEAGUES_COVERAGE = LEAGUES_COVERAGE.filter(

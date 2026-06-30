@@ -324,7 +324,9 @@ const EXPLICIT_NAME_MAP = {
   "mar.1": "Botola Pro",
   "mar.2": "Botola 2",
   "tun.1": "Tunisian Ligue Professionnelle 1",
-  "tun.2": "Tunisian Ligue Professionnelle 2"
+  "tun.2": "Tunisian Ligue Professionnelle 2",
+  "moz.1": "Moçambola",
+  "mng.1": "Mongolian Premier League"
 };
 
 function slugFallbackName(slug) {
