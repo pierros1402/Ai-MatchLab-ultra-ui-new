@@ -97,6 +97,11 @@ jobs:
           [ -f "$ODDS_FILE" ] && git add "$ODDS_FILE"
           [ -f "$FIXTURES_FILE" ] && git add "$FIXTURES_FILE"
 
+          node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=odds-refresh \
+            --dayKey="${DAY_KEY}" \
+            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$)"
+
           if git diff --cached --quiet; then
             echo "No odds/fixtures changes to commit."
           else

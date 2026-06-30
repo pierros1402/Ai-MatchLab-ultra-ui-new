@@ -101,6 +101,11 @@ jobs:
           [ -d "data/expected-matches" ] && git add data/expected-matches
           [ -d "data/verification" ] && git add data/verification
 
+          node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=daily-autonomous \
+            --dayKey="${DAY_KEY}" \
+            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/)"
+
           # Only our autonomous artifacts may be staged.
           BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/)' || true)"
           if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi

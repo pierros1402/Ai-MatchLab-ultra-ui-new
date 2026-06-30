@@ -253,6 +253,11 @@ jobs:
             fi
           done
 
+          node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=daily-deploy-snapshot \
+            --dayKey="${DAY_KEY}" \
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/team-geo/[^/]+\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}\.json$)"
+
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
           DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/team-geo/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/)' || true)"
 
