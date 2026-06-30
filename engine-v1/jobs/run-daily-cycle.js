@@ -1113,7 +1113,7 @@ export async function runDailyCycle(options = {}) {
 
   // Invariant check — runs after deploy snapshot so all artifacts exist
   try {
-    const invariant = runSnapshotInvariantCheck(dayKey);
+    const invariant = await runSnapshotInvariantCheck(dayKey);
     console.log("[daily-cycle] invariant-check:done", {
       blocked: invariant.blocked?.length ?? 0,
       autoFixed: invariant.autoFixed?.length ?? 0,

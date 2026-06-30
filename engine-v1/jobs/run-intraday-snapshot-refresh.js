@@ -257,7 +257,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
 
   // Invariant check after snapshot
   try {
-    const invariant = runSnapshotInvariantCheck(safeDayKey);
+    const invariant = await runSnapshotInvariantCheck(safeDayKey);
     console.log("[intraday-snapshot-refresh] invariant-check:done", {
       blocked: invariant.blocked?.length ?? 0,
       autoFixed: invariant.autoFixed?.length ?? 0,

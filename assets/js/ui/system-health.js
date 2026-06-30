@@ -8,11 +8,12 @@
   function el(id) { return document.getElementById(id); }
 
   function statusColor(report) {
-    if (!report || report.status === "no_report") return "gray";
-    if (report.blocked && report.blocked.length > 0) return "#ef4444";   // red
-    if (report.autoFixed && report.autoFixed.length > 0) return "#f59e0b"; // amber
-    if (report.warnings && report.warnings.length > 0) return "#f59e0b";  // amber
-    return "#22c55e"; // green
+    if (!report) return "#6b7280";               // fetch failed — gray
+    if (report.status === "no_report") return "#f59e0b"; // no report = UNKNOWN, treat as warning
+    if (report.blocked && report.blocked.length > 0) return "#ef4444";
+    if (report.autoFixed && report.autoFixed.length > 0) return "#f59e0b";
+    if (report.warnings && report.warnings.length > 0) return "#f59e0b";
+    return "#22c55e";
   }
 
   function formatTime(iso) {
@@ -34,7 +35,10 @@
   function renderReport(report) {
     if (!report) return `<p style="color:#94a3b8;font-size:13px;">Could not load report.</p>`;
     if (report.status === "no_report") {
-      return `<p style="color:#94a3b8;font-size:13px;">No invariant report for today yet.<br>Runs after the daily pipeline.</p>`;
+      return `<div style="padding:10px 0;">
+        <div style="font-size:14px;color:#fbbf24;font-weight:600;">⚠ UNKNOWN — No invariant report</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px;">The daily pipeline has not run yet or did not produce a report.<br>Snapshot integrity is <b>unverified</b> — do not treat as clean.</div>
+      </div>`;
     }
 
     const rows = [];
@@ -153,8 +157,8 @@
     const badge = el("system-health-badge");
     if (!badge) return;
     const color = statusColor(report);
-    if (color === "#22c55e" || color === "gray") {
-      badge.style.display = "none";
+    if (color === "#22c55e") {
+      badge.style.display = "none"; // all clear — hide badge
     } else {
       badge.style.display = "block";
       badge.style.background = color;

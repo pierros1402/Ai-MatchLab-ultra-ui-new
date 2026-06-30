@@ -1439,7 +1439,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     dayKey: kickoffDay(match),
     generatedAt: new Date().toISOString(),
     basic: {
-      canonicalId: match.canonicalId || buildCanonicalId(match.leagueSlug, match.homeTeam, match.awayTeam, match.kickoffUtc) || String(match.matchId),
+      canonicalId: match.canonicalId || buildCanonicalId(match.leagueSlug, match.homeTeam, match.awayTeam, match.dayKey || match.kickoffUtc) || String(match.matchId),
       matchId: String(match.matchId),
       leagueSlug: match.leagueSlug || null,
       leagueName: match.leagueName || null,

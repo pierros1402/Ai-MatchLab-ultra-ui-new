@@ -224,7 +224,7 @@ async function main() {
     }
 
     // Use canonicalId as the stable key; fall back to fs_ prefix for backward compat
-    const canonicalId = buildCanonicalId(slug, fx.home, fx.away, fx.kickoffUtc);
+    const canonicalId = buildCanonicalId(slug, fx.home, fx.away, dayKey || fx.kickoffUtc);
     const id = canonicalId || `fs_${fx.matchId}`;
 
     // Real market odds (if BetExplorer lists this match).
