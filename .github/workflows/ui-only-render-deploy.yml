@@ -1,0 +1,34 @@
+name: UI-only Render deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-only-render-deploy
+  cancel-in-progress: false
+
+jobs:
+  trigger-ui-render-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Intentionally no checkout, no snapshot build, no data commit, no engine deploy.
+      - name: Trigger Render UI redeploy
+        shell: bash
+        env:
+          RENDER_UI_DEPLOY_HOOK_URL: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
+            echo "ERROR: RENDER_UI_DEPLOY_HOOK_URL is not configured."
+            exit 1
+          fi
+
+          echo "Triggering Render UI redeploy..."
+          curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
+          echo "Render UI redeploy hook triggered."
