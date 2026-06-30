@@ -350,7 +350,7 @@ const research = await fetchMatchResearch(match, {
     missing.push("expected_lineups_reliability");
   }
 
-  if (!travelContext?.data) {
+  if (!travelContext?.data && travelContext?.status !== "not_applicable") {
     missing.push("travel_context");
   }
 
@@ -531,10 +531,11 @@ const research = await fetchMatchResearch(match, {
       missing.delete("team_news_reliability");
     }
 
-    if (travelReady) {
+    const travelStatus = finalFacts?.travelContext?.status;
+    if (travelReady || travelStatus === "not_applicable") {
       missing.delete("travel_context");
       missing.delete("travel_geo");
-      if (travelSource) sourcesUsed.add(travelSource);
+      if (travelReady && travelSource) sourcesUsed.add(travelSource);
     } else {
       missing.add("travel_context");
     }

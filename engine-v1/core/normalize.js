@@ -47,6 +47,14 @@ export function normalizeTeamKey(name = "") {
   return normalizeTeamTokens(name).replace(/ /g, "");
 }
 
+// Strip youth/reserve suffixes for standings lookup only.
+// Do NOT use in canonical ID generation — U21 teams have distinct IDs from parent clubs.
+const YOUTH_SUFFIX_RE = /\s+(u\d{2}|ii|b|reserves?|youth|juniors?|sub[-\s]?\d{2})$/i;
+
+export function stripYouthSuffix(name = "") {
+  return String(name || "").trim().replace(YOUTH_SUFFIX_RE, "").trim();
+}
+
 
 function roundKickoffTo10Min(utc) {
   const ts = new Date(utc || 0).getTime();

@@ -37,7 +37,7 @@ import { teamXgRates } from "../storage/discipline-memory-db.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 import { buildRefereeLookup, lookupReferee } from "../odds/referee-enrichment.js";
 import { TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
-import { normalizeTeamKey as normalizeTeam } from "../core/normalize.js";
+import { normalizeTeamKey as normalizeTeam, stripYouthSuffix } from "../core/normalize.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 
 function log(...a) { console.log("[run-odds-opening]", ...a); }
@@ -94,7 +94,21 @@ function findTeam(name, teams) {
     const s = t.norm === norm ? 1 : tokenJaccard(norm, t.norm);
     if (s > bestScore) { bestScore = s; best = t; }
   }
-  return bestScore >= 0.6 ? best : null;
+  if (bestScore >= 0.6) return best;
+
+  // Fallback: strip youth/reserve suffix and retry (e.g. "Flora U21" → "Flora")
+  const stripped = stripYouthSuffix(name);
+  if (stripped !== name) {
+    const normStripped = normalizeTeam(stripped);
+    let best2 = null, bestScore2 = 0;
+    for (const t of teams) {
+      const s = t.norm === normStripped ? 1 : tokenJaccard(normStripped, t.norm);
+      if (s > bestScore2) { bestScore2 = s; best2 = t; }
+    }
+    if (bestScore2 >= 0.6) return best2;
+  }
+
+  return null;
 }
 
 // Find one team in ANY league (for cross-league cup / UEFA-qualifier matches).
@@ -214,6 +228,27 @@ async function main() {
           leagueAvg = (h.leagueAvg + a.leagueAvg) / 2;
           crossLeague = true;
         }
+      }
+      // NATIONAL team competitions (WC, Euros, Nations League, etc.):
+      // No club standings available — run model with league-average prior.
+      // null rows → lambdasFromStandings returns leagueAvg for all rates.
+      if (intl.type === "national") {
+        const homeForm = teamFormRates(slug, fx.home);
+        const awayForm = teamFormRates(slug, fx.away);
+        const _p = priceMatchFromStandings(null, null, { leagueAvgGoalsPerTeam: leagueAvg, homeForm, awayForm });
+        const nationalAssessment = { model: { ..._p.model, source: "ai_poisson_national_prior" }, markets: _p.markets, nationalTeams: true };
+        const natCid = buildCanonicalId(slug, fx.home, fx.away, dayKey || fx.kickoffUtc);
+        const natId = natCid || `fs_${fx.matchId}`;
+        recordOddsSnapshot(natId, {
+          canonicalId: natCid, leagueSlug: slug, competition: intl.label,
+          home: fx.home, away: fx.away, dayKey, kickoffUtc: fx.kickoffUtc,
+          source: "flashscore", aiAssessment: nationalAssessment
+        }, {});
+        if (dayKey) patchFixtureAssessment(fx.home, fx.away, dayKey, nationalAssessment);
+        stats.attributed++; stats.international++; stats.withAiAssessment++;
+        stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
+        if (dayKey) stats.byDay[dayKey] = (stats.byDay[dayKey] || 0) + 1;
+        continue;
       }
     } else {
       const hit = attributeMatch(fx.home, fx.away, leagues);

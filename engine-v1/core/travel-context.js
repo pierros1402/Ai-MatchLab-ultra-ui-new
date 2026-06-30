@@ -101,7 +101,27 @@ function buildNote(status, distanceKm, homeGeo, awayGeo, sameCountry, travelProf
   };
 }
 
+const NATIONAL_COMPETITION_SLUGS = new Set([
+  "fifa.world", "fifa.world_cup_qual",
+  "uefa.euro", "uefa.euro_qual", "uefa.nations_league",
+  "conmebol.copa_america", "caf.afcon", "afc.asian_cup",
+  "concacaf.gold_cup", "concacaf.nations_league"
+]);
+
 export function buildTravelContext(match) {
+  // National-team competitions at neutral venues: travel is symmetric / N/A.
+  const slug = match?.leagueSlug || match?.competition?.slug || "";
+  if (NATIONAL_COMPETITION_SLUGS.has(slug)) {
+    return {
+      key: "travel_context",
+      status: "not_applicable",
+      data: null,
+      confidence: 0,
+      source: "national-competition",
+      reason: "neutral_venue_national_teams"
+    };
+  }
+
   const homeGeo = readTeamGeoRecord(match?.homeTeam);
   const awayGeo = readTeamGeoRecord(match?.awayTeam);
 
