@@ -369,6 +369,11 @@ function readDeploySnapshotFixtures(dayKey) {
   return readJsonFileSafe(filePath, null);
 }
 
+function readDeploySnapshotOdds(dayKey) {
+  const filePath = path.join(deploySnapshotRoot(dayKey), "odds.json");
+  return readJsonFileSafe(filePath, null);
+}
+
 function readDeploySnapshotDetail(dayKey, matchId) {
   const filePath = path.join(deploySnapshotRoot(dayKey), "details", `${String(matchId)}.json`);
   return readJsonFileSafe(filePath, null);
@@ -645,12 +650,126 @@ function sanitizeSnapshotRuntimeMatch(match, nowMs = Date.now()) {
   return match;
 }
 
+const SNAPSHOT_RUNTIME_SLUG_ALIASES = {
+  "fifa.world_cup": "fifa.world",
+  "fifa.world_cup_qual": "fifa.world_qual",
+};
+
+function canonicalSnapshotRuntimeSlug(slug) {
+  const raw = String(slug || "").trim();
+  return SNAPSHOT_RUNTIME_SLUG_ALIASES[raw] || raw;
+}
+
+function snapshotRuntimeRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.fixtures)) return payload.fixtures;
+  if (Array.isArray(payload?.matches)) return payload.matches;
+  return [];
+}
+
+function normalizeSnapshotRuntimeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function snapshotRuntimeKickoffKey(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+
+  const ts = Date.parse(raw);
+  if (Number.isFinite(ts)) return String(ts);
+
+  return raw.slice(0, 16);
+}
+
+function normalizeSnapshotRuntimeMatch(match, fallbackSource) {
+  const leagueSlug = canonicalSnapshotRuntimeSlug(match?.leagueSlug || match?.league || "");
+
+  return {
+    ...match,
+    matchId: String(match?.matchId || match?.id || ""),
+    homeTeam: match?.homeTeam || match?.home || "",
+    awayTeam: match?.awayTeam || match?.away || "",
+    kickoffUtc: match?.kickoffUtc || match?.kickoff || "",
+    status: match?.status || match?.statusType || "PRE",
+    rawStatus: match?.rawStatus || match?.status || "",
+    statusType: match?.statusType || match?.status || "",
+    statusName: match?.statusName || "",
+    leagueSlug,
+    leagueName: match?.leagueName || "",
+    scoreHome: match?.scoreHome ?? match?.homeScore ?? null,
+    scoreAway: match?.scoreAway ?? match?.awayScore ?? null,
+    penalties: match?.penalties || null,
+    decidedBy: match?.decidedBy || null,
+    minute: match?.minute ?? null,
+    source: match?.source || fallbackSource,
+  };
+}
+
+function snapshotRuntimeDedupeKey(match) {
+  const leagueSlug = canonicalSnapshotRuntimeSlug(match?.leagueSlug || "");
+  const home = normalizeSnapshotRuntimeText(match?.homeTeam || match?.home);
+  const away = normalizeSnapshotRuntimeText(match?.awayTeam || match?.away);
+  const kickoff = snapshotRuntimeKickoffKey(match?.kickoffUtc || match?.kickoff);
+
+  return [leagueSlug, home, away, kickoff].join("|");
+}
+
+function addSnapshotRuntimeMatch(target, seen, match) {
+  const normalized = normalizeSnapshotRuntimeMatch(match, "snapshot");
+  if (!normalized.matchId || !normalized.homeTeam) return false;
+
+  const key = snapshotRuntimeDedupeKey(normalized);
+  if (key && seen.has(key)) return false;
+
+  if (key) seen.add(key);
+  target.push(sanitizeSnapshotRuntimeMatch(normalized));
+  return true;
+}
+
+function buildSnapshotRuntimeMatches(resolvedDate) {
+  const fixturesPayload = readDeploySnapshotFixtures(resolvedDate);
+  if (!fixturesPayload) return null;
+
+  const oddsPayload = readDeploySnapshotOdds(resolvedDate);
+  const fixtureRows = snapshotRuntimeRows(fixturesPayload);
+  const oddsRows = snapshotRuntimeRows(oddsPayload);
+
+  const matches = [];
+  const seen = new Set();
+  const coveredFixtureSlugs = new Set();
+
+  for (const row of fixtureRows) {
+    const normalized = normalizeSnapshotRuntimeMatch(row, "snapshot-fixtures");
+    if (normalized.leagueSlug) coveredFixtureSlugs.add(normalized.leagueSlug);
+    addSnapshotRuntimeMatch(matches, seen, normalized);
+  }
+
+  let oddsSupplementCount = 0;
+  for (const row of oddsRows) {
+    const normalized = normalizeSnapshotRuntimeMatch(row, "snapshot-odds");
+    if (!normalized.leagueSlug || coveredFixtureSlugs.has(normalized.leagueSlug)) continue;
+    if (addSnapshotRuntimeMatch(matches, seen, normalized)) oddsSupplementCount++;
+  }
+
+  return {
+    matches,
+    fixtureCount: fixtureRows.length,
+    oddsCount: oddsRows.length,
+    oddsSupplementCount,
+  };
+}
+
 function snapshotFixturesRuntimeResponse(mode, dayKey) {
   const resolvedDate = resolveSnapshotDate(dayKey);
-  const payload = resolvedDate ? readDeploySnapshotFixtures(resolvedDate) : null;
+  const runtimeBuild = resolvedDate ? buildSnapshotRuntimeMatches(resolvedDate) : null;
   const manifest = resolvedDate ? readDeploySnapshotManifest(resolvedDate) : null;
 
-  if (!payload) {
+  if (!runtimeBuild) {
     return {
       ok: false,
       error: "snapshot_fixtures_not_found",
@@ -660,15 +779,7 @@ function snapshotFixturesRuntimeResponse(mode, dayKey) {
     };
   }
 
-  const rawMatches = Array.isArray(payload?.fixtures)
-    ? payload.fixtures
-    : Array.isArray(payload?.matches)
-      ? payload.matches
-      : Array.isArray(payload)
-        ? payload
-        : [];
-
-  const matches = rawMatches.map(match => sanitizeSnapshotRuntimeMatch(match));
+  const matches = runtimeBuild.matches;
 
   return {
     ok: true,
@@ -683,7 +794,10 @@ function snapshotFixturesRuntimeResponse(mode, dayKey) {
       hash: manifest?.hash || null,
       valueCount: Number(manifest?.counts?.valuePicks || 0),
       detailsCount: Number(manifest?.counts?.details || 0),
-      fixturesCount: matches.length
+      fixturesCount: matches.length,
+      baseFixturesCount: runtimeBuild.fixtureCount,
+      oddsRowsCount: runtimeBuild.oddsCount,
+      oddsSupplementCount: runtimeBuild.oddsSupplementCount
     }
   };
 }
