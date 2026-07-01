@@ -71,9 +71,13 @@ export function statusRankFromParts(status, rawStatus, statusType, statusName) {
 // panels lose their product meaning:
 //   today  = PRE + LIVE          upcoming + currently running. A match LEAVES
 //                                the today panel the moment it finishes (FT).
-//   active = PRE + FINAL + SPECIAL  the day's per-league mirror of scheduled and
-//                                finished/postponed matches (also for days moved
-//                                forward/back). NEVER shows LIVE.
+//   active = PRE + LIVE(as PRE) + FINAL + SPECIAL  the day's per-league mirror of
+//                                the WHOLE slate (also for days moved forward/back).
+//                                It is NOT the live panel, so a currently-running
+//                                match must not vanish — it stays visible but is
+//                                PROJECTED to PRE (kickoff time, no score/minute).
+//                                So active never SHOWS live status, yet never drops
+//                                a live match either.
 // Any other mode = no filter (full universe). UNKNOWN-status rows are excluded
 // from both panels rather than guessed into LIVE/FT.
 export const PANEL_MODES = Object.freeze(["today", "active"]);
@@ -86,8 +90,11 @@ export function panelModeAllowsRow(mode, row) {
     return rank === STATUS_RANK.PRE || rank === STATUS_RANK.LIVE;
   }
   if (mode === "active") {
+    // LIVE included too — it is projected to PRE (see projectLiveToPreForActive),
+    // so the day mirror stays complete without ever showing live status.
     return (
       rank === STATUS_RANK.PRE ||
+      rank === STATUS_RANK.LIVE ||
       rank === STATUS_RANK.FINAL ||
       rank === STATUS_RANK.SPECIAL
     );
@@ -95,14 +102,46 @@ export function panelModeAllowsRow(mode, row) {
   return true; // unknown mode → do not filter
 }
 
+// Present a live row as its scheduled (PRE) self for the active/day-mirror panel:
+// keep the fixture, drop everything live (status blob, score, minute). The
+// `displayedAsPre` flag is an audit breadcrumb (was LIVE, shown as PRE).
+function projectLiveToPreForActive(row) {
+  return {
+    ...row,
+    status: "PRE",
+    statusType: "PRE",
+    rawStatus: "PRE",
+    statusName: null,
+    state: null,
+    phase: null,
+    scoreHome: null,
+    scoreAway: null,
+    minute: null,
+    live: false,
+    isLive: false,
+    displayedAsPre: true,
+  };
+}
+
 /**
- * Apply the panel-mode status filter over a shared display universe. Callers
- * build the universe once (so /fixtures-runtime and /api/matches-for-date can
- * never disagree about which matches exist) and filter per panel here.
+ * Project a shared display universe down to a panel. Callers build the universe
+ * once (so /fixtures-runtime and /api/matches-for-date can never disagree about
+ * which matches exist) and shape it per panel here. `active` keeps live matches
+ * but renders them as PRE so the day mirror is never missing a running match.
  */
 export function filterByPanelMode(matches, mode) {
   if (mode !== "today" && mode !== "active") return matches || [];
-  return (matches || []).filter((row) => panelModeAllowsRow(mode, row));
+  const out = [];
+  for (const row of (matches || [])) {
+    if (!panelModeAllowsRow(mode, row)) continue;
+    if (mode === "active") {
+      const rank = statusRankFromParts(row?.status, row?.rawStatus, row?.statusType, row?.statusName);
+      out.push(rank === STATUS_RANK.LIVE ? projectLiveToPreForActive(row) : row);
+    } else {
+      out.push(row);
+    }
+  }
+  return out;
 }
 
 /**
