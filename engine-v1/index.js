@@ -24,6 +24,7 @@ import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
 import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
+import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1339,40 +1340,51 @@ function mergeFlashscoreFixtures(result, requestedDay) {
   return { ...result, matches: [...base, ...extra], count: base.length + extra.length, flashscoreAdded: extra.length };
 }
 
-app.get("/fixtures-runtime", (req, res) => {
-  try {
-    const mode = String(req.query.mode || "today");
-    const dayKey = String(req.query.date || athensDayKey());
+app.get("/fixtures-runtime", async (req, res) => {
+  const mode = String(req.query.mode || "today");
+  const dayKey = String(req.query.date || athensDayKey());
 
+  // Merge flashscore fixture supplement, overlay live/FT status (today only,
+  // odds-only leagues), keep count in sync, then respond.
+  const sendRuntime = async (payload) => {
+    const merged = mergeFlashscoreFixtures(payload, dayKey);
+    try {
+      merged.matches = await overlayFlashscoreLive(merged.matches, dayKey);
+      if (Array.isArray(merged.matches)) merged.count = merged.matches.length;
+    } catch (err) {
+      console.warn("[fixtures-runtime] live overlay failed", String(err?.message || err));
+    }
+    res.json(merged);
+  };
+
+  try {
     if (snapshotOnlyMode()) {
       const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
 
       if (snapshotResult.ok) {
-        res.json(mergeFlashscoreFixtures(snapshotResult, dayKey));
+        await sendRuntime(snapshotResult);
         return;
       }
     }
 
     const rows = buildFixturesRuntime(mode, dayKey);
 
-    res.json(mergeFlashscoreFixtures({
+    await sendRuntime({
       ok: true,
       mode,
       date: dayKey,
       count: rows.length,
       matches: rows,
       source: "runtime"
-    }, dayKey));
+    });
   } catch (err) {
     console.error("[fixtures-runtime] failed", err?.message || err);
 
     if (runtimeBuildsDisabled()) {
-      const mode = String(req.query.mode || "today");
-      const dayKey = String(req.query.date || athensDayKey());
       const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
 
       if (snapshotResult.ok) {
-        res.json(mergeFlashscoreFixtures(snapshotResult, dayKey));
+        await sendRuntime(snapshotResult);
         return;
       }
     }
@@ -1843,9 +1855,21 @@ app.post("/api/refresh-multi-odds", async (req, res) => {
 
 // Matches for any date: deploy snapshot → canonical-fixtures fallback.
 // Returns { date, matches: [{ matchId, homeTeam, awayTeam, kickoffUtc, status, leagueSlug, scoreHome, scoreAway }] }
-app.get("/api/matches-for-date", (req, res) => {
+app.get("/api/matches-for-date", async (req, res) => {
   const date = String(req.query.date || athensDayKey()).slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
+
+  // Overlay live/FT status from Flashscore for odds-only leagues (today only),
+  // then respond. No-op for past dates and when the feed is unavailable.
+  const respond = async (source, matches) => {
+    let out = matches;
+    try {
+      out = await overlayFlashscoreLive(matches, date);
+    } catch (err) {
+      console.warn("[matches-for-date] live overlay failed", String(err?.message || err));
+    }
+    return res.json({ ok: true, date, source, matches: out });
+  };
 
   // Load AI assessments for this date (if available) — keyed by matchId
   let assessmentMap = {};
@@ -1985,7 +2009,7 @@ app.get("/api/matches-for-date", (req, res) => {
       ...oddsMatches,
       ...fixturesAllMatches
     ], date);
-    if (merged.length) return res.json({ ok: true, date, source: "snapshot", matches: merged });
+    if (merged.length) return respond("snapshot", merged);
   }
 
   // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
@@ -2011,7 +2035,7 @@ app.get("/api/matches-for-date", (req, res) => {
           } catch { return []; }
         });
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return res.json({ ok: true, date, source: "canonical", matches: reconciled });
+      if (reconciled.length) return respond("canonical", reconciled);
     }
   } catch { /**/ }
 
@@ -2036,7 +2060,7 @@ app.get("/api/matches-for-date", (req, res) => {
           scoreAway:  m.scoreAway ?? null,
         })).filter(m => m.matchId && m.homeTeam);
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return res.json({ ok: true, date, source: "fixtures-all", matches: reconciled });
+      if (reconciled.length) return respond("fixtures-all", reconciled);
     } catch { /**/ }
   }
 
