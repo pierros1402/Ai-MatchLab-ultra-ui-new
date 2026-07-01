@@ -1,0 +1,230 @@
+AI MATCHLAB ULTRA — CONTINUATION / HANDOFF NOTE (UPDATED)
+Date: 2026-07-01
+Supersedes: AI_MATCHLAB_ULTRA_diagnostic_note_2026-07-01.txt
+
+TL;DR (GR):
+  Ξεκινήσαμε από τα θεμέλια. Έφτιαξα το κοινό "συμβόλαιο" εμφάνισης
+  (display-contract.js) + έναν κοινό builder (buildDisplayMatchesForDate) που
+  τον καλούν ΚΑΙ τα δύο endpoints, ώστε /api/matches-for-date και
+  /fixtures-runtime να ΜΗΝ διαφωνούν ποτέ. Επαληθεύτηκε ζωντανά: η απόκλιση
+  36-vs-13 έγινε 36=36. ΟΙ ΑΛΛΑΓΕΣ ΕΙΝΑΙ UNCOMMITTED. Επόμενα: σκλήρυνση live
+  overlay, snapshot/latest.json 07-01, orchestration Φάσης 3 (frozen value).
+
+============================================================
+0) HOW TO READ THIS NOTE
+============================================================
+
+This is the current source of truth for where the project stands, replacing the
+2026-07-01 diagnostic note. It records:
+  - the architecture DECISIONS locked in this session,
+  - what was BUILT and VERIFIED this session,
+  - what is still OPEN, in priority order.
+
+Claude persistent memory already holds the key facts (files under
+.claude/.../memory/): display-universe-unification, odds-value-firewall,
+daily-run-orchestration, value-odds-pipeline-map. This note is the human-readable
+mirror + the exact repo state.
+
+============================================================
+1) REPO STATE
+============================================================
+
+Branch: main
+HEAD:   56e9631a2  Fill main odds line from free OddsPortal consensus when BetExplorer is absent
+
+WORKING TREE — UNCOMMITTED CHANGES FROM THIS SESSION (foundation work):
+  NEW  engine-v1/core/display-contract.js
+  MOD  engine-v1/index.js          (import + fxNormTeam/dateMatchStatusRank delegate
+                                     + new buildDisplayMatchesForDate() + both
+                                     endpoints rewired)
+  (pre-existing untracked) data/multi-odds/2026-07-03.json   (0 matches)
+
+IMPORTANT: nothing from this session is committed or deployed yet. Review, then
+commit on a branch (do NOT commit straight to main without review), then deploy.
+
+Engine boots locally: `node engine-v1/index.js` → listens on :3010.
+(The older note claiming index.js "won't boot locally due to missing deps" is
+STALE — it boots fine now.)
+
+============================================================
+2) ARCHITECTURE DECISIONS LOCKED THIS SESSION
+============================================================
+
+A) ODDS ↔ VALUE FIREWALL (hard rule)
+   Three SEPARATE, non-cross-contaminating concerns:
+     1. Value panel value = OUR statistical estimate (form/history/standings,
+        Poisson). Computed ONCE → FROZEN, stable, never changes. NOTHING to do
+        with odds.
+     2. Odds (two UI panels) = real scraped bookmaker odds, shown ONLY for drift
+        (open→current→delta). Display layer. May at most signal a match EXISTS —
+        never an input to value.
+     3. Per-match DETAILS assessment = what the AI writes in each match's details,
+        for ALL matches. A DISTINCT output from (1) — NOT the same number as the
+        value-panel value. Also odds-independent.
+   Value panel (1) and details assessment (3) are two different things — do not
+   conflate them.
+
+B) DATA CLASSIFICATION
+   - deploy-snapshots/<day>/fixtures.json  = PREFERRED display source (ESPN
+       canonical status/scores), but a regenerable deploy artifact — NOT truth.
+   - odds.json / fixtures-all.json / multi-odds = SUPPLEMENTS (rows/existence +
+       odds drift). Never a status/result authority. Never feed value.
+   - data/fixtures.json (json-db) = regenerable OPERATIONAL BRIDGE/CACHE, NOT a
+       statistical truth store. Frozen openings mirror to data/assessments/<day>.json.
+       => run-odds-opening.js "canonicalWrites: 0" wording is acceptable ONLY under
+          this classification; make comments/guardrails say so explicitly.
+   - Statistical TRUTH = league-memory (results / standings / history). Deploy
+       snapshots + bridge must never overwrite/contaminate it.
+
+C) DAILY-RUN ORCHESTRATION (target)
+   Phase 1 Acquisition: assemble the COMPLETE PRE fixture list for ALL mapped
+     leagues.
+   GATE: once the whole PRE set is complete/opened (pre-kickoff; NOT "all FT").
+   Phase 2 Enrichment (batch, once): details, geo, team news, player usage,
+     lineups, referee/discipline, etc.
+   Phase 3 Value: compute value-panel value ONCE → FREEZE (never revised).
+   DECIDED (user, 2026-07-01): the DETAILS assessment (3 above) MAY refresh closer
+     to kickoff if needed (e.g. lineups / team-news land). The value-panel value
+     (1) stays FROZEN once regardless.
+
+============================================================
+3) WHAT WAS BUILT + VERIFIED THIS SESSION  (Priority 1 — DONE)
+============================================================
+
+Problem fixed: /api/matches-for-date and /fixtures-runtime returned DIFFERENT
+match universes for the same date (07-01: 36 vs 13). Root cause: when a day had
+no fixtures.json (partial snapshot), /fixtures-runtime fell back to json-db
+(buildFixturesRuntime) which never reads odds.json, while /api/matches-for-date
+read odds.json + fixtures-all.json directly. They also pulled supplements from
+different sources entirely.
+
+Built:
+  1. engine-v1/core/display-contract.js — the single shared contract:
+       - normalizeDisplayTeam / displayPairKey  (THE dedupe key)
+       - statusRankFromParts                    (status authority; TOKEN-AWARE, so
+         a concatenated blob "FT SECOND_HALF FT" ranks FINAL, not LIVE — fixes the
+         same class as commit 3f618042f)
+       - DISPLAY_SOURCE_PRIORITY, STATUS_RANK constants
+       - data-classification + firewall documentation
+     Unit-tested in isolation: 9/9 pass.
+
+  2. buildDisplayMatchesForDate(date) in index.js — extracted verbatim from the
+     mature /api/matches-for-date body (layers: fixtures.json → odds.json →
+     fixtures-all.json → reconcile via truth-overlay + quality dedupe). Returns
+     { source, matches }. Does NOT apply live overlay (callers own that).
+     Attaches the frozen `assessment` block separately (firewall).
+
+  3. Rewired BOTH endpoints to call it:
+       - /api/matches-for-date  → behaviour-preserving (it already used this logic).
+       - /fixtures-runtime      → now uses the same builder; dropped the separate
+         mergeFlashscoreFixtures (the builder already includes fixtures-all), and
+         bypassed the json-db path that caused the divergence.
+     index.js fxNormTeam + dateMatchStatusRank now DELEGATE to the contract.
+
+Verified LIVE (engine on :3010):
+       Date        matches-for-date   fixtures-runtime   diff
+       2026-07-01  36                 36                 0   (was 36 vs 13)
+       2026-06-30  26                 26                 0
+       2026-07-02  12                 12                 0
+   /fixtures-runtime response shape preserved: { ok, mode, date, count, matches,
+   source }; rows keep homeTeam/awayTeam/status/statusType/rawStatus/scoreHome/
+   scoreAway/leagueSlug/leagueName. mode=active also works.
+
+Left unused (NOT removed — smaller blast radius, cleanup later):
+   snapshotFixturesRuntimeResponse, buildFixturesRuntime (import),
+   mergeFlashscoreFixtures, snapshotOnlyMode()/runtimeBuildsDisabled() gating.
+
+============================================================
+4) OPEN WORK — PRIORITY ORDER FOR NEXT SESSION
+============================================================
+
+P1 (DONE this session) — Unify backend date-display logic. ✔
+
+P2 — HARDEN the Flashscore live overlay (engine-v1/odds/flashscore-live-overlay.js)
+   Current gaps (confirmed in code):
+     a) Cache is NOT day-keyed: `let CACHE = { ts, byPair }`. Add dayKey; reject if
+        CACHE.dayKey !== athensDayKey().
+     b) Stale cache survives a failed fetch ("stale live data beats none", line
+        ~62). For live status, stale can show a WRONG live state — do NOT overlay;
+        return row unchanged + a `liveOverlaySkipped: "feed_failed_or_stale"` flag.
+     c) Status mapping too weak: line ~122 `if (scoreHome!=null||scoreAway!=null)
+        → LIVE`. Any feed row with a score that isn't finished (halftime/abandoned/
+        suspended/postponed-with-score) becomes LIVE. Add explicit status mapping;
+        unknown status must NOT become LIVE/FT.
+     d) Missing audit fields: add liveOverlaySource / FetchedAt / CacheAgeMs /
+        StatusCode / MatchedBy — AND a flag when a row was attempted but UNMATCHED
+        (odds-only leagues silently never get FT when Flashscore naming differs
+        from odds/ESPN naming — a real coverage gap, not just debuggability).
+
+P3 — Resolve 07-01 snapshot state + stale latest.json
+   - data/deploy-snapshots/latest.json still points to 2026-06-30.
+   - data/deploy-snapshots/2026-07-01/ has only fixtures-all.json + odds.json
+     (no manifest/fixtures/value/details).
+   Note: the unified builder already TOLERATES this partial state (07-01 serves 36
+   rows fine), so this is no longer a correctness emergency — but generate a
+   complete snapshot and/or refresh latest.json to remove the inconsistency.
+
+P4 — run-odds-opening.js guardrail wording
+   It writes data/fixtures.json via patchFixtureAssessment yet advertises
+   `canonicalWrites: 0`. Under decision 2B (fixtures.json = bridge/cache) this is
+   acceptable — but update the comment/guardrail text to state that classification
+   explicitly so it stops looking false.
+
+P5 — VALUE FREEZE fix (feeds Phase-3 orchestration)
+   build-assessment-day.js currently recomputes `currentAssessment` every run and
+   sets `revised:true` on prob shift — i.e. the value-panel value DRIFTS. Decision:
+   value panel = frozen openAssessment only; retire currentAssessment/revised from
+   display + settlement (at most a hidden internal diagnostic).
+
+P6 — Enforce data-boundary guard in CI (--forbid-cache-truth-mix) for automated
+   commits touching data files.
+
+P7 — Cleanup: remove the now-unused fixtures-runtime helpers listed in §3.
+
+P8 — UI event architecture refactor (lower priority; current date-hold patch is
+   acceptable). Separate streams: date-matches:set / runtime-active:update /
+   live:update instead of one shared active-leagues:updated.
+
+============================================================
+5) VERIFY COMMANDS (next session)
+============================================================
+
+  Set-Location C:\Ai-MatchLab-ULTRA-UI
+  git status --short
+  git log --oneline -5
+
+  # Boot + confirm the two endpoints still agree:
+  node engine-v1/index.js         # listens on :3010  (Ctrl-C to stop)
+  # in another shell / PowerShell:
+  $a = Invoke-RestMethod "http://localhost:3010/api/matches-for-date?date=2026-07-01"
+  $b = Invoke-RestMethod "http://localhost:3010/fixtures-runtime?mode=today&date=2026-07-01"
+  "$($a.matches.Count) vs $($b.matches.Count)"     # expect equal
+
+  # Contract unit sanity:
+  node --input-type=module -e "import {statusRankFromParts,STATUS_RANK} from './engine-v1/core/display-contract.js'; console.log(statusRankFromParts('FT SECOND_HALF FT')===STATUS_RANK.FINAL)"
+
+============================================================
+6) STRICT DO-NOT-DO LIST (unchanged, still binding)
+============================================================
+
+  - Do NOT let odds influence value or the details assessment (firewall).
+  - Do NOT use deploy snapshots as authoritative truth stores.
+  - Do NOT fabricate FT for odds-only rows; do NOT overlay live/FT from stale cache.
+  - Do NOT trust fixtures-all.json as a result source.
+  - Do NOT let /fixtures-runtime and /api/matches-for-date define different
+    universes for the same date (now unified — keep it that way; both must keep
+    calling buildDisplayMatchesForDate).
+  - Do NOT reapply the reverted live alias UI patch.
+  - Do NOT mix cache artifacts + truth stores in automated commits without the
+    strict guardrail.
+  - Do NOT use git reset --hard / force push / destructive clean without an
+    explicit, backed-up plan.
+
+============================================================
+7) ONE-LINE STATUS
+============================================================
+
+  Foundation laid: a single display-match builder now governs both endpoints
+  (verified 36=36 live) and the odds↔value firewall + data classification are
+  decided. Changes are uncommitted. Next: harden the live overlay, tidy the 07-01
+  snapshot/latest.json, then freeze value for the Phase-3 daily-run orchestration.
