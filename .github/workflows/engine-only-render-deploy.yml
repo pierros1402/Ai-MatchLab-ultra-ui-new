@@ -1,0 +1,43 @@
+name: Engine-only Render deploy
+
+# Manually trigger a Render redeploy of the ENGINE service only (no UI deploy,
+# no snapshot build, no data commit). Mirrors "UI-only Render deploy".
+#
+# Requires the repo secret RENDER_ENGINE_DEPLOY_HOOK_URL (the engine service's
+# Render deploy hook URL). The same secret is already referenced by the daily
+# and intraday snapshot workflows — adding it makes their engine-redeploy steps
+# work too, instead of silently skipping.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: engine-only-render-deploy
+  cancel-in-progress: false
+
+jobs:
+  trigger-engine-render-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Intentionally no checkout, no snapshot build, no data commit, no UI deploy.
+      - name: Trigger Render engine redeploy
+        shell: bash
+        env:
+          RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RENDER_ENGINE_DEPLOY_HOOK_URL:-}" ]; then
+            echo "ERROR: RENDER_ENGINE_DEPLOY_HOOK_URL is not configured."
+            echo "Add it under repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+          echo "Triggering Render engine redeploy..."
+          curl -fsS -X POST "${RENDER_ENGINE_DEPLOY_HOOK_URL}"
+          echo "Render engine redeploy hook triggered."
