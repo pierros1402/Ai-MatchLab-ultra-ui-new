@@ -18,6 +18,7 @@ import { buildValueDay } from "./core/build-value-day.js";
 import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload, enrichSnapshotWithAssessment } from "./api/details.js";
 import { resolveDataPath } from "./storage/data-root.js";
+import { normalizeDisplayTeam, statusRankFromParts } from "./core/display-contract.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
@@ -1085,8 +1086,10 @@ app.get("/system-health", (req, res) => {
 // deduped against canonical matches by team names. This NEVER writes to the
 // canonical json-db / details, so the value engine and its prerequisites are
 // untouched — these rows are tagged source:"flashscore" for the UI only.
+// Display dedupe key — delegates to the shared contract so every endpoint
+// normalizes team names identically (see engine-v1/core/display-contract.js).
 function fxNormTeam(s) {
-  return String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "").trim();
+  return normalizeDisplayTeam(s);
 }
 function readFixturesAllSnapshot() {
   try {
@@ -1220,19 +1223,10 @@ function overlayTruthResults(matches, requestedDay) {
   });
 }
 
+// Status authority rank — delegates to the shared contract (token-aware, so a
+// concatenated blob like "FT SECOND_HALF FT" correctly ranks FINAL, not LIVE).
 function dateMatchStatusRank(match) {
-  const s = String([
-    match?.status,
-    match?.rawStatus,
-    match?.statusType,
-    match?.statusName,
-  ].filter(Boolean).join(" ")).toUpperCase();
-
-  if (s === "FT" || s.includes("FULL_TIME") || s.includes("FINAL") || s.includes("AET") || s.includes("PEN")) return 50;
-  if (s.includes("POSTPON") || s.includes("CANCEL") || s.includes("ABANDON") || s.includes("SUSPEND")) return 40;
-  if (s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") || s.includes("HALF_TIME") || s.includes("IN_PROGRESS")) return 30;
-  if (s === "PRE" || s.includes("SCHEDULED") || s.includes("NOT_STARTED")) return 20;
-  return 10;
+  return statusRankFromParts(match?.status, match?.rawStatus, match?.statusType, match?.statusName);
 }
 
 function hasDateMatchScore(match) {
@@ -1345,53 +1339,27 @@ function mergeFlashscoreFixtures(result, requestedDay) {
 
 app.get("/fixtures-runtime", async (req, res) => {
   const mode = String(req.query.mode || "today");
-  const dayKey = String(req.query.date || athensDayKey());
+  const dayKey = String(req.query.date || athensDayKey()).slice(0, 10);
 
-  // Merge flashscore fixture supplement, overlay live/FT status (today only,
-  // odds-only leagues), keep count in sync, then respond.
-  const sendRuntime = async (payload) => {
-    const merged = mergeFlashscoreFixtures(payload, dayKey);
+  try {
+    // Single shared universe — IDENTICAL to /api/matches-for-date so the two
+    // endpoints can never disagree for the same date. The builder already layers
+    // fixtures.json → odds.json → fixtures-all.json, so no separate flashscore
+    // merge is needed here (that was the old divergence source).
+    const { source, matches } = buildDisplayMatchesForDate(dayKey);
+
+    // Overlay live/FT status (today only, odds-only leagues); no-op for past
+    // dates and when the feed is unavailable.
+    let out = matches;
     try {
-      merged.matches = await overlayFlashscoreLive(merged.matches, dayKey);
-      if (Array.isArray(merged.matches)) merged.count = merged.matches.length;
+      out = await overlayFlashscoreLive(matches, dayKey);
     } catch (err) {
       console.warn("[fixtures-runtime] live overlay failed", String(err?.message || err));
     }
-    res.json(merged);
-  };
 
-  try {
-    if (snapshotOnlyMode()) {
-      const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
-
-      if (snapshotResult.ok) {
-        await sendRuntime(snapshotResult);
-        return;
-      }
-    }
-
-    const rows = buildFixturesRuntime(mode, dayKey);
-
-    await sendRuntime({
-      ok: true,
-      mode,
-      date: dayKey,
-      count: rows.length,
-      matches: rows,
-      source: "runtime"
-    });
+    res.json({ ok: true, mode, date: dayKey, count: out.length, matches: out, source });
   } catch (err) {
     console.error("[fixtures-runtime] failed", err?.message || err);
-
-    if (runtimeBuildsDisabled()) {
-      const snapshotResult = snapshotFixturesRuntimeResponse(mode, dayKey);
-
-      if (snapshotResult.ok) {
-        await sendRuntime(snapshotResult);
-        return;
-      }
-    }
-
     res.status(503).json({
       ok: false,
       error: "fixtures_runtime_unavailable",
@@ -1858,22 +1826,16 @@ app.post("/api/refresh-multi-odds", async (req, res) => {
 
 // Matches for any date: deploy snapshot → canonical-fixtures fallback.
 // Returns { date, matches: [{ matchId, homeTeam, awayTeam, kickoffUtc, status, leagueSlug, scoreHome, scoreAway }] }
-app.get("/api/matches-for-date", async (req, res) => {
-  const date = String(req.query.date || athensDayKey()).slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
-
-  // Overlay live/FT status from Flashscore for odds-only leagues (today only),
-  // then respond. No-op for past dates and when the feed is unavailable.
-  const respond = async (source, matches) => {
-    let out = matches;
-    try {
-      out = await overlayFlashscoreLive(matches, date);
-    } catch (err) {
-      console.warn("[matches-for-date] live overlay failed", String(err?.message || err));
-    }
-    return res.json({ ok: true, date, source, matches: out });
-  };
-
+// ── Shared display-match universe builder ──────────────────────────────────
+// THE single authority for "which matches exist for a day" — intended for BOTH
+// /api/matches-for-date and /fixtures-runtime so the two can never disagree.
+// Layers sources per the display contract (engine-v1/core/display-contract.js):
+// fixtures.json (ESPN canonical) → odds.json → fixtures-all.json, then reconciles
+// via truth-overlay + quality-aware dedupe. Attaches the frozen `assessment`
+// (value) as a strictly separate block — odds NEVER feed value (odds↔value
+// firewall). Returns { source, matches }; does NOT apply the request-time live
+// overlay — callers own that so it stays a same-day request-time concern.
+function buildDisplayMatchesForDate(date) {
   // Load AI assessments for this date (if available) — keyed by matchId
   let assessmentMap = {};
   try {
@@ -2013,7 +1975,7 @@ app.get("/api/matches-for-date", async (req, res) => {
       ...oddsMatches,
       ...fixturesAllMatches
     ], date);
-    if (merged.length) return respond("snapshot", merged);
+    if (merged.length) return { source: "snapshot", matches: merged };
   }
 
   // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
@@ -2039,7 +2001,7 @@ app.get("/api/matches-for-date", async (req, res) => {
           } catch { return []; }
         });
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return respond("canonical", reconciled);
+      if (reconciled.length) return { source: "canonical", matches: reconciled };
     }
   } catch { /**/ }
 
@@ -2064,11 +2026,28 @@ app.get("/api/matches-for-date", async (req, res) => {
           scoreAway:  m.scoreAway ?? null,
         })).filter(m => m.matchId && m.homeTeam && m.awayTeam);
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return respond("fixtures-all", reconciled);
+      if (reconciled.length) return { source: "fixtures-all", matches: reconciled };
     } catch { /**/ }
   }
 
-  return res.json({ ok: true, date, source: "none", matches: [] });
+  return { source: "none", matches: [] };
+}
+
+app.get("/api/matches-for-date", async (req, res) => {
+  const date = String(req.query.date || athensDayKey()).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
+
+  const { source, matches } = buildDisplayMatchesForDate(date);
+
+  // Overlay live/FT status from Flashscore for odds-only leagues (today only).
+  // No-op for past dates and when the feed is unavailable.
+  let out = matches;
+  try {
+    out = await overlayFlashscoreLive(matches, date);
+  } catch (err) {
+    console.warn("[matches-for-date] live overlay failed", String(err?.message || err));
+  }
+  return res.json({ ok: true, date, source, matches: out });
 });
 
 // All prefetched/fetched odds for a date — used by Opening Tracker panel.
