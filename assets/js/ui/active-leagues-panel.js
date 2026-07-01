@@ -262,6 +262,11 @@
     return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
   }
 
+  function selectedDateKey() {
+    return String(window.__AIML_SELECTED_DATE || todayKey()).slice(0, 10);
+  }
+
+
   document.addEventListener("active-leagues:updated", function (e) {
     try {
       const detail = e?.detail || null;
