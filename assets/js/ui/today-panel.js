@@ -194,12 +194,14 @@
       }
 
       const lgName = m.leagueName || m.leagueSlug || "—";
-      if (lgName !== lastLeague) {
+      // Country goes on the same line as the league, before it.
+      const lgLabel = m.country ? `${m.country} · ${lgName}` : lgName;
+      if (lgLabel !== lastLeague) {
         const lg = document.createElement("div");
         lg.className = "today-league";
-        lg.textContent = lgName;
+        lg.textContent = lgLabel;
         panel.appendChild(lg);
-        lastLeague = lgName;
+        lastLeague = lgLabel;
       }
 
       const row = document.createElement("div");
@@ -307,6 +309,8 @@
         away: m.away ?? m.awayTeam,
         leagueName: m.leagueName,
         leagueSlug: m.leagueSlug,
+        country: m.country,
+        leagueTier: m.leagueTier,
         status: m.status,
         rawStatus: m.rawStatus,
         statusType: m.statusType,

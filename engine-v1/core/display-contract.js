@@ -64,6 +64,47 @@ export function statusRankFromParts(status, rawStatus, statusType, statusName) {
   return STATUS_RANK.UNKNOWN;
 }
 
+// ── Panel-mode display rule ─────────────────────────────────────────────────
+// The shared builder (`buildDisplayMatchesForDate`) defines the match UNIVERSE
+// for a day. The panel MODE defines which statuses within that universe are
+// shown — these are two separate concerns and must never be collapsed, or the
+// panels lose their product meaning:
+//   today  = PRE + LIVE          upcoming + currently running. A match LEAVES
+//                                the today panel the moment it finishes (FT).
+//   active = PRE + FINAL + SPECIAL  the day's per-league mirror of scheduled and
+//                                finished/postponed matches (also for days moved
+//                                forward/back). NEVER shows LIVE.
+// Any other mode = no filter (full universe). UNKNOWN-status rows are excluded
+// from both panels rather than guessed into LIVE/FT.
+export const PANEL_MODES = Object.freeze(["today", "active"]);
+
+export function panelModeAllowsRow(mode, row) {
+  const rank = statusRankFromParts(
+    row?.status, row?.rawStatus, row?.statusType, row?.statusName
+  );
+  if (mode === "today") {
+    return rank === STATUS_RANK.PRE || rank === STATUS_RANK.LIVE;
+  }
+  if (mode === "active") {
+    return (
+      rank === STATUS_RANK.PRE ||
+      rank === STATUS_RANK.FINAL ||
+      rank === STATUS_RANK.SPECIAL
+    );
+  }
+  return true; // unknown mode → do not filter
+}
+
+/**
+ * Apply the panel-mode status filter over a shared display universe. Callers
+ * build the universe once (so /fixtures-runtime and /api/matches-for-date can
+ * never disagree about which matches exist) and filter per panel here.
+ */
+export function filterByPanelMode(matches, mode) {
+  if (mode !== "today" && mode !== "active") return matches || [];
+  return (matches || []).filter((row) => panelModeAllowsRow(mode, row));
+}
+
 /**
  * Canonical team-name key for display dedupe: lowercase, strip diacritics, keep
  * only [a-z0-9]. This is THE dedupe primitive — every endpoint uses it so the
