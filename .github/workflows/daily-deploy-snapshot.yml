@@ -12,9 +12,13 @@ on:
         required: false
         default: "false"
   schedule:
-    # Multiple retry slots. GitHub scheduled workflows can start late or be dropped under load.
-    # These UTC slots cover roughly 00:17-03:17 Europe/Athens across DST/standard time.
-    - cron: "17 21,22,23,0 * * *"
+    # GitHub scheduled workflows can start late or be dropped under load, so each
+    # window keeps several retry slots.
+    # Evening UTC 17-20 ≈ 20:00-23:00 Europe/Athens → PRE-BUILD TOMORROW (+deploy)
+    #   so a day's full slate incl. 00:00-05:00 kickoffs is LIVE before midnight.
+    # Early-morning UTC 21,22,23,0 ≈ 00:00-03:00 Athens → catch-up TODAY for
+    #   leagues that landed after the evening pre-build.
+    - cron: "17 17,18,19,20,21,22,23,0 * * *"
 
 permissions:
   contents: write
@@ -54,11 +58,22 @@ jobs:
           ATHENS_MINUTE="$(TZ=Europe/Athens date +%M)"
           ATHENS_HOUR_NUM=$((10#$ATHENS_HOUR))
 
-          if [ "$EVENT_NAME" = "schedule" ]; then
-            # GitHub scheduled workflows are not guaranteed to start at the exact cron minute.
-            # Accept a wider early-morning Athens window so delayed scheduled runs still build.
-            if [ "$ATHENS_HOUR_NUM" -gt 5 ]; then
-              echo "Skipping scheduled run outside 00:00-05:59 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+          if [ "$EVENT_NAME" = "schedule" ] && [ -z "$DAY_KEY" ]; then
+            # Pick the target day from the Athens clock (a manual dispatch with an
+            # explicit dayKey bypasses this entirely):
+            #   Evening 18:00-23:59 → build TOMORROW so its full slate (incl. the
+            #     00:00-05:00 kickoffs) is ready + deployed BEFORE midnight.
+            #   Early morning 00:00-05:59 → catch-up build of TODAY for leagues
+            #     that landed after the evening pre-build.
+            #   Any other hour → self-skip.
+            if [ "$ATHENS_HOUR_NUM" -ge 18 ] && [ "$ATHENS_HOUR_NUM" -le 23 ]; then
+              DAY_KEY="$(TZ=Europe/Athens date -d 'tomorrow' +%F)"
+              echo "Evening pre-build window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) → TOMORROW $DAY_KEY"
+            elif [ "$ATHENS_HOUR_NUM" -le 5 ]; then
+              DAY_KEY="$(TZ=Europe/Athens date +%F)"
+              echo "Early-morning catch-up window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) → TODAY $DAY_KEY"
+            else
+              echo "Skipping scheduled run outside evening(18-23)/early-morning(00-05) Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
               echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
               exit 0
@@ -83,8 +98,13 @@ jobs:
             echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
             echo "Render redeploy allowed for this manual daily run."
           elif [ "$EVENT_NAME" = "schedule" ]; then
-            echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
-            echo "Render redeploy disabled for scheduled daily snapshot runs."
+            # Scheduled runs now DEPLOY: the pre-built snapshot (tomorrow in the
+            # evening window, today in the morning catch-up) must reach the live
+            # engine's disk so the new day's matches — including 00:00-05:00
+            # kickoffs — are served at day-change without waiting for the first
+            # intraday deploy at 07:00 Athens (by when early matches are over).
+            echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
+            echo "Render redeploy enabled for scheduled pre-build/catch-up run."
           else
             echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
             echo "Render redeploy disabled for this daily run."
