@@ -39,102 +39,15 @@ import { buildRefereeLookup, lookupReferee } from "../odds/referee-enrichment.js
 import { TM_COMPETITIONS } from "../odds/transfermarkt-referee-source.js";
 import { normalizeTeamKey as normalizeTeam, stripYouthSuffix } from "../core/normalize.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
+import {
+  tokenJaccard,
+  buildLeagueIndex,
+  findTeam,
+  findTeamAnyLeague,
+  attributeMatch,
+} from "../odds/team-league-index.js";
 
 function log(...a) { console.log("[run-odds-opening]", ...a); }
-
-function tokenJaccard(a, b) {
-  const A = new Set(a.split(" ").filter(Boolean));
-  const B = new Set(b.split(" ").filter(Boolean));
-  if (!A.size || !B.size) return 0;
-  let inter = 0;
-  for (const t of A) if (B.has(t)) inter++;
-  return inter / new Set([...A, ...B]).size;
-}
-
-// ─── Global team → league index from accepted standings ─────────────────────────
-// Domestic attribution indexes ACTIVE leagues; the cross-league index (for UEFA
-// qualifiers / cups, where the two clubs come from DIFFERENT — and often off-season
-// — leagues) includes every league that has an accepted table (last-season included).
-
-function buildLeagueIndex({ activeOnly = true } = {}) {
-  const dir = resolveDataPath("league-memory", "standings");
-  const leagues = [];
-
-  let files = [];
-  try { files = fs.readdirSync(dir).filter(f => f.endsWith(".json")); } catch { /* none */ }
-
-  for (const file of files) {
-    const slug = file.replace(/\.json$/, "");
-    if (activeOnly && readLeagueState(slug)?.state !== "active") continue;
-
-    const rows = readStandings(slug)?.accepted?.rows;
-    if (!Array.isArray(rows) || rows.length < 4) continue;
-
-    // Index each team under its name AND its aliases (Wikidata/manual), so feeds
-    // that name the club differently still match.
-    const teams = [];
-    for (const r of rows) {
-      for (const cand of resolveAliasCandidates(slug, r.teamName)) {
-        const n = normalizeTeam(cand);
-        if (n) teams.push({ norm: n, row: r });
-      }
-    }
-    let gf = 0, pld = 0;
-    for (const r of rows) { gf += Number(r.goalsFor) || 0; pld += Number(r.played) || 0; }
-    leagues.push({ slug, teams, leagueAvg: pld > 0 ? gf / pld : 1.35 });
-  }
-  return leagues;
-}
-
-function findTeam(name, teams) {
-  const norm = normalizeTeam(name);
-  if (!norm) return null;
-  let best = null, bestScore = 0;
-  for (const t of teams) {
-    const s = t.norm === norm ? 1 : tokenJaccard(norm, t.norm);
-    if (s > bestScore) { bestScore = s; best = t; }
-  }
-  if (bestScore >= 0.6) return best;
-
-  // Fallback: strip youth/reserve suffix and retry (e.g. "Flora U21" → "Flora")
-  const stripped = stripYouthSuffix(name);
-  if (stripped !== name) {
-    const normStripped = normalizeTeam(stripped);
-    let best2 = null, bestScore2 = 0;
-    for (const t of teams) {
-      const s = t.norm === normStripped ? 1 : tokenJaccard(normStripped, t.norm);
-      if (s > bestScore2) { bestScore2 = s; best2 = t; }
-    }
-    if (bestScore2 >= 0.6) return best2;
-  }
-
-  return null;
-}
-
-// Find one team in ANY league (for cross-league cup / UEFA-qualifier matches).
-function findTeamAnyLeague(name, allLeagues) {
-  let best = null, bestScore = 0;
-  for (const lg of allLeagues) {
-    const t = findTeam(name, lg.teams);
-    if (!t) continue;
-    const s = tokenJaccard(normalizeTeam(name), t.norm);
-    if (s > bestScore) { bestScore = s; best = { slug: lg.slug, row: t.row, leagueAvg: lg.leagueAvg }; }
-  }
-  return best;
-}
-
-// Attribute a scraped match to the league whose standings contain BOTH teams.
-function attributeMatch(home, away, leagues) {
-  let best = null, bestScore = 0;
-  for (const lg of leagues) {
-    const h = findTeam(home, lg.teams);
-    const a = findTeam(away, lg.teams);
-    if (!h || !a) continue;
-    const score = (tokenJaccard(normalizeTeam(home), h.norm) + tokenJaccard(normalizeTeam(away), a.norm)) / 2;
-    if (score > bestScore) { bestScore = score; best = { league: lg, home: h.row, away: a.row }; }
-  }
-  return best;
-}
 
 // Athens (Europe/Athens) day key for an absolute UTC instant.
 const ATHENS_FMT = new Intl.DateTimeFormat("en-CA", {
