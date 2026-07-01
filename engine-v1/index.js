@@ -386,11 +386,21 @@ function snapshotValueResponse(dayKey) {
   const manifest = resolvedDate ? readDeploySnapshotManifest(resolvedDate) : null;
 
   if (!payload) {
+    // Partial / not-yet-built day (e.g. a day whose slate is odds-only leagues
+    // with no value coverage, or before the daily run produced value.json).
+    // Return a CLEAN empty result — NOT a 404 — so the value panel shows an empty
+    // state instead of hanging forever on its "Analyzing…" placeholder (the value
+    // adapter drops non-2xx responses and emits nothing). `coverage:"none"` is the
+    // explicit partial-day signal; `reason` preserves the old error for ops.
     return {
-      ok: false,
-      error: "snapshot_value_not_found",
+      ok: true,
       date: resolvedDate || String(dayKey || ""),
-      source: "snapshot"
+      count: 0,
+      total: 0,
+      picks: [],
+      source: "snapshot",
+      coverage: "none",
+      reason: "snapshot_value_not_found"
     };
   }
 
@@ -403,6 +413,7 @@ function snapshotValueResponse(dayKey) {
     count: picks.length,
     picks,
     source: "snapshot",
+    coverage: "complete",
     snapshot: {
       date: resolvedDate,
       generatedAt: manifest?.generatedAt || null,
