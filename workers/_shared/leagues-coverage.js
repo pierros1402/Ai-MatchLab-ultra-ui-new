@@ -422,7 +422,27 @@ export const LEAGUES_COVERAGE = [
   // MONGOLIA
   // ----------------------------------------------------------
   // display-only until Sofascore backfill confirms history availability
-  { slug: "mng.1", tier: 4, trust: 0.50, type: "league", region: "asia",   country: "mongolia" }
+  { slug: "mng.1", tier: 4, trust: 0.50, type: "league", region: "asia",   country: "mongolia" },
+
+  // ----------------------------------------------------------
+  // NEWLY COVERED (2026-07-01) — slugs seen in odds/fixtures-all but absent
+  // from the registry, so the panels grouped them under a headerless "Other"
+  // bucket. Added display-only (tier by real division; trust low until a
+  // Sofascore/Flashscore history backfill confirms availability) so the UI can
+  // group them by country. Region only affects continent/hemisphere hints.
+  // ----------------------------------------------------------
+  { slug: "aus.1", tier: 1, trust: 0.55, type: "league", region: "asia",     country: "australia" },
+  { slug: "bol.1", tier: 1, trust: 0.50, type: "league", region: "americas", country: "bolivia" },
+  { slug: "can.1", tier: 1, trust: 0.55, type: "league", region: "americas", country: "canada" },
+  { slug: "can.2", tier: 2, trust: 0.50, type: "league", region: "americas", country: "canada" },
+  { slug: "eth.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "ethiopia" },
+  { slug: "gab.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "gabon" },
+  { slug: "lca.2", tier: 2, trust: 0.50, type: "league", region: "americas", country: "saint_lucia" },
+  { slug: "mwi.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "malawi" },
+  { slug: "som.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "somalia" },
+  { slug: "syr.1", tier: 1, trust: 0.50, type: "league", region: "asia",     country: "syria" },
+  { slug: "tan.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "tanzania" },
+  { slug: "zim.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "zimbabwe" }
 ];
 
 const CLEAN_LEAGUES_COVERAGE = LEAGUES_COVERAGE.filter(
