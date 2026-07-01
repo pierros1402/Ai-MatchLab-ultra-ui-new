@@ -150,109 +150,142 @@
       return;
     }
 
-    const byLeague = new Map();
+    // Group by COUNTRY → LEAGUE. Country header sits above the first league of
+    // each country; leagues inside a country are ordered by tier (1st league
+    // first), then name. Matches with no known country fall into a trailing
+    // "Other" bucket rendered without a country header.
+    const byCountry = new Map(); // country → Map(leagueKey → { name, tier, arr })
 
     for (const m of matches) {
-      const key = m.leagueName || m.leagueSlug || "Other";
-      if (!byLeague.has(key)) byLeague.set(key, []);
-      byLeague.get(key).push(m);
+      const country = m.country || "";
+      const leagueKey = m.leagueName || m.leagueSlug || "Other";
+      if (!byCountry.has(country)) byCountry.set(country, new Map());
+      const leagues = byCountry.get(country);
+      if (!leagues.has(leagueKey)) {
+        leagues.set(leagueKey, { name: leagueKey, tier: m.leagueTier ?? null, arr: [] });
+      }
+      leagues.get(leagueKey).arr.push(m);
     }
 
-    for (const [lg, arr] of Array.from(byLeague.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))) {
+    const sortedCountries = Array.from(byCountry.keys()).sort((a, b) => {
+      if (!a) return 1;          // empty country ("Other") last
+      if (!b) return -1;
+      return a.localeCompare(b);
+    });
 
-      arr.sort(sortMatches);
-
+    for (const country of sortedCountries) {
       const sec = document.createElement("div");
 
-      const header = document.createElement("div");
-      header.className = "today-league";
-      header.textContent = lg;
-      sec.appendChild(header);
+      if (country) {
+        const countryHeader = document.createElement("div");
+        countryHeader.className = "today-country";
+        countryHeader.textContent = country;
+        sec.appendChild(countryHeader);
+      }
 
-      for (const m of arr) {
+      const leagues = Array.from(byCountry.get(country).values())
+        .sort((a, b) => {
+          const ta = a.tier == null ? 99 : a.tier;
+          const tb = b.tier == null ? 99 : b.tier;
+          if (ta !== tb) return ta - tb;
+          return a.name.localeCompare(b.name);
+        });
 
-        const row = document.createElement("div");
-        row.className = "match-row today-row";
+      for (const league of leagues) {
+        league.arr.sort(sortMatches);
 
-        const left = document.createElement("div");
-        left.className = "today-match";
-        left.textContent = `${m.home || "?"} – ${m.away || "?"}`;
+        const header = document.createElement("div");
+        header.className = "today-league";
+        header.textContent = league.name;
+        sec.appendChild(header);
 
-        const right = document.createElement("div");
-        right.className = "today-right";
-
-        const info = document.createElement("span");
-        info.className = "match-info";
-
-        const status = normStatus(m);
-
-        if (isPostponedOrCanceled(status)) {
-
-          info.textContent = "PP";
-
-        } else if (isFinalStatus(status)) {
-
-          const h = m.scoreHome ?? 0;
-          const a = m.scoreAway ?? 0;
-          info.textContent = formatFinalScore(m, h, a);
-
-        } else if (isLiveStatus(status)) {
-
-          const h = m.scoreHome ?? 0;
-          const a = m.scoreAway ?? 0;
-          const min = m.minute ? `${m.minute}'` : "LIVE";
-          info.textContent = `${min} ${h}-${a}`;
-          info.style.color = "#ff6b35";
-
-        } else {
-
-          info.textContent = timeHHMM(m.kickoff_ms);
-
+        for (const m of league.arr) {
+          sec.appendChild(buildMatchRow(m));
         }
-
-        // ⭐ SAVE (synced)
-        const save = document.createElement("span");
-        save.className = "match-save";
-        save.textContent = isSaved(m) ? "★" : "☆";
-        save.onclick = (e) => {
-          e.stopPropagation();
-          if (window.emit) emit("save-toggle", m);
-        };
-
-        // ⓘ DETAILS
-        const details = document.createElement("span");
-        details.className = "match-details";
-        details.textContent = "ⓘ";
-        details.onclick = (e) => {
-          e.stopPropagation();
-          if (window.emit) {
-            emit("details-open", m);
-            emit("nav:matches", { focus: "details" });
-          }
-        };
-
-        right.appendChild(info);
-        right.appendChild(save);
-        right.appendChild(details);
-
-        row.appendChild(left);
-        row.appendChild(right);
-
-        // Row → odds
-        row.onclick = () => {
-          if (window.emit) {
-            emit("match-selected", m);
-            emit("active-match:set", m);
-            emit("nav:oic", { tab: "odds" });
-          }
-        };
-
-        sec.appendChild(row);
       }
 
       mount.appendChild(sec);
     }
+  }
+
+  function buildMatchRow(m) {
+    const row = document.createElement("div");
+    row.className = "match-row today-row";
+
+    const left = document.createElement("div");
+    left.className = "today-match";
+    left.textContent = `${m.home || "?"} – ${m.away || "?"}`;
+
+    const right = document.createElement("div");
+    right.className = "today-right";
+
+    const info = document.createElement("span");
+    info.className = "match-info";
+
+    const status = normStatus(m);
+
+    if (isPostponedOrCanceled(status)) {
+
+      info.textContent = "PP";
+
+    } else if (isFinalStatus(status)) {
+
+      const h = m.scoreHome ?? 0;
+      const a = m.scoreAway ?? 0;
+      info.textContent = formatFinalScore(m, h, a);
+
+    } else if (isLiveStatus(status)) {
+
+      const h = m.scoreHome ?? 0;
+      const a = m.scoreAway ?? 0;
+      const min = m.minute ? `${m.minute}'` : "LIVE";
+      info.textContent = `${min} ${h}-${a}`;
+      info.style.color = "#ff6b35";
+
+    } else {
+
+      info.textContent = timeHHMM(m.kickoff_ms);
+
+    }
+
+    // ⭐ SAVE (synced)
+    const save = document.createElement("span");
+    save.className = "match-save";
+    save.textContent = isSaved(m) ? "★" : "☆";
+    save.onclick = (e) => {
+      e.stopPropagation();
+      if (window.emit) emit("save-toggle", m);
+    };
+
+    // ⓘ DETAILS
+    const details = document.createElement("span");
+    details.className = "match-details";
+    details.textContent = "ⓘ";
+    details.onclick = (e) => {
+      e.stopPropagation();
+      if (window.emit) {
+        emit("details-open", m);
+        emit("nav:matches", { focus: "details" });
+      }
+    };
+
+    right.appendChild(info);
+    right.appendChild(save);
+    right.appendChild(details);
+
+    row.appendChild(left);
+    row.appendChild(right);
+
+    // Row → odds
+    row.onclick = () => {
+      if (window.emit) {
+        emit("match-selected", m);
+        emit("active-match:set", m);
+        emit("nav:oic", { tab: "odds" });
+      }
+    };
+
+    return row;
   }
 
   // Track which date the user has navigated to (null = today)
