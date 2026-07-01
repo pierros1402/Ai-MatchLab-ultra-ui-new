@@ -22,6 +22,21 @@
     if (window.AIML && window.AIML.on) window.AIML.on(ev, fn);
   }
 
+  function athensToday() {
+    try {
+      return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+    } catch (_) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  function setSelectedDate(date) {
+    var ymd = String(date || athensToday()).slice(0, 10);
+    window.__AIML_SELECTED_DATE = ymd;
+    window.__AIML_VIEWING_NON_TODAY_DATE = ymd !== athensToday() ? ymd : null;
+  }
+
+
   var activeDate = null;
   var loading = false;
 

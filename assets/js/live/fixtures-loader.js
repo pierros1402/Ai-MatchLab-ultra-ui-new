@@ -97,6 +97,16 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     }
   }
 
+  function selectedDateISO() {
+    const selected = window.__AIML_SELECTED_DATE;
+    return String(selected || todayISO()).slice(0, 10);
+  }
+
+  function shouldPublishForDate(dateYmd) {
+    return selectedDateISO() === String(dateYmd || todayISO()).slice(0, 10);
+  }
+
+
   function normalizeStatus(m) {
     const parts = [
       m?.status?.type?.state,
@@ -274,9 +284,13 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
 
     window.__AIML_LAST_TODAY = payload;
 
-    document.dispatchEvent(
-      new CustomEvent("today-matches:loaded", { detail: payload })
-    );
+    if (shouldPublishForDate(payload.date)) {
+      document.dispatchEvent(
+        new CustomEvent("today-matches:loaded", { detail: payload })
+      );
+    } else {
+      liveLog("[TODAY] cached without publishing because selected date is", selectedDateISO());
+    }
 
     liveLog("[TODAY] loaded", payload.total);
     return payload;
@@ -307,9 +321,13 @@ async function loadActive(dateYmd) {
 
   window.__AIML_LAST_ACTIVE = payload;
 
-  document.dispatchEvent(
-    new CustomEvent("active-leagues:updated", { detail: payload })
-  );
+  if (shouldPublishForDate(payload.date)) {
+    document.dispatchEvent(
+      new CustomEvent("active-leagues:updated", { detail: payload })
+    );
+  } else {
+    liveLog("[ACTIVE] cached without publishing because selected date is", selectedDateISO());
+  }
 
   liveLog("[ACTIVE] loaded", payload.total);
   return payload;
