@@ -24,9 +24,21 @@
 
   function toPanelMatch(m) {
     var isLive = m.status === "LIVE";
+    var rawId = String(m.matchId || "");
+    var bareId = rawId.replace(/^fs_/, "");
+    var sourceIds = [];
+
+    if (rawId) sourceIds.push(rawId);
+    if (bareId) {
+      sourceIds.push(bareId);
+      sourceIds.push("fs_" + bareId);
+    }
+
     return {
-      matchId: m.matchId,
-      id: m.matchId,
+      matchId: rawId,
+      id: rawId,
+      sourceId: bareId || null,
+      sourceIds: Array.from(new Set(sourceIds)),
       home: m.home,
       away: m.away,
       homeTeam: m.home,
@@ -39,6 +51,7 @@
       isLive: isLive,
       live: isLive,
       minute: m.minute != null ? m.minute : null,
+      kickoffUtc: m.kickoffUtc || null,
       kickoff_ms: m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0
     };
   }

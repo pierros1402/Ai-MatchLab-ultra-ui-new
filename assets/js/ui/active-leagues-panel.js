@@ -54,6 +54,7 @@
 
   function isLiveStatus(status) {
     const s = normStatus(status);
+    if (s.includes("STALE_LIVE")) return false;
     return s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") || s.includes("HALFTIME") || s.includes("INPROGRESS");
   }
 
@@ -284,33 +285,115 @@
   try {
     syncSaved(window.getSavedMatches ? window.getSavedMatches() : []);
   } catch {}
+
+function normLiveJoinKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function liveMatchDayKey(m) {
+  const raw = m?.kickoffUtc || m?.kickoff || m?.startTime || null;
+  const ms = raw ? Date.parse(String(raw)) : Number(m?.kickoff_ms || 0);
+  if (!Number.isFinite(ms) || ms <= 0) return "";
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+function liveJoinAliases(m) {
+  const keys = new Set();
+  const add = value => {
+    if (value == null) return;
+    const s = String(value).trim();
+    if (s) keys.add(s);
+  };
+
+  add(m?.id);
+  add(m?.matchId);
+  add(m?.canonicalId);
+  add(m?.sourceId);
+
+  if (Array.isArray(m?.sourceIds)) {
+    m.sourceIds.forEach(add);
+  }
+
+  const sourceId = String(m?.sourceId || "").replace(/^fs_/, "").trim();
+  if (sourceId) {
+    add(sourceId);
+    add("fs_" + sourceId);
+  }
+
+  const home = normLiveJoinKey(m?.home || m?.homeTeam);
+  const away = normLiveJoinKey(m?.away || m?.awayTeam);
+  const league = normLiveJoinKey(m?.leagueSlug || m?.leagueName);
+  const day = liveMatchDayKey(m);
+
+  if (home && away) {
+    add("teams:" + home + "|" + away);
+    if (league) add("teams-league:" + league + "|" + home + "|" + away);
+    if (day) add("teams-date:" + day + "|" + home + "|" + away);
+    if (day && league) add("teams-date-league:" + day + "|" + league + "|" + home + "|" + away);
+  }
+
+  return Array.from(keys);
+}
+
+function buildLiveJoinIndex(matches) {
+  const map = new Map();
+  for (const match of Array.isArray(matches) ? matches : []) {
+    for (const key of liveJoinAliases(match)) {
+      if (!map.has(key)) map.set(key, match);
+    }
+  }
+  return map;
+}
+
+function findLiveJoinTarget(index, patch) {
+  for (const key of liveJoinAliases(patch)) {
+    const existing = index.get(key);
+    if (existing) return existing;
+  }
+  return null;
+}
+
+function applyLivePatch(existing, patch) {
+  existing.status = patch.status;
+  existing.rawStatus = patch.rawStatus;
+  existing.statusType = patch.statusType;
+  existing.statusName = patch.statusName;
+  existing.state = patch.state;
+  existing.phase = patch.phase;
+  existing.live = patch.live;
+  existing.isLive = patch.isLive;
+  existing.staleLive = patch.staleLive;
+  existing.staleLiveReason = patch.staleLiveReason;
+  existing.minute = patch.minute;
+  existing.scoreHome = patch.scoreHome;
+  existing.scoreAway = patch.scoreAway;
+  existing.penalties = patch.penalties || existing.penalties;
+  existing.decidedBy = patch.decidedBy || existing.decidedBy;
+}
+
 // --------------------------------------------------
 // LIVE SCORE SYNC
 // --------------------------------------------------
 if (window.on) {
   on("live:update", payload => {
     try {
-      // Don't update live scores when viewing a past/future date
       if (viewingDate) return;
       if (!payload?.matches?.length) return;
 
-      const map = new Map(LAST_MATCHES.map(m => [String(m.id ?? m.matchId), m]));
+      const index = buildLiveJoinIndex(LAST_MATCHES);
 
       for (const m of payload.matches) {
-        const existing = map.get(String(m.id || m.matchId));
+        const existing = findLiveJoinTarget(index, m);
         if (!existing) continue;
-        existing.status    = m.status;
-        existing.rawStatus = m.rawStatus;
-        existing.statusType = m.statusType;
-        existing.statusName = m.statusName;
-        existing.scoreHome = m.scoreHome;
-        existing.scoreAway = m.scoreAway;
-        existing.penalties = m.penalties;
-        existing.decidedBy = m.decidedBy;
-        existing.minute    = m.minute;
+        applyLivePatch(existing, m);
       }
 
-      render({ matches: Array.from(map.values()) });
+      render({ matches: LAST_MATCHES });
     } catch (err) {
       console.error("[active-leagues-panel] live:update error:", err);
     }
