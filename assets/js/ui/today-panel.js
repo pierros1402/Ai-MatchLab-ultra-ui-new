@@ -389,113 +389,41 @@
 
   load();
 
-
-function normLiveJoinKey(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "")
-    .trim();
-}
-
-function liveMatchDayKey(m) {
-  const raw = m?.kickoffUtc || m?.kickoff || m?.startTime || null;
-  const ms = raw ? Date.parse(String(raw)) : Number(m?.kickoff_ms || 0);
-  if (!Number.isFinite(ms) || ms <= 0) return "";
-  return new Date(ms).toISOString().slice(0, 10);
-}
-
-function liveJoinAliases(m) {
-  const keys = new Set();
-  const add = value => {
-    if (value == null) return;
-    const s = String(value).trim();
-    if (s) keys.add(s);
-  };
-
-  add(m?.id);
-  add(m?.matchId);
-  add(m?.canonicalId);
-  add(m?.sourceId);
-
-  if (Array.isArray(m?.sourceIds)) {
-    m.sourceIds.forEach(add);
-  }
-
-  const sourceId = String(m?.sourceId || "").replace(/^fs_/, "").trim();
-  if (sourceId) {
-    add(sourceId);
-    add("fs_" + sourceId);
-  }
-
-  const home = normLiveJoinKey(m?.home || m?.homeTeam);
-  const away = normLiveJoinKey(m?.away || m?.awayTeam);
-  const league = normLiveJoinKey(m?.leagueSlug || m?.leagueName);
-  const day = liveMatchDayKey(m);
-
-  if (home && away) {
-    add("teams:" + home + "|" + away);
-    if (league) add("teams-league:" + league + "|" + home + "|" + away);
-    if (day) add("teams-date:" + day + "|" + home + "|" + away);
-    if (day && league) add("teams-date-league:" + day + "|" + league + "|" + home + "|" + away);
-  }
-
-  return Array.from(keys);
-}
-
-function buildLiveJoinIndex(matches) {
-  const map = new Map();
-  for (const match of Array.isArray(matches) ? matches : []) {
-    for (const key of liveJoinAliases(match)) {
-      if (!map.has(key)) map.set(key, match);
-    }
-  }
-  return map;
-}
-
-function findLiveJoinTarget(index, patch) {
-  for (const key of liveJoinAliases(patch)) {
-    const existing = index.get(key);
-    if (existing) return existing;
-  }
-  return null;
-}
-
-function applyLivePatch(existing, patch) {
-  existing.status = patch.status;
-  existing.rawStatus = patch.rawStatus;
-  existing.statusType = patch.statusType;
-  existing.statusName = patch.statusName;
-  existing.state = patch.state;
-  existing.phase = patch.phase;
-  existing.live = patch.live;
-  existing.isLive = patch.isLive;
-  existing.staleLive = patch.staleLive;
-  existing.staleLiveReason = patch.staleLiveReason;
-  existing.minute = patch.minute;
-  existing.scoreHome = patch.scoreHome;
-  existing.scoreAway = patch.scoreAway;
-  existing.penalties = patch.penalties || existing.penalties;
-  existing.decidedBy = patch.decidedBy || existing.decidedBy;
-}
-
 // ----------------------------------
 // LIVE SYNC (CRITICAL)
 // ----------------------------------
 if (window.on) {
   on("live:update", payload => {
+
     if (!payload?.matches?.length) return;
 
-    const index = buildLiveJoinIndex(LAST_MATCHES);
+    // merge live into current list
+    const map = new Map(
+      LAST_MATCHES.map(m => [String(m.id), m])
+    );
 
     for (const m of payload.matches) {
-      const existing = findLiveJoinTarget(index, m);
+      const id = String(m.id || m.matchId);
+      const existing = map.get(id);
+
       if (!existing) continue;
-      applyLivePatch(existing, m);
+
+      existing.status = m.status;
+      existing.rawStatus = m.rawStatus;
+      existing.statusType = m.statusType;
+      existing.statusName = m.statusName;
+      existing.state = m.state;
+      existing.phase = m.phase;
+      existing.live = m.live;
+      existing.isLive = m.isLive;
+      existing.staleLive = m.staleLive;
+      existing.staleLiveReason = m.staleLiveReason;
+      existing.minute = m.minute;
+      existing.scoreHome = m.scoreHome;
+      existing.scoreAway = m.scoreAway;
     }
 
-    render(LAST_MATCHES);
+    render(Array.from(map.values()));
   });
 }
 
