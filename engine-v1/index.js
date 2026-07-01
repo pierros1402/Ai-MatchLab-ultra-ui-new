@@ -1319,6 +1319,9 @@ function mergeFlashscoreFixtures(result, requestedDay) {
   const extra = [];
   for (const m of snap.matches) {
     if (m.dayKey !== requestedDay) continue;
+    // Never surface a partial row: a malformed fixtures-all generation could
+    // carry blank team names, which would render as "? – ?" in a panel.
+    if (!m.home || !m.away) continue;
     // Skip if this league is already covered by the canonical response
     const slug = String(m.leagueSlug || "");
     const canonical = FX_SLUG_ALIASES[slug] || slug;
@@ -1978,6 +1981,7 @@ app.get("/api/matches-for-date", async (req, res) => {
         fixturesAllMatches = (faj.matches || [])
           .filter(m => {
             if (m.dayKey !== date) return false;
+            if (!(m.home || m.homeTeam) || !(m.away || m.awayTeam)) return false;
             const slug = String(m.leagueSlug || "");
             const canonical = SLUG_ALIASES[slug] || slug;
             if (fixtureSlugs.has(slug) || fixtureSlugs.has(canonical)) return false;
@@ -1999,7 +2003,7 @@ app.get("/api/matches-for-date", async (req, res) => {
             leagueName: m.leagueName || m.competition || "",
             scoreHome:  null,
             scoreAway:  null,
-          })).filter(m => m.matchId && m.homeTeam);
+          })).filter(m => m.matchId && m.homeTeam && m.awayTeam);
         break;
       }
     } catch { /**/ }
@@ -2047,7 +2051,7 @@ app.get("/api/matches-for-date", async (req, res) => {
       const p = resolveDataPath("deploy-snapshots", key, "fixtures-all.json");
       const j = JSON.parse(fs.readFileSync(p, "utf8"));
       const matches = (j.matches || [])
-        .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.id || m.matchId))
+        .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.away || m.awayTeam) && (m.id || m.matchId))
         .map(m => attachAssessment({
           matchId:    String(m.matchId || m.id || ""),
           homeTeam:   m.home || m.homeTeam || "",
@@ -2058,7 +2062,7 @@ app.get("/api/matches-for-date", async (req, res) => {
           leagueName: m.leagueName || m.competition || "",
           scoreHome:  m.scoreHome ?? null,
           scoreAway:  m.scoreAway ?? null,
-        })).filter(m => m.matchId && m.homeTeam);
+        })).filter(m => m.matchId && m.homeTeam && m.awayTeam);
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
       if (reconciled.length) return respond("fixtures-all", reconciled);
     } catch { /**/ }
