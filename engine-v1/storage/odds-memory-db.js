@@ -13,6 +13,7 @@
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
 import { normalizeTeamKey as normTeamKey } from "../core/normalize.js";
+import { buildConsensusIndex, resolveConsensusMarket } from "../odds/multi-odds-consensus.js";
 
 const DIR = resolveDataPath("odds-memory");
 const HISTORY_CAP = 50;
@@ -235,6 +236,10 @@ export function getOddsSnapshot(matchId, market = "1X2") {
  */
 export function getOddsForDay(dayKey) {
   const matches = [];
+  // Free broad-coverage fallback: OddsPortal consensus (~63 leagues) when the
+  // narrow BetExplorer listing has no market for a match. Index once per day;
+  // resolves by exact id then fuzzy team-pair (id spaces differ across sources).
+  const consensusIndex = dayKey ? buildConsensusIndex(dayKey) : null;
   try {
     for (const name of fs.readdirSync(DIR)) {
       if (!name.endsWith(".json")) continue;
@@ -243,6 +248,18 @@ export function getOddsForDay(dayKey) {
       if (dayKey && d.dayKey !== dayKey) continue;
 
       const m1x2 = d.markets?.["1X2"];
+      let market = (m1x2 && m1x2.open) ? { open: m1x2.open, current: m1x2.current, delta: m1x2.delta } : null;
+      let oddsBook = d.oddsBook || null;
+      if (!market && consensusIndex) {
+        const consensus = resolveConsensusMarket(consensusIndex, {
+          matchId: d.matchId, canonicalId: d.canonicalId, home: d.home, away: d.away
+        });
+        if (consensus) {
+          market = { open: consensus.open, current: consensus.current, delta: consensus.delta };
+          oddsBook = `OddsPortal consensus (${consensus.bookCount} books)`;
+        }
+      }
+
       matches.push({
         matchId: d.matchId,
         canonicalId: d.canonicalId || null,
@@ -254,8 +271,8 @@ export function getOddsForDay(dayKey) {
         kickoffUtc: d.kickoffUtc || null,
         kickoffLocal: d.kickoffLocal || null,
         source: d.source || null,
-        oddsBook: d.oddsBook || null,
-        market: (m1x2 && m1x2.open) ? { open: m1x2.open, current: m1x2.current, delta: m1x2.delta } : null,
+        oddsBook,
+        market,
         aiAssessment: d.aiAssessment || null,
         updatedAt: d.updatedAt
       });
