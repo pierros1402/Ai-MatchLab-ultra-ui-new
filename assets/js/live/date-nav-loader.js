@@ -86,11 +86,15 @@
   on("date:change", function (payload) {
     if (!payload || !payload.date) return;
     activeDate = payload.date;
+    setSelectedDate(payload.date);
 
     // If navigating back to today: let fixtures-loader handle it
     // (it already emitted matches:set on init). But reload anyway to keep current.
     loadMatchesForDate(payload.date);
   });
+
+  // Selected date starts as today until the user navigates.
+  setSelectedDate(athensToday());
 
   // Expose for debugging
   window.DateNavLoader = { loadDate: loadMatchesForDate };
