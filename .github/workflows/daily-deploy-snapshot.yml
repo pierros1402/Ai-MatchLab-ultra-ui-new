@@ -138,8 +138,17 @@ jobs:
             git add data/ingest-state
           fi
 
+          # --allow-data-deletions: the prune step above intentionally drops
+          # canonical-fixtures/<day> and coverage-reports/<day>.json OUTSIDE the
+          # rolling [-3,+30] retention window. These are a REGENERABLE rolling
+          # acquisition store (permanent truth lives in league-memory/history),
+          # so their retention deletions are by-design — without this flag the
+          # data-deletion guard fails the whole daily snapshot once the window
+          # advances past a committed day (broke the pipeline from 2026-07-01).
+          # Additions are still confined to the three prune dirs by --allow.
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-canonical-store \
+            --allow-data-deletions \
             --allow='^(data/canonical-fixtures/|data/coverage-reports/|data/ingest-state/)'
           echo "=== CANONICAL STORE STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
           DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/canonical-fixtures/|data/coverage-reports/|data/ingest-state/)' || true)"
