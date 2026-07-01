@@ -12,13 +12,12 @@ import { discoverActiveLeagues } from "./jobs/discover-active-leagues.js";
 import { monitorActiveLeagues } from "./jobs/monitor-active-leagues.js";
 import { runDailyCycle } from "./jobs/run-daily-cycle.js";
 import { discoverWindow } from "./jobs/discover-window.js";
-import { buildFixturesRuntime } from "./api/fixtures-runtime.js";
 import { getFixtureById } from "./storage/json-db.js";
 import { buildValueDay } from "./core/build-value-day.js";
 import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload, enrichSnapshotWithAssessment } from "./api/details.js";
 import { resolveDataPath } from "./storage/data-root.js";
-import { normalizeDisplayTeam, statusRankFromParts } from "./core/display-contract.js";
+import { normalizeDisplayTeam, statusRankFromParts, filterByPanelMode } from "./core/display-contract.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
@@ -1357,6 +1356,14 @@ app.get("/fixtures-runtime", async (req, res) => {
       console.warn("[fixtures-runtime] live overlay failed", String(err?.message || err));
     }
 
+    // Panel-mode filter (display-contract): the universe is shared with
+    // /api/matches-for-date, but each panel shows only its statuses —
+    //   today  = PRE + LIVE   (a match leaves the panel once it goes FT)
+    //   active = PRE + FT + SPECIAL, never LIVE (the day's per-league mirror)
+    // Applied AFTER the live overlay so overlay-produced LIVE/FT rows are
+    // routed to the correct panel.
+    out = filterByPanelMode(out, mode);
+
     res.json({ ok: true, mode, date: dayKey, count: out.length, matches: out, source });
   } catch (err) {
     console.error("[fixtures-runtime] failed", err?.message || err);
@@ -1843,7 +1850,27 @@ function buildDisplayMatchesForDate(date) {
     assessmentMap = JSON.parse(fs.readFileSync(ap, "utf8")).matches || {};
   } catch { /**/ }
 
-  function attachAssessment(m) {
+  // League → { country, tier } from the awareness registry, so the UI can group
+  // by country (active panel) and show the country before the league (today
+  // panel). Registry uses ESPN slugs; map the BetExplorer aliases across.
+  const leagueMeta = getLeagueMetaMap();
+  const COUNTRY_SLUG_ALIASES = {
+    "fifa.world_cup": "fifa.world",
+    "fifa.world_cup_qual": "fifa.world_qual",
+  };
+  function resolveLeagueMeta(slug) {
+    const s = String(slug || "");
+    return leagueMeta[s] || leagueMeta[COUNTRY_SLUG_ALIASES[s] || s] || null;
+  }
+  function attachCountry(m) {
+    const meta = resolveLeagueMeta(m.leagueSlug);
+    if (!meta) return m;
+    const country = meta.country && meta.country !== "Unknown" ? meta.country : null;
+    return { ...m, country: m.country || country, leagueTier: m.leagueTier ?? meta.tier ?? null };
+  }
+
+  function attachAssessment(rawMatch) {
+    const m = attachCountry(rawMatch);
     const a = assessmentMap[String(m.matchId)] || null;
     if (!a) return m;
     return {
