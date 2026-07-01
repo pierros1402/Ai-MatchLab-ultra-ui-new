@@ -68,6 +68,26 @@ export function recordSettlement(matchId, scoreHome, scoreAway) {
 
 
 /**
+ * Build a { "normHome|normAway|dayKey": matchId } index over every odds record.
+ * Settlement needs this because most records are keyed by canonicalId (cid_…),
+ * not by the Flashscore `fs_<matchId>` the results feed provides — so a plain
+ * `readOdds("fs_"+id)` lookup misses them and they never settle. One dir scan.
+ */
+export function buildTeamDayIndex() {
+  const idx = new Map();
+  try {
+    for (const f of fs.readdirSync(DIR)) {
+      if (!f.endsWith(".json")) continue;
+      const d = readOdds(f.replace(/\.json$/, ""));
+      if (!d || !d.home || !d.away) continue;
+      const key = `${normTeamKey(d.home)}|${normTeamKey(d.away)}|${d.dayKey || ""}`;
+      if (!idx.has(key)) idx.set(key, d.matchId);
+    }
+  } catch { /* dir not created yet */ }
+  return idx;
+}
+
+/**
  * Find an odds record by team names — for matches whose UI/canonical id differs
  * from our Flashscore `fs_` id (same fixture, different id space).
  */
