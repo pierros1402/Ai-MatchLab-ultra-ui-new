@@ -2176,12 +2176,13 @@ app.get("/api/multi-odds", (req, res) => {
   }
 });
 
-// Dynamic league catalogue — same format as the static AI-MATCHLAB-DATA JSON files
-// but built live from league-awareness (disabled leagues filtered, newly-promoted
+// Dynamic league catalogue — same shape as the generated static UI catalogue,
+// built live from league-awareness (disabled leagues filtered, newly-promoted
 // leagues included automatically). UI navigation + league-binding prefer this.
 const REGION_TO_CONTINENT = {
   europe: "EU", africa: "AF", asia: "AS",
-  concacaf: "NA", americas: "SA", oceania: "OC", international: "IN"
+  concacaf: "NA", americas: "SA", oceania: "OC",
+  international: "IN", world: "IN"
 };
 app.get("/api/leagues", (_req, res) => {
   try {
