@@ -645,7 +645,19 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
   };
 
   const latestFile = resolveDataPath("deploy-snapshots", "latest.json");
-  const updateLatest = options?.updateLatest !== false;
+  let updateLatest = options?.updateLatest !== false;
+
+  // Rebuilding a past day (recovery dispatch) must not point the live engine
+  // back in time; only an explicit updateLatest:true may move latest backwards.
+  if (updateLatest && options?.updateLatest !== true) {
+    const existingLatest = readJsonSafe(latestFile, null);
+    if (existingLatest?.date && String(dayKey) < String(existingLatest.date)) {
+      console.warn(
+        `[deploy-snapshot] latest.json kept at ${existingLatest.date}; rebuilt older day ${dayKey}`
+      );
+      updateLatest = false;
+    }
+  }
 
   if (updateLatest) {
     writeJsonStable(latestFile, latest);
