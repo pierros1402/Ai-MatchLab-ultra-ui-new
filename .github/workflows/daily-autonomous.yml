@@ -73,17 +73,9 @@ jobs:
         shell: bash
         run: |
           YESTERDAY="$(TZ=Europe/Athens date -d 'yesterday' +%F 2>/dev/null || TZ=Europe/Athens date -v-1d +%F)"
-          VER="data/verification/${YESTERDAY}.json"
-          if [ -f "$VER" ]; then
-            MISSING="$(node -e "const d=JSON.parse(require('fs').readFileSync('$VER','utf8')); console.log(d.missing||0);")"
-            echo "Verification: $MISSING missing matches for ${YESTERDAY}"
-            if [ "$MISSING" -gt 0 ]; then
-              echo "::error::${MISSING} result(s) not collected for ${YESTERDAY} — check data/verification/${YESTERDAY}.json"
-              exit 1
-            fi
-          else
-            echo "No verification file for ${YESTERDAY} (first run or no expected record yet)"
-          fi
+          # Emits one ::error:: per league with sample fixtures, then exits 1
+          # if any result is missing (fails the run → alert email).
+          node ./engine-v1/jobs/verify-results-day.js --report "$YESTERDAY"
 
       - name: Commit snapshots + memory
         if: env.SKIP != 'true'
