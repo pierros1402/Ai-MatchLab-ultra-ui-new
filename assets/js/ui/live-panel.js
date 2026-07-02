@@ -271,21 +271,29 @@ function initLivePanel(panel) {
     mem.is_second_half = isSecondHalf;
     MEMORY.set(key, mem);
 
-    row.className = `match-row live-row ${visualClass(m)}`;
+    // No independent source could confirm this still-live match (cross-source
+    // verifier flagged it). Freeze the clock and mark it "awaiting confirmation"
+    // instead of letting the derived minute run away — we do NOT fake an FT.
+    const unconfirmed = m.statusUnconfirmed === true;
+
+    row.className = `match-row live-row ${visualClass(m)}${unconfirmed ? " unconfirmed-row" : ""}`;
 
     const minuteNow = minuteValue(m);
-    const minuteLabel =
+    const baseLabel =
       rawMinute && rawMinute.includes("+") && !isSecondHalf
         ? `${rawMinute}'`
         : clampMinuteLabel(minuteNow);
+    const minuteLabel = unconfirmed ? `${baseLabel || "LIVE"} ⏳` : baseLabel;
 
     row.innerHTML = `
       <div class="teams">${esc(m.home || m.homeTeam)} – ${esc(m.away || m.awayTeam)}</div>
       <div class="meta">
-        <span class="live-minute"
+        <span class="live-minute${unconfirmed ? " unconfirmed" : ""}"
+              title="${unconfirmed ? "Live status unconfirmed — awaiting source confirmation" : ""}"
               data-key="${esc(key)}"
-              data-base="${Number.isFinite(mem.base_minute) ? mem.base_minute : ""}"
-              data-start="${Number.isFinite(mem.live_ts) ? mem.live_ts : ""}"
+              data-unconfirmed="${unconfirmed ? "1" : "0"}"
+              data-base="${!unconfirmed && Number.isFinite(mem.base_minute) ? mem.base_minute : ""}"
+              data-start="${!unconfirmed && Number.isFinite(mem.live_ts) ? mem.live_ts : ""}"
               data-raw="${esc(rawMinute)}"
               data-second-half="${isSecondHalf ? "1" : "0"}">${minuteLabel}</span>
         ${formatScore(m)}
@@ -440,6 +448,9 @@ function initLivePanel(panel) {
       const start = Number(el.dataset.start);
       const raw = String(el.dataset.raw || "").trim();
       const isSecondHalf = el.dataset.secondHalf === "1";
+
+      // Unconfirmed-live rows keep whatever frozen label they were rendered with.
+      if (el.dataset.unconfirmed === "1") return;
 
       if (!Number.isFinite(base) || !Number.isFinite(start)) {
         if (raw) el.textContent = `${raw}'`;
