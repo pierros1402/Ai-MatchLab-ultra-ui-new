@@ -198,16 +198,18 @@ function buildTeamPriors(matches) {
 
   for (const [key, bucket] of Object.entries(buckets)) {
     const allMatches = [...bucket.matches].sort(sortByKickoffAsc);
-    const recent = [...allMatches].sort(sortByKickoffDesc).slice(0, 12);
 
+    // Only the computed stats are read downstream (value-engine blends all/home/
+    // away + sample). The raw per-match rows were the dominant weight in the
+    // priors file (~80% of teamPriors, ~90% of matchupPriors) and are never read,
+    // so they are intentionally NOT emitted.
     out[key] = {
       team: bucket.team,
       leagueSlug: bucket.leagueSlug,
       sample: allMatches.length,
       all: computeStats(allMatches, "all"),
       home: computeStats(allMatches, "home"),
-      away: computeStats(allMatches, "away"),
-      matches: recent.map(({ __isHome, ...rest }) => rest)
+      away: computeStats(allMatches, "away")
     };
   }
 
@@ -275,8 +277,9 @@ function buildMatchupPriors(matches) {
       drawBias: sample ? draws / sample : 0,
       teamBBias: sample ? teamBWins / sample : 0,
       over25Bias: sample ? over25 / sample : 0,
-      bttsBias: sample ? btts / sample : 0,
-      matches
+      bttsBias: sample ? btts / sample : 0
+      // raw `matches` intentionally omitted — never read downstream, and it was
+      // the bulk of the priors file size (see buildTeamPriors note).
     };
   }
 
