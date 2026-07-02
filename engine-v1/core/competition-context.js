@@ -266,6 +266,204 @@ function computeRelegationMargin(row, sortedTable, relegationStartRank) {
   return Math.max(points - cutoffPoints, 0);
 }
 
+// ── Cross-league / cup per-team domestic-standing fallback ──────────────────
+// Cup and cross-league fixtures never sit in one shared table, so both teams
+// fail the shared-table lookup and the match loses ALL standings context — even
+// though each team HAS a position in its own domestic league. Rather than show
+// nothing, look each team up in its OWN league table (global search across every
+// standings file) and surface each side's position + motivation independently.
+
+const IMPORTANCE_RANK = { low: 0, medium: 1, high: 2 };
+
+function maxImportance(a, b) {
+  return (IMPORTANCE_RANK[a] || 0) >= (IMPORTANCE_RANK[b] || 0) ? a : b;
+}
+
+// Per-slug standings cache keyed on file mtime (mirrors results-truth-overlay).
+const __standingsCache = new Map(); // slug → { mtimeMs, parsed }
+let __standingsSlugs = { ts: 0, slugs: [] };
+
+function listStandingsSlugs() {
+  const now = Date.now();
+  if (__standingsSlugs.slugs.length && now - __standingsSlugs.ts < 5 * 60 * 1000) {
+    return __standingsSlugs.slugs;
+  }
+  try {
+    const dir = resolveDataPath("standings");
+    const slugs = fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .map(f => f.replace(/\.json$/i, ""));
+    __standingsSlugs = { ts: now, slugs };
+  } catch {
+    __standingsSlugs = { ts: now, slugs: [] };
+  }
+  return __standingsSlugs.slugs;
+}
+
+// Domestic league slugs look like "eng.1", "arg.2" (country code + division
+// number). Cups and continental/international competitions ("eng.league_cup",
+// "caf.champions", "conmebol.libertadores") are named — exclude them from the
+// per-team DOMESTIC search: we want each side's LEAGUE position, and cup tables
+// otherwise collide (an "Arsenal" row in both eng.1 and eng.league_cup).
+function isDomesticLeagueSlug(slug) {
+  return /^[a-z]{2,4}\.\d+$/.test(String(slug || ""));
+}
+
+function loadStandingsForSlug(slug) {
+  const file = resolveDataPath("standings", `${slug}.json`);
+  let stat;
+  try { stat = fs.statSync(file); } catch { return null; }
+
+  const cached = __standingsCache.get(slug);
+  if (cached && cached.mtimeMs === stat.mtimeMs) return cached.parsed;
+
+  const parsed = readJsonSafe(file, null);
+  __standingsCache.set(slug, { mtimeMs: stat.mtimeMs, parsed });
+  return parsed;
+}
+
+// Analyse ONE team's standing within its own league table: position, points and
+// the stake/importance its table position implies (title / europe / promotion /
+// relegation / neutral). Standalone so it never disturbs the shared-table path.
+function analyzeTeamPosition(row, sortedTable, meta) {
+  const totalTeams = meta.totalTeams || sortedTable.length || 0;
+  const cutoffs = resolveCutoffMap(totalTeams);
+  const matchesLeft = meta.matchesLeftEstimate;
+  const seasonPhase = classifySeasonPhase(matchesLeft ?? 0);
+  const late = seasonPhase === "late";
+  const mid = seasonPhase === "mid";
+
+  const position = normalizePosition(row?.position ?? row?.rank) || (sortedTable.indexOf(row) + 1);
+  const points = safeNum(row?.points, 0);
+
+  const titleTier = classifyGapTier(computeGapToTopZone(row, sortedTable, cutoffs.title));
+  const europeTier = classifyGapTier(computeGapToTopZone(row, sortedTable, cutoffs.europe));
+  const playoffTier = cutoffs.playoff
+    ? classifyGapTier(computeGapToTopZone(row, sortedTable, cutoffs.playoff))
+    : "unknown";
+  const relegMargin = computeRelegationMargin(row, sortedTable, cutoffs.relegationStart);
+
+  let stake = "neutral";
+  let importance = "low";
+
+  if ((late || mid) && titleTier === "tight") {
+    stake = "title"; importance = late ? "high" : "medium";
+  } else if ((late || mid) && (europeTier === "tight" || europeTier === "live")) {
+    stake = "europe"; importance = "medium";
+  } else if (cutoffs.playoff && (playoffTier === "tight" || playoffTier === "live")) {
+    stake = "promotion"; importance = "medium";
+  } else if (relegMargin !== null && relegMargin <= 6) {
+    stake = "relegation"; importance = late ? "high" : "medium";
+  }
+
+  return { position, points, totalTeams, matchesLeft, seasonPhase, stake, importance };
+}
+
+// Best-scoring row for a team in one table, with a match-quality tier so a common
+// short name (e.g. "Arsenal") prefers its EXACT table entry over a loose contains
+// match elsewhere ("Arsenal Sarandí"). 3 = exact canonical/alias, 2 = substring,
+// 1 = controlled token overlap, 0 = no match.
+function scoreTeamRow(table, slug, teamName) {
+  const candidates = resolveAliasCandidates(slug, teamName);
+  const normCands = candidates.map(normalizedComparableName).filter(Boolean);
+
+  let best = { row: null, score: 0 };
+  for (const row of table) {
+    const rowNames = [row?.team, row?.teamName, row?.name].filter(Boolean);
+    const normRows = rowNames.map(normalizedComparableName).filter(Boolean);
+
+    let score = 0;
+    if (normCands.some(c => normRows.some(r => r === c))) {
+      score = 3;
+    } else if (normCands.some(c => normRows.some(r => r.includes(c) || c.includes(r)))) {
+      score = 2;
+    } else if (candidates.some(c => rowNames.some(r => sameTeam(r, c)))) {
+      score = 1;
+    }
+
+    if (score > best.score) best = { row, score };
+  }
+  return best;
+}
+
+// Find a team's row in ANY league table (excluding the match's own competition
+// slug, which is the cup/cross-league one that failed). Ranks every league's best
+// match by quality and takes the top — but only if it is STRICTLY better than the
+// runner-up. A tie at the top tier is genuine ambiguity, so we skip it (a wrong
+// position is worse than none).
+function findTeamDomesticStanding(teamName, excludeSlug) {
+  const hits = [];
+  for (const slug of listStandingsSlugs()) {
+    if (slug === excludeSlug) continue;
+    if (!isDomesticLeagueSlug(slug)) continue;
+
+    const standings = loadStandingsForSlug(slug);
+    if (!standings) continue;
+    if (Number(standings?.confidence || 0) < 0.25) continue;
+
+    const meta = resolveStandingsMeta(standings);
+    if (!meta.table.length) continue;
+
+    const sortedTable = sortTableByPoints(meta.table);
+    const best = scoreTeamRow(sortedTable, slug, teamName);
+    if (best.score > 0) hits.push({ slug, row: best.row, sortedTable, meta, score: best.score });
+  }
+
+  if (!hits.length) return null;
+  hits.sort((a, b) => b.score - a.score);
+  if (hits.length > 1 && hits[1].score === hits[0].score) return null; // top-tier tie → ambiguous
+  return hits[0];
+}
+
+// Build a cross-league context from each team's own domestic standing. Returns
+// null unless BOTH teams are uniquely located (partial → keep the plain
+// fallback, so we never show one side's motivation as if it were the match's).
+function buildCrossLeagueContext(match) {
+  const excludeSlug = match?.leagueSlug || null;
+  const home = findTeamDomesticStanding(match?.homeTeam, excludeSlug);
+  const away = findTeamDomesticStanding(match?.awayTeam, excludeSlug);
+  if (!home || !away) return null;
+
+  const h = analyzeTeamPosition(home.row, home.sortedTable, home.meta);
+  const a = analyzeTeamPosition(away.row, away.sortedTable, away.meta);
+
+  const importance = maxImportance(h.importance, a.importance);
+  const stakeTags = uniqueStrings([
+    h.stake !== "neutral" ? h.stake : null,
+    a.stake !== "neutral" ? a.stake : null
+  ]);
+
+  return {
+    key: "competition_context",
+    status: "ready",
+    data: {
+      type: "cross_league",
+      phase: "cross_league",
+      positions: {
+        home: h.position,
+        away: a.position,
+        pointsHome: h.points,
+        pointsAway: a.points,
+        matchesLeft: null,
+        totalTeams: null,
+        homeLeague: home.slug,
+        awayLeague: away.slug,
+        homeTotalTeams: h.totalTeams,
+        awayTotalTeams: a.totalTeams
+      },
+      perTeam: {
+        home: { league: home.slug, position: h.position, points: h.points, totalTeams: h.totalTeams, stake: h.stake, seasonPhase: h.seasonPhase },
+        away: { league: away.slug, position: a.position, points: a.points, totalTeams: a.totalTeams, stake: a.stake, seasonPhase: a.seasonPhase }
+      },
+      stakes: { home: h.stake, away: a.stake, tags: stakeTags },
+      pressure: [],
+      importance,
+      notes: ["Cross-competition fixture: each team shown in its own domestic league table"]
+    },
+    confidence: 0.55
+  };
+}
+
 export function buildCompetitionContext(match) {
   const standingsFile = resolveDataPath("standings", `${match?.leagueSlug}.json`);
   const standings = readJsonSafe(standingsFile, null);
@@ -287,6 +485,11 @@ export function buildCompetitionContext(match) {
       confidence: standingsConfidence,
       standingsFile
     });
+
+    // Cup / cross-league fixture with no usable shared table: try to surface each
+    // team's position + motivation from its OWN domestic league before giving up.
+    const crossLeague = buildCrossLeagueContext(match);
+    if (crossLeague) return crossLeague;
 
     return {
       key: "competition_context",
@@ -329,6 +532,11 @@ export function buildCompetitionContext(match) {
       foundHome: !!homeRow,
       foundAway: !!awayRow
     });
+
+    // One/both teams absent from THIS competition's table (classic cross-league
+    // pairing): surface each side from its own domestic league if we can.
+    const crossLeague = buildCrossLeagueContext(match);
+    if (crossLeague) return crossLeague;
 
     return {
       key: "competition_context",
