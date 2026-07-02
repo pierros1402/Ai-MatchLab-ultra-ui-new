@@ -28,20 +28,32 @@ function pairKey(home, away) {
   return normalizeTeamKey(home) + "|" + normalizeTeamKey(away);
 }
 
-// PRE / STALE_PRE / SCHEDULED / unknown are upgradeable; anything already
-// final, live, or postponed is authoritative and left untouched.
-function isUpgradeable(match) {
-  const s = String(
+function statusBlob(match) {
+  return String(
     [match?.status, match?.rawStatus, match?.statusType, match?.statusName]
       .filter(Boolean)
       .join(" ")
   ).toUpperCase();
+}
 
-  if (!s) return true;
-  if (s === "FT" || s.includes("FULL_TIME") || s.includes("FINAL") || s.includes("AET") || s.includes("PEN")) return false;
-  if (s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") || s.includes("HALF_TIME") || s.includes("IN_PROGRESS")) return false;
-  if (s.includes("POSTPON") || s.includes("CANCEL") || s.includes("ABANDON") || s.includes("SUSPEND")) return false;
-  return true;
+// A row already FINAL or in a SPECIAL state (postponed/canceled/abandoned/
+// suspended) is authoritative — never touch it (no downgrade, no contradiction).
+function isAuthoritative(match) {
+  const s = statusBlob(match);
+  if (s === "FT" || s.includes("FULL_TIME") || s.includes("FINAL") || s.includes("AET") || s.includes("PEN")) return true;
+  if (s.includes("POSTPON") || s.includes("CANCEL") || s.includes("ABANDON") || s.includes("SUSPEND")) return true;
+  return false;
+}
+
+// A LIVE row is NOT free to become anything — but Flashscore reporting the match
+// finished IS a valid forward transition (LIVE → FT). Everything else about a
+// LIVE row (staying live, updating score) is owned by the live pipeline, so we
+// only act on the finished case for it. PRE/STALE/SCHEDULED/unknown are fully
+// upgradeable (PRE → LIVE or PRE → FT).
+function isLiveRow(match) {
+  const s = statusBlob(match);
+  return s.includes("LIVE") || s.includes("FIRST_HALF") || s.includes("SECOND_HALF") ||
+    s.includes("HALF_TIME") || s.includes("IN_PROGRESS");
 }
 
 async function getLiveIndex() {
@@ -102,7 +114,10 @@ export async function overlayFlashscoreLive(matches, requestedDay) {
   if (!byPair || !byPair.size) return list;
 
   return list.map(m => {
-    if (!isUpgradeable(m)) return m;
+    // Never touch a row that is already final or in a special state.
+    if (isAuthoritative(m)) return m;
+
+    const live = isLiveRow(m);
 
     const found = pickNearest(byPair, m.homeTeam, m.awayTeam, m.kickoffUtc);
     if (!found) return m;
@@ -113,11 +128,18 @@ export async function overlayFlashscoreLive(matches, requestedDay) {
         status: "FT",
         statusType: "FT",
         rawStatus: m.rawStatus || m.status || "",
+        minute: null,
+        live: false,
+        isLive: false,
         scoreHome: found.scoreHome,
         scoreAway: found.scoreAway,
         liveSource: "flashscore-offset0",
       };
     }
+
+    // A LIVE row that Flashscore does NOT report finished stays as-is — the live
+    // pipeline owns its ongoing state; we only ever push it forward to FT.
+    if (live) return m;
 
     if (found.scoreHome != null || found.scoreAway != null) {
       return {
