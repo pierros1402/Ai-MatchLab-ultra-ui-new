@@ -16,11 +16,14 @@ import fsSync from "node:fs";
 import { resolveDataPath } from "../storage/data-root.js";
 import { applyValueContextModifiers } from "./value-context-modifiers.js";
 import { applyValueContextIntegration } from "./value-context-integration.js";
+import { currentSeason } from "./season.js";
 
 const DATA_DIR = resolveDataPath();
 const HISTORY_INDEX_DIR = path.join(DATA_DIR, "history-index");
 
-const DEFAULT_SEASON = "2025-2026";
+// Derived, not hardcoded — advances automatically when a season rolls over so
+// value reads the freshly-built priors/indexes for the new season (season.js).
+const DEFAULT_SEASON = currentSeason();
 const __indexesCache = new Map();
 // ------------------------------------------------------------
 // FORM RULES

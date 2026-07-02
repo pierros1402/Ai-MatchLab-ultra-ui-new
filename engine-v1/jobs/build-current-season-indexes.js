@@ -1,12 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { currentSeason } from "../core/season.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DATA_ROOT = path.resolve(__dirname, "..", "..", "data");
-const SEASON = process.argv[2] || "2025-2026";
+const SEASON = process.argv[2] || currentSeason();
 
 const HISTORY_FILE = path.join(DATA_ROOT, "history", `${SEASON}.json`);
 const OUT_DIR = path.join(DATA_ROOT, "history-index");
