@@ -72,5 +72,5 @@ jobs:
           else
             SEASON="${SEASONS:-5}"
             git commit -m "Historical backfill: ${SEASON} seasons via football-data.co.uk"
-            git push
+            bash tools/git-push-rebase-retry.sh
           fi
