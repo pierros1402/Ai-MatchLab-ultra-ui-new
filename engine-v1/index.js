@@ -26,6 +26,7 @@ import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-mult
 import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
+import { overlayStaleLiveFinalize } from "./core/stale-live-finalize.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1373,6 +1374,11 @@ app.get("/fixtures-runtime", async (req, res) => {
     // snapshot never carries a status authority for them.
     out = overlayResultsTruth(out, dayKey);
 
+    // Backstop: a row still LIVE long past any plausible match length (no FT
+    // signal ever arrived) is force-finalized to FT from elapsed kickoff time,
+    // keeping the last known score. Runs LAST so real-data sources win first.
+    out = overlayStaleLiveFinalize(out);
+
     // Panel-mode filter (display-contract): the universe is shared with
     // /api/matches-for-date, but each panel shows only its statuses —
     //   today  = PRE + LIVE   (a match leaves the panel once it goes FT)
@@ -2125,6 +2131,8 @@ app.get("/api/matches-for-date", async (req, res) => {
 
   // Truth-store finals overlay (any date) — see /fixtures-runtime.
   out = overlayResultsTruth(out, date);
+  // Backstop: force-finalize rows stuck LIVE past any plausible match length.
+  out = overlayStaleLiveFinalize(out);
   return res.json({ ok: true, date, source, matches: out });
 });
 
