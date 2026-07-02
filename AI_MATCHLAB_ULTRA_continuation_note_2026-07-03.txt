@@ -1,0 +1,120 @@
+AI MATCHLAB ULTRA — CONTINUATION / HANDOFF NOTE
+Date: 2026-07-03
+Supersedes: AI_MATCHLAB_ULTRA_continuation_note_2026-07-02.txt (LOST — was untracked,
+  removed during branch operations this session; its content is fully preserved in
+  Claude auto-memory. Older 2026-07-01_UPDATED.txt is still tracked in git.)
+origin/main HEAD at handoff: 245ae16f6
+
+TL;DR (GR):
+  Μεγάλη session. Κλείσαμε ΟΛΑ τα ανοιχτά του προηγούμενου νήματος + χτίσαμε το
+  πλήρως αυτόνομο value-history pipeline. 8 θέματα landed & deployed:
+  (1) stuck-LIVE→FT με cross-source επιβεβαίωση, (2) Today-panel λεπτό,
+  (3) value calibration (shrinkage), (4) standings cross-league στα details,
+  (5) value priors για 78 λίγκες παραπάνω (converter + lean priors 50→12MB),
+  (6) 2ος daily feeder: displayed FT → results memory, (7) automatic season
+  rollover (core/season.js), (8) πλήρης αφαίρεση season hardcodes + daily index.
+  Ο βρόχος τώρα: fixtures FT → results memory → history-archive → model-priors →
+  value, ΚΑΙ κάθε σεζόν που τελειώνει μπαίνει μόνη της στο ιστορικό. Τίποτα manual.
+
+============================================================
+0) REPO / DEPLOY STATE
+============================================================
+- Deploys ΜΟΝΟ μέσω cherry-pick/push onto origin/main. Push στο main ΔΕΝ κάνει
+  auto-deploy (deploy-count στο free plan). Ο deploy γίνεται με Render deploy hooks
+  που τα πυροδοτούν workflows:
+    gh workflow run engine-only-render-deploy.yml   (engine)
+    gh workflow run ui-only-render-deploy.yml        (UI/static)
+  Επιβεβαίωση: gh run watch <id> --exit-status. Build ≈2-4' (engine), <2' (static).
+- PRE-FLIGHT πριν κάθε deploy (deploy-cherry-pick-gotcha): resolve το ΠΛΗΡΕΣ import
+  graph έναντι origin/main — νέο αρχείο + όλοι οι importers στο ΙΔΙΟ push.
+- DATA-DRIFT: το local checkout υστερεί σε data (workflows γράφουν data κατευθείαν
+  στο origin/main). ΠΑΝΤΑ git fetch + δούλεψε από branch off origin/main για data ops.
+  (Αυτή τη session: local results=185 vs origin=310 — γι' αυτό όλα τα data builds
+  έγιναν σε branch από φρέσκο origin/main.)
+- Engine: https://ai-matchlab-engine.onrender.com  UI: https://ai-matchlab-ultra-ui-new.onrender.com
+
+============================================================
+1) LANDED & DEPLOYED ΑΥΤΗ ΤΗ SESSION (όλα στο origin/main)
+============================================================
+A. STUCK-LIVE → FT (cross-source) — κανόνας: ΠΟΤΕ FT από το ρολόι.
+   - flashscore-live-overlay: LIVE→FT με πραγματικό Flashscore σκορ.
+   - ΝΕΟ engine-v1/core/live-ft-verifier.js: rows LIVE > STUCK_TRIGGER_MIN(125')
+     ξαναρωτούν ESPN + Flashscore· FT μόνο σε finished+σκορ· αλλιώς statusUnconfirmed.
+   - live-panel.js: statusUnconfirmed → παγωμένο ρολόι + "⏳".
+
+B. TODAY-PANEL ΛΕΠΤΟ — today-panel.js liveMinuteLabel(): kickoff-derived capped 90+',
+   κρατά stoppage, "⏳" για unconfirmed. (⚠️ browser hard-refresh για να φανεί.)
+
+C. VALUE CALIBRATION — ai-odds-model.js: empirical-Bayes shrinkage των season goal
+   rates προς league avg (SEASON_PRIOR_GAMES=6). Thin-data 78% under → ~64% (medium).
+   Well-sampled λίγκες αμετάβλητες.
+
+D. STANDINGS CROSS-LEAGUE — competition-context.js: όταν αποτυγχάνει το κοινό table
+   (cup/cross-league), buildCrossLeagueContext ψάχνει κάθε ομάδα στη ΔΙΚΗ της εγχώρια
+   λίγκα (μόνο domestic slugs ^[a-z]{2,4}\.\d+$, quality-ranked unique hit). details-
+   panel δείχνει per-team θέση+motivation.
+
+E. VALUE PRIORS COVERAGE (commits f1a36f956, e0be7d82e, f5657757e):
+   - ΝΕΟ engine-v1/jobs/build-history-archive-from-results.js — μετατρέπει results
+     memory → history-archive (ΧΩΡΙΣ scraping), dedup cross-source dupes (day+teams).
+   - build-model-priors LEAN: σταμάτησε να αποθηκεύει raw matches[] (ήταν ~80-90% όγκου).
+   - Αποτέλεσμα: archive 128→206 λίγκες· model-priors 50.5MB→11.8MB ΜΕ 2x κάλυψη
+     (teamPriors 2139→4150, leaguePriors 48→124). Οι 78 arc0 active λίγκες πήραν priors.
+
+F. 2ος DAILY FEEDER (commit 948347363) — engine-v1/jobs/accumulate-results-from-
+   fixtures-day.js: γράφει τα displayed ESPN-canonical FINAL fixtures στο ΙΔΙΟ results
+   memory (fixture-identity dedup ώστε να μη διπλογράφει ό,τι έχει το Flashscore).
+   Wired run-day step 2a. Verified: 10 finals → 7 skipped → 3 stored, μηδέν dupes.
+
+G+H. AUTOMATIC SEASON ROLLOVER (commits b45feb832, 245ae16f6):
+   - ΝΕΟ engine-v1/core/season.js: currentSeason()/priorSeasons(5), "YYYY-YYYY",
+     rollover 1 Αυγούστου. ΟΛΑ τα ~11 hardcoded "2025-2026" → δυναμικά (no-op σήμερα).
+   - run-day 2g: refresh CURRENT-season archive daily· rebuild model-priors ΜΟΝΟ όταν
+     αλλάζει το season set (rollover = δεν υπάρχει priors file της νέας σεζόν, ή νέα
+     λίγκα απέκτησε completed season) → μηδέν daily churn.
+   - run-day 2h: build-current-season-indexes (exported+CLI-guarded) τρέχει daily.
+   - build-model-priors exports buildModelPriors(); converter DEFAULT_SEASONS δυναμικό.
+   Την 1/8: 2025-2026 κλειδώνει→ιστορικό, μπαίνει στα priors sources, value διαβάζει
+   νέα σεζόν — αυτόματα.
+
+============================================================
+2) ΕΚΚΡΕΜΟΤΗΤΕΣ / ΠΛΑΝΟ ΣΥΝΕΧΕΙΑΣ (από εδώ το επόμενο νήμα)
+============================================================
+A. [ΕΠΑΛΗΘΕΥΣΗ ΠΡΩΤΑ] Παρακολούθησε τον ΕΠΟΜΕΝΟ daily-autonomous run (run-day):
+   τα νέα steps 2a/2g/2h τρέχουν καθαρά; Δες logs για "results-accumulate-fixtures",
+   "history-archive-refresh", "model-priors"(rebuilt:false αναμενόμενο), "current-
+   season-indexes". Ο daily commit θα περιέχει refreshed current-season archive files
+   (~όσες λίγκες έπαιξαν) — αναμενόμενο, proportional churn.
+B. ROLLOVER CHAIN gap: build-current-season-indexes διαβάζει data/history/{season}.json.
+   Αυτό το χτίζει το rebuild-current-season-history.js (ESPN scrape) — ΔΕΝ επιβεβαιώθηκε
+   ότι τρέχει daily. Στο rollover, αν το history/{newSeason}.json δεν είναι φρέσκο, το
+   index θα είναι thin → value πέφτει στα priors (graceful, όχι break). Έλεγξε/wire το
+   rebuild-current-season-history στον daily κύκλο για πλήρη κάλυψη.
+C. NO-RESULTS λίγκες (~23): σχεδόν όλα cups/continental (uefa.euro, copa_america,
+   ucl.q…) + micro (lie/smr/gib.2). «5ετές league history» δεν εφαρμόζεται· αν θες
+   κάλυψη → Sofascore headless one-shot (δες roadmap memory).
+D. STANDINGS-IN-DETAILS residuals: (1) thin λίγκες <4 ομάδες (κανένα table πουθενά),
+   (2) alias mismatch που ούτε ο findTeamRow λύνει, (3) το /standings TABLE παραμένει
+   κλειδωμένο στο ένα slug του αγώνα (cup → κανένα table)· μόνο το motivation block
+   έγινε cross-league.
+E. ODDS-ONLY residuals: phantom fixtures (syr.1-type, μόνο σε BetExplorer, ποτέ στο
+   Flashscore) — μένουν PRE· θέλει product decision (mark unverified after N days?).
+F. TWO STORES (πληροφορία, όχι bug): competition-context/match-profile διαβάζουν το
+   published data/standings (68 λίγκες, reconciled current-season), ΟΧΙ το raw
+   league-memory/standings (520). By design (freshness). Αν θες παραπάνω κάλυψη στο
+   context, fallback στο league-memory ΜΕ freshness guard (μη δείξεις stale σεζόν).
+
+============================================================
+3) ΚΛΕΙΔΙΑ ΓΙΑ ΤΟ ΕΠΟΜΕΝΟ ΝΗΜΑ
+============================================================
+- Auto-memory (Claude) έχει τα πάντα ενημερωμένα: stuck-live-ft-transition,
+  value-thin-data-shrinkage, standings-in-details-gap, odds-only-result-capture-gap,
+  next-coverage-roadmap, deploy-cherry-pick-gotcha (deploy μηχανισμός), display-
+  universe-unification. ΞΕΚΙΝΑ διαβάζοντας το MEMORY.md index.
+- Season truth = engine-v1/core/season.js (currentSeason/priorSeasons). Μη ξανα-
+  hardcode-άρεις σεζόν πουθενά.
+- Value data flow: results-memory-db → build-history-archive-from-results → history-
+  archive → build-model-priors → model-priors/{season}.json → value-engine-v1/
+  build-value-day. Όλα δυναμικά ως προς σεζόν, όλα στον daily κύκλο (run-day 2a/2g/2h).
+- ΠΟΤΕ FT/σκορ από εικασία (ρολόι/χρόνο) — μόνο από επιβεβαιωμένη πηγή. Odds ποτέ
+  δεν επηρεάζουν value/assessment (firewall).
