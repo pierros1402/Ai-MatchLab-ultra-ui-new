@@ -1,26 +1,18 @@
 /* =========================================================
-   League Binding v1.6 (AIML ULTRA, utils, global script)
+   League Binding v1.7 (AIML ULTRA, utils, global script)
    PURPOSE: DATA ONLY — NO UI SIDE EFFECTS
-   - Builds league index from FINAL datasets
+   - Builds league index from canonical /api/leagues catalogue
+   - Falls back to generated static catalogue from LEAGUES_COVERAGE
    - ESPN ⇄ Accordion matching
    - Enriches match objects with league meta
    - Emits readiness events ONLY
 ========================================================= */
 (function () {
   "use strict";
-  if (window.LeagueBinding && window.LeagueBinding.__v === "1.6") return;
+  if (window.LeagueBinding && window.LeagueBinding.__v === "1.7") return;
 
-  const DATA_BASE = "./AI-MATCHLAB-DATA";
-
-  const CONTINENT_DATA = {
-    EU: `${DATA_BASE}/europe/europe_betting_ready_FINAL.json`,
-    AF: `${DATA_BASE}/africa/africa_betting_ready_FINAL.json`,
-    AS: `${DATA_BASE}/asia/asia_betting_ready_FINAL.json`,
-    NA: `${DATA_BASE}/north_america/north_america_betting_ready_FINAL.json`,
-    SA: `${DATA_BASE}/south_america/south_america_betting_ready_FINAL.json`,
-    OC: `${DATA_BASE}/oceania/oceania_betting_ready_FINAL.json`,
-    IN: `${DATA_BASE}/international/international_betting_ready_FINAL.json`
-  };
+  const STATIC_CATALOGUE_URL = "./assets/data/leagues-catalogue.json";
+  const CONTINENT_CODES = ["EU", "AS", "AF", "NA", "SA", "OC", "IN"];
 
   const ESPN_ALIAS = {
     "PL": "Premier League",
@@ -42,6 +34,7 @@
   const state = {
     ready: false,
     loading: null,
+    catalogue: null,
     metaById: Object.create(null),
     idByName: Object.create(null),
     idByLoose: Object.create(null)
@@ -59,6 +52,20 @@
       .trim();
   }
 
+  function isCatalogue(value) {
+    return value && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function continentRows(catalogue, code) {
+    const rows = catalogue?.[code];
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function leagueRows(country) {
+    const rows = country?.leagues || country?.competitions || [];
+    return Array.isArray(rows) ? rows : [];
+  }
+
   function addLeague(meta) {
     if (!meta || !meta.id || !meta.name) return;
     const id = String(meta.id).trim();
@@ -73,14 +80,13 @@
   function ingestContinentDataset(continentCode, countriesArray) {
     if (!Array.isArray(countriesArray)) return;
     countriesArray.forEach((c) => {
-      const leagues = Array.isArray(c.leagues) ? c.leagues : [];
-      leagues.forEach((l) => {
+      leagueRows(c).forEach((l) => {
         if (!l.league_id) return;
         addLeague({
           id: String(l.league_id),
           name: String(l.display_name || l.league_name || l.league_id),
           continentCode: continentCode || "",
-          countryName: String(c.country_name || ""),
+          countryName: String(c.country_name || c.category || ""),
           tier: (l.tier != null ? Number(l.tier) : null)
         });
       });
@@ -94,37 +100,62 @@
     return res.json();
   }
 
+  async function fetchLeagueCatalogue() {
+    if (state.catalogue) return state.catalogue;
+
+    try {
+      const base = window.__AIML_ENGINE_BASE || "";
+      const dynamic = await fetchJson(`${base}/api/leagues`);
+      if (isCatalogue(dynamic)) {
+        state.catalogue = dynamic;
+        return state.catalogue;
+      }
+    } catch (e) {
+      console.warn("[LEAGUE-BIND] /api/leagues unavailable; using static catalogue fallback", e?.message || e);
+    }
+
+    try {
+      const fallback = await fetchJson(STATIC_CATALOGUE_URL);
+      if (isCatalogue(fallback)) {
+        state.catalogue = fallback;
+        return state.catalogue;
+      }
+    } catch (e) {
+      console.warn("[LEAGUE-BIND] static league catalogue unavailable", e?.message || e);
+    }
+
+    state.catalogue = {};
+    return state.catalogue;
+  }
+
   async function init(opts) {
     if (state.loading) return state.loading;
     if (state.ready) return Promise.resolve(true);
 
     const preload = Array.isArray(opts?.preload) ? opts.preload : ["EU"];
-    const codes = preload.filter((c) => CONTINENT_DATA[c]);
+    const requested = preload.filter((c) => CONTINENT_CODES.includes(c));
 
     state.loading = (async () => {
       try {
-        // Prefer live /api/leagues (disabled-filtered, newly-promoted included).
-        let dynamic = null;
-        try {
-          const base = window.__AIML_ENGINE_BASE || "";
-          const r = await fetch(`${base}/api/leagues`, { cache: "no-store" });
-          if (r.ok) dynamic = await r.json();
-        } catch (_) { /* fall through to static */ }
+        const catalogue = await fetchLeagueCatalogue();
+        const loaded = Object.create(null);
 
-        for (let i = 0; i < codes.length; i++) {
-          const code = codes[i];
-          const data = dynamic?.[code] || await fetchJson(CONTINENT_DATA[code]).catch(()=>[]);
-          ingestContinentDataset(code, Array.isArray(data) ? data : []);
+        for (let i = 0; i < requested.length; i++) {
+          const code = requested[i];
+          ingestContinentDataset(code, continentRows(catalogue, code));
+          loaded[code] = 1;
         }
-        // If dynamic: ingest all continents (not just preload) for full slug coverage.
-        if (dynamic) {
-          for (const [code, arr] of Object.entries(dynamic)) {
-            if (!codes.includes(code)) ingestContinentDataset(code, arr);
-          }
+
+        // Always ingest the full catalogue after the requested preload so match
+        // enrichment has all slugs even when the UI initially opens one region.
+        for (const code of CONTINENT_CODES) {
+          if (loaded[code]) continue;
+          ingestContinentDataset(code, continentRows(catalogue, code));
         }
-        state.ready = true;
-        if (window.emit) window.emit("league-binding:ready", { preload: codes.slice() });
-        return true;
+
+        state.ready = Object.keys(state.metaById).length > 0;
+        if (window.emit) window.emit("league-binding:ready", { preload: requested.slice() });
+        return state.ready;
       } catch (e) {
         console.warn("[LEAGUE-BIND] init failed:", e);
         return false;
@@ -192,7 +223,7 @@
   }
 
   window.LeagueBinding = {
-    __v: "1.6",
+    __v: "1.7",
     init,
     ingestContinentDataset,
     enrichMatch,
