@@ -64,8 +64,22 @@ export async function accumulateResults() {
   const stats = {
     scanned: 0, finished: 0, attributed: 0, stored: 0,
     byLeague: {},
-    resolvedBy: { coverageMap: 0, pathMap: 0, fixturesAll: 0 },
+    resolvedBy: { coverageMap: 0, pathMap: 0, fixturesAll: 0, pathFallback: 0 },
   };
+
+  // Last-resort slug straight from the Flashscore league path, so a finished
+  // match is NEVER dropped just because no map knows the competition (cups,
+  // super cups, relegation groups…). "/football/finland/suomen-cup/" →
+  // "fs.finland.suomen-cup". The display overlay matches these via its
+  // slug-agnostic day-index fallback, and a proper slug can be aliased later.
+  function pathFallbackSlug(leaguePath) {
+    const parts = String(leaguePath || "")
+      .split("/")
+      .filter(Boolean)
+      .slice(1, 3); // drop leading "football", keep country + competition
+    const clean = parts.map(p => p.toLowerCase().replace(/[^a-z0-9-]+/g, "")).filter(Boolean);
+    return clean.length === 2 ? `fs.${clean[0]}.${clean[1]}` : null;
+  }
 
   for (const m of feed.rows) {
     stats.scanned++;
@@ -84,11 +98,18 @@ export async function accumulateResults() {
       } else {
         // Pass 3: fixtures-all cross-reference by matchId.
         slug = fixturesAllIndex.get(String(m.matchId)) || null;
-        if (slug) stats.resolvedBy.fixturesAll++;
+        if (slug) {
+          stats.resolvedBy.fixturesAll++;
+        } else {
+          // Pass 4: never drop a finished match — persist under a
+          // deterministic path-derived slug (fs.{country}.{competition}).
+          slug = pathFallbackSlug(m.leaguePath);
+          if (slug) stats.resolvedBy.pathFallback++;
+        }
       }
     }
 
-    if (!slug) continue;  // league not in our feed window at all — skip
+    if (!slug) continue;  // no usable league path at all — cannot attribute
     stats.attributed++;
 
     const changed = recordMatchResult(slug, {
