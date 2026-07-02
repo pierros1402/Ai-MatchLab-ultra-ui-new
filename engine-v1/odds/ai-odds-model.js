@@ -14,6 +14,14 @@ const MAX_GOALS = 10;          // score grid cap (P beyond this is negligible)
 const HOME_ADVANTAGE = 1.12;   // ~12% scoring lift at home (league-agnostic prior)
 const DEFAULT_MARGIN = 0.06;   // 6% overround on the opening line
 
+// Empirical-Bayes shrinkage strength for per-team season goal rates, expressed
+// as "pseudo-games" played at the league average. A rate from a handful of games
+// is noisy and, unshrunk, yields extreme lambdas → overconfident probabilities
+// (the classic "78% under" from a team that has played 2-3 games). Blending in
+// this many league-average games pulls thin samples hard toward league-typical
+// while a full season (20+ games) is barely moved.
+const SEASON_PRIOR_GAMES = 6;
+
 function factorial(n) {
   let f = 1;
   for (let i = 2; i <= n; i++) f *= i;
@@ -56,11 +64,14 @@ export function lambdasFromStandings(home, away, options = {}) {
   const opts = typeof options === "number" ? { leagueAvgGoalsPerTeam: options } : (options || {});
   const leagueAvg = opts.leagueAvgGoalsPerTeam ?? 1.35;
 
+  // Season per-game rate, shrunk toward the league average by SEASON_PRIOR_GAMES
+  // pseudo-games (see constant). leagueAvg is goals per team per game — a neutral
+  // prior for attack (goalsFor) AND defence (goalsAgainst) alike.
   const rate = (row, key) => {
     const played = Number(row?.played) || 0;
     const val = Number(row?.[key]);
     if (!played || !Number.isFinite(val)) return leagueAvg;
-    return val / played;
+    return (val + SEASON_PRIOR_GAMES * leagueAvg) / (played + SEASON_PRIOR_GAMES);
   };
 
   // Season rates → blend recent form → blend xG (each where available).
