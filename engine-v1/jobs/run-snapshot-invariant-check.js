@@ -84,6 +84,7 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
   const report = {
     ok: true,
     valueSafe: true,
+    valueCount: null,   // # of value picks in value.json (null = no value.json)
     autoFixed: [],
     warnings:  [],
     blocked:   [],
@@ -95,6 +96,13 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
   const value     = readJsonSafe(valueFile);
   const manifest  = readJsonSafe(manifestFile);
   const fixtureList = Array.isArray(fixtures?.fixtures) ? fixtures.fixtures : [];
+
+  // Expose the actual pick count so the health UI can tell "integrity OK" apart
+  // from "0 picks generated" (valueSafe only measures count-integrity, not that
+  // picks exist — a SAFE pipeline can still legitimately have 0 picks).
+  if (value !== null) {
+    report.valueCount = Array.isArray(value?.picks) ? value.picks.length : (value?.count ?? 0);
+  }
 
   // ── CHECK 1: status agreement between fixtures and details ───────────────
   for (const fx of fixtureList) {
