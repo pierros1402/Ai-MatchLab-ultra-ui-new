@@ -56,6 +56,12 @@ function isLiveRow(match) {
     s.includes("HALF_TIME") || s.includes("IN_PROGRESS");
 }
 
+// Shared with the cross-source FT verifier so a stuck-live check reuses the same
+// cached Flashscore feed instead of fetching it a second time.
+export async function getFlashscoreLiveIndex() {
+  return getLiveIndex();
+}
+
 async function getLiveIndex() {
   const now = Date.now();
   if (CACHE.byPair && now - CACHE.ts < TTL_MS) return CACHE.byPair;

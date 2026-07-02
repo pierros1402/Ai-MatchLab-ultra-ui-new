@@ -26,7 +26,7 @@ import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-mult
 import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
-import { overlayStaleLiveFinalize } from "./core/stale-live-finalize.js";
+import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1374,10 +1374,16 @@ app.get("/fixtures-runtime", async (req, res) => {
     // snapshot never carries a status authority for them.
     out = overlayResultsTruth(out, dayKey);
 
-    // Backstop: a row still LIVE long past any plausible match length (no FT
-    // signal ever arrived) is force-finalized to FT from elapsed kickoff time,
-    // keeping the last known score. Runs LAST so real-data sources win first.
-    out = overlayStaleLiveFinalize(out);
+    // Stuck-LIVE → FT ONLY via cross-source confirmation: a row still LIVE well
+    // past a normal match length is re-checked against independent sources (ESPN
+    // + Flashscore). FT is written only on a real finished+score report; when no
+    // source confirms, the row is flagged `statusUnconfirmed` (never faked FT).
+    // No-op with zero fetches unless a stuck candidate actually exists.
+    try {
+      out = await verifyStuckLiveFinals(out, dayKey);
+    } catch (err) {
+      console.warn("[fixtures-runtime] ft verify failed", String(err?.message || err));
+    }
 
     // Panel-mode filter (display-contract): the universe is shared with
     // /api/matches-for-date, but each panel shows only its statuses —
@@ -2131,8 +2137,12 @@ app.get("/api/matches-for-date", async (req, res) => {
 
   // Truth-store finals overlay (any date) — see /fixtures-runtime.
   out = overlayResultsTruth(out, date);
-  // Backstop: force-finalize rows stuck LIVE past any plausible match length.
-  out = overlayStaleLiveFinalize(out);
+  // Stuck-LIVE → FT only via cross-source confirmation — see /fixtures-runtime.
+  try {
+    out = await verifyStuckLiveFinals(out, date);
+  } catch (err) {
+    console.warn("[matches-for-date] ft verify failed", String(err?.message || err));
+  }
   return res.json({ ok: true, date, source, matches: out });
 });
 
