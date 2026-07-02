@@ -1,91 +1,131 @@
 // assets/js/ui/navigation.js
-// FINAL — emits league-selected AND leagues:all (stable base)
+// FINAL — emits league-selected AND leagues:all (canonical catalogue, no legacy DATA dependency)
 (function () {
   "use strict";
 
-  const DATA_BASE = "./AI-MATCHLAB-DATA";
-  const URL_CONTINENTS = `${DATA_BASE}/indexes/continents.json`;
-  const CONTINENT_DATA = {
-    EU: `${DATA_BASE}/europe/europe_betting_ready_FINAL.json`,
-    AF: `${DATA_BASE}/africa/africa_betting_ready_FINAL.json`,
-    AS: `${DATA_BASE}/asia/asia_betting_ready_FINAL.json`,
-    NA: `${DATA_BASE}/north_america/north_america_betting_ready_FINAL.json`,
-    SA: `${DATA_BASE}/south_america/south_america_betting_ready_FINAL.json`,
-    OC: `${DATA_BASE}/oceania/oceania_betting_ready_FINAL.json`,
-    IN: `${DATA_BASE}/international/international_betting_ready_FINAL.json`
-  };
+  const STATIC_CATALOGUE_URL = "./assets/data/leagues-catalogue.json";
+  const CONTINENTS = [
+    { code: "EU", name: "Europe", timezone: "Europe/London" },
+    { code: "AS", name: "Asia", timezone: "Asia/Tokyo" },
+    { code: "AF", name: "Africa", timezone: "Africa/Johannesburg" },
+    { code: "NA", name: "North America", timezone: "America/New_York" },
+    { code: "SA", name: "South America", timezone: "America/Sao_Paulo" },
+    { code: "OC", name: "Oceania", timezone: "Pacific/Auckland" },
+    { code: "IN", name: "International", timezone: "UTC" }
+  ];
 
   const el = id => document.getElementById(id);
-  const emitEvt = (e,p)=> window.emit && window.emit(e,p);
+  const emitEvt = (e, p) => window.emit && window.emit(e, p);
   const safeOpen = id => window.openAccordion && window.openAccordion(id);
 
-  async function fetchJson(url){
-    const r = await fetch(url);
-    if(!r.ok) throw new Error(url);
+  async function fetchJson(url) {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
     return r.json();
   }
 
-  function item(txt,fn){
-    const d=document.createElement("div");
-    d.className="list-row";
-    d.textContent=txt;
-    d.onclick=fn;
+  function item(txt, fn) {
+    const d = document.createElement("div");
+    d.className = "list-row";
+    d.textContent = txt;
+    d.onclick = fn;
     return d;
   }
 
-  let ALL_LEAGUES = [];
-  let _dynamicLeagues = null;  // cache of /api/leagues response
-
-  async function fetchDynamicLeagues() {
-    if (_dynamicLeagues) return _dynamicLeagues;
-    try {
-      const base = window.__AIML_ENGINE_BASE || "";
-      const r = await fetch(`${base}/api/leagues`, { cache: "no-store" });
-      if (r.ok) { _dynamicLeagues = await r.json(); return _dynamicLeagues; }
-    } catch (_) { /* fall through to static */ }
-    return null;
+  function isCatalogue(value) {
+    return value && typeof value === "object" && !Array.isArray(value);
   }
 
-  window.loadNavigation = async function(){
+  function continentRows(catalogue, code) {
+    const rows = catalogue?.[code];
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function leagueRows(country) {
+    const rows = country?.leagues || country?.competitions || [];
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  let ALL_LEAGUES = [];
+  let _leagueCatalogue = null;
+
+  async function fetchLeagueCatalogue() {
+    if (_leagueCatalogue) return _leagueCatalogue;
+
+    try {
+      const base = window.__AIML_ENGINE_BASE || "";
+      const dynamic = await fetchJson(`${base}/api/leagues`);
+      if (isCatalogue(dynamic)) {
+        _leagueCatalogue = dynamic;
+        return _leagueCatalogue;
+      }
+    } catch (e) {
+      console.warn("[navigation] /api/leagues unavailable; using static catalogue fallback", e?.message || e);
+    }
+
+    try {
+      const fallback = await fetchJson(STATIC_CATALOGUE_URL);
+      if (isCatalogue(fallback)) {
+        _leagueCatalogue = fallback;
+        return _leagueCatalogue;
+      }
+    } catch (e) {
+      console.warn("[navigation] static league catalogue unavailable", e?.message || e);
+    }
+
+    _leagueCatalogue = {};
+    return _leagueCatalogue;
+  }
+
+  window.loadNavigation = async function () {
     ALL_LEAGUES = [];
-    const dynamic = await fetchDynamicLeagues();
+    const seen = Object.create(null);
+    const catalogue = await fetchLeagueCatalogue();
 
-    const continents = await fetchJson(URL_CONTINENTS);
     const list = el("continents-list");
-    list.innerHTML="";
+    if (!list) return;
+    list.innerHTML = "";
 
-    for (const c of continents){
-      list.appendChild(item(c.name,()=>onContinent(c)));
-      const data = dynamic?.[c.code] || await fetchJson(CONTINENT_DATA[c.code]).catch(()=>[]);
-      (Array.isArray(data)?data:[]).forEach(ct=>{
-        (ct.leagues||[]).forEach(lg=>{
-          ALL_LEAGUES.push({ id: lg.league_id, name: lg.display_name || lg.league_id });
+    for (const c of CONTINENTS) {
+      list.appendChild(item(c.name, () => onContinent(c)));
+      const data = continentRows(catalogue, c.code);
+      data.forEach(ct => {
+        leagueRows(ct).forEach(lg => {
+          const id = lg.league_id;
+          if (!id || seen[id]) return;
+          seen[id] = 1;
+          ALL_LEAGUES.push({ id, name: lg.display_name || lg.league_name || id });
         });
       });
     }
 
-    emitEvt("leagues:all",{leagues:ALL_LEAGUES});
+    emitEvt("leagues:all", { leagues: ALL_LEAGUES });
   };
 
-  async function onContinent(c){
+  async function onContinent(c) {
     const list = el("countries-list");
-    list.innerHTML="Loading…";
-    const dynamic = await fetchDynamicLeagues();
-    const data = dynamic?.[c.code] || await fetchJson(CONTINENT_DATA[c.code]).catch(()=>[]);
-    list.innerHTML="";
-    data.forEach(ct=>list.appendChild(item(ct.country_name,()=>onCountry(ct))));
+    if (!list) return;
+    list.innerHTML = "Loading…";
+    const catalogue = await fetchLeagueCatalogue();
+    const data = continentRows(catalogue, c.code);
+    list.innerHTML = "";
+    data.forEach(ct => list.appendChild(item(ct.country_name || ct.category || "Unknown", () => onCountry(ct))));
     safeOpen("panel-countries");
   }
 
-  function onCountry(country){
+  function onCountry(country) {
     const list = el("leagues-list");
-    list.innerHTML="";
-    (country.leagues||[]).forEach(lg=>{
-      list.appendChild(item(lg.display_name||lg.league_id,()=>{
-        emitEvt("league-selected",{
-          id: lg.league_id,
-          name: lg.display_name||lg.league_id,
-          source:"navigation"
+    if (!list) return;
+    list.innerHTML = "";
+    leagueRows(country).forEach(lg => {
+      const id = lg.league_id;
+      const name = lg.display_name || lg.league_name || id;
+      if (!id) return;
+      list.appendChild(item(name, () => {
+        emitEvt("league-selected", {
+          id,
+          name,
+          source: "navigation"
         });
         safeOpen("panel-matches");
       }));
@@ -93,7 +133,7 @@
     safeOpen("panel-leagues");
   }
 
-  document.addEventListener("DOMContentLoaded",()=>{
-    if(window.loadNavigation) window.loadNavigation();
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.loadNavigation) window.loadNavigation();
   });
 })();
