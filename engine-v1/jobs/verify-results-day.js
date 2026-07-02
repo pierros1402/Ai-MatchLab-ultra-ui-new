@@ -111,6 +111,16 @@ function getAccumulatedLeagues() {
   return slugs;
 }
 
+/** Group missing matches by league slug, sorted by count descending. */
+function groupMissingByLeague(missing) {
+  const map = new Map();
+  for (const m of missing || []) {
+    if (!map.has(m.leagueSlug)) map.set(m.leagueSlug, []);
+    map.get(m.leagueSlug).push(m);
+  }
+  return [...map.entries()].sort((a, b) => b[1].length - a[1].length);
+}
+
 export function verifyResultsDay(dayKey) {
   const date = dayKey || (() => {
     const d = new Date();
@@ -203,6 +213,10 @@ export function verifyResultsDay(dayKey) {
   }
 
   const hasGaps = missing.length > 0;
+  const missingLeagues = groupMissingByLeague(missing);
+  const missingByLeague = Object.fromEntries(
+    missingLeagues.map(([slug, ms]) => [slug, ms.length])
+  );
   const result = {
     ok:             !hasGaps,
     dayKey:         date,
@@ -213,6 +227,7 @@ export function verifyResultsDay(dayKey) {
     foundPrimary:   foundPrimary.length,
     foundSecondary: foundSecondary.length,
     missing:        missing.length,
+    missingByLeague,
     gapRate:        matches.length ? (missing.length / matches.length) : 0,
     details: {
       foundPrimary,
@@ -228,9 +243,10 @@ export function verifyResultsDay(dayKey) {
   );
 
   if (hasGaps) {
-    log("GAPS DETECTED", { date, missing: missing.length, total: matches.length });
-    for (const m of missing) {
-      log("  MISSING:", m.leagueSlug, m.home, "vs", m.away, m.kickoffUtc);
+    log("GAPS DETECTED", { date, missing: missing.length, total: matches.length, leagues: missingLeagues.length });
+    for (const [slug, ms] of missingLeagues) {
+      log(`  ${slug}: ${ms.length} missing`);
+      for (const m of ms) log("    -", m.home, "vs", m.away, m.kickoffUtc);
     }
   } else {
     log("all collected", { date, foundPrimary: foundPrimary.length, foundSecondary: foundSecondary.length });
@@ -239,13 +255,56 @@ export function verifyResultsDay(dayKey) {
   return result;
 }
 
+/**
+ * Read an already-written verification file and emit a LOUD, per-league
+ * breakdown as GitHub Actions annotations (one ::error:: per league so each
+ * shows up individually in the run summary). Returns { ok, missing, leagues }.
+ * Used by the workflow's gap-check step instead of a bare total count.
+ */
+export function reportVerificationAnnotations(dayKey) {
+  const file = path.join(VERIFICATION_DIR, `${dayKey}.json`);
+  if (!fs.existsSync(file)) {
+    console.log(`No verification file for ${dayKey} (first run or no expected record yet).`);
+    return { ok: true, missing: 0, leagues: 0 };
+  }
+  const v = JSON.parse(fs.readFileSync(file, "utf8"));
+  const missing = v.missing || 0;
+  if (!missing) {
+    console.log(`Verification: 0 missing matches for ${dayKey}.`);
+    return { ok: true, missing: 0, leagues: 0 };
+  }
+
+  const leagues = groupMissingByLeague(v.details?.missing || []);
+  console.log(`Verification: ${missing} missing match(es) across ${leagues.length} league(s) for ${dayKey}:`);
+  for (const [slug, ms] of leagues) {
+    const sample = ms.slice(0, 5).map(m => `${m.home} vs ${m.away}`).join("; ");
+    const more = ms.length > 5 ? ` (+${ms.length - 5} more)` : "";
+    // GitHub Actions annotation — one per league so the run page lists each.
+    console.log(`::error title=Missing results: ${slug} (${ms.length})::${slug} — ${ms.length} not collected for ${dayKey}: ${sample}${more}`);
+  }
+  return { ok: false, missing, leagues: leagues.length };
+}
+
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (entryUrl === import.meta.url) {
-  const arg = process.argv.slice(2).find(a => /^\d{4}-\d{2}-\d{2}$/.test(a));
-  const result = verifyResultsDay(arg);
-  console.log(JSON.stringify({ ...result, details: undefined }, null, 2));
-  if (!result.ok && !result.skipped) {
-    console.error(`\n[verify-results] ${result.missing} missing matches on ${result.dayKey} — check data/verification/${result.dayKey}.json`);
-    process.exitCode = 1;
+  const args = process.argv.slice(2);
+  const date = args.find(a => /^\d{4}-\d{2}-\d{2}$/.test(a));
+
+  // --report: read an existing verification file and emit per-league
+  // annotations (used by the workflow gap-check step). Does not re-verify.
+  if (args.includes("--report")) {
+    const r = reportVerificationAnnotations(date);
+    if (!r.ok) process.exitCode = 1;
+  } else {
+    const result = verifyResultsDay(date);
+    console.log(JSON.stringify({ ...result, details: undefined }, null, 2));
+    if (!result.ok && !result.skipped) {
+      const leagues = Object.entries(result.missingByLeague || {})
+        .sort((a, b) => b[1] - a[1]);
+      console.error(`\n[verify-results] ${result.missing} missing match(es) across ${leagues.length} league(s) on ${result.dayKey}:`);
+      for (const [slug, count] of leagues) console.error(`  ${slug}: ${count}`);
+      console.error(`  → check data/verification/${result.dayKey}.json`);
+      process.exitCode = 1;
+    }
   }
 }

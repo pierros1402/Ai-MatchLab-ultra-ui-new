@@ -90,10 +90,11 @@ export async function runDay(dayKey) {
   const verification = verifyResultsDay(yesterday);
   log("verify-results", {
     date: yesterday,
-    expected: verification.expected,
+    expected: verification.expectedInScope,
     foundPrimary: verification.foundPrimary,
     foundSecondary: verification.foundSecondary,
     missing: verification.missing,
+    missingByLeague: verification.missingByLeague,
     ok: verification.ok,
   });
 

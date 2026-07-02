@@ -82,9 +82,19 @@
       rows.push(issueRow("✓", "#22c55e", "All checks passed", "No issues found"));
     }
 
-    const valueLine = report.valueSafe === false
-      ? `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(239,68,68,.12);color:#fca5a5;font-size:12px;">⚠ Value pipeline marked <b>UNSAFE</b> — picks not generated for affected matches</div>`
-      : `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(34,197,94,.1);color:#86efac;font-size:12px;">✓ Value pipeline <b>SAFE</b></div>`;
+    // Three distinct states: UNSAFE (integrity problem) > NO PICKS YET
+    // (integrity fine but 0 picks — e.g. morning run before odds arrived) > SAFE.
+    // Never show a green "SAFE" while the panel says "No picks yet" — that reads
+    // as a contradiction. valueSafe only measures count-integrity, not existence.
+    let valueLine;
+    if (report.valueSafe === false) {
+      valueLine = `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(239,68,68,.12);color:#fca5a5;font-size:12px;">⚠ Value pipeline marked <b>UNSAFE</b> — picks not generated for affected matches</div>`;
+    } else if (report.valueCount === 0) {
+      valueLine = `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(245,158,11,.1);color:#fcd34d;font-size:12px;">◷ Value pipeline OK — <b>no picks yet</b> (integrity fine; awaiting odds/model)</div>`;
+    } else {
+      const n = report.valueCount != null ? ` — <b>${report.valueCount}</b> pick${report.valueCount === 1 ? "" : "s"}` : "";
+      valueLine = `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(34,197,94,.1);color:#86efac;font-size:12px;">✓ Value pipeline <b>SAFE</b>${n}</div>`;
+    }
 
     return `<div>${rows.join("")}</div>${valueLine}
       <div style="margin-top:12px;font-size:11px;color:#64748b;">Last check: ${formatTime(report.checkedAt)} · Day: ${report.dayKey || "—"}</div>`;
