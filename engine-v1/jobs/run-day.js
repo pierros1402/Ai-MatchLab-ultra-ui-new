@@ -23,6 +23,7 @@ import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { buildCoverageReport } from "./build-coverage-report.js";
 import { accumulateResults } from "./accumulate-results-day.js";
+import { accumulateResultsFromFixtures } from "./accumulate-results-from-fixtures-day.js";
 import { accumulateDiscipline } from "./run-discipline-day.js";
 import { deriveStandingsFromResults } from "./derive-standings-from-results.js";
 import { refreshRefereeStats } from "./run-referee-stats.js";
@@ -53,6 +54,19 @@ export async function runDay(dayKey) {
   // 2) Accumulate yesterday's finished results into form memory (no gaps over time).
   const results = await accumulateResults();
   log("results-accumulate", { stored: results.stored, leagues: Object.keys(results.byLeague).length, totalResults: results.results.results });
+
+  // 2a) Also persist the FINAL scores we DISPLAYED (ESPN-canonical fixtures
+  //     snapshot) into the SAME results memory — so what the app showed as
+  //     finished is remembered and flows into archive→priors, even when the
+  //     Flashscore feed missed it. Fixture-identity deduped: only adds results
+  //     not already present (never manufactures cross-source duplicates).
+  const fxResults = accumulateResultsFromFixtures(yesterday);
+  log("results-accumulate-fixtures", {
+    stored: fxResults.stored,
+    alreadyPresent: fxResults.alreadyPresent,
+    final: fxResults.final,
+    leagues: Object.keys(fxResults.byLeague).length,
+  });
 
   // 2b) Accumulate yesterday's discipline (cards/fouls/penalties) for referee/value.
   const discipline = await accumulateDiscipline({ max: 300 });
