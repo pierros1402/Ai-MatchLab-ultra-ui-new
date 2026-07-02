@@ -26,6 +26,7 @@ import { accumulateResults } from "./accumulate-results-day.js";
 import { accumulateResultsFromFixtures } from "./accumulate-results-from-fixtures-day.js";
 import { buildHistoryArchiveFromResults } from "./build-history-archive-from-results.js";
 import { buildModelPriors } from "./build-model-priors.js";
+import { buildCurrentSeasonIndexes } from "./build-current-season-indexes.js";
 import { currentSeason } from "../core/season.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import fsNode from "node:fs";
@@ -156,6 +157,16 @@ export async function runDay(dayKey) {
     }
   } catch (e) {
     log("history-archive-priors:skip", String(e?.message || e));
+  }
+
+  // 2h) Rebuild the CURRENT-season form indexes (team/league/matchup) from the
+  //     season history, so value form stays fresh and — at rollover — the new
+  //     season's index is created automatically (season derived from season.js).
+  try {
+    await buildCurrentSeasonIndexes();
+    log("current-season-indexes", { season: currentSeason() });
+  } catch (e) {
+    log("current-season-indexes:skip", String(e?.message || e));
   }
 
   // 2d) Weekly (Mondays): refresh per-referee tendencies — slow-changing, and TM

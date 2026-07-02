@@ -11,6 +11,7 @@ import {
 } from "../../workers/_shared/leagues-coverage.js";
 
 import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
+import { currentSeason } from "../core/season.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,8 +19,8 @@ const __dirname = path.dirname(__filename);
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
 const ATHENS_TZ = "Europe/Athens";
 
-const SEASON = "2025-2026";
-const SEASON_START = "2025-08-01";
+const SEASON = currentSeason();
+const SEASON_START = `${SEASON.slice(0, 4)}-08-01`;
 
 const OUT_DIR = path.resolve(__dirname, "../../data/history");
 const OUT_FILE = path.join(OUT_DIR, `${SEASON}.json`);

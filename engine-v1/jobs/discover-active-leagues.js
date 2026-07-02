@@ -6,6 +6,7 @@ import { normalizeFixture } from "../core/normalize.js";
 import { athensDayKey } from "../core/daykey.js";
 import { shouldSkipEspn } from "../source-discovery/league-awareness-service.js";
 import { getSummary } from "../storage/league-memory-db.js";
+import { currentSeason } from "../core/season.js";
 
 const LEAGUE_SEEDS = config.LEAGUE_SEEDS || [];
 const leagueName   = config.leagueName;
@@ -91,7 +92,7 @@ export async function discoverActiveLeagues(dayKey = athensDayKey()) {
 
   // ── History fallback (unchanged) ──────────────────────────────────────────
 
-  const historyPath      = resolveDataPath("history/2025-2026.json");
+  const historyPath      = resolveDataPath("history", `${currentSeason()}.json`);
   const activeFromHistory = new Set();
 
   try {

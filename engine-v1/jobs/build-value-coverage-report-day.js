@@ -12,8 +12,9 @@ import {
 } from "../core/value-engine-v1.js";
 import { getFixturesByDay } from "../storage/json-db.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { currentSeason } from "../core/season.js";
 
-const DEFAULT_SEASON = "2025-2026";
+const DEFAULT_SEASON = currentSeason();
 
 function readJsonSafe(file, fallback = null) {
   try {
