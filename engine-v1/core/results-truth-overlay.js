@@ -61,9 +61,33 @@ function teamTokens(name) {
   return out;
 }
 
+// Squad markers are IDENTITY, not noise: "HJK W" (women) and "HJK" (men), or
+// "Ajax U21" and "Ajax", are different teams. A subset match must never cross
+// a marker boundary, or a men's fixture could inherit a women's/youth score.
+const SQUAD_MARKERS = new Set([
+  "w", "women", "fem", "ii", "iii", "b", "c", "reserve", "reserves", "youth",
+  "junior", "juniors", "academy",
+  "u16", "u17", "u18", "u19", "u20", "u21", "u23",
+]);
+
+function squadMarkers(tokens) {
+  const out = new Set();
+  for (const t of tokens) if (SQUAD_MARKERS.has(t)) out.add(t);
+  return out;
+}
+
+function sameMarkers(aTokens, bTokens) {
+  const a = squadMarkers(aTokens);
+  const b = squadMarkers(bTokens);
+  if (a.size !== b.size) return false;
+  for (const t of a) if (!b.has(t)) return false;
+  return true;
+}
+
 /** True when one token set is a non-empty subset of the other (or equal). */
 function tokensMatch(aTokens, bTokens) {
   if (!aTokens.length || !bTokens.length) return false;
+  if (!sameMarkers(aTokens, bTokens)) return false;
   const a = new Set(aTokens);
   const b = new Set(bTokens);
   const aInB = [...a].every(t => b.has(t));
@@ -128,6 +152,54 @@ function findFinal(slug, dayKey, homeTeam, awayTeam) {
   return hits.length === 1 ? hits[0] : null;
 }
 
+// ── Global day-index fallback ───────────────────────────────────────────────
+// Display slugs and results-attribution slugs disagree more often than they
+// should (CPL stored as can.1 but displayed as can.2; a cup fixture displayed
+// under the league slug; accumulator fallback slugs like fs.finland.suomen-cup).
+// Rather than encode every mismatch, fall back to searching EVERY league's
+// finals for the day and demand a globally unique team-pair hit — a real-world
+// team pair effectively never plays twice on one day, and any ambiguity skips.
+let __allSlugsCache = { ts: 0, slugs: [] };
+
+function listResultSlugs() {
+  const now = Date.now();
+  if (__allSlugsCache.slugs.length && now - __allSlugsCache.ts < 5 * 60 * 1000) {
+    return __allSlugsCache.slugs;
+  }
+  try {
+    const dir = resolveDataPath("league-memory", "results");
+    const slugs = fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json"))
+      .map(f => f.replace(/\.json$/, ""));
+    __allSlugsCache = { ts: now, slugs };
+  } catch {
+    __allSlugsCache = { ts: now, slugs: [] };
+  }
+  return __allSlugsCache.slugs;
+}
+
+function findFinalGlobal(dayKey, homeTeam, awayTeam, excludeSlugs) {
+  const home = teamTokens(homeTeam);
+  const away = teamTokens(awayTeam);
+  if (!home.length || !away.length) return null;
+
+  const hits = [];
+  for (const slug of listResultSlugs()) {
+    if (excludeSlugs.has(slug)) continue;
+    const byDay = loadLeagueFinals(slug);
+    if (!byDay) continue;
+    const rows = byDay.get(dayKey);
+    if (!rows || !rows.length) continue;
+    for (const r of rows) {
+      if (tokensMatch(home, r.homeTokens) && tokensMatch(away, r.awayTokens)) {
+        hits.push(r);
+        if (hits.length > 1) return null; // ambiguous across the day — skip
+      }
+    }
+  }
+  return hits.length === 1 ? hits[0] : null;
+}
+
 function isUpgradeable(m) {
   const rank = statusRankFromParts(m?.status, m?.rawStatus, m?.statusType, m?.statusName);
   return rank !== STATUS_RANK.FINAL && rank !== STATUS_RANK.SPECIAL;
@@ -149,11 +221,19 @@ export function overlayResultsTruth(matches, dayKey) {
       const slug = String(m.leagueSlug || "");
       if (!slug) return m;
 
-      const found =
-        findFinal(slug, day, m.homeTeam, m.awayTeam) ||
-        (SLUG_ALIASES[slug]
-          ? findFinal(SLUG_ALIASES[slug], day, m.homeTeam, m.awayTeam)
-          : null);
+      const tried = new Set([slug]);
+      let found = findFinal(slug, day, m.homeTeam, m.awayTeam);
+
+      if (!found && SLUG_ALIASES[slug]) {
+        tried.add(SLUG_ALIASES[slug]);
+        found = findFinal(SLUG_ALIASES[slug], day, m.homeTeam, m.awayTeam);
+      }
+
+      // Slug-agnostic fallback: unique team-pair hit across ALL leagues' finals
+      // for the day (see findFinalGlobal).
+      if (!found) {
+        found = findFinalGlobal(day, m.homeTeam, m.awayTeam, tried);
+      }
 
       if (!found) return m;
 
