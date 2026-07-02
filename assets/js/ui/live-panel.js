@@ -124,6 +124,17 @@ function initLivePanel(panel) {
 
   /* ================= CLOCK ================= */
 
+  // No reliable live-minute feed exists, so the clock is derived from kickoff and
+  // keeps running when a match is stuck LIVE (engine hasn't marked FT yet). Cap
+  // the DISPLAYED minute so it never shows absurd values like "131'": anything at
+  // or past 90 shows "90+'". Empty/zero → no label.
+  const LIVE_MINUTE_CAP = 90;
+  function clampMinuteLabel(minute) {
+    const n = Number(minute);
+    if (!Number.isFinite(n) || n <= 0) return "";
+    return n >= LIVE_MINUTE_CAP ? `${LIVE_MINUTE_CAP}+'` : `${n}'`;
+  }
+
   function parseMinute(raw) {
     const s = String(raw || "").trim();
     const m = s.match(/^(\d+)(?:\+(\d+))?/);
@@ -266,7 +277,7 @@ function initLivePanel(panel) {
     const minuteLabel =
       rawMinute && rawMinute.includes("+") && !isSecondHalf
         ? `${rawMinute}'`
-        : (minuteNow ? `${minuteNow}'` : "");
+        : clampMinuteLabel(minuteNow);
 
     row.innerHTML = `
       <div class="teams">${esc(m.home || m.homeTeam)} – ${esc(m.away || m.awayTeam)}</div>
@@ -442,7 +453,7 @@ function initLivePanel(panel) {
       }
 
       const elapsed = Math.floor((now - start) / 60000);
-      el.textContent = `${base + Math.max(0, elapsed)}'`;
+      el.textContent = clampMinuteLabel(base + Math.max(0, elapsed));
     });
   }
 
