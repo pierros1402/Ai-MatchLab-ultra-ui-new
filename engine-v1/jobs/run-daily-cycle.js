@@ -338,19 +338,39 @@ function assertDailyIngestIsUsable({ dayKey, discoveryWindow }) {
 
   console.log("[daily-cycle] ingest-quality", JSON.stringify(summary, null, 2));
 
+  const hasCanonicalFixtureTarget = Number(canonicalCoverage?.fixtures || 0) > 0;
+
+  // Cross-midnight builds (evening pre-build of tomorrow, early-morning
+  // catch-up of today) legitimately see many neighboring-day events from
+  // sources still keyed to the adjacent day; those are skipped, not written.
+  // The ratio checks are only a corruption signal when the target day's
+  // absolute coverage is short — real mis-keying starves fixtureCount and
+  // still fails the target-fixture check below.
+  const coverageSatisfied = hasCanonicalFixtureTarget && fixtureCount >= minTargetFixtures;
+
   if (rawEvents >= minRawForGate && wrongDayRatio > maxWrongDayRatio) {
-    throw new Error(
-      `daily_ingest_quality_failed: excessive wrong-day skips for ${dayKey}; summary=${JSON.stringify(summary)}`
-    );
+    if (coverageSatisfied) {
+      console.warn(
+        `[daily-cycle] ingest-quality warning: wrong-day ratio ${summary.wrongDayRatio} above ${maxWrongDayRatio} but coverage target met (${fixtureCount}/${minTargetFixtures}); continuing`
+      );
+    } else {
+      throw new Error(
+        `daily_ingest_quality_failed: excessive wrong-day skips for ${dayKey}; summary=${JSON.stringify(summary)}`
+      );
+    }
   }
 
   if (rawEvents >= minRawForGate && keptRatioFromRaw < minKeptRatioFromRaw) {
-    throw new Error(
-      `daily_ingest_quality_failed: low kept/raw ratio for ${dayKey}; summary=${JSON.stringify(summary)}`
-    );
+    if (coverageSatisfied) {
+      console.warn(
+        `[daily-cycle] ingest-quality warning: kept/raw ratio ${summary.keptRatioFromRaw} below ${minKeptRatioFromRaw} but coverage target met (${fixtureCount}/${minTargetFixtures}); continuing`
+      );
+    } else {
+      throw new Error(
+        `daily_ingest_quality_failed: low kept/raw ratio for ${dayKey}; summary=${JSON.stringify(summary)}`
+      );
+    }
   }
-
-  const hasCanonicalFixtureTarget = Number(canonicalCoverage?.fixtures || 0) > 0;
 
   if (
     (hasCanonicalFixtureTarget && fixtureCount < minTargetFixtures) ||
