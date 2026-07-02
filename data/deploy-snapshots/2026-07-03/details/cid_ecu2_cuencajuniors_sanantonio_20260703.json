@@ -1,7 +1,7 @@
 {
   "matchId": "cid_ecu2_cuencajuniors_sanantonio_20260703",
   "dayKey": "2026-07-03",
-  "generatedAt": "2026-07-02T19:11:57.346Z",
+  "generatedAt": "2026-07-02T21:03:26.292Z",
   "basic": {
     "canonicalId": "cid_ecu2_cuencajuniors_sanantonio_20260703",
     "matchId": "cid_ecu2_cuencajuniors_sanantonio_20260703",
@@ -261,10 +261,10 @@
         "required": true,
         "priority": 95,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -279,10 +279,10 @@
         "required": false,
         "priority": 60,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.4,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -377,32 +377,38 @@
         "seasonFormLast5": {
           "status": "ready",
           "home": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
-              "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "wins": 2,
+              "draws": 1,
+              "losses": 2,
+              "points": 7,
+              "pointsPerMatch": 1.4
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 10,
+              "conceded": 11,
+              "avgScored": 2,
+              "avgConceded": 2.2
             },
             "trends": {
-              "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
+              "cleanSheets": 1,
+              "failedToScore": 2,
+              "over25": 5,
               "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "bttsYes": 2,
+              "bttsNo": 3
             },
-            "formScore": 0,
-            "momentum": "poor",
-            "confidence": 0
+            "formScore": 0.5,
+            "momentum": "neutral",
+            "confidence": 0.85
           },
           "away": {
             "sampleSize": 5,
@@ -439,47 +445,66 @@
             "confidence": 0.85
           },
           "comparison": {
-            "edge": "away",
+            "edge": null,
             "notes": []
           },
           "meta": {
             "homeSampleSameSeason": 0,
             "awaySampleSameSeason": 5,
-            "homeSampleMerged": 0,
+            "homeSampleMerged": 5,
             "awaySampleMerged": 5,
-            "h2hSampleMerged": 0,
-            "archiveSeasonsUsed": [],
-            "usedArchiveForHome": false,
+            "h2hSampleMerged": 1,
+            "archiveSeasonsUsed": [
+              "2021-2022",
+              "2022-2023",
+              "2023-2024",
+              "2024-2025",
+              "2025-2026"
+            ],
+            "usedArchiveForHome": true,
             "usedArchiveForAway": false,
             "currentSeasonRows": 12121,
-            "archiveRows": 0,
-            "mergedRows": 12121
+            "archiveRows": 905,
+            "mergedRows": 13026
           }
         },
         "h2hLast5": {
-          "status": "empty",
-          "sampleSize": 0,
-          "last5": [],
+          "status": "ready",
+          "sampleSize": 1,
+          "last5": [
+            {
+              "date": "2026-04-16T00:00:00.000Z",
+              "league": "ecu.2",
+              "season": "2025-2026",
+              "homeTeam": "San Antonio FC",
+              "awayTeam": "CD Cuenca Juniors",
+              "score": "1-1",
+              "resultFromCurrentPerspective": "DRAW",
+              "source": "results-memory"
+            }
+          ],
           "stats": {
             "homeWins": 0,
-            "draws": 0,
+            "draws": 1,
             "awayWins": 0,
-            "goalsForHomePerspective": 0,
-            "goalsForAwayPerspective": 0,
-            "avgGoalsTotal": null,
+            "goalsForHomePerspective": 1,
+            "goalsForAwayPerspective": 1,
+            "avgGoalsTotal": 2,
             "over25": 0,
-            "under25": 0,
-            "bttsYes": 0,
+            "under25": 1,
+            "bttsYes": 1,
             "bttsNo": 0
           },
           "trend": {
             "edge": null,
-            "goalPattern": "unknown"
+            "goalPattern": "balanced"
           },
-          "confidence": 0,
-          "summary": [],
+          "confidence": 0.4,
+          "summary": [
+            "Το πρόσφατο H2H δείγμα είναι ισορροπημένο."
+          ],
           "meta": {
-            "mergedSample": 0
+            "mergedSample": 1
           }
         },
         "playerUsage": {
@@ -543,14 +568,15 @@
           "avgConfidence": 0
         },
         "summary": [
-          "Last5 points: home 0, away 8."
+          "Last5 points: home 7, away 8.",
+          "H2H sample: 1 recent matches."
         ]
       },
-      "confidence": 0.53,
+      "confidence": 0.6,
       "readiness": {
         "history": true,
         "form": true,
-        "h2h": false,
+        "h2h": true,
         "standings": false,
         "teamNews": false,
         "lineup": true,
@@ -589,9 +615,9 @@
       "status": "ok",
       "data": {
         "home": {
-          "restDays": null,
-          "fatigue": "unknown",
-          "rotationRisk": "unknown",
+          "restDays": 23,
+          "fatigue": "low",
+          "rotationRisk": "low",
           "expectedStrength": "strong"
         },
         "away": {
@@ -606,9 +632,9 @@
       "source": "local-lineup-model",
       "reliability": "limited",
       "diagnostics": {
-        "hasHomeRest": false,
+        "hasHomeRest": true,
         "hasAwayRest": true,
-        "hasBothRest": false,
+        "hasBothRest": true,
         "hasHomeAbsences": false,
         "hasAwayAbsences": false,
         "hasAnyAbsences": false
@@ -616,24 +642,26 @@
     },
     "formGuide": {
       "homeTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
-          "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "wins": 2,
+          "draws": 1,
+          "losses": 2
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 10,
+          "conceded": 11,
+          "avgScored": 2,
+          "avgConceded": 2.2
         },
         "trends": "[circular]",
-        "formScore": 0,
-        "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "formScore": 0.5,
+        "momentum": "neutral",
+        "summary": [
+          "High goal involvement"
+        ],
+        "confidence": 0.85
       },
       "awayTeam": {
         "sampleSize": 5,
@@ -661,11 +689,13 @@
       "meta": "[circular]"
     },
     "headToHead": {
-      "sampleSize": 0,
-      "matches": [],
+      "sampleSize": 1,
+      "matches": [
+        "[circular]"
+      ],
       "stats": "[circular]",
       "trend": "[circular]",
-      "confidence": 0,
+      "confidence": 0.4,
       "summary": "[circular]",
       "meta": "[circular]"
     },
@@ -851,8 +881,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Cuenca Juniors - San Antonio: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. San Antonio: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12121 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:unknown, rotation:unknown, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "Cuenca Juniors vs San Antonio: contextual analysis using historical and available data. San Antonio: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12121 available match records. Table context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:unknown, rotation:unknown, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
+      "el": "Cuenca Juniors - San Antonio: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Cuenca Juniors: 2-1-2 στα τελευταία 5. San Antonio: 2-2-1 στα τελευταία 5. Το historical layer βασίστηκε σε 13026 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Cuenca Juniors 0 νίκες, ισοπαλίες 1, San Antonio 0 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:low, rotation:low, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+      "en": "Cuenca Juniors vs San Antonio: contextual analysis using historical and available data. Cuenca Juniors: 2-1-2 across the last 5. San Antonio: 2-2-1 across the last 5. The historical layer was based on 13026 available match records. Across the last 1 head-to-head meetings: Cuenca Juniors 0 wins, draws 1, San Antonio 0 wins. The head-to-head profile is relatively balanced. Table context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:low, rotation:low, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -860,10 +890,14 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.73,
+    "confidence": 0.8200000000000001,
     "signals": [
       "historical_context_available",
       "history_form_available",
+      "balanced_form_samples",
+      "archive_history_fallback_used",
+      "h2h_history_available",
+      "h2h_balanced",
       "phase_regular",
       "lineup_context_limited",
       "competition_context_limited"
@@ -881,22 +915,22 @@
     "reasoning": {
       "tempoProfile": {
         "label": "history_informed",
-        "explanation": "Derived from recent form and historical match coverage."
+        "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
         "label": "form_shaped",
-        "explanation": "Adjusted according to recent team form samples."
+        "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "history_supported_context",
+        "label": "h2h_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "history_informed",
+        "label": "matchup_informed",
         "explanation": ""
       }
     },
@@ -905,7 +939,7 @@
       "valueUsed": false,
       "researchUsed": true,
       "historyUsed": true,
-      "h2hUsed": false,
+      "h2hUsed": true,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
@@ -928,8 +962,8 @@
     }
   },
   "aiSummary": {
-    "el": "Cuenca Juniors - San Antonio: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. San Antonio: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 12121 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:unknown, rotation:unknown, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "Cuenca Juniors vs San Antonio: contextual analysis using historical and available data. San Antonio: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 12121 available match records. Table context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:unknown, rotation:unknown, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
+    "el": "Cuenca Juniors - San Antonio: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Cuenca Juniors: 2-1-2 στα τελευταία 5. San Antonio: 2-2-1 στα τελευταία 5. Το historical layer βασίστηκε σε 13026 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 1 μεταξύ τους: Cuenca Juniors 0 νίκες, ισοπαλίες 1, San Antonio 0 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:low, rotation:low, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+    "en": "Cuenca Juniors vs San Antonio: contextual analysis using historical and available data. Cuenca Juniors: 2-1-2 across the last 5. San Antonio: 2-2-1 across the last 5. The historical layer was based on 13026 available match records. Across the last 1 head-to-head meetings: Cuenca Juniors 0 wins, draws 1, San Antonio 0 wins. The head-to-head profile is relatively balanced. Table context: Cuenca Juniors=unknown, San Antonio=unknown. Lineup context: Cuenca Juniors=fatigue:low, rotation:low, strength:strong; San Antonio=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1043,7 +1077,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12121
+          "mergedRows": 13026
         }
       },
       {
@@ -1051,11 +1085,22 @@
         "key": "form_guide_local",
         "provider": "local-history",
         "trustClass": "derived_local",
-        "confidence": 0.52,
+        "confidence": 0.78,
         "status": "available",
         "meta": {
-          "homeSample": 0,
+          "homeSample": 5,
           "awaySample": 5
+        }
+      },
+      {
+        "kind": "head_to_head_local",
+        "key": "head_to_head_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.45,
+        "status": "available",
+        "meta": {
+          "sampleSize": 1
         }
       }
     ],

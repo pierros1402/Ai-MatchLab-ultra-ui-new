@@ -1,7 +1,7 @@
 {
   "matchId": "cid_irl2_finnharps_wexford_20260703",
   "dayKey": "2026-07-03",
-  "generatedAt": "2026-07-02T19:11:59.495Z",
+  "generatedAt": "2026-07-02T21:03:28.837Z",
   "basic": {
     "canonicalId": "cid_irl2_finnharps_wexford_20260703",
     "matchId": "cid_irl2_finnharps_wexford_20260703",
@@ -264,10 +264,10 @@
         "required": false,
         "priority": 72,
         "mode": "model_first",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "limited_local",
+        "provider": "local-lineup-model",
+        "confidence": 0.42,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-lineup-model"
@@ -281,10 +281,10 @@
         "required": true,
         "priority": 95,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -299,10 +299,10 @@
         "required": false,
         "priority": 60,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.82,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -395,62 +395,74 @@
           }
         },
         "seasonFormLast5": {
-          "status": "empty",
+          "status": "ready",
           "home": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "draws": 2,
+              "losses": 3,
+              "points": 2,
+              "pointsPerMatch": 0.4
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 3,
+              "conceded": 14,
+              "avgScored": 0.6,
+              "avgConceded": 2.8
             },
             "trends": {
               "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "failedToScore": 2,
+              "over25": 3,
+              "under25": 2,
+              "bttsYes": 3,
+              "bttsNo": 2
             },
-            "formScore": 0,
+            "formScore": 0.26,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.85
           },
           "away": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "draws": 3,
+              "losses": 2,
+              "points": 3,
+              "pointsPerMatch": 0.6
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 2,
+              "conceded": 8,
+              "avgScored": 0.4,
+              "avgConceded": 1.6
             },
             "trends": {
-              "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "cleanSheets": 2,
+              "failedToScore": 4,
+              "over25": 2,
+              "under25": 3,
+              "bttsYes": 1,
+              "bttsNo": 4
             },
-            "formScore": 0,
-            "momentum": "poor",
-            "confidence": 0
+            "formScore": 0.36,
+            "momentum": "negative",
+            "confidence": 0.85
           },
           "comparison": {
             "edge": null,
@@ -459,41 +471,102 @@
           "meta": {
             "homeSampleSameSeason": 0,
             "awaySampleSameSeason": 0,
-            "homeSampleMerged": 0,
-            "awaySampleMerged": 0,
-            "h2hSampleMerged": 0,
-            "archiveSeasonsUsed": [],
-            "usedArchiveForHome": false,
-            "usedArchiveForAway": false,
+            "homeSampleMerged": 5,
+            "awaySampleMerged": 5,
+            "h2hSampleMerged": 5,
+            "archiveSeasonsUsed": [
+              "2021-2022",
+              "2022-2023",
+              "2023-2024",
+              "2024-2025",
+              "2025-2026"
+            ],
+            "usedArchiveForHome": true,
+            "usedArchiveForAway": true,
             "currentSeasonRows": 12121,
-            "archiveRows": 0,
-            "mergedRows": 12121
+            "archiveRows": 869,
+            "mergedRows": 12990
           }
         },
         "h2hLast5": {
-          "status": "empty",
-          "sampleSize": 0,
-          "last5": [],
+          "status": "ready",
+          "sampleSize": 5,
+          "last5": [
+            {
+              "date": "2026-05-01T18:45:00.000Z",
+              "league": "irl.2",
+              "season": "2025-2026",
+              "homeTeam": "Wexford FC",
+              "awayTeam": "Finn Harps",
+              "score": "2-0",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2026-03-06T19:45:00.000Z",
+              "league": "irl.2",
+              "season": "2025-2026",
+              "homeTeam": "Finn Harps",
+              "awayTeam": "Wexford FC",
+              "score": "1-1",
+              "resultFromCurrentPerspective": "DRAW",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-09-22T18:45:00.000Z",
+              "league": "irl.2",
+              "season": "2025-2026",
+              "homeTeam": "Finn Harps",
+              "awayTeam": "Wexford FC",
+              "score": "1-3",
+              "resultFromCurrentPerspective": "HOME_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-08-01T18:45:00.000Z",
+              "league": "irl.2",
+              "season": "2025-2026",
+              "homeTeam": "Wexford FC",
+              "awayTeam": "Finn Harps",
+              "score": "2-1",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-06-13T18:45:00.000Z",
+              "league": "irl.2",
+              "season": "2024-2025",
+              "homeTeam": "Finn Harps",
+              "awayTeam": "Wexford FC",
+              "score": "1-1",
+              "resultFromCurrentPerspective": "DRAW",
+              "source": "results-memory"
+            }
+          ],
           "stats": {
-            "homeWins": 0,
-            "draws": 0,
-            "awayWins": 0,
-            "goalsForHomePerspective": 0,
-            "goalsForAwayPerspective": 0,
-            "avgGoalsTotal": null,
-            "over25": 0,
-            "under25": 0,
-            "bttsYes": 0,
-            "bttsNo": 0
+            "homeWins": 1,
+            "draws": 2,
+            "awayWins": 2,
+            "goalsForHomePerspective": 6,
+            "goalsForAwayPerspective": 7,
+            "avgGoalsTotal": 2.6,
+            "over25": 2,
+            "under25": 3,
+            "bttsYes": 4,
+            "bttsNo": 1
           },
           "trend": {
-            "edge": null,
-            "goalPattern": "unknown"
+            "edge": "away",
+            "goalPattern": "underlean"
           },
-          "confidence": 0,
-          "summary": [],
+          "confidence": 0.82,
+          "summary": [
+            "Wexford έχει καλύτερο πρόσφατο H2H δείγμα.",
+            "Το πρόσφατο H2H δείχνει τάση για πιο κλειστά σκορ.",
+            "Υπάρχει επαναλαμβανόμενο BTTS μοτίβο στο H2H."
+          ],
           "meta": {
-            "mergedSample": 0
+            "mergedSample": 5
           }
         },
         "playerUsage": {
@@ -541,9 +614,9 @@
           "confidence": 0
         },
         "lineup": {
-          "status": "empty",
-          "reliability": "empty",
-          "confidence": 0
+          "status": "partial",
+          "reliability": "limited",
+          "confidence": 0.42
         },
         "travel": {
           "status": "ready",
@@ -557,17 +630,18 @@
           "avgConfidence": 0
         },
         "summary": [
-          "Last5 points: home 0, away 0."
+          "Last5 points: home 2, away 3.",
+          "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.46,
+      "confidence": 0.67,
       "readiness": {
         "history": true,
-        "form": false,
-        "h2h": false,
+        "form": true,
+        "h2h": true,
         "standings": false,
         "teamNews": false,
-        "lineup": false,
+        "lineup": true,
         "travel": true,
         "playerUsage": false,
         "value": true
@@ -633,60 +707,96 @@
     },
     "expectedLineups": {
       "key": "expected_lineups",
-      "status": "empty",
-      "data": null,
-      "confidence": 0
+      "status": "ok",
+      "data": {
+        "home": {
+          "restDays": 7,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "away": {
+          "restDays": 7,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "reliability": "limited"
+      },
+      "confidence": 0.42,
+      "source": "local-lineup-model",
+      "reliability": "limited",
+      "diagnostics": {
+        "hasHomeRest": true,
+        "hasAwayRest": true,
+        "hasBothRest": true,
+        "hasHomeAbsences": false,
+        "hasAwayAbsences": false,
+        "hasAnyAbsences": false
+      }
     },
     "formGuide": {
       "homeTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
           "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "draws": 2,
+          "losses": 3
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 3,
+          "conceded": 14,
+          "avgScored": 0.6,
+          "avgConceded": 2.8
         },
         "trends": "[circular]",
-        "formScore": 0,
+        "formScore": 0.26,
         "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "summary": [
+          "Poor recent form",
+          "High goal involvement",
+          "Both teams scoring frequently"
+        ],
+        "confidence": 0.85
       },
       "awayTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
           "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "draws": 3,
+          "losses": 2
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 2,
+          "conceded": 8,
+          "avgScored": 0.4,
+          "avgConceded": 1.6
         },
         "trends": "[circular]",
-        "formScore": 0,
-        "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "formScore": 0.36,
+        "momentum": "negative",
+        "summary": [
+          "Struggling to score"
+        ],
+        "confidence": 0.85
       },
       "comparison": "[circular]",
       "meta": "[circular]"
     },
     "headToHead": {
-      "sampleSize": 0,
-      "matches": [],
+      "sampleSize": 5,
+      "matches": [
+        "[circular]",
+        "[circular]",
+        "[circular]",
+        "[circular]",
+        "[circular]"
+      ],
       "stats": "[circular]",
       "trend": "[circular]",
-      "confidence": 0,
+      "confidence": 0.82,
       "summary": "[circular]",
       "meta": "[circular]"
     },
@@ -872,8 +982,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Finn Harps - Wexford: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Finn Harps=unknown, Wexford=unknown. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "Finn Harps vs Wexford: contextual analysis using historical and available data. Table context: Finn Harps=unknown, Wexford=unknown. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
+      "el": "Finn Harps - Wexford: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Finn Harps: 0-2-3 στα τελευταία 5. Wexford: 0-3-2 στα τελευταία 5. Το historical layer βασίστηκε σε 12990 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Finn Harps 1 νίκες, ισοπαλίες 2, Wexford 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Finn Harps=unknown, Wexford=unknown. Lineup context: Finn Harps=fatigue:low, rotation:low, strength:strong; Wexford=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+      "en": "Finn Harps vs Wexford: contextual analysis using historical and available data. Finn Harps: 0-2-3 across the last 5. Wexford: 0-3-2 across the last 5. The historical layer was based on 12990 available match records. Across the last 5 head-to-head meetings: Finn Harps 1 wins, draws 2, Wexford 2 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Finn Harps=unknown, Wexford=unknown. Lineup context: Finn Harps=fatigue:low, rotation:low, strength:strong; Wexford=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -881,10 +991,17 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.65,
+    "confidence": 0.8200000000000001,
     "signals": [
       "historical_context_available",
+      "history_form_available",
+      "balanced_form_samples",
+      "archive_history_fallback_used",
+      "h2h_history_available",
+      "h2h_edge_away",
+      "h2h_goal_pattern_under",
       "phase_regular",
+      "lineup_context_limited",
       "competition_context_limited",
       "travel_context_available"
     ],
@@ -900,23 +1017,23 @@
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "history_informed",
+        "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "historical_low_event_risk",
+        "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "unknown",
+        "label": "h2h_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "unknown",
+        "label": "matchup_informed",
         "explanation": ""
       }
     },
@@ -924,13 +1041,13 @@
       "priorsUsed": true,
       "valueUsed": false,
       "researchUsed": true,
-      "historyUsed": false,
-      "h2hUsed": false,
+      "historyUsed": true,
+      "h2hUsed": true,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
-      "lineupLimited": false,
-      "lineupReliability": "empty",
+      "lineupLimited": true,
+      "lineupReliability": "limited",
       "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
@@ -948,8 +1065,8 @@
     }
   },
   "aiSummary": {
-    "el": "Finn Harps - Wexford: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Finn Harps=unknown, Wexford=unknown. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "Finn Harps vs Wexford: contextual analysis using historical and available data. Table context: Finn Harps=unknown, Wexford=unknown. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
+    "el": "Finn Harps - Wexford: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Finn Harps: 0-2-3 στα τελευταία 5. Wexford: 0-3-2 στα τελευταία 5. Το historical layer βασίστηκε σε 12990 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Finn Harps 1 νίκες, ισοπαλίες 2, Wexford 2 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Finn Harps=unknown, Wexford=unknown. Lineup context: Finn Harps=fatigue:low, rotation:low, strength:strong; Wexford=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+    "en": "Finn Harps vs Wexford: contextual analysis using historical and available data. Finn Harps: 0-2-3 across the last 5. Wexford: 0-3-2 across the last 5. The historical layer was based on 12990 available match records. Across the last 5 head-to-head meetings: Finn Harps 1 wins, draws 2, Wexford 2 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Finn Harps=unknown, Wexford=unknown. Lineup context: Finn Harps=fatigue:low, rotation:low, strength:strong; Wexford=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -974,6 +1091,7 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
+      "local-lineup-model",
       "local-history",
       "local-team-geo"
     ],
@@ -982,7 +1100,7 @@
       "competition_context_reliability",
       "referee_profile",
       "team_news",
-      "expected_lineups",
+      "expected_lineups_reliability",
       "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1044,6 +1162,17 @@
         "status": "limited"
       },
       {
+        "kind": "expected_lineups",
+        "key": "expected_lineups",
+        "provider": "local-lineup-model",
+        "trustClass": "limited_local",
+        "confidence": 0.42,
+        "status": "limited",
+        "meta": {
+          "reliability": "limited"
+        }
+      },
+      {
         "kind": "history_context_local",
         "key": "history_context_local",
         "provider": "local-history",
@@ -1051,7 +1180,30 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12121
+          "mergedRows": 12990
+        }
+      },
+      {
+        "kind": "form_guide_local",
+        "key": "form_guide_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.78,
+        "status": "available",
+        "meta": {
+          "homeSample": 5,
+          "awaySample": 5
+        }
+      },
+      {
+        "kind": "head_to_head_local",
+        "key": "head_to_head_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.7,
+        "status": "available",
+        "meta": {
+          "sampleSize": 5
         }
       }
     ],
