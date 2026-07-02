@@ -89,20 +89,46 @@
     return "LOW";
   }
 
+// The engine emits short market codes (OU25, BTTS, 1X2); older payloads used
+// display names ("Over / Under 2.5"). Normalize both to one key so the panel
+// filter cannot silently drop picks over naming.
+const MARKET_KEYS = {
+  "OU15": "OU15", "Over / Under 1.5": "OU15",
+  "OU25": "OU25", "Over / Under 2.5": "OU25",
+  "OU35": "OU35", "Over / Under 3.5": "OU35",
+  "BTTS": "BTTS",
+  "1X2": "1X2",
+};
+
+const PANEL_THRESHOLDS = {
+  OU15: 0.70,
+  OU35: 0.66,
+  BTTS: 0.66,
+  "1X2": 0.64,
+  OU25: 0.58,
+};
+
 function normalizePick(p) {
   const score =
     typeof p?.score === "number" && Number.isFinite(p.score)
       ? p.score
-      : typeof p?.confidence === "number" && Number.isFinite(p.confidence)
-        ? p.confidence
-        : 0;
+      : typeof p?.modelProb === "number" && Number.isFinite(p.modelProb)
+        ? p.modelProb
+        : typeof p?.confidence === "number" && Number.isFinite(p.confidence)
+          ? p.confidence
+          : 0;
 
   const confidenceNum =
     typeof p?.confidence === "number" && Number.isFinite(p.confidence)
       ? p.confidence
       : score;
 
-  const confidenceBand = toBand(confidenceNum);
+  // The engine sends confidence as a band string ("high"/"medium"/"low");
+  // older payloads sent a number. Accept both.
+  const confidenceBand =
+    typeof p?.confidence === "string" && p.confidence
+      ? String(p.confidence).toUpperCase()
+      : toBand(confidenceNum);
 
   return {
     ...p,
@@ -117,7 +143,9 @@ function normalizePick(p) {
     kickoff_ms:
       typeof p?.kickoff_ms === "number"
         ? p.kickoff_ms
-        : (p?.kickoff ? Date.parse(p.kickoff) : null),
+        : (p?.kickoff || p?.kickoffUtc)
+          ? Date.parse(p.kickoff || p.kickoffUtc)
+          : null,
 
     homeTeam: p?.homeTeam ?? p?.home ?? "—",
     awayTeam: p?.awayTeam ?? p?.away ?? "—",
@@ -127,32 +155,14 @@ function normalizePick(p) {
     confidenceValue: confidenceNum,
 
     includeInPanel: (() => {
-      const market = String(p?.market ?? p?.marketName ?? "").trim();
+      const rawMarket = String(p?.market ?? p?.marketName ?? "").trim();
+      const marketKey = MARKET_KEYS[rawMarket];
       const scoreNum = Number(score);
 
+      if (!marketKey) return false;
       if (!Number.isFinite(scoreNum)) return false;
 
-      if (market === "Over / Under 1.5") {
-        return scoreNum >= 0.70;
-      }
-
-      if (market === "Over / Under 3.5") {
-        return scoreNum >= 0.66;
-      }
-
-      if (market === "BTTS") {
-        return scoreNum >= 0.66;
-      }
-
-      if (market === "1X2") {
-        return scoreNum >= 0.64;
-      }
-
-      if (market === "Over / Under 2.5") {
-        return scoreNum >= 0.58;
-      }
-
-      return false;
+      return scoreNum >= PANEL_THRESHOLDS[marketKey];
     })()
   };
 }
