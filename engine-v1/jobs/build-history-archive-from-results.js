@@ -27,6 +27,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ALL_LEAGUE_SEEDS } from "../config.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { currentSeason } from "../core/season.js";
 
 // Seasons that feed the priors (build-model-priors sources 2021-22 … 2024-25) plus
 // the current one for completeness. Older seasons in results are ignored (5y cap).
@@ -137,6 +138,12 @@ export function buildHistoryArchiveFromResults(opts = {}) {
   const seasons = Array.isArray(opts.seasons) && opts.seasons.length ? opts.seasons : DEFAULT_SEASONS;
   const seasonsSet = new Set(seasons);
   const overwrite = Boolean(opts.overwrite);
+  // Daily mode: always rewrite the CURRENT season (it grows every matchday) but
+  // leave completed seasons untouched once written (they are stable history).
+  // A completed season is (re)written only when its file is MISSING, and that is
+  // the signal a season has just rolled into history → rebuild priors.
+  const refreshCurrentSeason = opts.refreshCurrentSeason !== false;
+  const curSeason = currentSeason();
   const leagues = Array.isArray(opts.leagues) && opts.leagues.length ? opts.leagues : ALL_LEAGUE_SEEDS.slice();
 
   ensureDir(ARCHIVE_ROOT);
@@ -146,9 +153,12 @@ export function buildHistoryArchiveFromResults(opts = {}) {
     startedAt: Date.now(),
     seasons,
     overwrite,
+    currentSeason: curSeason,
     leaguesConsidered: leagues.length,
     leaguesWithResults: 0,
     filesWritten: 0,
+    currentSeasonFilesWritten: 0,
+    pastSeasonsWritten: 0,      // completed-season files newly created → rollover
     filesSkippedExisting: 0,
     matchesWritten: 0,
     byLeague: []
@@ -170,7 +180,12 @@ export function buildHistoryArchiveFromResults(opts = {}) {
       if (!matchesMap || !matchesMap.size) continue;
 
       const outFile = path.join(leagueDir, `${season}.json`);
-      if (!overwrite && fs.existsSync(outFile)) {
+      const exists = fs.existsSync(outFile);
+      const isCurrent = season === curSeason;
+
+      // Past seasons: write once (skip if present) unless a full --overwrite.
+      // Current season: rewrite every run (unless refresh disabled) so it stays live.
+      if (exists && !overwrite && !(isCurrent && refreshCurrentSeason)) {
         summary.filesSkippedExisting += 1;
         continue;
       }
@@ -191,6 +206,8 @@ export function buildHistoryArchiveFromResults(opts = {}) {
       fs.writeFileSync(outFile, JSON.stringify(archivePayload, null, 2), "utf8");
       summary.filesWritten += 1;
       summary.matchesWritten += matches.length;
+      if (isCurrent) summary.currentSeasonFilesWritten += 1;
+      else if (!exists) summary.pastSeasonsWritten += 1; // completed season newly archived
       written.push({ season, matches: matches.length });
     }
 

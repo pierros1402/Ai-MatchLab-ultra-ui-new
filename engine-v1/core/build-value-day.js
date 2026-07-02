@@ -7,6 +7,7 @@ import {
   loadModelPriors
 } from "./value-engine-v1.js";
 import { buildMatchIntelligence } from "./build-match-intelligence.js";
+import { currentSeason } from "./season.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -474,7 +475,7 @@ function applyIntelligenceToValue(value, intelligence) {
 
 // ------------------------------
 export async function buildValueDay(date, { rebuild = false, env } = {}) {
-  const season = "2025-2026";
+  const season = currentSeason();
   const cacheKey = `${season}:${date}`;
 
   if (!rebuild && __valueDayCache.has(cacheKey)) {

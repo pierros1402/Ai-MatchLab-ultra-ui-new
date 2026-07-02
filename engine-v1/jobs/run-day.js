@@ -24,6 +24,11 @@ import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { buildCoverageReport } from "./build-coverage-report.js";
 import { accumulateResults } from "./accumulate-results-day.js";
 import { accumulateResultsFromFixtures } from "./accumulate-results-from-fixtures-day.js";
+import { buildHistoryArchiveFromResults } from "./build-history-archive-from-results.js";
+import { buildModelPriors } from "./build-model-priors.js";
+import { currentSeason } from "../core/season.js";
+import { resolveDataPath } from "../storage/data-root.js";
+import fsNode from "node:fs";
 import { accumulateDiscipline } from "./run-discipline-day.js";
 import { deriveStandingsFromResults } from "./derive-standings-from-results.js";
 import { refreshRefereeStats } from "./run-referee-stats.js";
@@ -120,6 +125,38 @@ export async function runDay(dayKey) {
   // 2f) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
   const derived = deriveStandingsFromResults();
   log("derive-standings", { derived: derived.derived, leagues: Object.keys(derived.byLeague) });
+
+  // 2g) Roll fresh results into the value history-archive (current season kept
+  //     live, completed seasons frozen) and rebuild model-priors ONLY when the
+  //     season set actually changed — i.e. a season just rolled over (the new
+  //     current season has no priors file yet) or a league gained a completed
+  //     season of depth. Otherwise the past-season priors are unchanged, so we
+  //     skip the rebuild (no daily churn). Fully automatic — no manual runs.
+  try {
+    const arch = buildHistoryArchiveFromResults();
+    const priorsFile = resolveDataPath("model-priors", `${currentSeason()}.json`);
+    const rollover = !fsNode.existsSync(priorsFile);   // new season → priors not built yet
+    const newDepth = arch.pastSeasonsWritten > 0;      // a completed season newly archived
+    log("history-archive-refresh", {
+      currentSeason: arch.currentSeason,
+      currentFilesWritten: arch.currentSeasonFilesWritten,
+      pastSeasonsWritten: arch.pastSeasonsWritten,
+    });
+    if (rollover || newDepth) {
+      const priors = await buildModelPriors();
+      log("model-priors-rebuild", {
+        reason: rollover ? "season_rollover" : "new_coverage",
+        target: priors.targetSeason,
+        sources: priors.sourceSeasons.join(","),
+        teamPriors: priors.teamPriors,
+        leaguePriors: priors.leaguePriors,
+      });
+    } else {
+      log("model-priors", { rebuilt: false, reason: "season_set_unchanged" });
+    }
+  } catch (e) {
+    log("history-archive-priors:skip", String(e?.message || e));
+  }
 
   // 2d) Weekly (Mondays): refresh per-referee tendencies — slow-changing, and TM
   // is reachable via the proxy. Done before odds so the enrichment uses fresh data.

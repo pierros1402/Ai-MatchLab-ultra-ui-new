@@ -1,16 +1,17 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
+import { currentSeason, priorSeasons } from "../core/season.js";
 
 const DATA_DIR = resolveDataPath();
 const ARCHIVE_ROOT = path.join(DATA_DIR, "history-archive");
 const OUT_DIR = path.join(DATA_DIR, "model-priors");
 
-const DEFAULT_TARGET_SEASON = process.argv[2] || "2025-2026";
-const DEFAULT_SOURCE_SEASONS = (process.argv[3] || "2021-2022,2022-2023,2023-2024,2024-2025")
-  .split(",")
-  .map(s => String(s).trim())
-  .filter(Boolean);
+// Season set is derived (season.js), not hardcoded, so priors auto-advance when a
+// season ends. CLI args still override for manual/backfill runs.
+const DEFAULT_TARGET_SEASON = currentSeason();
+const DEFAULT_SOURCE_SEASONS = priorSeasons(5);
 
 function safeNum(v, d = 0) {
   const n = Number(v);
@@ -317,16 +318,21 @@ async function collectArchiveMatches(sourceSeasons) {
   return { allMatches, meta };
 }
 
-async function main() {
-  const { allMatches, meta } = await collectArchiveMatches(DEFAULT_SOURCE_SEASONS);
+export async function buildModelPriors(opts = {}) {
+  const targetSeason = opts.targetSeason || DEFAULT_TARGET_SEASON;
+  const sourceSeasons = Array.isArray(opts.sourceSeasons) && opts.sourceSeasons.length
+    ? opts.sourceSeasons
+    : DEFAULT_SOURCE_SEASONS;
+
+  const { allMatches, meta } = await collectArchiveMatches(sourceSeasons);
 
   const teamPriors = buildTeamPriors(allMatches);
   const leaguePriors = buildLeaguePriors(allMatches);
   const matchupPriors = buildMatchupPriors(allMatches);
 
   const out = {
-    targetSeason: DEFAULT_TARGET_SEASON,
-    sourceSeasons: DEFAULT_SOURCE_SEASONS,
+    targetSeason,
+    sourceSeasons,
     createdAt: new Date().toISOString(),
     meta: {
       ...meta,
@@ -339,16 +345,34 @@ async function main() {
     matchupPriors
   };
 
-  const outFile = path.join(OUT_DIR, `${DEFAULT_TARGET_SEASON}.json`);
+  const outFile = path.join(OUT_DIR, `${targetSeason}.json`);
   await writeJson(outFile, out);
 
-  console.log("[priors] targetSeason:", DEFAULT_TARGET_SEASON);
-  console.log("[priors] sourceSeasons:", DEFAULT_SOURCE_SEASONS.join(", "));
-  console.log("[priors] archive matches:", meta.matchesLoaded);
-  console.log("[priors] wrote:", outFile);
-  console.log("[priors] teamPriors:", Object.keys(teamPriors).length);
-  console.log("[priors] leaguePriors:", Object.keys(leaguePriors).length);
-  console.log("[priors] matchupPriors:", Object.keys(matchupPriors).length);
+  return {
+    ok: true,
+    targetSeason,
+    sourceSeasons,
+    outFile,
+    archiveMatches: meta.matchesLoaded,
+    teamPriors: Object.keys(teamPriors).length,
+    leaguePriors: Object.keys(leaguePriors).length,
+    matchupPriors: Object.keys(matchupPriors).length
+  };
 }
 
-await main();
+const isCli = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (isCli) {
+  const targetSeason = process.argv[2] || DEFAULT_TARGET_SEASON;
+  const sourceSeasons = process.argv[3]
+    ? process.argv[3].split(",").map(s => s.trim()).filter(Boolean)
+    : DEFAULT_SOURCE_SEASONS;
+
+  const r = await buildModelPriors({ targetSeason, sourceSeasons });
+  console.log("[priors] targetSeason:", r.targetSeason);
+  console.log("[priors] sourceSeasons:", r.sourceSeasons.join(", "));
+  console.log("[priors] archive matches:", r.archiveMatches);
+  console.log("[priors] wrote:", r.outFile);
+  console.log("[priors] teamPriors:", r.teamPriors);
+  console.log("[priors] leaguePriors:", r.leaguePriors);
+  console.log("[priors] matchupPriors:", r.matchupPriors);
+}
