@@ -221,18 +221,29 @@ export function overlayResultsTruth(matches, dayKey) {
       const slug = String(m.leagueSlug || "");
       if (!slug) return m;
 
-      const tried = new Set([slug]);
-      let found = findFinal(slug, day, m.homeTeam, m.awayTeam);
+      // Sources disagree on which day a cross-midnight match belongs to (a
+      // 22:00Z kickoff is the NEXT Athens day); the truth store is keyed by the
+      // kickoff's Athens day, so look that day up first, then the display day.
+      const kickDay = athensDayFromKickoff(m.kickoffUtc);
+      const days = kickDay && kickDay !== day ? [kickDay, day] : [day];
 
-      if (!found && SLUG_ALIASES[slug]) {
-        tried.add(SLUG_ALIASES[slug]);
-        found = findFinal(SLUG_ALIASES[slug], day, m.homeTeam, m.awayTeam);
-      }
+      let found = null;
+      for (const d of days) {
+        const tried = new Set([slug]);
+        found = findFinal(slug, d, m.homeTeam, m.awayTeam);
 
-      // Slug-agnostic fallback: unique team-pair hit across ALL leagues' finals
-      // for the day (see findFinalGlobal).
-      if (!found) {
-        found = findFinalGlobal(day, m.homeTeam, m.awayTeam, tried);
+        if (!found && SLUG_ALIASES[slug]) {
+          tried.add(SLUG_ALIASES[slug]);
+          found = findFinal(SLUG_ALIASES[slug], d, m.homeTeam, m.awayTeam);
+        }
+
+        // Slug-agnostic fallback: unique team-pair hit across ALL leagues'
+        // finals for the day (see findFinalGlobal).
+        if (!found) {
+          found = findFinalGlobal(d, m.homeTeam, m.awayTeam, tried);
+        }
+
+        if (found) break;
       }
 
       if (!found) return m;
