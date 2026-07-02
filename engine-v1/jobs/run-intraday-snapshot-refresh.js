@@ -236,10 +236,15 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     reason: details.reason
   });
 
-  // Re-derive value picks (intraday odds may have been updated)
+  // Value picks: build ONCE, then freeze. Intraday odds refreshes must NOT
+  // rewrite an already-populated value.json (odds↔value firewall). If the day's
+  // value is still empty (e.g. morning run had no odds yet), the first refresh
+  // that can produce picks fills it; after that it stays frozen for the day.
   try {
-    const vResult = deriveValueFromOdds(safeDayKey);
-    console.log("[intraday-snapshot-refresh] value-derive:done", { count: vResult.count });
+    const vResult = deriveValueFromOdds(safeDayKey, { freeze: true });
+    console.log("[intraday-snapshot-refresh] value-derive:done", {
+      count: vResult.count, frozen: Boolean(vResult.frozen)
+    });
   } catch (e) {
     console.error("[intraday-snapshot-refresh] value-derive:error", e?.message);
   }
