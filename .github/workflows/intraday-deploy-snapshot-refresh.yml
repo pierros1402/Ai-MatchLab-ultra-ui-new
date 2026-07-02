@@ -282,7 +282,7 @@ jobs:
           fi
 
           git commit -m "Intraday refresh deploy snapshot for ${DAY_KEY}"
-          git push
+          bash tools/git-push-rebase-retry.sh
 
       - name: Trigger Render redeploy
         if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true'

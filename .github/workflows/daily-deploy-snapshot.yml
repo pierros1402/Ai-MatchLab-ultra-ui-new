@@ -185,7 +185,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "Update canonical fixture acquisition store for $DAY_KEY"
-            git push
+            bash tools/git-push-rebase-retry.sh
           fi
 
       - name: Run daily cycle
@@ -320,7 +320,7 @@ jobs:
           fi
 
           git commit -m "Auto refresh deploy snapshot for ${DAY_KEY}"
-          git push
+          bash tools/git-push-rebase-retry.sh
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
 
       - name: Skip Render redeploy for daily snapshot
