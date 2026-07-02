@@ -1,7 +1,7 @@
 {
   "matchId": "cid_syr1_tishreen_jableh_20260703",
   "dayKey": "2026-07-03",
-  "generatedAt": "2026-07-02T19:11:53.384Z",
+  "generatedAt": "2026-07-02T21:03:21.493Z",
   "basic": {
     "canonicalId": "cid_syr1_tishreen_jableh_20260703",
     "matchId": "cid_syr1_tishreen_jableh_20260703",
@@ -264,10 +264,10 @@
         "required": false,
         "priority": 72,
         "mode": "model_first",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "limited_local",
+        "provider": "local-lineup-model",
+        "confidence": 0.42,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-lineup-model"
@@ -395,62 +395,68 @@
           }
         },
         "seasonFormLast5": {
-          "status": "empty",
+          "status": "ready",
           "home": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 2,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
               "draws": 0,
-              "losses": 0,
+              "losses": 2,
               "points": 0,
-              "pointsPerMatch": null
+              "pointsPerMatch": 0
             },
             "goals": {
               "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "conceded": 2,
+              "avgScored": 0,
+              "avgConceded": 1
             },
             "trends": {
               "cleanSheets": 0,
-              "failedToScore": 0,
+              "failedToScore": 2,
               "over25": 0,
-              "under25": 0,
+              "under25": 2,
               "bttsYes": 0,
-              "bttsNo": 0
+              "bttsNo": 2
             },
             "formScore": 0,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.4
           },
           "away": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 2,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
               "draws": 0,
-              "losses": 0,
+              "losses": 2,
               "points": 0,
-              "pointsPerMatch": null
+              "pointsPerMatch": 0
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 1,
+              "conceded": 5,
+              "avgScored": 0.5,
+              "avgConceded": 2.5
             },
             "trends": {
               "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "failedToScore": 1,
+              "over25": 1,
+              "under25": 1,
+              "bttsYes": 1,
+              "bttsNo": 1
             },
             "formScore": 0,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.4
           },
           "comparison": {
             "edge": null,
@@ -459,15 +465,17 @@
           "meta": {
             "homeSampleSameSeason": 0,
             "awaySampleSameSeason": 0,
-            "homeSampleMerged": 0,
-            "awaySampleMerged": 0,
+            "homeSampleMerged": 2,
+            "awaySampleMerged": 2,
             "h2hSampleMerged": 0,
-            "archiveSeasonsUsed": [],
-            "usedArchiveForHome": false,
-            "usedArchiveForAway": false,
+            "archiveSeasonsUsed": [
+              "2025-2026"
+            ],
+            "usedArchiveForHome": true,
+            "usedArchiveForAway": true,
             "currentSeasonRows": 12121,
-            "archiveRows": 0,
-            "mergedRows": 12121
+            "archiveRows": 15,
+            "mergedRows": 12136
           }
         },
         "h2hLast5": {
@@ -541,9 +549,9 @@
           "confidence": 0
         },
         "lineup": {
-          "status": "empty",
-          "reliability": "empty",
-          "confidence": 0
+          "status": "partial",
+          "reliability": "limited",
+          "confidence": 0.42
         },
         "travel": {
           "status": "ready",
@@ -560,14 +568,14 @@
           "Last5 points: home 0, away 0."
         ]
       },
-      "confidence": 0.46,
+      "confidence": 0.6,
       "readiness": {
         "history": true,
-        "form": false,
+        "form": true,
         "h2h": false,
         "standings": false,
         "teamNews": false,
-        "lineup": false,
+        "lineup": true,
         "travel": true,
         "playerUsage": false,
         "value": true
@@ -633,50 +641,74 @@
     },
     "expectedLineups": {
       "key": "expected_lineups",
-      "status": "empty",
-      "data": null,
-      "confidence": 0
+      "status": "ok",
+      "data": {
+        "home": {
+          "restDays": 6,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "away": {
+          "restDays": 5,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "reliability": "limited"
+      },
+      "confidence": 0.42,
+      "source": "local-lineup-model",
+      "reliability": "limited",
+      "diagnostics": {
+        "hasHomeRest": true,
+        "hasAwayRest": true,
+        "hasBothRest": true,
+        "hasHomeAbsences": false,
+        "hasAwayAbsences": false,
+        "hasAnyAbsences": false
+      }
     },
     "formGuide": {
       "homeTeam": {
-        "sampleSize": 0,
+        "sampleSize": 2,
         "last5": "[circular]",
         "record": {
           "wins": 0,
           "draws": 0,
-          "losses": 0
+          "losses": 2
         },
         "goals": {
           "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "conceded": 2,
+          "avgScored": 0,
+          "avgConceded": 1
         },
         "trends": "[circular]",
         "formScore": 0,
         "momentum": "poor",
         "summary": [],
-        "confidence": 0
+        "confidence": 0.4
       },
       "awayTeam": {
-        "sampleSize": 0,
+        "sampleSize": 2,
         "last5": "[circular]",
         "record": {
           "wins": 0,
           "draws": 0,
-          "losses": 0
+          "losses": 2
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 1,
+          "conceded": 5,
+          "avgScored": 0.5,
+          "avgConceded": 2.5
         },
         "trends": "[circular]",
         "formScore": 0,
         "momentum": "poor",
         "summary": [],
-        "confidence": 0
+        "confidence": 0.4
       },
       "comparison": "[circular]",
       "meta": "[circular]"
@@ -872,8 +904,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Tishreen - Jableh: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Tishreen=unknown, Jableh=unknown. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "Tishreen vs Jableh: contextual analysis using historical and available data. Table context: Tishreen=unknown, Jableh=unknown. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
+      "el": "Tishreen - Jableh: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Tishreen: 0-0-2 στα τελευταία 2. Jableh: 0-0-2 στα τελευταία 2. Το historical layer βασίστηκε σε 12136 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Tishreen=unknown, Jableh=unknown. Lineup context: Tishreen=fatigue:low, rotation:low, strength:strong; Jableh=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+      "en": "Tishreen vs Jableh: contextual analysis using historical and available data. Tishreen: 0-0-2 across the last 2. Jableh: 0-0-2 across the last 2. The historical layer was based on 12136 available match records. Table context: Tishreen=unknown, Jableh=unknown. Lineup context: Tishreen=fatigue:low, rotation:low, strength:strong; Jableh=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -881,10 +913,13 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.65,
+    "confidence": 0.73,
     "signals": [
       "historical_context_available",
+      "history_form_available",
+      "archive_history_fallback_used",
       "phase_regular",
+      "lineup_context_limited",
       "competition_context_limited",
       "travel_context_available"
     ],
@@ -900,23 +935,23 @@
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "history_informed",
+        "explanation": "Derived from recent form and historical match coverage."
       },
       "riskProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "form_shaped",
+        "explanation": "Adjusted according to recent team form samples."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "unknown",
+        "label": "history_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "unknown",
+        "label": "history_informed",
         "explanation": ""
       }
     },
@@ -924,13 +959,13 @@
       "priorsUsed": true,
       "valueUsed": false,
       "researchUsed": true,
-      "historyUsed": false,
+      "historyUsed": true,
       "h2hUsed": false,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
-      "lineupLimited": false,
-      "lineupReliability": "empty",
+      "lineupLimited": true,
+      "lineupReliability": "limited",
       "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
@@ -948,8 +983,8 @@
     }
   },
   "aiSummary": {
-    "el": "Tishreen - Jableh: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Tishreen=unknown, Jableh=unknown. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "Tishreen vs Jableh: contextual analysis using historical and available data. Table context: Tishreen=unknown, Jableh=unknown. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
+    "el": "Tishreen - Jableh: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Tishreen: 0-0-2 στα τελευταία 2. Jableh: 0-0-2 στα τελευταία 2. Το historical layer βασίστηκε σε 12136 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Tishreen=unknown, Jableh=unknown. Lineup context: Tishreen=fatigue:low, rotation:low, strength:strong; Jableh=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+    "en": "Tishreen vs Jableh: contextual analysis using historical and available data. Tishreen: 0-0-2 across the last 2. Jableh: 0-0-2 across the last 2. The historical layer was based on 12136 available match records. Table context: Tishreen=unknown, Jableh=unknown. Lineup context: Tishreen=fatigue:low, rotation:low, strength:strong; Jableh=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -974,6 +1009,7 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
+      "local-lineup-model",
       "local-history",
       "local-team-geo"
     ],
@@ -982,7 +1018,7 @@
       "competition_context_reliability",
       "referee_profile",
       "team_news",
-      "expected_lineups",
+      "expected_lineups_reliability",
       "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1044,6 +1080,17 @@
         "status": "limited"
       },
       {
+        "kind": "expected_lineups",
+        "key": "expected_lineups",
+        "provider": "local-lineup-model",
+        "trustClass": "limited_local",
+        "confidence": 0.42,
+        "status": "limited",
+        "meta": {
+          "reliability": "limited"
+        }
+      },
+      {
         "kind": "history_context_local",
         "key": "history_context_local",
         "provider": "local-history",
@@ -1051,7 +1098,19 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12121
+          "mergedRows": 12136
+        }
+      },
+      {
+        "kind": "form_guide_local",
+        "key": "form_guide_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.52,
+        "status": "available",
+        "meta": {
+          "homeSample": 2,
+          "awaySample": 2
         }
       }
     ],

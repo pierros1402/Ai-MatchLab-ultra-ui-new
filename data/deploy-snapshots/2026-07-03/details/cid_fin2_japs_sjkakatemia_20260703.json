@@ -1,7 +1,7 @@
 {
   "matchId": "cid_fin2_japs_sjkakatemia_20260703",
   "dayKey": "2026-07-03",
-  "generatedAt": "2026-07-02T19:11:54.856Z",
+  "generatedAt": "2026-07-02T21:03:23.223Z",
   "basic": {
     "canonicalId": "cid_fin2_japs_sjkakatemia_20260703",
     "matchId": "cid_fin2_japs_sjkakatemia_20260703",
@@ -360,10 +360,10 @@
         "required": false,
         "priority": 72,
         "mode": "model_first",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "limited_local",
+        "provider": "local-lineup-model",
+        "confidence": 0.42,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-lineup-model"
@@ -377,10 +377,10 @@
         "required": true,
         "priority": 95,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -395,10 +395,10 @@
         "required": false,
         "priority": 60,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.64,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -491,110 +491,156 @@
           }
         },
         "seasonFormLast5": {
-          "status": "empty",
+          "status": "ready",
           "home": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
-              "wins": 0,
+              "wins": 1,
               "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "losses": 4,
+              "points": 3,
+              "pointsPerMatch": 0.6
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 4,
+              "conceded": 13,
+              "avgScored": 0.8,
+              "avgConceded": 2.6
             },
             "trends": {
               "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "failedToScore": 2,
+              "over25": 4,
+              "under25": 1,
+              "bttsYes": 3,
+              "bttsNo": 2
             },
-            "formScore": 0,
+            "formScore": 0.2,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.85
           },
           "away": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "draws": 1,
+              "losses": 4,
+              "points": 1,
+              "pointsPerMatch": 0.2
             },
             "goals": {
               "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "conceded": 8,
+              "avgScored": 0,
+              "avgConceded": 1.6
             },
             "trends": {
-              "cleanSheets": 0,
-              "failedToScore": 0,
+              "cleanSheets": 1,
+              "failedToScore": 5,
               "over25": 0,
-              "under25": 0,
+              "under25": 5,
               "bttsYes": 0,
-              "bttsNo": 0
+              "bttsNo": 5
             },
-            "formScore": 0,
+            "formScore": 0.06,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.85
           },
           "comparison": {
-            "edge": null,
+            "edge": "home",
             "notes": []
           },
           "meta": {
             "homeSampleSameSeason": 0,
             "awaySampleSameSeason": 0,
-            "homeSampleMerged": 0,
-            "awaySampleMerged": 0,
-            "h2hSampleMerged": 0,
+            "homeSampleMerged": 5,
+            "awaySampleMerged": 5,
+            "h2hSampleMerged": 3,
             "archiveSeasonsUsed": [
               "2021-2022",
               "2022-2023",
               "2023-2024",
-              "2024-2025"
+              "2024-2025",
+              "2025-2026"
             ],
-            "usedArchiveForHome": false,
-            "usedArchiveForAway": false,
+            "usedArchiveForHome": true,
+            "usedArchiveForAway": true,
             "currentSeasonRows": 12121,
-            "archiveRows": 0,
-            "mergedRows": 12121
+            "archiveRows": 143,
+            "mergedRows": 12264
           }
         },
         "h2hLast5": {
-          "status": "empty",
-          "sampleSize": 0,
-          "last5": [],
+          "status": "ready",
+          "sampleSize": 3,
+          "last5": [
+            {
+              "date": "2026-05-09T15:00:00.000Z",
+              "league": "fin.2",
+              "season": "2025-2026",
+              "homeTeam": "SJK Akatemia",
+              "awayTeam": "JäPS",
+              "score": "0-2",
+              "resultFromCurrentPerspective": "HOME_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-09-28T14:00:00.000Z",
+              "league": "fin.2",
+              "season": "2025-2026",
+              "homeTeam": "SJK Akatemia",
+              "awayTeam": "JäPS",
+              "score": "1-1",
+              "resultFromCurrentPerspective": "DRAW",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-07-19T13:00:00.000Z",
+              "league": "fin.2",
+              "season": "2025-2026",
+              "homeTeam": "SJK Akatemia",
+              "awayTeam": "JäPS",
+              "score": "4-1",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            }
+          ],
           "stats": {
-            "homeWins": 0,
-            "draws": 0,
-            "awayWins": 0,
-            "goalsForHomePerspective": 0,
-            "goalsForAwayPerspective": 0,
-            "avgGoalsTotal": null,
-            "over25": 0,
-            "under25": 0,
-            "bttsYes": 0,
-            "bttsNo": 0
+            "homeWins": 1,
+            "draws": 1,
+            "awayWins": 1,
+            "goalsForHomePerspective": 4,
+            "goalsForAwayPerspective": 5,
+            "avgGoalsTotal": 3,
+            "over25": 1,
+            "under25": 2,
+            "bttsYes": 2,
+            "bttsNo": 1
           },
           "trend": {
             "edge": null,
-            "goalPattern": "unknown"
+            "goalPattern": "balanced"
           },
-          "confidence": 0,
-          "summary": [],
+          "confidence": 0.64,
+          "summary": [
+            "Το πρόσφατο H2H δείγμα είναι ισορροπημένο."
+          ],
           "meta": {
-            "mergedSample": 0
+            "mergedSample": 3
           }
         },
         "playerUsage": {
@@ -642,9 +688,9 @@
           "confidence": 0
         },
         "lineup": {
-          "status": "empty",
-          "reliability": "empty",
-          "confidence": 0
+          "status": "partial",
+          "reliability": "limited",
+          "confidence": 0.42
         },
         "travel": {
           "status": "partial",
@@ -658,17 +704,18 @@
           "avgConfidence": 0
         },
         "summary": [
-          "Last5 points: home 0, away 0."
+          "Last5 points: home 3, away 1.",
+          "H2H sample: 3 recent matches."
         ]
       },
-      "confidence": 0.46,
+      "confidence": 0.67,
       "readiness": {
         "history": true,
-        "form": false,
-        "h2h": false,
+        "form": true,
+        "h2h": true,
         "standings": false,
         "teamNews": false,
-        "lineup": false,
+        "lineup": true,
         "travel": true,
         "playerUsage": false,
         "value": true
@@ -724,60 +771,95 @@
     },
     "expectedLineups": {
       "key": "expected_lineups",
-      "status": "empty",
-      "data": null,
-      "confidence": 0
+      "status": "ok",
+      "data": {
+        "home": {
+          "restDays": 5,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "away": {
+          "restDays": 7,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "reliability": "limited"
+      },
+      "confidence": 0.42,
+      "source": "local-lineup-model",
+      "reliability": "limited",
+      "diagnostics": {
+        "hasHomeRest": true,
+        "hasAwayRest": true,
+        "hasBothRest": true,
+        "hasHomeAbsences": false,
+        "hasAwayAbsences": false,
+        "hasAnyAbsences": false
+      }
     },
     "formGuide": {
       "homeTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
-          "wins": 0,
+          "wins": 1,
           "draws": 0,
-          "losses": 0
+          "losses": 4
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 4,
+          "conceded": 13,
+          "avgScored": 0.8,
+          "avgConceded": 2.6
         },
         "trends": "[circular]",
-        "formScore": 0,
+        "formScore": 0.2,
         "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "summary": [
+          "Poor recent form",
+          "High goal involvement",
+          "Both teams scoring frequently"
+        ],
+        "confidence": 0.85
       },
       "awayTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
           "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "draws": 1,
+          "losses": 4
         },
         "goals": {
           "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "conceded": 8,
+          "avgScored": 0,
+          "avgConceded": 1.6
         },
         "trends": "[circular]",
-        "formScore": 0,
+        "formScore": 0.06,
         "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "summary": [
+          "Poor recent form",
+          "Struggling to score"
+        ],
+        "confidence": 0.85
       },
       "comparison": "[circular]",
       "meta": "[circular]"
     },
     "headToHead": {
-      "sampleSize": 0,
-      "matches": [],
+      "sampleSize": 3,
+      "matches": [
+        "[circular]",
+        "[circular]",
+        "[circular]"
+      ],
       "stats": "[circular]",
       "trend": "[circular]",
-      "confidence": 0,
+      "confidence": 0.64,
       "summary": "[circular]",
       "meta": "[circular]"
     },
@@ -985,8 +1067,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "JaPS - SJK Akatemia: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: JaPS=unknown, SJK Akatemia=unknown. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "JaPS vs SJK Akatemia: contextual analysis using historical and available data. Table context: JaPS=unknown, SJK Akatemia=unknown. The available standings context remains reliability-limited.",
+      "el": "JaPS - SJK Akatemia: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. JaPS: 1-0-4 στα τελευταία 5. SJK Akatemia: 0-1-4 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 12264 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 3 μεταξύ τους: JaPS 1 νίκες, ισοπαλίες 1, SJK Akatemia 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: JaPS=unknown, SJK Akatemia=unknown. Lineup context: JaPS=fatigue:low, rotation:low, strength:strong; SJK Akatemia=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+      "en": "JaPS vs SJK Akatemia: contextual analysis using historical and available data. JaPS: 1-0-4 across the last 5. SJK Akatemia: 0-1-4 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 12264 available match records. Across the last 3 head-to-head meetings: JaPS 1 wins, draws 1, SJK Akatemia 1 wins. The head-to-head profile is relatively balanced. Table context: JaPS=unknown, SJK Akatemia=unknown. Lineup context: JaPS=fatigue:low, rotation:low, strength:strong; SJK Akatemia=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -994,10 +1076,16 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.65,
+    "confidence": 0.8200000000000001,
     "signals": [
       "historical_context_available",
+      "history_form_available",
+      "balanced_form_samples",
+      "archive_history_fallback_used",
+      "h2h_history_available",
+      "h2h_balanced",
       "phase_regular",
+      "lineup_context_limited",
       "competition_context_limited"
     ],
     "warnings": [
@@ -1012,23 +1100,23 @@
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "history_informed",
+        "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "form_shaped",
+        "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "unknown",
+        "label": "h2h_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "unknown",
+        "label": "matchup_informed",
         "explanation": ""
       }
     },
@@ -1036,13 +1124,13 @@
       "priorsUsed": true,
       "valueUsed": false,
       "researchUsed": true,
-      "historyUsed": false,
-      "h2hUsed": false,
+      "historyUsed": true,
+      "h2hUsed": true,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
-      "lineupLimited": false,
-      "lineupReliability": "empty",
+      "lineupLimited": true,
+      "lineupReliability": "limited",
       "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
@@ -1060,8 +1148,8 @@
     }
   },
   "aiSummary": {
-    "el": "JaPS - SJK Akatemia: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: JaPS=unknown, SJK Akatemia=unknown. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "JaPS vs SJK Akatemia: contextual analysis using historical and available data. Table context: JaPS=unknown, SJK Akatemia=unknown. The available standings context remains reliability-limited.",
+    "el": "JaPS - SJK Akatemia: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. JaPS: 1-0-4 στα τελευταία 5. SJK Akatemia: 0-1-4 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 12264 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 3 μεταξύ τους: JaPS 1 νίκες, ισοπαλίες 1, SJK Akatemia 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: JaPS=unknown, SJK Akatemia=unknown. Lineup context: JaPS=fatigue:low, rotation:low, strength:strong; SJK Akatemia=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+    "en": "JaPS vs SJK Akatemia: contextual analysis using historical and available data. JaPS: 1-0-4 across the last 5. SJK Akatemia: 0-1-4 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 12264 available match records. Across the last 3 head-to-head meetings: JaPS 1 wins, draws 1, SJK Akatemia 1 wins. The head-to-head profile is relatively balanced. Table context: JaPS=unknown, SJK Akatemia=unknown. Lineup context: JaPS=fatigue:low, rotation:low, strength:strong; SJK Akatemia=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1086,6 +1174,7 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
+      "local-lineup-model",
       "local-history"
     ],
     "conflicts": [],
@@ -1093,7 +1182,7 @@
       "competition_context_reliability",
       "referee_profile",
       "team_news",
-      "expected_lineups",
+      "expected_lineups_reliability",
       "value_snapshot",
       "travel_context"
     ],
@@ -1156,6 +1245,17 @@
         "status": "limited"
       },
       {
+        "kind": "expected_lineups",
+        "key": "expected_lineups",
+        "provider": "local-lineup-model",
+        "trustClass": "limited_local",
+        "confidence": 0.42,
+        "status": "limited",
+        "meta": {
+          "reliability": "limited"
+        }
+      },
+      {
         "kind": "history_context_local",
         "key": "history_context_local",
         "provider": "local-history",
@@ -1163,7 +1263,30 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12121
+          "mergedRows": 12264
+        }
+      },
+      {
+        "kind": "form_guide_local",
+        "key": "form_guide_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.78,
+        "status": "available",
+        "meta": {
+          "homeSample": 5,
+          "awaySample": 5
+        }
+      },
+      {
+        "kind": "head_to_head_local",
+        "key": "head_to_head_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.7,
+        "status": "available",
+        "meta": {
+          "sampleSize": 3
         }
       }
     ],

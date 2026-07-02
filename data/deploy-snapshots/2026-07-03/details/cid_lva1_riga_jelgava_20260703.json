@@ -1,7 +1,7 @@
 {
   "matchId": "cid_lva1_riga_jelgava_20260703",
   "dayKey": "2026-07-03",
-  "generatedAt": "2026-07-02T19:11:56.233Z",
+  "generatedAt": "2026-07-02T21:03:24.946Z",
   "basic": {
     "canonicalId": "cid_lva1_riga_jelgava_20260703",
     "matchId": "cid_lva1_riga_jelgava_20260703",
@@ -379,10 +379,10 @@
         "required": false,
         "priority": 72,
         "mode": "model_first",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "limited_local",
+        "provider": "local-lineup-model",
+        "confidence": 0.42,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-lineup-model"
@@ -396,10 +396,10 @@
         "required": true,
         "priority": 95,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -414,10 +414,10 @@
         "required": false,
         "priority": 60,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.82,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -510,105 +510,177 @@
           }
         },
         "seasonFormLast5": {
-          "status": "empty",
+          "status": "ready",
           "home": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
-              "wins": 0,
-              "draws": 0,
+              "wins": 4,
+              "draws": 1,
               "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "points": 13,
+              "pointsPerMatch": 2.6
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 12,
+              "conceded": 2,
+              "avgScored": 2.4,
+              "avgConceded": 0.4
             },
             "trends": {
-              "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "cleanSheets": 3,
+              "failedToScore": 1,
+              "over25": 3,
+              "under25": 2,
+              "bttsYes": 2,
+              "bttsNo": 3
             },
-            "formScore": 0,
-            "momentum": "poor",
-            "confidence": 0
+            "formScore": 0.88,
+            "momentum": "strong",
+            "confidence": 0.85
           },
           "away": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
-              "wins": 0,
+              "wins": 5,
               "draws": 0,
               "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "points": 15,
+              "pointsPerMatch": 3
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 20,
+              "conceded": 4,
+              "avgScored": 4,
+              "avgConceded": 0.8
             },
             "trends": {
-              "cleanSheets": 0,
+              "cleanSheets": 1,
               "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "over25": 4,
+              "under25": 1,
+              "bttsYes": 4,
+              "bttsNo": 1
             },
-            "formScore": 0,
-            "momentum": "poor",
-            "confidence": 0
+            "formScore": 1,
+            "momentum": "strong",
+            "confidence": 0.85
           },
           "comparison": {
-            "edge": null,
+            "edge": "away",
             "notes": []
           },
           "meta": {
             "homeSampleSameSeason": 0,
             "awaySampleSameSeason": 0,
-            "homeSampleMerged": 0,
-            "awaySampleMerged": 0,
-            "h2hSampleMerged": 0,
-            "archiveSeasonsUsed": [],
-            "usedArchiveForHome": false,
-            "usedArchiveForAway": false,
+            "homeSampleMerged": 5,
+            "awaySampleMerged": 5,
+            "h2hSampleMerged": 5,
+            "archiveSeasonsUsed": [
+              "2021-2022",
+              "2022-2023",
+              "2023-2024",
+              "2024-2025",
+              "2025-2026"
+            ],
+            "usedArchiveForHome": true,
+            "usedArchiveForAway": true,
             "currentSeasonRows": 12121,
-            "archiveRows": 0,
-            "mergedRows": 12121
+            "archiveRows": 898,
+            "mergedRows": 13019
           }
         },
         "h2hLast5": {
-          "status": "empty",
-          "sampleSize": 0,
-          "last5": [],
+          "status": "ready",
+          "sampleSize": 5,
+          "last5": [
+            {
+              "date": "2026-05-16T16:00:00.000Z",
+              "league": "lva.1",
+              "season": "2025-2026",
+              "homeTeam": "Riga FC",
+              "awayTeam": "FS Jelgava",
+              "score": "2-2",
+              "resultFromCurrentPerspective": "DRAW",
+              "source": "results-memory"
+            },
+            {
+              "date": "2026-04-04T13:00:00.000Z",
+              "league": "lva.1",
+              "season": "2025-2026",
+              "homeTeam": "FS Jelgava",
+              "awayTeam": "Riga FC",
+              "score": "0-8",
+              "resultFromCurrentPerspective": "HOME_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-09-21T11:00:00.000Z",
+              "league": "lva.1",
+              "season": "2025-2026",
+              "homeTeam": "FS Jelgava",
+              "awayTeam": "Riga FC",
+              "score": "2-3",
+              "resultFromCurrentPerspective": "HOME_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-07-01T17:00:00.000Z",
+              "league": "lva.1",
+              "season": "2025-2026",
+              "homeTeam": "Riga FC",
+              "awayTeam": "FS Jelgava",
+              "score": "3-0",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-05-10T15:00:00.000Z",
+              "league": "lva.1",
+              "season": "2024-2025",
+              "homeTeam": "Riga FC",
+              "awayTeam": "FS Jelgava",
+              "score": "2-0",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            }
+          ],
           "stats": {
-            "homeWins": 0,
-            "draws": 0,
-            "awayWins": 0,
-            "goalsForHomePerspective": 0,
-            "goalsForAwayPerspective": 0,
-            "avgGoalsTotal": null,
-            "over25": 0,
-            "under25": 0,
-            "bttsYes": 0,
-            "bttsNo": 0
+            "homeWins": 2,
+            "draws": 1,
+            "awayWins": 2,
+            "goalsForHomePerspective": 13,
+            "goalsForAwayPerspective": 9,
+            "avgGoalsTotal": 4.4,
+            "over25": 4,
+            "under25": 1,
+            "bttsYes": 2,
+            "bttsNo": 3
           },
           "trend": {
             "edge": null,
-            "goalPattern": "unknown"
+            "goalPattern": "overlean"
           },
-          "confidence": 0,
-          "summary": [],
+          "confidence": 0.82,
+          "summary": [
+            "Το πρόσφατο H2H δείγμα είναι ισορροπημένο.",
+            "Το πρόσφατο H2H δείχνει τάση για υψηλότερο σύνολο γκολ."
+          ],
           "meta": {
-            "mergedSample": 0
+            "mergedSample": 5
           }
         },
         "playerUsage": {
@@ -656,9 +728,9 @@
           "confidence": 0
         },
         "lineup": {
-          "status": "empty",
-          "reliability": "empty",
-          "confidence": 0
+          "status": "partial",
+          "reliability": "limited",
+          "confidence": 0.42
         },
         "travel": {
           "status": "ready",
@@ -672,17 +744,18 @@
           "avgConfidence": 0
         },
         "summary": [
-          "Last5 points: home 0, away 0."
+          "Last5 points: home 13, away 15.",
+          "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.46,
+      "confidence": 0.67,
       "readiness": {
         "history": true,
-        "form": false,
-        "h2h": false,
+        "form": true,
+        "h2h": true,
         "standings": false,
         "teamNews": false,
-        "lineup": false,
+        "lineup": true,
         "travel": true,
         "playerUsage": false,
         "value": true
@@ -748,60 +821,98 @@
     },
     "expectedLineups": {
       "key": "expected_lineups",
-      "status": "empty",
-      "data": null,
-      "confidence": 0
+      "status": "ok",
+      "data": {
+        "home": {
+          "restDays": 4,
+          "fatigue": "medium",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "away": {
+          "restDays": 4,
+          "fatigue": "medium",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "reliability": "limited"
+      },
+      "confidence": 0.42,
+      "source": "local-lineup-model",
+      "reliability": "limited",
+      "diagnostics": {
+        "hasHomeRest": true,
+        "hasAwayRest": true,
+        "hasBothRest": true,
+        "hasHomeAbsences": false,
+        "hasAwayAbsences": false,
+        "hasAnyAbsences": false
+      }
     },
     "formGuide": {
       "homeTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
-          "wins": 0,
-          "draws": 0,
+          "wins": 4,
+          "draws": 1,
           "losses": 0
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 12,
+          "conceded": 2,
+          "avgScored": 2.4,
+          "avgConceded": 0.4
         },
         "trends": "[circular]",
-        "formScore": 0,
-        "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "formScore": 0.88,
+        "momentum": "strong",
+        "summary": [
+          "Strong recent form",
+          "Defensively solid",
+          "High goal involvement"
+        ],
+        "confidence": 0.85
       },
       "awayTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
-          "wins": 0,
+          "wins": 5,
           "draws": 0,
           "losses": 0
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 20,
+          "conceded": 4,
+          "avgScored": 4,
+          "avgConceded": 0.8
         },
         "trends": "[circular]",
-        "formScore": 0,
-        "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "formScore": 1,
+        "momentum": "strong",
+        "summary": [
+          "Strong recent form",
+          "High goal involvement",
+          "Both teams scoring frequently"
+        ],
+        "confidence": 0.85
       },
       "comparison": "[circular]",
       "meta": "[circular]"
     },
     "headToHead": {
-      "sampleSize": 0,
-      "matches": [],
+      "sampleSize": 5,
+      "matches": [
+        "[circular]",
+        "[circular]",
+        "[circular]",
+        "[circular]",
+        "[circular]"
+      ],
       "stats": "[circular]",
       "trend": "[circular]",
-      "confidence": 0,
+      "confidence": 0.82,
       "summary": "[circular]",
       "meta": "[circular]"
     },
@@ -1011,8 +1122,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Riga FC - Jelgava: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Riga FC=unknown, Jelgava=unknown. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "Riga FC vs Jelgava: contextual analysis using historical and available data. Table context: Riga FC=unknown, Jelgava=unknown. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
+      "el": "Riga FC - Jelgava: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Riga FC: 4-1-0 στα τελευταία 5. Jelgava: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13019 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Riga FC 2 νίκες, ισοπαλίες 1, Jelgava 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Riga FC=unknown, Jelgava=unknown. Lineup context: Riga FC=fatigue:medium, rotation:low, strength:strong; Jelgava=fatigue:medium, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+      "en": "Riga FC vs Jelgava: contextual analysis using historical and available data. Riga FC: 4-1-0 across the last 5. Jelgava: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13019 available match records. Across the last 5 head-to-head meetings: Riga FC 2 wins, draws 1, Jelgava 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: Riga FC=unknown, Jelgava=unknown. Lineup context: Riga FC=fatigue:medium, rotation:low, strength:strong; Jelgava=fatigue:medium, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -1020,10 +1131,17 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.65,
+    "confidence": 0.8200000000000001,
     "signals": [
       "historical_context_available",
+      "history_form_available",
+      "balanced_form_samples",
+      "archive_history_fallback_used",
+      "h2h_history_available",
+      "h2h_balanced",
+      "h2h_goal_pattern_over",
       "phase_regular",
+      "lineup_context_limited",
       "competition_context_limited",
       "travel_context_available"
     ],
@@ -1039,23 +1157,23 @@
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "h2h_open_pattern",
+        "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "historical_goal_variance",
+        "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "unknown",
+        "label": "h2h_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "unknown",
+        "label": "matchup_informed",
         "explanation": ""
       }
     },
@@ -1063,13 +1181,13 @@
       "priorsUsed": true,
       "valueUsed": false,
       "researchUsed": true,
-      "historyUsed": false,
-      "h2hUsed": false,
+      "historyUsed": true,
+      "h2hUsed": true,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
-      "lineupLimited": false,
-      "lineupReliability": "empty",
+      "lineupLimited": true,
+      "lineupReliability": "limited",
       "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
@@ -1087,8 +1205,8 @@
     }
   },
   "aiSummary": {
-    "el": "Riga FC - Jelgava: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Riga FC=unknown, Jelgava=unknown. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "Riga FC vs Jelgava: contextual analysis using historical and available data. Table context: Riga FC=unknown, Jelgava=unknown. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
+    "el": "Riga FC - Jelgava: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Riga FC: 4-1-0 στα τελευταία 5. Jelgava: 5-0-0 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13019 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Riga FC 2 νίκες, ισοπαλίες 1, Jelgava 2 νίκες. Το H2H είναι σχετικά ισορροπημένο. Το H2H δείχνει τάση για πιο ανοιχτά παιχνίδια. Βαθμολογικό context: Riga FC=unknown, Jelgava=unknown. Lineup context: Riga FC=fatigue:medium, rotation:low, strength:strong; Jelgava=fatigue:medium, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Υπάρχει διαθέσιμο travel context από το local geo substrate. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+    "en": "Riga FC vs Jelgava: contextual analysis using historical and available data. Riga FC: 4-1-0 across the last 5. Jelgava: 5-0-0 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13019 available match records. Across the last 5 head-to-head meetings: Riga FC 2 wins, draws 1, Jelgava 2 wins. The head-to-head profile is relatively balanced. The head-to-head profile points toward more open games. Table context: Riga FC=unknown, Jelgava=unknown. Lineup context: Riga FC=fatigue:medium, rotation:low, strength:strong; Jelgava=fatigue:medium, rotation:low, strength:strong. Limited lineup context is available with low completeness. Travel context is available from the local geo substrate. The available standings context remains reliability-limited.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1113,6 +1231,7 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
+      "local-lineup-model",
       "local-history",
       "local-team-geo"
     ],
@@ -1121,7 +1240,7 @@
       "competition_context_reliability",
       "referee_profile",
       "team_news",
-      "expected_lineups",
+      "expected_lineups_reliability",
       "value_snapshot"
     ],
     "trustSummary": "partial_remote_enrichment",
@@ -1183,6 +1302,17 @@
         "status": "limited"
       },
       {
+        "kind": "expected_lineups",
+        "key": "expected_lineups",
+        "provider": "local-lineup-model",
+        "trustClass": "limited_local",
+        "confidence": 0.42,
+        "status": "limited",
+        "meta": {
+          "reliability": "limited"
+        }
+      },
+      {
         "kind": "history_context_local",
         "key": "history_context_local",
         "provider": "local-history",
@@ -1190,7 +1320,30 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12121
+          "mergedRows": 13019
+        }
+      },
+      {
+        "kind": "form_guide_local",
+        "key": "form_guide_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.78,
+        "status": "available",
+        "meta": {
+          "homeSample": 5,
+          "awaySample": 5
+        }
+      },
+      {
+        "kind": "head_to_head_local",
+        "key": "head_to_head_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.7,
+        "status": "available",
+        "meta": {
+          "sampleSize": 5
         }
       }
     ],

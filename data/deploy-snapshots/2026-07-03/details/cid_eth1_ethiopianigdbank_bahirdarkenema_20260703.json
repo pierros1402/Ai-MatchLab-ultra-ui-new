@@ -1,7 +1,7 @@
 {
   "matchId": "cid_eth1_ethiopianigdbank_bahirdarkenema_20260703",
   "dayKey": "2026-07-03",
-  "generatedAt": "2026-07-02T19:11:45.555Z",
+  "generatedAt": "2026-07-02T21:03:12.303Z",
   "basic": {
     "canonicalId": "cid_eth1_ethiopianigdbank_bahirdarkenema_20260703",
     "matchId": "cid_eth1_ethiopianigdbank_bahirdarkenema_20260703",
@@ -244,10 +244,10 @@
         "required": false,
         "priority": 72,
         "mode": "model_first",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "limited_local",
+        "provider": "local-lineup-model",
+        "confidence": 0.42,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-lineup-model"
@@ -261,10 +261,10 @@
         "required": true,
         "priority": 95,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -349,7 +349,7 @@
     },
     "matchProfile": {
       "key": "match_profile",
-      "status": "partial",
+      "status": "ready",
       "data": {
         "matchId": "cid_eth1_ethiopianigdbank_bahirdarkenema_20260703",
         "leagueSlug": "eth.1",
@@ -375,62 +375,70 @@
           }
         },
         "seasonFormLast5": {
-          "status": "empty",
+          "status": "ready",
           "home": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 3,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "draws": 1,
+              "losses": 2,
+              "points": 1,
+              "pointsPerMatch": 0.33
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 1,
+              "conceded": 4,
+              "avgScored": 0.33,
+              "avgConceded": 1.33
             },
             "trends": {
-              "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "cleanSheets": 1,
+              "failedToScore": 2,
+              "over25": 1,
+              "under25": 2,
+              "bttsYes": 1,
+              "bttsNo": 2
             },
-            "formScore": 0,
+            "formScore": 0.17,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.65
           },
           "away": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 3,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "draws": 1,
+              "losses": 2,
+              "points": 1,
+              "pointsPerMatch": 0.33
             },
             "goals": {
               "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "conceded": 3,
+              "avgScored": 0,
+              "avgConceded": 1
             },
             "trends": {
-              "cleanSheets": 0,
-              "failedToScore": 0,
+              "cleanSheets": 1,
+              "failedToScore": 3,
               "over25": 0,
-              "under25": 0,
+              "under25": 3,
               "bttsYes": 0,
-              "bttsNo": 0
+              "bttsNo": 3
             },
-            "formScore": 0,
+            "formScore": 0.17,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.65
           },
           "comparison": {
             "edge": null,
@@ -439,15 +447,17 @@
           "meta": {
             "homeSampleSameSeason": 0,
             "awaySampleSameSeason": 0,
-            "homeSampleMerged": 0,
-            "awaySampleMerged": 0,
+            "homeSampleMerged": 3,
+            "awaySampleMerged": 3,
             "h2hSampleMerged": 0,
-            "archiveSeasonsUsed": [],
-            "usedArchiveForHome": false,
-            "usedArchiveForAway": false,
+            "archiveSeasonsUsed": [
+              "2025-2026"
+            ],
+            "usedArchiveForHome": true,
+            "usedArchiveForAway": true,
             "currentSeasonRows": 12121,
-            "archiveRows": 0,
-            "mergedRows": 12121
+            "archiveRows": 23,
+            "mergedRows": 12144
           }
         },
         "h2hLast5": {
@@ -521,9 +531,9 @@
           "confidence": 0
         },
         "lineup": {
-          "status": "empty",
-          "reliability": "empty",
-          "confidence": 0
+          "status": "partial",
+          "reliability": "limited",
+          "confidence": 0.42
         },
         "travel": {
           "status": "empty",
@@ -537,17 +547,17 @@
           "avgConfidence": 0
         },
         "summary": [
-          "Last5 points: home 0, away 0."
+          "Last5 points: home 1, away 1."
         ]
       },
-      "confidence": 0.39,
+      "confidence": 0.53,
       "readiness": {
         "history": true,
-        "form": false,
+        "form": true,
         "h2h": false,
         "standings": false,
         "teamNews": false,
-        "lineup": false,
+        "lineup": true,
         "travel": false,
         "playerUsage": false,
         "value": true
@@ -580,50 +590,76 @@
     },
     "expectedLineups": {
       "key": "expected_lineups",
-      "status": "empty",
-      "data": null,
-      "confidence": 0
+      "status": "ok",
+      "data": {
+        "home": {
+          "restDays": 7,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "away": {
+          "restDays": 5,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "reliability": "limited"
+      },
+      "confidence": 0.42,
+      "source": "local-lineup-model",
+      "reliability": "limited",
+      "diagnostics": {
+        "hasHomeRest": true,
+        "hasAwayRest": true,
+        "hasBothRest": true,
+        "hasHomeAbsences": false,
+        "hasAwayAbsences": false,
+        "hasAnyAbsences": false
+      }
     },
     "formGuide": {
       "homeTeam": {
-        "sampleSize": 0,
+        "sampleSize": 3,
         "last5": "[circular]",
         "record": {
           "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "draws": 1,
+          "losses": 2
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 1,
+          "conceded": 4,
+          "avgScored": 0.33,
+          "avgConceded": 1.33
         },
         "trends": "[circular]",
-        "formScore": 0,
+        "formScore": 0.17,
         "momentum": "poor",
         "summary": [],
-        "confidence": 0
+        "confidence": 0.65
       },
       "awayTeam": {
-        "sampleSize": 0,
+        "sampleSize": 3,
         "last5": "[circular]",
         "record": {
           "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "draws": 1,
+          "losses": 2
         },
         "goals": {
           "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "conceded": 3,
+          "avgScored": 0,
+          "avgConceded": 1
         },
         "trends": "[circular]",
-        "formScore": 0,
+        "formScore": 0.17,
         "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "summary": [
+          "Struggling to score"
+        ],
+        "confidence": 0.65
       },
       "comparison": "[circular]",
       "meta": "[circular]"
@@ -819,8 +855,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Ethiopia Nigd Bank - Bahir Dar Kenema: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "Ethiopia Nigd Bank vs Bahir Dar Kenema: contextual analysis using historical and available data. Table context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. The available standings context remains reliability-limited.",
+      "el": "Ethiopia Nigd Bank - Bahir Dar Kenema: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Ethiopia Nigd Bank: 0-1-2 στα τελευταία 3. Bahir Dar Kenema: 0-1-2 στα τελευταία 3. Το historical layer βασίστηκε σε 12144 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. Lineup context: Ethiopia Nigd Bank=fatigue:low, rotation:low, strength:strong; Bahir Dar Kenema=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+      "en": "Ethiopia Nigd Bank vs Bahir Dar Kenema: contextual analysis using historical and available data. Ethiopia Nigd Bank: 0-1-2 across the last 3. Bahir Dar Kenema: 0-1-2 across the last 3. The historical layer was based on 12144 available match records. Table context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. Lineup context: Ethiopia Nigd Bank=fatigue:low, rotation:low, strength:strong; Bahir Dar Kenema=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -828,10 +864,13 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.65,
+    "confidence": 0.73,
     "signals": [
       "historical_context_available",
+      "history_form_available",
+      "archive_history_fallback_used",
       "phase_regular",
+      "lineup_context_limited",
       "competition_context_limited"
     ],
     "warnings": [
@@ -846,23 +885,23 @@
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "history_informed",
+        "explanation": "Derived from recent form and historical match coverage."
       },
       "riskProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "form_shaped",
+        "explanation": "Adjusted according to recent team form samples."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "unknown",
+        "label": "history_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "unknown",
+        "label": "history_informed",
         "explanation": ""
       }
     },
@@ -870,13 +909,13 @@
       "priorsUsed": true,
       "valueUsed": false,
       "researchUsed": true,
-      "historyUsed": false,
+      "historyUsed": true,
       "h2hUsed": false,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
-      "lineupLimited": false,
-      "lineupReliability": "empty",
+      "lineupLimited": true,
+      "lineupReliability": "limited",
       "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
@@ -894,8 +933,8 @@
     }
   },
   "aiSummary": {
-    "el": "Ethiopia Nigd Bank - Bahir Dar Kenema: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "Ethiopia Nigd Bank vs Bahir Dar Kenema: contextual analysis using historical and available data. Table context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. The available standings context remains reliability-limited.",
+    "el": "Ethiopia Nigd Bank - Bahir Dar Kenema: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Ethiopia Nigd Bank: 0-1-2 στα τελευταία 3. Bahir Dar Kenema: 0-1-2 στα τελευταία 3. Το historical layer βασίστηκε σε 12144 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. Lineup context: Ethiopia Nigd Bank=fatigue:low, rotation:low, strength:strong; Bahir Dar Kenema=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+    "en": "Ethiopia Nigd Bank vs Bahir Dar Kenema: contextual analysis using historical and available data. Ethiopia Nigd Bank: 0-1-2 across the last 3. Bahir Dar Kenema: 0-1-2 across the last 3. The historical layer was based on 12144 available match records. Table context: Ethiopia Nigd Bank=unknown, Bahir Dar Kenema=unknown. Lineup context: Ethiopia Nigd Bank=fatigue:low, rotation:low, strength:strong; Bahir Dar Kenema=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -920,6 +959,7 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
+      "local-lineup-model",
       "local-history"
     ],
     "conflicts": [],
@@ -927,7 +967,7 @@
       "competition_context_reliability",
       "referee_profile",
       "team_news",
-      "expected_lineups",
+      "expected_lineups_reliability",
       "travel_context",
       "value_snapshot"
     ],
@@ -990,6 +1030,17 @@
         "status": "limited"
       },
       {
+        "kind": "expected_lineups",
+        "key": "expected_lineups",
+        "provider": "local-lineup-model",
+        "trustClass": "limited_local",
+        "confidence": 0.42,
+        "status": "limited",
+        "meta": {
+          "reliability": "limited"
+        }
+      },
+      {
         "kind": "history_context_local",
         "key": "history_context_local",
         "provider": "local-history",
@@ -997,7 +1048,19 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12121
+          "mergedRows": 12144
+        }
+      },
+      {
+        "kind": "form_guide_local",
+        "key": "form_guide_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.78,
+        "status": "available",
+        "meta": {
+          "homeSample": 3,
+          "awaySample": 3
         }
       }
     ],

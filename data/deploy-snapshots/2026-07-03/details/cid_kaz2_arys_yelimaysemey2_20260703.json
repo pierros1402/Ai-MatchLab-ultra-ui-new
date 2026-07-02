@@ -1,7 +1,7 @@
 {
   "matchId": "cid_kaz2_arys_yelimaysemey2_20260703",
   "dayKey": "2026-07-03",
-  "generatedAt": "2026-07-02T19:11:49.304Z",
+  "generatedAt": "2026-07-02T21:03:16.762Z",
   "basic": {
     "canonicalId": "cid_kaz2_arys_yelimaysemey2_20260703",
     "matchId": "cid_kaz2_arys_yelimaysemey2_20260703",
@@ -244,10 +244,10 @@
         "required": false,
         "priority": 72,
         "mode": "model_first",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "limited_local",
+        "provider": "local-lineup-model",
+        "confidence": 0.42,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-lineup-model"
@@ -261,10 +261,10 @@
         "required": true,
         "priority": 95,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -279,10 +279,10 @@
         "required": false,
         "priority": 60,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.4,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -349,7 +349,7 @@
     },
     "matchProfile": {
       "key": "match_profile",
-      "status": "partial",
+      "status": "ready",
       "data": {
         "matchId": "cid_kaz2_arys_yelimaysemey2_20260703",
         "leagueSlug": "kaz.2",
@@ -375,105 +375,146 @@
           }
         },
         "seasonFormLast5": {
-          "status": "empty",
+          "status": "ready",
           "home": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
               "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "draws": 1,
+              "losses": 4,
+              "points": 1,
+              "pointsPerMatch": 0.2
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 4,
+              "conceded": 12,
+              "avgScored": 0.8,
+              "avgConceded": 2.4
             },
             "trends": {
               "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "failedToScore": 1,
+              "over25": 4,
+              "under25": 1,
+              "bttsYes": 4,
+              "bttsNo": 1
             },
-            "formScore": 0,
+            "formScore": 0.08,
             "momentum": "poor",
-            "confidence": 0
+            "confidence": 0.85
           },
           "away": {
-            "sampleSize": 0,
-            "last5": [],
+            "sampleSize": 5,
+            "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]"
+            ],
             "record": {
-              "wins": 0,
-              "draws": 0,
-              "losses": 0,
-              "points": 0,
-              "pointsPerMatch": null
+              "wins": 2,
+              "draws": 2,
+              "losses": 1,
+              "points": 8,
+              "pointsPerMatch": 1.6
             },
             "goals": {
-              "scored": 0,
-              "conceded": 0,
-              "avgScored": null,
-              "avgConceded": null
+              "scored": 9,
+              "conceded": 8,
+              "avgScored": 1.8,
+              "avgConceded": 1.6
             },
             "trends": {
-              "cleanSheets": 0,
-              "failedToScore": 0,
-              "over25": 0,
+              "cleanSheets": 1,
+              "failedToScore": 1,
+              "over25": 5,
               "under25": 0,
-              "bttsYes": 0,
-              "bttsNo": 0
+              "bttsYes": 3,
+              "bttsNo": 2
             },
-            "formScore": 0,
-            "momentum": "poor",
-            "confidence": 0
+            "formScore": 0.56,
+            "momentum": "positive",
+            "confidence": 0.85
           },
           "comparison": {
-            "edge": null,
+            "edge": "away",
             "notes": []
           },
           "meta": {
             "homeSampleSameSeason": 0,
             "awaySampleSameSeason": 0,
-            "homeSampleMerged": 0,
-            "awaySampleMerged": 0,
-            "h2hSampleMerged": 0,
-            "archiveSeasonsUsed": [],
-            "usedArchiveForHome": false,
-            "usedArchiveForAway": false,
+            "homeSampleMerged": 5,
+            "awaySampleMerged": 5,
+            "h2hSampleMerged": 2,
+            "archiveSeasonsUsed": [
+              "2021-2022",
+              "2022-2023",
+              "2023-2024",
+              "2024-2025",
+              "2025-2026"
+            ],
+            "usedArchiveForHome": true,
+            "usedArchiveForAway": true,
             "currentSeasonRows": 12121,
-            "archiveRows": 0,
-            "mergedRows": 12121
+            "archiveRows": 945,
+            "mergedRows": 13066
           }
         },
         "h2hLast5": {
-          "status": "empty",
-          "sampleSize": 0,
-          "last5": [],
+          "status": "ready",
+          "sampleSize": 2,
+          "last5": [
+            {
+              "date": "2023-10-20T08:00:00.000Z",
+              "league": "kaz.2",
+              "season": "2023-2024",
+              "homeTeam": "Yelimay Semey",
+              "awayTeam": "FK Arys",
+              "score": "3-0",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2023-07-07T12:00:00.000Z",
+              "league": "kaz.2",
+              "season": "2023-2024",
+              "homeTeam": "FK Arys",
+              "awayTeam": "Yelimay Semey",
+              "score": "0-2",
+              "resultFromCurrentPerspective": "HOME_WIN",
+              "source": "results-memory"
+            }
+          ],
           "stats": {
-            "homeWins": 0,
+            "homeWins": 1,
             "draws": 0,
-            "awayWins": 0,
-            "goalsForHomePerspective": 0,
-            "goalsForAwayPerspective": 0,
-            "avgGoalsTotal": null,
-            "over25": 0,
-            "under25": 0,
+            "awayWins": 1,
+            "goalsForHomePerspective": 2,
+            "goalsForAwayPerspective": 3,
+            "avgGoalsTotal": 2.5,
+            "over25": 1,
+            "under25": 1,
             "bttsYes": 0,
-            "bttsNo": 0
+            "bttsNo": 2
           },
           "trend": {
             "edge": null,
-            "goalPattern": "unknown"
+            "goalPattern": "balanced"
           },
-          "confidence": 0,
-          "summary": [],
+          "confidence": 0.4,
+          "summary": [
+            "Το πρόσφατο H2H δείγμα είναι ισορροπημένο."
+          ],
           "meta": {
-            "mergedSample": 0
+            "mergedSample": 2
           }
         },
         "playerUsage": {
@@ -521,9 +562,9 @@
           "confidence": 0
         },
         "lineup": {
-          "status": "empty",
-          "reliability": "empty",
-          "confidence": 0
+          "status": "partial",
+          "reliability": "limited",
+          "confidence": 0.42
         },
         "travel": {
           "status": "empty",
@@ -537,17 +578,18 @@
           "avgConfidence": 0
         },
         "summary": [
-          "Last5 points: home 0, away 0."
+          "Last5 points: home 1, away 8.",
+          "H2H sample: 2 recent matches."
         ]
       },
-      "confidence": 0.39,
+      "confidence": 0.6,
       "readiness": {
         "history": true,
-        "form": false,
-        "h2h": false,
+        "form": true,
+        "h2h": true,
         "standings": false,
         "teamNews": false,
-        "lineup": false,
+        "lineup": true,
         "travel": false,
         "playerUsage": false,
         "value": true
@@ -580,60 +622,94 @@
     },
     "expectedLineups": {
       "key": "expected_lineups",
-      "status": "empty",
-      "data": null,
-      "confidence": 0
+      "status": "ok",
+      "data": {
+        "home": {
+          "restDays": 8,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "away": {
+          "restDays": 8,
+          "fatigue": "low",
+          "rotationRisk": "low",
+          "expectedStrength": "strong"
+        },
+        "reliability": "limited"
+      },
+      "confidence": 0.42,
+      "source": "local-lineup-model",
+      "reliability": "limited",
+      "diagnostics": {
+        "hasHomeRest": true,
+        "hasAwayRest": true,
+        "hasBothRest": true,
+        "hasHomeAbsences": false,
+        "hasAwayAbsences": false,
+        "hasAnyAbsences": false
+      }
     },
     "formGuide": {
       "homeTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
           "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "draws": 1,
+          "losses": 4
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 4,
+          "conceded": 12,
+          "avgScored": 0.8,
+          "avgConceded": 2.4
         },
         "trends": "[circular]",
-        "formScore": 0,
+        "formScore": 0.08,
         "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "summary": [
+          "Poor recent form",
+          "High goal involvement",
+          "Both teams scoring frequently"
+        ],
+        "confidence": 0.85
       },
       "awayTeam": {
-        "sampleSize": 0,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
-          "wins": 0,
-          "draws": 0,
-          "losses": 0
+          "wins": 2,
+          "draws": 2,
+          "losses": 1
         },
         "goals": {
-          "scored": 0,
-          "conceded": 0,
-          "avgScored": null,
-          "avgConceded": null
+          "scored": 9,
+          "conceded": 8,
+          "avgScored": 1.8,
+          "avgConceded": 1.6
         },
         "trends": "[circular]",
-        "formScore": 0,
-        "momentum": "poor",
-        "summary": [],
-        "confidence": 0
+        "formScore": 0.56,
+        "momentum": "positive",
+        "summary": [
+          "High goal involvement",
+          "Both teams scoring frequently"
+        ],
+        "confidence": 0.85
       },
       "comparison": "[circular]",
       "meta": "[circular]"
     },
     "headToHead": {
-      "sampleSize": 0,
-      "matches": [],
+      "sampleSize": 2,
+      "matches": [
+        "[circular]",
+        "[circular]"
+      ],
       "stats": "[circular]",
       "trend": "[circular]",
-      "confidence": 0,
+      "confidence": 0.4,
       "summary": "[circular]",
       "meta": "[circular]"
     },
@@ -819,8 +895,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Arys - Yelimay Semey 2: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Arys=unknown, Yelimay Semey 2=unknown. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "Arys vs Yelimay Semey 2: contextual analysis using historical and available data. Table context: Arys=unknown, Yelimay Semey 2=unknown. The available standings context remains reliability-limited.",
+      "el": "Arys - Yelimay Semey 2: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Arys: 0-1-4 στα τελευταία 5. Yelimay Semey 2: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13066 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 2 μεταξύ τους: Arys 1 νίκες, ισοπαλίες 0, Yelimay Semey 2 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Arys=unknown, Yelimay Semey 2=unknown. Lineup context: Arys=fatigue:low, rotation:low, strength:strong; Yelimay Semey 2=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+      "en": "Arys vs Yelimay Semey 2: contextual analysis using historical and available data. Arys: 0-1-4 across the last 5. Yelimay Semey 2: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13066 available match records. Across the last 2 head-to-head meetings: Arys 1 wins, draws 0, Yelimay Semey 2 1 wins. The head-to-head profile is relatively balanced. Table context: Arys=unknown, Yelimay Semey 2=unknown. Lineup context: Arys=fatigue:low, rotation:low, strength:strong; Yelimay Semey 2=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -828,10 +904,16 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.65,
+    "confidence": 0.8200000000000001,
     "signals": [
       "historical_context_available",
+      "history_form_available",
+      "balanced_form_samples",
+      "archive_history_fallback_used",
+      "h2h_history_available",
+      "h2h_balanced",
       "phase_regular",
+      "lineup_context_limited",
       "competition_context_limited"
     ],
     "warnings": [
@@ -846,23 +928,23 @@
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "history_informed",
+        "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "unknown",
-        "explanation": ""
+        "label": "form_shaped",
+        "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "unknown",
+        "label": "h2h_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "unknown",
+        "label": "matchup_informed",
         "explanation": ""
       }
     },
@@ -870,13 +952,13 @@
       "priorsUsed": true,
       "valueUsed": false,
       "researchUsed": true,
-      "historyUsed": false,
-      "h2hUsed": false,
+      "historyUsed": true,
+      "h2hUsed": true,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
-      "lineupLimited": false,
-      "lineupReliability": "empty",
+      "lineupLimited": true,
+      "lineupReliability": "limited",
       "teamNewsUsed": false,
       "teamNewsThin": false,
       "teamNewsReliability": "empty",
@@ -894,8 +976,8 @@
     }
   },
   "aiSummary": {
-    "el": "Arys - Yelimay Semey 2: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Βαθμολογικό context: Arys=unknown, Yelimay Semey 2=unknown. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "Arys vs Yelimay Semey 2: contextual analysis using historical and available data. Table context: Arys=unknown, Yelimay Semey 2=unknown. The available standings context remains reliability-limited.",
+    "el": "Arys - Yelimay Semey 2: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Arys: 0-1-4 στα τελευταία 5. Yelimay Semey 2: 2-2-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 13066 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 2 μεταξύ τους: Arys 1 νίκες, ισοπαλίες 0, Yelimay Semey 2 1 νίκες. Το H2H είναι σχετικά ισορροπημένο. Βαθμολογικό context: Arys=unknown, Yelimay Semey 2=unknown. Lineup context: Arys=fatigue:low, rotation:low, strength:strong; Yelimay Semey 2=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
+    "en": "Arys vs Yelimay Semey 2: contextual analysis using historical and available data. Arys: 0-1-4 across the last 5. Yelimay Semey 2: 2-2-1 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 13066 available match records. Across the last 2 head-to-head meetings: Arys 1 wins, draws 0, Yelimay Semey 2 1 wins. The head-to-head profile is relatively balanced. Table context: Arys=unknown, Yelimay Semey 2=unknown. Lineup context: Arys=fatigue:low, rotation:low, strength:strong; Yelimay Semey 2=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -920,6 +1002,7 @@
       "team-news-match-facts",
       "team-news-provider-stub",
       "local-standings",
+      "local-lineup-model",
       "local-history"
     ],
     "conflicts": [],
@@ -927,7 +1010,7 @@
       "competition_context_reliability",
       "referee_profile",
       "team_news",
-      "expected_lineups",
+      "expected_lineups_reliability",
       "travel_context",
       "value_snapshot"
     ],
@@ -990,6 +1073,17 @@
         "status": "limited"
       },
       {
+        "kind": "expected_lineups",
+        "key": "expected_lineups",
+        "provider": "local-lineup-model",
+        "trustClass": "limited_local",
+        "confidence": 0.42,
+        "status": "limited",
+        "meta": {
+          "reliability": "limited"
+        }
+      },
+      {
         "kind": "history_context_local",
         "key": "history_context_local",
         "provider": "local-history",
@@ -997,7 +1091,30 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 12121
+          "mergedRows": 13066
+        }
+      },
+      {
+        "kind": "form_guide_local",
+        "key": "form_guide_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.78,
+        "status": "available",
+        "meta": {
+          "homeSample": 5,
+          "awaySample": 5
+        }
+      },
+      {
+        "kind": "head_to_head_local",
+        "key": "head_to_head_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.45,
+        "status": "available",
+        "meta": {
+          "sampleSize": 2
         }
       }
     ],
