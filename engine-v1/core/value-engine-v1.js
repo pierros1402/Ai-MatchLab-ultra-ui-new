@@ -246,7 +246,7 @@ function normalizeOddsMarketName(value) {
 }
 
 function canonicalTeamKey(value) {
-  const tokens = normalizeTeamTokens(value);
+  const tokens = normalizeOddsMarketName(value);
   const seen = new Set();
   const filtered = [];
 
