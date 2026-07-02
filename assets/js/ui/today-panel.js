@@ -49,6 +49,33 @@
     });
   }
 
+  // No reliable live-minute feed exists, so — exactly like the Live panel — the
+  // minute is derived from kickoff and the DISPLAYED value is capped so it never
+  // shows absurd values (anything ≥ 90 → "90+'"). Empty/zero → no label.
+  const LIVE_MINUTE_CAP = 90;
+  function clampMinuteLabel(n) {
+    if (!Number.isFinite(n) || n <= 0) return "";
+    return n >= LIVE_MINUTE_CAP ? `${LIVE_MINUTE_CAP}+'` : `${n}'`;
+  }
+
+  // Minute label for a live row: a match the cross-source verifier could not
+  // confirm shows "⏳" (frozen, awaiting confirmation) instead of a running
+  // clock. Otherwise prefer an explicit numeric feed minute (keeping stoppage
+  // like "45+2"), else derive from elapsed time since kickoff.
+  function liveMinuteLabel(m) {
+    if (m.statusUnconfirmed === true) return "⏳";
+
+    const raw = String(m.minute || "").trim().match(/^(\d+)(?:\+(\d+))?/);
+    if (raw) {
+      return raw[2] ? `${raw[1]}+${raw[2]}'` : clampMinuteLabel(Number(raw[1]));
+    }
+
+    const ko = Number(m.kickoff_ms) ||
+      (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0);
+    if (!ko) return "";
+    return clampMinuteLabel(Math.floor((Date.now() - ko) / 60000));
+  }
+
  function isLiveStatus(st) {
    if (!st) return false;
 
@@ -218,12 +245,17 @@
       const st = matchStatusText(m);
 
       if (isMatchLive(m)) {
-        const min = m.minute ? `${m.minute}'` : "";
+        const min = liveMinuteLabel(m);
         const sc =
           m.scoreHome != null && m.scoreAway != null
             ? `${m.scoreHome}-${m.scoreAway}`
             : "";
         info.textContent = `${min} ${sc}`.trim() || "LIVE";
+        info.classList.add("live");
+        if (m.statusUnconfirmed === true) {
+          info.classList.add("unconfirmed");
+          info.title = "Live status unconfirmed — awaiting source confirmation";
+        }
       } else {
         info.textContent = time;
       }
@@ -321,6 +353,8 @@
         isLive: m.isLive,
         staleLive: m.staleLive,
         staleLiveReason: m.staleLiveReason,
+        statusUnconfirmed: m.statusUnconfirmed,
+        ftSource: m.ftSource,
         scoreHome: m.scoreHome,
         scoreAway: m.scoreAway,
         minute: m.minute,
@@ -422,6 +456,8 @@ if (window.on) {
       existing.isLive = m.isLive;
       existing.staleLive = m.staleLive;
       existing.staleLiveReason = m.staleLiveReason;
+      existing.statusUnconfirmed = m.statusUnconfirmed;
+      existing.ftSource = m.ftSource;
       existing.minute = m.minute;
       existing.scoreHome = m.scoreHome;
       existing.scoreAway = m.scoreAway;
