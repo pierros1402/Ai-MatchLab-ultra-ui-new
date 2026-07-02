@@ -1857,6 +1857,37 @@ app.post("/api/refresh-multi-odds", async (req, res) => {
 // fixtures.json (ESPN canonical) → odds.json → fixtures-all.json, then reconciles
 // via truth-overlay + quality-aware dedupe. Attaches the frozen `assessment`
 // (value) as a strictly separate block — odds NEVER feed value (odds↔value
+// Display universe = senior MEN's football only. Youth (U14–U23) and women's
+// competitions are excluded — they are not in our curated map and pollute the
+// panels. Reserve/B/II sides are KEPT (they play in men's divisions we show,
+// e.g. kaz.2, ltu.2). Detection is by unambiguous markers on team names OR the
+// league/competition slug. Deliberately NOT filtering "junior(s)"/"academy":
+// several senior men's clubs carry those (Boca Juniors, Atlético Junior, …).
+const DISPLAY_EXCLUDE_MARKERS = new Set([
+  "w", "women", "womens", "fem", "femin", "feminin", "feminine", "feminina",
+  "feminines", "ladies",
+  "u14", "u15", "u16", "u17", "u18", "u19", "u20", "u21", "u22", "u23",
+]);
+function displayHasExcludedMarker(text) {
+  const tokens = String(text || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")   // deburr (féminin → feminin)
+    .replace(/\bu[\s-]?(1[4-9]|2[0-3])\b/g, "u$1")       // "U-19"/"U 19" → "u19"
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+  for (const t of tokens) if (DISPLAY_EXCLUDE_MARKERS.has(t)) return true;
+  return false;
+}
+function isYouthOrWomenRow(m) {
+  return displayHasExcludedMarker(m.leagueSlug) ||
+         displayHasExcludedMarker(m.competition) ||
+         displayHasExcludedMarker(m.homeTeam || m.home) ||
+         displayHasExcludedMarker(m.awayTeam || m.away);
+}
+function excludeYouthWomenRows(matches) {
+  return Array.isArray(matches) ? matches.filter(m => !isYouthOrWomenRow(m)) : matches;
+}
+
 // firewall). Returns { source, matches }; does NOT apply the request-time live
 // overlay — callers own that so it stays a same-day request-time concern.
 function buildDisplayMatchesForDate(date) {
@@ -2019,7 +2050,7 @@ function buildDisplayMatchesForDate(date) {
       ...oddsMatches,
       ...fixturesAllMatches
     ], date);
-    if (merged.length) return { source: "snapshot", matches: merged };
+    if (merged.length) return { source: "snapshot", matches: excludeYouthWomenRows(merged) };
   }
 
   // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
@@ -2045,7 +2076,7 @@ function buildDisplayMatchesForDate(date) {
           } catch { return []; }
         });
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return { source: "canonical", matches: reconciled };
+      if (reconciled.length) return { source: "canonical", matches: excludeYouthWomenRows(reconciled) };
     }
   } catch { /**/ }
 
@@ -2070,7 +2101,7 @@ function buildDisplayMatchesForDate(date) {
           scoreAway:  m.scoreAway ?? null,
         })).filter(m => m.matchId && m.homeTeam && m.awayTeam);
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return { source: "fixtures-all", matches: reconciled };
+      if (reconciled.length) return { source: "fixtures-all", matches: excludeYouthWomenRows(reconciled) };
     } catch { /**/ }
   }
 
