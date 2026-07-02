@@ -25,6 +25,7 @@ import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
 import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
+import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1367,6 +1368,11 @@ app.get("/fixtures-runtime", async (req, res) => {
       console.warn("[fixtures-runtime] live overlay failed", String(err?.message || err));
     }
 
+    // Overlay FINAL results from the league-memory truth store (any date):
+    // odds-only matches on past days get their FT + score here, since the
+    // snapshot never carries a status authority for them.
+    out = overlayResultsTruth(out, dayKey);
+
     // Panel-mode filter (display-contract): the universe is shared with
     // /api/matches-for-date, but each panel shows only its statuses —
     //   today  = PRE + LIVE   (a match leaves the panel once it goes FT)
@@ -2085,6 +2091,9 @@ app.get("/api/matches-for-date", async (req, res) => {
   } catch (err) {
     console.warn("[matches-for-date] live overlay failed", String(err?.message || err));
   }
+
+  // Truth-store finals overlay (any date) — see /fixtures-runtime.
+  out = overlayResultsTruth(out, date);
   return res.json({ ok: true, date, source, matches: out });
 });
 
