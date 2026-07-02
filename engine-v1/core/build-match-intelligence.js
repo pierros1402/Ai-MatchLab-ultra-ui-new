@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { resolveDataPath } from "../storage/data-root.js";
+import { currentSeason } from "./season.js";
 
 function safeArray(v) {
   return Array.isArray(v) ? v : [];
@@ -82,7 +83,7 @@ function getStandingsMap() {
   return byLeague;
 }
 
-function getHistorySeason(season = "2025-2026") {
+function getHistorySeason(season = currentSeason()) {
   const filePath = resolveDataPath(path.join("history", `${season}.json`));
   const raw = readJsonSafe(filePath, null);
 
@@ -371,7 +372,7 @@ function buildFinalAssessment({
   };
 }
 
-export async function buildMatchIntelligence(fixture, { season = "2025-2026" } = {}) {
+export async function buildMatchIntelligence(fixture, { season = currentSeason() } = {}) {
   if (!fixture?.matchId || !fixture?.leagueSlug) {
     return {
       ok: false,

@@ -233,7 +233,7 @@ function extractCanonicalMatches(history) {
   return allMatches;
 }
 
-async function run() {
+export async function buildCurrentSeasonIndexes() {
   console.log("[index] season:", SEASON);
   console.log("[index] history file:", HISTORY_FILE);
 
@@ -258,7 +258,10 @@ async function run() {
   console.log("[index] wrote:", MATCHUP_OUT);
 }
 
-run().catch(err => {
-  console.error("[index] failed", err);
-  process.exit(1);
-});
+const isCli = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+if (isCli) {
+  buildCurrentSeasonIndexes().catch(err => {
+    console.error("[index] failed", err);
+    process.exit(1);
+  });
+}

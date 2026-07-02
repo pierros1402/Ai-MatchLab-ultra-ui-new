@@ -27,6 +27,7 @@ import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js"
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
+import { currentSeason } from "./core/season.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1469,7 +1470,7 @@ function dirInfoSafe(...parts) {
 
 app.get("/debug/value-inputs", (req, res) => {
   const date = String(req.query.date || athensDayKey());
-  const season = String(req.query.season || "2025-2026");
+  const season = String(req.query.season || currentSeason());
 
   res.json({
     ok: true,

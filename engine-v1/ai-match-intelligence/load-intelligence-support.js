@@ -1,5 +1,6 @@
 import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
+import { currentSeason } from "../core/season.js";
 
 function readJsonSafe(file, fallback = null) {
   try {
@@ -12,7 +13,7 @@ function readJsonSafe(file, fallback = null) {
 
 export function loadIntelligenceSupport(dayKey, matchId, valuePicks = []) {
   const priors = readJsonSafe(
-    resolveDataPath("model-priors", "2025-2026.json"),
+    resolveDataPath("model-priors", `${currentSeason()}.json`),
     {}
   );
 

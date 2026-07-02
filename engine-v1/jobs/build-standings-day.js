@@ -9,8 +9,9 @@
 import fs from "fs";
 import path from "path";
 import { resolveDataPath } from "../storage/data-root.js";
+import { currentSeason } from "../core/season.js";
 
-const DEFAULT_SEASON = "2025-2026";
+const DEFAULT_SEASON = currentSeason();
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {

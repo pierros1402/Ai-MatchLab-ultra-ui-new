@@ -27,13 +27,13 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ALL_LEAGUE_SEEDS } from "../config.js";
 import { resolveDataPath } from "../storage/data-root.js";
-import { currentSeason } from "../core/season.js";
+import { currentSeason, priorSeasons } from "../core/season.js";
 
 // Seasons that feed the priors (build-model-priors sources 2021-22 … 2024-25) plus
 // the current one for completeness. Older seasons in results are ignored (5y cap).
-const DEFAULT_SEASONS = [
-  "2021-2022", "2022-2023", "2023-2024", "2024-2025", "2025-2026"
-];
+// The 5 completed seasons + the current one — derived so it rolls forward
+// automatically (season.js), instead of a frozen literal list.
+const DEFAULT_SEASONS = [...priorSeasons(5), currentSeason()];
 
 const RESULTS_DIR = resolveDataPath("league-memory", "results");
 const ARCHIVE_ROOT = resolveDataPath("history-archive");
