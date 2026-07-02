@@ -610,12 +610,35 @@ function summarizeAiTask(task) {
   if (key === "competition_context") {
     const importance = data.importance || "unknown";
     const pressure = Array.isArray(data.pressure) ? data.pressure.join(", ") : "";
-    const stakes = Array.isArray(data.stakes) ? data.stakes.join(", ") : "";
-    return [
-      `Importance: ${importance}`,
-      pressure ? `Pressure: ${pressure}` : "",
-      stakes ? `Stakes: ${stakes}` : ""
-    ].filter(Boolean).join(" • ");
+    // stakes may be an array (legacy) or an object { home, away, tags } (ready).
+    const stakes = Array.isArray(data.stakes)
+      ? data.stakes.join(", ")
+      : (data.stakes && Array.isArray(data.stakes.tags) ? data.stakes.tags.join(", ") : "");
+
+    const lines = [];
+
+    // Cross-league / cup: each side's position + motivation in its own league.
+    const pt = data.perTeam;
+    if (pt && pt.home && pt.away) {
+      const side = (s) => {
+        const pos = s.position != null ? `#${s.position}` : "—";
+        const of = s.totalTeams ? `/${s.totalTeams}` : "";
+        const lg = s.league ? ` (${s.league})` : "";
+        const stk = s.stake && s.stake !== "neutral" ? ` — ${s.stake}` : "";
+        return `${pos}${of}${lg}${stk}`;
+      };
+      lines.push(`Home: ${side(pt.home)}`);
+      lines.push(`Away: ${side(pt.away)}`);
+    } else if (data.positions && data.positions.home != null) {
+      const p = data.positions;
+      lines.push(`Positions: home #${p.home} vs away #${p.away}`);
+    }
+
+    lines.push(`Importance: ${importance}`);
+    if (pressure) lines.push(`Pressure: ${pressure}`);
+    if (stakes) lines.push(`Stakes: ${stakes}`);
+
+    return lines.filter(Boolean).join(" • ");
   }
 
   if (key === "travel_context") {
