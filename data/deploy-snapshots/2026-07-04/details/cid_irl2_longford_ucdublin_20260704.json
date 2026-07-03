@@ -1,7 +1,7 @@
 {
   "matchId": "cid_irl2_longford_ucdublin_20260704",
   "dayKey": "2026-07-04",
-  "generatedAt": "2026-07-03T19:10:07.722Z",
+  "generatedAt": "2026-07-03T20:59:01.457Z",
   "basic": {
     "canonicalId": "cid_irl2_longford_ucdublin_20260704",
     "matchId": "cid_irl2_longford_ucdublin_20260704",
@@ -25,21 +25,23 @@
     "importance": "medium",
     "positions": {
       "home": 6,
-      "away": 11,
+      "away": 4,
       "pointsHome": 11,
-      "pointsAway": 3,
+      "pointsAway": 12,
       "matchesLeft": 24,
       "totalTeams": 18
     },
     "stakes": {
       "home": "europe",
-      "away": "relegation",
+      "away": "europe",
       "tags": [
-        "playoff_race"
+        "playoff_race",
+        "direct_rival_match"
       ]
     },
     "pressure": [
-      "chasing_cutoff"
+      "chasing_cutoff",
+      "cannot_lose"
     ],
     "notes": [],
     "diagnostics": null,
@@ -105,14 +107,222 @@
       "en": "No local geo records are available yet for the teams."
     }
   },
-  "value": [],
+  "value": [
+    {
+      "matchId": "cid_irl2_longford_ucdublin_20260704",
+      "leagueSlug": "irl.2",
+      "homeTeam": "Longford",
+      "awayTeam": "UC Dublin",
+      "kickoff": "2026-07-04T18:30:00.000Z",
+      "market": "1X2",
+      "marketName": "1X2",
+      "pick": "AWAY",
+      "score": 0.7380000000000001,
+      "band": "MEDIUM",
+      "confidence": 0.791,
+      "signals": [
+        "away_edge",
+        "priors_applied",
+        "ai_context_medium_importance",
+        "late_season_pressure",
+        "close_strength_gap",
+        "match_profile_applied"
+      ],
+      "meta": {
+        "model": "value-engine-v1",
+        "mode": "statistical_plus_context",
+        "formWindow": 5,
+        "formRules": {
+          "sameSeasonOnly": true,
+          "maxAgeDays": 35,
+          "fullStrengthDays": 7,
+          "decayStartDays": 8,
+          "heavyDecayDays": 14,
+          "breakdownDays": 21
+        },
+        "baseWeights": {
+          "form": 0.5,
+          "homeAway": 0.2,
+          "goals": 0.2,
+          "matchup": 0.1
+        },
+        "effectiveWeights": {
+          "homeOverallFormWeight": 0.4,
+          "awayOverallFormWeight": 0.4,
+          "homeSideFormWeight": 0.12,
+          "awaySideFormWeight": 0.12
+        },
+        "expectedHomeGoals": 1.109,
+        "expectedAwayGoals": 1.467,
+        "expectedTotalGoals": 2.577,
+        "homeStrength": 0.395,
+        "awayStrength": 0.541,
+        "homeEdge": 0.078,
+        "awayPenalty": 0.063,
+        "recency": {
+          "homeOverall": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 125,
+            "daysSinceLastMatch": 7,
+            "spanDays": 0,
+            "freshnessScore": 1,
+            "continuityScore": 1
+          },
+          "awayOverall": {
+            "sample": 4,
+            "rawSample": 1,
+            "priorSample": 73,
+            "daysSinceLastMatch": 7,
+            "spanDays": 0,
+            "freshnessScore": 1,
+            "continuityScore": 1
+          },
+          "homeSide": {
+            "sample": 3,
+            "rawSample": 0,
+            "priorSample": 125,
+            "daysSinceLastMatch": null,
+            "spanDays": null,
+            "freshnessScore": 0.2,
+            "continuityScore": 0.2
+          },
+          "awaySide": {
+            "sample": 3,
+            "rawSample": 0,
+            "priorSample": 73,
+            "daysSinceLastMatch": null,
+            "spanDays": null,
+            "freshnessScore": 0.2,
+            "continuityScore": 0.2
+          }
+        },
+        "matchupSample": 3,
+        "priorsUsed": true,
+        "priors": {
+          "used": true,
+          "homePriorSample": 125,
+          "awayPriorSample": 73,
+          "leaguePriorSample": 679,
+          "matchupPriorSample": 7
+        },
+        "resolution": {
+          "homeInput": "Longford",
+          "awayInput": "UC Dublin",
+          "homeResolvedKey": "Longford",
+          "awayResolvedKey": "UC Dublin",
+          "homeResolveScore": 1,
+          "awayResolveScore": 1,
+          "matchupResolvedKey": "Longford::UC Dublin",
+          "matchupResolveScore": 0,
+          "homePriorKey": "irl.2::Longford",
+          "awayPriorKey": "irl.2::UC Dublin",
+          "matchupPriorKey": "irl.2|Longford|UC Dublin"
+        },
+        "sourceKeys": {
+          "homeTeamKey": "Longford",
+          "awayTeamKey": "UC Dublin",
+          "leagueKey": "irl.2",
+          "matchupKey": "Longford::UC Dublin"
+        },
+        "contextModifiers": {
+          "applied": true,
+          "version": "value-context-modifiers-v1.0"
+        },
+        "contextAdjusted": true,
+        "contextDelta": 0,
+        "contextReasons": [
+          {
+            "code": "form_away_stronger",
+            "impact": 0.08,
+            "note": "Away team has significantly stronger form"
+          },
+          {
+            "code": "ai_h2h_away_edge",
+            "impact": 0.06,
+            "note": "AI detected away H2H edge"
+          },
+          {
+            "code": "ai_away_form_signal",
+            "impact": 0.05,
+            "note": "AI confirmed strong away form edge"
+          }
+        ],
+        "aiContext": {
+          "available": true,
+          "importance": "medium",
+          "stakes": {
+            "home": "europe",
+            "away": "europe",
+            "tags": [
+              "playoff_race",
+              "direct_rival_match"
+            ]
+          },
+          "pressure": [
+            "chasing_cutoff",
+            "cannot_lose"
+          ]
+        },
+        "matchProfileApplied": true,
+        "matchProfileConfidence": 0.67,
+        "matchProfileReasons": [
+          {
+            "code": "match_profile_away_form_edge",
+            "impact": 0.022000000000000002,
+            "note": "MatchProfile last5 points: home 6, away 9"
+          },
+          {
+            "code": "match_profile_home_table_edge",
+            "impact": 0.027500000000000004,
+            "note": "MatchProfile table positions: home #6, away #11"
+          },
+          {
+            "code": "match_profile_h2h_away_edge",
+            "impact": 0.011000000000000001,
+            "note": "MatchProfile H2H trend leans away"
+          },
+          {
+            "code": "match_profile_h2h_underlean",
+            "impact": -0.0165,
+            "note": "MatchProfile H2H goal pattern leans under"
+          }
+        ],
+        "outcomeScores": {
+          "homeWinScore": 0.29050000000000004,
+          "drawScore": 0.088,
+          "awayWinScore": 0.7380000000000001,
+          "bestSide": "AWAY",
+          "sideGap": 0.44750000000000006,
+          "drawGapToBestSide": 0.6500000000000001
+        }
+      },
+      "context": {
+        "season": "2025-2026",
+        "leagueSlug": "irl.2",
+        "competitionType": "league",
+        "phase": "regular",
+        "leagueTrust": "medium",
+        "leagueTier": 2,
+        "homeRestDays": 7,
+        "awayRestDays": 7,
+        "homeMatchesLast7": 0,
+        "awayMatchesLast7": 0,
+        "homeMatchesLast14": 1,
+        "awayMatchesLast14": 1,
+        "homeNextMatchInDays": null,
+        "awayNextMatchInDays": null
+      }
+    }
+  ],
   "analysis": {
     "codes": [
+      "value_present",
       "medium_competition_context"
     ],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Το ισχυρότερο διαθέσιμο value snapshot είναι 1X2 → AWAY με score 0.738. Υπάρχει ένδειξη μεσαίας σημασίας από το competition context. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
+      "en": "The strongest available value snapshot is 1X2 → AWAY with score 0.738. There is an indication of medium importance from the competition context. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
     }
   },
   "playerUsageIntel": {
@@ -176,7 +386,7 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"cid_irl2_longford_ucdublin_20260704\",\"dayKey\":\"2026-07-04\",\"status\":\"STATUS_SCHEDULED\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"cid_irl2_longford_ucdublin_20260704\",\"dayKey\":\"2026-07-04\",\"status\":\"STATUS_SCHEDULED\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"ready\",\"competitionReason\":\"\",\"importance\":\"medium\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":1,\"topValue\":{\"market\":\"1X2\",\"pick\":\"AWAY\",\"score\":0.7380000000000001},\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": false,
       "refereeStats": true,
@@ -274,10 +484,10 @@
         "required": true,
         "priority": 95,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.78,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -292,10 +502,10 @@
         "required": false,
         "priority": 60,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "derived_local",
+        "provider": "local-history",
+        "confidence": 0.82,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-history",
@@ -327,10 +537,10 @@
         "required": false,
         "priority": 65,
         "mode": "deterministic_only",
-        "state": "pending",
-        "resolution": "missing_local",
-        "provider": null,
-        "confidence": 0,
+        "state": "done",
+        "resolution": "deterministic_local",
+        "provider": "local-value",
+        "confidence": 0.791,
         "remoteFallbackRecommended": false,
         "preferredEvidence": [
           "local-value"
@@ -357,21 +567,23 @@
         "activePhase": "regular",
         "positions": {
           "home": 6,
-          "away": 11,
+          "away": 4,
           "pointsHome": 11,
-          "pointsAway": 3,
+          "pointsAway": 12,
           "matchesLeft": 24,
           "totalTeams": 18
         },
         "stakes": {
           "home": "europe",
-          "away": "relegation",
+          "away": "europe",
           "tags": [
-            "playoff_race"
+            "playoff_race",
+            "direct_rival_match"
           ]
         },
         "pressure": [
-          "chasing_cutoff"
+          "chasing_cutoff",
+          "cannot_lose"
         ],
         "importance": "medium",
         "notes": []
@@ -472,45 +684,49 @@
             "confidence": 0.85
           },
           "away": {
-            "sampleSize": 1,
+            "sampleSize": 5,
             "last5": [
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
+              "[max_depth]",
               "[max_depth]"
             ],
             "record": {
-              "wins": 1,
+              "wins": 3,
               "draws": 0,
-              "losses": 0,
-              "points": 3,
-              "pointsPerMatch": 3
+              "losses": 2,
+              "points": 9,
+              "pointsPerMatch": 1.8
             },
             "goals": {
-              "scored": 2,
-              "conceded": 0,
-              "avgScored": 2,
-              "avgConceded": 0
+              "scored": 9,
+              "conceded": 3,
+              "avgScored": 1.8,
+              "avgConceded": 0.6
             },
             "trends": {
-              "cleanSheets": 1,
-              "failedToScore": 0,
-              "over25": 0,
-              "under25": 1,
-              "bttsYes": 0,
-              "bttsNo": 1
+              "cleanSheets": 3,
+              "failedToScore": 1,
+              "over25": 2,
+              "under25": 3,
+              "bttsYes": 1,
+              "bttsNo": 4
             },
-            "formScore": 1,
-            "momentum": "strong",
-            "confidence": 0.4
+            "formScore": 0.64,
+            "momentum": "positive",
+            "confidence": 0.85
           },
           "comparison": {
-            "edge": "home",
+            "edge": "away",
             "notes": []
           },
           "meta": {
             "homeSampleSameSeason": 5,
             "awaySampleSameSeason": 1,
             "homeSampleMerged": 5,
-            "awaySampleMerged": 1,
-            "h2hSampleMerged": 0,
+            "awaySampleMerged": 5,
+            "h2hSampleMerged": 5,
             "archiveSeasonsUsed": [
               "2021-2022",
               "2022-2023",
@@ -519,36 +735,90 @@
               "2025-2026"
             ],
             "usedArchiveForHome": false,
-            "usedArchiveForAway": false,
+            "usedArchiveForAway": true,
             "currentSeasonRows": 17533,
-            "archiveRows": 869,
-            "mergedRows": 18356
+            "archiveRows": 859,
+            "mergedRows": 18386
           }
         },
         "h2hLast5": {
-          "status": "empty",
-          "sampleSize": 0,
-          "last5": [],
+          "status": "ready",
+          "sampleSize": 5,
+          "last5": [
+            {
+              "date": "2026-05-01T18:45:00.000Z",
+              "league": "irl.2",
+              "season": "2025-2026",
+              "homeTeam": "UC Dublin",
+              "awayTeam": "Longford",
+              "score": "2-0",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2026-03-07T19:30:00.000Z",
+              "league": "irl.2",
+              "season": "2025-2026",
+              "homeTeam": "Longford",
+              "awayTeam": "UC Dublin",
+              "score": "0-0",
+              "resultFromCurrentPerspective": "DRAW",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-09-12T18:45:00.000Z",
+              "league": "irl.2",
+              "season": "2025-2026",
+              "homeTeam": "UC Dublin",
+              "awayTeam": "Longford",
+              "score": "2-1",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-06-28T18:30:00.000Z",
+              "league": "irl.2",
+              "season": "2024-2025",
+              "homeTeam": "Longford",
+              "awayTeam": "UC Dublin",
+              "score": "0-2",
+              "resultFromCurrentPerspective": "AWAY_WIN",
+              "source": "results-memory"
+            },
+            {
+              "date": "2025-05-09T18:45:00.000Z",
+              "league": "irl.2",
+              "season": "2024-2025",
+              "homeTeam": "UC Dublin",
+              "awayTeam": "Longford",
+              "score": "1-1",
+              "resultFromCurrentPerspective": "DRAW",
+              "source": "results-memory"
+            }
+          ],
           "stats": {
             "homeWins": 0,
-            "draws": 0,
-            "awayWins": 0,
-            "goalsForHomePerspective": 0,
-            "goalsForAwayPerspective": 0,
-            "avgGoalsTotal": null,
-            "over25": 0,
-            "under25": 0,
-            "bttsYes": 0,
-            "bttsNo": 0
+            "draws": 2,
+            "awayWins": 3,
+            "goalsForHomePerspective": 2,
+            "goalsForAwayPerspective": 7,
+            "avgGoalsTotal": 1.8,
+            "over25": 1,
+            "under25": 4,
+            "bttsYes": 2,
+            "bttsNo": 3
           },
           "trend": {
-            "edge": null,
-            "goalPattern": "unknown"
+            "edge": "away",
+            "goalPattern": "underlean"
           },
-          "confidence": 0,
-          "summary": [],
+          "confidence": 0.82,
+          "summary": [
+            "UC Dublin έχει καλύτερο πρόσφατο H2H δείγμα.",
+            "Το πρόσφατο H2H δείχνει τάση για πιο κλειστά σκορ."
+          ],
           "meta": {
-            "mergedSample": 0
+            "mergedSample": 5
           }
         },
         "playerUsage": {
@@ -605,22 +875,23 @@
           "confidence": 0
         },
         "value": {
-          "count": 0,
-          "topMarket": null,
-          "topPick": null,
-          "topScore": null,
-          "avgConfidence": 0
+          "count": 1,
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.7380000000000001,
+          "avgConfidence": 0.791
         },
         "summary": [
           "Table: Longford Town #6 vs UC Dublin #11.",
-          "Last5 points: home 6, away 3."
+          "Last5 points: home 6, away 9.",
+          "H2H sample: 5 recent matches."
         ]
       },
-      "confidence": 0.6,
+      "confidence": 0.67,
       "readiness": {
         "history": true,
         "form": true,
-        "h2h": false,
+        "h2h": true,
         "standings": true,
         "teamNews": false,
         "lineup": true,
@@ -710,44 +981,53 @@
         "confidence": 0.85
       },
       "awayTeam": {
-        "sampleSize": 1,
+        "sampleSize": 5,
         "last5": "[circular]",
         "record": {
-          "wins": 1,
+          "wins": 3,
           "draws": 0,
-          "losses": 0
+          "losses": 2
         },
         "goals": {
-          "scored": 2,
-          "conceded": 0,
-          "avgScored": 2,
-          "avgConceded": 0
+          "scored": 9,
+          "conceded": 3,
+          "avgScored": 1.8,
+          "avgConceded": 0.6
         },
         "trends": "[circular]",
-        "formScore": 1,
-        "momentum": "strong",
-        "summary": [],
-        "confidence": 0.4
+        "formScore": 0.64,
+        "momentum": "positive",
+        "summary": [
+          "Strong recent form",
+          "Defensively solid"
+        ],
+        "confidence": 0.85
       },
       "comparison": "[circular]",
       "meta": "[circular]"
     },
     "headToHead": {
-      "sampleSize": 0,
-      "matches": [],
+      "sampleSize": 5,
+      "matches": [
+        "[circular]",
+        "[circular]",
+        "[circular]",
+        "[circular]",
+        "[circular]"
+      ],
       "stats": "[circular]",
       "trend": "[circular]",
-      "confidence": 0,
+      "confidence": 0.82,
       "summary": "[circular]",
       "meta": "[circular]"
     },
     "valueContext": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0,
-      "confidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.7380000000000001,
+      "avgConfidence": 0.791,
+      "confidence": 0.75
     },
     "researchPlan": {
       "matchId": "cid_irl2_longford_ucdublin_20260704",
@@ -923,8 +1203,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "Longford - UC Dublin: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Longford: 2-0-3 στα τελευταία 5. UC Dublin: 1-0-0 στα τελευταία 1. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 18356 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Longford=europe, UC Dublin=relegation. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-      "en": "Longford vs UC Dublin: contextual analysis using historical and available data. Longford: 2-0-3 across the last 5. UC Dublin: 1-0-0 across the last 1. Recent form gives a slight edge to the home side. The historical layer was based on 18356 available match records. Table context: Longford=europe, UC Dublin=relegation. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+      "el": "Longford - UC Dublin: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Longford: 2-0-3 στα τελευταία 5. UC Dublin: 3-0-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 18386 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Longford 0 νίκες, ισοπαλίες 2, UC Dublin 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Longford=europe, UC Dublin=europe. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.738. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
+      "en": "Longford vs UC Dublin: contextual analysis using historical and available data. Longford: 2-0-3 across the last 5. UC Dublin: 3-0-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 18386 available match records. Across the last 5 head-to-head meetings: Longford 0 wins, draws 2, UC Dublin 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Longford=europe, UC Dublin=europe. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.738. Limited lineup context is available with low completeness.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -932,12 +1212,19 @@
         "evidenceCount": 0
       }
     },
-    "confidence": 0.73,
+    "confidence": 0.92,
     "signals": [
       "historical_context_available",
       "history_form_available",
+      "balanced_form_samples",
+      "archive_history_fallback_used",
+      "h2h_history_available",
+      "h2h_edge_away",
+      "h2h_goal_pattern_under",
       "phase_regular",
-      "relegation_pressure",
+      "value_support_present",
+      "value_1x2_signal",
+      "high_edge_market",
       "lineup_context_limited",
       "competition_context_ready"
     ],
@@ -945,40 +1232,40 @@
       "referee_unavailable"
     ],
     "valueSummary": {
-      "count": 0,
-      "topMarket": null,
-      "topPick": null,
-      "topScore": null,
-      "avgConfidence": 0
+      "count": 1,
+      "topMarket": "1X2",
+      "topPick": "AWAY",
+      "topScore": 0.7380000000000001,
+      "avgConfidence": 0.791
     },
     "reasoning": {
       "tempoProfile": {
-        "label": "history_informed",
-        "explanation": "Derived from recent form and historical match coverage."
+        "label": "result_driven",
+        "explanation": "Derived from head-to-head goal patterns."
       },
       "riskProfile": {
-        "label": "form_shaped",
-        "explanation": "Adjusted according to recent team form samples."
+        "label": "directional_match_edge",
+        "explanation": "Adjusted according to repeated matchup tendencies in recent head-to-head games."
       },
       "motivationProfile": {
         "label": "regular_context",
         "explanation": ""
       },
       "tacticalInteraction": {
-        "label": "history_supported_context",
+        "label": "value_supported_context",
         "explanation": ""
       },
       "gameStateExpectation": {
-        "label": "history_informed",
+        "label": "market_informed",
         "explanation": ""
       }
     },
     "support": {
       "priorsUsed": true,
-      "valueUsed": false,
+      "valueUsed": true,
       "researchUsed": true,
       "historyUsed": true,
-      "h2hUsed": false,
+      "h2hUsed": true,
       "refereeUsed": false,
       "lineupUsed": false,
       "cacheHit": false,
@@ -1001,8 +1288,8 @@
     }
   },
   "aiSummary": {
-    "el": "Longford - UC Dublin: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Longford: 2-0-3 στα τελευταία 5. UC Dublin: 1-0-0 στα τελευταία 1. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 18356 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: Longford=europe, UC Dublin=relegation. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
-    "en": "Longford vs UC Dublin: contextual analysis using historical and available data. Longford: 2-0-3 across the last 5. UC Dublin: 1-0-0 across the last 1. Recent form gives a slight edge to the home side. The historical layer was based on 18356 available match records. Table context: Longford=europe, UC Dublin=relegation. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. Limited lineup context is available with low completeness.",
+    "el": "Longford - UC Dublin: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. Longford: 2-0-3 στα τελευταία 5. UC Dublin: 3-0-2 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους φιλοξενούμενους. Το historical layer βασίστηκε σε 18386 διαθέσιμες εγγραφές αγώνων. Στα τελευταία 5 μεταξύ τους: Longford 0 νίκες, ισοπαλίες 2, UC Dublin 3 νίκες. Το H2H γέρνει προς τους φιλοξενούμενους. Το H2H δείχνει τάση για πιο κλειστά παιχνίδια. Βαθμολογικό context: Longford=europe, UC Dublin=europe. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. Το ισχυρότερο value market είναι 1X2 → AWAY με score 0.738. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα.",
+    "en": "Longford vs UC Dublin: contextual analysis using historical and available data. Longford: 2-0-3 across the last 5. UC Dublin: 3-0-2 across the last 5. Recent form gives a slight edge to the away side. The historical layer was based on 18386 available match records. Across the last 5 head-to-head meetings: Longford 0 wins, draws 2, UC Dublin 3 wins. The head-to-head profile leans toward the away side. The head-to-head profile points toward tighter games. Table context: Longford=europe, UC Dublin=europe. Lineup context: Longford=fatigue:low, rotation:low, strength:strong; UC Dublin=fatigue:low, rotation:low, strength:strong. The strongest value market is 1X2 → AWAY with score 0.738. Limited lineup context is available with low completeness.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1011,11 +1298,12 @@
     }
   },
   "valueSummary": {
-    "count": 0,
-    "topMarket": null,
-    "topPick": null,
-    "topScore": null,
-    "avgConfidence": 0
+    "count": 1,
+    "topMarket": "1X2",
+    "topPick": "AWAY",
+    "topScore": 0.7380000000000001,
+    "avgConfidence": 0.791,
+    "confidence": 0.75
   },
   "sourceAudit": {
     "status": "partial",
@@ -1028,15 +1316,15 @@
       "team-news-provider-stub",
       "local-standings",
       "local-lineup-model",
-      "local-history"
+      "local-history",
+      "local-value"
     ],
     "conflicts": [],
     "missing": [
       "referee_profile",
       "team_news",
       "expected_lineups_reliability",
-      "travel_context",
-      "value_snapshot"
+      "travel_context"
     ],
     "trustSummary": "partial_remote_enrichment",
     "evidence": [
@@ -1115,7 +1403,7 @@
         "confidence": 0.82,
         "status": "available",
         "meta": {
-          "mergedRows": 18356
+          "mergedRows": 18386
         }
       },
       {
@@ -1123,11 +1411,35 @@
         "key": "form_guide_local",
         "provider": "local-history",
         "trustClass": "derived_local",
-        "confidence": 0.52,
+        "confidence": 0.78,
         "status": "available",
         "meta": {
           "homeSample": 5,
-          "awaySample": 1
+          "awaySample": 5
+        }
+      },
+      {
+        "kind": "head_to_head_local",
+        "key": "head_to_head_local",
+        "provider": "local-history",
+        "trustClass": "derived_local",
+        "confidence": 0.7,
+        "status": "available",
+        "meta": {
+          "sampleSize": 5
+        }
+      },
+      {
+        "kind": "value_snapshot_local",
+        "key": "value_snapshot_local",
+        "provider": "local-value",
+        "trustClass": "model_local",
+        "confidence": 0.72,
+        "status": "available",
+        "meta": {
+          "topMarket": "1X2",
+          "topPick": "AWAY",
+          "topScore": 0.7380000000000001
         }
       }
     ],
