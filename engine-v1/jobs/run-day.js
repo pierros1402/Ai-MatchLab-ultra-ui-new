@@ -19,7 +19,7 @@ import { athensDayKey } from "../core/daykey.js";
 import { classifyAllByCalendar } from "../source-discovery/league-awareness-service.js";
 import { runOddsOpening } from "./run-odds-opening.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
-import { deriveValueFromOdds } from "./derive-value-from-odds.js";
+import { buildValueDay } from "../core/build-value-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { buildCoverageReport } from "./build-coverage-report.js";
 import { accumulateResults } from "./accumulate-results-day.js";
@@ -197,14 +197,12 @@ export async function runDay(dayKey) {
   const snap = exportOddsSnapshotDay(today);
   log("odds-snapshot", { count: snap.count, file: snap.file });
 
-  // 3b) Derive value picks from odds AI assessment → value.json
-  const value = deriveValueFromOdds(today);
-  log("value-derive", {
-    count: value.count,
-    withMarket: value.withMarket,
-    modelOnly: value.modelOnly,
-    highConfidence: value.highConfidence
-  });
+  // 3b) Value picks — PURE STATS, ODDS-FREE (hard firewall). buildValueDay derives
+  //     picks ONLY from history/priors/standings/form via evaluateMatchValue; odds
+  //     never enter value, not even as a transport artifact. (Replaces the old
+  //     deriveValueFromOdds bridge that read the assessment out of odds.json.)
+  const value = await buildValueDay(today, { rebuild: true });
+  log("value-build", { count: value.count });
 
   // 4) Refresh the coverage report so data gaps stay explicit (not discovered late).
   const cov = buildCoverageReport(today);
