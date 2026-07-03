@@ -103,13 +103,19 @@ jobs:
           [ -d "data/history-index" ] && git add data/history-index
           [ -d "data/model-priors" ] && git add data/model-priors
 
+          # The per-league history-archive that run-day.js refreshes (step 2g)
+          # feeds model-priors; without committing it the current season's
+          # archive growth was rebuilt on the runner daily and discarded. The
+          # converter skips identical files, so only real new results diff.
+          [ -d "data/history-archive" ] && git add data/history-archive
+
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-autonomous \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/history-index/|data/model-priors/)"
+            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/history-index/|data/model-priors/|data/history-archive/)"
 
           # Only our autonomous artifacts may be staged.
-          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/history-index/|data/model-priors/)' || true)"
+          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/history-index/|data/model-priors/|data/history-archive/)' || true)"
           if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi
 
           if git diff --cached --quiet; then

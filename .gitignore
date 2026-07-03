@@ -54,8 +54,11 @@ data/team-geo/_reports/
 data/team-geo/_bootstrap/
 data/team-geo/_imports/
 data/value/
+# Season stores: un-ignore by PATTERN (????-????.json), never by pinned season —
+# a pinned literal silently drops the new season's files at the Aug 1 rollover
+# (.report.json etc. stay ignored: the pattern matches the season name exactly).
 data/history/*
-!data/history/2025-2026.json
+!data/history/????-????.json
 data/history-index/*
 !data/history-index/team-form/
 !data/history-index/matchups/
@@ -63,14 +66,14 @@ data/history-index/*
 data/history-index/team-form/*
 data/history-index/matchups/*
 data/history-index/league-form/*
-!data/history-index/team-form/2025-2026.json
-!data/history-index/matchups/2025-2026.json
-!data/history-index/league-form/2025-2026.json
+!data/history-index/team-form/????-????.json
+!data/history-index/matchups/????-????.json
+!data/history-index/league-form/????-????.json
 data/research-cache/
 # data/observations.json is a controlled seed input for deployed value parity
 !data/observations.json
 data/model-priors/*
-!data/model-priors/2025-2026.json
+!data/model-priors/????-????.json
 
 # Local Python environments / generated signals
 harvesters/venv/
