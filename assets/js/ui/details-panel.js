@@ -1419,6 +1419,25 @@ function startIntelWatcher(matchId, rerenderFn) {
     `;
   }
 
+function resolveDetailsMatchId(match) {
+  const candidates = [
+    match?.detailsId,
+    match?.detailId,
+    match?.canonicalId,
+    match?.canonicalMatchId,
+    match?.cid,
+    match?.matchId,
+    match?.id
+  ];
+
+  for (const value of candidates) {
+    const key = String(value || "").trim();
+    if (key) return key;
+  }
+
+  return "";
+}
+
 async function renderLocal(match, mountEl) {
   const el = mountEl;
   if (!el) return;
@@ -1443,11 +1462,20 @@ async function renderLocal(match, mountEl) {
   const kickoffLocal = esc(fmtKickoffLocal(m));
 
   const matchId = String(m.matchId || m.id || "").trim();
+  const detailsMatchId = resolveDetailsMatchId(m) || matchId;
+
+  if (detailsMatchId && matchId && detailsMatchId !== matchId) {
+    console.log("[details] using canonical details id", {
+      matchId,
+      detailsMatchId
+    });
+  }
+
   const leagueSlug = String(m.leagueSlug || m.league || "_unknown");
   const season = String(cfg().season || "2025-2026");
 
-  const newDetails = matchId
-    ? await loadFromNewDetailsAPI(matchId)
+  const newDetails = detailsMatchId
+    ? await loadFromNewDetailsAPI(detailsMatchId)
     : null;
 
   // ------------------------------------------------------------
@@ -1895,7 +1923,7 @@ async function renderLocal(match, mountEl) {
         renderAIDivider() +
         stdqHtml;
 
-    startIntelWatcher(matchId, () => {
+    startIntelWatcher(detailsMatchId || matchId, () => {
       run("read").then(() => {
         requestAnimationFrame(() => {
           document

@@ -545,8 +545,15 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
   const fixturesSource = fixturesSnapshot.source;
   const targetFixtureGate = resolveManifestTargetFixtureGate(fixturesSnapshot);
 
+  // Default to preserving existing deploy snapshot details.
+  // Details are expensive/cache-like UI artifacts; a plain export must not erase
+  // them just because the canonical details source is empty or incomplete.
+  // Callers that intentionally want a clean details export may pass
+  // { preserveDetails: false } explicitly.
+  const preserveDetails = options?.preserveDetails !== false;
+
   const value = valueForDay(dayKey, { snapshotRoot, preserveValue: options?.preserveValue === true });
-  const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails: options?.preserveDetails === true });
+  const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails });
 
   const fixturesOut = {
     ok: true,
@@ -681,7 +688,9 @@ if (process.argv[1] && process.argv[1].endsWith("export-deploy-snapshot-day.js")
   const dayKey = String(process.argv[2] || "").trim();
 
   try {
-    const result = exportDeploySnapshotDay(dayKey);
+    const result = exportDeploySnapshotDay(dayKey, {
+      preserveDetails: true
+    });
     console.log(JSON.stringify(result, null, 2));
   } catch (err) {
     console.error("[export-deploy-snapshot-day] fatal", err);
