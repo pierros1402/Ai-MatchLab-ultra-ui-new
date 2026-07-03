@@ -122,10 +122,11 @@ export function normalizeFixture(event, slug) {
     awayTeam,
     kickoffUtc: kickoff
   });
-
-  // Pass the dayKey (from caller context) if available; otherwise the normalizer
-  // falls back to UTC kickoff date — acceptable for ESPN where UTC≈Athens day.
-  const canonicalId = buildCanonicalId(slug, homeTeam, awayTeam, event.dayKey || kickoff);
+  // Canonical identity must use the Athens/dayKey calendar day, not the UTC
+  // kickoff date. ESPN can return 23:00Z matches that belong to the next
+  // Athens day; using kickoff directly would create a previous-day cid_*.
+  const dayKey = event?.dayKey || athensDayFromKickoff(kickoff);
+  const canonicalId = buildCanonicalId(slug, homeTeam, awayTeam, dayKey || kickoff);
 
   return {
     // canonicalId is the primary stable key — provider-agnostic
@@ -139,8 +140,7 @@ export function normalizeFixture(event, slug) {
 
     leagueSlug: slug,
     leagueName: LEAGUE_NAME_MAP[slug] || slug,
-
-    dayKey: athensDayFromKickoff(kickoff),
+    dayKey,
     kickoffUtc: kickoff,
 
     homeTeam,

@@ -236,11 +236,10 @@
 
     } else if (isLiveStatus(status)) {
 
-      const h = m.scoreHome ?? 0;
-      const a = m.scoreAway ?? 0;
-      const min = m.minute ? `${m.minute}'` : "LIVE";
-      info.textContent = `${min} ${h}-${a}`;
-      info.style.color = "#ff6b35";
+      // Active contract: live-in-progress remains displayed as PRE until final.
+      // Raw/live status is still preserved on the match object for live/details panels.
+      info.textContent = "PRE";
+      info.style.color = "";
 
     } else {
 

@@ -50,11 +50,74 @@ function kickoffDay(match) {
   return null;
 }
 
-function readValueForMatch(dayKey, matchId) {
+function compactTeamKey(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function addValueAlias(set, value) {
+  const key = String(value || "").trim();
+  if (key) set.add(key);
+}
+
+function valueAliasesForMatch(matchId, match) {
+  const aliases = new Set();
+
+  addValueAlias(aliases, matchId);
+  addValueAlias(aliases, match?.matchId);
+  addValueAlias(aliases, match?.id);
+  addValueAlias(aliases, match?.canonicalId);
+  addValueAlias(aliases, match?.canonicalMatchId);
+  addValueAlias(aliases, match?.cid);
+  addValueAlias(aliases, match?.sourceId);
+  addValueAlias(aliases, match?.sourceMatchId);
+  addValueAlias(aliases, match?.providerMatchId);
+  addValueAlias(aliases, match?.espnId);
+
+  return aliases;
+}
+
+function valuePickMatchesTeams(pick, match) {
+  if (!pick || !match) return false;
+
+  const pickLeague = String(pick.leagueSlug || pick.league || "").trim();
+  const matchLeague = String(match.leagueSlug || match.league || "").trim();
+
+  if (pickLeague && matchLeague && pickLeague !== matchLeague) {
+    return false;
+  }
+
+  const pickHome = compactTeamKey(pick.homeTeam || pick.home || pick.homeName);
+  const pickAway = compactTeamKey(pick.awayTeam || pick.away || pick.awayName);
+  const matchHome = compactTeamKey(match.homeTeam || match.home || match.homeTeamName);
+  const matchAway = compactTeamKey(match.awayTeam || match.away || match.awayTeamName);
+
+  return !!(
+    pickHome &&
+    pickAway &&
+    matchHome &&
+    matchAway &&
+    pickHome === matchHome &&
+    pickAway === matchAway
+  );
+}
+
+function readValueForMatch(dayKey, matchId, match = null) {
   const file = resolveDataPath("value", `${dayKey}.json`);
   const payload = readJsonSafe(file, null);
   const picks = Array.isArray(payload?.picks) ? payload.picks : [];
-  return picks.filter(p => String(p?.matchId) === String(matchId));
+
+  const aliases = valueAliasesForMatch(matchId, match);
+  const byId = picks.filter(p => aliases.has(String(p?.matchId || "").trim()));
+
+  if (byId.length) {
+    return byId;
+  }
+
+  return picks.filter(p => valuePickMatchesTeams(p, match));
 }
 
 // Friendly labels for pick keys across all markets.
@@ -312,7 +375,7 @@ export async function getDetailsPayload(matchId, { rebuild = false } = {}) {
   const assessment = snapshot?.assessment || null;
   const discipline = snapshot?.discipline || null;
 
-  const value = readValueForMatch(dayKey, match.matchId);
+  const value = readValueForMatch(dayKey, match.matchId, match);
 
   return {
     ok: true,

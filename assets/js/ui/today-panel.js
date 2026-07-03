@@ -424,6 +424,39 @@
   try {
     syncSaved(window.getSavedMatches ? window.getSavedMatches() : []);
   } catch {}
+  // Unified fixtures-loader sync.
+  // fixtures-loader.js refreshes Today every 15s and emits a document CustomEvent.
+  // This keeps the Today panel aligned with the same source as the rest of the UI.
+  document.addEventListener("today-matches:loaded", (event) => {
+    const payload = event?.detail || {};
+    const matches = Array.isArray(payload.matches) ? payload.matches : [];
+
+    console.log("[TODAY] render unified today-matches:loaded payload", {
+      date: payload.date,
+      matches: matches.length
+    });
+
+    window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
+    render(matches);
+  });
+
+  // Replay latest Today payload if fixtures-loader emitted before this panel loaded.
+  if (window.__AIML_LAST_TODAY?.matches?.length) {
+    const payload = window.__AIML_LAST_TODAY;
+    const matches = Array.isArray(payload.matches) ? payload.matches : [];
+
+    console.log("[TODAY] replay latest unified today payload", {
+      date: payload.date,
+      matches: matches.length
+    });
+
+    setTimeout(() => {
+      window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
+      render(matches);
+    }, 0);
+  }
+
+
 
   load();
 

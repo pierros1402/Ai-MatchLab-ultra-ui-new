@@ -651,6 +651,19 @@ if (!filtered.length) {
       render(toRenderPayload(payload));
     });
 
+    // Replay the latest value payload if value-adapter emitted before this panel loaded.
+    if (window.__AIML_LAST_VALUE) {
+      console.log("[value-picks] replay latest value payload", {
+        date: window.__AIML_LAST_VALUE.date,
+        total: window.__AIML_LAST_VALUE.total,
+        ageMs: Date.now() - (window.__AIML_LAST_VALUE_AT || Date.now())
+      });
+
+      setTimeout(() => {
+        render(toRenderPayload(window.__AIML_LAST_VALUE));
+      }, 0);
+    }
+
   } else {
     warn("window.on not found (app.js not loaded first?)");
   }
