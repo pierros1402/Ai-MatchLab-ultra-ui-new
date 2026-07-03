@@ -236,18 +236,11 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     reason: details.reason
   });
 
-  // Value picks: build ONCE, then freeze. Intraday odds refreshes must NOT
-  // rewrite an already-populated value.json (odds↔value firewall). If the day's
-  // value is still empty (e.g. morning run had no odds yet), the first refresh
-  // that can produce picks fills it; after that it stays frozen for the day.
-  try {
-    const vResult = deriveValueFromOdds(safeDayKey, { freeze: true });
-    console.log("[intraday-snapshot-refresh] value-derive:done", {
-      count: vResult.count, frozen: Boolean(vResult.frozen)
-    });
-  } catch (e) {
-    console.error("[intraday-snapshot-refresh] value-derive:error", e?.message);
-  }
+  // Value picks: NOT touched intraday. Value is pure-stats and built once per day
+  // by buildValueDay in the daily cycle (odds↔value firewall — odds never enter
+  // value, not even as a transport artifact). The export below uses
+  // preserveValue:true, so the frozen daily value.json is carried through
+  // unchanged. The old intraday deriveValueFromOdds call was REMOVED.
 
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
   const snapshot = exportDeploySnapshotDay(safeDayKey, { preserveDetails: true, preserveValue: true });

@@ -971,40 +971,26 @@ export async function runDailyCycle(options = {}) {
     missingNonEspnProviderCapability: fixtureAcquisitionReadinessSummary.missingNonEspnProviderCapability
   });
 
-  if (!fixtureAcquisitionReadyForValue(fixtureAcquisitionReadiness)) {
-    const blockedValue = writeBlockedValueFile(
-      dayKey,
-      "fixture_acquisition_v2_not_ready",
-      fixtureAcquisitionReadinessSummary
-    );
+  // VALUE IS PURE-STATS AND ODDS-FREE (hard firewall). buildValueDay derives
+  // picks ONLY from history/priors/standings/form via evaluateMatchValue — it
+  // never reads odds. The fixture-acquisition-v2 readiness report above is kept
+  // for DIAGNOSTICS only; it must NOT gate value. Its "verified fixture provider"
+  // predicate is unachievable (no league ever has a configured verified provider,
+  // so readyRows is permanently 0) and was silently zeroing the pure-stats value
+  // panel every day. A fixture with no statistical backing already yields no pick
+  // from the engine, which is the correct, stats-based guard.
+  console.log("[daily-cycle] value-build:start", {
+    dayKey,
+    readinessOk: fixtureAcquisitionReadinessSummary.ok
+  });
 
-    valueBuild = {
-      ok: true,
-      date: dayKey,
-      count: 0,
-      blocked: true,
-      reason: "fixture_acquisition_v2_not_ready",
-      file: blockedValue.file,
-      readinessSummary: fixtureAcquisitionReadinessSummary
-    };
+  valueBuild = await buildValueDay(dayKey, { rebuild: true });
 
-    console.warn("[daily-cycle] value-build:blocked", {
-      dayKey,
-      reason: valueBuild.reason,
-      file: valueBuild.file,
-      readinessSummary: fixtureAcquisitionReadinessSummary
-    });
-  } else {
-    console.log("[daily-cycle] value-build:start", { dayKey });
-
-    valueBuild = await buildValueDay(dayKey, { rebuild: true });
-
-    console.log("[daily-cycle] value-build:done", {
-      ok: valueBuild?.ok,
-      date: valueBuild?.date,
-      count: valueBuild?.count ?? 0
-    });
-  }
+  console.log("[daily-cycle] value-build:done", {
+    ok: valueBuild?.ok,
+    date: valueBuild?.date,
+    count: valueBuild?.count ?? 0
+  });
 
   console.log("[daily-cycle] value-coverage-report:start", { dayKey });
 
@@ -1110,16 +1096,12 @@ export async function runDailyCycle(options = {}) {
 
   console.log("[daily-cycle] deploy-snapshot-export:start", { dayKey });
 
-  // Derive value picks from AI model (odds → value bridge)
-  try {
-    const valueResult = deriveValueFromOdds(dayKey);
-    console.log("[daily-cycle] value-derive:done", {
-      count: valueResult.count, withMarket: valueResult.withMarket,
-      modelOnly: valueResult.modelOnly, highConfidence: valueResult.highConfidence
-    });
-  } catch (e) {
-    console.error("[daily-cycle] value-derive:error", e?.message);
-  }
+  // ODDS↔VALUE FIREWALL: value is already built (pure-stats buildValueDay above)
+  // and written to data/value/<day>.json, which the deploy snapshot export copies
+  // to snapshot value.json. The old deriveValueFromOdds bridge was REMOVED here —
+  // odds must not participate in any value computation, not even as a transport
+  // artifact. Odds live only in the middle + two right panels (opening→current
+  // drift), never in value.
 
   deploySnapshot = await Promise.resolve(exportDeploySnapshotDay(dayKey));
 
