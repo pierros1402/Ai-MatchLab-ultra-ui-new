@@ -93,13 +93,23 @@ jobs:
           [ -d "data/expected-matches" ] && git add data/expected-matches
           [ -d "data/verification" ] && git add data/verification
 
+          # Statistical value stores that run-day.js rebuilds every run
+          # (buildCurrentSeasonIndexes + buildModelPriors). They were regenerated
+          # on the runner daily but never committed, so the deployed engine kept
+          # serving stale team-form / league-form / matchups (a fresh rebuild diffs
+          # thousands of lines) and the value model degraded across the season.
+          # .gitignore already limits these to the pinned <season>.json files, so
+          # `git add` on the dirs stages only those.
+          [ -d "data/history-index" ] && git add data/history-index
+          [ -d "data/model-priors" ] && git add data/model-priors
+
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-autonomous \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/)"
+            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/history-index/|data/model-priors/)"
 
           # Only our autonomous artifacts may be staged.
-          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/)' || true)"
+          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/history-index/|data/model-priors/)' || true)"
           if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi
 
           if git diff --cached --quiet; then
