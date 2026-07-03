@@ -292,13 +292,22 @@ jobs:
             fi
           done
 
+          # run-daily-cycle appends the finalized previous day into
+          # data/history/<season>.json (appendFinalizedDayToHistory). This was
+          # never committed, so every day's finalized matches were appended on
+          # the runner and discarded — the committed season history froze at
+          # its last manual commit and the form indexes were built stale.
+          if compgen -G "data/history/????-????.json" > /dev/null; then
+            git add data/history/????-????.json
+          fi
+
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}\.json$)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}\.json$|data/history/[0-9]{4}-[0-9]{4}\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}\.json$)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"

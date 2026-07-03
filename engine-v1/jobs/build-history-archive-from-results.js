@@ -160,6 +160,7 @@ export function buildHistoryArchiveFromResults(opts = {}) {
     currentSeasonFilesWritten: 0,
     pastSeasonsWritten: 0,      // completed-season files newly created → rollover
     filesSkippedExisting: 0,
+    filesUnchanged: 0,
     matchesWritten: 0,
     byLeague: []
   };
@@ -198,10 +199,18 @@ export function buildHistoryArchiveFromResults(opts = {}) {
         (a, b) => (a.kickoff_ms || 0) - (b.kickoff_ms || 0) || String(a.id).localeCompare(String(b.id))
       );
 
+      // No-op guard: the daily workflow commits this directory, so a rewrite
+      // must mean real new matches — identical content would churn ~170 files
+      // of pure timestamp diffs into every daily commit.
+      if (existing && JSON.stringify(existing.matches) === JSON.stringify(matches)) {
+        summary.filesUnchanged += 1;
+        continue;
+      }
+
       const archivePayload = {
         leagueSlug: slug,
         season,
-        createdAt: Date.now(),
+        createdAt: existing?.createdAt || Date.now(),
         updatedAt: Date.now(),
         stats: { source: "results-memory", kept: matches.length },
         matches
