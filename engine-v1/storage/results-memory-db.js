@@ -12,6 +12,9 @@
 
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
+import { normalizeTeamKey } from "../core/normalize.js";
+import { sourceRank } from "./result-dedup.js";
+import { canonicalTeamName } from "./team-aliases-db.js";
 
 const DIR = resolveDataPath("league-memory", "results");
 const PER_TEAM_CAP = 250;   // ~5 seasons of weekly league play per team
@@ -26,10 +29,64 @@ export function readResults(slug) {
   catch { return { slug, teams: {} }; }
 }
 
+function dayKeyOf(date) {
+  const s = date ? String(date) : "";
+  return s.length >= 10 ? s.slice(0, 10) : null;
+}
+
+// Resolve an incoming team name to the canonical key already used in this league —
+// so the SAME club recorded under spelling variants from different feeds ("Åsane"
+// vs "Asane", "Ranheim IL" vs "Ranheim") lands under ONE team key instead of
+// splitting form across two. Tries, in order: exact key, diacritic/affix-normalized
+// key (normalizeTeamKey), then the alias tables (canonicalTeamName). Falls back to
+// the alias canonical spelling for a brand-new team, else the name as given.
+function resolveTeamKey(teams, slug, name) {
+  if (!name) return name;
+  if (teams[name]) return name;
+
+  const nk = normalizeTeamKey(name);
+  if (nk) {
+    for (const k of Object.keys(teams)) {
+      if (normalizeTeamKey(k) === nk) return k;
+    }
+  }
+
+  const canon = canonicalTeamName(slug, name);
+  if (canon && canon !== name) {
+    if (teams[canon]) return canon;
+    const cnk = normalizeTeamKey(canon);
+    for (const k of Object.keys(teams)) {
+      if (normalizeTeamKey(k) === cnk) return k;
+    }
+    return canon; // new team — store under its canonical spelling
+  }
+  return name;
+}
+
+// A team plays at most one match per day, so an existing entry on the same day
+// against the same (normalized) opponent IS the same fixture arriving from another
+// feed. Collapse to one, keeping the most authoritative source id (native > espn >
+// sofa). Otherwise append. Then age-cap, sort newest-first and length-cap.
 function pushResult(list, entry) {
-  if (list.some(r => r.matchId === entry.matchId)) return list; // dedup
-  const out = [...list, entry];
   const cutoff = Date.now() - MAX_AGE_DAYS * 86400000;
+  const dk = dayKeyOf(entry.date);
+  const oppKey = normalizeTeamKey(entry.opp);
+
+  let out = list;
+  const dupIdx = list.findIndex(r =>
+    (r.matchId === entry.matchId) ||
+    (dk && dayKeyOf(r.date) === dk && normalizeTeamKey(r.opp) === oppKey)
+  );
+
+  if (dupIdx >= 0) {
+    // Replace only when the incoming record comes from a more authoritative source.
+    if (sourceRank(entry.matchId) < sourceRank(list[dupIdx].matchId)) {
+      out = list.map((r, i) => (i === dupIdx ? entry : r));
+    }
+  } else {
+    out = [...list, entry];
+  }
+
   return out
     .filter(r => !r.date || Date.parse(r.date) >= cutoff)
     .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
@@ -47,20 +104,25 @@ export function recordMatchResult(slug, m) {
   const data = readResults(slug);
   data.teams = data.teams || {};
 
+  // Collapse cross-source spelling variants onto the team key already in the ledger
+  // so both feeds append to the same team (prevents the split-key double count).
+  const homeKey = resolveTeamKey(data.teams, slug, m.home);
+  const awayKey = resolveTeamKey(data.teams, slug, m.away);
+
   const date = m.kickoffUtc || null;
   const homeRes = m.scoreHome > m.scoreAway ? "W" : m.scoreHome < m.scoreAway ? "L" : "D";
   const awayRes = homeRes === "W" ? "L" : homeRes === "L" ? "W" : "D";
 
-  const before = JSON.stringify(data.teams[m.home] || []) + JSON.stringify(data.teams[m.away] || []);
+  const before = JSON.stringify(data.teams[homeKey] || []) + JSON.stringify(data.teams[awayKey] || []);
 
-  data.teams[m.home] = pushResult(data.teams[m.home] || [], {
-    matchId: m.matchId, date, opp: m.away, ha: "H", gf: m.scoreHome, ga: m.scoreAway, res: homeRes
+  data.teams[homeKey] = pushResult(data.teams[homeKey] || [], {
+    matchId: m.matchId, date, opp: awayKey, ha: "H", gf: m.scoreHome, ga: m.scoreAway, res: homeRes
   });
-  data.teams[m.away] = pushResult(data.teams[m.away] || [], {
-    matchId: m.matchId, date, opp: m.home, ha: "A", gf: m.scoreAway, ga: m.scoreHome, res: awayRes
+  data.teams[awayKey] = pushResult(data.teams[awayKey] || [], {
+    matchId: m.matchId, date, opp: homeKey, ha: "A", gf: m.scoreAway, ga: m.scoreHome, res: awayRes
   });
 
-  const changed = (JSON.stringify(data.teams[m.home]) + JSON.stringify(data.teams[m.away])) !== before;
+  const changed = (JSON.stringify(data.teams[homeKey]) + JSON.stringify(data.teams[awayKey])) !== before;
   if (changed) {
     data.slug = slug;
     data.updatedAt = new Date().toISOString();

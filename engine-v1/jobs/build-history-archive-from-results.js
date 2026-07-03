@@ -143,6 +143,12 @@ export function buildHistoryArchiveFromResults(opts = {}) {
   // A completed season is (re)written only when its file is MISSING, and that is
   // the signal a season has just rolled into history → rebuild priors.
   const refreshCurrentSeason = opts.refreshCurrentSeason !== false;
+  // Surgical rebuild: overwrite ONLY season files we previously derived from
+  // results-memory (stats.source match), never externally-validated archives
+  // (e.g. the ESPN backfill-history files, whose source is not "results-memory").
+  // Used after the cross-source results dedup to refresh the inflated archives
+  // without clobbering single-source ESPN history that had no duplicates.
+  const overwriteSource = opts.overwriteSource || null;
   const curSeason = currentSeason();
   const leagues = Array.isArray(opts.leagues) && opts.leagues.length ? opts.leagues : ALL_LEAGUE_SEEDS.slice();
 
@@ -190,7 +196,9 @@ export function buildHistoryArchiveFromResults(opts = {}) {
 
       // Past seasons: write once (skip if present) unless a full --overwrite.
       // Current season: rewrite every run (unless refresh disabled) so it stays live.
-      if (exists && !overwrite && !(isCurrent && refreshCurrentSeason)) {
+      // Exception: force-refresh a results-memory-sourced file when requested.
+      const forceSource = overwriteSource && existing?.stats?.source === overwriteSource;
+      if (exists && !overwrite && !forceSource && !(isCurrent && refreshCurrentSeason)) {
         summary.filesSkippedExisting += 1;
         continue;
       }
@@ -245,7 +253,8 @@ if (isCli) {
   const summary = buildHistoryArchiveFromResults({
     leagues: parseList(args.leagues),
     seasons: parseList(args.seasons),
-    overwrite: String(args.overwrite || "").toLowerCase() === "true"
+    overwrite: String(args.overwrite || "").toLowerCase() === "true",
+    overwriteSource: args["overwrite-source"] || args.overwriteSource || null
   });
 
   console.log(JSON.stringify({
