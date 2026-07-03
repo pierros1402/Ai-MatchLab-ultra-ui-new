@@ -69,6 +69,46 @@ function collectAliasValues(aliasMap, teamName) {
   return values;
 }
 
+// Reverse index: any known spelling (canonical key OR listed variant) → canonical.
+// Cached per league because recordMatchResult() calls this on every stored match.
+const _reverseIndexCache = new Map();
+
+function buildReverseIndex(leagueSlug) {
+  const idx = new Map(); // normalizeText(anySpelling) → canonical display
+  const maps = [
+    { ...(BUILTIN_ALIASES.global || {}), ...(BUILTIN_ALIASES[leagueSlug] || {}) },
+    readGlobalAliasMap(),
+    readLeagueAliasMap(leagueSlug) // league-specific last so it wins ties
+  ];
+  for (const map of maps) {
+    for (const [canonical, aliases] of Object.entries(map || {})) {
+      idx.set(normalizeText(canonical), canonical);
+      for (const a of toAliasArray(aliases)) idx.set(normalizeText(a), canonical);
+    }
+  }
+  return idx;
+}
+
+/**
+ * Resolve a team spelling to its canonical display name via the alias tables.
+ * Returns null when the name is unknown to the alias data (so callers keep the
+ * original). Used by the results memory to collapse cross-source spelling variants
+ * (e.g. "Ranheim IL" → "Ranheim") that plain diacritic/affix normalization misses.
+ */
+export function canonicalTeamName(leagueSlug, teamName) {
+  const t = normalizeText(teamName);
+  if (!t) return null;
+  const key = leagueSlug || "_global";
+  let idx = _reverseIndexCache.get(key);
+  if (!idx) { idx = buildReverseIndex(leagueSlug); _reverseIndexCache.set(key, idx); }
+  return idx.get(t) || null;
+}
+
+/** Drop cached reverse indexes (call after writing alias files in-process). */
+export function clearAliasCache() {
+  _reverseIndexCache.clear();
+}
+
 export function resolveAliasCandidates(leagueSlug, teamName) {
   const base = String(teamName || "").trim();
   if (!base) return [];
