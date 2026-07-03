@@ -35,9 +35,12 @@
             mergedOptions.signal = controller.signal;
           }
 
+          // 45s tolerates a Render free-tier cold start (spin-up ~50s) on the
+          // FIRST request after idle. A keep-warm cron normally prevents spin-down,
+          // so this is the belt-and-suspenders ceiling, not the common path.
           const timeout = setTimeout(() => {
             try { controller.abort(); } catch(_) {}
-          }, 20000);
+          }, 45000);
 
           const response = await originalFetch(resource, mergedOptions);
           clearTimeout(timeout);

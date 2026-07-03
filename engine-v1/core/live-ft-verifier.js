@@ -68,8 +68,15 @@ async function fetchEspnLeagueIndex(slug, dayKey) {
   const url = `${ESPN_BASE}/${slug}/scoreboard?dates=${yyyymmdd}`;
 
   let byPair = new Map();
+  // Hard per-fetch timeout: on a datacenter IP (Render) ESPN can hang the socket
+  // open indefinitely. Without this, the whole /fixtures-runtime request hangs
+  // past the client's abort budget and the UI shows "loading error". 4s is plenty
+  // for a live scoreboard; on timeout we return an empty index (verify is best-effort).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
   try {
     const res = await fetch(url, {
+      signal: controller.signal,
       headers: { "user-agent": "Mozilla/5.0 Ai-MatchLab ft-verifier", "accept": "application/json,text/plain,*/*" }
     });
     if (res.ok) {
@@ -92,7 +99,9 @@ async function fetchEspnLeagueIndex(slug, dayKey) {
       await res.body?.cancel?.();
     }
   } catch {
-    // network/parse failure → no opinion from ESPN this run
+    // network/parse failure or 4s timeout → no opinion from ESPN this run
+  } finally {
+    clearTimeout(timer);
   }
 
   __espnCache.set(slug, { ts: now, byPair });
