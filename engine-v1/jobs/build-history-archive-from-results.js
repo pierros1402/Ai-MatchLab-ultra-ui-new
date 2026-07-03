@@ -180,7 +180,11 @@ export function buildHistoryArchiveFromResults(opts = {}) {
       if (!matchesMap || !matchesMap.size) continue;
 
       const outFile = path.join(leagueDir, `${season}.json`);
-      const exists = fs.existsSync(outFile);
+      // A season file only counts as existing if it actually holds matches —
+      // the ESPN backfill leaves empty shells (stats.normalized=0, matches:[])
+      // for leagues it can't reach, and those must be rebuilt, not skipped.
+      const existing = fs.existsSync(outFile) ? readJsonSafe(outFile, null) : null;
+      const exists = Array.isArray(existing?.matches) && existing.matches.length > 0;
       const isCurrent = season === curSeason;
 
       // Past seasons: write once (skip if present) unless a full --overwrite.
