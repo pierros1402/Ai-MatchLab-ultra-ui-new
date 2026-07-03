@@ -1350,6 +1350,29 @@ function mergeFlashscoreFixtures(result, requestedDay) {
   return { ...result, matches: [...base, ...extra], count: base.length + extra.length, flashscoreAdded: extra.length };
 }
 
+// Best-effort overlay budget: an external overlay (Flashscore/ESPN) must NEVER
+// block the response. If it doesn't resolve within budgetMs we serve `fallback`
+// (the un-overlaid rows) and let the underlying promise keep running so its cache
+// warms for the next request. This is what makes the runtime endpoint stay fast on
+// Render's throttled 1-worker instance even when an upstream feed hangs.
+function overlayWithBudget(label, budgetMs, fallback, run) {
+  let timer;
+  const capped = new Promise(resolve => {
+    timer = setTimeout(() => {
+      console.warn(`[overlay-budget] ${label} exceeded ${budgetMs}ms — serving base rows`);
+      resolve(fallback);
+    }, budgetMs);
+  });
+
+  return Promise.race([
+    Promise.resolve().then(run).catch(err => {
+      console.warn(`[overlay-budget] ${label} failed`, String(err?.message || err));
+      return fallback;
+    }),
+    capped
+  ]).finally(() => clearTimeout(timer));
+}
+
 app.get("/fixtures-runtime", async (req, res) => {
   const mode = String(req.query.mode || "today");
   const dayKey = String(req.query.date || athensDayKey()).slice(0, 10);
@@ -1362,13 +1385,14 @@ app.get("/fixtures-runtime", async (req, res) => {
     const { source, matches } = buildDisplayMatchesForDate(dayKey);
 
     // Overlay live/FT status (today only, odds-only leagues); no-op for past
-    // dates and when the feed is unavailable.
-    let out = matches;
-    try {
-      out = await overlayFlashscoreLive(matches, dayKey);
-    } catch (err) {
-      console.warn("[fixtures-runtime] live overlay failed", String(err?.message || err));
-    }
+    // dates and when the feed is unavailable. Budgeted so a slow/hung Flashscore
+    // feed can never block the response — base rows are served and the cache warms
+    // in the background for the next request.
+    const base = matches;
+    let out = await overlayWithBudget(
+      "fixtures-runtime:flashscore-live", 4000, base,
+      () => overlayFlashscoreLive(base, dayKey)
+    );
 
     // Overlay FINAL results from the league-memory truth store (any date):
     // odds-only matches on past days get their FT + score here, since the
@@ -1379,12 +1403,13 @@ app.get("/fixtures-runtime", async (req, res) => {
     // past a normal match length is re-checked against independent sources (ESPN
     // + Flashscore). FT is written only on a real finished+score report; when no
     // source confirms, the row is flagged `statusUnconfirmed` (never faked FT).
-    // No-op with zero fetches unless a stuck candidate actually exists.
-    try {
-      out = await verifyStuckLiveFinals(out, dayKey);
-    } catch (err) {
-      console.warn("[fixtures-runtime] ft verify failed", String(err?.message || err));
-    }
+    // No-op with zero fetches unless a stuck candidate actually exists. Budgeted
+    // so a hung upstream can never block the response.
+    const beforeVerify = out;
+    out = await overlayWithBudget(
+      "fixtures-runtime:ft-verify", 4000, beforeVerify,
+      () => verifyStuckLiveFinals(beforeVerify, dayKey)
+    );
 
     // Panel-mode filter (display-contract): the universe is shared with
     // /api/matches-for-date, but each panel shows only its statuses —
@@ -2128,22 +2153,22 @@ app.get("/api/matches-for-date", async (req, res) => {
   const { source, matches } = buildDisplayMatchesForDate(date);
 
   // Overlay live/FT status from Flashscore for odds-only leagues (today only).
-  // No-op for past dates and when the feed is unavailable.
-  let out = matches;
-  try {
-    out = await overlayFlashscoreLive(matches, date);
-  } catch (err) {
-    console.warn("[matches-for-date] live overlay failed", String(err?.message || err));
-  }
+  // No-op for past dates and when the feed is unavailable. Budgeted — see
+  // /fixtures-runtime — so a slow/hung feed can never block the response.
+  const base = matches;
+  let out = await overlayWithBudget(
+    "matches-for-date:flashscore-live", 4000, base,
+    () => overlayFlashscoreLive(base, date)
+  );
 
   // Truth-store finals overlay (any date) — see /fixtures-runtime.
   out = overlayResultsTruth(out, date);
   // Stuck-LIVE → FT only via cross-source confirmation — see /fixtures-runtime.
-  try {
-    out = await verifyStuckLiveFinals(out, date);
-  } catch (err) {
-    console.warn("[matches-for-date] ft verify failed", String(err?.message || err));
-  }
+  const beforeVerify = out;
+  out = await overlayWithBudget(
+    "matches-for-date:ft-verify", 4000, beforeVerify,
+    () => verifyStuckLiveFinals(beforeVerify, date)
+  );
   return res.json({ ok: true, date, source, matches: out });
 });
 
