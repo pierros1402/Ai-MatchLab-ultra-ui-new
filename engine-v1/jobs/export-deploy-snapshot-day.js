@@ -41,6 +41,23 @@ function normalizeMatchId(value) {
   return String(value ?? "").trim();
 }
 
+// Collapse cross-source duplicates per league (same real match under two
+// canonical IDs / matchIds from different providers) for a mixed-league row set.
+function dedupeRowsPerLeague(rows) {
+  const byLeague = new Map();
+  for (const row of rows) {
+    const slug = String(row?.leagueSlug || "unknown");
+    if (!byLeague.has(slug)) byLeague.set(slug, []);
+    byLeague.get(slug).push(row);
+  }
+
+  const out = [];
+  for (const [slug, leagueRows] of byLeague) {
+    out.push(...dedupeLeagueDayFixtures(leagueRows, { slug }).rows);
+  }
+  return out;
+}
+
 function dayFixtures(fixturesPayload, dayKey) {
   const fixtures = Array.isArray(fixturesPayload?.fixtures)
     ? fixturesPayload.fixtures
@@ -48,8 +65,9 @@ function dayFixtures(fixturesPayload, dayKey) {
       ? fixturesPayload
       : [];
 
-  return fixtures
-    .filter(row => String(row?.dayKey || "") === String(dayKey))
+  const rows = fixtures.filter(row => String(row?.dayKey || "") === String(dayKey));
+
+  return dedupeRowsPerLeague(rows)
     .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
 }
 
