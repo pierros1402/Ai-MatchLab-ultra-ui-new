@@ -38,6 +38,7 @@ import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { buildLeagueGapReportDay } from "./build-league-gap-report-day.js";
+import { recoverBrokenLeaguesDay } from "./recover-broken-leagues-day.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./fetch-multi-bookmaker-odds.js";
 import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
@@ -445,6 +446,21 @@ export async function runDailyCycle(options = {}) {
     playerUsageManualDraftLimit: normalizedPlayerUsageManualDraftLimit
   });
 
+
+  // Self-heal: re-acquire leagues that have expected matches but zero canonical
+  // fixtures (season-calendar false negatives / provider zero-events) BEFORE
+  // anything downstream consumes fixtures, so recovered matches get standings,
+  // details and value like any other. No human intervention required.
+  try {
+    const recovery = await recoverBrokenLeaguesDay(dayKey);
+    console.log("[daily-cycle] broken-league-recovery:done", {
+      dayKey,
+      recovered: (recovery?.recovered || []).map(r => `${r.slug}(${r.fixtures})`),
+      stillBroken: (recovery?.stillBroken || []).map(s => s.slug)
+    });
+  } catch (e) {
+    console.error("[daily-cycle] broken-league-recovery:error", e?.message);
+  }
 
   console.log("[daily-cycle] canonical-fixtures-sync:start", { dayKey });
 

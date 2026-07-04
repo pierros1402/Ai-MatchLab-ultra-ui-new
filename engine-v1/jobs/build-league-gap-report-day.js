@@ -131,32 +131,65 @@ function snapshotStateForDay(dayKey) {
 
   const detailCounts = new Map();
   const detailValueCounts = new Map();
+  const teamNewsReadyCounts = new Map();
   const detailsDir = path.join(root, "details");
   if (fs.existsSync(detailsDir)) {
     for (const file of fs.readdirSync(detailsDir).filter(x => x.endsWith(".json"))) {
       const id = path.basename(file, ".json");
-      let slug = cidToLeague.get(id);
-      if (!slug) {
-        const detail = readJsonSafe(path.join(detailsDir, file), null);
-        slug = String(detail?.basic?.leagueSlug || "").trim() || "unknown";
-      }
+      const detail = readJsonSafe(path.join(detailsDir, file), null);
+      const slug = cidToLeague.get(id)
+        || String(detail?.basic?.leagueSlug || "").trim()
+        || "unknown";
+
       detailCounts.set(slug, (detailCounts.get(slug) || 0) + 1);
 
-      const detail = readJsonSafe(path.join(detailsDir, file), null);
       const hasValue = Array.isArray(detail?.value) && detail.value.length > 0;
       if (hasValue) detailValueCounts.set(slug, (detailValueCounts.get(slug) || 0) + 1);
+
+      // Team-news is usable only with a non-empty, non-error status. "empty"/
+      // "missing_local_team_news_evidence" is an explicit gap, not coverage.
+      const tnStatus = String(detail?.teamNews?.status || "").toLowerCase();
+      const tnUsable = tnStatus && !["empty", "missing", "unavailable", "error", "stale", "rejected"].includes(tnStatus);
+      if (tnUsable) teamNewsReadyCounts.set(slug, (teamNewsReadyCounts.get(slug) || 0) + 1);
     }
   }
 
-  return { fixtureCounts, valueCounts, detailCounts, detailValueCounts };
+  return { fixtureCounts, valueCounts, detailCounts, detailValueCounts, teamNewsReadyCounts };
+}
+
+// A standings file counts as READY only when it actually holds table rows.
+// An empty/placeholder file existing is NOT coverage — the same "existence ≠
+// usable" trap the audit warns about. Handles both store shapes:
+//   data/standings:            { table: [...] }  (also phaseTables)
+//   data/league-memory/standings: { accepted: { rows: [...] } }
+function standingsRowCount(file) {
+  const payload = readJsonSafe(file, null);
+  if (!payload || typeof payload !== "object") return 0;
+
+  const candidates = [
+    payload.table,
+    payload.rows,
+    payload.standings,
+    payload.accepted?.rows
+  ];
+  for (const rows of candidates) {
+    if (Array.isArray(rows) && rows.length > 0) return rows.length;
+  }
+  return 0;
 }
 
 function standingsStateForSlug(slug) {
-  const main = fs.existsSync(resolveDataPath("standings", `${slug}.json`));
-  const leagueMemory = fs.existsSync(resolveDataPath("league-memory", "standings", `${slug}.json`));
+  const mainFile = resolveDataPath("standings", `${slug}.json`);
+  const memoryFile = resolveDataPath("league-memory", "standings", `${slug}.json`);
+
+  const mainRows = standingsRowCount(mainFile);
+  const memoryRows = standingsRowCount(memoryFile);
+  const rows = Math.max(mainRows, memoryRows);
+
   return {
-    standingsReady: main || leagueMemory,
-    standingsSource: main ? "data/standings" : leagueMemory ? "league-memory" : null
+    standingsReady: rows > 0,
+    standingsRows: rows,
+    standingsSource: mainRows > 0 ? "data/standings" : memoryRows > 0 ? "league-memory" : null
   };
 }
 
@@ -231,8 +264,10 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       snapshotFixtures: snapshot.fixtureCounts.get(slug) || 0,
       detailsFiles: snapshot.detailCounts.get(slug) || 0,
       detailsWithValue: snapshot.detailValueCounts.get(slug) || 0,
+      detailsWithTeamNews: snapshot.teamNewsReadyCounts.get(slug) || 0,
       valuePicks: snapshot.valueCounts.get(slug) || 0,
       standingsReady: standings.standingsReady,
+      standingsRows: standings.standingsRows,
       standingsSource: standings.standingsSource
     };
 
@@ -281,6 +316,14 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       lostExpectedMatches: lostMatches,
       standingsReadyLeagues: rows.filter(r => r.standingsReady).length,
       standingsMissingLeagues: rows.filter(r => !r.standingsReady).length,
+      // Standings readiness restricted to leagues actually playing today —
+      // the number that matters for today's product, vs the whole declared universe.
+      activeLeaguesWithMatches: rows.filter(r => r.canonicalFixtures > 0).length,
+      activeStandingsReady: rows.filter(r => r.canonicalFixtures > 0 && r.standingsReady).length,
+      activeStandingsMissing: rows
+        .filter(r => r.canonicalFixtures > 0 && !r.standingsReady)
+        .map(r => r.slug),
+      activeTeamNewsReady: rows.filter(r => r.canonicalFixtures > 0 && r.detailsWithTeamNews > 0).length,
       byStatus
     },
     broken,
