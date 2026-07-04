@@ -37,6 +37,7 @@ import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.j
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
+import { buildLeagueGapReportDay } from "./build-league-gap-report-day.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./fetch-multi-bookmaker-odds.js";
 import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
@@ -1124,6 +1125,20 @@ export async function runDailyCycle(options = {}) {
     });
   } catch (e) {
     console.error("[daily-cycle] invariant-check:error", e?.message);
+  }
+
+  // League gap report — per-slug declared→expected→canonical→snapshot→value
+  // readiness so coverage losses (season-calendar cuts, provider zero-events)
+  // are visible instead of silently shrinking the day's fixture count.
+  try {
+    const gapReport = buildLeagueGapReportDay(dayKey);
+    console.log("[daily-cycle] league-gap-report:done", {
+      byStatus: gapReport?.summary?.byStatus,
+      lostExpectedMatches: gapReport?.summary?.lostExpectedMatches,
+      broken: (gapReport?.broken || []).map(b => b.slug)
+    });
+  } catch (e) {
+    console.error("[daily-cycle] league-gap-report:error", e?.message);
   }
 
   // Per-bookmaker odds (EU/Asian/Betfair panels + partial Greek via OddsPapi).
