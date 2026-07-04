@@ -1,4 +1,4 @@
-﻿const DEBUG_AI_VALUE =
+const DEBUG_AI_VALUE =
   String(globalThis.process?.env?.DEBUG_AI_VALUE || "").toLowerCase() === "true";
 
 function debugAiValueLog(...args) {
@@ -35,6 +35,9 @@ const FORM_FULL_STRENGTH_DAYS = 7;
 const FORM_DECAY_START_DAYS = 8;
 const FORM_HEAVY_DECAY_DAYS = 14;
 const FORM_BREAKDOWN_DAYS = 21;
+const FORM_GAP_MODERATE_DAYS = 14;
+const FORM_GAP_HEAVY_DAYS = 21;
+const FORM_GAP_STALE_DAYS = 35;
 
 const BASE_WEIGHTS = Object.freeze({
   form: 0.5,
@@ -927,6 +930,42 @@ function computeFreshnessScore(daysSinceLastMatch) {
   return 0.08;
 }
 
+function computeMaxInternalGapFromDated(dated) {
+  let maxInternalGap = 0;
+
+  for (let i = 0; i < dated.length - 1; i += 1) {
+    const gap = daysBetween(dated[i].date || dated[i], dated[i + 1].date || dated[i + 1]);
+    if (Number.isFinite(gap) && gap > maxInternalGap) {
+      maxInternalGap = gap;
+    }
+  }
+
+  return maxInternalGap;
+}
+
+function classifyFormGap(daysSinceLastMatch, maxInternalGap) {
+  const gap = Math.max(
+    Number.isFinite(daysSinceLastMatch) ? daysSinceLastMatch : 0,
+    Number.isFinite(maxInternalGap) ? maxInternalGap : 0
+  );
+
+  if (gap > FORM_GAP_STALE_DAYS) return "stale";
+  if (gap > FORM_GAP_HEAVY_DAYS) return "heavy";
+  if (gap > FORM_GAP_MODERATE_DAYS) return "moderate";
+  return "normal";
+}
+
+function computeFormContinuityWeight({ freshnessScore, continuityScore, sampleSize }) {
+  const sampleFactor = clamp((Number(sampleSize) || 0) / FORM_WINDOW, 0, 1);
+  return clamp(
+    (clamp(freshnessScore, 0, 1) * 0.35) +
+      (clamp(continuityScore, 0, 1) * 0.35) +
+      (sampleFactor * 0.30),
+    0,
+    1
+  );
+}
+
 function computeContinuityScore(selectedMatches, fixtureDate) {
   if (!selectedMatches.length || !(fixtureDate instanceof Date)) return 0.2;
 
@@ -942,14 +981,7 @@ function computeContinuityScore(selectedMatches, fixtureDate) {
 
   const daysSinceLastMatch = daysBetween(fixtureDate, mostRecent);
   const spanDays = daysBetween(mostRecent, oldest) || 0;
-
-  let maxInternalGap = 0;
-  for (let i = 0; i < dated.length - 1; i += 1) {
-    const gap = daysBetween(dated[i].date, dated[i + 1].date);
-    if (Number.isFinite(gap) && gap > maxInternalGap) {
-      maxInternalGap = gap;
-    }
-  }
+  const maxInternalGap = computeMaxInternalGapFromDated(dated);
 
   let score = 1.0;
 
@@ -1018,16 +1050,27 @@ function selectValidFormMatches(matches, teamName, side, season, fixtureDate, wi
       ? daysBetween(mostRecent, oldest)
       : null;
 
+  const maxInternalGap = computeMaxInternalGapFromDated(
+    dated.map(matchDate => ({ date: matchDate }))
+  );
   const freshnessScore = computeFreshnessScore(daysSinceLastMatch);
   const continuityScore = computeContinuityScore(selected, fixtureDate);
+  const formContinuityWeight = computeFormContinuityWeight({
+    freshnessScore,
+    continuityScore,
+    sampleSize: selected.length
+  });
 
   return {
     selected,
     sample: selected.length,
     daysSinceLastMatch,
     spanDays,
+    maxInternalGap,
+    gapSeverity: classifyFormGap(daysSinceLastMatch, maxInternalGap),
     freshnessScore,
-    continuityScore
+    continuityScore,
+    formContinuityWeight
   };
 }
 
@@ -1050,8 +1093,11 @@ function computeTeamMetricsFromSelection(teamName, selection) {
       bttsRate: 0,
       daysSinceLastMatch: null,
       spanDays: null,
+      maxInternalGap: null,
+      gapSeverity: "missing",
       freshnessScore: 0.2,
-      continuityScore: 0.2
+      continuityScore: 0.2,
+      formContinuityWeight: 0
     };
   }
 
@@ -1094,8 +1140,11 @@ function computeTeamMetricsFromSelection(teamName, selection) {
     bttsRate: btts / total,
     daysSinceLastMatch: selection.daysSinceLastMatch,
     spanDays: selection.spanDays,
+    maxInternalGap: selection.maxInternalGap,
+    gapSeverity: selection.gapSeverity,
     freshnessScore: selection.freshnessScore,
-    continuityScore: selection.continuityScore
+    continuityScore: selection.continuityScore,
+    formContinuityWeight: selection.formContinuityWeight
   };
 }
 
@@ -2072,7 +2121,11 @@ export async function evaluateMatchValue(input, opts = {}) {
         fullStrengthDays: FORM_FULL_STRENGTH_DAYS,
         decayStartDays: FORM_DECAY_START_DAYS,
         heavyDecayDays: FORM_HEAVY_DECAY_DAYS,
-        breakdownDays: FORM_BREAKDOWN_DAYS
+        breakdownDays: FORM_BREAKDOWN_DAYS,
+        gapModerateDays: FORM_GAP_MODERATE_DAYS,
+        gapHeavyDays: FORM_GAP_HEAVY_DAYS,
+        gapStaleDays: FORM_GAP_STALE_DAYS,
+        gapPolicy: "form_weight_reduced_not_rejected"
       },
       baseWeights: BASE_WEIGHTS,
       effectiveWeights: {
@@ -2095,8 +2148,11 @@ export async function evaluateMatchValue(input, opts = {}) {
           priorSample: priorsMeta.homePriorSample,
           daysSinceLastMatch: homeMetrics.daysSinceLastMatch,
           spanDays: homeMetrics.spanDays,
+          maxInternalGap: homeMetrics.maxInternalGap,
+          gapSeverity: homeMetrics.gapSeverity,
           freshnessScore: round(homeMetrics.freshnessScore, 3),
-          continuityScore: round(homeMetrics.continuityScore, 3)
+          continuityScore: round(homeMetrics.continuityScore, 3),
+          formContinuityWeight: round(homeMetrics.formContinuityWeight, 3)
         },
         awayOverall: {
           sample: awayMetrics.sample,
@@ -2104,8 +2160,11 @@ export async function evaluateMatchValue(input, opts = {}) {
           priorSample: priorsMeta.awayPriorSample,
           daysSinceLastMatch: awayMetrics.daysSinceLastMatch,
           spanDays: awayMetrics.spanDays,
+          maxInternalGap: awayMetrics.maxInternalGap,
+          gapSeverity: awayMetrics.gapSeverity,
           freshnessScore: round(awayMetrics.freshnessScore, 3),
-          continuityScore: round(awayMetrics.continuityScore, 3)
+          continuityScore: round(awayMetrics.continuityScore, 3),
+          formContinuityWeight: round(awayMetrics.formContinuityWeight, 3)
         },
         homeSide: {
           sample: homeSideMetrics.sample,
@@ -2113,8 +2172,11 @@ export async function evaluateMatchValue(input, opts = {}) {
           priorSample: priorsMeta.homePriorSample,
           daysSinceLastMatch: homeSideMetrics.daysSinceLastMatch,
           spanDays: homeSideMetrics.spanDays,
+          maxInternalGap: homeSideMetrics.maxInternalGap,
+          gapSeverity: homeSideMetrics.gapSeverity,
           freshnessScore: round(homeSideMetrics.freshnessScore, 3),
-          continuityScore: round(homeSideMetrics.continuityScore, 3)
+          continuityScore: round(homeSideMetrics.continuityScore, 3),
+          formContinuityWeight: round(homeSideMetrics.formContinuityWeight, 3)
         },
         awaySide: {
           sample: awaySideMetrics.sample,
@@ -2122,8 +2184,11 @@ export async function evaluateMatchValue(input, opts = {}) {
           priorSample: priorsMeta.awayPriorSample,
           daysSinceLastMatch: awaySideMetrics.daysSinceLastMatch,
           spanDays: awaySideMetrics.spanDays,
+          maxInternalGap: awaySideMetrics.maxInternalGap,
+          gapSeverity: awaySideMetrics.gapSeverity,
           freshnessScore: round(awaySideMetrics.freshnessScore, 3),
-          continuityScore: round(awaySideMetrics.continuityScore, 3)
+          continuityScore: round(awaySideMetrics.continuityScore, 3),
+          formContinuityWeight: round(awaySideMetrics.formContinuityWeight, 3)
         }
       },
       matchupSample: matchupBias.sample,

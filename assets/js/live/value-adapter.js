@@ -98,15 +98,66 @@ const MARKET_KEYS = {
   "OU35": "OU35", "Over / Under 3.5": "OU35",
   "BTTS": "BTTS",
   "1X2": "1X2",
+  "DC": "DC", "Double Chance": "DC",
 };
 
-const PANEL_THRESHOLDS = {
-  OU15: 0.70,
-  OU35: 0.66,
-  BTTS: 0.66,
-  "1X2": 0.64,
-  OU25: 0.58,
-};
+const STRICT_PANEL_POLICY_VERSION = "statistical-value-policy-v2.0";
+
+function isHighBand(band) {
+  return String(band || "").toUpperCase() === "HIGH";
+}
+
+function pickText(pick) {
+  return String(pick || "").toUpperCase().trim();
+}
+
+function passesStrictPanelPolicy({ marketKey, pick, score, confidence, band }) {
+  const label = pickText(pick);
+
+  if (!Number.isFinite(score)) return false;
+  if (!Number.isFinite(confidence)) return false;
+
+  if (label.includes("UNDER 1.5")) return false;
+
+  if (label.includes("UNDER 2.5")) {
+    return isHighBand(band) && score >= 0.78 && confidence >= 0.74;
+  }
+
+  if (label.includes("UNDER 3.5")) {
+    return isHighBand(band) && score >= 0.84 && confidence >= 0.78;
+  }
+
+  if (marketKey === "OU15") {
+    return label.includes("OVER 1.5") && isHighBand(band) && score >= 0.86 && confidence >= 0.76;
+  }
+
+  if (marketKey === "OU25") {
+    return label.includes("OVER 2.5") && score >= 0.75 && confidence >= 0.71;
+  }
+
+  if (marketKey === "OU35") {
+    return label.includes("OVER 3.5") && score >= 0.80 && confidence >= 0.74;
+  }
+
+  if (marketKey === "BTTS") {
+    return label.includes("YES") && score >= 0.72 && confidence >= 0.68;
+  }
+
+  if (marketKey === "1X2") {
+    if (label === "DRAW" || label === "X") {
+      return isHighBand(band) && confidence >= 0.76;
+    }
+
+    return score >= 0.72 && confidence >= 0.68;
+  }
+
+  if (marketKey === "DC") {
+    if (!["1X", "X2", "12"].includes(label)) return false;
+    return score >= 0.78 && confidence >= 0.70;
+  }
+
+  return false;
+}
 
 function normalizePick(p) {
   const score =
@@ -129,6 +180,8 @@ function normalizePick(p) {
     typeof p?.confidence === "string" && p.confidence
       ? String(p.confidence).toUpperCase()
       : toBand(confidenceNum);
+
+  const engineBand = String(p?.band || confidenceBand || "LOW").toUpperCase();
 
   return {
     ...p,
@@ -153,6 +206,8 @@ function normalizePick(p) {
     score,
     confidence: confidenceBand,
     confidenceValue: confidenceNum,
+    band: engineBand,
+    panelPolicyVersion: STRICT_PANEL_POLICY_VERSION,
 
     includeInPanel: (() => {
       const rawMarket = String(p?.market ?? p?.marketName ?? "").trim();
@@ -160,9 +215,14 @@ function normalizePick(p) {
       const scoreNum = Number(score);
 
       if (!marketKey) return false;
-      if (!Number.isFinite(scoreNum)) return false;
 
-      return scoreNum >= PANEL_THRESHOLDS[marketKey];
+      return passesStrictPanelPolicy({
+        marketKey,
+        pick: p?.pick,
+        score: scoreNum,
+        confidence: confidenceNum,
+        band: engineBand
+      });
     })()
   };
 }
