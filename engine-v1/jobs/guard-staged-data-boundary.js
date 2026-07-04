@@ -67,6 +67,15 @@ function deploySnapshotAllowedForDay(p) {
   return p.startsWith(`data/deploy-snapshots/${dayKey}/`);
 }
 
+// Deploy-snapshot details are cache artifacts keyed to the day's FINAL fixture
+// set; the exporter prunes orphans (details whose fixture dropped out of
+// canonical), so their deletion is intended. Truth stores stay
+// deletion-protected — this exception covers only the guarded day's details.
+function isPrunableSnapshotDetail(p) {
+  if (!dayKey) return false;
+  return p.startsWith(`data/deploy-snapshots/${dayKey}/details/`);
+}
+
 const staged = parseNameStatus(git(["diff", "--cached", "--name-status"]));
 const violations = [];
 
@@ -85,7 +94,7 @@ for (const item of staged) {
 
   if (statusLetter === "D" && !allowDataDeletions) {
     for (const p of paths) {
-      if (isDataPath(p)) {
+      if (isDataPath(p) && !isPrunableSnapshotDetail(p)) {
         violations.push({
           reason: "data_deletion_blocked",
           status: item.status,
