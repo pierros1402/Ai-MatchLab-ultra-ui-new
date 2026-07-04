@@ -819,17 +819,33 @@ export async function runFixtureAcquisitionChunk(options = {}) {
   const dateWindow = buildDateWindow(opts.dayKey, opts.daysBack, opts.daysForward);
   const allowedDays = new Set(dateWindow);
 
-  const chunk = opts.fullPass
-    ? selectLeagueChunk({
-        cursor: 0,
-        chunkSize: Number.MAX_SAFE_INTEGER,
-        dateWindow
-      })
-    : selectLeagueChunk({
-        cursor: state.cursor,
-        chunkSize: opts.chunkSize,
-        dateWindow
-      });
+  // Explicit recovery mode: force-acquire exactly these leagues, ignoring the
+  // season filter and cursor. Used by the self-heal recovery pass to re-fetch
+  // leagues that ended a day BROKEN (expected matches but zero canonical).
+  const explicitLeagues = Array.isArray(opts.explicitLeagues)
+    ? opts.explicitLeagues.map(x => String(x || "").trim()).filter(Boolean)
+    : null;
+
+  const chunk = explicitLeagues && explicitLeagues.length
+    ? {
+        seeds: explicitLeagues,
+        allSeeds: explicitLeagues,
+        seasonOverrides: explicitLeagues,
+        selected: explicitLeagues,
+        startCursor: 0,
+        nextCursor: state.cursor
+      }
+    : opts.fullPass
+      ? selectLeagueChunk({
+          cursor: 0,
+          chunkSize: Number.MAX_SAFE_INTEGER,
+          dateWindow
+        })
+      : selectLeagueChunk({
+          cursor: state.cursor,
+          chunkSize: opts.chunkSize,
+          dateWindow
+        });
 
   if (opts.fullPass) {
     chunk.startCursor = 0;
@@ -889,10 +905,17 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     }
   }
 
-  const supplemental = await acquireEspnAllScoreboardSupplemental({
-    dayKey: opts.dayKey,
-    allowedDays
-  });
+  // Explicit recovery is a targeted re-fetch of specific leagues; skip the
+  // full all-scoreboard scan and never overwrite the day's main coverage
+  // report or advance the round-robin cursor.
+  const isExplicit = Boolean(explicitLeagues && explicitLeagues.length);
+
+  const supplemental = isExplicit
+    ? { provider: "skipped_explicit_mode", ok: true, rawEvents: 0, normalized: 0, accepted: 0, writtenByDay: {}, error: null, existingCanonicalUpdates: 0, skippedOtherDay: 0, skippedOutOfTargetSeeds: 0, skippedNoLeagueSlug: 0, byLeague: {} }
+    : await acquireEspnAllScoreboardSupplemental({
+        dayKey: opts.dayKey,
+        allowedDays
+      });
 
   report.results.push({
     slug: "all",
@@ -940,10 +963,18 @@ export async function runFixtureAcquisitionChunk(options = {}) {
 
   report.coverage = readCanonicalCoverage(opts.dayKey);
   report.finishedAt = new Date().toISOString();
+  report.type = isExplicit ? "fixture_acquisition_recovery" : report.type;
 
-  writeCoverageReport(opts.dayKey, report);
+  // Recovery runs must not clobber the day's main coverage report (the gap
+  // report reads it) — write to a recovery-scoped file instead.
+  if (isExplicit) {
+    const recoveryFile = resolveDataPath("coverage-reports", `${opts.dayKey}.recovery.json`);
+    writeJson(recoveryFile, report);
+  } else {
+    writeCoverageReport(opts.dayKey, report);
+  }
 
-  if (!opts.fullPass) {
+  if (!opts.fullPass && !isExplicit) {
     state.cursor = chunk.nextCursor;
     state.updatedAt = report.finishedAt;
     state.lastRun = {
