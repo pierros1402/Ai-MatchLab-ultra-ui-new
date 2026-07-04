@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -63,7 +64,13 @@ function canonicalFixturesForDay(dayKey) {
 
   for (const file of fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort()) {
     const payload = readJsonSafe(path.join(dir, file), null);
-    const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+    const rawFixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+
+    // Defense-in-depth: collapse cross-source duplicates even if a stale store
+    // file predates write-time dedup (same match under two canonical IDs).
+    const fixtures = dedupeLeagueDayFixtures(rawFixtures, {
+      slug: path.basename(file, ".json")
+    }).rows;
 
     for (const fixture of fixtures) {
       const matchId = normalizeMatchId(
@@ -438,6 +445,20 @@ function emptyDir(dir) {
   }
 }
 
+function detailIdCandidates(detail, fileBaseName) {
+  return [
+    detail?.basic?.canonicalId,
+    detail?.matchId,
+    detail?.basic?.matchId,
+    detail?.basic?.providerMatchId,
+    detail?.providerMatchId,
+    detail?.fixture?.matchId,
+    fileBaseName
+  ]
+    .map(x => String(x || "").trim())
+    .filter(Boolean);
+}
+
 function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
   const files = detailFilesForDay(dayKey);
   const summaries = [];
@@ -445,6 +466,21 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
   let largest = { file: null, bytes: 0, mb: 0 };
 
   const preserveExistingDetails = options?.preserveDetails === true;
+
+  // Snapshot details contract: a detail may only ship when it belongs to the
+  // day's final fixture set. Orphans (built for fixtures that later dropped out
+  // of canonical) inflate the details count and mislead readiness metrics.
+  // Pruning is only armed when the fixture set is non-empty — on a broken day
+  // with zero fixtures we keep everything rather than wipe the cache.
+  const validIds = options?.validIds instanceof Set && options.validIds.size > 0
+    ? options.validIds
+    : null;
+  const orphansRemoved = [];
+
+  const isOrphan = (detail, fileBaseName) => {
+    if (!validIds) return false;
+    return !detailIdCandidates(detail, fileBaseName).some(id => validIds.has(id));
+  };
 
   ensureDir(snapshotDetailsDir);
   if (!preserveExistingDetails) {
@@ -461,6 +497,11 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       detail?.basic?.canonicalId ||
       normalizeMatchId(detail?.matchId || detail?.basic?.matchId || detail?.fixture?.matchId) ||
       path.basename(src, ".json");
+
+    if (isOrphan(detail, path.basename(src, ".json"))) {
+      orphansRemoved.push(`${matchId}.json`);
+      continue;
+    }
 
     const outFile = path.join(snapshotDetailsDir, `${matchId}.json`);
 
@@ -499,6 +540,15 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       const detail = readJsonSafe(detailFile, null);
       if (!detail || typeof detail !== "object") continue;
 
+      // preserveDetails keeps expensive detail payloads across exports, but an
+      // orphan is not a cache hit — it is a fixture that no longer exists in
+      // the day's final set. Delete it so counts stay honest.
+      if (isOrphan(detail, path.basename(name, ".json"))) {
+        fs.rmSync(detailFile, { force: true });
+        orphansRemoved.push(name);
+        continue;
+      }
+
       const bytes = bytesOfFile(detailFile);
       totalBytes += bytes;
 
@@ -523,6 +573,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
     totalBytes,
     totalMb: mb(totalBytes),
     largest,
+    orphansRemoved,
     summaries
   };
 }
@@ -553,7 +604,41 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
   const preserveDetails = options?.preserveDetails !== false;
 
   const value = valueForDay(dayKey, { snapshotRoot, preserveValue: options?.preserveValue === true });
-  const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails });
+
+  // Every identifier a detail might be keyed under for the day's fixtures.
+  const validIds = new Set();
+  for (const fixture of fixtures) {
+    for (const id of [
+      fixture?.canonicalId,
+      fixture?.matchId,
+      fixture?.sourceMatchId,
+      fixture?.sourceId,
+      fixture?.matchKey
+    ]) {
+      const key = String(id || "").trim();
+      if (key) validIds.add(key);
+    }
+  }
+
+  const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds });
+
+  // Fixtures that ended the day without any detail file.
+  const detailFileIds = new Set(
+    detailsReport.summaries.map(x => path.basename(String(x.file || ""), ".json"))
+  );
+  const detailsMissingForFixtures = fixtures
+    .filter(fixture => {
+      const cid = String(fixture?.canonicalId || "").trim();
+      const mid = String(fixture?.matchId || "").trim();
+      return !(cid && detailFileIds.has(cid)) && !(mid && detailFileIds.has(mid));
+    })
+    .map(fixture => String(fixture?.canonicalId || fixture?.matchId || ""));
+
+  const fixturesByLeague = {};
+  for (const fixture of fixtures) {
+    const slug = String(fixture?.leagueSlug || "unknown");
+    fixturesByLeague[slug] = (fixturesByLeague[slug] || 0) + 1;
+  }
 
   const fixturesOut = {
     ok: true,
@@ -595,8 +680,14 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
     counts: {
       fixtures: fixturesOut.count,
       valuePicks: valueOut.count,
-      details: detailsReport.count
+      details: detailsReport.count,
+      detailsMatchedToFixtures: detailsReport.count,
+      orphanDetailsRemoved: detailsReport.orphansRemoved.length,
+      detailsMissingForFixtures: detailsMissingForFixtures.length
     },
+    fixturesByLeague,
+    orphanDetailsRemoved: detailsReport.orphansRemoved,
+    detailsMissingForFixtures,
     coverage: {
       minTargetFixtures: targetFixtureGate.minTargetFixtures,
       minTargetFixtureSource: targetFixtureGate.minTargetFixtureSource,

@@ -8,6 +8,7 @@ import {
 } from "./value-engine-v1.js";
 import { buildMatchIntelligence } from "./build-match-intelligence.js";
 import { currentSeason } from "./season.js";
+import { buildCanonicalId } from "./canonical-id.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -226,6 +227,12 @@ function expandValueMarkets(match, value) {
 
   function pushPick({ market, marketName, pick, score }) {
     items.push({
+      // canonicalId is the settlement/join key; matchId keeps the provider id
+      // for legacy readers. Never emit a pick keyed only by a raw ESPN id.
+      canonicalId:
+        match.canonicalId ||
+        buildCanonicalId(match.leagueSlug, match.homeTeam, match.awayTeam, match.dayKey || match.kickoffUtc) ||
+        String(match.matchId),
       matchId: match.matchId,
       leagueSlug: match.leagueSlug,
       homeTeam: match.homeTeam,

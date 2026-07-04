@@ -98,7 +98,10 @@ function readValuePicksForDay(dayKey) {
 
 function getValueForMatch(dayKey, matchId) {
   const all = readValuePicksForDay(dayKey);
-  return all.filter(p => String(p?.matchId) === String(matchId));
+  const id = String(matchId);
+  return all.filter(
+    p => String(p?.matchId) === id || String(p?.canonicalId || "") === id
+  );
 }
 
 function buildValuePicksByMatch(dayKey) {
@@ -106,14 +109,18 @@ function buildValuePicksByMatch(dayKey) {
   const map = new Map();
 
   for (const pick of all) {
-    const key = String(pick?.matchId || "");
-    if (!key) continue;
+    // Picks may carry a provider matchId (e.g. raw ESPN id) alongside the
+    // canonical id; index under both so fixture rows keyed either way join.
+    const keys = new Set(
+      [pick?.canonicalId, pick?.matchId].map(k => String(k || "")).filter(Boolean)
+    );
 
-    if (!map.has(key)) {
-      map.set(key, []);
+    for (const key of keys) {
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key).push(pick);
     }
-
-    map.get(key).push(pick);
   }
 
   return map;
@@ -1434,13 +1441,22 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     }
   }
 
+  const canonicalId =
+    match.canonicalId ||
+    buildCanonicalId(match.leagueSlug, match.homeTeam, match.awayTeam, match.dayKey || match.kickoffUtc) ||
+    String(match.matchId);
+
   return {
-    matchId: String(match.matchId),
+    // matchId is the canonical id (same key as the details filename); the raw
+    // provider id (e.g. numeric ESPN id) stays in providerMatchId.
+    matchId: canonicalId,
+    providerMatchId: String(match.matchId),
     dayKey: kickoffDay(match),
     generatedAt: new Date().toISOString(),
     basic: {
-      canonicalId: match.canonicalId || buildCanonicalId(match.leagueSlug, match.homeTeam, match.awayTeam, match.dayKey || match.kickoffUtc) || String(match.matchId),
-      matchId: String(match.matchId),
+      canonicalId,
+      matchId: canonicalId,
+      providerMatchId: String(match.matchId),
       leagueSlug: match.leagueSlug || null,
       leagueName: match.leagueName || null,
       competitionType: classifyCompetitionType(match),
