@@ -1355,20 +1355,58 @@ function mergeFlashscoreFixtures(result, requestedDay) {
 // (the un-overlaid rows) and let the underlying promise keep running so its cache
 // warms for the next request. This is what makes the runtime endpoint stay fast on
 // Render's throttled 1-worker instance even when an upstream feed hangs.
+// Circuit breaker: on Render's datacenter IP the Flashscore/ESPN overlay fetches
+// never complete — every request paid the FULL budget (4s + 4s = 8s serial) only
+// to fall back to base rows anyway, and left a hung socket/promise leaking behind.
+// After a few consecutive timeouts/failures we OPEN the breaker for a cooldown and
+// skip the doomed overlay entirely (serve the fallback in ~0ms, no fetch, no leak).
+// One probe is allowed through after the cooldown, so live self-heals wherever the
+// feed actually responds. Serving the fallback is identical to the old timeout path,
+// so live-truth rules are unchanged — we just stop waiting 8s to reach the same answer.
+const overlayBreaker = new Map(); // label -> { fails, openUntil }
+const OVERLAY_BREAKER_TRIP = 2;
+const OVERLAY_BREAKER_COOLDOWN_MS = 5 * 60 * 1000;
+
+function markOverlayOk(label) {
+  overlayBreaker.set(label, { fails: 0, openUntil: 0 });
+}
+
+function markOverlayFail(label) {
+  const b = overlayBreaker.get(label) || { fails: 0, openUntil: 0 };
+  b.fails += 1;
+  if (b.fails >= OVERLAY_BREAKER_TRIP) {
+    b.openUntil = Date.now() + OVERLAY_BREAKER_COOLDOWN_MS;
+  }
+  overlayBreaker.set(label, b);
+}
+
 function overlayWithBudget(label, budgetMs, fallback, run) {
+  const b = overlayBreaker.get(label);
+  if (b && b.openUntil > Date.now()) {
+    // Breaker open — skip the overlay fetch entirely, serve base rows instantly.
+    return Promise.resolve(fallback);
+  }
+
   let timer;
+  let settledFast = false; // true if the timeout won the race (overlay too slow)
   const capped = new Promise(resolve => {
     timer = setTimeout(() => {
+      settledFast = true;
+      markOverlayFail(label);
       console.warn(`[overlay-budget] ${label} exceeded ${budgetMs}ms — serving base rows`);
       resolve(fallback);
     }, budgetMs);
   });
 
   return Promise.race([
-    Promise.resolve().then(run).catch(err => {
-      console.warn(`[overlay-budget] ${label} failed`, String(err?.message || err));
-      return fallback;
-    }),
+    Promise.resolve().then(run).then(
+      value => { if (!settledFast) markOverlayOk(label); return value; },
+      err => {
+        markOverlayFail(label);
+        console.warn(`[overlay-budget] ${label} failed`, String(err?.message || err));
+        return fallback;
+      }
+    ),
     capped
   ]).finally(() => clearTimeout(timer));
 }

@@ -74,6 +74,29 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     return await r.json();
   }
 
+  // Coalesce identical runtime requests (same mode+date) that fire nearly
+  // simultaneously. On startup, loadToday + loadLive + the unified loop all hit
+  // /fixtures-runtime at once; sharing one in-flight promise collapses the cold
+  // startup burst (~5 heavy requests → 2). This matters most on the throttled
+  // single-worker Render instance where each request is expensive. The key omits
+  // the cachebuster so concurrent calls merge; once the promise settles it is
+  // removed, so the 15s polling loop still fetches fresh each tick.
+  const __runtimeInflight = new Map();
+
+  function fetchRuntime(mode, dateYmd) {
+    const key = `${mode}|${String(dateYmd || "").slice(0, 10)}`;
+    const existing = __runtimeInflight.get(key);
+    if (existing) return existing;
+
+    const base = getBaseUrl();
+    const url =
+      `${base}/fixtures-runtime?mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}`;
+
+    const p = fetchJson(url).finally(() => __runtimeInflight.delete(key));
+    __runtimeInflight.set(key, p);
+    return p;
+  }
+
   function safeArray(x) {
     return Array.isArray(x) ? x : [];
   }
@@ -260,12 +283,7 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
   const loadLiveSafe   = d => loadLive(d || todayISO());
 
   async function loadToday(dateYmd) {
-    const base = getBaseUrl();
-
-    const url =
-      `${base}/fixtures-runtime?mode=today&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}&nocache=${Math.random()}`;
-
-    const data = await fetchJson(url);
+    const data = await fetchRuntime("today", dateYmd);
     const matches = safeArray(data.matches);
 
     const mergedMatches = mergeStableMatches(
@@ -297,12 +315,7 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
   }
 
 async function loadActive(dateYmd) {
-  const base = getBaseUrl();
-
-  const url =
-    `${base}/fixtures-runtime?mode=active&date=${encodeURIComponent(dateYmd)}&_t=${nowTs()}&nocache=${Math.random()}`;
-
-  const data = await fetchJson(url);
+  const data = await fetchRuntime("active", dateYmd);
   const matches = safeArray(data.matches);
 
   const mergedMatches = mergeStableMatches(
@@ -344,12 +357,7 @@ async function loadLive(dateYmd) {
   }
 
   try {
-    const base = getBaseUrl();
-
-    const url =
-      `${base}/fixtures-runtime?mode=today&date=${encodeURIComponent(ymd)}&_t=${nowTs()}&nocache=${Math.random()}`;
-
-    const data = await fetchJson(url);
+    const data = await fetchRuntime("today", ymd);
     const matches = safeArray(data.matches);
 
     const liveMatches = matches.filter(m => isLiveStatus(m));
