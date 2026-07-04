@@ -8,7 +8,6 @@ import {
 } from "./value-engine-v1.js";
 import { buildMatchIntelligence } from "./build-match-intelligence.js";
 import { currentSeason } from "./season.js";
-import { buildCanonicalId } from "./canonical-id.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -43,6 +42,148 @@ function readDeploySnapshotFixturesByDay(dayKey) {
   return rows
     .filter(row => String(row?.dayKey || row?.date || "").slice(0, 10) === String(dayKey))
     .sort((a, b) => String(a.kickoffUtc || a.kickoff || "").localeCompare(String(b.kickoffUtc || b.kickoff || "")));
+}
+
+
+const STRICT_VALUE_POLICY_VERSION = "statistical-value-policy-v2.0";
+
+const BAND_RANK = Object.freeze({ HIGH: 3, MEDIUM: 2, LOW: 1 });
+
+const MARKET_PRIORITY = Object.freeze({
+  "1X2": 90,
+  "Over / Under 2.5": 88,
+  "BTTS": 74,
+  "Over / Under 3.5": 68,
+  "Double Chance": 62,
+  "Over / Under 1.5": 55
+});
+
+function valueNum(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function valueAvg(values, fallback = 0) {
+  const nums = values.map(v => Number(v)).filter(Number.isFinite);
+  if (!nums.length) return fallback;
+  return nums.reduce((sum, n) => sum + n, 0) / nums.length;
+}
+
+function getValueRecencyEntries(value) {
+  const recency = value?.meta?.recency || {};
+  return [
+    recency.homeOverall,
+    recency.awayOverall,
+    recency.homeSide,
+    recency.awaySide
+  ].filter(Boolean);
+}
+
+function computeStatisticalReadiness(value, confidence) {
+  const entries = getValueRecencyEntries(value);
+  const sampleScore = valueAvg(
+    entries.map(e => Math.min(1, valueNum(e?.rawSample ?? e?.sample, 0) / 5)),
+    0.55
+  );
+  const freshnessScore = valueAvg(entries.map(e => e?.freshnessScore), 0.55);
+  const continuityScore = valueAvg(entries.map(e => e?.continuityScore), 0.55);
+  const formWeightScore = valueAvg(entries.map(e => e?.formContinuityWeight), 0.55);
+  const matchupScore = Math.min(1, valueNum(value?.meta?.matchupSample, 0) / 5);
+  const matchProfileScore = Math.min(1, Math.max(0.45, valueNum(value?.meta?.matchProfileConfidence, 0)));
+
+  return clamp01(
+    (sampleScore * 0.24) +
+      (freshnessScore * 0.12) +
+      (continuityScore * 0.14) +
+      (formWeightScore * 0.18) +
+      (Math.min(1, valueNum(confidence, 0)) * 0.20) +
+      (matchupScore * 0.06) +
+      (matchProfileScore * 0.06)
+  );
+}
+
+function computeFormContinuityHaircut(value) {
+  const entries = getValueRecencyEntries(value);
+  const formWeightScore = valueAvg(entries.map(e => e?.formContinuityWeight), 0.65);
+  const maxGap = Math.max(
+    ...entries.map(e => Math.max(valueNum(e?.daysSinceLastMatch, 0), valueNum(e?.maxInternalGap, 0))),
+    0
+  );
+
+  let gapHaircut = 0;
+  if (maxGap > 35) gapHaircut = 0.12;
+  else if (maxGap > 21) gapHaircut = 0.08;
+  else if (maxGap > 14) gapHaircut = 0.045;
+
+  const weightHaircut = Math.max(0, 1 - formWeightScore) * 0.12;
+  return Math.max(gapHaircut, weightHaircut);
+}
+
+function adjustedValueConfidence(value, confidence) {
+  return clamp01(valueNum(confidence, 0) - computeFormContinuityHaircut(value));
+}
+
+function strictBand({ score, confidence, readiness, high, medium }) {
+  if (
+    score >= high.score &&
+    confidence >= high.confidence &&
+    readiness >= high.readiness
+  ) {
+    return "HIGH";
+  }
+
+  if (
+    medium &&
+    score >= medium.score &&
+    confidence >= medium.confidence &&
+    readiness >= medium.readiness
+  ) {
+    return "MEDIUM";
+  }
+
+  return "LOW";
+}
+
+function normalizeOutcomeScores(value) {
+  return renormalize1X2Scores({
+    homeWinScore: value?.homeWinScore,
+    drawScore: value?.drawScore,
+    awayWinScore: value?.awayWinScore
+  });
+}
+
+function strongestPickPerMatch(picks) {
+  const bestByMatch = new Map();
+
+  for (const pick of Array.isArray(picks) ? picks : []) {
+    const key = String(pick?.matchId || "");
+    if (!key) continue;
+
+    const existing = bestByMatch.get(key);
+    if (!existing || compareValuePicks(pick, existing) > 0) {
+      bestByMatch.set(key, pick);
+    }
+  }
+
+  return Array.from(bestByMatch.values());
+}
+
+function compareValuePicks(a, b) {
+  const aScore =
+    ((BAND_RANK[a?.band] || 0) * 100000) +
+    (valueNum(a?.score, 0) * 10000) +
+    (valueNum(a?.confidence, 0) * 1000) +
+    (valueNum(a?.readiness, 0) * 500) +
+    (MARKET_PRIORITY[a?.marketName || a?.market] || 0);
+
+  const bScore =
+    ((BAND_RANK[b?.band] || 0) * 100000) +
+    (valueNum(b?.score, 0) * 10000) +
+    (valueNum(b?.confidence, 0) * 1000) +
+    (valueNum(b?.readiness, 0) * 500) +
+    (MARKET_PRIORITY[b?.marketName || b?.market] || 0);
+
+  return aScore - bScore;
 }
 
 // ------------------------------
@@ -162,10 +303,15 @@ function expandValueMarkets(match, value) {
   let adjustedOver35 = over35;
   let adjustedBtts = btts;
 
+  const normalizedOutcomeScores = normalizeOutcomeScores(value);
   const adjusted1X2 = {
-    home: Number(value?.homeWinScore ?? -1),
-    away: Number(value?.awayWinScore ?? -1)
+    home: Number(normalizedOutcomeScores.homeWinScore ?? -1),
+    draw: Number(normalizedOutcomeScores.drawScore ?? -1),
+    away: Number(normalizedOutcomeScores.awayWinScore ?? -1)
   };
+
+  const readiness = computeStatisticalReadiness(value, confidence);
+  const effectiveConfidence = adjustedValueConfidence(value, confidence);
 
   if (aiStrongPositive && !hasPoorForm) {
     adjustedOver25 *= 1.03;
@@ -177,12 +323,6 @@ function expandValueMarkets(match, value) {
   if (aiOverLean && !hasGoalsBlocker) {
     adjustedOver25 *= 1.04;
     adjustedOver35 *= 1.03;
-  }
-
-  function toBand(score) {
-    if (score >= 0.75) return "HIGH";
-    if (score >= 0.65) return "MEDIUM";
-    return "LOW";
   }
 
   function buildValuePickMeta() {
@@ -209,6 +349,14 @@ function expandValueMarkets(match, value) {
 
     return {
       ...(value.meta || {}),
+      valuePolicy: {
+        version: STRICT_VALUE_POLICY_VERSION,
+        oddsIndependent: true,
+        type: "statistical_value",
+        formGapHandling: "reduced_weight_not_rejected"
+      },
+      readiness: round(readiness, 3),
+      adjustedConfidence: round(effectiveConfidence, 3),
       outcomeScores: hasOutcomeScores
         ? {
             homeWinScore,
@@ -225,14 +373,10 @@ function expandValueMarkets(match, value) {
     };
   }
 
-  function pushPick({ market, marketName, pick, score }) {
+  function pushPick({ market, marketName, pick, score, band, policyReason }) {
+    if (!band || band === "LOW") return;
+
     items.push({
-      // canonicalId is the settlement/join key; matchId keeps the provider id
-      // for legacy readers. Never emit a pick keyed only by a raw ESPN id.
-      canonicalId:
-        match.canonicalId ||
-        buildCanonicalId(match.leagueSlug, match.homeTeam, match.awayTeam, match.dayKey || match.kickoffUtc) ||
-        String(match.matchId),
       matchId: match.matchId,
       leagueSlug: match.leagueSlug,
       homeTeam: match.homeTeam,
@@ -241,113 +385,241 @@ function expandValueMarkets(match, value) {
       market,
       marketName,
       pick,
-      score,
-      band: toBand(score),
-      confidence,
+      score: round(score, 3),
+      band,
+      confidence: round(effectiveConfidence, 3),
+      rawConfidence: round(confidence, 3),
+      readiness: round(readiness, 3),
       signals: [...signals],
-      meta: buildValuePickMeta(),
+      meta: {
+        ...buildValuePickMeta(),
+        policyReason
+      },
       context
     });
   }
 
-  // 1X2: only clear home/away edges. Draw remains suppressed for now.
+  // 1X2: strict home/away only; draw is deliberately rare and HIGH-only.
   if (
     Number.isFinite(adjusted1X2.home) &&
+    Number.isFinite(adjusted1X2.draw) &&
     Number.isFinite(adjusted1X2.away)
   ) {
-    const best = Math.max(adjusted1X2.home, adjusted1X2.away);
-    const second = Math.min(adjusted1X2.home, adjusted1X2.away);
-    const gap = best - second;
-    const pick = adjusted1X2.home > adjusted1X2.away ? "HOME" : "AWAY";
+    const outcomes = [
+      { pick: "HOME", score: adjusted1X2.home },
+      { pick: "DRAW", score: adjusted1X2.draw },
+      { pick: "AWAY", score: adjusted1X2.away }
+    ].sort((a, b) => b.score - a.score);
+
+    const bestOutcome = outcomes[0];
+    const secondOutcome = outcomes[1];
+    const gap = bestOutcome.score - secondOutcome.score;
 
     const sideHasNegativeFormSignal =
-      pick === "HOME"
+      bestOutcome.pick === "HOME"
         ? hasAnySignal([
             "home_form_decay",
             "ai_form_home_negative",
             "ai_form_home_poor"
           ])
-        : hasAnySignal([
-            "away_form_decay",
-            "ai_form_away_negative",
-            "ai_form_away_poor"
-          ]);
+        : bestOutcome.pick === "AWAY"
+          ? hasAnySignal([
+              "away_form_decay",
+              "ai_form_away_negative",
+              "ai_form_away_poor"
+            ])
+          : false;
+
+    if (bestOutcome.pick === "HOME" || bestOutcome.pick === "AWAY") {
+      const band = strictBand({
+        score: bestOutcome.score,
+        confidence: effectiveConfidence,
+        readiness,
+        high: { score: 0.78, confidence: 0.74, readiness: 0.78 },
+        medium: { score: 0.72, confidence: 0.68, readiness: 0.70 }
+      });
+
+      if (gap >= (band === "HIGH" ? 0.22 : 0.16) && !sideHasNegativeFormSignal) {
+        pushPick({
+          market: "1X2",
+          marketName: "1X2",
+          pick: bestOutcome.pick,
+          score: bestOutcome.score,
+          band,
+          policyReason: "strict_1x2_clear_side_edge"
+        });
+      }
+    }
+
+    if (bestOutcome.pick === "DRAW") {
+      const maxDrawGap = Math.max(
+        Math.abs(adjusted1X2.draw - adjusted1X2.home),
+        Math.abs(adjusted1X2.draw - adjusted1X2.away)
+      );
+
+      if (
+        adjusted1X2.draw >= 0.36 &&
+        maxDrawGap <= 0.06 &&
+        expectedTotalGoals >= 1.80 &&
+        expectedTotalGoals <= 2.45 &&
+        effectiveConfidence >= 0.76 &&
+        readiness >= 0.80
+      ) {
+        pushPick({
+          market: "1X2",
+          marketName: "1X2",
+          pick: "DRAW",
+          score: adjusted1X2.draw,
+          band: "HIGH",
+          policyReason: "strict_draw_profile_high_only"
+        });
+      }
+    }
+
+    const dc1xScore = adjusted1X2.home + adjusted1X2.draw;
+    const dcx2Score = adjusted1X2.draw + adjusted1X2.away;
+    const dc12Score = adjusted1X2.home + adjusted1X2.away;
 
     if (
-      best >= 0.68 &&
-      gap >= 0.10 &&
-      confidence >= 0.42 &&
-      !sideHasNegativeFormSignal
+      adjusted1X2.away <= 0.22 &&
+      adjusted1X2.home >= 0.52 &&
+      adjusted1X2.draw >= 0.20 &&
+      dc1xScore >= 0.78 &&
+      effectiveConfidence >= 0.70 &&
+      readiness >= 0.72
     ) {
       pushPick({
-        market: "1X2",
-        marketName: "1X2",
-        pick,
-        score: best
+        market: "DC",
+        marketName: "Double Chance",
+        pick: "1X",
+        score: dc1xScore,
+        band: dc1xScore >= 0.84 && effectiveConfidence >= 0.74 && readiness >= 0.78 ? "HIGH" : "MEDIUM",
+        policyReason: "dc_away_near_excluded_draw_still_live"
+      });
+    }
+
+    if (
+      adjusted1X2.home <= 0.22 &&
+      adjusted1X2.away >= 0.52 &&
+      adjusted1X2.draw >= 0.20 &&
+      dcx2Score >= 0.78 &&
+      effectiveConfidence >= 0.70 &&
+      readiness >= 0.72
+    ) {
+      pushPick({
+        market: "DC",
+        marketName: "Double Chance",
+        pick: "X2",
+        score: dcx2Score,
+        band: dcx2Score >= 0.84 && effectiveConfidence >= 0.74 && readiness >= 0.78 ? "HIGH" : "MEDIUM",
+        policyReason: "dc_home_near_excluded_draw_still_live"
+      });
+    }
+
+    if (
+      adjusted1X2.draw <= 0.20 &&
+      adjusted1X2.home >= 0.34 &&
+      adjusted1X2.away >= 0.34 &&
+      Math.abs(adjusted1X2.home - adjusted1X2.away) <= 0.22 &&
+      dc12Score >= 0.80 &&
+      effectiveConfidence >= 0.72 &&
+      readiness >= 0.75
+    ) {
+      pushPick({
+        market: "DC",
+        marketName: "Double Chance",
+        pick: "12",
+        score: dc12Score,
+        band: "HIGH",
+        policyReason: "dc_draw_near_excluded_both_sides_live"
       });
     }
   }
 
-  const qualifiesOver25 =
-    adjustedOver25 >= 0.65 &&
-    expectedTotalGoals >= 2.75 &&
-    hasGoalSupport &&
-    !hasGoalsBlocker &&
-    confidence >= 0.44;
+  const over25High =
+    adjustedOver25 >= 0.78 &&
+    expectedTotalGoals >= 3.05 &&
+    effectiveConfidence >= 0.74 &&
+    readiness >= 0.78;
 
-  // O1.5: baseline market. Suppressed when the same match qualifies for stronger O2.5.
+  const over25NearHighMedium =
+    adjustedOver25 >= 0.75 &&
+    expectedTotalGoals >= 2.98 &&
+    effectiveConfidence >= 0.71 &&
+    readiness >= 0.75;
+
+  const qualifiesOver25 =
+    (over25High || over25NearHighMedium) &&
+    hasGoalSupport &&
+    !hasGoalsBlocker;
+
+  // O1.5: easy market, so panel only accepts HIGH and never accepts Under 1.5.
   if (
-    adjustedOver15 >= 0.70 &&
+    adjustedOver15 >= 0.86 &&
+    expectedTotalGoals >= 2.75 &&
     !qualifiesOver25 &&
     !hasGoalsBlocker &&
-    confidence >= 0.40
+    effectiveConfidence >= 0.76 &&
+    readiness >= 0.78
   ) {
     pushPick({
       market: "Over / Under 1.5",
       marketName: "Over / Under 1.5",
       pick: "Over 1.5",
-      score: adjustedOver15
+      score: adjustedOver15,
+      band: "HIGH",
+      policyReason: "over15_high_only_under15_disabled"
     });
   }
 
-  // O2.5: must have real goal support, not just a marginal numeric score.
-  // Slightly tolerant after intelligence/match-profile adjustments, but only when xG profile supports goals.
+  // O2.5: accepts HIGH plus only near-HIGH MEDIUM; weak MEDIUM stays out of the panel.
   if (qualifiesOver25) {
     pushPick({
       market: "Over / Under 2.5",
       marketName: "Over / Under 2.5",
       pick: "Over 2.5",
-      score: adjustedOver25
+      score: adjustedOver25,
+      band: over25High ? "HIGH" : "MEDIUM",
+      policyReason: over25High
+        ? "over25_strict_high"
+        : "over25_near_high_medium_only"
     });
   }
 
-  // O3.5: rare market only. Needs strong goal support and no defensive blocker.
+  // O3.5: volatile market, conservative only. Under 3.5 is intentionally not generated here.
   if (
-    adjustedOver35 >= 0.74 &&
+    adjustedOver35 >= 0.80 &&
+    expectedTotalGoals >= 3.35 &&
     hasStrongGoalSupport &&
     !hasGoalsBlocker &&
-    confidence >= 0.48
+    effectiveConfidence >= 0.74 &&
+    readiness >= 0.78
   ) {
     pushPick({
       market: "Over / Under 3.5",
       marketName: "Over / Under 3.5",
       pick: "Over 3.5",
-      score: adjustedOver35
+      score: adjustedOver35,
+      band: adjustedOver35 >= 0.86 && effectiveConfidence >= 0.78 ? "HIGH" : "MEDIUM",
+      policyReason: "over35_conservative"
     });
   }
 
   // BTTS YES: requires explicit BTTS/attack support and rejects defensive/no-BTTS profiles.
   if (
-    adjustedBtts >= 0.68 &&
+    adjustedBtts >= 0.72 &&
     hasBttsSupport &&
     !hasBttsBlocker &&
-    confidence >= 0.45
+    effectiveConfidence >= 0.68 &&
+    readiness >= 0.70
   ) {
     pushPick({
       market: "BTTS",
       marketName: "BTTS",
       pick: "BTTS YES",
-      score: adjustedBtts
+      score: adjustedBtts,
+      band: adjustedBtts >= 0.78 && effectiveConfidence >= 0.74 && readiness >= 0.78 ? "HIGH" : "MEDIUM",
+      policyReason: "btts_strict_support_no_blocker"
     });
   }
 
@@ -501,21 +773,39 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
         const parsed = JSON.parse(raw);
         const parsedPicks = Array.isArray(parsed?.picks) ? parsed.picks : [];
 
+        const currentFixtureIds = new Set(
+          getFixturesByDay(date)
+            .map(f => String(f?.matchId || f?.id || ""))
+            .filter(Boolean)
+        );
+        const filteredPicks = currentFixtureIds.size > 0
+          ? parsedPicks.filter(p => currentFixtureIds.has(String(p?.matchId || "")))
+          : parsedPicks;
+
+        if (filteredPicks.length !== parsedPicks.length) {
+          console.log("[value] cached snapshot orphan picks removed", {
+            date,
+            before: parsedPicks.length,
+            after: filteredPicks.length,
+            removed: parsedPicks.length - filteredPicks.length
+          });
+        }
+
         const normalized = {
           ok: true,
           date: parsed.date || date,
           createdAt: parsed.createdAt ?? null,
           updatedAt: parsed.updatedAt ?? null,
-          count: parsedPicks.length,
-          picks: parsedPicks
+          count: filteredPicks.length,
+          picks: filteredPicks
         };
 
-        if (parsedPicks.length > 0) {
+        if (filteredPicks.length > 0) {
           __valueDayCache.set(cacheKey, normalized);
 
           console.log("[value] snapshot hit", {
             date,
-            count: parsedPicks.length
+            count: filteredPicks.length
           });
 
           return normalized;
@@ -618,7 +908,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     }
   }
  
-  const dedupedPicks = dedupeValuePicks(picks);
+  const dedupedPicks = strongestPickPerMatch(dedupeValuePicks(picks));
   
   dedupedPicks.sort((a, b) => {
     const bandRank = { HIGH: 3, MEDIUM: 2, LOW: 1 };
