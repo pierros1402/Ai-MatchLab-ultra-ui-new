@@ -1966,7 +1966,39 @@ function excludeYouthWomenRows(matches) {
 
 // firewall). Returns { source, matches }; does NOT apply the request-time live
 // overlay — callers own that so it stays a same-day request-time concern.
+// buildDisplayMatchesForDate re-reads and re-parses several large JSON snapshots
+// (assessments, fixtures, odds, fixtures-all) and re-joins league metadata on EVERY
+// call. On Render's throttled 0.1-CPU instance those synchronous reads block the
+// event loop, so a burst of requests (15s poll × multiple panels/tabs) could stall
+// even the trivial /health route and trip a restart. The underlying snapshot only
+// changes on deploy/intraday refresh, so memoize the built universe per day for a
+// short TTL. Overlays run on the cached base and are immutable (they .map to new
+// objects — see flashscore-live-overlay.js), so sharing the array across requests
+// is safe.
+const __displayUniverseCache = new Map(); // date -> { ts, value }
+const DISPLAY_UNIVERSE_TTL_MS = 20000;
+
 function buildDisplayMatchesForDate(date) {
+  const key = String(date || "");
+  const now = Date.now();
+  const hit = __displayUniverseCache.get(key);
+  if (hit && (now - hit.ts) < DISPLAY_UNIVERSE_TTL_MS) return hit.value;
+
+  const value = buildDisplayMatchesForDateUncached(date);
+  __displayUniverseCache.set(key, { ts: now, value });
+
+  // Bound the map to a handful of recent days.
+  if (__displayUniverseCache.size > 8) {
+    let oldestKey = null, oldestTs = Infinity;
+    for (const [k, v] of __displayUniverseCache) {
+      if (v.ts < oldestTs) { oldestTs = v.ts; oldestKey = k; }
+    }
+    if (oldestKey !== null) __displayUniverseCache.delete(oldestKey);
+  }
+  return value;
+}
+
+function buildDisplayMatchesForDateUncached(date) {
   // Load AI assessments for this date (if available) — keyed by matchId
   let assessmentMap = {};
   try {
