@@ -92,12 +92,15 @@ const ESPN_SUPPORTED = new Set([
   "fifa.world"
 ]);
 
-// Leagues in our coverage map that ESPN does not support.
-// Flashscore is their canonical fixture provider.
+// Flashscore covers EVERY declared league: primary provider for leagues ESPN
+// does not support, and fallback for ESPN leagues when ESPN returns zero
+// events or errors (ESPN-supported leagues must not be single-provider risk).
+// Its fetch slices the cached full-day feed by resolved slug, so widening
+// support adds no extra HTTP calls and cannot misattribute rows.
 const FLASHSCORE_SUPPORTED = new Set(
   LEAGUES_COVERAGE
     .map(s => String(s?.slug || "").trim())
-    .filter(slug => slug && !ESPN_SUPPORTED.has(slug))
+    .filter(Boolean)
 );
 
 // Flashscore fetches the full day feed once and caches it per day.

@@ -111,7 +111,11 @@ function readValueForMatch(dayKey, matchId, match = null) {
   const picks = Array.isArray(payload?.picks) ? payload.picks : [];
 
   const aliases = valueAliasesForMatch(matchId, match);
-  const byId = picks.filter(p => aliases.has(String(p?.matchId || "").trim()));
+  const byId = picks.filter(
+    p =>
+      aliases.has(String(p?.matchId || "").trim()) ||
+      aliases.has(String(p?.canonicalId || "").trim())
+  );
 
   if (byId.length) {
     return byId;

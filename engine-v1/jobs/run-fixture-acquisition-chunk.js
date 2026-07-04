@@ -7,6 +7,7 @@ import { isInSeason } from "../source-discovery/season-calendar.js";
 import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
+import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 import { registerMatch } from "../storage/canonical-match-registry.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
@@ -123,6 +124,26 @@ function inSeasonForWindow(slug, dateWindow) {
   });
 }
 
+// Leagues with a real fixture signal in the expected-matches store for any day
+// in the window. The season calendar is a heuristic default filter, not an
+// absolute cutter: a recorded scheduled match beats an "out of season" guess
+// (e.g. gab.1/mwi.1/zim.1 playing while the calendar considers them idle).
+function expectedLeagueSlugsForWindow(dateWindow) {
+  const slugs = new Set();
+
+  for (const day of Array.isArray(dateWindow) ? dateWindow : []) {
+    const record = readJson(resolveDataPath("expected-matches", `${day}.json`), null);
+    const matches = Array.isArray(record?.matches) ? record.matches : [];
+
+    for (const match of matches) {
+      const slug = String(match?.leagueSlug || "").trim();
+      if (slug) slugs.add(slug);
+    }
+  }
+
+  return slugs;
+}
+
 function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
   const allSeeds = Array.isArray(LEAGUE_SEEDS)
     ? LEAGUE_SEEDS.map(x => String(x || "").trim()).filter(Boolean)
@@ -130,14 +151,29 @@ function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
 
   // Filter to leagues that are in-season for at least one date in the window.
   // This prevents querying off-season leagues (e.g. Premier League in June).
+  // Exception: leagues with recorded expected matches stay in even when the
+  // season calendar disagrees (season-calendar false negatives).
+  const expectedSlugs = dateWindow && dateWindow.length
+    ? expectedLeagueSlugsForWindow(dateWindow)
+    : new Set();
+
+  const seasonOverrides = [];
   const seeds = dateWindow && dateWindow.length
-    ? allSeeds.filter(slug => inSeasonForWindow(slug, dateWindow))
+    ? allSeeds.filter(slug => {
+        if (inSeasonForWindow(slug, dateWindow)) return true;
+        if (expectedSlugs.has(slug)) {
+          seasonOverrides.push(slug);
+          return true;
+        }
+        return false;
+      })
     : allSeeds;
 
   if (seeds.length === 0) {
     return {
       seeds,
       allSeeds,
+      seasonOverrides,
       selected: [],
       startCursor: 0,
       nextCursor: 0
@@ -156,6 +192,7 @@ function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
   return {
     seeds,
     allSeeds,
+    seasonOverrides,
     selected,
     startCursor,
     nextCursor
@@ -189,7 +226,18 @@ function readCanonicalLeague(dayKey, slug) {
 }
 
 function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
-  const cleanFixtures = fixtures
+  // Collapse cross-source duplicates (same real match under two canonical IDs
+  // because providers spell the teams differently) before persisting.
+  const deduped = dedupeLeagueDayFixtures(fixtures, { slug });
+  if (deduped.removed.length) {
+    console.log("[fixture-acquisition] cross_source_duplicates_merged", {
+      dayKey,
+      slug,
+      merged: deduped.removed
+    });
+  }
+
+  const cleanFixtures = deduped.rows
     .filter(Boolean)
     .sort((a, b) => {
       const ka = String(a?.kickoffUtc || "");
@@ -347,7 +395,8 @@ function selectAdapterForLeague(slug) {
 }
 
 async function acquireLeagueDay({ slug, dayKey, allowedDays }) {
-  const { plan, adapter } = selectAdapterForLeague(slug);
+  const { plan } = selectAdapterForLeague(slug);
+  const adapters = getFixtureAdapters();
 
   const stats = {
     slug,
@@ -355,7 +404,8 @@ async function acquireLeagueDay({ slug, dayKey, allowedDays }) {
     dayKey,
     providerMode: plan?.mode || "none",
     providerExecution: plan?.execution || "skip",
-    provider: adapter?.id || null,
+    provider: null,
+    providerAttempts: [],
     ok: false,
     rawEvents: 0,
     normalized: 0,
@@ -364,18 +414,61 @@ async function acquireLeagueDay({ slug, dayKey, allowedDays }) {
     error: null
   };
 
-  if (!adapter) {
+  const plannedProviders = (Array.isArray(plan?.providers) ? plan.providers : [])
+    .map(p => adapters.find(x =>
+      String(x?.id || "").trim() === String(p?.id || "").trim() &&
+      x.isEnabled() &&
+      x.supportsLeague(slug)
+    ))
+    .filter(Boolean);
+
+  if (!plannedProviders.length) {
     stats.error = "no_enabled_adapter_for_league";
     return stats;
   }
 
+  // Try providers in plan order (primary first). A provider that errors OR
+  // returns zero raw events hands over to the next one — an ESPN league day
+  // with real matches must not die on "ESPN rawEvents 0" while Flashscore has
+  // the fixtures in its day feed (fallbackPolicy: on_primary_failure_or_empty).
+  let adapter = null;
   let events = [];
 
-  try {
-    const payload = await adapter.fetch({ slug, dayKey });
-    events = Array.isArray(payload) ? payload : [];
-  } catch (err) {
-    stats.error = String(err?.message || err);
+  for (const candidate of plannedProviders) {
+    let fetchError = null;
+    let payload = [];
+
+    try {
+      const fetched = await candidate.fetch({ slug, dayKey });
+      payload = Array.isArray(fetched) ? fetched : [];
+    } catch (err) {
+      fetchError = String(err?.message || err);
+    }
+
+    stats.providerAttempts.push({
+      provider: candidate.id,
+      rawEvents: payload.length,
+      error: fetchError
+    });
+
+    if (!fetchError && payload.length > 0) {
+      adapter = candidate;
+      events = payload;
+      break;
+    }
+  }
+
+  stats.provider = adapter?.id
+    || stats.providerAttempts[0]?.provider
+    || plannedProviders[0].id;
+
+  if (!adapter) {
+    const allErrored = stats.providerAttempts.every(a => a.error);
+    stats.error = allErrored ? stats.providerAttempts[0]?.error || "all_providers_failed" : null;
+    // No provider produced events. rawEvents stays 0; that is an honest result
+    // when no matches are scheduled, and a visible BROKEN signal in the gap
+    // report when expected matches exist.
+    stats.ok = !allErrored;
     return stats;
   }
 
@@ -511,13 +604,20 @@ function existingCanonicalIdsForDay(dayKey) {
 }
 
 async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
-  const dateWindowArr = [...allowedDays];
-  const targetSeedSet = new Set(
+  // Accept every DECLARED league here, in-season or not: an event actually
+  // present in ESPN's all-scoreboard is a stronger fixture signal than the
+  // season-calendar heuristic (which produced false negatives for leagues
+  // like gab.1/mwi.1/zim.1). The declared-registry boundary still applies.
+  const declaredSeedSet = new Set(
     (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
       .map(x => String(x || "").trim())
       .filter(Boolean)
-      .filter(slug => inSeasonForWindow(slug, dateWindowArr))
   );
+  const dateWindowArr = [...allowedDays];
+  const inSeasonSeedSet = new Set(
+    [...declaredSeedSet].filter(slug => inSeasonForWindow(slug, dateWindowArr))
+  );
+  const targetSeedSet = declaredSeedSet;
 
   const stats = {
     provider: "espn_all_scoreboard",
@@ -631,6 +731,10 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
       stats.accepted++;
       if (existedInCanonical) {
         stats.existingCanonicalUpdates++;
+      }
+      if (!inSeasonSeedSet.has(slug)) {
+        if (!stats.seasonOverrideAccepted) stats.seasonOverrideAccepted = {};
+        stats.seasonOverrideAccepted[slug] = (stats.seasonOverrideAccepted[slug] || 0) + 1;
       }
       stats.byLeague[slug] = (stats.byLeague[slug] || 0) + 1;
     }
@@ -746,6 +850,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     dateWindow,
     totalSeedCount: chunk.allSeeds ? chunk.allSeeds.length : chunk.seeds.length,
     leagueSeedCount: chunk.seeds.length,
+    seasonOverrides: chunk.seasonOverrides || [],
     chunkSize: opts.fullPass ? chunk.selected.length : opts.chunkSize,
     startCursor: chunk.startCursor,
     nextCursor: chunk.nextCursor,
