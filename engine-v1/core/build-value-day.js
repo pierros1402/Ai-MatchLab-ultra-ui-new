@@ -69,6 +69,13 @@ function valueAvg(values, fallback = 0) {
   return nums.reduce((sum, n) => sum + n, 0) / nums.length;
 }
 
+
+function round(value, digits = 3) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  const factor = 10 ** digits;
+  return Math.round(n * factor) / factor;
+}
 function renormalize1X2Scores(scores = {}) {
   const home = Number(scores.homeWinScore) || 0;
   const draw = Number(scores.drawScore) || 0;
