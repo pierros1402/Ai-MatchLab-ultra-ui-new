@@ -153,6 +153,42 @@
     return m && m.id != null && SAVED_IDS.has(String(m.id));
   }
 
+  // Normalize a raw runtime match (homeTeam/kickoffUtc/matchId) into the shape
+  // render() expects (home/kickoff_ms/id). The Active panel maps the same way
+  // inside its render — Today now consumes the SAME unified payload, so it must
+  // map identically instead of relying on a separate standalone fetch.
+  function mapMatch(m) {
+    return {
+      id: m.id ?? m.matchId,
+      home: m.home ?? m.homeTeam,
+      away: m.away ?? m.awayTeam,
+      leagueName: m.leagueName,
+      leagueSlug: m.leagueSlug,
+      country: m.country,
+      leagueTier: m.leagueTier,
+      status: m.status,
+      rawStatus: m.rawStatus,
+      statusType: m.statusType,
+      statusName: m.statusName,
+      state: m.state,
+      phase: m.phase,
+      live: m.live,
+      isLive: m.isLive,
+      staleLive: m.staleLive,
+      staleLiveReason: m.staleLiveReason,
+      statusUnconfirmed: m.statusUnconfirmed,
+      ftSource: m.ftSource,
+      scoreHome: m.scoreHome,
+      scoreAway: m.scoreAway,
+      minute: m.minute,
+      kickoff_ms:
+        m.kickoff_ms != null
+          ? Number(m.kickoff_ms)
+          : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0),
+      __raw: m
+    };
+  }
+
   function render(matches) {
     panel.innerHTML = "";
 
@@ -429,12 +465,8 @@
   // This keeps the Today panel aligned with the same source as the rest of the UI.
   document.addEventListener("today-matches:loaded", (event) => {
     const payload = event?.detail || {};
-    const matches = Array.isArray(payload.matches) ? payload.matches : [];
-
-    console.log("[TODAY] render unified today-matches:loaded payload", {
-      date: payload.date,
-      matches: matches.length
-    });
+    const raw = Array.isArray(payload.matches) ? payload.matches : [];
+    const matches = raw.map(mapMatch);
 
     window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
     render(matches);
@@ -443,12 +475,7 @@
   // Replay latest Today payload if fixtures-loader emitted before this panel loaded.
   if (window.__AIML_LAST_TODAY?.matches?.length) {
     const payload = window.__AIML_LAST_TODAY;
-    const matches = Array.isArray(payload.matches) ? payload.matches : [];
-
-    console.log("[TODAY] replay latest unified today payload", {
-      date: payload.date,
-      matches: matches.length
-    });
+    const matches = (Array.isArray(payload.matches) ? payload.matches : []).map(mapMatch);
 
     setTimeout(() => {
       window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
@@ -456,9 +483,11 @@
     }, 0);
   }
 
-
-
-  load();
+  // NOTE: Today is now a pure consumer of the unified fixtures-loader (same as the
+  // Active panel), fed by the "today-matches:loaded" event above plus the replay.
+  // The old standalone load() fetch was removed: it fired a SECOND, un-coalesced
+  // today request during the cold startup burst that timed out on the throttled
+  // Render instance and wrote "Σφάλμα φόρτωσης" over an otherwise-good render.
 
 // ----------------------------------
 // LIVE SYNC (CRITICAL)
