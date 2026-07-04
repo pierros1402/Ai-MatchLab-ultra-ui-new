@@ -69,6 +69,27 @@ function valueAvg(values, fallback = 0) {
   return nums.reduce((sum, n) => sum + n, 0) / nums.length;
 }
 
+function renormalize1X2Scores(scores = {}) {
+  const home = Number(scores.homeWinScore) || 0;
+  const draw = Number(scores.drawScore) || 0;
+  const away = Number(scores.awayWinScore) || 0;
+  const sum = home + draw + away;
+
+  if (sum <= 0) {
+    return {
+      homeWinScore: 0.33,
+      drawScore: 0.34,
+      awayWinScore: 0.33
+    };
+  }
+
+  return {
+    homeWinScore: home / sum,
+    drawScore: draw / sum,
+    awayWinScore: away / sum
+  };
+}
+
 function getValueRecencyEntries(value) {
   const recency = value?.meta?.recency || {};
   return [
