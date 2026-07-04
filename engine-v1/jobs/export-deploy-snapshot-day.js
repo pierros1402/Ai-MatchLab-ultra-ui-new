@@ -640,15 +640,22 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
 
   const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds });
 
-  // Fixtures that ended the day without any detail file.
-  const detailFileIds = new Set(
-    detailsReport.summaries.map(x => path.basename(String(x.file || ""), ".json"))
+  // Fixtures that ended the day without any detail file. Ground-truth check
+  // against the snapshot details directory on disk (not the summaries list,
+  // which can skew across the preserveDetails rebuild) — a detail is present
+  // if <id>.json exists for the fixture's canonicalId or matchId.
+  const detailFileIdsOnDisk = new Set(
+    fs.existsSync(snapshotDetailsDir)
+      ? fs.readdirSync(snapshotDetailsDir)
+          .filter(name => name.endsWith(".json"))
+          .map(name => name.slice(0, -".json".length))
+      : []
   );
   const detailsMissingForFixtures = fixtures
     .filter(fixture => {
       const cid = String(fixture?.canonicalId || "").trim();
       const mid = String(fixture?.matchId || "").trim();
-      return !(cid && detailFileIds.has(cid)) && !(mid && detailFileIds.has(mid));
+      return !(cid && detailFileIdsOnDisk.has(cid)) && !(mid && detailFileIdsOnDisk.has(mid));
     })
     .map(fixture => String(fixture?.canonicalId || fixture?.matchId || ""));
 
