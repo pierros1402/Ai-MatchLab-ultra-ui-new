@@ -358,6 +358,14 @@ jobs:
           bash tools/git-push-rebase-retry.sh
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
 
+      # Runs AFTER the commit so the night's data still lands; a red run here
+      # means value.json shipped source=missing_local_value_file while fixtures
+      # exist — a value-pipeline failure, not "no picks today" (2026-07-02 mode).
+      - name: Value artifact gate
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: node engine-v1/jobs/check-value-artifact-gate.js --date="${DAY_KEY}"
+
       - name: Skip Render redeploy for daily snapshot
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
         run: echo "Daily snapshot committed, but Render redeploy is disabled for this run."

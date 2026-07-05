@@ -82,11 +82,45 @@ export function statusRankFromParts(status, rawStatus, statusType, statusName) {
 // from both panels rather than guessed into LIVE/FT.
 export const PANEL_MODES = Object.freeze(["today", "active"]);
 
+// ── Stale-LIVE display guard (today panel) ──────────────────────────────────
+// A row can sit LIVE forever when the source that marked it live went silent —
+// the audit found SECOND_HALF rows with ~18h-old lastSeenAt still served as
+// "now playing". The live-ft-verifier tags such rows `statusUnconfirmed` when
+// NO independent source has an opinion (it never fakes FT). This guard is the
+// DISPLAY consequence: an unconfirmed live row far past kickoff leaves the
+// today panel (exactly as it would on FT), and any live row past a hard sanity
+// floor leaves regardless (no real match runs 8h, delays included). The stored
+// status is NOT touched — no fabricated FT; the active/day-mirror panel keeps
+// the row (projected to PRE) and the truth-store overlay delivers the real FT
+// when the result lands.
+export const STALE_LIVE_UNCONFIRMED_MIN = 300; // 5h past kickoff + unconfirmed
+export const STALE_LIVE_HARD_MIN = 480;        // 8h past kickoff, unconditional
+
+function minutesSinceKickoffMs(row, nowMs) {
+  const ts = row?.kickoffUtc ? new Date(row.kickoffUtc).getTime() : NaN;
+  if (!Number.isFinite(ts)) return null;
+  return (nowMs - ts) / 60000;
+}
+
+export function isStaleLiveForDisplay(row, nowMs = Date.now()) {
+  const rank = statusRankFromParts(
+    row?.status, row?.rawStatus, row?.statusType, row?.statusName
+  );
+  if (rank !== STATUS_RANK.LIVE) return false;
+
+  const mins = minutesSinceKickoffMs(row, nowMs);
+  if (mins == null) return false; // no kickoff → cannot judge, keep showing
+
+  if (mins >= STALE_LIVE_HARD_MIN) return true;
+  return row?.statusUnconfirmed === true && mins >= STALE_LIVE_UNCONFIRMED_MIN;
+}
+
 export function panelModeAllowsRow(mode, row) {
   const rank = statusRankFromParts(
     row?.status, row?.rawStatus, row?.statusType, row?.statusName
   );
   if (mode === "today") {
+    if (rank === STATUS_RANK.LIVE && isStaleLiveForDisplay(row)) return false;
     return rank === STATUS_RANK.PRE || rank === STATUS_RANK.LIVE;
   }
   if (mode === "active") {

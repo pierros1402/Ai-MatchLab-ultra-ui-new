@@ -779,6 +779,16 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
       orphanDetailsRemoved: detailsReport.orphansRemoved.length,
       detailsMissingForFixtures: detailsMissingForFixtures.length
     },
+    // Value artifact gate: `missing_local_value_file` while fixtures exist is a
+    // PIPELINE failure (the value build never produced data/value/<day>.json),
+    // not a legitimate "no picks today" — the exact silent failure mode of the
+    // 2026-07-02 outage. check-value-artifact-gate.js turns the workflow red on it.
+    valueGate: {
+      fixtures: fixturesOut.count,
+      valuePicks: valueOut.count,
+      valueSource: String(valueOut?.source || "local_value_file"),
+      ok: !(fixturesOut.count > 0 && String(valueOut?.source || "") === "missing_local_value_file")
+    },
     fixturesByLeague,
     orphanDetailsRemoved: detailsReport.orphansRemoved,
     detailsMissingForFixtures,
