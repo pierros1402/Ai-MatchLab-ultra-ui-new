@@ -17,15 +17,20 @@ function normalizeTeamNewsNoteText(value) {
   }
 
   if (value && typeof value === "object" && !Array.isArray(value)) {
+    // Structured absence: keep the player attached to the reason. A bare
+    // reason string later gets re-parsed as a "player" downstream.
+    const player = String(value.player || value.name || value.fullName || "").trim();
+    const reason = String(value.reason || value.note || value.description || "").trim();
+
+    if (player && reason) return `${player}: ${reason}`;
+
     return String(
       value.note ||
       value.reason ||
       value.label ||
       value.title ||
       value.description ||
-      value.player ||
-      value.name ||
-      value.fullName ||
+      player ||
       ""
     ).trim();
   }
@@ -153,6 +158,25 @@ function pullNotesFromBucket(bucket) {
   ]);
 }
 
+// Structured absences ({player, reason, importance}) must survive the bridge
+// as-is: flattening them to note strings and re-parsing loses the player
+// (colon-splitting rejects compound reasons) and turns bare reasons into
+// phantom "players".
+function pullStructuredAbsences(bucket) {
+  return asArray(bucket?.absences)
+    .filter(item =>
+      item &&
+      typeof item === "object" &&
+      !Array.isArray(item) &&
+      normalizeText(item.player || item.name || item.fullName)
+    )
+    .map(item => ({
+      player: normalizeText(item.player || item.name || item.fullName),
+      reason: normalizeText(item.reason || item.note || item.description) || null,
+      importance: normalizeText(item.importance) || "medium"
+    }));
+}
+
 function inferTeamNewsReliability(data = {}) {
   const homeCount = asArray(data?.homeTeam?.notes).length;
   const awayCount = asArray(data?.awayTeam?.notes).length;
@@ -216,22 +240,28 @@ function buildCanonicalTeamNews(
 
   const notesHome = asArray(extracted?.homeTeam?.notes);
   const notesAway = asArray(extracted?.awayTeam?.notes);
+  const structuredHome = asArray(extracted?.homeTeam?.absences);
+  const structuredAway = asArray(extracted?.awayTeam?.absences);
 
   const rawPayload = {
     data: {
       home: {
-        absences: notesHome.map((note) => ({
-          player: note,
-          reason: note,
-          importance: "medium"
-        }))
+        absences: structuredHome.length
+          ? structuredHome
+          : notesHome.map((note) => ({
+              player: note,
+              reason: note,
+              importance: "medium"
+            }))
       },
       away: {
-        absences: notesAway.map((note) => ({
-          player: note,
-          reason: note,
-          importance: "medium"
-        }))
+        absences: structuredAway.length
+          ? structuredAway
+          : notesAway.map((note) => ({
+              player: note,
+              reason: note,
+              importance: "medium"
+            }))
       }
     }
   };
@@ -289,10 +319,12 @@ function extractTeamNewsFromResearch(context = {}) {
   if (factHomeNotes.length || factAwayNotes.length) {
     return {
       homeTeam: {
-        notes: factHomeNotes
+        notes: factHomeNotes,
+        absences: pullStructuredAbsences(factHomeBucket)
       },
       awayTeam: {
-        notes: factAwayNotes
+        notes: factAwayNotes,
+        absences: pullStructuredAbsences(factAwayBucket)
       }
     };
   }
@@ -314,10 +346,12 @@ function extractTeamNewsFromResearch(context = {}) {
   if (ctxHomeNotes.length || ctxAwayNotes.length) {
     return {
       homeTeam: {
-        notes: ctxHomeNotes
+        notes: ctxHomeNotes,
+        absences: pullStructuredAbsences(ctxHomeBucket)
       },
       awayTeam: {
-        notes: ctxAwayNotes
+        notes: ctxAwayNotes,
+        absences: pullStructuredAbsences(ctxAwayBucket)
       }
     };
   }

@@ -311,7 +311,20 @@ function normalizeTeamNewsAbsenceShape(playerValue, reasonValue = "") {
     "muscle"
   ]);
 
-  if (!player || reasonOnlyTerms.has(lowerPlayer)) {
+  // Reason-like text is never a player name. The exact-term set cannot
+  // enumerate compound reasons ("Yellow card suspension — out until
+  // 07/07/2026 — misses 2 games", "Ankle injury"), which used to slip
+  // through as phantom "players".
+  const reasonLikeText = value => {
+    const v = String(value || "").toLowerCase().replace(/\s+/g, " ").trim();
+    return (
+      reasonOnlyTerms.has(v) ||
+      /^(unknown |red card |yellow card |ankle |knee |thigh |calf |groin |shoulder |muscle |hamstring )?\b(injur(y|ies|ed)|suspension|suspended|illness|surgery)\b/.test(v) ||
+      /\b(out until \d|misses \d+ game)\b/.test(v)
+    );
+  };
+
+  if (!player || reasonLikeText(lowerPlayer)) {
     return null;
   }
 
@@ -330,12 +343,13 @@ function normalizeTeamNewsAbsenceShape(playerValue, reasonValue = "") {
 
     if (parts.length >= 2) {
       const first = parts[0];
-      const second = parts[1];
-      const compactSecond = second.toLowerCase().replace(/\s+/g, " ").trim();
+      const second = parts.slice(1).join(": ").trim();
 
-      if (reasonOnlyTerms.has(compactSecond)) {
+      // "Player: <reason>" — accept when the right side reads like a
+      // reason (compound reasons included), not only exact set members.
+      if (reasonLikeText(second)) {
         player = first;
-        reason = reason || compactSecond;
+        reason = reason || second;
       } else {
         return null;
       }
