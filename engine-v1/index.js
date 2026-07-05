@@ -1605,14 +1605,33 @@ app.get("/value-export/range", async (req, res) => {
   for (const date of days) {
     let result = null;
 
-    if (runtimeBuildsDisabled()) {
-      result = snapshotValueResponse(date);
-    } else {
-      result = await buildValueDay(date, { rebuild });
+    if (!rebuild) {
+      const snapshotResult = snapshotValueResponse(date);
+
+      if (snapshotResult?.ok) {
+        result = snapshotResult;
+      }
     }
 
-    const picks = Array.isArray(result?.picks) ? result.picks : [];
-    const filtered = picks.filter(shouldIncludeValuePick);
+    if (!result) {
+      if (runtimeBuildsDisabled()) {
+        result = snapshotValueResponse(date);
+      } else {
+        result = await buildValueDay(date, { rebuild });
+      }
+    }
+
+    const picks = Array.isArray(result?.picks)
+      ? result.picks
+      : Array.isArray(result?.items)
+        ? result.items
+        : Array.isArray(result?.valuePicks)
+          ? result.valuePicks
+          : Array.isArray(result?.data?.picks)
+            ? result.data.picks
+            : [];
+
+    const filtered = picks.filter((p) => p && typeof p === "object");
 
     for (const p of filtered) {
       rows.push({

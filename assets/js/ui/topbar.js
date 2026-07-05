@@ -346,10 +346,12 @@ btnToday.addEventListener("click", () => setInputs(today, today));
       return localStorage.getItem("aiml_admin_token") || "1234";
     }
 
-    const MAIN_BASE =
-      (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
-        ? window.AIML_LIVE_CFG.fixturesBase
-        : "http://localhost:3010";
+    const MAIN_BASE = String(
+      (window.AIML_VALUE_CFG && window.AIML_VALUE_CFG.valueBase) ||
+      (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL) ||
+      (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase) ||
+      "http://localhost:3010"
+    ).replace(/\/+$/, "");
 
     exportMenu.querySelector("#export-assessment")?.addEventListener("click", () => {
       const r = getRange();
