@@ -88,6 +88,14 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=0 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
 
+      # Intraday re-exports the snapshot, which would leave the committed
+      # invariant report stale vs manifest.generatedAt — refresh it so the
+      # nightly Invariant gate never trips on an intraday manifest.
+      - name: Refresh snapshot invariant report
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY"
+
       - name: Snapshot verification
         if: env.SKIP_BUILD != 'true'
         shell: bash
@@ -161,6 +169,7 @@ jobs:
           test -e "data/deploy-snapshots/${DAY_KEY}/fixtures.json" && git add "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/value.json" && git add "data/deploy-snapshots/${DAY_KEY}/value.json"
+          test -e "data/deploy-snapshots/${DAY_KEY}/invariant-report.json" && git add "data/deploy-snapshots/${DAY_KEY}/invariant-report.json"
           test -d "data/deploy-snapshots/${DAY_KEY}/details" && git add "data/deploy-snapshots/${DAY_KEY}/details"
           test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
 

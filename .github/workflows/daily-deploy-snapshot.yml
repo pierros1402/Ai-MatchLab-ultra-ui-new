@@ -208,6 +208,16 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
 
+      # Re-run AFTER the final export so the committed report describes THIS
+      # manifest — the in-cycle run predates the geo rebuild + re-export above
+      # and was permanently stale vs manifest.generatedAt (audit P1). Auto-fixes
+      # it applies to detail files are staged with the day dir. Never blocks
+      # the commit; the post-commit "Invariant gate" turns the run red instead.
+      - name: Refresh snapshot invariant report
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY"
+
       - name: Snapshot fixture coverage floor
         if: env.SKIP_BUILD != 'true'
         continue-on-error: true
@@ -365,6 +375,14 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: node engine-v1/jobs/check-value-artifact-gate.js --date="${DAY_KEY}"
+
+      # Post-commit auditor: red run when the committed invariant report is
+      # stale vs the manifest, missing, or carries blocked issues (duplicate
+      # canonicalId, value-count mismatches). Data has already landed.
+      - name: Invariant gate
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
 
       - name: Skip Render redeploy for daily snapshot
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
