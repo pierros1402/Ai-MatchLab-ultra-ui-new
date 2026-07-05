@@ -81,6 +81,77 @@
   }
 
   
+  async function fetchValueComparison(dateYmd) {
+    const url = "data/value-comparison/" + encodeURIComponent(dateYmd) + ".json";
+
+    try {
+      console.log("[value-adapter] comparison fetch:start", url);
+
+      const r = await RAW_FETCH(url, {
+        cache: "no-store"
+      });
+
+      console.log("[value-adapter] comparison fetch:status", r.status, url);
+
+      if (r.status === 404) return null;
+
+      if (!r.ok) {
+        console.warn("[value-adapter] comparison fetch failed", r.status);
+        return null;
+      }
+
+      const data = await r.json();
+
+      if (data && data.ok && data.plans && data.plans.A && data.plans.B) {
+        return data;
+      }
+
+      console.warn("[value-adapter] comparison payload invalid", data);
+      return null;
+    } catch (err) {
+      console.warn("[value-adapter] comparison fetch error", err);
+      return null;
+    }
+  }
+
+  function comparisonRows(comparison, key) {
+    const rows = comparison && comparison.plans && comparison.plans[key] && comparison.plans[key].picks;
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  function comparisonPayloadFrom(comparison, date) {
+    const planA = comparisonRows(comparison, "A");
+    const planB = comparisonRows(comparison, "B");
+    const allRows = planA.concat(planB);
+
+    return {
+      ok: true,
+      source: "value-comparison",
+      mode: "plan-comparison",
+      date: comparison.date || date,
+      total: allRows.length,
+      picks: allRows,
+      items: allRows,
+      comparison: comparison
+    };
+  }
+
+  function emitValuePayload(payload) {
+    console.log("[value-adapter] emit payload", {
+      date: payload && payload.date,
+      source: payload && payload.source,
+      mode: payload && payload.mode,
+      total: payload && payload.total,
+      sample: payload && payload.picks && payload.picks[0] || null
+    });
+
+    window.__AIML_LAST_VALUE = payload;
+    window.__AIML_LAST_VALUE_AT = Date.now();
+
+    emit("value-picks:loaded", payload);
+    emit("value:update", payload);
+  }
+
   function toBand(x) {
     const n = Number(x);
     if (!Number.isFinite(n)) return "LOW";
@@ -229,6 +300,14 @@ function normalizePick(p) {
 
   async function refreshOnce(dateYmd) {
     const date = dateYmd || ymdTodayAthens();
+    const comparison = await fetchValueComparison(date);
+
+    if (comparison) {
+      const payload = comparisonPayloadFrom(comparison, date);
+      emitValuePayload(payload);
+      return;
+    }
+
     const data = await fetchValue(date);
 
     if (!data) return;
