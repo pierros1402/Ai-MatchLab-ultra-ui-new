@@ -32,6 +32,7 @@ import { normalizeTeamNewsSourceCoverageReportDay } from "./normalize-team-news-
 import { buildTeamNewsSourceEnrichmentTasksDay } from "./build-team-news-source-enrichment-tasks-day.js";
 import { applyTeamNewsSeedsDay } from "./apply-team-news-seeds-day.js";
 import { validateTeamNewsSeedsDay } from "./validate-team-news-seeds-day.js";
+import { acquireTeamNewsTransfermarktDay } from "./acquire-team-news-transfermarkt-day.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { buildValueCoverageReportDay } from "./build-value-coverage-report-day.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
@@ -854,6 +855,41 @@ export async function runDailyCycle(options = {}) {
       missingCount: teamNewsWorkset?.missingCount ?? 0,
       needsAcquisitionCount: teamNewsWorkset?.needsAcquisitionCount ?? 0
     });
+  }
+
+  // Deterministic team-news source BEFORE the research pipeline: one TM
+  // "suspensions & injuries" page per league fills most teams, so research
+  // tasks only target what TM has no competition page for.
+  console.log("[daily-cycle] team-news-transfermarkt:start", { dayKey });
+
+  try {
+    const teamNewsTm = await acquireTeamNewsTransfermarktDay(dayKey);
+
+    console.log("[daily-cycle] team-news-transfermarkt:done", {
+      ok: teamNewsTm?.ok,
+      dayKey: teamNewsTm?.dayKey,
+      totalTeams: teamNewsTm?.totalTeams ?? 0,
+      writtenCount: teamNewsTm?.writtenCount ?? 0,
+      withAbsencesCount: teamNewsTm?.withAbsencesCount ?? 0,
+      checkedEmptyCount: teamNewsTm?.checkedEmptyCount ?? 0,
+      unmatchedTeamCount: teamNewsTm?.unmatchedTeamCount ?? 0,
+      leaguesWithoutSource: teamNewsTm?.leaguesWithoutSource?.length ?? 0
+    });
+
+    if ((teamNewsTm?.writtenCount ?? 0) > 0) {
+      console.log("[daily-cycle] team-news-workset-refresh-after-tm:start", { dayKey });
+
+      teamNewsWorkset = await buildTeamNewsWorksetDay(dayKey);
+
+      console.log("[daily-cycle] team-news-workset-refresh-after-tm:done", {
+        ok: teamNewsWorkset?.ok,
+        teamsCount: teamNewsWorkset?.teamsCount ?? 0,
+        existingCount: teamNewsWorkset?.existingCount ?? 0,
+        missingCount: teamNewsWorkset?.missingCount ?? 0
+      });
+    }
+  } catch (err) {
+    console.error("[daily-cycle] team-news-transfermarkt:error", err?.message || err);
   }
 
   console.log("[daily-cycle] team-news-research-tasks:start", { dayKey });
