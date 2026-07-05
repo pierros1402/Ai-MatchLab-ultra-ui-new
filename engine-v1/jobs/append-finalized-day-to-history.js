@@ -1,19 +1,20 @@
 import fs from "fs/promises";
 import { getFixturesByDay } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
+import { currentSeason } from "../core/season.js";
 
 const HISTORY_DIR = ensureDir(resolveDataPath("history"));
 
+// Season attribution MUST match core/season.js (rollover = 1 August). This
+// used to flip on 1 July, so July days were appended into <nextSeason>.json
+// while every reader (report, indexes, priors) looked at the current-season
+// store — the two files split the same month between them.
 function resolveSeasonFromDay(dayKey) {
-  const [year, month] = String(dayKey).split("-").map(Number);
+  const [year, month, day] = String(dayKey).split("-").map(Number);
 
   if (!year || !month) return "unknown-season";
 
-  if (month >= 7) {
-    return `${year}-${year + 1}`;
-  }
-
-  return `${year - 1}-${year}`;
+  return currentSeason(new Date(Date.UTC(year, month - 1, day || 1)));
 }
 
 async function readJsonSafe(filePath, fallback) {
