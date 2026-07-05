@@ -6,8 +6,9 @@ import { discoverWindow } from "./discover-window.js";
 import { discoverActiveLeagues } from "./discover-active-leagues.js";
 import { monitorActiveLeagues } from "./monitor-active-leagues.js";
 import { finalizeDayIfSafe } from "./finalize-day.js";
-import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
+import { appendFinalizedDayToHistory, historyHasDay } from "./append-finalized-day-to-history.js";
 import { buildHistoryReport } from "./build-history-report.js";
+import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
 import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
@@ -1234,6 +1235,26 @@ export async function runDailyCycle(options = {}) {
       writtenLeagueCount: finalizeLiveStatusRefresh?.writtenLeagueCount ?? 0
     });
 
+    // Cross-source finalization: the ESPN refresh above can only terminalize
+    // leagues ESPN carries — Flashscore-only/odds-only leagues stayed
+    // STATUS_SCHEDULED forever, keeping readiness permanently unsafe and
+    // starving the season-history append. Upgrade open rows from the
+    // league-memory results truth store (unique-hit-or-skip, never fabricates).
+    console.log("[daily-cycle] finalize-results-truth-sweep:start", { finalizeDayKey });
+    try {
+      const truthSweep = applyResultsTruthToCanonicalDay(finalizeDayKey);
+      console.log("[daily-cycle] finalize-results-truth-sweep:done", {
+        ok: truthSweep?.ok,
+        dayKey: truthSweep?.dayKey,
+        leaguesScanned: truthSweep?.leaguesScanned ?? 0,
+        leaguesWritten: truthSweep?.leaguesWritten ?? 0,
+        rowsUpgraded: truthSweep?.rowsUpgraded ?? 0,
+        byLeague: truthSweep?.byLeague || {}
+      });
+    } catch (e) {
+      console.warn("[daily-cycle] finalize-results-truth-sweep:failed", String(e?.message || e));
+    }
+
     console.log("[daily-cycle] finalize-canonical-sync:start", { finalizeDayKey });
 
     const finalizeCanonicalSync = syncCanonicalFixturesToJsonDbDay(finalizeDayKey);
@@ -1343,6 +1364,53 @@ export async function runDailyCycle(options = {}) {
 
         console.warn("[daily-cycle] history-append:skipped", historyAppend);
         console.warn("[daily-cycle] indexes-rebuild:skipped", indexesRebuild);
+      }
+    }
+
+    // History catch-up: the append above only ever covers YESTERDAY, so any
+    // day the readiness gate skipped froze out of the season store forever
+    // (2026-07-03/04 were lost this way while their finals sat in
+    // league-memory/results). For each recent day missing from the store:
+    // sweep truth finals onto canonical, re-sync, re-audit, append when safe.
+    // Self-healing — an unsafe day is retried on following nights and stays
+    // visible as a gap in the derived history report until it lands.
+    const historyCatchUp = [];
+    for (let back = 2; back <= 7; back++) {
+      const day = shiftDay(dayKey, -back);
+      try {
+        if (await historyHasDay(day)) continue;
+
+        const sweep = applyResultsTruthToCanonicalDay(day);
+        syncCanonicalFixturesToJsonDbDay(day);
+        const readiness = auditFinalizationReadinessDay(day);
+
+        let append = null;
+        if (readiness?.safeToFinalizeStats) {
+          append = await appendFinalizedDayToHistory(day);
+        }
+
+        historyCatchUp.push({
+          day,
+          rowsUpgraded: sweep?.rowsUpgraded ?? 0,
+          open: readiness?.open ?? null,
+          safe: !!readiness?.safeToFinalizeStats,
+          appended: !!append?.ok,
+          appendedRows: append?.mergedRows ?? 0
+        });
+      } catch (e) {
+        historyCatchUp.push({ day, error: String(e?.message || e) });
+      }
+    }
+
+    if (historyCatchUp.length) {
+      console.log("[daily-cycle] history-catch-up:done", historyCatchUp);
+
+      if (historyCatchUp.some(x => x.appended)) {
+        try {
+          console.log("[daily-cycle] history-report:refresh", buildHistoryReport());
+        } catch (e) {
+          console.warn("[daily-cycle] history-report:refresh-failed", String(e?.message || e));
+        }
       }
     }
   }
