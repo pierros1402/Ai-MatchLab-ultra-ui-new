@@ -31,6 +31,7 @@
  */
 
 import { normalizeTeamTokens, normalizeTeamKey } from "./normalize.js";
+import { repairCanonicalIdDay } from "./canonical-id.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 
 const KICKOFF_TOLERANCE_MS = 6 * 60 * 60 * 1000;
@@ -136,6 +137,13 @@ export function dedupeLeagueDayFixtures(rows, { slug } = {}) {
   let list = (Array.isArray(rows) ? rows : []).filter(Boolean);
   const leagueSlug = String(slug || list[0]?.leagueSlug || "").trim();
   const removed = [];
+
+  // Repair cross-midnight day-token drift BEFORE deduping: a 23:00Z kickoff
+  // used to get a previous-day cid (…20260702 on a dayKey-2026-07-03 row), so
+  // the same match under a right-day cid from another source would never
+  // collapse — and details keyed by dayKey could not join. Runs at both choke
+  // points (canonical write + snapshot export read) since both call this.
+  list = list.map(repairCanonicalIdDay);
 
   // Pre-pass: identical canonicalId is the same match by definition, whatever
   // the source (e.g. an ESPN row keyed by numeric matchId next to a Flashscore

@@ -20,6 +20,7 @@
  */
 
 import { normalizeTeamKey } from "./normalize.js";
+import { athensDayFromKickoff } from "./daykey.js";
 
 // Strips dots and non-alphanumeric from league slug for use in ID
 function leagueToken(slug) {
@@ -29,15 +30,18 @@ function leagueToken(slug) {
 }
 
 function dayToken(dayKeyOrKickoff) {
-  // Prefer explicit dayKey (YYYY-MM-DD) over UTC kickoff to avoid timezone drift
+  // Prefer explicit dayKey (YYYY-MM-DD) over kickoff to avoid timezone drift
   // for matches after midnight UTC that belong to the Athens next-day slot.
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(dayKeyOrKickoff || ""))) {
     return dayKeyOrKickoff.replace(/-/g, "");
   }
-  // Fallback: parse as kickoffUtc
-  const d = new Date(dayKeyOrKickoff || 0);
-  if (Number.isNaN(d.getTime())) return "0";
-  return d.toISOString().slice(0, 10).replace(/-/g, "");
+  // Fallback: parse as kickoffUtc — but in ATHENS terms, matching the dayKey
+  // calendar. The old UTC slice here was the drift source: a 23:00Z kickoff
+  // produced a previous-day token (…20260702) for a dayKey-2026-07-03 match,
+  // so fixtures and details could not join.
+  const athensDay = athensDayFromKickoff(dayKeyOrKickoff);
+  if (athensDay) return athensDay.replace(/-/g, "");
+  return "0";
 }
 
 /**
@@ -81,4 +85,30 @@ export function parseCanonicalId(cid) {
 
 export function isCanonicalId(value) {
   return typeof value === "string" && value.startsWith("cid_") && parseCanonicalId(value) !== null;
+}
+
+/**
+ * Repair a row whose stored canonicalId's day token disagrees with the row's
+ * own dayKey (cross-midnight UTC drift, produced by the old UTC fallback in
+ * dayToken). The id is rebuilt by swapping ONLY the day token — team/league
+ * tokens are kept byte-identical (re-normalizing names could change them) —
+ * and the old id is preserved as legacyCanonicalId for anything still keyed
+ * on it. Rows with no mismatch are returned untouched (same reference).
+ */
+export function repairCanonicalIdDay(row) {
+  const cid = String(row?.canonicalId || "");
+  const dayKey = String(row?.dayKey || "");
+  if (!cid.startsWith("cid_") || !/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) return row;
+
+  const parsed = parseCanonicalId(cid);
+  if (!parsed) return row;
+
+  const want = dayKey.replace(/-/g, "");
+  if (parsed.day === want) return row;
+
+  return {
+    ...row,
+    canonicalId: cid.slice(0, cid.length - parsed.day.length) + want,
+    legacyCanonicalId: cid
+  };
 }
