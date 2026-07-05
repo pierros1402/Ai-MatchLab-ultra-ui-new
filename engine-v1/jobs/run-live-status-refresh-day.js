@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 
 import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
+import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
 function normalizeText(value) {
@@ -183,6 +184,7 @@ function normalizeSourceRows(events, slug, dayKey) {
     byId.set(id, {
       matchId: normalized.matchId,
       matchKey: normalized.matchKey,
+      canonicalId: normalized.canonicalId || null,
       source: normalized.source || "espn_direct_league_status",
       sourceId: normalized.sourceId || normalized.sourceMatchId || normalized.matchId,
       sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
@@ -274,6 +276,7 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     sourceRows: 0,
     matchedRows: 0,
     changedRows: 0,
+    appendedRows: 0,
     writtenLeagueCount: 0,
     byLeague: [],
     errors: [],
@@ -295,6 +298,7 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       sourceRows: 0,
       matchedRows: 0,
       changedRows: 0,
+      appendedRows: 0,
       written: false,
       error: null
     };
@@ -314,12 +318,14 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
 
       const current = readCanonicalLeague(safeDayKey, slug);
       let changed = false;
+      const matchedIds = new Set();
 
-      const nextFixtures = (Array.isArray(current.fixtures) ? current.fixtures : []).map(row => {
+      let nextFixtures = (Array.isArray(current.fixtures) ? current.fixtures : []).map(row => {
         const id = stableFixtureId(row);
         const incoming = id ? sourceById.get(id) : null;
         if (!incoming) return row;
 
+        matchedIds.add(id);
         leagueStats.matchedRows++;
         stats.matchedRows++;
 
@@ -338,7 +344,26 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         return merged;
       });
 
+      // Targeted late-fixture acquisition (intraday): the scoreboard was
+      // already fetched for the status refresh — rows it lists for THIS day
+      // that canonical lacks are late-added fixtures the status-only intraday
+      // used to miss until the nightly full pass. Zero extra fetches; the
+      // dedupe below collapses cross-source name variants so an ESPN row
+      // never duplicates an existing Flashscore row of the same match.
+      if (options.appendNewFixtures) {
+        for (const [id, row] of sourceById) {
+          if (matchedIds.has(id)) continue;
+          nextFixtures.push({ ...row, firstSeenAt: row.lastSeenAt });
+          leagueStats.appendedRows++;
+          stats.appendedRows++;
+          changed = true;
+        }
+      }
+
       if (changed) {
+        const deduped = dedupeLeagueDayFixtures(nextFixtures, { slug });
+        nextFixtures = deduped.rows;
+
         writeCanonicalLeague(safeDayKey, slug, nextFixtures, {
           acquisitionProvider: "espn_direct_league_status",
           requestedLeagueSlug: slug,
