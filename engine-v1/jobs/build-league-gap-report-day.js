@@ -30,6 +30,10 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
 function log(...a) { console.log("[league-gap-report]", ...a); }
 
+function bump(map, key) {
+  map.set(key, (map.get(key) || 0) + 1);
+}
+
 function readJsonSafe(file, fallback = null) {
   try {
     if (!fs.existsSync(file)) return fallback;
@@ -132,6 +136,15 @@ function snapshotStateForDay(dayKey) {
   const detailCounts = new Map();
   const detailValueCounts = new Map();
   const teamNewsReadyCounts = new Map();
+  // Travel and player-usage self-report a graded coverage state. Track the
+  // full ready/partial/empty spread instead of "a block exists" — the same
+  // "existence ≠ usable" honesty the standings/team-news metrics enforce.
+  const travelReadyCounts = new Map();
+  const travelPartialCounts = new Map();
+  const travelEmptyCounts = new Map();
+  const playerUsageReadyCounts = new Map();
+  const playerUsagePartialCounts = new Map();
+  const playerUsageEmptyCounts = new Map();
   const detailsDir = path.join(root, "details");
   if (fs.existsSync(detailsDir)) {
     for (const file of fs.readdirSync(detailsDir).filter(x => x.endsWith(".json"))) {
@@ -151,10 +164,32 @@ function snapshotStateForDay(dayKey) {
       const tnStatus = String(detail?.teamNews?.status || "").toLowerCase();
       const tnUsable = tnStatus && !["empty", "missing", "unavailable", "error", "stale", "rejected"].includes(tnStatus);
       if (tnUsable) teamNewsReadyCounts.set(slug, (teamNewsReadyCounts.get(slug) || 0) + 1);
+
+      // Travel: the block already self-classifies ready/partial/empty
+      // (ready = both venues geolocated, partial = one, empty = neither).
+      const travelStatus = String(detail?.travel?.status || "").toLowerCase();
+      if (travelStatus === "ready") bump(travelReadyCounts, slug);
+      else if (travelStatus === "partial") bump(travelPartialCounts, slug);
+      else bump(travelEmptyCounts, slug);
+
+      // Player-usage is resolved per side; a match is fully usable only when
+      // BOTH sides produced real usage. One side = partial, neither = empty.
+      const puUsable = (side) => {
+        const s = String(detail?.playerUsageIntel?.[side]?.status || "").toLowerCase();
+        return Boolean(s) && !["unavailable", "empty", "missing", "error", "stale", "rejected", "none"].includes(s);
+      };
+      const puSides = (puUsable("home") ? 1 : 0) + (puUsable("away") ? 1 : 0);
+      if (puSides === 2) bump(playerUsageReadyCounts, slug);
+      else if (puSides === 1) bump(playerUsagePartialCounts, slug);
+      else bump(playerUsageEmptyCounts, slug);
     }
   }
 
-  return { fixtureCounts, valueCounts, detailCounts, detailValueCounts, teamNewsReadyCounts };
+  return {
+    fixtureCounts, valueCounts, detailCounts, detailValueCounts, teamNewsReadyCounts,
+    travelReadyCounts, travelPartialCounts, travelEmptyCounts,
+    playerUsageReadyCounts, playerUsagePartialCounts, playerUsageEmptyCounts
+  };
 }
 
 // A standings file counts as READY only when it actually holds table rows.
@@ -265,6 +300,12 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       detailsFiles: snapshot.detailCounts.get(slug) || 0,
       detailsWithValue: snapshot.detailValueCounts.get(slug) || 0,
       detailsWithTeamNews: snapshot.teamNewsReadyCounts.get(slug) || 0,
+      travelReady: snapshot.travelReadyCounts.get(slug) || 0,
+      travelPartial: snapshot.travelPartialCounts.get(slug) || 0,
+      travelEmpty: snapshot.travelEmptyCounts.get(slug) || 0,
+      playerUsageReady: snapshot.playerUsageReadyCounts.get(slug) || 0,
+      playerUsagePartial: snapshot.playerUsagePartialCounts.get(slug) || 0,
+      playerUsageEmpty: snapshot.playerUsageEmptyCounts.get(slug) || 0,
       valuePicks: snapshot.valueCounts.get(slug) || 0,
       standingsReady: standings.standingsReady,
       standingsRows: standings.standingsRows,
@@ -288,6 +329,10 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
   for (const row of rows) {
     byStatus[row.status] = (byStatus[row.status] || 0) + 1;
   }
+
+  // Leagues actually playing today — the universe that matters for today's
+  // product, reused by the honest travel/player-usage coverage rollups.
+  const activeRows = rows.filter(r => r.canonicalFixtures > 0);
 
   const broken = rows
     .filter(row => row.status === "BROKEN")
@@ -324,6 +369,18 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
         .filter(r => r.canonicalFixtures > 0 && !r.standingsReady)
         .map(r => r.slug),
       activeTeamNewsReady: rows.filter(r => r.canonicalFixtures > 0 && r.detailsWithTeamNews > 0).length,
+      // Detail-file coverage across leagues actually playing today, graded
+      // honestly: "empty" is a real gap, not silently folded into "covered".
+      travelCoverage: {
+        ready: activeRows.reduce((s, r) => s + r.travelReady, 0),
+        partial: activeRows.reduce((s, r) => s + r.travelPartial, 0),
+        empty: activeRows.reduce((s, r) => s + r.travelEmpty, 0)
+      },
+      playerUsageCoverage: {
+        ready: activeRows.reduce((s, r) => s + r.playerUsageReady, 0),
+        partial: activeRows.reduce((s, r) => s + r.playerUsagePartial, 0),
+        empty: activeRows.reduce((s, r) => s + r.playerUsageEmpty, 0)
+      },
       byStatus
     },
     broken,
