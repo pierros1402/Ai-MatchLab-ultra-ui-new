@@ -97,6 +97,10 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
   const manifest  = readJsonSafe(manifestFile);
   const fixtureList = Array.isArray(fixtures?.fixtures) ? fixtures.fixtures : [];
 
+  // Which manifest this report describes — the gate compares this (and
+  // checkedAt) against the committed manifest to catch a stale report.
+  report.manifestGeneratedAt = manifest?.generatedAt || null;
+
   // Expose the actual pick count so the health UI can tell "integrity OK" apart
   // from "0 picks generated" (valueSafe only measures count-integrity, not that
   // picks exist — a SAFE pipeline can still legitimately have 0 picks).
@@ -216,6 +220,28 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
     }
   }
 
+  // ── CHECK 6: duplicate canonicalId in fixtures.json ───────────────────────
+  // Same cid twice means the dedup choke points failed — details/value join
+  // ambiguously and the UI double-counts the match. Blocked, never auto-fixed
+  // here (the fix belongs in fixture-dedup, not in a report-time guess).
+  const cidCounts = new Map();
+  for (const fx of fixtureList) {
+    const cid = String(fx?.canonicalId || "").trim();
+    if (!cid) continue;
+    cidCounts.set(cid, (cidCounts.get(cid) || 0) + 1);
+  }
+  const duplicateCids = [...cidCounts.entries()]
+    .filter(([, count]) => count > 1)
+    .map(([cid, count]) => ({ cid, count }));
+
+  if (duplicateCids.length > 0) {
+    report.blocked.push({
+      type: "duplicate_canonical_id",
+      duplicates: duplicateCids
+    });
+    ciError(`[blocked] ${duplicateCids.length} duplicate canonicalId(s) in fixtures.json: ${duplicateCids.map(d => d.cid).join(", ")}`);
+  }
+
   // ── Finalize ─────────────────────────────────────────────────────────────
   if (report.blocked.length > 0) {
     report.ok = false;
@@ -236,9 +262,57 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
   return report;
 }
 
+/**
+ * Read-only gate: verifies the COMMITTED report is fresh for the committed
+ * manifest and carries no blocked issues, without re-running the checks.
+ * Runs post-commit in the workflow (data has landed; a failure turns the run
+ * red for a human) — the audit found the report permanently stale because the
+ * in-cycle check predates the geo rebuild + final re-export.
+ * Exit codes: 0 ok · 1 manifest missing · 2 report missing · 3 stale · 4 blocked.
+ */
+export function gateSnapshotInvariants(dayKey = athensDayKey()) {
+  const snapshotDir = resolveDataPath("deploy-snapshots", dayKey);
+  const report = readJsonSafe(path.join(snapshotDir, "invariant-report.json"));
+  const manifest = readJsonSafe(path.join(snapshotDir, "manifest.json"));
+
+  if (!manifest) return { ok: false, code: 1, reason: "manifest_missing", dayKey };
+  if (!report) return { ok: false, code: 2, reason: "invariant_report_missing", dayKey };
+
+  const checkedAt = Date.parse(report.checkedAt || "");
+  const generatedAt = Date.parse(manifest.generatedAt || "");
+
+  if (!Number.isFinite(checkedAt) || (Number.isFinite(generatedAt) && checkedAt < generatedAt)) {
+    return {
+      ok: false, code: 3, reason: "invariant_report_stale", dayKey,
+      checkedAt: report.checkedAt || null,
+      manifestGeneratedAt: manifest.generatedAt || null
+    };
+  }
+
+  const blockedCount = Array.isArray(report.blocked) ? report.blocked.length : 0;
+  if (blockedCount > 0) {
+    return { ok: false, code: 4, reason: "blocked_issues", dayKey, blocked: report.blocked };
+  }
+
+  return {
+    ok: true, code: 0, dayKey,
+    checkedAt: report.checkedAt,
+    manifestGeneratedAt: manifest.generatedAt || null,
+    valueSafe: report.valueSafe !== false,
+    warnings: Array.isArray(report.warnings) ? report.warnings.length : 0
+  };
+}
+
 const isCli = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isCli) {
   const arg = process.argv.slice(2).find(a => /^\d{4}-\d{2}-\d{2}$/.test(a)) || athensDayKey();
+
+  if (process.argv.includes("--gate")) {
+    const r = gateSnapshotInvariants(arg);
+    console.log(JSON.stringify(r, null, 2));
+    process.exit(r.code);
+  }
+
   runSnapshotInvariantCheck(arg).then(r => {
     console.log(JSON.stringify(r, null, 2));
     if (!r.ok) process.exit(1);
