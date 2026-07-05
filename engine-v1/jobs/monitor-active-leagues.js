@@ -95,6 +95,7 @@ export async function monitorActiveLeagues(dayKey = athensDayKey()) {
         source: normalized.source,
         sourceId: normalized.sourceId,
         matchId: normalized.matchId,
+        canonicalId: normalized.canonicalId || null,
         leagueSlug: normalized.leagueSlug,
         leagueName: normalized.leagueName,
         homeTeam: normalized.homeTeam,
