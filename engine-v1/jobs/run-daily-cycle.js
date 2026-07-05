@@ -6,7 +6,7 @@ import { discoverWindow } from "./discover-window.js";
 import { discoverActiveLeagues } from "./discover-active-leagues.js";
 import { monitorActiveLeagues } from "./monitor-active-leagues.js";
 import { finalizeDayIfSafe } from "./finalize-day.js";
-import { appendFinalizedDayToHistory, historyHasDay } from "./append-finalized-day-to-history.js";
+import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
 import { buildHistoryReport } from "./build-history-report.js";
 import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
 import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
@@ -1367,33 +1367,38 @@ export async function runDailyCycle(options = {}) {
       }
     }
 
-    // History catch-up: the append above only ever covers YESTERDAY, so any
-    // day the readiness gate skipped froze out of the season store forever
-    // (2026-07-03/04 were lost this way while their finals sat in
-    // league-memory/results). For each recent day missing from the store:
-    // sweep truth finals onto canonical, re-sync, re-audit, append when safe.
-    // Self-healing — an unsafe day is retried on following nights and stays
-    // visible as a gap in the derived history report until it lands.
+    // History catch-up: the append above only ever covers YESTERDAY, and its
+    // open===0 gate froze whole days out of the season store forever when a
+    // single row never terminalized (2026-07-03/04 were lost this way while
+    // their finals sat in league-memory/results). For each recent day: sweep
+    // truth finals onto canonical, re-sync, and MERGE what is terminal into
+    // the store — appendFinalizedDayToHistory merges by id, so re-running
+    // every night is additive: late finals (cross-midnight rows whose result
+    // lands under the next day) join on a later pass, and a postponed match
+    // can no longer hold a hundred real finals hostage. Gates kept: no
+    // terminal row without a score, no duplicate ids — never fabricates.
     const historyCatchUp = [];
     for (let back = 2; back <= 7; back++) {
       const day = shiftDay(dayKey, -back);
       try {
-        if (await historyHasDay(day)) continue;
-
         const sweep = applyResultsTruthToCanonicalDay(day);
         syncCanonicalFixturesToJsonDbDay(day);
         const readiness = auditFinalizationReadinessDay(day);
 
         let append = null;
-        if (readiness?.safeToFinalizeStats) {
+        if (
+          (readiness?.terminal ?? 0) > 0 &&
+          (readiness?.terminalMissingScore ?? 0) === 0 &&
+          (readiness?.duplicateIdCount ?? 0) === 0
+        ) {
           append = await appendFinalizedDayToHistory(day);
         }
 
         historyCatchUp.push({
           day,
           rowsUpgraded: sweep?.rowsUpgraded ?? 0,
+          terminal: readiness?.terminal ?? 0,
           open: readiness?.open ?? null,
-          safe: !!readiness?.safeToFinalizeStats,
           appended: !!append?.ok,
           appendedRows: append?.mergedRows ?? 0
         });
