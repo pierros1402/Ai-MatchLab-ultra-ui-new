@@ -1189,6 +1189,9 @@ export async function runDailyCycle(options = {}) {
     console.log("[daily-cycle] league-gap-report:done", {
       byStatus: gapReport?.summary?.byStatus,
       lostExpectedMatches: gapReport?.summary?.lostExpectedMatches,
+      activeTeamNewsReady: gapReport?.summary?.activeTeamNewsReady,
+      travelCoverage: gapReport?.summary?.travelCoverage,
+      playerUsageCoverage: gapReport?.summary?.playerUsageCoverage,
       broken: (gapReport?.broken || []).map(b => b.slug)
     });
   } catch (e) {
