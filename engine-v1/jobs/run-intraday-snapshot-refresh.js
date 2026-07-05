@@ -190,10 +190,15 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
 
   console.log("[intraday-snapshot-refresh] live-status-refresh:start", { dayKey: safeDayKey });
   const { runLiveStatusRefreshDay } = await import("./run-live-status-refresh-day.js");
-  const liveStats = await runLiveStatusRefreshDay(safeDayKey);
+  // appendNewFixtures: the status fetch already carries the league's full
+  // day slate — same-day rows canonical lacks (late-added fixtures) join here
+  // instead of waiting for the nightly full pass. Intraday-only; the finalize
+  // path keeps its status-only semantics.
+  const liveStats = await runLiveStatusRefreshDay(safeDayKey, { appendNewFixtures: true });
   console.log("[intraday-snapshot-refresh] live-status-refresh:done", {
     dayKey: safeDayKey,
     changedRows: liveStats.changedRows,
+    appendedRows: liveStats.appendedRows ?? 0,
     changedFixtures: liveStats.changedFixtures?.length ?? 0
   });
 
