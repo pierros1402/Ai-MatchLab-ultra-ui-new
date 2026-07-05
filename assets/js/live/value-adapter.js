@@ -132,7 +132,7 @@ function passesStrictPanelPolicy({ marketKey, pick, score, confidence, band }) {
   }
 
   if (marketKey === "OU25") {
-    return label.includes("OVER 2.5") && score >= 0.75 && confidence >= 0.71;
+    return label.includes("OVER 2.5") && score >= 0.68 && confidence >= 0.66;
   }
 
   if (marketKey === "OU35") {
