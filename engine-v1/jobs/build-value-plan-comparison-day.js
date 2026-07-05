@@ -1,0 +1,396 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT = path.resolve(__dirname, "..", "..");
+
+function dataPath(...parts) {
+  return path.join(ROOT, "data", ...parts);
+}
+
+function readJsonSafe(file, fallback = null) {
+  try {
+    if (!fs.existsSync(file)) return fallback;
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJsonPretty(file, payload) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+function clean(value) {
+  return String(value ?? "").trim();
+}
+
+function rowsFromPayload(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  for (const key of ["picks", "valuePicks", "rows", "items"]) {
+    if (Array.isArray(payload[key])) return payload[key];
+  }
+  return [];
+}
+
+function rowId(row) {
+  return clean(row?.matchId || row?.id || row?.fixtureId || row?.eventId || row?.gameId);
+}
+
+function homeName(row) {
+  return clean(row?.homeTeam || row?.home || row?.homeName || row?.teams?.home?.name || row?.home?.name);
+}
+
+function awayName(row) {
+  return clean(row?.awayTeam || row?.away || row?.awayName || row?.teams?.away?.name || row?.away?.name);
+}
+
+function normalizeMarket(value) {
+  return clean(value).toUpperCase();
+}
+
+function normalizeSelection(row) {
+  return clean(row?.pick || row?.selection || row?.prediction || row?.side || row?.outcome).toUpperCase();
+}
+
+function decimalOdds(row) {
+  const keys = [
+    "odds",
+    "price",
+    "decimalOdds",
+    "displayOdds",
+    "bookOdds",
+    "marketOdds",
+    "selectionOdds",
+    "bestOdds"
+  ];
+
+  for (const key of keys) {
+    const value = row?.[key];
+    if (typeof value === "number" && Number.isFinite(value) && value > 1) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value.replace(",", "."));
+      if (Number.isFinite(parsed) && parsed > 1) return parsed;
+    }
+    if (value && typeof value === "object") {
+      for (const nestedKey of ["decimal", "value", "odds", "price"]) {
+        const nested = value[nestedKey];
+        if (typeof nested === "number" && Number.isFinite(nested) && nested > 1) return nested;
+        if (typeof nested === "string") {
+          const parsed = Number(nested.replace(",", "."));
+          if (Number.isFinite(parsed) && parsed > 1) return parsed;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function evaluatePickResult(pick, finalResult) {
+  const home = Number(finalResult.homeScore ?? finalResult.scoreHome ?? finalResult?.finalScore?.homeScore);
+  const away = Number(finalResult.awayScore ?? finalResult.scoreAway ?? finalResult?.finalScore?.awayScore);
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+
+  const market = normalizeMarket(pick?.market || pick?.marketName || pick?.type);
+  const selection = normalizeSelection(pick);
+  const total = home + away;
+
+  const compactMarket = market.replace(/[^A-Z0-9]/gu, "");
+  const compactSelection = selection.replace(/[^A-Z0-9.]/gu, "");
+
+  const compactOuMatch = compactMarket.match(/^OU([0-9]{2})$/u);
+  if (compactOuMatch) {
+    const line = Number(compactOuMatch[1]) / 10;
+    if (compactSelection === "OVER" || compactSelection.startsWith("OVER")) return total > line;
+    if (compactSelection === "UNDER" || compactSelection.startsWith("UNDER")) return total < line;
+  }
+
+  if (compactMarket === "BTTS") {
+    const bothTeamsScored = home > 0 && away > 0;
+    if (compactSelection === "YES") return bothTeamsScored;
+    if (compactSelection === "NO") return !bothTeamsScored;
+  }
+
+  if (market.includes("OVER") || market.includes("UNDER")) {
+    const lineMatch = market.match(/([0-9]+(?:\.[0-9]+)?)/u) || selection.match(/([0-9]+(?:\.[0-9]+)?)/u);
+    const line = lineMatch ? Number(lineMatch[1]) : null;
+
+    if (!Number.isFinite(line)) return null;
+    if (market.includes("OVER") || selection.includes("OVER")) return total > line;
+    if (market.includes("UNDER") || selection.includes("UNDER")) return total < line;
+  }
+
+  if (market === "BTTS" || market.includes("BOTH TEAMS")) {
+    if (selection === "YES" || selection === "Y" || selection.includes("YES")) return home > 0 && away > 0;
+    if (selection === "NO" || selection === "N" || selection.includes("NO")) return !(home > 0 && away > 0);
+    return null;
+  }
+
+  if (market === "1X2" || market.includes("MATCH WINNER") || market.includes("FULL TIME RESULT")) {
+    if (selection === "HOME" || selection === "1") return home > away;
+    if (selection === "AWAY" || selection === "2") return away > home;
+    if (selection === "DRAW" || selection === "X") return home === away;
+    return null;
+  }
+
+  return null;
+}
+
+function loadFixtures(dayKey) {
+  const file = dataPath("deploy-snapshots", dayKey, "fixtures.json");
+  const rows = rowsFromPayload(readJsonSafe(file, null));
+  const byId = new Map();
+
+  for (const row of rows) {
+    const id = rowId(row);
+    if (id) byId.set(id, row);
+  }
+
+  return { file, rows, byId };
+}
+
+function loadFinalResults(dayKey) {
+  const dir = dataPath("final-results", dayKey);
+  const rows = [];
+
+  if (fs.existsSync(dir)) {
+    for (const name of fs.readdirSync(dir)) {
+      if (!name.endsWith(".json")) continue;
+      const row = readJsonSafe(path.join(dir, name), null);
+      if (!row) continue;
+      const id = rowId(row);
+      if (!id) continue;
+      rows.push(row);
+    }
+  }
+
+  const byId = new Map(rows.map(row => [rowId(row), row]));
+  return { dir, rows, byId };
+}
+
+function enrichPick(row, fixture, finalResult, planId) {
+  const id = rowId(row);
+  const odds = decimalOdds(row);
+  const win = finalResult ? evaluatePickResult(row, finalResult) : null;
+
+  let settlement = "UNRESOLVED";
+  if (finalResult && win === true) settlement = "WIN";
+  if (finalResult && win === false) settlement = "LOSS";
+  if (finalResult && win === null) settlement = "UNSUPPORTED";
+
+  return {
+    planId,
+    matchId: id,
+    country: clean(row?.country || fixture?.country || finalResult?.country),
+    leagueSlug: clean(row?.leagueSlug || row?.league || fixture?.leagueSlug || fixture?.league || finalResult?.leagueSlug),
+    leagueName: clean(row?.leagueName || row?.competitionName || fixture?.leagueName || fixture?.competitionName || finalResult?.leagueName || finalResult?.competitionName),
+    homeTeam: homeName(row) || homeName(fixture),
+    awayTeam: awayName(row) || awayName(fixture),
+    market: clean(row?.market || row?.marketName || row?.type),
+    pick: clean(row?.pick || row?.selection || row?.prediction || row?.side || row?.outcome),
+    band: row?.band ?? null,
+    score: row?.score ?? null,
+    confidence: row?.confidence ?? null,
+    readiness: row?.readiness ?? null,
+    oddsDecimal: odds,
+    oddsUse: odds ? "display_settlement_only" : null,
+    finalScore: finalResult
+      ? {
+          homeScore: Number(finalResult.homeScore ?? finalResult.scoreHome ?? finalResult?.finalScore?.homeScore),
+          awayScore: Number(finalResult.awayScore ?? finalResult.scoreAway ?? finalResult?.finalScore?.awayScore),
+          scoreKey: clean(finalResult.scoreKey || finalResult?.finalScore?.scoreKey)
+        }
+      : null,
+    result: settlement
+  };
+}
+
+function summarize(rows) {
+  const picks = rows.length;
+  const uniqueMatches = new Set(rows.map(row => row.matchId).filter(Boolean)).size;
+  const settledRows = rows.filter(row => row.result === "WIN" || row.result === "LOSS");
+  const wins = rows.filter(row => row.result === "WIN").length;
+  const losses = rows.filter(row => row.result === "LOSS").length;
+  const unresolved = rows.filter(row => row.result === "UNRESOLVED").length;
+  const unsupported = rows.filter(row => row.result === "UNSUPPORTED").length;
+  const oddsRows = settledRows.filter(row => Number.isFinite(row.oddsDecimal) && row.oddsDecimal > 1);
+
+  const totalStake = oddsRows.length;
+  const totalReturn = oddsRows.reduce((sum, row) => sum + (row.result === "WIN" ? row.oddsDecimal : 0), 0);
+  const profit = oddsRows.length ? totalReturn - totalStake : null;
+
+  return {
+    picks,
+    uniqueMatches,
+    settled: settledRows.length,
+    wins,
+    losses,
+    unresolved,
+    unsupported,
+    hitRate: settledRows.length ? Number((wins / settledRows.length).toFixed(4)) : null,
+    oddsAvailable: oddsRows.length,
+    averageOdds: oddsRows.length
+      ? Number((oddsRows.reduce((sum, row) => sum + row.oddsDecimal, 0) / oddsRows.length).toFixed(4))
+      : null,
+    totalStake: oddsRows.length ? totalStake : null,
+    totalReturn: oddsRows.length ? Number(totalReturn.toFixed(4)) : null,
+    profit: profit === null ? null : Number(profit.toFixed(4)),
+    roi: profit === null ? null : Number((profit / totalStake).toFixed(4))
+  };
+}
+
+function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById }) {
+  const rawRows = rowsFromPayload(payload);
+
+  const picks = rawRows.map(row => {
+    const id = rowId(row);
+    return enrichPick(row, fixturesById.get(id), finalById.get(id), planId);
+  });
+
+  return {
+    id: planId,
+    label,
+    sourcePath,
+    policyVersion: payload?.policyVersion || null,
+    outputMode: payload?.outputMode || null,
+    count: picks.length,
+    summary: summarize(picks),
+    picks
+  };
+}
+
+function parseArgs(argv) {
+  const out = {
+    date: "",
+    write: false,
+    planA: "",
+    planB: "",
+    output: ""
+  };
+
+  for (const arg of argv) {
+    if (/^\d{4}-\d{2}-\d{2}$/u.test(arg)) out.date = arg;
+    else if (arg.startsWith("--date=")) out.date = arg.slice("--date=".length);
+    else if (arg === "--write") out.write = true;
+    else if (arg.startsWith("--plan-a=")) out.planA = arg.slice("--plan-a=".length);
+    else if (arg.startsWith("--plan-b=")) out.planB = arg.slice("--plan-b=".length);
+    else if (arg.startsWith("--output=")) out.output = arg.slice("--output=".length);
+  }
+
+  return out;
+}
+
+export function buildValuePlanComparisonDay(dayKey, options = {}) {
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(clean(dayKey))) {
+    return { ok: false, reason: "invalid_day_key", dayKey };
+  }
+
+  const planAPath = path.resolve(options.planA || dataPath("deploy-snapshots", dayKey, "value.json"));
+  const planBPath = path.resolve(options.planB || dataPath("value-plans", dayKey, "plan-b.json"));
+  const outputPath = path.resolve(options.output || dataPath("value-comparison", `${dayKey}.json`));
+
+  const planAPayload = readJsonSafe(planAPath, null);
+  const planBPayload = readJsonSafe(planBPath, null);
+
+  if (!planAPayload) return { ok: false, reason: "missing_plan_a", planAPath };
+  if (!planBPayload) return { ok: false, reason: "missing_plan_b", planBPath };
+
+  const fixtures = loadFixtures(dayKey);
+  const finalResults = loadFinalResults(dayKey);
+
+  const planA = buildPlan({
+    planId: "plan-a",
+    label: "Plan A - current UI value",
+    sourcePath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
+    payload: planAPayload,
+    fixturesById: fixtures.byId,
+    finalById: finalResults.byId
+  });
+
+  const planB = buildPlan({
+    planId: "plan-b",
+    label: "Plan B - strict value-policy-v2.3 observation",
+    sourcePath: path.relative(ROOT, planBPath).replaceAll("\\", "/"),
+    payload: planBPayload,
+    fixturesById: fixtures.byId,
+    finalById: finalResults.byId
+  });
+
+  const comparison = {
+    pickDeltaPlanBMinusPlanA: planB.summary.picks - planA.summary.picks,
+    settledDeltaPlanBMinusPlanA: planB.summary.settled - planA.summary.settled,
+    winsDeltaPlanBMinusPlanA: planB.summary.wins - planA.summary.wins,
+    lossesDeltaPlanBMinusPlanA: planB.summary.losses - planA.summary.losses,
+    hitRateDeltaPlanBMinusPlanA: planA.summary.hitRate === null || planB.summary.hitRate === null
+      ? null
+      : Number((planB.summary.hitRate - planA.summary.hitRate).toFixed(4)),
+    roiDeltaPlanBMinusPlanA: planA.summary.roi === null || planB.summary.roi === null
+      ? null
+      : Number((planB.summary.roi - planA.summary.roi).toFixed(4))
+  };
+
+  const payload = {
+    ok: true,
+    schema: "ai-matchlab.value-plan-comparison.v1",
+    date: dayKey,
+    generatedAt: new Date().toISOString(),
+    sourceContract: {
+      planA: "production_ui_value_snapshot_artifact",
+      planB: "strict_value_policy_v2.3_observation_artifact",
+      finalTruth: "verified_final_results",
+      deploySnapshotUsedAsFinalTruth: false,
+      realBookmakerOddsUsedForValue: false,
+      oddsUse: "display_settlement_only_when_present"
+    },
+    inputs: {
+      fixturesPath: path.relative(ROOT, fixtures.file).replaceAll("\\", "/"),
+      finalResultsDir: path.relative(ROOT, finalResults.dir).replaceAll("\\", "/"),
+      verifiedFinalResults: finalResults.rows.length,
+      outputPath: path.relative(ROOT, outputPath).replaceAll("\\", "/")
+    },
+    plans: {
+      A: planA,
+      B: planB
+    },
+    comparison
+  };
+
+  if (options.write === true) {
+    writeJsonPretty(outputPath, payload);
+  }
+
+  return payload;
+}
+
+const isCli =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isCli) {
+  const args = parseArgs(process.argv.slice(2));
+
+  if (!args.date) {
+    console.error(JSON.stringify({
+      ok: false,
+      reason: "missing_date",
+      usage: "node engine-v1/jobs/build-value-plan-comparison-day.js --date=YYYY-MM-DD [--write]"
+    }, null, 2));
+    process.exitCode = 2;
+  } else {
+    const result = buildValuePlanComparisonDay(args.date, args);
+    console.log(JSON.stringify({
+      ok: result.ok,
+      date: result.date,
+      outputPath: result.inputs?.outputPath || null,
+      planA: result.plans?.A?.summary || null,
+      planB: result.plans?.B?.summary || null,
+      comparison: result.comparison || null
+    }, null, 2));
+    if (!result.ok) process.exitCode = 1;
+  }
+}
