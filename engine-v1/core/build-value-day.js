@@ -45,7 +45,7 @@ function readDeploySnapshotFixturesByDay(dayKey) {
 }
 
 
-const STRICT_VALUE_POLICY_VERSION = "statistical-value-policy-v2.0";
+const STRICT_VALUE_POLICY_VERSION = "statistical-value-policy-v2.2";
 
 const BAND_RANK = Object.freeze({ HIGH: 3, MEDIUM: 2, LOW: 1 });
 
@@ -54,7 +54,7 @@ const MARKET_PRIORITY = Object.freeze({
   "Over / Under 2.5": 88,
   "BTTS": 74,
   "Over / Under 3.5": 68,
-  "Double Chance": 62,
+  "Double Chance": 35,
   "Over / Under 1.5": 55
 });
 
@@ -504,82 +504,26 @@ function expandValueMarkets(match, value) {
       }
     }
 
-    const dc1xScore = adjusted1X2.home + adjusted1X2.draw;
-    const dcx2Score = adjusted1X2.draw + adjusted1X2.away;
-    const dc12Score = adjusted1X2.home + adjusted1X2.away;
-
-    if (
-      adjusted1X2.away <= 0.22 &&
-      adjusted1X2.home >= 0.52 &&
-      adjusted1X2.draw >= 0.20 &&
-      dc1xScore >= 0.78 &&
-      effectiveConfidence >= 0.70 &&
-      readiness >= 0.72
-    ) {
-      pushPick({
-        market: "DC",
-        marketName: "Double Chance",
-        pick: "1X",
-        score: dc1xScore,
-        band: dc1xScore >= 0.84 && effectiveConfidence >= 0.74 && readiness >= 0.78 ? "HIGH" : "MEDIUM",
-        policyReason: "dc_away_near_excluded_draw_still_live"
-      });
-    }
-
-    if (
-      adjusted1X2.home <= 0.22 &&
-      adjusted1X2.away >= 0.52 &&
-      adjusted1X2.draw >= 0.20 &&
-      dcx2Score >= 0.78 &&
-      effectiveConfidence >= 0.70 &&
-      readiness >= 0.72
-    ) {
-      pushPick({
-        market: "DC",
-        marketName: "Double Chance",
-        pick: "X2",
-        score: dcx2Score,
-        band: dcx2Score >= 0.84 && effectiveConfidence >= 0.74 && readiness >= 0.78 ? "HIGH" : "MEDIUM",
-        policyReason: "dc_home_near_excluded_draw_still_live"
-      });
-    }
-
-    if (
-      adjusted1X2.draw <= 0.20 &&
-      adjusted1X2.home >= 0.34 &&
-      adjusted1X2.away >= 0.34 &&
-      Math.abs(adjusted1X2.home - adjusted1X2.away) <= 0.22 &&
-      dc12Score >= 0.80 &&
-      effectiveConfidence >= 0.72 &&
-      readiness >= 0.75
-    ) {
-      pushPick({
-        market: "DC",
-        marketName: "Double Chance",
-        pick: "12",
-        score: dc12Score,
-        band: "HIGH",
-        policyReason: "dc_draw_near_excluded_both_sides_live"
-      });
-    }
   }
 
   const over25High =
-    adjustedOver25 >= 0.78 &&
-    expectedTotalGoals >= 3.05 &&
-    effectiveConfidence >= 0.74 &&
-    readiness >= 0.78;
+    adjustedOver25 >= 0.72 &&
+    expectedTotalGoals >= 2.90 &&
+    effectiveConfidence >= 0.70 &&
+    readiness >= 0.72 &&
+    !hasGoalsBlocker &&
+    (hasGoalSupport || expectedTotalGoals >= 3.00);
 
   const over25NearHighMedium =
-    adjustedOver25 >= 0.75 &&
-    expectedTotalGoals >= 2.98 &&
-    effectiveConfidence >= 0.71 &&
-    readiness >= 0.75;
+    adjustedOver25 >= 0.68 &&
+    expectedTotalGoals >= 2.75 &&
+    effectiveConfidence >= 0.66 &&
+    readiness >= 0.68 &&
+    !hasGoalsBlocker &&
+    (hasGoalSupport || expectedTotalGoals >= 2.95);
 
   const qualifiesOver25 =
-    (over25High || over25NearHighMedium) &&
-    hasGoalSupport &&
-    !hasGoalsBlocker;
+    over25High || over25NearHighMedium;
 
   // O1.5: easy market, so panel only accepts HIGH and never accepts Under 1.5.
   if (
@@ -649,6 +593,100 @@ function expandValueMarkets(match, value) {
       band: adjustedBtts >= 0.78 && effectiveConfidence >= 0.74 && readiness >= 0.78 ? "HIGH" : "MEDIUM",
       policyReason: "btts_strict_support_no_blocker"
     });
+  }
+
+  // DC: fallback only. It must not override stronger statistical value markets.
+  if (
+    Number.isFinite(adjusted1X2.home) &&
+    Number.isFinite(adjusted1X2.draw) &&
+    Number.isFinite(adjusted1X2.away)
+  ) {
+    const strongGoalMarketProfile =
+      qualifiesOver25 ||
+      (
+        adjustedOver35 >= 0.80 &&
+        expectedTotalGoals >= 3.35 &&
+        hasStrongGoalSupport &&
+        !hasGoalsBlocker &&
+        effectiveConfidence >= 0.74 &&
+        readiness >= 0.78
+      );
+
+    const dc1xScore = adjusted1X2.home + adjusted1X2.draw;
+    const dcx2Score = adjusted1X2.draw + adjusted1X2.away;
+    const dc12Score = adjusted1X2.home + adjusted1X2.away;
+
+    const hasPrimaryValuePick = items.some(p =>
+      p?.market === "1X2" ||
+      p?.market === "Over / Under 2.5" ||
+      p?.market === "Over / Under 3.5" ||
+      p?.market === "Over / Under 1.5" ||
+      p?.market === "BTTS"
+    );
+
+    const dcFallbackBlocked = hasPrimaryValuePick || strongGoalMarketProfile;
+
+    if (
+      !dcFallbackBlocked &&
+      adjusted1X2.away <= 0.16 &&
+      adjusted1X2.home >= 0.60 &&
+      adjusted1X2.draw >= 0.23 &&
+      dc1xScore >= 0.84 &&
+      effectiveConfidence >= 0.76 &&
+      readiness >= 0.80
+    ) {
+      pushPick({
+        market: "DC",
+        marketName: "Double Chance",
+        pick: "1X",
+        score: dc1xScore,
+        band: dc1xScore >= 0.88 && effectiveConfidence >= 0.80 && readiness >= 0.84 ? "HIGH" : "MEDIUM",
+        policyReason: "dc_away_strict_near_excluded_draw_live_fallback"
+      });
+    }
+
+    if (
+      !dcFallbackBlocked &&
+      adjusted1X2.home <= 0.16 &&
+      adjusted1X2.away >= 0.60 &&
+      adjusted1X2.draw >= 0.23 &&
+      dcx2Score >= 0.84 &&
+      effectiveConfidence >= 0.76 &&
+      readiness >= 0.80
+    ) {
+      pushPick({
+        market: "DC",
+        marketName: "Double Chance",
+        pick: "X2",
+        score: dcx2Score,
+        band: dcx2Score >= 0.88 && effectiveConfidence >= 0.80 && readiness >= 0.84 ? "HIGH" : "MEDIUM",
+        policyReason: "dc_home_strict_near_excluded_draw_live_fallback"
+      });
+    }
+
+    // 12 is a high-risk no-draw market. It is allowed only as a rare fallback.
+    if (
+      !dcFallbackBlocked &&
+      adjusted1X2.draw <= 0.12 &&
+      adjusted1X2.home >= 0.40 &&
+      adjusted1X2.away >= 0.40 &&
+      Math.abs(adjusted1X2.home - adjusted1X2.away) <= 0.12 &&
+      dc12Score >= 0.88 &&
+      expectedTotalGoals >= 2.85 &&
+      hasStrongGoalSupport &&
+      !hasGoalsBlocker &&
+      effectiveConfidence >= 0.80 &&
+      readiness >= 0.82
+    ) {
+      pushPick({
+        market: "DC",
+        marketName: "Double Chance",
+        pick: "12",
+        score: dc12Score,
+        band: "HIGH",
+        policyReason: "dc12_rare_draw_almost_removed_open_goal_fallback"
+      });
+    }
   }
 
   return items;
