@@ -559,6 +559,7 @@ export async function ingestDay(dayKey, env) {
           sourceId: normalized.sourceId,
           sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
           matchId: normalized.matchId,
+          canonicalId: normalized.canonicalId || null,
           matchKey: normalized.matchKey,
           leagueSlug: normalized.leagueSlug,
           leagueName: normalized.leagueName,

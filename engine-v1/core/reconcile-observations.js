@@ -1040,6 +1040,13 @@ export async function reconcileObservations({
   const newest = sorted[0];
   const matchId = newest?.matchId || existing?.matchId || "";
   const matchKey = newest?.matchKey || existing?.matchKey || "";
+  // canonicalId is the provider-agnostic join key (details/value/UI). ESPN
+  // observations carry a numeric matchId, so losing canonicalId here breaks
+  // every downstream join for matches only ESPN observed.
+  const canonicalId =
+    sorted.map(row => String(row?.canonicalId || "").trim()).find(Boolean) ||
+    String(existing?.canonicalId || "").trim() ||
+    null;
 
   const kickoff = pickBest(rows, "kickoffUtc", "kickoffReliability");
   const homeTeam = pickBest(rows, "homeTeam", "teamsReliability");
@@ -1138,6 +1145,7 @@ export async function reconcileObservations({
   const resolved = {
     matchId,
     matchKey,
+    canonicalId,
     source: "reconciled",
     dayKey: newest.actualDay || newest.dayKey || existing?.dayKey || null,
 

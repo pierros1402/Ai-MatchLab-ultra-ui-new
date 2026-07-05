@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import { buildCanonicalId } from "../core/canonical-id.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -119,10 +120,47 @@ function canonicalFixturesForDay(dayKey) {
   });
 }
 
+// Rows that only ESPN observed can reach the runtime fixtures DB without a
+// canonicalId (numeric matchId). Details/value/UI all join on canonicalId, so
+// backfill it from the canonical store (exact) or recompute it (same
+// deterministic function acquisition used on the same provider names).
+function backfillCanonicalIds(rows, canonicalRows, dayKey) {
+  const cidBySourceId = new Map();
+  for (const row of canonicalRows) {
+    const cid = String(row?.canonicalId || "").trim();
+    if (!cid) continue;
+    for (const key of [row?.matchId, row?.sourceMatchId, row?.sourceId]) {
+      const id = normalizeMatchId(key);
+      if (id && !id.startsWith("cid_")) cidBySourceId.set(id, cid);
+    }
+  }
+
+  return rows.map(row => {
+    if (String(row?.canonicalId || "").trim()) return row;
+
+    const matchId = normalizeMatchId(row?.matchId);
+    if (matchId.startsWith("cid_")) {
+      return { ...row, canonicalId: matchId };
+    }
+
+    const canonicalId =
+      cidBySourceId.get(matchId) ||
+      cidBySourceId.get(normalizeMatchId(row?.sourceMatchId)) ||
+      buildCanonicalId(row?.leagueSlug, row?.homeTeam, row?.awayTeam, row?.dayKey || dayKey) ||
+      null;
+
+    return canonicalId ? { ...row, canonicalId } : row;
+  });
+}
+
 function fixturesForSnapshotDay(dayKey) {
   const fixturesPayload = readJsonSafe(resolveDataPath("fixtures.json"), { fixtures: [] });
-  const fixturesFromMain = dayFixtures(fixturesPayload, dayKey);
   const fixturesFromCanonical = canonicalFixturesForDay(dayKey);
+  const fixturesFromMain = backfillCanonicalIds(
+    dayFixtures(fixturesPayload, dayKey),
+    fixturesFromCanonical,
+    dayKey
+  );
   const canonicalFixtureCount = fixturesFromCanonical.length;
   const fixtureJsonCount = fixturesFromMain.length;
 
