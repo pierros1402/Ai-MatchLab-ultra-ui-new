@@ -2430,7 +2430,25 @@ app.get("/details", async (req, res) => {
         }
       }
 
-      res.status(404).json(snapshotResult);
+      // Honest coverage contract (audit P1): say WHY there is no detail
+      // instead of a bare not-found the UI renders as a silent blank. A
+      // canonical fixture without a detail file is a pipeline gap (tracked in
+      // manifest.detailsMissingForFixtures); anything else reaching this point
+      // is supplement-only existence or an unknown id — details are never
+      // built for those by design.
+      const contractDate = date || athensDayKey();
+      const snapFixtures = readDeploySnapshotFixtures(contractDate);
+      const canonicalHit = (Array.isArray(snapFixtures?.fixtures) ? snapFixtures.fixtures : [])
+        .some(fx => String(fx?.canonicalId || "") === id || String(fx?.matchId || "") === id);
+
+      res.status(404).json({
+        ok: false,
+        error: "details_unavailable",
+        reason: canonicalHit ? "missing_detail_for_canonical_fixture" : "supplemental_or_unknown_match",
+        matchId: id,
+        date: contractDate,
+        source: "snapshot"
+      });
       return;
     }
 
@@ -2451,8 +2469,26 @@ app.get("/details", async (req, res) => {
     const result = await getDetailsPayload(id, { rebuild });
 
     if (!result?.ok) {
-      const status = result?.error === "match_not_found" ? 404 : 400;
-      res.status(status).json(result);
+      if (result?.error === "match_not_found") {
+        // Same honest coverage contract as the snapshot branch: classify the
+        // miss so the UI can explain it instead of a silent blank.
+        const contractDate = date || athensDayKey();
+        const snapFixtures = readDeploySnapshotFixtures(contractDate);
+        const canonicalHit = (Array.isArray(snapFixtures?.fixtures) ? snapFixtures.fixtures : [])
+          .some(fx => String(fx?.canonicalId || "") === id || String(fx?.matchId || "") === id);
+
+        res.status(404).json({
+          ok: false,
+          error: "details_unavailable",
+          reason: canonicalHit ? "missing_detail_for_canonical_fixture" : "supplemental_or_unknown_match",
+          matchId: id,
+          date: contractDate,
+          source: "runtime"
+        });
+        return;
+      }
+
+      res.status(400).json(result);
       return;
     }
 

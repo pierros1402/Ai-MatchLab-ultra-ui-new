@@ -134,10 +134,16 @@ async function loadFromNewDetailsAPI(matchId) {
     const res = await fetch(
       `${apiBase}/details?id=${encodeURIComponent(matchId)}`
     );
-    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
 
-    const data = await res.json();
-    if (!data?.ok) return null;
+    if (!res.ok || !data?.ok) {
+      // Honest miss: the engine explicitly said there is no detail for this
+      // match (supplement-only fixture or tracked pipeline gap). Return the
+      // structured payload so the panel can SAY so — null stays reserved for
+      // network/availability failures, which fall through to the legacy path.
+      if (data && data.error === "details_unavailable") return data;
+      return null;
+    }
 
     return data;
   } catch {
@@ -1477,6 +1483,43 @@ async function renderLocal(match, mountEl) {
   const newDetails = detailsMatchId
     ? await loadFromNewDetailsAPI(detailsMatchId)
     : null;
+
+  // ------------------------------------------------------------
+  // HONEST MISS: engine said details are unavailable for this match
+  // (supplement-only fixture or a tracked pipeline gap) — render the basic
+  // header + a clear message instead of legacy loaders that end in a blank.
+  // ------------------------------------------------------------
+  if (newDetails && newDetails.ok === false && newDetails.error === "details_unavailable") {
+    const lang = getCurrentLang();
+    const isPipelineGap = newDetails.reason === "missing_detail_for_canonical_fixture";
+    const msg = lang === "el"
+      ? (isPipelineGap
+          ? "Οι λεπτομέρειες για αυτόν τον αγώνα δεν έχουν χτιστεί ακόμα — καταγεγραμμένο κενό, αναμένεται στον επόμενο κύκλο."
+          : "Δεν υπάρχει πλήρης ανάλυση για αυτόν τον αγώνα: εμφανίζεται ως συμπληρωματικός (ύπαρξη/αποδόσεις μόνο), οπότε δεν χτίζονται λεπτομέρειες.")
+      : (isPipelineGap
+          ? "Details for this match have not been built yet — a tracked gap, expected on the next cycle."
+          : "No full analysis exists for this match: it is a supplemental fixture (existence/odds only), so details are not built for it.");
+
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="font-weight:900;font-size:18px;">${home} <span style="opacity:.6;">vs</span> ${away}</div>
+        <div style="opacity:.85;font-weight:800;">${status}${minute}</div>
+      </div>
+      <div style="margin-top:6px;opacity:.85;">
+        ${score ? `<span style="font-weight:900;">${score}</span>` : ``}
+        ${kickoffLocal ? `<span style="margin-left:10px;">${kickoffLocal}</span>` : ``}
+      </div>
+      <div style="margin-top:6px;opacity:.75;font-size:12px;">
+        League: <b>${league}</b>
+        ${matchId ? `<span style="margin-left:10px;opacity:.7;">ID: ${esc(matchId)}</span>` : ``}
+      </div>
+      <div class="muted" style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:12px;background:rgba(255,255,255,0.03);">
+        ${esc(msg)}
+      </div>
+    `;
+    document.dispatchEvent(new CustomEvent("details-rendered"));
+    return;
+  }
 
   // ------------------------------------------------------------
   // NEW ENGINE DETAILS API FIRST
