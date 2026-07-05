@@ -137,6 +137,18 @@ function mergeRowsById(existingRows, incomingRows) {
   });
 }
 
+// True when the season store already holds rows for this day — used by the
+// daily-cycle catch-up loop to find recent days the readiness gate skipped.
+export async function historyHasDay(dayKey) {
+  const season = resolveSeasonFromDay(dayKey);
+  const history = await readJsonSafe(
+    resolveDataPath("history", `${season}.json`),
+    null
+  );
+  const days = normalizeHistoryDays(history);
+  return days.some(d => d?.dayKey === dayKey && (d?.rows || []).length > 0);
+}
+
 export async function appendFinalizedDayToHistory(dayKey) {
   const rows = getFixturesByDay(dayKey);
   const terminalRows = rows.filter(isTerminalRow);
