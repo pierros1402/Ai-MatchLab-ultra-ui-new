@@ -137,6 +137,25 @@
     return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
   }
 
+  function dayBoundsLocalMs(dateYmd) {
+    const ymd = String(dateYmd || todayISO()).slice(0, 10);
+    const parts = ymd.split("-").map(Number);
+
+    if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) {
+      return {
+        start: startOfTodayLocalMs(),
+        end: endOfTodayLocalMs()
+      };
+    }
+
+    const [y, m, d] = parts;
+
+    return {
+      start: new Date(y, m - 1, d, 0, 0, 0, 0).getTime(),
+      end: new Date(y, m - 1, d, 23, 59, 59, 999).getTime()
+    };
+  }
+
   function safeEmit(name, payload) {
     if (typeof window.emit === "function") window.emit(name, payload);
   }
@@ -189,31 +208,33 @@
     };
   }
 
-  function render(matches) {
+  function render(matches, dateYmd) {
     panel.innerHTML = "";
 
     LAST_MATCHES = Array.isArray(matches) ? matches : [];
 
+    const dayKey =
+      (typeof dateYmd === "string" && dateYmd.length >= 10)
+        ? dateYmd.slice(0, 10)
+        : (window.__AIML_SELECTED_DATE
+            ? String(window.__AIML_SELECTED_DATE).slice(0, 10)
+            : todayISO());
 
-    const startDay = startOfTodayLocalMs();
-    const endDay = endOfTodayLocalMs();
-
-    const now = Date.now();
+    const bounds = dayBoundsLocalMs(dayKey);
+    const startDay = bounds.start;
+    const endDay = bounds.end;
 
     const arr = LAST_MATCHES
       .filter(m => {
 
         const st = matchStatusText(m);
-        const ko = Number(m.kickoff_ms || 0);
 
         const isPre = st === "PRE" || st.includes("SCHEDULED");
         const isLive = isMatchLive(m);
 
-        // hide scheduled matches that should have started already
-        if (isPre && ko && ko < now) {
-          return false;
-        }
-
+        // Today shows PRE + LIVE only. FT still disappears.
+        // Do not hide PRE/SCHEDULED merely because kickoff time has passed:
+        // live/FT status can lag, and that can blank the Today panel.
         return isPre || isLive;
 
       })
@@ -353,9 +374,9 @@
 
         window.AIML_FIXTURES_TODAY = { matches };
 
-        render(matches);
+        render(matches, todayISO());
 
-        safeEmit("today-matches:loaded", { matches });
+        safeEmit("today-matches:loaded", { matches, date: todayISO() });
 
         LOADING = false;
         return;
@@ -405,9 +426,9 @@
 
       window.AIML_FIXTURES_TODAY = { matches };
 
-      render(matches);
+      render(matches, todayISO());
 
-      safeEmit("today-matches:loaded", { matches });
+      safeEmit("today-matches:loaded", { matches, date: todayISO() });
 
 // ----------------------------------
 // SYNC WITH LIVE SNAPSHOT
@@ -469,7 +490,7 @@
     const matches = raw.map(mapMatch);
 
     window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
-    render(matches);
+    render(matches, payload.date);
   });
 
   // Replay latest Today payload if fixtures-loader emitted before this panel loaded.
@@ -479,7 +500,7 @@
 
     setTimeout(() => {
       window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
-      render(matches);
+      render(matches, payload.date);
     }, 0);
   }
 
