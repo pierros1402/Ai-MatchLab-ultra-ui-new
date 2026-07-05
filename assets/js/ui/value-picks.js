@@ -509,12 +509,175 @@ function renderRow(p) {
   `;
 }
 
+function comparisonPlan(plans, key) {
+  return plans && plans[key] ? plans[key] : {};
+}
+
+function resultBadgeHtml(result) {
+  const r = String(result || "").toUpperCase();
+  if (r === "WIN") return '<span class="value-badge win">WIN</span>';
+  if (r === "LOSS") return '<span class="value-badge loss">LOSS</span>';
+  if (r === "UNSUPPORTED") return '<span class="value-badge unresolved">UNSUPPORTED</span>';
+  if (r === "UNRESOLVED") return '<span class="value-badge unresolved">UNRESOLVED</span>';
+  return "";
+}
+
+function hitRateLabel(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  return String(Math.round(n * 100)) + "%";
+}
+
+function comparisonMarketLabel(p) {
+  const market = String(p?.market || p?.marketName || "").toUpperCase();
+  if (market === "OU15") return "Over / Under 1.5";
+  if (market === "OU25") return "Over / Under 2.5";
+  if (market === "OU35") return "Over / Under 3.5";
+  if (market === "BTTS") return "BTTS";
+  return p?.market || p?.marketName || "—";
+}
+
+function comparisonPickLabel(p) {
+  const market = String(p?.market || p?.marketName || "").toUpperCase();
+  const pick = String(p?.pick || p?.selection || p?.prediction || "").trim();
+  const pickUpper = pick.toUpperCase();
+
+  if (market === "OU15" && pickUpper === "OVER") return "Over 1.5";
+  if (market === "OU15" && pickUpper === "UNDER") return "Under 1.5";
+  if (market === "OU25" && pickUpper === "OVER") return "Over 2.5";
+  if (market === "OU25" && pickUpper === "UNDER") return "Under 2.5";
+  if (market === "OU35" && pickUpper === "OVER") return "Over 3.5";
+  if (market === "OU35" && pickUpper === "UNDER") return "Under 3.5";
+  if (market === "BTTS" && pickUpper === "YES") return "BTTS Yes";
+  if (market === "BTTS" && pickUpper === "NO") return "BTTS No";
+
+  return pick || "—";
+}
+
+function comparisonScoreLabel(p) {
+  const parts = [];
+  if (typeof p?.score === "number") parts.push(scoreToPct(p.score));
+  if (p?.finalScore?.scoreKey) parts.push("FT " + p.finalScore.scoreKey);
+  return parts.length ? parts.join(" • ") : "—";
+}
+
+function renderComparisonRow(p) {
+  const country = String(p?.country || "").trim();
+  const league = String(p?.leagueName || leagueLabel(p) || "").trim();
+  const countryLeague = [country, league].filter(Boolean).join(" • ") || "Unknown League";
+  const home = p?.homeTeam || p?.home || "—";
+  const away = p?.awayTeam || p?.away || "—";
+  const conf = confidenceKey(p?.band || p?.confidence);
+  const market = comparisonMarketLabel(p);
+  const pick = comparisonPickLabel(p);
+  const resultBadge = resultBadgeHtml(p?.result);
+
+  return [
+    '<div class="value-row value-compare-row conf-' + esc(String(conf).toLowerCase()) + '" data-match-id="' + esc(p?.matchId || "") + '">',
+    '  <div class="value-row-top">',
+    '    <div class="value-league">' + esc(countryLeague) + '</div>',
+    '    <div class="value-meta">' + resultBadge + '</div>',
+    '  </div>',
+    '  <div class="value-row-mid">',
+    '    <div class="value-fixture">',
+    '      <span class="value-home">' + esc(home) + '</span>',
+    '      <span class="value-vs">vs</span>',
+    '      <span class="value-away">' + esc(away) + '</span>',
+    '    </div>',
+    '  </div>',
+    '  <div class="value-row-bot">',
+    '    <div class="value-score">',
+    '      <span class="value-score-pct">' + esc(comparisonScoreLabel(p)) + '</span>',
+    '      <span class="value-score-pick">' + esc(market) + ' • ' + esc(pick) + '</span>',
+    '    </div>',
+    '    <div class="value-conf">' + esc(conf) + '</div>',
+    '  </div>',
+    '</div>'
+  ].join("");
+}
+
+function renderPlanSummary(summary) {
+  return String(Number(summary?.picks || 0)) + " picks • " +
+    String(Number(summary?.settled || 0)) + " settled • " +
+    String(Number(summary?.wins || 0)) + "W-" +
+    String(Number(summary?.losses || 0)) + "L • Hit " +
+    hitRateLabel(summary?.hitRate);
+}
+
+function renderPlanBlock(plan, title) {
+  const picks = Array.isArray(plan?.picks) ? plan.picks : [];
+  const rows = picks.map(renderComparisonRow).join("");
+
+  return [
+    '<div class="value-plan-card">',
+    '  <div class="value-plan-title">' + esc(title) + '</div>',
+    '  <div class="value-plan-summary">' + esc(renderPlanSummary(plan?.summary || {})) + '</div>',
+    '  <div class="value-plan-rows">',
+    rows || '<div class="panel-empty">No picks.</div>',
+    '  </div>',
+    '</div>'
+  ].join("");
+}
+
+function renderPlanComparison(payload) {
+  if (!resolveDomRefs()) return;
+
+  lastPayload = payload;
+
+  const comparison = payload?.comparison || {};
+  const planA = comparisonPlan(comparison.plans, "A");
+  const planB = comparisonPlan(comparison.plans, "B");
+  const date = comparison?.date || payload?.date || "";
+  const totalA = Number(planA?.summary?.picks || 0);
+  const totalB = Number(planB?.summary?.picks || 0);
+
+  const headerHtml = [
+    '<div class="value-head value-compare-head">',
+    '  <div class="value-head-row">',
+    '    <div>',
+    '      <div class="value-head-title">' + esc(date) + ' • Plan A/B comparison</div>',
+    '      <div class="value-head-sub">Plan A ' + esc(totalA) + ' picks • Plan B ' + esc(totalB) + ' picks</div>',
+    '    </div>',
+    '  </div>',
+    '</div>'
+  ].join("");
+
+  const bodyHtml = [
+    '<div class="value-plan-compare">',
+    renderPlanBlock(planA, "Plan A - current UI value"),
+    renderPlanBlock(planB, "Plan B - strict value-policy-v2.3 observation"),
+    '</div>'
+  ].join("");
+
+  if (headWrapEl) {
+    headWrapEl.innerHTML = headerHtml;
+    bodyEl.innerHTML = bodyHtml;
+  } else {
+    bodyEl.innerHTML = headerHtml + bodyHtml;
+  }
+
+  hideAnalyzingIfHasPicks(totalA + totalB);
+  window.AIML_PANEL?.set(root, "data");
+
+  console.log("[value-picks] comparison render:html-written", {
+    date,
+    planA: totalA,
+    planB: totalB,
+    htmlLength: bodyEl.innerHTML.length
+  });
+}
+
   function render(payload) {
     if (!resolveDomRefs()) return;
 
     console.log("[value-picks] render:start", payload);
   //window.AIML_PANEL?.set(root, "loading", "Loading value picks...");
     lastPayload = payload;
+
+    if (payload?.comparison?.plans?.A && payload?.comparison?.plans?.B) {
+      renderPlanComparison(payload);
+      return;
+    }
 
     const allPicks = Array.isArray(payload?.picks) ? payload.picks : [];
     const date = payload?.date || "";
@@ -636,7 +799,10 @@ if (!filtered.length) {
         ok: payload?.ok !== false,
         date: payload?.date || "",
         total,
-        picks
+        picks,
+        source: payload?.source || "",
+        mode: payload?.mode || "",
+        comparison: payload?.comparison || null
       };
     }
 
