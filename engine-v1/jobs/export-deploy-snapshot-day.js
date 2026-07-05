@@ -164,20 +164,49 @@ function fixturesForSnapshotDay(dayKey) {
   const canonicalFixtureCount = fixturesFromCanonical.length;
   const fixtureJsonCount = fixturesFromMain.length;
 
-  if (fixturesFromCanonical.length > fixturesFromMain.length) {
-    return {
-      source: "canonical_fixtures",
-      canonicalFixtureCount,
-      fixtureJsonCount,
-      fixtures: fixturesFromCanonical
-    };
+  // UNION of runtime + canonical (dedup collapses same-match rows; runtime
+  // first so its fresher status/score wins ties). Picking one source XOR the
+  // other dropped rows the winner lacked — e.g. canonical-only FT rows next
+  // to runtime-only Flashscore-league rows on the same day.
+  const union = dedupeRowsPerLeague([...fixturesFromMain, ...fixturesFromCanonical]);
+
+  // Day-universe shrink guard. A transient source failure on one runner must
+  // never shrink the published day: on 2026-07-05 an intraday refresh whose
+  // Flashscore harvest failed exported a 79-row universe over a 94-row
+  // snapshot and deleted 19 mar.1/mar.2/eth.1/tan.1 details as "orphans".
+  // Rescue is per-LEAGUE (league entirely missing from the fresh universe),
+  // so intentionally pruning a single phantom row keeps working.
+  const existingSnapshot = readJsonSafe(
+    path.join(resolveDataPath("deploy-snapshots", dayKey), "fixtures.json"),
+    null
+  );
+  const snapshotRows = (Array.isArray(existingSnapshot?.fixtures) ? existingSnapshot.fixtures : [])
+    .filter(row => String(row?.dayKey || existingSnapshot?.date || "") === String(dayKey));
+
+  const freshLeagues = new Set(union.map(row => String(row?.leagueSlug || "")));
+  const rescuedRows = snapshotRows.filter(
+    row => !freshLeagues.has(String(row?.leagueSlug || ""))
+  );
+  const rescuedLeagues = [...new Set(rescuedRows.map(row => String(row?.leagueSlug || "")))];
+
+  if (rescuedRows.length) {
+    console.warn("[export-deploy-snapshot] day-universe shrink guard: rescuing leagues absent from fresh universe", {
+      dayKey,
+      rescuedLeagues,
+      rescuedCount: rescuedRows.length
+    });
   }
 
+  const fixtures = dedupeRowsPerLeague([...union, ...rescuedRows])
+    .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
+
   return {
-    source: "fixtures_json",
+    source: "union",
     canonicalFixtureCount,
     fixtureJsonCount,
-    fixtures: fixturesFromMain
+    snapshotRescuedCount: rescuedRows.length,
+    snapshotRescuedLeagues: rescuedLeagues,
+    fixtures
   };
 }
 
@@ -731,6 +760,8 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
     fixturesSource,
     fixtureJsonCount: fixturesSnapshot.fixtureJsonCount,
     canonicalFixtureCount: fixturesSnapshot.canonicalFixtureCount,
+    snapshotRescuedCount: fixturesSnapshot.snapshotRescuedCount || 0,
+    snapshotRescuedLeagues: fixturesSnapshot.snapshotRescuedLeagues || [],
     canonicalCoverageFixtureCount: targetFixtureGate.canonicalCoverageFixtureCount,
     staticMinTargetFixtures: targetFixtureGate.staticMinTargetFixtures,
     minTargetFixtures: targetFixtureGate.minTargetFixtures,
