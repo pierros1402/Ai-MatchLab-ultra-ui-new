@@ -405,6 +405,78 @@ function filterContradictoryAndRedundantValuePicks(candidatePicks) {
   };
 }
 
+
+function isOutOfScopeValueLeague(pick) {
+  const league = String(pick?.leagueSlug || "").toLowerCase();
+
+  if (!league) return true;
+
+  if (league.startsWith("fs.")) return true;
+  if (league.includes("copa")) return true;
+  if (league.includes("cup")) return true;
+  if (league.includes("friendly")) return true;
+  if (league.includes("u20")) return true;
+  if (league.includes("u19")) return true;
+  if (league.includes("reserve")) return true;
+
+  return false;
+}
+
+function strictValuePolicyRejectionReason(pick) {
+  const market = normalizeMarket(pick?.market);
+  const selection = normalizeSelection(pick?.pick);
+  const modelProb = Number(pick?.modelProb || 0);
+  const confidence = String(pick?.confidence || "").toLowerCase();
+
+  if (isOutOfScopeValueLeague(pick)) {
+    return "out_of_scope_league_suppressed";
+  }
+
+  if (market === "OU25" && selection === "under") {
+    if (confidence !== "high" || modelProb < 0.78) {
+      return "under25_strict_gate_failed";
+    }
+  }
+
+  if (market === "OU25" && selection === "over") {
+    if (confidence !== "high") {
+      return "ordinary_medium_over25_excluded";
+    }
+  }
+
+  if (market === "BTTS") {
+    if (confidence !== "high") {
+      return "ordinary_medium_btts_excluded";
+    }
+  }
+
+  if ((market.includes("1X2") || market === "MATCH_RESULT" || market === "RESULT") && confidence !== "high") {
+    return "one_x_two_not_strong_enough";
+  }
+
+  return null;
+}
+
+function applyStrictValuePolicy(candidatePicks) {
+  const accepted = [];
+  const rejected = [];
+
+  for (const pick of candidatePicks || []) {
+    const reason = strictValuePolicyRejectionReason(pick);
+
+    if (reason) {
+      rejected.push(makeRejectedLedgerRow(pick, reason));
+      continue;
+    }
+
+    accepted.push(pick);
+  }
+
+  return {
+    picks: accepted,
+    rejected
+  };
+}
 function enrichValuePick(pick) {
   const reasonCodes = Array.isArray(pick?.reasonCodes) ? pick.reasonCodes : [];
   const riskFlags = Array.isArray(pick?.riskFlags) ? pick.riskFlags : [];
@@ -416,6 +488,7 @@ function enrichValuePick(pick) {
       ...new Set([
         ...reasonCodes,
         "passed_model_probability_gate",
+        "passed_strict_value_policy",
         "passed_non_contradictory_value_filter"
       ])
     ],
@@ -651,15 +724,20 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false } 
 
   candidatePicks.sort(compareValuePicks);
 
-  const filtered = filterContradictoryAndRedundantValuePicks(candidatePicks);
+  const strictPolicy = applyStrictValuePolicy(candidatePicks);
+  const filtered = filterContradictoryAndRedundantValuePicks(strictPolicy.picks);
   const finalPicks = filtered.picks.map(enrichValuePick);
+  const rejectedRows = [
+    ...strictPolicy.rejected,
+    ...filtered.rejected
+  ];
 
   const audit = buildValueAudit({
     dayKey,
     sourceMatches,
     candidatePicks,
     finalPicks,
-    rejectedRows: filtered.rejected,
+    rejectedRows,
     sourceContract
   });
 
@@ -702,6 +780,7 @@ if (isCli) {
     )
   }, null, 2));
 }
+
 
 
 
