@@ -10,6 +10,9 @@ import fs from "fs";
 import path from "path";
 import { resolveDataPath } from "../storage/data-root.js";
 import { currentSeason } from "../core/season.js";
+import { readStandings, recordStandingsResult } from "../storage/standings-memory-db.js";
+import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
+import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 
 const DEFAULT_SEASON = currentSeason();
 
@@ -404,16 +407,52 @@ function collectStandingsCandidatesForLeague(slug, dayKey, options = {}) {
     });
   }
 
+  // Candidate 3: accepted table from the league-memory research store —
+  // the SAME store assessment and odds attribution read. Including it here
+  // keeps data/standings and league-memory converging on one truth instead
+  // of split-brain (details showing nothing while assessment has a table).
+  try {
+    const memory = readStandings(slug);
+    const rows = safeArray(memory?.accepted?.rows);
+    const memConfidence = Number(memory?.accepted?.confidence) || 0;
+
+    candidates.push({
+      type: "league_memory",
+      label: `league-memory-${memory?.accepted?.season || "unknown"}`,
+      ok: rows.length > 0,
+      confidence: rows.length > 0 ? Math.min(0.9, memConfidence) : 0,
+      rows
+    });
+  } catch (e) {
+    candidates.push({
+      type: "league_memory",
+      label: "league-memory",
+      ok: false,
+      confidence: 0,
+      error: e?.message || "league_memory_read_failed",
+      rows: []
+    });
+  }
+
   return candidates;
 }
 
 // ------------------------------------------------------------
 // RECONCILIATION
 // ------------------------------------------------------------
-function chooseBestCandidate(candidates = []) {
+// Candidates are ranked by confidence SCALED BY COMPLETENESS so a partial
+// history table (e.g. 6/20 teams) cannot shadow a full table from the
+// league-memory store or a previously built artifact.
+function chooseBestCandidate(candidates = [], slug = "") {
+  const effectiveConfidence = c => {
+    const conf = Number(c?.confidence) || 0;
+    const { completeness } = computeStandingsCompleteness(safeArray(c?.rows), slug);
+    return conf * Math.max(completeness, 0.01);
+  };
+
   const valid = safeArray(candidates)
     .filter(c => c?.ok && safeArray(c?.rows).length > 0)
-    .sort((a, b) => (Number(b?.confidence) || 0) - (Number(a?.confidence) || 0));
+    .sort((a, b) => effectiveConfidence(b) - effectiveConfidence(a));
 
   return valid[0] || null;
 }
@@ -614,7 +653,7 @@ function scoreStandingsConfidence(rows = [], slug = "", baseConfidence = 0.9) {
 }
 
 function reconcileStandingsRows(slug, candidates = []) {
-  const best = chooseBestCandidate(candidates);
+  const best = chooseBestCandidate(candidates, slug);
 
   const sourceAudit = candidates.map(c => ({
     type: c?.type || "unknown",
@@ -627,6 +666,7 @@ function reconcileStandingsRows(slug, candidates = []) {
       league: slug,
       confidence: 0,
       completeness: 0,
+      chosenType: null,
       sourceAudit,
       phases: {},
       table: []
@@ -670,6 +710,7 @@ function reconcileStandingsRows(slug, candidates = []) {
       league: slug,
       confidence: scored.confidence,
       completeness: scored.completeness,
+      chosenType: best?.type || null,
       sourceAudit: [
         ...sourceAudit,
         {
@@ -702,6 +743,7 @@ function reconcileStandingsRows(slug, candidates = []) {
     league: slug,
     confidence: scored.confidence,
     completeness: scored.completeness,
+    chosenType: best?.type || null,
     sourceAudit: [
       ...sourceAudit,
       {
@@ -798,12 +840,49 @@ export async function buildStandingsDay(dayKey, leagues = [], options = {}) {
       const state = reconcileStandingsRows(slug, candidates);
       const written = writeLeagueStandingsArtifact(slug, state);
 
+      // Sync fresh local-history truth back into league-memory so assessment
+      // and odds attribution (which read that store) see the same table as
+      // details. Only when local truth WON the reconciliation — a table that
+      // came FROM league-memory or from a previous artifact carries no new
+      // information and must not overwrite scraped provenance (source/url).
+      // recordStandingsResult itself guards against clobbering a newer season
+      // or a higher-confidence accepted table.
+      let memorySync = null;
+      if (
+        state?.chosenType === "local_truth_history" &&
+        safeArray(state?.table).length > 0 &&
+        (Number(state?.confidence) || 0) > 0
+      ) {
+        try {
+          const leagueSeason = currentSeasonLabel(slug, getLeagueMeta(slug));
+          const rows = state.table.map(row => ({
+            ...row,
+            goalDifference: toNumber(row?.goalDifference, toNumber(row?.goalDiff, 0))
+          }));
+
+          memorySync = recordStandingsResult(slug, {
+            status: "accepted",
+            season: leagueSeason,
+            source: "daily-standings-build",
+            confidence: Number(state.confidence) || 0,
+            rowCount: rows.length,
+            rows
+          });
+        } catch (e) {
+          memorySync = { written: false, reason: e?.message || "memory_sync_failed" };
+        }
+      }
+
       results.push({
         league: slug,
         ok: true,
         found: written.rowsCount > 0,
         rowsCount: written.rowsCount,
-        confidence: Number(state?.confidence) || 0
+        confidence: Number(state?.confidence) || 0,
+        source: state?.chosenType || null,
+        memorySync: memorySync
+          ? { written: !!memorySync.written, reason: memorySync.reason || null }
+          : null
       });
     } catch (err) {
       results.push({

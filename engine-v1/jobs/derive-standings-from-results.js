@@ -42,13 +42,16 @@ function tableFromResults(slug) {
     totalGames += P;
     rows.push({
       teamName: name, played: P, won: W, drawn: D, lost: L,
+      // canonical field names too — compactRows() in standings-memory-db keeps
+      // wins/draws/losses/position, so won/drawn/lost/rank alone are dropped
+      wins: W, draws: D, losses: L,
       goalsFor: GF, goalsAgainst: GA, goalDifference: GF - GA, points: W * 3 + D
     });
   }
   if (totalGames / 2 < MIN_GAMES) return null;
 
   rows.sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor);
-  rows.forEach((r, i) => { r.rank = i + 1; });
+  rows.forEach((r, i) => { r.rank = i + 1; r.position = i + 1; });
   return rows;
 }
 
