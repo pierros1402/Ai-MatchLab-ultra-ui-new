@@ -24,7 +24,10 @@ const SEASON_START = `${SEASON.slice(0, 4)}-08-01`;
 
 const OUT_DIR = path.resolve(__dirname, "../../data/history");
 const OUT_FILE = path.join(OUT_DIR, `${SEASON}.json`);
-const REPORT_FILE = path.join(OUT_DIR, `${SEASON}.report.json`);
+// Fetch diagnostics only. The canonical <season>.report.json is derived from
+// the STORE by build-history-report.js (daily cycle) — this one-shot backfill
+// tool must not clobber it with stale fetch-attempt stats.
+const REPORT_FILE = path.join(OUT_DIR, `${SEASON}.fetch-report.json`);
 
 function pad2(n) {
   return String(n).padStart(2, "0");
