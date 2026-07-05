@@ -101,7 +101,7 @@ const MARKET_KEYS = {
   "DC": "DC", "Double Chance": "DC",
 };
 
-const STRICT_PANEL_POLICY_VERSION = "statistical-value-policy-v2.0";
+const STRICT_PANEL_POLICY_VERSION = "statistical-value-policy-v2.2";
 
 function isHighBand(band) {
   return String(band || "").toUpperCase() === "HIGH";
