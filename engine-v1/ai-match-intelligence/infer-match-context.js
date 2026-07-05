@@ -475,13 +475,31 @@ export function inferMatchContext(match, support) {
     const homeStrength = lineupContext.data.home.expectedStrength;
     const awayStrength = lineupContext.data.away.expectedStrength;
 
-    summaryPartsEl.push(
-      `Lineup context: ${match.homeTeam}=fatigue:${homeFatigue}, rotation:${homeRotation}, strength:${homeStrength}; ${match.awayTeam}=fatigue:${awayFatigue}, rotation:${awayRotation}, strength:${awayStrength}.`
-    );
+    const lineupReliability = String(
+      lineupContext.reliability || lineupContext.data.reliability || ""
+    ).toLowerCase();
 
-    summaryPartsEn.push(
-      `Lineup context: ${match.homeTeam}=fatigue:${homeFatigue}, rotation:${homeRotation}, strength:${homeStrength}; ${match.awayTeam}=fatigue:${awayFatigue}, rotation:${awayRotation}, strength:${awayStrength}.`
-    );
+    if (lineupReliability === "usable") {
+      // Πλήρες lineup context: rest days ΚΑΙ πραγματικές απουσίες → strength αξιόπιστο.
+      summaryPartsEl.push(
+        `Lineup context: ${match.homeTeam}=fatigue:${homeFatigue}, rotation:${homeRotation}, strength:${homeStrength}; ${match.awayTeam}=fatigue:${awayFatigue}, rotation:${awayRotation}, strength:${awayStrength}.`
+      );
+
+      summaryPartsEn.push(
+        `Lineup context: ${match.homeTeam}=fatigue:${homeFatigue}, rotation:${homeRotation}, strength:${homeStrength}; ${match.awayTeam}=fatigue:${awayFatigue}, rotation:${awayRotation}, strength:${awayStrength}.`
+      );
+    } else {
+      // reliability="limited": μόνο εκτίμηση κόπωσης από ρυθμό αγώνων, χωρίς
+      // επιβεβαιωμένες συνθέσεις/απουσίες. Δεν παρουσιάζεται ως lineup context
+      // και παραλείπεται το strength (χωρίς απουσίες = γενικό, παραπλανητικό).
+      summaryPartsEl.push(
+        `Εκτίμηση κόπωσης (από ρυθμό αγώνων, χωρίς επιβεβαιωμένες συνθέσεις): ${match.homeTeam}=fatigue:${homeFatigue}, rotation:${homeRotation}; ${match.awayTeam}=fatigue:${awayFatigue}, rotation:${awayRotation}.`
+      );
+
+      summaryPartsEn.push(
+        `Fatigue estimate (from match rhythm, no confirmed lineups): ${match.homeTeam}=fatigue:${homeFatigue}, rotation:${homeRotation}; ${match.awayTeam}=fatigue:${awayFatigue}, rotation:${awayRotation}.`
+      );
+    }
   }
 
   const valueNarrative = buildValueNarrative(support.valueSummary);
