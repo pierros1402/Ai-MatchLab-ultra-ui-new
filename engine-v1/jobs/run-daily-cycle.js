@@ -7,6 +7,7 @@ import { discoverActiveLeagues } from "./discover-active-leagues.js";
 import { monitorActiveLeagues } from "./monitor-active-leagues.js";
 import { finalizeDayIfSafe } from "./finalize-day.js";
 import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
+import { buildHistoryReport } from "./build-history-report.js";
 import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
@@ -1294,6 +1295,18 @@ export async function runDailyCycle(options = {}) {
         console.log("[daily-cycle] history-append:start", { finalizeDayKey });
         historyAppend = await appendFinalizedDayToHistory(finalizeDayKey);
         console.log("[daily-cycle] history-append:done", historyAppend);
+
+        // Keep <season>.report.json in sync with the store it describes —
+        // derived from store contents, so it can never drift like the old
+        // one-shot backfill report did.
+        try {
+          const historyReport = buildHistoryReport(
+            historyAppend?.season || undefined
+          );
+          console.log("[daily-cycle] history-report:done", historyReport);
+        } catch (e) {
+          console.warn("[daily-cycle] history-report:failed", String(e?.message || e));
+        }
 
         console.log("[daily-cycle] indexes-rebuild:start", { finalizeDayKey });
         indexesRebuild = await rebuildIndexesForSeason(finalizeDayKey);

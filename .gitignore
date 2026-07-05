@@ -55,10 +55,12 @@ data/team-geo/_bootstrap/
 data/team-geo/_imports/
 data/value/
 # Season stores: un-ignore by PATTERN (????-????.json), never by pinned season —
-# a pinned literal silently drops the new season's files at the Aug 1 rollover
-# (.report.json etc. stay ignored: the pattern matches the season name exactly).
+# a pinned literal silently drops the new season's files at the Aug 1 rollover.
+# The derived store report persists too (build-history-report.js, daily cycle);
+# .fetch-report.json (one-shot backfill diagnostics) stays ignored.
 data/history/*
 !data/history/????-????.json
+!data/history/????-????.report.json
 data/history-index/*
 !data/history-index/team-form/
 !data/history-index/matchups/
