@@ -8,7 +8,8 @@ function parseArgs(argv) {
   const out = {
     date: null,
     rebuild: false,
-    freeze: false
+    freeze: false,
+    planBObservation: false
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -35,6 +36,11 @@ function parseArgs(argv) {
       continue;
     }
 
+    if (arg === "--plan-b-observation" || arg === "--plan-b") {
+      out.planBObservation = true;
+      continue;
+    }
+
     if (arg === "--help" || arg === "-h") {
       out.help = true;
       continue;
@@ -56,7 +62,8 @@ function usage() {
     "  - Does not run full daily ingest/details/snapshot build.",
     "  - Uses the existing model-assessment value bridge.",
     "  - Does not read deploy-snapshot odds.json as value input.",
-    "  - Real bookmaker odds must remain display-only and must not enter value decisions."
+    "  - Real bookmaker odds must remain display-only and must not enter value decisions.",
+    "  - Use --plan-b-observation to write strict Plan B to data/value-plans/YYYY-MM-DD without overwriting production value.json."
   ].join("\n");
 }
 
@@ -79,12 +86,13 @@ async function main() {
   }
 
   const result = deriveValueFromOdds(dayKey, {
-    freeze: args.freeze && !args.rebuild
+    freeze: args.freeze && !args.rebuild,
+    outputMode: args.planBObservation ? "plan-b-observation" : "production"
   });
 
   console.log(JSON.stringify({
     ok: result?.ok !== false,
-    mode: "standalone-value",
+    mode: args.planBObservation ? "standalone-value-plan-b-observation" : "standalone-value",
     date: dayKey,
     valuePicks: Number(result?.count || 0),
     source: result?.source || null,
@@ -94,10 +102,12 @@ async function main() {
       realBookmakerOddsUsed: false
     },
     outputs: {
-      canonicalValue: `data/value/${dayKey}.json`,
-      canonicalAudit: `data/value/_audit/${dayKey}.json`,
-      snapshotValue: `data/deploy-snapshots/${dayKey}/value.json`,
-      snapshotAudit: `data/deploy-snapshots/${dayKey}/value-audit.json`
+      canonicalValue: args.planBObservation ? `data/value-plans/${dayKey}/plan-b.json` : `data/value/${dayKey}.json`,
+      canonicalAudit: args.planBObservation ? `data/value-plans/${dayKey}/plan-b-audit.json` : `data/value/_audit/${dayKey}.json`,
+      snapshotValue: args.planBObservation ? null : `data/deploy-snapshots/${dayKey}/value.json`,
+      snapshotAudit: args.planBObservation ? null : `data/deploy-snapshots/${dayKey}/value-audit.json`,
+      observationValue: args.planBObservation ? `data/value-plans/${dayKey}/plan-b.json` : null,
+      observationAudit: args.planBObservation ? `data/value-plans/${dayKey}/plan-b-audit.json` : null
     }
   }, null, 2));
 }

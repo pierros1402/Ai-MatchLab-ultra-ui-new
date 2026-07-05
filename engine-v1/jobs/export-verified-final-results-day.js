@@ -75,7 +75,8 @@ function parseArgs(argv) {
     dayKey: "",
     write: false,
     allFixtures: false,
-    offsets: [0]
+    offsets: [0],
+    valuePath: ""
   };
 
   for (const arg of argv) {
@@ -107,14 +108,21 @@ function parseArgs(argv) {
         .filter(Number.isFinite);
       continue;
     }
+
+    if (arg.startsWith("--value-path=")) {
+      out.valuePath = arg.slice("--value-path=".length);
+      continue;
+    }
   }
 
   return out;
 }
 
-function buildTargets(dayKey, { allFixtures = false } = {}) {
+function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = {}) {
   const fixturesPath = resolveDataPath("deploy-snapshots", dayKey, "fixtures.json");
-  const valuePath = resolveDataPath("deploy-snapshots", dayKey, "value.json");
+  const valuePath = valuePathOverride
+    ? path.resolve(valuePathOverride)
+    : resolveDataPath("deploy-snapshots", dayKey, "value.json");
 
   const fixtures = rowsFromPayload(readJsonSafe(fixturesPath, null), ["fixtures", "matches"]);
   const valuePicks = rowsFromPayload(readJsonSafe(valuePath, null), ["picks", "valuePicks", "rows"]);
@@ -278,7 +286,8 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   }
 
   const targetSource = buildTargets(safeDayKey, {
-    allFixtures: options.allFixtures === true
+    allFixtures: options.allFixtures === true,
+    valuePathOverride: options.valuePath || ""
   });
 
   const feed = await fetchFlashscoreFixtures({
@@ -403,7 +412,7 @@ if (isCli) {
     console.error(JSON.stringify({
       ok: false,
       reason: "missing_day",
-      usage: "node engine-v1/jobs/export-verified-final-results-day.js --date=YYYY-MM-DD [--write] [--all-fixtures] [--offsets=0,-1]"
+      usage: "node engine-v1/jobs/export-verified-final-results-day.js --date=YYYY-MM-DD [--write] [--all-fixtures] [--offsets=0,-1] [--value-path=data/value-plans/YYYY-MM-DD/plan-b.json]"
     }, null, 2));
     process.exitCode = 2;
   } else {

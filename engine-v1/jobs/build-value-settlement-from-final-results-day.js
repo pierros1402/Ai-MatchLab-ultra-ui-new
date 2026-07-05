@@ -253,6 +253,26 @@ function evaluatePickResult(pick, finalResult) {
   const market = normalizeMarket(pick?.market || pick?.marketName || pick?.type);
   const selection = normalizeSelection(pick);
   const total = home + away;
+  const compactMarket = market.replace(/[^A-Z0-9]/gu, '');
+  const compactSelection = selection.replace(/[^A-Z0-9.]/gu, '');
+
+  const compactOuMatch = compactMarket.match(/^OU([0-9]{2})$/u);
+  if (compactOuMatch) {
+    const line = Number(compactOuMatch[1]) / 10;
+    if (compactSelection === 'OVER' || compactSelection.startsWith('OVER')) {
+      return total > line;
+    }
+    if (compactSelection === 'UNDER' || compactSelection.startsWith('UNDER')) {
+      return total < line;
+    }
+  }
+
+  if (compactMarket === 'BTTS') {
+    const bothTeamsScored = home > 0 && away > 0;
+    if (compactSelection === 'YES') return bothTeamsScored;
+    if (compactSelection === 'NO') return !bothTeamsScored;
+  }
+
 
   if (market.includes('OVER') || market.includes('UNDER')) {
     const lineMatch = market.match(/([0-9]+(?:\.[0-9]+)?)/u) || selection.match(/([0-9]+(?:\.[0-9]+)?)/u);

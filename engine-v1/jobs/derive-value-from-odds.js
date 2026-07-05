@@ -618,13 +618,43 @@ function writeJsonFile(file, payload) {
   ensureDir(path.dirname(file));
   fs.writeFileSync(file, JSON.stringify(payload, null, 2), "utf8");
 }
-export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false } = {}) {
-  const outFile = resolveDataPath("deploy-snapshots", dayKey, "value.json");
-  const canonicalOut = resolveDataPath("value", `${dayKey}.json`);
-  const canonicalAuditOut = resolveDataPath("value", "_audit", `${dayKey}.json`);
-  const snapshotAuditOut = resolveDataPath("deploy-snapshots", dayKey, "value-audit.json");
-  const snapshotDir = resolveDataPath("deploy-snapshots", dayKey);
-  const valueDir = resolveDataPath("value");
+export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production" } = {}) {
+  const isPlanBObservation = outputMode === "plan-b-observation";
+
+  const outFile = isPlanBObservation
+    ? resolveDataPath("value-plans", dayKey, "plan-b.json")
+    : resolveDataPath("deploy-snapshots", dayKey, "value.json");
+
+  const canonicalOut = isPlanBObservation
+    ? resolveDataPath("value-plans", dayKey, "plan-b.json")
+    : resolveDataPath("value", `${dayKey}.json`);
+
+  const canonicalAuditOut = isPlanBObservation
+    ? resolveDataPath("value-plans", dayKey, "plan-b-audit.json")
+    : resolveDataPath("value", "_audit", `${dayKey}.json`);
+
+  const snapshotAuditOut = isPlanBObservation
+    ? resolveDataPath("value-plans", dayKey, "plan-b-audit.json")
+    : resolveDataPath("deploy-snapshots", dayKey, "value-audit.json");
+
+  const snapshotDir = isPlanBObservation
+    ? resolveDataPath("value-plans", dayKey)
+    : resolveDataPath("deploy-snapshots", dayKey);
+
+  const valueDir = isPlanBObservation
+    ? resolveDataPath("value-plans", dayKey)
+    : resolveDataPath("value");
+
+  const auditPaths = isPlanBObservation
+    ? {
+        canonical: `data/value-plans/${dayKey}/plan-b-audit.json`,
+        snapshot: null,
+        observation: `data/value-plans/${dayKey}/plan-b-audit.json`
+      }
+    : {
+        canonical: `data/value/_audit/${dayKey}.json`,
+        snapshot: `data/deploy-snapshots/${dayKey}/value-audit.json`
+      };
 
   ensureDir(snapshotDir);
   ensureDir(valueDir);
@@ -658,10 +688,9 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false } 
       reasonCodes: ["missing_model_assessment_memory"],
       riskFlags: ["no_value_input"],
       sourceContract,
-      audit: {
-        canonical: `data/value/_audit/${dayKey}.json`,
-        snapshot: `data/deploy-snapshots/${dayKey}/value-audit.json`
-      }
+    outputMode,
+    planId: isPlanBObservation ? "plan-b" : "production",
+    audit: auditPaths
     };
 
     const audit = buildValueAudit({
@@ -748,10 +777,9 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false } 
     source: "derive-value-from-model-assessment",
     policyVersion: "value-policy-v2.3",
     sourceContract,
-    audit: {
-      canonical: `data/value/_audit/${dayKey}.json`,
-      snapshot: `data/deploy-snapshots/${dayKey}/value-audit.json`
-    },
+    outputMode,
+    planId: isPlanBObservation ? "plan-b" : "production",
+    audit: auditPaths,
     verifiedValue: 0,
     modelLean: finalPicks.length,
     bookEdge: 0,
