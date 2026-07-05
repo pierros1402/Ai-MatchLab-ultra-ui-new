@@ -35,6 +35,9 @@ const SLUG_ALIASES = {
 const TOKEN_ALIASES = new Map([
   ["utd", "united"],
   ["intl", "international"],
+  // Brazilian state-abbreviation convention: "America MG" ↔ "América Mineiro",
+  // "Atletico MG" ↔ "Atlético Mineiro" (Flashscore vs ESPN naming).
+  ["mg", "mineiro"],
 ]);
 
 const GENERIC_TOKENS = new Set([
