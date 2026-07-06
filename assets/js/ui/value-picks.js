@@ -578,11 +578,12 @@ function renderComparisonRow(p) {
   const time = kickoffHHMM(kickoffMs);
   const timeHtml = time ? '<span class="value-time">' + esc(time) + '</span>' : "";
 
-  // Market implied probability ("ποσοστό αγοράς") from AI-priced odds
-  const mktPct = (typeof p?.marketProb === "number")
-    ? Math.round(p.marketProb * 100) + "%"
+  // Decimal odd for the pick (AI-priced fair odd from odds.json until a real
+  // bookmaker feed is wired). Shown next to the pick, e.g. "@1.48".
+  const oddVal = (typeof p?.oddsDecimal === "number" && p.oddsDecimal > 1)
+    ? p.oddsDecimal.toFixed(2)
     : null;
-  const mktHtml = mktPct ? '<span class="value-mkt">αγορά ' + esc(mktPct) + '</span>' : "";
+  const mktHtml = oddVal ? '<span class="value-mkt">@' + esc(oddVal) + '</span>' : "";
 
   return [
     '<div class="value-row value-compare-row conf-' + esc(String(conf).toLowerCase()) + '" data-match-id="' + esc(p?.matchId || "") + '">',
