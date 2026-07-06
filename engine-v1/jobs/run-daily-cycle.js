@@ -257,7 +257,15 @@ function resolveMinTargetFixtures({ staticMinTargetFixtures, canonicalCoverage }
   }
 
   const canonicalFixtures = Number(canonicalCoverage.fixtures || 0);
-  const canonicalFloor = Math.max(1, Math.floor(canonicalFixtures * 0.95));
+  // The 95% floor guards high-volume days against incomplete acquisition. On
+  // low-volume days (summer, few active leagues — e.g. 15 fixtures) a couple of
+  // dropped fixtures is a big %, so blend in an absolute grace of 3:
+  // min(95% floor, canonical-3). Large days keep 95%; small days tolerate a few
+  // dropped fixtures instead of blocking the whole day (and its value/health).
+  const canonicalFloor = Math.max(
+    1,
+    Math.min(Math.floor(canonicalFixtures * 0.95), canonicalFixtures - 3)
+  );
 
   return {
     minTargetFixtures: Math.min(staticMinTargetFixtures, canonicalFloor),
