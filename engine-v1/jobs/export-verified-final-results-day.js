@@ -172,7 +172,13 @@ function sourceScoreKey(row) {
 }
 
 function isScored(row) {
-  return Number.isFinite(Number(row?.scoreHome)) && Number.isFinite(Number(row?.scoreAway));
+  // CRITICAL: a "verified final result" must come from a FINISHED match. The
+  // Flashscore feed reports 0-0 for pre-game rows, which are finite scores —
+  // without the finished gate we fabricated 0-0 "final truths" for matches that
+  // hadn't kicked off yet, settling picks as LOSS pre-game. finished = AB==="3".
+  return row?.finished === true &&
+    Number.isFinite(Number(row?.scoreHome)) &&
+    Number.isFinite(Number(row?.scoreAway));
 }
 
 function findExactFlashscoreMatch(target, sourceRows, dayKey) {
