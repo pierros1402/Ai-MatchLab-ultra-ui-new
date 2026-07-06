@@ -517,9 +517,9 @@ function resultBadgeHtml(result) {
   const r = String(result || "").toUpperCase();
   if (r === "WIN") return '<span class="value-badge win">WIN</span>';
   if (r === "LOSS") return '<span class="value-badge loss">LOSS</span>';
-  if (r === "UNSUPPORTED") return '<span class="value-badge unresolved">UNSUPPORTED</span>';
-  if (r === "UNRESOLVED") return '<span class="value-badge unresolved">UNRESOLVED</span>';
-  return "";
+  // Before the match is played (UNRESOLVED) or non-settleable (UNSUPPORTED),
+  // show a neutral dash — no negative-looking badge until there's an FT result.
+  return '<span class="value-badge pending">—</span>';
 }
 
 function hitRateLabel(value) {
