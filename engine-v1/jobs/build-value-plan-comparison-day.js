@@ -195,6 +195,72 @@ function loadFixtures(dayKey) {
   return { file, rows, byId };
 }
 
+// AI-priced market odds + implied probabilities from odds.json, plus kickoff.
+// Firewall-safe: display context only, never feeds settlement math beyond the
+// already-present oddsDecimal.
+function loadOddsMap(dayKey) {
+  const file = dataPath("deploy-snapshots", dayKey, "odds.json");
+  const parsed = readJsonSafe(file, null);
+  const byId = new Map();
+  for (const m of parsed?.matches || []) {
+    const markets = m?.aiAssessment?.markets || null;
+    if (!markets && !m?.kickoffUtc) continue;
+    const entry = { markets, kickoff: m?.kickoffUtc || null };
+    for (const id of [m?.matchId, m?.canonicalId]) {
+      if (id) byId.set(String(id), entry);
+    }
+  }
+  return byId;
+}
+
+const COMPARISON_MARKET_KEYS = {
+  OU15: "OU15", "Over / Under 1.5": "OU15",
+  OU25: "OU25", "Over / Under 2.5": "OU25",
+  OU35: "OU35", "Over / Under 3.5": "OU35",
+  BTTS: "BTTS", "1X2": "1X2", DC: "DC", "Double Chance": "DC"
+};
+
+function oddsSideForPick(marketKey, pick) {
+  const p = String(pick || "").toUpperCase().trim();
+  if (marketKey === "OU15" || marketKey === "OU25" || marketKey === "OU35") {
+    if (p.includes("OVER")) return "over";
+    if (p.includes("UNDER")) return "under";
+    return null;
+  }
+  if (marketKey === "BTTS") {
+    if (p.includes("YES")) return "yes";
+    if (p.includes("NO")) return "no";
+    return null;
+  }
+  if (marketKey === "1X2") {
+    if (p === "1" || p === "HOME") return "home";
+    if (p === "X" || p === "DRAW") return "draw";
+    if (p === "2" || p === "AWAY") return "away";
+    return null;
+  }
+  if (marketKey === "DC") {
+    if (["1X", "X2", "12"].includes(p)) return p;
+    return null;
+  }
+  return null;
+}
+
+function resolveMarketFor(oddsEntry, market, pick) {
+  const markets = oddsEntry?.markets;
+  if (!markets) return { prob: null, odds: null };
+  const key = COMPARISON_MARKET_KEYS[market] || market;
+  const block = markets[key];
+  if (!block) return { prob: null, odds: null };
+  const side = oddsSideForPick(key, pick);
+  if (!side) return { prob: null, odds: null };
+  const prob = Number(block.probs?.[side]);
+  const odds = Number(block.odds?.[side]);
+  return {
+    prob: Number.isFinite(prob) ? prob : null,
+    odds: Number.isFinite(odds) ? odds : null
+  };
+}
+
 function loadFinalResults(dayKey) {
   const dir = dataPath("final-results", dayKey);
   const rows = [];
@@ -214,9 +280,8 @@ function loadFinalResults(dayKey) {
   return { dir, rows, byId };
 }
 
-function enrichPick(row, fixture, finalResult, planId) {
+function enrichPick(row, fixture, finalResult, planId, oddsEntry) {
   const id = rowId(row);
-  const odds = decimalOdds(row);
   const win = finalResult ? evaluatePickResult(row, finalResult) : null;
 
   let settlement = "UNRESOLVED";
@@ -227,20 +292,28 @@ function enrichPick(row, fixture, finalResult, planId) {
   const leagueSlug = clean(row?.leagueSlug || row?.league || fixture?.leagueSlug || fixture?.league || finalResult?.leagueSlug);
   const cat = leagueCatalogueMap().get(leagueSlug) || null;
 
+  const market = clean(row?.market || row?.marketName || row?.type);
+  const pick = clean(row?.pick || row?.selection || row?.prediction || row?.side || row?.outcome);
+  const mkt = resolveMarketFor(oddsEntry, market, pick);
+  const odds = decimalOdds(row) ?? mkt.odds;
+  const kickoff = clean(row?.kickoff || fixture?.kickoff || fixture?.kickoffUtc || oddsEntry?.kickoff) || null;
+
   return {
     planId,
     matchId: id,
     country: clean(row?.country || fixture?.country || finalResult?.country || cat?.country),
     leagueSlug,
     leagueName: clean(row?.leagueName || row?.competitionName || fixture?.leagueName || fixture?.competitionName || finalResult?.leagueName || finalResult?.competitionName || cat?.name),
+    kickoff,
     homeTeam: homeName(row) || homeName(fixture),
     awayTeam: awayName(row) || awayName(fixture),
-    market: clean(row?.market || row?.marketName || row?.type),
-    pick: clean(row?.pick || row?.selection || row?.prediction || row?.side || row?.outcome),
+    market,
+    pick,
     band: row?.band ?? null,
     score: row?.score ?? null,
     confidence: row?.confidence ?? null,
     readiness: row?.readiness ?? null,
+    marketProb: mkt.prob,
     oddsDecimal: odds,
     oddsUse: odds ? "display_settlement_only" : null,
     finalScore: finalResult
@@ -288,12 +361,12 @@ function summarize(rows) {
   };
 }
 
-function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById }) {
+function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById, oddsById }) {
   const rawRows = rowsFromPayload(payload);
 
   const picks = rawRows.map(row => {
     const id = rowId(row);
-    return enrichPick(row, fixturesById.get(id), finalById.get(id), planId);
+    return enrichPick(row, fixturesById.get(id), finalById.get(id), planId, oddsById?.get(id));
   });
 
   return {
@@ -346,6 +419,7 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
 
   const fixtures = loadFixtures(dayKey);
   const finalResults = loadFinalResults(dayKey);
+  const oddsById = loadOddsMap(dayKey);
 
   const planA = buildPlan({
     planId: "plan-a",
@@ -353,7 +427,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     sourcePath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
     payload: planAPayload,
     fixturesById: fixtures.byId,
-    finalById: finalResults.byId
+    finalById: finalResults.byId,
+    oddsById
   });
 
   const planB = buildPlan({
@@ -362,7 +437,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     sourcePath: path.relative(ROOT, planBPath).replaceAll("\\", "/"),
     payload: planBPayload,
     fixturesById: fixtures.byId,
-    finalById: finalResults.byId
+    finalById: finalResults.byId,
+    oddsById
   });
 
   const comparison = {
