@@ -1701,12 +1701,41 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
   let fixtureSource = "fixtures_json";
 
   const canonicalRows = readCanonicalFixturesForDay(dayKey);
-  if (canonicalRows.length > rows.length) {
+
+  // UNION runtime + canonical so a fixture present in EITHER source gets a
+  // detail — matching the export universe. export-deploy-snapshot-day unions
+  // the same two sources (fixtures.json + canonical-fixtures); this builder
+  // previously kept whichever source had MORE rows (XOR), so a canonical-only
+  // fixture absent from the runtime DB — e.g. the cross-midnight
+  // cid_bra2_nautico_juventude row — never got a detail and surfaced in the
+  // snapshot as a permanent "missing detail" gap. Runtime rows are kept as-is
+  // (fresher status/score); only canonical rows whose ids match no runtime row
+  // are appended, so existing behaviour is unchanged for every runtime fixture.
+  if (!rows.length && canonicalRows.length) {
     rows = canonicalRows;
     fixtureSource = "canonical_fixtures";
-  } else if (!rows.length && canonicalRows.length) {
-    rows = canonicalRows;
-    fixtureSource = "canonical_fixtures";
+  } else if (canonicalRows.length) {
+    const idKeys = row =>
+      [row?.canonicalId, row?.matchId, row?.sourceMatchId, row?.sourceId, row?.matchKey]
+        .map(k => String(k || "").trim())
+        .filter(Boolean);
+
+    const knownIds = new Set();
+    for (const row of rows) {
+      for (const key of idKeys(row)) knownIds.add(key);
+    }
+
+    const canonicalOnly = canonicalRows.filter(row => {
+      const keys = idKeys(row);
+      return keys.length && !keys.some(key => knownIds.has(key));
+    });
+
+    if (canonicalOnly.length) {
+      rows = [...rows, ...canonicalOnly];
+      fixtureSource = rows.length === canonicalOnly.length
+        ? "canonical_fixtures"
+        : "runtime_union_canonical";
+    }
   }
 
   if (!rows.length) {
