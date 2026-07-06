@@ -150,6 +150,25 @@ jobs:
           }
           NODE
 
+      - name: Refresh value plan comparison settlement
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/value.json" ]; then
+            node ./engine-v1/jobs/export-verified-final-results-day.js --date="$DAY_KEY" --write
+          else
+            echo "No production value file for ${DAY_KEY}; skipping Plan A final-result export."
+          fi
+
+          if [ -f "data/value-plans/${DAY_KEY}/plan-b.json" ]; then
+            node ./engine-v1/jobs/export-verified-final-results-day.js --date="$DAY_KEY" --write --value-path="data/value-plans/${DAY_KEY}/plan-b.json"
+            node ./engine-v1/jobs/build-value-plan-comparison-day.js --date="$DAY_KEY" --write
+          else
+            echo "No Plan B observation file for ${DAY_KEY}; skipping comparison settlement refresh."
+          fi
+
       - name: Configure git author
         if: env.SKIP_BUILD != 'true'
         run: |
@@ -173,6 +192,9 @@ jobs:
           test -d "data/deploy-snapshots/${DAY_KEY}/details" && git add "data/deploy-snapshots/${DAY_KEY}/details"
           test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
 
+          test -d "data/final-results/${DAY_KEY}" && git add "data/final-results/${DAY_KEY}/"
+          test -e "data/value-comparison/${DAY_KEY}.json" && git add "data/value-comparison/${DAY_KEY}.json"
+
           STAGED="$(git diff --cached --name-only || true)"
           echo "Staged files:"
           printf "%s\n" "$STAGED"
@@ -181,9 +203,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/)"
+              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/final-results/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"
@@ -270,17 +292,69 @@ jobs:
             materialChanged
           }, null, 2));
 
-          fs.appendFileSync(process.env.GITHUB_ENV, `INTRADAY_MATERIAL_CHANGE=${materialChanged ? "true" : "false"}\n`);
-
           if (!materialChanged) {
             console.log("No material score/status/minute changes. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
             execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
             execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
           }
+
+          const comparisonFile = `data/value-comparison/${day}.json`;
+
+          function readJsonFromHeadOrNull(path) {
+            try {
+              return JSON.parse(execFileSync("git", ["show", `HEAD:${path}`], { encoding: "utf8" }));
+            } catch {
+              return null;
+            }
+          }
+
+          function stripNonMaterialComparisonFields(value) {
+            if (!value || typeof value !== "object") return value;
+            const copy = JSON.parse(JSON.stringify(value));
+            delete copy.generatedAt;
+            return copy;
+          }
+
+          const comparisonBefore = readJsonFromHeadOrNull(comparisonFile);
+          const comparisonAfter = readJsonFile(comparisonFile);
+
+          if (comparisonBefore && comparisonAfter) {
+            const beforeMaterial = stripNonMaterialComparisonFields(comparisonBefore);
+            const afterMaterial = stripNonMaterialComparisonFields(comparisonAfter);
+            const comparisonMaterialChanged = JSON.stringify(beforeMaterial) !== JSON.stringify(afterMaterial);
+
+            console.log(JSON.stringify({
+              comparisonFile,
+              comparisonMaterialChanged
+            }, null, 2));
+
+            if (!comparisonMaterialChanged) {
+              console.log("Only value-comparison generatedAt changed. Restoring comparison file to avoid timestamp-only commit.");
+              execFileSync("git", ["restore", "--staged", "--", comparisonFile], { stdio: "inherit" });
+              execFileSync("git", ["restore", "--", comparisonFile], { stdio: "inherit" });
+            }
+          }
+
+          let commitNeeded = materialChanged;
+          if (!commitNeeded) {
+            try {
+              execFileSync("git", ["diff", "--cached", "--quiet"], { stdio: "ignore" });
+              commitNeeded = false;
+            } catch {
+              commitNeeded = true;
+            }
+          }
+
+          console.log(JSON.stringify({
+            materialChanged,
+            commitNeeded
+          }, null, 2));
+
+          fs.appendFileSync(process.env.GITHUB_ENV, `INTRADAY_COMMIT_NEEDED=${commitNeeded ? "true" : "false"}\n`);
           NODE
 
       - name: Commit and push snapshot changes
-        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true'
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_COMMIT_NEEDED == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -294,7 +368,7 @@ jobs:
           bash tools/git-push-rebase-retry.sh
 
       - name: Trigger Render redeploy
-        if: env.SKIP_BUILD != 'true' && env.INTRADAY_MATERIAL_CHANGE == 'true'
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_COMMIT_NEEDED == 'true'
         shell: bash
         env:
           RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
