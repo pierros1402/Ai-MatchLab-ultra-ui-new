@@ -218,7 +218,13 @@ function resolveManifestTargetFixtureGate(fixturesSnapshot) {
   const canonicalFixtures = Number(fixturesSnapshot?.canonicalFixtureCount || 0);
 
   if (canonicalFixtures > 0) {
-    const canonicalFloor = Math.max(1, Math.floor(canonicalFixtures * 0.95));
+    // Mirror run-daily-cycle's low-volume grace: min(95% floor, canonical-3)
+    // so a summer day with ~15 fixtures isn't blocked by 2-3 dropped rows while
+    // high-volume days keep the strict 95% floor. Keep both gates in sync.
+    const canonicalFloor = Math.max(
+      1,
+      Math.min(Math.floor(canonicalFixtures * 0.95), canonicalFixtures - 3)
+    );
 
     return {
       staticMinTargetFixtures: normalizedStaticMinTargetFixtures,
