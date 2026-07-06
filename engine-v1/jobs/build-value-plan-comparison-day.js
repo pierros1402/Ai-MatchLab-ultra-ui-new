@@ -295,7 +295,10 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry) {
   const market = clean(row?.market || row?.marketName || row?.type);
   const pick = clean(row?.pick || row?.selection || row?.prediction || row?.side || row?.outcome);
   const mkt = resolveMarketFor(oddsEntry, market, pick);
-  const odds = decimalOdds(row) ?? mkt.odds;
+  // Real bookmaker odd only (from the pick row itself). The AI-priced fair odd
+  // is kept separately as aiFairOdds — the UI odd slot stays EMPTY until a real
+  // company feed is wired, per user request.
+  const odds = decimalOdds(row);
   const kickoff = clean(row?.kickoff || fixture?.kickoff || fixture?.kickoffUtc || oddsEntry?.kickoff) || null;
 
   return {
@@ -314,6 +317,7 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry) {
     confidence: row?.confidence ?? null,
     readiness: row?.readiness ?? null,
     marketProb: mkt.prob,
+    aiFairOdds: mkt.odds,
     oddsDecimal: odds,
     oddsUse: odds ? "display_settlement_only" : null,
     finalScore: finalResult
