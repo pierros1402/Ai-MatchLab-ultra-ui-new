@@ -568,15 +568,27 @@ function renderComparisonRow(p) {
   const home = p?.homeTeam || p?.home || "—";
   const away = p?.awayTeam || p?.away || "—";
   const conf = confidenceKey(p?.band || p?.confidence);
-  const market = comparisonMarketLabel(p);
   const pick = comparisonPickLabel(p);
   const resultBadge = resultBadgeHtml(p?.result);
+
+  // Kickoff time (HH:MM)
+  const kickoffMs = typeof p?.kickoff_ms === "number"
+    ? p.kickoff_ms
+    : (p?.kickoff ? Date.parse(p.kickoff) : null);
+  const time = kickoffHHMM(kickoffMs);
+  const timeHtml = time ? '<span class="value-time">' + esc(time) + '</span>' : "";
+
+  // Market implied probability ("ποσοστό αγοράς") from AI-priced odds
+  const mktPct = (typeof p?.marketProb === "number")
+    ? Math.round(p.marketProb * 100) + "%"
+    : null;
+  const mktHtml = mktPct ? '<span class="value-mkt">αγορά ' + esc(mktPct) + '</span>' : "";
 
   return [
     '<div class="value-row value-compare-row conf-' + esc(String(conf).toLowerCase()) + '" data-match-id="' + esc(p?.matchId || "") + '">',
     '  <div class="value-row-top">',
     '    <div class="value-league">' + esc(countryLeague) + '</div>',
-    '    <div class="value-meta">' + resultBadge + '</div>',
+    '    <div class="value-meta">' + timeHtml + resultBadge + '</div>',
     '  </div>',
     '  <div class="value-row-mid">',
     '    <div class="value-fixture">',
@@ -588,7 +600,8 @@ function renderComparisonRow(p) {
     '  <div class="value-row-bot">',
     '    <div class="value-score">',
     '      <span class="value-score-pct">' + esc(comparisonScoreLabel(p)) + '</span>',
-    '      <span class="value-score-pick">' + esc(market) + ' • ' + esc(pick) + '</span>',
+    '      <span class="value-score-pick">' + esc(pick) + '</span>',
+    '      ' + mktHtml,
     '    </div>',
     '    <div class="value-conf">' + esc(conf) + '</div>',
     '  </div>',
