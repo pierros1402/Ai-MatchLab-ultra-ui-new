@@ -28,6 +28,47 @@ function clean(value) {
   return String(value ?? "").trim();
 }
 
+// slug -> { country, name } from the shared league catalogue, so comparison
+// rows carry a real country + league name (e.g. "isl.1" -> Iceland / Besta
+// deild karla) instead of a bare slug. Value picks/fixtures don't carry these.
+let _leagueCatalogueMap = null;
+function leagueCatalogueMap() {
+  if (_leagueCatalogueMap) return _leagueCatalogueMap;
+  const map = new Map();
+  try {
+    const j = JSON.parse(
+      fs.readFileSync(path.join(ROOT, "assets", "data", "leagues-catalogue.json"), "utf8")
+    );
+    const stack = [j];
+    while (stack.length) {
+      const node = stack.pop();
+      if (Array.isArray(node)) {
+        for (const x of node) stack.push(x);
+        continue;
+      }
+      if (node && typeof node === "object") {
+        if (node.country_name && Array.isArray(node.leagues)) {
+          for (const l of node.leagues) {
+            if (l?.league_id) {
+              map.set(String(l.league_id), {
+                country: String(node.country_name || ""),
+                name: String(l.display_name || l.league_name || "")
+              });
+            }
+          }
+        }
+        for (const v of Object.values(node)) {
+          if (v && typeof v === "object") stack.push(v);
+        }
+      }
+    }
+  } catch {
+    /* catalogue optional — rows fall back to slug */
+  }
+  _leagueCatalogueMap = map;
+  return map;
+}
+
 function rowsFromPayload(payload) {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
@@ -183,12 +224,15 @@ function enrichPick(row, fixture, finalResult, planId) {
   if (finalResult && win === false) settlement = "LOSS";
   if (finalResult && win === null) settlement = "UNSUPPORTED";
 
+  const leagueSlug = clean(row?.leagueSlug || row?.league || fixture?.leagueSlug || fixture?.league || finalResult?.leagueSlug);
+  const cat = leagueCatalogueMap().get(leagueSlug) || null;
+
   return {
     planId,
     matchId: id,
-    country: clean(row?.country || fixture?.country || finalResult?.country),
-    leagueSlug: clean(row?.leagueSlug || row?.league || fixture?.leagueSlug || fixture?.league || finalResult?.leagueSlug),
-    leagueName: clean(row?.leagueName || row?.competitionName || fixture?.leagueName || fixture?.competitionName || finalResult?.leagueName || finalResult?.competitionName),
+    country: clean(row?.country || fixture?.country || finalResult?.country || cat?.country),
+    leagueSlug,
+    leagueName: clean(row?.leagueName || row?.competitionName || fixture?.leagueName || fixture?.competitionName || finalResult?.leagueName || finalResult?.competitionName || cat?.name),
     homeTeam: homeName(row) || homeName(fixture),
     awayTeam: awayName(row) || awayName(fixture),
     market: clean(row?.market || row?.marketName || row?.type),
