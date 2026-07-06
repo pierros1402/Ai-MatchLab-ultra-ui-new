@@ -313,7 +313,12 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry) {
     market,
     pick,
     band: row?.band ?? null,
-    score: row?.score ?? null,
+    // Plan A carries "score"; Plan B (strict v2.3) has no score — its headline
+    // metric is modelProb (the model's probability). Fall back to it so the
+    // Plan B row shows a % instead of "—".
+    score: (typeof row?.score === "number")
+      ? row.score
+      : (typeof row?.modelProb === "number" ? row.modelProb : null),
     confidence: row?.confidence ?? null,
     readiness: row?.readiness ?? null,
     marketProb: mkt.prob,
