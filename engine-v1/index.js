@@ -1589,6 +1589,101 @@ app.get("/value-picks", async (req, res) => {
   });
 });
 
+// Map a value pick's market + selection onto the AI-priced ("current market")
+// odds carried in deploy-snapshots/<date>/odds.json (aiAssessment.markets).
+// Firewall-safe: this is DISPLAY only — odds never feed the value engine.
+const VALUE_EXPORT_MARKET_KEYS = {
+  OU15: "OU15", "Over / Under 1.5": "OU15",
+  OU25: "OU25", "Over / Under 2.5": "OU25",
+  OU35: "OU35", "Over / Under 3.5": "OU35",
+  BTTS: "BTTS",
+  "1X2": "1X2",
+  DC: "DC", "Double Chance": "DC"
+};
+
+function valueExportOddsSide(marketKey, pick) {
+  const p = String(pick || "").toUpperCase().trim();
+  if (marketKey === "OU15" || marketKey === "OU25" || marketKey === "OU35") {
+    if (p.includes("OVER")) return "over";
+    if (p.includes("UNDER")) return "under";
+    return null;
+  }
+  if (marketKey === "BTTS") {
+    if (p.includes("YES")) return "yes";
+    if (p.includes("NO")) return "no";
+    return null;
+  }
+  if (marketKey === "1X2") {
+    if (p === "1" || p === "HOME") return "home";
+    if (p === "X" || p === "DRAW") return "draw";
+    if (p === "2" || p === "AWAY") return "away";
+    return null;
+  }
+  if (marketKey === "DC") {
+    if (["1X", "X2", "12"].includes(p)) return p;
+    return null;
+  }
+  return null;
+}
+
+function loadValueExportOddsMap(date) {
+  const map = new Map();
+  try {
+    const file = resolveDataPath("deploy-snapshots", date, "odds.json");
+    if (!fs.existsSync(file)) return map;
+    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+    for (const m of parsed?.matches || []) {
+      const markets = m?.aiAssessment?.markets;
+      if (!markets) continue;
+      const entry = { markets, kickoff: m?.kickoffUtc || null };
+      for (const id of [m?.matchId, m?.canonicalId]) {
+        if (id) map.set(String(id), entry);
+      }
+    }
+  } catch {
+    /* odds are optional — export still works without them */
+  }
+  return map;
+}
+
+function resolveValueExportOdds(oddsEntry, market, marketName, pick) {
+  const markets = oddsEntry?.markets;
+  if (!markets) return null;
+  const key =
+    VALUE_EXPORT_MARKET_KEYS[market] ||
+    VALUE_EXPORT_MARKET_KEYS[marketName] ||
+    market;
+  const block = markets[key];
+  if (!block?.odds) return null;
+  const side = valueExportOddsSide(key, pick);
+  if (!side) return null;
+  const v = Number(block.odds[side]);
+  return Number.isFinite(v) ? v : null;
+}
+
+// Load both plans for a day: Plan A + Plan B from value-comparison/<date>.json
+// (settled, carries both), falling back to snapshot value.json (Plan A only)
+// for days before the comparison artifact existed.
+function loadValueExportDayPicks(date, { rebuild }) {
+  if (!rebuild) {
+    try {
+      const cmpFile = resolveDataPath("value-comparison", `${date}.json`);
+      if (fs.existsSync(cmpFile)) {
+        const cmp = JSON.parse(fs.readFileSync(cmpFile, "utf8"));
+        const out = [];
+        for (const [planKey, planLabel] of [["A", "Plan A"], ["B", "Plan B"]]) {
+          const picks = cmp?.plans?.[planKey]?.picks || [];
+          for (const p of picks) out.push({ plan: planLabel, source: "value_comparison", pick: p });
+        }
+        if (out.length) return out;
+      }
+    } catch {
+      /* fall through to snapshot */
+    }
+  }
+  return null;
+}
+
 app.get("/value-export/range", async (req, res) => {
   const from = String(req.query.from || athensDayKey());
   const to = String(req.query.to || from);
@@ -1603,49 +1698,61 @@ app.get("/value-export/range", async (req, res) => {
   const rows = [];
 
   for (const date of days) {
-    let result = null;
+    const oddsMap = loadValueExportOddsMap(date);
 
-    if (!rebuild) {
-      const snapshotResult = snapshotValueResponse(date);
+    // Prefer both plans (A+B) from the comparison artifact; else Plan A only.
+    let planned = loadValueExportDayPicks(date, { rebuild });
 
-      if (snapshotResult?.ok) {
-        result = snapshotResult;
+    if (!planned) {
+      let result = null;
+
+      if (!rebuild) {
+        const snapshotResult = snapshotValueResponse(date);
+        if (snapshotResult?.ok) result = snapshotResult;
       }
+
+      if (!result) {
+        if (runtimeBuildsDisabled()) {
+          result = snapshotValueResponse(date);
+        } else {
+          result = await buildValueDay(date, { rebuild });
+        }
+      }
+
+      const picks = Array.isArray(result?.picks)
+        ? result.picks
+        : Array.isArray(result?.items)
+          ? result.items
+          : Array.isArray(result?.valuePicks)
+            ? result.valuePicks
+            : Array.isArray(result?.data?.picks)
+              ? result.data.picks
+              : [];
+
+      planned = picks
+        .filter((p) => p && typeof p === "object")
+        .map((p) => ({ plan: "Plan A", source: result?.source || null, pick: p }));
     }
 
-    if (!result) {
-      if (runtimeBuildsDisabled()) {
-        result = snapshotValueResponse(date);
-      } else {
-        result = await buildValueDay(date, { rebuild });
-      }
-    }
+    for (const { plan, source, pick: p } of planned) {
+      const matchId = p.matchId || p.canonicalId;
+      const oddsEntry = oddsMap.get(String(matchId));
+      const odds = resolveValueExportOdds(oddsEntry, p.market, p.marketName, p.pick);
 
-    const picks = Array.isArray(result?.picks)
-      ? result.picks
-      : Array.isArray(result?.items)
-        ? result.items
-        : Array.isArray(result?.valuePicks)
-          ? result.valuePicks
-          : Array.isArray(result?.data?.picks)
-            ? result.data.picks
-            : [];
-
-    const filtered = picks.filter((p) => p && typeof p === "object");
-
-    for (const p of filtered) {
       rows.push({
         date,
-        kickoff: p.kickoff,
+        plan,
+        kickoff: p.kickoff || oddsEntry?.kickoff || null,
         league: p.leagueSlug,
         home: p.homeTeam,
         away: p.awayTeam,
         market: p.market,
         pick: p.pick,
+        odds,
         score: p.score,
         confidence: p.confidence,
         result: p.result ?? null,
-        source: result?.source || null
+        source: source || null
       });
     }
   }
@@ -1666,27 +1773,31 @@ if (format === "xlsx") {
 
   sheet.columns = [
     { header: "Date", key: "date", width: 14 },
+    { header: "Plan", key: "plan", width: 10 },
     { header: "Kickoff", key: "kickoff", width: 22 },
     { header: "League", key: "league", width: 16 },
     { header: "Home", key: "home", width: 24 },
     { header: "Away", key: "away", width: 24 },
     { header: "Market", key: "market", width: 20 },
     { header: "Pick", key: "pick", width: 16 },
+    { header: "Odds", key: "odds", width: 10 },
     { header: "Score", key: "score", width: 10 },
     { header: "Confidence", key: "confidence", width: 12 },
     { header: "Result", key: "result", width: 12 },
-    { header: "Source", key: "source", width: 14 }
+    { header: "Source", key: "source", width: 16 }
   ];
 
   for (const row of rows) {
     sheet.addRow({
       date: row.date,
+      plan: row.plan || "",
       kickoff: row.kickoff,
       league: row.league,
       home: row.home,
       away: row.away,
       market: row.market,
       pick: row.pick,
+      odds: Number.isFinite(Number(row.odds)) ? Number(row.odds) : "",
       score: Number(row.score),
       confidence: Number(row.confidence),
       result: row.result || "",
@@ -1699,24 +1810,27 @@ if (format === "xlsx") {
   headerRow.font = { bold: true };
   headerRow.alignment = { vertical: "middle", horizontal: "center" };
 
-  // Alignment by column
-  ["A", "B", "C", "F", "G", "H", "I", "J", "K"].forEach((col) => {
+  // Columns: A Date, B Plan, C Kickoff, D League, E Home, F Away, G Market,
+  // H Pick, I Odds, J Score, K Confidence, L Result, M Source.
+  // Center everything except the team names (E, F).
+  ["A", "B", "C", "D", "G", "H", "I", "J", "K", "L", "M"].forEach((col) => {
     sheet.getColumn(col).alignment = {
       vertical: "middle",
       horizontal: "center"
     };
   });
 
-  ["D", "E"].forEach((col) => {
+  ["E", "F"].forEach((col) => {
     sheet.getColumn(col).alignment = {
       vertical: "middle",
       horizontal: "left"
     };
   });
 
-  // Number formatting
-  sheet.getColumn("H").numFmt = "0.000";
-  sheet.getColumn("I").numFmt = "0.000";
+  // Number formatting: Odds 2dp, Score/Confidence 3dp
+  sheet.getColumn("I").numFmt = "0.00";
+  sheet.getColumn("J").numFmt = "0.000";
+  sheet.getColumn("K").numFmt = "0.000";
 
   // Freeze header
   sheet.views = [{ state: "frozen", ySplit: 1 }];
@@ -1724,7 +1838,7 @@ if (format === "xlsx") {
   // Auto filter
   sheet.autoFilter = {
     from: "A1",
-    to: "K1"
+    to: "M1"
   };
 
   res.setHeader(
@@ -1752,12 +1866,14 @@ if (format !== "csv") {
 
   const header = [
     "date",
+    "plan",
     "kickoff",
     "league",
     "home",
     "away",
     "market",
     "pick",
+    "odds",
     "score",
     "confidence",
     "result",
@@ -1769,12 +1885,14 @@ if (format !== "csv") {
   for (const row of rows) {
     lines.push([
       row.date,
+      csvEscape(row.plan || ""),
       row.kickoff,
       row.league,
       csvEscape(row.home),
       csvEscape(row.away),
       csvEscape(row.market),
       csvEscape(row.pick),
+      Number.isFinite(Number(row.odds)) ? Number(row.odds) : "",
       row.score,
       row.confidence,
       csvEscape(row.result || ""),
