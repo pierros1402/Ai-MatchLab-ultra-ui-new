@@ -208,6 +208,14 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
 
+      - name: Build value Plan B comparison observation
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-standalone-day.js --date "$DAY_KEY" --rebuild --plan-b-observation
+          node ./engine-v1/jobs/build-value-plan-comparison-day.js --date "$DAY_KEY" --write
+
       # Re-run AFTER the final export so the committed report describes THIS
       # manifest — the in-cycle run predates the geo rebuild + re-export above
       # and was permanently stale vs manifest.generatedAt (audit P1). Auto-fixes
@@ -283,6 +291,14 @@ jobs:
           git add data/deploy-snapshots/latest.json
           git add "data/deploy-snapshots/${DAY_KEY}/"
 
+          if [ -d "data/value-plans/${DAY_KEY}" ]; then
+            git add "data/value-plans/${DAY_KEY}/"
+          fi
+
+          if [ -f "data/value-comparison/${DAY_KEY}.json" ]; then
+            git add "data/value-comparison/${DAY_KEY}.json"
+          fi
+
           if compgen -G "data/team-geo/*.json" > /dev/null; then
             git add data/team-geo/*.json
           fi
@@ -340,10 +356,10 @@ jobs:
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/${DAY_KEY}\.json$|data/standings/[^/]+\.json$)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/value-plans/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$|data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/${DAY_KEY}\.json$|data/standings/[^/]+\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}\.json$|data/coverage-readiness/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/value-plans/|data/value-comparison/|data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}\.json$|data/coverage-readiness/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"
