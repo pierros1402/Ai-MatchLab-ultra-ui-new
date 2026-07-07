@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { teamPairMatches } from "../core/team-identity.js";
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -181,17 +182,33 @@ function isScored(row) {
     Number.isFinite(Number(row?.scoreAway));
 }
 
-function findExactFlashscoreMatch(target, sourceRows, dayKey) {
-  const candidates = sourceRows.filter(row => {
+function findFlashscoreMatch(target, sourceRows, dayKey) {
+  // Scored rows on the same Athens day are the only settlement candidates.
+  const pool = sourceRows.filter(row => {
     if (!isScored(row)) return false;
-    if (norm(row?.home) !== norm(target.homeTeam)) return false;
-    if (norm(row?.away) !== norm(target.awayTeam)) return false;
-
     const sourceDay = athensDayFromUtc(row?.kickoffUtc);
     if (sourceDay && sourceDay !== dayKey) return false;
-
     return true;
   });
+
+  // Tier 1 — exact normalized-name equality (original path; fast, unambiguous).
+  let candidates = pool.filter(row =>
+    norm(row?.home) === norm(target.homeTeam) &&
+    norm(row?.away) === norm(target.awayTeam)
+  );
+  let matchTier = "exact";
+
+  // Tier 2 (additive) — only when exact matched nothing, fall back to the shared
+  // fuzzy identity matcher (token subset + squad-marker safety). This closes the
+  // verify false-negatives ("America MG" vs "América Mineiro", "Keflavik" vs
+  // "Keflavík ÍF") without ever overriding a clean exact hit. Uniqueness is
+  // still required below, so an ambiguous fuzzy hit stays unresolved.
+  if (candidates.length === 0) {
+    candidates = pool.filter(row =>
+      teamPairMatches(target.homeTeam, target.awayTeam, row?.home, row?.away)
+    );
+    matchTier = "token";
+  }
 
   if (candidates.length !== 1) {
     return {
@@ -213,7 +230,8 @@ function findExactFlashscoreMatch(target, sourceRows, dayKey) {
 
   return {
     ok: true,
-    row: candidates[0]
+    row: candidates[0],
+    matchTier
   };
 }
 
@@ -310,7 +328,7 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const conflicts = [];
 
   for (const target of targetSource.targets) {
-    const found = findExactFlashscoreMatch(target, sourceRows, safeDayKey);
+    const found = findFlashscoreMatch(target, sourceRows, safeDayKey);
 
     if (!found.ok) {
       unresolved.push({
