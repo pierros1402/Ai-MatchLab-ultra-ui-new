@@ -4,7 +4,7 @@ import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 import ExcelJS from "exceljs";
-import { athensDayKey, shiftDay } from "./core/daykey.js";
+import { athensDayKey, shiftDay, athensDayFromKickoff } from "./core/daykey.js";
 import { ingestDay } from "./jobs/ingest-day.js";
 import { finalizeDayIfSafe } from "./jobs/finalize-day.js";
 import { auditWindow } from "./jobs/audit-window.js";
@@ -1291,8 +1291,31 @@ function dedupeDateMatches(matches, requestedDay) {
   return Array.from(best.values()).sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
 }
 
+// Athens-day ownership: a match belongs to exactly ONE calendar day — the Athens
+// day of its kickoff instant. Cross-midnight kickoffs (22:00–23:59 UTC) were being
+// double-bucketed: the correct row on its Athens day (where it gets FT), PLUS a
+// phantom SCHEDULED copy on the adjacent UTC day (a second source spelled the
+// teams slightly differently, so same-day dedupe never merged them). The stored
+// dayKey/canonicalId can carry the wrong day, so we judge from the kickoff instant
+// itself (DST-safe via the Athens TZ). Rows with no/invalid kickoff are KEPT — we
+// never drop a match we cannot place.
+function athensDayForRow(row) {
+  const ko = row?.kickoffUtc;
+  if (!ko || !Number.isFinite(Date.parse(ko))) return null;
+  try { return athensDayFromKickoff(ko); } catch { return null; }
+}
+
+function filterToAthensDayOwnership(matches, requestedDay) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(requestedDay || ""))) return matches || [];
+  return (Array.isArray(matches) ? matches : []).filter(m => {
+    const day = athensDayForRow(m);
+    return !day || day === requestedDay;
+  });
+}
+
 function reconcileDateMatchesForDisplay(matches, requestedDay) {
-  return dedupeDateMatches(overlayTruthResults(matches, requestedDay), requestedDay);
+  const owned = filterToAthensDayOwnership(matches, requestedDay);
+  return dedupeDateMatches(overlayTruthResults(owned, requestedDay), requestedDay);
 }
 // Slug aliases: old BetExplorer slugs that map to ESPN canonical slugs
 const FX_SLUG_ALIASES = {
@@ -2101,6 +2124,43 @@ function excludeYouthWomenRows(matches) {
   return Array.isArray(matches) ? matches.filter(m => !isYouthOrWomenRow(m)) : matches;
 }
 
+// ── Display-only supplemental league metadata ───────────────────────────────
+// Some rows carry a leagueSlug the coverage registry does not know (Flashscore
+// supplemental leagues `fs.<country>.<league>` and a few micro ESPN slugs). Left
+// unresolved they render as a raw slug ("nca.1", "fs.usa.mls-next-pro") with no
+// country — but the product rule is "country before the league". This resolves a
+// country + friendly name for display ONLY; it NEVER feeds LEAGUES_COVERAGE or
+// acquisition, so adding names here cannot move the coverage floor or fetch plan.
+const SUPPLEMENTAL_LEAGUE_META = {
+  "nca.1": { country: "Nicaragua", name: "Primera División", tier: 1 },
+  "sle.1": { country: "Sierra Leone", name: "Premier League", tier: 1 },
+};
+// Country segments that title-case wrong (acronyms / naming), plus league-word
+// acronyms kept uppercase so "mls-next-pro" reads "MLS Next Pro".
+const FS_COUNTRY_FIXUPS = { usa: "USA", uae: "UAE", drc: "DR Congo", world: "International" };
+const FS_ACRONYMS = new Set(["mls", "usl", "npl", "fc", "sc", "afc", "act", "ii", "u23", "u21", "u20", "u19"]);
+function fsTitleCase(seg) {
+  return String(seg || "")
+    .split(/[-_.\s]+/)
+    .filter(Boolean)
+    .map(w => FS_ACRONYMS.has(w.toLowerCase())
+      ? w.toUpperCase()
+      : w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+function resolveSupplementalLeagueMeta(slug) {
+  const s = String(slug || "");
+  if (SUPPLEMENTAL_LEAGUE_META[s]) return SUPPLEMENTAL_LEAGUE_META[s];
+  if (s.startsWith("fs.")) {
+    const parts = s.slice(3).split(".");
+    if (parts.length >= 2 && parts[0]) {
+      const country = FS_COUNTRY_FIXUPS[parts[0].toLowerCase()] || fsTitleCase(parts[0]);
+      return { country, name: fsTitleCase(parts.slice(1).join(" ")) || null, tier: null };
+    }
+  }
+  return null;
+}
+
 // firewall). Returns { source, matches }; does NOT apply the request-time live
 // overlay — callers own that so it stays a same-day request-time concern.
 // buildDisplayMatchesForDate re-reads and re-parses several large JSON snapshots
@@ -2153,13 +2213,19 @@ function buildDisplayMatchesForDateUncached(date) {
   };
   function resolveLeagueMeta(slug) {
     const s = String(slug || "");
-    return leagueMeta[s] || leagueMeta[COUNTRY_SLUG_ALIASES[s] || s] || null;
+    return leagueMeta[s] || leagueMeta[COUNTRY_SLUG_ALIASES[s] || s] || resolveSupplementalLeagueMeta(s) || null;
   }
   function attachCountry(m) {
     const meta = resolveLeagueMeta(m.leagueSlug);
     if (!meta) return m;
     const country = meta.country && meta.country !== "Unknown" ? meta.country : null;
-    return { ...m, country: m.country || country, leagueTier: m.leagueTier ?? meta.tier ?? null };
+    // Fill a friendly league name only when the row carries none or just the raw
+    // slug — never override a real source name (so "Brazil Serie B" is kept).
+    const rawName = String(m.leagueName || "").trim();
+    const leagueName = (!rawName || rawName === String(m.leagueSlug || "")) && meta.name
+      ? meta.name
+      : m.leagueName;
+    return { ...m, leagueName, country: m.country || country, leagueTier: m.leagueTier ?? meta.tier ?? null };
   }
 
   function attachAssessment(rawMatch) {
