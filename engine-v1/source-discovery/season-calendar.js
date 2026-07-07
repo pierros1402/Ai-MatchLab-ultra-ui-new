@@ -50,7 +50,12 @@ const SLUG_WINDOWS = {
   "uefa.europa.conf": { start: 7, end: 5 },
   "ucl.q":            { start: 6, end: 9 },
   "uel.q":            { start: 6, end: 9 },
-  "uecl.q":           { start: 6, end: 9 }
+  "uecl.q":           { start: 6, end: 9 },
+
+  // Yemen D1 runs on a war-displaced schedule (observed playing in July 2026)
+  // — not the Gulf autumn→spring default. Keep the window open all year; a
+  // day with no fixtures harmlessly returns 0 and writes no file.
+  "yem.1":            { start: 1, end: 12 }
 };
 
 // ─── Per-country overrides ──────────────────────────────────────────────────────

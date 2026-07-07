@@ -65,6 +65,7 @@ const PLACEHOLDER_LEAGUE_NAMES = {
   "mwi.1": "Super League",
   "som.1": "National League",
   "syr.1": "Premier League",
+  "yem.1": "Division 1",
   "tan.1": "Ligi Kuu Bara",
   "zim.1": "Premier Soccer League",
   // can.2 / lca.2 have no Flashscore competition to match — left unmapped.
@@ -378,6 +379,7 @@ export const DOMESTIC_PATH_SLUG = {
   "/football/somalia/national-league/": "som.1",
   "/football/syria/premier-league/": "syr.1",
   "/football/tanzania/ligi-kuu-bara/": "tan.1",
+  "/football/yemen/division-1/": "yem.1",
   "/football/zimbabwe/premier-soccer-league/": "zim.1",
 };
 

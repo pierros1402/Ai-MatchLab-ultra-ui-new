@@ -4,6 +4,7 @@ import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
 import { resolveInternational } from "../odds/international-competitions.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
+import { athensDayFromKickoff } from "../core/daykey.js";
 import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
 
 const ESPN_SUPPORTED = new Set([
@@ -172,7 +173,13 @@ const FIXTURE_ADAPTERS = [
         || resolveSlug(fx.country, fx.leagueName)
         || slug;
 
-      const canonicalId = buildCanonicalId(leagueSlug, fx.home, fx.away, fx.dayKey || fx.kickoffUtc);
+      // Identity and bucketing must use the Athens calendar day of the
+      // kickoff, like the ESPN path (normalize.js) — NOT the feed's raw
+      // dayKey, which is UTC-based. A 21:00Z kickoff is already the next
+      // Athens day; the raw dayKey filed it (and its cid_*) one day early,
+      // so the match vanished from the day universe the UI actually shows
+      // (2026-07-07: uru.2 Miramar–Atenas, 21:00Z = 00:00 Athens).
+      const canonicalId = buildCanonicalId(leagueSlug, fx.home, fx.away, fx.kickoffUtc);
       if (!canonicalId) return null;
 
       return {
@@ -187,7 +194,7 @@ const FIXTURE_ADAPTERS = [
         leagueSlug,
         leagueName: intl ? intl.label : fx.leagueName,
 
-        dayKey: fx.kickoffUtc?.slice(0, 10) || null,
+        dayKey: athensDayFromKickoff(fx.kickoffUtc),
         kickoffUtc: fx.kickoffUtc,
 
         homeTeam: fx.home,
