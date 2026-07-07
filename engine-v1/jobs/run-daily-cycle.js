@@ -1323,6 +1323,46 @@ export async function runDailyCycle(options = {}) {
         latestUpdated: finalizedDeploySnapshot?.latestUpdated
       });
 
+      // Re-settle the finalized day's value picks against the freshly-exported
+      // snapshot. The value settlement pipeline (verified final results →
+      // Plan A/B comparison) otherwise runs ONLY for the current DAY_KEY (in
+      // daily-deploy-snapshot.yml + intraday), so a pick whose match kicks off
+      // late — after the day's last comparison run — stays UNRESOLVED forever
+      // even though the result later lands (audit 2026-07-07: isl.1
+      // Keflavik v Fram 19:15Z settled on nobody). Running the same sequence
+      // here for finalizeDayKey (yesterday) lets any result captured by the
+      // finalize live-status refresh + results-truth sweep above settle the
+      // picks. Settlement only — the frozen scoring re-selects identical picks
+      // from unchanged inputs, only the WIN/LOSS result field updates.
+      console.log("[daily-cycle] finalize-value-resettle:start", { finalizeDayKey });
+      try {
+        runDailyCycleNodeJob([
+          "./engine-v1/jobs/export-verified-final-results-day.js",
+          `--date=${finalizeDayKey}`,
+          "--write"
+        ], "finalize-verified-final-results-plan-a");
+
+        const finalizePlanBPath = resolveDataPath("value-plans", finalizeDayKey, "plan-b.json");
+        if (fs.existsSync(finalizePlanBPath)) {
+          runDailyCycleNodeJob([
+            "./engine-v1/jobs/export-verified-final-results-day.js",
+            `--date=${finalizeDayKey}`,
+            "--write",
+            `--value-path=data/value-plans/${finalizeDayKey}/plan-b.json`
+          ], "finalize-verified-final-results-plan-b");
+        }
+
+        runDailyCycleNodeJob([
+          "./engine-v1/jobs/build-value-plan-comparison-day.js",
+          `--date=${finalizeDayKey}`,
+          "--write"
+        ], "finalize-value-plan-comparison");
+
+        console.log("[daily-cycle] finalize-value-resettle:done", { finalizeDayKey });
+      } catch (e) {
+        console.warn("[daily-cycle] finalize-value-resettle:failed", String(e?.message || e));
+      }
+
       if (finalizeReadiness?.safeToFinalizeStats) {
         console.log("[daily-cycle] history-append:start", { finalizeDayKey });
         historyAppend = await appendFinalizedDayToHistory(finalizeDayKey);
