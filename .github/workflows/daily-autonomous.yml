@@ -78,7 +78,16 @@ jobs:
           node ./engine-v1/jobs/verify-results-day.js --report "$YESTERDAY"
 
       - name: Commit snapshots + memory
-        if: env.SKIP != 'true'
+        # Persist the harvested truth even when the results gap check above
+        # fails. A few genuinely-uncollected matches (late Flashscore finalizers,
+        # postponements) previously discarded EVERY result, value store and
+        # memory that WAS harvested — they are truthful, just incomplete — which
+        # starved the results-truth store on the ~half of runs that trip the
+        # gate (audit 2026-07-07: isl.1 Keflavik v Fram never reached settlement
+        # because the 07-07 harvest's commit was skipped by the failed verify).
+        # The verify step still fails the run so the alert email fires; we just
+        # no longer throw away good data with it. run_day must have succeeded.
+        if: ${{ always() && env.SKIP != 'true' && steps.run_day.outcome == 'success' }}
         shell: bash
         run: |
           set -euo pipefail
