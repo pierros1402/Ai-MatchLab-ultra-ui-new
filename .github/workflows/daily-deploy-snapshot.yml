@@ -416,6 +416,14 @@ jobs:
         shell: bash
         run: node engine-v1/jobs/check-value-artifact-gate.js --date="${DAY_KEY}"
 
+      # Autonomy scoreboard: one self-describing report per day rolling up
+      # universe parity, acquisition, freshness, invariants, value and
+      # settlement into a single clean/not-clean verdict. Consecutive clean
+      # days are the Definition-of-Done streak for the autonomous mechanism.
+      - name: Build day report
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+
       - name: Stage allowed snapshot files only
         if: env.SKIP_BUILD != 'true'
         shell: bash
@@ -424,6 +432,10 @@ jobs:
 
           git add data/deploy-snapshots/latest.json
           git add "data/deploy-snapshots/${DAY_KEY}/"
+
+          if [ -f "data/build-reports/${DAY_KEY}.json" ]; then
+            git add "data/build-reports/${DAY_KEY}.json"
+          fi
 
           if [ -d "data/value-plans/${DAY_KEY}" ]; then
             git add "data/value-plans/${DAY_KEY}/"
@@ -453,10 +465,10 @@ jobs:
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/value-plans/${DAY_KEY}/|data/value-plans/${FINALIZE_DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$|data/value-comparison/${FINALIZE_DAY_KEY}\.json$|data/value-comparison/cumulative\.json$)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/value-plans/${FINALIZE_DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$|data/value-comparison/${FINALIZE_DAY_KEY}\.json$|data/value-comparison/cumulative\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/value-plans/|data/value-comparison/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/value-plans/|data/value-comparison/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"
