@@ -358,13 +358,23 @@ jobs:
             git add "data/coverage-readiness/${DAY_KEY}.json"
           fi
 
+          # Canonical FT upgrades written DURING the cycle (finalize live
+          # refresh + results-truth sweeps, incl. the D-2..D-7 catch-up). The
+          # canonical acquisition commit runs BEFORE the cycle, so these
+          # upgrades were regenerated on the runner every night and discarded
+          # (2026-07-07 logs: the same 55 rows of 07-05 and 86 rows of 07-04
+          # re-upgraded nightly; Keflavik's swept FT never reached origin).
+          if [ -d "data/canonical-fixtures" ]; then
+            git add data/canonical-fixtures
+          fi
+
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-truth \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/${DAY_KEY}\.json$|data/standings/[^/]+\.json$)"
+            --allow="^(data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/${DAY_KEY}\.json$|data/standings/[^/]+\.json$|data/canonical-fixtures/)"
 
           echo "=== TRUTH STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/|data/standings/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/|data/standings/|data/canonical-fixtures/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed truth files staged:"
@@ -445,30 +455,53 @@ jobs:
             git add "data/value-comparison/${DAY_KEY}.json"
           fi
 
-          # Yesterday's re-settled value picks (finalize-value-resettle step in
-          # run-daily-cycle): a late-kickoff match whose result lands after the
-          # prior day's last comparison run now settles here. Without staging
-          # these the WIN/LOSS would regenerate on the runner and be discarded,
-          # leaving the committed export permanently UNRESOLVED.
-          if [ -n "${FINALIZE_DAY_KEY:-}" ] && [ -d "data/value-plans/${FINALIZE_DAY_KEY}" ]; then
-            git add "data/value-plans/${FINALIZE_DAY_KEY}/"
-          fi
+          # Re-settled value picks + re-exported snapshots for RECENT days
+          # (D-1..D-7): run-daily-cycle's finalize resettle covers yesterday
+          # and the history catch-up now re-settles any recent day whose
+          # truth arrived late (Keflavik case: the 07-06 final only reached
+          # the truth store via 07-07's harvest). Without staging these the
+          # WIN/LOSS would regenerate on the runner every night and be
+          # discarded, leaving the committed export permanently UNRESOLVED.
+          RECENT_KEYS=""
+          for back in 1 2 3 4 5 6 7; do
+            RECENT_KEYS="$RECENT_KEYS $(TZ=Europe/Athens date -d "${DAY_KEY} -${back} day" +%F)"
+          done
+          echo "Recent settlement window:${RECENT_KEYS}"
 
-          if [ -n "${FINALIZE_DAY_KEY:-}" ] && [ -f "data/value-comparison/${FINALIZE_DAY_KEY}.json" ]; then
-            git add "data/value-comparison/${FINALIZE_DAY_KEY}.json"
+          for k in ${RECENT_KEYS}; do
+            if [ -d "data/deploy-snapshots/$k" ]; then
+              git add "data/deploy-snapshots/$k/"
+            fi
+            if [ -d "data/value-plans/$k" ]; then
+              git add "data/value-plans/$k/"
+            fi
+            if [ -f "data/value-comparison/$k.json" ]; then
+              git add "data/value-comparison/$k.json"
+            fi
+            if [ -d "data/final-results/$k" ]; then
+              git add "data/final-results/$k/"
+            fi
+          done
+
+          if [ -d "data/final-results/${DAY_KEY}" ]; then
+            git add "data/final-results/${DAY_KEY}/"
           fi
 
           if [ -f "data/value-comparison/cumulative.json" ]; then
             git add "data/value-comparison/cumulative.json"
           fi
 
+          RECENT_ALT="$(echo ${RECENT_KEYS} | tr ' ' '|')"
+          RECENT_CSV="$(echo ${RECENT_KEYS} | tr ' ' ',')"
+
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/value-plans/${FINALIZE_DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$|data/value-comparison/${FINALIZE_DAY_KEY}\.json$|data/value-comparison/cumulative\.json$)"
+            --extra-days="${RECENT_CSV}" \
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/value-plans/|data/value-comparison/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/value-plans/|data/value-comparison/|data/final-results/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"

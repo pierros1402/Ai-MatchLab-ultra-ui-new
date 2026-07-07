@@ -13,6 +13,16 @@ function hasFlag(name) {
 const label = argValue("label", "data-boundary");
 const allowPattern = argValue("allow", "");
 const dayKey = argValue("dayKey", process.env.DAY_KEY || "");
+
+// Additional day keys whose deploy snapshots may legitimately be staged in
+// the same commit: the finalize + late-truth settlement re-export RECENT
+// days' snapshots (D-1..D-7), which the single-day rule below used to reject.
+const extraDays = argValue("extra-days", "")
+  .split(",")
+  .map(s => s.trim())
+  .filter(Boolean);
+const allowedSnapshotDays = new Set([dayKey, ...extraDays].filter(Boolean));
+
 const forbidCacheTruthMix = hasFlag("forbid-cache-truth-mix");
 const allowDataDeletions = process.env.ALLOW_DATA_DELETIONS === "1" || hasFlag("allow-data-deletions");
 
@@ -64,16 +74,22 @@ function isTruthPath(p) {
 function deploySnapshotAllowedForDay(p) {
   if (!dayKey) return true;
   if (p === "data/deploy-snapshots/latest.json") return true;
-  return p.startsWith(`data/deploy-snapshots/${dayKey}/`);
+  for (const d of allowedSnapshotDays) {
+    if (p.startsWith(`data/deploy-snapshots/${d}/`)) return true;
+  }
+  return false;
 }
 
 // Deploy-snapshot details are cache artifacts keyed to the day's FINAL fixture
 // set; the exporter prunes orphans (details whose fixture dropped out of
 // canonical), so their deletion is intended. Truth stores stay
-// deletion-protected — this exception covers only the guarded day's details.
+// deletion-protected — this exception covers only guarded days' details.
 function isPrunableSnapshotDetail(p) {
   if (!dayKey) return false;
-  return p.startsWith(`data/deploy-snapshots/${dayKey}/details/`);
+  for (const d of allowedSnapshotDays) {
+    if (p.startsWith(`data/deploy-snapshots/${d}/details/`)) return true;
+  }
+  return false;
 }
 
 const staged = parseNameStatus(git(["diff", "--cached", "--name-status"]));
