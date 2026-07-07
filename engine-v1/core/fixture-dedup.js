@@ -33,6 +33,7 @@
 import { normalizeTeamTokens, normalizeTeamKey } from "./normalize.js";
 import { repairCanonicalIdDay } from "./canonical-id.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
+import { sameSquadMarkers } from "./team-identity.js";
 
 const KICKOFF_TOLERANCE_MS = 6 * 60 * 60 * 1000;
 
@@ -84,6 +85,12 @@ export function sameTeamName(slug, a, b) {
   const nameA = String(a || "").trim();
   const nameB = String(b || "").trim();
   if (!nameA || !nameB) return false;
+
+  // Safety gate FIRST: squad markers are identity, not noise. "HJK" and "HJK W",
+  // "Ajax" and "Ajax U21", "Barcelona" and "Barcelona B" must never merge, or a
+  // men's/senior fixture could absorb and drop a women's/youth/reserve one. This
+  // blocks the merge regardless of how strong the name overlap looks below.
+  if (!sameSquadMarkers(nameA, nameB)) return false;
 
   const keyA = normalizeTeamKey(nameA);
   const keyB = normalizeTeamKey(nameB);

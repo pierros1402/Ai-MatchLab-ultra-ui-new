@@ -86,6 +86,17 @@ export function tokensMatch(aTokens, bTokens) {
   return aInB || bInA;
 }
 
+/**
+ * True when two team NAMES carry the same squad markers (both senior, both W,
+ * both U21, …). This is the SAFETY half of the matcher, exported on its own so
+ * other dedupe layers (e.g. fixture-dedup's looser prefix-token matcher) can
+ * refuse to merge across a squad boundary without adopting the whole matcher —
+ * "Barcelona" and "Barcelona B" are different teams even for a prefix match.
+ */
+export function sameSquadMarkers(a, b) {
+  return sameMarkers(teamTokens(a), teamTokens(b));
+}
+
 /** True when two team NAMES refer to the same real-world team. */
 export function teamNamesMatch(a, b) {
   return tokensMatch(teamTokens(a), teamTokens(b));
