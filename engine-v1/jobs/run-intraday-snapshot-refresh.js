@@ -248,7 +248,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   // unchanged. The old intraday deriveValueFromOdds call was REMOVED.
 
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
-  const snapshot = exportDeploySnapshotDay(safeDayKey, { preserveDetails: true, preserveValue: true });
+  const snapshot = await exportDeploySnapshotDay(safeDayKey, { preserveDetails: true, preserveValue: true });
   console.log("[intraday-snapshot-refresh] export-snapshot:done", {
     dayKey: safeDayKey,
     hash: snapshot?.hash,
