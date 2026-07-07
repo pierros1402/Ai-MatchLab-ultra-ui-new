@@ -1,0 +1,148 @@
+/**
+ * verify-artifact-freshness-day.js
+ *
+ * Freshness contract between the published deploy snapshot and its
+ * authoritative upstream inputs. A snapshot whose manifest.generatedAt is
+ * OLDER than any upstream artifact was built from data that has since
+ * changed and must be re-exported before it ships (2026-07-07 incident:
+ * manifest 05:33Z, uefa.champions canonical 07:31Z — 10 Champions League
+ * qualifiers existed in the canonical store but not in the published UI).
+ *
+ * Upstream inputs checked (each skipped when absent — an evening pre-build
+ * of tomorrow legitimately has no expected-matches file yet):
+ *   - data/canonical-fixtures/<day>/*.json  (updatedAt, per league file)
+ *   - data/expected-matches/<day>.json      (recordedAt)
+ *   - data/coverage-reports/<day>.json      (finishedAt)
+ *   - data/coverage-readiness/<day>.json    (generatedAt)
+ *
+ * This is a PUBLISH gate: it must only ever block the snapshot commit or
+ * deploy — never the persistence of harvested truth (canonical fixtures,
+ * results, history), which is committed separately and unconditionally.
+ *
+ * Usage: node engine-v1/jobs/verify-artifact-freshness-day.js --date=YYYY-MM-DD [--gate]
+ * Writes: data/deploy-snapshots/<day>/freshness-report.json
+ * Exit codes: without --gate always 0 (report-only) · with --gate 1 when
+ * stale or the manifest is missing/unreadable.
+ */
+
+import fs from "fs";
+import path from "path";
+import { pathToFileURL } from "node:url";
+import { resolveDataPath } from "../storage/data-root.js";
+
+function readJsonSafe(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function parseTime(value) {
+  const t = Date.parse(String(value || ""));
+  return Number.isFinite(t) ? t : null;
+}
+
+export function verifyArtifactFreshnessDay(dayKey) {
+  const report = {
+    ok: true,
+    dayKey,
+    generatedAt: new Date().toISOString(),
+    manifestGeneratedAt: null,
+    inputs: [],
+    staleInputs: [],
+    skippedInputs: [],
+    reasons: []
+  };
+
+  const manifestFile = resolveDataPath("deploy-snapshots", dayKey, "manifest.json");
+  const manifest = readJsonSafe(manifestFile);
+  const manifestAt = parseTime(manifest?.generatedAt);
+
+  if (!manifestAt) {
+    report.ok = false;
+    report.reasons.push("manifest_missing_or_unreadable");
+    return report;
+  }
+  report.manifestGeneratedAt = manifest.generatedAt;
+
+  const inputs = [];
+
+  const canonicalDir = resolveDataPath("canonical-fixtures", dayKey);
+  if (fs.existsSync(canonicalDir)) {
+    for (const name of fs.readdirSync(canonicalDir).filter(f => f.endsWith(".json")).sort()) {
+      const payload = readJsonSafe(path.join(canonicalDir, name));
+      inputs.push({
+        kind: "canonical_fixtures",
+        artifact: `canonical-fixtures/${dayKey}/${name}`,
+        at: payload?.updatedAt || null,
+        staleReason: "snapshot_stale_against_canonical"
+      });
+    }
+  }
+
+  inputs.push({
+    kind: "expected_matches",
+    artifact: `expected-matches/${dayKey}.json`,
+    at: readJsonSafe(resolveDataPath("expected-matches", `${dayKey}.json`))?.recordedAt || null,
+    staleReason: "snapshot_stale_against_expected_matches"
+  });
+
+  inputs.push({
+    kind: "coverage_report",
+    artifact: `coverage-reports/${dayKey}.json`,
+    at: readJsonSafe(resolveDataPath("coverage-reports", `${dayKey}.json`))?.finishedAt || null,
+    staleReason: "snapshot_stale_against_coverage_report"
+  });
+
+  inputs.push({
+    kind: "coverage_readiness",
+    artifact: `coverage-readiness/${dayKey}.json`,
+    at: readJsonSafe(resolveDataPath("coverage-readiness", `${dayKey}.json`))?.generatedAt || null,
+    staleReason: "snapshot_stale_against_coverage_readiness"
+  });
+
+  for (const input of inputs) {
+    const at = parseTime(input.at);
+
+    if (at === null) {
+      report.skippedInputs.push({ ...input, skipped: "artifact_missing_or_no_timestamp" });
+      continue;
+    }
+
+    const entry = { ...input, newerThanManifestMs: at - manifestAt };
+    report.inputs.push(entry);
+
+    if (at > manifestAt) {
+      report.staleInputs.push(entry);
+      if (!report.reasons.includes(input.staleReason)) {
+        report.reasons.push(input.staleReason);
+      }
+    }
+  }
+
+  report.ok = report.staleInputs.length === 0;
+  return report;
+}
+
+const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
+if (entryUrl === import.meta.url) {
+  const dateArg = process.argv.find(a => a.startsWith("--date="))?.split("=")[1]
+    || process.argv.slice(2).find(a => /^\d{4}-\d{2}-\d{2}$/.test(a));
+  const gate = process.argv.includes("--gate");
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateArg || ""))) {
+    console.error("Usage: node engine-v1/jobs/verify-artifact-freshness-day.js --date=YYYY-MM-DD [--gate]");
+    process.exit(1);
+  }
+
+  const report = verifyArtifactFreshnessDay(dateArg);
+  console.log(JSON.stringify(report, null, 2));
+
+  const outDir = resolveDataPath("deploy-snapshots", dateArg);
+  if (fs.existsSync(outDir)) {
+    fs.writeFileSync(path.join(outDir, "freshness-report.json"), JSON.stringify(report, null, 2) + "\n");
+  }
+
+  process.exit(gate && !report.ok ? 1 : 0);
+}

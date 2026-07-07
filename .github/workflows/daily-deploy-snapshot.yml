@@ -230,7 +230,7 @@ jobs:
       # manifest — the in-cycle run predates the geo rebuild + re-export above
       # and was permanently stale vs manifest.generatedAt (audit P1). Auto-fixes
       # it applies to detail files are staged with the day dir. Never blocks
-      # the commit; the post-commit "Invariant gate" turns the run red instead.
+      # here; the pre-publish "Invariant gate" below is the hard stop.
       - name: Refresh snapshot invariant report
         if: env.SKIP_BUILD != 'true'
         continue-on-error: true
@@ -292,39 +292,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Stage allowed generated files only
+      # TRUTH FIRST, UNGATED: history, standings, team-geo, team-news,
+      # multi-odds and coverage-readiness are harvested truth — they commit
+      # unconditionally BEFORE any publish gate. A gate failure must only ever
+      # stop the snapshot publish, never discard collected truth (2026-07-07
+      # Gap B lesson: a verify step that skipped the commit threw away every
+      # harvested result roughly every second night).
+      - name: Persist truth artifacts (ungated)
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: |
           git restore --staged . || true
-
-          git add data/deploy-snapshots/latest.json
-          git add "data/deploy-snapshots/${DAY_KEY}/"
-
-          if [ -d "data/value-plans/${DAY_KEY}" ]; then
-            git add "data/value-plans/${DAY_KEY}/"
-          fi
-
-          if [ -f "data/value-comparison/${DAY_KEY}.json" ]; then
-            git add "data/value-comparison/${DAY_KEY}.json"
-          fi
-
-          # Yesterday's re-settled value picks (finalize-value-resettle step in
-          # run-daily-cycle): a late-kickoff match whose result lands after the
-          # prior day's last comparison run now settles here. Without staging
-          # these the WIN/LOSS would regenerate on the runner and be discarded,
-          # leaving the committed export permanently UNRESOLVED.
-          if [ -n "${FINALIZE_DAY_KEY:-}" ] && [ -d "data/value-plans/${FINALIZE_DAY_KEY}" ]; then
-            git add "data/value-plans/${FINALIZE_DAY_KEY}/"
-          fi
-
-          if [ -n "${FINALIZE_DAY_KEY:-}" ] && [ -f "data/value-comparison/${FINALIZE_DAY_KEY}.json" ]; then
-            git add "data/value-comparison/${FINALIZE_DAY_KEY}.json"
-          fi
-
-          if [ -f "data/value-comparison/cumulative.json" ]; then
-            git add "data/value-comparison/cumulative.json"
-          fi
 
           if compgen -G "data/team-geo/*.json" > /dev/null; then
             git add data/team-geo/*.json
@@ -381,12 +359,104 @@ jobs:
           fi
 
           node engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=daily-deploy-truth \
+            --dayKey="${DAY_KEY}" \
+            --allow="^(data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/${DAY_KEY}\.json$|data/standings/[^/]+\.json$)"
+
+          echo "=== TRUTH STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/|data/standings/)' || true)"
+
+          if [ -n "$DISALLOWED" ]; then
+            echo "ERROR: disallowed truth files staged:"
+            echo "$DISALLOWED"
+            exit 1
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No truth artifact changes to commit."
+          else
+            git commit -m "Persist daily truth artifacts for ${DAY_KEY}"
+            bash tools/git-push-rebase-retry.sh
+          fi
+
+      # PUBLISH GATE 1 — freshness: the snapshot must not be older than the
+      # canonical/expected/coverage inputs it was built from (2026-07-07:
+      # manifest 05:33Z shipped while uefa.champions canonical landed 07:31Z —
+      # 10 CL qualifiers existed in the store but not in the UI). One
+      # self-heal attempt re-exports; then the gate is hard. Truth is already
+      # committed above, so failing here only stops the snapshot publish.
+      - name: Artifact freshness gate (self-heal, pre-publish)
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate; then
+            echo "Snapshot stale against upstream inputs — rebuilding details and re-exporting."
+            node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
+          fi
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+
+      # PUBLISH GATE 2 — invariants: blocked issues (duplicate canonicalId,
+      # value-count mismatches, stale report vs manifest) stop the snapshot
+      # BEFORE it is committed. Previously post-commit only, which shipped the
+      # broken snapshot and merely turned the run red.
+      - name: Invariant gate (pre-publish)
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+
+      # PUBLISH GATE 3 — value artifact: value.json with
+      # source=missing_local_value_file while fixtures exist is a
+      # value-pipeline failure dressed up as "no picks today" (2026-07-02
+      # outage mode). It must not ship.
+      - name: Value artifact gate (pre-publish)
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: node engine-v1/jobs/check-value-artifact-gate.js --date="${DAY_KEY}"
+
+      - name: Stage allowed snapshot files only
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          git restore --staged . || true
+
+          git add data/deploy-snapshots/latest.json
+          git add "data/deploy-snapshots/${DAY_KEY}/"
+
+          if [ -d "data/value-plans/${DAY_KEY}" ]; then
+            git add "data/value-plans/${DAY_KEY}/"
+          fi
+
+          if [ -f "data/value-comparison/${DAY_KEY}.json" ]; then
+            git add "data/value-comparison/${DAY_KEY}.json"
+          fi
+
+          # Yesterday's re-settled value picks (finalize-value-resettle step in
+          # run-daily-cycle): a late-kickoff match whose result lands after the
+          # prior day's last comparison run now settles here. Without staging
+          # these the WIN/LOSS would regenerate on the runner and be discarded,
+          # leaving the committed export permanently UNRESOLVED.
+          if [ -n "${FINALIZE_DAY_KEY:-}" ] && [ -d "data/value-plans/${FINALIZE_DAY_KEY}" ]; then
+            git add "data/value-plans/${FINALIZE_DAY_KEY}/"
+          fi
+
+          if [ -n "${FINALIZE_DAY_KEY:-}" ] && [ -f "data/value-comparison/${FINALIZE_DAY_KEY}.json" ]; then
+            git add "data/value-comparison/${FINALIZE_DAY_KEY}.json"
+          fi
+
+          if [ -f "data/value-comparison/cumulative.json" ]; then
+            git add "data/value-comparison/cumulative.json"
+          fi
+
+          node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/value-plans/${DAY_KEY}/|data/value-plans/${FINALIZE_DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$|data/value-comparison/${FINALIZE_DAY_KEY}\.json$|data/value-comparison/cumulative\.json$|data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/${DAY_KEY}\.json$|data/standings/[^/]+\.json$)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/value-plans/${DAY_KEY}/|data/value-plans/${FINALIZE_DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$|data/value-comparison/${FINALIZE_DAY_KEY}\.json$|data/value-comparison/cumulative\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/value-plans/|data/value-comparison/|data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/|data/standings/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/value-plans/|data/value-comparison/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"
@@ -402,7 +472,7 @@ jobs:
         shell: bash
         run: |
           if git diff --cached --quiet; then
-            echo "No snapshot or geo changes to commit."
+            echo "No snapshot changes to commit."
             echo "DAILY_SNAPSHOT_COMMITTED=false" >> "$GITHUB_ENV"
             exit 0
           fi
@@ -410,22 +480,6 @@ jobs:
           git commit -m "Auto refresh deploy snapshot for ${DAY_KEY}"
           bash tools/git-push-rebase-retry.sh
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
-
-      # Runs AFTER the commit so the night's data still lands; a red run here
-      # means value.json shipped source=missing_local_value_file while fixtures
-      # exist — a value-pipeline failure, not "no picks today" (2026-07-02 mode).
-      - name: Value artifact gate
-        if: env.SKIP_BUILD != 'true'
-        shell: bash
-        run: node engine-v1/jobs/check-value-artifact-gate.js --date="${DAY_KEY}"
-
-      # Post-commit auditor: red run when the committed invariant report is
-      # stale vs the manifest, missing, or carries blocked issues (duplicate
-      # canonicalId, value-count mismatches). Data has already landed.
-      - name: Invariant gate
-        if: env.SKIP_BUILD != 'true'
-        shell: bash
-        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
 
       - name: Skip Render redeploy for daily snapshot
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
