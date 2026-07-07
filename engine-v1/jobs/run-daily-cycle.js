@@ -144,6 +144,50 @@ function runDailyCycleNodeJob(args, label) {
 
   return result;
 }
+
+// Value settlement chain for one day: verified final results for Plan A (and
+// Plan B when its artifact exists) + the plan comparison. Settlement only —
+// the frozen scoring never runs here, only the WIN/LOSS result field updates.
+function resettleValueDay(settleDayKey, label) {
+  runDailyCycleNodeJob([
+    "./engine-v1/jobs/export-verified-final-results-day.js",
+    `--date=${settleDayKey}`,
+    "--write"
+  ], `${label}-verified-final-results-plan-a`);
+
+  const planBPath = resolveDataPath("value-plans", settleDayKey, "plan-b.json");
+  if (fs.existsSync(planBPath)) {
+    runDailyCycleNodeJob([
+      "./engine-v1/jobs/export-verified-final-results-day.js",
+      `--date=${settleDayKey}`,
+      "--write",
+      `--value-path=data/value-plans/${settleDayKey}/plan-b.json`
+    ], `${label}-verified-final-results-plan-b`);
+  }
+
+  runDailyCycleNodeJob([
+    "./engine-v1/jobs/build-value-plan-comparison-day.js",
+    `--date=${settleDayKey}`,
+    "--write"
+  ], `${label}-value-plan-comparison`);
+}
+
+// Unresolved pick count across all plans in a day's committed comparison.
+// null = no comparison artifact exists yet (distinct from 0 = all settled).
+function countUnresolvedComparisonPicks(checkDayKey) {
+  try {
+    const file = resolveDataPath("value-comparison", `${checkDayKey}.json`);
+    if (!fs.existsSync(file)) return null;
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    let unresolved = 0;
+    for (const plan of Object.values(data?.plans || {})) {
+      unresolved += Number(plan?.summary?.unresolved || 0);
+    }
+    return unresolved;
+  } catch {
+    return null;
+  }
+}
 function normalizePositiveIntegerOption(value, fallback) {
   if (value === Infinity) return Infinity;
 
@@ -1307,7 +1351,15 @@ export async function runDailyCycle(options = {}) {
     finalize = await finalizeDayIfSafe(finalizeDayKey);
     console.log("[daily-cycle] finalize:done", finalize);
 
-    if (finalize?.ok) {
+    // Snapshot re-export + pick settlement run REGARDLESS of finalize.ok.
+    // finalizeDayIfSafe answers "is the WHOLE day terminal?" — gating
+    // settlement on it let one open row hold every settled result hostage
+    // (2026-07-07: pre_exists on 3 rows skipped this block, so the
+    // just-swept Keflavik FT never reached its pick — UNRESOLVED with the
+    // score sitting in canonical). Settling the results we DO know must not
+    // wait for the last unknown one; finalize.ok keeps gating only the
+    // history append below.
+    try {
       console.log("[daily-cycle] finalized-deploy-snapshot-export:start", { finalizeDayKey });
 
       finalizedDeploySnapshot = await Promise.resolve(exportDeploySnapshotDay(finalizeDayKey, {
@@ -1332,37 +1384,15 @@ export async function runDailyCycle(options = {}) {
       // Keflavik v Fram 19:15Z settled on nobody). Running the same sequence
       // here for finalizeDayKey (yesterday) lets any result captured by the
       // finalize live-status refresh + results-truth sweep above settle the
-      // picks. Settlement only — the frozen scoring re-selects identical picks
-      // from unchanged inputs, only the WIN/LOSS result field updates.
+      // picks.
       console.log("[daily-cycle] finalize-value-resettle:start", { finalizeDayKey });
-      try {
-        runDailyCycleNodeJob([
-          "./engine-v1/jobs/export-verified-final-results-day.js",
-          `--date=${finalizeDayKey}`,
-          "--write"
-        ], "finalize-verified-final-results-plan-a");
+      resettleValueDay(finalizeDayKey, "finalize");
+      console.log("[daily-cycle] finalize-value-resettle:done", { finalizeDayKey });
+    } catch (e) {
+      console.warn("[daily-cycle] finalize-value-resettle:failed", String(e?.message || e));
+    }
 
-        const finalizePlanBPath = resolveDataPath("value-plans", finalizeDayKey, "plan-b.json");
-        if (fs.existsSync(finalizePlanBPath)) {
-          runDailyCycleNodeJob([
-            "./engine-v1/jobs/export-verified-final-results-day.js",
-            `--date=${finalizeDayKey}`,
-            "--write",
-            `--value-path=data/value-plans/${finalizeDayKey}/plan-b.json`
-          ], "finalize-verified-final-results-plan-b");
-        }
-
-        runDailyCycleNodeJob([
-          "./engine-v1/jobs/build-value-plan-comparison-day.js",
-          `--date=${finalizeDayKey}`,
-          "--write"
-        ], "finalize-value-plan-comparison");
-
-        console.log("[daily-cycle] finalize-value-resettle:done", { finalizeDayKey });
-      } catch (e) {
-        console.warn("[daily-cycle] finalize-value-resettle:failed", String(e?.message || e));
-      }
-
+    if (finalize?.ok) {
       if (finalizeReadiness?.safeToFinalizeStats) {
         console.log("[daily-cycle] history-append:start", { finalizeDayKey });
         historyAppend = await appendFinalizedDayToHistory(finalizeDayKey);
@@ -1436,6 +1466,34 @@ export async function runDailyCycle(options = {}) {
         syncCanonicalFixturesToJsonDbDay(day);
         const readiness = auditFinalizationReadinessDay(day);
 
+        // Late-arriving-truth settlement: the finalize resettle above only
+        // ever covers YESTERDAY, but a result can land 2+ days after the
+        // match (Gap B kept Keflavik's 07-06 final out of the truth store
+        // until 07-07's harvest — by then the 07-06 finalize had already
+        // run). When this day still has unsettled picks or the sweep just
+        // upgraded rows, re-export its snapshot (the verified-results
+        // exporter reads deploy-snapshots/<day>/fixtures.json) and re-run
+        // settlement. preserveValue keeps the day's frozen picks — only the
+        // WIN/LOSS result field can change. Guarded on canonical fixtures
+        // still existing so a pruned day can never regress its snapshot.
+        let resettled = false;
+        const hasValueArtifacts =
+          fs.existsSync(resolveDataPath("value-plans", day)) ||
+          fs.existsSync(resolveDataPath("value-comparison", `${day}.json`));
+        const unresolvedPicks = countUnresolvedComparisonPicks(day);
+        if (
+          (readiness?.fixtures ?? 0) > 0 &&
+          hasValueArtifacts &&
+          ((sweep?.rowsUpgraded ?? 0) > 0 || unresolvedPicks === null || unresolvedPicks > 0)
+        ) {
+          await Promise.resolve(exportDeploySnapshotDay(day, {
+            updateLatest: false,
+            preserveValue: true
+          }));
+          resettleValueDay(day, `catch-up-${day}`);
+          resettled = true;
+        }
+
         let append = null;
         if (
           (readiness?.terminal ?? 0) > 0 &&
@@ -1450,6 +1508,8 @@ export async function runDailyCycle(options = {}) {
           rowsUpgraded: sweep?.rowsUpgraded ?? 0,
           terminal: readiness?.terminal ?? 0,
           open: readiness?.open ?? null,
+          unresolvedPicks,
+          resettled,
           appended: !!append?.ok,
           appendedRows: append?.mergedRows ?? 0
         });
