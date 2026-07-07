@@ -442,6 +442,7 @@ export const LEAGUES_COVERAGE = [
   { slug: "som.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "somalia" },
   { slug: "syr.1", tier: 1, trust: 0.50, type: "league", region: "asia",     country: "syria" },
   { slug: "tan.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "tanzania" },
+  { slug: "yem.1", tier: 1, trust: 0.50, type: "league", region: "asia",     country: "yemen" },
   { slug: "zim.1", tier: 1, trust: 0.50, type: "league", region: "africa",   country: "zimbabwe" }
 ];
 
