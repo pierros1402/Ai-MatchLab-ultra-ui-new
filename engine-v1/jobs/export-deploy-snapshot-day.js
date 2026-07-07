@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
-import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
-import { buildCanonicalId } from "../core/canonical-id.js";
+import { fixturesForSnapshotDay, normalizeMatchId } from "../core/day-fixture-universe.js";
+import { ensureDetailsForFixtures } from "./build-details-day.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -36,178 +36,6 @@ function bytesOfFile(filePath) {
 
 function mb(bytes) {
   return Number((Number(bytes || 0) / 1024 / 1024).toFixed(2));
-}
-
-function normalizeMatchId(value) {
-  return String(value ?? "").trim();
-}
-
-// Collapse cross-source duplicates per league (same real match under two
-// canonical IDs / matchIds from different providers) for a mixed-league row set.
-function dedupeRowsPerLeague(rows) {
-  const byLeague = new Map();
-  for (const row of rows) {
-    const slug = String(row?.leagueSlug || "unknown");
-    if (!byLeague.has(slug)) byLeague.set(slug, []);
-    byLeague.get(slug).push(row);
-  }
-
-  const out = [];
-  for (const [slug, leagueRows] of byLeague) {
-    out.push(...dedupeLeagueDayFixtures(leagueRows, { slug }).rows);
-  }
-  return out;
-}
-
-function dayFixtures(fixturesPayload, dayKey) {
-  const fixtures = Array.isArray(fixturesPayload?.fixtures)
-    ? fixturesPayload.fixtures
-    : Array.isArray(fixturesPayload)
-      ? fixturesPayload
-      : [];
-
-  const rows = fixtures.filter(row => String(row?.dayKey || "") === String(dayKey));
-
-  return dedupeRowsPerLeague(rows)
-    .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
-}
-
-function canonicalFixturesForDay(dayKey) {
-  const dir = resolveDataPath("canonical-fixtures", dayKey);
-  const rows = [];
-  const seen = new Set();
-
-  if (!fs.existsSync(dir)) {
-    return rows;
-  }
-
-  for (const file of fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort()) {
-    const payload = readJsonSafe(path.join(dir, file), null);
-    const rawFixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
-
-    // Defense-in-depth: collapse cross-source duplicates even if a stale store
-    // file predates write-time dedup (same match under two canonical IDs).
-    const fixtures = dedupeLeagueDayFixtures(rawFixtures, {
-      slug: path.basename(file, ".json")
-    }).rows;
-
-    for (const fixture of fixtures) {
-      const matchId = normalizeMatchId(
-        fixture?.matchId ||
-        fixture?.sourceMatchId ||
-        fixture?.sourceId ||
-        fixture?.matchKey ||
-        fixture?.id
-      );
-
-      if (!matchId || seen.has(matchId)) {
-        continue;
-      }
-
-      seen.add(matchId);
-      rows.push({
-        ...fixture,
-        matchId
-      });
-    }
-  }
-
-  return rows.sort((a, b) => {
-    const ka = String(a?.kickoffUtc || a?.date || a?.startTime || "");
-    const kb = String(b?.kickoffUtc || b?.date || b?.startTime || "");
-    if (ka !== kb) return ka.localeCompare(kb);
-    return String(a?.matchId || "").localeCompare(String(b?.matchId || ""));
-  });
-}
-
-// Rows that only ESPN observed can reach the runtime fixtures DB without a
-// canonicalId (numeric matchId). Details/value/UI all join on canonicalId, so
-// backfill it from the canonical store (exact) or recompute it (same
-// deterministic function acquisition used on the same provider names).
-function backfillCanonicalIds(rows, canonicalRows, dayKey) {
-  const cidBySourceId = new Map();
-  for (const row of canonicalRows) {
-    const cid = String(row?.canonicalId || "").trim();
-    if (!cid) continue;
-    for (const key of [row?.matchId, row?.sourceMatchId, row?.sourceId]) {
-      const id = normalizeMatchId(key);
-      if (id && !id.startsWith("cid_")) cidBySourceId.set(id, cid);
-    }
-  }
-
-  return rows.map(row => {
-    if (String(row?.canonicalId || "").trim()) return row;
-
-    const matchId = normalizeMatchId(row?.matchId);
-    if (matchId.startsWith("cid_")) {
-      return { ...row, canonicalId: matchId };
-    }
-
-    const canonicalId =
-      cidBySourceId.get(matchId) ||
-      cidBySourceId.get(normalizeMatchId(row?.sourceMatchId)) ||
-      buildCanonicalId(row?.leagueSlug, row?.homeTeam, row?.awayTeam, row?.dayKey || dayKey) ||
-      null;
-
-    return canonicalId ? { ...row, canonicalId } : row;
-  });
-}
-
-function fixturesForSnapshotDay(dayKey) {
-  const fixturesPayload = readJsonSafe(resolveDataPath("fixtures.json"), { fixtures: [] });
-  const fixturesFromCanonical = canonicalFixturesForDay(dayKey);
-  const fixturesFromMain = backfillCanonicalIds(
-    dayFixtures(fixturesPayload, dayKey),
-    fixturesFromCanonical,
-    dayKey
-  );
-  const canonicalFixtureCount = fixturesFromCanonical.length;
-  const fixtureJsonCount = fixturesFromMain.length;
-
-  // UNION of runtime + canonical (dedup collapses same-match rows; runtime
-  // first so its fresher status/score wins ties). Picking one source XOR the
-  // other dropped rows the winner lacked — e.g. canonical-only FT rows next
-  // to runtime-only Flashscore-league rows on the same day.
-  const union = dedupeRowsPerLeague([...fixturesFromMain, ...fixturesFromCanonical]);
-
-  // Day-universe shrink guard. A transient source failure on one runner must
-  // never shrink the published day: on 2026-07-05 an intraday refresh whose
-  // Flashscore harvest failed exported a 79-row universe over a 94-row
-  // snapshot and deleted 19 mar.1/mar.2/eth.1/tan.1 details as "orphans".
-  // Rescue is per-LEAGUE (league entirely missing from the fresh universe),
-  // so intentionally pruning a single phantom row keeps working.
-  const existingSnapshot = readJsonSafe(
-    path.join(resolveDataPath("deploy-snapshots", dayKey), "fixtures.json"),
-    null
-  );
-  const snapshotRows = (Array.isArray(existingSnapshot?.fixtures) ? existingSnapshot.fixtures : [])
-    .filter(row => String(row?.dayKey || existingSnapshot?.date || "") === String(dayKey));
-
-  const freshLeagues = new Set(union.map(row => String(row?.leagueSlug || "")));
-  const rescuedRows = snapshotRows.filter(
-    row => !freshLeagues.has(String(row?.leagueSlug || ""))
-  );
-  const rescuedLeagues = [...new Set(rescuedRows.map(row => String(row?.leagueSlug || "")))];
-
-  if (rescuedRows.length) {
-    console.warn("[export-deploy-snapshot] day-universe shrink guard: rescuing leagues absent from fresh universe", {
-      dayKey,
-      rescuedLeagues,
-      rescuedCount: rescuedRows.length
-    });
-  }
-
-  const fixtures = dedupeRowsPerLeague([...union, ...rescuedRows])
-    .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
-
-  return {
-    source: "union",
-    canonicalFixtureCount,
-    fixtureJsonCount,
-    snapshotRescuedCount: rescuedRows.length,
-    snapshotRescuedLeagues: rescuedLeagues,
-    fixtures
-  };
 }
 
 function resolveManifestTargetFixtureGate(fixturesSnapshot) {
@@ -669,7 +497,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
   };
 }
 
-export function exportDeploySnapshotDay(dayKey, options = {}) {
+export async function exportDeploySnapshotDay(dayKey, options = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dayKey || ""))) {
     throw new Error(`invalid dayKey: ${dayKey}`);
   }
@@ -711,25 +539,57 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
     }
   }
 
-  const detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds });
+  let detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds });
 
   // Fixtures that ended the day without any detail file. Ground-truth check
   // against the snapshot details directory on disk (not the summaries list,
   // which can skew across the preserveDetails rebuild) — a detail is present
   // if <id>.json exists for the fixture's canonicalId or matchId.
-  const detailFileIdsOnDisk = new Set(
+  const detailIdsOnDisk = () => new Set(
     fs.existsSync(snapshotDetailsDir)
       ? fs.readdirSync(snapshotDetailsDir)
           .filter(name => name.endsWith(".json"))
           .map(name => name.slice(0, -".json".length))
       : []
   );
-  const detailsMissingForFixtures = fixtures
-    .filter(fixture => {
-      const cid = String(fixture?.canonicalId || "").trim();
-      const mid = String(fixture?.matchId || "").trim();
-      return !(cid && detailFileIdsOnDisk.has(cid)) && !(mid && detailFileIdsOnDisk.has(mid));
-    })
+  const missingRowsAgainst = idSet => fixtures.filter(fixture => {
+    const cid = String(fixture?.canonicalId || "").trim();
+    const mid = String(fixture?.matchId || "").trim();
+    return !(cid && idSet.has(cid)) && !(mid && idSet.has(mid));
+  });
+
+  let missingRows = missingRowsAgainst(detailIdsOnDisk());
+
+  // Missing-detail GUARANTEE. Every publishable fixture must ship a detail page
+  // (even a sparse one — buildDetails never skips, it writes empty blocks). If
+  // any fixture lacks a detail on disk, build it NOW from the same published
+  // universe and re-copy, so a snapshot can never go out with a fixture that has
+  // no detail. This is the publish choke point: whatever any upstream builder
+  // did, completeness is enforced here. Anything still missing afterwards is a
+  // genuine build failure and stays reported for the invariant gate.
+  if (missingRows.length && options?.buildMissingDetails !== false) {
+    console.warn("[export-deploy-snapshot] backfilling missing details", {
+      dayKey,
+      count: missingRows.length,
+      fixtures: missingRows.map(f => String(f?.canonicalId || f?.matchId || ""))
+    });
+
+    await ensureDetailsForFixtures(dayKey, missingRows, { allRows: fixtures });
+
+    // Bring the freshly built details into the snapshot, then re-check on disk.
+    detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds });
+    missingRows = missingRowsAgainst(detailIdsOnDisk());
+
+    if (missingRows.length) {
+      console.error("[export-deploy-snapshot] details still missing after backfill", {
+        dayKey,
+        count: missingRows.length,
+        fixtures: missingRows.map(f => String(f?.canonicalId || f?.matchId || ""))
+      });
+    }
+  }
+
+  const detailsMissingForFixtures = missingRows
     .map(fixture => String(fixture?.canonicalId || fixture?.matchId || ""));
 
   const fixturesByLeague = {};
@@ -888,13 +748,15 @@ export function exportDeploySnapshotDay(dayKey, options = {}) {
 if (process.argv[1] && process.argv[1].endsWith("export-deploy-snapshot-day.js")) {
   const dayKey = String(process.argv[2] || "").trim();
 
-  try {
-    const result = exportDeploySnapshotDay(dayKey, {
-      preserveDetails: true
-    });
-    console.log(JSON.stringify(result, null, 2));
-  } catch (err) {
-    console.error("[export-deploy-snapshot-day] fatal", err);
-    process.exit(1);
-  }
+  (async () => {
+    try {
+      const result = await exportDeploySnapshotDay(dayKey, {
+        preserveDetails: true
+      });
+      console.log(JSON.stringify(result, null, 2));
+    } catch (err) {
+      console.error("[export-deploy-snapshot-day] fatal", err);
+      process.exit(1);
+    }
+  })();
 }

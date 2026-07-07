@@ -23,7 +23,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { LEAGUE_SEEDS, leagueName } from "../config.js";
-import { LEAGUES_BY_SLUG } from "../../workers/_shared/leagues-coverage.js";
+import { LEAGUES_BY_SLUG, isLeagueCompetition } from "../../workers/_shared/leagues-coverage.js";
 import { isInSeason } from "../source-discovery/season-calendar.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
@@ -285,6 +285,8 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     const row = {
       slug,
       leagueName: leagueName(slug),
+      type: LEAGUES_BY_SLUG[slug]?.type || "unknown",
+      isLeague: isLeagueCompetition(slug),
       declared: true,
       inSeason: inSeasonOn(slug, date),
       seasonOverride: acquisition.seasonOverrides.has(slug),
@@ -352,7 +354,21 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     dayKey: date,
     generatedAt: new Date().toISOString(),
     summary: {
+      // NOTE: `declared` is the full ingest universe (leagues + cups +
+      // continental, ~229) — we intentionally acquire cup fixtures too. The
+      // `leagueOnly` block below is the honest LEAGUE coverage view (audit
+      // §8.2); cups/continental must not inflate league counts.
       declaredLeagues: declared.length,
+      leagueOnly: {
+        declaredLeagues: rows.filter(r => r.isLeague).length,
+        leaguesWithCanonicalFixtures: rows.filter(r => r.isLeague && r.canonicalFixtures > 0).length,
+        standingsReadyLeagues: rows.filter(r => r.isLeague && r.standingsReady).length,
+        standingsMissingLeagues: rows.filter(r => r.isLeague && !r.standingsReady).length,
+        activeStandingsMissing: rows
+          .filter(r => r.isLeague && r.canonicalFixtures > 0 && !r.standingsReady)
+          .map(r => r.slug),
+        nonLeagueCompetitions: rows.filter(r => !r.isLeague).length
+      },
       selectedForAcquisition: acquisition.selected.size,
       leaguesWithExpectedMatches: expected.size,
       leaguesWithCanonicalFixtures: canonical.size,

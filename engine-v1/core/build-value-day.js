@@ -18,16 +18,24 @@ function readJsonSafe(filePath, fallback = null) {
   }
 }
 
-function readDetailsSnapshot(dayKey, matchId) {
-  const canonicalPath = resolveDataPath("details", dayKey, `${matchId}.json`);
-  const canonical = readJsonSafe(canonicalPath, null);
+function readDetailsSnapshot(dayKey, ...ids) {
+  // Details are keyed by canonicalId; a fixture's matchId can be a raw provider
+  // id (numeric ESPN) that does NOT match the detail filename. Try every id the
+  // caller knows (canonicalId first) so ESPN-observed matches still resolve
+  // their detail instead of silently building value with no context.
+  const candidates = [...new Set(ids.map(id => String(id || "").trim()).filter(Boolean))];
 
-  if (canonical) {
-    return canonical;
+  for (const id of candidates) {
+    const canonical = readJsonSafe(resolveDataPath("details", dayKey, `${id}.json`), null);
+    if (canonical) return canonical;
   }
 
-  const snapshotPath = resolveDataPath("deploy-snapshots", dayKey, "details", `${matchId}.json`);
-  return readJsonSafe(snapshotPath, null);
+  for (const id of candidates) {
+    const snapshot = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "details", `${id}.json`), null);
+    if (snapshot) return snapshot;
+  }
+
+  return null;
 }
 
 function readDeploySnapshotFixturesByDay(dayKey) {
@@ -926,7 +934,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
 
   for (const match of matches) {
     try {
-      const details = readDetailsSnapshot(date, match.matchId);
+      const details = readDetailsSnapshot(date, match.canonicalId, match.matchId);
       const matchProfile = details?.researchedFacts?.matchProfile || null;
 
             const competitionContext =

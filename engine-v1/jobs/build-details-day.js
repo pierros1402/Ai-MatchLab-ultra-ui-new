@@ -11,6 +11,7 @@ import { teamPlayerUsage } from "../storage/lineups-memory-db.js";
 import { readTeamGeoRecord } from "../storage/team-geo-db.js";
 import { inferAbsencesFromUsage } from "../ai-match-intelligence/player-usage/absence-inference.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
+import { resolveDayFixtureRows } from "../core/day-fixture-universe.js";
 
 const DETAILS_SCHEMA_VERSION = "details-snapshot-v3";
 const DETAILS_BUILDER_VERSION = "2026-05-01-player-usage-travel-geo-signature";
@@ -1539,49 +1540,6 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
 }
 
 
-function readCanonicalFixturesForDay(dayKey) {
-  const dir = resolveDataPath("canonical-fixtures", dayKey);
-  const rows = [];
-  const seen = new Set();
-
-  if (!fs.existsSync(dir)) {
-    return rows;
-  }
-
-  for (const file of fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort()) {
-    const payload = readJsonSafe(path.join(dir, file), null);
-    const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
-
-    for (const fixture of fixtures) {
-      const matchId = String(
-        fixture?.matchId ||
-        fixture?.sourceMatchId ||
-        fixture?.sourceId ||
-        fixture?.matchKey ||
-        fixture?.id ||
-        ""
-      ).trim();
-
-      if (!matchId || seen.has(matchId)) {
-        continue;
-      }
-
-      seen.add(matchId);
-      rows.push({
-        ...fixture,
-        matchId
-      });
-    }
-  }
-
-  return rows.sort((a, b) => {
-    const ka = String(a?.kickoffUtc || a?.date || "");
-    const kb = String(b?.kickoffUtc || b?.date || "");
-    if (ka !== kb) return ka.localeCompare(kb);
-    return String(a?.matchId || "").localeCompare(String(b?.matchId || ""));
-  });
-}
-
 function detailsFilePath(dayKey, match) {
   // Key on canonicalId when available — provider-agnostic stable filename.
   // Falls back to matchId for any legacy records that predate canonical IDs.
@@ -1696,76 +1654,9 @@ export async function buildDetailsForMatch(matchId, { rebuild = false } = {}) {
   };
 }
 
-export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
-  let rows = getFixturesByDay(dayKey) || [];
-  let fixtureSource = "fixtures_json";
-
-  const canonicalRows = readCanonicalFixturesForDay(dayKey);
-
-  // UNION runtime + canonical so a fixture present in EITHER source gets a
-  // detail — matching the export universe. export-deploy-snapshot-day unions
-  // the same two sources (fixtures.json + canonical-fixtures); this builder
-  // previously kept whichever source had MORE rows (XOR), so a canonical-only
-  // fixture absent from the runtime DB — e.g. the cross-midnight
-  // cid_bra2_nautico_juventude row — never got a detail and surfaced in the
-  // snapshot as a permanent "missing detail" gap. Runtime rows are kept as-is
-  // (fresher status/score); only canonical rows whose ids match no runtime row
-  // are appended, so existing behaviour is unchanged for every runtime fixture.
-  if (!rows.length && canonicalRows.length) {
-    rows = canonicalRows;
-    fixtureSource = "canonical_fixtures";
-  } else if (canonicalRows.length) {
-    const idKeys = row =>
-      [row?.canonicalId, row?.matchId, row?.sourceMatchId, row?.sourceId, row?.matchKey]
-        .map(k => String(k || "").trim())
-        .filter(Boolean);
-
-    const knownIds = new Set();
-    for (const row of rows) {
-      for (const key of idKeys(row)) knownIds.add(key);
-    }
-
-    const canonicalOnly = canonicalRows.filter(row => {
-      const keys = idKeys(row);
-      return keys.length && !keys.some(key => knownIds.has(key));
-    });
-
-    if (canonicalOnly.length) {
-      rows = [...rows, ...canonicalOnly];
-      fixtureSource = rows.length === canonicalOnly.length
-        ? "canonical_fixtures"
-        : "runtime_union_canonical";
-    }
-  }
-
-  if (!rows.length) {
-    return {
-      ok: false,
-      dayKey,
-      reason: "no_rows",
-      fixtureSource,
-      built: 0,
-      skipped: 0,
-      files: []
-    };
-  }
-
-  ensureDir(resolveDataPath("details", dayKey));
-
-  const valuePicksByMatch = buildValuePicksByMatch(dayKey);
-
-  console.log("[build-details-day] value:snapshot", {
-    dayKey,
-    fixtureSource,
-    fixtureCount: rows.length,
-    matchesWithValue: valuePicksByMatch.size
-  });
-
-  let built = 0;
-  let skipped = 0;
-  const files = [];
-
-for (const match of rows) {
+// Build (or reuse) the detail for a single fixture row. Shared by the whole-day
+// builder and the export backfill so both write identical detail files.
+async function buildOneDetail(match, { dayKey, valuePicksByMatch, allRows, rebuild = false }) {
   console.log("[build-details-day] match:start", {
     matchId: match?.matchId,
     homeTeam: match?.homeTeam,
@@ -1781,7 +1672,7 @@ for (const match of rows) {
   const aiBlocks = await buildAiDetailsBlock(match, {
     dayKey,
     valuePicks,
-    allFixtures: rows
+    allFixtures: allRows
   });
 
   const basePayload = buildDetailsPayload(match, valuePicks, aiBlocks);
@@ -1839,18 +1730,13 @@ for (const match of rows) {
 
   sanitizeDetailsTeamNewsPayload(payload);
 
-  
-
   const nextSignature = buildDetailsSignature(match, valuePicks, payload);
 
   if (!rebuild && existing?.meta?.signature === nextSignature) {
     console.log("[build-details-day] match:skip", {
       matchId: match?.matchId
     });
-
-    skipped += 1;
-    files.push(file);
-    continue;
+    return { status: "skipped", file };
   }
 
   payload.meta.signature = nextSignature;
@@ -1861,9 +1747,50 @@ for (const match of rows) {
     file
   });
 
-  built += 1;
-  files.push(file);
+  return { status: "built", file };
 }
+
+export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
+  // SINGLE source of truth: build a detail for exactly the published fixture
+  // universe (canonical ∪ runtime). Previously this picked runtime-XOR-canonical
+  // by row count and silently dropped canonical-only fixtures — so a Flashscore-
+  // only match could be published without ever getting a detail. See
+  // core/day-fixture-universe.js.
+  const rows = resolveDayFixtureRows(dayKey);
+
+  if (!rows.length) {
+    return {
+      ok: false,
+      dayKey,
+      reason: "no_rows",
+      fixtureSource: "day_fixture_universe",
+      built: 0,
+      skipped: 0,
+      files: []
+    };
+  }
+
+  ensureDir(resolveDataPath("details", dayKey));
+
+  const valuePicksByMatch = buildValuePicksByMatch(dayKey);
+
+  console.log("[build-details-day] value:snapshot", {
+    dayKey,
+    fixtureSource: "day_fixture_universe",
+    fixtureCount: rows.length,
+    matchesWithValue: valuePicksByMatch.size
+  });
+
+  let built = 0;
+  let skipped = 0;
+  const files = [];
+
+  for (const match of rows) {
+    const result = await buildOneDetail(match, { dayKey, valuePicksByMatch, allRows: rows, rebuild });
+    if (result.status === "built") built += 1;
+    else skipped += 1;
+    files.push(result.file);
+  }
 
   return {
     ok: true,
@@ -1873,6 +1800,37 @@ for (const match of rows) {
     skipped,
     files
   };
+}
+
+/**
+ * Build details for a SPECIFIC set of fixture rows (not the whole day). Used by
+ * the deploy-snapshot export to backfill any publishable fixture that ended up
+ * without a detail, so the published snapshot can never miss one. Writes into
+ * the same data/details/<day>/ store buildDetailsDay uses.
+ */
+export async function ensureDetailsForFixtures(dayKey, fixtureRows = [], { rebuild = false, allRows = null } = {}) {
+  const rows = Array.isArray(fixtureRows) ? fixtureRows.filter(Boolean) : [];
+  if (!rows.length) {
+    return { ok: true, dayKey, total: 0, built: 0, skipped: 0, files: [] };
+  }
+
+  ensureDir(resolveDataPath("details", dayKey));
+
+  const valuePicksByMatch = buildValuePicksByMatch(dayKey);
+  const context = Array.isArray(allRows) && allRows.length ? allRows : rows;
+
+  let built = 0;
+  let skipped = 0;
+  const files = [];
+
+  for (const match of rows) {
+    const result = await buildOneDetail(match, { dayKey, valuePicksByMatch, allRows: context, rebuild });
+    if (result.status === "built") built += 1;
+    else skipped += 1;
+    files.push(result.file);
+  }
+
+  return { ok: true, dayKey, total: rows.length, built, skipped, files };
 }
 
 const __filename = fileURLToPath(import.meta.url);

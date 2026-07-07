@@ -242,6 +242,25 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
     ciError(`[blocked] ${duplicateCids.length} duplicate canonicalId(s) in fixtures.json: ${duplicateCids.map(d => d.cid).join(", ")}`);
   }
 
+  // ── CHECK 7: every published fixture must ship a detail ───────────────────
+  // The export backfills missing details at publish time (see
+  // day-fixture-universe.js + ensureDetailsForFixtures), so a non-empty list
+  // here means the backfill genuinely could not build a detail — a real failure
+  // a human must see, not a silently-shippable gap. Audit 2026-07-06: manifest
+  // reported 1 missing detail while the invariant still said ok:true.
+  const missingDetails = Array.isArray(manifest?.detailsMissingForFixtures)
+    ? manifest.detailsMissingForFixtures
+    : [];
+
+  if (missingDetails.length > 0) {
+    report.blocked.push({
+      type: "fixtures_missing_details",
+      count: missingDetails.length,
+      fixtures: missingDetails.slice(0, 25)
+    });
+    ciError(`[blocked] ${missingDetails.length} fixture(s) published without a detail: ${missingDetails.slice(0, 10).join(", ")}`);
+  }
+
   // ── Finalize ─────────────────────────────────────────────────────────────
   if (report.blocked.length > 0) {
     report.ok = false;

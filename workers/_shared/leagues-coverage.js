@@ -451,6 +451,17 @@ const CLEAN_LEAGUES_COVERAGE = LEAGUES_COVERAGE.filter(
 
 export const LEAGUE_SEEDS = CLEAN_LEAGUES_COVERAGE.map(x => x.slug);
 
+// League-ONLY seeds (type === "league"): the correct denominator for league
+// coverage/readiness reports. LEAGUE_SEEDS above is the full competition
+// universe (leagues + cups + continental + national, ~229) and is what INGEST
+// intentionally acquires — but counting it as "league coverage" mixes fifa.world
+// / UEFA / domestic cups into the league target (audit 2026-07-06 §8.2). Use
+// this list (and isLeagueCompetition) whenever the question is "how many
+// LEAGUES are covered", never the raw LEAGUE_SEEDS.
+export const LEAGUE_ONLY_SEEDS = CLEAN_LEAGUES_COVERAGE
+  .filter(x => x.type === "league")
+  .map(x => x.slug);
+
 export const LEAGUES_BY_SLUG = Object.fromEntries(
   CLEAN_LEAGUES_COVERAGE.map(x => [x.slug, x])
 );
@@ -480,4 +491,17 @@ export function isContinentalCompetition(slug) {
 export function isLeagueCompetition(slug) {
   const type = LEAGUES_BY_SLUG[slug]?.type || "";
   return type === "league";
+}
+
+// Is this slug present in the registry at all (any type)? Use for "do we know
+// this competition" questions — NOT for league coverage (a cup is known but is
+// not a league). Audit 2026-07-06 §8.2: keep the two concepts distinct.
+export function isKnownCompetition(slug) {
+  return Boolean(LEAGUES_BY_SLUG[slug]);
+}
+
+// Is this slug a known LEAGUE (present AND type === "league")? Alias of
+// isLeagueCompetition with an intent-revealing name for coverage reports.
+export function isKnownLeague(slug) {
+  return isLeagueCompetition(slug);
 }
