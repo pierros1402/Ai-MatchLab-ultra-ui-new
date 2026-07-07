@@ -70,6 +70,19 @@ function resolveManifestTargetFixtureGate(fixturesSnapshot) {
   };
 }
 
+// A valid value artifact is NOT the same as a non-empty one: a 0-pick day
+// where the engine ran and rejected every candidate is a legitimate result
+// and must never be downgraded to missing_local_value_file.
+function isValidValueArtifact(payload) {
+  return Boolean(
+    payload &&
+    typeof payload === "object" &&
+    payload.ok !== false &&
+    Array.isArray(payload.picks) &&
+    String(payload.source || "") !== "missing_local_value_file"
+  );
+}
+
 function valueForDay(dayKey, options = {}) {
   const file = resolveDataPath("value", `${dayKey}.json`);
   const payload = readJsonSafe(file, null);
@@ -83,7 +96,7 @@ function valueForDay(dayKey, options = {}) {
   const snapshotHasPicks = Array.isArray(snapshotPayload?.picks) && snapshotPayload.picks.length > 0;
 
   if (!payload || typeof payload !== "object") {
-    if (snapshotHasPicks) {
+    if (isValidValueArtifact(snapshotPayload)) {
       return {
         ...snapshotPayload,
         source: snapshotPayload?.source || "preserved_snapshot_value"
