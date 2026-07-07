@@ -603,6 +603,18 @@ function existingCanonicalIdsForDay(dayKey) {
   return ids;
 }
 
+// ESPN dropdown slugs that differ from our declared seed slugs. ESPN splits
+// UEFA qualifying rounds into separate "*_qual" league codes, while the
+// fixtures path stores qualifiers under the parent competition slug
+// (verified 2026-07-07: Flashscore CL qualifiers landed in uefa.champions
+// with leagueName "Champions League - Qualification"). Mapping to the parent
+// keeps both sources on the same league so day-universe dedupe can match.
+const ESPN_DROPDOWN_SLUG_ALIASES = {
+  "uefa.champions_qual": "uefa.champions",
+  "uefa.europa_qual": "uefa.europa",
+  "uefa.europa.conf_qual": "uefa.europa.conf"
+};
+
 async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
   // Accept every DECLARED league here, in-season or not: an event actually
   // present in ESPN's all-scoreboard is a stronger fixture signal than the
@@ -680,11 +692,18 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
 
       const leagueId = extractEspnLeagueId(event?.uid);
       const dropdownLeague = leagueId ? dropdownById.get(leagueId) : null;
-      const slug = String(dropdownLeague?.slug || "").trim();
+      const rawSlug = String(dropdownLeague?.slug || "").trim();
+      const slug = ESPN_DROPDOWN_SLUG_ALIASES[rawSlug] || rawSlug;
 
       if (!slug) {
         stats.skippedNoLeagueSlug++;
         continue;
+      }
+
+      if (slug !== rawSlug) {
+        if (!stats.aliasedSlugSample) stats.aliasedSlugSample = {};
+        const aliasKey = rawSlug + "->" + slug;
+        stats.aliasedSlugSample[aliasKey] = (stats.aliasedSlugSample[aliasKey] || 0) + 1;
       }
 
       if (!targetSeedSet.has(slug)) {
@@ -935,6 +954,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
     skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
     skippedSlugSample: supplemental.skippedSlugSample,
+    aliasedSlugSample: supplemental.aliasedSlugSample,
     byLeague: supplemental.byLeague
   });
 
@@ -957,6 +977,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
     skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
     skippedSlugSample: supplemental.skippedSlugSample,
+    aliasedSlugSample: supplemental.aliasedSlugSample,
     byLeague: supplemental.byLeague,
     error: supplemental.error
   };
