@@ -148,11 +148,30 @@ function runDailyCycleNodeJob(args, label) {
 // Value settlement chain for one day: verified final results for Plan A (and
 // Plan B when its artifact exists) + the plan comparison. Settlement only —
 // the frozen scoring never runs here, only the WIN/LOSS result field updates.
-function resettleValueDay(settleDayKey, label) {
+//
+// offsetDays: export-verified-final-results-day.js re-verifies against a LIVE
+// Flashscore refetch keyed to `offsets` — 0 means "today" in REAL wall-clock
+// time, unrelated to settleDayKey. The CLI default is [0], which is only
+// correct when settleDayKey IS today (the intraday same-day calls). Calling
+// it for a PAST day (finalizeDayKey, or the history catch-up days) with no
+// offset silently searches today's feed for yesterday's teams and always
+// returns "no_exact_flashscore_match" — canonical can carry the FT (via the
+// separate league-memory truth-sweep) while this exporter's own final-results
+// artifact — the one build-value-plan-comparison-day actually reads for
+// settlement — never gets written (caught 2026-07-07: Keflavik's canonical
+// FT 1-1 landed but its pick stayed UNRESOLVED). A small window around the
+// exact offset is safe because findExactFlashscoreMatch re-filters every
+// candidate row by Athens day equality, so extra offsets can only add
+// same-day-filtered candidates, never a wrong-day match.
+function resettleValueDay(settleDayKey, label, offsetDays = 0) {
+  const offsets = [...new Set([offsetDays - 1, offsetDays, offsetDays + 1])];
+  const offsetsArg = `--offsets=${offsets.join(",")}`;
+
   runDailyCycleNodeJob([
     "./engine-v1/jobs/export-verified-final-results-day.js",
     `--date=${settleDayKey}`,
-    "--write"
+    "--write",
+    offsetsArg
   ], `${label}-verified-final-results-plan-a`);
 
   const planBPath = resolveDataPath("value-plans", settleDayKey, "plan-b.json");
@@ -161,6 +180,7 @@ function resettleValueDay(settleDayKey, label) {
       "./engine-v1/jobs/export-verified-final-results-day.js",
       `--date=${settleDayKey}`,
       "--write",
+      offsetsArg,
       `--value-path=data/value-plans/${settleDayKey}/plan-b.json`
     ], `${label}-verified-final-results-plan-b`);
   }
@@ -1362,8 +1382,19 @@ export async function runDailyCycle(options = {}) {
     try {
       console.log("[daily-cycle] finalized-deploy-snapshot-export:start", { finalizeDayKey });
 
+      // preserveValue: this re-export now runs every night regardless of
+      // finalize.ok (see above). Without it, exportDeploySnapshotDay rebuilds
+      // value.json fresh from data/value/<day>.json — and for a day whose
+      // matches are all FT, that rebuild legitimately returns 0 picks,
+      // silently wiping the frozen pre-match picks the day was committed
+      // with (regression caught 2026-07-07: Super Nova's already-settled WIN
+      // and Keflavik's pick both disappeared from data/deploy-snapshots/
+      // 2026-07-06/value.json, count 2 -> 0). preserveValue keeps the
+      // existing committed picks; only settlement (export-verified-final-
+      // results-day + comparison, below) may change their result field.
       finalizedDeploySnapshot = await Promise.resolve(exportDeploySnapshotDay(finalizeDayKey, {
-        updateLatest: false
+        updateLatest: false,
+        preserveValue: true
       }));
 
       console.log("[daily-cycle] finalized-deploy-snapshot-export:done", {
@@ -1386,7 +1417,7 @@ export async function runDailyCycle(options = {}) {
       // finalize live-status refresh + results-truth sweep above settle the
       // picks.
       console.log("[daily-cycle] finalize-value-resettle:start", { finalizeDayKey });
-      resettleValueDay(finalizeDayKey, "finalize");
+      resettleValueDay(finalizeDayKey, "finalize", -1);
       console.log("[daily-cycle] finalize-value-resettle:done", { finalizeDayKey });
     } catch (e) {
       console.warn("[daily-cycle] finalize-value-resettle:failed", String(e?.message || e));
@@ -1490,7 +1521,7 @@ export async function runDailyCycle(options = {}) {
             updateLatest: false,
             preserveValue: true
           }));
-          resettleValueDay(day, `catch-up-${day}`);
+          resettleValueDay(day, `catch-up-${day}`, -back);
           resettled = true;
         }
 
