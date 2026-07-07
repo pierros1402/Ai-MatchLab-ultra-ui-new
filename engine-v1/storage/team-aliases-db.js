@@ -37,7 +37,28 @@ const BUILTIN_ALIASES = {
       "gimnasia (mendoza)",
       "gimnasia y esgrima de mendoza",
       "gimnasia y esgrima mendoza"
-    ]
+    ],
+
+    // National-team name variants across sources (ESPN vs Flashscore). Without
+    // these the two feeds mint different canonical IDs for the same match
+    // (cid_fifaworld_usa_belgium vs cid_fifaworld_unitedstates_belgium) and the
+    // day snapshot double-counts it — one row stuck SCHEDULED, the other LIVE/FT
+    // (audit 2026-07-07: fifa.world USA/United States v Belgium). The union-find
+    // dedup only *learns* aliases after it first merges, which it never does
+    // here, so national teams must be seeded. Canonical key = ESPN long form,
+    // alias = Flashscore/short form.
+    "united states": ["usa"],
+    "south korea": ["korea republic", "korea south"],
+    "north korea": ["korea dpr", "korea north"],
+    "ivory coast": ["cote d'ivoire", "côte d'ivoire"],
+    "czechia": ["czech republic"],
+    "china": ["china pr"],
+    "iran": ["ir iran"],
+    "united arab emirates": ["uae"],
+    "cape verde": ["cabo verde"],
+    "dr congo": ["congo dr", "democratic republic of the congo"],
+    "republic of ireland": ["ireland"],
+    "bosnia and herzegovina": ["bosnia herzegovina", "bosnia-herzegovina"]
   }
 };
 
