@@ -22,6 +22,7 @@ import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { STATUS_RANK, statusRankFromParts } from "./display-contract.js";
+import { teamTokens, tokensMatch } from "./team-identity.js";
 
 // Display slugs that differ from the truth-store slugs (BetExplorer vs ESPN).
 const SLUG_ALIASES = {
@@ -29,74 +30,9 @@ const SLUG_ALIASES = {
   "fifa.world_cup_qual": "fifa.world_qual",
 };
 
-// Team-name tokens: same spirit as the value engine's tokenizer — strip
-// diacritics/punctuation and generic club affixes, expand the abbreviations
-// that differ between Flashscore (truth store) and ESPN/BetExplorer (display).
-const TOKEN_ALIASES = new Map([
-  ["utd", "united"],
-  ["intl", "international"],
-  // Brazilian state-abbreviation convention: "America MG" ↔ "América Mineiro",
-  // "Atletico MG" ↔ "Atlético Mineiro" (Flashscore vs ESPN naming).
-  ["mg", "mineiro"],
-]);
-
-const GENERIC_TOKENS = new Set([
-  "fc", "afc", "cf", "sc", "ac", "cd", "ca", "ec", "se", "ad", "sv", "fk",
-  "if", "bk", "aif", "club", "de", "do", "da", "dos", "das", "e", "the",
-]);
-
-function teamTokens(name) {
-  const base = String(name || "")
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/['’`.]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-
-  const out = [];
-  for (let tok of base.split(" ")) {
-    if (!tok) continue;
-    tok = TOKEN_ALIASES.get(tok) || tok;
-    if (GENERIC_TOKENS.has(tok)) continue;
-    out.push(tok);
-  }
-  return out;
-}
-
-// Squad markers are IDENTITY, not noise: "HJK W" (women) and "HJK" (men), or
-// "Ajax U21" and "Ajax", are different teams. A subset match must never cross
-// a marker boundary, or a men's fixture could inherit a women's/youth score.
-const SQUAD_MARKERS = new Set([
-  "w", "women", "fem", "ii", "iii", "b", "c", "reserve", "reserves", "youth",
-  "junior", "juniors", "academy",
-  "u16", "u17", "u18", "u19", "u20", "u21", "u23",
-]);
-
-function squadMarkers(tokens) {
-  const out = new Set();
-  for (const t of tokens) if (SQUAD_MARKERS.has(t)) out.add(t);
-  return out;
-}
-
-function sameMarkers(aTokens, bTokens) {
-  const a = squadMarkers(aTokens);
-  const b = squadMarkers(bTokens);
-  if (a.size !== b.size) return false;
-  for (const t of a) if (!b.has(t)) return false;
-  return true;
-}
-
-/** True when one token set is a non-empty subset of the other (or equal). */
-function tokensMatch(aTokens, bTokens) {
-  if (!aTokens.length || !bTokens.length) return false;
-  if (!sameMarkers(aTokens, bTokens)) return false;
-  const a = new Set(aTokens);
-  const b = new Set(bTokens);
-  const aInB = [...a].every(t => b.has(t));
-  const bInA = [...b].every(t => a.has(t));
-  return aInB || bInA;
-}
+// Team-identity tokenization + subset matching now live in the shared
+// team-identity.js module (imported above) so the settlement verifier uses the
+// exact same matcher — see Phase 1 identity-resolver unification.
 
 // ── Per-league/day final-result index, cached on file mtime ────────────────
 const __indexCache = new Map(); // slug → { mtimeMs, byDay: Map<dayKey, rows[]> }

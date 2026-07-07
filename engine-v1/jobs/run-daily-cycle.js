@@ -160,7 +160,7 @@ function runDailyCycleNodeJob(args, label) {
 // artifact — the one build-value-plan-comparison-day actually reads for
 // settlement — never gets written (caught 2026-07-07: Keflavik's canonical
 // FT 1-1 landed but its pick stayed UNRESOLVED). A small window around the
-// exact offset is safe because findExactFlashscoreMatch re-filters every
+// exact offset is safe because findFlashscoreMatch re-filters every
 // candidate row by Athens day equality, so extra offsets can only add
 // same-day-filtered candidates, never a wrong-day match.
 function resettleValueDay(settleDayKey, label, offsetDays = 0) {
