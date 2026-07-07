@@ -36,7 +36,21 @@ const SLUG_WINDOWS = {
   // FIFA World Cup: always held in June–July (2026, 2030, …).
   // ESPN uses slug "fifa.world" (verified from supplemental skippedSlugSample).
   // Off-years → ESPN returns 0 fixtures harmlessly.
-  "fifa.world": { start: 6, end: 7 }
+  "fifa.world": { start: 6, end: 7 },
+
+  // UEFA club competitions. The europe region default (Aug–May) wrongly marks
+  // them off-season in July — but the QUALIFYING rounds kick off in early July
+  // (audit 2026-07-07: Champions League qualifiers + Conference League were
+  // playing yet acquired nothing, because isInSeason filtered them out). The
+  // full competition runs July qualifiers → May final, so open the window from
+  // July. Qualifier-only slugs finish by Sept; a wider window is harmless (a
+  // day with no fixtures just returns 0 and writes no file).
+  "uefa.champions":   { start: 7, end: 5 },
+  "uefa.europa":      { start: 7, end: 5 },
+  "uefa.europa.conf": { start: 7, end: 5 },
+  "ucl.q":            { start: 6, end: 9 },
+  "uel.q":            { start: 6, end: 9 },
+  "uecl.q":           { start: 6, end: 9 }
 };
 
 // ─── Per-country overrides ──────────────────────────────────────────────────────
