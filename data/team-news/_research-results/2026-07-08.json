@@ -11,14 +11,14 @@
   "canonicalWrites": [],
   "results": [
     {
-      "taskId": "team_news:bfb44a408cd3",
+      "taskId": "team_news:43e8ed866018",
       "taskType": "team_news",
       "status": "unresolved_candidate",
       "dayKey": "2026-07-08",
       "match": {
-        "matchId": "cid_bol1_gvsanjose_realtomayapo_20260708",
+        "matchId": "401867144",
         "leagueSlug": "bol.1",
-        "kickoffUtc": "2026-07-07T23:00:00.000Z",
+        "kickoffUtc": "2026-07-07T23:30Z",
         "venue": "Estadio Jesús Bermúdez",
         "homeTeam": "GV San José",
         "awayTeam": "Real Tomayapo"
@@ -35,14 +35,14 @@
         }
       },
       "localContext": {
-        "hasDetailMatch": true,
-        "hasFixtureMatch": false,
-        "detailEvidenceCount": 3,
-        "fixtureEvidenceCount": 0
+        "hasDetailMatch": false,
+        "hasFixtureMatch": true,
+        "detailEvidenceCount": 0,
+        "fixtureEvidenceCount": 1
       },
       "evidenceSummary": {
-        "evidenceCount": 3,
-        "localEvidenceCount": 3,
+        "evidenceCount": 1,
+        "localEvidenceCount": 1,
         "evidenceTags": []
       },
       "aiProviderAudit": {
@@ -56,7 +56,7 @@
           "opponent": "Real Tomayapo",
           "side": "home",
           "leagueSlug": "bol.1",
-          "kickoffUtc": "2026-07-07T23:00:00.000Z",
+          "kickoffUtc": "2026-07-07T23:30Z",
           "venue": "Estadio Jesús Bermúdez",
           "query": "GV San José Real Tomayapo bol.1 team news injuries suspensions expected lineup"
         },
@@ -86,7 +86,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14347,
+                  "htmlLength": 14335,
                   "resultCount": 0
                 },
                 {
@@ -94,7 +94,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14337,
+                  "htmlLength": 14350,
                   "resultCount": 0
                 },
                 {
@@ -115,7 +115,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14323,
+                  "htmlLength": 14317,
                   "resultCount": 0
                 },
                 {
@@ -202,7 +202,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14269,
+                  "htmlLength": 14257,
                   "resultCount": 0
                 },
                 {
@@ -210,7 +210,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14260,
+                  "htmlLength": 14278,
                   "resultCount": 0
                 },
                 {
@@ -276,7 +276,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 985,
+                "fetchDurationMs": 323,
                 "fetchFinalUrl": "https://diez.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -293,7 +293,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 467,
+                "fetchDurationMs": 117,
                 "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -407,69 +407,22 @@
         "notes": [],
         "evidence": [
           {
-            "type": "researched_facts_team_news",
-            "label": "researchedFacts.teamNews for GV San José",
+            "type": "fixture_source_payload",
+            "label": "canonicalFixtures fixture payload for GV San José",
             "value": {
-              "key": "team_news",
-              "status": "empty",
-              "data": null,
-              "confidence": 0,
-              "source": "local-team-news",
-              "reason": "missing_local_team_news_evidence"
+              "sourceName": "canonicalFixtures",
+              "side": "home",
+              "keys": [
+                "sourceFile",
+                "syncedAt"
+              ],
+              "payload": {
+                "sourceFile": "canonical-fixtures/2026-07-08/bol.1.json",
+                "syncedAt": "2026-07-08T00:11:17.207Z"
+              }
             },
-            "source": "detail.researchedFacts.teamNews",
-            "confidence": 0.5
-          },
-          {
-            "type": "source_intelligence",
-            "label": "sourceIntelligence for GV San José",
-            "value": {
-              "decision": {
-                "status": {
-                  "type": "consensus",
-                  "chosen": "STATUS_SCHEDULED",
-                  "source": "flashscore",
-                  "sources": [
-                    "flashscore"
-                  ]
-                },
-                "score": {
-                  "type": "consensus",
-                  "chosen": "0-0",
-                  "source": "flashscore",
-                  "sources": [
-                    "flashscore"
-                  ]
-                },
-                "minute": {
-                  "type": "consensus",
-                  "chosen": null,
-                  "source": null,
-                  "sources": [
-                    "flashscore"
-                  ]
-                }
-              },
-              "confidence": 0.814,
-              "conflicts": [],
-              "disagreement": false,
-              "sources": 1
-            },
-            "source": "detail.sourceIntelligence",
-            "confidence": 0.35
-          },
-          {
-            "type": "detail_team_news",
-            "label": "detail.teamNews for GV San José",
-            "value": {
-              "status": "empty",
-              "source": "local-team-news",
-              "confidence": 0,
-              "data": null,
-              "reason": "missing_local_team_news_evidence"
-            },
-            "source": "detail.teamNews",
-            "confidence": 0.4
+            "source": "fixture.sources.canonicalFixtures",
+            "confidence": 0.25
           }
         ],
         "writeRecommendation": false,
@@ -491,7 +444,7 @@
             "opponent": "Real Tomayapo",
             "side": "home",
             "leagueSlug": "bol.1",
-            "kickoffUtc": "2026-07-07T23:00:00.000Z",
+            "kickoffUtc": "2026-07-07T23:30Z",
             "venue": "Estadio Jesús Bermúdez",
             "query": "GV San José Real Tomayapo bol.1 team news injuries suspensions expected lineup"
           },
@@ -521,7 +474,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14347,
+                    "htmlLength": 14335,
                     "resultCount": 0
                   },
                   {
@@ -529,7 +482,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14337,
+                    "htmlLength": 14350,
                     "resultCount": 0
                   },
                   {
@@ -550,7 +503,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14323,
+                    "htmlLength": 14317,
                     "resultCount": 0
                   },
                   {
@@ -637,7 +590,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14269,
+                    "htmlLength": 14257,
                     "resultCount": 0
                   },
                   {
@@ -645,7 +598,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14260,
+                    "htmlLength": 14278,
                     "resultCount": 0
                   },
                   {
@@ -711,7 +664,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 985,
+                  "fetchDurationMs": 323,
                   "fetchFinalUrl": "https://diez.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -728,7 +681,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 467,
+                  "fetchDurationMs": 117,
                   "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -839,7 +792,7 @@
       "reviewedAnswer": null,
       "acceptance": {
         "accepted": false,
-        "evidenceCount": 3,
+        "evidenceCount": 1,
         "evidenceTags": [],
         "requireAnyOf": [
           "named_absence",
@@ -861,19 +814,19 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:21.025Z",
+        "executedAt": "2026-07-08T00:14:22.649Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
     {
-      "taskId": "team_news:378fe706b63f",
+      "taskId": "team_news:731402579e18",
       "taskType": "team_news",
       "status": "unresolved_candidate",
       "dayKey": "2026-07-08",
       "match": {
-        "matchId": "cid_bol1_gvsanjose_realtomayapo_20260708",
+        "matchId": "401867144",
         "leagueSlug": "bol.1",
-        "kickoffUtc": "2026-07-07T23:00:00.000Z",
+        "kickoffUtc": "2026-07-07T23:30Z",
         "venue": "Estadio Jesús Bermúdez",
         "homeTeam": "GV San José",
         "awayTeam": "Real Tomayapo"
@@ -890,14 +843,14 @@
         }
       },
       "localContext": {
-        "hasDetailMatch": true,
-        "hasFixtureMatch": false,
-        "detailEvidenceCount": 3,
-        "fixtureEvidenceCount": 0
+        "hasDetailMatch": false,
+        "hasFixtureMatch": true,
+        "detailEvidenceCount": 0,
+        "fixtureEvidenceCount": 1
       },
       "evidenceSummary": {
-        "evidenceCount": 3,
-        "localEvidenceCount": 3,
+        "evidenceCount": 1,
+        "localEvidenceCount": 1,
         "evidenceTags": []
       },
       "aiProviderAudit": {
@@ -911,7 +864,7 @@
           "opponent": "GV San José",
           "side": "away",
           "leagueSlug": "bol.1",
-          "kickoffUtc": "2026-07-07T23:00:00.000Z",
+          "kickoffUtc": "2026-07-07T23:30Z",
           "venue": "Estadio Jesús Bermúdez",
           "query": "Real Tomayapo GV San José bol.1 team news injuries suspensions expected lineup"
         },
@@ -941,7 +894,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14335,
+                  "htmlLength": 14353,
                   "resultCount": 0
                 },
                 {
@@ -949,7 +902,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14344,
+                  "htmlLength": 14338,
                   "resultCount": 0
                 },
                 {
@@ -970,7 +923,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14323,
+                  "htmlLength": 14329,
                   "resultCount": 0
                 },
                 {
@@ -999,7 +952,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14295,
+                  "htmlLength": 14301,
                   "resultCount": 0
                 },
                 {
@@ -1007,7 +960,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14310,
+                  "htmlLength": 14304,
                   "resultCount": 0
                 },
                 {
@@ -1028,7 +981,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14273,
+                  "htmlLength": 14266,
                   "resultCount": 0
                 },
                 {
@@ -1036,7 +989,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14275,
+                  "htmlLength": 14282,
                   "resultCount": 0
                 },
                 {
@@ -1057,7 +1010,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14267,
+                  "htmlLength": 14273,
                   "resultCount": 0
                 },
                 {
@@ -1131,7 +1084,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 102,
+                "fetchDurationMs": 41,
                 "fetchFinalUrl": "https://diez.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -1148,7 +1101,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 76,
+                "fetchDurationMs": 8,
                 "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -1262,69 +1215,22 @@
         "notes": [],
         "evidence": [
           {
-            "type": "researched_facts_team_news",
-            "label": "researchedFacts.teamNews for Real Tomayapo",
+            "type": "fixture_source_payload",
+            "label": "canonicalFixtures fixture payload for Real Tomayapo",
             "value": {
-              "key": "team_news",
-              "status": "empty",
-              "data": null,
-              "confidence": 0,
-              "source": "local-team-news",
-              "reason": "missing_local_team_news_evidence"
+              "sourceName": "canonicalFixtures",
+              "side": "away",
+              "keys": [
+                "sourceFile",
+                "syncedAt"
+              ],
+              "payload": {
+                "sourceFile": "canonical-fixtures/2026-07-08/bol.1.json",
+                "syncedAt": "2026-07-08T00:11:17.207Z"
+              }
             },
-            "source": "detail.researchedFacts.teamNews",
-            "confidence": 0.5
-          },
-          {
-            "type": "source_intelligence",
-            "label": "sourceIntelligence for Real Tomayapo",
-            "value": {
-              "decision": {
-                "status": {
-                  "type": "consensus",
-                  "chosen": "STATUS_SCHEDULED",
-                  "source": "flashscore",
-                  "sources": [
-                    "flashscore"
-                  ]
-                },
-                "score": {
-                  "type": "consensus",
-                  "chosen": "0-0",
-                  "source": "flashscore",
-                  "sources": [
-                    "flashscore"
-                  ]
-                },
-                "minute": {
-                  "type": "consensus",
-                  "chosen": null,
-                  "source": null,
-                  "sources": [
-                    "flashscore"
-                  ]
-                }
-              },
-              "confidence": 0.814,
-              "conflicts": [],
-              "disagreement": false,
-              "sources": 1
-            },
-            "source": "detail.sourceIntelligence",
-            "confidence": 0.35
-          },
-          {
-            "type": "detail_team_news",
-            "label": "detail.teamNews for Real Tomayapo",
-            "value": {
-              "status": "empty",
-              "source": "local-team-news",
-              "confidence": 0,
-              "data": null,
-              "reason": "missing_local_team_news_evidence"
-            },
-            "source": "detail.teamNews",
-            "confidence": 0.4
+            "source": "fixture.sources.canonicalFixtures",
+            "confidence": 0.25
           }
         ],
         "writeRecommendation": false,
@@ -1346,7 +1252,7 @@
             "opponent": "GV San José",
             "side": "away",
             "leagueSlug": "bol.1",
-            "kickoffUtc": "2026-07-07T23:00:00.000Z",
+            "kickoffUtc": "2026-07-07T23:30Z",
             "venue": "Estadio Jesús Bermúdez",
             "query": "Real Tomayapo GV San José bol.1 team news injuries suspensions expected lineup"
           },
@@ -1376,7 +1282,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14335,
+                    "htmlLength": 14353,
                     "resultCount": 0
                   },
                   {
@@ -1384,7 +1290,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14344,
+                    "htmlLength": 14338,
                     "resultCount": 0
                   },
                   {
@@ -1405,7 +1311,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14323,
+                    "htmlLength": 14329,
                     "resultCount": 0
                   },
                   {
@@ -1434,7 +1340,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14295,
+                    "htmlLength": 14301,
                     "resultCount": 0
                   },
                   {
@@ -1442,7 +1348,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14310,
+                    "htmlLength": 14304,
                     "resultCount": 0
                   },
                   {
@@ -1463,7 +1369,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14273,
+                    "htmlLength": 14266,
                     "resultCount": 0
                   },
                   {
@@ -1471,7 +1377,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14275,
+                    "htmlLength": 14282,
                     "resultCount": 0
                   },
                   {
@@ -1492,7 +1398,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14267,
+                    "htmlLength": 14273,
                     "resultCount": 0
                   },
                   {
@@ -1566,7 +1472,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 102,
+                  "fetchDurationMs": 41,
                   "fetchFinalUrl": "https://diez.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -1583,7 +1489,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 76,
+                  "fetchDurationMs": 8,
                   "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -1694,7 +1600,7 @@
       "reviewedAnswer": null,
       "acceptance": {
         "accepted": false,
-        "evidenceCount": 3,
+        "evidenceCount": 1,
         "evidenceTags": [],
         "requireAnyOf": [
           "named_absence",
@@ -1716,7 +1622,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:22.544Z",
+        "executedAt": "2026-07-08T00:14:23.772Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -1804,7 +1710,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14372,
+                  "htmlLength": 14366,
                   "resultCount": 0
                 },
                 {
@@ -1825,7 +1731,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14345,
+                  "htmlLength": 14339,
                   "resultCount": 0
                 },
                 {
@@ -1833,7 +1739,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14360,
+                  "htmlLength": 14342,
                   "resultCount": 0
                 },
                 {
@@ -1862,7 +1768,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14326,
+                  "htmlLength": 14332,
                   "resultCount": 0
                 },
                 {
@@ -1883,7 +1789,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14277,
+                  "htmlLength": 14283,
                   "resultCount": 0
                 },
                 {
@@ -1891,7 +1797,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14298,
+                  "htmlLength": 14292,
                   "resultCount": 0
                 },
                 {
@@ -1912,7 +1818,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14255,
+                  "htmlLength": 14261,
                   "resultCount": 0
                 },
                 {
@@ -1920,7 +1826,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14270,
+                  "htmlLength": 14264,
                   "resultCount": 0
                 },
                 {
@@ -1986,7 +1892,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 97,
+                "fetchDurationMs": 39,
                 "fetchFinalUrl": "https://diez.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -2003,7 +1909,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 76,
+                "fetchDurationMs": 6,
                 "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -2201,7 +2107,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14372,
+                    "htmlLength": 14366,
                     "resultCount": 0
                   },
                   {
@@ -2222,7 +2128,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14345,
+                    "htmlLength": 14339,
                     "resultCount": 0
                   },
                   {
@@ -2230,7 +2136,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14360,
+                    "htmlLength": 14342,
                     "resultCount": 0
                   },
                   {
@@ -2259,7 +2165,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14326,
+                    "htmlLength": 14332,
                     "resultCount": 0
                   },
                   {
@@ -2280,7 +2186,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14277,
+                    "htmlLength": 14283,
                     "resultCount": 0
                   },
                   {
@@ -2288,7 +2194,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14298,
+                    "htmlLength": 14292,
                     "resultCount": 0
                   },
                   {
@@ -2309,7 +2215,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14255,
+                    "htmlLength": 14261,
                     "resultCount": 0
                   },
                   {
@@ -2317,7 +2223,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14270,
+                    "htmlLength": 14264,
                     "resultCount": 0
                   },
                   {
@@ -2383,7 +2289,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 97,
+                  "fetchDurationMs": 39,
                   "fetchFinalUrl": "https://diez.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -2400,7 +2306,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 76,
+                  "fetchDurationMs": 6,
                   "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -2533,7 +2439,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:24.110Z",
+        "executedAt": "2026-07-08T00:14:24.878Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -2613,7 +2519,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14357,
+                  "htmlLength": 14351,
                   "resultCount": 0
                 },
                 {
@@ -2621,7 +2527,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14354,
+                  "htmlLength": 14366,
                   "resultCount": 0
                 },
                 {
@@ -2642,7 +2548,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14333,
+                  "htmlLength": 14345,
                   "resultCount": 0
                 },
                 {
@@ -2671,7 +2577,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14328,
+                  "htmlLength": 14317,
                   "resultCount": 0
                 },
                 {
@@ -2679,7 +2585,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14320,
+                  "htmlLength": 14332,
                   "resultCount": 0
                 },
                 {
@@ -2700,7 +2606,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14277,
+                  "htmlLength": 14283,
                   "resultCount": 0
                 },
                 {
@@ -2708,7 +2614,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14292,
+                  "htmlLength": 14286,
                   "resultCount": 0
                 },
                 {
@@ -2729,7 +2635,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14273,
+                  "htmlLength": 14279,
                   "resultCount": 0
                 },
                 {
@@ -2737,7 +2643,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14294,
+                  "htmlLength": 14282,
                   "resultCount": 0
                 },
                 {
@@ -2803,7 +2709,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 96,
+                "fetchDurationMs": 36,
                 "fetchFinalUrl": "https://diez.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -2820,7 +2726,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 76,
+                "fetchDurationMs": 7,
                 "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -3010,7 +2916,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14357,
+                    "htmlLength": 14351,
                     "resultCount": 0
                   },
                   {
@@ -3018,7 +2924,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14354,
+                    "htmlLength": 14366,
                     "resultCount": 0
                   },
                   {
@@ -3039,7 +2945,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14333,
+                    "htmlLength": 14345,
                     "resultCount": 0
                   },
                   {
@@ -3068,7 +2974,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14328,
+                    "htmlLength": 14317,
                     "resultCount": 0
                   },
                   {
@@ -3076,7 +2982,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14320,
+                    "htmlLength": 14332,
                     "resultCount": 0
                   },
                   {
@@ -3097,7 +3003,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14277,
+                    "htmlLength": 14283,
                     "resultCount": 0
                   },
                   {
@@ -3105,7 +3011,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14292,
+                    "htmlLength": 14286,
                     "resultCount": 0
                   },
                   {
@@ -3126,7 +3032,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14273,
+                    "htmlLength": 14279,
                     "resultCount": 0
                   },
                   {
@@ -3134,7 +3040,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14294,
+                    "htmlLength": 14282,
                     "resultCount": 0
                   },
                   {
@@ -3200,7 +3106,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 96,
+                  "fetchDurationMs": 36,
                   "fetchFinalUrl": "https://diez.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -3217,7 +3123,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 76,
+                  "fetchDurationMs": 7,
                   "fetchFinalUrl": "https://www.tigosports.com.bo/futbol",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -3350,7 +3256,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:25.671Z",
+        "executedAt": "2026-07-08T00:14:25.921Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -3430,7 +3336,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14311,
+                  "htmlLength": 14323,
                   "resultCount": 0
                 },
                 {
@@ -3438,7 +3344,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14332,
+                  "htmlLength": 14324,
                   "resultCount": 0
                 },
                 {
@@ -3459,7 +3365,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14285,
+                  "htmlLength": 14297,
                   "resultCount": 0
                 },
                 {
@@ -3467,7 +3373,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14306,
+                  "htmlLength": 14294,
                   "resultCount": 0
                 },
                 {
@@ -3488,7 +3394,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14285,
+                  "htmlLength": 14279,
                   "resultCount": 0
                 },
                 {
@@ -3525,7 +3431,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14262,
+                  "htmlLength": 14286,
                   "resultCount": 0
                 },
                 {
@@ -3546,7 +3452,7 @@
                   "ok": true,
                   "blocked": false,
                   "failureReason": null,
-                  "htmlLength": 14285,
+                  "htmlLength": 14297,
                   "resultCount": 0
                 },
                 {
@@ -3717,7 +3623,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14311,
+                    "htmlLength": 14323,
                     "resultCount": 0
                   },
                   {
@@ -3725,7 +3631,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14332,
+                    "htmlLength": 14324,
                     "resultCount": 0
                   },
                   {
@@ -3746,7 +3652,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14285,
+                    "htmlLength": 14297,
                     "resultCount": 0
                   },
                   {
@@ -3754,7 +3660,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14306,
+                    "htmlLength": 14294,
                     "resultCount": 0
                   },
                   {
@@ -3775,7 +3681,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14285,
+                    "htmlLength": 14279,
                     "resultCount": 0
                   },
                   {
@@ -3812,7 +3718,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14262,
+                    "htmlLength": 14286,
                     "resultCount": 0
                   },
                   {
@@ -3833,7 +3739,7 @@
                     "ok": true,
                     "blocked": false,
                     "failureReason": null,
-                    "htmlLength": 14285,
+                    "htmlLength": 14297,
                     "resultCount": 0
                   },
                   {
@@ -3947,7 +3853,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:27.028Z",
+        "executedAt": "2026-07-08T00:14:26.877Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -4544,7 +4450,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:32.705Z",
+        "executedAt": "2026-07-08T00:14:32.305Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -4814,12 +4720,12 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 305,
+                "fetchDurationMs": 214,
                 "fetchFinalUrl": "https://ligapro.ec/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
                 "textLength": 2009,
-                "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417946 EN VIVO VISITAS 2417946 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
+                "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417934 EN VIVO VISITAS 2417934 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
               },
               {
                 "id": "transfermarkt-search",
@@ -4861,12 +4767,12 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 409,
+                "fetchDurationMs": 764,
                 "fetchFinalUrl": "https://mundial.futbolecuador.com/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
-                "textLength": 1182,
-                "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 32 minutos Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas\" hace 53 minutos DT de Egipto le dio con todo a la FIFA y tildó de amañado al partido que Argentina les remontó \"Ellos quieren que Messi sea campeón. En el fútbol, muchas cosas se deciden "
+                "textLength": 1086,
+                "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 1 hora Suiza y los tiros penales rompen el corazón de Colombia al querdar fuera del Mundial Los helvéticos se verán con la Argentina, el último sudamericano vivo, en los cuartos de final hace 2 horas Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas"
               }
             ],
             "registryArticleSamples": [],
@@ -5183,12 +5089,12 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 305,
+                  "fetchDurationMs": 214,
                   "fetchFinalUrl": "https://ligapro.ec/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
                   "textLength": 2009,
-                  "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417946 EN VIVO VISITAS 2417946 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
+                  "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417934 EN VIVO VISITAS 2417934 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
                 },
                 {
                   "id": "transfermarkt-search",
@@ -5230,12 +5136,12 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 409,
+                  "fetchDurationMs": 764,
                   "fetchFinalUrl": "https://mundial.futbolecuador.com/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
-                  "textLength": 1182,
-                  "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 32 minutos Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas\" hace 53 minutos DT de Egipto le dio con todo a la FIFA y tildó de amañado al partido que Argentina les remontó \"Ellos quieren que Messi sea campeón. En el fútbol, muchas cosas se deciden "
+                  "textLength": 1086,
+                  "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 1 hora Suiza y los tiros penales rompen el corazón de Colombia al querdar fuera del Mundial Los helvéticos se verán con la Argentina, el último sudamericano vivo, en los cuartos de final hace 2 horas Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas"
                 }
               ],
               "registryArticleSamples": [],
@@ -5333,7 +5239,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:39.578Z",
+        "executedAt": "2026-07-08T00:14:39.260Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -5603,12 +5509,12 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 263,
+                "fetchDurationMs": 125,
                 "fetchFinalUrl": "https://ligapro.ec/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
                 "textLength": 2009,
-                "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417946 EN VIVO VISITAS 2417946 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
+                "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417934 EN VIVO VISITAS 2417934 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
               },
               {
                 "id": "ecu-futbolecuador-news",
@@ -5620,12 +5526,12 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html; charset=utf-8",
-                "fetchDurationMs": 385,
+                "fetchDurationMs": 449,
                 "fetchFinalUrl": "https://mundial.futbolecuador.com/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
-                "textLength": 1182,
-                "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 32 minutos Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas\" hace 53 minutos DT de Egipto le dio con todo a la FIFA y tildó de amañado al partido que Argentina les remontó \"Ellos quieren que Messi sea campeón. En el fútbol, muchas cosas se deciden "
+                "textLength": 1086,
+                "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 1 hora Suiza y los tiros penales rompen el corazón de Colombia al querdar fuera del Mundial Los helvéticos se verán con la Argentina, el último sudamericano vivo, en los cuartos de final hace 2 horas Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas"
               },
               {
                 "id": "transfermarkt-search",
@@ -5972,12 +5878,12 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 263,
+                  "fetchDurationMs": 125,
                   "fetchFinalUrl": "https://ligapro.ec/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
                   "textLength": 2009,
-                  "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417946 EN VIVO VISITAS 2417946 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
+                  "textPreview": "LIGAPRO -- Fin del comentario --> LIGAPRO Partidos Carrusel ❮ ❯ VISITAS 2417934 EN VIVO VISITAS 2417934 EN VIVO MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad MENU Tabla de Posiciones Resultados Calendario Actas de Programación Equipos Estadísticas Institucional Información Institucional Comunicados Control Económico Legal Transparencia Prensa Acreditaciones de Prensa Boletines de Prensa Cargar Multimedia Galeria LigaPro Aviso de Privacidad SERIE A SERIE B "
                 },
                 {
                   "id": "ecu-futbolecuador-news",
@@ -5989,12 +5895,12 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html; charset=utf-8",
-                  "fetchDurationMs": 385,
+                  "fetchDurationMs": 449,
                   "fetchFinalUrl": "https://mundial.futbolecuador.com/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
-                  "textLength": 1182,
-                  "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 32 minutos Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas\" hace 53 minutos DT de Egipto le dio con todo a la FIFA y tildó de amañado al partido que Argentina les remontó \"Ellos quieren que Messi sea campeón. En el fútbol, muchas cosas se deciden "
+                  "textLength": 1086,
+                  "textPreview": "Mundial 2026: Calendario, Grupos y Noticias | FutbolEcuador.com This is content for browsers with no JS (or disabled JS) . Ir a la versión clásica Nuestra Selección Grupos Calendario Estadios Equipos Estadísticas Entradas Chat IA Agenda Deportiva hace 1 hora Suiza y los tiros penales rompen el corazón de Colombia al querdar fuera del Mundial Los helvéticos se verán con la Argentina, el último sudamericano vivo, en los cuartos de final hace 2 horas Con convicción y pleno conocimiento, presidente de México niega amenazas a La Tri en su país “Lo que me llama la atención es quiénes impulsaron esa falsa noticia, primero haciendo menos el triunfo de la selección y luego difundiendo noticias falsas"
                 },
                 {
                   "id": "transfermarkt-search",
@@ -6122,7 +6028,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:46.505Z",
+        "executedAt": "2026-07-08T00:14:46.173Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -6506,7 +6412,7 @@
                 "extraFacts"
               ],
               "payload": {
-                "observedAt": 1783463043616,
+                "observedAt": 1783469554456,
                 "sourceId": "8dqdCX6R",
                 "status": "STATUS_SCHEDULED",
                 "rawStatus": "STATUS_SCHEDULED",
@@ -6811,7 +6717,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:52.641Z",
+        "executedAt": "2026-07-08T00:14:52.237Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -7195,7 +7101,7 @@
                 "extraFacts"
               ],
               "payload": {
-                "observedAt": 1783463043616,
+                "observedAt": 1783469554456,
                 "sourceId": "8dqdCX6R",
                 "status": "STATUS_SCHEDULED",
                 "rawStatus": "STATUS_SCHEDULED",
@@ -7500,7 +7406,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:26:58.793Z",
+        "executedAt": "2026-07-08T00:14:58.174Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -7884,7 +7790,7 @@
                 "extraFacts"
               ],
               "payload": {
-                "observedAt": 1783463044110,
+                "observedAt": 1783469554871,
                 "sourceId": "hj0d0ITH",
                 "status": "STATUS_SCHEDULED",
                 "rawStatus": "STATUS_SCHEDULED",
@@ -8189,7 +8095,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:04.895Z",
+        "executedAt": "2026-07-08T00:15:04.199Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -8573,7 +8479,7 @@
                 "extraFacts"
               ],
               "payload": {
-                "observedAt": 1783463044110,
+                "observedAt": 1783469554871,
                 "sourceId": "hj0d0ITH",
                 "status": "STATUS_SCHEDULED",
                 "rawStatus": "STATUS_SCHEDULED",
@@ -8878,7 +8784,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:10.992Z",
+        "executedAt": "2026-07-08T00:15:10.112Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -9262,7 +9168,7 @@
                 "extraFacts"
               ],
               "payload": {
-                "observedAt": 1783463044273,
+                "observedAt": 1783469555034,
                 "sourceId": "Misgv8I0",
                 "status": "STATUS_SCHEDULED",
                 "rawStatus": "STATUS_SCHEDULED",
@@ -9567,7 +9473,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:17.101Z",
+        "executedAt": "2026-07-08T00:15:16.162Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -9951,7 +9857,7 @@
                 "extraFacts"
               ],
               "payload": {
-                "observedAt": 1783463044273,
+                "observedAt": 1783469555034,
                 "sourceId": "Misgv8I0",
                 "status": "STATUS_SCHEDULED",
                 "rawStatus": "STATUS_SCHEDULED",
@@ -10256,7 +10162,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:23.246Z",
+        "executedAt": "2026-07-08T00:15:22.104Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -10352,7 +10258,7 @@
                   "ok": false,
                   "blocked": true,
                   "failureReason": "blocked_or_challenge_search_page",
-                  "htmlLength": 119772,
+                  "htmlLength": 120000,
                   "resultCount": 0
                 }
               ]
@@ -10381,7 +10287,7 @@
                   "ok": false,
                   "blocked": true,
                   "failureReason": "blocked_or_challenge_search_page",
-                  "htmlLength": 118183,
+                  "htmlLength": 120000,
                   "resultCount": 0
                 }
               ]
@@ -10410,7 +10316,7 @@
                   "ok": false,
                   "blocked": true,
                   "failureReason": "blocked_or_challenge_search_page",
-                  "htmlLength": 119944,
+                  "htmlLength": 120000,
                   "resultCount": 0
                 }
               ]
@@ -10439,7 +10345,7 @@
                   "ok": false,
                   "blocked": true,
                   "failureReason": "blocked_or_challenge_search_page",
-                  "htmlLength": 119855,
+                  "htmlLength": 120000,
                   "resultCount": 0
                 }
               ]
@@ -10468,7 +10374,7 @@
                   "ok": false,
                   "blocked": true,
                   "failureReason": "blocked_or_challenge_search_page",
-                  "htmlLength": 119721,
+                  "htmlLength": 120000,
                   "resultCount": 0
                 }
               ]
@@ -10536,7 +10442,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 270,
+                "fetchDurationMs": 121,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -10656,7 +10562,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.500Z"
+                "syncedAt": "2026-07-08T00:11:17.297Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -10728,7 +10634,7 @@
                     "ok": false,
                     "blocked": true,
                     "failureReason": "blocked_or_challenge_search_page",
-                    "htmlLength": 119772,
+                    "htmlLength": 120000,
                     "resultCount": 0
                   }
                 ]
@@ -10757,7 +10663,7 @@
                     "ok": false,
                     "blocked": true,
                     "failureReason": "blocked_or_challenge_search_page",
-                    "htmlLength": 118183,
+                    "htmlLength": 120000,
                     "resultCount": 0
                   }
                 ]
@@ -10786,7 +10692,7 @@
                     "ok": false,
                     "blocked": true,
                     "failureReason": "blocked_or_challenge_search_page",
-                    "htmlLength": 119944,
+                    "htmlLength": 120000,
                     "resultCount": 0
                   }
                 ]
@@ -10815,7 +10721,7 @@
                     "ok": false,
                     "blocked": true,
                     "failureReason": "blocked_or_challenge_search_page",
-                    "htmlLength": 119855,
+                    "htmlLength": 120000,
                     "resultCount": 0
                   }
                 ]
@@ -10844,7 +10750,7 @@
                     "ok": false,
                     "blocked": true,
                     "failureReason": "blocked_or_challenge_search_page",
-                    "htmlLength": 119721,
+                    "htmlLength": 120000,
                     "resultCount": 0
                   }
                 ]
@@ -10912,7 +10818,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 270,
+                  "fetchDurationMs": 121,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -11040,7 +10946,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:29.624Z",
+        "executedAt": "2026-07-08T00:15:28.795Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -11310,7 +11216,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 23,
+                "fetchDurationMs": 25,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -11440,7 +11346,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.500Z"
+                "syncedAt": "2026-07-08T00:11:17.297Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -11686,7 +11592,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 23,
+                  "fetchDurationMs": 25,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -11824,7 +11730,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:35.775Z",
+        "executedAt": "2026-07-08T00:15:34.864Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -11949,7 +11855,7 @@
                   "ok": false,
                   "blocked": true,
                   "failureReason": "blocked_or_challenge_search_page",
-                  "htmlLength": 118395,
+                  "htmlLength": 120000,
                   "resultCount": 0
                 }
               ]
@@ -11978,7 +11884,7 @@
                   "ok": false,
                   "blocked": true,
                   "failureReason": "blocked_or_challenge_search_page",
-                  "htmlLength": 118289,
+                  "htmlLength": 120000,
                   "resultCount": 0
                 }
               ]
@@ -12094,7 +12000,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 23,
+                "fetchDurationMs": 28,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -12251,7 +12157,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.491Z"
+                "syncedAt": "2026-07-08T00:11:17.289Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -12352,7 +12258,7 @@
                     "ok": false,
                     "blocked": true,
                     "failureReason": "blocked_or_challenge_search_page",
-                    "htmlLength": 118395,
+                    "htmlLength": 120000,
                     "resultCount": 0
                   }
                 ]
@@ -12381,7 +12287,7 @@
                     "ok": false,
                     "blocked": true,
                     "failureReason": "blocked_or_challenge_search_page",
-                    "htmlLength": 118289,
+                    "htmlLength": 120000,
                     "resultCount": 0
                   }
                 ]
@@ -12497,7 +12403,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 23,
+                  "fetchDurationMs": 28,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -12635,7 +12541,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:41.909Z",
+        "executedAt": "2026-07-08T00:15:40.847Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -12905,7 +12811,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 27,
+                "fetchDurationMs": 26,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -13062,7 +12968,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.491Z"
+                "syncedAt": "2026-07-08T00:11:17.289Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -13308,7 +13214,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 27,
+                  "fetchDurationMs": 26,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -13446,7 +13352,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:48.099Z",
+        "executedAt": "2026-07-08T00:15:47.006Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -13716,7 +13622,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 51,
+                "fetchDurationMs": 33,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -13846,7 +13752,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.482Z"
+                "syncedAt": "2026-07-08T00:11:17.280Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -14092,7 +13998,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 51,
+                  "fetchDurationMs": 33,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -14230,7 +14136,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:27:54.348Z",
+        "executedAt": "2026-07-08T00:15:52.934Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -14500,7 +14406,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 24,
+                "fetchDurationMs": 25,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -14630,7 +14536,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.482Z"
+                "syncedAt": "2026-07-08T00:11:17.280Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -14876,7 +14782,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 24,
+                  "fetchDurationMs": 25,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -15014,7 +14920,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:28:00.551Z",
+        "executedAt": "2026-07-08T00:15:59.247Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -15284,7 +15190,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 23,
+                "fetchDurationMs": 24,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -15414,7 +15320,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.533Z"
+                "syncedAt": "2026-07-08T00:11:17.322Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -15660,7 +15566,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 23,
+                  "fetchDurationMs": 24,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -15798,7 +15704,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:28:45.176Z",
+        "executedAt": "2026-07-08T00:16:05.238Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -16068,7 +15974,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 81,
+                "fetchDurationMs": 19,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -16198,7 +16104,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.533Z"
+                "syncedAt": "2026-07-08T00:11:17.322Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -16444,7 +16350,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 81,
+                  "fetchDurationMs": 19,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -16582,7 +16488,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:30:30.100Z",
+        "executedAt": "2026-07-08T00:16:11.141Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -16852,7 +16758,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 288,
+                "fetchDurationMs": 32,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -17009,7 +16915,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.508Z"
+                "syncedAt": "2026-07-08T00:11:17.305Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -17255,7 +17161,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 288,
+                  "fetchDurationMs": 32,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -17393,7 +17299,7 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:32:15.049Z",
+        "executedAt": "2026-07-08T00:16:36.236Z",
         "executor": "run-team-news-research-tasks-day"
       }
     },
@@ -17663,7 +17569,7 @@
                 "fetchStatus": 200,
                 "fetchReason": null,
                 "fetchContentType": "text/html",
-                "fetchDurationMs": 94,
+                "fetchDurationMs": 26,
                 "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                 "fetchErrorName": null,
                 "fetchErrorMessage": null,
@@ -17820,7 +17726,7 @@
               ],
               "payload": {
                 "sourceFile": "canonical-fixtures/2026-07-08/uefa.champions.json",
-                "syncedAt": "2026-07-07T22:22:47.508Z"
+                "syncedAt": "2026-07-08T00:11:17.305Z"
               }
             },
             "source": "fixture.sources.canonicalFixtures",
@@ -18066,7 +17972,7 @@
                   "fetchStatus": 200,
                   "fetchReason": null,
                   "fetchContentType": "text/html",
-                  "fetchDurationMs": 94,
+                  "fetchDurationMs": 26,
                   "fetchFinalUrl": "https://www.uefa.com/uefachampionsleague/news/",
                   "fetchErrorName": null,
                   "fetchErrorMessage": null,
@@ -18204,10 +18110,10 @@
       },
       "canonicalWrite": null,
       "audit": {
-        "executedAt": "2026-07-07T22:33:59.973Z",
+        "executedAt": "2026-07-08T00:18:21.157Z",
         "executor": "run-team-news-research-tasks-day"
       }
     }
   ],
-  "updatedAt": "2026-07-07T22:33:59.973Z"
+  "updatedAt": "2026-07-08T00:18:21.157Z"
 }
