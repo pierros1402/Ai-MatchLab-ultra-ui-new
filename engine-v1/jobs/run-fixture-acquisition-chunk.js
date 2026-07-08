@@ -145,36 +145,185 @@ function expectedLeagueSlugsForWindow(dateWindow) {
   return slugs;
 }
 
+function resultRowsFromPayload(payload) {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+
+  for (const key of ["matches", "results", "fixtures", "rows", "items"]) {
+    if (Array.isArray(payload?.[key])) return payload[key];
+  }
+
+  return [];
+}
+
+function fixtureTimeMs(row) {
+  if (Number.isFinite(Number(row?.kickoff_ms))) {
+    return Number(row.kickoff_ms);
+  }
+
+  for (const key of ["dayKey", "kickoff", "kickoffUtc", "date", "playedAt"]) {
+    const value = row?.[key];
+    if (!value) continue;
+
+    const text = String(value);
+    const ms = /^\d{4}-\d{2}-\d{2}$/.test(text)
+      ? Date.parse(text + "T12:00:00Z")
+      : Date.parse(text);
+
+    if (Number.isFinite(ms)) return ms;
+  }
+
+  return NaN;
+}
+
+function looksLikePlayedResult(row) {
+  const status = String(row?.status || row?.rawStatus || "").toUpperCase();
+  if (status === "FT" || status === "AET" || status === "PEN" || status === "FINISHED") return true;
+
+  return Number.isFinite(Number(row?.scoreHome)) && Number.isFinite(Number(row?.scoreAway));
+}
+
+function recentHistoryEvidenceForSlug(slug, dateWindow, lookbackDays = 45) {
+  const days = Array.isArray(dateWindow) ? dateWindow : [];
+  const dayTimes = days
+    .map(day => Date.parse(String(day) + "T12:00:00Z"))
+    .filter(Number.isFinite);
+
+  if (!dayTimes.length) return null;
+
+  const lowerBound = Math.min(...dayTimes) - lookbackDays * 24 * 60 * 60 * 1000;
+  const upperBound = Math.max(...dayTimes) + 24 * 60 * 60 * 1000;
+
+  const files = [];
+
+  const historyDir = resolveDataPath("history-archive", slug);
+  if (fs.existsSync(historyDir)) {
+    for (const file of fs.readdirSync(historyDir).filter(x => x.endsWith(".json"))) {
+      files.push({ file: path.join(historyDir, file), source: "history-archive" });
+    }
+  }
+
+  const memoryFile = resolveDataPath("league-memory", "results", `${slug}.json`);
+  if (fs.existsSync(memoryFile)) {
+    files.push({ file: memoryFile, source: "league-memory-results" });
+  }
+
+  let latest = null;
+  let rowsChecked = 0;
+
+  for (const entry of files) {
+    const payload = readJson(entry.file, null);
+    const rows = resultRowsFromPayload(payload);
+    rowsChecked += rows.length;
+
+    for (const row of rows) {
+      if (!looksLikePlayedResult(row)) continue;
+
+      const ms = fixtureTimeMs(row);
+      if (!Number.isFinite(ms)) continue;
+      if (ms < lowerBound || ms > upperBound) continue;
+
+      if (!latest || ms > latest.ms) {
+        latest = {
+          ms,
+          source: entry.source,
+          file: entry.file,
+          homeTeam: row?.homeTeam || row?.home || null,
+          awayTeam: row?.awayTeam || row?.away || null,
+          status: row?.status || row?.rawStatus || null,
+          scoreHome: row?.scoreHome ?? null,
+          scoreAway: row?.scoreAway ?? null
+        };
+      }
+    }
+  }
+
+  if (!latest) return null;
+
+  return {
+    slug,
+    reason: "recent_history_activity",
+    lookbackDays,
+    rowsChecked,
+    lastActivityDay: new Date(latest.ms).toISOString().slice(0, 10),
+    source: latest.source,
+    sample: {
+      homeTeam: latest.homeTeam,
+      awayTeam: latest.awayTeam,
+      status: latest.status,
+      scoreHome: latest.scoreHome,
+      scoreAway: latest.scoreAway
+    }
+  };
+}
+
 function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
-  const allSeeds = Array.isArray(LEAGUE_SEEDS)
-    ? LEAGUE_SEEDS.map(x => String(x || "").trim()).filter(Boolean).filter(slug => !isDisabledLeague(slug))
+  const rawSeeds = Array.isArray(LEAGUE_SEEDS)
+    ? LEAGUE_SEEDS.map(x => String(x || "").trim()).filter(Boolean)
     : [];
+
+  const disabledSeeds = rawSeeds.filter(slug => isDisabledLeague(slug));
+  const allSeeds = rawSeeds.filter(slug => !isDisabledLeague(slug));
 
   // Filter to leagues that are in-season for at least one date in the window.
   // This prevents querying off-season leagues (e.g. Premier League in June).
-  // Exception: leagues with recorded expected matches stay in even when the
-  // season calendar disagrees (season-calendar false negatives).
+  // Exceptions:
+  //  - leagues with recorded expected matches stay in even when the
+  //    season calendar disagrees;
+  //  - leagues with recent played history/results stay in as season-calendar
+  //    false-negative candidates, then provider fetch confirms or rejects them.
   const expectedSlugs = dateWindow && dateWindow.length
     ? expectedLeagueSlugsForWindow(dateWindow)
     : new Set();
 
   const seasonOverrides = [];
+  const seasonOverrideReasons = {};
+  const recentHistorySeasonOverrides = {};
+  const outOfSeasonExcluded = [];
+
   const seeds = dateWindow && dateWindow.length
     ? allSeeds.filter(slug => {
         if (inSeasonForWindow(slug, dateWindow)) return true;
+
         if (expectedSlugs.has(slug)) {
           seasonOverrides.push(slug);
+          seasonOverrideReasons[slug] = "expected_matches";
           return true;
         }
+
+        const evidence = recentHistoryEvidenceForSlug(slug, dateWindow);
+        if (evidence) {
+          seasonOverrides.push(slug);
+          seasonOverrideReasons[slug] = "recent_history_activity";
+          recentHistorySeasonOverrides[slug] = evidence;
+          return true;
+        }
+
+        outOfSeasonExcluded.push(slug);
         return false;
       })
     : allSeeds;
+
+  const selectionDiagnostics = {
+    rawSeedCount: rawSeeds.length,
+    disabledSeedCount: disabledSeeds.length,
+    disabledSeeds,
+    activeSeedCount: allSeeds.length,
+    selectedSeedCount: seeds.length,
+    expectedSeasonOverrideCount: Object.values(seasonOverrideReasons).filter(x => x === "expected_matches").length,
+    recentHistorySeasonOverrideCount: Object.keys(recentHistorySeasonOverrides).length,
+    seasonOverrideReasons,
+    recentHistorySeasonOverrides,
+    outOfSeasonExcludedCount: outOfSeasonExcluded.length,
+    outOfSeasonExcludedSample: outOfSeasonExcluded.slice(0, 80)
+  };
 
   if (seeds.length === 0) {
     return {
       seeds,
       allSeeds,
       seasonOverrides,
+      selectionDiagnostics,
       selected: [],
       startCursor: 0,
       nextCursor: 0
@@ -194,6 +343,7 @@ function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
     seeds,
     allSeeds,
     seasonOverrides,
+    selectionDiagnostics,
     selected,
     startCursor,
     nextCursor
@@ -870,7 +1020,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
   // season filter and cursor. Used by the self-heal recovery pass to re-fetch
   // leagues that ended a day BROKEN (expected matches but zero canonical).
   const explicitLeagues = Array.isArray(opts.explicitLeagues)
-    ? opts.explicitLeagues.map(x => String(x || "").trim()).filter(Boolean)
+    ? opts.explicitLeagues.map(x => String(x || "").trim()).filter(Boolean).filter(slug => !isDisabledLeague(slug))
     : null;
 
   const chunk = explicitLeagues && explicitLeagues.length
@@ -914,6 +1064,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     totalSeedCount: chunk.allSeeds ? chunk.allSeeds.length : chunk.seeds.length,
     leagueSeedCount: chunk.seeds.length,
     seasonOverrides: chunk.seasonOverrides || [],
+    selectionDiagnostics: chunk.selectionDiagnostics || {},
     chunkSize: opts.fullPass ? chunk.selected.length : opts.chunkSize,
     startCursor: chunk.startCursor,
     nextCursor: chunk.nextCursor,
@@ -1065,6 +1216,7 @@ if (isCli) {
         fullPass: report.fullPass,
         baseDayKey: report.baseDayKey,
         selectedLeagues: report.selectedLeagues,
+        selectionDiagnostics: report.selectionDiagnostics,
         startCursor: report.startCursor,
         nextCursor: report.nextCursor,
         summary: report.summary,
