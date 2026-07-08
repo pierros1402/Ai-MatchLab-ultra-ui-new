@@ -17,6 +17,8 @@ const DISABLED_COUNTRIES = new Set([
   "fij", "asa", "cok", "ncl", "png", "sam", "tah", "tga",
   // small Africa
   "mad", "mri",
+  // Africa — weak/unreliable sources, excluded by the user
+  "som", "eth", "moz", "tan",
   // explicitly excluded by the user
   "afg", "ple", "sri"
 ]);
