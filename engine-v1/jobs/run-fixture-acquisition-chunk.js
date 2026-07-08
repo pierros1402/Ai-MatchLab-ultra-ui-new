@@ -1028,6 +1028,16 @@ export async function runFixtureAcquisitionChunk(options = {}) {
         seeds: explicitLeagues,
         allSeeds: explicitLeagues,
         seasonOverrides: explicitLeagues,
+        selectionDiagnostics: {
+          explicitMode: true,
+          explicitLeagues,
+          disabledExplicitLeaguesSuppressed: Array.isArray(opts.explicitLeagues)
+            ? opts.explicitLeagues
+                .map(x => String(x || "").trim())
+                .filter(Boolean)
+                .filter(slug => isDisabledLeague(slug))
+            : []
+        },
         selected: explicitLeagues,
         startCursor: 0,
         nextCursor: state.cursor
