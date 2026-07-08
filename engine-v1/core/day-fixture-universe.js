@@ -69,7 +69,7 @@ function dayFixtures(fixturesPayload, dayKey) {
     .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
 }
 
-function canonicalFixturesForDay(dayKey) {
+export function canonicalFixturesForDay(dayKey) {
   const dir = resolveDataPath("canonical-fixtures", dayKey);
   const rows = [];
   const seen = new Set();

@@ -1,5 +1,4 @@
 import fs from "fs";
-import { getActiveByDay, getFixturesByDay } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import {
   evaluateMatchValue,
@@ -8,6 +7,7 @@ import {
 } from "./value-engine-v1.js";
 import { buildMatchIntelligence } from "./build-match-intelligence.js";
 import { currentSeason } from "./season.js";
+import { canonicalFixturesForDay } from "./day-fixture-universe.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -37,21 +37,6 @@ function readDetailsSnapshot(dayKey, ...ids) {
 
   return null;
 }
-
-function readDeploySnapshotFixturesByDay(dayKey) {
-  const filePath = resolveDataPath("deploy-snapshots", dayKey, "fixtures.json");
-  const payload = readJsonSafe(filePath, null);
-  const rows = Array.isArray(payload?.fixtures)
-    ? payload.fixtures
-    : Array.isArray(payload)
-      ? payload
-      : [];
-
-  return rows
-    .filter(row => String(row?.dayKey || row?.date || "").slice(0, 10) === String(dayKey))
-    .sort((a, b) => String(a.kickoffUtc || a.kickoff || "").localeCompare(String(b.kickoffUtc || b.kickoff || "")));
-}
-
 
 const STRICT_VALUE_POLICY_VERSION = "statistical-value-policy-v2.2";
 
@@ -861,8 +846,8 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
         const parsedPicks = Array.isArray(parsed?.picks) ? parsed.picks : [];
 
         const currentFixtureIds = new Set(
-          getFixturesByDay(date)
-            .map(f => String(f?.matchId || f?.id || ""))
+          canonicalFixturesForDay(date)
+            .map(f => String(f?.canonicalId || f?.matchId || f?.id || ""))
             .filter(Boolean)
         );
         const filteredPicks = currentFixtureIds.size > 0
@@ -906,25 +891,16 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   }
   const now = Date.now();
 
-  const canonicalMatches = rebuild ? getFixturesByDay(date) : getActiveByDay(date);
-  const snapshotFallbackMatches = canonicalMatches.length === 0
-    ? readDeploySnapshotFixturesByDay(date)
-    : [];
+  const sourceMatches = canonicalFixturesForDay(date);
 
-  const sourceMatches = canonicalMatches.length > 0
-    ? canonicalMatches
-    : snapshotFallbackMatches;
-
-  const inputSource = canonicalMatches.length > 0
+  const inputSource = sourceMatches.length > 0
     ? "canonical_fixtures"
-    : snapshotFallbackMatches.length > 0
-      ? "deploy_snapshot_fixtures_fallback"
-      : "empty";
+    : "empty";
 
-  if (canonicalMatches.length === 0 && snapshotFallbackMatches.length > 0) {
-    console.log("[value] using deploy snapshot fixture fallback", {
+  if (sourceMatches.length === 0) {
+    console.log("[value] no canonical fixture input; deploy snapshot fallback disabled", {
       date,
-      sourceMatches: snapshotFallbackMatches.length
+      rebuild
     });
   }
 
@@ -1052,7 +1028,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     source: inputSource,
     sourceContract: {
       canonicalOnly: inputSource === "canonical_fixtures",
-      deploySnapshotInput: inputSource === "deploy_snapshot_fixtures_fallback",
+      deploySnapshotInput: false,
       realBookmakerOddsUsed: false
     },
     generatedAt: new Date().toISOString(),
