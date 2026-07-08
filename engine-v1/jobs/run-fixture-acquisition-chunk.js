@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { ESPN_BASE, LEAGUE_SEEDS, leagueName } from "../config.js";
 import { LEAGUES_BY_SLUG } from "../../workers/_shared/leagues-coverage.js";
 import { isInSeason } from "../source-discovery/season-calendar.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
@@ -137,7 +138,7 @@ function expectedLeagueSlugsForWindow(dateWindow) {
 
     for (const match of matches) {
       const slug = String(match?.leagueSlug || "").trim();
-      if (slug) slugs.add(slug);
+      if (slug && !isDisabledLeague(slug)) slugs.add(slug);
     }
   }
 
@@ -146,7 +147,7 @@ function expectedLeagueSlugsForWindow(dateWindow) {
 
 function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
   const allSeeds = Array.isArray(LEAGUE_SEEDS)
-    ? LEAGUE_SEEDS.map(x => String(x || "").trim()).filter(Boolean)
+    ? LEAGUE_SEEDS.map(x => String(x || "").trim()).filter(Boolean).filter(slug => !isDisabledLeague(slug))
     : [];
 
   // Filter to leagues that are in-season for at least one date in the window.
@@ -226,6 +227,11 @@ function readCanonicalLeague(dayKey, slug) {
 }
 
 function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
+  if (isDisabledLeague(slug)) {
+    console.log("[fixture-acquisition] disabled_league_write_suppressed", { dayKey, slug });
+    return readCanonicalLeague(dayKey, slug);
+  }
+
   // Collapse cross-source duplicates (same real match under two canonical IDs
   // because providers spell the teams differently) before persisting.
   const deduped = dedupeLeagueDayFixtures(fixtures, { slug });
@@ -395,6 +401,24 @@ function selectAdapterForLeague(slug) {
 }
 
 async function acquireLeagueDay({ slug, dayKey, allowedDays }) {
+  if (isDisabledLeague(slug)) {
+    return {
+      slug,
+      leagueName: leagueName(slug),
+      dayKey,
+      providerMode: "disabled",
+      providerExecution: "skip",
+      provider: null,
+      providerAttempts: [],
+      ok: true,
+      rawEvents: 0,
+      normalized: 0,
+      accepted: 0,
+      writtenByDay: {},
+      error: "disabled_league_suppressed"
+    };
+  }
+
   const { plan } = selectAdapterForLeague(slug);
   const adapters = getFixtureAdapters();
 
@@ -486,12 +510,15 @@ async function acquireLeagueDay({ slug, dayKey, allowedDays }) {
     if (!allowedDays.has(fixtureDay)) continue;
 
     const row = serializeFixture(normalized, adapter.id, dayKey);
-    const key = `${fixtureDay}::${normalized.leagueSlug || slug}`;
+    const outputSlug = normalized.leagueSlug || slug;
+    if (isDisabledLeague(outputSlug)) continue;
+
+    const key = `${fixtureDay}::${outputSlug}`;
 
     if (!grouped.has(key)) {
       grouped.set(key, {
         dayKey: fixtureDay,
-        slug: normalized.leagueSlug || slug,
+        slug: outputSlug,
         rows: []
       });
     }
