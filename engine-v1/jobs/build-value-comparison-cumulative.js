@@ -91,6 +91,55 @@ function listComparisonDays(dir) {
     .sort();
 }
 
+function readBuildReport(day) {
+  return readJsonSafe(dataPath("build-reports", `${day}.json`), null);
+}
+
+function dayIsIntegrityClean(day) {
+  const buildReport = readBuildReport(day);
+  if (!buildReport) {
+    return { ok: false, reason: "build_report_missing" };
+  }
+  if (buildReport.clean !== true) {
+    return {
+      ok: false,
+      reason: "build_report_not_clean",
+      hardFailures: buildReport.hardFailures || []
+    };
+  }
+
+  const invariant = readJsonSafe(dataPath("deploy-snapshots", day, "invariant-report.json"), null);
+  const manifest = readJsonSafe(dataPath("deploy-snapshots", day, "manifest.json"), null);
+  if (!invariant) return { ok: false, reason: "invariant_report_missing" };
+
+  const checkedAt = Date.parse(invariant.checkedAt || "");
+  const generatedAt = Date.parse(manifest?.generatedAt || "");
+  if (!Number.isFinite(checkedAt) || (Number.isFinite(generatedAt) && checkedAt < generatedAt)) {
+    return {
+      ok: false,
+      reason: "invariant_report_stale",
+      checkedAt: invariant.checkedAt || null,
+      manifestGeneratedAt: manifest?.generatedAt || null
+    };
+  }
+
+  if (invariant.ok === false || (Array.isArray(invariant.blocked) && invariant.blocked.length > 0)) {
+    return { ok: false, reason: "invariant_blocked", blocked: invariant.blocked || [] };
+  }
+
+  const rescuedCount = Number(manifest?.snapshotRescuedCount || 0);
+  if (rescuedCount > 0) {
+    return {
+      ok: false,
+      reason: "snapshot_rescue_present",
+      snapshotRescuedCount: rescuedCount,
+      snapshotRescuedLeagues: manifest?.snapshotRescuedLeagues || []
+    };
+  }
+
+  return { ok: true };
+}
+
 export function buildValueComparisonCumulative(options = {}) {
   const dir = options.dir || dataPath("value-comparison");
   const outputPath = options.output || path.join(dir, "cumulative.json");
@@ -100,10 +149,20 @@ export function buildValueComparisonCumulative(options = {}) {
   const totalsA = emptyTotals();
   const totalsB = emptyTotals();
   const daysIncluded = [];
+  const daysExcluded = [];
+  const requireIntegrityClean = options.requireIntegrityClean !== false;
   let planAMeta = { id: "plan-a", label: "Plan A - current UI value" };
   let planBMeta = { id: "plan-b", label: "Plan B - strict value-policy-v2.3 observation" };
 
   for (const day of days) {
+    if (requireIntegrityClean) {
+      const integrity = dayIsIntegrityClean(day);
+      if (!integrity.ok) {
+        daysExcluded.push({ dayKey: day, reason: integrity.reason, details: integrity });
+        continue;
+      }
+    }
+
     const payload = readJsonSafe(path.join(dir, `${day}.json`), null);
     const A = payload?.plans?.A?.summary;
     const B = payload?.plans?.B?.summary;
@@ -128,7 +187,10 @@ export function buildValueComparisonCumulative(options = {}) {
     dayCount: daysIncluded.length,
     firstDay: daysIncluded[0] || null,
     lastDay: daysIncluded[daysIncluded.length - 1] || null,
+    requireIntegrityClean,
     daysIncluded,
+    daysExcluded,
+    excludedDayCount: daysExcluded.length,
     plans: {
       A: { ...planAMeta, totals: finalA },
       B: { ...planBMeta, totals: finalB }
@@ -151,9 +213,10 @@ export function buildValueComparisonCumulative(options = {}) {
 }
 
 function parseArgs(argv) {
-  const out = { write: false };
+  const out = { write: false, requireIntegrityClean: true };
   for (const arg of argv) {
     if (arg === "--write") out.write = true;
+    else if (arg === "--include-unclean") out.requireIntegrityClean = false;
     else if (arg.startsWith("--dir=")) out.dir = arg.slice("--dir=".length);
     else if (arg.startsWith("--output=")) out.output = arg.slice("--output=".length);
   }
@@ -168,6 +231,7 @@ if (isDirect) {
     "[value-comparison-cumulative] done",
     JSON.stringify({
       dayCount: result.dayCount,
+      excludedDayCount: result.payload.excludedDayCount,
       firstDay: result.payload.firstDay,
       lastDay: result.payload.lastDay,
       planA: result.payload.plans.A.totals,
