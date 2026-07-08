@@ -651,6 +651,7 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
     (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
       .map(x => String(x || "").trim())
       .filter(Boolean)
+      .filter(slug => !isDisabledLeague(slug))
   );
   const dateWindowArr = [...allowedDays];
   const inSeasonSeedSet = new Set(

@@ -107,7 +107,12 @@ const COUNTRY_WINDOWS = {
   new_zealand:  { start: 10, end: 4 },
 
   // South Asia
-  india: { start: 9, end: 4 }
+  india: { start: 9, end: 4 },
+
+  // Zimbabwe Premier Soccer League is active in the southern/winter window
+  // (observed fixtures in June/July 2026). Do not use the generic Africa
+  // autumn→spring default here.
+  zimbabwe: { start: 3, end: 11 }
 };
 
 // Middle-East / Gulf countries play a European-style autumn→spring season.
