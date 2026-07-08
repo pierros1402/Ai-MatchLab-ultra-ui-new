@@ -188,7 +188,12 @@ jobs:
           test -e "data/deploy-snapshots/${DAY_KEY}/fixtures.json" && git add "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/value.json" && git add "data/deploy-snapshots/${DAY_KEY}/value.json"
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/value-audit.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/value-audit.json"; fi
           test -e "data/deploy-snapshots/${DAY_KEY}/invariant-report.json" && git add "data/deploy-snapshots/${DAY_KEY}/invariant-report.json"
+          # Freshness + build reports refreshed by run-intraday-snapshot-refresh.js
+          # so they describe THIS re-exported manifest, not the earlier daily one.
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/freshness-report.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/freshness-report.json"; fi
+          if [ -f "data/build-reports/${DAY_KEY}.json" ]; then git add "data/build-reports/${DAY_KEY}.json"; fi
           test -d "data/deploy-snapshots/${DAY_KEY}/details" && git add "data/deploy-snapshots/${DAY_KEY}/details"
           test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
 
@@ -203,9 +208,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/final-results/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/final-results/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"
@@ -296,6 +301,16 @@ jobs:
             console.log("No material score/status/minute changes. Restoring staged deploy snapshot files to avoid timestamp-only commit.");
             execFileSync("git", ["restore", "--staged", "--", "data/deploy-snapshots"], { stdio: "inherit" });
             execFileSync("git", ["restore", "--", "data/deploy-snapshots"], { stdio: "inherit" });
+            // build-reports/<day>.json lives outside deploy-snapshots; its only
+            // change on an unchanged snapshot is a fresh generatedAt, so restore
+            // it too or the commit-needed check below trips on a timestamp-only diff.
+            // Guarded: a brand-new day may have no HEAD build-report to restore to.
+            try {
+              execFileSync("git", ["restore", "--staged", "--", `data/build-reports/${day}.json`], { stdio: "inherit" });
+              execFileSync("git", ["restore", "--", `data/build-reports/${day}.json`], { stdio: "inherit" });
+            } catch (e) {
+              console.log(`build-reports restore skipped: ${e.message}`);
+            }
           }
 
           const comparisonFile = `data/value-comparison/${day}.json`;

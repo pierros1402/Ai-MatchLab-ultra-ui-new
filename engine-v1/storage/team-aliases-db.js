@@ -59,6 +59,21 @@ const BUILTIN_ALIASES = {
     "dr congo": ["congo dr", "democratic republic of the congo"],
     "republic of ireland": ["ireland"],
     "bosnia and herzegovina": ["bosnia herzegovina", "bosnia-herzegovina"]
+  },
+
+  // UEFA qualifier cross-provider spellings that plain normalization / prefix-
+  // token subset cannot bridge even after the bracketed-nationality strip
+  // (audit 2026-07-07, uefa.champions): an acronym vs full name, or a Catalan
+  // "d'" elision. Canonical key = ESPN long form, alias = Flashscore short form.
+  "uefa.champions": {
+    "the new saints": ["tns"],
+    "inter d'escaldes": ["inter escaldes"]
+  },
+
+  // ecu.1 (audit 2026-07-07): Flashscore "U. Catolica" vs ESPN "Universidad
+  // Católica (Quito)" — a "U." abbreviation the subset matcher can't expand.
+  "ecu.1": {
+    "universidad catolica": ["u catolica", "u. catolica"]
   }
 };
 

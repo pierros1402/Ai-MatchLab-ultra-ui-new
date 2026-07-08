@@ -7,7 +7,9 @@ import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
-import { resolveDataPath } from "../storage/data-root.js";
+import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
+import { buildDayReport } from "./build-day-report.js";
+import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -268,6 +270,42 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     });
   } catch (e) {
     console.error("[intraday-snapshot-refresh] invariant-check:error", e?.message);
+  }
+
+  // Freshness + build reports MUST describe THIS final manifest. The intraday
+  // re-export moved manifest.generatedAt forward; without re-running these two
+  // the committed freshness-report.json / build-reports/<day>.json keep pointing
+  // at the earlier daily-cycle manifest (audit 2026-07-07: manifest 18:15Z but
+  // both reports 15:05Z). Re-run and stage them here — after the export AND the
+  // invariant above — so every re-export is self-consistent. Report-only; a
+  // failure here must never abort the refresh.
+  try {
+    const freshness = verifyArtifactFreshnessDay(safeDayKey);
+    const snapshotDir = resolveDataPath("deploy-snapshots", safeDayKey);
+    if (fs.existsSync(snapshotDir)) {
+      fs.writeFileSync(
+        path.join(snapshotDir, "freshness-report.json"),
+        JSON.stringify(freshness, null, 2) + "\n"
+      );
+    }
+
+    const dayReport = buildDayReport(safeDayKey);
+    const buildReportsDir = resolveDataPath("build-reports");
+    ensureDir(buildReportsDir);
+    fs.writeFileSync(
+      path.join(buildReportsDir, `${safeDayKey}.json`),
+      JSON.stringify(dayReport, null, 2) + "\n"
+    );
+
+    console.log("[intraday-snapshot-refresh] reports-refresh:done", {
+      dayKey: safeDayKey,
+      freshnessOk: freshness.ok,
+      manifestGeneratedAt: freshness.manifestGeneratedAt,
+      clean: dayReport.clean,
+      cleanStrict: dayReport.cleanStrict
+    });
+  } catch (e) {
+    console.error("[intraday-snapshot-refresh] reports-refresh:error", e?.message);
   }
 
   return {
