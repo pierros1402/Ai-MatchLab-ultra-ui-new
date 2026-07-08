@@ -18,6 +18,7 @@ import path from "path";
 import { resolveDataPath } from "../storage/data-root.js";
 import { dedupeLeagueDayFixtures } from "./fixture-dedup.js";
 import { buildCanonicalId } from "./canonical-id.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -49,6 +50,10 @@ function dedupeRowsPerLeague(rows) {
   return out;
 }
 
+function isDisabledFixtureRow(row) {
+  return isDisabledLeague(row?.leagueSlug);
+}
+
 function dayFixtures(fixturesPayload, dayKey) {
   const fixtures = Array.isArray(fixturesPayload?.fixtures)
     ? fixturesPayload.fixtures
@@ -56,7 +61,9 @@ function dayFixtures(fixturesPayload, dayKey) {
       ? fixturesPayload
       : [];
 
-  const rows = fixtures.filter(row => String(row?.dayKey || "") === String(dayKey));
+  const rows = fixtures
+    .filter(row => String(row?.dayKey || "") === String(dayKey))
+    .filter(row => !isDisabledFixtureRow(row));
 
   return dedupeRowsPerLeague(rows)
     .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
@@ -72,14 +79,19 @@ function canonicalFixturesForDay(dayKey) {
   }
 
   for (const file of fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort()) {
+    const slug = path.basename(file, ".json");
+    if (isDisabledLeague(slug)) {
+      continue;
+    }
+
     const payload = readJsonSafe(path.join(dir, file), null);
     const rawFixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
 
     // Defense-in-depth: collapse cross-source duplicates even if a stale store
     // file predates write-time dedup (same match under two canonical IDs).
     const fixtures = dedupeLeagueDayFixtures(rawFixtures, {
-      slug: path.basename(file, ".json")
-    }).rows;
+      slug
+    }).rows.filter(row => !isDisabledFixtureRow({ ...row, leagueSlug: row?.leagueSlug || slug }));
 
     for (const fixture of fixtures) {
       const matchId = normalizeMatchId(
@@ -177,7 +189,8 @@ export function fixturesForSnapshotDay(dayKey) {
     null
   );
   const snapshotRows = (Array.isArray(existingSnapshot?.fixtures) ? existingSnapshot.fixtures : [])
-    .filter(row => String(row?.dayKey || existingSnapshot?.date || "") === String(dayKey));
+    .filter(row => String(row?.dayKey || existingSnapshot?.date || "") === String(dayKey))
+    .filter(row => !isDisabledFixtureRow(row));
 
   const freshLeagues = new Set(union.map(row => String(row?.leagueSlug || "")));
   const rescuedRows = snapshotRows.filter(
