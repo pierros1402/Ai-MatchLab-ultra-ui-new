@@ -258,6 +258,19 @@ function writeValueSnapshot(date, result) {
 
   fs.writeFileSync(file, JSON.stringify(payload, null, 2));
 }
+
+// Production value-audit (rejection ledger). Report 2026-07-07 #5: production
+// value shipped WITHOUT an audit — only Plan B had one — so a 0-pick day was
+// indistinguishable from a broken pipeline. This is OBSERVABILITY ONLY: it
+// records the decisions buildValueDay already makes at its existing stage
+// predicates and NEVER gates, mutates, or re-scores a pick (value scoring is
+// frozen — value-baseline-2026-07-06). Written to data/value/_audit/<day>.json;
+// the deploy exporter ships it as value-audit.json.
+function writeValueAudit(date, audit) {
+  ensureDir(resolveDataPath("value", "_audit"));
+  const file = resolveDataPath("value", "_audit", `${date}.json`);
+  fs.writeFileSync(file, JSON.stringify(audit, null, 2));
+}
 // ------------------------------
 async function getSeasonResources(season, force = false) {
   if (!force && __seasonResourceCache.has(season)) {
@@ -928,6 +941,23 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     const kickoffTs = new Date(m?.kickoffUtc || 0).getTime();
     return kickoffTs > now;
   });
+
+  // AUDIT (observability only). Recompute — never re-decide — why each canonical
+  // fixture did/didn't reach evaluation, using the SAME predicates as the filter
+  // above. This array and the loop counters below feed value-audit.json; they
+  // do not touch `matches`, `picks`, or any score.
+  const auditRejections = [];
+  const auditIdOf = m => String(m?.canonicalId || m?.matchId || m?.id || "").trim() || null;
+  for (const m of sourceMatches) {
+    if (!isPlayable(m)) { auditRejections.push({ matchId: auditIdOf(m), reason: "not_playable" }); continue; }
+    if (rebuild) continue; // eligible under rebuild semantics
+    const status = String(m?.status || "").toUpperCase();
+    if (status !== "PRE") { auditRejections.push({ matchId: auditIdOf(m), reason: "not_pre_status", status }); continue; }
+    if (!(new Date(m?.kickoffUtc || 0).getTime() > now)) {
+      auditRejections.push({ matchId: auditIdOf(m), reason: "kickoff_passed" });
+    }
+  }
+
   const { indexes, priors } = await getSeasonResources(season, rebuild);
 
   const picks = [];
@@ -965,13 +995,17 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
                     { season, indexes, priors }
                   );
 
-      if (!value) continue;
+      if (!value) {
+        auditRejections.push({ matchId: auditIdOf(match), reason: "no_value_signal" });
+        continue;
+      }
 
       const enrichedValue = applyIntelligenceToValue(value, intelligence);
       const finalValue = applyMatchProfileToValue(enrichedValue, matchProfile);
 
       picks.push(...expandValueMarkets(match, finalValue));
     } catch (err) {
+      auditRejections.push({ matchId: auditIdOf(match), reason: "evaluation_error", error: err?.message || String(err) });
       console.log("[value] match failed", {
         date,
         matchId: match?.matchId,
@@ -1004,6 +1038,42 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
 
   __valueDayCache.set(cacheKey, result);
   writeValueSnapshot(date, result);
+
+  // Production value-audit (rejection ledger) — observability only, derived from
+  // the counters gathered above; does not affect `result`/picks in any way.
+  const rejectionByReason = {};
+  for (const r of auditRejections) {
+    rejectionByReason[r.reason] = (rejectionByReason[r.reason] || 0) + 1;
+  }
+  const audit = {
+    ok: true,
+    date,
+    policyVersion: STRICT_VALUE_POLICY_VERSION,
+    source: inputSource,
+    sourceContract: {
+      canonicalOnly: inputSource === "canonical_fixtures",
+      deploySnapshotInput: inputSource === "deploy_snapshot_fixtures_fallback",
+      realBookmakerOddsUsed: false
+    },
+    generatedAt: new Date().toISOString(),
+    universe: {
+      fixturesSeen: sourceMatches.length,
+      eligibleEvaluated: matches.length,
+      candidateMarkets: picks.length,
+      approved: dedupedPicks.length,
+      supersededOrDeduped: Math.max(0, picks.length - dedupedPicks.length)
+    },
+    rejections: {
+      total: auditRejections.length,
+      byReason: rejectionByReason,
+      sample: auditRejections.slice(0, 100)
+    }
+  };
+  try {
+    writeValueAudit(date, audit);
+  } catch (e) {
+    console.log("[value] audit write failed", e?.message || e);
+  }
 
   return result;
 }

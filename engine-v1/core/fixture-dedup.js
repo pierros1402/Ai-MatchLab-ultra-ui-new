@@ -81,16 +81,34 @@ function prefixTokenSubset(aTokens, bTokens) {
   return true;
 }
 
-export function sameTeamName(slug, a, b) {
-  const nameA = String(a || "").trim();
-  const nameB = String(b || "").trim();
-  if (!nameA || !nameB) return false;
+// Providers append a bracketed nationality/city qualifier to disambiguate
+// international fixtures — Flashscore writes "Drita (Kos)", "Vardar (Mkd)",
+// "Universidad Católica (Quito)" while ESPN omits it. The trailing "(Kos)"
+// survives normalization as a spurious identity token ("drita kos") and breaks
+// the subset match on the side whose club name ALSO differs (Drita vs Drita
+// Gjilan). Strip ONE trailing bracketed group for the fuzzy comparison only —
+// never for canonical-id generation. Safe after the squad gate below: "(W)",
+// "(U21)", "(B)" pairs are already blocked, so this can only ever drop a
+// country/city qualifier, never a squad marker.
+function stripTrailingQualifier(name) {
+  const stripped = String(name || "").replace(/\s*\([^)]*\)\s*$/, "").trim();
+  return stripped || String(name || "").trim();
+}
 
-  // Safety gate FIRST: squad markers are identity, not noise. "HJK" and "HJK W",
-  // "Ajax" and "Ajax U21", "Barcelona" and "Barcelona B" must never merge, or a
-  // men's/senior fixture could absorb and drop a women's/youth/reserve one. This
-  // blocks the merge regardless of how strong the name overlap looks below.
-  if (!sameSquadMarkers(nameA, nameB)) return false;
+export function sameTeamName(slug, a, b) {
+  const rawA = String(a || "").trim();
+  const rawB = String(b || "").trim();
+  if (!rawA || !rawB) return false;
+
+  // Safety gate FIRST, on the ORIGINAL names: squad markers are identity, not
+  // noise. "HJK" and "HJK W", "Ajax" and "Ajax U21", "Barcelona" and
+  // "Barcelona B" must never merge, or a men's/senior fixture could absorb and
+  // drop a women's/youth/reserve one. Runs before the qualifier strip so a
+  // squad marker in brackets ("HJK (W)") is still seen.
+  if (!sameSquadMarkers(rawA, rawB)) return false;
+
+  const nameA = stripTrailingQualifier(rawA);
+  const nameB = stripTrailingQualifier(rawB);
 
   const keyA = normalizeTeamKey(nameA);
   const keyB = normalizeTeamKey(nameB);

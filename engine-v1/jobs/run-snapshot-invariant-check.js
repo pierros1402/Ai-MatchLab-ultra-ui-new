@@ -26,6 +26,7 @@ import { fileURLToPath } from "url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { athensDayKey } from "../core/daykey.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
+import { sameTeamName } from "../core/fixture-dedup.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -259,6 +260,82 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
       fixtures: missingDetails.slice(0, 25)
     });
     ciError(`[blocked] ${missingDetails.length} fixture(s) published without a detail: ${missingDetails.slice(0, 10).join(", ")}`);
+  }
+
+  // ── CHECK 8: one detail file per published fixture (strict bijection) ─────
+  // The exporter names each detail after a published fixture's canonicalId and
+  // prunes anything else, so on a clean day detailFiles === publishedIds exactly.
+  // A mismatch means a stale wrong-day twin (…20260708 beside …20260707) or a
+  // dropped cross-source duplicate's detail rode along, or a fixture shipped with
+  // no detail. CHECK 7 uses the manifest's own list; this one re-derives from
+  // disk so a wrong manifest can't hide the gap. Blocked — a duplicate/orphan
+  // detail is exactly what "32 fixtures / 33 details" was.
+  const publishedIds = new Set();
+  for (const fx of fixtureList) {
+    const cid = String(fx?.canonicalId || "").trim();
+    const name = cid || String(fx?.matchId || "").trim();
+    if (name) publishedIds.add(name);
+  }
+  const detailBasenames = fs.existsSync(detailsDir)
+    ? fs.readdirSync(detailsDir).filter(n => n.endsWith(".json")).map(n => n.slice(0, -".json".length))
+    : [];
+  const detailsWithoutFixture = detailBasenames.filter(name => !publishedIds.has(name));
+  const fixturesWithoutDetail = [...publishedIds].filter(name => !detailBasenames.includes(name));
+
+  if (detailsWithoutFixture.length > 0 || fixturesWithoutDetail.length > 0) {
+    report.blocked.push({
+      type: "details_fixtures_not_bijective",
+      publishedFixtures: publishedIds.size,
+      detailFiles: detailBasenames.length,
+      detailsWithoutFixture: detailsWithoutFixture.slice(0, 25),
+      fixturesWithoutDetail: fixturesWithoutDetail.slice(0, 25)
+    });
+    ciError(`[blocked] details/fixtures not 1:1 — ${detailBasenames.length} details vs ${publishedIds.size} fixtures (extra details: ${detailsWithoutFixture.slice(0, 5).join(", ")}; missing: ${fixturesWithoutDetail.slice(0, 5).join(", ")})`);
+  }
+
+  // ── CHECK 9: cross-source alias duplicates that ID-dedup missed ────────────
+  // CHECK 6 only catches an IDENTICAL canonicalId twice. The real 2026-07-07 bug
+  // was the SAME match under two provider spellings ("Drita (Kos)" vs "Drita
+  // Gjilan") with DIFFERENT cids — invisible to a cid equality check. Re-run the
+  // dedup predicate (same league + same kickoff minute + identity-matched teams)
+  // over the SURVIVING fixtures: any hit means fixture-dedup failed and the same
+  // match is published twice. Blocked, not a warning.
+  const kickoffMinute = (ko) => {
+    const ts = new Date(ko || 0).getTime();
+    return Number.isFinite(ts) && ts > 0 ? Math.floor(ts / 60000) : null;
+  };
+  const byLeague = new Map();
+  for (const fx of fixtureList) {
+    const slug = String(fx?.leagueSlug || "unknown");
+    if (!byLeague.has(slug)) byLeague.set(slug, []);
+    byLeague.get(slug).push(fx);
+  }
+  const aliasDuplicatePairs = [];
+  for (const [slug, rows] of byLeague) {
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = i + 1; j < rows.length; j++) {
+        const a = rows[i];
+        const b = rows[j];
+        const ma = kickoffMinute(a?.kickoffUtc);
+        const mb = kickoffMinute(b?.kickoffUtc);
+        if (ma === null || mb === null || ma !== mb) continue;
+        if (!sameTeamName(slug, a?.homeTeam, b?.homeTeam)) continue;
+        if (!sameTeamName(slug, a?.awayTeam, b?.awayTeam)) continue;
+        aliasDuplicatePairs.push({
+          slug,
+          a: `${a?.homeTeam} v ${a?.awayTeam} (${a?.canonicalId || a?.matchId})`,
+          b: `${b?.homeTeam} v ${b?.awayTeam} (${b?.canonicalId || b?.matchId})`
+        });
+      }
+    }
+  }
+  if (aliasDuplicatePairs.length > 0) {
+    report.blocked.push({
+      type: "alias_duplicate_fixtures",
+      count: aliasDuplicatePairs.length,
+      pairs: aliasDuplicatePairs.slice(0, 25)
+    });
+    ciError(`[blocked] ${aliasDuplicatePairs.length} cross-source alias duplicate fixture pair(s) survived dedup: ${aliasDuplicatePairs.slice(0, 3).map(p => `${p.a} == ${p.b}`).join(" | ")}`);
   }
 
   // ── Finalize ─────────────────────────────────────────────────────────────

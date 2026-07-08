@@ -407,9 +407,21 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
   const validIds = options?.validIds instanceof Set && options.validIds.size > 0
     ? options.validIds
     : null;
+
+  // Strict one-detail-per-fixture allow-list: the ONLY names a detail may ship
+  // under are published fixture canonicalIds. A detail keyed by a stale wrong-day
+  // twin cid (…20260708 beside the repaired …20260707) or by a dropped
+  // cross-source duplicate's cid is not in this set and is pruned — even though
+  // the looser validIds/candidate check would keep it (the fixture still carries
+  // the stale id as matchId/matchKey/providerMatchId). When present, this set is
+  // authoritative and supersedes the candidate check.
+  const canonicalNames = options?.canonicalNames instanceof Set && options.canonicalNames.size > 0
+    ? options.canonicalNames
+    : null;
   const orphansRemoved = [];
 
-  const isOrphan = (detail, fileBaseName) => {
+  const isOrphan = (detail, fileBaseName, outName) => {
+    if (canonicalNames) return !canonicalNames.has(String(outName || fileBaseName));
     if (!validIds) return false;
     return !detailIdCandidates(detail, fileBaseName).some(id => validIds.has(id));
   };
@@ -430,7 +442,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       normalizeMatchId(detail?.matchId || detail?.basic?.matchId || detail?.fixture?.matchId) ||
       path.basename(src, ".json");
 
-    if (isOrphan(detail, path.basename(src, ".json"))) {
+    if (isOrphan(detail, path.basename(src, ".json"), matchId)) {
       orphansRemoved.push(`${matchId}.json`);
       continue;
     }
@@ -475,7 +487,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       // preserveDetails keeps expensive detail payloads across exports, but an
       // orphan is not a cache hit — it is a fixture that no longer exists in
       // the day's final set. Delete it so counts stay honest.
-      if (isOrphan(detail, path.basename(name, ".json"))) {
+      if (isOrphan(detail, path.basename(name, ".json"), path.basename(name, ".json"))) {
         fs.rmSync(detailFile, { force: true });
         orphansRemoved.push(name);
         continue;
@@ -552,7 +564,19 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     }
   }
 
-  let detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds });
+  // Strict output allow-list: exactly one detail file per fixture, named after
+  // the fixture's canonicalId (matchId fallback ONLY for a fixture that genuinely
+  // has no canonicalId). Deliberately excludes matchId/matchKey when a canonicalId
+  // exists — those can still carry a stale wrong-day twin (…20260708) that would
+  // otherwise keep a duplicate detail alive.
+  const canonicalNames = new Set();
+  for (const fixture of fixtures) {
+    const cid = String(fixture?.canonicalId || "").trim();
+    const name = cid || String(fixture?.matchId || "").trim();
+    if (name) canonicalNames.add(name);
+  }
+
+  let detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds, canonicalNames });
 
   // Fixtures that ended the day without any detail file. Ground-truth check
   // against the snapshot details directory on disk (not the summaries list,
@@ -590,7 +614,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     await ensureDetailsForFixtures(dayKey, missingRows, { allRows: fixtures });
 
     // Bring the freshly built details into the snapshot, then re-check on disk.
-    detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds });
+    detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds, canonicalNames });
     missingRows = missingRowsAgainst(detailIdsOnDisk());
 
     if (missingRows.length) {
@@ -629,6 +653,16 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
   writeJsonStable(path.join(snapshotRoot, "fixtures.json"), fixturesOut);
   writeJsonStable(path.join(snapshotRoot, "value.json"), valueOut);
 
+  // Ship the production value-audit (rejection ledger) next to value.json so a
+  // published 0-pick day is explained, not mistaken for a broken pipeline
+  // (report 2026-07-07 #5). Written by buildValueDay at data/value/_audit/<day>;
+  // best-effort — a day built before this landed simply has no audit to ship.
+  const valueAudit = readJsonSafe(resolveDataPath("value", "_audit", `${dayKey}.json`), null);
+  const valueAuditPresent = Boolean(valueAudit && typeof valueAudit === "object");
+  if (valueAuditPresent) {
+    writeJsonStable(path.join(snapshotRoot, "value-audit.json"), valueAudit);
+  }
+
   const manifest = {
     ok: true,
     date: dayKey,
@@ -648,6 +682,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     files: {
       fixtures: "fixtures.json",
       value: "value.json",
+      valueAudit: valueAuditPresent ? "value-audit.json" : null,
       detailsDir: "details"
     },
     counts: {
