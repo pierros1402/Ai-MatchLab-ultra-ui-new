@@ -2701,9 +2701,13 @@ app.get("/api/odds", oddsHandler);
 // Called by Render cron at ~14:00 Athens time (before most EU evening matches).
 app.post("/api/refresh-multi-odds", async (req, res) => {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const provided = req.headers["x-cron-secret"] || req.query.secret;
-    if (provided !== secret) return res.status(401).json({ ok: false, error: "unauthorized" });
+  if (!secret) {
+    return res.status(503).json({ ok: false, error: "cron_secret_not_configured" });
+  }
+
+  const provided = req.headers["x-cron-secret"];
+  if (provided !== secret) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
   }
   const date = String(req.query.date || athensDayKey());
   const doPrefetch = req.query.prefetch !== "0"; // default: also prefetch next 6 days
