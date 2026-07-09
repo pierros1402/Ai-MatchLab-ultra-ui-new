@@ -757,17 +757,29 @@ function buildSnapshotRuntimeMatches(resolvedDate) {
   const matches = [];
   const seen = new Set();
   const coveredFixtureSlugs = new Set();
-
+  const runtimeLeagueMeta = getLeagueMetaMap();
+  const runtimeSlugAliases = {
+    "fifa.world_cup": "fifa.world",
+    "fifa.world_cup_qual": "fifa.world_qual",
+  };
   for (const row of fixtureRows) {
     const normalized = normalizeSnapshotRuntimeMatch(row, "snapshot-fixtures");
-    if (normalized.leagueSlug) coveredFixtureSlugs.add(normalized.leagueSlug);
+    if (normalized.leagueSlug) {
+      coveredFixtureSlugs.add(normalized.leagueSlug);
+      const canonical = runtimeSlugAliases[normalized.leagueSlug] || normalized.leagueSlug;
+      coveredFixtureSlugs.add(canonical);
+    }
     addSnapshotRuntimeMatch(matches, seen, normalized);
   }
 
   let oddsSupplementCount = 0;
   for (const row of oddsRows) {
     const normalized = normalizeSnapshotRuntimeMatch(row, "snapshot-odds");
-    if (!normalized.leagueSlug || coveredFixtureSlugs.has(normalized.leagueSlug)) continue;
+    const slug = normalized.leagueSlug;
+    const canonical = runtimeSlugAliases[slug] || slug;
+    if (!slug || coveredFixtureSlugs.has(slug) || coveredFixtureSlugs.has(canonical)) continue;
+    if (!hasDisplayRealOddsMarket(row)) continue;
+    if (!isDisplayApprovedSupplementLeague(slug, runtimeLeagueMeta, runtimeSlugAliases)) continue;
     if (addSnapshotRuntimeMatch(matches, seen, normalized)) oddsSupplementCount++;
   }
 
@@ -1117,6 +1129,45 @@ function readLeagueState() {
   } catch {
     return {};
   }
+}
+
+
+function displaySlugVariants(slug, aliases = {}) {
+  const s = String(slug || "").trim();
+  if (!s) return [];
+  const out = new Set([s]);
+  const canonical = aliases[s] || s;
+  if (canonical) out.add(canonical);
+  for (const [alias, target] of Object.entries(aliases || {})) {
+    if (target === s || target === canonical) out.add(alias);
+  }
+  return [...out].filter(Boolean);
+}
+
+function displayLeagueIsDisabled(slug, aliases = {}) {
+  return displaySlugVariants(slug, aliases).some(v => isDisabledLeague(v));
+}
+
+function hasDisplayRealOddsMarket(row) {
+  const markets = row?.aiAssessment?.markets || row?.markets || null;
+  if (!markets || typeof markets !== "object") return false;
+  return Object.values(markets).some(block => {
+    const odds = block?.odds || block;
+    if (!odds || typeof odds !== "object") return false;
+    return Object.values(odds).some(v => Number.isFinite(Number(v)) && Number(v) > 1);
+  });
+}
+
+function isDisplayApprovedSupplementLeague(slug, leagueMeta, aliases = {}) {
+  if (displayLeagueIsDisabled(slug, aliases)) return false;
+  const variants = displaySlugVariants(slug, aliases);
+
+  // Supplement rows may enrich curated registry leagues, but they must not
+  // rediscover arbitrary Flashscore/friendly/lower/out-of-scope rows.
+  if (variants.some(v => /^fs\./u.test(v))) return false;
+  if (variants.some(v => /(?:^|[._-])(friendly|friendlies|club-friendly|copa-chile|usl-league-two)(?:$|[._-])/iu.test(v))) return false;
+
+  return variants.some(v => Boolean(leagueMeta?.[v]));
 }
 
 function normalizeScoreValue(value) {
@@ -2114,10 +2165,29 @@ function displayHasExcludedMarker(text) {
   for (const t of tokens) if (DISPLAY_EXCLUDE_MARKERS.has(t)) return true;
   return false;
 }
+function isCuratedSeniorDisplayLeagueRow(m) {
+  const slug = String(m?.leagueSlug || "").trim();
+  if (!slug) return false;
+  const aliases = {
+    "fifa.world_cup": "fifa.world",
+    "fifa.world_cup_qual": "fifa.world_qual",
+  };
+  return isDisplayApprovedSupplementLeague(slug, getLeagueMetaMap(), aliases);
+}
+
 function isYouthOrWomenRow(m) {
-  return displayHasExcludedMarker(m.leagueSlug) ||
-         displayHasExcludedMarker(m.competition) ||
-         displayHasExcludedMarker(m.homeTeam || m.home) ||
+  // Youth/women competition rows are excluded by league/competition identity.
+  if (displayHasExcludedMarker(m.leagueSlug) ||
+      displayHasExcludedMarker(m.competition) ||
+      displayHasExcludedMarker(m.leagueName)) {
+    return true;
+  }
+
+  // Reserve/B/II/U21 sides are allowed when they play inside a curated senior
+  // league that the product intentionally covers, e.g. est.2 / Esiliiga.
+  if (isCuratedSeniorDisplayLeagueRow(m)) return false;
+
+  return displayHasExcludedMarker(m.homeTeam || m.home) ||
          displayHasExcludedMarker(m.awayTeam || m.away);
 }
 function excludeYouthWomenRows(matches) {
@@ -2301,13 +2371,18 @@ function buildDisplayMatchesForDateUncached(date) {
           leagueName: m.leagueName || "",
           scoreHome:  m.scoreHome ?? null,
           scoreAway:  m.scoreAway ?? null,
+          aiAssessment: m.aiAssessment || null,
+          markets: m.markets || null,
         }))
         // Exclude any league already covered by fixtures.json (same or aliased slug)
+        // and never let odds become a broad fixture-discovery source.
         .filter(m => {
           if (!m.matchId || !m.homeTeam) return false;
-          const slug = m.leagueSlug;
+          const slug = String(m.leagueSlug || "");
           const canonical = SLUG_ALIASES[slug] || slug;
-          return !fixtureSlugs.has(slug) && !fixtureSlugs.has(canonical);
+          if (fixtureSlugs.has(slug) || fixtureSlugs.has(canonical)) return false;
+          if (!hasDisplayRealOddsMarket(m)) return false;
+          return isDisplayApprovedSupplementLeague(slug, leagueMeta, SLUG_ALIASES);
         });
     } catch { /**/ }
 
@@ -2326,6 +2401,9 @@ function buildDisplayMatchesForDateUncached(date) {
         const seenTeams = new Set([...fixtureMatches, ...oddsMatches].map(m =>
           `${fxNormTeam(m.homeTeam)}|${fxNormTeam(m.awayTeam)}`
         ));
+        const supplementSlugs = new Set(oddsMatches.flatMap(m =>
+          displaySlugVariants(m.leagueSlug, SLUG_ALIASES)
+        ));
         fixturesAllMatches = (faj.matches || [])
           .filter(m => {
             if (m.dayKey !== date) return false;
@@ -2333,6 +2411,8 @@ function buildDisplayMatchesForDateUncached(date) {
             const slug = String(m.leagueSlug || "");
             const canonical = SLUG_ALIASES[slug] || slug;
             if (fixtureSlugs.has(slug) || fixtureSlugs.has(canonical)) return false;
+            if (supplementSlugs.has(slug) || supplementSlugs.has(canonical)) return false;
+            if (!isDisplayApprovedSupplementLeague(slug, leagueMeta, SLUG_ALIASES)) return false;
             const st = leagueState[slug] || leagueState[canonical];
             if (st && (st.state === "finished" || st.state === "disabled")) return false;
             const teamKey = `${fxNormTeam(m.home)}|${fxNormTeam(m.away)}`;
