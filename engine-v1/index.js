@@ -1082,26 +1082,611 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "engine-v1" });
 });
 
+
+function systemHealthReadJson(file) {
+  try {
+    if (!fs.existsSync(file)) {
+      return { exists: false, ok: false, path: file, data: null, error: "missing" };
+    }
+    return {
+      exists: true,
+      ok: true,
+      path: file,
+      data: JSON.parse(fs.readFileSync(file, "utf8")),
+      error: null
+    };
+  } catch (err) {
+    return {
+      exists: true,
+      ok: false,
+      path: file,
+      data: null,
+      error: String(err?.message || err)
+    };
+  }
+}
+
+function systemHealthIssue(severity, source, type, message, details = {}) {
+  return { severity, source, type, message, details };
+}
+
+function systemHealthSeverity(issues) {
+  if ((issues || []).some(i => i.severity === "error")) return "error";
+  if ((issues || []).some(i => i.severity === "warning")) return "warning";
+  if ((issues || []).some(i => i.severity === "info")) return "info";
+  return "ok";
+}
+
+function systemHealthIssueCounts(issues) {
+  const out = { error: 0, warning: 0, info: 0 };
+  for (const issue of issues || []) {
+    if (out[issue.severity] != null) out[issue.severity] += 1;
+  }
+  return out;
+}
+
+function systemHealthRelativeArtifact(file) {
+  return String(file || "").replace(/\\/g, "/").split("/data/").pop() || String(file || "");
+}
+
+function systemHealthBuildWarning(text) {
+  const raw = String(text || "");
+  if (raw.startsWith("acquisition_skipped_slugs:")) {
+    const slugs = raw.slice("acquisition_skipped_slugs:".length)
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    return systemHealthIssue(
+      "warning",
+      "build-report",
+      "acquisition_skipped_slugs",
+      "Acquisition skipped slugs during fixture acquisition.",
+      { slugs, raw }
+    );
+  }
+
+  return systemHealthIssue("warning", "build-report", "build_warning", raw, { raw });
+}
+
+function buildSystemHealthReport(day) {
+  const checkedNow = new Date().toISOString();
+
+  const files = {
+    buildReport: resolveDataPath("build-reports", day + ".json"),
+    invariant: resolveDataPath("deploy-snapshots", day, "invariant-report.json"),
+    freshness: resolveDataPath("deploy-snapshots", day, "freshness-report.json"),
+    manifest: resolveDataPath("deploy-snapshots", day, "manifest.json"),
+    valueAudit: resolveDataPath("deploy-snapshots", day, "value-audit.json"),
+    value: resolveDataPath("deploy-snapshots", day, "value.json"),
+    valueComparison: resolveDataPath("value-comparison", day + ".json")
+  };
+
+  const read = {};
+  for (const [key, artifact] of Object.entries(files)) {
+    read[key] = systemHealthReadJson(artifact);
+  }
+
+  const issues = [];
+  const hasAnyArtifact = Object.values(read).some(r => r.exists);
+
+  function addArtifactIssue(key, severity) {
+    const r = read[key];
+    const artifact = systemHealthRelativeArtifact(r.path);
+
+    if (!r.exists) {
+      issues.push(systemHealthIssue(
+        severity,
+        key,
+        "artifact_missing",
+        "Diagnostic artifact is missing.",
+        { artifact }
+      ));
+      return;
+    }
+
+    if (!r.ok) {
+      issues.push(systemHealthIssue(
+        "error",
+        key,
+        "artifact_json_invalid",
+        "Diagnostic artifact exists but cannot be parsed as JSON.",
+        { artifact, error: r.error }
+      ));
+    }
+  }
+
+  if (!hasAnyArtifact) {
+    const issuesOnly = [
+      systemHealthIssue(
+        "warning",
+        "system-health",
+        "no_diagnostic_artifacts",
+        "No diagnostic artifacts exist for this day.",
+        { dayKey: day }
+      )
+    ];
+
+    return {
+      ok: false,
+      severity: "warning",
+      status: "no_report",
+      issueCounts: systemHealthIssueCounts(issuesOnly),
+      issues: issuesOnly,
+      valueSafe: false,
+      valueCount: null,
+      autoFixed: [],
+      warnings: [],
+      blocked: [],
+      checkedAt: null,
+      dayKey: day
+    };
+  }
+
+  addArtifactIssue("manifest", "error");
+  addArtifactIssue("invariant", "error");
+  addArtifactIssue("freshness", "error");
+  addArtifactIssue("value", "error");
+  addArtifactIssue("valueAudit", "error");
+  addArtifactIssue("buildReport", "warning");
+  addArtifactIssue("valueComparison", "info");
+
+  const buildReport = read.buildReport.data;
+  const invariant = read.invariant.data;
+  const freshness = read.freshness.data;
+  const manifest = read.manifest.data;
+  const valueAudit = read.valueAudit.data;
+  const value = read.value.data;
+  const valueComparison = read.valueComparison.data;
+
+  if (invariant) {
+    for (const b of invariant.blocked || []) {
+      issues.push(systemHealthIssue(
+        "error",
+        "invariant-report",
+        b.type || "invariant_blocked",
+        "Snapshot invariant blocked the build.",
+        b
+      ));
+    }
+
+    for (const a of invariant.autoFixed || []) {
+      issues.push(systemHealthIssue(
+        "warning",
+        "invariant-report",
+        "auto_fixed_" + (a.type || "issue"),
+        "Invariant check auto-fixed a snapshot/detail issue.",
+        a
+      ));
+    }
+
+    for (const w of invariant.warnings || []) {
+      issues.push(systemHealthIssue(
+        "warning",
+        "invariant-report",
+        w.type || "invariant_warning",
+        w.reason || "Invariant warning.",
+        w
+      ));
+    }
+
+    if (invariant.ok === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "invariant-report",
+        "invariant_not_ok",
+        "Invariant report marked the snapshot as not OK.",
+        { ok: invariant.ok }
+      ));
+    }
+
+    if (invariant.valueSafe === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "invariant-report",
+        "value_unsafe",
+        "Invariant report marked Value output as unsafe.",
+        { valueSafe: invariant.valueSafe, valueCount: invariant.valueCount }
+      ));
+    }
+  }
+
+  if (buildReport) {
+    for (const failure of buildReport.hardFailures || []) {
+      issues.push(systemHealthIssue(
+        "error",
+        "build-report",
+        "build_hard_failure",
+        String(failure),
+        { failure }
+      ));
+    }
+
+    for (const warning of buildReport.warnings || []) {
+      issues.push(systemHealthBuildWarning(warning));
+    }
+
+    if (buildReport.clean === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "build-report",
+        "build_not_clean",
+        "Build report is not clean.",
+        { clean: buildReport.clean, cleanStrict: buildReport.cleanStrict }
+      ));
+    } else if (buildReport.cleanStrict === false) {
+      issues.push(systemHealthIssue(
+        "warning",
+        "build-report",
+        "build_not_strict_clean",
+        "Build report is clean but not strict-clean.",
+        { clean: buildReport.clean, cleanStrict: buildReport.cleanStrict }
+      ));
+    }
+
+    const failedFetches = Number(buildReport.acquisition?.failedFetches || 0);
+    if (failedFetches > 0) {
+      issues.push(systemHealthIssue(
+        "warning",
+        "build-report",
+        "acquisition_failed_fetches",
+        "Fixture acquisition had failed provider fetches.",
+        { failedFetches }
+      ));
+    }
+
+    const planBUnresolved = Number(buildReport.settlement?.planB?.unresolved || 0);
+    if (planBUnresolved > 0) {
+      issues.push(systemHealthIssue(
+        "info",
+        "build-report",
+        "plan_b_unresolved_settlement",
+        "Plan B observation picks are still unresolved.",
+        {
+          picks: buildReport.settlement?.planB?.picks,
+          settled: buildReport.settlement?.planB?.settled,
+          unresolved: planBUnresolved
+        }
+      ));
+    }
+  }
+
+  if (freshness) {
+    if (freshness.ok === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "freshness-report",
+        "freshness_not_ok",
+        "Freshness gate failed.",
+        { reasons: freshness.reasons || [] }
+      ));
+    }
+
+    for (const reason of freshness.reasons || []) {
+      issues.push(systemHealthIssue(
+        "error",
+        "freshness-report",
+        "freshness_reason",
+        String(reason),
+        { reason }
+      ));
+    }
+
+    for (const stale of freshness.staleInputs || []) {
+      issues.push(systemHealthIssue(
+        "error",
+        "freshness-report",
+        "stale_input",
+        "Snapshot input is stale.",
+        stale
+      ));
+    }
+
+    for (const stale of freshness.staleDerivedArtifacts || []) {
+      issues.push(systemHealthIssue(
+        "error",
+        "freshness-report",
+        "stale_derived_artifact",
+        "Derived artifact is stale.",
+        stale
+      ));
+    }
+
+    for (const skipped of freshness.skippedInputs || []) {
+      issues.push(systemHealthIssue(
+        "info",
+        "freshness-report",
+        "skipped_freshness_input",
+        "Freshness input was skipped.",
+        skipped
+      ));
+    }
+  }
+
+  if (manifest) {
+    if (manifest.ok === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "manifest",
+        "manifest_not_ok",
+        "Snapshot manifest is not OK.",
+        { ok: manifest.ok }
+      ));
+    }
+
+    const counts = manifest.counts || {};
+
+    if (Number(counts.detailsMissingForFixtures || 0) > 0 || (manifest.detailsMissingForFixtures || []).length > 0) {
+      issues.push(systemHealthIssue(
+        "error",
+        "manifest",
+        "details_missing_for_fixtures",
+        "Visible fixtures are missing detail files.",
+        {
+          count: counts.detailsMissingForFixtures,
+          matches: manifest.detailsMissingForFixtures || []
+        }
+      ));
+    }
+
+    if (Number(counts.orphanDetailsRemoved || 0) > 0 || (manifest.orphanDetailsRemoved || []).length > 0) {
+      issues.push(systemHealthIssue(
+        "warning",
+        "manifest",
+        "orphan_details_removed",
+        "Snapshot export removed orphan detail files.",
+        {
+          count: counts.orphanDetailsRemoved,
+          files: manifest.orphanDetailsRemoved || []
+        }
+      ));
+    }
+
+    if (Number(manifest.snapshotRescuedCount || 0) > 0) {
+      issues.push(systemHealthIssue(
+        "warning",
+        "manifest",
+        "snapshot_rescued_rows",
+        "Snapshot contains rescued rows that did not come from canonical fixtures.",
+        {
+          snapshotRescuedCount: manifest.snapshotRescuedCount,
+          snapshotRescuedLeagues: manifest.snapshotRescuedLeagues || []
+        }
+      ));
+    }
+
+    if (manifest.valueGate?.ok === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "manifest",
+        "value_gate_failed",
+        "Manifest Value gate failed.",
+        manifest.valueGate
+      ));
+    }
+
+    if (manifest.valueGate?.valueFreshAgainstCanonical === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "manifest",
+        "value_stale_against_canonical",
+        "Production Value artifact is stale against canonical fixtures.",
+        manifest.valueGate
+      ));
+    }
+
+    if (
+      manifest.fixtureJsonCount != null &&
+      manifest.canonicalFixtureCount != null &&
+      Number(manifest.fixtureJsonCount) !== Number(manifest.canonicalFixtureCount)
+    ) {
+      issues.push(systemHealthIssue(
+        "error",
+        "manifest",
+        "fixture_canonical_count_mismatch",
+        "Published fixture count differs from canonical fixture count.",
+        {
+          fixtureJsonCount: manifest.fixtureJsonCount,
+          canonicalFixtureCount: manifest.canonicalFixtureCount
+        }
+      ));
+    }
+  }
+
+  if (value) {
+    if (value.ok === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "value",
+        "value_not_ok",
+        "Production Value artifact is not OK.",
+        { ok: value.ok }
+      ));
+    }
+
+    if (Array.isArray(value.picks) && value.count != null && Number(value.count) !== value.picks.length) {
+      issues.push(systemHealthIssue(
+        "error",
+        "value",
+        "value_count_array_mismatch",
+        "Value declared count does not match picks length.",
+        { declaredCount: value.count, actualCount: value.picks.length }
+      ));
+    }
+  }
+
+  if (valueAudit) {
+    if (valueAudit.ok === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "value-audit",
+        "value_audit_not_ok",
+        "Value audit is not OK.",
+        { ok: valueAudit.ok }
+      ));
+    }
+
+    if (valueAudit.sourceContract?.canonicalOnly === false) {
+      issues.push(systemHealthIssue(
+        "error",
+        "value-audit",
+        "value_not_canonical_only",
+        "Value audit says production Value was not canonical-only.",
+        valueAudit.sourceContract
+      ));
+    }
+
+    if (valueAudit.sourceContract?.deploySnapshotInput === true) {
+      issues.push(systemHealthIssue(
+        "error",
+        "value-audit",
+        "value_used_deploy_snapshot_input",
+        "Value audit says production Value used deploy snapshot input.",
+        valueAudit.sourceContract
+      ));
+    }
+
+    const candidateMarkets = Number(valueAudit.universe?.candidateMarkets || 0);
+    const valueCount = Number(value?.count || 0);
+
+    if (valueCount === 0 && candidateMarkets === 0) {
+      issues.push(systemHealthIssue(
+        "info",
+        "value-audit",
+        "production_value_zero_candidates",
+        "Production Value produced zero picks because zero candidate markets were generated.",
+        {
+          fixturesSeen: valueAudit.universe?.fixturesSeen,
+          eligibleEvaluated: valueAudit.universe?.eligibleEvaluated,
+          candidateMarkets,
+          approved: valueAudit.universe?.approved
+        }
+      ));
+    }
+  }
+
+  if (valueComparison) {
+    const planA = valueComparison.plans?.A;
+    const planB = valueComparison.plans?.B;
+
+    if (planA || planB) {
+      issues.push(systemHealthIssue(
+        "info",
+        "value-comparison",
+        "value_plan_comparison_summary",
+        "Value Plan A/B comparison artifact is available.",
+        {
+          planA: planA ? { count: planA.count, summary: planA.summary } : null,
+          planB: planB ? { count: planB.count, summary: planB.summary } : null
+        }
+      ));
+    }
+  }
+
+  const severity = systemHealthSeverity(issues);
+  const status = severity === "error"
+    ? "error"
+    : severity === "warning"
+      ? "warning"
+      : severity === "info"
+        ? "info"
+        : "ok";
+
+  return {
+    ok: severity !== "error",
+    severity,
+    status,
+    issueCounts: systemHealthIssueCounts(issues),
+    issues,
+    dayKey: day,
+    checkedAt: invariant?.checkedAt || buildReport?.generatedAt || checkedNow,
+    manifestGeneratedAt: invariant?.manifestGeneratedAt || freshness?.manifestGeneratedAt || manifest?.generatedAt || null,
+
+    valueSafe: invariant?.valueSafe ?? true,
+    valueCount: invariant?.valueCount ?? value?.count ?? null,
+    autoFixed: invariant?.autoFixed || [],
+    warnings: invariant?.warnings || [],
+    blocked: invariant?.blocked || [],
+
+    artifacts: {
+      buildReport: { exists: read.buildReport.exists, ok: read.buildReport.ok, path: systemHealthRelativeArtifact(read.buildReport.path), generatedAt: buildReport?.generatedAt || null },
+      invariant: { exists: read.invariant.exists, ok: read.invariant.ok, path: systemHealthRelativeArtifact(read.invariant.path), checkedAt: invariant?.checkedAt || null },
+      freshness: { exists: read.freshness.exists, ok: read.freshness.ok, path: systemHealthRelativeArtifact(read.freshness.path), generatedAt: freshness?.generatedAt || null },
+      manifest: { exists: read.manifest.exists, ok: read.manifest.ok, path: systemHealthRelativeArtifact(read.manifest.path), generatedAt: manifest?.generatedAt || null },
+      valueAudit: { exists: read.valueAudit.exists, ok: read.valueAudit.ok, path: systemHealthRelativeArtifact(read.valueAudit.path), generatedAt: valueAudit?.generatedAt || null },
+      value: { exists: read.value.exists, ok: read.value.ok, path: systemHealthRelativeArtifact(read.value.path), updatedAt: value?.updatedAt || null },
+      valueComparison: { exists: read.valueComparison.exists, ok: read.valueComparison.ok, path: systemHealthRelativeArtifact(read.valueComparison.path), generatedAt: valueComparison?.generatedAt || null }
+    },
+
+    summaries: {
+      build: buildReport ? {
+        clean: buildReport.clean,
+        cleanStrict: buildReport.cleanStrict,
+        hardFailures: buildReport.hardFailures || [],
+        warnings: buildReport.warnings || [],
+        universe: buildReport.universe || null,
+        acquisition: buildReport.acquisition || null
+      } : null,
+      freshness: freshness ? {
+        ok: freshness.ok,
+        reasons: freshness.reasons || [],
+        staleInputs: freshness.staleInputs || [],
+        staleDerivedArtifacts: freshness.staleDerivedArtifacts || [],
+        skippedInputs: freshness.skippedInputs || []
+      } : null,
+      manifest: manifest ? {
+        ok: manifest.ok,
+        counts: manifest.counts || null,
+        fixtureJsonCount: manifest.fixtureJsonCount,
+        canonicalFixtureCount: manifest.canonicalFixtureCount,
+        snapshotRescuedCount: manifest.snapshotRescuedCount,
+        snapshotRescuedLeagues: manifest.snapshotRescuedLeagues || [],
+        valueGate: manifest.valueGate || null,
+        coverage: manifest.coverage || null
+      } : null,
+      value: {
+        production: value ? { ok: value.ok, source: value.source, count: value.count } : null,
+        audit: valueAudit ? {
+          ok: valueAudit.ok,
+          policyVersion: valueAudit.policyVersion,
+          source: valueAudit.source,
+          sourceContract: valueAudit.sourceContract || null,
+          universe: valueAudit.universe || null
+        } : null,
+        comparison: valueComparison ? {
+          ok: valueComparison.ok,
+          schema: valueComparison.schema,
+          plans: valueComparison.plans ? {
+            A: valueComparison.plans.A ? { count: valueComparison.plans.A.count, summary: valueComparison.plans.A.summary } : null,
+            B: valueComparison.plans.B ? { count: valueComparison.plans.B.count, summary: valueComparison.plans.B.summary } : null
+          } : null
+        } : null
+      },
+      settlement: buildReport?.settlement || null
+    }
+  };
+}
+
 app.get("/system-health", (req, res) => {
   try {
-    const day = String(req.query.day || athensDayKey());
-    const file = resolveDataPath("deploy-snapshots", day, "invariant-report.json");
-    if (!fs.existsSync(file)) {
-      return res.json({
-        ok: true,
-        valueSafe: true,
-        autoFixed: [],
-        warnings: [],
-        blocked: [],
-        checkedAt: null,
-        dayKey: day,
-        status: "no_report"
-      });
-    }
-    const report = JSON.parse(fs.readFileSync(file, "utf8"));
-    res.json(report);
+    const day = String(req.query.day || athensDayKey()).slice(0, 10);
+    res.json(buildSystemHealthReport(day));
   } catch (err) {
-    res.status(500).json({ ok: false, error: String(err?.message || err) });
+    res.status(500).json({
+      ok: false,
+      severity: "error",
+      status: "error",
+      issues: [
+        systemHealthIssue(
+          "error",
+          "system-health",
+          "system_health_endpoint_failed",
+          "System Health endpoint failed while building diagnostics.",
+          { error: String(err?.message || err) }
+        )
+      ],
+      error: String(err?.message || err)
+    });
   }
 });
 
