@@ -286,6 +286,25 @@
   }
 
 
+  function resolveKickoffMs(p) {
+    if (typeof p?.kickoff_ms === "number" && Number.isFinite(p.kickoff_ms)) {
+      return p.kickoff_ms;
+    }
+
+    const raw =
+      p?.kickoff ||
+      p?.kickoffUtc ||
+      p?.startTime ||
+      p?.startUtc ||
+      p?.time ||
+      "";
+
+    if (!raw) return null;
+
+    const parsed = Date.parse(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
   function kickoffHHMM(ms) {
     if (!ms || typeof ms !== "number") return "";
     const d = new Date(ms);
@@ -466,10 +485,7 @@ function renderRow(p) {
     resultBadge = `<span class="value-badge loss">LOSS</span>`;
   }
 
-  const kickoffMs =
-    typeof p?.kickoff_ms === "number"
-      ? p.kickoff_ms
-      : (p?.kickoff ? Date.parse(p.kickoff) : null);
+  const kickoffMs = resolveKickoffMs(p);
 
   const time = kickoffHHMM(kickoffMs);
   const timeHtml = time ? `<span class="value-time">${esc(time)}</span>` : "";
@@ -572,9 +588,8 @@ function renderComparisonRow(p) {
   const resultBadge = resultBadgeHtml(p?.result);
 
   // Kickoff time (HH:MM)
-  const kickoffMs = typeof p?.kickoff_ms === "number"
-    ? p.kickoff_ms
-    : (p?.kickoff ? Date.parse(p.kickoff) : null);
+  const kickoffMs = resolveKickoffMs(p);
+
   const time = kickoffHHMM(kickoffMs);
   const timeHtml = time ? '<span class="value-time">' + esc(time) + '</span>' : "";
 
