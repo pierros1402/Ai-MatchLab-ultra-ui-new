@@ -64,6 +64,46 @@ function sha256Json(payload) {
     .digest("hex");
 }
 
+function parseArtifactTime(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+
+  const text = String(value || "").trim();
+  if (!text) return null;
+
+  if (/^\d+(?:\.\d+)?$/u.test(text)) {
+    const numeric = Number(text);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  const t = Date.parse(text);
+  return Number.isFinite(t) ? t : null;
+}
+
+function latestCanonicalFixtureUpdatedAt(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+  if (!fs.existsSync(dir)) return null;
+
+  let latest = null;
+  for (const name of fs.readdirSync(dir).filter(file => file.endsWith(".json"))) {
+    const payload = readJsonSafe(path.join(dir, name), null);
+    const at = parseArtifactTime(payload?.updatedAt);
+    if (Number.isFinite(at) && (latest === null || at > latest)) latest = at;
+  }
+  return latest;
+}
+
+function fileUpdatedAtMs(filePath) {
+  try {
+    return fs.existsSync(filePath) ? fs.statSync(filePath).mtimeMs : null;
+  } catch {
+    return null;
+  }
+}
+
+function isoOrNull(ms) {
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
+
 function parseArgs(argv = process.argv.slice(2)) {
   const out = {
     date: null,
@@ -217,12 +257,30 @@ function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent, option
     ...(manifest.counts || {}),
     valuePicks: Number(valueOut?.count || 0)
   };
+  const latestCanonicalUpdatedAt = latestCanonicalFixtureUpdatedAt(dayKey);
+  const valueArtifactAt = Math.max(
+    ...[
+      fileUpdatedAtMs(valueFile),
+      parseArtifactTime(valueOut?.updatedAt),
+      parseArtifactTime(valueOut?.generatedAt)
+    ].filter(Number.isFinite)
+  );
+  const valueSource = String(valueOut?.source || "local_value_file");
+  const missingValueWithFixtures = Number(manifest.counts?.fixtures || 0) > 0 && valueSource === "missing_local_value_file";
+  const valueFreshAgainstCanonical = !(
+    Number.isFinite(latestCanonicalUpdatedAt) &&
+    Number.isFinite(valueArtifactAt) &&
+    valueArtifactAt < latestCanonicalUpdatedAt
+  );
+
   manifest.valueGate = {
-    ...(manifest.valueGate || {}),
     fixtures: Number(manifest.counts?.fixtures || 0),
     valuePicks: Number(valueOut?.count || 0),
-    valueSource: String(valueOut?.source || "local_value_file"),
-    ok: !(Number(manifest.counts?.fixtures || 0) > 0 && String(valueOut?.source || "") === "missing_local_value_file")
+    valueSource,
+    latestCanonicalUpdatedAt: isoOrNull(latestCanonicalUpdatedAt),
+    valueArtifactAt: isoOrNull(valueArtifactAt),
+    valueFreshAgainstCanonical,
+    ok: !missingValueWithFixtures && valueFreshAgainstCanonical
   };
   manifest.sizes = {
     ...(manifest.sizes || {}),

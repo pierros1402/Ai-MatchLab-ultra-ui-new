@@ -46,13 +46,17 @@ export function checkValueArtifactGate(dayKey) {
     };
   }
 
-  if (gate.ok) return { ok: true, code: 0, gate };
-
   const reason = String(gate?.valueSource || "") === "missing_local_value_file"
     ? "missing_local_value_file_with_fixtures"
     : gate?.valueFreshAgainstCanonical === false
       ? "value_artifact_stale_against_canonical"
       : "value_artifact_gate_failed";
+
+  if (gate?.valueFreshAgainstCanonical === false) {
+    return { ok: false, code: 2, reason: "value_artifact_stale_against_canonical", gate };
+  }
+
+  if (gate.ok) return { ok: true, code: 0, gate };
 
   return { ok: false, code: 2, reason, gate };
 }
