@@ -25,6 +25,8 @@ import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { buildValuePlanComparisonDay } from "./build-value-plan-comparison-day.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
+import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
+import { buildDayReport } from "./build-day-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
 function isDayKey(value) {
@@ -393,8 +395,16 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
   const freshness = verifyArtifactFreshnessDay(date);
   writeFreshnessReport(date, freshness);
 
+  const invariant = await runSnapshotInvariantCheck(date);
+  const buildReport = buildDayReport(date);
+  writeJsonStable(resolveDataPath("build-reports", `${date}.json`), buildReport);
+
   return {
-    ok: freshness.ok !== false && manifestUpdate?.ok !== false && comparison?.ok !== false,
+    ok: freshness.ok !== false
+      && invariant?.ok !== false
+      && manifestUpdate?.ok !== false
+      && comparison?.ok !== false
+      && buildReport?.hardFailures?.length === 0,
     mode: "refresh_value_artifacts_after_canonical_change",
     safety: "value_only_preserve_snapshot_fixtures",
     date,
@@ -434,6 +444,18 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       staleInputs: freshness.staleInputs?.length || 0,
       staleDerivedArtifacts: freshness.staleDerivedArtifacts?.length || 0
     },
+    invariant: {
+      ok: invariant?.ok !== false,
+      valueSafe: invariant?.valueSafe !== false,
+      blocked: invariant?.blocked?.length || 0,
+      warnings: invariant?.warnings?.length || 0
+    },
+    buildReport: {
+      clean: buildReport?.clean === true,
+      cleanStrict: buildReport?.cleanStrict === true,
+      hardFailures: buildReport?.hardFailures || [],
+      warnings: buildReport?.warnings || []
+    },
     outputs: {
       value: `data/value/${date}.json`,
       valueAudit: `data/value/_audit/${date}.json`,
@@ -442,7 +464,9 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       planB: options.skipPlanB === true ? null : `data/value-plans/${date}/plan-b.json`,
       planBAudit: options.skipPlanB === true ? null : `data/value-plans/${date}/plan-b-audit.json`,
       comparison: options.skipComparison === true ? null : `data/value-comparison/${date}.json`,
-      freshness: `data/deploy-snapshots/${date}/freshness-report.json`
+      freshness: `data/deploy-snapshots/${date}/freshness-report.json`,
+      invariant: `data/deploy-snapshots/${date}/invariant-report.json`,
+      buildReport: `data/build-reports/${date}.json`
     }
   };
 }
@@ -453,7 +477,7 @@ function usage() {
     "  node engine-v1/jobs/refresh-value-artifacts-day.js --date=YYYY-MM-DD",
     "",
     "Rebuilds Plan A value/audit, deploy snapshot value/audit, Plan B observation,",
-    "value comparison, and freshness report after canonical fixtures changed,",
+    "value comparison, freshness, invariant, and build reports after canonical fixtures changed,",
     "without rewriting deploy snapshot fixtures.json."
   ].join("\n");
 }
