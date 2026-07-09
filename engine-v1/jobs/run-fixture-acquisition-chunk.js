@@ -1,4 +1,4 @@
-﻿import fs from "fs";
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ESPN_BASE, LEAGUE_SEEDS, leagueName } from "../config.js";
@@ -12,6 +12,7 @@ import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 import { registerMatch } from "../storage/canonical-match-registry.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import { refreshValueArtifactsDay } from "./refresh-value-artifacts-day.js";
 
 function parseArgs(argv = process.argv.slice(2)) {
   const out = {
@@ -20,7 +21,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     daysBack: Number(process.env.FIXTURE_ACQ_DAYS_BACK || 1),
     daysForward: Number(process.env.FIXTURE_ACQ_DAYS_FORWARD || 14),
     reset: false,
-    fullPass: false
+    fullPass: false,
+    refreshDownstreamAfterCanonicalChange: null
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -33,6 +35,16 @@ function parseArgs(argv = process.argv.slice(2)) {
 
     if (arg === "--full-pass") {
       out.fullPass = true;
+      continue;
+    }
+
+    if (arg === "--refresh-downstream") {
+      out.refreshDownstreamAfterCanonicalChange = true;
+      continue;
+    }
+
+    if (arg === "--no-refresh-downstream") {
+      out.refreshDownstreamAfterCanonicalChange = false;
       continue;
     }
 
@@ -1117,6 +1129,9 @@ export async function runFixtureAcquisitionChunk(options = {}) {
   // full all-scoreboard scan and never overwrite the day's main coverage
   // report or advance the round-robin cursor.
   const isExplicit = Boolean(explicitLeagues && explicitLeagues.length);
+  const shouldRefreshDownstreamAfterCanonicalChange = opts.refreshDownstreamAfterCanonicalChange === null
+    ? isExplicit
+    : opts.refreshDownstreamAfterCanonicalChange === true;
 
   const supplemental = isExplicit
     ? { provider: "skipped_explicit_mode", ok: true, rawEvents: 0, normalized: 0, accepted: 0, writtenByDay: {}, error: null, existingCanonicalUpdates: 0, skippedOtherDay: 0, skippedOutOfTargetSeeds: 0, skippedNoLeagueSlug: 0, byLeague: {} }
@@ -1204,6 +1219,32 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     report.stateUpdateSkipped = true;
   }
 
+  if (
+    shouldRefreshDownstreamAfterCanonicalChange &&
+    Number(report?.summary?.accepted || 0) > 0
+  ) {
+    try {
+      report.downstreamRefresh = await refreshValueArtifactsDay(opts.dayKey, {
+        updateLatest: opts.updateLatest
+      });
+    } catch (err) {
+      report.downstreamRefresh = {
+        ok: false,
+        reason: "downstream_refresh_failed_after_canonical_change",
+        error: err?.message || String(err)
+      };
+      report.ok = false;
+    }
+  } else {
+    report.downstreamRefresh = {
+      ok: true,
+      skipped: true,
+      reason: shouldRefreshDownstreamAfterCanonicalChange
+        ? "no_canonical_rows_accepted"
+        : "refresh_downstream_disabled"
+    };
+  }
+
   return report;
 }
 
@@ -1231,6 +1272,7 @@ if (isCli) {
         nextCursor: report.nextCursor,
         summary: report.summary,
         coverage: report.coverage,
+        downstreamRefresh: report.downstreamRefresh || null,
         reportFile: resolveDataPath("coverage-reports", `${report.baseDayKey}.json`)
       }, null, 2));
     })

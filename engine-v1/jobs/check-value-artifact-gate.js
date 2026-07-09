@@ -46,9 +46,15 @@ export function checkValueArtifactGate(dayKey) {
     };
   }
 
-  return gate.ok
-    ? { ok: true, code: 0, gate }
-    : { ok: false, code: 2, reason: "missing_local_value_file_with_fixtures", gate };
+  if (gate.ok) return { ok: true, code: 0, gate };
+
+  const reason = String(gate?.valueSource || "") === "missing_local_value_file"
+    ? "missing_local_value_file_with_fixtures"
+    : gate?.valueFreshAgainstCanonical === false
+      ? "value_artifact_stale_against_canonical"
+      : "value_artifact_gate_failed";
+
+  return { ok: false, code: 2, reason, gate };
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;

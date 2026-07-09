@@ -39,8 +39,23 @@ function readJsonSafe(file) {
 }
 
 function parseTime(value) {
-  const t = Date.parse(String(value || ""));
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+
+  const text = String(value || "").trim();
+  if (!text) return null;
+
+  if (/^\d+(?:\.\d+)?$/u.test(text)) {
+    const numeric = Number(text);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  const t = Date.parse(text);
   return Number.isFinite(t) ? t : null;
+}
+
+function maxTime(values) {
+  const times = values.map(parseTime).filter(Number.isFinite);
+  return times.length ? Math.max(...times) : null;
 }
 
 export function verifyArtifactFreshnessDay(dayKey) {
@@ -51,6 +66,8 @@ export function verifyArtifactFreshnessDay(dayKey) {
     manifestGeneratedAt: null,
     inputs: [],
     staleInputs: [],
+    derivedArtifacts: [],
+    staleDerivedArtifacts: [],
     skippedInputs: [],
     reasons: []
   };
@@ -121,7 +138,68 @@ export function verifyArtifactFreshnessDay(dayKey) {
     }
   }
 
-  report.ok = report.staleInputs.length === 0;
+  const canonicalInputTimes = report.inputs
+    .filter(input => input.kind === "canonical_fixtures")
+    .map(input => parseTime(input.at))
+    .filter(Number.isFinite);
+  const latestCanonicalInputAt = canonicalInputTimes.length ? Math.max(...canonicalInputTimes) : null;
+
+  if (latestCanonicalInputAt !== null) {
+    const snapshotValue = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
+    const snapshotAudit = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value-audit.json"));
+    const planBAudit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"));
+    const comparison = readJsonSafe(resolveDataPath("value-comparison", `${dayKey}.json`));
+
+    const derivedArtifacts = [
+      {
+        kind: "snapshot_value",
+        artifact: `deploy-snapshots/${dayKey}/value.json`,
+        at: maxTime([snapshotValue?.updatedAt, snapshotValue?.createdAt, snapshotValue?.generatedAt]),
+        staleReason: "snapshot_value_stale_against_canonical"
+      },
+      {
+        kind: "snapshot_value_audit",
+        artifact: `deploy-snapshots/${dayKey}/value-audit.json`,
+        at: snapshotAudit?.generatedAt || null,
+        staleReason: "snapshot_value_audit_stale_against_canonical"
+      },
+      {
+        kind: "plan_b_audit",
+        artifact: `value-plans/${dayKey}/plan-b-audit.json`,
+        at: planBAudit?.generatedAt || null,
+        staleReason: "plan_b_audit_stale_against_canonical"
+      },
+      {
+        kind: "value_plan_comparison",
+        artifact: `value-comparison/${dayKey}.json`,
+        at: comparison?.generatedAt || null,
+        staleReason: "value_plan_comparison_stale_against_canonical"
+      }
+    ];
+
+    for (const artifact of derivedArtifacts) {
+      const at = parseTime(artifact.at);
+      if (at === null) {
+        report.skippedInputs.push({ ...artifact, skipped: "artifact_missing_or_no_timestamp" });
+        continue;
+      }
+
+      const entry = {
+        ...artifact,
+        olderThanLatestCanonicalMs: at - latestCanonicalInputAt
+      };
+      report.derivedArtifacts.push(entry);
+
+      if (at < latestCanonicalInputAt) {
+        report.staleDerivedArtifacts.push(entry);
+        if (!report.reasons.includes(artifact.staleReason)) {
+          report.reasons.push(artifact.staleReason);
+        }
+      }
+    }
+  }
+
+  report.ok = report.staleInputs.length === 0 && report.staleDerivedArtifacts.length === 0;
   return report;
 }
 

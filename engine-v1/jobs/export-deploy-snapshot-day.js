@@ -38,6 +38,40 @@ function mb(bytes) {
   return Number((Number(bytes || 0) / 1024 / 1024).toFixed(2));
 }
 
+function parseArtifactTime(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+
+  const text = String(value || "").trim();
+  if (!text) return null;
+
+  if (/^\d+(?:\.\d+)?$/u.test(text)) {
+    const numeric = Number(text);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  const t = Date.parse(text);
+  return Number.isFinite(t) ? t : null;
+}
+
+function maxArtifactTime(...values) {
+  const times = values.map(parseArtifactTime).filter(Number.isFinite);
+  return times.length ? Math.max(...times) : null;
+}
+
+function latestCanonicalFixtureUpdatedAt(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+  if (!fs.existsSync(dir)) return null;
+
+  let latest = null;
+  for (const name of fs.readdirSync(dir).filter(file => file.endsWith(".json"))) {
+    const payload = readJsonSafe(path.join(dir, name), null);
+    const at = parseArtifactTime(payload?.updatedAt);
+    if (Number.isFinite(at) && (latest === null || at > latest)) latest = at;
+  }
+  return latest;
+}
+
+
 function resolveManifestTargetFixtureGate(fixturesSnapshot) {
   const staticMinTargetFixtures = Number(process.env.DAILY_INGEST_MIN_TARGET_FIXTURES || 45);
   const normalizedStaticMinTargetFixtures = Number.isFinite(staticMinTargetFixtures) && staticMinTargetFixtures > 0
@@ -663,6 +697,17 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     writeJsonStable(path.join(snapshotRoot, "value-audit.json"), valueAudit);
   }
 
+  const latestCanonicalAt = latestCanonicalFixtureUpdatedAt(dayKey);
+  const valueArtifactAt = maxArtifactTime(
+    valueOut?.updatedAt,
+    valueOut?.createdAt,
+    valueOut?.generatedAt,
+    valueAudit?.generatedAt
+  );
+  const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
+    ? null
+    : valueArtifactAt >= latestCanonicalAt;
+
   const manifest = {
     ok: true,
     date: dayKey,
@@ -701,7 +746,10 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
       fixtures: fixturesOut.count,
       valuePicks: valueOut.count,
       valueSource: String(valueOut?.source || "local_value_file"),
-      ok: !(fixturesOut.count > 0 && String(valueOut?.source || "") === "missing_local_value_file")
+      latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
+      valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
+      valueFreshAgainstCanonical,
+      ok: !(fixturesOut.count > 0 && String(valueOut?.source || "") === "missing_local_value_file") && valueFreshAgainstCanonical !== false
     },
     fixturesByLeague,
     orphanDetailsRemoved: detailsReport.orphansRemoved,
