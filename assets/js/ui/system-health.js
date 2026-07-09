@@ -301,13 +301,44 @@
     if (modal) modal.style.display = "none";
   }
 
-  // ── Fetch & badge update ──────────────────────────────────────────────────
+  function resolveSystemHealthDay() {
+    const queryDate = (() => {
+      try {
+        return new URLSearchParams(window.location.search || "").get("date") || "";
+      } catch {
+        return "";
+      }
+    })();
+
+    const candidates = [
+      window.__AIML_SELECTED_DATE,
+      window.__AIML_SELECTED_DAY,
+      window.__AIML_SELECTED_DATE_KEY,
+      window.__AIML_CURRENT_DATE,
+      queryDate,
+      document.querySelector("[data-selected-date]")?.getAttribute("data-selected-date"),
+      document.querySelector("[data-day]")?.getAttribute("data-day"),
+      document.querySelector("input[type='date']")?.value
+    ];
+
+    for (const value of candidates) {
+      const text = String(value || "").trim();
+      const match = text.match(/^\d{4}-\d{2}-\d{2}$/);
+      if (match) return text;
+    }
+
+    return "";
+  }
+
+  // Fetch & badge update
 
   let _lastReport = null;
 
   async function fetchReport() {
     try {
-      const res = await fetch(engineUrl("/system-health"));
+      const day = resolveSystemHealthDay();
+      const path = day ? `/system-health?day=${encodeURIComponent(day)}` : "/system-health";
+      const res = await fetch(engineUrl(path));
       if (!res.ok) return null;
       return await res.json();
     } catch { return null; }
