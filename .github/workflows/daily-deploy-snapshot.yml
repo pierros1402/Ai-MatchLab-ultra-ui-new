@@ -201,6 +201,10 @@ jobs:
           # Transfermarkt blocks the GitHub Actions IP range; the team-news
           # absences acquisition inside the cycle fetches TM through the proxy.
           TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
+          # Per-bookmaker odds (multi-odds → consensus middle line + EU/Asian/
+          # Betfair right panels). Free tier; without it fetchMultiBookmakerOdds
+          # returns no_key and every day's multi-odds file stays empty.
+          ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
         run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
 
       - name: Run team geo enrichment
