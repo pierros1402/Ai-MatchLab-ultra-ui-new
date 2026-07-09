@@ -105,22 +105,52 @@ export function buildConsensusIndex(dayKey, dayPayload = null) {
     const market = marketFromConsensus(c);
     byId.set(String(id), market);
     pairs.push({
-      home: normalizeTeamTokens(entry.home),
-      away: normalizeTeamTokens(entry.away),
+      home: prepTeam(entry.home),
+      away: prepTeam(entry.away),
       market,
     });
   }
   return { byId, pairs };
 }
 
+// Flashscore-side names carry "(Cro)"-style country suffixes and abbreviations
+// ("Dyn. Kyiv") that the canonical multi-odds names don't, so plain
+// normalizeTeamTokens + tokenJaccard lands just under the 0.6 join threshold
+// (measured 2026-07-09: only 3/27 covered matches joined). Strip the trailing
+// parenthesized suffix before normalizing, and let a token count as shared when
+// one is a ≥3-char prefix of the other (dyn → dynamo). Local to this display
+// join — attribution/canonical paths keep the strict shared helpers.
+function prepTeam(name) {
+  return normalizeTeamTokens(String(name || "").replace(/\s*\([^)]*\)\s*$/, ""));
+}
+
+function tokensMatch(a, b) {
+  if (a === b) return true;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  return short.length >= 3 && long.startsWith(short);
+}
+
+function prefixAwareJaccard(a, b) {
+  const A = [...new Set(a.split(" ").filter(Boolean))];
+  const B = [...new Set(b.split(" ").filter(Boolean))];
+  if (!A.length || !B.length) return 0;
+  const used = new Set();
+  let inter = 0;
+  for (const t of A) {
+    const hit = B.find((u, i) => !used.has(i) && tokensMatch(t, u));
+    if (hit !== undefined) { used.add(B.indexOf(hit)); inter++; }
+  }
+  return inter / (A.length + B.length - inter);
+}
+
 function resolveByPair(index, home, away) {
-  const nh = normalizeTeamTokens(home);
-  const na = normalizeTeamTokens(away);
+  const nh = prepTeam(home);
+  const na = prepTeam(away);
   if (!nh || !na) return null;
 
   let best = null, bestScore = 0;
   for (const p of index.pairs) {
-    const score = (tokenJaccard(nh, p.home) + tokenJaccard(na, p.away)) / 2;
+    const score = (prefixAwareJaccard(nh, p.home) + prefixAwareJaccard(na, p.away)) / 2;
     if (score > bestScore) { bestScore = score; best = p; }
   }
   return bestScore >= 0.6 ? best.market : null;
