@@ -89,6 +89,53 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=0 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
 
+      - name: Self-heal stale value artifacts
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY"
+
+          if node - <<'NODE'
+          const fs = require("fs");
+
+          const day = process.env.DAY_KEY;
+          const file = `data/deploy-snapshots/${day}/freshness-report.json`;
+          const report = JSON.parse(fs.readFileSync(file, "utf8"));
+
+          const valueKinds = new Set([
+            "snapshot_value",
+            "snapshot_value_audit",
+            "plan_b",
+            "plan_b_audit",
+            "value_plan_comparison"
+          ]);
+
+          const staleValueArtifacts = Array.isArray(report.staleDerivedArtifacts)
+            ? report.staleDerivedArtifacts.filter(entry =>
+                valueKinds.has(String(entry?.kind || ""))
+              )
+            : [];
+
+          console.log(JSON.stringify({
+            staleValueArtifactCount: staleValueArtifacts.length,
+            staleValueArtifacts: staleValueArtifacts.map(entry => ({
+              kind: entry.kind,
+              artifact: entry.artifact,
+              staleReason: entry.staleReason
+            }))
+          }, null, 2));
+
+          process.exit(staleValueArtifacts.length > 0 ? 0 : 1);
+          NODE
+          then
+            echo "Value-derived artifacts are stale against canonical inputs — running targeted refresh."
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+          else
+            echo "Value-derived artifacts are current — skipping targeted refresh."
+          fi
+
       # Intraday re-exports the snapshot, which would leave the committed
       # invariant report stale vs manifest.generatedAt — refresh it so the
       # nightly Invariant gate never trips on an intraday manifest.
@@ -190,6 +237,9 @@ jobs:
           test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/value.json" && git add "data/deploy-snapshots/${DAY_KEY}/value.json"
           if [ -f "data/deploy-snapshots/${DAY_KEY}/value-audit.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/value-audit.json"; fi
+          if [ -f "data/value/${DAY_KEY}.json" ]; then git add "data/value/${DAY_KEY}.json"; fi
+          if [ -f "data/value/_audit/${DAY_KEY}.json" ]; then git add "data/value/_audit/${DAY_KEY}.json"; fi
+          if [ -d "data/value-plans/${DAY_KEY}" ]; then git add "data/value-plans/${DAY_KEY}/"; fi
           node ./engine-v1/jobs/build-system-health-alerts-day.js --date="${DAY_KEY}"
 
           test -e "data/deploy-snapshots/${DAY_KEY}/invariant-report.json" && git add "data/deploy-snapshots/${DAY_KEY}/invariant-report.json"
@@ -213,9 +263,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/final-results/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/final-results/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"

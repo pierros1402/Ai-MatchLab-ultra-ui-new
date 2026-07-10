@@ -220,16 +220,13 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
 
-      - name: Build value Plan B comparison observation
+      - name: Refresh value artifacts after final canonical snapshot
         if: env.SKIP_BUILD != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          node ./engine-v1/jobs/build-value-standalone-day.js --date "$DAY_KEY" --rebuild --plan-b-observation
-          node ./engine-v1/jobs/build-value-plan-comparison-day.js --date "$DAY_KEY" --write
-          # Roll every per-day comparison up into one Plan A vs Plan B total so
-          # the two plans can be judged across days, not just on this one day.
-          node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+        run: node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+
+      - name: Build cumulative value comparison
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
 
       # Re-run AFTER the final export so the committed report describes THIS
       # manifest — the in-cycle run predates the geo rebuild + re-export above
@@ -471,6 +468,14 @@ jobs:
             git add "data/system-health/latest.json"
           fi
 
+          if [ -f "data/value/${DAY_KEY}.json" ]; then
+            git add "data/value/${DAY_KEY}.json"
+          fi
+
+          if [ -f "data/value/_audit/${DAY_KEY}.json" ]; then
+            git add "data/value/_audit/${DAY_KEY}.json"
+          fi
+
           if [ -d "data/value-plans/${DAY_KEY}" ]; then
             git add "data/value-plans/${DAY_KEY}/"
           fi
@@ -522,10 +527,10 @@ jobs:
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
             --extra-days="${RECENT_CSV}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value-plans/|data/value-comparison/|data/final-results/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/value-comparison/|data/final-results/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"
