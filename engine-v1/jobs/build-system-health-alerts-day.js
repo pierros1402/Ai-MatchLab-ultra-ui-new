@@ -362,6 +362,7 @@ export function buildSystemHealthAlertsDay(dayKey) {
 
   const outDir = resolveDataPath("system-health");
   const previous = readJsonSafe(path.join(outDir, "latest.json"), null);
+  const previousDay = readJsonSafe(path.join(outDir, `${dayKey}.json`), null);
   const previousActive = Array.isArray(previous?.activeIssues) ? previous.activeIssues : [];
 
   const previousKeys = new Set(previousActive.map(issueKey));
@@ -373,7 +374,18 @@ export function buildSystemHealthAlertsDay(dayKey) {
 
   const newActionableIssues = newIssues.filter(i => i.severity === "error" || i.severity === "warning");
 
-  const report = {
+  const activeKeyList = [...activeKeys].sort();
+  const previousDayActiveKeys = new Set(
+    Array.isArray(previousDay?.activeIssues)
+      ? previousDay.activeIssues.map(issueKey)
+      : []
+  );
+  const previousDayActiveKeyList = [...previousDayActiveKeys].sort();
+  const sameActiveIssueSet = previousDay?.dayKey === dayKey
+    && activeKeyList.length === previousDayActiveKeyList.length
+    && activeKeyList.every((key, index) => key === previousDayActiveKeyList[index]);
+
+  let report = {
     schema: "ai-matchlab.system-health-alerts.v1",
     dayKey,
     generatedAt: new Date().toISOString(),
@@ -394,6 +406,21 @@ export function buildSystemHealthAlertsDay(dayKey) {
     resolvedIssues,
     persistentIssues
   };
+
+  // Avoid timestamp-only / new-vs-persistent churn in intraday runs.
+  // If the active issue set is unchanged for the same day, keep the previous
+  // report stable so workflows do not commit only generatedAt/history noise.
+  if (sameActiveIssueSet && previousDay) {
+    report = {
+      ...previousDay,
+      activeIssues,
+      actionableIssues,
+      activeIssueCount: activeIssues.length,
+      actionableIssueCount: actionableIssues.length,
+      issueCounts: countIssues(activeIssues),
+      severity: severityFromIssues(activeIssues)
+    };
+  }
 
   writeJson(path.join(outDir, `${dayKey}.json`), report);
   writeJson(path.join(outDir, "latest.json"), {
