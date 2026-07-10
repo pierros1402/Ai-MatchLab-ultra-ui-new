@@ -330,40 +330,273 @@
     return "";
   }
 
-  // Fetch & badge update
+  // Fetch, alert artifact & badge update
+
+  const STATIC_ALERT_PATH = "data/system-health/latest.json";
 
   let _lastReport = null;
+  let _lastAlertArtifact = null;
 
-  async function fetchReport() {
+  async function fetchDiagnosticReport() {
     try {
       const day = resolveSystemHealthDay();
       const path = day ? `/system-health?day=${encodeURIComponent(day)}` : "/system-health";
-      const res = await fetch(engineUrl(path));
+      const res = await fetch(engineUrl(path), { cache: "no-store" });
       if (!res.ok) return null;
       return await res.json();
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   }
 
-  function updateBadge(report) {
-    const badge = el("system-health-badge");
-    if (!badge) return;
-    const color = statusColor(report);
-    if (color === "#22c55e") {
-      badge.style.display = "none"; // all clear — hide badge
-    } else {
-      badge.style.display = "block";
-      badge.style.background = color;
+  async function fetchAlertArtifact() {
+    try {
+      const separator = STATIC_ALERT_PATH.includes("?") ? "&" : "?";
+      const url = `${STATIC_ALERT_PATH}${separator}v=${Date.now()}`;
+      const res = await fetch(url, { cache: "no-store" });
+
+      if (!res.ok) return null;
+
+      const artifact = await res.json();
+
+      if (artifact?.schema !== "ai-matchlab.system-health-alerts.v1") {
+        return null;
+      }
+
+      return artifact;
+    } catch {
+      return null;
     }
+  }
+
+  function numberValue(value) {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
+
+  function alertSeverity(artifact, fallbackReport) {
+    if (artifact) {
+      const errors =
+        numberValue(artifact.alertCounts?.error) ||
+        numberValue(artifact.issueCounts?.error);
+
+      const warnings =
+        numberValue(artifact.alertCounts?.warning) ||
+        numberValue(artifact.issueCounts?.warning);
+
+      if (errors > 0) return "error";
+      if (warnings > 0) return "warning";
+
+      return String(artifact.severity || "info").toLowerCase();
+    }
+
+    if (fallbackReport) {
+      if (numberValue(fallbackReport.issueCounts?.error) > 0) return "error";
+      if (numberValue(fallbackReport.issueCounts?.warning) > 0) return "warning";
+
+      return String(
+        fallbackReport.severity ||
+        fallbackReport.status ||
+        "ok"
+      ).toLowerCase();
+    }
+
+    return "unknown";
+  }
+
+  function badgeCount(artifact, fallbackReport) {
+    if (artifact) {
+      return (
+        numberValue(artifact.newActionableIssueCount) ||
+        numberValue(artifact.actionableIssueCount)
+      );
+    }
+
+    if (fallbackReport) {
+      return (
+        numberValue(fallbackReport.issueCounts?.error) +
+        numberValue(fallbackReport.issueCounts?.warning)
+      );
+    }
+
+    return 0;
+  }
+
+  function shouldShowAlertBadge(artifact, fallbackReport) {
+    if (artifact) {
+      return Boolean(artifact.alert) || badgeCount(artifact, null) > 0;
+    }
+
+    if (!fallbackReport) return true;
+
+    const severity = alertSeverity(null, fallbackReport);
+
+    return severity === "error" || severity === "warning";
+  }
+
+  function updateBadge(artifact, fallbackReport) {
+    const badge = el("system-health-badge");
+    const button = el("btn-system-health");
+
+    if (!badge) return;
+
+    const show = shouldShowAlertBadge(artifact, fallbackReport);
+
+    if (!show) {
+      badge.style.display = "none";
+      badge.textContent = "";
+
+      if (button) {
+        button.title = artifact
+          ? `System Health · ${String(artifact.severity || "info").toUpperCase()} · no actionable alerts`
+          : "System Health";
+      }
+
+      return;
+    }
+
+    const severity = alertSeverity(artifact, fallbackReport);
+    const count = badgeCount(artifact, fallbackReport);
+
+    const background =
+      severity === "error"
+        ? "#ef4444"
+        : severity === "warning"
+          ? "#f59e0b"
+          : "#64748b";
+
+    badge.style.display = "flex";
+    badge.style.alignItems = "center";
+    badge.style.justifyContent = "center";
+    badge.style.top = "-4px";
+    badge.style.right = "-5px";
+    badge.style.width = count > 0 ? "auto" : "12px";
+    badge.style.minWidth = count > 0 ? "16px" : "12px";
+    badge.style.height = count > 0 ? "16px" : "12px";
+    badge.style.padding = count > 0 ? "0 4px" : "0";
+    badge.style.borderRadius = "999px";
+    badge.style.background = background;
+    badge.style.color = "#ffffff";
+    badge.style.fontSize = "9px";
+    badge.style.fontWeight = "800";
+    badge.style.lineHeight = "1";
+    badge.style.boxSizing = "border-box";
+    badge.textContent = count > 0 ? String(count) : "!";
+
+    if (button) {
+      button.title =
+        `System Health alert · ${severity.toUpperCase()}` +
+        (count > 0 ? ` · ${count} actionable issue${count === 1 ? "" : "s"}` : "");
+    }
+  }
+
+  function alertArtifactMatchesSelectedDay(artifact) {
+    if (!artifact) return false;
+
+    const selectedDay = resolveSystemHealthDay();
+    if (!selectedDay) return true;
+
+    const artifactDay = String(
+      artifact.dayKey ||
+      artifact.latestForDay ||
+      ""
+    ).trim();
+
+    return artifactDay === selectedDay;
+  }
+
+  function renderAlertArtifactSummary(artifact) {
+    if (!artifact || !alertArtifactMatchesSelectedDay(artifact)) return "";
+
+    const severity = String(artifact.severity || "info").toLowerCase();
+    const actionable = numberValue(artifact.actionableIssueCount);
+    const newActionable = numberValue(artifact.newActionableIssueCount);
+    const resolved = numberValue(artifact.resolvedIssueCount);
+    const persistent = numberValue(artifact.persistentIssueCount);
+    const active = numberValue(artifact.activeIssueCount);
+
+    const tone =
+      severity === "error"
+        ? issueTone("error")
+        : severity === "warning"
+          ? issueTone("warning")
+          : issueTone("info");
+
+    const alertLabel = artifact.alert ? "ACTIVE ALERT" : "NO ACTIVE ALERT";
+
+    return `<div style="
+      margin-bottom:10px;
+      padding:8px 10px;
+      border-radius:6px;
+      background:rgba(15,23,42,.88);
+      border:1px solid rgba(255,255,255,.08);
+      border-left:3px solid ${tone.color};
+      font-size:11px;
+      color:#cbd5e1;
+    ">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+        <span style="font-weight:800;color:${tone.color};">${esc(alertLabel)}</span>
+        <span style="color:#64748b;">Alert layer</span>
+      </div>
+      <div style="margin-top:5px;">
+        Active: <b>${esc(active)}</b> ·
+        Actionable: <b>${esc(actionable)}</b> ·
+        New actionable: <b>${esc(newActionable)}</b>
+      </div>
+      <div style="margin-top:2px;">
+        Persistent: <b>${esc(persistent)}</b> ·
+        Resolved: <b>${esc(resolved)}</b>
+      </div>
+    </div>`;
+  }
+
+  async function refreshBadge() {
+    const artifact = await fetchAlertArtifact();
+    const usableArtifact =
+      artifact && alertArtifactMatchesSelectedDay(artifact)
+        ? artifact
+        : null;
+
+    _lastAlertArtifact = usableArtifact;
+
+    if (usableArtifact) {
+      updateBadge(usableArtifact, null);
+      return;
+    }
+
+    const report = await fetchDiagnosticReport();
+    _lastReport = report;
+    updateBadge(null, report);
   }
 
   async function fetchAndRender() {
     const body = el("system-health-body");
-    if (body) body.innerHTML = `<p style="color:#94a3b8;font-size:13px;">Loading…</p>`;
 
-    const report = await fetchReport();
+    if (body) {
+      body.innerHTML =
+        `<p style="color:#94a3b8;font-size:13px;">Loading…</p>`;
+    }
+
+    const [report, artifact] = await Promise.all([
+      fetchDiagnosticReport(),
+      fetchAlertArtifact()
+    ]);
+
+    const usableArtifact =
+      artifact && alertArtifactMatchesSelectedDay(artifact)
+        ? artifact
+        : null;
+
     _lastReport = report;
-    updateBadge(report);
-    if (body) body.innerHTML = renderReport(report);
+    _lastAlertArtifact = usableArtifact;
+
+    updateBadge(usableArtifact, report);
+
+    if (body) {
+      body.innerHTML =
+        renderAlertArtifactSummary(usableArtifact) +
+        renderReport(report);
+    }
   }
 
   // ── Boot ──────────────────────────────────────────────────────────────────
@@ -378,17 +611,16 @@
     btn.addEventListener("click", () => {
       const modal = el("system-health-modal");
       const isOpen = modal && modal.style.display === "flex";
+
       if (isOpen) closeModal();
       else openModal();
     });
 
-    // Initial badge fetch — non-blocking
-    fetchReport().then(r => { _lastReport = r; updateBadge(r); });
+    // Artifact-first badge refresh.
+    refreshBadge();
 
-    // Poll badge in background
-    setInterval(() => {
-      fetchReport().then(r => { _lastReport = r; updateBadge(r); });
-    }, POLL_INTERVAL_MS);
+    // Poll alert artifact in background.
+    setInterval(refreshBadge, POLL_INTERVAL_MS);
   }
 
   if (document.readyState === "loading") {
