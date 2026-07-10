@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: daily-deploy-snapshot
@@ -441,6 +442,13 @@ jobs:
       - name: Build system health alert artifact
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
+
+      - name: Sync System Health GitHub issue
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node ./engine-v1/jobs/sync-system-health-github-issue.js --date="$DAY_KEY"
 
       - name: Stage allowed snapshot files only
         if: env.SKIP_BUILD != 'true'

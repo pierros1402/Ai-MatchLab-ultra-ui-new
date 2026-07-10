@@ -14,6 +14,7 @@ on:
     - cron: "2-59/5 * * * *"
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: intraday-deploy-snapshot-refresh
@@ -221,6 +222,13 @@ jobs:
               exit 1
             fi
           fi
+
+      - name: Sync System Health GitHub issue
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node ./engine-v1/jobs/sync-system-health-github-issue.js --date="$DAY_KEY"
 
       - name: Detect material intraday snapshot changes
         if: env.SKIP_BUILD != 'true'
