@@ -58,6 +58,7 @@ import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -406,8 +407,12 @@ function filterContradictoryAndRedundantValuePicks(candidatePicks) {
 }
 
 
+function valueLeagueSlug(pick) {
+  return String(pick?.leagueSlug || "").toLowerCase();
+}
+
 function isOutOfScopeValueLeague(pick) {
-  const league = String(pick?.leagueSlug || "").toLowerCase();
+  const league = valueLeagueSlug(pick);
 
   if (!league) return true;
 
@@ -427,6 +432,11 @@ function strictValuePolicyRejectionReason(pick) {
   const selection = normalizeSelection(pick?.pick);
   const modelProb = Number(pick?.modelProb || 0);
   const confidence = String(pick?.confidence || "").toLowerCase();
+  const league = valueLeagueSlug(pick);
+
+  if (isDisabledLeague(league)) {
+    return "disabled_league_suppressed";
+  }
 
   if (isOutOfScopeValueLeague(pick)) {
     return "out_of_scope_league_suppressed";
