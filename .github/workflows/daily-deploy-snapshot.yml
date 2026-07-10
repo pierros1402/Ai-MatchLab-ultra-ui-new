@@ -403,9 +403,11 @@ jobs:
         run: |
           set -euo pipefail
           if ! node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate; then
-            echo "Snapshot stale against upstream inputs — rebuilding details and re-exporting."
+            echo "Snapshot stale against upstream inputs; rebuilding details, re-exporting, and refreshing Value artifacts."
             node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
             node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+            node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
             node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
           fi
           node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
