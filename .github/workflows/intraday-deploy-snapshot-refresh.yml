@@ -319,6 +319,32 @@ jobs:
             return String(row?.matchId ?? row?.id ?? row?.fixtureId ?? "").trim();
           }
 
+          function isPreLike(row) {
+            const statusText = [
+              row?.status,
+              row?.statusType,
+              row?.rawStatus,
+              row?.phase
+            ]
+              .map(value => String(value || "").toUpperCase())
+              .join(" ");
+
+            return /\b(PRE|SCHEDULED|STATUS_SCHEDULED|NOT_STARTED)\b/.test(statusText);
+          }
+
+          function materialScore(row, primaryField, fallbackField) {
+            const value = row?.[primaryField] ?? row?.[fallbackField] ?? null;
+
+            // Scheduled rows may be represented as either null-null or 0-0.
+            // Neither representation is a real score/status change.
+            if (value === null && isPreLike(row)) {
+              return 0;
+            }
+
+            const numeric = Number(value);
+            return Number.isFinite(numeric) ? numeric : value;
+          }
+
           function material(row) {
             return {
               matchId: idOf(row),
@@ -327,8 +353,8 @@ jobs:
               rawStatus: row?.rawStatus ?? null,
               phase: row?.phase ?? null,
               minute: row?.minute ?? null,
-              scoreHome: row?.scoreHome ?? row?.homeScore ?? null,
-              scoreAway: row?.scoreAway ?? row?.awayScore ?? null,
+              scoreHome: materialScore(row, "scoreHome", "homeScore"),
+              scoreAway: materialScore(row, "scoreAway", "awayScore"),
               live: row?.live ?? null,
               isLive: row?.isLive ?? null,
               staleLive: row?.staleLive ?? null,

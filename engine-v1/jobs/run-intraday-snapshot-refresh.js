@@ -1,10 +1,11 @@
-﻿import fs from "fs";
+import fs from "fs";
 import { spawnSync } from "child_process";
 import { fileURLToPath } from "url";
 import path from "path";
 
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
+import { rebuildReconciledFixturesDay } from "./rebuild-reconciled-fixtures-day.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
@@ -221,6 +222,31 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     acceptedRows: sync.acceptedRows,
     skippedRows: sync.skippedRows,
     written: sync.written
+  });
+
+  console.log("[intraday-snapshot-refresh] rebuild-reconciled-fixtures:start", {
+    dayKey: safeDayKey
+  });
+
+  const reconciliation = await rebuildReconciledFixturesDay(safeDayKey, {
+    write: true,
+    env: process.env
+  });
+
+  console.log("[intraday-snapshot-refresh] rebuild-reconciled-fixtures:done", {
+    dayKey: safeDayKey,
+    canonicalRows: reconciliation.canonicalRows,
+    reconciledRows: reconciliation.reconciledRows,
+    inserted: reconciliation.inserted,
+    updated: reconciliation.updated,
+    unchanged: reconciliation.unchanged,
+    skipped: reconciliation.skipped,
+    rowsWithOperationalState: reconciliation.rowsWithOperationalState,
+    rowsWithDisplayFlags: reconciliation.rowsWithDisplayFlags,
+    rowsWithHealth: reconciliation.rowsWithHealth,
+    rowsWithSources: reconciliation.rowsWithSources,
+    rowsWithReconcileMeta: reconciliation.rowsWithReconcileMeta,
+    completeCoverage: reconciliation.completeCoverage
   });
 
   const value = {

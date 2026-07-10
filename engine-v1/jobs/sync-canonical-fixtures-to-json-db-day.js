@@ -1,4 +1,4 @@
-﻿import fs from "fs";
+import fs from "fs";
 import path from "path";
 import { resolveDataPath } from "../storage/data-root.js";
 import { upsertFixtureWithMeta } from "../storage/json-db.js";
@@ -139,8 +139,7 @@ export function syncCanonicalFixturesToJsonDbDay(dayKey, options = {}) {
 
       if (!write) continue;
 
-      const result = upsertFixtureWithMeta(normalized);
-      const action = String(result?.action || "");
+      const action = String(upsertFixtureWithMeta(normalized) || "");
 
       if (action === "inserted") inserted++;
       else if (action === "updated") updated++;

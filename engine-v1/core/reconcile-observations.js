@@ -1023,7 +1023,8 @@ function resolveOperationalState({
 export async function reconcileObservations({
   env,
   observations,
-  existing = null
+  existing = null,
+  sideEffects = true
 }) {
   const rows = Array.isArray(observations)
     ? observations
@@ -1229,12 +1230,15 @@ export async function reconcileObservations({
     conflictTypes
   };
 
-  const disagreementEntries = collectDisagreements(matchId, rows, resolved);
+  if (sideEffects) {
+    const disagreementEntries = collectDisagreements(matchId, rows, resolved);
 
-  if (disagreementEntries.length) {
-    await persistDisagreements(env, disagreementEntries, rows, resolved);
+    if (disagreementEntries.length) {
+      await persistDisagreements(env, disagreementEntries, rows, resolved);
+    }
+
+    updateSourceReliability(rows, conflictTypes);
   }
 
-  updateSourceReliability(rows, conflictTypes);
   return resolved;
 }
