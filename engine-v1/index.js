@@ -1129,20 +1129,93 @@ function systemHealthRelativeArtifact(file) {
   return String(file || "").replace(/\\/g, "/").split("/data/").pop() || String(file || "");
 }
 
+function systemHealthNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function systemHealthParseSkippedSlugs(raw) {
+  return String(raw || "")
+    .replace(/^acquisition_skipped_slugs:/, "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function systemHealthKnownContextSkippedSlug(slug) {
+  const s = String(slug || "").toLowerCase();
+
+  if (!s) return false;
+  if (s.startsWith("fs.")) return true;
+  if (s.startsWith("club.")) return true;
+  if (s.includes("friendly")) return true;
+  if (s.includes("u19") || s.includes("u20") || s.includes("reserve")) return true;
+
+  if (s === "usa.nwsl") return true;
+  if (s === "arg.3") return true;
+
+  return false;
+}
+
+function systemHealthSkippedSlugsContextOnly(slugs) {
+  return Array.isArray(slugs)
+    && slugs.length > 0
+    && slugs.every(systemHealthKnownContextSkippedSlug);
+}
+
+function systemHealthBuildWarningIsContextOnly(text) {
+  const raw = String(text || "");
+  if (!raw.startsWith("acquisition_skipped_slugs:")) return false;
+  return systemHealthSkippedSlugsContextOnly(systemHealthParseSkippedSlugs(raw));
+}
+
+function systemHealthInvariantWarningIssue(w) {
+  const type = w?.type || "invariant_warning";
+
+  if (type === "coverage_floor_drop") {
+    const actualFixtures = systemHealthNumber(w?.actualFixtures);
+    const effectiveFloor = systemHealthNumber(w?.effectiveFloor);
+    const effectiveFloorMet = actualFixtures !== null
+      && effectiveFloor !== null
+      && actualFixtures >= effectiveFloor;
+
+    return systemHealthIssue(
+      effectiveFloorMet ? "info" : "warning",
+      "invariant-report",
+      type,
+      effectiveFloorMet
+        ? "Canonical fixtures are below static floor but meet the effective floor."
+        : (w?.reason || "Canonical fixture count is below the effective floor."),
+      {
+        ...w,
+        effectiveFloorMet
+      }
+    );
+  }
+
+  return systemHealthIssue(
+    "warning",
+    "invariant-report",
+    type,
+    w?.reason || "Invariant warning.",
+    w
+  );
+}
+
 function systemHealthBuildWarning(text) {
   const raw = String(text || "");
   if (raw.startsWith("acquisition_skipped_slugs:")) {
-    const slugs = raw.slice("acquisition_skipped_slugs:".length)
-      .split(",")
-      .map(s => s.trim())
-      .filter(Boolean);
+    const slugs = systemHealthParseSkippedSlugs(raw);
+    const contextOnly = systemHealthSkippedSlugsContextOnly(slugs);
 
     return systemHealthIssue(
-      "warning",
+      contextOnly ? "info" : "warning",
       "build-report",
       "acquisition_skipped_slugs",
-      "Acquisition skipped slugs during fixture acquisition.",
-      { slugs, raw }
+      contextOnly
+        ? "Acquisition skipped only known out-of-scope/context slugs."
+        : "Acquisition skipped slugs during fixture acquisition.",
+      { slugs, raw, contextOnly }
     );
   }
 
@@ -1261,13 +1334,7 @@ function buildSystemHealthReport(day) {
     }
 
     for (const w of invariant.warnings || []) {
-      issues.push(systemHealthIssue(
-        "warning",
-        "invariant-report",
-        w.type || "invariant_warning",
-        w.reason || "Invariant warning.",
-        w
-      ));
+      issues.push(systemHealthInvariantWarningIssue(w));
     }
 
     if (invariant.ok === false) {
@@ -1302,7 +1369,11 @@ function buildSystemHealthReport(day) {
       ));
     }
 
-    for (const warning of buildReport.warnings || []) {
+    const buildWarnings = Array.isArray(buildReport.warnings) ? buildReport.warnings : [];
+    const buildWarningsContextOnly = buildWarnings.length > 0
+      && buildWarnings.every(systemHealthBuildWarningIsContextOnly);
+
+    for (const warning of buildWarnings) {
       issues.push(systemHealthBuildWarning(warning));
     }
 
@@ -1316,11 +1387,17 @@ function buildSystemHealthReport(day) {
       ));
     } else if (buildReport.cleanStrict === false) {
       issues.push(systemHealthIssue(
-        "warning",
+        buildWarningsContextOnly ? "info" : "warning",
         "build-report",
         "build_not_strict_clean",
-        "Build report is clean but not strict-clean.",
-        { clean: buildReport.clean, cleanStrict: buildReport.cleanStrict }
+        buildWarningsContextOnly
+          ? "Build report is clean; strict-clean is false only because of contextual warnings."
+          : "Build report is clean but not strict-clean.",
+        {
+          clean: buildReport.clean,
+          cleanStrict: buildReport.cleanStrict,
+          contextOnlyWarnings: buildWarningsContextOnly
+        }
       ));
     }
 
