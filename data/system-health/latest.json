@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-10",
-  "generatedAt": "2026-07-10T07:59:54.410Z",
-  "severity": "info",
+  "generatedAt": "2026-07-10T11:35:56.925Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 0,
-    "info": 4
+    "error": 2,
+    "warning": 5,
+    "info": 3
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
-    "error": 0,
-    "warning": 0,
+    "error": 2,
+    "warning": 5,
     "info": 0
   },
-  "activeIssueCount": 4,
-  "actionableIssueCount": 0,
-  "newIssueCount": 4,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 0,
-  "persistentIssueCount": 0,
+  "activeIssueCount": 10,
+  "actionableIssueCount": 7,
+  "newIssueCount": 7,
+  "newActionableIssueCount": 7,
+  "resolvedIssueCount": 1,
+  "persistentIssueCount": 3,
   "activeIssues": [
     {
       "severity": "info",
@@ -37,6 +37,81 @@
       }
     },
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical",
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-07-10/value.json",
+        "at": 1783643433319,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917522
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-07-10/value-audit.json",
+        "at": "2026-07-10T00:30:33.320Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917521
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-07-10/plan-b-audit.json",
+        "at": "2026-07-10T04:13:16.225Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26554616
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-07-10.json",
+        "at": "2026-07-10T04:13:16.935Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26553906
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "info",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -52,14 +127,13 @@
       }
     },
     {
-      "severity": "info",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean; strict-clean is false only because of contextual warnings.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": true
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -109,8 +183,281 @@
       }
     }
   ],
-  "actionableIssues": [],
+  "actionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical",
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-07-10/value.json",
+        "at": 1783643433319,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917522
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-07-10/value-audit.json",
+        "at": "2026-07-10T00:30:33.320Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917521
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-07-10/plan-b-audit.json",
+        "at": "2026-07-10T04:13:16.225Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26554616
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-07-10.json",
+        "at": "2026-07-10T04:13:16.935Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26553906
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
   "newIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical",
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-07-10/value.json",
+        "at": 1783643433319,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917522
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-07-10/value-audit.json",
+        "at": "2026-07-10T00:30:33.320Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917521
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-07-10/plan-b-audit.json",
+        "at": "2026-07-10T04:13:16.225Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26554616
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-07-10.json",
+        "at": "2026-07-10T04:13:16.935Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26553906
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical",
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-07-10/value.json",
+        "at": 1783643433319,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917522
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-07-10/value-audit.json",
+        "at": "2026-07-10T00:30:33.320Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -39917521
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-07-10/plan-b-audit.json",
+        "at": "2026-07-10T04:13:16.225Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26554616
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-07-10.json",
+        "at": "2026-07-10T04:13:16.935Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -26553906
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean; strict-clean is false only because of contextual warnings.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": true
+      }
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "info",
       "source": "invariant-report",
@@ -143,17 +490,6 @@
     },
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean; strict-clean is false only because of contextual warnings.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": true
-      }
-    },
-    {
-      "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
       "message": "Value Plan A/B comparison artifact is available.",
@@ -199,8 +535,5 @@
       }
     }
   ],
-  "newActionableIssues": [],
-  "resolvedIssues": [],
-  "persistentIssues": [],
   "latestForDay": "2026-07-10"
 }
