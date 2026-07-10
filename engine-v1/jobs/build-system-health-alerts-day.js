@@ -129,6 +129,77 @@ function buildWarningIsContextOnly(text) {
   return skippedSlugsContextOnly(parseSkippedSlugs(raw));
 }
 
+function markdownCell(value) {
+  return String(value ?? "")
+    .replace(/\r?\n/g, " ")
+    .replace(/\|/g, "\\|")
+    .trim();
+}
+
+function appendGitHubStepSummary(report) {
+  const summaryFile = String(process.env.GITHUB_STEP_SUMMARY || "").trim();
+  if (!summaryFile || !report) return;
+
+  const counts = report.issueCounts || {};
+  const alertCounts = report.alertCounts || {};
+  const newActionable = Array.isArray(report.newActionableIssues)
+    ? report.newActionableIssues
+    : [];
+
+  const severity = String(report.severity || "ok").toUpperCase();
+  const alertState = report.alert === true ? "true" : "false";
+
+  const stateIcon = report.alert === true
+    ? (Number(counts.error || 0) > 0 ? "🔴" : "🟠")
+    : (severity === "INFO" ? "🔵" : "🟢");
+
+  const lines = [
+    "",
+    "## " + stateIcon + " System Health Alert Summary",
+    "",
+    "| Field | Value |",
+    "|---|---:|",
+    "| Day | " + markdownCell(report.dayKey) + " |",
+    "| Severity | **" + markdownCell(severity) + "** |",
+    "| Alert | **" + alertState + "** |",
+    "| Errors | " + Number(counts.error || 0) + " |",
+    "| Warnings | " + Number(counts.warning || 0) + " |",
+    "| Info | " + Number(counts.info || 0) + " |",
+    "| Active issues | " + Number(report.activeIssueCount || 0) + " |",
+    "| Actionable issues | " + Number(report.actionableIssueCount || 0) + " |",
+    "| New actionable issues | " + Number(report.newActionableIssueCount || 0) + " |",
+    "| New alert errors | " + Number(alertCounts.error || 0) + " |",
+    "| New alert warnings | " + Number(alertCounts.warning || 0) + " |",
+    ""
+  ];
+
+  if (newActionable.length > 0) {
+    lines.push("### New actionable issues", "");
+    lines.push("| Severity | Source | Type | Message |");
+    lines.push("|---|---|---|---|");
+
+    for (const item of newActionable) {
+      lines.push(
+        "| **" + markdownCell(String(item?.severity || "warning").toUpperCase()) +
+        "** | " + markdownCell(item?.source || "unknown") +
+        " | " + markdownCell(item?.type || "unknown_issue") +
+        " | " + markdownCell(item?.message || "") + " |"
+      );
+    }
+
+    lines.push("");
+  } else {
+    lines.push(
+      report.alert === true
+        ? "> Alert is active, but no new actionable issue rows were available."
+        : "> No new actionable ERROR or WARNING issues.",
+      ""
+    );
+  }
+
+  fs.appendFileSync(summaryFile, lines.join("\n") + "\n", "utf8");
+}
+
 function invariantWarningIssue(w) {
   const type = w?.type || "invariant_warning";
 
@@ -427,6 +498,8 @@ export function buildSystemHealthAlertsDay(dayKey) {
     ...report,
     latestForDay: dayKey
   });
+
+  appendGitHubStepSummary(report);
 
   return report;
 }
