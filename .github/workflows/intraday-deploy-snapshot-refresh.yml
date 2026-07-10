@@ -189,11 +189,15 @@ jobs:
           test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/value.json" && git add "data/deploy-snapshots/${DAY_KEY}/value.json"
           if [ -f "data/deploy-snapshots/${DAY_KEY}/value-audit.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/value-audit.json"; fi
+          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="${DAY_KEY}"
+
           test -e "data/deploy-snapshots/${DAY_KEY}/invariant-report.json" && git add "data/deploy-snapshots/${DAY_KEY}/invariant-report.json"
           # Freshness + build reports refreshed by run-intraday-snapshot-refresh.js
           # so they describe THIS re-exported manifest, not the earlier daily one.
           if [ -f "data/deploy-snapshots/${DAY_KEY}/freshness-report.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/freshness-report.json"; fi
           if [ -f "data/build-reports/${DAY_KEY}.json" ]; then git add "data/build-reports/${DAY_KEY}.json"; fi
+          if [ -f "data/system-health/${DAY_KEY}.json" ]; then git add "data/system-health/${DAY_KEY}.json"; fi
+          if [ -f "data/system-health/latest.json" ]; then git add "data/system-health/latest.json"; fi
           test -d "data/deploy-snapshots/${DAY_KEY}/details" && git add "data/deploy-snapshots/${DAY_KEY}/details"
           test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
 
@@ -208,9 +212,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/final-results/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/final-results/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"
