@@ -75,6 +75,11 @@ const COUNTRY_WINDOWS = {
   kazakhstan:    { start: 3, end: 11 },
   moldova:       { start: 3, end: 11 },
   belarus:       { start: 3, end: 11 },
+
+  // Russian domestic leagues begin in July and run through spring.
+  // The generic Europe Aug–May window misses the opening fixtures.
+  russia:        { start: 7, end: 5 },
+
   ukraine:       { start: 3, end: 11 },  // limited — season paused but window kept open
   georgia:       { start: 3, end: 11 },
   armenia:       { start: 3, end: 11 },

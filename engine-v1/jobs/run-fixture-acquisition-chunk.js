@@ -1192,10 +1192,7 @@ export async function runFixtureAcquisitionChunk(options = {}) {
 
   // Recovery runs must not clobber the day's main coverage report (the gap
   // report reads it) — write to a recovery-scoped file instead.
-  if (isExplicit) {
-    const recoveryFile = resolveDataPath("coverage-reports", `${opts.dayKey}.recovery.json`);
-    writeJson(recoveryFile, report);
-  } else {
+  if (!isExplicit) {
     writeCoverageReport(opts.dayKey, report);
   }
 
@@ -1243,6 +1240,16 @@ export async function runFixtureAcquisitionChunk(options = {}) {
         ? "no_canonical_rows_accepted"
         : "refresh_downstream_disabled"
     };
+  }
+
+  // Persist explicit recovery evidence only after state/update and
+  // downstream-refresh diagnostics have been finalized.
+  if (isExplicit) {
+    const recoveryFile = resolveDataPath(
+      "coverage-reports",
+      `${opts.dayKey}.recovery.json`
+    );
+    writeJson(recoveryFile, report);
   }
 
   return report;
