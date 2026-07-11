@@ -228,10 +228,29 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Intraday refresh is status-only. Do not commit canonical acquisition
-          # store, coverage reports, ingest cursors, or runtime fixture DB files.
+          # Intraday refresh may persist status/score updates only for canonical
+          # files that were already tracked for the selected day. New acquisition
+          # files, other days, coverage reports and ingest state remain excluded.
+          CANONICAL_STATUS_PATCH="${RUNNER_TEMP}/intraday-canonical-status-${DAY_KEY}.patch"
+
+          git diff --binary --diff-filter=M -- \
+            "data/canonical-fixtures/${DAY_KEY}/" \
+            > "$CANONICAL_STATUS_PATCH"
+
           git restore -- data/canonical-fixtures data/coverage-reports data/ingest-state data/fixtures.json data/fixtures.json.bak 2>/dev/null || true
           git clean -fd -- data/canonical-fixtures data/coverage-reports data/ingest-state 2>/dev/null || true
+
+          if [ -s "$CANONICAL_STATUS_PATCH" ]; then
+            git apply --whitespace=nowarn "$CANONICAL_STATUS_PATCH"
+          fi
+
+          CANONICAL_STATUS_FILES="$(git diff --name-only --diff-filter=M -- "data/canonical-fixtures/${DAY_KEY}/" || true)"
+
+          if [ -n "$CANONICAL_STATUS_FILES" ]; then
+            while IFS= read -r canonical_file; do
+              [ -n "$canonical_file" ] && git add -- "$canonical_file"
+            done <<< "$CANONICAL_STATUS_FILES"
+          fi
 
           test -e "data/deploy-snapshots/${DAY_KEY}/fixtures.json" && git add "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
           test -e "data/deploy-snapshots/${DAY_KEY}/manifest.json" && git add "data/deploy-snapshots/${DAY_KEY}/manifest.json"
@@ -263,9 +282,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/final-results/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/final-results/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"
@@ -448,12 +467,36 @@ jobs:
             }
           }
 
+          const stagedFiles = execFileSync(
+            "git",
+            ["diff", "--cached", "--name-only"],
+            { encoding: "utf8" }
+          )
+            .split(/\r?\n/)
+            .map(value => value.trim())
+            .filter(Boolean);
+
+          const canonicalStatusChanged =
+            stagedFiles.some(filePath =>
+              filePath.startsWith(
+                `data/canonical-fixtures/${day}/`
+              ) &&
+              filePath.endsWith(".json")
+            );
+
+          const finalCommitNeeded =
+            commitNeeded || canonicalStatusChanged;
+
           console.log(JSON.stringify({
             materialChanged,
-            commitNeeded
+            canonicalStatusChanged,
+            commitNeeded: finalCommitNeeded
           }, null, 2));
 
-          fs.appendFileSync(process.env.GITHUB_ENV, `INTRADAY_COMMIT_NEEDED=${commitNeeded ? "true" : "false"}\n`);
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            `INTRADAY_COMMIT_NEEDED=${finalCommitNeeded ? "true" : "false"}\n`
+          );
           NODE
 
       - name: Commit and push snapshot changes
