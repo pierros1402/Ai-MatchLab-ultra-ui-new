@@ -125,7 +125,10 @@ function isRefreshCandidate(row, now = new Date(), options = {}) {
 
   const hoursFromKickoff = (kickoff.getTime() - now.getTime()) / 3600000;
 
-  return preLike && hoursFromKickoff <= 3 && hoursFromKickoff >= -8;
+  // Elapsed time only controls whether the trusted provider is re-checked.
+  // It must never promote a fixture to FT. Keep every past open fixture
+  // eligible until an authoritative provider supplies a terminal state.
+  return preLike && hoursFromKickoff <= 3;
 }
 
 function collectTargetLeagues(dayKey, options = {}) {
@@ -449,6 +452,9 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       matchedRows: 0,
       changedRows: 0,
       appendedRows: 0,
+      exactIdFallbackCandidates: 0,
+      exactIdFallbackMatches: 0,
+      adjacentFetches: [],
       written: false,
       error: null
     };
@@ -467,6 +473,152 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       stats.sourceRows += sourceById.size;
 
       const current = readCanonicalLeague(safeDayKey, slug);
+
+      // ESPN may file a UTC-midnight fixture under the neighbouring
+      // scoreboard date. Only exact canonical ESPN source IDs are recovered.
+      // normalizeSourceRows() still enforces the requested Athens day.
+      const missingExactIds = new Set(
+        (
+          Array.isArray(current?.fixtures)
+            ? current.fixtures
+            : []
+        )
+          .filter(row => {
+            const source = normalizeText(
+              row?.source
+            ).toLowerCase();
+
+            const id = stableFixtureId(row);
+
+            return (
+              source === "espn" &&
+              !isFinalLike(row) &&
+              Boolean(id) &&
+              !sourceById.has(id)
+            );
+          })
+          .map(row => stableFixtureId(row))
+          .filter(Boolean)
+      );
+
+      leagueStats.exactIdFallbackCandidates =
+        missingExactIds.size;
+
+      if (missingExactIds.size > 0) {
+        const adjacentDayKeys = [-1, 1].map(offset => {
+          const date = new Date(
+            `${safeDayKey}T12:00:00.000Z`
+          );
+
+          date.setUTCDate(
+            date.getUTCDate() + offset
+          );
+
+          return date
+            .toISOString()
+            .slice(0, 10);
+        });
+
+        for (
+          const sourceDayKey of adjacentDayKeys
+        ) {
+          const adjacentUrl =
+            ESPN_BASE +
+            "/" +
+            slug +
+            "/scoreboard?dates=" +
+            espnDateFromDayKey(sourceDayKey);
+
+          try {
+            const adjacentSource =
+              await fetchJson(
+                adjacentUrl,
+                "espn_exact_id_adjacent_" +
+                  slug +
+                  "_" +
+                  sourceDayKey
+              );
+
+            const adjacentEvents =
+              Array.isArray(
+                adjacentSource?.events
+              )
+                ? adjacentSource.events
+                : [];
+
+            const adjacentById =
+              normalizeSourceRows(
+                adjacentEvents,
+                slug,
+                safeDayKey
+              );
+
+            let matched = 0;
+
+            for (
+              const id of [
+                ...missingExactIds
+              ]
+            ) {
+              const incoming =
+                adjacentById.get(id);
+
+              if (!incoming) {
+                continue;
+              }
+
+              sourceById.set(
+                id,
+                incoming
+              );
+
+              missingExactIds.delete(id);
+              matched++;
+
+              leagueStats
+                .exactIdFallbackMatches++;
+            }
+
+            leagueStats.sourceEvents +=
+              adjacentEvents.length;
+
+            leagueStats.sourceRows +=
+              matched;
+
+            stats.sourceEventCount +=
+              adjacentEvents.length;
+
+            stats.sourceRows +=
+              matched;
+
+            leagueStats.adjacentFetches.push({
+              dayKey: sourceDayKey,
+              ok: true,
+              events:
+                adjacentEvents.length,
+              matched
+            });
+          }
+          catch (err) {
+            leagueStats.adjacentFetches.push({
+              dayKey: sourceDayKey,
+              ok: false,
+              events: 0,
+              matched: 0,
+              error:
+                err?.message ||
+                String(err)
+            });
+          }
+
+          if (
+            missingExactIds.size === 0
+          ) {
+            break;
+          }
+        }
+      }
+
       let changed = false;
       const matchedIds = new Set();
 
@@ -518,6 +670,16 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           acquisitionProvider: "espn_direct_league_status",
           requestedLeagueSlug: slug,
           requestedDayKey: safeDayKey,
+
+          exactIdAdjacentDateFallback: {
+            candidates:
+              leagueStats.exactIdFallbackCandidates,
+            matches:
+              leagueStats.exactIdFallbackMatches,
+            fetches:
+              leagueStats.adjacentFetches
+          },
+
           mergedAt: new Date().toISOString(),
           mode: "targeted_live_status_refresh"
         });
