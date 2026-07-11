@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
 function normalizeText(value) {
@@ -152,6 +153,58 @@ function collectTargetLeagues(dayKey, options = {}) {
   return [...out.values()].sort((a, b) => a.slug.localeCompare(b.slug));
 }
 
+function collectFlashscoreTargetLeagues(dayKey) {
+  const dir = canonicalDir(dayKey);
+  const out = [];
+
+  if (!fs.existsSync(dir)) {
+    return out;
+  }
+
+  for (
+    const name of fs
+      .readdirSync(dir)
+      .filter(value => value.endsWith(".json"))
+      .sort()
+  ) {
+    const slug = name.replace(/\.json$/i, "");
+    const payload = readCanonicalLeague(dayKey, slug);
+
+    const fixtures = Array.isArray(payload?.fixtures)
+      ? payload.fixtures
+      : [];
+
+    const candidates = fixtures.filter(row => {
+      const source = normalizeText(row?.source).toLowerCase();
+
+      const providerMatchId = normalizeText(
+        row?.sourceId ||
+        row?.sourceMatchId
+      );
+
+      return (
+        source === "flashscore" &&
+        Boolean(providerMatchId) &&
+        !isFinalLike(row)
+      );
+    });
+
+    if (candidates.length === 0) {
+      continue;
+    }
+
+    out.push({
+      slug,
+      candidateCount: candidates.length,
+      fixtureCount: fixtures.length
+    });
+  }
+
+  return out.sort((a, b) =>
+    a.slug.localeCompare(b.slug)
+  );
+}
+
 async function fetchJson(url, label) {
   const res = await fetch(url, {
     headers: {
@@ -253,6 +306,82 @@ function rowStatusSignature(row) {
   });
 }
 
+
+function athensDayFromUtc(value) {
+  const raw = normalizeText(value);
+  if (!raw) return "";
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString("en-CA", {
+    timeZone: "Europe/Athens"
+  });
+}
+
+function isExactFlashscoreFinalRow(row, dayKey) {
+  if (row?.finished !== true) return false;
+  if (normalizeText(row?.statusCode) !== "3") return false;
+
+  const scoreHome = Number(row?.scoreHome);
+  const scoreAway = Number(row?.scoreAway);
+
+  if (!Number.isFinite(scoreHome) || !Number.isFinite(scoreAway)) {
+    return false;
+  }
+
+  const sourceDay = athensDayFromUtc(row?.kickoffUtc);
+
+  return !sourceDay || sourceDay === dayKey;
+}
+
+function buildFlashscoreFinalIncoming(previous, sourceRow) {
+  const providerMatchId = normalizeText(sourceRow?.matchId);
+
+  return {
+    source: "flashscore",
+    sourceId: providerMatchId,
+    sourceMatchId: providerMatchId,
+
+    leagueSlug: previous?.leagueSlug || null,
+    leagueName:
+      previous?.leagueName ||
+      sourceRow?.leagueName ||
+      null,
+
+    dayKey: previous?.dayKey || null,
+    fetchedDayKey:
+      previous?.fetchedDayKey ||
+      previous?.dayKey ||
+      null,
+
+    kickoffUtc:
+      previous?.kickoffUtc ||
+      sourceRow?.kickoffUtc ||
+      null,
+
+    homeTeam:
+      previous?.homeTeam ||
+      sourceRow?.home ||
+      null,
+
+    awayTeam:
+      previous?.awayTeam ||
+      sourceRow?.away ||
+      null,
+
+    scoreHome: Number(sourceRow.scoreHome),
+    scoreAway: Number(sourceRow.scoreAway),
+
+    status: "FT",
+    statusType: "STATUS_FINAL",
+    rawStatus: "STATUS_FINAL",
+    minute: "FT",
+
+    lastSeenAt: new Date().toISOString()
+  };
+}
+
 export async function runLiveStatusRefreshDay(dayKey, options = {}) {
   const safeDayKey = normalizeText(dayKey);
 
@@ -262,6 +391,8 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
 
   const startedAt = new Date().toISOString();
   const targetLeagues = collectTargetLeagues(safeDayKey, options);
+  const flashscoreTargetLeagues =
+    collectFlashscoreTargetLeagues(safeDayKey);
 
   const stats = {
     ok: true,
@@ -282,6 +413,25 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     errors: [],
     // Fixtures whose status changed this run — used by intraday to patch details.basic
     changedFixtures: []
+  };
+
+
+  stats.flashscoreFinalRefresh = {
+    attempted: false,
+    ok: false,
+    offsets: [0],
+    targetLeagueCount: flashscoreTargetLeagues.length,
+    targetLeagues: flashscoreTargetLeagues,
+    sourceRows: 0,
+    finishedRows: 0,
+    exactIdCandidates: 0,
+    exactIdMatches: 0,
+    changedRows: 0,
+    writtenLeagueCount: 0,
+    attempts: [],
+    missingFromFeedSourceIds: [],
+    notFinishedSourceIds: [],
+    error: null
   };
 
   for (const target of targetLeagues) {
@@ -382,6 +532,196 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     }
 
     stats.byLeague.push(leagueStats);
+  }
+
+
+  const flashscoreStats = stats.flashscoreFinalRefresh;
+
+  if (flashscoreTargetLeagues.length > 0) {
+    flashscoreStats.attempted = true;
+
+    try {
+      const feed = await fetchFlashscoreFixtures({
+        offsets: [0]
+      });
+
+      const sourceRows = Array.isArray(feed?.rows)
+        ? feed.rows
+        : [];
+
+      const finishedRows = sourceRows.filter(row =>
+        isExactFlashscoreFinalRow(row, safeDayKey)
+      );
+
+      flashscoreStats.ok = Boolean(feed?.ok);
+      flashscoreStats.sourceRows = sourceRows.length;
+      flashscoreStats.finishedRows = finishedRows.length;
+      flashscoreStats.attempts = Array.isArray(feed?.attempts)
+        ? feed.attempts
+        : [];
+
+      const sourceByProviderId = new Map();
+
+      for (const row of sourceRows) {
+        const providerMatchId = normalizeText(row?.matchId);
+        if (!providerMatchId) continue;
+
+        sourceByProviderId.set(providerMatchId, row);
+      }
+
+      const finalByProviderId = new Map();
+
+      for (const row of finishedRows) {
+        const providerMatchId = normalizeText(row?.matchId);
+        if (!providerMatchId) continue;
+
+        finalByProviderId.set(providerMatchId, row);
+      }
+
+      const missingFromFeedSourceIds = new Set();
+      const notFinishedSourceIds = new Set();
+
+      const writtenLeagueSlugs = new Set(
+        stats.byLeague
+          .filter(row => row?.written)
+          .map(row => normalizeText(row?.slug))
+          .filter(Boolean)
+      );
+
+      for (const target of flashscoreTargetLeagues) {
+        const slug = target.slug;
+        const current = readCanonicalLeague(safeDayKey, slug);
+
+        const currentFixtures = Array.isArray(current?.fixtures)
+          ? current.fixtures
+          : [];
+
+        let leagueChanged = false;
+        let leagueChangedRows = 0;
+
+        const nextFixtures = currentFixtures.map(row => {
+          const canonicalSource = normalizeText(row?.source)
+            .toLowerCase();
+
+          if (
+            canonicalSource !== "flashscore" ||
+            isFinalLike(row)
+          ) {
+            return row;
+          }
+
+          const providerMatchId = normalizeText(
+            row?.sourceId ||
+            row?.sourceMatchId
+          );
+
+          if (!providerMatchId) {
+            return row;
+          }
+
+          flashscoreStats.exactIdCandidates++;
+
+          const observedRow =
+            sourceByProviderId.get(providerMatchId);
+
+          if (!observedRow) {
+            missingFromFeedSourceIds.add(providerMatchId);
+            return row;
+          }
+
+          const sourceRow =
+            finalByProviderId.get(providerMatchId);
+
+          if (!sourceRow) {
+            notFinishedSourceIds.add(providerMatchId);
+            return row;
+          }
+
+          flashscoreStats.exactIdMatches++;
+
+          const merged = mergeStatusRow(
+            row,
+            buildFlashscoreFinalIncoming(row, sourceRow)
+          );
+
+          const before = rowStatusSignature(row);
+          const after = rowStatusSignature(merged);
+
+          if (before === after) {
+            return row;
+          }
+
+          leagueChanged = true;
+          leagueChangedRows++;
+
+          flashscoreStats.changedRows++;
+          stats.changedRows++;
+          stats.changedFixtures.push(merged);
+
+          return merged;
+        });
+
+        if (!leagueChanged) {
+          continue;
+        }
+
+        const deduped = dedupeLeagueDayFixtures(
+          nextFixtures,
+          { slug }
+        );
+
+        const previousSourceMeta =
+          current?.sourceMeta &&
+          typeof current.sourceMeta === "object"
+            ? current.sourceMeta
+            : {};
+
+        writeCanonicalLeague(
+          safeDayKey,
+          slug,
+          deduped.rows,
+          {
+            ...previousSourceMeta,
+
+            flashscoreFinalRefresh: {
+              matchedBy: "exact_source_id",
+              requestedDayKey: safeDayKey,
+              offsets: [0],
+              changedRows: leagueChangedRows,
+              mergedAt: new Date().toISOString()
+            }
+          }
+        );
+
+        writtenLeagueSlugs.add(slug);
+        flashscoreStats.writtenLeagueCount++;
+      }
+
+      stats.writtenLeagueCount =
+        writtenLeagueSlugs.size;
+
+      flashscoreStats.missingFromFeedSourceIds = [
+        ...missingFromFeedSourceIds
+      ]
+        .sort()
+        .slice(0, 100);
+
+      flashscoreStats.notFinishedSourceIds = [
+        ...notFinishedSourceIds
+      ]
+        .sort()
+        .slice(0, 100);
+    } catch (err) {
+      flashscoreStats.ok = false;
+      flashscoreStats.error = String(
+        err?.message || err
+      );
+
+      stats.errors.push({
+        slug: "flashscore_exact_final_refresh",
+        error: flashscoreStats.error
+      });
+    }
   }
 
   stats.finishedAt = new Date().toISOString();
