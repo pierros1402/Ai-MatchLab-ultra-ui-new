@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-11",
-  "generatedAt": "2026-07-11T04:13:27.143Z",
+  "generatedAt": "2026-07-11T19:20:14.656Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
-    "info": 2
+    "info": 1
   },
   "alert": false,
   "alertCounts": {
@@ -14,12 +14,12 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 4,
+  "activeIssueCount": 3,
   "actionableIssueCount": 2,
   "newIssueCount": 0,
   "newActionableIssueCount": 0,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 4,
+  "persistentIssueCount": 3,
   "activeIssues": [
     {
       "severity": "warning",
@@ -50,17 +50,6 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
-      }
-    },
-    {
-      "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B observation picks are still unresolved.",
-      "details": {
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
       }
     },
     {
@@ -148,15 +137,13 @@
   "resolvedIssues": [
     {
       "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
+      "source": "build-report",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B observation picks are still unresolved.",
       "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-11.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
       }
     }
   ],
@@ -194,17 +181,6 @@
     },
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B observation picks are still unresolved.",
-      "details": {
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
       "message": "Value Plan A/B comparison artifact is available.",
@@ -233,12 +209,12 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 0,
+            "settled": 1,
             "wins": 0,
-            "losses": 0,
-            "unresolved": 1,
+            "losses": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
