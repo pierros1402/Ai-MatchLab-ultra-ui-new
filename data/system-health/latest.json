@@ -1,26 +1,39 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
-  "dayKey": "2026-07-11",
-  "generatedAt": "2026-07-11T19:20:14.656Z",
+  "dayKey": "2026-07-12",
+  "generatedAt": "2026-07-11T20:06:12.912Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
-    "info": 1
+    "info": 3
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 3,
+  "activeIssueCount": 5,
   "actionableIssueCount": 2,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
+  "newIssueCount": 3,
+  "newActionableIssueCount": 1,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 3,
+  "persistentIssueCount": 2,
   "activeIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-07-12.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
     {
       "severity": "warning",
       "source": "build-report",
@@ -29,15 +42,15 @@
       "details": {
         "slugs": [
           "usa.nwsl",
-          "club.friendly",
-          "arg.3",
           "sco.cis",
           "usa.usl.l1.cup",
           "can.w.nsl",
+          "club.friendly",
           "uefa.euro.u19",
-          "chi.copa_chi"
+          "chi.copa_chi",
+          "arg.copa"
         ],
-        "raw": "acquisition_skipped_slugs:usa.nwsl,club.friendly,arg.3,sco.cis,usa.usl.l1.cup,can.w.nsl,uefa.euro.u19,chi.copa_chi",
+        "raw": "acquisition_skipped_slugs:usa.nwsl,sco.cis,usa.usl.l1.cup,can.w.nsl,club.friendly,uefa.euro.u19,chi.copa_chi,arg.copa",
         "contextOnly": false
       }
     },
@@ -50,6 +63,17 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B observation picks are still unresolved.",
+      "details": {
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
       }
     },
     {
@@ -82,12 +106,12 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 1,
+            "settled": 0,
             "wins": 0,
-            "losses": 1,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -108,15 +132,15 @@
       "details": {
         "slugs": [
           "usa.nwsl",
-          "club.friendly",
-          "arg.3",
           "sco.cis",
           "usa.usl.l1.cup",
           "can.w.nsl",
+          "club.friendly",
           "uefa.euro.u19",
-          "chi.copa_chi"
+          "chi.copa_chi",
+          "arg.copa"
         ],
-        "raw": "acquisition_skipped_slugs:usa.nwsl,club.friendly,arg.3,sco.cis,usa.usl.l1.cup,can.w.nsl,uefa.euro.u19,chi.copa_chi",
+        "raw": "acquisition_skipped_slugs:usa.nwsl,sco.cis,usa.usl.l1.cup,can.w.nsl,club.friendly,uefa.euro.u19,chi.copa_chi,arg.copa",
         "contextOnly": false
       }
     },
@@ -132,9 +156,40 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-07-12.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "usa.nwsl",
+          "sco.cis",
+          "usa.usl.l1.cup",
+          "can.w.nsl",
+          "club.friendly",
+          "uefa.euro.u19",
+          "chi.copa_chi",
+          "arg.copa"
+        ],
+        "raw": "acquisition_skipped_slugs:usa.nwsl,sco.cis,usa.usl.l1.cup,can.w.nsl,club.friendly,uefa.euro.u19,chi.copa_chi,arg.copa",
+        "contextOnly": false
+      }
+    },
     {
       "severity": "info",
       "source": "build-report",
@@ -147,7 +202,29 @@
       }
     }
   ],
-  "persistentIssues": [
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "usa.nwsl",
+          "sco.cis",
+          "usa.usl.l1.cup",
+          "can.w.nsl",
+          "club.friendly",
+          "uefa.euro.u19",
+          "chi.copa_chi",
+          "arg.copa"
+        ],
+        "raw": "acquisition_skipped_slugs:usa.nwsl,sco.cis,usa.usl.l1.cup,can.w.nsl,club.friendly,uefa.euro.u19,chi.copa_chi,arg.copa",
+        "contextOnly": false
+      }
+    }
+  ],
+  "resolvedIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -167,7 +244,9 @@
         "raw": "acquisition_skipped_slugs:usa.nwsl,club.friendly,arg.3,sco.cis,usa.usl.l1.cup,can.w.nsl,uefa.euro.u19,chi.copa_chi",
         "contextOnly": false
       }
-    },
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -209,12 +288,12 @@
           "summary": {
             "picks": 1,
             "uniqueMatches": 1,
-            "settled": 1,
+            "settled": 0,
             "wins": 0,
-            "losses": 1,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -226,5 +305,5 @@
       }
     }
   ],
-  "latestForDay": "2026-07-11"
+  "latestForDay": "2026-07-12"
 }
