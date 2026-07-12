@@ -1,39 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-12",
-  "generatedAt": "2026-07-11T20:06:12.912Z",
+  "generatedAt": "2026-07-12T00:45:40.997Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
-    "info": 3
+    "info": 2
   },
-  "alert": true,
+  "alert": false,
   "alertCounts": {
     "error": 0,
-    "warning": 1,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 5,
+  "activeIssueCount": 4,
   "actionableIssueCount": 2,
-  "newIssueCount": 3,
-  "newActionableIssueCount": 1,
+  "newIssueCount": 0,
+  "newActionableIssueCount": 0,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 2,
+  "persistentIssueCount": 4,
   "activeIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-12.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
     {
       "severity": "warning",
       "source": "build-report",
@@ -156,7 +143,9 @@
       }
     }
   ],
-  "newIssues": [
+  "newIssues": [],
+  "newActionableIssues": [],
+  "resolvedIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -169,7 +158,9 @@
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
       }
-    },
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -188,6 +179,17 @@
         ],
         "raw": "acquisition_skipped_slugs:usa.nwsl,sco.cis,usa.usl.l1.cup,can.w.nsl,club.friendly,uefa.euro.u19,chi.copa_chi,arg.copa",
         "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -199,63 +201,6 @@
         "picks": 1,
         "settled": 0,
         "unresolved": 1
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "usa.nwsl",
-          "sco.cis",
-          "usa.usl.l1.cup",
-          "can.w.nsl",
-          "club.friendly",
-          "uefa.euro.u19",
-          "chi.copa_chi",
-          "arg.copa"
-        ],
-        "raw": "acquisition_skipped_slugs:usa.nwsl,sco.cis,usa.usl.l1.cup,can.w.nsl,club.friendly,uefa.euro.u19,chi.copa_chi,arg.copa",
-        "contextOnly": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "usa.nwsl",
-          "club.friendly",
-          "arg.3",
-          "sco.cis",
-          "usa.usl.l1.cup",
-          "can.w.nsl",
-          "uefa.euro.u19",
-          "chi.copa_chi"
-        ],
-        "raw": "acquisition_skipped_slugs:usa.nwsl,club.friendly,arg.3,sco.cis,usa.usl.l1.cup,can.w.nsl,uefa.euro.u19,chi.copa_chi",
-        "contextOnly": false
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
