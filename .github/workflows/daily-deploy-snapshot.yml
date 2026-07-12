@@ -559,6 +559,19 @@ jobs:
           bash tools/git-push-rebase-retry.sh
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
 
+      - name: Notify Render to mirror the fresh snapshot (no deploy)
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true'
+        shell: bash
+        run: |
+          # Runtime snapshot sync: the engine pulls today's (and the finalized
+          # previous day's) artifacts from GitHub — zero Render pipeline minutes.
+          # -m 150 tolerates a free-instance cold start; failures never fail
+          # the build (the boot self-sync catches up on next wake anyway).
+          for D in "${DAY_KEY}" "${FINALIZE_DAY_KEY}"; do
+            echo "Requesting snapshot sync for ${D}..."
+            curl -fsS -m 150 "https://ai-matchlab-engine.onrender.com/ops/sync-snapshot?date=${D}" || echo "sync request for ${D} failed (non-fatal)"
+          done
+
       - name: Skip Render redeploy for daily snapshot
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
         run: echo "Daily snapshot committed, but Render redeploy is disabled for this run."

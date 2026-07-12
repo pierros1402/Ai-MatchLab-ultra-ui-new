@@ -24,6 +24,7 @@ import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
 import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./jobs/fetch-oddsapiio-odds.js";
+import { syncDeploySnapshotFromGithub } from "./jobs/sync-deploy-snapshot-from-github.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
@@ -994,6 +995,27 @@ app.get("/ops/value-build-async", (req, res) => {
     created,
     job: publicJob(job)
   });
+});
+
+// Runtime snapshot mirror: pull the day's deploy-snapshot artifacts straight
+// from GitHub into the local data dir — no Render build/deploy consumed.
+// Enabled only on Render (or with ALLOW_SNAPSHOT_SYNC=true) so a local dev
+// engine can't clobber its own freshly-generated data with the repo state.
+function snapshotSyncEnabled() {
+  return isRenderRuntime() || truthyEnv(process.env.ALLOW_SNAPSHOT_SYNC);
+}
+
+app.get("/ops/sync-snapshot", async (req, res) => {
+  if (!snapshotSyncEnabled()) {
+    return res.status(403).json({ ok: false, reason: "snapshot_sync_disabled_outside_render" });
+  }
+  const dayKey = String(req.query.date || athensDayKey());
+  try {
+    const summary = await syncDeploySnapshotFromGithub(dayKey);
+    res.status(summary.ok ? 200 : 502).json(summary);
+  } catch (err) {
+    res.status(500).json({ ok: false, dayKey, error: String(err?.message || err) });
+  }
 });
 
 app.get("/deploy-snapshot/latest", (_req, res) => {
@@ -3542,4 +3564,15 @@ if (command === "discover-window") {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`engine-v1 listening on ${PORT}`);
+
+  // Boot self-sync (Render only): a free instance that spun down and woke up
+  // serves the snapshot frozen at deploy time — catch up from GitHub so the
+  // UI sees the current day without a redeploy. Fire-and-forget; a failure
+  // just leaves the deploy-time snapshot in place.
+  if (snapshotSyncEnabled()) {
+    setTimeout(() => {
+      syncDeploySnapshotFromGithub(athensDayKey())
+        .catch(err => console.error("[snapshot-sync] boot sync failed:", String(err?.message || err)));
+    }, 3000);
+  }
 });

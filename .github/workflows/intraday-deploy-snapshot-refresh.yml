@@ -512,6 +512,16 @@ jobs:
 
           git commit -m "Intraday refresh deploy snapshot for ${DAY_KEY}"
           bash tools/git-push-rebase-retry.sh
+          echo "INTRADAY_SNAPSHOT_PUSHED=true" >> "$GITHUB_ENV"
+
+      - name: Notify Render to mirror the fresh snapshot (no deploy)
+        if: env.SKIP_BUILD != 'true' && env.INTRADAY_SNAPSHOT_PUSHED == 'true'
+        shell: bash
+        run: |
+          # Runtime snapshot sync — zero Render pipeline minutes (see the
+          # daily workflow for details). Non-fatal by design.
+          echo "Requesting snapshot sync for ${DAY_KEY}..."
+          curl -fsS -m 150 "https://ai-matchlab-engine.onrender.com/ops/sync-snapshot?date=${DAY_KEY}" || echo "sync request failed (non-fatal)"
 
       - name: Automatic Render redeploy disabled by deploy-budget firewall
         if: ${{ false }}
