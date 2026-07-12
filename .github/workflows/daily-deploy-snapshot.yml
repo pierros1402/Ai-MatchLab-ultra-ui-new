@@ -106,13 +106,11 @@ jobs:
             echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
             echo "Render redeploy allowed for this manual daily run."
           elif [ "$EVENT_NAME" = "schedule" ]; then
-            # Scheduled runs now DEPLOY: the pre-built snapshot (tomorrow in the
-            # evening window, today in the morning catch-up) must reach the live
-            # engine's disk so the new day's matches — including 00:00-05:00
-            # kickoffs — are served at day-change without waiting for the first
-            # intraday deploy at 07:00 Athens (by when early matches are over).
-            echo "ALLOW_RENDER_DEPLOY=true" >> "$GITHUB_ENV"
-            echo "Render redeploy enabled for scheduled pre-build/catch-up run."
+            # Deploy-budget firewall: scheduled data builds continue to commit
+            # canonical and snapshot artifacts, but Render deploys require an
+            # explicit manual workflow or triggerRender=true dispatch.
+            echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
+            echo "Render redeploy disabled for scheduled data build."
           else
             echo "ALLOW_RENDER_DEPLOY=false" >> "$GITHUB_ENV"
             echo "Render redeploy disabled for this daily run."

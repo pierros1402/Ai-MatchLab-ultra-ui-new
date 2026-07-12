@@ -513,8 +513,8 @@ jobs:
           git commit -m "Intraday refresh deploy snapshot for ${DAY_KEY}"
           bash tools/git-push-rebase-retry.sh
 
-      - name: Trigger Render redeploy
-        if: env.SKIP_BUILD != 'true' && env.INTRADAY_COMMIT_NEEDED == 'true'
+      - name: Automatic Render redeploy disabled by deploy-budget firewall
+        if: ${{ false }}
         shell: bash
         env:
           RENDER_ENGINE_DEPLOY_HOOK_URL: ${{ secrets.RENDER_ENGINE_DEPLOY_HOOK_URL }}
