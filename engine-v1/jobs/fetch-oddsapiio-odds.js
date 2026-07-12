@@ -376,7 +376,11 @@ export async function fetchOddsApiIoDay(date, budget = null) {
     }
 
     const c = toFetch[i++];
-    const oddsJ = await apiGet(`/odds?eventId=${encodeURIComponent(c.eventId)}&bookmakers=${BOOKMAKERS_PARAM}`, budget);
+    // No bookmakers param here: requesting books beyond the plan's selection
+    // 403s (free tier = 2 selected bookmakers — validated 2026-07-12). Omitting
+    // it returns whatever the account allows; classifyBook sorts them into
+    // panels at ingest.
+    const oddsJ = await apiGet(`/odds?eventId=${encodeURIComponent(c.eventId)}`, budget);
     if (!oddsJ) continue;
     // Single-event responses may be one object (with .bookmakers) or an array.
     const evs = Array.isArray(oddsJ) ? oddsJ : (oddsJ?.bookmakers ? [oddsJ] : Object.values(oddsJ || {}));
