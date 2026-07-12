@@ -1,0 +1,35 @@
+# One-off utility: set the odds-api.io account's selected bookmakers using the
+# repo's ODDS_API_IO_KEY secret — avoids any manual key handling. Dispatch it
+# from the Actions tab (or `gh workflow run`) whenever the selection should
+# change; the free tier serves only the selected bookmakers.
+name: Odds bookmaker selection
+
+on:
+  workflow_dispatch:
+    inputs:
+      bookmakers:
+        description: "Comma-separated bookmaker names (must match GET /v3/bookmakers exactly)"
+        required: false
+        default: "Bet365,Stoiximan"
+
+jobs:
+  select:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Select bookmakers and show the result
+        env:
+          KEY: ${{ secrets.ODDS_API_IO_KEY }}
+          BOOKS: ${{ inputs.bookmakers }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${KEY:-}" ]; then echo "ODDS_API_IO_KEY secret is not set"; exit 1; fi
+
+          ENC_BOOKS="$(python3 -c 'import urllib.parse,os; print(urllib.parse.quote(os.environ["BOOKS"]))')"
+
+          echo "PUT /bookmakers/selected/select (${BOOKS})..."
+          curl -sS -X PUT "https://api.odds-api.io/v3/bookmakers/selected/select?bookmakers=${ENC_BOOKS}&apiKey=${KEY}" || echo "(PUT request failed)"
+          echo
+          echo "GET /bookmakers/selected:"
+          curl -sS "https://api.odds-api.io/v3/bookmakers/selected?apiKey=${KEY}" || echo "(GET request failed)"
+          echo
