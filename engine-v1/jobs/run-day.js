@@ -139,7 +139,7 @@ export async function runDay(dayKey) {
     const rollover = !fsNode.existsSync(priorsFile);   // new season → priors not built yet
     const newDepth = arch.pastSeasonsWritten > 0;      // a completed season newly archived
     log("history-archive-refresh", {
-      currentSeason: arch.currentSeason,
+      seasons: arch.seasons,
       currentFilesWritten: arch.currentSeasonFilesWritten,
       pastSeasonsWritten: arch.pastSeasonsWritten,
     });
@@ -148,7 +148,7 @@ export async function runDay(dayKey) {
       log("model-priors-rebuild", {
         reason: rollover ? "season_rollover" : "new_coverage",
         target: priors.targetSeason,
-        sources: priors.sourceSeasons.join(","),
+        sources: Array.isArray(priors.sourceSeasons) ? priors.sourceSeasons.join(",") : priors.sourceSeasons,
         teamPriors: priors.teamPriors,
         leaguePriors: priors.leaguePriors,
       });

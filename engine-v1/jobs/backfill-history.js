@@ -36,13 +36,20 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Label-aware windows: "YYYY-YYYY" (cross-year) spans Jul 1 → Jun 30;
+// a plain "YYYY" (calendar-year league, see core/season-model.js) spans the
+// calendar year.
 function seasonStartDay(season) {
-  const [startYear] = String(season).split("-");
+  const s = String(season);
+  if (!s.includes("-")) return `${s}-01-01`;
+  const [startYear] = s.split("-");
   return `${startYear}-07-01`;
 }
 
 function seasonEndDay(season) {
-  const [, endYear] = String(season).split("-");
+  const s = String(season);
+  if (!s.includes("-")) return `${s}-12-31`;
+  const [, endYear] = s.split("-");
   return `${endYear}-06-30`;
 }
 

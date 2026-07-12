@@ -2,16 +2,18 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
-import { currentSeason, priorSeasons } from "../core/season.js";
+import { currentSeason } from "../core/season.js";
+import { priorArchiveSeasons } from "../core/season-model.js";
 
 const DATA_DIR = resolveDataPath();
 const ARCHIVE_ROOT = path.join(DATA_DIR, "history-archive");
 const OUT_DIR = path.join(DATA_DIR, "model-priors");
 
-// Season set is derived (season.js), not hardcoded, so priors auto-advance when a
-// season ends. CLI args still override for manual/backfill runs.
+// The output file keeps the GLOBAL season label (value-engine reads
+// model-priors/{currentSeason}.json); the SOURCE season set is per-league —
+// calendar-year leagues read "YYYY" archive files, cross-year "YYYY-YYYY"
+// (season-model.js). CLI args still override for manual/backfill runs.
 const DEFAULT_TARGET_SEASON = currentSeason();
-const DEFAULT_SOURCE_SEASONS = priorSeasons(5);
 
 function safeNum(v, d = 0) {
   const n = Number(v);
@@ -287,18 +289,19 @@ function buildMatchupPriors(matches) {
   return out;
 }
 
-async function collectArchiveMatches(sourceSeasons) {
+async function collectArchiveMatches(sourceSeasonsOverride) {
   const leagueDirs = await listLeagueDirs();
   const allMatches = [];
   const meta = {
     leaguesScanned: 0,
     filesRead: 0,
     matchesLoaded: 0,
-    seasons: sourceSeasons
+    seasons: sourceSeasonsOverride || "per-league"
   };
 
   for (const slug of leagueDirs) {
     meta.leaguesScanned += 1;
+    const sourceSeasons = sourceSeasonsOverride || priorArchiveSeasons(slug, 5);
 
     for (const season of sourceSeasons) {
       const filePath = path.join(ARCHIVE_ROOT, slug, `${season}.json`);
@@ -322,7 +325,7 @@ export async function buildModelPriors(opts = {}) {
   const targetSeason = opts.targetSeason || DEFAULT_TARGET_SEASON;
   const sourceSeasons = Array.isArray(opts.sourceSeasons) && opts.sourceSeasons.length
     ? opts.sourceSeasons
-    : DEFAULT_SOURCE_SEASONS;
+    : null; // per-league (season-model.js)
 
   const { allMatches, meta } = await collectArchiveMatches(sourceSeasons);
 
@@ -332,7 +335,7 @@ export async function buildModelPriors(opts = {}) {
 
   const out = {
     targetSeason,
-    sourceSeasons,
+    sourceSeasons: sourceSeasons || "per-league",
     createdAt: new Date().toISOString(),
     meta: {
       ...meta,
@@ -351,7 +354,7 @@ export async function buildModelPriors(opts = {}) {
   return {
     ok: true,
     targetSeason,
-    sourceSeasons,
+    sourceSeasons: sourceSeasons || "per-league",
     outFile,
     archiveMatches: meta.matchesLoaded,
     teamPriors: Object.keys(teamPriors).length,
@@ -365,11 +368,11 @@ if (isCli) {
   const targetSeason = process.argv[2] || DEFAULT_TARGET_SEASON;
   const sourceSeasons = process.argv[3]
     ? process.argv[3].split(",").map(s => s.trim()).filter(Boolean)
-    : DEFAULT_SOURCE_SEASONS;
+    : null; // per-league (season-model.js)
 
   const r = await buildModelPriors({ targetSeason, sourceSeasons });
   console.log("[priors] targetSeason:", r.targetSeason);
-  console.log("[priors] sourceSeasons:", r.sourceSeasons.join(", "));
+  console.log("[priors] sourceSeasons:", Array.isArray(r.sourceSeasons) ? r.sourceSeasons.join(", ") : r.sourceSeasons);
   console.log("[priors] archive matches:", r.archiveMatches);
   console.log("[priors] wrote:", r.outFile);
   console.log("[priors] teamPriors:", r.teamPriors);

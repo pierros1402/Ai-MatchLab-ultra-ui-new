@@ -83,7 +83,14 @@ const COUNTRY_WINDOWS = {
   ukraine:       { start: 3, end: 11 },  // limited — season paused but window kept open
   georgia:       { start: 3, end: 11 },
   armenia:       { start: 3, end: 11 },
-  azerbaijan:    { start: 3, end: 11 },
+
+  // Azerbaijan runs a European autumn→spring season (empirical check 2026-07-12:
+  // 25% of results in Dec–Feb, 0% in Jun–Jul) — NOT the post-Soviet summer rhythm.
+  azerbaijan:    { start: 8, end: 5 },
+
+  // South Africa also runs autumn→spring (Aug–May); without this override the
+  // southern-hemisphere default would wrongly mark it calendar-year.
+  south_africa:  { start: 8, end: 5 },
 
   // North America
   usa:    { start: 2, end: 11 },

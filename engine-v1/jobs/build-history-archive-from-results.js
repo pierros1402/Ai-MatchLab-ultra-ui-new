@@ -27,13 +27,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { ALL_LEAGUE_SEEDS } from "../config.js";
 import { resolveDataPath } from "../storage/data-root.js";
-import { currentSeason, priorSeasons } from "../core/season.js";
-
-// Seasons that feed the priors (build-model-priors sources 2021-22 … 2024-25) plus
-// the current one for completeness. Older seasons in results are ignored (5y cap).
-// The 5 completed seasons + the current one — derived so it rolls forward
-// automatically (season.js), instead of a frozen literal list.
-const DEFAULT_SEASONS = [...priorSeasons(5), currentSeason()];
+import {
+  archiveSeasonForDate,
+  archiveSeasonLabels,
+  currentArchiveSeason
+} from "../core/season-model.js";
 
 const RESULTS_DIR = resolveDataPath("league-memory", "results");
 const ARCHIVE_ROOT = resolveDataPath("history-archive");
@@ -50,17 +48,6 @@ function ensureDir(dir) {
 function safeNum(v, fallback = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
-}
-
-// Football season label for a date: runs Aug→May, split at July 1. A match in
-// Jan-Jun belongs to the season that STARTED the previous calendar year.
-function seasonForDate(dateStr) {
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return null;
-  const y = d.getUTCFullYear();
-  const m = d.getUTCMonth() + 1; // 1-12
-  const startYear = m >= 7 ? y : y - 1;
-  return `${startYear}-${startYear + 1}`;
 }
 
 function dayKeyFromDate(dateStr) {
@@ -99,7 +86,7 @@ function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
       if (e.gf == null || e.ga == null) continue;
       if (!e.date) continue;
 
-      const season = seasonForDate(e.date);
+      const season = archiveSeasonForDate(slug, e.date);
       if (!season || !seasonsSet.has(season)) continue;
 
       const scoreHome = safeNum(e.gf);
@@ -135,8 +122,10 @@ function bucketLeagueMatches(slug, resultsPayload, seasonsSet) {
 }
 
 export function buildHistoryArchiveFromResults(opts = {}) {
-  const seasons = Array.isArray(opts.seasons) && opts.seasons.length ? opts.seasons : DEFAULT_SEASONS;
-  const seasonsSet = new Set(seasons);
+  // Explicit opts.seasons (manual/backfill runs) applies to every league as
+  // before; the default is PER-LEAGUE — calendar-year leagues get "YYYY"
+  // labels, cross-year leagues the legacy "YYYY-YYYY" July-split labels.
+  const seasonsOverride = Array.isArray(opts.seasons) && opts.seasons.length ? opts.seasons : null;
   const overwrite = Boolean(opts.overwrite);
   // Daily mode: always rewrite the CURRENT season (it grows every matchday) but
   // leave completed seasons untouched once written (they are stable history).
@@ -149,7 +138,6 @@ export function buildHistoryArchiveFromResults(opts = {}) {
   // Used after the cross-source results dedup to refresh the inflated archives
   // without clobbering single-source ESPN history that had no duplicates.
   const overwriteSource = opts.overwriteSource || null;
-  const curSeason = currentSeason();
   const leagues = Array.isArray(opts.leagues) && opts.leagues.length ? opts.leagues : ALL_LEAGUE_SEEDS.slice();
 
   ensureDir(ARCHIVE_ROOT);
@@ -157,9 +145,8 @@ export function buildHistoryArchiveFromResults(opts = {}) {
   const summary = {
     ok: true,
     startedAt: Date.now(),
-    seasons,
+    seasons: seasonsOverride || "per-league",
     overwrite,
-    currentSeason: curSeason,
     leaguesConsidered: leagues.length,
     leaguesWithResults: 0,
     filesWritten: 0,
@@ -177,6 +164,9 @@ export function buildHistoryArchiveFromResults(opts = {}) {
     if (!payload?.teams) continue;
 
     summary.leaguesWithResults += 1;
+    const seasons = seasonsOverride || archiveSeasonLabels(slug);
+    const seasonsSet = new Set(seasons);
+    const curSeason = currentArchiveSeason(slug);
     const bySeason = bucketLeagueMatches(slug, payload, seasonsSet);
 
     const leagueDir = ensureDir(path.join(ARCHIVE_ROOT, slug));
