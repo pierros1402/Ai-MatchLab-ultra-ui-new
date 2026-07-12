@@ -13,8 +13,9 @@
  *    They never feed value/assessment.
  *
  * Budget: the free tier allows ~100 requests/hour. One prefetch run costs
- * 1 × /events per day + ceil(matched/10) × /odds/multi per day (multi
- * fetches 10 events per request). A run-level budget object caps the total
+ * 1 × /events per day + the odds requests: batched /odds/multi (10 events
+ * per request) when the plan allows it, per-event /odds otherwise — the free
+ * tier 403s the multi endpoint. A run-level budget object caps the total
  * (default 80) and is shared across D0 + the D+1..D+6 prefetch; priority
  * leagues are fetched first when the cap bites. An 8h per-match refresh
  * gate keeps the later nightly cycle runs nearly free.
@@ -97,7 +98,7 @@ export function createOddsApiIoBudget(max = MAX_REQUESTS_PER_RUN) {
   return { remaining: max, used: 0, limitHit: false };
 }
 
-async function apiGet(pathAndQuery, budget) {
+async function apiGet(pathAndQuery, budget, meta = {}) {
   if (budget.remaining <= 0) return null;
   budget.remaining--;
   budget.used++;
@@ -107,6 +108,7 @@ async function apiGet(pathAndQuery, budget) {
   const url = `${BASE}${pathAndQuery}${sep}apiKey=${KEY}`;
   try {
     const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    meta.status = r.status;
     if (r.status === 429) {
       budget.remaining = 0;
       budget.limitHit = true;
@@ -120,6 +122,14 @@ async function apiGet(pathAndQuery, budget) {
     return null;
   }
 }
+
+// The batch endpoint is not available on every plan (the free tier 403s it —
+// observed on the first keyed run, 2026-07-12). Once detected, the whole
+// process falls back to per-event /odds requests: 1 request per match instead
+// of per 10, so the run budget covers fewer matches — priority leagues are
+// already fetched first, and the 8h refresh gate tops the rest up across
+// later cycles.
+let oddsMultiBlocked = false;
 
 // ─── Market parsing ───────────────────────────────────────────────────────────
 // odds-api.io /odds event shape:
@@ -325,27 +335,54 @@ export async function fetchOddsApiIoDay(date, budget = null) {
   log(`${date}: matched ${toFetch.length}/${stale.length} fixtures`);
   if (!toFetch.length) return { ok: true, date, fetched: 0, skipped, matched: 0 };
 
-  // 3) Odds in chunks of 10 (one /odds/multi request each)
+  // 3) Odds: /odds/multi batches (10 events/request) when the plan allows it,
+  //    per-event /odds otherwise (see oddsMultiBlocked above).
   let fetched = 0;
-  for (let i = 0; i < toFetch.length; i += 10) {
+
+  const ingest = (ev) => {
+    const target = byEventId.get(String(ev?.id));
+    if (!target) return;
+    const merged = ingestOddsEvent(cache, target.matchId, target.home, target.away, ev);
+    if (!merged) return;
+    const books1x2 = Object.values(merged["1X2"] || {}).reduce((s, g) => s + Object.keys(g).length, 0);
+    log(`  ${target.home} vs ${target.away}: ${books1x2} books [${Object.keys(merged).join(",")}]`);
+    fetched++;
+  };
+
+  for (let i = 0; i < toFetch.length; ) {
     if (budget.remaining <= 0) {
       log(`${date}: budget exhausted after ${fetched} matches — rest next cycle`);
       break;
     }
-    const chunk = toFetch.slice(i, i + 10);
-    const ids = chunk.map(c => c.eventId).join(",");
-    const oddsJ = await apiGet(`/odds/multi?eventIds=${encodeURIComponent(ids)}&bookmakers=${BOOKMAKERS_PARAM}`, budget);
-    if (!oddsJ) continue;
 
-    const oddsEvents = Array.isArray(oddsJ) ? oddsJ : Object.values(oddsJ || {});
-    for (const ev of oddsEvents) {
-      const target = byEventId.get(String(ev?.id));
-      if (!target) continue;
-      const merged = ingestOddsEvent(cache, target.matchId, target.home, target.away, ev);
-      if (!merged) continue;
-      const books1x2 = Object.values(merged["1X2"] || {}).reduce((s, g) => s + Object.keys(g).length, 0);
-      log(`  ${target.home} vs ${target.away}: ${books1x2} books [${Object.keys(merged).join(",")}]`);
-      fetched++;
+    if (!oddsMultiBlocked) {
+      const chunk = toFetch.slice(i, i + 10);
+      const ids = chunk.map(c => c.eventId).join(",");
+      const meta = {};
+      const oddsJ = await apiGet(`/odds/multi?eventIds=${encodeURIComponent(ids)}&bookmakers=${BOOKMAKERS_PARAM}`, budget, meta);
+      if (oddsJ) {
+        const oddsEvents = Array.isArray(oddsJ) ? oddsJ : Object.values(oddsJ || {});
+        for (const ev of oddsEvents) ingest(ev);
+        i += chunk.length;
+        continue;
+      }
+      if (meta.status === 403) {
+        oddsMultiBlocked = true;
+        log("plan does not allow /odds/multi (403) — falling back to per-event /odds");
+        continue; // retry the same events per-event
+      }
+      i += chunk.length; // transient failure: skip this chunk (as before)
+      continue;
+    }
+
+    const c = toFetch[i++];
+    const oddsJ = await apiGet(`/odds?eventId=${encodeURIComponent(c.eventId)}&bookmakers=${BOOKMAKERS_PARAM}`, budget);
+    if (!oddsJ) continue;
+    // Single-event responses may be one object (with .bookmakers) or an array.
+    const evs = Array.isArray(oddsJ) ? oddsJ : (oddsJ?.bookmakers ? [oddsJ] : Object.values(oddsJ || {}));
+    for (const ev of evs) {
+      if (ev && typeof ev === "object" && !ev.id) ev.id = c.eventId;
+      ingest(ev);
     }
   }
 
