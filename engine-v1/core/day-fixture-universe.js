@@ -170,7 +170,7 @@ export function fixturesForSnapshotDay(dayKey) {
     dayKey
   );
   const canonicalFixtureCount = fixturesFromCanonical.length;
-  const fixtureJsonCount = fixturesFromMain.length;
+  const sourceFixtureJsonCount = fixturesFromMain.length;
 
   // UNION of runtime + canonical (dedup collapses same-match rows; runtime
   // first so its fresher status/score wins ties). Picking one source XOR the
@@ -212,7 +212,8 @@ export function fixturesForSnapshotDay(dayKey) {
   return {
     source: "union",
     canonicalFixtureCount,
-    fixtureJsonCount,
+    sourceFixtureJsonCount,
+    fixtureJsonCount: fixtures.length,
     snapshotRescuedCount: rescuedRows.length,
     snapshotRescuedLeagues: rescuedLeagues,
     fixtures

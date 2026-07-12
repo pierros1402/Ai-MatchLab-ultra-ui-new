@@ -716,6 +716,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     source: "local_canonical_export",
     version: "deploy-snapshot-v1",
     fixturesSource,
+    sourceFixtureJsonCount: fixturesSnapshot.sourceFixtureJsonCount,
     fixtureJsonCount: fixturesSnapshot.fixtureJsonCount,
     canonicalFixtureCount: fixturesSnapshot.canonicalFixtureCount,
     snapshotRescuedCount: fixturesSnapshot.snapshotRescuedCount || 0,

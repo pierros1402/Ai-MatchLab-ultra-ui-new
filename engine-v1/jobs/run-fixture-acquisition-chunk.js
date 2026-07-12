@@ -428,7 +428,59 @@ function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
   return payload;
 }
 
-function mergeCanonicalFixtures(existing, incoming) {
+const EXPLICIT_FINAL_STATUS_TOKENS = new Set([
+  "FT",
+  "FINAL",
+  "FULL_TIME",
+  "STATUS_FINAL",
+  "STATUS_FULL_TIME",
+  "STATUS_FINAL_AET",
+  "STATUS_FINAL_PEN",
+  "STATUS_AET",
+  "STATUS_PEN",
+  "AET",
+  "PEN",
+  "AFTER_EXTRA_TIME",
+  "AFTER_PENALTIES"
+]);
+
+function hasExplicitFinalStatus(row) {
+  return [
+    row?.status,
+    row?.statusType,
+    row?.rawStatus,
+    row?.sourceStatus,
+    row?.sourceStatusType
+  ]
+    .map(value => String(value || "").trim().toUpperCase())
+    .filter(Boolean)
+    .some(value => EXPLICIT_FINAL_STATUS_TOKENS.has(value));
+}
+
+function explicitFinalBundle(row) {
+  if (!hasExplicitFinalStatus(row)) return null;
+
+  const status = String(row?.status || "").trim().toUpperCase();
+  const rawStatus = String(row?.rawStatus || "").trim().toUpperCase();
+  const statusType = String(row?.statusType || "").trim().toUpperCase();
+
+  const bundle = {
+    status: EXPLICIT_FINAL_STATUS_TOKENS.has(status) ? row.status : "FT",
+    rawStatus: EXPLICIT_FINAL_STATUS_TOKENS.has(rawStatus) ? row.rawStatus : "STATUS_FINAL",
+    statusType: EXPLICIT_FINAL_STATUS_TOKENS.has(statusType) ? row.statusType : "STATUS_FINAL",
+    minute: row?.minute || "FT"
+  };
+
+  for (const key of ["scoreHome", "scoreAway", "penalties", "decidedBy"]) {
+    if (row?.[key] !== null && row?.[key] !== undefined && row?.[key] !== "") {
+      bundle[key] = row[key];
+    }
+  }
+
+  return bundle;
+}
+
+export function mergeCanonicalFixtures(existing, incoming) {
   const map = new Map();
 
   function meaningful(value) {
@@ -465,6 +517,15 @@ function mergeCanonicalFixtures(existing, incoming) {
       } else if (meaningful(previous[key])) {
         merged[key] = previous[key];
       }
+    }
+
+    const previousFinal = explicitFinalBundle(previous);
+    const nextFinal = explicitFinalBundle(next);
+
+    if (nextFinal) {
+      Object.assign(merged, nextFinal);
+    } else if (previousFinal) {
+      Object.assign(merged, previousFinal);
     }
 
     merged.firstSeenAt = previous.firstSeenAt || next.firstSeenAt || new Date().toISOString();
