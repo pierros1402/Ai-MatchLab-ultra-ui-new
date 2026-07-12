@@ -9,7 +9,7 @@ import {
 } from "./skipped-slug-policy.js";
 
 test("context-only skipped slugs do not produce actionable build warnings", () => {
-  const raw = "acquisition_skipped_slugs:usa.nwsl,club.friendly,usa.usl.l1.cup,can.w.nsl,uefa.euro.u19,chi.copa_chi";
+  const raw = "acquisition_skipped_slugs:usa.nwsl,club.friendly,usa.usl.l1.cup,can.w.nsl,uefa.euro.u19,chi.copa_chi,arg.copa";
   const slugs = parseAcquisitionSkippedSlugs(raw);
 
   assert.equal(skippedSlugsContextOnly(slugs), true);
