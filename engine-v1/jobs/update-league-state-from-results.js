@@ -1,7 +1,7 @@
 /**
  * update-league-state-from-results.js
  *
- * Derives league active/break/finished state from TWO observation signals —
+ * Derives league active/pause/finished state from TWO observation signals —
  * no calendar guessing, no manual entries.  Runs daily AFTER accumulateResults.
  *
  * Signal 1 — Feed appearances (fixtures-all.json):
@@ -16,7 +16,7 @@
  *
  * Combined decision (most recent of the two signals wins):
  *   age ≤ 14 days  → "active"   (playing or just played)
- *   age 14–60 days → "break"    (mid-season or international break)
+ *   age 14–60 days → "pause"    (mid-season or international break)
  *   age  > 60 days → "finished" (season over)
  *   no signal      → leave calendar decision unchanged (unknown leagues)
  *
@@ -102,7 +102,7 @@ function classifyFromAge(ageDays, signalType) {
     return { state: "active", confidence: 0.95, reason };
   }
   if (ageDays <= BREAK_THRESHOLD_DAYS) {
-    return { state: "break",    confidence: 0.82, reason: "observation_mid_break" };
+    return { state: "pause",    confidence: 0.82, reason: "observation_mid_break" };
   }
   return   { state: "finished", confidence: 0.90, reason: "observation_long_silence" };
 }
@@ -127,7 +127,7 @@ export function updateLeagueStateFromResults(options = {}) {
   ]);
 
   let updated = 0, skipped = 0, overrode = 0;
-  const summary = { active: [], break: [], finished: [] };
+  const summary = { active: [], pause: [], finished: [] };
 
   for (const slug of allSlugs) {
     const existing = readLeagueState(slug) || {};
@@ -180,7 +180,7 @@ export function updateLeagueStateFromResults(options = {}) {
     skipped,
     overriddenCalendar: overrode,
     active:   summary.active.length,
-    break:    summary.break.length,
+    pause:    summary.pause.length,
     finished: summary.finished.length,
   });
 
@@ -191,7 +191,7 @@ export function updateLeagueStateFromResults(options = {}) {
     overriddenCalendar: overrode,
     byObservedState: {
       active:   summary.active,
-      break:    summary.break,
+      pause:    summary.pause,
       finished: summary.finished,
     },
   };

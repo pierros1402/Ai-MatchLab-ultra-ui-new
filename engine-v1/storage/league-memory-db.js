@@ -14,9 +14,19 @@ function ensureDirs() {
 
 // ─── State read / write ───────────────────────────────────────────────────────
 
+// Canonical state enum: active | pause | finished | disabled | unknown.
+// Older runs of update-league-state-from-results wrote "break" for mid-season
+// gaps; normalize it so every consumer sees the canonical enum.
+function normalizeState(row) {
+  if (row && row.state === "break") return { ...row, state: "pause" };
+  return row;
+}
+
 export function readAllStates() {
   try {
-    return JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+    const all = JSON.parse(fs.readFileSync(STATE_FILE, "utf8"));
+    for (const slug of Object.keys(all)) all[slug] = normalizeState(all[slug]);
+    return all;
   } catch {
     return {};
   }

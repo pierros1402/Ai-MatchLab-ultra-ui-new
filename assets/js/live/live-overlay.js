@@ -36,6 +36,8 @@
       scoreAway: m.scoreAway,
       status: m.status,
       statusType: m.status,
+      staleLive: m.staleLive === true,
+      statusUnconfirmed: m.statusUnconfirmed === true,
       isLive: isLive,
       live: isLive,
       minute: m.minute != null ? m.minute : null,

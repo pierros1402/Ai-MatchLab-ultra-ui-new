@@ -336,6 +336,10 @@ if (window.on) {
       for (const m of payload.matches) {
         const existing = map.get(String(m.id || m.matchId));
         if (!existing) continue;
+        // Never downgrade a snapshot-confirmed final: a STALE_LIVE overlay row
+        // means "no confirmed live info", not new evidence about the result.
+        if ((m.staleLive === true || String(m.status || "").toUpperCase() === "STALE_LIVE") &&
+            String(existing.status || "").toUpperCase() === "FT") continue;
         existing.status    = m.status;
         existing.rawStatus = m.rawStatus;
         existing.statusType = m.statusType;

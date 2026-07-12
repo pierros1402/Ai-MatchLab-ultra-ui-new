@@ -8,7 +8,9 @@
  * mapping.
  *
  *   GET /api/live            → { ok, ts, count, matches:[{matchId,home,away,
- *                               scoreHome,scoreAway,status,statusCode}] }
+ *                               scoreHome,scoreAway,status,statusCode,
+ *                               staleLive?,statusUnconfirmed?}] }
+ *                               status ∈ PRE | LIVE | FT | STALE_LIVE
  *   GET /health
  *
  * Deploy: `wrangler deploy` (see workers/wrangler.live.toml), or paste into the
@@ -22,16 +24,17 @@ const CACHE_TTL = 30; // seconds
 
 const LIVE_WINDOW_SEC = 3.5 * 3600; // a match can't be "live" longer than this
 
-// Robust status: never let an old/finished match linger as LIVE. AB=3 is the
-// reliable finished flag; AB=1 / no score is scheduled; in-play only if it has a
-// score, isn't finished, and kicked off recently. Unknown codes (postponed,
-// abandoned, after-ET, feed lag) fall through to FT/PRE — NOT LIVE.
+// Robust status: never let an old/finished match linger as LIVE — but also never
+// FABRICATE a final. FT is asserted ONLY on AB=3 (the feed's confirmed-finished
+// flag). A match past the live window, or an unknown code with a score
+// (postponed, abandoned, after-ET, feed lag), becomes STALE_LIVE: the panels
+// treat it as not-live and keep whatever confirmed status the snapshot has.
 function mapStatus(ab, hasScore, kickoffSec, nowSec) {
-  if (ab === "3") return "FT";
+  if (ab === "3") return "FT";            // feed-confirmed final
   if (ab === "1" || !hasScore) return "PRE";
-  if (kickoffSec && nowSec - kickoffSec > LIVE_WINDOW_SEC) return "FT"; // too old to be live
+  if (kickoffSec && nowSec - kickoffSec > LIVE_WINDOW_SEC) return "STALE_LIVE"; // ended by clock, final unconfirmed
   if (ab === "2") return "LIVE";          // in-play
-  return hasScore ? "FT" : "PRE";         // any other code with a score = finished
+  return "STALE_LIVE";                    // unknown code with a score — flagged, not faked
 }
 
 // Approximate live minute from kickoff (the feed has no clean minute field).
@@ -77,6 +80,8 @@ function parseFeed(text) {
       scoreAway: Number.isFinite(sa) ? sa : null,
       statusCode: f.AB || null,
       status,
+      staleLive: status === "STALE_LIVE" || undefined,
+      statusUnconfirmed: status === "STALE_LIVE" || undefined,
       minute: status === "LIVE" ? liveMinute(koSec, nowSec) : null,
       kickoffUtc: koSec ? new Date(koSec * 1000).toISOString() : null
     });
