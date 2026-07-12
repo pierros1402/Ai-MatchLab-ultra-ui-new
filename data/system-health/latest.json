@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
-  "dayKey": "2026-07-12",
-  "generatedAt": "2026-07-12T17:43:34.420Z",
+  "dayKey": "2026-07-13",
+  "generatedAt": "2026-07-12T18:23:38.682Z",
   "severity": "info",
   "issueCounts": {
     "error": 0,
     "warning": 0,
-    "info": 1
+    "info": 3
   },
   "alert": false,
   "alertCounts": {
@@ -14,13 +14,41 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 1,
+  "activeIssueCount": 3,
   "actionableIssueCount": 0,
-  "newIssueCount": 0,
+  "newIssueCount": 2,
   "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
+  "resolvedIssueCount": 0,
   "persistentIssueCount": 1,
   "activeIssues": [
+    {
+      "severity": "info",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
+      "details": {
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 15,
+        "actualFixtures": 18,
+        "drop": 30,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-07-13.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
     {
       "severity": "info",
       "source": "value-comparison",
@@ -47,16 +75,16 @@
           }
         },
         "planB": {
-          "count": 1,
+          "count": 0,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 1,
-            "wins": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
             "losses": 0,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -69,21 +97,38 @@
     }
   ],
   "actionableIssues": [],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B observation picks are still unresolved.",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
       "details": {
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 15,
+        "actualFixtures": 18,
+        "drop": 30,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-07-13.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     }
   ],
+  "newActionableIssues": [],
+  "resolvedIssues": [],
   "persistentIssues": [
     {
       "severity": "info",
@@ -111,16 +156,16 @@
           }
         },
         "planB": {
-          "count": 1,
+          "count": 0,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 1,
-            "wins": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
             "losses": 0,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -132,5 +177,5 @@
       }
     }
   ],
-  "latestForDay": "2026-07-12"
+  "latestForDay": "2026-07-13"
 }
