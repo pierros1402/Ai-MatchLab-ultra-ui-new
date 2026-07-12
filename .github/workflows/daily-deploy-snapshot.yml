@@ -204,6 +204,10 @@ jobs:
           # Betfair right panels). Free tier; without it fetchMultiBookmakerOdds
           # returns no_key and every day's multi-odds file stays empty.
           ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
+          # odds-api.io adapter (D0 + D+1..D+6 opening prefetch, replaces the
+          # dead OddsPortal scraper). Free tier ~100 req/h; the adapter caps
+          # itself at 80 requests per cycle run. Without the key it skips.
+          ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
         run: node ./engine-v1/jobs/run-daily-cycle.js "$DAY_KEY"
 
       - name: Run team geo enrichment

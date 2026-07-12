@@ -1,6 +1,12 @@
 /**
  * fetch-oddsportal-greek-odds.js
  *
+ * ⛔ RETIRED 2026-07-09 — DO NOT WIRE BACK IN. OddsPortal moved its odds
+ *    behind AJAX + Cloudflare, so the __NEXT_DATA__ parser below finds
+ *    nothing and every run fetched 0 matches. Replaced by
+ *    jobs/fetch-oddsapiio-odds.js (odds-api.io adapter). Kept for the
+ *    league-slug → OddsPortal path mapping and as historical reference.
+ *
  * Fetches per-bookmaker 1X2 odds from OddsPortal for any date's matches.
  * Captures ALL bookmakers and classifies them into Greek / European / Asian /
  * Betfair panels — no OddsPapi API needed, no request limits.

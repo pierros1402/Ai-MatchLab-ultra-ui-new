@@ -23,7 +23,7 @@ import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
-import { fetchOddsPortalGreekOdds } from "./jobs/fetch-oddsportal-greek-odds.js";
+import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./jobs/fetch-oddsapiio-odds.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
@@ -2764,13 +2764,15 @@ app.post("/api/refresh-multi-odds", async (req, res) => {
   const date = String(req.query.date || athensDayKey());
   const doPrefetch = req.query.prefetch !== "0"; // default: also prefetch next 6 days
   try {
+    const oddsBudget = createOddsApiIoBudget();
     const r1 = await fetchMultiBookmakerOdds(date);
-    const r2 = await fetchOddsPortalGreekOdds(date);
-    // Fire-and-forget: OddsPortal prefetch can take minutes (many pages), don't block response
+    const r2 = await fetchOddsApiIoDay(date, oddsBudget);
+    // Fire-and-forget: the D+1..D+6 prefetch can take minutes, don't block response.
+    // Shares the request budget with the day fetch above (free-tier hourly cap).
     if (doPrefetch) {
-      prefetchUpcomingOdds(date, 6).catch(e => console.error("[prefetch] error:", e?.message || e));
+      prefetchUpcomingOdds(date, 6, oddsBudget).catch(e => console.error("[prefetch] error:", e?.message || e));
     }
-    res.json({ ok: true, date, oddspapi: r1, oddsportal: r2, prefetch: { ok: true, started: doPrefetch } });
+    res.json({ ok: true, date, oddspapi: r1, oddsApiIo: r2, prefetch: { ok: true, started: doPrefetch } });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e?.message || e) });
   }

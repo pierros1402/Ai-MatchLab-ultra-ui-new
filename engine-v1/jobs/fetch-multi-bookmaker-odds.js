@@ -17,7 +17,8 @@ import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { buildAssessmentDay } from "./build-assessment-day.js";
-import { fetchOddsPortalAllOdds } from "./fetch-oddsportal-greek-odds.js";
+import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./fetch-oddsapiio-odds.js";
+import { mergeWithDelta, normTeam, pairKey, namesMatch } from "../odds/multi-odds-merge.js";
 
 const BASE   = "https://api.oddspapi.io/v4";
 const KEY    = process.env.ODDSPAPI_KEY || "";
@@ -51,48 +52,8 @@ function classifyBook(bk) {
   return "european";
 }
 
-// ─── Team name normalisation for fuzzy matching ────────────────────────────────
-
-const TEAM_STRIP = /\b(fc|sc|fk|cf|afc|bk|sk|if|iff|ik|rk|hk|pk|ff|ss|nk|gjk|vvv|rkc|btk|csk|iff|ac|as|ss|rc|cd|ud|ca|ssc|cf|sjk|rup|kc|fc|sc)\b/gi;
-
-function normTeam(name) {
-  if (!name) return "";
-  return String(name)
-    .toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(TEAM_STRIP, " ")
-    .replace(/[^a-z0-9]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function pairKey(a, b) {
-  return `${normTeam(a)}~${normTeam(b)}`;
-}
-
-// Levenshtein distance for fallback fuzzy match
-function lev(a, b) {
-  if (a === b) return 0;
-  const m = a.length, n = b.length;
-  if (!m) return n; if (!n) return m;
-  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++)
-    for (let j = 1; j <= n; j++)
-      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] :
-        1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
-  return dp[m][n];
-}
-
-function namesMatch(a, b) {
-  const na = normTeam(a), nb = normTeam(b);
-  if (!na || !nb) return false;
-  if (na === nb) return true;
-  if (na.includes(nb) || nb.includes(na)) return true;
-  // Fuzzy: allow up to 3 chars edit distance on short names
-  const maxDist = Math.floor(Math.min(na.length, nb.length) * 0.25);
-  return lev(na, nb) <= Math.max(2, maxDist);
-}
+// Team-name fuzzy matching + opening-freeze delta merge now live in
+// ../odds/multi-odds-merge.js (shared with the odds-api.io adapter).
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -177,43 +138,6 @@ function parseAllMarkets(bookmakerOdds) {
   }
 
   return { markets: result, seenMarketIds: [...seen].sort() };
-}
-
-// Merge fresh odds with existing (preserves opening line, computes delta).
-// Works for any market: legs are the keys of each bookmaker's odds object.
-// existingPanel: the stored panel object (may have open/delta already), or null
-// freshPanel:    newly parsed panel { greek:{}, european:{}, asian:{}, betfair:{} }
-function mergeWithDelta(existingPanel, freshPanel) {
-  const merged = { greek: {}, european: {}, asian: {}, betfair: {} };
-
-  for (const panel of ["greek", "european", "asian", "betfair"]) {
-    for (const [bk, fOdds] of Object.entries(freshPanel?.[panel] || {})) {
-      const prev = existingPanel?.[panel]?.[bk];
-      const legs = Object.keys(fOdds);
-
-      if (!prev) {
-        merged[panel][bk] = { ...fOdds, open: { ...fOdds } };
-      } else {
-        const open = prev.open || Object.fromEntries(legs.map(l => [l, prev[l]]));
-        const delta = {};
-        let anyMoved = false;
-        for (const l of legs) {
-          if (open[l] != null && fOdds[l] != null) {
-            const d = +(fOdds[l] - open[l]).toFixed(3);
-            delta[l] = d;
-            if (d !== 0) anyMoved = true;
-          }
-        }
-        merged[panel][bk] = {
-          ...fOdds,
-          open,
-          ...(anyMoved ? { delta } : {}),
-        };
-      }
-    }
-  }
-
-  return merged;
 }
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -350,9 +274,12 @@ export async function fetchMultiBookmakerOdds(date) {
     const { markets: freshMarkets, seenMarketIds } = parseAllMarkets(oddsJ.bookmakerOdds);
     seenMarketIds.forEach(id => allSeenMarketIds.add(id));
 
-    // Merge each market with delta tracking
+    // Merge each market with delta tracking. Start from the existing markets so
+    // odds prefetched by another source (odds-api.io) survive an OddsPapi
+    // refresh that doesn't carry that market; mergeWithDelta likewise keeps
+    // per-book entries the fresh payload lacks.
     const existingMarkets = cache[matchId]?.markets || {};
-    const mergedMarkets = {};
+    const mergedMarkets = { ...existingMarkets };
     for (const [mk, fresh] of Object.entries(freshMarkets)) {
       mergedMarkets[mk] = mergeWithDelta(existingMarkets[mk] || null, fresh);
     }
@@ -392,21 +319,23 @@ export async function fetchMultiBookmakerOdds(date) {
 // so fetchMultiBookmakerOdds on match day inherits the frozen open{} via
 // mergeWithDelta — delta = match-day current minus pre-fetched opening.
 
-export async function prefetchUpcomingOdds(startDate, daysAhead = 6) {
+export async function prefetchUpcomingOdds(startDate, daysAhead = 6, budget = null) {
   startDate = startDate || athensDayKey();
-  log(`prefetch: ${startDate} → ${addDays(startDate, daysAhead)} via OddsPortal (no API limit)`);
+  budget = budget || createOddsApiIoBudget();
+  log(`prefetch: ${startDate} → ${addDays(startDate, daysAhead)} via odds-api.io (budget ${budget.remaining} req)`);
 
   let totalFetched = 0;
 
   for (let d = 1; d <= daysAhead; d++) {
     const date = addDays(startDate, d);
     try {
-      // OddsPortal scraper handles gate (8h), canonical-fixtures fallback, all panels
-      const r = await fetchOddsPortalAllOdds(date);
-      log(`  ${date}: fetched=${r.fetched} skipped=${r.skipped || 0}`);
+      // Adapter handles the 8h gate, canonical-fixtures fallback, all panels;
+      // the shared budget keeps the whole run under the free-tier hourly cap.
+      const r = await fetchOddsApiIoDay(date, budget);
+      log(`  ${date}: fetched=${r.fetched} skipped=${r.skipped || 0}${r.limitHit ? " (rate limited)" : ""}`);
       totalFetched += r.fetched || 0;
     } catch (e) {
-      log(`  ${date}: oddsportal error — ${e?.message || e}`);
+      log(`  ${date}: odds-api.io error — ${e?.message || e}`);
     }
 
     // AI assessment independent of odds source
@@ -418,8 +347,8 @@ export async function prefetchUpcomingOdds(startDate, daysAhead = 6) {
     }
   }
 
-  log(`prefetch done: ${totalFetched} new fetches`);
-  return { ok: true, startDate, daysAhead, fetched: totalFetched };
+  log(`prefetch done: ${totalFetched} new fetches, ${budget.used} requests used${budget.limitHit ? " (rate limited)" : ""}`);
+  return { ok: true, startDate, daysAhead, fetched: totalFetched, requestsUsed: budget.used, limitHit: budget.limitHit };
 }
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────

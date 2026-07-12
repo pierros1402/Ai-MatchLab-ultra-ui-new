@@ -43,7 +43,7 @@ import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { buildLeagueGapReportDay } from "./build-league-gap-report-day.js";
 import { recoverBrokenLeaguesDay } from "./recover-broken-leagues-day.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./fetch-multi-bookmaker-odds.js";
-import { fetchOddsPortalGreekOdds } from "./fetch-oddsportal-greek-odds.js";
+import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./fetch-oddsapiio-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
 import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
@@ -1277,19 +1277,18 @@ export async function runDailyCycle(options = {}) {
     console.log("[daily-cycle] multi-bookmaker-odds", { fetched: multiOdds.fetched, total: multiOdds.total });
   } catch (e) { console.log("[daily-cycle] multi-bookmaker-odds:skip", String(e?.message || e)); }
 
-  // Prefetch odds for the next 6 days so "opening" is captured days before the match.
-  // Uses canonical-fixtures (available for future dates). First capture per match = open{}.
+  // Real bookmaker odds via odds-api.io (Greek/EU/Asian/Betfair panels) for
+  // today + the next 6 days so "opening" is frozen days before the match.
+  // One shared request budget keeps the whole cycle under the free-tier
+  // hourly cap; today runs first so it wins when the cap bites.
   try {
-    const prefetch = await prefetchUpcomingOdds(dayKey, 6);
-    console.log("[daily-cycle] prefetch-upcoming-odds", { fetched: prefetch.fetched });
-  } catch (e) { console.log("[daily-cycle] prefetch-upcoming-odds:skip", String(e?.message || e)); }
+    const oddsBudget = createOddsApiIoBudget();
+    const todayOdds = await fetchOddsApiIoDay(dayKey, oddsBudget);
+    console.log("[daily-cycle] odds-api-io-today", { fetched: todayOdds.fetched, skipped: todayOdds.skipped || 0 });
 
-  // Greek panel supplement via OddsPortal (stoiximan/vistabet).
-  // Geo-blocked from GR IPs — silently skips when not on Render.
-  try {
-    const opOdds = await fetchOddsPortalGreekOdds(dayKey);
-    console.log("[daily-cycle] oddsportal-greek-odds", { fetched: opOdds.fetched });
-  } catch (e) { console.log("[daily-cycle] oddsportal-greek-odds:skip", String(e?.message || e)); }
+    const prefetch = await prefetchUpcomingOdds(dayKey, 6, oddsBudget);
+    console.log("[daily-cycle] prefetch-upcoming-odds", { fetched: prefetch.fetched, requestsUsed: prefetch.requestsUsed, limitHit: prefetch.limitHit || false });
+  } catch (e) { console.log("[daily-cycle] odds-api-io:skip", String(e?.message || e)); }
 
   if (doFinalize) {
     console.log("[daily-cycle] finalize-live-status-refresh:start", { finalizeDayKey });

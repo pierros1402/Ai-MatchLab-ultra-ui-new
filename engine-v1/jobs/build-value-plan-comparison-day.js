@@ -213,6 +213,36 @@ function loadOddsMap(dayKey) {
   return byId;
 }
 
+// Real bookmaker odds from the multi-odds store (odds-api.io + OddsPapi
+// panels), keyed by our own matchId. Display/settlement-report join only —
+// picks are frozen before this build step runs, so this can never influence
+// pick selection (odds↔value firewall).
+const MULTI_ODDS_PANELS = ["greek", "european", "asian", "betfair"];
+
+function loadMultiOddsMap(dayKey) {
+  const parsed = readJsonSafe(dataPath("multi-odds", `${dayKey}.json`), null);
+  const byId = new Map();
+  for (const [id, entry] of Object.entries(parsed?.matches || {})) {
+    if (entry?.markets) byId.set(String(id), entry.markets);
+  }
+  return byId;
+}
+
+// Average real-book odd across every panel/bookmaker for one market+side.
+function realBookOdds(multiMarkets, marketKey, side) {
+  const block = multiMarkets?.[marketKey];
+  if (!block || !side) return null;
+  const vals = [];
+  for (const panel of MULTI_ODDS_PANELS) {
+    for (const bk of Object.values(block[panel] || {})) {
+      const v = Number(bk?.[side]);
+      if (Number.isFinite(v) && v > 1) vals.push(v);
+    }
+  }
+  if (!vals.length) return null;
+  return Number((vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(2));
+}
+
 const COMPARISON_MARKET_KEYS = {
   OU15: "OU15", "Over / Under 1.5": "OU15",
   OU25: "OU25", "Over / Under 2.5": "OU25",
@@ -280,7 +310,7 @@ function loadFinalResults(dayKey) {
   return { dir, rows, byId };
 }
 
-function enrichPick(row, fixture, finalResult, planId, oddsEntry) {
+function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) {
   const id = rowId(row);
   const win = finalResult ? evaluatePickResult(row, finalResult) : null;
 
@@ -295,10 +325,12 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry) {
   const market = clean(row?.market || row?.marketName || row?.type);
   const pick = clean(row?.pick || row?.selection || row?.prediction || row?.side || row?.outcome);
   const mkt = resolveMarketFor(oddsEntry, market, pick);
-  // Real bookmaker odd only (from the pick row itself). The AI-priced fair odd
-  // is kept separately as aiFairOdds — the UI odd slot stays EMPTY until a real
-  // company feed is wired, per user request.
-  const odds = decimalOdds(row);
+  // Real bookmaker odd only: from the pick row itself, else the multi-odds
+  // store (average across real books for this market+side). The AI-priced
+  // fair odd is kept separately as aiFairOdds.
+  const marketKey = COMPARISON_MARKET_KEYS[market] || market;
+  const odds = decimalOdds(row)
+    ?? realBookOdds(multiMarkets, marketKey, oddsSideForPick(marketKey, pick));
   const kickoff = clean(row?.kickoff || fixture?.kickoff || fixture?.kickoffUtc || oddsEntry?.kickoff) || null;
 
   return {
@@ -370,12 +402,12 @@ function summarize(rows) {
   };
 }
 
-function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById, oddsById }) {
+function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById, oddsById, multiOddsById }) {
   const rawRows = rowsFromPayload(payload);
 
   const picks = rawRows.map(row => {
     const id = rowId(row);
-    return enrichPick(row, fixturesById.get(id), finalById.get(id), planId, oddsById?.get(id));
+    return enrichPick(row, fixturesById.get(id), finalById.get(id), planId, oddsById?.get(id), multiOddsById?.get(id));
   });
 
   return {
@@ -429,6 +461,7 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
   const fixtures = loadFixtures(dayKey);
   const finalResults = loadFinalResults(dayKey);
   const oddsById = loadOddsMap(dayKey);
+  const multiOddsById = loadMultiOddsMap(dayKey);
 
   const planA = buildPlan({
     planId: "plan-a",
@@ -437,7 +470,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     payload: planAPayload,
     fixturesById: fixtures.byId,
     finalById: finalResults.byId,
-    oddsById
+    oddsById,
+    multiOddsById
   });
 
   const planB = buildPlan({
@@ -447,7 +481,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     payload: planBPayload,
     fixturesById: fixtures.byId,
     finalById: finalResults.byId,
-    oddsById
+    oddsById,
+    multiOddsById
   });
 
   const comparison = {
