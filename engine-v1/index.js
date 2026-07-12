@@ -28,6 +28,10 @@ import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
+import {
+  parseAcquisitionSkippedSlugs,
+  skippedSlugsContextOnly
+} from "./system-health/skipped-slug-policy.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1134,39 +1138,10 @@ function systemHealthNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function systemHealthParseSkippedSlugs(raw) {
-  return String(raw || "")
-    .replace(/^acquisition_skipped_slugs:/, "")
-    .split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
-}
-
-function systemHealthKnownContextSkippedSlug(slug) {
-  const s = String(slug || "").toLowerCase();
-
-  if (!s) return false;
-  if (s.startsWith("fs.")) return true;
-  if (s.startsWith("club.")) return true;
-  if (s.includes("friendly")) return true;
-  if (s.includes("u19") || s.includes("u20") || s.includes("reserve")) return true;
-
-  if (s === "usa.nwsl") return true;
-  if (s === "arg.3") return true;
-
-  return false;
-}
-
-function systemHealthSkippedSlugsContextOnly(slugs) {
-  return Array.isArray(slugs)
-    && slugs.length > 0
-    && slugs.every(systemHealthKnownContextSkippedSlug);
-}
-
 function systemHealthBuildWarningIsContextOnly(text) {
   const raw = String(text || "");
   if (!raw.startsWith("acquisition_skipped_slugs:")) return false;
-  return systemHealthSkippedSlugsContextOnly(systemHealthParseSkippedSlugs(raw));
+  return skippedSlugsContextOnly(parseAcquisitionSkippedSlugs(raw));
 }
 
 function systemHealthInvariantWarningIssue(w) {
@@ -1205,8 +1180,8 @@ function systemHealthInvariantWarningIssue(w) {
 function systemHealthBuildWarning(text) {
   const raw = String(text || "");
   if (raw.startsWith("acquisition_skipped_slugs:")) {
-    const slugs = systemHealthParseSkippedSlugs(raw);
-    const contextOnly = systemHealthSkippedSlugsContextOnly(slugs);
+    const slugs = parseAcquisitionSkippedSlugs(raw);
+    const contextOnly = skippedSlugsContextOnly(slugs);
 
     return systemHealthIssue(
       contextOnly ? "info" : "warning",

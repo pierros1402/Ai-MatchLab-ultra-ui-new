@@ -14,6 +14,10 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import {
+  parseAcquisitionSkippedSlugs,
+  skippedSlugsContextOnly
+} from "../system-health/skipped-slug-policy.js";
 
 function readJsonSafe(file, fallback = null) {
   try {
@@ -73,40 +77,11 @@ function num(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-function parseSkippedSlugs(raw) {
-  return String(raw || "")
-    .replace(/^acquisition_skipped_slugs:/, "")
-    .split(",")
-    .map(s => s.trim())
-    .filter(Boolean);
-}
-
-function knownContextSkippedSlug(slug) {
-  const s = String(slug || "").toLowerCase();
-
-  if (!s) return false;
-  if (s.startsWith("fs.")) return true;
-  if (s.startsWith("club.")) return true;
-  if (s.includes("friendly")) return true;
-  if (s.includes("u19") || s.includes("u20") || s.includes("reserve")) return true;
-
-  if (s === "usa.nwsl") return true;
-  if (s === "arg.3") return true;
-
-  return false;
-}
-
-function skippedSlugsContextOnly(slugs) {
-  return Array.isArray(slugs)
-    && slugs.length > 0
-    && slugs.every(knownContextSkippedSlug);
-}
-
 function buildWarningIssue(text) {
   const raw = String(text || "");
 
   if (raw.startsWith("acquisition_skipped_slugs:")) {
-    const slugs = parseSkippedSlugs(raw);
+    const slugs = parseAcquisitionSkippedSlugs(raw);
     const contextOnly = skippedSlugsContextOnly(slugs);
 
     return issue(
@@ -126,7 +101,7 @@ function buildWarningIssue(text) {
 function buildWarningIsContextOnly(text) {
   const raw = String(text || "");
   if (!raw.startsWith("acquisition_skipped_slugs:")) return false;
-  return skippedSlugsContextOnly(parseSkippedSlugs(raw));
+  return skippedSlugsContextOnly(parseAcquisitionSkippedSlugs(raw));
 }
 
 function markdownCell(value) {

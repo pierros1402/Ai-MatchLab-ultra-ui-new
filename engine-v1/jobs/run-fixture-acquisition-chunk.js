@@ -799,6 +799,7 @@ function existingCanonicalIdsForDay(dayKey) {
 // with leagueName "Champions League - Qualification"). Mapping to the parent
 // keeps both sources on the same league so day-universe dedupe can match.
 const ESPN_DROPDOWN_SLUG_ALIASES = {
+  "sco.cis": "sco.tennents",
   "uefa.champions_qual": "uefa.champions",
   "uefa.europa_qual": "uefa.europa",
   "uefa.europa.conf_qual": "uefa.europa.conf"

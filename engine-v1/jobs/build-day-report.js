@@ -21,6 +21,7 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import { buildAcquisitionSkippedSlugsWarning } from "../system-health/skipped-slug-policy.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 
 function readJsonSafe(file) {
@@ -190,8 +191,12 @@ export function buildDayReport(dayKey) {
       + report.universe.expectedLeaguesMissingFromPublished.join(","));
   }
   if (report.acquisition?.skippedSlugSample && Object.keys(report.acquisition.skippedSlugSample).length > 0) {
-    report.warnings.push("acquisition_skipped_slugs:"
-      + Object.keys(report.acquisition.skippedSlugSample).join(","));
+    const skippedSlugWarning = buildAcquisitionSkippedSlugsWarning(
+      Object.keys(report.acquisition.skippedSlugSample)
+    );
+    if (skippedSlugWarning) {
+      report.warnings.push(skippedSlugWarning);
+    }
   }
 
   report.clean = report.hardFailures.length === 0;
