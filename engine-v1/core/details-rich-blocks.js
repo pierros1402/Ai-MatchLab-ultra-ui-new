@@ -89,15 +89,24 @@ export function buildFormBlock(homeTeam, awayTeam, season = currentSeason()) {
 }
 
 /**
- * H2H block: recent meetings (most recent first) plus a W/D/L summary from the
- * home team's perspective. Limited to `limit` matches for payload size.
+ * H2H block: recent meetings split into all / at-home / at-away, each with its
+ * own W-D-L summary (from the home team's perspective) — the exact shape the
+ * details-panel H2H tabs consume (all/atHome/atAway + summary.{all,atHome,atAway}).
+ * getH2HForMatch already builds these; we only most-recent-sort and cap each list
+ * for payload size (the summaries stay computed over the full history).
  */
-export function buildH2HBlock(homeTeam, awayTeam, limit = 10) {
+export function buildH2HBlock(homeTeam, awayTeam, limit = 20) {
   const h2h = getH2HForMatch(homeTeam, awayTeam);
   if (!h2h || !Array.isArray(h2h.all) || !h2h.all.length) {
-    return { status: "empty", homeTeam, awayTeam, summary: null, matches: [] };
+    return {
+      status: "empty",
+      homeTeam,
+      awayTeam,
+      all: [], atHome: [], atAway: [],
+      summary: { all: null, atHome: null, atAway: null }
+    };
   }
-  const matches = [...h2h.all]
+  const trim = list => [...(list || [])]
     .sort((a, b) => String(b.date).localeCompare(String(a.date)))
     .slice(0, limit)
     .map(m => ({
@@ -113,9 +122,11 @@ export function buildH2HBlock(homeTeam, awayTeam, limit = 10) {
     status: "ready",
     homeTeam,
     awayTeam,
-    summary: h2h.summary?.all || null,
     totalMeetings: h2h.all.length,
-    matches
+    all: trim(h2h.all),
+    atHome: trim(h2h.atHome),
+    atAway: trim(h2h.atAway),
+    summary: h2h.summary || { all: null, atHome: null, atAway: null }
   };
 }
 

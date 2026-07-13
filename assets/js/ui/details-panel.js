@@ -1712,6 +1712,95 @@ async function renderLocal(match, mountEl) {
       </div>
 
       ${(() => {
+        // League Table — full validated standings, fail-closed behind the
+        // integrity axis (status "gated" when the league is anomalous, so a
+        // corrupt/cumulative table never reaches the UI).
+        const st = snap.standings;
+        if (!st) return "";
+        if (st.status === "gated") {
+          return `
+          <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+            <div style="font-weight:900;margin-bottom:6px;">League Table</div>
+            <div class="muted" style="font-size:12px;opacity:.75;">Full table withheld pending an integrity check${st.reason ? ` (${esc(String(st.reason))})` : ""}.</div>
+          </div>`;
+        }
+        if (st.status !== "ready" || !Array.isArray(st.rows) || !st.rows.length) return "";
+        const homeRaw = (m.home || m.homeTeam || "").toLowerCase();
+        const awayRaw = (m.away || m.awayTeam || "").toLowerCase();
+        const firstTok = s => String(s || "").toLowerCase().split(" ")[0];
+        const isSide = (name, sideRaw) => {
+          const n = String(name || "").toLowerCase();
+          const t = firstTok(sideRaw);
+          return Boolean(t) && (n.includes(t) || sideRaw.includes(firstTok(n)));
+        };
+        const body = st.rows.map(r => {
+          const hl = isSide(r.teamName, homeRaw) || isSide(r.teamName, awayRaw);
+          const gd = r.goalDifference != null ? (r.goalDifference > 0 ? "+" : "") + r.goalDifference : "—";
+          return `<tr style="${hl ? "background:rgba(120,170,255,0.10);" : ""}border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:5px 8px;opacity:.7;text-align:right;">${esc(r.position ?? "")}</td>
+            <td style="padding:5px 8px;font-weight:${hl ? "900" : "700"};">${esc(r.teamName || "")}</td>
+            <td style="padding:5px 6px;text-align:right;opacity:.85;">${esc(r.played ?? "")}</td>
+            <td style="padding:5px 6px;text-align:right;opacity:.7;">${esc(r.wins ?? "")}-${esc(r.draws ?? "")}-${esc(r.losses ?? "")}</td>
+            <td style="padding:5px 6px;text-align:right;opacity:.85;">${esc(gd)}</td>
+            <td style="padding:5px 8px;text-align:right;font-weight:900;">${esc(r.points ?? "")}</td>
+          </tr>`;
+        }).join("");
+        return `
+        <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+            <div style="font-weight:900;">League Table</div>
+            ${st.matchday != null ? `<div class="muted" style="font-size:12px;opacity:.75;">Matchday ${esc(st.matchday)}</div>` : ""}
+          </div>
+          <div style="overflow:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead><tr style="opacity:.6;text-align:right;">
+                <th style="padding:4px 8px;text-align:right;">#</th>
+                <th style="padding:4px 8px;text-align:left;">Team</th>
+                <th style="padding:4px 6px;">P</th>
+                <th style="padding:4px 6px;">W-D-L</th>
+                <th style="padding:4px 6px;">GD</th>
+                <th style="padding:4px 8px;">Pts</th>
+              </tr></thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+        </div>`;
+      })()}
+
+      ${(() => {
+        // Recent Form — last5 / last10 aggregates for both sides.
+        const fm = snap.form;
+        if (!fm || fm.status !== "ready" || (!fm.home && !fm.away)) return "";
+        const homeRaw = m.home || m.homeTeam || "";
+        const awayRaw = m.away || m.awayTeam || "";
+        const win = w => {
+          if (!w) return `<div class="muted" style="font-size:12px;opacity:.5;">—</div>`;
+          const ppg = w.ppg != null ? Number(w.ppg).toFixed(2) : "—";
+          return `<div style="font-size:12px;margin-top:2px;">
+            <b style="color:#4caf50;">${w.wins ?? 0}W</b> <b style="opacity:.75;">${w.draws ?? 0}D</b> <b style="color:#f44336;">${w.losses ?? 0}L</b>
+            <span style="opacity:.6;margin-left:8px;">${w.gf ?? 0}:${w.ga ?? 0}</span>
+            <span style="opacity:.6;margin-left:8px;">${ppg} ppg</span>
+          </div>`;
+        };
+        const sideCol = (title, side) => `
+          <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+            <div style="font-weight:900;margin-bottom:8px;">${esc(title)}</div>
+            <div style="opacity:.7;font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Last 5</div>
+            ${win(side?.last5)}
+            <div style="opacity:.7;font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-top:8px;">Last 10</div>
+            ${win(side?.last10)}
+          </div>`;
+        return `
+        <div style="margin-top:14px;">
+          <div style="font-weight:900;margin-bottom:8px;">Recent Form</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">
+            ${sideCol(homeRaw, fm.home)}
+            ${sideCol(awayRaw, fm.away)}
+          </div>
+        </div>`;
+      })()}
+
+      ${(() => {
         const h2h = snap.h2h;
         if (!h2h || !h2h.all?.length) return "";
         const homeRaw = m.home || m.homeTeam || "";
