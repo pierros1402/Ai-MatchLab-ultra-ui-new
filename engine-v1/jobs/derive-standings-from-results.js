@@ -72,6 +72,12 @@ function tableFromResults(slug, meta = {}) {
       if (r.res === "W") W++; else if (r.res === "D") D++; else L++;
     }
     totalGames += P;
+    // A team with zero games in the season window is NOT a current participant —
+    // it's a relegated/withdrawn club that still has older results in
+    // results-memory (e.g. blr.1 carries 9 such: Shakhtyor, Slutsk, Smorgon …).
+    // Listing it as a played=0 row pollutes the table (and drags matchdayMin to 0),
+    // so drop it; a real team gets its row back the moment it plays.
+    if (P === 0) continue;
     rows.push({
       teamName: name, played: P, won: W, drawn: D, lost: L,
       // canonical field names too — compactRows() in standings-memory-db keeps
@@ -80,21 +86,24 @@ function tableFromResults(slug, meta = {}) {
       goalsFor: GF, goalsAgainst: GA, goalDifference: GF - GA, points: W * 3 + D
     });
   }
-  if (totalGames / 2 < MIN_GAMES) return null;
+  if (totalGames / 2 < MIN_GAMES || rows.length < MIN_TEAMS) return null;
 
   rows.sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference || b.goalsFor - a.goalsFor);
   rows.forEach((r, i) => { r.rank = i + 1; r.position = i + 1; });
   return rows;
 }
 
-export function deriveStandingsFromResults({ force = false } = {}) {
+export function deriveStandingsFromResults({ force = false, leagues = null } = {}) {
   const dir = resolveDataPath("league-memory", "results");
   let files = [];
   try { files = fs.readdirSync(dir).filter(f => f.endsWith(".json")); } catch { /* none */ }
 
+  const only = Array.isArray(leagues) && leagues.length ? new Set(leagues) : null;
+
   const stats = { considered: 0, derived: 0, skippedHaveReal: 0, tooThin: 0, clearedCorrupt: 0, byLeague: {} };
   for (const file of files) {
     const slug = file.replace(/\.json$/, "");
+    if (only && !only.has(slug)) continue;
     stats.considered++;
 
     const meta = getLeagueMeta(slug);
@@ -145,6 +154,9 @@ export function deriveStandingsFromResults({ force = false } = {}) {
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (entryUrl === import.meta.url) {
-  const r = deriveStandingsFromResults();
+  const args = process.argv.slice(2);
+  const val = (k) => { const hit = args.find(a => a.startsWith(`${k}=`)); return hit ? hit.slice(k.length + 1) : null; };
+  const leagues = String(val("--leagues") || "").split(",").map(s => s.trim()).filter(Boolean);
+  const r = deriveStandingsFromResults({ force: args.includes("--force"), leagues });
   console.log(JSON.stringify({ ...r, guarantees: { canonicalWrites: 0 } }, null, 2));
 }
