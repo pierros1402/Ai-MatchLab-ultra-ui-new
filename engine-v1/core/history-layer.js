@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveDataPath } from "../storage/data-root.js";
 import { normalizeTeamTokens } from "./normalize.js";
+import { currentArchiveSeason } from "./season-model.js";
 
 const CURRENT_HISTORY_DIR = resolveDataPath("history");
 const ARCHIVE_HISTORY_DIR = resolveDataPath("history-archive");
@@ -249,7 +250,20 @@ export function getMatchHistoryContext(match, opts = {}) {
       ? Date.parse(match.kickoffUtc)
       : null;
 
-  const currentSeasonRows = filterRowsBeforeKickoff(readCurrentSeasonRows(season), kickoffMs);
+  // Current-season form comes from the per-league, season-aware, Flashscore-
+  // canonical archive (calendar-year leagues get "YYYY", cross-year "YYYY-YYYY"),
+  // NOT the consolidated ESPN history whose universal Aug→Jul split mixes two real
+  // seasons for the 60+ calendar-year leagues and is coverage-thin. The ESPN file
+  // is used only as a fallback for leagues that have no archive yet.
+  const currentArchiveLabel = opts.season || currentArchiveSeason(leagueSlug);
+  let currentSeasonRows = filterRowsBeforeKickoff(
+    readArchiveLeagueSeasonRows(leagueSlug, currentArchiveLabel),
+    kickoffMs
+  );
+  if (!currentSeasonRows.length) {
+    currentSeasonRows = filterRowsBeforeKickoff(readCurrentSeasonRows(season), kickoffMs);
+  }
+
   const archiveSeasons = opts.archiveSeasons || getAvailableArchiveSeasons(leagueSlug);
 
   const archiveRows = archiveSeasons.flatMap(archiveSeason =>

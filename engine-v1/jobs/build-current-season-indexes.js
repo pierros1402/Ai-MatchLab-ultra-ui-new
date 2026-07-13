@@ -2,6 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { currentSeason } from "../core/season.js";
+import { currentArchiveSeason } from "../core/season-model.js";
+import { canonicalTeamName } from "../storage/team-aliases-db.js";
+import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,6 +12,13 @@ const __dirname = path.dirname(__filename);
 const DATA_ROOT = path.resolve(__dirname, "..", "..", "data");
 const SEASON = process.argv[2] || currentSeason();
 
+// Primary source: the per-league, per-season, Flashscore-canonical archive that
+// build-history-archive-from-results.js rebuilds every run-day from results-memory.
+// It is complete and season-aware per league (calendar-year leagues get "YYYY",
+// cross-year leagues "YYYY-YYYY"), unlike the consolidated ESPN history which is
+// universal Aug→Jul and coverage-thin. The consolidated file survives only as a
+// fallback for leagues that have no archive yet, so coverage never regresses.
+const ARCHIVE_DIR = path.join(DATA_ROOT, "history-archive");
 const HISTORY_FILE = path.join(DATA_ROOT, "history", `${SEASON}.json`);
 const OUT_DIR = path.join(DATA_ROOT, "history-index");
 
@@ -218,31 +228,107 @@ function buildMatchupIndex(allMatches) {
   return result;
 }
 
-function extractCanonicalMatches(history) {
+/**
+ * Reconcile a match's team names to their canonical identity via the alias
+ * tables. Archive rows are already Flashscore-canonical so this is a no-op for
+ * them, but the ESPN fallback rows ("Dinamo Minsk", "Gomel") must be bridged to
+ * the canonical spelling the details form/H2H blocks look up with ("Din. Minsk",
+ * "FC Gomel") — otherwise a club's games split across two spellings and a lookup
+ * by the fixture name resolves only a fraction (blr.1 "Din. Minsk" last5 was 1
+ * of ~10). The alias tables already list the ESPN spelling as a variant.
+ */
+function canonicalizeTeams(m) {
+  const slug = m?.leagueSlug;
+  const home = (slug && canonicalTeamName(slug, m.homeTeam)) || m.homeTeam;
+  const away = (slug && canonicalTeamName(slug, m.awayTeam)) || m.awayTeam;
+  if (home === m.homeTeam && away === m.awayTeam) return m;
+  return { ...m, homeTeam: home, awayTeam: away };
+}
+
+async function listArchiveLeagues() {
+  try {
+    const entries = await fs.readdir(ARCHIVE_DIR, { withFileTypes: true });
+    return entries.filter(e => e.isDirectory()).map(e => e.name);
+  } catch {
+    return [];
+  }
+}
+
+// Read one league's current-season matches from its per-league archive, using
+// the league's own season model (calendar vs cross-year) to pick the file.
+async function readArchiveMatchesForLeague(slug) {
+  const label = currentArchiveSeason(slug);
+  const file = path.join(ARCHIVE_DIR, slug, `${label}.json`);
+
+  let payload;
+  try {
+    payload = JSON.parse(await fs.readFile(file, "utf8"));
+  } catch {
+    return [];
+  }
+
+  const matches = Array.isArray(payload?.matches) ? payload.matches : [];
+  const leagueName = LEAGUE_NAME_MAP[slug] || slug;
+
+  return matches.map(m =>
+    canonicalizeTeams({ ...m, leagueName: m.leagueName || leagueName })
+  );
+}
+
+// Fallback only: pull rows for leagues NOT covered by an archive from the
+// consolidated ESPN history, so coverage never regresses for leagues we hold
+// only in that file. Archive-covered leagues are skipped (the archive wins).
+async function readGlobalHistoryFallback(coveredSlugs) {
+  let history;
+  try {
+    history = JSON.parse(await fs.readFile(HISTORY_FILE, "utf8"));
+  } catch {
+    return [];
+  }
+
   if (!Array.isArray(history?.days)) return [];
 
-  const allMatches = [];
-
+  const out = [];
   for (const day of history.days) {
     if (!Array.isArray(day?.rows)) continue;
     for (const m of day.rows) {
-      allMatches.push(m);
+      if (coveredSlugs.has(m?.leagueSlug)) continue;
+      out.push(canonicalizeTeams(m));
     }
   }
 
-  return allMatches;
+  return out;
 }
 
 export async function buildCurrentSeasonIndexes() {
   console.log("[index] season:", SEASON);
-  console.log("[index] history file:", HISTORY_FILE);
+  console.log("[index] archive dir:", ARCHIVE_DIR);
 
-  const raw = await fs.readFile(HISTORY_FILE, "utf8");
-  const history = JSON.parse(raw);
+  const archiveLeagues = await listArchiveLeagues();
 
-  const allMatches = extractCanonicalMatches(history);
+  // A league counts as archive-covered only once it actually contributes rows for
+  // its current season — a slug with a stale/empty dir (e.g. a cup with no
+  // current-season file yet) must still fall through to the ESPN fallback so its
+  // matches don't vanish from the form index.
+  const contributedSlugs = new Set();
 
-  console.log("[index] total matches:", allMatches.length);
+  const allMatches = [];
+  for (const slug of archiveLeagues) {
+    const rows = await readArchiveMatchesForLeague(slug);
+    if (rows.length) {
+      contributedSlugs.add(slug);
+      allMatches.push(...rows);
+    }
+  }
+
+  const archiveCount = allMatches.length;
+
+  const fallback = await readGlobalHistoryFallback(contributedSlugs);
+  allMatches.push(...fallback);
+
+  console.log(
+    `[index] matches: ${allMatches.length} (archive ${archiveCount} from ${contributedSlugs.size} leagues, fallback ${fallback.length})`
+  );
 
   const teamIndex = buildTeamIndex(allMatches);
   const leagueIndex = buildLeagueIndex(allMatches);
