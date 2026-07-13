@@ -12,6 +12,7 @@ import { readTeamGeoRecord } from "../storage/team-geo-db.js";
 import { inferAbsencesFromUsage } from "../ai-match-intelligence/player-usage/absence-inference.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { resolveDayFixtureRows } from "../core/day-fixture-universe.js";
+import { buildRichContextBlocks } from "../core/details-rich-blocks.js";
 
 const DETAILS_SCHEMA_VERSION = "details-snapshot-v3";
 const DETAILS_BUILDER_VERSION = "2026-05-01-player-usage-travel-geo-signature";
@@ -1369,6 +1370,10 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
   const referee = buildRefereeBlock(match);
   const travel = buildTravelBlock(travelContextFact);
   const teamNews = buildTeamNewsBlock(teamNewsFact);
+  // Flashscore-style rich context (standings table / form / H2H) from data we
+  // already hold. The standings table is fail-closed behind the league
+  // integrity gate (core/details-rich-blocks.js); form & H2H are independent.
+  const richBlocks = buildRichContextBlocks(match);
   const analysis = buildAnalysisBlock(
     match,
     valuePicks,
@@ -1537,6 +1542,9 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       status: match?.lineups ? "partial" : "missing"
     },
     travel,
+    standings: richBlocks.standings,
+    form: richBlocks.form,
+    h2h: richBlocks.h2h,
     value: Array.isArray(valuePicks) ? valuePicks : [],
     analysis,
     playerUsageIntel,
