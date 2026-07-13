@@ -21,6 +21,7 @@ import { readStandings, hasAcceptedStandings } from "../storage/standings-memory
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { currentSeason } from "../core/season.js";
 import { isLeagueCompetition, LEAGUE_ONLY_SEEDS, LEAGUES_BY_SLUG } from "../../workers/_shared/leagues-coverage.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 
 function readJson(path) {
   try { return JSON.parse(fs.readFileSync(path, "utf8")); } catch { return null; }
@@ -83,8 +84,13 @@ export function buildCoverageReport(dayKey = athensDayKey()) {
   // headline totals/gaps are league-only.
   const leagueRows = rows.filter(r => r.isLeague);
   const leaguesWithFixtures = leagueRows.filter(r => r.fixtures > 0);
-  const coveredTargetLeagues = LEAGUE_ONLY_SEEDS.filter(s => historySlugs.has(s));
-  const missingTargetLeagues = LEAGUE_ONLY_SEEDS.filter(s => !historySlugs.has(s));
+  // Disabled leagues (som/eth/moz/tan …) stay on the registry for UI naming but
+  // are DEACTIVATED — nothing is ever acquired for them. They must not count as
+  // coverage targets or they show up as permanent "missing" gaps (audit V2 §ε).
+  const activeTargetSeeds = LEAGUE_ONLY_SEEDS.filter(s => !isDisabledLeague(s));
+  const disabledTargetSeeds = LEAGUE_ONLY_SEEDS.filter(s => isDisabledLeague(s));
+  const coveredTargetLeagues = activeTargetSeeds.filter(s => historySlugs.has(s));
+  const missingTargetLeagues = activeTargetSeeds.filter(s => !historySlugs.has(s));
 
   const report = {
     ok: true,
@@ -99,10 +105,11 @@ export function buildCoverageReport(dayKey = athensDayKey()) {
       withStandings: leagueRows.filter(r => r.standings).length,
       withHistory: leagueRows.filter(r => r.history).length,
       assessmentReady: leagueRows.filter(r => r.assessmentReady).length,
-      // Target = registry league seeds (type === "league").
-      targetLeagues: LEAGUE_ONLY_SEEDS.length,
+      // Target = registry league seeds (type === "league"), excluding disabled.
+      targetLeagues: activeTargetSeeds.length,
       coveredTargetLeagues: coveredTargetLeagues.length,
       missingTargetLeagues: missingTargetLeagues.length,
+      disabledTargetLeagues: disabledTargetSeeds.length,
       // Non-league competitions present in the considered set (transparency).
       nonLeagueCompetitions: rows.length - leagueRows.length
     },

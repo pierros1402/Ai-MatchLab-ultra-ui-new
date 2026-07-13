@@ -70,10 +70,26 @@ const BUILTIN_ALIASES = {
     "inter d'escaldes": ["inter escaldes"]
   },
 
+  // nor.1 (audit V2 2026-07-12 §α): "Hamarkameratene" (full club name) vs
+  // "HamKam" (the common abbreviation) share no token, so the subset matcher
+  // mints two canonical IDs for the same club → a duplicate published fixture
+  // (Sandefjord v HamKam / v Hamarkameratene). Canonical key = short form.
+  "nor.1": {
+    "hamkam": ["hamarkameratene", "ham kam", "ham-kam"]
+  },
+
   // ecu.1 (audit 2026-07-07): Flashscore "U. Catolica" vs ESPN "Universidad
   // Católica (Quito)" — a "U." abbreviation the subset matcher can't expand.
+  // (audit V2 2026-07-12 §α): "LDU Quito" (Liga Deportiva Universitaria) vs
+  // "Liga de Quito" — an acronym vs full name that also mints two IDs.
   "ecu.1": {
-    "universidad catolica": ["u catolica", "u. catolica"]
+    "universidad catolica": ["u catolica", "u. catolica"],
+    "liga de quito": [
+      "ldu quito",
+      "ldu",
+      "liga deportiva universitaria",
+      "liga deportiva universitaria de quito"
+    ]
   }
 };
 

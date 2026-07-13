@@ -167,6 +167,19 @@ function resettleValueDay(settleDayKey, label, offsetDays = 0) {
   const offsets = [...new Set([offsetDays - 1, offsetDays, offsetDays + 1])];
   const offsetsArg = `--offsets=${offsets.join(",")}`;
 
+  // Cross-source verified FT truth for the WHOLE fixture universe, not just
+  // value picks: strengthens the FT-confirmation layer for every match
+  // ([[stuck-live-ft-transition]]) without touching value settlement, which
+  // stays strictly picks-scoped in the calls below. Runs first so the picks'
+  // final-results are already present when settlement reads them.
+  runDailyCycleNodeJob([
+    "./engine-v1/jobs/export-verified-final-results-day.js",
+    `--date=${settleDayKey}`,
+    "--write",
+    "--all-fixtures",
+    offsetsArg
+  ], `${label}-verified-final-results-all-fixtures`);
+
   runDailyCycleNodeJob([
     "./engine-v1/jobs/export-verified-final-results-day.js",
     `--date=${settleDayKey}`,

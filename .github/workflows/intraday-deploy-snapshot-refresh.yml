@@ -204,6 +204,17 @@ jobs:
         run: |
           set -euo pipefail
 
+          # Cross-source verified FT truth for the WHOLE fixture universe, not
+          # just value picks. This strengthens the FT-confirmation layer for
+          # every match and never touches value settlement (which stays strictly
+          # picks-scoped in the calls below). Runs first so the picks' own
+          # final-results already exist when settlement reads them.
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/fixtures.json" ]; then
+            node ./engine-v1/jobs/export-verified-final-results-day.js --date="$DAY_KEY" --write --all-fixtures
+          else
+            echo "No fixtures snapshot for ${DAY_KEY}; skipping all-fixtures final-result export."
+          fi
+
           if [ -f "data/deploy-snapshots/${DAY_KEY}/value.json" ]; then
             node ./engine-v1/jobs/export-verified-final-results-day.js --date="$DAY_KEY" --write
           else

@@ -24,6 +24,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { LEAGUE_SEEDS, leagueName } from "../config.js";
 import { LEAGUES_BY_SLUG, isLeagueCompetition } from "../../workers/_shared/leagues-coverage.js";
+import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
+import { hasAcceptedStandings } from "../storage/standings-memory-db.js";
 import { isInSeason } from "../source-discovery/season-calendar.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
@@ -221,8 +223,17 @@ function standingsStateForSlug(slug) {
   const memoryRows = standingsRowCount(memoryFile);
   const rows = Math.max(mainRows, memoryRows);
 
+  // Validated = an ACCEPTED standings snapshot exists (it passed the standings
+  // accept flow), which is strictly stronger than "a file with rows exists".
+  // A present-but-unvalidated table is a weak fallback and must be reported as
+  // such, not conflated with validated coverage (standings fail-closed, audit
+  // §θ). Kept as a distinct flag rather than folding it into standingsReady, so
+  // legitimate published tables are never hidden from the product.
+  const standingsValidated = hasAcceptedStandings(slug);
+
   return {
     standingsReady: rows > 0,
+    standingsValidated,
     standingsRows: rows,
     standingsSource: mainRows > 0 ? "data/standings" : memoryRows > 0 ? "league-memory" : null
   };
@@ -267,9 +278,15 @@ function classify(row) {
 export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
   const date = String(dayKey);
 
-  const declared = (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
+  // Disabled leagues are DEACTIVATED — never acquired anywhere. They stay on the
+  // registry for UI naming only, so they must not appear as declared coverage
+  // targets in the gap report (audit V2 §ε). Track them separately for
+  // transparency instead of counting them as perpetual OUT_OF_SEASON gaps.
+  const allDeclared = (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
     .map(x => String(x || "").trim())
     .filter(Boolean);
+  const declared = allDeclared.filter(slug => !isDisabledLeague(slug));
+  const disabledDeclared = allDeclared.filter(slug => isDisabledLeague(slug));
 
   const acquisition = acquisitionResultsForDay(date);
   const expected = expectedCountsForDay(date);
@@ -310,6 +327,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       playerUsageEmpty: snapshot.playerUsageEmptyCounts.get(slug) || 0,
       valuePicks: snapshot.valueCounts.get(slug) || 0,
       standingsReady: standings.standingsReady,
+      standingsValidated: standings.standingsValidated,
       standingsRows: standings.standingsRows,
       standingsSource: standings.standingsSource
     };
@@ -359,10 +377,15 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       // `leagueOnly` block below is the honest LEAGUE coverage view (audit
       // §8.2); cups/continental must not inflate league counts.
       declaredLeagues: declared.length,
+      disabledLeagues: disabledDeclared,
       leagueOnly: {
         declaredLeagues: rows.filter(r => r.isLeague).length,
         leaguesWithCanonicalFixtures: rows.filter(r => r.isLeague && r.canonicalFixtures > 0).length,
         standingsReadyLeagues: rows.filter(r => r.isLeague && r.standingsReady).length,
+        standingsValidatedLeagues: rows.filter(r => r.isLeague && r.standingsValidated).length,
+        standingsPresentNotValidated: rows
+          .filter(r => r.isLeague && r.standingsReady && !r.standingsValidated)
+          .map(r => r.slug),
         standingsMissingLeagues: rows.filter(r => r.isLeague && !r.standingsReady).length,
         activeStandingsMissing: rows
           .filter(r => r.isLeague && r.canonicalFixtures > 0 && !r.standingsReady)

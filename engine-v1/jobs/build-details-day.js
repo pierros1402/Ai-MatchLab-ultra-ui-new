@@ -215,7 +215,12 @@ function compactForDetails(value, {
     ]);
 
     if (Array.isArray(input)) {
-      return input.slice(0, maxArrayItems).map(item => walk(item, depth + 1, key));
+      const arr = input.slice(0, maxArrayItems).map(item => walk(item, depth + 1, key));
+      // Path-scoped, not tree-scoped: release this node so a sibling that merely
+      // shares the same reference (common in H2H, where the same match/team
+      // object is reused across lists) is not falsely flagged "[circular]".
+      seen.delete(input);
+      return arr;
     }
 
     const out = {};
@@ -241,6 +246,10 @@ function compactForDetails(value, {
       out[k] = walk(v, depth + 1, k);
     }
 
+    // Release this node from the active DFS path (see array branch above): only
+    // a genuine ancestor cycle should resolve to "[circular]", never a repeated
+    // sibling reference.
+    seen.delete(input);
     return out;
   }
 
@@ -1438,6 +1447,15 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
         coreStarters: u.coreStarters,
         confirmedAbsences: [],
         inferredAbsences: [],
+        // Keep meta.sampleMatches in lockstep with the top-level value. The
+        // spread above carries the "unavailable" intel's meta (sampleMatches 0),
+        // and overriding only the top-level field leaves the two disagreeing —
+        // the 54/54 player-usage contradiction (audit V2 §ζ).
+        meta: {
+          ...(playerUsageIntel[side]?.meta || {}),
+          sampleMatches: u.sample,
+          method: "flashscore_lineups_fallback"
+        }
       };
     }
   }
