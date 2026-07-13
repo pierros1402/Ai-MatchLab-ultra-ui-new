@@ -26,6 +26,7 @@ import { LEAGUE_SEEDS, leagueName } from "../config.js";
 import { LEAGUES_BY_SLUG, isLeagueCompetition } from "../../workers/_shared/leagues-coverage.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { hasAcceptedStandings } from "../storage/standings-memory-db.js";
+import { computeMatchdayAxis } from "../core/matchday-axis.js";
 import { isInSeason } from "../source-discovery/season-calendar.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
@@ -298,6 +299,10 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
   for (const slug of declared) {
     const acq = acquisition.bySlug.get(slug) || null;
     const standings = standingsStateForSlug(slug);
+    // Matchday confirmation axis (core/matchday-axis.js): the current round per
+    // league + integrity flag. Surfaced so the daily report shows the round and
+    // any corrupt/cumulative standings (blr.1 & co.) are visible as anomalies.
+    const md = computeMatchdayAxis(slug);
 
     const row = {
       slug,
@@ -329,7 +334,11 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       standingsReady: standings.standingsReady,
       standingsValidated: standings.standingsValidated,
       standingsRows: standings.standingsRows,
-      standingsSource: standings.standingsSource
+      standingsSource: standings.standingsSource,
+      matchday: md.matchday,
+      matchdaySpread: md.matchdaySpread,
+      matchdayAnomaly: md.matchdayAnomaly?.bool || false,
+      matchdayAnomalyReason: md.matchdayAnomaly?.reason || null
     };
 
     const { status, reason } = classify(row);
@@ -390,6 +399,11 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
         activeStandingsMissing: rows
           .filter(r => r.isLeague && r.canonicalFixtures > 0 && !r.standingsReady)
           .map(r => r.slug),
+        // Matchday axis integrity: validated standings whose played counts are
+        // corrupt/cumulative (fail-closed — these must not surface a table).
+        matchdayAnomalyLeagues: rows
+          .filter(r => r.isLeague && r.matchdayAnomaly)
+          .map(r => ({ slug: r.slug, reason: r.matchdayAnomalyReason, spread: r.matchdaySpread })),
         nonLeagueCompetitions: rows.filter(r => !r.isLeague).length
       },
       selectedForAcquisition: acquisition.selected.size,

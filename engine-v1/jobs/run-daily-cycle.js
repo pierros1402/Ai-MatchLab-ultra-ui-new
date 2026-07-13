@@ -12,6 +12,7 @@ import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canoni
 import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
+import { buildMatchdayAxis } from "./build-matchday-axis.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
 import { buildPlayerUsageWorksetDay } from "./build-player-usage-workset-day.js";
 import { buildPlayerUsageDeterministicCandidatesDay } from "./build-player-usage-deterministic-candidates-day.js";
@@ -647,6 +648,26 @@ export async function runDailyCycle(options = {}) {
     built: standingsBuild?.built ?? 0,
     skipped: standingsBuild?.skipped ?? 0
   });
+
+  // ── Matchday confirmation axis ───────────────────────────────────────────────
+  // Stamp the deterministic matchday (round) per league from validated standings
+  // (core/matchday-axis.js) onto league-memory. It's an independent axis to
+  // confirm league state (expected-vs-actual) and the fail-closed integrity gate
+  // for the rich details/UI below — a league with corrupt/cumulative standings
+  // (blr.1 & co.) is flagged here and never surfaces a wrong table. Additive:
+  // touches only matchday* fields, never state/season.
+  console.log("[daily-cycle] matchday-axis:start", { dayKey });
+  let matchdayAxis = null;
+  try {
+    matchdayAxis = buildMatchdayAxis();
+    console.log("[daily-cycle] matchday-axis:done", {
+      computed: matchdayAxis?.matchdayComputed ?? 0,
+      anomalies: matchdayAxis?.anomalyCount ?? 0,
+      softFlags: matchdayAxis?.softFlagCount ?? 0
+    });
+  } catch (e) {
+    console.error("[daily-cycle] matchday-axis:error", e?.message);
+  }
 
   console.log("[daily-cycle] team-geo-seeds:start", { dayKey });
 
