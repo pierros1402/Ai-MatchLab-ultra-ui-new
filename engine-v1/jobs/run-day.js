@@ -32,6 +32,7 @@ import { resolveDataPath } from "../storage/data-root.js";
 import fsNode from "node:fs";
 import { accumulateDiscipline } from "./run-discipline-day.js";
 import { deriveStandingsFromResults } from "./derive-standings-from-results.js";
+import { clearWrongLeagueStandings } from "./clear-wrong-league-standings.js";
 import { refreshRefereeStats } from "./run-referee-stats.js";
 import { buildTeamGeoSparql } from "./build-team-geo-sparql.js";
 import { buildTeamAliasesSparql } from "./build-team-aliases-sparql.js";
@@ -125,7 +126,13 @@ export async function runDay(dayKey) {
 
   // 2f) Fill standings gaps (no-Wikipedia long-tail) by deriving a table from results.
   const derived = deriveStandingsFromResults();
-  log("derive-standings", { derived: derived.derived, leagues: Object.keys(derived.byLeague) });
+  log("derive-standings", { derived: derived.derived, cleared: derived.clearedCorrupt, leagues: Object.keys(derived.byLeague) });
+
+  // 2f2) Integrity guard: drop accepted tables scraped from the WRONG article —
+  //      a single-club season page, or a table whose teams don't belong to the
+  //      league (name-collision scrapes like grn.2←Granada CF, and.2←FC Andorra).
+  const wrongCleared = clearWrongLeagueStandings();
+  if (wrongCleared.cleared > 0) log("clear-wrong-standings", { cleared: wrongCleared.cleared, leagues: Object.keys(wrongCleared.byLeague) });
 
   // 2g) Roll fresh results into the value history-archive (current season kept
   //     live, completed seasons frozen) and rebuild model-priors ONLY when the

@@ -138,6 +138,26 @@ function isNonClubCompetitionUrl(url) {
   } catch { return false; }
 }
 
+// A SINGLE CLUB's season page ("2025–26 FC Andorra season", "2025–26 Granada CF
+// season") — its body carries a partial mini-league snippet the parser mistakes
+// for a full table. These win searches for small leagues by pure name collision
+// (Grenada↔Granada CF, Andorra↔FC Andorra), so they must never be scraped as a
+// league table. Requires BOTH a trailing "…season" AND a club designator so real
+// league-season pages (e.g. "Major League Soccer season") are not caught.
+const CLUB_DESIGNATOR_RE = /\b(fc|cf|sc|ac|sd|cd|ud|ca|afc|cfc|sad|club)\b/;
+function isClubSeasonUrl(url) {
+  try {
+    const path = decodeURIComponent(new URL(url).pathname).toLowerCase();
+    if (!/_season\/?$/.test(path)) return false;
+    // Split on underscores/punctuation so \b tokens match (underscore is a word
+    // char, so \bcf\b would NOT fire inside "granada_cf_season" otherwise).
+    const words = path.replace(/[^a-z0-9]+/g, " ");
+    return CLUB_DESIGNATOR_RE.test(words);
+  } catch { return false; }
+}
+
+export { isClubSeasonUrl };
+
 function scoreWikiCandidate(url, title, leagueName, countryName, season) {
   let score = 0;
   const t = (title || "").toLowerCase();
@@ -180,6 +200,7 @@ async function discoverWikipediaUrl(leagueName, countryName, season, opts) {
       const url = row.url;
       if (!url || !isWikipediaArticleUrl(url)) continue;
       if (isNonClubCompetitionUrl(url)) continue; // skip World Cup / national-team pages
+      if (isClubSeasonUrl(url)) continue;         // skip single-club season pages
       const score = scoreWikiCandidate(url, row.title, leagueName, countryName, season);
       candidates.push({ url, title: row.title, score });
     }
@@ -197,6 +218,7 @@ async function tryCachedUrl(slug, season, opts) {
   const cached = getCachedUrl(slug, season);
   if (!cached?.url) return null;
   if (isNonClubCompetitionUrl(cached.url)) return null; // poisoned cache entry
+  if (isClubSeasonUrl(cached.url)) return null;         // poisoned: club-season page
 
   const parsed = await parseWikipediaStandings(cached.url, opts);
   if (!parsed.ok) return null;
