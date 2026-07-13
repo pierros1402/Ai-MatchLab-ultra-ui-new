@@ -18,24 +18,56 @@ import fs from "fs";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { readResults } from "../storage/results-memory-db.js";
-import { recordStandingsResult, hasAcceptedStandings } from "../storage/standings-memory-db.js";
+import { recordStandingsResult, readStandings, clearAcceptedStandings } from "../storage/standings-memory-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
-import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
+import { currentSeasonLabel, seasonWindow } from "../source-discovery/season-calendar.js";
+import { maxPlayableGames } from "../core/matchday-axis.js";
 
 const MIN_TEAMS = 4;
 const MIN_GAMES = 3;   // need a few games before a table is meaningful
 
-function tableFromResults(slug) {
+/**
+ * Concrete [from, to) UTC millisecond bounds for the season currently in
+ * progress, derived from the league's season window (start/end MONTHS) and today.
+ * results-memory accumulates EVERY match a league ever played (5+ seasons), so
+ * without this bound the table sums all-time games — the cumulative-standings
+ * corruption the matchday axis flags (mex.1 played 213, aze.1 169 …).
+ */
+export function currentSeasonBounds(slug, meta = {}, date = new Date()) {
+  const { start, end } = seasonWindow(slug, meta);
+  const y = date.getUTCFullYear();
+  const m = date.getUTCMonth() + 1;
+  if (start <= end) {
+    // Calendar-year season (Brazil, Sweden, Mexico Apertura window, …).
+    return { from: Date.UTC(y, start - 1, 1), to: Date.UTC(y, end, 1) };
+  }
+  // Cross-year season (Aug→May): identified by the year it started in. `end` is
+  // 1-based, so Date.UTC(year, end, 1) is the first day AFTER the end month.
+  const startYear = (m >= start) ? y : y - 1;
+  return { from: Date.UTC(startYear, start - 1, 1), to: Date.UTC(startYear + 1, end, 1) };
+}
+
+function matchTime(r) {
+  const t = Date.parse(r?.date || r?.kickoff || r?.dayKey || "");
+  return Number.isNaN(t) ? null : t;
+}
+
+function tableFromResults(slug, meta = {}) {
   const data = readResults(slug);
   const teams = data.teams || {};
   const names = Object.keys(teams);
   if (names.length < MIN_TEAMS) return null;
+
+  const { from, to } = currentSeasonBounds(slug, meta);
 
   const rows = [];
   let totalGames = 0;
   for (const name of names) {
     let P = 0, W = 0, D = 0, L = 0, GF = 0, GA = 0;
     for (const r of teams[name]) {
+      // Current season only — drop earlier seasons still in results-memory.
+      const t = matchTime(r);
+      if (t == null || t < from || t >= to) continue;
       P++; GF += Number(r.gf) || 0; GA += Number(r.ga) || 0;
       if (r.res === "W") W++; else if (r.res === "D") D++; else L++;
     }
@@ -60,15 +92,44 @@ export function deriveStandingsFromResults({ force = false } = {}) {
   let files = [];
   try { files = fs.readdirSync(dir).filter(f => f.endsWith(".json")); } catch { /* none */ }
 
-  const stats = { considered: 0, derived: 0, skippedHaveReal: 0, tooThin: 0, byLeague: {} };
+  const stats = { considered: 0, derived: 0, skippedHaveReal: 0, tooThin: 0, clearedCorrupt: 0, byLeague: {} };
   for (const file of files) {
     const slug = file.replace(/\.json$/, "");
     stats.considered++;
 
-    const season = currentSeasonLabel(slug, getLeagueMeta(slug));
-    if (!force && hasAcceptedStandings(slug, season)) { stats.skippedHaveReal++; continue; }
+    const meta = getLeagueMeta(slug);
+    const season = currentSeasonLabel(slug, meta);
 
-    const rows = tableFromResults(slug);
+    let accepted = readStandings(slug)?.accepted;
+
+    // Drop a previously-DERIVED table that is a corrupt all-time aggregate
+    // (played beyond a quadruple round-robin) BEFORE anything else. Done up
+    // front — not just when the current season is thin — because such a table is
+    // often mislabelled (e.g. an Aug→May league stamped "2026" instead of
+    // "2025-26"), and shouldReplace() would otherwise keep the corrupt one and
+    // reject the correct current-season derive as an "older" season.
+    if (accepted?.source === "derived-from-results") {
+      const teams = accepted.rows?.length || 0;
+      const maxPlayed = Math.max(0, ...(accepted.rows || []).map(r => Number(r.played) || 0));
+      if (teams >= 2 && maxPlayed > maxPlayableGames(teams, 4)) {
+        clearAcceptedStandings(slug, "corrupt_all_time_aggregate");
+        stats.clearedCorrupt++;
+        accepted = null;
+      }
+    }
+
+    // Skip only when a REAL (non-derived) table already covers this season — a
+    // scraped Wikipedia table must never be clobbered. A remaining DERIVED table
+    // is refreshed every run so it grows with the accumulating results.
+    const hasRealForSeason = accepted &&
+      accepted.source !== "derived-from-results" &&
+      String(accepted.season) === String(season) &&
+      Array.isArray(accepted.rows) && accepted.rows.length > 0;
+    if (!force && hasRealForSeason) { stats.skippedHaveReal++; continue; }
+
+    const rows = tableFromResults(slug, meta);
+    // Too thin to build a meaningful table; the corrupt aggregate (if any) has
+    // already been cleared above, so the honest state is "no standings yet".
     if (!rows) { stats.tooThin++; continue; }
 
     recordStandingsResult(slug, {

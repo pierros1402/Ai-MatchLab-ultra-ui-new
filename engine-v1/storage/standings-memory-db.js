@@ -118,6 +118,26 @@ export function recordStandingsResult(slug, result) {
   return { written, reason, accepted, slug, season: result.season };
 }
 
+/**
+ * Drop the accepted snapshot for a league (e.g. it was found to be a corrupt
+ * all-time aggregate and no valid current-season table can replace it yet).
+ * Keeps the attempts log and records why. Returns { cleared }.
+ */
+export function clearAcceptedStandings(slug, reason = "cleared") {
+  const cur = readStandings(slug);
+  if (!cur?.accepted) return { cleared: false, slug, reason: "nothing_accepted" };
+
+  const now = new Date().toISOString();
+  cur.attempts = [...(cur.attempts || []).slice(-9), {
+    at: now, status: "cleared", reason,
+    season: cur.accepted.season, source: cur.accepted.source || null, rowCount: cur.accepted.rowCount || 0
+  }];
+  cur.accepted = null;
+  cur.updatedAt = now;
+  fs.writeFileSync(fileFor(slug), JSON.stringify(cur, null, 2), "utf8");
+  return { cleared: true, slug, reason };
+}
+
 export function getStandingsSummary() {
   let total = 0;
   let withAccepted = 0;
