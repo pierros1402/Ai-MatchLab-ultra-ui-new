@@ -33,3 +33,25 @@ jobs:
           echo "GET /bookmakers/selected:"
           curl -sS "https://api.odds-api.io/v3/bookmakers/selected?apiKey=${KEY}" || echo "(GET request failed)"
           echo
+
+      - name: Probe single-event /odds (with vs without bookmakers param)
+        env:
+          KEY: ${{ secrets.ODDS_API_IO_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          EV_ID="$(curl -sS "https://api.odds-api.io/v3/events?sport=football&status=pending&limit=1&apiKey=${KEY}" | python3 -c 'import json,sys; d=json.load(sys.stdin); d=d if isinstance(d,list) else d.get("data",[]); print(d[0]["id"] if d else "")')"
+          if [ -z "$EV_ID" ]; then echo "no pending event found"; exit 0; fi
+          echo "event id: ${EV_ID}"
+
+          echo "— /odds WITHOUT bookmakers param:"
+          curl -sS -o /tmp/a.json -w "HTTP %{http_code}\n" "https://api.odds-api.io/v3/odds?eventId=${EV_ID}&apiKey=${KEY}" || true
+          head -c 400 /tmp/a.json; echo
+
+          echo "— /odds WITH large bookmakers list:"
+          curl -sS -o /tmp/b.json -w "HTTP %{http_code}\n" "https://api.odds-api.io/v3/odds?eventId=${EV_ID}&bookmakers=Bet365%2CStoiximan%2CUnibet%2CWilliam%20Hill&apiKey=${KEY}" || true
+          head -c 400 /tmp/b.json; echo
+
+          echo "— /odds WITH only selected (Bet365,Stoiximan):"
+          curl -sS -o /tmp/c.json -w "HTTP %{http_code}\n" "https://api.odds-api.io/v3/odds?eventId=${EV_ID}&bookmakers=Bet365%2CStoiximan&apiKey=${KEY}" || true
+          head -c 400 /tmp/c.json; echo
