@@ -1,6 +1,16 @@
 import fs from "fs";
 import { resolveDataPath } from "./data-root.js";
 
+function readAliasDirFiles() {
+  const dir = resolveDataPath("team-aliases");
+  let out = [];
+  try {
+    out = fs.readdirSync(dir)
+      .filter(f => f.endsWith(".json") && f !== "global.json");
+  } catch { /* dir may not exist */ }
+  return out;
+}
+
 function readJsonSafe(filePath, fallback = null) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
@@ -159,6 +169,82 @@ export function canonicalTeamName(leagueSlug, teamName) {
 /** Drop cached reverse indexes (call after writing alias files in-process). */
 export function clearAliasCache() {
   _reverseIndexCache.clear();
+  _globalIndex = null;
+}
+
+// ── Global (league-agnostic) team-identity resolver ──────────────────────────
+// Some stores are league-agnostic by design — most importantly the H2H memory,
+// which aggregates a team pair's meetings across every competition, so it cannot
+// consult a per-league alias table. This resolver folds EVERY alias source
+// (builtin global + builtin per-league + global.json + every data/team-aliases/
+// league file) into one spelling→canonical map.
+//
+// Safety invariant (why this never wrong-merges): a normalized spelling that
+// resolves to TWO different canonicals across leagues (e.g. "Arsenal" the club
+// vs an "Arsenal …" alias elsewhere, or a genuine cross-league name collision)
+// is dropped as AMBIGUOUS and left untouched. So the map only ever merges
+// spellings that the alias data unambiguously agrees are the same club — the
+// conservative choice, correct over complete.
+let _globalIndex = null;
+
+/**
+ * Pure reducer (exported for tests): fold a list of {canonical:[variants]} maps
+ * into one normalized-spelling→canonical index, dropping any spelling that two
+ * sources disagree on. Kept side-effect-free so the collision-safety invariant
+ * can be tested with synthetic inputs, independent of the on-disk alias data.
+ */
+export function buildGlobalReverseMap(aliasMaps) {
+  const map = new Map();        // normText(spelling) -> canonical display
+  const ambiguous = new Set();  // spellings seen with >1 distinct canonical
+
+  const add = (spelling, canonical) => {
+    const k = normalizeText(spelling);
+    const cName = String(canonical || "").trim();
+    if (!k || !cName) return;
+    if (ambiguous.has(k)) return;
+    const prev = map.get(k);
+    if (prev === undefined) {
+      map.set(k, cName);
+    } else if (normalizeText(prev) !== normalizeText(cName)) {
+      ambiguous.add(k);
+      map.delete(k);
+    }
+  };
+
+  for (const aliasMap of aliasMaps || []) {
+    for (const [canonical, aliases] of Object.entries(aliasMap || {})) {
+      add(canonical, canonical); // a canonical name maps to itself
+      for (const a of toAliasArray(aliases)) add(a, canonical);
+    }
+  }
+
+  return map;
+}
+
+function buildGlobalReverseIndex() {
+  const sources = [];
+  sources.push(BUILTIN_ALIASES.global || {});
+  for (const key of Object.keys(BUILTIN_ALIASES)) {
+    if (key !== "global") sources.push(BUILTIN_ALIASES[key]);
+  }
+  sources.push(readGlobalAliasMap());
+  for (const file of readAliasDirFiles()) {
+    sources.push(readJsonSafe(resolveDataPath("team-aliases", file), {}) || {});
+  }
+  return buildGlobalReverseMap(sources);
+}
+
+/**
+ * Resolve a team spelling to its canonical display name using ALL alias tables
+ * (league-agnostic). Returns null when the spelling is unknown OR ambiguous, so
+ * callers keep the original name. Used by the H2H store, which is keyed by team
+ * pair across competitions and therefore has no single league to consult.
+ */
+export function globalCanonicalTeamName(teamName) {
+  const t = normalizeText(teamName);
+  if (!t) return null;
+  if (!_globalIndex) _globalIndex = buildGlobalReverseIndex();
+  return _globalIndex.get(t) || null;
 }
 
 export function resolveAliasCandidates(leagueSlug, teamName) {

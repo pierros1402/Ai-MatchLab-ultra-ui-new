@@ -13,22 +13,42 @@
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
 import { normalizeTeamKey } from "../core/normalize.js";
+import { globalCanonicalTeamName } from "./team-aliases-db.js";
 
 const DIR = resolveDataPath("h2h");
 const MAX_MATCHES = 20;
 
-function pairKey(a, b) {
-  const na = normalizeTeamKey(a), nb = normalizeTeamKey(b);
+// H2H is league-agnostic, so it uses the GLOBAL (cross-league, collision-safe)
+// identity resolver to fold spelling variants of the same club onto one key —
+// otherwise "Dinamo Minsk" (ESPN) and "Din. Minsk" (Flashscore) split a pair's
+// meetings across two files and a lookup by the fixture name finds only some.
+const canon = (name) => globalCanonicalTeamName(name) || name;
+const canonKey = (name) => normalizeTeamKey(canon(name));
+const rawKey = (name) => normalizeTeamKey(name);
+
+function pairKeyOf(na, nb) {
   return na < nb ? `${na}~${nb}` : `${nb}~${na}`;
 }
 
-function fileFor(a, b) {
-  return resolveDataPath("h2h", `${pairKey(a, b)}.json`);
+/** Canonical file key (spelling variants folded to one identity). */
+export function canonPairKey(a, b) {
+  return pairKeyOf(canonKey(a), canonKey(b));
+}
+
+function fileForKey(key) {
+  return resolveDataPath("h2h", `${key}.json`);
 }
 
 export function readH2H(teamA, teamB) {
-  try { return JSON.parse(fs.readFileSync(fileFor(teamA, teamB), "utf8")); }
-  catch { return null; }
+  const ck = canonPairKey(teamA, teamB);
+  try { return JSON.parse(fs.readFileSync(fileForKey(ck), "utf8")); } catch { /* fall through */ }
+  // Fallback to the pre-canonicalization key so lookups keep working before the
+  // one-off re-key migration has consolidated an old-spelling file (no regression).
+  const rk = pairKeyOf(rawKey(teamA), rawKey(teamB));
+  if (rk !== ck) {
+    try { return JSON.parse(fs.readFileSync(fileForKey(rk), "utf8")); } catch { /* none */ }
+  }
+  return null;
 }
 
 /**
@@ -40,17 +60,22 @@ export function recordH2H(m) {
   if (m.scoreHome == null || m.scoreAway == null) return false;
   if (!m.homeTeam || !m.awayTeam) return false;
 
+  // Store under canonical identity so the same club never splits across two
+  // spellings — both the file key and the stored names are canonicalized.
+  const homeTeam = canon(m.homeTeam);
+  const awayTeam = canon(m.awayTeam);
+
   ensureDir(DIR);
-  const file = fileFor(m.homeTeam, m.awayTeam);
+  const file = fileForKey(canonPairKey(m.homeTeam, m.awayTeam));
   let data;
   try { data = JSON.parse(fs.readFileSync(file, "utf8")); }
   catch { data = { teamA: null, teamB: null, matches: [] }; }
 
   // Canonical team names (first seen wins)
-  const na = normalizeTeamKey(m.homeTeam), nb = normalizeTeamKey(m.awayTeam);
+  const na = canonKey(m.homeTeam), nb = canonKey(m.awayTeam);
   if (!data.teamA) {
-    data.teamA = na < nb ? m.homeTeam : m.awayTeam;
-    data.teamB = na < nb ? m.awayTeam : m.homeTeam;
+    data.teamA = na < nb ? homeTeam : awayTeam;
+    data.teamB = na < nb ? awayTeam : homeTeam;
   }
 
   if ((data.matches || []).some(x => x.matchId === m.matchId)) return false; // dedup
@@ -59,8 +84,8 @@ export function recordH2H(m) {
     {
       matchId: m.matchId,
       date: m.date || null,
-      homeTeam: m.homeTeam,
-      awayTeam: m.awayTeam,
+      homeTeam,
+      awayTeam,
       scoreHome: m.scoreHome,
       scoreAway: m.scoreAway,
       competition: m.competition || null,
@@ -85,13 +110,15 @@ export function getH2HForMatch(homeTeam, awayTeam) {
   if (!data || !data.matches?.length) return null;
 
   const all = data.matches;
-  const atHome = all.filter(m => normalizeTeamKey(m.homeTeam) === normalizeTeamKey(homeTeam));
-  const atAway = all.filter(m => normalizeTeamKey(m.homeTeam) === normalizeTeamKey(awayTeam));
+  // Compare on canonical keys so venue/perspective splits are correct even when
+  // a stored match still carries a pre-migration spelling of the participant.
+  const atHome = all.filter(m => canonKey(m.homeTeam) === canonKey(homeTeam));
+  const atAway = all.filter(m => canonKey(m.homeTeam) === canonKey(awayTeam));
 
   function summary(matches, home, away) {
     let w = 0, d = 0, l = 0, gf = 0, ga = 0;
     for (const m of matches) {
-      const isHome = normalizeTeamKey(m.homeTeam) === normalizeTeamKey(home);
+      const isHome = canonKey(m.homeTeam) === canonKey(home);
       const mGf = isHome ? m.scoreHome : m.scoreAway;
       const mGa = isHome ? m.scoreAway : m.scoreHome;
       gf += mGf; ga += mGa;
