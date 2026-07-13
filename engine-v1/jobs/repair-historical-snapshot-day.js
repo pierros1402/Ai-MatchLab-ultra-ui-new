@@ -15,8 +15,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
-import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { exportDeploySnapshotDay } from "./export-deploy-snapshot-day.js";
+import { refreshValueArtifactsDay } from "./refresh-value-artifacts-day.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { buildDayReport } from "./build-day-report.js";
@@ -65,23 +65,9 @@ export async function repairHistoricalSnapshotDay(dayKey, options = {}) {
   const startedAt = new Date().toISOString();
   const steps = [];
 
-  if (options.rebuildValue === true) {
-    const valueResult = deriveValueFromOdds(dayKey, { outputMode: "production" });
-    steps.push({
-      step: "rebuild_value",
-      ok: valueResult?.ok !== false,
-      count: Number(valueResult?.count || 0),
-      source: valueResult?.source || null,
-      policyVersion: valueResult?.policyVersion || null
-    });
-  } else {
-    steps.push({
-      step: "rebuild_value",
-      skipped: true,
-      reason: "preserve_existing_historical_value_by_default"
-    });
-  }
-
+  // Fixture/detail integrity first: dedup alias twins, prune orphan details,
+  // enforce one-detail-per-fixture. Preserves FT status (rescued from the
+  // existing snapshot when canonical has aged out) and existing value picks.
   const exportResult = await exportDeploySnapshotDay(dayKey, {
     preserveDetails: true,
     preserveValue: true,
@@ -94,28 +80,56 @@ export async function repairHistoricalSnapshotDay(dayKey, options = {}) {
     latestUpdated: exportResult?.latestUpdated === true
   });
 
-  const freshness = verifyArtifactFreshnessDay(dayKey);
-  writeJson(resolveDataPath("deploy-snapshots", dayKey, "freshness-report.json"), freshness);
-  steps.push({ step: "verify_artifact_freshness", ok: freshness.ok === true, reasons: freshness.reasons || [] });
+  if (options.rebuildValue === true) {
+    // Full value refresh in one pass: Plan A value/audit, snapshot value/audit,
+    // Plan B observation + plan-b-audit, value-comparison, then fresh
+    // freshness/invariant/build reports. This is the ONLY value path that clears
+    // the *_stale_against_canonical family, because it rewrites every derived
+    // value artifact with a timestamp newer than the (possibly re-touched)
+    // canonical fixtures. The partial deriveValueFromOdds path below leaves
+    // plan-b-audit/value-comparison stale and the day never fully clears.
+    const refresh = await refreshValueArtifactsDay(dayKey, { updateLatest: false });
+    steps.push({
+      step: "refresh_value_artifacts",
+      ok: refresh?.ok !== false,
+      coverageOk: refresh?.coverage?.ok !== false,
+      reason: refresh?.reason || null,
+      valuePicks: Number(refresh?.planA?.count || 0),
+      freshnessOk: refresh?.freshness?.ok !== false,
+      invariantOk: refresh?.invariant?.ok !== false,
+      buildClean: refresh?.buildReport?.clean === true,
+      buildHardFailures: refresh?.buildReport?.hardFailures || []
+    });
+  } else {
+    steps.push({
+      step: "rebuild_value",
+      skipped: true,
+      reason: "preserve_existing_historical_value_by_default"
+    });
 
-  const invariant = await runSnapshotInvariantCheck(dayKey);
-  steps.push({
-    step: "run_snapshot_invariant_check",
-    ok: invariant.ok === true,
-    blocked: Array.isArray(invariant.blocked) ? invariant.blocked.length : 0,
-    warnings: Array.isArray(invariant.warnings) ? invariant.warnings.length : 0
-  });
+    const freshness = verifyArtifactFreshnessDay(dayKey);
+    writeJson(resolveDataPath("deploy-snapshots", dayKey, "freshness-report.json"), freshness);
+    steps.push({ step: "verify_artifact_freshness", ok: freshness.ok === true, reasons: freshness.reasons || [] });
 
-  const buildReport = buildDayReport(dayKey);
-  writeJson(resolveDataPath("build-reports", `${dayKey}.json`), buildReport);
-  steps.push({
-    step: "build_day_report",
-    ok: buildReport.clean === true,
-    clean: buildReport.clean === true,
-    cleanStrict: buildReport.cleanStrict === true,
-    hardFailures: buildReport.hardFailures || [],
-    warnings: buildReport.warnings || []
-  });
+    const invariant = await runSnapshotInvariantCheck(dayKey);
+    steps.push({
+      step: "run_snapshot_invariant_check",
+      ok: invariant.ok === true,
+      blocked: Array.isArray(invariant.blocked) ? invariant.blocked.length : 0,
+      warnings: Array.isArray(invariant.warnings) ? invariant.warnings.length : 0
+    });
+
+    const buildReport = buildDayReport(dayKey);
+    writeJson(resolveDataPath("build-reports", `${dayKey}.json`), buildReport);
+    steps.push({
+      step: "build_day_report",
+      ok: buildReport.clean === true,
+      clean: buildReport.clean === true,
+      cleanStrict: buildReport.cleanStrict === true,
+      hardFailures: buildReport.hardFailures || [],
+      warnings: buildReport.warnings || []
+    });
+  }
 
   const integrity = auditHistoricalIntegrityDay(dayKey);
   const result = {

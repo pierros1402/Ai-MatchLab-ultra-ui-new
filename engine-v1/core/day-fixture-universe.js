@@ -206,8 +206,20 @@ export function fixturesForSnapshotDay(dayKey) {
     });
   }
 
-  const fixtures = dedupeRowsPerLeague([...union, ...rescuedRows])
-    .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
+  // Rescued rows come straight from the archived snapshot and can predate
+  // canonicalId assignment (ESPN-only rows keyed by a numeric matchId). Unlike
+  // the runtime path (fixturesFromMain) they never passed through
+  // backfillCanonicalIds, so on an aged-out day — empty fresh universe → full
+  // rescue — their canonicalId stays blank and every details/value/UI join by
+  // canonicalId breaks (the export then prunes their detail as an orphan). Run
+  // the merged set through backfill so any row still missing a canonicalId gets
+  // one: exact source-id match against canonical first, then the deterministic
+  // buildCanonicalId fallback. Idempotent for rows already keyed.
+  const fixtures = backfillCanonicalIds(
+    dedupeRowsPerLeague([...union, ...rescuedRows]),
+    fixturesFromCanonical,
+    dayKey
+  ).sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
 
   return {
     source: "union",

@@ -137,6 +137,17 @@ export function auditHistoricalIntegrityDay(dayKey) {
     (!Number.isFinite(manifestGeneratedAt) || checkedAt >= manifestGeneratedAt)
   );
 
+  // Rescue = the day's fixtures were reconstructed from the existing snapshot
+  // because a league was absent from the fresh canonical∪runtime universe. When
+  // the day's canonical-fixtures directory still exists, that absence is a real
+  // transient source failure serving stale rows → hard failure. But once a day's
+  // canonical-fixtures have aged out entirely (the directory is gone), full
+  // rescue from the archived snapshot IS the only reconstruction path and the
+  // freshest available truth — nothing newer exists to contradict it — so it is
+  // a warning, not a blocker. Without this, no aged-out day could ever repair.
+  const canonicalDirExists = fs.existsSync(resolveDataPath("canonical-fixtures", dayKey));
+  const rescuedCount = Number(manifest?.snapshotRescuedCount || 0);
+
   const hardFailures = [];
   if (!manifest) hardFailures.push("manifest_missing");
   if (!fixturesPayload) hardFailures.push("fixtures_missing");
@@ -145,10 +156,11 @@ export function auditHistoricalIntegrityDay(dayKey) {
   if (aliasDuplicatePairs.length) hardFailures.push("alias_duplicate_fixtures");
   if (Array.isArray(invariant?.blocked) && invariant.blocked.length) hardFailures.push("invariant_blocked");
   if (!invariantFresh) hardFailures.push("invariant_report_stale_or_missing");
-  if (Number(manifest?.snapshotRescuedCount || 0) > 0) hardFailures.push("snapshot_rescue_present");
+  if (rescuedCount > 0 && canonicalDirExists) hardFailures.push("snapshot_rescue_present");
   if (buildReport && buildReport.clean === false) hardFailures.push("build_report_not_clean");
 
   const warnings = [];
+  if (rescuedCount > 0 && !canonicalDirExists) warnings.push("snapshot_rescue_from_aged_out_canonical");
   if (!valueAudit) warnings.push("production_value_audit_missing");
   if (!buildReport) warnings.push("build_report_missing");
   if (value && value.ok === false) warnings.push("value_artifact_not_ok");
