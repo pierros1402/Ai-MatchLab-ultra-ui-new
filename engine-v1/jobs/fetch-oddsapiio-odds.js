@@ -51,7 +51,6 @@ const EUROPEAN_BOOKS = [
 ];
 
 const BOOKMAKERS = [...GREEK_BOOKS, ...ASIAN_BOOKS, ...BETFAIR_BOOKS, ...EUROPEAN_BOOKS];
-const BOOKMAKERS_PARAM = encodeURIComponent(BOOKMAKERS.join(","));
 
 const GREEK_SET = new Set(GREEK_BOOKS.map(b => b.toLowerCase()));
 const ASIAN_SET = new Set(ASIAN_BOOKS.map(b => b.toLowerCase()));
@@ -123,13 +122,29 @@ async function apiGet(pathAndQuery, budget, meta = {}) {
   }
 }
 
-// The batch endpoint is not available on every plan (the free tier 403s it —
-// observed on the first keyed run, 2026-07-12). Once detected, the whole
-// process falls back to per-event /odds requests: 1 request per match instead
-// of per 10, so the run budget covers fewer matches — priority leagues are
-// already fetched first, and the 8h refresh gate tops the rest up across
-// later cycles.
+// If /odds/multi is ever genuinely unavailable, the process falls back to
+// per-event /odds requests (1 request per match instead of per 10).
 let oddsMultiBlocked = false;
+
+// The bookmakers param is REQUIRED on the odds endpoints, and each plan caps
+// how many names a request may carry — the free tier allows EXACTLY the
+// account's selected bookmakers (probe 2026-07-13: full 23-name list → 403
+// "max 2 bookmakers", selected pair → 200). Resolve the selection once per
+// process; an empty selection (unrestricted plans) falls back to the full
+// panel list.
+let bookmakersParamPromise = null;
+function resolveBookmakersParam(budget) {
+  if (!bookmakersParamPromise) {
+    bookmakersParamPromise = (async () => {
+      const j = await apiGet("/bookmakers/selected", budget);
+      const sel = Array.isArray(j?.bookmakers) ? j.bookmakers.filter(Boolean) : [];
+      const books = sel.length ? sel : BOOKMAKERS;
+      log(`odds requests will use ${books.length} bookmakers${sel.length ? " (account selection)" : " (full list)"}: ${books.join(", ")}`);
+      return encodeURIComponent(books.join(","));
+    })();
+  }
+  return bookmakersParamPromise;
+}
 
 // ─── Market parsing ───────────────────────────────────────────────────────────
 // odds-api.io /odds event shape:
@@ -337,6 +352,7 @@ export async function fetchOddsApiIoDay(date, budget = null) {
 
   // 3) Odds: /odds/multi batches (10 events/request) when the plan allows it,
   //    per-event /odds otherwise (see oddsMultiBlocked above).
+  const booksParam = await resolveBookmakersParam(budget);
   let fetched = 0;
 
   const ingest = (ev) => {
@@ -359,7 +375,7 @@ export async function fetchOddsApiIoDay(date, budget = null) {
       const chunk = toFetch.slice(i, i + 10);
       const ids = chunk.map(c => c.eventId).join(",");
       const meta = {};
-      const oddsJ = await apiGet(`/odds/multi?eventIds=${encodeURIComponent(ids)}&bookmakers=${BOOKMAKERS_PARAM}`, budget, meta);
+      const oddsJ = await apiGet(`/odds/multi?eventIds=${encodeURIComponent(ids)}&bookmakers=${booksParam}`, budget, meta);
       if (oddsJ) {
         const oddsEvents = Array.isArray(oddsJ) ? oddsJ : Object.values(oddsJ || {});
         for (const ev of oddsEvents) ingest(ev);
@@ -378,9 +394,8 @@ export async function fetchOddsApiIoDay(date, budget = null) {
     const c = toFetch[i++];
     // No bookmakers param here: requesting books beyond the plan's selection
     // 403s (free tier = 2 selected bookmakers — validated 2026-07-12). Omitting
-    // it returns whatever the account allows; classifyBook sorts them into
-    // panels at ingest.
-    const oddsJ = await apiGet(`/odds?eventId=${encodeURIComponent(c.eventId)}`, budget);
+    // classifyBook sorts the returned books into panels at ingest.
+    const oddsJ = await apiGet(`/odds?eventId=${encodeURIComponent(c.eventId)}&bookmakers=${booksParam}`, budget);
     if (!oddsJ) continue;
     // Single-event responses may be one object (with .bookmakers) or an array.
     const evs = Array.isArray(oddsJ) ? oddsJ : (oddsJ?.bookmakers ? [oddsJ] : Object.values(oddsJ || {}));
