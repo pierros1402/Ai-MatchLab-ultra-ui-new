@@ -383,6 +383,24 @@ function normalizeTeamNewsAbsenceShape(playerValue, reasonValue = "") {
   };
 }
 
+// Some upstream sources (AI research, manual imports) bake match-context or an
+// echoed label into the absence reason — e.g. "broken foot ... vs Barcelona" or
+// "Hamstring: Hamstring" (audit V2 §στ). Strip only the unambiguous cases so a
+// legitimate reason is never mangled; structured sources (Transfermarkt) carry
+// clean reasons and pass through untouched.
+export function sanitizeAbsenceReason(reason) {
+  let r = String(reason || "").trim();
+  if (!r) return r;
+  // Collapse an echoed "X: X" (the two sides equal, case-insensitive).
+  const echo = r.match(/^(.{2,}?):\s*(.+)$/);
+  if (echo && echo[1].trim().toLowerCase() === echo[2].trim().toLowerCase()) {
+    r = echo[1].trim();
+  }
+  // Drop opponent leakage introduced by " vs <opponent> ...".
+  r = r.replace(/\s+vs\b.*$/i, "").trim();
+  return r;
+}
+
 function normalizeAbsence(item = {}) {
   const player = extractTeamNewsPlayerName(item);
 
@@ -391,12 +409,12 @@ function normalizeAbsence(item = {}) {
   let shaped = normalizeTeamNewsAbsenceShape(player, "");
   if (!shaped) return null;
 
-  const rawReason = normalizeText(
+  const rawReason = sanitizeAbsenceReason(normalizeText(
     item?.reason ||
     item?.status ||
     item?.description ||
     item?.note
-  );
+  ));
 
   let reason =
     rawReason &&
