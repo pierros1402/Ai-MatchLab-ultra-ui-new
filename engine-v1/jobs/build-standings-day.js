@@ -546,7 +546,7 @@ function estimateExpectedLeagueSize(slug) {
   return map[slug] || 20;
 }
 
-function computeStandingsCompleteness(rows = [], slug = "") {
+export function computeStandingsCompleteness(rows = [], slug = "") {
   const rowCount = safeArray(rows).length;
   const expectedSize = estimateExpectedLeagueSize(slug);
 
@@ -554,14 +554,32 @@ function computeStandingsCompleteness(rows = [], slug = "") {
     return {
       rowCount,
       expectedSize,
-      completeness: 0
+      completeness: 0,
+      oversized: false
+    };
+  }
+
+  // Fail-closed upper guard: a clean league table holds at most one row per team,
+  // so its row count cannot materially exceed the expected team set. A table that
+  // does is a cumulative all-time aggregate or several parallel groups folded into
+  // one slug (aus.1 185/20, arg.2 43/18, swe.1 29/16). Capping completeness at 1
+  // let these pass as fully complete; instead treat them as untrustworthy. The
+  // slack tolerates estimate imprecision (an unmapped 24-team league seen as 20).
+  const oversizedThreshold = Math.max(expectedSize + 3, Math.ceil(expectedSize * 1.35));
+  if (rowCount > oversizedThreshold) {
+    return {
+      rowCount,
+      expectedSize,
+      completeness: 0,
+      oversized: true
     };
   }
 
   return {
     rowCount,
     expectedSize,
-    completeness: Math.max(0, Math.min(1, rowCount / expectedSize))
+    completeness: Math.max(0, Math.min(1, rowCount / expectedSize)),
+    oversized: false
   };
 }
 
@@ -604,9 +622,9 @@ function validateStandingsShape(rows = []) {
   };
 }
 
-function scoreStandingsConfidence(rows = [], slug = "", baseConfidence = 0.9) {
+export function scoreStandingsConfidence(rows = [], slug = "", baseConfidence = 0.9) {
   const { validRows, reasons } = validateStandingsShape(rows);
-  const { rowCount, expectedSize, completeness } = computeStandingsCompleteness(validRows, slug);
+  const { rowCount, expectedSize, completeness, oversized } = computeStandingsCompleteness(validRows, slug);
 
   if (!validRows.length) {
     return {
@@ -615,6 +633,18 @@ function scoreStandingsConfidence(rows = [], slug = "", baseConfidence = 0.9) {
       rowCount,
       expectedSize,
       reasons: reasons.length ? reasons : ["no_valid_rows"]
+    };
+  }
+
+  // hard fail-close: an oversized table (more rows than the league can have) is a
+  // cumulative/multi-group aggregate, never reliable current-season truth.
+  if (oversized) {
+    return {
+      confidence: 0,
+      completeness,
+      rowCount,
+      expectedSize,
+      reasons: [...reasons, "oversized_table"]
     };
   }
 
