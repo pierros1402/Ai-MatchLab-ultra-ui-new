@@ -385,9 +385,40 @@ function readDeploySnapshotOdds(dayKey) {
   return readJsonFileSafe(filePath, null);
 }
 
+// Resolve a possibly-provider matchId to the canonical id the detail file is
+// keyed under. The export job aligns fixtures.json matchId → canonicalId (07-14
+// hotfix) and keeps the original provider id in providerMatchId, so a client
+// still holding a provider id (numeric ESPN, sourceMatchId) can be mapped here.
+// Defense-in-depth for readDeploySnapshotDetail — details are canonical-keyed.
+function resolveSnapshotDetailId(dayKey, matchId) {
+  const id = String(matchId || "");
+  try {
+    const fj = readJsonFileSafe(path.join(deploySnapshotRoot(dayKey), "fixtures.json"), null);
+    const rows = Array.isArray(fj) ? fj : (fj?.fixtures || fj?.matches || []);
+    for (const r of rows) {
+      const cands = [r?.providerMatchId, r?.sourceMatchId, r?.sourceId, r?.matchId, r?.canonicalId]
+        .map(x => String(x || ""));
+      if (cands.includes(id)) return String(r?.canonicalId || r?.matchId || id);
+    }
+  } catch { /* no fixtures.json → cannot remap */ }
+  return null;
+}
+
 function readDeploySnapshotDetail(dayKey, matchId) {
   const filePath = path.join(deploySnapshotRoot(dayKey), "details", `${String(matchId)}.json`);
-  return readJsonFileSafe(filePath, null);
+  const direct = readJsonFileSafe(filePath, null);
+  if (direct) return direct;
+
+  // Fallback: the requested id may be a provider id while details are keyed by
+  // canonicalId. Remap via fixtures.json and retry once.
+  const canonical = resolveSnapshotDetailId(dayKey, matchId);
+  if (canonical && canonical !== String(matchId)) {
+    return readJsonFileSafe(
+      path.join(deploySnapshotRoot(dayKey), "details", `${canonical}.json`),
+      null
+    );
+  }
+  return null;
 }
 
 function snapshotValueResponse(dayKey) {
