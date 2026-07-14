@@ -27,6 +27,7 @@ import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./jobs/fetch-oddsapiio
 import { syncDeploySnapshotFromGithub } from "./jobs/sync-deploy-snapshot-from-github.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
+import { normTeam } from "./odds/multi-odds-merge.js";
 import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./core/matchday-axis.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
@@ -3331,7 +3332,35 @@ app.get("/api/multi-odds", (req, res) => {
   try {
     const p = resolveDataPath("multi-odds", `${date}.json`);
     const daily = JSON.parse(fs.readFileSync(p, "utf8"));
-    const rec = daily?.matches?.[matchId] || null;
+    const matches = daily?.matches || {};
+    let rec = matches[matchId] || null;
+
+    // The store is keyed by the PROVIDER id captured at write time, while the
+    // UI now asks with the canonical cid (fixtures.json matchId alignment).
+    // Bridge via the day's fixture row: any of its ids → provider key, then
+    // fall back to a normalized team-name match (identity-agnostic, the same
+    // way the store writer paired fixtures with provider events).
+    let fixtureRow = null;
+    if (!rec) {
+      const fj = readJsonFileSafe(path.join(deploySnapshotRoot(date), "fixtures.json"), null);
+      const rows = Array.isArray(fj) ? fj : (fj?.fixtures || fj?.matches || []);
+      fixtureRow = rows.find(r =>
+        [r?.canonicalId, r?.matchId, r?.providerMatchId, r?.sourceMatchId, r?.sourceId]
+          .some(x => String(x || "") === matchId)
+      ) || null;
+      for (const alt of [fixtureRow?.providerMatchId, fixtureRow?.sourceMatchId, fixtureRow?.sourceId]) {
+        const key = String(alt || "").trim();
+        if (key && matches[key]) { rec = matches[key]; break; }
+      }
+    }
+    if (!rec && fixtureRow) {
+      const h = normTeam(fixtureRow.homeTeam || fixtureRow.home);
+      const a = normTeam(fixtureRow.awayTeam || fixtureRow.away);
+      if (h && a) {
+        rec = Object.values(matches).find(m => normTeam(m?.home) === h && normTeam(m?.away) === a) || null;
+      }
+    }
+
     if (!rec) return res.json({ ok: false, matchId, date, reason: "not_found" });
     res.json({ ok: true, matchId, date, ...rec });
   } catch {
