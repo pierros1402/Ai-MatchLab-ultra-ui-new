@@ -2,65 +2,49 @@
   "ok": true,
   "schema": "ai-matchlab.historical-repair.v1",
   "dayKey": "2026-07-06",
-  "startedAt": "2026-07-08T06:37:04.881Z",
-  "finishedAt": "2026-07-08T06:37:04.974Z",
-  "rebuildValue": false,
+  "startedAt": "2026-07-14T13:39:03.978Z",
+  "finishedAt": "2026-07-14T13:39:04.237Z",
+  "rebuildValue": true,
   "steps": [
-    {
-      "step": "rebuild_value",
-      "skipped": true,
-      "reason": "preserve_existing_historical_value_by_default"
-    },
     {
       "step": "export_deploy_snapshot",
       "ok": true,
       "counts": {
-        "fixtures": 15,
+        "fixtures": 13,
         "valuePicks": 2,
-        "details": 15,
-        "detailsMatchedToFixtures": 15,
+        "details": 13,
+        "detailsMatchedToFixtures": 13,
         "orphanDetailsRemoved": 0,
         "detailsMissingForFixtures": 0
       },
       "latestUpdated": false
     },
     {
-      "step": "verify_artifact_freshness",
+      "step": "refresh_value_artifacts",
       "ok": true,
-      "reasons": []
-    },
-    {
-      "step": "run_snapshot_invariant_check",
-      "ok": true,
-      "blocked": 0,
-      "warnings": 1
-    },
-    {
-      "step": "build_day_report",
-      "ok": true,
-      "clean": true,
-      "cleanStrict": false,
-      "hardFailures": [],
-      "warnings": [
-        "expected_leagues_missing_from_published:can.1,usa.2",
-        "acquisition_skipped_slugs:usa.nwsl,usa.usl.1,usa.usl.l1,can.w.nsl,uefa.euro.u19,arg.3,chi.copa_chi"
-      ]
+      "coverageOk": true,
+      "reason": null,
+      "valuePicks": 0,
+      "freshnessOk": true,
+      "invariantOk": true,
+      "buildClean": true,
+      "buildHardFailures": []
     }
   ],
   "integrity": {
     "ok": true,
     "dayKey": "2026-07-06",
-    "checkedAt": "2026-07-08T06:37:04.974Z",
+    "checkedAt": "2026-07-14T13:39:04.237Z",
     "counts": {
-      "fixtures": 15,
-      "uniqueFixtureIds": 15,
-      "details": 15,
-      "valuePicks": 2,
-      "snapshotRescuedCount": 0
+      "fixtures": 13,
+      "uniqueFixtureIds": 13,
+      "details": 13,
+      "valuePicks": 0,
+      "snapshotRescuedCount": 13
     },
     "hardFailures": [],
     "warnings": [
-      "production_value_audit_missing"
+      "snapshot_rescue_from_aged_out_canonical"
     ],
     "detailsWithoutFixture": [],
     "fixturesWithoutDetail": [],
@@ -68,8 +52,8 @@
     "aliasDuplicatePairs": [],
     "invariant": {
       "ok": true,
-      "checkedAt": "2026-07-08T06:37:04.926Z",
-      "manifestGeneratedAt": "2026-07-08T06:37:04.916Z",
+      "checkedAt": "2026-07-14T13:39:04.227Z",
+      "manifestGeneratedAt": "2026-07-14T13:39:04.065Z",
       "fresh": true,
       "blocked": 0
     },
@@ -78,8 +62,7 @@
       "cleanStrict": false,
       "hardFailures": [],
       "warnings": [
-        "expected_leagues_missing_from_published:can.1,usa.2",
-        "acquisition_skipped_slugs:usa.nwsl,usa.usl.1,usa.usl.l1,can.w.nsl,uefa.euro.u19,arg.3,chi.copa_chi"
+        "expected_leagues_missing_from_published:can.1,som.1,usa.2"
       ]
     }
   }

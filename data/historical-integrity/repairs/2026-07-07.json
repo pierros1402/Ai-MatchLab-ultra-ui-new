@@ -2,64 +2,49 @@
   "ok": true,
   "schema": "ai-matchlab.historical-repair.v1",
   "dayKey": "2026-07-07",
-  "startedAt": "2026-07-08T06:34:57.798Z",
-  "finishedAt": "2026-07-08T06:34:57.914Z",
-  "rebuildValue": false,
+  "startedAt": "2026-07-14T13:39:04.238Z",
+  "finishedAt": "2026-07-14T13:39:04.528Z",
+  "rebuildValue": true,
   "steps": [
-    {
-      "step": "rebuild_value",
-      "skipped": true,
-      "reason": "preserve_existing_historical_value_by_default"
-    },
     {
       "step": "export_deploy_snapshot",
       "ok": true,
       "counts": {
-        "fixtures": 25,
+        "fixtures": 23,
         "valuePicks": 0,
-        "details": 25,
-        "detailsMatchedToFixtures": 25,
-        "orphanDetailsRemoved": 8,
+        "details": 23,
+        "detailsMatchedToFixtures": 23,
+        "orphanDetailsRemoved": 0,
         "detailsMissingForFixtures": 0
       },
       "latestUpdated": false
     },
     {
-      "step": "verify_artifact_freshness",
+      "step": "refresh_value_artifacts",
       "ok": true,
-      "reasons": []
-    },
-    {
-      "step": "run_snapshot_invariant_check",
-      "ok": true,
-      "blocked": 0,
-      "warnings": 1
-    },
-    {
-      "step": "build_day_report",
-      "ok": true,
-      "clean": true,
-      "cleanStrict": false,
-      "hardFailures": [],
-      "warnings": [
-        "acquisition_skipped_slugs:chi.copa_chi"
-      ]
+      "coverageOk": true,
+      "reason": null,
+      "valuePicks": 0,
+      "freshnessOk": true,
+      "invariantOk": true,
+      "buildClean": true,
+      "buildHardFailures": []
     }
   ],
   "integrity": {
     "ok": true,
     "dayKey": "2026-07-07",
-    "checkedAt": "2026-07-08T06:34:57.914Z",
+    "checkedAt": "2026-07-14T13:39:04.528Z",
     "counts": {
-      "fixtures": 25,
-      "uniqueFixtureIds": 25,
-      "details": 25,
+      "fixtures": 23,
+      "uniqueFixtureIds": 23,
+      "details": 23,
       "valuePicks": 0,
-      "snapshotRescuedCount": 0
+      "snapshotRescuedCount": 23
     },
     "hardFailures": [],
     "warnings": [
-      "production_value_audit_missing"
+      "snapshot_rescue_from_aged_out_canonical"
     ],
     "detailsWithoutFixture": [],
     "fixturesWithoutDetail": [],
@@ -67,8 +52,8 @@
     "aliasDuplicatePairs": [],
     "invariant": {
       "ok": true,
-      "checkedAt": "2026-07-08T06:34:57.869Z",
-      "manifestGeneratedAt": "2026-07-08T06:34:57.858Z",
+      "checkedAt": "2026-07-14T13:39:04.510Z",
+      "manifestGeneratedAt": "2026-07-14T13:39:04.330Z",
       "fresh": true,
       "blocked": 0
     },
@@ -77,7 +62,7 @@
       "cleanStrict": false,
       "hardFailures": [],
       "warnings": [
-        "acquisition_skipped_slugs:chi.copa_chi"
+        "expected_leagues_missing_from_published:som.1"
       ]
     }
   }
