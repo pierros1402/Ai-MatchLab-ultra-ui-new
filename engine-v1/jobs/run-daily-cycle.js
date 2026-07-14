@@ -13,6 +13,7 @@ import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildMatchdayAxis } from "./build-matchday-axis.js";
+import { buildMatchdayLedger } from "./build-matchday-ledger.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
 import { buildPlayerUsageWorksetDay } from "./build-player-usage-workset-day.js";
 import { buildPlayerUsageDeterministicCandidatesDay } from "./build-player-usage-deterministic-candidates-day.js";
@@ -667,6 +668,27 @@ export async function runDailyCycle(options = {}) {
     });
   } catch (e) {
     console.error("[daily-cycle] matchday-axis:error", e?.message);
+  }
+
+  // ── Full-season matchday ledger ──────────────────────────────────────────────
+  // Extend the axis from one-round-per-league to one-round-per-fixture: for every
+  // integrity-green league, impute a round onto every played fixture of the
+  // current season (core/matchday-ledger.js) and persist it under
+  // data/matchday-ledger. Each ledger's latest round is cross-checked against the
+  // axis matchday so split/cup/season-boundary leagues are flagged, not trusted.
+  // Runs after the axis because it consumes the same integrity gate. Additive.
+  console.log("[daily-cycle] matchday-ledger:start", { dayKey });
+  let matchdayLedger = null;
+  try {
+    matchdayLedger = buildMatchdayLedger();
+    console.log("[daily-cycle] matchday-ledger:done", {
+      built: matchdayLedger?.ledgersBuilt ?? 0,
+      agree: (matchdayLedger?.ledgersBuilt ?? 0) - (matchdayLedger?.mismatchCount ?? 0),
+      mismatches: matchdayLedger?.mismatchCount ?? 0,
+      anomalies: matchdayLedger?.anomalyCount ?? 0
+    });
+  } catch (e) {
+    console.error("[daily-cycle] matchday-ledger:error", e?.message);
   }
 
   console.log("[daily-cycle] team-geo-seeds:start", { dayKey });
