@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { resolveDataPath } from "../storage/data-root.js";
+import { resolveDataPath, normalizeFixtureRows } from "../storage/data-root.js";
 
 // ============================================================
 // VALUE CONTEXT MODIFIERS — STABLE v1.0
@@ -67,7 +67,7 @@ export async function applyValueContextModifiers({
 
   const indexes = await loadIndexes(season);
   const fixturesDb = await readJsonSafe(path.join(DATA_ROOT, "fixtures.json"), []);
-  const currentFixtures = Array.isArray(fixturesDb) ? fixturesDb : [];
+  const currentFixtures = normalizeFixtureRows(fixturesDb);
 
   const homeName = getHomeTeamName(fixture);
   const awayName = getAwayTeamName(fixture);

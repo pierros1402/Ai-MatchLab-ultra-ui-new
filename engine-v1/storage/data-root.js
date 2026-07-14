@@ -29,3 +29,12 @@ export function ensureDir(dirPath) {
   }
   return dirPath;
 }
+
+// data/fixtures.json is written as an object `{ fixtures: [...] }`, but some
+// consumers historically read it as a top-level array and silently received an
+// empty list. This normalizer accepts either shape and always returns the rows.
+export function normalizeFixtureRows(value) {
+  if (Array.isArray(value)) return value;
+  if (value && Array.isArray(value.fixtures)) return value.fixtures;
+  return [];
+}

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { resolveDataPath } from "../storage/data-root.js";
+import { resolveDataPath, normalizeFixtureRows } from "../storage/data-root.js";
 import { currentSeason } from "./season.js";
 
 function safeArray(v) {
@@ -53,7 +53,7 @@ function readJsonSafe(filePath, fallback) {
 
 function getAllFixturesLocal() {
   const filePath = resolveDataPath("fixtures.json");
-  return safeArray(readJsonSafe(filePath, []));
+  return normalizeFixtureRows(readJsonSafe(filePath, []));
 }
 
 function getStandingsMap() {
