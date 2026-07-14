@@ -21,7 +21,7 @@ import { readResults } from "../storage/results-memory-db.js";
 import { recordStandingsResult, readStandings, clearAcceptedStandings } from "../storage/standings-memory-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { currentSeasonLabel, seasonWindow } from "../source-discovery/season-calendar.js";
-import { maxPlayableGames } from "../core/matchday-axis.js";
+import { maxPlayableGames, isKnownNonLeagueCompetition } from "../core/matchday-axis.js";
 
 const MIN_TEAMS = 4;
 const MIN_GAMES = 3;   // need a few games before a table is meaningful
@@ -105,6 +105,20 @@ export function deriveStandingsFromResults({ force = false, leagues = null } = {
     const slug = file.replace(/\.json$/, "");
     if (only && !only.has(slug)) continue;
     stats.considered++;
+
+    // Cups / qualifiers / national-team competitions are knockout or phase-based:
+    // accumulating their results into a single "league table" produces garbage
+    // (last season's holders still in the table, both name universes as separate
+    // rows — see uefa.champions 2026-07-14). Never derive for them, and clear any
+    // previously-derived table so the stored garbage self-heals.
+    if (isKnownNonLeagueCompetition(slug)) {
+      if (readStandings(slug)?.accepted?.source === "derived-from-results") {
+        clearAcceptedStandings(slug, "not_league_competition");
+        stats.clearedCorrupt++;
+      }
+      stats.skippedNotLeague = (stats.skippedNotLeague || 0) + 1;
+      continue;
+    }
 
     const meta = getLeagueMeta(slug);
     const season = currentSeasonLabel(slug, meta);

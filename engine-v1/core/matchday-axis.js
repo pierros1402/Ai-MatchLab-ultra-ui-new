@@ -22,6 +22,17 @@
  */
 
 import { readStandings, hasAcceptedStandings } from "../storage/standings-memory-db.js";
+import { isLeagueCompetition, isKnownCompetition } from "../../workers/_shared/leagues-coverage.js";
+
+/**
+ * A slug is gated as non-league ONLY when the registry KNOWS it is a cup /
+ * continental / national-team competition. Slugs absent from the curated
+ * registry are overwhelmingly real (uncurated) domestic leagues — treating
+ * "unknown" as "not a league" would strip standings from ~170 of them.
+ */
+export function isKnownNonLeagueCompetition(slug) {
+  return isKnownCompetition(slug) && !isLeagueCompetition(slug);
+}
 
 /**
  * Games a single team plays in an N-times round-robin of `teamCount` teams.
@@ -65,6 +76,15 @@ export function computeMatchdayAxis(slug) {
     matchdaySource: null,
     matchdayAnomaly: { bool: false, reason: null }
   };
+
+  // Cups / qualifiers / national-team competitions are knockout (or phase-based)
+  // — a "matchday from standings played-counts" is meaningless there, and any
+  // table derived from their accumulated results is contamination (last season's
+  // holders, both name universes as separate rows). Fail closed: no matchday, no
+  // integrity green, so no League Table / «Αγων.N» ever surfaces for them.
+  if (isKnownNonLeagueCompetition(slug)) {
+    return { ...base, matchdayAnomaly: { bool: false, reason: "not_league_competition" } };
+  }
 
   if (!hasAcceptedStandings(slug)) {
     return { ...base, matchdayAnomaly: { bool: false, reason: "no_validated_standings" } };

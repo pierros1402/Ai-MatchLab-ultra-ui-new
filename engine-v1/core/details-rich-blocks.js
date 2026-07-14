@@ -20,7 +20,7 @@ import { readStandings } from "../storage/standings-memory-db.js";
 import { getH2HForMatch } from "../storage/h2h-memory-db.js";
 import { normalizeTeamKey } from "./normalize.js";
 import { currentSeason } from "./season.js";
-import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./matchday-axis.js";
+import { computeMatchdayAxis, isLeagueIntegrityGreen, isKnownNonLeagueCompetition } from "./matchday-axis.js";
 
 // ── team-form index (season-scoped, read once per process) ───────────────────
 
@@ -137,6 +137,12 @@ export function buildH2HBlock(homeTeam, awayTeam, limit = 20) {
  */
 export function buildStandingsBlock(leagueSlug) {
   if (!leagueSlug) return { status: "empty", reason: "no_league", rows: [] };
+
+  // Knockout / cup / national-team competitions have no league table. "empty"
+  // (not "gated") so the UI renders nothing rather than a withheld-table notice.
+  if (isKnownNonLeagueCompetition(leagueSlug)) {
+    return { status: "empty", reason: "not_league_competition", rows: [] };
+  }
 
   const axis = computeMatchdayAxis(leagueSlug);
   if (!isLeagueIntegrityGreen(leagueSlug)) {

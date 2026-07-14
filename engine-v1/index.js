@@ -28,6 +28,7 @@ import { syncDeploySnapshotFromGithub } from "./jobs/sync-deploy-snapshot-from-g
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
 import { normTeam } from "./odds/multi-odds-merge.js";
+import { isKnownNonLeagueCompetition } from "./core/matchday-axis.js";
 import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./core/matchday-axis.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
@@ -897,6 +898,16 @@ function snapshotDetailsResponse(matchId, requestedDate = "") {
   for (const date of datesToTry) {
     const detail = readDeploySnapshotDetail(date, matchId);
     if (!detail) continue;
+
+    // Serve-time guard: details baked before the not-league gate may carry a
+    // "League Table" for a knockout/cup competition (accumulated-results garbage
+    // — last season's holders, duplicate name universes). Strip it here so the
+    // already-published snapshot heals immediately; the pipeline gate
+    // (details-rich-blocks) stops new ones at build time.
+    const detailSlug = String(detail?.basic?.leagueSlug || "");
+    if (detailSlug && isKnownNonLeagueCompetition(detailSlug) && detail?.standings?.rows?.length) {
+      detail.standings = { status: "empty", reason: "not_league_competition", rows: [] };
+    }
 
     const valuePayload = readDeploySnapshotValue(date);
     const picks = Array.isArray(valuePayload?.picks)
