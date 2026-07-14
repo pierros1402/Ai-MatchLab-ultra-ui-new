@@ -26,6 +26,7 @@ import { LEAGUE_SEEDS, leagueName } from "../config.js";
 import { LEAGUES_BY_SLUG, isLeagueCompetition } from "../../workers/_shared/leagues-coverage.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { hasAcceptedStandings } from "../storage/standings-memory-db.js";
+import { readAllStates } from "../storage/league-memory-db.js";
 import { computeMatchdayAxis } from "../core/matchday-axis.js";
 import { isInSeason } from "../source-discovery/season-calendar.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
@@ -293,6 +294,12 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
   const expected = expectedCountsForDay(date);
   const canonical = canonicalCountsForDay(date);
   const snapshot = snapshotStateForDay(date);
+  // Full-season matchday ledger stamps (jobs/build-matchday-ledger.js), read once
+  // from league-memory. The axis gives ONE round per league; the ledger gives
+  // rowsWithRound — how many of the season's fixtures actually carry an imputed
+  // round — plus whether that round agrees with the axis. Surfaced here so the
+  // FULL_SEASON_MATCHDAY_LEDGER_MISSING gap (rowsWithRound was 0) is visible.
+  const ledgerStates = readAllStates();
 
   const rows = [];
 
@@ -303,6 +310,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     // league + integrity flag. Surfaced so the daily report shows the round and
     // any corrupt/cumulative standings (blr.1 & co.) are visible as anomalies.
     const md = computeMatchdayAxis(slug);
+    const ledger = ledgerStates[slug] || {};
 
     const row = {
       slug,
@@ -338,7 +346,16 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       matchday: md.matchday,
       matchdaySpread: md.matchdaySpread,
       matchdayAnomaly: md.matchdayAnomaly?.bool || false,
-      matchdayAnomalyReason: md.matchdayAnomaly?.reason || null
+      matchdayAnomalyReason: md.matchdayAnomaly?.reason || null,
+      // Full-season ledger: rowsWithRound (fixtures carrying an imputed round),
+      // its latest round, and whether it agrees with the axis matchday. null when
+      // the league failed the integrity gate (no ledger was minted).
+      ledgerRowsWithRound: Number.isFinite(ledger.matchdayLedgerRows) ? ledger.matchdayLedgerRows : 0,
+      ledgerLatestRound: ledger.matchdayLedgerLatestRound ?? null,
+      ledgerCrossCheckAgrees: ledger.matchdayLedgerCrossCheck
+        ? ledger.matchdayLedgerCrossCheck.agrees === true
+        : null,
+      ledgerAnomaly: ledger.matchdayLedgerAnomaly?.bool || false
     };
 
     const { status, reason } = classify(row);
@@ -433,6 +450,18 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
         ready: activeRows.reduce((s, r) => s + r.playerUsageReady, 0),
         partial: activeRows.reduce((s, r) => s + r.playerUsagePartial, 0),
         empty: activeRows.reduce((s, r) => s + r.playerUsageEmpty, 0)
+      },
+      // Full-season matchday ledger rollup (jobs/build-matchday-ledger.js). Closes
+      // FULL_SEASON_MATCHDAY_LEDGER_MISSING: leaguesWithLedger + total rowsWithRound
+      // prove the ledger is populated, while crossCheckMismatch/anomaly leagues make
+      // split-season / cup / contaminated cases loud instead of silently trusted.
+      matchdayLedger: {
+        leaguesWithLedger: rows.filter(r => r.ledgerRowsWithRound > 0).length,
+        rowsWithRoundTotal: rows.reduce((s, r) => s + r.ledgerRowsWithRound, 0),
+        crossCheckMismatchLeagues: rows
+          .filter(r => r.ledgerCrossCheckAgrees === false)
+          .map(r => r.slug),
+        anomalyLeagues: rows.filter(r => r.ledgerAnomaly).map(r => r.slug)
       },
       byStatus
     },
