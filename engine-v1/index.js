@@ -27,6 +27,7 @@ import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./jobs/fetch-oddsapiio
 import { syncDeploySnapshotFromGithub } from "./jobs/sync-deploy-snapshot-from-github.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
+import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./core/matchday-axis.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
@@ -2989,9 +2990,31 @@ function buildDisplayMatchesForDateUncached(date) {
     const s = String(slug || "");
     return leagueMeta[s] || leagueMeta[COUNTRY_SLUG_ALIASES[s] || s] || resolveSupplementalLeagueMeta(s) || null;
   }
+
+  // Per-league current matchday (round) for the "Χώρα – Λίγκα · Αγων.N" label,
+  // memoized per slug (computeMatchdayAxis reads standings from disk). Surfaced
+  // ONLY when league integrity is green — the same trustworthy-standings gate the
+  // rich details/standings block uses — so a corrupt/cumulative table can never
+  // print a bogus round. Cups/friendlies have no standings and correctly get null
+  // (no round label). This is the axis matchday, not the ledger's per-fixture
+  // round; today's fixtures are the league's current round by definition.
+  const matchdayCache = new Map();
+  function leagueMatchday(slug) {
+    const s = String(slug || "");
+    if (!s) return null;
+    if (matchdayCache.has(s)) return matchdayCache.get(s);
+    let md = null;
+    try {
+      if (isLeagueIntegrityGreen(s)) md = computeMatchdayAxis(s).matchday ?? null;
+    } catch { /* standings absent/unreadable → no label */ }
+    matchdayCache.set(s, md);
+    return md;
+  }
+
   function attachCountry(m) {
     const meta = resolveLeagueMeta(m.leagueSlug);
-    if (!meta) return m;
+    const matchday = leagueMatchday(m.leagueSlug);
+    if (!meta) return matchday == null ? m : { ...m, matchday };
     const country = meta.country && meta.country !== "Unknown" ? meta.country : null;
     // Fill a friendly league name only when the row carries none or just the raw
     // slug — never override a real source name (so "Brazil Serie B" is kept).
@@ -2999,7 +3022,7 @@ function buildDisplayMatchesForDateUncached(date) {
     const leagueName = (!rawName || rawName === String(m.leagueSlug || "")) && meta.name
       ? meta.name
       : m.leagueName;
-    return { ...m, leagueName, country: m.country || country, leagueTier: m.leagueTier ?? meta.tier ?? null };
+    return { ...m, leagueName, country: m.country || country, leagueTier: m.leagueTier ?? meta.tier ?? null, matchday: m.matchday ?? matchday };
   }
 
   function attachAssessment(rawMatch) {
