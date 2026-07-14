@@ -1,31 +1,33 @@
 /* opener-panel.js — Opening Tracker panel
  * Shows upcoming matches with opening vs current odds for each bookmaker.
- * Driven by /api/multi-odds-day?date=X (the prefetch + day-of data).
+ * Driven by /api/multi-odds-day?date=X.
+ * The fetched day payload is also shared with the four bookmaker panels so the
+ * same odds are routed to Greek / European / Asian / Betfair views.
  */
 
 (function () {
   "use strict";
 
-  var body    = document.getElementById("opener-body");
-  var dateEl  = document.getElementById("opener-date");
-  var mktEl   = document.getElementById("opener-market");
+  var body = document.getElementById("opener-body");
+  var dateEl = document.getElementById("opener-date");
+  var mktEl = document.getElementById("opener-market");
 
   if (!body || !dateEl || !mktEl) return;
 
-  var CFG  = window.AIML_CONFIG || window.AIML_LIVE_CFG || {};
-  var BASE = CFG.BASE_URL || CFG.fixturesBase || "";
+  var BASE = resolveBase();
 
-  // ── Leg display labels ─────────────────────────────────────────────────────
   var LEG_LABELS = {
     home: "1", draw: "X", away: "2",
     over: "O", under: "U",
-    yes: "GG", no: "NG",
+    yes: "GG", no: "NG"
   };
 
-  // Reference books priority (first found is the "display" book per match)
   var REF_PRIORITY = ["pinnacle", "bet365", "bwin", "unibet", "1xbet", "william hill"];
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  function resolveBase() {
+    var cfg = window.AIML_CONFIG || window.AIML_LIVE_CFG || {};
+    return String(cfg.BASE_URL || cfg.fixturesBase || "").replace(/\/$/, "");
+  }
 
   function el(tag, cls, txt) {
     var d = document.createElement(tag);
@@ -35,12 +37,15 @@
   }
 
   function fmt(x) {
-    return (typeof x === "number" && isFinite(x)) ? x.toFixed(2) : "—";
+    var n = Number(x);
+    return isFinite(n) ? n.toFixed(2) : "—";
   }
 
   function timeAgo(ts) {
     if (!ts) return "";
-    var diff = Date.now() - ts;
+    var value = typeof ts === "number" ? ts : Date.parse(ts);
+    if (!isFinite(value)) return "";
+    var diff = Math.max(0, Date.now() - value);
     var h = Math.floor(diff / 3600000);
     var d = Math.floor(h / 24);
     if (d >= 1) return d + "d ago";
@@ -48,17 +53,17 @@
     return "<1h ago";
   }
 
-  function utcToLocal(iso) {
-    if (!iso) return "";
-    try {
-      var d = new Date(iso);
-      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    } catch { return ""; }
-  }
-
-  // Athens "today"
   function athensToday() {
-    return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    try {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Athens",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(new Date());
+    } catch (_) {
+      return new Date().toISOString().slice(0, 10);
+    }
   }
 
   function addDays(ymd, n) {
@@ -68,69 +73,119 @@
 
   function shortDate(ymd) {
     var d = new Date(ymd + "T12:00:00Z");
-    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return months[d.getUTCMonth()] + " " + d.getUTCDate();
   }
 
-  // ── State ──────────────────────────────────────────────────────────────────
+  function emitSafe(eventName, payload) {
+    if (typeof window.emit === "function") {
+      window.emit(eventName, payload);
+      return true;
+    }
+    try {
+      window.dispatchEvent(new CustomEvent(eventName, { detail: payload }));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
-  var state = { date: null, market: "1X2", data: null, loading: false };
+  function publishDayPayload(date, payload) {
+    if (!window.AIML_MULTI_ODDS_DAY_CACHE) {
+      window.AIML_MULTI_ODDS_DAY_CACHE = Object.create(null);
+    }
+    window.AIML_MULTI_ODDS_DAY_CACHE[date] = payload;
+    emitSafe("odds-day:multi", {
+      date: date,
+      matches: payload && payload.matches ? payload.matches : {},
+      payload: payload,
+      source: "opening-tracker"
+    });
+  }
 
-  // ── Date dropdown ──────────────────────────────────────────────────────────
+  function selectTrackerMatch(matchId, rec) {
+    var match = {
+      id: String(matchId),
+      matchId: String(matchId),
+      home: rec.home || rec.homeTeam || "",
+      away: rec.away || rec.awayTeam || "",
+      league: rec.league || rec.leagueName || rec.competition || "",
+      date: state.date,
+      kickoffUtc: rec.kickoffUtc || rec.kickoff || null
+    };
+
+    emitSafe("match-selected", match);
+    emitSafe("active-match:set", match);
+    emitSafe("odds-snapshot:multi", {
+      matchId: String(matchId),
+      markets: rec.markets || {},
+      date: state.date,
+      source: "opening-tracker-click"
+    });
+    emitSafe("nav:oic", { tab: "odds", source: "opening-tracker" });
+  }
+
+  var state = { date: null, market: "1X2", data: null, loading: false, requestSeq: 0 };
 
   function populateDates() {
     var today = athensToday();
     dateEl.innerHTML = "";
-    for (var i = 1; i <= 7; i++) {
-      var d = addDays(today, i);
-      var opt = document.createElement("option");
-      opt.value = d;
-      opt.textContent = shortDate(d);
-      dateEl.appendChild(opt);
-    }
-    // Also add today and yesterday to see "just fetched" opening vs current
+
     var todayOpt = document.createElement("option");
     todayOpt.value = today;
     todayOpt.textContent = "Today";
-    dateEl.insertBefore(todayOpt, dateEl.firstChild);
+    dateEl.appendChild(todayOpt);
 
-    dateEl.value = today; // default: Today (freshly synced multi-odds; upcoming days selectable)
-    state.date = dateEl.value;
+    for (var i = 1; i <= 7; i++) {
+      var date = addDays(today, i);
+      var opt = document.createElement("option");
+      opt.value = date;
+      opt.textContent = shortDate(date);
+      dateEl.appendChild(opt);
+    }
+
+    dateEl.value = today;
+    state.date = today;
   }
-
-  // ── Fetch & render ─────────────────────────────────────────────────────────
 
   async function load() {
     if (state.loading) return;
     state.loading = true;
+    var seq = ++state.requestSeq;
     body.innerHTML = '<div class="opener-empty">Loading…</div>';
 
     try {
+      BASE = resolveBase();
+      if (!BASE) throw new Error("BASE_URL not ready");
+
       var url = BASE + "/api/multi-odds-day?date=" + encodeURIComponent(state.date);
-      var r = await fetch(url, { cache: "no-store" });
-      var j = await r.json();
-      state.data = j;
-      render(j);
-    } catch (e) {
+      var response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      var json = await response.json();
+      if (seq !== state.requestSeq) return;
+
+      state.data = json;
+      publishDayPayload(state.date, json);
+      render(json);
+    } catch (err) {
+      if (seq !== state.requestSeq) return;
       body.innerHTML = '<div class="opener-empty">Error loading odds.</div>';
-      console.error("[opener-panel]", e);
+      console.error("[opener-panel]", err);
     } finally {
-      state.loading = false;
+      if (seq === state.requestSeq) state.loading = false;
     }
   }
 
-  function render(j) {
-    var matches = j && j.matches ? Object.entries(j.matches) : [];
+  function render(json) {
+    var matches = json && json.matches ? Object.entries(json.matches) : [];
     if (!matches.length) {
       body.innerHTML = '<div class="opener-empty">No pre-fetched odds for this date yet.</div>';
       return;
     }
 
     var market = state.market;
-
-    // Filter to matches that have the selected market
     var relevant = matches.filter(function (entry) {
-      return entry[1].markets && entry[1].markets[market];
+      return entry[1] && entry[1].markets && entry[1].markets[market];
     });
 
     if (!relevant.length) {
@@ -138,106 +193,129 @@
       return;
     }
 
-    // Sort by kickoffUtc (if available from canonical via API; otherwise use matchId order)
     relevant.sort(function (a, b) {
-      var ta = a[1].kickoffUtc || ""; var tb = b[1].kickoffUtc || "";
+      var ta = a[1].kickoffUtc || "";
+      var tb = b[1].kickoffUtc || "";
       return ta < tb ? -1 : ta > tb ? 1 : 0;
     });
 
     body.innerHTML = "";
+
     relevant.forEach(function (entry) {
       var matchId = entry[0];
-      var rec     = entry[1];
-      var mktData = rec.markets[market];
+      var rec = entry[1];
+      var marketData = rec.markets[market] || {};
 
-      // Collect all books across all panels
       var allBooks = {};
-      ["greek","european","asian","betfair"].forEach(function (panel) {
-        Object.entries(mktData[panel] || {}).forEach(function (kv) {
-          allBooks[kv[0]] = { data: kv[1], panel: panel };
+      ["greek", "european", "eu", "asian", "betfair"].forEach(function (panel) {
+        Object.entries(marketData[panel] || {}).forEach(function (kv) {
+          var normalizedPanel = panel === "eu" ? "european" : panel;
+          allBooks[kv[0]] = { data: kv[1], panel: normalizedPanel };
         });
       });
 
+      // Flat-market fallback. This keeps the tracker and four OIC panels aligned
+      // even if the API supplies bookmaker keys without pre-grouping.
+      if (!Object.keys(allBooks).length && window.OICRenderer
+        && typeof window.OICRenderer.normalizeMultiMarketData === "function") {
+        var grouped = window.OICRenderer.normalizeMultiMarketData(marketData);
+        ["greek", "european", "asian", "betfair"].forEach(function (panel) {
+          Object.entries(grouped[panel] || {}).forEach(function (kv) {
+            allBooks[kv[0]] = { data: kv[1], panel: panel };
+          });
+        });
+      }
+
       if (!Object.keys(allBooks).length) return;
 
-      // Pick reference book (Pinnacle → bet365 → first available)
       var refBook = null;
       for (var pi = 0; pi < REF_PRIORITY.length; pi++) {
-        if (allBooks[REF_PRIORITY[pi]]) { refBook = REF_PRIORITY[pi]; break; }
+        if (allBooks[REF_PRIORITY[pi]]) {
+          refBook = REF_PRIORITY[pi];
+          break;
+        }
       }
       if (!refBook) refBook = Object.keys(allBooks)[0];
 
-      var refOdds = allBooks[refBook].data;
+      var refOdds = allBooks[refBook].data || {};
+      if (refOdds.current && typeof refOdds.current === "object") refOdds = refOdds.current;
+      var legs = Object.keys(refOdds).filter(function (key) {
+        return key !== "open" && key !== "delta" && key !== "current" && typeof refOdds[key] !== "object";
+      });
+      if (!legs.length) return;
 
-      // Derive legs from data
-      var legs = Object.keys(refOdds).filter(function (k) { return k !== "open" && k !== "delta"; });
-
-      // Match header
       var matchDiv = el("div", "opener-match");
+      matchDiv.setAttribute("data-match-id", String(matchId));
+      matchDiv.setAttribute("role", "button");
+      matchDiv.setAttribute("tabindex", "0");
+      matchDiv.setAttribute("aria-label", "Show odds for " + (rec.home || "") + " versus " + (rec.away || ""));
+      matchDiv.addEventListener("click", function () { selectTrackerMatch(matchId, rec); });
+      matchDiv.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          selectTrackerMatch(matchId, rec);
+        }
+      });
 
       var titleDiv = el("div", "opener-match-title");
-      var nameSpan = el("span", "", (rec.home || "?") + " vs " + (rec.away || "?"));
-      var metaSpan = el("span", "opener-match-time");
-      var openAge  = el("span", "opener-match-open-age", "Open: " + timeAgo(rec.openedAt));
-      metaSpan.textContent = "";
-      titleDiv.appendChild(nameSpan);
-      titleDiv.appendChild(openAge);
+      titleDiv.appendChild(el("span", "", (rec.home || "?") + " vs " + (rec.away || "?")));
+      titleDiv.appendChild(el("span", "opener-match-open-age", "Open: " + timeAgo(rec.openedAt)));
       matchDiv.appendChild(titleDiv);
 
-      // Books that have moved (show movers first, then stable)
-      var movers  = [];
-      var stable  = [];
+      var movers = [];
+      var stable = [];
       Object.entries(allBooks).forEach(function (kv) {
-        var bk = kv[0]; var d = kv[1].data;
-        var hasDelta = d.delta && legs.some(function (l) { return d.delta[l] !== 0; });
-        if (hasDelta) movers.push(bk);
-        else          stable.push(bk);
+        var book = kv[0];
+        var odds = kv[1].data || {};
+        var deltaBlock = odds.delta || {};
+        var hasDelta = legs.some(function (leg) { return Number(deltaBlock[leg]) !== 0; });
+        if (hasDelta) movers.push(book);
+        else stable.push(book);
       });
 
-      // Show: ref book always first, then top movers (max 6 total)
       var toShow = [refBook];
-      movers.filter(function (b) { return b !== refBook; }).forEach(function (b) {
-        if (toShow.length < 6) toShow.push(b);
+      movers.filter(function (book) { return book !== refBook; }).forEach(function (book) {
+        if (toShow.length < 6) toShow.push(book);
       });
-      stable.filter(function (b) { return b !== refBook; }).forEach(function (b) {
-        if (toShow.length < 6) toShow.push(b);
+      stable.filter(function (book) { return book !== refBook; }).forEach(function (book) {
+        if (toShow.length < 6) toShow.push(book);
       });
 
-      // Column count CSS var
       matchDiv.style.setProperty("--opener-cols", legs.length);
 
-      // Header row
-      var hdr = el("div", "opener-odds-header");
-      hdr.style.gridTemplateColumns = "130px repeat(" + legs.length + ", minmax(0,1fr))";
-      hdr.appendChild(el("div", "", ""));
-      legs.forEach(function (l) {
-        hdr.appendChild(el("div", "", LEG_LABELS[l] || l));
-      });
-      matchDiv.appendChild(hdr);
+      var header = el("div", "opener-odds-header");
+      header.style.gridTemplateColumns = "130px repeat(" + legs.length + ", minmax(0,1fr))";
+      header.appendChild(el("div", "", ""));
+      legs.forEach(function (leg) { header.appendChild(el("div", "", LEG_LABELS[leg] || leg)); });
+      matchDiv.appendChild(header);
 
-      // Book rows
-      toShow.forEach(function (bk) {
-        var d = allBooks[bk].data;
+      toShow.forEach(function (book) {
+        var odds = allBooks[book].data || {};
+        var currentBlock = odds.current && typeof odds.current === "object" ? odds.current : odds;
+        var openBlock = odds.open || odds.opening || {};
+        var deltaBlock = odds.delta || {};
+
         var row = el("div", "opener-odds-row");
         row.style.gridTemplateColumns = "130px repeat(" + legs.length + ", minmax(0,1fr))";
-        row.appendChild(el("div", "opener-book", bk));
+        row.appendChild(el("div", "opener-book", book));
 
-        legs.forEach(function (l) {
-          var curr  = d[l];
-          var open  = d.open && d.open[l];
-          var delta = d.delta && d.delta[l];
-
+        legs.forEach(function (leg) {
+          var current = currentBlock[leg];
+          var opening = openBlock && openBlock[leg];
+          var delta = Number(deltaBlock && deltaBlock[leg]);
           var cell = el("div", "opener-cell");
-          cell.appendChild(el("div", "opener-curr", fmt(curr)));
+          cell.appendChild(el("div", "opener-curr", fmt(current)));
 
-          if (open != null && open !== curr) {
-            cell.appendChild(el("div", "opener-open", fmt(open)));
+          if (opening != null && Number(opening) !== Number(current)) {
+            cell.appendChild(el("div", "opener-open", fmt(opening)));
           }
 
-          if (typeof delta === "number" && delta !== 0) {
-            var dEl = el("div", "opener-delta " + (delta > 0 ? "delta-up" : "delta-down"),
-              (delta > 0 ? "+" : "") + delta.toFixed(2));
-            cell.appendChild(dEl);
+          if (isFinite(delta) && delta !== 0) {
+            cell.appendChild(el(
+              "div",
+              "opener-delta " + (delta > 0 ? "delta-up" : "delta-down"),
+              (delta > 0 ? "+" : "") + delta.toFixed(2)
+            ));
           }
 
           row.appendChild(cell);
@@ -250,30 +328,27 @@
     });
   }
 
-  // ── Event bindings ─────────────────────────────────────────────────────────
-
   dateEl.addEventListener("change", function () {
     state.date = dateEl.value;
+    state.loading = false;
     load();
   });
 
   mktEl.addEventListener("change", function () {
     state.market = mktEl.value;
-    if (state.data) render(state.data); // re-render from cache, no new fetch
+    if (state.data) render(state.data);
   });
-
-  // ── Init ───────────────────────────────────────────────────────────────────
 
   populateDates();
 
-  // Wait for API base to be available, then load
   function tryLoad() {
-    BASE = (window.AIML_CONFIG && window.AIML_CONFIG.BASE_URL)
-      || (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
-      || "";
-    if (BASE) { load(); return; }
+    BASE = resolveBase();
+    if (BASE) {
+      load();
+      return;
+    }
     setTimeout(tryLoad, 400);
   }
-  tryLoad();
 
+  tryLoad();
 })();
