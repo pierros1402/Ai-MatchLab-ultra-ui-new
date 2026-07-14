@@ -26,6 +26,7 @@ import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-mult
 import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./jobs/fetch-oddsapiio-odds.js";
 import { syncDeploySnapshotFromGithub } from "./jobs/sync-deploy-snapshot-from-github.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
+import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
@@ -2766,7 +2767,24 @@ function oddsHandler(req, res) {
     res.status(400).json({ ok: false, error: "missing_matchId" });
     return;
   }
-  res.json(getDeployedOddsSnapshot(matchId, market, date));
+  const direct = getDeployedOddsSnapshot(matchId, market, date);
+  if (direct && direct.aiAssessment) {
+    res.json(direct);
+    return;
+  }
+  // Bridge fallback: the requested id is an ESPN fixture cid while odds.json is
+  // keyed by Flashscore cids, so the exact lookup above misses. The display
+  // universe already reconciled the two (odds-fixture-bridge) and is cached, so
+  // reuse its resolved assessment rather than bridging again here.
+  try {
+    const uni = buildDisplayMatchesForDate(date);
+    const m = (uni?.matches || []).find(x => String(x.matchId) === matchId);
+    if (m?.aiAssessment) {
+      res.json({ ...direct, ok: true, matchId, market, aiAssessment: m.aiAssessment, reconciled: true });
+      return;
+    }
+  } catch { /* fall through to the direct (empty) result */ }
+  res.json(direct);
 }
 app.get("/odds", oddsHandler);
 app.get("/api/odds", oddsHandler);
@@ -2930,6 +2948,27 @@ function buildDisplayMatchesForDate(date) {
   return value;
 }
 
+// Map an odds.json entry's frozen aiAssessment into the same `assessment` shape
+// attachAssessment produces from data/assessments, so a fixture reconciled to a
+// Flashscore odds row exposes the SAME contract the frontend already reads. The
+// 1X2 probs double as open/current (a single frozen capture, no revision).
+function assessmentFromOddsEntry(entry) {
+  const ai = entry?.aiAssessment;
+  if (!ai || !ai.markets) return null;
+  const p = ai.markets?.["1X2"]?.probs || null;
+  const probs = p ? { home: p.home, draw: p.draw, away: p.away } : null;
+  return {
+    openedAt:          entry.updatedAt || null,
+    assessedAt:        entry.updatedAt || null,
+    revised:           false,
+    openAssessment:    probs,
+    currentAssessment: probs,
+    markets:           ai.markets,
+    model:             ai.model || null,
+    reconciledFrom:    "flashscore_odds_bridge" // audit breadcrumb: joined by bridge, not exact id
+  };
+}
+
 function buildDisplayMatchesForDateUncached(date) {
   // Load AI assessments for this date (if available) — keyed by matchId
   let assessmentMap = {};
@@ -3022,9 +3061,11 @@ function buildDisplayMatchesForDateUncached(date) {
     } catch { /**/ }
 
     let oddsMatches = [];
+    let oddsRawMatches = [];
     try {
       const op = resolveDataPath("deploy-snapshots", date, "odds.json");
       const oj = JSON.parse(fs.readFileSync(op, "utf8"));
+      oddsRawMatches = Array.isArray(oj.matches) ? oj.matches : [];
       oddsMatches = (oj.matches || [])
         .map(m => attachAssessment({
           matchId:    String(m.matchId || ""),
@@ -3050,6 +3091,30 @@ function buildDisplayMatchesForDateUncached(date) {
           return isDisplayApprovedSupplementLeague(slug, leagueMeta, SLUG_ALIASES);
         });
     } catch { /**/ }
+
+    // 1b. Reconcile the two identity universes. The odds.json assessment lives
+    // under Flashscore identity (slug fs.*, names "Ayr"/"KuPS (Fin)") while the
+    // fixtures are ESPN identity — so their canonical ids differ and an exact-id
+    // join reached almost none of a cup-heavy day. Bridge them matchId-agnostic
+    // (kickoff + team-token overlap on both sides) and attach the FROZEN
+    // assessment onto the fixture the UI already shows. Display-only: never mints
+    // a fixture, never feeds value (odds↔value firewall). Only fills fixtures that
+    // don't already carry an assessment from data/assessments.
+    if (oddsRawMatches.length && fixtureMatches.length) {
+      try {
+        const needy = fixtureMatches.filter(m => !m.assessment);
+        const { byFixtureId } = resolveOddsForFixtures(needy, oddsRawMatches);
+        if (byFixtureId.size) {
+          fixtureMatches = fixtureMatches.map(m => {
+            const entry = byFixtureId.get(String(m.matchId));
+            if (!entry) return m;
+            const assessment = assessmentFromOddsEntry(entry);
+            if (!assessment) return m;
+            return { ...m, assessment, aiAssessment: entry.aiAssessment || null };
+          });
+        }
+      } catch { /* bridge is best-effort display enrichment */ }
+    }
 
     // 1c. fixtures-all.json — supplement with active leagues not covered by
     //     fixtures.json or odds.json (e.g. swe.2, kaz.1, est.1, isl.1…).
