@@ -25,7 +25,13 @@ import path from "path";
 import crypto from "crypto";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
-import { athensDayKey } from "../core/daykey.js";
+import { athensDayKey, shiftDay } from "../core/daykey.js";
+
+// Opening odds (data/multi-odds/<day>.json) are forward-looking — the Opening
+// Tracker offers today + the next 7 days. They live OUTSIDE the per-day
+// deploy-snapshot dir, so without this the live engine never mirrors them and
+// the tracker shows empty. Pull the same forward window on every sync.
+const MULTI_ODDS_DAYS_FORWARD = Number(process.env.SNAPSHOT_SYNC_MULTI_ODDS_DAYS || 7);
 
 const REPO   = process.env.SNAPSHOT_SYNC_REPO || "pierros1402/Ai-MatchLab-ultra-ui-new";
 const BRANCH = process.env.SNAPSHOT_SYNC_BRANCH || "main";
@@ -100,12 +106,37 @@ async function runBatches(jobs) {
   return errors;
 }
 
+// Mirror data/multi-odds/<day>.json for baseDay .. baseDay+daysForward. One
+// directory listing (sha-gated like everything else) then transfer only the
+// windowed files that changed. Returns its own error list so a multi-odds hiccup
+// never gates latest.json — opening odds are a supplement, not the served slate.
+async function syncMultiOddsWindow(baseDay, daysForward, stats) {
+  const wanted = new Set();
+  for (let i = 0; i <= daysForward; i++) wanted.add(shiftDay(baseDay, i));
+
+  let entries;
+  try {
+    entries = await listDir("data/multi-odds");
+  } catch (e) {
+    return [`multi-odds list: ${String(e?.message || e)}`];
+  }
+
+  const jobs = [];
+  for (const e of entries) {
+    if (e.type !== "file" || !e.name.endsWith(".json")) continue;
+    if (!wanted.has(e.name.replace(/\.json$/, ""))) continue;
+    jobs.push(() => syncOne(e, resolveDataPath("multi-odds", e.name), stats));
+  }
+  stats.multiOddsListed = jobs.length;
+  return runBatches(jobs);
+}
+
 export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey()) {
   if (inFlight) return inFlight; // coalesce concurrent callers onto the running sync
   inFlight = (async () => {
     const startedAt = Date.now();
     const day = String(dayKey);
-    const stats = { filesWritten: 0, skippedUnchanged: 0, bytesWritten: 0 };
+    const stats = { filesWritten: 0, skippedUnchanged: 0, bytesWritten: 0, multiOddsListed: 0 };
     const repoDir = `data/deploy-snapshots/${day}`;
 
     const [top, details] = await Promise.all([
@@ -125,6 +156,9 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey()) {
       jobs.push(() => syncOne(e, resolveDataPath("deploy-snapshots", day, "details", e.name), stats));
     }
     const errors = await runBatches(jobs);
+
+    // Opening odds window — supplement, kept off the `errors` gate below.
+    const multiOddsErrors = await syncMultiOddsWindow(day, MULTI_ODDS_DAYS_FORWARD, stats);
 
     // latest.json LAST and only on a healthy sync: consumers that follow the
     // pointer must never land on a half-written day.
@@ -149,6 +183,7 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey()) {
       listedDetails: details.length,
       ...stats,
       errors: errors.slice(0, 10),
+      multiOddsErrors: (multiOddsErrors || []).slice(0, 10),
       tookMs: Date.now() - startedAt
     };
     log("done", summary);

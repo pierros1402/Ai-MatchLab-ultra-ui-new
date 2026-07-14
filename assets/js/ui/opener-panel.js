@@ -94,7 +94,7 @@
     todayOpt.textContent = "Today";
     dateEl.insertBefore(todayOpt, dateEl.firstChild);
 
-    dateEl.value = addDays(today, 1); // default: tomorrow
+    dateEl.value = today; // default: Today (freshly synced multi-odds; upcoming days selectable)
     state.date = dateEl.value;
   }
 
