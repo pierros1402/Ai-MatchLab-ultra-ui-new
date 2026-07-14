@@ -669,11 +669,31 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     fixturesByLeague[slug] = (fixturesByLeague[slug] || 0) + 1;
   }
 
+  // Public-id alignment. The display universe, odds.json and every detail file
+  // are keyed by canonicalId, but ESPN/reconciled fixture rows still carry the
+  // numeric provider id as `matchId` (only flashscore-sourced rows already
+  // expose the cid). Left as-is the UI reads that provider id from fixtures.json
+  // and asks /details and /api/multi-odds with it, missing the canonical-keyed
+  // artifacts — the "details not built yet" gap that hit ~92% of a cup/South-
+  // American day (2026-07-14). Expose canonicalId as the public matchId here (the
+  // one artifact the display reads) while preserving the provider id under
+  // providerMatchId/sourceMatchId for source-side joins. Idempotent: a row whose
+  // matchId already equals its canonicalId is untouched.
+  const alignedFixtures = fixtures.map(fx => {
+    const cid = String(fx?.canonicalId || "").trim();
+    if (!cid || String(fx?.matchId || "") === cid) return fx;
+    return {
+      ...fx,
+      matchId: cid,
+      providerMatchId: fx.providerMatchId || fx.matchId || fx.sourceMatchId || null
+    };
+  });
+
   const fixturesOut = {
     ok: true,
     date: dayKey,
-    count: fixtures.length,
-    fixtures
+    count: alignedFixtures.length,
+    fixtures: alignedFixtures
   };
 
   const valueOut = {
