@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
-  "dayKey": "2026-07-14",
-  "generatedAt": "2026-07-14T00:28:32.177Z",
+  "dayKey": "2026-07-15",
+  "generatedAt": "2026-07-14T18:31:22.133Z",
   "severity": "info",
   "issueCounts": {
     "error": 0,
     "warning": 0,
-    "info": 2
+    "info": 3
   },
   "alert": false,
   "alertCounts": {
@@ -14,11 +14,11 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 2,
+  "activeIssueCount": 3,
   "actionableIssueCount": 0,
-  "newIssueCount": 0,
+  "newIssueCount": 1,
   "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
+  "resolvedIssueCount": 0,
   "persistentIssueCount": 2,
   "activeIssues": [
     {
@@ -29,11 +29,24 @@
       "details": {
         "type": "coverage_floor_drop",
         "staticFloor": 45,
-        "effectiveFloor": 33,
-        "actualFixtures": 36,
-        "drop": 12,
+        "effectiveFloor": 13,
+        "actualFixtures": 16,
+        "drop": 32,
         "reason": "canonical_fixture_count_below_static_floor",
         "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-07-15.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
@@ -84,9 +97,7 @@
     }
   ],
   "actionableIssues": [],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -94,13 +105,15 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-14.json",
+        "artifact": "expected-matches/2026-07-15.json",
         "at": null,
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
       }
     }
   ],
+  "newActionableIssues": [],
+  "resolvedIssues": [],
   "persistentIssues": [
     {
       "severity": "info",
@@ -110,9 +123,9 @@
       "details": {
         "type": "coverage_floor_drop",
         "staticFloor": 45,
-        "effectiveFloor": 33,
-        "actualFixtures": 36,
-        "drop": 12,
+        "effectiveFloor": 13,
+        "actualFixtures": 16,
+        "drop": 32,
         "reason": "canonical_fixture_count_below_static_floor",
         "effectiveFloorMet": true
       }
@@ -164,5 +177,5 @@
       }
     }
   ],
-  "latestForDay": "2026-07-14"
+  "latestForDay": "2026-07-15"
 }
