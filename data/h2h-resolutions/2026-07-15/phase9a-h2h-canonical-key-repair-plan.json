@@ -1,0 +1,154 @@
+{
+  "ok": true,
+  "readyToApply": true,
+  "status": "ready_for_separate_hash_verified_executor",
+  "schema": "ai-matchlab.h2h-canonical-key-repair-plan.v1",
+  "policyVersion": "h2h-canonical-key-repair-plan-policy-v1",
+  "generatedAt": "2026-07-15T17:21:48.444Z",
+  "sourceContract": {
+    "h2hReadOnly": true,
+    "planArtifactOnly": true,
+    "automaticApply": false,
+    "truthWrites": 0,
+    "truthFilesChanged": 0
+  },
+  "sourceAudit": {
+    "schema": "ai-matchlab.h2h-canonical-key-integrity.v1",
+    "status": "repair_candidates_found",
+    "policyVersion": "h2h-canonical-key-policy-v1",
+    "inventory": {
+      "path": "C:\\Ai-MatchLab-ULTRA-UI\\data\\h2h",
+      "sha256": "cc06a1dc7f55067b600fe6420a373adeb231d55a742d9cfd37487c962cb77d47",
+      "fileCount": 8938,
+      "bytes": 4600454,
+      "byteIdenticalAfterAudit": true
+    },
+    "summary": {
+      "fileCount": 8938,
+      "matchCount": 13608,
+      "invalidJsonFileCount": 0,
+      "legacyDegradedPairKeyCount": 2,
+      "policyDegradedPairKeyCount": 0,
+      "fallbackTeamIdentityCount": 2,
+      "nonCanonicalFileNameCount": 2,
+      "targetCollisionCount": 0,
+      "storedPairMismatchCount": 0,
+      "invalidMatchCount": 0,
+      "duplicateMatchIdCount": 0,
+      "conflictingDuplicateMatchIdCount": 0
+    }
+  },
+  "summary": {
+    "deterministicActions": 2,
+    "blockedActions": 0,
+    "legacyDegradedPairKeys": 2,
+    "policyDegradedPairKeys": 0,
+    "sourceFilesAffected": 2,
+    "targetFiles": 2,
+    "matchesPreserved": 2,
+    "payloadRewritesRequired": 0,
+    "targetCollisions": 0
+  },
+  "actions": [
+    {
+      "blocked": false,
+      "actionId": "h2h-canonical-key-repair-0001",
+      "actionType": "rename_h2h_file_to_canonical_key",
+      "status": "planned_not_applied",
+      "confidence": "deterministic",
+      "sourceFileName": "~eemdijk.json",
+      "targetFileName": "afc~eemdijk.json",
+      "sourcePath": "C:\\Ai-MatchLab-ULTRA-UI\\data\\h2h\\~eemdijk.json",
+      "targetPath": "C:\\Ai-MatchLab-ULTRA-UI\\data\\h2h\\afc~eemdijk.json",
+      "sourceSha256": "0e3c40a3bbf6212409433b334a1fe16064b630c162669ca122322f60ef1252d1",
+      "sourceBytes": 351,
+      "teamA": "AFC",
+      "teamB": "Eemdijk",
+      "legacyPairKey": "~eemdijk",
+      "canonicalPairKey": "afc~eemdijk",
+      "fallbackTeamIdentityCount": 1,
+      "matchCount": 1,
+      "matchIds": [
+        "759210"
+      ],
+      "targetExists": false,
+      "payloadRewriteRequired": false,
+      "automaticApplyAllowed": false,
+      "truthWrites": 0,
+      "reasonCodes": [
+        "legacy_pair_key_contains_empty_half",
+        "h2h_specific_nonempty_fallback_is_deterministic",
+        "target_does_not_exist",
+        "payload_pair_and_matches_pass_integrity_gates"
+      ]
+    },
+    {
+      "blocked": false,
+      "actionId": "h2h-canonical-key-repair-0002",
+      "actionType": "rename_h2h_file_to_canonical_key",
+      "status": "planned_not_applied",
+      "confidence": "deterministic",
+      "sourceFileName": "~necnijmegen.json",
+      "targetFileName": "afc~necnijmegen.json",
+      "sourcePath": "C:\\Ai-MatchLab-ULTRA-UI\\data\\h2h\\~necnijmegen.json",
+      "targetPath": "C:\\Ai-MatchLab-ULTRA-UI\\data\\h2h\\afc~necnijmegen.json",
+      "sourceSha256": "050ec4e0d1949645ccb806bc0d4d2df36bd5366c57f007415cc3039dfe30de9c",
+      "sourceBytes": 361,
+      "teamA": "AFC",
+      "teamB": "NEC Nijmegen",
+      "legacyPairKey": "~necnijmegen",
+      "canonicalPairKey": "afc~necnijmegen",
+      "fallbackTeamIdentityCount": 1,
+      "matchCount": 1,
+      "matchIds": [
+        "760398"
+      ],
+      "targetExists": false,
+      "payloadRewriteRequired": false,
+      "automaticApplyAllowed": false,
+      "truthWrites": 0,
+      "reasonCodes": [
+        "legacy_pair_key_contains_empty_half",
+        "h2h_specific_nonempty_fallback_is_deterministic",
+        "target_does_not_exist",
+        "payload_pair_and_matches_pass_integrity_gates"
+      ]
+    }
+  ],
+  "blocked": [],
+  "expectedPostRepair": {
+    "fileCount": 8938,
+    "matchCount": 13608,
+    "legacyDegradedPairKeyCount": 0,
+    "policyDegradedPairKeyCount": 0,
+    "nonCanonicalFileNameCount": 0,
+    "storedPairMismatchCount": 0,
+    "invalidMatchCount": 0,
+    "duplicateMatchIdCount": 0,
+    "conflictingDuplicateMatchIdCount": 0
+  },
+  "implementationRequirements": {
+    "policyConsumersToUpdateBeforeWrite": [
+      "engine-v1/storage/h2h-memory-db.js",
+      "engine-v1/jobs/migrate-h2h-canonical-keys.js",
+      "engine-v1/jobs/audit-history-semantic-integrity.js"
+    ],
+    "executorRequirements": [
+      "dry_run_default",
+      "inventory_hash_required",
+      "plan_hash_required",
+      "per_file_source_hash_required",
+      "external_backup_before_write",
+      "atomic_rename_or_copy_delete",
+      "post_audit_required",
+      "rollback_on_post_audit_failure"
+    ]
+  },
+  "guarantees": {
+    "h2hWrites": 0,
+    "historyWrites": 0,
+    "archiveWrites": 0,
+    "resultsMemoryWrites": 0,
+    "automaticRepair": 0
+  }
+}
