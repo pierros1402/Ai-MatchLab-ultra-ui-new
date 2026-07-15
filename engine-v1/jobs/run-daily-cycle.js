@@ -13,6 +13,7 @@ import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildMatchdayAxis } from "./build-matchday-axis.js";
+import { refreshStandingsFromFlashscore } from "./refresh-standings-from-flashscore.js";
 import { buildMatchdayLedger } from "./build-matchday-ledger.js";
 import { buildTeamNewsDay } from "./build-team-news-day.js";
 import { buildPlayerUsageWorksetDay } from "./build-player-usage-workset-day.js";
@@ -649,6 +650,24 @@ export async function runDailyCycle(options = {}) {
     built: standingsBuild?.built ?? 0,
     skipped: standingsBuild?.skipped ?? 0
   });
+
+  // ── Flashscore live standings refresh ────────────────────────────────────────
+  // Replace stale scraped/derived tables with the CURRENT table from Flashscore's
+  // own standings pages for every league in the ±1-day feed window (bra.2 was 4
+  // matchdays behind on a 24-day-old Wikipedia scrape — systemic, not one-off).
+  // Runs BEFORE the axis/ledger/gap-report so they see fresh played counts.
+  console.log("[daily-cycle] fs-standings:start", { dayKey });
+  try {
+    const fsStandings = await refreshStandingsFromFlashscore();
+    console.log("[daily-cycle] fs-standings:done", {
+      targets: fsStandings?.targets ?? 0,
+      refreshed: fsStandings?.refreshedCount ?? 0,
+      implausible: fsStandings?.implausibleCount ?? 0,
+      failed: fsStandings?.failedCount ?? 0
+    });
+  } catch (e) {
+    console.error("[daily-cycle] fs-standings:error", e?.message);
+  }
 
   // ── Matchday confirmation axis ───────────────────────────────────────────────
   // Stamp the deterministic matchday (round) per league from validated standings

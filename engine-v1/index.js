@@ -28,7 +28,7 @@ import { syncDeploySnapshotFromGithub } from "./jobs/sync-deploy-snapshot-from-g
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
 import { normTeam } from "./odds/multi-odds-merge.js";
-import { isKnownNonLeagueCompetition } from "./core/matchday-axis.js";
+import { buildStandingsBlock } from "./core/details-rich-blocks.js";
 import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./core/matchday-axis.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
@@ -899,14 +899,25 @@ function snapshotDetailsResponse(matchId, requestedDate = "") {
     const detail = readDeploySnapshotDetail(date, matchId);
     if (!detail) continue;
 
-    // Serve-time guard: details baked before the not-league gate may carry a
-    // "League Table" for a knockout/cup competition (accumulated-results garbage
-    // — last season's holders, duplicate name universes). Strip it here so the
-    // already-published snapshot heals immediately; the pipeline gate
-    // (details-rich-blocks) stops new ones at build time.
+    // Serve-time standings overlay: the baked block is frozen at build time and
+    // can be stale (bra.2 sat 4 matchdays behind) or plain wrong (a knockout
+    // competition with an accumulated-results "table"). Recompute the block from
+    // the live store — buildStandingsBlock carries the cup gate and the
+    // integrity gate — and apply it when it is more restrictive (cup → empty)
+    // or strictly FRESHER than the baked one. Never replace a newer baked table
+    // with an older store (the store only updates on deploy; details rebuild daily).
     const detailSlug = String(detail?.basic?.leagueSlug || "");
-    if (detailSlug && isKnownNonLeagueCompetition(detailSlug) && detail?.standings?.rows?.length) {
-      detail.standings = { status: "empty", reason: "not_league_competition", rows: [] };
+    if (detailSlug && detail?.standings) {
+      try {
+        const live = buildStandingsBlock(detailSlug);
+        const bakedAt = Date.parse(detail.standings?.updatedAt || "") || 0;
+        const liveAt = Date.parse(live?.updatedAt || "") || 0;
+        if (live?.reason === "not_league_competition") {
+          detail.standings = live; // cups never show a table, baked or not
+        } else if (live?.status === "ready" && liveAt > bakedAt) {
+          detail.standings = live;
+        }
+      } catch { /* keep the baked block on any overlay failure */ }
     }
 
     const valuePayload = readDeploySnapshotValue(date);

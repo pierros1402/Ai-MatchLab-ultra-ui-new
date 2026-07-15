@@ -45,6 +45,7 @@ function cleanLeagueName(za) {
 export function parseFlashscoreFeed(text) {
   const out = [];
   let league = null, country = null, path = null;
+  let tournamentId = null, stageId = null;
 
   for (const rec of String(text || "").split("~")) {
     const f = {};
@@ -53,7 +54,13 @@ export function parseFlashscoreFeed(text) {
       if (i > 0) f[kv.slice(0, i)] = kv.slice(i + 1);
     }
 
-    if (f.ZA) { league = cleanLeagueName(f.ZA); country = f.ZY || null; path = f.ZL || null; }
+    if (f.ZA) {
+      league = cleanLeagueName(f.ZA); country = f.ZY || null; path = f.ZL || null;
+      // ZE/ZC identify the tournament season + stage — enough to fetch the
+      // CURRENT standings from flashscore.mobi/standings/{ZE}/{ZC}/ (see
+      // odds/flashscore-standings-source.js).
+      tournamentId = f.ZE || null; stageId = f.ZC || null;
+    }
 
     if (f.AA && f.AE && f.AF) {
       const ts = Number(f.AD);
@@ -66,6 +73,8 @@ export function parseFlashscoreFeed(text) {
         leaguePath: path,
         country,
         leagueName: league,
+        tournamentId,
+        stageId,
         home: f.AE.trim(),
         away: f.AF.trim(),
         kickoffUtc,
