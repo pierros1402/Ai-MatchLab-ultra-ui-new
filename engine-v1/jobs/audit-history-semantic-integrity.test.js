@@ -83,7 +83,7 @@ test("operational day validation uses Europe/Athens rather than UTC date", () =>
   assert.equal(report.operationalDayMismatchCount, 0);
 });
 
-test("H2H audit exposes an empty normalized pair half", () => {
+test("H2H audit flags the legacy AFC filename and expects the canonical fallback", () => {
   const payload = {
     teamA: "AFC",
     teamB: "Eemdijk",
@@ -95,6 +95,8 @@ test("H2H audit exposes an empty normalized pair half", () => {
   };
 
   const report = auditH2HPayload("~eemdijk.json", payload);
-  assert.equal(report.degradedPairKey, true);
+  assert.equal(report.expectedFileName, "afc~eemdijk.json");
+  assert.equal(report.nonCanonicalFileName, true);
+  assert.equal(report.degradedPairKey, false);
   assert.equal(report.storedPairMismatchCount, 0);
 });

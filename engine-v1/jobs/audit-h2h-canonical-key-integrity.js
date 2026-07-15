@@ -14,7 +14,8 @@ import {
   H2H_CANONICAL_KEY_POLICY_VERSION,
   canonicalH2HPairIdentity,
   legacyH2HPairIdentity,
-  compactRawIdentityKey
+  compactRawIdentityKey,
+  isDegradedH2HPairKey
 } from "../core/h2h-canonical-key-policy.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -164,14 +165,19 @@ export function auditH2HPayload(
     }
   }
 
+  const sourcePairKey = actualFileName.replace(/\.json$/i, "");
+  const sourceDegradedPairKey = isDegradedH2HPairKey(sourcePairKey);
+
   return {
     actualFileName,
     expectedFileName,
-    sourcePairKey: actualFileName.replace(/\.json$/i, ""),
+    sourcePairKey,
     legacyExpectedPairKey: legacyPair.key,
     policyExpectedPairKey: pair.key,
     nonCanonicalFileName: Boolean(expectedFileName && actualFileName !== expectedFileName),
-    legacyDegradedPairKey: legacyPair.degraded,
+    legacyPolicyWouldDegrade: legacyPair.degraded,
+    legacyDegradedPairKey: legacyPair.degraded && sourceDegradedPairKey,
+    sourceDegradedPairKey,
     policyDegradedPairKey: !pair.valid || pair.degraded,
     keyCollision: pair.collision,
     keyPolicy: pair,

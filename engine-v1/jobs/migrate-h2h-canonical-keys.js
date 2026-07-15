@@ -23,21 +23,21 @@ import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
-import { normalizeTeamKey } from "../core/normalize.js";
+import { canonicalH2HPairIdentity } from "../core/h2h-canonical-key-policy.js";
 import { globalCanonicalTeamName } from "../storage/team-aliases-db.js";
 
 const DIR = resolveDataPath("h2h");
 const MAX_MATCHES = 20; // keep in sync with h2h-memory-db.js
 
 const canon = (name) => globalCanonicalTeamName(name) || name;
+const identityOnly = value => value;
 
-/** Canonical, orientation-fixed pair identity: teamA maps to the smaller key half. */
-function orientedPair(a, b) {
+/** Canonical, orientation-fixed pair identity under the dedicated H2H policy. */
+export function orientedPair(a, b) {
   const ca = canon(a), cb = canon(b);
-  const ka = normalizeTeamKey(ca), kb = normalizeTeamKey(cb);
-  return ka <= kb
-    ? { key: `${ka}~${kb}`, teamA: ca, teamB: cb }
-    : { key: `${kb}~${ka}`, teamA: cb, teamB: ca };
+  const pair = canonicalH2HPairIdentity(ca, cb, { resolveCanonical: identityOnly });
+  if (!pair.valid || !pair.key) return null;
+  return { key: pair.key, teamA: pair.teamA, teamB: pair.teamB };
 }
 
 function readJsonSafe(file) {
@@ -58,7 +58,7 @@ export function migrateH2HCanonicalKeys({ apply = false } = {}) {
 
   // Group every source file by its canonical pair key.
   const groups = new Map(); // key -> { sources:Set, matches:Map<matchId,match>, teamA, teamB }
-  const stats = { filesScanned: 0, skippedNoNames: 0 };
+  const stats = { filesScanned: 0, skippedNoNames: 0, skippedInvalidPairIdentity: 0 };
 
   for (const f of files) {
     stats.filesScanned++;
@@ -67,7 +67,9 @@ export function migrateH2HCanonicalKeys({ apply = false } = {}) {
     const [a, b] = namesOf(data);
     if (!a || !b) { stats.skippedNoNames++; continue; }
 
-    const { key, teamA, teamB } = orientedPair(a, b);
+    const oriented = orientedPair(a, b);
+    if (!oriented) { stats.skippedInvalidPairIdentity++; continue; }
+    const { key, teamA, teamB } = oriented;
     if (!groups.has(key)) {
       groups.set(key, { sources: new Set(), matches: new Map(), teamA, teamB });
     }

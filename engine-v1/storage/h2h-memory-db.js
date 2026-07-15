@@ -12,27 +12,50 @@
 
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
-import { normalizeTeamKey } from "../core/normalize.js";
+import {
+  canonicalH2HPairIdentity,
+  canonicalH2HTeamIdentity
+} from "../core/h2h-canonical-key-policy.js";
 import { globalCanonicalTeamName } from "./team-aliases-db.js";
 
 const DIR = resolveDataPath("h2h");
 const MAX_MATCHES = 20;
+const identityOnly = value => value;
 
 // H2H is league-agnostic, so it uses the GLOBAL (cross-league, collision-safe)
 // identity resolver to fold spelling variants of the same club onto one key —
 // otherwise "Dinamo Minsk" (ESPN) and "Din. Minsk" (Flashscore) split a pair's
 // meetings across two files and a lookup by the fixture name finds only some.
 const canon = (name) => globalCanonicalTeamName(name) || name;
-const canonKey = (name) => normalizeTeamKey(canon(name));
-const rawKey = (name) => normalizeTeamKey(name);
+const canonKey = (name) => canonicalH2HTeamIdentity(
+  canon(name),
+  { resolveCanonical: identityOnly }
+).key;
+const rawKey = (name) => canonicalH2HTeamIdentity(
+  name,
+  { resolveCanonical: identityOnly }
+).key;
 
 function pairKeyOf(na, nb) {
+  if (!na || !nb) return null;
   return na < nb ? `${na}~${nb}` : `${nb}~${na}`;
+}
+
+function canonicalPairIdentity(a, b) {
+  return canonicalH2HPairIdentity(
+    canon(a),
+    canon(b),
+    { resolveCanonical: identityOnly }
+  );
 }
 
 /** Canonical file key (spelling variants folded to one identity). */
 export function canonPairKey(a, b) {
-  return pairKeyOf(canonKey(a), canonKey(b));
+  const pair = canonicalPairIdentity(a, b);
+  if (!pair.valid || !pair.key) {
+    throw new Error(`invalid_h2h_pair_identity:${pair.reasonCode || "unknown"}`);
+  }
+  return pair.key;
 }
 
 function fileForKey(key) {
@@ -40,12 +63,15 @@ function fileForKey(key) {
 }
 
 export function readH2H(teamA, teamB) {
-  const ck = canonPairKey(teamA, teamB);
+  let ck = null;
+  try { ck = canonPairKey(teamA, teamB); }
+  catch { return null; }
+
   try { return JSON.parse(fs.readFileSync(fileForKey(ck), "utf8")); } catch { /* fall through */ }
   // Fallback to the pre-canonicalization key so lookups keep working before the
   // one-off re-key migration has consolidated an old-spelling file (no regression).
   const rk = pairKeyOf(rawKey(teamA), rawKey(teamB));
-  if (rk !== ck) {
+  if (rk && rk !== ck) {
     try { return JSON.parse(fs.readFileSync(fileForKey(rk), "utf8")); } catch { /* none */ }
   }
   return null;
@@ -64,18 +90,22 @@ export function recordH2H(m) {
   // spellings — both the file key and the stored names are canonicalized.
   const homeTeam = canon(m.homeTeam);
   const awayTeam = canon(m.awayTeam);
+  const pair = canonicalH2HPairIdentity(
+    homeTeam,
+    awayTeam,
+    { resolveCanonical: identityOnly }
+  );
+  if (!pair.valid || !pair.key) return false;
 
   ensureDir(DIR);
-  const file = fileForKey(canonPairKey(m.homeTeam, m.awayTeam));
+  const file = fileForKey(pair.key);
   let data;
   try { data = JSON.parse(fs.readFileSync(file, "utf8")); }
   catch { data = { teamA: null, teamB: null, matches: [] }; }
 
-  // Canonical team names (first seen wins)
-  const na = canonKey(m.homeTeam), nb = canonKey(m.awayTeam);
   if (!data.teamA) {
-    data.teamA = na < nb ? homeTeam : awayTeam;
-    data.teamB = na < nb ? awayTeam : homeTeam;
+    data.teamA = pair.teamA;
+    data.teamB = pair.teamB;
   }
 
   if ((data.matches || []).some(x => x.matchId === m.matchId)) return false; // dedup

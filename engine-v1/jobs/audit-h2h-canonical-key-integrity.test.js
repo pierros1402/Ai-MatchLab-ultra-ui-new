@@ -42,6 +42,17 @@ test("payload audit identifies a legacy degraded key and its safe target", () =>
   assert.equal(report.nonCanonicalFileName, true);
 });
 
+
+test("canonical AFC filename clears the legacy degraded-file count", () => {
+  const report = auditH2HPayload("afc~eemdijk.json", payload(), {
+    resolveCanonical: noAliases
+  });
+  assert.equal(report.legacyPolicyWouldDegrade, true);
+  assert.equal(report.sourceDegradedPairKey, false);
+  assert.equal(report.legacyDegradedPairKey, false);
+  assert.equal(report.nonCanonicalFileName, false);
+});
+
 test("stored match from another pair fails closed", () => {
   const p = payload();
   p.matches[0].awayTeam = "NEC Nijmegen";

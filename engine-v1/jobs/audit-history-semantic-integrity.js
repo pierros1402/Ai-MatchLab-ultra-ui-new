@@ -21,7 +21,7 @@ import {
   canonicalTeamName,
   globalCanonicalTeamName
 } from "../storage/team-aliases-db.js";
-import { canonPairKey } from "../storage/h2h-memory-db.js";
+import { canonicalH2HPairIdentity } from "../core/h2h-canonical-key-policy.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const KICKOFF_TOLERANCE_MS = 6 * 60 * 60 * 1000;
@@ -458,10 +458,10 @@ export function auditHistoryRows(rows, options = {}) {
 
 export function auditH2HPayload(fileName, payload, options = {}) {
   const maxExamples = options.maxExamples || DEFAULT_MAX_EXAMPLES;
-  const expectedFileName = `${canonPairKey(payload?.teamA, payload?.teamB)}.json`;
+  const pair = canonicalH2HPairIdentity(payload?.teamA, payload?.teamB);
+  const expectedFileName = pair.valid && pair.key ? `${pair.key}.json` : null;
   const actualFileName = path.basename(fileName);
-  const expectedKey = expectedFileName.slice(0, -5);
-  const degradedPairKey = expectedKey.startsWith("~") || expectedKey.endsWith("~") || expectedKey === "~";
+  const degradedPairKey = !pair.valid || pair.degraded;
   const rows = (Array.isArray(payload?.matches) ? payload.matches : []).map(row => ({
     ...row,
     leagueSlug: row?.leagueSlug || "unknown",
@@ -483,7 +483,7 @@ export function auditH2HPayload(fileName, payload, options = {}) {
   return {
     actualFileName,
     expectedFileName,
-    nonCanonicalFileName: actualFileName !== expectedFileName,
+    nonCanonicalFileName: !expectedFileName || actualFileName !== expectedFileName,
     degradedPairKey,
     storedPairMismatchCount,
     historyAudit,
