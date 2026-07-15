@@ -48,6 +48,7 @@ const BUILTIN_ALIASES = {
       "gimnasia y esgrima de mendoza",
       "gimnasia y esgrima mendoza"
     ],
+    "atletico atlanta": ["atlanta"],
 
     // National-team name variants across sources (ESPN vs Flashscore). Without
     // these the two feeds mint different canonical IDs for the same match

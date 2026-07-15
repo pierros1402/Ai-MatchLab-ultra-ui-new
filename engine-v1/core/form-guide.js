@@ -1,6 +1,6 @@
 // engine-v1/core/form-guide.js
 
-import { isSameTeamName } from "./history-layer.js";
+import { dedupeHistoryMatches, isSameTeamName } from "./history-layer.js";
 
 export function buildFormGuide(match, historyInput) {
   const homeTeam = match?.homeTeam || match?.basic?.homeTeam;
@@ -38,7 +38,7 @@ function resolveTeamMatches(historyInput, side, team, limit = 5) {
 }
 
 function getLastMatchesFromRows(rows, team, limit = 5) {
-  return rows
+  return dedupeHistoryMatches(rows)
     .filter(m => {
       if (!isFinalLike(m?.status)) return false;
       return isSameTeamName(m?.homeTeam, team) || isSameTeamName(m?.awayTeam, team);

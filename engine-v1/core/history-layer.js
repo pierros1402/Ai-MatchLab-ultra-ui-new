@@ -2,6 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { resolveDataPath } from "../storage/data-root.js";
 import { normalizeTeamTokens } from "./normalize.js";
+import { teamNamesMatch } from "./team-identity.js";
+import { globalCanonicalTeamName } from "../storage/team-aliases-db.js";
 import { currentArchiveSeason } from "./season-model.js";
 
 const CURRENT_HISTORY_DIR = resolveDataPath("history");
@@ -31,23 +33,30 @@ function teamTokens(name) {
   return normalizeTeamName(name).split(" ").filter(Boolean);
 }
 
-export function isSameTeamName(a, b) {
-  const na = normalizeTeamName(a);
-  const nb = normalizeTeamName(b);
+export function canonicalHistoryTeamName(name) {
+  const raw = String(name || "").trim();
+  if (!raw) return "";
+  return globalCanonicalTeamName(raw) || raw;
+}
 
+export function isSameTeamName(a, b) {
+  const ca = canonicalHistoryTeamName(a);
+  const cb = canonicalHistoryTeamName(b);
+
+  if (!ca || !cb) return false;
+  if (teamNamesMatch(ca, cb)) return true;
+
+  const na = normalizeTeamName(ca);
+  const nb = normalizeTeamName(cb);
   if (!na || !nb) return false;
   if (na === nb) return true;
-  if (na.includes(nb) || nb.includes(na)) return true;
 
-  const ta = teamTokens(a);
-  const tb = teamTokens(b);
-  if (!ta.length || !tb.length) return false;
-
+  const ta = teamTokens(ca);
+  const tb = teamTokens(cb);
   const common = ta.filter(x => tb.includes(x));
 
   if (common.length >= 2) return true;
   if (common.length === 1 && Math.max(ta.length, tb.length) === 1) return true;
-
   return false;
 }
 
@@ -193,19 +202,23 @@ function filterRowsBeforeKickoff(rows, cutoffMs) {
   return rows.filter(row => safeNum(row?.kickoff_ms, 0) < cutoffMs);
 }
 
-function dedupeMatches(rows) {
+export function dedupeHistoryMatches(rows) {
   const seen = new Set();
   const out = [];
 
   for (const row of rows) {
-    const key = JSON.stringify([
-      row?.leagueSlug || "",
-      row?.dayKey || "",
-      row?.homeTeam || "",
-      row?.awayTeam || "",
-      row?.kickoff || ""
-    ]);
+    const home = normalizeTeamName(canonicalHistoryTeamName(row?.homeTeam));
+    const away = normalizeTeamName(canonicalHistoryTeamName(row?.awayTeam));
+    // kickoff is the cross-provider temporal truth; stored dayKey can differ by
+    // timezone/ingest-day (the same 21:00Z match was observed as the next day).
+    const day = String(row?.kickoff || row?.dayKey || "").slice(0, 10);
+    const sh = safeNum(row?.scoreHome, null);
+    const sa = safeNum(row?.scoreAway, null);
+    const league = String(row?.leagueSlug || "");
 
+    // Cross-provider duplicates may have different IDs and kickoff minutes.
+    // The stable real-match signature is league + calendar day + oriented teams + score.
+    const key = JSON.stringify([league, day, home, away, sh, sa]);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(row);
@@ -220,7 +233,7 @@ export function getRecentTeamMatches(rows, teamName, { limit = 5, leagueSlug = n
     return isSameTeamName(row?.homeTeam, teamName) || isSameTeamName(row?.awayTeam, teamName);
   });
 
-  return dedupeMatches(filtered)
+  return dedupeHistoryMatches(filtered)
     .sort(sortByKickoffDesc)
     .slice(0, limit);
 }
@@ -235,9 +248,27 @@ export function getHeadToHeadMatches(rows, homeTeam, awayTeam, { limit = 5, leag
     return sameDirection || reverseDirection;
   });
 
-  return dedupeMatches(filtered)
+  return dedupeHistoryMatches(filtered)
     .sort(sortByKickoffDesc)
     .slice(0, limit);
+}
+
+
+function excludeTargetFixture(rows, match) {
+  const targetDay = String(match?.kickoffUtc || match?.dayKey || "").slice(0, 10);
+  const home = match?.homeTeam;
+  const away = match?.awayTeam;
+  if (!targetDay || !home || !away) return [...rows];
+
+  return rows.filter(row => {
+    const rowDay = String(row?.kickoff || row?.dayKey || "").slice(0, 10);
+    if (rowDay !== targetDay) return true;
+    const sameDirection = isSameTeamName(row?.homeTeam, home) && isSameTeamName(row?.awayTeam, away);
+    const reverseDirection = isSameTeamName(row?.homeTeam, away) && isSameTeamName(row?.awayTeam, home);
+    // A result/history row for today's exact pair can be a date-only or prematurely
+    // imported final record. It must never enter pre-match form/H2H context.
+    return !(sameDirection || reverseDirection);
+  });
 }
 
 export function getMatchHistoryContext(match, opts = {}) {
@@ -256,21 +287,24 @@ export function getMatchHistoryContext(match, opts = {}) {
   // seasons for the 60+ calendar-year leagues and is coverage-thin. The ESPN file
   // is used only as a fallback for leagues that have no archive yet.
   const currentArchiveLabel = opts.season || currentArchiveSeason(leagueSlug);
-  let currentSeasonRows = filterRowsBeforeKickoff(
+  let currentSeasonRows = excludeTargetFixture(filterRowsBeforeKickoff(
     readArchiveLeagueSeasonRows(leagueSlug, currentArchiveLabel),
     kickoffMs
-  );
+  ), match);
   if (!currentSeasonRows.length) {
-    currentSeasonRows = filterRowsBeforeKickoff(readCurrentSeasonRows(season), kickoffMs);
+    currentSeasonRows = excludeTargetFixture(filterRowsBeforeKickoff(readCurrentSeasonRows(season), kickoffMs), match);
   }
 
   const archiveSeasons = opts.archiveSeasons || getAvailableArchiveSeasons(leagueSlug);
 
   const archiveRows = archiveSeasons.flatMap(archiveSeason =>
-    filterRowsBeforeKickoff(readArchiveLeagueSeasonRows(leagueSlug, archiveSeason), kickoffMs)
+    excludeTargetFixture(
+      filterRowsBeforeKickoff(readArchiveLeagueSeasonRows(leagueSlug, archiveSeason), kickoffMs),
+      match
+    )
   );
 
-  const mergedRows = dedupeMatches([...currentSeasonRows, ...archiveRows]).sort(sortByKickoffDesc);
+  const mergedRows = dedupeHistoryMatches([...currentSeasonRows, ...archiveRows]).sort(sortByKickoffDesc);
 
   const homeMatchesSameSeason = getRecentTeamMatches(currentSeasonRows, match?.homeTeam, {
     limit: opts.sameSeasonLimit || 5,

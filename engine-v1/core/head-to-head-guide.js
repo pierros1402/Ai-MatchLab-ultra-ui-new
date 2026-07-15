@@ -1,3 +1,5 @@
+import { isSameTeamName } from "./history-layer.js";
+
 function round(n) {
   return Number(Number(n || 0).toFixed(2));
 }
@@ -11,7 +13,7 @@ function isHomePerspective(row, homeTeam, awayTeam) {
   const rowHome = String(row?.homeTeam || "");
   const rowAway = String(row?.awayTeam || "");
 
-  return rowHome === String(homeTeam || "") && rowAway === String(awayTeam || "");
+  return isSameTeamName(rowHome, homeTeam) && isSameTeamName(rowAway, awayTeam);
 }
 
 export function buildHeadToHeadGuide(match, historyContext) {
