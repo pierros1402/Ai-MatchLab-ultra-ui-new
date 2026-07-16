@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-16",
-  "generatedAt": "2026-07-15T18:43:27.865Z",
+  "generatedAt": "2026-07-16T00:36:52.163Z",
   "severity": "info",
   "issueCounts": {
     "error": 0,
     "warning": 0,
-    "info": 3
+    "info": 2
   },
   "alert": false,
   "alertCounts": {
@@ -14,35 +14,22 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 3,
+  "activeIssueCount": 2,
   "actionableIssueCount": 0,
-  "newIssueCount": 2,
+  "newIssueCount": 0,
   "newActionableIssueCount": 0,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 1,
+  "persistentIssueCount": 2,
   "activeIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-16.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
     {
       "severity": "info",
       "source": "build-report",
       "type": "plan_b_unresolved_settlement",
       "message": "Plan B observation picks are still unresolved.",
       "details": {
-        "picks": 2,
+        "picks": 3,
         "settled": 0,
-        "unresolved": 2
+        "unresolved": 3
       }
     },
     {
@@ -71,14 +58,14 @@
           }
         },
         "planB": {
-          "count": 2,
+          "count": 3,
           "summary": {
-            "picks": 2,
-            "uniqueMatches": 1,
+            "picks": 3,
+            "uniqueMatches": 2,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 2,
+            "unresolved": 3,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -93,7 +80,9 @@
     }
   ],
   "actionableIssues": [],
-  "newIssues": [
+  "newIssues": [],
+  "newActionableIssues": [],
+  "resolvedIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -106,7 +95,9 @@
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
       }
-    },
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "info",
       "source": "build-report",
@@ -117,27 +108,7 @@
         "settled": 0,
         "unresolved": 2
       }
-    }
-  ],
-  "newActionableIssues": [],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "invariant-report",
-      "type": "coverage_floor_drop",
-      "message": "Canonical fixtures are below static floor but meet the effective floor.",
-      "details": {
-        "type": "coverage_floor_drop",
-        "staticFloor": 45,
-        "effectiveFloor": 13,
-        "actualFixtures": 16,
-        "drop": 32,
-        "reason": "canonical_fixture_count_below_static_floor",
-        "effectiveFloorMet": true
-      }
-    }
-  ],
-  "persistentIssues": [
+    },
     {
       "severity": "info",
       "source": "value-comparison",
