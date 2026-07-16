@@ -2,6 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  isPlanAObservationDay,
+  planAObservationFile,
+  readPlanAObservationDay,
+  PLAN_A_OBSERVATION_START_DAY
+} from "../value/plan-a-observation.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT = path.resolve(__dirname, "..", "..");
@@ -416,6 +423,10 @@ function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById
     sourcePath,
     policyVersion: payload?.policyVersion || null,
     outputMode: payload?.outputMode || null,
+    immutable: payload?.immutable === true,
+    frozenAt: payload?.frozenAt || null,
+    observationSignature: payload?.observationSignature || null,
+    provenance: payload?.provenance || null,
     count: picks.length,
     summary: summarize(picks),
     picks
@@ -448,14 +459,59 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     return { ok: false, reason: "invalid_day_key", dayKey };
   }
 
-  const planAPath = path.resolve(options.planA || dataPath("deploy-snapshots", dayKey, "value.json"));
+  const observationPeriod = isPlanAObservationDay(dayKey);
+  const snapshotPlanAPath = path.resolve(dataPath("deploy-snapshots", dayKey, "value.json"));
+  const immutablePlanAPath = path.resolve(planAObservationFile(dayKey));
+  if (
+    observationPeriod &&
+    options.planA &&
+    path.resolve(options.planA) !== immutablePlanAPath
+  ) {
+    return {
+      ok: false,
+      reason: "plan_a_override_forbidden_during_observation_period",
+      dayKey,
+      requestedPlanAPath: path.resolve(options.planA),
+      requiredPlanAPath: immutablePlanAPath,
+      trialStartDate: PLAN_A_OBSERVATION_START_DAY
+    };
+  }
+
+  let planAPath = path.resolve(
+    options.planA || (observationPeriod
+      ? immutablePlanAPath
+      : snapshotPlanAPath)
+  );
   const planBPath = path.resolve(options.planB || dataPath("value-plans", dayKey, "plan-b.json"));
   const outputPath = path.resolve(options.output || dataPath("value-comparison", `${dayKey}.json`));
 
-  const planAPayload = readJsonSafe(planAPath, null);
+  let planAPayload = null;
+  if (observationPeriod) {
+    const observation = readPlanAObservationDay(dayKey);
+    if (!observation.ok) {
+      return {
+        ok: false,
+        reason: "invalid_immutable_plan_a_observation",
+        planAPath,
+        observation,
+        trialStartDate: PLAN_A_OBSERVATION_START_DAY
+      };
+    }
+    planAPayload = observation.payload;
+  } else {
+    planAPayload = readJsonSafe(planAPath, null);
+  }
+
   const planBPayload = readJsonSafe(planBPath, null);
 
-  if (!planAPayload) return { ok: false, reason: "missing_plan_a", planAPath };
+  if (!planAPayload) {
+    return {
+      ok: false,
+      reason: observationPeriod ? "missing_immutable_plan_a_observation" : "missing_plan_a",
+      planAPath,
+      trialStartDate: observationPeriod ? PLAN_A_OBSERVATION_START_DAY : null
+    };
+  }
   if (!planBPayload) return { ok: false, reason: "missing_plan_b", planBPath };
 
   const fixtures = loadFixtures(dayKey);
@@ -465,7 +521,9 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
 
   const planA = buildPlan({
     planId: "plan-a",
-    label: "Plan A - current UI value",
+    label: observationPeriod
+      ? "Plan A - frozen production observation"
+      : "Plan A - current UI value",
     sourcePath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
     payload: planAPayload,
     fixturesById: fixtures.byId,
@@ -504,7 +562,11 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     date: dayKey,
     generatedAt: new Date().toISOString(),
     sourceContract: {
-      planA: "production_ui_value_snapshot_artifact",
+      planA: observationPeriod
+        ? "immutable_plan_a_observation_artifact"
+        : "production_ui_value_snapshot_artifact",
+      planAObservationStartDate: PLAN_A_OBSERVATION_START_DAY,
+      planAImmutable: observationPeriod,
       planB: "strict_value_policy_v2.3_observation_artifact",
       finalTruth: "verified_final_results",
       deploySnapshotUsedAsFinalTruth: false,
@@ -515,6 +577,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       fixturesPath: path.relative(ROOT, fixtures.file).replaceAll("\\", "/"),
       finalResultsDir: path.relative(ROOT, finalResults.dir).replaceAll("\\", "/"),
       verifiedFinalResults: finalResults.rows.length,
+      planAPath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
+      planAFreeze: null,
       outputPath: path.relative(ROOT, outputPath).replaceAll("\\", "/")
     },
     plans: {

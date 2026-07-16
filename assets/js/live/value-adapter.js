@@ -29,6 +29,10 @@
     (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valuePicksPath) ||
     "/value-picks";
 
+  const COMPARISON_ENDPOINT =
+    (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valueComparisonPath) ||
+    "/value-comparison";
+
   function pad2(n) {
     return String(n).padStart(2, "0");
   }
@@ -80,23 +84,21 @@
     }
   }
 
-  
-  async function fetchValueComparison(dateYmd) {
-    const url = "data/value-comparison/" + encodeURIComponent(dateYmd) + ".json";
 
+  async function fetchComparisonUrl(url, sourceLabel) {
     try {
-      console.log("[value-adapter] comparison fetch:start", url);
+      console.log("[value-adapter] comparison fetch:start", sourceLabel, url);
 
       const r = await RAW_FETCH(url, {
         cache: "no-store"
       });
 
-      console.log("[value-adapter] comparison fetch:status", r.status, url);
+      console.log("[value-adapter] comparison fetch:status", sourceLabel, r.status, url);
 
       if (r.status === 404) return null;
 
       if (!r.ok) {
-        console.warn("[value-adapter] comparison fetch failed", r.status);
+        console.warn("[value-adapter] comparison fetch failed", sourceLabel, r.status);
         return null;
       }
 
@@ -106,12 +108,26 @@
         return data;
       }
 
-      console.warn("[value-adapter] comparison payload invalid", data);
+      console.warn("[value-adapter] comparison payload invalid", sourceLabel, data);
       return null;
     } catch (err) {
-      console.warn("[value-adapter] comparison fetch error", err);
+      console.warn("[value-adapter] comparison fetch error", sourceLabel, err);
       return null;
     }
+  }
+
+  async function fetchValueComparison(dateYmd) {
+    const encodedDate = encodeURIComponent(dateYmd);
+    const engineUrl =
+      (BASE ? BASE.replace(/\/$/, "") : "http://localhost:3010") +
+      COMPARISON_ENDPOINT +
+      `?date=${encodedDate}`;
+
+    const engineComparison = await fetchComparisonUrl(engineUrl, "engine");
+    if (engineComparison) return engineComparison;
+
+    const staticUrl = "data/value-comparison/" + encodedDate + ".json";
+    return fetchComparisonUrl(staticUrl, "static-fallback");
   }
 
   function comparisonRows(comparison, key) {

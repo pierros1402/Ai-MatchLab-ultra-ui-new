@@ -24,7 +24,10 @@ import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
 import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./jobs/fetch-oddsapiio-odds.js";
-import { syncDeploySnapshotFromGithub } from "./jobs/sync-deploy-snapshot-from-github.js";
+import {
+  syncDeploySnapshotFromGithub,
+  syncValueComparisonFromGithub
+} from "./jobs/sync-deploy-snapshot-from-github.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
 import { normTeam } from "./odds/multi-odds-merge.js";
@@ -2338,6 +2341,100 @@ app.get("/debug/value-inputs", (req, res) => {
       historyIndexTeamForm: fileInfoSafe("history-index", "team-form", `${season}.json`),
       historyIndexMatchups: fileInfoSafe("history-index", "matchups", `${season}.json`),
       observations: fileInfoSafe("observations.json")
+    }
+  });
+});
+
+function readValueComparisonArtifact(date) {
+  const file = resolveDataPath("value-comparison", `${date}.json`);
+  if (!fs.existsSync(file)) {
+    return { ok: false, reason: "value_comparison_not_found", file };
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(fs.readFileSync(file, "utf8"));
+  } catch (error) {
+    return {
+      ok: false,
+      reason: "value_comparison_json_invalid",
+      file,
+      error: error?.message || String(error)
+    };
+  }
+
+  if (
+    payload?.ok !== true ||
+    payload?.date !== date ||
+    !payload?.plans?.A ||
+    !payload?.plans?.B
+  ) {
+    return { ok: false, reason: "value_comparison_payload_invalid", file };
+  }
+
+  return { ok: true, file, payload };
+}
+
+app.get("/value-comparison", async (req, res) => {
+  const date = String(req.query.date || athensDayKey());
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(date)) {
+    return res.status(400).json({
+      ok: false,
+      reason: "invalid_day_key",
+      date
+    });
+  }
+
+  let artifact = readValueComparisonArtifact(date);
+  let syncSummary = null;
+
+  // The current day's settlement can change intraday even when a valid local
+  // file already exists. Refresh it on demand in Render; historical dates are
+  // fetched only when missing/invalid to avoid unnecessary raw-GitHub traffic.
+  const shouldSyncComparison = snapshotSyncEnabled()
+    && (!artifact.ok || date === athensDayKey());
+
+  if (shouldSyncComparison) {
+    try {
+      syncSummary = await syncValueComparisonFromGithub(date);
+      artifact = readValueComparisonArtifact(date);
+    } catch (error) {
+      syncSummary = {
+        ok: false,
+        error: error?.message || String(error)
+      };
+    }
+  }
+
+  if (!artifact.ok) {
+    const status = artifact.reason === "value_comparison_json_invalid"
+      || artifact.reason === "value_comparison_payload_invalid"
+      ? 500
+      : 404;
+    return res.status(status).json({
+      ok: false,
+      date,
+      reason: artifact.reason,
+      source: "value-comparison-runtime-mirror",
+      syncAttempted: Boolean(syncSummary),
+      sync: syncSummary
+        ? {
+            ok: syncSummary.ok === true,
+            valueComparisonPresent: syncSummary.valueComparisonPresent === true,
+            valueComparisonWritten: syncSummary.valueComparisonWritten === true,
+            errors: syncSummary.valueComparisonErrors || syncSummary.errors || []
+          }
+        : null
+    });
+  }
+
+  return res.json({
+    ...artifact.payload,
+    source: "value-comparison-runtime-mirror",
+    runtimeMirror: {
+      localArtifact: true,
+      syncAttempted: Boolean(syncSummary),
+      synced: syncSummary?.valueComparisonWritten === true
     }
   });
 });

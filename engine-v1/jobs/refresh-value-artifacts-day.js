@@ -28,6 +28,11 @@ import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { buildDayReport } from "./build-day-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import {
+  ensurePlanAObservationDay,
+  isPlanAObservationDay,
+  readPlanAObservationDay
+} from "../value/plan-a-observation.js";
 
 function isDayKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/u.test(String(value || ""));
@@ -361,6 +366,31 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
   }
 
   const startedAt = new Date().toISOString();
+  const observationPeriod = isPlanAObservationDay(date);
+  if (observationPeriod) {
+    const existingObservation = readPlanAObservationDay(date);
+    const observationFileExists = fs.existsSync(existingObservation.file);
+    if (observationFileExists && !existingObservation.ok) {
+      return {
+        ok: false,
+        mode: "refresh_value_artifacts_after_canonical_change",
+        date,
+        reason: "invalid_existing_plan_a_observation",
+        observation: existingObservation
+      };
+    }
+    if (!observationFileExists && date < athensDayKey()) {
+      return {
+        ok: false,
+        mode: "refresh_value_artifacts_after_canonical_change",
+        date,
+        reason: "missing_historical_plan_a_observation",
+        observationFile: existingObservation.file,
+        trialStartDate: "2026-07-05"
+      };
+    }
+  }
+
   const coverage = validateSnapshotCoversCanonical(date);
   if (!coverage.ok) {
     return {
@@ -374,6 +404,15 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
 
   const planA = await buildValueDay(date, { rebuild: true });
   const snapshotValue = updateSnapshotValueArtifacts(date, planA);
+  const planAObservation = observationPeriod
+    ? ensurePlanAObservationDay(date, snapshotValue.valueOut, {
+        sourcePath: `data/deploy-snapshots/${date}/value.json`,
+        provenance: {
+          kind: "refresh_value_artifacts_first_freeze",
+          note: "First production Plan A output is frozen; later rebuild differences are preserved only as diagnostics."
+        }
+      })
+    : null;
   const manifestUpdate = updateManifestValueMetadata(
     date,
     snapshotValue.valueOut,
@@ -403,6 +442,7 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     ok: freshness.ok !== false
       && invariant?.ok !== false
       && manifestUpdate?.ok !== false
+      && planAObservation?.ok !== false
       && comparison?.ok !== false
       && buildReport?.hardFailures?.length === 0,
     mode: "refresh_value_artifacts_after_canonical_change",
@@ -416,6 +456,19 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       source: planA?.source || snapshotValue.valueOut?.source || null,
       count: Number(snapshotValue.valueOut?.count || 0)
     },
+    planAObservation: planAObservation
+      ? {
+          ok: planAObservation.ok !== false,
+          created: planAObservation.created === true,
+          preservedExisting: planAObservation.preservedExisting === true,
+          conflict: planAObservation.conflict === true,
+          reason: planAObservation.reason || null,
+          count: Number(planAObservation.count || 0),
+          candidateCount: Number(planAObservation.candidateCount || 0),
+          observationSignature: planAObservation.observationSignature || null,
+          candidateSignature: planAObservation.candidateSignature || null
+        }
+      : null,
     snapshot: {
       ok: manifestUpdate?.ok !== false,
       preservedFixtures: true,
@@ -461,6 +514,8 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       valueAudit: `data/value/_audit/${date}.json`,
       snapshotValue: `data/deploy-snapshots/${date}/value.json`,
       snapshotAudit: `data/deploy-snapshots/${date}/value-audit.json`,
+      planAObservation: observationPeriod ? `data/value-plans/${date}/plan-a.json` : null,
+      planAObservationAudit: observationPeriod ? `data/value-plans/${date}/plan-a-audit.json` : null,
       planB: options.skipPlanB === true ? null : `data/value-plans/${date}/plan-b.json`,
       planBAudit: options.skipPlanB === true ? null : `data/value-plans/${date}/plan-b-audit.json`,
       comparison: options.skipComparison === true ? null : `data/value-comparison/${date}.json`,

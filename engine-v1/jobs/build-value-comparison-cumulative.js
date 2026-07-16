@@ -2,6 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import {
+  PLAN_A_OBSERVATION_START_DAY,
+  readPlanAObservationDay
+} from "../value/plan-a-observation.js";
+
 // Cumulative Plan A vs Plan B comparison.
 //
 // Each day, build-value-plan-comparison-day.js writes a per-day settled
@@ -143,30 +148,56 @@ function dayIsIntegrityClean(day) {
 export function buildValueComparisonCumulative(options = {}) {
   const dir = options.dir || dataPath("value-comparison");
   const outputPath = options.output || path.join(dir, "cumulative.json");
+  const trialStartDay = String(options.trialStartDay || PLAN_A_OBSERVATION_START_DAY);
 
-  const days = listComparisonDays(dir);
+  const days = listComparisonDays(dir).filter(day => day >= trialStartDay);
 
   const totalsA = emptyTotals();
   const totalsB = emptyTotals();
   const daysIncluded = [];
   const daysExcluded = [];
-  const requireIntegrityClean = options.requireIntegrityClean !== false;
-  let planAMeta = { id: "plan-a", label: "Plan A - current UI value" };
+  const integrityDiagnostics = [];
+  const requireIntegrityClean = options.requireIntegrityClean === true;
+  const requireImmutablePlanA = options.requireImmutablePlanA !== false;
+  let planAMeta = { id: "plan-a", label: "Plan A - frozen production observation" };
   let planBMeta = { id: "plan-b", label: "Plan B - strict value-policy-v2.3 observation" };
 
   for (const day of days) {
-    if (requireIntegrityClean) {
-      const integrity = dayIsIntegrityClean(day);
-      if (!integrity.ok) {
-        daysExcluded.push({ dayKey: day, reason: integrity.reason, details: integrity });
+    const payload = readJsonSafe(path.join(dir, `${day}.json`), null);
+    const A = payload?.plans?.A?.summary;
+    const B = payload?.plans?.B?.summary;
+    if (!A || !B) {
+      daysExcluded.push({ dayKey: day, reason: "comparison_plans_missing" });
+      continue;
+    }
+
+    if (requireImmutablePlanA) {
+      const contractImmutable = payload?.sourceContract?.planAImmutable === true;
+      const planImmutable = payload?.plans?.A?.immutable === true;
+      const observation = readPlanAObservationDay(day);
+      if (!contractImmutable || !planImmutable || !observation.ok) {
+        daysExcluded.push({
+          dayKey: day,
+          reason: "immutable_plan_a_observation_invalid",
+          details: {
+            contractImmutable,
+            planImmutable,
+            observationReason: observation.reason || null,
+            observationFile: observation.file || null
+          }
+        });
         continue;
       }
     }
 
-    const payload = readJsonSafe(path.join(dir, `${day}.json`), null);
-    const A = payload?.plans?.A?.summary;
-    const B = payload?.plans?.B?.summary;
-    if (!A || !B) continue;
+    const integrity = dayIsIntegrityClean(day);
+    if (!integrity.ok) {
+      integrityDiagnostics.push({ dayKey: day, reason: integrity.reason, details: integrity });
+      if (requireIntegrityClean) {
+        daysExcluded.push({ dayKey: day, reason: integrity.reason, details: integrity });
+        continue;
+      }
+    }
 
     addInto(totalsA, A);
     addInto(totalsB, B);
@@ -183,14 +214,18 @@ export function buildValueComparisonCumulative(options = {}) {
     ok: true,
     schema: "ai-matchlab.value-plan-comparison-cumulative.v1",
     generatedAt: new Date().toISOString(),
-    note: "Rolled-up Plan A vs Plan B across every settled per-day comparison. Firewall: re-aggregation of settled artifacts only; no odds enter value.",
+    note: "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
+    trialStartDay,
     dayCount: daysIncluded.length,
     firstDay: daysIncluded[0] || null,
     lastDay: daysIncluded[daysIncluded.length - 1] || null,
     requireIntegrityClean,
+    requireImmutablePlanA,
     daysIncluded,
     daysExcluded,
     excludedDayCount: daysExcluded.length,
+    integrityDiagnostics,
+    integrityWarningDayCount: integrityDiagnostics.length,
     plans: {
       A: { ...planAMeta, totals: finalA },
       B: { ...planBMeta, totals: finalB }
@@ -213,10 +248,18 @@ export function buildValueComparisonCumulative(options = {}) {
 }
 
 function parseArgs(argv) {
-  const out = { write: false, requireIntegrityClean: true };
+  const out = {
+    write: false,
+    requireIntegrityClean: false,
+    requireImmutablePlanA: true,
+    trialStartDay: PLAN_A_OBSERVATION_START_DAY
+  };
   for (const arg of argv) {
     if (arg === "--write") out.write = true;
+    else if (arg === "--require-integrity-clean") out.requireIntegrityClean = true;
     else if (arg === "--include-unclean") out.requireIntegrityClean = false;
+    else if (arg === "--allow-non-immutable-plan-a") out.requireImmutablePlanA = false;
+    else if (arg.startsWith("--trial-start=")) out.trialStartDay = arg.slice("--trial-start=".length);
     else if (arg.startsWith("--dir=")) out.dir = arg.slice("--dir=".length);
     else if (arg.startsWith("--output=")) out.output = arg.slice("--output=".length);
   }

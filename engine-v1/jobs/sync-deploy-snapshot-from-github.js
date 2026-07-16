@@ -96,6 +96,27 @@ async function syncOne(entry, localPath, stats) {
   stats.bytesWritten += buf.length;
 }
 
+async function syncRawOptional(repoPath, localPath, stats) {
+  const res = await fetchWithTimeout(`${RAW}/${repoPath}`);
+  if (res.status === 404) return { present: false, written: false };
+  if (!res.ok) throw new Error(`fetch ${repoPath} → HTTP ${res.status}`);
+
+  const buf = Buffer.from(await res.arrayBuffer());
+  try {
+    if (fs.existsSync(localPath) && fs.readFileSync(localPath).equals(buf)) {
+      stats.skippedUnchanged++;
+      return { present: true, written: false };
+    }
+  } catch {
+    // Fall through to the atomic write.
+  }
+
+  writeAtomic(localPath, buf);
+  stats.filesWritten++;
+  stats.bytesWritten += buf.length;
+  return { present: true, written: true };
+}
+
 async function runBatches(jobs) {
   const errors = [];
   for (let i = 0; i < jobs.length; i += CONCURRENCY) {
@@ -105,6 +126,48 @@ async function runBatches(jobs) {
   }
   return errors;
 }
+async function syncValueComparisonArtifact(day, stats) {
+  const comparisonSync = await syncRawOptional(
+    `data/value-comparison/${day}.json`,
+    resolveDataPath("value-comparison", `${day}.json`),
+    stats
+  );
+  stats.valueComparisonPresent = comparisonSync.present;
+  stats.valueComparisonWritten = comparisonSync.written;
+  return comparisonSync;
+}
+
+export async function syncValueComparisonFromGithub(dayKey = athensDayKey()) {
+  const day = String(dayKey);
+  const stats = {
+    filesWritten: 0,
+    skippedUnchanged: 0,
+    bytesWritten: 0,
+    valueComparisonPresent: false,
+    valueComparisonWritten: false
+  };
+  try {
+    await syncValueComparisonArtifact(day, stats);
+    return {
+      ok: true,
+      dayKey: day,
+      repo: REPO,
+      branch: BRANCH,
+      ...stats,
+      errors: []
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      dayKey: day,
+      repo: REPO,
+      branch: BRANCH,
+      ...stats,
+      errors: [String(error?.message || error)]
+    };
+  }
+}
+
 
 // Mirror data/multi-odds/<day>.json for baseDay .. baseDay+daysForward. One
 // directory listing (sha-gated like everything else) then transfer only the
@@ -136,7 +199,14 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey()) {
   inFlight = (async () => {
     const startedAt = Date.now();
     const day = String(dayKey);
-    const stats = { filesWritten: 0, skippedUnchanged: 0, bytesWritten: 0, multiOddsListed: 0 };
+    const stats = {
+      filesWritten: 0,
+      skippedUnchanged: 0,
+      bytesWritten: 0,
+      multiOddsListed: 0,
+      valueComparisonPresent: false,
+      valueComparisonWritten: false
+    };
     const repoDir = `data/deploy-snapshots/${day}`;
 
     const [top, details] = await Promise.all([
@@ -159,6 +229,16 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey()) {
 
     // Opening odds window — supplement, kept off the `errors` gate below.
     const multiOddsErrors = await syncMultiOddsWindow(day, MULTI_ODDS_DAYS_FORWARD, stats);
+
+    // Plan A/B comparison is a day-level runtime artifact outside the deploy
+    // snapshot directory. Pull it by raw path (no extra Contents API listing)
+    // so the UI can receive both plans without a daily Render/UI deploy.
+    const valueComparisonErrors = [];
+    try {
+      await syncValueComparisonArtifact(day, stats);
+    } catch (e) {
+      valueComparisonErrors.push(String(e?.message || e));
+    }
 
     // latest.json LAST and only on a healthy sync: consumers that follow the
     // pointer must never land on a half-written day.
@@ -184,6 +264,7 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey()) {
       ...stats,
       errors: errors.slice(0, 10),
       multiOddsErrors: (multiOddsErrors || []).slice(0, 10),
+      valueComparisonErrors: valueComparisonErrors.slice(0, 10),
       tookMs: Date.now() - startedAt
     };
     log("done", summary);

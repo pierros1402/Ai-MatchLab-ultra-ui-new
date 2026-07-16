@@ -1,82 +1,31 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-07-16T00:36:40.998Z",
-  "note": "Rolled-up Plan A vs Plan B across every settled per-day comparison. Firewall: re-aggregation of settled artifacts only; no odds enter value.",
-  "dayCount": 3,
-  "firstDay": "2026-07-11",
+  "generatedAt": "2026-07-16T17:12:31.814Z",
+  "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
+  "trialStartDay": "2026-07-05",
+  "dayCount": 12,
+  "firstDay": "2026-07-05",
   "lastDay": "2026-07-16",
-  "requireIntegrityClean": true,
+  "requireIntegrityClean": false,
+  "requireImmutablePlanA": true,
   "daysIncluded": [
+    "2026-07-05",
+    "2026-07-06",
+    "2026-07-07",
+    "2026-07-08",
+    "2026-07-09",
+    "2026-07-10",
     "2026-07-11",
     "2026-07-12",
+    "2026-07-13",
+    "2026-07-14",
+    "2026-07-15",
     "2026-07-16"
   ],
-  "daysExcluded": [
-    {
-      "dayKey": "2026-07-01",
-      "reason": "snapshot_rescue_present",
-      "details": {
-        "ok": false,
-        "reason": "snapshot_rescue_present",
-        "snapshotRescuedCount": 14,
-        "snapshotRescuedLeagues": [
-          "fifa.world",
-          "bra.2",
-          "ltu.2",
-          "lva.1",
-          "can.1",
-          "blr.1",
-          "ecu.2",
-          "ecu.1"
-        ]
-      }
-    },
-    {
-      "dayKey": "2026-07-04",
-      "reason": "snapshot_rescue_present",
-      "details": {
-        "ok": false,
-        "reason": "snapshot_rescue_present",
-        "snapshotRescuedCount": 108,
-        "snapshotRescuedLeagues": [
-          "fifa.world",
-          "ecu.1",
-          "chn.2",
-          "lva.2",
-          "kor.1",
-          "kor.2",
-          "chn.1",
-          "blr.2",
-          "est.2",
-          "fin.1",
-          "fro.2",
-          "kaz.1",
-          "nor.2",
-          "mwi.1",
-          "blr.1",
-          "fin.2",
-          "gab.1",
-          "ltu.1",
-          "lva.1",
-          "zim.1",
-          "swe.1",
-          "fro.1",
-          "isl.1",
-          "isl.2",
-          "syr.1",
-          "mda.1",
-          "est.1",
-          "uru.2",
-          "arg.2",
-          "irl.2",
-          "bra.2",
-          "can.1",
-          "usa.2",
-          "ecu.2"
-        ]
-      }
-    },
+  "daysExcluded": [],
+  "excludedDayCount": 0,
+  "integrityDiagnostics": [
     {
       "dayKey": "2026-07-05",
       "reason": "snapshot_rescue_present",
@@ -253,24 +202,24 @@
       }
     }
   ],
-  "excludedDayCount": 11,
+  "integrityWarningDayCount": 9,
   "plans": {
     "A": {
       "id": "plan-a",
-      "label": "Plan A - current UI value",
+      "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 0,
-        "uniqueMatches": 0,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
+        "picks": 6,
+        "uniqueMatches": 6,
+        "settled": 6,
+        "wins": 4,
+        "losses": 2,
         "unresolved": 0,
         "unsupported": 0,
         "oddsAvailable": 0,
         "totalStake": 0,
         "totalReturn": 0,
         "profit": 0,
-        "hitRate": null,
+        "hitRate": 0.6667,
         "roi": null
       }
     },
@@ -278,28 +227,28 @@
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 4,
-        "uniqueMatches": 3,
-        "settled": 2,
-        "wins": 1,
-        "losses": 1,
-        "unresolved": 2,
+        "picks": 11,
+        "uniqueMatches": 7,
+        "settled": 10,
+        "wins": 7,
+        "losses": 3,
+        "unresolved": 1,
         "unsupported": 0,
         "oddsAvailable": 0,
         "totalStake": 0,
         "totalReturn": 0,
         "profit": 0,
-        "hitRate": 0.5,
+        "hitRate": 0.7,
         "roi": null
       }
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 4,
-    "settledDeltaPlanBMinusPlanA": 2,
-    "winsDeltaPlanBMinusPlanA": 1,
+    "picksDeltaPlanBMinusPlanA": 5,
+    "settledDeltaPlanBMinusPlanA": 4,
+    "winsDeltaPlanBMinusPlanA": 3,
     "lossesDeltaPlanBMinusPlanA": 1,
-    "hitRateDeltaPlanBMinusPlanA": null,
+    "hitRateDeltaPlanBMinusPlanA": 0.0333,
     "roiDeltaPlanBMinusPlanA": null
   }
 }

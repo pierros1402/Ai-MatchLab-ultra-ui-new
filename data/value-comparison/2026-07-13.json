@@ -2,9 +2,11 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-07-13",
-  "generatedAt": "2026-07-14T18:24:56.529Z",
+  "generatedAt": "2026-07-16T15:51:01.640Z",
   "sourceContract": {
-    "planA": "production_ui_value_snapshot_artifact",
+    "planA": "immutable_plan_a_observation_artifact",
+    "planAObservationStartDate": "2026-07-05",
+    "planAImmutable": true,
     "planB": "strict_value_policy_v2.3_observation_artifact",
     "finalTruth": "verified_final_results",
     "deploySnapshotUsedAsFinalTruth": false,
@@ -15,15 +17,25 @@
     "fixturesPath": "data/deploy-snapshots/2026-07-13/fixtures.json",
     "finalResultsDir": "data/final-results/2026-07-13",
     "verifiedFinalResults": 18,
+    "planAPath": "data/value-plans/2026-07-13/plan-a.json",
+    "planAFreeze": null,
     "outputPath": "data/value-comparison/2026-07-13.json"
   },
   "plans": {
     "A": {
       "id": "plan-a",
-      "label": "Plan A - current UI value",
-      "sourcePath": "data/deploy-snapshots/2026-07-13/value.json",
+      "label": "Plan A - frozen production observation",
+      "sourcePath": "data/value-plans/2026-07-13/plan-a.json",
       "policyVersion": null,
-      "outputMode": null,
+      "outputMode": "plan-a-observation",
+      "immutable": true,
+      "frozenAt": "2026-07-16T15:51:00.528Z",
+      "observationSignature": "6db93f53a3a7ff9cd65a8125347d2d722001c6d127a386359a10124741e05008",
+      "provenance": {
+        "kind": "verified_trial_backfill",
+        "sourcePath": "data/deploy-snapshots/2026-07-13/value.json",
+        "note": "Backfilled verified production Plan A state for the A/B trial period."
+      },
       "count": 0,
       "summary": {
         "picks": 0,
@@ -49,6 +61,10 @@
       "sourcePath": "data/value-plans/2026-07-13/plan-b.json",
       "policyVersion": "value-policy-v2.3",
       "outputMode": "plan-b-observation",
+      "immutable": false,
+      "frozenAt": null,
+      "observationSignature": null,
+      "provenance": null,
       "count": 0,
       "summary": {
         "picks": 0,
