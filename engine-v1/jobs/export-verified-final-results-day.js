@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { teamPairMatches } from "../core/team-identity.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -61,6 +62,122 @@ function awayName(row) {
 
 function leagueSlug(row) {
   return clean(row?.leagueSlug || row?.league || row?.competitionSlug);
+}
+
+function canonicalLookupKeys(row) {
+  return [
+    row?.canonicalId,
+    row?.matchId,
+    row?.sourceMatchId,
+    row?.sourceId,
+    row?.providerMatchId,
+    row?.fixtureId,
+    row?.id
+  ]
+    .map(clean)
+    .filter(Boolean);
+}
+
+function indexCanonicalFixtures(rows = []) {
+  const byKey = new Map();
+
+  for (const row of rows) {
+    for (const key of canonicalLookupKeys(row)) {
+      if (!byKey.has(key)) byKey.set(key, row);
+    }
+  }
+
+  return byKey;
+}
+
+function findCanonicalFixture(row, byKey) {
+  for (const key of canonicalLookupKeys(row)) {
+    const found = byKey.get(key);
+    if (found) return found;
+  }
+
+  return null;
+}
+
+function canonicalEspnProviderId(row) {
+  const providerId = clean(
+    row?.sourceMatchId ||
+    row?.sourceId ||
+    row?.matchId
+  );
+
+  return /^\d+$/u.test(providerId) ? providerId : "";
+}
+
+function hasCanonicalTerminalStatus(row) {
+  const status = clean(row?.status).toUpperCase();
+
+  return new Set([
+    "FT",
+    "FINAL",
+    "FULL_TIME",
+    "STATUS_FINAL",
+    "STATUS_FULL_TIME"
+  ]).has(status);
+}
+
+function hasExplicitEspnTerminalStatus(row) {
+  const providerStatusValues = [
+    row?.rawStatus,
+    row?.statusType
+  ]
+    .map(value => clean(value).toUpperCase())
+    .filter(Boolean);
+
+  const exactProviderTerminal = new Set([
+    "FT",
+    "FINAL",
+    "FULL_TIME",
+    "STATUS_FINAL",
+    "STATUS_FULL_TIME",
+    "STATUS_FINAL_AET",
+    "STATUS_FINAL_PEN",
+    "STATUS_FULL_TIME_AET",
+    "STATUS_FULL_TIME_PEN"
+  ]);
+
+  return providerStatusValues.some(value =>
+    exactProviderTerminal.has(value)
+  );
+}
+
+function canonicalScore(row) {
+  const rawHomeScore = row?.scoreHome ?? row?.homeScore;
+  const rawAwayScore = row?.scoreAway ?? row?.awayScore;
+
+  if (
+    rawHomeScore === null ||
+    rawHomeScore === undefined ||
+    rawHomeScore === "" ||
+    rawAwayScore === null ||
+    rawAwayScore === undefined ||
+    rawAwayScore === ""
+  ) {
+    return null;
+  }
+
+  const homeScore = Number(rawHomeScore);
+  const awayScore = Number(rawAwayScore);
+
+  if (
+    !Number.isInteger(homeScore) ||
+    !Number.isInteger(awayScore) ||
+    homeScore < 0 ||
+    awayScore < 0
+  ) {
+    return null;
+  }
+
+  return {
+    homeScore,
+    awayScore,
+    scoreKey: `${homeScore}-${awayScore}`
+  };
 }
 
 function athensDayFromUtc(value) {
@@ -127,6 +244,8 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
 
   const fixtures = rowsFromPayload(readJsonSafe(fixturesPath, null), ["fixtures", "matches"]);
   const valuePicks = rowsFromPayload(readJsonSafe(valuePath, null), ["picks", "valuePicks", "rows"]);
+  const canonicalFixtures = canonicalFixturesForDay(dayKey);
+  const canonicalByKey = indexCanonicalFixtures(canonicalFixtures);
 
   const fixturesById = new Map();
   for (const fixture of fixtures) {
@@ -143,6 +262,11 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
     if (!id) continue;
 
     const fixture = fixturesById.get(id) || row;
+    const canonicalFixture =
+      findCanonicalFixture(fixture, canonicalByKey) ||
+      findCanonicalFixture(row, canonicalByKey) ||
+      canonicalByKey.get(id) ||
+      null;
 
     const target = {
       matchId: id,
@@ -152,7 +276,8 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
       homeTeam: homeName(fixture) || homeName(row),
       awayTeam: awayName(fixture) || awayName(row),
       kickoffUtc: clean(fixture?.kickoffUtc || row?.kickoffUtc),
-      source: allFixtures ? "deploy_snapshot_fixtures" : "deploy_snapshot_value_picks"
+      source: allFixtures ? "deploy_snapshot_fixtures" : "deploy_snapshot_value_picks",
+      canonicalFixture
     };
 
     if (!target.homeTeam || !target.awayTeam) continue;
@@ -164,6 +289,7 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
     valuePath,
     fixtureRows: fixtures.length,
     valueRows: valuePicks.length,
+    canonicalRows: canonicalFixtures.length,
     targets: [...targetsById.values()]
   };
 }
@@ -302,6 +428,203 @@ function buildVerifiedFinalResult(dayKey, target, sourceRow) {
   };
 }
 
+export function resolveCanonicalEspnFinalFallback(target, dayKey) {
+  const row = target?.canonicalFixture;
+
+  if (!row) {
+    return { ok: false, reason: "canonical_fixture_missing" };
+  }
+
+  if (clean(row?.canonicalId) !== clean(target?.matchId)) {
+    return {
+      ok: false,
+      reason: "canonical_id_mismatch",
+      canonicalId: clean(row?.canonicalId)
+    };
+  }
+
+  if (clean(row?.source).toLowerCase() !== "espn") {
+    return {
+      ok: false,
+      reason: "canonical_source_not_espn",
+      source: clean(row?.source)
+    };
+  }
+
+  const providerMatchId = canonicalEspnProviderId(row);
+
+  if (!providerMatchId) {
+    return {
+      ok: false,
+      reason: "canonical_espn_provider_id_invalid"
+    };
+  }
+
+  if (!hasCanonicalTerminalStatus(row)) {
+    return {
+      ok: false,
+      reason: "canonical_espn_status_not_terminal",
+      status: clean(row?.status)
+    };
+  }
+
+  if (!hasExplicitEspnTerminalStatus(row)) {
+    return {
+      ok: false,
+      reason: "canonical_espn_not_explicit_terminal",
+      status: clean(row?.status),
+      rawStatus: clean(row?.rawStatus),
+      statusType: clean(row?.statusType),
+      operationalState: clean(row?.operationalState)
+    };
+  }
+
+  const score = canonicalScore(row);
+
+  if (!score) {
+    return {
+      ok: false,
+      reason: "canonical_espn_final_score_invalid"
+    };
+  }
+
+  if (
+    !teamPairMatches(
+      target?.homeTeam,
+      target?.awayTeam,
+      homeName(row),
+      awayName(row)
+    )
+  ) {
+    return {
+      ok: false,
+      reason: "canonical_espn_team_pair_mismatch"
+    };
+  }
+
+  const canonicalDay = clean(row?.dayKey);
+
+  if (canonicalDay && canonicalDay !== dayKey) {
+    return {
+      ok: false,
+      reason: "canonical_espn_day_key_mismatch",
+      canonicalDay
+    };
+  }
+
+  const kickoffUtc = clean(row?.kickoffUtc);
+  const kickoffDay = athensDayFromUtc(kickoffUtc);
+
+  if (!kickoffUtc || !kickoffDay || kickoffDay !== dayKey) {
+    return {
+      ok: false,
+      reason: "canonical_espn_kickoff_day_mismatch",
+      kickoffUtc,
+      kickoffDay
+    };
+  }
+
+  const observedAt = clean(row?.lastSeenAt || row?.updatedAt);
+
+  if (!observedAt || Number.isNaN(new Date(observedAt).getTime())) {
+    return {
+      ok: false,
+      reason: "canonical_espn_terminal_observation_missing"
+    };
+  }
+
+  return {
+    ok: true,
+    row,
+    providerMatchId,
+    observedAt,
+    ...score
+  };
+}
+
+export function buildCanonicalEspnVerifiedFinalResult(
+  dayKey,
+  target,
+  resolved
+) {
+  const sourceRow = resolved.row;
+  const generatedAt = new Date().toISOString();
+
+  return {
+    schema: "ai-matchlab.verified-final-result.v1",
+    verifiedFinalTruth: true,
+    date: dayKey,
+    dayKey,
+    matchId: target.matchId,
+    leagueSlug: target.leagueSlug || leagueSlug(sourceRow),
+    leagueName: target.leagueName || clean(sourceRow?.leagueName),
+    country: target.country || clean(sourceRow?.country),
+    homeTeam: target.homeTeam,
+    awayTeam: target.awayTeam,
+    homeScore: resolved.homeScore,
+    awayScore: resolved.awayScore,
+    scoreHome: resolved.homeScore,
+    scoreAway: resolved.awayScore,
+    finalScore: {
+      homeScore: resolved.homeScore,
+      awayScore: resolved.awayScore,
+      home: resolved.homeScore,
+      away: resolved.awayScore,
+      scoreKey: resolved.scoreKey
+    },
+    scoreKey: resolved.scoreKey,
+    kickoffUtc: clean(sourceRow?.kickoffUtc),
+    finalTruthVerdict: "verified_final_result",
+    verdict: "verified_final_result",
+    sourceCount: 1,
+    independentSourceCount: 1,
+    source: "canonical_espn_terminal_final",
+    sources: [
+      {
+        provider: "espn",
+        providerMatchId: resolved.providerMatchId,
+        canonicalId: clean(sourceRow?.canonicalId),
+        leagueName: clean(sourceRow?.leagueName),
+        home: homeName(sourceRow),
+        away: awayName(sourceRow),
+        scoreHome: resolved.homeScore,
+        scoreAway: resolved.awayScore,
+        kickoffUtc: clean(sourceRow?.kickoffUtc),
+        rawStatus: clean(sourceRow?.rawStatus),
+        statusType: clean(sourceRow?.statusType),
+        terminalObservedAt: resolved.observedAt,
+        scoreKey: resolved.scoreKey
+      }
+    ],
+    verification: {
+      verdict: "verified_final_result",
+      finalTruthVerdict: "verified_final_result",
+      state: "verified_final_result",
+      method: "canonical_espn_terminal_final",
+      authority: "canonical_fixture_store",
+      sourceCount: 1,
+      independentSourceCount: 1,
+      checks: {
+        canonicalIdExact: true,
+        provider: "espn",
+        providerMatchIdValid: true,
+        explicitTerminalStatus: true,
+        numericNonNegativeScore: true,
+        teamPairMatched: true,
+        athensDayMatched: true,
+        terminalObservationPresent: true,
+        flashscoreFinishedMatchAbsent: true
+      },
+      generatedAt
+    },
+    settlement: {
+      finalTruthVerdict: "verified_final_result",
+      state: "verified_final_result"
+    },
+    generatedAt
+  };
+}
+
 export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const safeDayKey = clean(dayKey);
 
@@ -330,18 +653,40 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   for (const target of targetSource.targets) {
     const found = findFlashscoreMatch(target, sourceRows, safeDayKey);
 
-    if (!found.ok) {
+    let payload = null;
+    let resolutionMethod = "";
+    let fallbackReason = "";
+
+    if (found.ok) {
+      payload = buildVerifiedFinalResult(safeDayKey, target, found.row);
+      resolutionMethod = "flashscore_same_day_exact_team_match";
+    } else if (found.reason === "no_exact_flashscore_match") {
+      const fallback = resolveCanonicalEspnFinalFallback(target, safeDayKey);
+
+      if (fallback.ok) {
+        payload = buildCanonicalEspnVerifiedFinalResult(
+          safeDayKey,
+          target,
+          fallback
+        );
+        resolutionMethod = "canonical_espn_terminal_final";
+      } else {
+        fallbackReason = fallback.reason;
+      }
+    }
+
+    if (!payload) {
       unresolved.push({
         matchId: target.matchId,
         homeTeam: target.homeTeam,
         awayTeam: target.awayTeam,
         reason: found.reason,
-        candidates: found.candidates
+        candidates: found.candidates,
+        canonicalFallbackReason: fallbackReason || null
       });
       continue;
     }
 
-    const payload = buildVerifiedFinalResult(safeDayKey, target, found.row);
     const filePath = path.join(outputDir, `${target.matchId}.json`);
     const existing = readJsonSafe(filePath, null);
 
@@ -350,8 +695,9 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
       homeTeam: target.homeTeam,
       awayTeam: target.awayTeam,
       scoreKey: payload.scoreKey,
-      provider: "flashscore",
-      providerMatchId: payload.sources[0].providerMatchId,
+      provider: clean(payload?.sources?.[0]?.provider),
+      providerMatchId: clean(payload?.sources?.[0]?.providerMatchId),
+      resolutionMethod,
       filePath
     };
 
@@ -398,6 +744,7 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     summary: {
       fixtureRows: targetSource.fixtureRows,
       valueRows: targetSource.valueRows,
+      canonicalRows: targetSource.canonicalRows,
       targetRows: targetSource.targets.length,
       flashscoreRows: sourceRows.length,
       flashscoreRowsWithScore: sourceRows.filter(isScored).length,
@@ -405,7 +752,16 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
       written: written.length,
       existing: existingRows.length,
       unresolved: unresolved.length,
-      conflicts: conflicts.length
+      conflicts: conflicts.length,
+      canonicalEspnFallbackWouldWrite: wouldWrite.filter(
+        row => row.resolutionMethod === "canonical_espn_terminal_final"
+      ).length,
+      canonicalEspnFallbackWritten: written.filter(
+        row => row.resolutionMethod === "canonical_espn_terminal_final"
+      ).length,
+      canonicalEspnFallbackExisting: existingRows.filter(
+        row => row.resolutionMethod === "canonical_espn_terminal_final"
+      ).length
     },
     wouldWrite,
     written,
@@ -420,6 +776,17 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
       finalResultsWrites: options.write === true,
       requiresExactTeamPairMatch: true,
       requiresNumericScore: true,
+      canonicalEspnFallback: {
+        sourceMustBeEspn: true,
+        canonicalIdMustMatch: true,
+        providerMatchIdMustBeNumeric: true,
+        explicitTerminalStatusRequired: true,
+        numericNonNegativeScoreRequired: true,
+        teamPairMatchRequired: true,
+        athensDayMatchRequired: true,
+        terminalObservationRequired: true,
+        allowedOnlyWhenFlashscoreFinishedMatchAbsent: true
+      },
       acceptedFinalTruthVerdict: "verified_final_result"
     }
   };
