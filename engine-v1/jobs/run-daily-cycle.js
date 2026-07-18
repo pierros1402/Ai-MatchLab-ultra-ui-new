@@ -9,7 +9,10 @@ import { finalizeDayIfSafe } from "./finalize-day.js";
 import { appendFinalizedDayToHistory } from "./append-finalized-day-to-history.js";
 import { buildHistoryReport } from "./build-history-report.js";
 import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
-import { rebuildIndexesForSeason } from "./rebuild-indexes-for-season.js";
+import {
+  rebuildIndexesForSeason,
+  collectIndexRebuildTargets
+} from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildMatchdayAxis } from "./build-matchday-axis.js";
@@ -635,6 +638,7 @@ export async function runDailyCycle(options = {}) {
   let finalize = null;
   let historyAppend = null;
   let indexesRebuild = null;
+  let catchUpIndexesRebuild = [];
 
   console.log("[daily-cycle] standings-build:start", { dayKey });
 
@@ -1616,7 +1620,8 @@ export async function runDailyCycle(options = {}) {
           unresolvedPicks,
           resettled,
           appended: !!append?.ok,
-          appendedRows: append?.mergedRows ?? 0
+          appendedRows: append?.mergedRows ?? 0,
+          season: append?.season || null
         });
       } catch (e) {
         historyCatchUp.push({ day, error: String(e?.message || e) });
@@ -1628,9 +1633,60 @@ export async function runDailyCycle(options = {}) {
 
       if (historyCatchUp.some(x => x.appended)) {
         try {
-          console.log("[daily-cycle] history-report:refresh", buildHistoryReport());
+          console.log(
+            "[daily-cycle] history-report:refresh",
+            buildHistoryReport()
+          );
         } catch (e) {
-          console.warn("[daily-cycle] history-report:refresh-failed", String(e?.message || e));
+          console.warn(
+            "[daily-cycle] history-report:refresh-failed",
+            String(e?.message || e)
+          );
+        }
+
+        const catchUpRebuildTargets =
+          collectIndexRebuildTargets(
+            historyCatchUp
+          );
+
+        for (
+          const target of
+          catchUpRebuildTargets
+        ) {
+          console.log(
+            "[daily-cycle] catch-up-indexes-rebuild:start",
+            target
+          );
+
+          const rebuild =
+            await rebuildIndexesForSeason(
+              target.day
+            );
+
+          const rebuildResult = {
+            ...target,
+            ...rebuild
+          };
+
+          catchUpIndexesRebuild.push(
+            rebuildResult
+          );
+
+          if (rebuild?.ok) {
+            console.log(
+              "[daily-cycle] catch-up-indexes-rebuild:done",
+              {
+                day: target.day,
+                season: rebuild.season,
+                ok: true
+              }
+            );
+          } else {
+            console.warn(
+              "[daily-cycle] catch-up-indexes-rebuild:failed",
+              rebuildResult
+            );
+          }
         }
       }
     }
@@ -1689,7 +1745,8 @@ export async function runDailyCycle(options = {}) {
     finalizeValueBuild,
     finalize,
     historyAppend,
-    indexesRebuild
+    indexesRebuild,
+    catchUpIndexesRebuild
   };
 }
 

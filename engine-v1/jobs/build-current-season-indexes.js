@@ -10,7 +10,44 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const DATA_ROOT = path.resolve(__dirname, "..", "..", "data");
-const SEASON = process.argv[2] || currentSeason();
+
+export function resolveTargetDateFromDay(dayKey) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+    String(dayKey || "")
+  );
+
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const date = new Date(
+    Date.UTC(year, month - 1, day)
+  );
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() + 1 !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+const TARGET_DAY =
+  process.argv[3] ||
+  null;
+
+const TARGET_DATE =
+  resolveTargetDateFromDay(TARGET_DAY) ||
+  new Date();
+
+const SEASON =
+  process.argv[2] ||
+  currentSeason(TARGET_DATE);
 
 // Primary source: the per-league, per-season, Flashscore-canonical archive that
 // build-history-archive-from-results.js rebuilds every run-day from results-memory.
@@ -257,7 +294,10 @@ async function listArchiveLeagues() {
 // Read one league's current-season matches from its per-league archive, using
 // the league's own season model (calendar vs cross-year) to pick the file.
 async function readArchiveMatchesForLeague(slug) {
-  const label = currentArchiveSeason(slug);
+  const label = currentArchiveSeason(
+    slug,
+    TARGET_DATE
+  );
   const file = path.join(ARCHIVE_DIR, slug, `${label}.json`);
 
   let payload;
@@ -302,6 +342,11 @@ async function readGlobalHistoryFallback(coveredSlugs) {
 
 export async function buildCurrentSeasonIndexes() {
   console.log("[index] season:", SEASON);
+  console.log("[index] target day:", TARGET_DAY);
+  console.log(
+    "[index] target date:",
+    TARGET_DATE.toISOString()
+  );
   console.log("[index] archive dir:", ARCHIVE_DIR);
 
   const archiveLeagues = await listArchiveLeagues();
