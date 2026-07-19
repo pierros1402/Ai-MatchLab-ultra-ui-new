@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-07-19",
-  "generatedAt": "2026-07-19T00:50:51.993Z",
+  "generatedAt": "2026-07-19T04:35:50.273Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -16,7 +16,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-07-19/fixtures.json",
     "finalResultsDir": "data/final-results/2026-07-19",
-    "verifiedFinalResults": 0,
+    "verifiedFinalResults": 23,
     "planAPath": "data/value-plans/2026-07-19/plan-a.json",
     "planAFreeze": null,
     "outputPath": "data/value-comparison/2026-07-19.json"
@@ -40,18 +40,18 @@
       "summary": {
         "picks": 7,
         "uniqueMatches": 7,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
-        "unresolved": 7,
+        "settled": 2,
+        "wins": 1,
+        "losses": 1,
+        "unresolved": 5,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5,
+        "oddsAvailable": 1,
+        "averageOdds": 1.6,
+        "totalStake": 1,
+        "totalReturn": 1.6,
+        "profit": 0.6,
+        "roi": 0.6
       },
       "picks": [
         {
@@ -103,7 +103,7 @@
           "matchId": "cid_kaz1_ertispavlodar_astana_20260719",
           "country": "Kazakhstan",
           "leagueSlug": "kaz.1",
-          "leagueName": "Kazakhstan Premier League",
+          "leagueName": "Premier League",
           "kickoff": "2026-07-19T14:00:00.000Z",
           "homeTeam": "Ertis Pavlodar",
           "awayTeam": "FC Astana",
@@ -117,8 +117,12 @@
           "aiFairOdds": 2.21,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS"
         },
         {
           "planId": "plan-a",
@@ -145,9 +149,9 @@
         {
           "planId": "plan-a",
           "matchId": "760516",
-          "country": "Fifa",
+          "country": "World",
           "leagueSlug": "fifa.world",
-          "leagueName": "FIFA World Cup",
+          "leagueName": "World Championship - Play Offs",
           "kickoff": "2026-07-18T21:00Z",
           "homeTeam": "France",
           "awayTeam": "England",
@@ -161,8 +165,12 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.6,
           "oddsUse": "display_settlement_only",
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 6,
+            "scoreKey": "4-6"
+          },
+          "result": "WIN"
         },
         {
           "planId": "plan-a",
@@ -224,24 +232,24 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 1,
-        "settled": 0,
-        "wins": 0,
+        "settled": 2,
+        "wins": 2,
         "losses": 0,
-        "unresolved": 2,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 1,
+        "oddsAvailable": 2,
+        "averageOdds": 1.895,
+        "totalStake": 2,
+        "totalReturn": 3.79,
+        "profit": 1.79,
+        "roi": 0.895
       },
       "picks": [
         {
           "planId": "plan-b",
           "matchId": "cid_usa2_sportingjax_brooklyn_20260719",
-          "country": "Usa",
+          "country": "USA",
           "leagueSlug": "usa.2",
           "leagueName": "USL Championship",
           "kickoff": "2026-07-18T23:00:00.000Z",
@@ -257,13 +265,17 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 1.65,
           "oddsUse": "display_settlement_only",
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN"
         },
         {
           "planId": "plan-b",
           "matchId": "cid_usa2_sportingjax_brooklyn_20260719",
-          "country": "Usa",
+          "country": "USA",
           "leagueSlug": "usa.2",
           "leagueName": "USL Championship",
           "kickoff": "2026-07-18T23:00:00.000Z",
@@ -279,8 +291,12 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": 2.14,
           "oddsUse": "display_settlement_only",
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN"
         }
       ]
     }
@@ -288,9 +304,9 @@
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -5,
     "settledDeltaPlanBMinusPlanA": 0,
-    "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": 0,
-    "hitRateDeltaPlanBMinusPlanA": null,
-    "roiDeltaPlanBMinusPlanA": null
+    "winsDeltaPlanBMinusPlanA": 1,
+    "lossesDeltaPlanBMinusPlanA": -1,
+    "hitRateDeltaPlanBMinusPlanA": 0.5,
+    "roiDeltaPlanBMinusPlanA": 0.295
   }
 }
