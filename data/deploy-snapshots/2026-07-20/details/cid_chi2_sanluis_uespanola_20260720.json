@@ -2,7 +2,7 @@
   "matchId": "cid_chi2_sanluis_uespanola_20260720",
   "providerMatchId": "cid_chi2_sanluis_uespanola_20260720",
   "dayKey": "2026-07-20",
-  "generatedAt": "2026-07-19T21:36:03.688Z",
+  "generatedAt": "2026-07-19T22:36:10.647Z",
   "basic": {
     "canonicalId": "cid_chi2_sanluis_uespanola_20260720",
     "matchId": "cid_chi2_sanluis_uespanola_20260720",
@@ -28,13 +28,20 @@
     "positions": null,
     "stakes": [],
     "pressure": [
-      "low_confidence_table"
+      "possible_cross_competition_mismatch"
     ],
     "notes": [
-      "Fallback: missing or low-confidence standings"
+      "Fallback: possible cross-competition mismatch"
     ],
-    "diagnostics": null,
-    "sourceReliability": "limited",
+    "diagnostics": {
+      "reason": "possible_cross_competition_mismatch",
+      "leagueSlug": "chi.2",
+      "homeTeam": "San Luis",
+      "awayTeam": "U. Espanola",
+      "foundHome": true,
+      "foundAway": false
+    },
+    "sourceReliability": "suspect",
     "travelImpact": "unknown",
     "travelProfile": "unknown",
     "crossBorder": null
@@ -100,7 +107,7 @@
     "status": "ready",
     "leagueSlug": "chi.2",
     "matchday": 15,
-    "updatedAt": "2026-07-19T21:16:45.605Z",
+    "updatedAt": "2026-07-19T22:17:27.825Z",
     "rows": [
       {
         "position": 1,
@@ -319,8 +326,8 @@
   "analysis": {
     "codes": [],
     "summary": {
-      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Δεν υπάρχει ακόμη επαρκές αξιόπιστο standings context για ασφαλή εκτίμηση βαθμολογικής σημασίας. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
-      "en": "No value snapshot is available yet for this match. There is not yet enough reliable standings context for a safe assessment of competitive importance. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
+      "el": "Δεν υπάρχει ακόμη διαθέσιμο value snapshot για τον αγώνα. Το competition context υποδεικνύει πιθανή ασυμφωνία διοργάνωσης ή διασταυρούμενο ζευγάρι ομάδων από την πηγή. Δεν υπάρχει ακόμη διαθέσιμο team news context στο snapshot. Δεν υπάρχει ακόμη διαθέσιμο local travel context στο snapshot.",
+      "en": "No value snapshot is available yet for this match. The competition context indicates a possible competition mismatch or cross-competition pairing from the source. Team news context is not yet available in the snapshot. Local travel context is not yet available in the snapshot."
     }
   },
   "playerUsageIntel": {
@@ -384,7 +391,7 @@
     ],
     "source": "engine-v1",
     "snapshotMode": "update_on_change",
-    "signature": "{\"matchId\":\"cid_chi2_sanluis_uespanola_20260720\",\"dayKey\":\"2026-07-20\",\"status\":\"STATUS_SCHEDULED\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"fallback\",\"competitionReason\":\"\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
+    "signature": "{\"matchId\":\"cid_chi2_sanluis_uespanola_20260720\",\"dayKey\":\"2026-07-20\",\"status\":\"STATUS_SCHEDULED\",\"rawStatus\":\"STATUS_SCHEDULED\",\"minute\":\"\",\"scoreHome\":0,\"scoreAway\":0,\"referee\":\"\",\"competitionType\":\"league\",\"competitionStatus\":\"fallback\",\"competitionReason\":\"possible_cross_competition_mismatch\",\"importance\":\"low\",\"teamNewsStatus\":\"empty\",\"teamNewsSource\":\"local-team-news\",\"teamNewsHomeAbsences\":0,\"teamNewsAwayAbsences\":0,\"teamNewsNotes\":0,\"travelStatus\":\"empty\",\"travelSource\":\"local-team-geo\",\"travelDistanceKm\":0,\"travelImpact\":\"unknown\",\"travelProfile\":\"unknown\",\"travelSameCountry\":null,\"travelCrossBorder\":null,\"travelHomeKey\":\"\",\"travelAwayKey\":\"\",\"playerUsageHomeStatus\":\"unavailable\",\"playerUsageHomeConfidence\":0,\"playerUsageHomeReason\":\"player_usage_missing_or_empty\",\"playerUsageAwayStatus\":\"unavailable\",\"playerUsageAwayConfidence\":0,\"playerUsageAwayReason\":\"player_usage_missing_or_empty\",\"valueCount\":0,\"topValue\":null,\"schemaVersion\":\"details-snapshot-v3\",\"builderVersion\":\"2026-05-01-player-usage-travel-geo-signature\"}",
     "pendingSignals": {
       "standings": true,
       "refereeStats": true,
@@ -402,7 +409,7 @@
         "priority": 100,
         "mode": "deterministic_only",
         "state": "done",
-        "resolution": "fallback_local",
+        "resolution": "suspect_local",
         "provider": "local-standings",
         "confidence": 0.3,
         "remoteFallbackRecommended": false,
@@ -559,12 +566,20 @@
         "positions": null,
         "stakes": [],
         "pressure": [
-          "low_confidence_table"
+          "possible_cross_competition_mismatch"
         ],
         "importance": "low",
         "notes": [
-          "Fallback: missing or low-confidence standings"
-        ]
+          "Fallback: possible cross-competition mismatch"
+        ],
+        "diagnostics": {
+          "reason": "possible_cross_competition_mismatch",
+          "leagueSlug": "chi.2",
+          "homeTeam": "San Luis",
+          "awayTeam": "U. Espanola",
+          "foundHome": true,
+          "foundAway": false
+        }
       },
       "confidence": 0.3
     },
@@ -578,22 +593,37 @@
         "awayTeam": "U. Espanola",
         "kickoffUtc": "2026-07-19T23:00:00.000Z",
         "standings": {
-          "status": "empty",
+          "status": "ready",
           "leagueSlug": "chi.2",
-          "home": null,
+          "home": {
+            "team": "San Luis de Quillota",
+            "position": 1,
+            "played": 6,
+            "wins": 4,
+            "draws": 1,
+            "losses": 1,
+            "points": 13,
+            "goalsFor": 12,
+            "goalsAgainst": 5,
+            "goalDiff": 7,
+            "pointsPerMatch": 2.17,
+            "goalsForPerMatch": 2,
+            "goalsAgainstPerMatch": 0.83,
+            "confidence": 0.9
+          },
           "away": null,
           "positions": null,
           "stakes": [],
           "pressure": [
-            "low_confidence_table"
+            "possible_cross_competition_mismatch"
           ],
           "importance": "low",
-          "confidence": 0,
+          "confidence": 0.9,
           "source": "local-standings",
           "diagnostics": {
             "standingsFile": "/home/runner/work/Ai-MatchLab-ultra-ui-new/Ai-MatchLab-ultra-ui-new/data/standings/chi.2.json",
-            "tableRows": 0,
-            "foundHome": false,
+            "tableRows": 22,
+            "foundHome": true,
             "foundAway": false
           }
         },
@@ -776,12 +806,12 @@
           "Last5 points: home 10, away 0."
         ]
       },
-      "confidence": 0.53,
+      "confidence": 0.6,
       "readiness": {
         "history": true,
         "form": true,
         "h2h": false,
-        "standings": false,
+        "standings": true,
         "teamNews": false,
         "lineup": true,
         "travel": false,
@@ -1181,8 +1211,8 @@
       "reason": "no_phase_data"
     },
     "summary": {
-      "el": "San Luis - U. Espanola: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. San Luis: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 1337 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: San Luis=unknown, U. Espanola=unknown. Εκτίμηση κόπωσης (από ρυθμό αγώνων, χωρίς επιβεβαιωμένες συνθέσεις): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-      "en": "San Luis vs U. Espanola: contextual analysis using historical and available data. San Luis: 3-1-1 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 1337 available match records. Table context: San Luis=unknown, U. Espanola=unknown. Fatigue estimate (from match rhythm, no confirmed lineups): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
+      "el": "San Luis - U. Espanola: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. San Luis: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 1337 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: San Luis=unknown, U. Espanola=unknown. Εκτίμηση κόπωσης (από ρυθμό αγώνων, χωρίς επιβεβαιωμένες συνθέσεις): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το competition context παραμένει ύποπτο για πιθανή ασυμφωνία διοργάνωσης από την πηγή.",
+      "en": "San Luis vs U. Espanola: contextual analysis using historical and available data. San Luis: 3-1-1 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 1337 available match records. Table context: San Luis=unknown, U. Espanola=unknown. Fatigue estimate (from match rhythm, no confirmed lineups): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Limited lineup context is available with low completeness. The competition context remains suspect for a possible source-side competition mismatch.",
       "teamNews": {
         "status": "empty",
         "source": "local-team-news",
@@ -1196,7 +1226,7 @@
       "history_form_available",
       "phase_regular",
       "lineup_context_limited",
-      "competition_context_limited"
+      "competition_context_suspect"
     ],
     "warnings": [
       "referee_unavailable"
@@ -1252,14 +1282,14 @@
       "travelCrossBorder": false,
       "travelDistanceKm": null,
       "competitionContextUsed": false,
-      "competitionContextSuspect": false,
-      "competitionContextLimited": true,
+      "competitionContextSuspect": true,
+      "competitionContextLimited": false,
       "competitionContextConfidence": 0.3
     }
   },
   "aiSummary": {
-    "el": "San Luis - U. Espanola: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. San Luis: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 1337 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: San Luis=unknown, U. Espanola=unknown. Εκτίμηση κόπωσης (από ρυθμό αγώνων, χωρίς επιβεβαιωμένες συνθέσεις): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το διαθέσιμο βαθμολογικό πλαίσιο παραμένει περιορισμένης αξιοπιστίας.",
-    "en": "San Luis vs U. Espanola: contextual analysis using historical and available data. San Luis: 3-1-1 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 1337 available match records. Table context: San Luis=unknown, U. Espanola=unknown. Fatigue estimate (from match rhythm, no confirmed lineups): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Limited lineup context is available with low completeness. The available standings context remains reliability-limited.",
+    "el": "San Luis - U. Espanola: ανάλυση με βάση ιστορικά και διαθέσιμα δεδομένα. San Luis: 3-1-1 στα τελευταία 5. Η πρόσφατη φόρμα δίνει ελαφρύ προβάδισμα στους γηπεδούχους. Το historical layer βασίστηκε σε 1337 διαθέσιμες εγγραφές αγώνων. Βαθμολογικό context: San Luis=unknown, U. Espanola=unknown. Εκτίμηση κόπωσης (από ρυθμό αγώνων, χωρίς επιβεβαιωμένες συνθέσεις): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Υπάρχει περιορισμένο lineup context με χαμηλή πληρότητα. Το competition context παραμένει ύποπτο για πιθανή ασυμφωνία διοργάνωσης από την πηγή.",
+    "en": "San Luis vs U. Espanola: contextual analysis using historical and available data. San Luis: 3-1-1 across the last 5. Recent form gives a slight edge to the home side. The historical layer was based on 1337 available match records. Table context: San Luis=unknown, U. Espanola=unknown. Fatigue estimate (from match rhythm, no confirmed lineups): San Luis=fatigue:low, rotation:low; U. Espanola=fatigue:unknown, rotation:unknown. Limited lineup context is available with low completeness. The competition context remains suspect for a possible source-side competition mismatch.",
     "teamNews": {
       "status": "empty",
       "source": "local-team-news",
@@ -1296,7 +1326,7 @@
       "travel_context",
       "value_snapshot"
     ],
-    "trustSummary": "partial_remote_enrichment",
+    "trustSummary": "local_evidence_with_competition_suspect_context",
     "evidence": [
       {
         "kind": "remote_research",
@@ -1350,9 +1380,12 @@
         "kind": "competition_context_local",
         "key": "competition_context_local",
         "provider": "local-standings",
-        "trustClass": "fallback_local",
-        "confidence": 0.45,
-        "status": "limited"
+        "trustClass": "suspect_local",
+        "confidence": 0.3,
+        "status": "limited",
+        "meta": {
+          "diagnosticsReason": "possible_cross_competition_mismatch"
+        }
       },
       {
         "kind": "expected_lineups",
