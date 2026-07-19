@@ -65,9 +65,48 @@ export function parseFlashscoreFeed(text) {
     if (f.AA && f.AE && f.AF) {
       const ts = Number(f.AD);
       const kickoffUtc = Number.isFinite(ts) ? new Date(ts * 1000).toISOString() : null;
-      // AG/AH = current/final scores; AB = status code (3 = finished on Flashscore).
-      const sh = f.AG !== undefined && f.AG !== "" ? Number(f.AG) : null;
-      const sa = f.AH !== undefined && f.AH !== "" ? Number(f.AH) : null;
+      // Flashscore AB=3 is a broad terminal bucket, not proof that
+      // the match was played. A played final additionally requires two
+      // explicit non-negative integer scores. Missing AG/AH must remain
+      // null and must never be coerced into an FT 0-0 result.
+      const sh =
+        f.AG !== undefined && f.AG !== ""
+          ? Number(f.AG)
+          : null;
+
+      const sa =
+        f.AH !== undefined && f.AH !== ""
+          ? Number(f.AH)
+          : null;
+
+      const scoreHome =
+        Number.isInteger(sh) && sh >= 0
+          ? sh
+          : null;
+
+      const scoreAway =
+        Number.isInteger(sa) && sa >= 0
+          ? sa
+          : null;
+
+      const statusCode = f.AB || null;
+      const statusDetailCode = f.AC || null;
+
+      const hasCompleteScore =
+        scoreHome !== null &&
+        scoreAway !== null;
+
+      const terminalBucket =
+        statusCode === "3";
+
+      const playedFinal =
+        terminalBucket &&
+        hasCompleteScore;
+
+      const nonPlayedTerminal =
+        terminalBucket &&
+        !hasCompleteScore;
+
       out.push({
         matchId: f.AA,
         leaguePath: path,
@@ -79,10 +118,14 @@ export function parseFlashscoreFeed(text) {
         away: f.AF.trim(),
         kickoffUtc,
         kickoffTs: Number.isFinite(ts) ? ts : null,
-        scoreHome: Number.isFinite(sh) ? sh : null,
-        scoreAway: Number.isFinite(sa) ? sa : null,
-        statusCode: f.AB || null,
-        finished: f.AB === "3"
+        scoreHome,
+        scoreAway,
+        statusCode,
+        statusDetailCode,
+        hasCompleteScore,
+        playedFinal,
+        nonPlayedTerminal,
+        finished: playedFinal
       });
     }
   }

@@ -322,20 +322,79 @@ function athensDayFromUtc(value) {
   });
 }
 
-function isExactFlashscoreFinalRow(row, dayKey) {
+function strictFlashscoreScore(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const score = Number(value);
+
+  if (
+    !Number.isInteger(score) ||
+    score < 0
+  ) {
+    return null;
+  }
+
+  return score;
+}
+
+export function isExactFlashscoreFinalRow(
+  row,
+  dayKey,
+  nowMs = Date.now()
+) {
   if (row?.finished !== true) return false;
-  if (normalizeText(row?.statusCode) !== "3") return false;
+  if (row?.playedFinal !== true) return false;
+  if (row?.nonPlayedTerminal === true) return false;
 
-  const scoreHome = Number(row?.scoreHome);
-  const scoreAway = Number(row?.scoreAway);
-
-  if (!Number.isFinite(scoreHome) || !Number.isFinite(scoreAway)) {
+  if (
+    normalizeText(row?.statusCode) !== "3"
+  ) {
     return false;
   }
 
-  const sourceDay = athensDayFromUtc(row?.kickoffUtc);
+  const scoreHome =
+    strictFlashscoreScore(
+      row?.scoreHome
+    );
 
-  return !sourceDay || sourceDay === dayKey;
+  const scoreAway =
+    strictFlashscoreScore(
+      row?.scoreAway
+    );
+
+  if (
+    scoreHome === null ||
+    scoreAway === null
+  ) {
+    return false;
+  }
+
+  const kickoffMs = Date.parse(
+    normalizeText(row?.kickoffUtc)
+  );
+
+  if (
+    !Number.isFinite(kickoffMs) ||
+    kickoffMs > nowMs
+  ) {
+    return false;
+  }
+
+  const sourceDay =
+    athensDayFromUtc(
+      row?.kickoffUtc
+    );
+
+  return (
+    !sourceDay ||
+    sourceDay === dayKey
+  );
 }
 
 function buildFlashscoreFinalIncoming(previous, sourceRow) {
@@ -373,8 +432,8 @@ function buildFlashscoreFinalIncoming(previous, sourceRow) {
       sourceRow?.away ||
       null,
 
-    scoreHome: Number(sourceRow.scoreHome),
-    scoreAway: Number(sourceRow.scoreAway),
+    scoreHome: strictFlashscoreScore(sourceRow.scoreHome),
+    scoreAway: strictFlashscoreScore(sourceRow.scoreAway),
 
     status: "FT",
     statusType: "STATUS_FINAL",

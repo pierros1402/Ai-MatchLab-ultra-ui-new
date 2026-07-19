@@ -298,14 +298,68 @@ function sourceScoreKey(row) {
   return `${Number(row.scoreHome)}-${Number(row.scoreAway)}`;
 }
 
-function isScored(row) {
-  // CRITICAL: a "verified final result" must come from a FINISHED match. The
-  // Flashscore feed reports 0-0 for pre-game rows, which are finite scores —
-  // without the finished gate we fabricated 0-0 "final truths" for matches that
-  // hadn't kicked off yet, settling picks as LOSS pre-game. finished = AB==="3".
-  return row?.finished === true &&
-    Number.isFinite(Number(row?.scoreHome)) &&
-    Number.isFinite(Number(row?.scoreAway));
+function strictSourceScore(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const score = Number(value);
+
+  if (
+    !Number.isInteger(score) ||
+    score < 0
+  ) {
+    return null;
+  }
+
+  return score;
+}
+
+export function isScored(
+  row,
+  nowMs = Date.now()
+) {
+  if (row?.finished !== true) return false;
+  if (row?.playedFinal !== true) return false;
+  if (row?.nonPlayedTerminal === true) return false;
+
+  if (clean(row?.statusCode) !== "3") {
+    return false;
+  }
+
+  const homeScore =
+    strictSourceScore(
+      row?.scoreHome
+    );
+
+  const awayScore =
+    strictSourceScore(
+      row?.scoreAway
+    );
+
+  if (
+    homeScore === null ||
+    awayScore === null
+  ) {
+    return false;
+  }
+
+  const kickoffMs = Date.parse(
+    clean(row?.kickoffUtc)
+  );
+
+  if (
+    !Number.isFinite(kickoffMs) ||
+    kickoffMs > nowMs
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 function findFlashscoreMatch(target, sourceRows, dayKey) {
