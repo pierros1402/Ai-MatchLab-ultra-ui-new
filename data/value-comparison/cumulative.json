@@ -1,12 +1,12 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-07-19T00:50:52.196Z",
+  "generatedAt": "2026-07-19T21:37:21.214Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
   "trialStartDay": "2026-07-05",
-  "dayCount": 15,
+  "dayCount": 16,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-07-19",
+  "lastDay": "2026-07-20",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -24,7 +24,8 @@
     "2026-07-16",
     "2026-07-17",
     "2026-07-18",
-    "2026-07-19"
+    "2026-07-19",
+    "2026-07-20"
   ],
   "daysExcluded": [],
   "excludedDayCount": 0,
@@ -233,55 +234,65 @@
         "checkedAt": "2026-07-18T14:26:34.824Z",
         "manifestGeneratedAt": "2026-07-19T00:35:41.689Z"
       }
+    },
+    {
+      "dayKey": "2026-07-19",
+      "reason": "invariant_report_stale",
+      "details": {
+        "ok": false,
+        "reason": "invariant_report_stale",
+        "checkedAt": "2026-07-19T20:37:24.019Z",
+        "manifestGeneratedAt": "2026-07-19T21:24:27.351Z"
+      }
     }
   ],
-  "integrityWarningDayCount": 12,
+  "integrityWarningDayCount": 13,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 13,
-        "uniqueMatches": 13,
-        "settled": 6,
-        "wins": 4,
-        "losses": 2,
-        "unresolved": 7,
+        "picks": 16,
+        "uniqueMatches": 16,
+        "settled": 11,
+        "wins": 8,
+        "losses": 3,
+        "unresolved": 5,
         "unsupported": 0,
-        "oddsAvailable": 0,
-        "totalStake": 0,
-        "totalReturn": 0,
-        "profit": 0,
-        "hitRate": 0.6667,
-        "roi": null
+        "oddsAvailable": 1,
+        "totalStake": 1,
+        "totalReturn": 1.6,
+        "profit": 0.6,
+        "hitRate": 0.7273,
+        "roi": 0.6
       }
     },
     "B": {
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 34,
-        "uniqueMatches": 19,
-        "settled": 32,
-        "wins": 20,
+        "picks": 35,
+        "uniqueMatches": 20,
+        "settled": 34,
+        "wins": 22,
         "losses": 12,
-        "unresolved": 2,
+        "unresolved": 1,
         "unsupported": 0,
-        "oddsAvailable": 8,
-        "totalStake": 8,
-        "totalReturn": 8.99,
-        "profit": 0.9900000000000002,
-        "hitRate": 0.625,
-        "roi": 0.1238
+        "oddsAvailable": 10,
+        "totalStake": 10,
+        "totalReturn": 12.780000000000001,
+        "profit": 2.7800000000000002,
+        "hitRate": 0.6471,
+        "roi": 0.278
       }
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 21,
-    "settledDeltaPlanBMinusPlanA": 26,
-    "winsDeltaPlanBMinusPlanA": 16,
-    "lossesDeltaPlanBMinusPlanA": 10,
-    "hitRateDeltaPlanBMinusPlanA": -0.0417,
-    "roiDeltaPlanBMinusPlanA": null
+    "picksDeltaPlanBMinusPlanA": 19,
+    "settledDeltaPlanBMinusPlanA": 23,
+    "winsDeltaPlanBMinusPlanA": 14,
+    "lossesDeltaPlanBMinusPlanA": 9,
+    "hitRateDeltaPlanBMinusPlanA": -0.0802,
+    "roiDeltaPlanBMinusPlanA": -0.322
   }
 }
