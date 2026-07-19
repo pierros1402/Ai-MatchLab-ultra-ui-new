@@ -40,17 +40,6 @@ function readDetailsSnapshot(dayKey, ...ids) {
 
 const STRICT_VALUE_POLICY_VERSION = "statistical-value-policy-v2.2";
 
-const BAND_RANK = Object.freeze({ HIGH: 3, MEDIUM: 2, LOW: 1 });
-
-const MARKET_PRIORITY = Object.freeze({
-  "1X2": 90,
-  "Over / Under 2.5": 88,
-  "BTTS": 74,
-  "Over / Under 3.5": 68,
-  "Double Chance": 35,
-  "Over / Under 1.5": 55
-});
-
 function valueNum(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
@@ -171,40 +160,6 @@ function normalizeOutcomeScores(value) {
     drawScore: value?.drawScore,
     awayWinScore: value?.awayWinScore
   });
-}
-
-function strongestPickPerMatch(picks) {
-  const bestByMatch = new Map();
-
-  for (const pick of Array.isArray(picks) ? picks : []) {
-    const key = String(pick?.matchId || "");
-    if (!key) continue;
-
-    const existing = bestByMatch.get(key);
-    if (!existing || compareValuePicks(pick, existing) > 0) {
-      bestByMatch.set(key, pick);
-    }
-  }
-
-  return Array.from(bestByMatch.values());
-}
-
-function compareValuePicks(a, b) {
-  const aScore =
-    ((BAND_RANK[a?.band] || 0) * 100000) +
-    (valueNum(a?.score, 0) * 10000) +
-    (valueNum(a?.confidence, 0) * 1000) +
-    (valueNum(a?.readiness, 0) * 500) +
-    (MARKET_PRIORITY[a?.marketName || a?.market] || 0);
-
-  const bScore =
-    ((BAND_RANK[b?.band] || 0) * 100000) +
-    (valueNum(b?.score, 0) * 10000) +
-    (valueNum(b?.confidence, 0) * 1000) +
-    (valueNum(b?.readiness, 0) * 500) +
-    (MARKET_PRIORITY[b?.marketName || b?.market] || 0);
-
-  return aScore - bScore;
 }
 
 // ------------------------------
@@ -708,7 +663,7 @@ function normalizeValueTeamKey(name) {
     .trim();
 }
 
-function dedupeValuePicks(picks) {
+export function dedupeValuePicks(picks) {
   const bestByKey = new Map();
 
   for (const p of Array.isArray(picks) ? picks : []) {
@@ -992,7 +947,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     }
   }
  
-  const dedupedPicks = strongestPickPerMatch(dedupeValuePicks(picks));
+  const dedupedPicks = dedupeValuePicks(picks);
   
   dedupedPicks.sort((a, b) => {
     const bandRank = { HIGH: 3, MEDIUM: 2, LOW: 1 };

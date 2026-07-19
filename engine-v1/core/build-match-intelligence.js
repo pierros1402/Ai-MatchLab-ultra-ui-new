@@ -22,24 +22,98 @@ function normalizeName(name) {
     .trim();
 }
 
-function namesLikelyMatch(a, b) {
+const GENERIC_TEAM_TOKENS = new Set([
+  "fc", "fci", "cf", "sc", "afc", "ac", "cd", "fk", "sk", "nk", "sv", "if", "bk",
+  "club", "football", "futbol", "soccer"
+]);
+
+const TEAM_VARIANT_WORDS = new Set([
+  "reserve", "reserves", "academy", "youth", "women", "woman", "ladies",
+  "feminino", "feminina", "femenino", "femenina"
+]);
+
+function teamVariantTokens(normalizedName) {
+  const tokens = normalizedName.split(" ").filter(Boolean);
+  const variants = [];
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    const isFinalToken = index === tokens.length - 1;
+
+    if (/^u\d{1,2}$/u.test(token) || TEAM_VARIANT_WORDS.has(token)) {
+      variants.push(token);
+      continue;
+    }
+
+    // Numeric second/third teams can appear in the middle (for example BATE 2 Borisov).
+    if (token === "2" || token === "3") {
+      variants.push(token);
+      continue;
+    }
+
+    if (isFinalToken && ["b", "ii", "iii"].includes(token)) {
+      variants.push(token);
+    }
+  }
+
+  return variants.sort();
+}
+
+function nonVariantTeamTokens(normalizedName) {
+  const variants = new Set(teamVariantTokens(normalizedName));
+  return normalizedName
+    .split(" ")
+    .filter(Boolean)
+    .filter(token => !variants.has(token));
+}
+
+function significantTeamTokens(normalizedName) {
+  return nonVariantTeamTokens(normalizedName)
+    .filter(token => !GENERIC_TEAM_TOKENS.has(token));
+}
+
+function uniqueInOrder(tokens) {
+  return [...new Set(tokens)];
+}
+
+function hasOnlyLeadingGenericDifference(normalizedName, baseTokens) {
+  const tokens = nonVariantTeamTokens(normalizedName);
+  if (tokens.length <= baseTokens.length || baseTokens.length === 0) return false;
+
+  const prefixLength = tokens.length - baseTokens.length;
+  const prefix = tokens.slice(0, prefixLength);
+  const suffix = tokens.slice(prefixLength);
+
+  return (
+    prefix.length > 0 &&
+    prefix.every(token => GENERIC_TEAM_TOKENS.has(token)) &&
+    suffix.join("|") === baseTokens.join("|")
+  );
+}
+
+export function namesLikelyMatch(a, b) {
   const na = normalizeName(a);
   const nb = normalizeName(b);
 
   if (!na || !nb) return false;
   if (na === nb) return true;
 
-  if (na.includes(nb) || nb.includes(na)) return true;
+  const aVariants = teamVariantTokens(na);
+  const bVariants = teamVariantTokens(nb);
+  if (aVariants.join("|") !== bVariants.join("|")) return false;
 
-  const aTokens = new Set(na.split(" ").filter(Boolean));
-  const bTokens = new Set(nb.split(" ").filter(Boolean));
+  const aTokens = uniqueInOrder(significantTeamTokens(na));
+  const bTokens = uniqueInOrder(significantTeamTokens(nb));
+  if (!aTokens.length || !bTokens.length) return false;
 
-  let overlap = 0;
-  for (const t of aTokens) {
-    if (bTokens.has(t)) overlap++;
-  }
+  // Fail closed: token subsets, reordered names and fuzzy containment are not identity evidence.
+  if (aTokens.join("|") !== bTokens.join("|")) return false;
 
-  return overlap >= Math.min(2, Math.min(aTokens.size, bTokens.size));
+  if (aTokens.length >= 2) return true;
+  return (
+    hasOnlyLeadingGenericDifference(na, aTokens) ||
+    hasOnlyLeadingGenericDifference(nb, bTokens)
+  );
 }
 
 function readJsonSafe(filePath, fallback) {
@@ -109,7 +183,7 @@ function getHistorySeason(season = currentSeason()) {
   return [];
 }
 
-function getRecentTeamMatches(historyRows, teamName, limit = 5, excludeMatchId = null) {
+export function getRecentTeamMatches(historyRows, teamName, leagueSlug, limit = 5, excludeMatchId = null) {
   const matches = historyRows
     .filter(row => {
       if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
@@ -117,6 +191,7 @@ function getRecentTeamMatches(historyRows, teamName, limit = 5, excludeMatchId =
       }
 
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
+      if (leagueSlug && String(row?.leagueSlug || "") !== String(leagueSlug)) return false;
 
       return (
         namesLikelyMatch(row?.homeTeam, teamName) ||
@@ -139,6 +214,7 @@ function getRecentTeamMatches(historyRows, teamName, limit = 5, excludeMatchId =
       }
 
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
+      if (leagueSlug && String(row?.leagueSlug || "") !== String(leagueSlug)) return false;
 
       return (
         namesLikelyMatch(row?.homeTeam, teamName) ||
@@ -149,9 +225,8 @@ function getRecentTeamMatches(historyRows, teamName, limit = 5, excludeMatchId =
     .slice(0, limit);
 }
 
-function summarizeTeamForm(matches, teamName) {
-  const teamKey = normalizeName(teamName);
-
+export function summarizeTeamForm(matches, teamName) {
+  let processedMatches = 0;
   let wins = 0;
   let draws = 0;
   let losses = 0;
@@ -159,13 +234,16 @@ function summarizeTeamForm(matches, teamName) {
   let goalsAgainst = 0;
 
   for (const row of matches) {
-    const homeKey = normalizeName(row?.homeTeam);
-    const awayKey = normalizeName(row?.awayTeam);
+    const isHome = namesLikelyMatch(row?.homeTeam, teamName);
+    const isAway = namesLikelyMatch(row?.awayTeam, teamName);
 
-    const isHome = homeKey === teamKey;
+    // Ambiguous or unrelated rows are excluded rather than assigned to the wrong side.
+    if (isHome === isAway) continue;
+
     const gf = isHome ? safeNum(row?.scoreHome) : safeNum(row?.scoreAway);
     const ga = isHome ? safeNum(row?.scoreAway) : safeNum(row?.scoreHome);
 
+    processedMatches += 1;
     goalsFor += gf;
     goalsAgainst += ga;
 
@@ -175,7 +253,7 @@ function summarizeTeamForm(matches, teamName) {
   }
 
   return {
-    matches: matches.length,
+    matches: processedMatches,
     wins,
     draws,
     losses,
@@ -184,7 +262,7 @@ function summarizeTeamForm(matches, teamName) {
   };
 }
 
-function getH2H(historyRows, homeTeam, awayTeam, limit = 5, excludeMatchId = null) {
+export function getH2H(historyRows, homeTeam, awayTeam, leagueSlug, limit = 5, excludeMatchId = null) {
   const fromHistory = historyRows
     .filter(row => {
       if (excludeMatchId && String(row?.id || row?.matchId) === String(excludeMatchId)) {
@@ -192,6 +270,7 @@ function getH2H(historyRows, homeTeam, awayTeam, limit = 5, excludeMatchId = nul
       }
 
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
+      if (leagueSlug && String(row?.leagueSlug || "") !== String(leagueSlug)) return false;
 
       return (
         (
@@ -220,6 +299,7 @@ function getH2H(historyRows, homeTeam, awayTeam, limit = 5, excludeMatchId = nul
       }
 
       if (String(row?.status || "").toUpperCase() !== "FT") return false;
+      if (leagueSlug && String(row?.leagueSlug || "") !== String(leagueSlug)) return false;
 
       return (
         (
@@ -386,9 +466,9 @@ export async function buildMatchIntelligence(fixture, { season = currentSeason()
   const leagueStandings = standingsByLeague.get(fixture.leagueSlug) || null;
   const phaseSummary = getPhaseSummary(leagueStandings);
 
-  const homeRecent = getRecentTeamMatches(historyRows, fixture.homeTeam, 5, fixture.matchId);
-  const awayRecent = getRecentTeamMatches(historyRows, fixture.awayTeam, 5, fixture.matchId);
-  const h2h = getH2H(historyRows, fixture.homeTeam, fixture.awayTeam, 5, fixture.matchId);
+  const homeRecent = getRecentTeamMatches(historyRows, fixture.homeTeam, fixture.leagueSlug, 5, fixture.matchId);
+  const awayRecent = getRecentTeamMatches(historyRows, fixture.awayTeam, fixture.leagueSlug, 5, fixture.matchId);
+  const h2h = getH2H(historyRows, fixture.homeTeam, fixture.awayTeam, fixture.leagueSlug, 5, fixture.matchId);
 
   const homeForm = summarizeTeamForm(homeRecent, fixture.homeTeam);
   const awayForm = summarizeTeamForm(awayRecent, fixture.awayTeam);

@@ -2,9 +2,10 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 import { athensDayKey } from "../core/daykey.js";
+import { refreshValueArtifactsDay } from "./refresh-value-artifacts-day.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const out = {
     date: null,
     rebuild: false,
@@ -52,23 +53,48 @@ function parseArgs(argv) {
   return out;
 }
 
-function usage() {
+export function usage() {
   return [
     "Usage:",
     "  node ./engine-v1/jobs/build-value-standalone-day.js --date YYYY-MM-DD --rebuild",
+    "  node ./engine-v1/jobs/build-value-standalone-day.js --date YYYY-MM-DD --plan-b-observation [--freeze]",
     "",
     "Contract:",
-    "  - Builds only the Value layer for the selected date.",
-    "  - Does not run full daily ingest/details/snapshot build.",
-    "  - Uses the existing model-assessment value bridge.",
-    "  - Does not read deploy-snapshot odds.json as value input.",
-    "  - Real bookmaker odds must remain display-only and must not enter value decisions.",
-    "  - Use --plan-b-observation to write strict Plan B to data/value-plans/YYYY-MM-DD without overwriting production value.json."
+    "  - Production mode delegates to the canonical-only Plan A refresh pipeline.",
+    "  - Production mode rebuilds value/audit, snapshot value/audit, comparison, freshness, invariant, and build report artifacts.",
+    "  - Production mode preserves snapshot fixtures.json and does not update latest.json.",
+    "  - Plan B remains an independent observation path backed by deriveValueFromOdds.",
+    "  - Real bookmaker odds remain display-only and do not enter Plan A decisions.",
+    "  - --freeze is supported only with --plan-b-observation."
   ].join("\n");
 }
 
-function isDayKey(value) {
+export function isDayKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/u.test(String(value || ""));
+}
+
+export async function runStandaloneValueDay(dayKey, args = {}, dependencies = {}) {
+  const runPlanARefresh = dependencies.refreshValueArtifactsDay || refreshValueArtifactsDay;
+  const runPlanBObservation = dependencies.deriveValueFromOdds || deriveValueFromOdds;
+
+  if (args.planBObservation) {
+    return runPlanBObservation(dayKey, {
+      freeze: args.freeze === true && args.rebuild !== true,
+      outputMode: "plan-b-observation"
+    });
+  }
+
+  if (args.freeze) {
+    throw new Error("--freeze is supported only with --plan-b-observation.");
+  }
+
+  if (args.rebuild !== true) {
+    throw new Error("Production standalone Value requires --rebuild.");
+  }
+
+  return runPlanARefresh(dayKey, {
+    updateLatest: false
+  });
 }
 
 async function main() {
@@ -85,30 +111,32 @@ async function main() {
     throw new Error(`Invalid date: ${dayKey}. Expected YYYY-MM-DD.`);
   }
 
-  const result = deriveValueFromOdds(dayKey, {
-    freeze: args.freeze && !args.rebuild,
-    outputMode: args.planBObservation ? "plan-b-observation" : "production"
-  });
+  const result = await runStandaloneValueDay(dayKey, args);
+  const planBMode = args.planBObservation === true;
+  const source = planBMode ? result?.source || null : result?.planA?.source || null;
+  const valuePicks = planBMode
+    ? Number(result?.count || 0)
+    : Number(result?.planA?.count || 0);
 
   console.log(JSON.stringify({
     ok: result?.ok !== false,
-    mode: args.planBObservation ? "standalone-value-plan-b-observation" : "standalone-value",
+    mode: planBMode ? "standalone-value-plan-b-observation" : "standalone-value-plan-a-refresh",
     date: dayKey,
-    valuePicks: Number(result?.count || 0),
-    source: result?.source || null,
+    valuePicks,
+    source,
     policyVersion: result?.policyVersion || null,
-    sourceContract: result?.sourceContract || {
-      deploySnapshotInput: false,
-      realBookmakerOddsUsed: false
-    },
-    outputs: {
-      canonicalValue: args.planBObservation ? `data/value-plans/${dayKey}/plan-b.json` : `data/value/${dayKey}.json`,
-      canonicalAudit: args.planBObservation ? `data/value-plans/${dayKey}/plan-b-audit.json` : `data/value/_audit/${dayKey}.json`,
-      snapshotValue: args.planBObservation ? null : `data/deploy-snapshots/${dayKey}/value.json`,
-      snapshotAudit: args.planBObservation ? null : `data/deploy-snapshots/${dayKey}/value-audit.json`,
-      observationValue: args.planBObservation ? `data/value-plans/${dayKey}/plan-b.json` : null,
-      observationAudit: args.planBObservation ? `data/value-plans/${dayKey}/plan-b-audit.json` : null
-    }
+    sourceContract: planBMode
+      ? (result?.sourceContract || {
+          deploySnapshotInput: false,
+          realBookmakerOddsUsed: false
+        })
+      : {
+          canonicalOnly: source === "canonical_fixtures",
+          deploySnapshotInput: false,
+          realBookmakerOddsUsed: false
+        },
+    outputs: result?.outputs || null,
+    result
   }, null, 2));
 }
 
@@ -125,4 +153,3 @@ if (isCli) {
     process.exitCode = 1;
   });
 }
-
