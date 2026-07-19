@@ -15,6 +15,9 @@ import {
   collectDisagreements,
   persistDisagreements
 } from "./disagreement-log.js";
+import {
+  resolveApprovedFlashscoreNonPlayedDecision
+} from "../source-discovery/flashscore-nonplayed-decisions.js";
 
 const SOURCE_PROFILE = {
   espn: {
@@ -131,8 +134,19 @@ function isSpecialStatus(rawStatus, status) {
 }
 
 function safeNum(v, fallback = null) {
+  if (
+    v === null ||
+    v === undefined ||
+    v === ""
+  ) {
+    return fallback;
+  }
+
   const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
+
+  return Number.isFinite(n)
+    ? n
+    : fallback;
 }
 
 function parseMinute(v) {
@@ -222,6 +236,185 @@ function pickBest(observations, field, reliabilityField) {
   };
 }
 
+function cleanDecisionValue(value) {
+  return String(
+    value ?? ""
+  ).trim();
+}
+
+function resolveDecisionBackedSpecialObservation(
+  observations,
+  existing
+) {
+  const rows = (
+    Array.isArray(observations)
+      ? observations
+      : []
+  )
+    .filter(Boolean)
+    .sort(byNewest);
+
+  for (const row of rows) {
+    if (
+      !isSpecialStatus(
+        row?.rawStatus,
+        row?.status
+      )
+    ) {
+      continue;
+    }
+
+    const correction =
+      row?.statusCorrection;
+
+    if (
+      !correction ||
+      typeof correction !== "object"
+    ) {
+      continue;
+    }
+
+    const canonicalId =
+      cleanDecisionValue(
+        row?.canonicalId ||
+        row?.matchId ||
+        existing?.canonicalId ||
+        existing?.matchId
+      );
+
+    const dayKey =
+      cleanDecisionValue(
+        row?.actualDay ||
+        row?.dayKey ||
+        existing?.actualDay ||
+        existing?.dayKey
+      );
+
+    const providerEvidence =
+      correction
+        ?.providerEvidence;
+
+    const providerMatchId =
+      cleanDecisionValue(
+        row?.sourceId ||
+        row?.sourceMatchId ||
+        providerEvidence
+          ?.providerMatchId
+      );
+
+    const decision =
+      resolveApprovedFlashscoreNonPlayedDecision({
+        dayKey,
+        canonicalId,
+        providerMatchId
+      });
+
+    if (!decision) {
+      continue;
+    }
+
+    const expectedEvidence =
+      decision
+        .requiredProviderEvidence;
+
+    const correctedTo =
+      correction?.correctedTo;
+
+    const source =
+      canonicalSource(
+        row?.source
+      );
+
+    const status =
+      cleanDecisionValue(
+        row?.status
+      );
+
+    const rawStatus =
+      cleanDecisionValue(
+        row?.rawStatus
+      );
+
+    const statusType =
+      cleanDecisionValue(
+        row?.statusType
+      );
+
+    if (
+      correction?.decisionId !==
+        decision.decisionId ||
+      correction?.policyVersion !==
+        decision.policyVersion ||
+      correction?.reason !==
+        "approved_flashscore_nonplayed_decision" ||
+      source !==
+        decision.provider ||
+      status !==
+        decision.resolvedStatus ||
+      rawStatus !==
+        decision.resolvedStatus ||
+      (
+        statusType &&
+        statusType !==
+          decision.resolvedStatus
+      ) ||
+      row?.scoreHome !== null ||
+      row?.scoreAway !== null ||
+      correctedTo?.status !==
+        decision.resolvedStatus ||
+      correctedTo?.rawStatus !==
+        decision.resolvedStatus ||
+      correctedTo?.statusType !==
+        decision.resolvedStatus ||
+      correctedTo?.scoreHome !==
+        null ||
+      correctedTo?.scoreAway !==
+        null ||
+      cleanDecisionValue(
+        providerEvidence?.provider
+      ) !==
+        decision.provider ||
+      cleanDecisionValue(
+        providerEvidence
+          ?.providerMatchId
+      ) !==
+        decision.providerMatchId ||
+      cleanDecisionValue(
+        providerEvidence
+          ?.statusCode
+      ) !==
+        expectedEvidence.statusCode ||
+      cleanDecisionValue(
+        providerEvidence
+          ?.statusDetailCode
+      ) !==
+        expectedEvidence
+          .statusDetailCode ||
+      providerEvidence
+        ?.nonPlayedTerminal !==
+        true ||
+      providerEvidence
+        ?.playedFinal ===
+        true ||
+      providerEvidence
+        ?.scoreHome !==
+        null ||
+      providerEvidence
+        ?.scoreAway !==
+        null
+    ) {
+      continue;
+    }
+
+    return {
+      row,
+      decision
+    };
+  }
+
+  return null;
+}
+
 function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
   const latestPerSource = new Map();
 
@@ -268,7 +461,28 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
   let value = best?.status ?? existing?.status ?? "PRE";
   let source = best?.source || null;
 
-  if (existing?.status && isTerminal(existing.status)) {
+  const decisionBackedSpecial =
+    resolveDecisionBackedSpecialObservation(
+      observations,
+      existing
+    );
+
+  if (decisionBackedSpecial) {
+    value =
+      decisionBackedSpecial
+        .decision
+        .resolvedStatus;
+
+    source =
+      canonicalSource(
+        decisionBackedSpecial
+          .row
+          .source
+      );
+  } else if (
+    existing?.status &&
+    isTerminal(existing.status)
+  ) {
     const terminalObs = Array.from(latestPerSource.values())
       .filter(row => isTerminal(row?.status))
       .sort((a, b) => {
@@ -315,10 +529,44 @@ function pickStatusWeighted(observations, existing, reliabilityDb = {}) {
     }
   }
 
-  return { value, source };
+  return {
+    value,
+    source,
+
+    decisionId:
+      decisionBackedSpecial
+        ?.decision
+        ?.decisionId ??
+      null,
+
+    policyVersion:
+      decisionBackedSpecial
+        ?.decision
+        ?.policyVersion ??
+      null,
+
+    statusCorrection:
+      decisionBackedSpecial
+        ?.row
+        ?.statusCorrection ??
+      null
+  };
 }
 
 function pickScoreWeighted(observations, existing, chosenStatus, reliabilityDb = {}) {
+  if (
+    isSpecialStatus(
+      chosenStatus,
+      chosenStatus
+    )
+  ) {
+    return {
+      scoreHome: null,
+      scoreAway: null,
+      source: null
+    };
+  }
+
   const eligible = observations.filter(row => {
     if (isPre(chosenStatus)) return true;
     return row.scoreHome != null && row.scoreAway != null;
@@ -796,6 +1044,27 @@ function computeConfidence({
 function buildStatusReason(rows, statusPick, conflictTypes) {
   const sources = [...new Set(rows.map(r => r.source))];
 
+  if (statusPick?.decisionId) {
+    return {
+      type:
+        "approved_status_correction",
+
+      chosen:
+        statusPick.value,
+
+      source:
+        statusPick.source,
+
+      sources,
+
+      decisionId:
+        statusPick.decisionId,
+
+      policyVersion:
+        statusPick.policyVersion
+    };
+  }
+
   if (!conflictTypes.includes("status")) {
     return {
       type: "consensus",
@@ -1167,6 +1436,11 @@ export async function reconcileObservations({
       existing?.rawStatus ||
       null,
     minute: minutePick.value,
+
+    statusCorrection:
+      statusPick
+        .statusCorrection ||
+      null,
 
     scoreHome: scorePick.scoreHome,
     scoreAway: scorePick.scoreAway,

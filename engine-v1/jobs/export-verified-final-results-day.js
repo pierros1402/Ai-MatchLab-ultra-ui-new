@@ -3,6 +3,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
+import {
+  resolveApprovedFlashscoreNonPlayedDecision
+} from "../source-discovery/flashscore-nonplayed-decisions.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { teamPairMatches } from "../core/team-identity.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
@@ -362,6 +365,179 @@ export function isScored(
   return true;
 }
 
+export function findExactFlashscorePostponedMatch(
+  target,
+  sourceRows,
+  dayKey
+) {
+  const canonicalId =
+    clean(
+      target?.canonicalId ||
+      target?.matchId
+    );
+
+  const decision =
+    resolveApprovedFlashscoreNonPlayedDecision({
+      dayKey,
+      canonicalId
+    });
+
+  if (!decision) {
+    return {
+      ok: false,
+      reason:
+        "no_approved_nonplayed_decision",
+      candidates: []
+    };
+  }
+
+  const exactRows = (
+    Array.isArray(sourceRows)
+      ? sourceRows
+      : []
+  ).filter(row => {
+    if (
+      clean(row?.matchId) !==
+      decision.providerMatchId
+    ) {
+      return false;
+    }
+
+    if (
+      row?.nonPlayedTerminal !== true ||
+      row?.playedFinal === true ||
+      row?.finished === true
+    ) {
+      return false;
+    }
+
+    if (
+      clean(row?.statusCode) !==
+        decision
+          .requiredProviderEvidence
+          .statusCode ||
+      clean(
+        row?.statusDetailCode
+      ) !==
+        decision
+          .requiredProviderEvidence
+          .statusDetailCode
+    ) {
+      return false;
+    }
+
+    if (
+      strictSourceScore(
+        row?.scoreHome
+      ) !== null ||
+      strictSourceScore(
+        row?.scoreAway
+      ) !== null
+    ) {
+      return false;
+    }
+
+    return (
+      athensDayFromUtc(
+        row?.kickoffUtc
+      ) === dayKey
+    );
+  });
+
+  if (exactRows.length !== 1) {
+    return {
+      ok: false,
+
+      reason:
+        exactRows.length === 0
+          ? "approved_nonplayed_source_row_missing"
+          : "approved_nonplayed_source_row_ambiguous",
+
+      candidates:
+        exactRows.map(row => ({
+          providerMatchId:
+            clean(row?.matchId),
+
+          home:
+            clean(row?.home),
+
+          away:
+            clean(row?.away),
+
+          kickoffUtc:
+            clean(row?.kickoffUtc)
+        }))
+    };
+  }
+
+  return {
+    ok: true,
+    row: exactRows[0],
+    decision,
+    matchTier:
+      "immutable_decision_exact_provider_id"
+  };
+}
+
+export function shouldRetractExistingFlashscoreFinal(
+  existing,
+  target,
+  sourceRow,
+  decision
+) {
+  if (
+    !existing ||
+    existing?.verifiedFinalTruth !== true ||
+    !decision
+  ) {
+    return false;
+  }
+
+  const canonicalId =
+    clean(
+      target?.canonicalId ||
+      target?.matchId
+    );
+
+  if (
+    canonicalId !==
+    decision.canonicalId
+  ) {
+    return false;
+  }
+
+  const flashscoreSource =
+    Array.isArray(existing?.sources)
+      ? existing.sources.find(row =>
+          clean(row?.provider)
+            .toLowerCase() ===
+          "flashscore"
+        )
+      : null;
+
+  if (!flashscoreSource) {
+    return false;
+  }
+
+  const existingProviderId =
+    clean(
+      flashscoreSource
+        ?.providerMatchId
+    );
+
+  const observedProviderId =
+    clean(
+      sourceRow?.matchId
+    );
+
+  return (
+    existingProviderId ===
+      decision.providerMatchId &&
+    observedProviderId ===
+      decision.providerMatchId
+  );
+}
+
 function findFlashscoreMatch(target, sourceRows, dayKey) {
   // Scored rows on the same Athens day are the only settlement candidates.
   const pool = sourceRows.filter(row => {
@@ -703,6 +879,9 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const existingRows = [];
   const unresolved = [];
   const conflicts = [];
+  const wouldRetract = [];
+  const retracted = [];
+  const retractionBlocked = [];
 
   for (const target of targetSource.targets) {
     const found = findFlashscoreMatch(target, sourceRows, safeDayKey);
@@ -730,14 +909,128 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     }
 
     if (!payload) {
+      const postponed =
+        findExactFlashscorePostponedMatch(
+          target,
+          sourceRows,
+          safeDayKey
+        );
+
+      const staleFilePath =
+        path.join(
+          outputDir,
+          `${target.matchId}.json`
+        );
+
+      const staleExisting =
+        readJsonSafe(
+          staleFilePath,
+          null
+        );
+
+      let retraction = null;
+
+      if (postponed.ok && staleExisting) {
+        const retractable =
+          shouldRetractExistingFlashscoreFinal(
+            staleExisting,
+            target,
+            postponed.row,
+            postponed.decision
+          );
+
+        const row = {
+          matchId:
+            target.matchId,
+
+          homeTeam:
+            target.homeTeam,
+
+          awayTeam:
+            target.awayTeam,
+
+          providerMatchId:
+            clean(
+              postponed.row?.matchId
+            ),
+
+          evidence:
+            "approved_flashscore_nonplayed_decision",
+
+          decisionId:
+            postponed
+              .decision
+              .decisionId,
+
+          filePath:
+            staleFilePath
+        };
+
+        if (!retractable) {
+          retractionBlocked.push(row);
+
+          conflicts.push({
+            ...row,
+            type:
+              "verified_final_retraction_blocked",
+            reason:
+              "existing_final_not_exact_flashscore_artifact"
+          });
+
+          retraction = "blocked";
+        } else if (options.write === true) {
+          fs.unlinkSync(staleFilePath);
+          retracted.push(row);
+          retraction = "retracted";
+        } else {
+          wouldRetract.push(row);
+          retraction = "would_retract";
+        }
+      }
+
       unresolved.push({
         matchId: target.matchId,
         homeTeam: target.homeTeam,
         awayTeam: target.awayTeam,
-        reason: found.reason,
-        candidates: found.candidates,
-        canonicalFallbackReason: fallbackReason || null
+
+        reason:
+          postponed.ok
+            ? "flashscore_exact_postponed_non_played"
+            : found.reason,
+
+        candidates:
+          postponed.ok
+            ? [
+                {
+                  providerMatchId:
+                    clean(
+                      postponed.row?.matchId
+                    ),
+
+                  home:
+                    clean(
+                      postponed.row?.home
+                    ),
+
+                  away:
+                    clean(
+                      postponed.row?.away
+                    ),
+
+                  kickoffUtc:
+                    clean(
+                      postponed.row?.kickoffUtc
+                    )
+                }
+              ]
+            : found.candidates,
+
+        canonicalFallbackReason:
+          fallbackReason || null,
+
+        retraction
       });
+
       continue;
     }
 
@@ -805,6 +1098,9 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
       wouldWrite: wouldWrite.length,
       written: written.length,
       existing: existingRows.length,
+      wouldRetract: wouldRetract.length,
+      retracted: retracted.length,
+      retractionBlocked: retractionBlocked.length,
       unresolved: unresolved.length,
       conflicts: conflicts.length,
       canonicalEspnFallbackWouldWrite: wouldWrite.filter(
@@ -820,6 +1116,9 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     wouldWrite,
     written,
     existing: existingRows,
+    wouldRetract,
+    retracted,
+    retractionBlocked,
     unresolved,
     conflicts,
     guarantees: {

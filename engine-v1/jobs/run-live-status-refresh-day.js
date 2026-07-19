@@ -6,6 +6,10 @@ import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
+import {
+  listApprovedFlashscoreNonPlayedDecisions,
+  resolveApprovedFlashscoreNonPlayedDecision
+} from "../source-discovery/flashscore-nonplayed-decisions.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
 function normalizeText(value) {
@@ -397,6 +401,365 @@ export function isExactFlashscoreFinalRow(
   );
 }
 
+export function mergeFlashscoreTargetLeaguesWithApprovedDecisions(
+  baseTargetLeagues,
+  dayKey
+) {
+  const requestedDay =
+    normalizeText(dayKey);
+
+  const bySlug =
+    new Map();
+
+  for (
+    const target
+    of (
+      Array.isArray(
+        baseTargetLeagues
+      )
+        ? baseTargetLeagues
+        : []
+    )
+  ) {
+    const slug =
+      normalizeText(
+        typeof target === "string"
+          ? target
+          : target?.slug
+      );
+
+    if (!slug) {
+      continue;
+    }
+
+    const normalizedTarget =
+      target &&
+      typeof target === "object" &&
+      !Array.isArray(target)
+        ? {
+            ...target,
+            slug
+          }
+        : {
+            slug,
+            candidateCount: 0,
+            fixtureCount: 0
+          };
+
+    bySlug.set(
+      slug,
+      normalizedTarget
+    );
+  }
+
+  const approvedDecisions =
+    listApprovedFlashscoreNonPlayedDecisions()
+      .filter(decision =>
+        normalizeText(
+          decision?.dayKey
+        ) === requestedDay
+      );
+
+  for (
+    const decision
+    of approvedDecisions
+  ) {
+    const slug =
+      normalizeText(
+        decision?.leagueSlug
+      );
+
+    if (!slug) {
+      continue;
+    }
+
+    const previous =
+      bySlug.get(slug);
+
+    const previousDecisionIds =
+      Array.isArray(
+        previous?.approvedDecisionIds
+      )
+        ? previous
+            .approvedDecisionIds
+        : [];
+
+    const approvedDecisionIds = [
+      ...new Set([
+        ...previousDecisionIds,
+        normalizeText(
+          decision?.decisionId
+        )
+      ].filter(Boolean))
+    ].sort();
+
+    bySlug.set(
+      slug,
+      {
+        ...(previous || {
+          slug,
+          candidateCount: 0,
+          fixtureCount: 0
+        }),
+
+        slug,
+
+        forcedByApprovedDecision:
+          true,
+
+        approvedDecisionCount:
+          approvedDecisionIds.length,
+
+        approvedDecisionIds
+      }
+    );
+  }
+
+  return [
+    ...bySlug.values()
+  ].sort((a, b) =>
+    a.slug.localeCompare(
+      b.slug
+    )
+  );
+}
+
+export function isFlashscoreNonPlayedTerminalEvidence(
+  row,
+  dayKey
+) {
+  if (
+    row?.nonPlayedTerminal !== true ||
+    row?.playedFinal === true ||
+    row?.finished === true
+  ) {
+    return false;
+  }
+
+  if (
+    normalizeText(
+      row?.statusCode
+    ) !== "3" ||
+    normalizeText(
+      row?.statusDetailCode
+    ) !== "4"
+  ) {
+    return false;
+  }
+
+  if (
+    strictFlashscoreScore(
+      row?.scoreHome
+    ) !== null ||
+    strictFlashscoreScore(
+      row?.scoreAway
+    ) !== null
+  ) {
+    return false;
+  }
+
+  const sourceDay =
+    athensDayFromUtc(
+      row?.kickoffUtc
+    );
+
+  return (
+    Boolean(sourceDay) &&
+    sourceDay === dayKey
+  );
+}
+
+export function isExactFlashscorePostponedRow(
+  row,
+  dayKey,
+  canonicalRow
+) {
+  if (
+    !isFlashscoreNonPlayedTerminalEvidence(
+      row,
+      dayKey
+    )
+  ) {
+    return false;
+  }
+
+  const decision =
+    resolveApprovedFlashscoreNonPlayedDecision({
+      dayKey,
+
+      canonicalId:
+        canonicalRow?.canonicalId ||
+        canonicalRow?.matchId,
+
+      providerMatchId:
+        row?.matchId
+    });
+
+  if (!decision) {
+    return false;
+  }
+
+  return (
+    decision.providerMatchId ===
+      normalizeText(row?.matchId) &&
+    decision.requiredProviderEvidence
+      ?.statusCode ===
+      normalizeText(row?.statusCode) &&
+    decision.requiredProviderEvidence
+      ?.statusDetailCode ===
+      normalizeText(
+        row?.statusDetailCode
+      )
+  );
+}
+
+export function buildFlashscorePostponedIncoming(
+  previous,
+  sourceRow,
+  dayKey = previous?.dayKey
+) {
+  const providerMatchId =
+    normalizeText(
+      sourceRow?.matchId
+    );
+
+  const canonicalId =
+    normalizeText(
+      previous?.canonicalId ||
+      previous?.matchId
+    );
+
+  const decision =
+    resolveApprovedFlashscoreNonPlayedDecision({
+      dayKey,
+      canonicalId,
+      providerMatchId
+    });
+
+  if (
+    !decision ||
+    !isFlashscoreNonPlayedTerminalEvidence(
+      sourceRow,
+      dayKey
+    )
+  ) {
+    throw new Error(
+      "unapproved_flashscore_nonplayed_status_mutation"
+    );
+  }
+
+  const correctedAt =
+    new Date().toISOString();
+
+  const status =
+    decision.resolvedStatus;
+
+  return {
+    ...previous,
+
+    source: "flashscore",
+    sourceId: providerMatchId,
+    sourceMatchId: providerMatchId,
+
+    scoreHome: null,
+    scoreAway: null,
+    penalties: null,
+    decidedBy: null,
+
+    status,
+    statusType: status,
+    rawStatus: status,
+    minute: null,
+
+    lastSeenAt: correctedAt,
+
+    statusCorrection: {
+      correctedAt,
+      decisionId:
+        decision.decisionId,
+
+      policyVersion:
+        decision.policyVersion,
+
+      correctedFrom: {
+        status:
+          previous?.status ??
+          null,
+
+        statusType:
+          previous?.statusType ??
+          null,
+
+        rawStatus:
+          previous?.rawStatus ??
+          null,
+
+        minute:
+          previous?.minute ??
+          null,
+
+        scoreHome:
+          previous?.scoreHome ??
+          null,
+
+        scoreAway:
+          previous?.scoreAway ??
+          null
+      },
+
+      correctedTo: {
+        status,
+        statusType: status,
+        rawStatus: status,
+        minute: null,
+        scoreHome: null,
+        scoreAway: null
+      },
+
+      reason:
+        "approved_flashscore_nonplayed_decision",
+
+      decisionBasis:
+        decision.decisionBasis,
+
+      providerEvidence: {
+        provider:
+          decision.provider,
+
+        providerMatchId,
+
+        statusCode:
+          normalizeText(
+            sourceRow?.statusCode
+          ),
+
+        statusDetailCode:
+          normalizeText(
+            sourceRow
+              ?.statusDetailCode
+          ),
+
+        playedFinal:
+          sourceRow?.playedFinal ===
+          true,
+
+        nonPlayedTerminal:
+          sourceRow
+            ?.nonPlayedTerminal ===
+          true,
+
+        scoreHome:
+          sourceRow?.scoreHome ??
+          null,
+
+        scoreAway:
+          sourceRow?.scoreAway ??
+          null
+      }
+    }
+  };
+}
+
 function buildFlashscoreFinalIncoming(previous, sourceRow) {
   const providerMatchId = normalizeText(sourceRow?.matchId);
 
@@ -454,7 +817,12 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
   const startedAt = new Date().toISOString();
   const targetLeagues = collectTargetLeagues(safeDayKey, options);
   const flashscoreTargetLeagues =
-    collectFlashscoreTargetLeagues(safeDayKey);
+    mergeFlashscoreTargetLeaguesWithApprovedDecisions(
+      collectFlashscoreTargetLeagues(
+        safeDayKey
+      ),
+      safeDayKey
+    );
 
   const stats = {
     ok: true,
@@ -486,8 +854,11 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     targetLeagues: flashscoreTargetLeagues,
     sourceRows: 0,
     finishedRows: 0,
+    postponedRows: 0,
     exactIdCandidates: 0,
     exactIdMatches: 0,
+    postponedExactIdMatches: 0,
+    unapprovedNonPlayedMatches: 0,
     changedRows: 0,
     writtenLeagueCount: 0,
     attempts: [],
@@ -774,9 +1145,17 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         isExactFlashscoreFinalRow(row, safeDayKey)
       );
 
+      const postponedRows = sourceRows.filter(row =>
+        isFlashscoreNonPlayedTerminalEvidence(
+          row,
+          safeDayKey
+        )
+      );
+
       flashscoreStats.ok = Boolean(feed?.ok);
       flashscoreStats.sourceRows = sourceRows.length;
       flashscoreStats.finishedRows = finishedRows.length;
+      flashscoreStats.postponedRows = postponedRows.length;
       flashscoreStats.attempts = Array.isArray(feed?.attempts)
         ? feed.attempts
         : [];
@@ -797,6 +1176,22 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         if (!providerMatchId) continue;
 
         finalByProviderId.set(providerMatchId, row);
+      }
+
+      const postponedByProviderId = new Map();
+
+      for (const row of postponedRows) {
+        const providerMatchId =
+          normalizeText(
+            row?.matchId
+          );
+
+        if (!providerMatchId) continue;
+
+        postponedByProviderId.set(
+          providerMatchId,
+          row
+        );
       }
 
       const missingFromFeedSourceIds = new Set();
@@ -825,8 +1220,7 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
             .toLowerCase();
 
           if (
-            canonicalSource !== "flashscore" ||
-            isFinalLike(row)
+            canonicalSource !== "flashscore"
           ) {
             return row;
           }
@@ -847,6 +1241,66 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
 
           if (!observedRow) {
             missingFromFeedSourceIds.add(providerMatchId);
+            return row;
+          }
+
+          const postponedRow =
+            postponedByProviderId.get(
+              providerMatchId
+            );
+
+          if (
+            postponedRow &&
+            isExactFlashscorePostponedRow(
+              postponedRow,
+              safeDayKey,
+              row
+            )
+          ) {
+            flashscoreStats.exactIdMatches++;
+            flashscoreStats.postponedExactIdMatches++;
+
+            const corrected =
+              buildFlashscorePostponedIncoming(
+                row,
+                postponedRow,
+                safeDayKey
+              );
+
+            const before =
+              rowStatusSignature(row);
+
+            const after =
+              rowStatusSignature(corrected);
+
+            if (before === after) {
+              return row;
+            }
+
+            leagueChanged = true;
+            leagueChangedRows++;
+
+            flashscoreStats.changedRows++;
+            stats.changedRows++;
+
+            stats.changedFixtures.push(
+              corrected
+            );
+
+            return corrected;
+          }
+
+          if (postponedRow) {
+            flashscoreStats
+              .unapprovedNonPlayedMatches++;
+          }
+
+          /*
+           * A current canonical final remains immutable unless
+           * the exact provider ID carries explicit AC=4
+           * non-played terminal evidence.
+           */
+          if (isFinalLike(row)) {
             return row;
           }
 
