@@ -2,6 +2,7 @@ import { LEAGUE_NAME_MAP } from "../config.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { mapStatus } from "./status-map.js";
 import { buildCanonicalId } from "./canonical-id.js";
+import { isPreKickoffNonPlayed } from "./non-played-state.js";
 
 function parseScore(value) {
   if (value === undefined || value === null || value === "") {
@@ -88,6 +89,7 @@ export function normalizeFixture(event, slug) {
 
   const rawStatus = comp?.status?.type?.name || "UNKNOWN";
   const status = mapStatus(rawStatus);
+  const preKickoffNonPlayed = isPreKickoffNonPlayed({ status, rawStatus });
 
   const decidedBy =
     String(rawStatus || "").toUpperCase().includes("PEN")
@@ -112,9 +114,13 @@ export function normalizeFixture(event, slug) {
     };
   }
 
-  if (status === "STATUS_SCHEDULED" || status === "PRE") {
+  if (status === "STATUS_SCHEDULED" || status === "PRE" || preKickoffNonPlayed) {
     scoreHome = null;
     scoreAway = null;
+  }
+
+  if (preKickoffNonPlayed) {
+    penalties = null;
   }
 
   const matchKey = buildMatchKey({
@@ -149,11 +155,11 @@ export function normalizeFixture(event, slug) {
     scoreHome,
     scoreAway,
     penalties,
-    decidedBy: penalties ? "pens" : decidedBy,
+    decidedBy: preKickoffNonPlayed ? null : (penalties ? "pens" : decidedBy),
 
     rawStatus,
     status,
-    minute: comp?.status?.displayClock || null,
+    minute: preKickoffNonPlayed ? null : (comp?.status?.displayClock || null),
 
     venue: comp?.venue?.fullName || null,
 

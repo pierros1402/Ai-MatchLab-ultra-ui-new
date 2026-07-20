@@ -8,6 +8,7 @@ import {
   readPlanAObservationDay,
   PLAN_A_OBSERVATION_START_DAY
 } from "../value/plan-a-observation.js";
+import { verifiedFinalVetoReason } from "../core/non-played-state.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -440,17 +441,87 @@ function resolveMarketFor(oddsEntry, market, pick) {
   };
 }
 
-function loadFinalResults(dayKey) {
-  const dir = dataPath("final-results", dayKey);
-  const rows = [];
+function loadCanonicalFinalVetoIndex(dayKey) {
+  const dir = dataPath("canonical-fixtures", dayKey);
+  const byCanonicalId = new Map();
+  const ambiguousIds = new Set();
 
   if (fs.existsSync(dir)) {
     for (const name of fs.readdirSync(dir)) {
       if (!name.endsWith(".json")) continue;
+
+      const payload = readJsonSafe(path.join(dir, name), null);
+      const fixtures = Array.isArray(payload?.fixtures)
+        ? payload.fixtures
+        : [];
+
+      for (const fixture of fixtures) {
+        const canonicalId = clean(fixture?.canonicalId);
+        if (!canonicalId) continue;
+
+        if (byCanonicalId.has(canonicalId)) {
+          ambiguousIds.add(canonicalId);
+          byCanonicalId.delete(canonicalId);
+          continue;
+        }
+
+        if (!ambiguousIds.has(canonicalId)) {
+          byCanonicalId.set(canonicalId, fixture);
+        }
+      }
+    }
+  }
+
+  return {
+    dir,
+    byCanonicalId,
+    ambiguousIds
+  };
+}
+
+export function loadFinalResults(
+  dayKey,
+  canonicalIndex = loadCanonicalFinalVetoIndex(dayKey)
+) {
+  const dir = dataPath("final-results", dayKey);
+  const rows = [];
+  const canonicalContradictions = [];
+
+  if (fs.existsSync(dir)) {
+    for (const name of fs.readdirSync(dir)) {
+      if (!name.endsWith(".json")) continue;
+
       const row = readJsonSafe(path.join(dir, name), null);
       if (!row) continue;
+
       const id = rowId(row);
       if (!id) continue;
+
+      if (canonicalIndex.ambiguousIds.has(id)) {
+        canonicalContradictions.push({
+          matchId: id,
+          reason: "canonical_identity_ambiguous"
+        });
+        continue;
+      }
+
+      const fixture =
+        canonicalIndex.byCanonicalId.get(id) ||
+        null;
+
+      const vetoReason = verifiedFinalVetoReason(fixture);
+
+      if (vetoReason) {
+        canonicalContradictions.push({
+          matchId: id,
+          canonicalId: clean(fixture?.canonicalId),
+          fixtureStatus: clean(fixture?.status),
+          fixtureRawStatus: clean(fixture?.rawStatus),
+          reason: vetoReason
+        });
+        continue;
+      }
+
       rows.push(row);
     }
   }
@@ -461,7 +532,12 @@ function loadFinalResults(dayKey) {
     dir,
     rows,
     byId: identity.byId,
-    ambiguousIds: identity.ambiguousIds
+    ambiguousIds: identity.ambiguousIds,
+    canonicalDir: canonicalIndex.dir,
+    canonicalIdentityAmbiguities: [
+      ...canonicalIndex.ambiguousIds
+    ].sort(),
+    canonicalContradictions
   };
 }
 
@@ -720,6 +796,9 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       fixturesPath: path.relative(ROOT, fixtures.file).replaceAll("\\", "/"),
       finalResultsDir: path.relative(ROOT, finalResults.dir).replaceAll("\\", "/"),
       verifiedFinalResults: finalResults.rows.length,
+      canonicalFinalVetoDir: path.relative(ROOT, finalResults.canonicalDir).replaceAll("\\", "/"),
+      canonicalContradictionsRejected: finalResults.canonicalContradictions,
+      canonicalIdentityAmbiguities: finalResults.canonicalIdentityAmbiguities,
       fixtureIdentityAmbiguities: fixtures.ambiguousIds,
       finalIdentityAmbiguities: finalResults.ambiguousIds,
       planAPath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),

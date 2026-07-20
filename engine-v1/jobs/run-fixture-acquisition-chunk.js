@@ -7,6 +7,11 @@ import { isInSeason } from "../source-discovery/season-calendar.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
 import { normalizeFixture } from "../core/normalize.js";
+import {
+  isPreKickoffNonPlayed,
+  isVerifiedFinalVetoState,
+  sanitizePreKickoffNonPlayed
+} from "../core/non-played-state.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 import { registerMatch } from "../storage/canonical-match-registry.js";
@@ -189,6 +194,7 @@ function fixtureTimeMs(row) {
 }
 
 function looksLikePlayedResult(row) {
+  if (isVerifiedFinalVetoState(row)) return false;
   const status = String(row?.status || row?.rawStatus || "").toUpperCase();
   if (status === "FT" || status === "AET" || status === "PEN" || status === "FINISHED") return true;
 
@@ -363,7 +369,48 @@ function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
 }
 
 function stableFixtureId(row) {
-  return String(row?.matchId || row?.sourceMatchId || row?.sourceId || row?.matchKey || "").trim();
+  if (!row || typeof row !== "object") return "";
+
+  const source = String(
+    row?.source ||
+    row?.provider ||
+    row?.adapterId ||
+    ""
+  ).trim().toLowerCase();
+
+  const providerId = String(
+    row?.sourceMatchId ||
+    row?.sourceId ||
+    row?.providerMatchId ||
+    row?.matchId ||
+    row?.id ||
+    ""
+  ).trim();
+
+  // Source-scoped provider identity is the primary external identity.
+  // Canonical IDs can legitimately change after team/day-key correction.
+  if (source && providerId) {
+    return `provider:${source}:${providerId}`;
+  }
+
+  const canonicalId = String(row?.canonicalId || "").trim();
+  if (canonicalId) return `canonical:${canonicalId}`;
+
+  const matchKey = String(row?.matchKey || "").trim();
+  if (matchKey) return `match-key:${matchKey}`;
+
+  const legacyUnscopedId = String(
+    row?.matchId ||
+    row?.id ||
+    row?.sourceMatchId ||
+    row?.sourceId ||
+    row?.providerMatchId ||
+    ""
+  ).trim();
+
+  return legacyUnscopedId
+    ? `legacy-unscoped:${legacyUnscopedId}`
+    : "";
 }
 
 function canonicalLeagueFile(dayKey, slug) {
@@ -407,6 +454,7 @@ function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
 
   const cleanFixtures = deduped.rows
     .filter(Boolean)
+    .map(row => sanitizePreKickoffNonPlayed(row))
     .sort((a, b) => {
       const ka = String(a?.kickoffUtc || "");
       const kb = String(b?.kickoffUtc || "");
@@ -480,7 +528,7 @@ function explicitFinalBundle(row) {
   return bundle;
 }
 
-export function mergeCanonicalFixtures(existing, incoming) {
+function mergeCanonicalFixturesBase(existing, incoming) {
   const map = new Map();
 
   function meaningful(value) {
@@ -549,6 +597,141 @@ export function mergeCanonicalFixtures(existing, incoming) {
   return [...map.values()];
 }
 
+function canonicalMergeIdentityKeys(row) {
+  if (!row || typeof row !== "object") return [];
+
+  const keys = [];
+  const canonicalId = String(row?.canonicalId || "").trim();
+
+  if (canonicalId) {
+    keys.push(`canonical:${canonicalId}`);
+  }
+
+  const source = String(
+    row?.source ||
+    row?.provider ||
+    row?.adapterId ||
+    ""
+  ).trim().toLowerCase();
+
+  if (source) {
+    for (const value of [
+      row?.sourceMatchId,
+      row?.sourceId,
+      row?.providerMatchId,
+      row?.matchId,
+      row?.id
+    ]) {
+      const providerId = String(value ?? "").trim();
+      if (providerId && providerId !== canonicalId) {
+        keys.push(`provider:${source}:${providerId}`);
+      }
+    }
+  }
+
+  if (!keys.length) {
+    const matchKey = String(row?.matchKey || "").trim();
+    if (matchKey) {
+      keys.push(`match-key:${matchKey}`);
+    } else {
+      const legacyUnscopedId = String(
+        row?.matchId ||
+        row?.id ||
+        row?.sourceMatchId ||
+        row?.sourceId ||
+        row?.providerMatchId ||
+        ""
+      ).trim();
+
+      if (legacyUnscopedId) {
+        keys.push(`legacy-unscoped:${legacyUnscopedId}`);
+      }
+    }
+  }
+
+  return [...new Set(keys)];
+}
+
+export function mergeCanonicalFixtures(existingFixtures = [], incomingFixtures = []) {
+  const existingRows = (
+    Array.isArray(existingFixtures)
+      ? existingFixtures
+      : []
+  ).map(row => sanitizePreKickoffNonPlayed(row));
+
+  const incomingRows = (
+    Array.isArray(incomingFixtures)
+      ? incomingFixtures
+      : []
+  ).map(row => sanitizePreKickoffNonPlayed(row));
+
+  const incomingNonPlayedByIdentity = new Map();
+
+  for (const row of incomingRows) {
+    if (!isPreKickoffNonPlayed(row)) continue;
+
+    for (const identity of canonicalMergeIdentityKeys(row)) {
+      if (!incomingNonPlayedByIdentity.has(identity)) {
+        incomingNonPlayedByIdentity.set(identity, new Set());
+      }
+      incomingNonPlayedByIdentity.get(identity).add(row);
+    }
+  }
+
+  const mergedRows = mergeCanonicalFixturesBase(
+    existingRows,
+    incomingRows
+  );
+
+  return (
+    Array.isArray(mergedRows)
+      ? mergedRows
+      : []
+  ).map(row => {
+    const candidates = new Set();
+
+    for (const identity of canonicalMergeIdentityKeys(row)) {
+      for (const candidate of (
+        incomingNonPlayedByIdentity.get(identity) ||
+        []
+      )) {
+        candidates.add(candidate);
+      }
+    }
+
+    if (candidates.size !== 1) {
+      return sanitizePreKickoffNonPlayed(row);
+    }
+
+    const [incomingNonPlayed] = candidates;
+
+    return sanitizePreKickoffNonPlayed({
+      ...row,
+      status:
+        incomingNonPlayed.status ??
+        row.status,
+      rawStatus:
+        incomingNonPlayed.rawStatus ??
+        row.rawStatus,
+      statusType:
+        incomingNonPlayed.statusType ??
+        row.statusType,
+      sourceStatus:
+        incomingNonPlayed.sourceStatus ??
+        row.sourceStatus,
+      lastSeenAt:
+        incomingNonPlayed.lastSeenAt ??
+        row.lastSeenAt,
+      scoreHome: null,
+      scoreAway: null,
+      minute: null,
+      penalties: null,
+      decidedBy: null,
+      isDisplayFinal: false
+    });
+  });
+}
+
 function serializeFixture(normalized, adapterId, fetchedDayKey) {
   const canonicalId = normalized.canonicalId
     || buildCanonicalId(
@@ -558,7 +741,6 @@ function serializeFixture(normalized, adapterId, fetchedDayKey) {
         normalized.dayKey || fetchedDayKey || normalized.kickoffUtc
       );
 
-  // Register in the canonical registry so any layer can resolve source ID → canonical ID
   if (canonicalId && normalized.dayKey) {
     registerMatch(normalized.dayKey, {
       canonicalId,
@@ -571,7 +753,7 @@ function serializeFixture(normalized, adapterId, fetchedDayKey) {
     });
   }
 
-  return {
+  return sanitizePreKickoffNonPlayed({
     canonicalId,
     matchId: normalized.matchId,
     matchKey: normalized.matchKey,
@@ -602,7 +784,7 @@ function serializeFixture(normalized, adapterId, fetchedDayKey) {
 
     firstSeenAt: new Date().toISOString(),
     lastSeenAt: new Date().toISOString()
-  };
+  });
 }
 
 function selectAdapterForLeague(slug) {

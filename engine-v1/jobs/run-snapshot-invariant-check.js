@@ -27,6 +27,11 @@ import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { athensDayKey } from "../core/daykey.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { sameTeamName } from "../core/fixture-dedup.js";
+import {
+  hasMatchStateConflict,
+  hasPreKickoffNonPlayedDisplayViolation,
+  isPreKickoffNonPlayed
+} from "../core/non-played-state.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -109,6 +114,57 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
     report.valueCount = Array.isArray(value?.picks) ? value.picks.length : (value?.count ?? 0);
   }
 
+  // ── CHECK 0: explicit pre-kickoff non-played rows carry no result/display state ──
+  for (const fx of fixtureList) {
+    if (hasMatchStateConflict(fx)) {
+      const conflictId =
+        fx.canonicalId ||
+        fx.matchId ||
+        null;
+
+      report.blocked.push({
+        type: "fixture_status_truth_conflict",
+        matchId: conflictId,
+        status: fx.status ?? null,
+        rawStatus: fx.rawStatus ?? null,
+        impact: "verified_final_truth_unsafe"
+      });
+      report.valueSafe = false;
+      ciError(
+        `[blocked] fixture has conflicting terminal/non-played status evidence: ${conflictId || "unknown"}`
+      );
+    }
+
+    if (!hasPreKickoffNonPlayedDisplayViolation(fx)) continue;
+
+    const cid =
+      fx.canonicalId ||
+      buildCanonicalId(
+        fx.leagueSlug,
+        fx.homeTeam || fx.home,
+        fx.awayTeam || fx.away,
+        fx.dayKey || fx.kickoffUtc
+      );
+
+    report.blocked.push({
+      type: "pre_kickoff_nonplayed_fixture_state_violation",
+      matchId: cid || fx.matchId || null,
+      status: fx.status ?? null,
+      rawStatus: fx.rawStatus ?? null,
+      scoreHome: fx.scoreHome ?? null,
+      scoreAway: fx.scoreAway ?? null,
+      minute: fx.minute ?? null,
+      penalties: fx.penalties ?? null,
+      decidedBy: fx.decidedBy ?? null,
+      isDisplayFinal: fx.isDisplayFinal ?? null,
+      impact: "result_truth_and_display_unsafe"
+    });
+    report.valueSafe = false;
+    ciError(
+      `[blocked] pre-kickoff non-played fixture carries score/minute/final state: ${cid || fx.matchId || "unknown"}`
+    );
+  }
+
   // ── CHECK 1: status agreement between fixtures and details ───────────────
   for (const fx of fixtureList) {
     const cid = fx.canonicalId || buildCanonicalId(fx.leagueSlug, fx.homeTeam || fx.home, fx.awayTeam || fx.away, fx.dayKey || fx.kickoffUtc);
@@ -126,6 +182,46 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
     if (!resolvedFile) continue;
 
     const detail = readJsonSafe(resolvedFile);
+
+    if (hasMatchStateConflict(detail?.basic)) {
+      report.blocked.push({
+        type: "detail_status_truth_conflict",
+        matchId: cid,
+        file: path.relative(snapshotDir, resolvedFile),
+        status: detail.basic.status ?? null,
+        rawStatus: detail.basic.rawStatus ?? null,
+        impact: "verified_final_truth_unsafe"
+      });
+      report.valueSafe = false;
+      ciError(
+        `[blocked] detail has conflicting terminal/non-played status evidence: ${cid}`
+      );
+    }
+
+    if (
+      isPreKickoffNonPlayed(detail?.basic) &&
+      hasPreKickoffNonPlayedDisplayViolation(detail.basic)
+    ) {
+      report.blocked.push({
+        type: "pre_kickoff_nonplayed_detail_state_violation",
+        matchId: cid,
+        file: path.relative(snapshotDir, resolvedFile),
+        status: detail.basic.status ?? null,
+        rawStatus: detail.basic.rawStatus ?? null,
+        scoreHome: detail.basic.scoreHome ?? null,
+        scoreAway: detail.basic.scoreAway ?? null,
+        minute: detail.basic.minute ?? null,
+        penalties: detail.basic.penalties ?? null,
+        decidedBy: detail.basic.decidedBy ?? null,
+        isDisplayFinal: detail.basic.isDisplayFinal ?? null,
+        impact: "detail_truth_and_display_unsafe"
+      });
+      report.valueSafe = false;
+      ciError(
+        `[blocked] pre-kickoff non-played detail carries score/minute/final state: ${cid}`
+      );
+    }
+
     const detailStatus = detail?.basic?.status;
     const fixtureStatus = fx.status;
 

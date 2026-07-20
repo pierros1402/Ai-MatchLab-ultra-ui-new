@@ -9,6 +9,7 @@ import {
 import { resolveDataPath } from "../storage/data-root.js";
 import { teamPairMatches } from "../core/team-identity.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { verifiedFinalVetoReason } from "../core/non-played-state.js";
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -855,6 +856,13 @@ export function buildCanonicalEspnVerifiedFinalResult(
   };
 }
 
+export function hasCanonicalPreKickoffNonPlayedVeto(target) {
+  return verifiedFinalVetoReason(
+    target?.canonicalFixture ||
+    null
+  ) !== null;
+}
+
 export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const safeDayKey = clean(dayKey);
 
@@ -884,7 +892,18 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const retractionBlocked = [];
 
   for (const target of targetSource.targets) {
-    const found = findFlashscoreMatch(target, sourceRows, safeDayKey);
+    const canonicalVetoReason =
+      verifiedFinalVetoReason(
+        target?.canonicalFixture ||
+        null
+      );
+
+    const found = canonicalVetoReason
+      ? {
+          ok: false,
+          reason: canonicalVetoReason
+        }
+      : findFlashscoreMatch(target, sourceRows, safeDayKey);
 
     let payload = null;
     let resolutionMethod = "";

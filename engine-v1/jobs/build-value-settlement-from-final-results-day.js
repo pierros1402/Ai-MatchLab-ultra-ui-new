@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { verifiedFinalVetoReason } from '../core/non-played-state.js';
 
 const currentFile = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(currentFile), '../..');
@@ -163,6 +164,26 @@ function hasProviderOnlyFinalTruthRisk(data) {
   return providerText.includes('espn') && independentSourceCount < 1;
 }
 
+function strictFinalScore(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    return null;
+  }
+
+  const score = Number(value);
+
+  return (
+    Number.isInteger(score) &&
+    score >= 0
+  )
+    ? score
+    : null;
+}
+
 function normalizeFinalResultData(data, filePath) {
   if (!data || data.verifiedFinalTruth !== true) return null;
   if (!hasVerifiedFinalResultVerdict(data)) return null;
@@ -170,13 +191,13 @@ function normalizeFinalResultData(data, filePath) {
 
   const matchId = clean(data.matchId);
   const date = clean(data.date);
-  const homeScore = Number(data?.finalScore?.homeScore);
-  const awayScore = Number(data?.finalScore?.awayScore);
+  const homeScore = strictFinalScore(data?.finalScore?.homeScore);
+  const awayScore = strictFinalScore(data?.finalScore?.awayScore);
   const sourceCount = Number(data?.verification?.sourceCount || data?.sourceCount || 0);
   const independentSourceCount = Number(data?.verification?.independentSourceCount || data?.independentSourceCount || 0);
 
   if (!matchId || !date) return null;
-  if (!Number.isInteger(homeScore) || !Number.isInteger(awayScore)) return null;
+  if (homeScore === null || awayScore === null) return null;
   if (!Number.isFinite(sourceCount) || sourceCount < 1) return null;
   if (!Number.isFinite(independentSourceCount) || independentSourceCount < 1) return null;
 
@@ -202,20 +223,84 @@ function normalizeFinalResultFile(filePath) {
 
 function loadFinalResults(dayKey) {
   const dir = resolveRepoPath('data', 'final-results', dayKey);
+  const canonicalDir = resolveRepoPath('data', 'canonical-fixtures', dayKey);
+  const canonicalById = new Map();
+  const canonicalIdentityAmbiguities = new Set();
+
+  if (fs.existsSync(canonicalDir)) {
+    for (const name of fs.readdirSync(canonicalDir).filter(name => name.endsWith('.json'))) {
+      const payload = readJsonSafe(path.join(canonicalDir, name), null);
+      const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
+
+      for (const fixture of fixtures) {
+        const canonicalId = clean(fixture?.canonicalId);
+        if (!canonicalId) continue;
+
+        if (canonicalById.has(canonicalId)) {
+          canonicalIdentityAmbiguities.add(canonicalId);
+          canonicalById.delete(canonicalId);
+          continue;
+        }
+
+        if (!canonicalIdentityAmbiguities.has(canonicalId)) {
+          canonicalById.set(canonicalId, fixture);
+        }
+      }
+    }
+  }
+
   if (!fs.existsSync(dir)) {
     return {
       dir,
-      rows: []
+      rows: [],
+      canonicalContradictions: [],
+      canonicalIdentityAmbiguities: [...canonicalIdentityAmbiguities].sort()
     };
   }
 
-  const rows = fs.readdirSync(dir)
-    .filter(name => name.endsWith('.json'))
-    .map(name => normalizeFinalResultFile(path.join(dir, name)))
-    .filter(Boolean)
-    .sort((a, b) => a.matchId.localeCompare(b.matchId));
+  const rows = [];
+  const canonicalContradictions = [];
 
-  return { dir, rows };
+  for (const name of fs.readdirSync(dir).filter(name => name.endsWith('.json'))) {
+    const row = normalizeFinalResultFile(path.join(dir, name));
+    if (!row) continue;
+
+    if (canonicalIdentityAmbiguities.has(row.matchId)) {
+      canonicalContradictions.push({
+        matchId: row.matchId,
+        finalResultPath: repoRelative(row.path),
+        reason: 'canonical_identity_ambiguous'
+      });
+      continue;
+    }
+
+    const canonicalFixture = canonicalById.get(row.matchId) || null;
+    const vetoReason = verifiedFinalVetoReason(canonicalFixture);
+
+    if (vetoReason) {
+      canonicalContradictions.push({
+        matchId: row.matchId,
+        finalResultPath: repoRelative(row.path),
+        canonicalId: clean(canonicalFixture?.canonicalId),
+        canonicalStatus: clean(canonicalFixture?.status),
+        canonicalRawStatus: clean(canonicalFixture?.rawStatus),
+        reason: vetoReason
+      });
+      continue;
+    }
+
+    rows.push(row);
+  }
+
+  rows.sort((a, b) => a.matchId.localeCompare(b.matchId));
+  canonicalContradictions.sort((a, b) => a.matchId.localeCompare(b.matchId));
+
+  return {
+    dir,
+    rows,
+    canonicalContradictions,
+    canonicalIdentityAmbiguities: [...canonicalIdentityAmbiguities].sort()
+  };
 }
 
 function pickMatchKeys(pick) {
@@ -410,6 +495,8 @@ function buildSettlementReport(dayKey, options = {}) {
     summary: {
       valuePicks: valueSource.rows.length,
       verifiedFinalResults: finalSource.rows.length,
+      canonicalContradictionsRejected: finalSource.canonicalContradictions.length,
+      canonicalIdentityAmbiguities: finalSource.canonicalIdentityAmbiguities.length,
       settledRows: settledRows.length,
       unresolvedRows: unresolvedRows.length,
       winRows: settledRows.filter(row => row.result === 'WIN').length,
@@ -417,6 +504,8 @@ function buildSettlementReport(dayKey, options = {}) {
     },
     settledRows,
     unresolvedRows,
+    canonicalContradictions: finalSource.canonicalContradictions,
+    canonicalIdentityAmbiguities: finalSource.canonicalIdentityAmbiguities,
     draftValueData,
     guarantees: {
       canonicalWrites: 0,
@@ -579,5 +668,6 @@ export {
   buildSettlementReport,
   evaluatePickResult,
   loadFinalResults,
-  loadValueData
+  loadValueData,
+  normalizeFinalResultData
 };
