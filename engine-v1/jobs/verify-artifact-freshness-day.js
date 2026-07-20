@@ -28,6 +28,7 @@
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "node:url";
+import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
 function readJsonSafe(file) {
@@ -58,6 +59,27 @@ function maxTime(values) {
   return times.length ? Math.max(...times) : null;
 }
 
+export function shouldPreserveHistoricalPlanBObservation({
+  dayKey,
+  currentAthensDay = athensDayKey(),
+  planB,
+  planBAudit
+} = {}) {
+  const requestedDay = String(dayKey || "").trim();
+  const operationalDay = String(currentAthensDay || "").trim();
+  const validDay = /^\d{4}-\d{2}-\d{2}$/u;
+
+  if (!validDay.test(requestedDay) || !validDay.test(operationalDay)) return false;
+  if (requestedDay >= operationalDay) return false;
+  if (planB?.outputMode !== "plan-b-observation") return false;
+  if (planBAudit?.date !== requestedDay) return false;
+
+  const sourceContract = planBAudit?.sourceContract;
+  return sourceContract?.valueInput === "odds_memory_ai_assessment"
+    && sourceContract?.deploySnapshotInput === false
+    && sourceContract?.realBookmakerOddsUsed === false;
+}
+
 export function verifyArtifactFreshnessDay(dayKey) {
   const report = {
     ok: true,
@@ -68,6 +90,7 @@ export function verifyArtifactFreshnessDay(dayKey) {
     staleInputs: [],
     derivedArtifacts: [],
     staleDerivedArtifacts: [],
+    preservedHistoricalDerivedArtifacts: [],
     skippedInputs: [],
     reasons: []
   };
@@ -147,8 +170,16 @@ export function verifyArtifactFreshnessDay(dayKey) {
   if (latestCanonicalInputAt !== null) {
     const snapshotValue = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
     const snapshotAudit = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value-audit.json"));
+    const planB = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b.json"));
     const planBAudit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"));
     const comparison = readJsonSafe(resolveDataPath("value-comparison", `${dayKey}.json`));
+    const currentAthensDay = athensDayKey();
+    const preserveHistoricalPlanBAudit = shouldPreserveHistoricalPlanBObservation({
+      dayKey,
+      currentAthensDay,
+      planB,
+      planBAudit
+    });
 
     const derivedArtifacts = [
       {
@@ -167,7 +198,17 @@ export function verifyArtifactFreshnessDay(dayKey) {
         kind: "plan_b_audit",
         artifact: `value-plans/${dayKey}/plan-b-audit.json`,
         at: planBAudit?.generatedAt || null,
-        staleReason: "plan_b_audit_stale_against_canonical"
+        staleReason: "plan_b_audit_stale_against_canonical",
+        preservation: preserveHistoricalPlanBAudit
+          ? {
+              reason: "closed_day_immutable_plan_b_observation",
+              requestedDay: dayKey,
+              currentAthensDay,
+              outputMode: planB?.outputMode || null,
+              auditDate: planBAudit?.date || null,
+              sourceContract: planBAudit?.sourceContract || null
+            }
+          : null
       },
       {
         kind: "value_plan_comparison",
@@ -191,6 +232,11 @@ export function verifyArtifactFreshnessDay(dayKey) {
       report.derivedArtifacts.push(entry);
 
       if (at < latestCanonicalInputAt) {
+        if (artifact.preservation) {
+          report.preservedHistoricalDerivedArtifacts.push({ ...entry, preserved: true });
+          continue;
+        }
+
         report.staleDerivedArtifacts.push(entry);
         if (!report.reasons.includes(artifact.staleReason)) {
           report.reasons.push(artifact.staleReason);
