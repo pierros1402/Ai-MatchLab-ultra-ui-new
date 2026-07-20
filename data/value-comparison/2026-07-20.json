@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-07-20",
-  "generatedAt": "2026-07-20T20:56:35.160Z",
+  "generatedAt": "2026-07-20T22:31:13.901Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -16,7 +16,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-07-20/fixtures.json",
     "finalResultsDir": "data/final-results/2026-07-20",
-    "verifiedFinalResults": 20,
+    "verifiedFinalResults": 26,
     "fixtureIdentityAmbiguities": [],
     "finalIdentityAmbiguities": [],
     "planAPath": "data/value-plans/2026-07-20/plan-a.json",
@@ -42,18 +42,18 @@
       "summary": {
         "picks": 3,
         "uniqueMatches": 3,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
-        "unresolved": 3,
+        "settled": 3,
+        "wins": 2,
+        "losses": 1,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.6667,
+        "oddsAvailable": 1,
+        "averageOdds": 1.3,
+        "totalStake": 1,
+        "totalReturn": 1.3,
+        "profit": 0.3,
+        "roi": 0.3
       },
       "picks": [
         {
@@ -61,7 +61,7 @@
           "matchId": "cid_isl2_kopavogur_vestri_20260720",
           "country": "Iceland",
           "leagueSlug": "isl.2",
-          "leagueName": "Icelandic 1. deild karla",
+          "leagueName": "Division 1",
           "kickoff": "2026-07-20T19:15:00.000Z",
           "homeTeam": "Kopavogur",
           "awayTeam": "Vestri",
@@ -75,15 +75,19 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 1.3,
           "oddsUse": "display_settlement_only",
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 6,
+            "awayScore": 2,
+            "scoreKey": "6-2"
+          },
+          "result": "WIN"
         },
         {
           "planId": "plan-a",
           "matchId": "cid_isl1_keflavik_akranes_20260720",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-07-20T19:15:00.000Z",
           "homeTeam": "Keflavik",
           "awayTeam": "Akranes",
@@ -97,15 +101,19 @@
           "aiFairOdds": null,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 5,
+            "awayScore": 2,
+            "scoreKey": "5-2"
+          },
+          "result": "WIN"
         },
         {
           "planId": "plan-a",
           "matchId": "cid_isl1_hafnarfjordur_breidablik_20260720",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-07-20T19:15:00.000Z",
           "homeTeam": "Hafnarfjordur",
           "awayTeam": "Breidablik",
@@ -119,8 +127,12 @@
           "aiFairOdds": null,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 0,
+            "scoreKey": "0-0"
+          },
+          "result": "LOSS"
         }
       ]
     },
@@ -138,18 +150,18 @@
       "summary": {
         "picks": 1,
         "uniqueMatches": 1,
-        "settled": 0,
-        "wins": 0,
+        "settled": 1,
+        "wins": 1,
         "losses": 0,
-        "unresolved": 1,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 1,
+        "oddsAvailable": 1,
+        "averageOdds": 1.3,
+        "totalStake": 1,
+        "totalReturn": 1.3,
+        "profit": 0.3,
+        "roi": 0.3
       },
       "picks": [
         {
@@ -157,7 +169,7 @@
           "matchId": "cid_isl2_kopavogur_vestri_20260720",
           "country": "Iceland",
           "leagueSlug": "isl.2",
-          "leagueName": "Icelandic 1. deild karla",
+          "leagueName": "Division 1",
           "kickoff": "2026-07-20T19:15:00.000Z",
           "homeTeam": "Kopavogur",
           "awayTeam": "Vestri",
@@ -171,18 +183,22 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 1.3,
           "oddsUse": "display_settlement_only",
-          "finalScore": null,
-          "result": "UNRESOLVED"
+          "finalScore": {
+            "homeScore": 6,
+            "awayScore": 2,
+            "scoreKey": "6-2"
+          },
+          "result": "WIN"
         }
       ]
     }
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -2,
-    "settledDeltaPlanBMinusPlanA": 0,
-    "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": 0,
-    "hitRateDeltaPlanBMinusPlanA": null,
-    "roiDeltaPlanBMinusPlanA": null
+    "settledDeltaPlanBMinusPlanA": -2,
+    "winsDeltaPlanBMinusPlanA": -1,
+    "lossesDeltaPlanBMinusPlanA": -1,
+    "hitRateDeltaPlanBMinusPlanA": 0.3333,
+    "roiDeltaPlanBMinusPlanA": 0
   }
 }
