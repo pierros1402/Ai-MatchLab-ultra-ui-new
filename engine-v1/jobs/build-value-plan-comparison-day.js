@@ -89,6 +89,146 @@ function rowId(row) {
   return clean(row?.matchId || row?.id || row?.fixtureId || row?.eventId || row?.gameId);
 }
 
+function addExactIdentityAlias(target, value) {
+  const alias = clean(value);
+  if (alias) target.add(alias);
+}
+
+export function exactIdentityAliases(row) {
+  const aliases = new Set();
+
+  for (const key of [
+    "matchId",
+    "canonicalId",
+    "id",
+    "fixtureId",
+    "eventId",
+    "gameId",
+    "sourceId",
+    "sourceMatchId",
+    "providerMatchId"
+  ]) {
+    addExactIdentityAlias(aliases, row?.[key]);
+  }
+
+  const sources = row?.sources;
+
+  if (Array.isArray(sources)) {
+    for (const sourceRow of sources) {
+      for (const key of [
+        "matchId",
+        "canonicalId",
+        "sourceId",
+        "sourceMatchId",
+        "providerMatchId"
+      ]) {
+        addExactIdentityAlias(aliases, sourceRow?.[key]);
+      }
+    }
+  } else if (sources && typeof sources === "object") {
+    for (const sourceRow of Object.values(sources)) {
+      for (const key of [
+        "matchId",
+        "canonicalId",
+        "sourceId",
+        "sourceMatchId",
+        "providerMatchId"
+      ]) {
+        addExactIdentityAlias(aliases, sourceRow?.[key]);
+      }
+    }
+  }
+
+  return [...aliases];
+}
+
+export function buildExactIdentityIndex(rows = []) {
+  const byId = new Map();
+  const ambiguousIds = new Set();
+
+  for (const row of rows) {
+    for (const alias of exactIdentityAliases(row)) {
+      if (ambiguousIds.has(alias)) continue;
+
+      const existing = byId.get(alias);
+
+      if (!existing) {
+        byId.set(alias, row);
+        continue;
+      }
+
+      if (existing !== row) {
+        byId.delete(alias);
+        ambiguousIds.add(alias);
+      }
+    }
+  }
+
+  return {
+    byId,
+    ambiguousIds: [...ambiguousIds].sort()
+  };
+}
+
+function strictExplicitScore(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && value.trim() === "") return null;
+
+  const parsed = Number(value);
+
+  return (
+    Number.isFinite(parsed) &&
+    Number.isInteger(parsed) &&
+    parsed >= 0
+  )
+    ? parsed
+    : null;
+}
+
+function resolveConsistentScore(values) {
+  const present = values.filter(value =>
+    value !== null &&
+    value !== undefined &&
+    !(typeof value === "string" && value.trim() === "")
+  );
+
+  if (!present.length) return null;
+
+  const parsed = present.map(strictExplicitScore);
+  if (parsed.some(value => value === null)) return null;
+
+  return new Set(parsed).size === 1
+    ? parsed[0]
+    : null;
+}
+
+export function resolveVerifiedFinalScore(finalResult) {
+  if (!finalResult || typeof finalResult !== "object") return null;
+
+  const homeScore = resolveConsistentScore([
+    finalResult.homeScore,
+    finalResult.scoreHome,
+    finalResult?.finalScore?.homeScore,
+    finalResult?.finalScore?.home
+  ]);
+
+  const awayScore = resolveConsistentScore([
+    finalResult.awayScore,
+    finalResult.scoreAway,
+    finalResult?.finalScore?.awayScore,
+    finalResult?.finalScore?.away
+  ]);
+
+  if (homeScore === null || awayScore === null) return null;
+
+  return {
+    homeScore,
+    awayScore,
+    scoreKey: clean(finalResult.scoreKey || finalResult?.finalScore?.scoreKey) ||
+      String(homeScore) + "-" + String(awayScore)
+  };
+}
+
 function homeName(row) {
   return clean(row?.homeTeam || row?.home || row?.homeName || row?.teams?.home?.name || row?.home?.name);
 }
@@ -139,10 +279,12 @@ function decimalOdds(row) {
   return null;
 }
 
-function evaluatePickResult(pick, finalResult) {
-  const home = Number(finalResult.homeScore ?? finalResult.scoreHome ?? finalResult?.finalScore?.homeScore);
-  const away = Number(finalResult.awayScore ?? finalResult.scoreAway ?? finalResult?.finalScore?.awayScore);
-  if (!Number.isFinite(home) || !Number.isFinite(away)) return null;
+export function evaluatePickResult(pick, finalResult) {
+  const score = resolveVerifiedFinalScore(finalResult);
+  if (!score) return null;
+
+  const home = score.homeScore;
+  const away = score.awayScore;
 
   const market = normalizeMarket(pick?.market || pick?.marketName || pick?.type);
   const selection = normalizeSelection(pick);
@@ -192,14 +334,14 @@ function evaluatePickResult(pick, finalResult) {
 function loadFixtures(dayKey) {
   const file = dataPath("deploy-snapshots", dayKey, "fixtures.json");
   const rows = rowsFromPayload(readJsonSafe(file, null));
-  const byId = new Map();
+  const identity = buildExactIdentityIndex(rows);
 
-  for (const row of rows) {
-    const id = rowId(row);
-    if (id) byId.set(id, row);
-  }
-
-  return { file, rows, byId };
+  return {
+    file,
+    rows,
+    byId: identity.byId,
+    ambiguousIds: identity.ambiguousIds
+  };
 }
 
 // AI-priced market odds + implied probabilities from odds.json, plus kickoff.
@@ -313,12 +455,19 @@ function loadFinalResults(dayKey) {
     }
   }
 
-  const byId = new Map(rows.map(row => [rowId(row), row]));
-  return { dir, rows, byId };
+  const identity = buildExactIdentityIndex(rows);
+
+  return {
+    dir,
+    rows,
+    byId: identity.byId,
+    ambiguousIds: identity.ambiguousIds
+  };
 }
 
 function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) {
   const id = rowId(row);
+  const verifiedScore = resolveVerifiedFinalScore(finalResult);
   const win = finalResult ? evaluatePickResult(row, finalResult) : null;
 
   let settlement = "UNRESOLVED";
@@ -364,13 +513,7 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) 
     aiFairOdds: mkt.odds,
     oddsDecimal: odds,
     oddsUse: odds ? "display_settlement_only" : null,
-    finalScore: finalResult
-      ? {
-          homeScore: Number(finalResult.homeScore ?? finalResult.scoreHome ?? finalResult?.finalScore?.homeScore),
-          awayScore: Number(finalResult.awayScore ?? finalResult.scoreAway ?? finalResult?.finalScore?.awayScore),
-          scoreKey: clean(finalResult.scoreKey || finalResult?.finalScore?.scoreKey)
-        }
-      : null,
+    finalScore: verifiedScore,
     result: settlement
   };
 }
@@ -577,6 +720,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       fixturesPath: path.relative(ROOT, fixtures.file).replaceAll("\\", "/"),
       finalResultsDir: path.relative(ROOT, finalResults.dir).replaceAll("\\", "/"),
       verifiedFinalResults: finalResults.rows.length,
+      fixtureIdentityAmbiguities: fixtures.ambiguousIds,
+      finalIdentityAmbiguities: finalResults.ambiguousIds,
       planAPath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
       planAFreeze: null,
       outputPath: path.relative(ROOT, outputPath).replaceAll("\\", "/")

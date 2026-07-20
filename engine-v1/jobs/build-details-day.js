@@ -325,7 +325,15 @@ function compactResearchedFactsForDetails(researchedFacts, playerUsageIntel) {
   };
 }
 
-function buildDetailsSignature(match, valuePicks, payload) {
+function explicitFiniteNumberOrNull(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && value.trim() === "") return null;
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function buildDetailsSignature(match, valuePicks, payload) {
   const topPick = (valuePicks || [])
     .slice()
     .sort((a, b) => Number(b?.score || 0) - Number(a?.score || 0))[0] || null;
@@ -339,8 +347,8 @@ function buildDetailsSignature(match, valuePicks, payload) {
     status: String(match?.status || ""),
     rawStatus: String(match?.rawStatus || ""),
     minute: String(match?.minute || ""),
-    scoreHome: Number.isFinite(Number(match?.scoreHome)) ? Number(match.scoreHome) : null,
-    scoreAway: Number.isFinite(Number(match?.scoreAway)) ? Number(match.scoreAway) : null,
+    scoreHome: explicitFiniteNumberOrNull(match?.scoreHome),
+    scoreAway: explicitFiniteNumberOrNull(match?.scoreAway),
     referee: String(
       match?.referee ||
       match?.sources?.espn?.referee ||
