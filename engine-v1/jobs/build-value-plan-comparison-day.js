@@ -9,6 +9,8 @@ import {
   PLAN_A_OBSERVATION_START_DAY
 } from "../value/plan-a-observation.js";
 import { verifiedFinalVetoReason } from "../core/non-played-state.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { validatePicksAgainstCanonicalFixtures } from "../core/plan-b-canonical-membership.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -733,6 +735,80 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
   }
   if (!planBPayload) return { ok: false, reason: "missing_plan_b", planBPath };
 
+  const canonicalFixtures = canonicalFixturesForDay(dayKey);
+  const planBMembership = validatePicksAgainstCanonicalFixtures(
+    rowsFromPayload(planBPayload),
+    canonicalFixtures
+  );
+  const planBContract = planBPayload?.sourceContract;
+  const planBContractOk =
+    planBContract?.fixtureUniverse === "canonical_fixtures" &&
+    planBContract?.canonicalFixtureUniverseRequired === true &&
+    planBContract?.exactIdentityJoinOnly === true &&
+    planBContract?.oddsMemoryCanCreateFixture === false;
+
+  if (
+    planBPayload?.ok === false ||
+    !planBContractOk ||
+    !planBMembership.ok
+  ) {
+    const blockedPayload = {
+      ok: false,
+      schema: "ai-matchlab.value-plan-comparison.v1",
+      date: dayKey,
+      generatedAt: new Date().toISOString(),
+      reason: planBPayload?.ok === false
+        ? "plan_b_artifact_not_ok"
+        : !planBContractOk
+          ? "plan_b_canonical_membership_contract_missing"
+          : "plan_b_canonical_membership_violation",
+      sourceContract: {
+        planB: "canonical_fixture_membership_required",
+        oddsMayCreateFixtures: false
+      },
+      inputs: {
+        planAPath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
+        planBPath: path.relative(ROOT, planBPath).replaceAll("\\", "/"),
+        outputPath: path.relative(ROOT, outputPath).replaceAll("\\", "/"),
+        canonicalFixtures: canonicalFixtures.length
+      },
+      membership: {
+        contractOk: planBContractOk,
+        ...planBMembership.summary,
+        orphanPickIds: planBMembership.orphanPicks
+          .map(row => clean(row?.canonicalId || row?.matchId))
+          .filter(Boolean)
+          .sort(),
+        ambiguousPickIds: planBMembership.ambiguousPicks
+          .map(entry => clean(entry?.pick?.canonicalId || entry?.pick?.matchId))
+          .filter(Boolean)
+          .sort()
+      },
+      plans: {
+        A: null,
+        B: {
+          count: 0,
+          summary: {
+            picks: 0,
+            settled: 0,
+            wins: 0,
+            losses: 0,
+            unresolved: 0,
+            hitRate: null,
+            roi: null
+          },
+          picks: []
+        }
+      }
+    };
+
+    if (options.write === true) {
+      writeJsonPretty(outputPath, blockedPayload);
+    }
+
+    return blockedPayload;
+  }
+
   const fixtures = loadFixtures(dayKey);
   const finalResults = loadFinalResults(dayKey);
   const oddsById = loadOddsMap(dayKey);
@@ -787,6 +863,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       planAObservationStartDate: PLAN_A_OBSERVATION_START_DAY,
       planAImmutable: observationPeriod,
       planB: "strict_value_policy_v2.3_observation_artifact",
+      planBCanonicalFixtureMembershipRequired: true,
+      planBOddsMayCreateFixtures: false,
       finalTruth: "verified_final_results",
       deploySnapshotUsedAsFinalTruth: false,
       realBookmakerOddsUsedForValue: false,
@@ -802,6 +880,7 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       fixtureIdentityAmbiguities: fixtures.ambiguousIds,
       finalIdentityAmbiguities: finalResults.ambiguousIds,
       planAPath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
+      planBMembership: planBMembership.summary,
       planAFreeze: null,
       outputPath: path.relative(ROOT, outputPath).replaceAll("\\", "/")
     },

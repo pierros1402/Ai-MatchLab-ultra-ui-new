@@ -56,6 +56,62 @@ export function checkValueArtifactGate(dayKey) {
     return { ok: false, code: 2, reason: "value_artifact_stale_against_canonical", gate };
   }
 
+  const planB = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(resolveDataPath("value-plans", dayKey, "plan-b.json"), "utf8"));
+    } catch {
+      return null;
+    }
+  })();
+
+  const planBAudit = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"), "utf8"));
+    } catch {
+      return null;
+    }
+  })();
+
+  if (planB && Number(planB?.count || 0) > 0) {
+    const sourceContract = planB?.sourceContract || planBAudit?.sourceContract || null;
+    const contractOk = Boolean(
+      sourceContract?.fixtureUniverse === "canonical_fixtures" &&
+      sourceContract?.canonicalFixtureUniverseRequired === true &&
+      sourceContract?.exactIdentityJoinOnly === true &&
+      sourceContract?.oddsMemoryCanCreateFixture === false
+    );
+
+    if (!contractOk) {
+      return {
+        ok: false,
+        code: 2,
+        reason: "plan_b_canonical_membership_contract_missing",
+        gate,
+        planB: { count: Number(planB?.count || 0), sourceContract }
+      };
+    }
+
+    const membership = planBAudit?.membership || {};
+    const outputOrphanPicks = Number(membership?.outputOrphanPicks || 0);
+    const outputAmbiguousPicks = Number(membership?.outputAmbiguousPicks || 0);
+
+    if (outputOrphanPicks > 0 || outputAmbiguousPicks > 0) {
+      return {
+        ok: false,
+        code: 2,
+        reason: "plan_b_canonical_membership_failed",
+        gate,
+        planB: {
+          count: Number(planB?.count || 0),
+          outputOrphanPicks,
+          outputAmbiguousPicks,
+          outputOrphanPickIds: membership?.outputOrphanPickIds || [],
+          outputAmbiguousPickIds: membership?.outputAmbiguousPickIds || []
+        }
+      };
+    }
+  }
+
   if (gate.ok) return { ok: true, code: 0, gate };
 
   return { ok: false, code: 2, reason, gate };
