@@ -65,3 +65,18 @@ test("Plan B observation using bookmaker odds is not preserved", () => {
 
   assert.equal(shouldPreserveHistoricalPlanBObservation(input), false);
 });
+
+test("new canonical-joined Plan B contract is preserved for closed days", () => {
+  const input = validInput();
+  input.planBAudit.sourceContract = {
+    valueInput: "canonical_fixture_universe_joined_with_odds_memory_ai_assessment",
+    fixtureUniverse: "canonical_fixtures",
+    canonicalFixtureUniverseRequired: true,
+    exactIdentityJoinOnly: true,
+    oddsMemoryCanCreateFixture: false,
+    deploySnapshotInput: false,
+    realBookmakerOddsUsed: false
+  };
+
+  assert.equal(shouldPreserveHistoricalPlanBObservation(input), true);
+});
