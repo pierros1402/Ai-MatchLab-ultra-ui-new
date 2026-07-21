@@ -149,14 +149,33 @@ export function buildDayReport(dayKey) {
   const value = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
   const planB = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b.json"));
   const planBAudit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"));
+  const planBContract = planB?.sourceContract || planBAudit?.sourceContract || null;
+  const planBMembership = planBAudit?.membership || null;
+  const planBContractOk = Boolean(
+    planBContract?.fixtureUniverse === "canonical_fixtures" &&
+    planBContract?.canonicalFixtureUniverseRequired === true &&
+    planBContract?.exactIdentityJoinOnly === true &&
+    planBContract?.oddsMemoryCanCreateFixture === false
+  );
+
   report.value = {
     source: String(value?.source || "missing"),
     count: Number(value?.count || 0),
     gateOk: !(publishedCount > 0 && String(value?.source || "") === "missing_local_value_file"),
     planB: planB ? {
+      ok: planB?.ok !== false,
       count: Number(planB.count || 0),
       approved: Number(planBAudit?.approved ?? planBAudit?.summary?.approved ?? 0),
-      rejected: Number(planBAudit?.rejected ?? planBAudit?.summary?.rejected ?? 0)
+      rejected: Number(planBAudit?.rejected ?? planBAudit?.summary?.rejected ?? 0),
+      canonicalMembershipContractOk: planBContractOk,
+      membership: planBMembership ? {
+        canonicalFixtures: Number(planBMembership.canonicalFixtures || 0),
+        assessmentRows: Number(planBMembership.assessmentRows || 0),
+        joinedMatches: Number(planBMembership.joinedMatches || 0),
+        orphanAssessmentRows: Number(planBMembership.orphanAssessmentRows || 0),
+        outputOrphanPicks: Number(planBMembership.outputOrphanPicks || 0),
+        outputAmbiguousPicks: Number(planBMembership.outputAmbiguousPicks || 0)
+      } : null
     } : null
   };
 
@@ -177,6 +196,15 @@ export function buildDayReport(dayKey) {
     report.hardFailures.push("invariant_blocked");
   }
   if (!report.value.gateOk) report.hardFailures.push("value_artifact_missing");
+  if (report.value.planB && !report.value.planB.canonicalMembershipContractOk) {
+    report.hardFailures.push("plan_b_canonical_membership_contract_missing");
+  }
+  if (
+    Number(report.value.planB?.membership?.outputOrphanPicks || 0) > 0 ||
+    Number(report.value.planB?.membership?.outputAmbiguousPicks || 0) > 0
+  ) {
+    report.hardFailures.push("plan_b_canonical_membership_failed");
+  }
   if (manifest && detailsCount < publishedCount) report.hardFailures.push("details_incomplete");
 
   // League-level parity stays a WARNING until the identity resolver lands:
