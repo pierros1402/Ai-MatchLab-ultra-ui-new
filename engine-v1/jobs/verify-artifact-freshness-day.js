@@ -75,7 +75,12 @@ export function shouldPreserveHistoricalPlanBObservation({
   if (planBAudit?.date !== requestedDay) return false;
 
   const sourceContract = planBAudit?.sourceContract;
-  return sourceContract?.valueInput === "odds_memory_ai_assessment"
+  const acceptedValueInputs = new Set([
+    "odds_memory_ai_assessment",
+    "canonical_fixture_universe_joined_with_odds_memory_ai_assessment"
+  ]);
+
+  return acceptedValueInputs.has(sourceContract?.valueInput)
     && sourceContract?.deploySnapshotInput === false
     && sourceContract?.realBookmakerOddsUsed === false;
 }

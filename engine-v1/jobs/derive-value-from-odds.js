@@ -57,7 +57,11 @@ import { fileURLToPath } from "url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
-import { buildCanonicalId } from "../core/canonical-id.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import {
+  joinCanonicalFixturesWithModelAssessments,
+  validatePicksAgainstCanonicalFixtures
+} from "../core/plan-b-canonical-membership.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -594,7 +598,8 @@ function buildValueAudit({
   finalPicks,
   rejectedRows,
   sourceContract,
-  inputFailure = null
+  inputFailure = null,
+  membership = null
 }) {
   const candidateLedger = buildCandidateLedger(candidatePicks, finalPicks, rejectedRows);
   const rejected = candidateLedger.filter((row) => row.status === "rejected");
@@ -609,6 +614,7 @@ function buildValueAudit({
     source: "derive-value-from-model-assessment",
     sourceContract,
     inputFailure,
+    membership,
     summary: {
       fixturesSeen: Array.isArray(sourceMatches) ? sourceMatches.length : 0,
       candidateMarkets: candidatePicks.length,
@@ -671,32 +677,75 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
   ensureDir(path.dirname(canonicalAuditOut));
 
   const sourceContract = {
-    valueInput: "odds_memory_ai_assessment",
+    valueInput: "canonical_fixture_universe_joined_with_odds_memory_ai_assessment",
+    fixtureUniverse: "canonical_fixtures",
+    canonicalFixtureUniverseRequired: true,
+    exactIdentityJoinOnly: true,
+    oddsMemoryCanCreateFixture: false,
     deploySnapshotInput: false,
     realBookmakerOddsUsed: false,
-    note: "Transitional model-assessment bridge; value reads aiAssessment from memory, not deploy snapshot odds.json."
+    note: "Plan B starts from canonicalFixturesForDay(dayKey) and joins odds-memory aiAssessment only through exact fixture identity."
+  };
+
+  const canonicalFixtures = canonicalFixturesForDay(dayKey);
+  const oddsPayload = getOddsForDay(dayKey);
+  const assessmentRows = Array.isArray(oddsPayload?.matches) ? oddsPayload.matches : [];
+  const membershipJoin = joinCanonicalFixturesWithModelAssessments(
+    canonicalFixtures,
+    assessmentRows
+  );
+  const sourceMatches = membershipJoin.joinedMatches;
+
+  const membership = {
+    ...membershipJoin.summary,
+    orphanAssessmentMatchIds: membershipJoin.orphanAssessmentRows
+      .map(row => String(row?.canonicalId || row?.matchId || "").trim())
+      .filter(Boolean)
+      .sort(),
+    canonicalRowsWithoutAssessmentIds: membershipJoin.canonicalRowsWithoutAssessment
+      .map(row => String(row?.canonicalId || row?.matchId || "").trim())
+      .filter(Boolean)
+      .sort(),
+    ambiguousCanonicalMatches: membershipJoin.ambiguousCanonicalMatches,
+    canonicalRowsMissingIdentity: membershipJoin.canonicalRowsMissingIdentity
+      .map(row => ({
+        canonicalId: row?.canonicalId || null,
+        matchId: row?.matchId || null,
+        leagueSlug: row?.leagueSlug || null,
+        home: row?.homeTeam || row?.home || null,
+        away: row?.awayTeam || row?.away || null
+      }))
   };
 
   if (freeze) {
     const existing = readJsonSafe(outFile, null);
-    if (existing && Array.isArray(existing.picks) && existing.picks.length > 0) {
+    const existingValidation = validatePicksAgainstCanonicalFixtures(
+      existing?.picks,
+      canonicalFixtures
+    );
+    const existingContract = existing?.sourceContract;
+
+    if (
+      existing &&
+      Array.isArray(existing.picks) &&
+      existingContract?.canonicalFixtureUniverseRequired === true &&
+      existingContract?.oddsMemoryCanCreateFixture === false &&
+      existingValidation.ok
+    ) {
       return existing;
     }
   }
 
-  const oddsPayload = getOddsForDay(dayKey);
-  const sourceMatches = Array.isArray(oddsPayload?.matches) ? oddsPayload.matches : [];
-
-  if (sourceMatches.length === 0) {
+  if (canonicalFixtures.length === 0) {
     const result = {
       ok: false,
       date: dayKey,
       count: 0,
       picks: [],
-      source: "no_model_assessment_memory",
+      source: "missing_canonical_fixture_universe",
       policyVersion: "value-policy-v2.3",
-      reasonCodes: ["missing_model_assessment_memory"],
-      riskFlags: ["no_value_input"],
+      reasonCodes: ["missing_canonical_fixture_universe"],
+      riskFlags: ["no_canonical_fixture_input"],
       sourceContract,
     outputMode,
     planId: isPlanBObservation ? "plan-b" : "production",
@@ -710,7 +759,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       finalPicks: [],
       rejectedRows: [],
       sourceContract,
-      inputFailure: "missing_model_assessment_memory"
+      inputFailure: "missing_canonical_fixture_universe",
+      membership
     });
 
     writeJsonFile(canonicalAuditOut, audit);
@@ -726,13 +776,12 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
   for (const match of sourceMatches) {
     if (!match.aiAssessment?.markets) continue;
 
-    const canonicalId = match.canonicalId
-      || buildCanonicalId(match.leagueSlug, match.home, match.away, match.dayKey || match.kickoffUtc)
-      || match.matchId;
+    const canonicalId = String(match?.canonicalId || "").trim();
+    if (!canonicalId) continue;
 
     const base = {
       canonicalId,
-      matchId: match.matchId,
+      matchId: match.matchId || canonicalId,
       leagueSlug: match.leagueSlug,
       home: match.home,
       away: match.away,
@@ -777,8 +826,57 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     candidatePicks,
     finalPicks,
     rejectedRows,
-    sourceContract
+    sourceContract,
+    membership
   });
+
+  const outputMembership = validatePicksAgainstCanonicalFixtures(
+    finalPicks,
+    canonicalFixtures
+  );
+
+  audit.membership = {
+    ...audit.membership,
+    outputPicks: outputMembership.summary.picks,
+    outputValidPicks: outputMembership.summary.validPicks,
+    outputOrphanPicks: outputMembership.summary.orphanPicks,
+    outputAmbiguousPicks: outputMembership.summary.ambiguousPicks,
+    outputOrphanPickIds: outputMembership.orphanPicks
+      .map(row => String(row?.canonicalId || row?.matchId || "").trim())
+      .filter(Boolean)
+      .sort(),
+    outputAmbiguousPickIds: outputMembership.ambiguousPicks
+      .map(entry => String(entry?.pick?.canonicalId || entry?.pick?.matchId || "").trim())
+      .filter(Boolean)
+      .sort()
+  };
+
+  if (!outputMembership.ok) {
+    const blocked = {
+      ok: false,
+      date: dayKey,
+      count: 0,
+      picks: [],
+      source: "plan_b_canonical_membership_blocked",
+      policyVersion: "value-policy-v2.3",
+      reasonCodes: ["plan_b_output_canonical_membership_failed"],
+      riskFlags: ["unsafe_plan_b_output_suppressed"],
+      sourceContract,
+      outputMode,
+      planId: isPlanBObservation ? "plan-b" : "production",
+      audit: auditPaths
+    };
+
+    audit.ok = false;
+    audit.inputFailure = "plan_b_output_canonical_membership_failed";
+
+    writeJsonFile(canonicalAuditOut, audit);
+    writeJsonFile(snapshotAuditOut, audit);
+    writeJsonFile(canonicalOut, blocked);
+    writeJsonFile(outFile, blocked);
+
+    return blocked;
+  }
 
   const result = {
     ok: true,
