@@ -1,39 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-21",
-  "generatedAt": "2026-07-20T19:37:32.708Z",
+  "generatedAt": "2026-07-21T00:40:24.904Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
-    "info": 3
+    "info": 2
   },
-  "alert": true,
+  "alert": false,
   "alertCounts": {
     "error": 0,
-    "warning": 2,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 5,
+  "activeIssueCount": 4,
   "actionableIssueCount": 2,
-  "newIssueCount": 3,
-  "newActionableIssueCount": 2,
+  "newIssueCount": 0,
+  "newActionableIssueCount": 0,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 2,
+  "persistentIssueCount": 4,
   "activeIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-21.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
     {
       "severity": "warning",
       "source": "build-report",
@@ -144,7 +131,9 @@
       }
     }
   ],
-  "newIssues": [
+  "newIssues": [],
+  "newActionableIssues": [],
+  "resolvedIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -157,78 +146,34 @@
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
       }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "arg.supercopa",
-          "col.copa"
-        ],
-        "raw": "acquisition_skipped_slugs:arg.supercopa,col.copa",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "arg.supercopa",
-          "col.copa"
-        ],
-        "raw": "acquisition_skipped_slugs:arg.supercopa,col.copa",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "invariant-report",
-      "type": "coverage_floor_drop",
-      "message": "Canonical fixtures are below static floor but meet the effective floor.",
-      "details": {
-        "type": "coverage_floor_drop",
-        "staticFloor": 45,
-        "effectiveFloor": 32,
-        "actualFixtures": 35,
-        "drop": 13,
-        "reason": "canonical_fixture_count_below_static_floor",
-        "effectiveFloorMet": true
-      }
     }
   ],
   "persistentIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "arg.supercopa",
+          "col.copa"
+        ],
+        "raw": "acquisition_skipped_slugs:arg.supercopa,col.copa",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    },
     {
       "severity": "info",
       "source": "build-report",
