@@ -13,9 +13,9 @@
  *  - deploy-snapshots/<day>/fixtures.json  → PREFERRED display source when a
  *      complete snapshot exists (ESPN canonical status/scores). NOT statistical
  *      truth on its own — a regenerable deploy artifact.
- *  - deploy-snapshots/<day>/odds.json, fixtures-all.json → SUPPLEMENTS: they add
- *      rows/existence + (odds) drift display. They are NEVER a result/status
- *      authority and NEVER an input to the value assessment (odds↔value firewall).
+ *  - deploy-snapshots/<day>/odds.json and fixtures-all.json → ENRICHMENT-ONLY
+ *      artifacts. They may enrich rows already present in the authoritative
+ *      fixture universe, but can never create match existence or result state.
  *  - data/fixtures.json (json-db) → regenerable OPERATIONAL BRIDGE/CACHE, NOT a
  *      statistical truth store. Frozen openings/assessments are mirrored to
  *      data/assessments/<day>.json, so the bridge can be rebuilt without loss.
@@ -25,15 +25,16 @@
  * ── Firewall ────────────────────────────────────────────────────────────────
  *  Odds never influence the value-panel value or the per-match detail
  *  assessment. Rows carry `assessment` (value, statistical) and odds/drift as
- *  strictly separate blocks. The supplement paths may add existence, never value.
+ *  strictly separate blocks. Enrichment artifacts require exact membership
+ *  in an existing canonical/snapshot fixture and can never add existence.
  */
 
 // Order in which sources are layered into the display universe. Earlier sources
 // win a league/pair; later sources only fill gaps they don't already cover.
 export const DISPLAY_SOURCE_PRIORITY = Object.freeze([
   "snapshot-fixtures", // deploy-snapshots/<day>/fixtures.json  (ESPN canonical)
-  "snapshot-odds",     // deploy-snapshots/<day>/odds.json        (supplement)
-  "fixtures-all",      // deploy-snapshots/<day>/fixtures-all.json (supplement)
+  "snapshot-odds",     // deploy-snapshots/<day>/odds.json        (enrichment only)
+  "fixtures-all",      // deploy-snapshots/<day>/fixtures-all.json (enrichment only)
   "canonical-fixtures",// canonical-fixtures/<day>/*.json         (future-day fallback)
 ]);
 
@@ -176,6 +177,56 @@ export function filterByPanelMode(matches, mode) {
     }
   }
   return out;
+}
+
+/**
+ * Exact fixture identity used to join display enrichment artifacts.
+ *
+ * Odds and fixtures-all rows may enrich an existing fixture, but a missing,
+ * ambiguous, or name-only identity can never create a new display fixture.
+ */
+export function displayFixtureIdentity(row) {
+  return String(
+    row?.canonicalId ??
+    row?.matchId ??
+    row?.id ??
+    ""
+  ).trim();
+}
+
+/**
+ * Partition enrichment rows by exact membership in the authoritative fixture
+ * universe. Team names, league slugs, and kickoff proximity are deliberately
+ * insufficient.
+ */
+export function partitionDisplaySupplementsByFixtureIdentity(
+  fixtureRows = [],
+  supplementRows = []
+) {
+  const fixtureIds = new Set(
+    (fixtureRows || [])
+      .map(displayFixtureIdentity)
+      .filter(Boolean)
+  );
+
+  const matched = [];
+  const ignored = [];
+
+  for (const row of (supplementRows || [])) {
+    const identity = displayFixtureIdentity(row);
+
+    if (identity && fixtureIds.has(identity)) {
+      matched.push(row);
+    } else {
+      ignored.push(row);
+    }
+  }
+
+  return {
+    fixtureIds,
+    matched,
+    ignored
+  };
 }
 
 /**
