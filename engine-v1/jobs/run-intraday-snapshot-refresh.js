@@ -16,6 +16,10 @@ import {
   isPreKickoffNonPlayed,
   sanitizePreKickoffNonPlayed
 } from "../core/non-played-state.js";
+import {
+  applyBasicMutableStatusFields,
+  synchronizeDetailStatusState
+} from "../core/detail-status-sync.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -88,61 +92,14 @@ export function authoritativePreKickoffNonPlayedRows(
     .map(row => sanitizePreKickoffNonPlayed(row));
 }
 
-// Patch only the mutable status fields in an existing details file.
-// This avoids a full rebuild while keeping details.basic in sync with
-// the canonical fixture status after each live refresh cycle.
+// Patch the mutable status fields and their signature projection together.
+// This avoids a full rebuild while keeping details.basic and meta.signature
+// in sync with authoritative fixture truth before snapshot export.
 export function applyMutableStatusFields(
   basic,
   row
 ) {
-  if (
-    !basic ||
-    typeof basic !== "object" ||
-    !row ||
-    typeof row !== "object"
-  ) {
-    return false;
-  }
-
-  const fields = [
-    "status",
-    "rawStatus",
-    "statusType",
-    "minute",
-    "scoreHome",
-    "scoreAway"
-  ];
-
-  const before = JSON.stringify(
-    Object.fromEntries(
-      fields.map(field => [
-        field,
-        basic[field] ?? null
-      ])
-    )
-  );
-
-  for (const field of fields) {
-    if (
-      Object.prototype.hasOwnProperty.call(
-        row,
-        field
-      )
-    ) {
-      basic[field] = row[field];
-    }
-  }
-
-  const after = JSON.stringify(
-    Object.fromEntries(
-      fields.map(field => [
-        field,
-        basic[field] ?? null
-      ])
-    )
-  );
-
-  return before !== after;
+  return applyBasicMutableStatusFields(basic, row);
 }
 
 function patchDetailsBasic(
@@ -208,18 +165,14 @@ function patchDetailsBasic(
         continue;
       }
 
-      const changed =
-        applyMutableStatusFields(
-          detail.basic,
-          row
-        );
+      const sync = synchronizeDetailStatusState(
+        detail,
+        row
+      );
 
-      if (!changed) {
+      if (!sync.ok || !sync.changed) {
         continue;
       }
-
-      detail.basic.lastStatusPatchedAt =
-        new Date().toISOString();
 
       try {
         fs.writeFileSync(

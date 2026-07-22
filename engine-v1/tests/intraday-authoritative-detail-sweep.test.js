@@ -212,3 +212,27 @@ test("intraday applies the narrow non-played sweep before export", () => {
     /patchDetailsBasic\(\s*safeDayKey,\s*canonicalStatusRows/
   );
 });
+test("intraday detail patch synchronizes basic state and signature before export", () => {
+  const source = fs.readFileSync(
+    new URL(
+      "../jobs/run-intraday-snapshot-refresh.js",
+      import.meta.url
+    ),
+    "utf8"
+  ).replace(/\r\n/g, "\n");
+
+  assert.match(
+    source,
+    /synchronizeDetailStatusState\(\s*detail,\s*row\s*\)/
+  );
+
+  assert.doesNotMatch(
+    source,
+    /detail\.basic\.lastStatusPatchedAt\s*=\s*new Date\(\)\.toISOString\(\)/
+  );
+
+  const patchIndex = source.indexOf("synchronizeDetailStatusState(");
+  const exportIndex = source.indexOf("export-snapshot:start");
+  assert.ok(patchIndex >= 0);
+  assert.ok(exportIndex > patchIndex);
+});

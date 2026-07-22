@@ -34,6 +34,21 @@ function bytesOfFile(filePath) {
   }
 }
 
+export function canonicalDetailBytesOfFile(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return 0;
+
+    const text = fs.readFileSync(filePath, "utf8");
+
+    return Buffer.byteLength(
+      text.replace(/\r\n?/g, "\n"),
+      "utf8"
+    );
+  } catch {
+    return 0;
+  }
+}
+
 function mb(bytes) {
   return Number((Number(bytes || 0) / 1024 / 1024).toFixed(2));
 }
@@ -489,7 +504,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
     */
     writeJsonStable(outFile, detail);
 
-    const bytes = bytesOfFile(outFile);
+    const bytes = canonicalDetailBytesOfFile(outFile);
     totalBytes += bytes;
 
     if (bytes > largest.bytes) {
@@ -527,7 +542,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
         continue;
       }
 
-      const bytes = bytesOfFile(detailFile);
+      const bytes = canonicalDetailBytesOfFile(detailFile);
       totalBytes += bytes;
 
       if (bytes > largest.bytes) {
@@ -705,16 +720,63 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
   };
 
   writeJsonStable(path.join(snapshotRoot, "fixtures.json"), fixturesOut);
-  writeJsonStable(path.join(snapshotRoot, "value.json"), valueOut);
+
+  const snapshotValueFile = path.join(
+    snapshotRoot,
+    "value.json"
+  );
+
+  const preserveSnapshotValueBytes =
+    options?.preserveValue === true &&
+    isValidValueArtifact(
+      readJsonSafe(snapshotValueFile, null)
+    );
+
+  if (!preserveSnapshotValueBytes) {
+    writeJsonStable(snapshotValueFile, valueOut);
+  }
 
   // Ship the production value-audit (rejection ledger) next to value.json so a
   // published 0-pick day is explained, not mistaken for a broken pipeline
   // (report 2026-07-07 #5). Written by buildValueDay at data/value/_audit/<day>;
   // best-effort — a day built before this landed simply has no audit to ship.
-  const valueAudit = readJsonSafe(resolveDataPath("value", "_audit", `${dayKey}.json`), null);
-  const valueAuditPresent = Boolean(valueAudit && typeof valueAudit === "object");
-  if (valueAuditPresent) {
-    writeJsonStable(path.join(snapshotRoot, "value-audit.json"), valueAudit);
+  const snapshotValueAuditFile = path.join(
+    snapshotRoot,
+    "value-audit.json"
+  );
+
+  const preservedSnapshotValueAudit =
+    options?.preserveValue === true
+      ? readJsonSafe(snapshotValueAuditFile, null)
+      : null;
+
+  const valueAudit =
+    preservedSnapshotValueAudit ||
+    readJsonSafe(
+      resolveDataPath(
+        "value",
+        "_audit",
+        `${dayKey}.json`
+      ),
+      null
+    );
+
+  const valueAuditPresent = Boolean(
+    valueAudit &&
+    typeof valueAudit === "object"
+  );
+
+  const preserveSnapshotValueAuditBytes =
+    Boolean(preservedSnapshotValueAudit);
+
+  if (
+    valueAuditPresent &&
+    !preserveSnapshotValueAuditBytes
+  ) {
+    writeJsonStable(
+      snapshotValueAuditFile,
+      valueAudit
+    );
   }
 
   const latestCanonicalAt = latestCanonicalFixtureUpdatedAt(dayKey);

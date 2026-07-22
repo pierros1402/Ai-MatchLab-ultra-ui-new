@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 import {
+  canonicalManifestByteLength,
   evaluateInvariantGate
 } from "../jobs/run-snapshot-invariant-check.js";
 
@@ -179,5 +180,35 @@ test("intraday self-heals a missing Value baseline before publication", () => {
   assert.match(
     selfHealStep,
     /refresh-value-artifacts-day\.js --date="\$DAY_KEY"/
+  );
+});
+test("snapshot invariant is read-only and blocks detail/signature or manifest-byte drift", () => {
+  const source = fs.readFileSync(
+    new URL(
+      "../jobs/run-snapshot-invariant-check.js",
+      import.meta.url
+    ),
+    "utf8"
+  ).replace(/\r\n/g, "\n");
+
+  assert.match(source, /detail_fixture_state_drift/);
+  assert.match(source, /manifest_detail_metadata_drift/);
+  assert.match(source, /assessDetailStatusState\(detail, fx\)/);
+  assert.doesNotMatch(source, /patchDetailBasicStatus/);
+  assert.doesNotMatch(source, /status_mismatch_unpatchable/);
+});
+
+test("manifest detail byte checks normalize checkout newlines", () => {
+  const lf = '{\n  "ok": true\n}\n';
+  const crlf = lf.replace(/\n/g, "\r\n");
+
+  assert.equal(
+    canonicalManifestByteLength(lf),
+    canonicalManifestByteLength(crlf)
+  );
+
+  assert.notEqual(
+    canonicalManifestByteLength(lf),
+    canonicalManifestByteLength('{\n  "ok": false\n}\n')
   );
 });

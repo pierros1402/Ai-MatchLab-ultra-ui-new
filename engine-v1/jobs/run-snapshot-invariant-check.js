@@ -32,6 +32,7 @@ import {
   hasPreKickoffNonPlayedDisplayViolation,
   isPreKickoffNonPlayed
 } from "../core/non-played-state.js";
+import { assessDetailStatusState } from "../core/detail-status-sync.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -61,23 +62,23 @@ function ciNotice(msg) {
   else console.log("[invariant:notice]", msg);
 }
 
-// ── Patch helpers (safe auto-fixes) ──────────────────────────────────────────
-function patchDetailBasicStatus(detailFile, fixture) {
-  const detail = readJsonSafe(detailFile);
-  if (!detail?.basic) return false;
+export function canonicalManifestByteLength(value) {
+  const text = Buffer.isBuffer(value)
+    ? value.toString("utf8")
+    : String(value ?? "");
 
-  detail.basic.status    = fixture.status;
-  detail.basic.rawStatus = fixture.rawStatus;
-  detail.basic.minute    = fixture.minute ?? null;
-  detail.basic.scoreHome = fixture.scoreHome ?? null;
-  detail.basic.scoreAway = fixture.scoreAway ?? null;
-  detail.basic.lastStatusPatchedAt = new Date().toISOString();
-
-  try {
-    fs.writeFileSync(detailFile, JSON.stringify(detail, null, 2), "utf8");
-    return true;
-  } catch { return false; }
+  // Git can materialize tracked JSON as CRLF on Windows while manifests were
+  // created from canonical LF bytes. Compare logical JSON bytes, not checkout
+  // newline bytes.
+  return Buffer.byteLength(
+    text.replace(/\r\n?/g, "\n"),
+    "utf8"
+  );
 }
+
+// The invariant checker is deliberately read-only for fixture/detail payloads.
+// Any repair must happen before snapshot export so manifest metadata describes
+// the exact bytes that are later gated and published.
 
 // ── Main check ────────────────────────────────────────────────────────────────
 export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
@@ -182,6 +183,27 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
     if (!resolvedFile) continue;
 
     const detail = readJsonSafe(resolvedFile);
+    const stateAssessment = assessDetailStatusState(detail, fx);
+
+    if (
+      !stateAssessment.ok ||
+      stateAssessment.basicDifferences.length > 0 ||
+      stateAssessment.signatureDifferences.length > 0
+    ) {
+      report.blocked.push({
+        type: "detail_fixture_state_drift",
+        matchId: cid,
+        file: path.relative(snapshotDir, resolvedFile),
+        reason: stateAssessment.reason || "fixture_detail_state_mismatch",
+        basicDifferences: stateAssessment.basicDifferences,
+        signatureDifferences: stateAssessment.signatureDifferences,
+        impact: "detail_truth_and_manifest_unsafe"
+      });
+      report.valueSafe = false;
+      ciError(
+        `[blocked] detail mutable state/signature drift: ${cid}`
+      );
+    }
 
     if (hasMatchStateConflict(detail?.basic)) {
       report.blocked.push({
@@ -220,33 +242,6 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
       ciError(
         `[blocked] pre-kickoff non-played detail carries score/minute/final state: ${cid}`
       );
-    }
-
-    const detailStatus = detail?.basic?.status;
-    const fixtureStatus = fx.status;
-
-    if (detailStatus && fixtureStatus && detailStatus !== fixtureStatus) {
-      const label = `${fx.homeTeam || fx.home} v ${fx.awayTeam || fx.away} (${cid})`;
-      const wasPatched = patchDetailBasicStatus(resolvedFile, fx);
-
-      if (wasPatched) {
-        report.autoFixed.push({
-          type: "status_mismatch",
-          match: label,
-          before: detailStatus,
-          after: fixtureStatus,
-          file: path.relative(snapshotDir, resolvedFile)
-        });
-        ciNotice(`[auto-fixed] status mismatch patched: ${label} ${detailStatus}→${fixtureStatus}`);
-      } else {
-        report.blocked.push({
-          type: "status_mismatch_unpatchable",
-          match: label,
-          fixtureStatus,
-          detailStatus
-        });
-        ciError(`[blocked] status mismatch unpatchable: ${label}`);
-      }
     }
   }
 
@@ -387,6 +382,51 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
       fixturesWithoutDetail: fixturesWithoutDetail.slice(0, 25)
     });
     ciError(`[blocked] details/fixtures not 1:1 — ${detailBasenames.length} details vs ${publishedIds.size} fixtures (extra details: ${detailsWithoutFixture.slice(0, 5).join(", ")}; missing: ${fixturesWithoutDetail.slice(0, 5).join(", ")})`);
+  }
+
+  // ── CHECK 8b: manifest detail metadata must describe current bytes ───────
+  const manifestDetails = Array.isArray(manifest?.details)
+    ? manifest.details
+    : [];
+  const detailMetadataDrift = [];
+
+  for (const entry of manifestDetails) {
+    const fileName = String(entry?.file || "").trim();
+    if (!fileName) continue;
+
+    const detailFile = path.join(detailsDir, fileName);
+    if (!fs.existsSync(detailFile)) continue;
+
+    const physicalBytes = fs.statSync(detailFile).size;
+    const canonicalBytes = canonicalManifestByteLength(
+      fs.readFileSync(detailFile)
+    );
+    const declaredBytes = Number(entry?.bytes);
+
+    if (Number.isFinite(declaredBytes) && declaredBytes === canonicalBytes) {
+      continue;
+    }
+
+    detailMetadataDrift.push({
+      file: fileName,
+      canonicalId: entry?.canonicalId || null,
+      declaredBytes: Number.isFinite(declaredBytes) ? declaredBytes : null,
+      canonicalBytes,
+      physicalBytes
+    });
+  }
+
+  if (detailMetadataDrift.length > 0) {
+    report.blocked.push({
+      type: "manifest_detail_metadata_drift",
+      count: detailMetadataDrift.length,
+      details: detailMetadataDrift.slice(0, 25),
+      impact: "manifest_snapshot_bytes_unsafe"
+    });
+    report.valueSafe = false;
+    ciError(
+      `[blocked] ${detailMetadataDrift.length} detail file(s) no longer match manifest byte metadata`
+    );
   }
 
   // ── CHECK 9: cross-source alias duplicates that ID-dedup missed ────────────
