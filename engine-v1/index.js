@@ -17,7 +17,12 @@ import { buildValueDay } from "./core/build-value-day.js";
 import { buildDetailsDay } from "./jobs/build-details-day.js";
 import { getDetailsPayload, enrichSnapshotWithAssessment } from "./api/details.js";
 import { resolveDataPath } from "./storage/data-root.js";
-import { normalizeDisplayTeam, statusRankFromParts, filterByPanelMode } from "./core/display-contract.js";
+import {
+  normalizeDisplayTeam,
+  statusRankFromParts,
+  filterByPanelMode,
+  partitionDisplaySupplementsByFixtureIdentity
+} from "./core/display-contract.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
 import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js";
@@ -799,38 +804,25 @@ function buildSnapshotRuntimeMatches(resolvedDate) {
 
   const matches = [];
   const seen = new Set();
-  const coveredFixtureSlugs = new Set();
-  const runtimeLeagueMeta = getLeagueMetaMap();
-  const runtimeSlugAliases = {
-    "fifa.world_cup": "fifa.world",
-    "fifa.world_cup_qual": "fifa.world_qual",
-  };
+
   for (const row of fixtureRows) {
     const normalized = normalizeSnapshotRuntimeMatch(row, "snapshot-fixtures");
-    if (normalized.leagueSlug) {
-      coveredFixtureSlugs.add(normalized.leagueSlug);
-      const canonical = runtimeSlugAliases[normalized.leagueSlug] || normalized.leagueSlug;
-      coveredFixtureSlugs.add(canonical);
-    }
     addSnapshotRuntimeMatch(matches, seen, normalized);
   }
 
-  let oddsSupplementCount = 0;
-  for (const row of oddsRows) {
-    const normalized = normalizeSnapshotRuntimeMatch(row, "snapshot-odds");
-    const slug = normalized.leagueSlug;
-    const canonical = runtimeSlugAliases[slug] || slug;
-    if (!slug || coveredFixtureSlugs.has(slug) || coveredFixtureSlugs.has(canonical)) continue;
-    if (!hasDisplayRealOddsMarket(row)) continue;
-    if (!isDisplayApprovedSupplementLeague(slug, runtimeLeagueMeta, runtimeSlugAliases)) continue;
-    if (addSnapshotRuntimeMatch(matches, seen, normalized)) oddsSupplementCount++;
-  }
+  // odds.json is market enrichment only. Exact fixture membership is required;
+  // orphan odds rows are audited and ignored rather than converted into PRE/FT
+  // fixtures by elapsed-time or results overlays.
+  const oddsMembership =
+    partitionDisplaySupplementsByFixtureIdentity(fixtureRows, oddsRows);
 
   return {
     matches,
     fixtureCount: fixtureRows.length,
     oddsCount: oddsRows.length,
-    oddsSupplementCount,
+    oddsSupplementCount: 0,
+    oddsMatchedFixtureCount: oddsMembership.matched.length,
+    oddsOrphanRowsIgnored: oddsMembership.ignored.length,
   };
 }
 
@@ -867,7 +859,9 @@ function snapshotFixturesRuntimeResponse(mode, dayKey) {
       fixturesCount: matches.length,
       baseFixturesCount: runtimeBuild.fixtureCount,
       oddsRowsCount: runtimeBuild.oddsCount,
-      oddsSupplementCount: runtimeBuild.oddsSupplementCount
+      oddsSupplementCount: runtimeBuild.oddsSupplementCount,
+      oddsMatchedFixtureCount: runtimeBuild.oddsMatchedFixtureCount,
+      oddsOrphanRowsIgnored: runtimeBuild.oddsOrphanRowsIgnored
     }
   };
 }
