@@ -46,6 +46,10 @@ import {
   parseAcquisitionSkippedSlugs,
   skippedSlugsContextOnly
 } from "./system-health/skipped-slug-policy.js";
+import {
+  collectRuntimeArtifactIssues,
+  classifyRuntimeSystemHealth
+} from "./system-health/runtime-report-policy.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1190,12 +1194,6 @@ function systemHealthIssue(severity, source, type, message, details = {}) {
   return { severity, source, type, message, details };
 }
 
-function systemHealthSeverity(issues) {
-  if ((issues || []).some(i => i.severity === "error")) return "error";
-  if ((issues || []).some(i => i.severity === "warning")) return "warning";
-  if ((issues || []).some(i => i.severity === "info")) return "info";
-  return "ok";
-}
 
 function systemHealthIssueCounts(issues) {
   const out = { error: 0, warning: 0, info: 0 };
@@ -1291,69 +1289,9 @@ function buildSystemHealthReport(day) {
     read[key] = systemHealthReadJson(artifact);
   }
 
-  const issues = [];
-  const hasAnyArtifact = Object.values(read).some(r => r.exists);
-
-  function addArtifactIssue(key, severity) {
-    const r = read[key];
-    const artifact = systemHealthRelativeArtifact(r.path);
-
-    if (!r.exists) {
-      issues.push(systemHealthIssue(
-        severity,
-        key,
-        "artifact_missing",
-        "Diagnostic artifact is missing.",
-        { artifact }
-      ));
-      return;
-    }
-
-    if (!r.ok) {
-      issues.push(systemHealthIssue(
-        "error",
-        key,
-        "artifact_json_invalid",
-        "Diagnostic artifact exists but cannot be parsed as JSON.",
-        { artifact, error: r.error }
-      ));
-    }
-  }
-
-  if (!hasAnyArtifact) {
-    const issuesOnly = [
-      systemHealthIssue(
-        "warning",
-        "system-health",
-        "no_diagnostic_artifacts",
-        "No diagnostic artifacts exist for this day.",
-        { dayKey: day }
-      )
-    ];
-
-    return {
-      ok: false,
-      severity: "warning",
-      status: "no_report",
-      issueCounts: systemHealthIssueCounts(issuesOnly),
-      issues: issuesOnly,
-      valueSafe: false,
-      valueCount: null,
-      autoFixed: [],
-      warnings: [],
-      blocked: [],
-      checkedAt: null,
-      dayKey: day
-    };
-  }
-
-  addArtifactIssue("manifest", "error");
-  addArtifactIssue("invariant", "error");
-  addArtifactIssue("freshness", "error");
-  addArtifactIssue("value", "error");
-  addArtifactIssue("valueAudit", "error");
-  addArtifactIssue("buildReport", "warning");
-  addArtifactIssue("valueComparison", "info");
+  const issues = collectRuntimeArtifactIssues(read, {
+    relativeArtifact: systemHealthRelativeArtifact
+  });
 
   const buildReport = read.buildReport.data;
   const invariant = read.invariant.data;
@@ -1711,26 +1649,22 @@ function buildSystemHealthReport(day) {
     }
   }
 
-  const severity = systemHealthSeverity(issues);
-  const status = severity === "error"
-    ? "error"
-    : severity === "warning"
-      ? "warning"
-      : severity === "info"
-        ? "info"
-        : "ok";
+  const runtimeState = classifyRuntimeSystemHealth({
+    issues,
+    invariant
+  });
 
   return {
-    ok: severity !== "error",
-    severity,
-    status,
+    ok: runtimeState.ok,
+    severity: runtimeState.severity,
+    status: runtimeState.status,
     issueCounts: systemHealthIssueCounts(issues),
     issues,
     dayKey: day,
     checkedAt: invariant?.checkedAt || buildReport?.generatedAt || checkedNow,
     manifestGeneratedAt: invariant?.manifestGeneratedAt || freshness?.manifestGeneratedAt || manifest?.generatedAt || null,
 
-    valueSafe: invariant?.valueSafe ?? true,
+    valueSafe: runtimeState.valueSafe,
     valueCount: invariant?.valueCount ?? value?.count ?? null,
     autoFixed: invariant?.autoFixed || [],
     warnings: invariant?.warnings || [],

@@ -18,6 +18,9 @@ import {
   parseAcquisitionSkippedSlugs,
   skippedSlugsContextOnly
 } from "../system-health/skipped-slug-policy.js";
+import {
+  systemHealthMissingArtifactSeverity
+} from "../system-health/runtime-report-policy.js";
 
 function readJsonSafe(file, fallback = null) {
   try {
@@ -219,13 +222,13 @@ export function buildSystemHealthAlertsDay(dayKey) {
   const issues = [];
 
   if (!manifest) {
-    issues.push(issue("error", "manifest", "artifact_missing", "Snapshot manifest is missing.", {
+    issues.push(issue(systemHealthMissingArtifactSeverity("manifest"), "manifest", "artifact_missing", "Snapshot manifest is missing.", {
       artifact: `data/deploy-snapshots/${dayKey}/manifest.json`
     }));
   }
 
   if (!invariant) {
-    issues.push(issue("error", "invariant-report", "artifact_missing", "Invariant report is missing.", {
+    issues.push(issue(systemHealthMissingArtifactSeverity("invariant"), "invariant-report", "artifact_missing", "Invariant report is missing.", {
       artifact: `data/deploy-snapshots/${dayKey}/invariant-report.json`
     }));
   } else {
@@ -256,7 +259,7 @@ export function buildSystemHealthAlertsDay(dayKey) {
   }
 
   if (!freshness) {
-    issues.push(issue("warning", "freshness-report", "artifact_missing", "Freshness report is missing.", {
+    issues.push(issue(systemHealthMissingArtifactSeverity("freshness"), "freshness-report", "artifact_missing", "Freshness report is missing.", {
       artifact: `data/deploy-snapshots/${dayKey}/freshness-report.json`
     }));
   } else {
@@ -280,7 +283,7 @@ export function buildSystemHealthAlertsDay(dayKey) {
   }
 
   if (!buildReport) {
-    issues.push(issue("warning", "build-report", "artifact_missing", "Build report is missing.", {
+    issues.push(issue(systemHealthMissingArtifactSeverity("buildReport"), "build-report", "artifact_missing", "Build report is missing.", {
       artifact: `data/build-reports/${dayKey}.json`
     }));
   } else {
@@ -335,7 +338,7 @@ export function buildSystemHealthAlertsDay(dayKey) {
   }
 
   if (!value) {
-    issues.push(issue("error", "value", "artifact_missing", "Production value artifact is missing.", {
+    issues.push(issue(systemHealthMissingArtifactSeverity("value"), "value", "artifact_missing", "Production value artifact is missing.", {
       artifact: `data/deploy-snapshots/${dayKey}/value.json`
     }));
   } else if (value.ok === false) {
@@ -346,7 +349,7 @@ export function buildSystemHealthAlertsDay(dayKey) {
   }
 
   if (!valueAudit) {
-    issues.push(issue("warning", "value-audit", "artifact_missing", "Production value audit artifact is missing.", {
+    issues.push(issue(systemHealthMissingArtifactSeverity("valueAudit"), "value-audit", "artifact_missing", "Production value audit artifact is missing.", {
       artifact: `data/deploy-snapshots/${dayKey}/value-audit.json`
     }));
   } else {
@@ -387,7 +390,7 @@ export function buildSystemHealthAlertsDay(dayKey) {
   }
 
   if (!valueComparison) {
-    issues.push(issue("info", "value-comparison", "artifact_missing", "Value Plan A/B comparison artifact is missing.", {
+    issues.push(issue(systemHealthMissingArtifactSeverity("valueComparison"), "value-comparison", "artifact_missing", "Value Plan A/B comparison artifact is missing.", {
       artifact: `data/value-comparison/${dayKey}.json`
     }));
   } else {
