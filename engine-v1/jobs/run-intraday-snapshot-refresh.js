@@ -11,6 +11,11 @@ import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { buildDayReport } from "./build-day-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import {
+  isPreKickoffNonPlayed,
+  sanitizePreKickoffNonPlayed
+} from "../core/non-played-state.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -71,6 +76,16 @@ function parseArgs(argv = []) {
   out.daysForward = Number.isFinite(out.daysForward) && out.daysForward >= 0 ? Math.floor(out.daysForward) : 14;
 
   return out;
+}
+
+export function authoritativePreKickoffNonPlayedRows(
+  rows = []
+) {
+  if (!Array.isArray(rows)) return [];
+
+  return rows
+    .filter(row => isPreKickoffNonPlayed(row))
+    .map(row => sanitizePreKickoffNonPlayed(row));
 }
 
 // Patch only the mutable status fields in an existing details file.
@@ -311,7 +326,7 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
 
   // Patch details.basic for every match that changed status this cycle.
   // This is the targeted fix for the SECOND_HALF vs FT inconsistency — we
-  // update only the 5 mutable status fields without a full details rebuild.
+  // update only the mutable status fields without a full details rebuild.
   const patchStats = patchDetailsBasic(safeDayKey, liveStats.changedFixtures ?? []);
   console.log("[intraday-snapshot-refresh] patch-details-basic:done", {
     dayKey: safeDayKey,
@@ -352,6 +367,35 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     rowsWithReconcileMeta: reconciliation.rowsWithReconcileMeta,
     completeCoverage: reconciliation.completeCoverage
   });
+
+  // A canonical correction can predate the current live refresh and therefore
+  // be absent from changedFixtures. Recover only authoritative pre-kickoff
+  // non-played states. Interrupted, delayed, invalidated and played-final rows
+  // are deliberately excluded because their scores or minutes may be real.
+  const canonicalStatusRows =
+    canonicalFixturesForDay(safeDayKey);
+
+  const authoritativeNonPlayedRows =
+    authoritativePreKickoffNonPlayedRows(
+      canonicalStatusRows
+    );
+
+  const authoritativePatchStats =
+    patchDetailsBasic(
+      safeDayKey,
+      authoritativeNonPlayedRows
+    );
+
+  console.log(
+    "[intraday-snapshot-refresh] patch-details-basic-authoritative-nonplayed:done",
+    {
+      dayKey: safeDayKey,
+      canonicalRows: canonicalStatusRows.length,
+      authoritativeNonPlayedRows:
+        authoritativeNonPlayedRows.length,
+      ...authoritativePatchStats
+    }
+  );
 
   const value = {
     ok: true,
