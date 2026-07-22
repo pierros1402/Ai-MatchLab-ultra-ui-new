@@ -169,7 +169,7 @@ test("intraday applies the narrow non-played sweep before export", () => {
       import.meta.url
     ),
     "utf8"
-  );
+  ).replace(/\r\n/g, "\n");
 
   const reconciliationIndex = source.indexOf(
     "rebuild-reconciled-fixtures:done"
