@@ -325,7 +325,7 @@ function compactResearchedFactsForDetails(researchedFacts, playerUsageIntel) {
   };
 }
 
-function explicitFiniteNumberOrNull(value) {
+export function explicitFiniteNumberOrNull(value) {
   if (value === null || value === undefined) return null;
   if (typeof value === "string" && value.trim() === "") return null;
 
@@ -1498,8 +1498,8 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       status: match.status || null,
       rawStatus: match.rawStatus || null,
       minute: match.minute || null,
-      scoreHome: Number.isFinite(Number(match.scoreHome)) ? Number(match.scoreHome) : null,
-      scoreAway: Number.isFinite(Number(match.scoreAway)) ? Number(match.scoreAway) : null,
+      scoreHome: explicitFiniteNumberOrNull(match.scoreHome),
+      scoreAway: explicitFiniteNumberOrNull(match.scoreAway),
       venue: match.venue || null
     },
     context: {
