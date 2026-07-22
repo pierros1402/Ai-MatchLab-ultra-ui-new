@@ -1,12 +1,12 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-07-21T00:40:20.681Z",
+  "generatedAt": "2026-07-22T18:57:36.228Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
   "trialStartDay": "2026-07-05",
-  "dayCount": 17,
+  "dayCount": 19,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-07-21",
+  "lastDay": "2026-07-23",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -26,7 +26,9 @@
     "2026-07-18",
     "2026-07-19",
     "2026-07-20",
-    "2026-07-21"
+    "2026-07-21",
+    "2026-07-22",
+    "2026-07-23"
   ],
   "daysExcluded": [],
   "excludedDayCount": 0,
@@ -228,22 +230,25 @@
     },
     {
       "dayKey": "2026-07-18",
-      "reason": "invariant_report_stale",
+      "reason": "build_report_not_clean",
       "details": {
         "ok": false,
-        "reason": "invariant_report_stale",
-        "checkedAt": "2026-07-18T14:26:34.824Z",
-        "manifestGeneratedAt": "2026-07-20T19:23:30.290Z"
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "plan_b_canonical_membership_contract_missing"
+        ]
       }
     },
     {
       "dayKey": "2026-07-19",
-      "reason": "invariant_report_stale",
+      "reason": "build_report_not_clean",
       "details": {
         "ok": false,
-        "reason": "invariant_report_stale",
-        "checkedAt": "2026-07-20T14:00:28.822Z",
-        "manifestGeneratedAt": "2026-07-21T00:26:29.328Z"
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "snapshot_stale",
+          "plan_b_canonical_membership_contract_missing"
+        ]
       }
     },
     {
@@ -255,20 +260,40 @@
         "checkedAt": "2026-07-20T20:20:46.691Z",
         "manifestGeneratedAt": "2026-07-21T00:26:22.838Z"
       }
+    },
+    {
+      "dayKey": "2026-07-21",
+      "reason": "invariant_report_stale",
+      "details": {
+        "ok": false,
+        "reason": "invariant_report_stale",
+        "checkedAt": "2026-07-21T19:13:35.930Z",
+        "manifestGeneratedAt": "2026-07-22T18:42:40.494Z"
+      }
+    },
+    {
+      "dayKey": "2026-07-22",
+      "reason": "invariant_report_stale",
+      "details": {
+        "ok": false,
+        "reason": "invariant_report_stale",
+        "checkedAt": "2026-07-22T17:49:44.750Z",
+        "manifestGeneratedAt": "2026-07-22T18:42:34.727Z"
+      }
     }
   ],
-  "integrityWarningDayCount": 14,
+  "integrityWarningDayCount": 16,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 16,
-        "uniqueMatches": 16,
+        "picks": 19,
+        "uniqueMatches": 19,
         "settled": 15,
         "wins": 10,
         "losses": 5,
-        "unresolved": 1,
+        "unresolved": 4,
         "unsupported": 0,
         "oddsAvailable": 4,
         "totalStake": 4,
@@ -282,12 +307,12 @@
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 40,
-        "uniqueMatches": 23,
+        "picks": 43,
+        "uniqueMatches": 24,
         "settled": 35,
         "wins": 23,
         "losses": 12,
-        "unresolved": 5,
+        "unresolved": 8,
         "unsupported": 0,
         "oddsAvailable": 11,
         "totalStake": 11,
