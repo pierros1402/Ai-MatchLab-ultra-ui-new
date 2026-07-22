@@ -21,7 +21,8 @@ import {
   normalizeDisplayTeam,
   statusRankFromParts,
   filterByPanelMode,
-  partitionDisplaySupplementsByFixtureIdentity
+  partitionDisplaySupplementsByFixtureIdentity,
+  selectAuthoritativeDisplayUniverse
 } from "./core/display-contract.js";
 import { buildMatchIntelligence } from "./core/build-match-intelligence.js";
 import { getDeployedOddsSnapshot, getDeployedOddsDay, getAssessmentRows } from "./storage/odds-memory-db.js";
@@ -2206,7 +2207,11 @@ app.get("/fixtures-runtime", async (req, res) => {
     // endpoints can never disagree for the same date. The builder already layers
     // fixtures.json → odds.json → fixtures-all.json, so no separate flashscore
     // merge is needed here (that was the old divergence source).
-    const { source, matches } = buildDisplayMatchesForDate(dayKey);
+    const {
+      source,
+      matches,
+      membership
+    } = buildDisplayMatchesForDate(dayKey);
 
     // Overlay live/FT status (today only, odds-only leagues); no-op for past
     // dates and when the feed is unavailable. Budgeted so a slow/hung Flashscore
@@ -2243,7 +2248,15 @@ app.get("/fixtures-runtime", async (req, res) => {
     // routed to the correct panel.
     out = filterByPanelMode(out, mode);
 
-    res.json({ ok: true, mode, date: dayKey, count: out.length, matches: out, source });
+    res.json({
+      ok: true,
+      mode,
+      date: dayKey,
+      count: out.length,
+      matches: out,
+      source,
+      membership
+    });
   } catch (err) {
     console.error("[fixtures-runtime] failed", err?.message || err);
     res.status(503).json({
@@ -3199,11 +3212,15 @@ function buildDisplayMatchesForDateUncached(date) {
     };
 
     let fixtureMatches = [];
-    let fixtureSlugs = new Set();
+  let fixtureSlugs = new Set();
+  let snapshotFixtureArtifactLoaded = false;
 
     try {
       const fp = resolveDataPath("deploy-snapshots", date, "fixtures.json");
-      const fj = JSON.parse(fs.readFileSync(fp, "utf8"));
+      const fj = JSON.parse(
+      fs.readFileSync(fp, "utf8")
+    );
+    snapshotFixtureArtifactLoaded = true;
       fixtureMatches = (Array.isArray(fj) ? fj : (fj.fixtures || fj.matches || []))
         .map(m => attachAssessment({
           matchId:    String(m.matchId || m.id || ""),
@@ -3334,12 +3351,26 @@ function buildDisplayMatchesForDateUncached(date) {
       }
     } catch { /**/ }
 
-    const merged = reconcileDateMatchesForDisplay([
-      ...fixtureMatches,
-      ...oddsMatches,
-      ...fixturesAllMatches
-    ], date);
-    if (merged.length) return { source: "snapshot", matches: excludeYouthWomenRows(merged) };
+    const displayUniverse =
+    selectAuthoritativeDisplayUniverse(
+      fixtureMatches,
+      oddsRawMatches,
+      fixturesAllMatches
+    );
+
+  const merged =
+    reconcileDateMatchesForDisplay(
+      displayUniverse.matches,
+      date
+    );
+
+  if (snapshotFixtureArtifactLoaded) {
+    return {
+      source: "snapshot",
+      matches: excludeYouthWomenRows(merged),
+      membership: displayUniverse.membership
+    };
+  }
   }
 
   // 2. Fallback: canonical-fixtures (for future dates without snapshot yet)
@@ -3369,39 +3400,27 @@ function buildDisplayMatchesForDateUncached(date) {
     }
   } catch { /**/ }
 
-  // 3. Fallback: fixtures-all.json — try today then yesterday (covers D+0 when today's snapshot not yet created)
-  for (let offset = 0; offset <= 1; offset++) {
-    try {
-      const d = new Date(); d.setDate(d.getDate() - offset);
-      const key = d.toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
-      const p = resolveDataPath("deploy-snapshots", key, "fixtures-all.json");
-      const j = JSON.parse(fs.readFileSync(p, "utf8"));
-      const matches = (j.matches || [])
-        .filter(m => m.dayKey === date && (m.home || m.homeTeam) && (m.away || m.awayTeam) && (m.id || m.matchId))
-        .map(m => attachAssessment({
-          matchId:    String(m.matchId || m.id || ""),
-          homeTeam:   m.home || m.homeTeam || "",
-          awayTeam:   m.away || m.awayTeam || "",
-          kickoffUtc: m.kickoffUtc || m.kickoff || "",
-          status:     m.status || "PRE",
-          leagueSlug: m.leagueSlug || "",
-          leagueName: m.leagueName || m.competition || "",
-          scoreHome:  m.scoreHome ?? null,
-          scoreAway:  m.scoreAway ?? null,
-        })).filter(m => m.matchId && m.homeTeam && m.awayTeam);
-      const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return { source: "fixtures-all", matches: excludeYouthWomenRows(reconciled) };
-    } catch { /**/ }
-  }
-
-  return { source: "none", matches: [] };
+  // 3. fixtures-all is enrichment-only and cannot create match existence.
+  return {
+    source: "none",
+    matches: [],
+    membership: {
+      authoritativeSource: "none",
+      authoritativeFixtureCount: 0,
+      supplementsMayCreateFixture: false
+    }
+  };
 }
 
 app.get("/api/matches-for-date", async (req, res) => {
   const date = String(req.query.date || athensDayKey()).slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
 
-  const { source, matches } = buildDisplayMatchesForDate(date);
+  const {
+    source,
+    matches,
+    membership
+  } = buildDisplayMatchesForDate(date);
 
   // Overlay live/FT status from Flashscore for odds-only leagues (today only).
   // No-op for past dates and when the feed is unavailable. Budgeted — see
@@ -3420,7 +3439,13 @@ app.get("/api/matches-for-date", async (req, res) => {
     "matches-for-date:ft-verify", 4000, beforeVerify,
     () => verifyStuckLiveFinals(beforeVerify, date)
   );
-  return res.json({ ok: true, date, source, matches: out });
+  return res.json({
+    ok: true,
+    date,
+    source,
+    matches: out,
+    membership
+  });
 });
 
 // All prefetched/fetched odds for a date — used by Opening Tracker panel.

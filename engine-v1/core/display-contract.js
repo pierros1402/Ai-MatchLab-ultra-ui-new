@@ -230,6 +230,66 @@ export function partitionDisplaySupplementsByFixtureIdentity(
 }
 
 /**
+ * Build the authoritative display existence universe.
+ *
+ * Snapshot/canonical fixtures define which matches exist. Odds and fixtures-all
+ * rows are diagnostic/enrichment inputs only and are never appended as matches.
+ */
+export function selectAuthoritativeDisplayUniverse(
+  fixtureRows = [],
+  oddsRows = [],
+  fixturesAllRows = []
+) {
+  const fixtures = Array.isArray(fixtureRows)
+    ? [...fixtureRows]
+    : [];
+
+  const odds = Array.isArray(oddsRows)
+    ? oddsRows
+    : [];
+
+  const fixturesAll = Array.isArray(fixturesAllRows)
+    ? fixturesAllRows
+    : [];
+
+  const oddsMembership =
+    partitionDisplaySupplementsByFixtureIdentity(
+      fixtures,
+      odds
+    );
+
+  const fixturesAllMembership =
+    partitionDisplaySupplementsByFixtureIdentity(
+      fixtures,
+      fixturesAll
+    );
+
+  return {
+    matches: fixtures,
+    membership: {
+      authoritativeSource:
+        "deploy-snapshot-fixtures",
+      authoritativeFixtureCount:
+        fixtures.length,
+      supplementsMayCreateFixture:
+        false,
+      oddsRowsSeen:
+        odds.length,
+      oddsExactFixtureMembers:
+        oddsMembership.matched.length,
+      oddsRowsIgnoredForExistence:
+        odds.length,
+      fixturesAllRowsSeen:
+        fixturesAll.length,
+      fixturesAllExactFixtureMembers:
+        fixturesAllMembership.matched.length,
+      fixturesAllRowsIgnoredForExistence:
+        fixturesAll.length
+    }
+  };
+}
+
+/**
  * Canonical team-name key for display dedupe: lowercase, strip diacritics, keep
  * only [a-z0-9]. This is THE dedupe primitive — every endpoint uses it so the
  * same match never appears twice across snapshot / odds / fixtures-all sources.
