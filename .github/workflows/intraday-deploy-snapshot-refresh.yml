@@ -139,10 +139,14 @@ jobs:
       # Intraday re-exports the snapshot, which would leave the committed
       # invariant report stale vs manifest.generatedAt — refresh it so the
       # nightly Invariant gate never trips on an intraday manifest.
-      - name: Refresh snapshot invariant report
+      - name: Refresh and enforce snapshot invariant report
         if: env.SKIP_BUILD != 'true'
-        continue-on-error: true
-        run: node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY"
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
 
       - name: Snapshot verification
         if: env.SKIP_BUILD != 'true'
@@ -155,9 +159,10 @@ jobs:
           const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
           const fixturesFile = `data/deploy-snapshots/${day}/fixtures.json`;
           const valueFile = `data/deploy-snapshots/${day}/value.json`;
+          const invariantFile = `data/deploy-snapshots/${day}/invariant-report.json`;
           const detailsDir = `data/deploy-snapshots/${day}/details`;
 
-          for (const file of [manifestFile, fixturesFile, valueFile]) {
+          for (const file of [manifestFile, fixturesFile, valueFile, invariantFile]) {
             if (!fs.existsSync(file)) {
               throw new Error(`missing required snapshot file: ${file}`);
             }
@@ -170,6 +175,7 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
           const fixtures = JSON.parse(fs.readFileSync(fixturesFile, "utf8"));
           const value = JSON.parse(fs.readFileSync(valueFile, "utf8"));
+          const invariant = JSON.parse(fs.readFileSync(invariantFile, "utf8"));
           const details = fs.readdirSync(detailsDir).filter(f => f.endsWith(".json"));
 
           console.log(JSON.stringify({
@@ -182,7 +188,10 @@ jobs:
             fixturesCount: fixtures.count,
             valueCount: value.count,
             valuePicks: Array.isArray(value.picks) ? value.picks.length : null,
-            detailsFiles: details.length
+            detailsFiles: details.length,
+            invariantOk: invariant.ok,
+            invariantValueSafe: invariant.valueSafe,
+            invariantBlocked: Array.isArray(invariant.blocked) ? invariant.blocked.length : null
           }, null, 2));
 
           if (manifest.date !== day) {
@@ -195,6 +204,18 @@ jobs:
 
           if (!details.length) {
             throw new Error("snapshot has zero detail files");
+          }
+
+          if (invariant.ok !== true) {
+            throw new Error("snapshot invariant report is not ok");
+          }
+
+          if (invariant.valueSafe === false) {
+            throw new Error("snapshot invariant report marks value unsafe");
+          }
+
+          if (Array.isArray(invariant.blocked) && invariant.blocked.length > 0) {
+            throw new Error(`snapshot invariant report has ${invariant.blocked.length} blocked issue(s)`);
           }
           NODE
 

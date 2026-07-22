@@ -462,11 +462,7 @@ export async function runSnapshotInvariantCheck(dayKey = athensDayKey()) {
  * in-cycle check predates the geo rebuild + final re-export.
  * Exit codes: 0 ok · 1 manifest missing · 2 report missing · 3 stale · 4 blocked.
  */
-export function gateSnapshotInvariants(dayKey = athensDayKey()) {
-  const snapshotDir = resolveDataPath("deploy-snapshots", dayKey);
-  const report = readJsonSafe(path.join(snapshotDir, "invariant-report.json"));
-  const manifest = readJsonSafe(path.join(snapshotDir, "manifest.json"));
-
+export function evaluateInvariantGate({ dayKey, report, manifest }) {
   if (!manifest) return { ok: false, code: 1, reason: "manifest_missing", dayKey };
   if (!report) return { ok: false, code: 2, reason: "invariant_report_missing", dayKey };
 
@@ -486,13 +482,41 @@ export function gateSnapshotInvariants(dayKey = athensDayKey()) {
     return { ok: false, code: 4, reason: "blocked_issues", dayKey, blocked: report.blocked };
   }
 
+  if (report.ok !== true) {
+    return {
+      ok: false,
+      code: 5,
+      reason: "invariant_report_not_ok",
+      dayKey,
+      reportOk: report.ok ?? null
+    };
+  }
+
+  if (report.valueSafe === false) {
+    return {
+      ok: false,
+      code: 6,
+      reason: "value_unsafe",
+      dayKey,
+      valueSafe: false
+    };
+  }
+
   return {
     ok: true, code: 0, dayKey,
     checkedAt: report.checkedAt,
     manifestGeneratedAt: manifest.generatedAt || null,
-    valueSafe: report.valueSafe !== false,
+    valueSafe: true,
     warnings: Array.isArray(report.warnings) ? report.warnings.length : 0
   };
+}
+
+export function gateSnapshotInvariants(dayKey = athensDayKey()) {
+  const snapshotDir = resolveDataPath("deploy-snapshots", dayKey);
+  const report = readJsonSafe(path.join(snapshotDir, "invariant-report.json"));
+  const manifest = readJsonSafe(path.join(snapshotDir, "manifest.json"));
+
+  return evaluateInvariantGate({ dayKey, report, manifest });
 }
 
 const isCli = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
