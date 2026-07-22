@@ -128,3 +128,56 @@ test("intraday workflow hard-fails before staging on invariant or value failure"
     /invariant\.blocked\.length > 0/
   );
 });
+test("intraday self-heals a missing Value baseline before publication", () => {
+  const workflow = fs.readFileSync(
+    new URL(
+      "../../.github/workflows/intraday-deploy-snapshot-refresh.yml",
+      import.meta.url
+    ),
+    "utf8"
+  );
+
+  const selfHealStep = workflow.match(
+    /- name: Self-heal stale or missing value artifacts[\s\S]*?(?=\n      # Intraday re-exports)/
+  )?.[0];
+
+  assert.ok(
+    selfHealStep,
+    "intraday Value self-heal step is missing"
+  );
+
+  assert.match(
+    selfHealStep,
+    /local_value_missing_or_invalid/
+  );
+
+  assert.match(
+    selfHealStep,
+    /snapshot_value_missing_or_invalid/
+  );
+
+  assert.match(
+    selfHealStep,
+    /manifest\?\.valueGate\?\.ok !== true/
+  );
+
+  assert.match(
+    selfHealStep,
+    /fixtureCount > 0/
+  );
+
+  assert.match(
+    selfHealStep,
+    /String\(payload\.source \|\| ""\) !== "missing_local_value_file"/
+  );
+
+  assert.match(
+    selfHealStep,
+    /process\.exit\(shouldRefresh \? 0 : 1\)/
+  );
+
+  assert.match(
+    selfHealStep,
+    /refresh-value-artifacts-day\.js --date="\$DAY_KEY"/
+  );
+});

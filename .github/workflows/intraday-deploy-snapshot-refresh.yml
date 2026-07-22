@@ -89,7 +89,7 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=0 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
 
-      - name: Self-heal stale value artifacts
+      - name: Self-heal stale or missing value artifacts
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: |
@@ -101,8 +101,39 @@ jobs:
           const fs = require("fs");
 
           const day = process.env.DAY_KEY;
-          const file = `data/deploy-snapshots/${day}/freshness-report.json`;
-          const report = JSON.parse(fs.readFileSync(file, "utf8"));
+
+          const files = {
+            freshness: `data/deploy-snapshots/${day}/freshness-report.json`,
+            manifest: `data/deploy-snapshots/${day}/manifest.json`,
+            fixtures: `data/deploy-snapshots/${day}/fixtures.json`,
+            localValue: `data/value/${day}.json`,
+            snapshotValue: `data/deploy-snapshots/${day}/value.json`
+          };
+
+          function readJsonSafe(file) {
+            try {
+              if (!fs.existsSync(file)) return null;
+              return JSON.parse(fs.readFileSync(file, "utf8"));
+            } catch {
+              return null;
+            }
+          }
+
+          function isValidValueArtifact(payload) {
+            return Boolean(
+              payload &&
+              typeof payload === "object" &&
+              payload.ok !== false &&
+              Array.isArray(payload.picks) &&
+              String(payload.source || "") !== "missing_local_value_file"
+            );
+          }
+
+          const report = readJsonSafe(files.freshness) || {};
+          const manifest = readJsonSafe(files.manifest);
+          const fixtures = readJsonSafe(files.fixtures);
+          const localValue = readJsonSafe(files.localValue);
+          const snapshotValue = readJsonSafe(files.snapshotValue);
 
           const valueKinds = new Set([
             "snapshot_value",
@@ -112,28 +143,73 @@ jobs:
             "value_plan_comparison"
           ]);
 
-          const staleValueArtifacts = Array.isArray(report.staleDerivedArtifacts)
+          const staleValueArtifacts = Array.isArray(
+            report.staleDerivedArtifacts
+          )
             ? report.staleDerivedArtifacts.filter(entry =>
                 valueKinds.has(String(entry?.kind || ""))
               )
             : [];
 
+          const valueBaselineIssues = [];
+
+          if (!isValidValueArtifact(localValue)) {
+            valueBaselineIssues.push({
+              kind: "local_value_missing_or_invalid",
+              artifact: files.localValue,
+              source: localValue?.source || null
+            });
+          }
+
+          if (!isValidValueArtifact(snapshotValue)) {
+            valueBaselineIssues.push({
+              kind: "snapshot_value_missing_or_invalid",
+              artifact: files.snapshotValue,
+              source: snapshotValue?.source || null
+            });
+          }
+
+          if (manifest?.valueGate?.ok !== true) {
+            valueBaselineIssues.push({
+              kind: "manifest_value_gate_failed",
+              artifact: files.manifest,
+              valueGate: manifest?.valueGate || null
+            });
+          }
+
+          const fixtureCount = Number(
+            fixtures?.count ??
+            manifest?.counts?.fixtures ??
+            0
+          );
+
+          const shouldRefresh =
+            fixtureCount > 0 &&
+            (
+              staleValueArtifacts.length > 0 ||
+              valueBaselineIssues.length > 0
+            );
+
           console.log(JSON.stringify({
+            fixtureCount,
             staleValueArtifactCount: staleValueArtifacts.length,
             staleValueArtifacts: staleValueArtifacts.map(entry => ({
               kind: entry.kind,
               artifact: entry.artifact,
               staleReason: entry.staleReason
-            }))
+            })),
+            valueBaselineIssueCount: valueBaselineIssues.length,
+            valueBaselineIssues,
+            shouldRefresh
           }, null, 2));
 
-          process.exit(staleValueArtifacts.length > 0 ? 0 : 1);
+          process.exit(shouldRefresh ? 0 : 1);
           NODE
           then
-            echo "Value-derived artifacts are stale against canonical inputs — running targeted refresh."
+            echo "Value artifacts are stale, missing, or invalid — running canonical-only targeted refresh."
             node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
           else
-            echo "Value-derived artifacts are current — skipping targeted refresh."
+            echo "No publishable fixture-backed Value repair is required — skipping targeted refresh."
           fi
 
       # Intraday re-exports the snapshot, which would leave the committed
