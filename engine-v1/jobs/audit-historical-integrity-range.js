@@ -100,6 +100,104 @@ function findAliasDuplicatePairs(fixtures) {
   return pairs;
 }
 
+function normalizedReasonList(value) {
+  return Array.isArray(value)
+    ? [...new Set(
+        value
+          .map(reason => String(reason || "").trim())
+          .filter(Boolean)
+      )].sort()
+    : [];
+}
+
+export function hasPreservedBaselineRepairEvidence(
+  repairReport,
+  dayKey
+) {
+  const validation = repairReport?.validation;
+  const blocking = normalizedReasonList(
+    validation?.blockingIntegrityHardFailures
+  );
+  const preserved = normalizedReasonList(
+    validation?.preservedBaselineIntegrityHardFailures
+  );
+
+  return Boolean(
+    repairReport?.ok === true &&
+    String(repairReport?.dayKey || "") === String(dayKey || "") &&
+    validation?.ok === true &&
+    normalizedReasonList(
+      validation?.newFreshnessReasons
+    ).length === 0 &&
+    normalizedReasonList(
+      validation?.newBuildHardFailures
+    ).length === 0 &&
+    Number(validation?.invariantBlocked || 0) === 0 &&
+    blocking.length === 0 &&
+    preserved.includes("build_report_not_clean")
+  );
+}
+
+export function classifyHistoricalIntegrityOutcome({
+  dayKey,
+  hardFailures = [],
+  warnings = [],
+  repairReport = null
+} = {}) {
+  const normalizedHardFailures =
+    normalizedReasonList(hardFailures);
+  const normalizedWarnings =
+    normalizedReasonList(warnings);
+
+  const preservedBaselineLimitations = [];
+
+  if (
+    normalizedHardFailures.includes(
+      "build_report_not_clean"
+    ) &&
+    hasPreservedBaselineRepairEvidence(
+      repairReport,
+      dayKey
+    )
+  ) {
+    preservedBaselineLimitations.push(
+      "build_report_not_clean"
+    );
+  }
+
+  const repairRequiredFailures =
+    normalizedHardFailures.filter(
+      reason =>
+        !preservedBaselineLimitations.includes(reason)
+    );
+
+  const agedOutCanonicalWarning =
+    normalizedWarnings.includes(
+      "snapshot_rescue_from_aged_out_canonical"
+    );
+
+  let classification = "clean";
+
+  if (repairRequiredFailures.length > 0) {
+    classification = "repair_required";
+  } else if (preservedBaselineLimitations.length > 0) {
+    classification = "preserved_baseline_limitation";
+  } else if (agedOutCanonicalWarning) {
+    classification = "aged_out_canonical_warning";
+  }
+
+  return {
+    ok: repairRequiredFailures.length === 0,
+    clean:
+      normalizedHardFailures.length === 0 &&
+      normalizedWarnings.length === 0,
+    classification,
+    repairRequiredFailures,
+    preservedBaselineLimitations,
+    agedOutCanonicalWarning
+  };
+}
+
 export function auditHistoricalIntegrityDay(dayKey) {
   const snapshotDir = resolveDataPath("deploy-snapshots", dayKey);
   const fixturesPayload = readJsonSafe(path.join(snapshotDir, "fixtures.json"), null);
@@ -108,6 +206,11 @@ export function auditHistoricalIntegrityDay(dayKey) {
   const buildReport = readJsonSafe(resolveDataPath("build-reports", `${dayKey}.json`), null);
   const value = readJsonSafe(path.join(snapshotDir, "value.json"), null);
   const valueAudit = readJsonSafe(path.join(snapshotDir, "value-audit.json"), null);
+
+  const repairReport = readJsonSafe(
+    resolveDataPath("historical-integrity", "repairs", `${dayKey}.json`),
+    null
+  );
 
   const detailsDir = path.join(snapshotDir, "details");
   const fixtures = Array.isArray(fixturesPayload?.fixtures) ? fixturesPayload.fixtures : [];
@@ -165,8 +268,23 @@ export function auditHistoricalIntegrityDay(dayKey) {
   if (!buildReport) warnings.push("build_report_missing");
   if (value && value.ok === false) warnings.push("value_artifact_not_ok");
 
+  const outcome = classifyHistoricalIntegrityOutcome({
+    dayKey,
+    hardFailures,
+    warnings,
+    repairReport
+  });
+
   return {
-    ok: hardFailures.length === 0,
+    ok: outcome.ok,
+    clean: outcome.clean,
+    classification: outcome.classification,
+    repairRequiredFailures:
+      outcome.repairRequiredFailures,
+    preservedBaselineLimitations:
+      outcome.preservedBaselineLimitations,
+    agedOutCanonicalWarning:
+      outcome.agedOutCanonicalWarning,
     dayKey,
     checkedAt: new Date().toISOString(),
     counts: {
@@ -201,21 +319,50 @@ export function auditHistoricalIntegrityDay(dayKey) {
 export function auditHistoricalIntegrityRange(options = {}) {
   const days = listSnapshotDays(options);
   const reports = days.map(day => auditHistoricalIntegrityDay(day));
+
+  const repairRequiredDays = reports
+    .filter(
+      report =>
+        report.classification === "repair_required"
+    )
+    .map(report => report.dayKey);
+
   const summary = {
-    ok: reports.every(r => r.ok),
-    schema: "ai-matchlab.historical-integrity.v1",
+    ok: repairRequiredDays.length === 0,
+    schema: "ai-matchlab.historical-integrity.v2",
     generatedAt: new Date().toISOString(),
     from: options.from || days[0] || null,
     to: options.to || days[days.length - 1] || null,
     dayCount: reports.length,
-    cleanDays: reports.filter(r => r.ok).map(r => r.dayKey),
-    repairRequiredDays: reports.filter(r => !r.ok).map(r => r.dayKey),
+    cleanDays: reports
+      .filter(report => report.classification === "clean")
+      .map(report => report.dayKey),
+    evidenceUsableDays: reports
+      .filter(report => report.ok)
+      .map(report => report.dayKey),
+    preservedBaselineLimitationDays: reports
+      .filter(
+        report =>
+          report.classification ===
+          "preserved_baseline_limitation"
+      )
+      .map(report => report.dayKey),
+    agedOutCanonicalWarningDays: reports
+      .filter(report => report.agedOutCanonicalWarning)
+      .map(report => report.dayKey),
+    repairRequiredDays,
     warningDays: reports.filter(r => r.warnings.length > 0).map(r => r.dayKey),
     days: reports.map(r => ({
       dayKey: r.dayKey,
       ok: r.ok,
+      clean: r.clean,
+      classification: r.classification,
       counts: r.counts,
       hardFailures: r.hardFailures,
+      repairRequiredFailures:
+        r.repairRequiredFailures,
+      preservedBaselineLimitations:
+        r.preservedBaselineLimitations,
       warnings: r.warnings
     }))
   };
