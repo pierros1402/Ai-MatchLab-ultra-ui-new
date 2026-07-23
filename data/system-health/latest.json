@@ -1,39 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-23",
-  "generatedAt": "2026-07-22T18:57:49.634Z",
+  "generatedAt": "2026-07-23T00:55:15.984Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
-    "info": 3
+    "info": 2
   },
-  "alert": true,
+  "alert": false,
   "alertCounts": {
     "error": 0,
-    "warning": 1,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 5,
+  "activeIssueCount": 4,
   "actionableIssueCount": 2,
-  "newIssueCount": 3,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 3,
-  "persistentIssueCount": 2,
+  "newIssueCount": 0,
+  "newActionableIssueCount": 0,
+  "resolvedIssueCount": 1,
+  "persistentIssueCount": 4,
   "activeIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-23.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
     {
       "severity": "warning",
       "source": "build-report",
@@ -146,7 +133,9 @@
       }
     }
   ],
-  "newIssues": [
+  "newIssues": [],
+  "newActionableIssues": [],
+  "resolvedIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -159,7 +148,9 @@
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
       }
-    },
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -173,6 +164,17 @@
         ],
         "raw": "acquisition_skipped_slugs:uefa.wchampions_qual,col.copa,crc.1",
         "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -184,81 +186,6 @@
         "picks": 8,
         "settled": 0,
         "unresolved": 8
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "uefa.wchampions_qual",
-          "col.copa",
-          "crc.1"
-        ],
-        "raw": "acquisition_skipped_slugs:uefa.wchampions_qual,col.copa,crc.1",
-        "contextOnly": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "invariant-report",
-      "type": "coverage_floor_drop",
-      "message": "Canonical fixtures are below static floor but meet the effective floor.",
-      "details": {
-        "type": "coverage_floor_drop",
-        "staticFloor": 45,
-        "effectiveFloor": 37,
-        "actualFixtures": 40,
-        "drop": 8,
-        "reason": "canonical_fixture_count_below_static_floor",
-        "effectiveFloorMet": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "coverage_readiness",
-        "artifact": "coverage-readiness/2026-07-22.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_coverage_readiness",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "arg.supercopa",
-          "col.copa",
-          "uefa.wchampions_qual"
-        ],
-        "raw": "acquisition_skipped_slugs:arg.supercopa,col.copa,uefa.wchampions_qual",
-        "contextOnly": false
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
