@@ -13,6 +13,7 @@ import {
   sanitizePreKickoffNonPlayed
 } from "../core/non-played-state.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
+import { canonicalEspnLeagueSlug } from "../core/espn-league-identity.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
 import { registerMatch } from "../storage/canonical-match-registry.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
@@ -732,7 +733,7 @@ export function mergeCanonicalFixtures(existingFixtures = [], incomingFixtures =
   });
 }
 
-function serializeFixture(normalized, adapterId, fetchedDayKey) {
+export function serializeFixture(normalized, adapterId, fetchedDayKey) {
   const canonicalId = normalized.canonicalId
     || buildCanonicalId(
         normalized.leagueSlug,
@@ -760,6 +761,9 @@ function serializeFixture(normalized, adapterId, fetchedDayKey) {
     source: normalized.source || adapterId,
     sourceId: normalized.sourceId || normalized.sourceMatchId || normalized.matchId,
     sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
+    ...(normalized.providerLeagueSlug
+      ? { providerLeagueSlug: normalized.providerLeagueSlug }
+      : {}),
 
     leagueSlug: normalized.leagueSlug,
     leagueName: normalized.leagueName,
@@ -1035,19 +1039,6 @@ function existingCanonicalIdsForDay(dayKey) {
   return ids;
 }
 
-// ESPN dropdown slugs that differ from our declared seed slugs. ESPN splits
-// UEFA qualifying rounds into separate "*_qual" league codes, while the
-// fixtures path stores qualifiers under the parent competition slug
-// (verified 2026-07-07: Flashscore CL qualifiers landed in uefa.champions
-// with leagueName "Champions League - Qualification"). Mapping to the parent
-// keeps both sources on the same league so day-universe dedupe can match.
-const ESPN_DROPDOWN_SLUG_ALIASES = {
-  "sco.cis": "sco.tennents",
-  "uefa.champions_qual": "uefa.champions",
-  "uefa.europa_qual": "uefa.europa",
-  "uefa.europa.conf_qual": "uefa.europa.conf"
-};
-
 async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
   // Accept every DECLARED league here, in-season or not: an event actually
   // present in ESPN's all-scoreboard is a stronger fixture signal than the
@@ -1127,7 +1118,7 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
       const leagueId = extractEspnLeagueId(event?.uid);
       const dropdownLeague = leagueId ? dropdownById.get(leagueId) : null;
       const rawSlug = String(dropdownLeague?.slug || "").trim();
-      const slug = ESPN_DROPDOWN_SLUG_ALIASES[rawSlug] || rawSlug;
+      const slug = canonicalEspnLeagueSlug(rawSlug);
 
       if (!slug) {
         stats.skippedNoLeagueSlug++;
@@ -1162,6 +1153,7 @@ async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
       const row = serializeFixture(
         {
           ...normalized,
+          providerLeagueSlug: rawSlug || slug,
           leagueSlug: slug,
           leagueName: leagueName(slug)
         },

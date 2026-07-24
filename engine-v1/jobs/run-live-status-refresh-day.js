@@ -4,7 +4,9 @@ import { fileURLToPath } from "url";
 
 import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
+import { buildCanonicalId } from "../core/canonical-id.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import { espnProviderFetchSlugs } from "../core/espn-league-identity.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import {
   listApprovedFlashscoreNonPlayedDecisions,
@@ -152,7 +154,8 @@ function collectTargetLeagues(dayKey, options = {}) {
       out.set(slug, {
         slug,
         candidateCount: candidates.length,
-        fixtureCount: fixtures.length
+        fixtureCount: fixtures.length,
+        providerFetchSlugs: espnProviderFetchSlugs(slug, candidates)
       });
     }
   }
@@ -228,11 +231,19 @@ async function fetchJson(url, label) {
   return res.json();
 }
 
-function normalizeSourceRows(events, slug, dayKey) {
+export function normalizeSourceRows(
+  events,
+  providerSlug,
+  dayKey,
+  options = {}
+) {
   const byId = new Map();
+  const canonicalSlug =
+    normalizeText(options.canonicalSlug) ||
+    normalizeText(providerSlug);
 
   for (const event of Array.isArray(events) ? events : []) {
-    const normalized = normalizeFixture(event, slug);
+    const normalized = normalizeFixture(event, providerSlug);
     if (!normalized) continue;
 
     const fixtureDay = normalizeText(normalized.dayKey);
@@ -244,12 +255,18 @@ function normalizeSourceRows(events, slug, dayKey) {
     byId.set(id, {
       matchId: normalized.matchId,
       matchKey: normalized.matchKey,
-      canonicalId: normalized.canonicalId || null,
+      canonicalId: buildCanonicalId(
+        canonicalSlug,
+        normalized.homeTeam,
+        normalized.awayTeam,
+        normalized.dayKey || dayKey
+      ),
       source: normalized.source || "espn_direct_league_status",
       sourceId: normalized.sourceId || normalized.sourceMatchId || normalized.matchId,
       sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
-      leagueSlug: normalized.leagueSlug || slug,
-      leagueName: normalized.leagueName || leagueName(slug),
+      providerLeagueSlug: normalizeText(providerSlug) || null,
+      leagueSlug: canonicalSlug,
+      leagueName: leagueName(canonicalSlug),
       dayKey: normalized.dayKey,
       fetchedDayKey: dayKey,
       kickoffUtc: normalized.kickoffUtc,
@@ -278,6 +295,7 @@ function mergeStatusRow(previous, incoming) {
     "source",
     "sourceId",
     "sourceMatchId",
+    "providerLeagueSlug",
     "leagueSlug",
     "leagueName",
     "dayKey",
@@ -869,13 +887,18 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
 
   for (const target of targetLeagues) {
     const slug = target.slug;
-    const url = ESPN_BASE + "/" + slug + "/scoreboard?dates=" + espnDateFromDayKey(safeDayKey);
+    const providerFetchSlugs = Array.isArray(target?.providerFetchSlugs) &&
+      target.providerFetchSlugs.length > 0
+      ? target.providerFetchSlugs
+      : [slug];
 
     const leagueStats = {
       slug,
       leagueName: leagueName(slug),
       candidateCount: target.candidateCount,
       fixtureCount: target.fixtureCount,
+      providerFetchSlugs,
+      providerFetches: [],
       ok: false,
       sourceEvents: 0,
       sourceRows: 0,
@@ -890,16 +913,59 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     };
 
     try {
-      const source = await fetchJson(url, "espn_direct_league_status_" + slug);
-      const events = Array.isArray(source?.events) ? source.events : [];
-      const sourceById = normalizeSourceRows(events, slug, safeDayKey);
+      const sourceById = new Map();
+      let successfulProviderFetches = 0;
+
+      for (const providerSlug of providerFetchSlugs) {
+        const url = ESPN_BASE + "/" + providerSlug +
+          "/scoreboard?dates=" + espnDateFromDayKey(safeDayKey);
+
+        try {
+          const source = await fetchJson(
+            url,
+            "espn_direct_league_status_" + providerSlug
+          );
+          const events = Array.isArray(source?.events) ? source.events : [];
+          const providerRows = normalizeSourceRows(
+            events,
+            providerSlug,
+            safeDayKey,
+            { canonicalSlug: slug }
+          );
+
+          for (const [id, row] of providerRows) {
+            sourceById.set(id, row);
+          }
+
+          successfulProviderFetches++;
+          leagueStats.sourceEvents += events.length;
+          stats.sourceEventCount += events.length;
+          leagueStats.providerFetches.push({
+            providerSlug,
+            ok: true,
+            events: events.length,
+            rows: providerRows.size,
+            error: null
+          });
+        } catch (err) {
+          leagueStats.providerFetches.push({
+            providerSlug,
+            ok: false,
+            events: 0,
+            rows: 0,
+            error: err?.message || String(err)
+          });
+        }
+      }
+
+      if (successfulProviderFetches === 0) {
+        throw new Error("all_espn_provider_fetches_failed");
+      }
 
       leagueStats.ok = true;
-      leagueStats.sourceEvents = events.length;
       leagueStats.sourceRows = sourceById.size;
 
       stats.fetchedLeagueCount++;
-      stats.sourceEventCount += events.length;
       stats.sourceRows += sourceById.size;
 
       const current = readCanonicalLeague(safeDayKey, slug);
@@ -952,93 +1018,104 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         for (
           const sourceDayKey of adjacentDayKeys
         ) {
-          const adjacentUrl =
-            ESPN_BASE +
-            "/" +
-            slug +
-            "/scoreboard?dates=" +
-            espnDateFromDayKey(sourceDayKey);
+          for (const providerSlug of providerFetchSlugs) {
+            const adjacentUrl =
+              ESPN_BASE +
+              "/" +
+              providerSlug +
+              "/scoreboard?dates=" +
+              espnDateFromDayKey(sourceDayKey);
 
-          try {
-            const adjacentSource =
-              await fetchJson(
-                adjacentUrl,
-                "espn_exact_id_adjacent_" +
-                  slug +
-                  "_" +
-                  sourceDayKey
-              );
+            try {
+              const adjacentSource =
+                await fetchJson(
+                  adjacentUrl,
+                  "espn_exact_id_adjacent_" +
+                    providerSlug +
+                    "_" +
+                    sourceDayKey
+                );
 
-            const adjacentEvents =
-              Array.isArray(
-                adjacentSource?.events
-              )
-                ? adjacentSource.events
-                : [];
+              const adjacentEvents =
+                Array.isArray(
+                  adjacentSource?.events
+                )
+                  ? adjacentSource.events
+                  : [];
 
-            const adjacentById =
-              normalizeSourceRows(
-                adjacentEvents,
-                slug,
-                safeDayKey
-              );
+              const adjacentById =
+                normalizeSourceRows(
+                  adjacentEvents,
+                  providerSlug,
+                  safeDayKey,
+                  { canonicalSlug: slug }
+                );
 
-            let matched = 0;
+              let matched = 0;
 
-            for (
-              const id of [
-                ...missingExactIds
-              ]
-            ) {
-              const incoming =
-                adjacentById.get(id);
+              for (
+                const id of [
+                  ...missingExactIds
+                ]
+              ) {
+                const incoming =
+                  adjacentById.get(id);
 
-              if (!incoming) {
-                continue;
+                if (!incoming) {
+                  continue;
+                }
+
+                sourceById.set(
+                  id,
+                  incoming
+                );
+
+                missingExactIds.delete(id);
+                matched++;
+
+                leagueStats
+                  .exactIdFallbackMatches++;
               }
 
-              sourceById.set(
-                id,
-                incoming
-              );
+              leagueStats.sourceEvents +=
+                adjacentEvents.length;
 
-              missingExactIds.delete(id);
-              matched++;
+              leagueStats.sourceRows +=
+                matched;
 
-              leagueStats
-                .exactIdFallbackMatches++;
+              stats.sourceEventCount +=
+                adjacentEvents.length;
+
+              stats.sourceRows +=
+                matched;
+
+              leagueStats.adjacentFetches.push({
+                providerSlug,
+                dayKey: sourceDayKey,
+                ok: true,
+                events:
+                  adjacentEvents.length,
+                matched
+              });
+            }
+            catch (err) {
+              leagueStats.adjacentFetches.push({
+                providerSlug,
+                dayKey: sourceDayKey,
+                ok: false,
+                events: 0,
+                matched: 0,
+                error:
+                  err?.message ||
+                  String(err)
+              });
             }
 
-            leagueStats.sourceEvents +=
-              adjacentEvents.length;
-
-            leagueStats.sourceRows +=
-              matched;
-
-            stats.sourceEventCount +=
-              adjacentEvents.length;
-
-            stats.sourceRows +=
-              matched;
-
-            leagueStats.adjacentFetches.push({
-              dayKey: sourceDayKey,
-              ok: true,
-              events:
-                adjacentEvents.length,
-              matched
-            });
-          }
-          catch (err) {
-            leagueStats.adjacentFetches.push({
-              dayKey: sourceDayKey,
-              ok: false,
-              events: 0,
-              matched: 0,
-              error:
-                err?.message ||
-                String(err)
-            });
+            if (
+              missingExactIds.size === 0
+            ) {
+              break;
+            }
           }
 
           if (
@@ -1100,6 +1177,8 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           acquisitionProvider: "espn_direct_league_status",
           requestedLeagueSlug: slug,
           requestedDayKey: safeDayKey,
+
+          providerFetchSlugs,
 
           exactIdAdjacentDateFallback: {
             candidates:
