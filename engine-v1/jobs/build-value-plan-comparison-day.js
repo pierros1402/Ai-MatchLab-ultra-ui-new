@@ -543,6 +543,28 @@ export function loadFinalResults(
   };
 }
 
+export function resolveComparisonKickoff(
+  row,
+  fixture,
+  oddsEntry
+) {
+  return (
+    clean(
+      row?.kickoff ||
+      row?.kickoffUtc ||
+      row?.startTime ||
+      row?.startUtc ||
+      row?.time ||
+      fixture?.kickoff ||
+      fixture?.kickoffUtc ||
+      fixture?.startTime ||
+      fixture?.startUtc ||
+      oddsEntry?.kickoff ||
+      oddsEntry?.kickoffUtc
+    ) || null
+  );
+}
+
 function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) {
   const id = rowId(row);
   const verifiedScore = resolveVerifiedFinalScore(finalResult);
@@ -565,7 +587,7 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) 
   const marketKey = COMPARISON_MARKET_KEYS[market] || market;
   const odds = decimalOdds(row)
     ?? realBookOdds(multiMarkets, marketKey, oddsSideForPick(marketKey, pick));
-  const kickoff = clean(row?.kickoff || fixture?.kickoff || fixture?.kickoffUtc || oddsEntry?.kickoff) || null;
+  const kickoff = resolveComparisonKickoff(row, fixture, oddsEntry);
 
   return {
     planId,

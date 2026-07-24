@@ -137,6 +137,34 @@ function isRefreshCandidate(row, now = new Date(), options = {}) {
   return preLike && hoursFromKickoff <= 3;
 }
 
+export function isEspnRefreshCandidate(
+  row,
+  now = new Date(),
+  options = {}
+) {
+  const source =
+    normalizeText(
+      row?.source
+    ).toLowerCase();
+
+  const providerMatchId =
+    normalizeText(
+      row?.sourceId ||
+      row?.sourceMatchId ||
+      row?.matchId
+    );
+
+  return (
+    source.startsWith("espn") &&
+    Boolean(providerMatchId) &&
+    isRefreshCandidate(
+      row,
+      now,
+      options
+    )
+  );
+}
+
 function collectTargetLeagues(dayKey, options = {}) {
   const dir = canonicalDir(dayKey);
   const now = options.now instanceof Date ? options.now : new Date();
@@ -148,7 +176,14 @@ function collectTargetLeagues(dayKey, options = {}) {
     const slug = name.replace(/\.json$/i, "");
     const payload = readCanonicalLeague(dayKey, slug);
     const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
-    const candidates = fixtures.filter(row => isRefreshCandidate(row, now, options));
+    const candidates =
+      fixtures.filter(row =>
+        isEspnRefreshCandidate(
+          row,
+          now,
+          options
+        )
+      );
 
     if (candidates.length > 0) {
       out.set(slug, {
@@ -286,34 +321,40 @@ export function normalizeSourceRows(
   return byId;
 }
 
-function mergeStatusRow(previous, incoming) {
-  const merged = { ...previous };
+export function mergeStatusRow(
+  previous,
+  incoming
+) {
+  const merged = {
+    ...previous
+  };
 
-  for (const key of [
-    "matchId",
-    "matchKey",
-    "source",
-    "sourceId",
-    "sourceMatchId",
+  const mutableStatusFields = [
     "providerLeagueSlug",
-    "leagueSlug",
-    "leagueName",
-    "dayKey",
     "fetchedDayKey",
-    "kickoffUtc",
-    "homeTeam",
-    "awayTeam",
-    "scoreHome",
-    "scoreAway",
     "status",
     "statusType",
     "rawStatus",
+    "operationalState",
     "minute",
-    "venue",
+    "scoreHome",
+    "scoreAway",
+    "penalties",
+    "decidedBy",
     "lastSeenAt"
-  ]) {
-    if (meaningful(incoming?.[key])) {
-      merged[key] = incoming[key];
+  ];
+
+  for (
+    const key of
+    mutableStatusFields
+  ) {
+    if (
+      meaningful(
+        incoming?.[key]
+      )
+    ) {
+      merged[key] =
+        incoming[key];
     }
   }
 
@@ -823,6 +864,33 @@ function buildFlashscoreFinalIncoming(previous, sourceRow) {
 
     lastSeenAt: new Date().toISOString()
   };
+}
+
+export function finalizeLiveStatusRefreshStats(
+  stats
+) {
+  const errors =
+    Array.isArray(stats?.errors)
+      ? stats.errors
+      : [];
+
+  const failedLeagueCount =
+    Number(
+      stats?.failedLeagueCount || 0
+    );
+
+  const flashscoreFailed =
+    stats?.flashscoreFinalRefresh
+      ?.attempted === true &&
+    stats?.flashscoreFinalRefresh
+      ?.ok !== true;
+
+  stats.ok =
+    errors.length === 0 &&
+    failedLeagueCount === 0 &&
+    !flashscoreFailed;
+
+  return stats;
 }
 
 export async function runLiveStatusRefreshDay(dayKey, options = {}) {
@@ -1478,8 +1546,12 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     }
   }
 
-  stats.finishedAt = new Date().toISOString();
-  return stats;
+  stats.finishedAt =
+    new Date().toISOString();
+
+  return finalizeLiveStatusRefreshStats(
+    stats
+  );
 }
 
 const isCli =
