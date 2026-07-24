@@ -22,6 +22,7 @@ import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { buildAcquisitionSkippedSlugsWarning } from "../system-health/skipped-slug-policy.js";
+import { buildLiveStatusCompleteness } from "../core/live-status-completeness.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 
 function readJsonSafe(file) {
@@ -53,7 +54,7 @@ function planSummary(plan) {
   };
 }
 
-export function buildDayReport(dayKey) {
+export function buildDayReport(dayKey, options = {}) {
   const report = {
     ok: true,
     schema: "ai-matchlab.day-build-report.v1",
@@ -65,6 +66,7 @@ export function buildDayReport(dayKey) {
     invariant: null,
     value: null,
     settlement: null,
+    liveStatusCompleteness: null,
     hardFailures: [],
     warnings: [],
     clean: false,
@@ -76,15 +78,28 @@ export function buildDayReport(dayKey) {
   const expectedByLeague = countByLeague(expected?.matches, "leagueSlug");
 
   const canonicalByLeague = {};
+  const canonicalFixtures = [];
   const canonicalDir = resolveDataPath("canonical-fixtures", dayKey);
   if (fs.existsSync(canonicalDir)) {
     for (const name of fs.readdirSync(canonicalDir).filter(f => f.endsWith(".json"))) {
       const payload = readJsonSafe(path.join(canonicalDir, name));
       const slug = String(payload?.leagueSlug || name.replace(/\.json$/, ""));
+      const rows = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
       canonicalByLeague[slug] = (canonicalByLeague[slug] || 0)
-        + (Array.isArray(payload?.fixtures) ? payload.fixtures.length : 0);
+        + rows.length;
+      canonicalFixtures.push(...rows);
     }
   }
+
+  report.liveStatusCompleteness =
+    buildLiveStatusCompleteness(
+      canonicalFixtures,
+      {
+        now: options.now,
+        staleAfterHours:
+          options.staleAfterHours
+      }
+    );
 
   const snapshotFixtures = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "fixtures.json"));
   const publishedByLeague = countByLeague(snapshotFixtures?.fixtures, "leagueSlug");
@@ -206,6 +221,20 @@ export function buildDayReport(dayKey) {
     report.hardFailures.push("plan_b_canonical_membership_failed");
   }
   if (manifest && detailsCount < publishedCount) report.hardFailures.push("details_incomplete");
+
+  if (
+    Number(
+      report.liveStatusCompleteness
+        ?.staleOpenCount || 0
+    ) > 0
+  ) {
+    report.hardFailures.push(
+      "live_status_stale_open_exact_provider_ids:" +
+      report.liveStatusCompleteness
+        .staleOpenCanonicalIds
+        .join(",")
+    );
+  }
 
   // League-level parity stays a WARNING until the identity resolver lands:
   // alias mismatches between sources would otherwise produce false alarms

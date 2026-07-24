@@ -107,6 +107,69 @@ function buildWarningIsContextOnly(text) {
   return skippedSlugsContextOnly(parseAcquisitionSkippedSlugs(raw));
 }
 
+function buildHardFailureIssue(
+  failure,
+  buildReport
+) {
+  const raw = String(
+    failure || ""
+  );
+
+  const prefix =
+    "live_status_stale_open_exact_provider_ids:";
+
+  if (raw.startsWith(prefix)) {
+    const canonicalIds = raw
+      .slice(prefix.length)
+      .split(",")
+      .map(value => value.trim())
+      .filter(Boolean);
+
+    const completeness =
+      buildReport
+        ?.liveStatusCompleteness ||
+      {};
+
+    return issue(
+      "error",
+      "live-status-completeness",
+      "stale_open_exact_provider_ids",
+      "Exact-provider fixtures remain non-terminal beyond the conservative completeness window.",
+      {
+        raw,
+        canonicalIds,
+        count:
+          canonicalIds.length,
+        staleAfterHours:
+          completeness
+            ?.policy
+            ?.staleAfterHours ??
+          null,
+        exactProviderIdOnly: true,
+        heuristicFinalPromotion: false,
+        fixtures:
+          Array.isArray(
+            completeness
+              ?.staleOpenFixtures
+          )
+            ? completeness
+                .staleOpenFixtures
+            : []
+      }
+    );
+  }
+
+  return issue(
+    "error",
+    "build-report",
+    "build_hard_failure",
+    raw,
+    {
+      failure: raw
+    }
+  );
+}
+
 function markdownCell(value) {
   return String(value ?? "")
     .replace(/\r?\n/g, " ")
@@ -288,7 +351,12 @@ export function buildSystemHealthAlertsDay(dayKey) {
     }));
   } else {
     for (const failure of buildReport.hardFailures || []) {
-      issues.push(issue("error", "build-report", "build_hard_failure", String(failure), { failure }));
+      issues.push(
+        buildHardFailureIssue(
+          failure,
+          buildReport
+        )
+      );
     }
 
     const buildWarnings = Array.isArray(buildReport.warnings) ? buildReport.warnings : [];

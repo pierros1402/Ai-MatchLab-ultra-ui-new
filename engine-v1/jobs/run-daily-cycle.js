@@ -1571,6 +1571,28 @@ export async function runDailyCycle(options = {}) {
     for (let back = 2; back <= 7; back++) {
       const day = shiftDay(dayKey, -back);
       try {
+        let liveRefresh = null;
+
+        try {
+          liveRefresh =
+            await runLiveStatusRefreshDay(
+              day,
+              {
+                includeAllOpenStates: true,
+                reason:
+                  "recent_day_catch_up"
+              }
+            );
+        } catch (error) {
+          liveRefresh = {
+            ok: false,
+            dayKey: day,
+            error:
+              error?.message ||
+              String(error)
+          };
+        }
+
         const sweep = applyResultsTruthToCanonicalDay(day);
         syncCanonicalFixturesToJsonDbDay(day);
         const readiness = auditFinalizationReadinessDay(day);
@@ -1614,6 +1636,20 @@ export async function runDailyCycle(options = {}) {
 
         historyCatchUp.push({
           day,
+          liveRefreshOk:
+            liveRefresh?.ok === true &&
+            Number(
+              liveRefresh
+                ?.failedLeagueCount || 0
+            ) === 0,
+          liveRefreshChangedRows:
+            liveRefresh
+              ?.changedRows ?? 0,
+          liveRefreshFailedLeagueCount:
+            liveRefresh
+              ?.failedLeagueCount ?? 0,
+          liveRefreshError:
+            liveRefresh?.error || null,
           rowsUpgraded: sweep?.rowsUpgraded ?? 0,
           terminal: readiness?.terminal ?? 0,
           open: readiness?.open ?? null,
