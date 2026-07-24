@@ -856,6 +856,369 @@ export function buildCanonicalEspnVerifiedFinalResult(
   };
 }
 
+
+export function resolveCanonicalFlashscoreFinalFallback(
+  target,
+  dayKey
+) {
+  const row =
+    target?.canonicalFixture;
+
+  if (!row) {
+    return {
+      ok: false,
+      reason:
+        "canonical_fixture_missing"
+    };
+  }
+
+  if (
+    clean(row?.canonicalId) !==
+    clean(target?.matchId)
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_id_mismatch",
+      canonicalId:
+        clean(row?.canonicalId)
+    };
+  }
+
+  if (
+    clean(row?.source)
+      .toLowerCase() !==
+    "flashscore"
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_source_not_flashscore",
+      source:
+        clean(row?.source)
+    };
+  }
+
+  const providerMatchId =
+    clean(
+      row?.sourceMatchId ||
+      row?.sourceId
+    );
+
+  if (
+    !/^[A-Za-z0-9]{6,32}$/u
+      .test(providerMatchId)
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_provider_id_invalid"
+    };
+  }
+
+  if (!hasCanonicalTerminalStatus(row)) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_status_not_terminal",
+      status:
+        clean(row?.status)
+    };
+  }
+
+  if (!hasExplicitEspnTerminalStatus(row)) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_not_explicit_terminal",
+      status:
+        clean(row?.status),
+      rawStatus:
+        clean(row?.rawStatus),
+      statusType:
+        clean(row?.statusType),
+      operationalState:
+        clean(row?.operationalState)
+    };
+  }
+
+  const score =
+    canonicalScore(row);
+
+  if (!score) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_final_score_invalid"
+    };
+  }
+
+  if (
+    !teamPairMatches(
+      target?.homeTeam,
+      target?.awayTeam,
+      homeName(row),
+      awayName(row)
+    )
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_team_pair_mismatch"
+    };
+  }
+
+  const canonicalDay =
+    clean(row?.dayKey);
+
+  if (
+    canonicalDay &&
+    canonicalDay !== dayKey
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_day_key_mismatch",
+      canonicalDay
+    };
+  }
+
+  const kickoffUtc =
+    clean(row?.kickoffUtc);
+
+  const kickoffDay =
+    athensDayFromUtc(kickoffUtc);
+
+  if (
+    !kickoffUtc ||
+    !kickoffDay ||
+    kickoffDay !== dayKey
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_kickoff_day_mismatch",
+      kickoffUtc,
+      kickoffDay
+    };
+  }
+
+  const observedAt =
+    clean(
+      row?.lastSeenAt ||
+      row?.updatedAt
+    );
+
+  if (
+    !observedAt ||
+    Number.isNaN(
+      new Date(observedAt).getTime()
+    )
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_flashscore_terminal_observation_missing"
+    };
+  }
+
+  return {
+    ok: true,
+    row,
+    providerMatchId,
+    observedAt,
+    ...score
+  };
+}
+
+export function buildCanonicalFlashscoreVerifiedFinalResult(
+  dayKey,
+  target,
+  resolved
+) {
+  const sourceRow =
+    resolved.row;
+
+  const generatedAt =
+    new Date().toISOString();
+
+  return {
+    schema:
+      "ai-matchlab.verified-final-result.v1",
+
+    verifiedFinalTruth: true,
+    date: dayKey,
+    dayKey,
+
+    matchId:
+      target.matchId,
+
+    leagueSlug:
+      target.leagueSlug ||
+      leagueSlug(sourceRow),
+
+    leagueName:
+      target.leagueName ||
+      clean(sourceRow?.leagueName),
+
+    country:
+      target.country ||
+      clean(sourceRow?.country),
+
+    homeTeam:
+      target.homeTeam,
+
+    awayTeam:
+      target.awayTeam,
+
+    homeScore:
+      resolved.homeScore,
+
+    awayScore:
+      resolved.awayScore,
+
+    scoreHome:
+      resolved.homeScore,
+
+    scoreAway:
+      resolved.awayScore,
+
+    finalScore: {
+      homeScore:
+        resolved.homeScore,
+
+      awayScore:
+        resolved.awayScore,
+
+      home:
+        resolved.homeScore,
+
+      away:
+        resolved.awayScore,
+
+      scoreKey:
+        resolved.scoreKey
+    },
+
+    scoreKey:
+      resolved.scoreKey,
+
+    kickoffUtc:
+      clean(sourceRow?.kickoffUtc),
+
+    finalTruthVerdict:
+      "verified_final_result",
+
+    verdict:
+      "verified_final_result",
+
+    sourceCount: 1,
+    independentSourceCount: 1,
+
+    source:
+      "canonical_flashscore_terminal_final",
+
+    sources: [
+      {
+        provider:
+          "flashscore",
+
+        providerMatchId:
+          resolved.providerMatchId,
+
+        canonicalId:
+          clean(
+            sourceRow?.canonicalId
+          ),
+
+        leagueName:
+          clean(
+            sourceRow?.leagueName
+          ),
+
+        home:
+          homeName(sourceRow),
+
+        away:
+          awayName(sourceRow),
+
+        scoreHome:
+          resolved.homeScore,
+
+        scoreAway:
+          resolved.awayScore,
+
+        kickoffUtc:
+          clean(
+            sourceRow?.kickoffUtc
+          ),
+
+        rawStatus:
+          clean(
+            sourceRow?.rawStatus
+          ),
+
+        statusType:
+          clean(
+            sourceRow?.statusType
+          ),
+
+        terminalObservedAt:
+          resolved.observedAt,
+
+        scoreKey:
+          resolved.scoreKey
+      }
+    ],
+
+    verification: {
+      verdict:
+        "verified_final_result",
+
+      finalTruthVerdict:
+        "verified_final_result",
+
+      state:
+        "verified_final_result",
+
+      method:
+        "canonical_flashscore_terminal_final",
+
+      authority:
+        "canonical_fixture_store",
+
+      sourceCount: 1,
+      independentSourceCount: 1,
+
+      checks: {
+        canonicalIdExact: true,
+        provider:
+          "flashscore",
+
+        providerMatchIdValid: true,
+        explicitTerminalStatus: true,
+        numericNonNegativeScore: true,
+        teamPairMatched: true,
+        athensDayMatched: true,
+        terminalObservationPresent: true,
+        liveFlashscoreScoredMatchAbsent: true
+      },
+
+      generatedAt
+    },
+
+    settlement: {
+      finalTruthVerdict:
+        "verified_final_result",
+
+      state:
+        "verified_final_result"
+    },
+
+    generatedAt
+  };
+}
+
 export function hasCanonicalPreKickoffNonPlayedVeto(target) {
   return verifiedFinalVetoReason(
     target?.canonicalFixture ||
@@ -912,18 +1275,67 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     if (found.ok) {
       payload = buildVerifiedFinalResult(safeDayKey, target, found.row);
       resolutionMethod = "flashscore_same_day_exact_team_match";
-    } else if (found.reason === "no_exact_flashscore_match") {
-      const fallback = resolveCanonicalEspnFinalFallback(target, safeDayKey);
+    } else if (
+      found.reason ===
+      "no_exact_flashscore_match"
+    ) {
+      const canonicalSource =
+        clean(
+          target?.canonicalFixture
+            ?.source
+        ).toLowerCase();
 
-      if (fallback.ok) {
-        payload = buildCanonicalEspnVerifiedFinalResult(
-          safeDayKey,
-          target,
-          fallback
-        );
-        resolutionMethod = "canonical_espn_terminal_final";
-      } else {
-        fallbackReason = fallback.reason;
+      let fallback = {
+        ok: false,
+        reason:
+          "canonical_source_unsupported"
+      };
+
+      if (canonicalSource === "espn") {
+        fallback =
+          resolveCanonicalEspnFinalFallback(
+            target,
+            safeDayKey
+          );
+
+        if (fallback.ok) {
+          payload =
+            buildCanonicalEspnVerifiedFinalResult(
+              safeDayKey,
+              target,
+              fallback
+            );
+
+          resolutionMethod =
+            "canonical_espn_terminal_final";
+        }
+      }
+      else if (
+        canonicalSource ===
+        "flashscore"
+      ) {
+        fallback =
+          resolveCanonicalFlashscoreFinalFallback(
+            target,
+            safeDayKey
+          );
+
+        if (fallback.ok) {
+          payload =
+            buildCanonicalFlashscoreVerifiedFinalResult(
+              safeDayKey,
+              target,
+              fallback
+            );
+
+          resolutionMethod =
+            "canonical_flashscore_terminal_final";
+        }
+      }
+
+      if (!fallback.ok) {
+        fallbackReason =
+          fallback.reason;
       }
     }
 
