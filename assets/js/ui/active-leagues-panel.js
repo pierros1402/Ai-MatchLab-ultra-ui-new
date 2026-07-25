@@ -158,12 +158,59 @@
 
     for (const m of matches) {
       const country = m.country || "";
-      const leagueKey = m.leagueName || m.leagueSlug || "Other";
-      if (!byCountry.has(country)) byCountry.set(country, new Map());
-      const leagues = byCountry.get(country);
-      if (!leagues.has(leagueKey)) {
-        leagues.set(leagueKey, { name: leagueKey, tier: m.leagueTier ?? null, arr: [] });
+      // League identity is the canonical slug, never the provider display name.
+      // Different source labels such as "Colombia Primera B" and
+      // "Primera B - Clausura" must remain one league group when both are col.2.
+      const leagueKey = String(
+        m.leagueSlug ||
+        m.leagueName ||
+        "Other"
+      )
+        .trim()
+        .toLowerCase();
+      const leagueName = String(
+        m.canonicalLeagueName ||
+        m.leagueDisplayName ||
+        m.leagueName ||
+        m.leagueSlug ||
+        "Other"
+      ).trim();
+
+      if (!byCountry.has(country)) {
+        byCountry.set(country, new Map());
       }
+
+      const leagues = byCountry.get(country);
+
+      if (!leagues.has(leagueKey)) {
+        leagues.set(leagueKey, {
+          name: leagueName,
+          tier: m.leagueTier ?? null,
+          arr: []
+        });
+      } else {
+        const existing = leagues.get(leagueKey);
+
+        // A provider may use a shortened competition/stage label for the same
+        // canonical slug. Keep one group and prefer the more descriptive label.
+        if (
+          leagueName &&
+          (
+            !existing.name ||
+            leagueName.length > existing.name.length
+          )
+        ) {
+          existing.name = leagueName;
+        }
+
+        if (
+          existing.tier == null &&
+          m.leagueTier != null
+        ) {
+          existing.tier = m.leagueTier;
+        }
+      }
+
       leagues.get(leagueKey).arr.push(m);
     }
 
