@@ -11,7 +11,7 @@ import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { buildDayReport } from "./build-day-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
-import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import {
   isPreKickoffNonPlayed,
   sanitizePreKickoffNonPlayed
@@ -321,31 +321,28 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     completeCoverage: reconciliation.completeCoverage
   });
 
-  // A canonical correction can predate the current live refresh and therefore
-  // be absent from changedFixtures. Recover only authoritative pre-kickoff
-  // non-played states. Interrupted, delayed, invalidated and played-final rows
-  // are deliberately excluded because their scores or minutes may be real.
-  const canonicalStatusRows =
-    canonicalFixturesForDay(safeDayKey);
-
-  const authoritativeNonPlayedRows =
-    authoritativePreKickoffNonPlayedRows(
-      canonicalStatusRows
-    );
+  // The detail sweep must use the exact fixture projection that the snapshot
+  // exporter will publish. Raw canonical rows can differ from the publishable
+  // projection after reconciliation and normalization, for example null scores
+  // versus explicit zeroes or a provider "0'" clock versus a null PRE minute.
+  // patchDetailsBasic writes only rows with actual mutable state/signature drift.
+  // Missing, malformed or invalid detail signatures remain fail-closed.
+  const publishableStatusRows =
+    fixturesForSnapshotDay(
+      safeDayKey
+    ).fixtures;
 
   const authoritativePatchStats =
     patchDetailsBasic(
       safeDayKey,
-      authoritativeNonPlayedRows
+      publishableStatusRows
     );
 
   console.log(
-    "[intraday-snapshot-refresh] patch-details-basic-authoritative-nonplayed:done",
+    "[intraday-snapshot-refresh] patch-details-basic-publishable-fixtures:done",
     {
       dayKey: safeDayKey,
-      canonicalRows: canonicalStatusRows.length,
-      authoritativeNonPlayedRows:
-        authoritativeNonPlayedRows.length,
+      publishableRows: publishableStatusRows.length,
       ...authoritativePatchStats
     }
   );

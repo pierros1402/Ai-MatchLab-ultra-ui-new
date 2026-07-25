@@ -162,7 +162,7 @@ test("ordinary live patch still preserves real zero-zero final scores", () => {
   assert.equal(basic.scoreAway, 0);
 });
 
-test("intraday applies the narrow non-played sweep before export", () => {
+test("intraday applies the publishable fixture detail sweep before export", () => {
   const source = fs.readFileSync(
     new URL(
       "../jobs/run-intraday-snapshot-refresh.js",
@@ -175,20 +175,20 @@ test("intraday applies the narrow non-played sweep before export", () => {
     "rebuild-reconciled-fixtures:done"
   );
 
-  const canonicalRowsIndex = source.indexOf(
-    "const canonicalStatusRows ="
+  const publishableRowsIndex = source.indexOf(
+    "const publishableStatusRows ="
   );
 
-  const selectorIndex = source.indexOf(
-    "const authoritativeNonPlayedRows ="
+  const fixtureProjectionIndex = source.indexOf(
+    "fixturesForSnapshotDay("
   );
 
   const patchIndex = source.indexOf(
-    "patchDetailsBasic(\n      safeDayKey,\n      authoritativeNonPlayedRows"
+    "patchDetailsBasic(\n      safeDayKey,\n      publishableStatusRows"
   );
 
   const logIndex = source.indexOf(
-    "patch-details-basic-authoritative-nonplayed:done"
+    "patch-details-basic-publishable-fixtures:done"
   );
 
   const exportIndex = source.indexOf(
@@ -196,20 +196,31 @@ test("intraday applies the narrow non-played sweep before export", () => {
   );
 
   assert.ok(reconciliationIndex >= 0);
-  assert.ok(canonicalRowsIndex > reconciliationIndex);
-  assert.ok(selectorIndex > canonicalRowsIndex);
-  assert.ok(patchIndex > selectorIndex);
+  assert.ok(publishableRowsIndex > reconciliationIndex);
+  assert.ok(fixtureProjectionIndex >= 0);
+  assert.ok(fixtureProjectionIndex >= publishableRowsIndex);
+  assert.ok(patchIndex > publishableRowsIndex);
   assert.ok(logIndex > patchIndex);
   assert.ok(exportIndex > logIndex);
 
   assert.match(
     source,
-    /authoritativePreKickoffNonPlayedRows\([\s\S]*?canonicalStatusRows/
+    /fixturesForSnapshotDay\(\s*safeDayKey\s*\)\.fixtures/
+  );
+
+  assert.match(
+    source,
+    /patchDetailsBasic\(\s*safeDayKey,\s*publishableStatusRows/
   );
 
   assert.doesNotMatch(
     source,
     /patchDetailsBasic\(\s*safeDayKey,\s*canonicalStatusRows/
+  );
+
+  assert.doesNotMatch(
+    source,
+    /patchDetailsBasic\(\s*safeDayKey,\s*authoritativeNonPlayedRows/
   );
 });
 test("intraday detail patch synchronizes basic state and signature before export", () => {
