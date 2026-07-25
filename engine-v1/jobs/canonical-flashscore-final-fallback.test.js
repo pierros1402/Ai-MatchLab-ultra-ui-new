@@ -42,8 +42,8 @@ const EXPECTED_TERMINAL_IDS = [
   "cid_zim1_triangle_ngeziplatinum_20260723"
 ];
 
-const SCHEDULED_CONTROL_ID =
-  "cid_isl2_leiknir_throttur_20260723";
+const SYNTHETIC_SCHEDULED_CONTROL_ID =
+  "cid_test_flashscore_scheduled_20260723";
 
 function loadCanonicalRows() {
   const directory =
@@ -165,21 +165,47 @@ test(
 );
 
 test(
-  "scheduled Flashscore control remains unresolved",
+  "synthetic scheduled Flashscore control remains unresolved",
   () => {
     const rows =
       loadCanonicalRows();
 
-    const row =
+    const terminalBase =
       rows.find(candidate =>
         candidate.canonicalId ===
-        SCHEDULED_CONTROL_ID
+        EXPECTED_TERMINAL_IDS[0]
       );
 
     assert.ok(
-      row,
-      "scheduled Iceland control row missing"
+      terminalBase,
+      "terminal Flashscore fixture required for synthetic control"
     );
+
+    const row = {
+      ...terminalBase,
+
+      canonicalId:
+        SYNTHETIC_SCHEDULED_CONTROL_ID,
+
+      status:
+        "STATUS_SCHEDULED",
+
+      rawStatus:
+        "STATUS_SCHEDULED",
+
+      statusType:
+        "STATUS_SCHEDULED",
+
+      operationalState:
+        "PRE",
+
+      scoreHome: null,
+      scoreAway: null,
+      homeScore: null,
+      awayScore: null,
+      finalScore: null,
+      minute: null
+    };
 
     const resolved =
       resolveCanonicalFlashscoreFinalFallback(
