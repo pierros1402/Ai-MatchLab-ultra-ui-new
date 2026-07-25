@@ -19,6 +19,8 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { dedupeLeagueDayFixtures } from "./fixture-dedup.js";
 import { buildCanonicalId } from "./canonical-id.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
+import { athensDayFromKickoff } from "./daykey.js";
+import { canonicalTeamName } from "../storage/team-aliases-db.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -54,19 +56,485 @@ function isDisabledFixtureRow(row) {
   return isDisabledLeague(row?.leagueSlug);
 }
 
-function dayFixtures(fixturesPayload, dayKey) {
-  const fixtures = Array.isArray(fixturesPayload?.fixtures)
-    ? fixturesPayload.fixtures
-    : Array.isArray(fixturesPayload)
-      ? fixturesPayload
-      : [];
+function kickoffValue(row) {
+  return (
+    row?.kickoffUtc ||
+    row?.kickoff ||
+    row?.date ||
+    row?.startTime ||
+    null
+  );
+}
 
-  const rows = fixtures
-    .filter(row => String(row?.dayKey || "") === String(dayKey))
-    .filter(row => !isDisabledFixtureRow(row));
+export function fixtureBelongsToAthensDay(
+  row,
+  dayKey
+) {
+  const target =
+    String(dayKey || "").trim();
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/u
+      .test(target)
+  ) {
+    return false;
+  }
+
+  const kickoff =
+    kickoffValue(row);
+
+  if (!kickoff) {
+    return false;
+  }
+
+  const parsed =
+    new Date(kickoff);
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+    return false;
+  }
+
+  try {
+    return (
+      athensDayFromKickoff(
+        parsed.toISOString()
+      ) === target
+    );
+  }
+  catch {
+    return false;
+  }
+}
+
+export function canonicalizeFixtureDisplayNames(
+  row
+) {
+  if (!row) {
+    return row;
+  }
+
+  const leagueSlug =
+    String(row?.leagueSlug || "")
+      .trim();
+
+  if (!leagueSlug) {
+    return row;
+  }
+
+  const homeTeam =
+    canonicalTeamName(
+      leagueSlug,
+      row?.homeTeam
+    ) ||
+    row?.homeTeam;
+
+  const awayTeam =
+    canonicalTeamName(
+      leagueSlug,
+      row?.awayTeam
+    ) ||
+    row?.awayTeam;
+
+  if (
+    homeTeam === row?.homeTeam &&
+    awayTeam === row?.awayTeam
+  ) {
+    return row;
+  }
+
+  return {
+    ...row,
+    homeTeam,
+    awayTeam
+  };
+}
+
+function exactFixtureAliases(row) {
+  const aliases =
+    new Set();
+
+  for (const key of [
+    "canonicalId",
+    "matchId",
+    "sourceId",
+    "sourceMatchId",
+    "providerMatchId"
+  ]) {
+    const value =
+      normalizeMatchId(
+        row?.[key]
+      );
+
+    if (value) {
+      aliases.add(value);
+    }
+  }
+
+  return [
+    ...aliases
+  ];
+}
+
+function canonicalRowIdentity(row) {
+  return normalizeMatchId(
+    row?.canonicalId ||
+    row?.matchId
+  );
+}
+
+function buildUniqueCanonicalAliasIndex(
+  rows
+) {
+  const byAlias =
+    new Map();
+
+  const ambiguousAliases =
+    new Set();
+
+  for (const row of rows) {
+    for (
+      const alias of
+      exactFixtureAliases(row)
+    ) {
+      if (
+        ambiguousAliases.has(alias)
+      ) {
+        continue;
+      }
+
+      const existing =
+        byAlias.get(alias);
+
+      if (!existing) {
+        byAlias.set(
+          alias,
+          row
+        );
+
+        continue;
+      }
+
+      if (
+        canonicalRowIdentity(existing) !==
+        canonicalRowIdentity(row)
+      ) {
+        byAlias.delete(alias);
+        ambiguousAliases.add(alias);
+      }
+    }
+  }
+
+  return {
+    byAlias,
+    ambiguousAliases
+  };
+}
+
+function runtimeFreshness(row) {
+  const numeric =
+    Number(row?.updatedAt);
+
+  if (Number.isFinite(numeric)) {
+    return numeric;
+  }
+
+  const parsed =
+    Date.parse(
+      String(
+        row?.updatedAt ||
+        row?.lastSeenAt ||
+        ""
+      )
+    );
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : 0;
+}
+
+export function mergeCanonicalWithRuntimeOverlay(
+  canonicalRows,
+  runtimeRows,
+  dayKey
+) {
+  const canonicalFixtures =
+    dedupeRowsPerLeague(
+      (
+        Array.isArray(canonicalRows)
+          ? canonicalRows
+          : []
+      )
+        .filter(row =>
+          fixtureBelongsToAthensDay(
+            row,
+            dayKey
+          )
+        )
+        .map(row =>
+          canonicalizeFixtureDisplayNames({
+            ...row,
+            dayKey
+          })
+        )
+    );
+
+  const canonicalIndex =
+    buildUniqueCanonicalAliasIndex(
+      canonicalFixtures
+    );
+
+  const overlayByCanonicalId =
+    new Map();
+
+  const runtimeOnlyRows = [];
+  const ambiguousRuntimeRows = [];
+  const outsideTargetDayRows = [];
+
+  for (
+    const rawRow of
+    Array.isArray(runtimeRows)
+      ? runtimeRows
+      : []
+  ) {
+    if (
+      !fixtureBelongsToAthensDay(
+        rawRow,
+        dayKey
+      )
+    ) {
+      outsideTargetDayRows.push(
+        rawRow
+      );
+
+      continue;
+    }
+
+    const matches =
+      new Map();
+
+    for (
+      const alias of
+      exactFixtureAliases(rawRow)
+    ) {
+      if (
+        canonicalIndex
+          .ambiguousAliases
+          .has(alias)
+      ) {
+        continue;
+      }
+
+      const canonical =
+        canonicalIndex
+          .byAlias
+          .get(alias);
+
+      const identity =
+        canonicalRowIdentity(
+          canonical
+        );
+
+      if (
+        canonical &&
+        identity
+      ) {
+        matches.set(
+          identity,
+          canonical
+        );
+      }
+    }
+
+    if (matches.size === 0) {
+      runtimeOnlyRows.push(rawRow);
+      continue;
+    }
+
+    if (matches.size !== 1) {
+      ambiguousRuntimeRows.push(rawRow);
+      continue;
+    }
+
+    const [
+      canonicalId,
+      canonical
+    ] =
+      matches.entries().next().value;
+
+    const candidate = {
+      ...rawRow,
+      canonicalId:
+        canonical?.canonicalId ||
+        canonicalId,
+
+      dayKey
+    };
+
+    const previous =
+      overlayByCanonicalId
+        .get(canonicalId);
+
+    if (
+      !previous ||
+      runtimeFreshness(candidate) >=
+        runtimeFreshness(previous)
+    ) {
+      overlayByCanonicalId.set(
+        canonicalId,
+        candidate
+      );
+    }
+  }
+
+  let runtimeOverlayCount = 0;
+
+  const fixtures =
+    canonicalFixtures
+      .map(canonical => {
+        const identity =
+          canonicalRowIdentity(
+            canonical
+          );
+
+        const runtime =
+          overlayByCanonicalId
+            .get(identity);
+
+        if (!runtime) {
+          return canonical;
+        }
+
+        runtimeOverlayCount += 1;
+
+        return canonicalizeFixtureDisplayNames({
+          ...canonical,
+          ...runtime,
+
+          canonicalId:
+            canonical?.canonicalId ||
+            identity,
+
+          matchId:
+            canonical?.matchId ||
+            runtime?.matchId ||
+            identity,
+
+          leagueSlug:
+            canonical?.leagueSlug,
+
+          leagueName:
+            canonical?.leagueName ||
+            runtime?.leagueName,
+
+          dayKey,
+
+          kickoffUtc:
+            canonical?.kickoffUtc ||
+            runtime?.kickoffUtc,
+
+          homeTeam:
+            canonical?.homeTeam,
+
+          awayTeam:
+            canonical?.awayTeam
+        });
+      })
+      .sort((a, b) =>
+        String(
+          a?.kickoffUtc || ""
+        ).localeCompare(
+          String(
+            b?.kickoffUtc || ""
+          )
+        )
+      );
+
+  return {
+    fixtures,
+    runtimeOverlayCount,
+
+    runtimeOnlyExcludedCount:
+      runtimeOnlyRows.length,
+
+    runtimeOnlyExcludedIds:
+      runtimeOnlyRows
+        .map(row =>
+          normalizeMatchId(
+            row?.canonicalId ||
+            row?.matchId
+          )
+        )
+        .filter(Boolean)
+        .sort(),
+
+    outsideTargetDayRuntimeCount:
+      outsideTargetDayRows.length,
+
+    outsideTargetDayRuntimeIds:
+      outsideTargetDayRows
+        .map(row =>
+          normalizeMatchId(
+            row?.canonicalId ||
+            row?.matchId
+          )
+        )
+        .filter(Boolean)
+        .sort(),
+
+    ambiguousRuntimeCount:
+      ambiguousRuntimeRows.length,
+
+    ambiguousCanonicalAliasCount:
+      canonicalIndex
+        .ambiguousAliases
+        .size
+  };
+}
+
+function dayFixtures(
+  fixturesPayload,
+  dayKey
+) {
+  const fixtures =
+    Array.isArray(
+      fixturesPayload?.fixtures
+    )
+      ? fixturesPayload.fixtures
+      : Array.isArray(
+          fixturesPayload
+        )
+        ? fixturesPayload
+        : [];
+
+  const rows =
+    fixtures
+      .filter(row =>
+        fixtureBelongsToAthensDay(
+          row,
+          dayKey
+        )
+      )
+      .filter(row =>
+        !isDisabledFixtureRow(row)
+      )
+      .map(
+        canonicalizeFixtureDisplayNames
+      );
 
   return dedupeRowsPerLeague(rows)
-    .sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
+    .sort((a, b) =>
+      String(
+        a?.kickoffUtc || ""
+      ).localeCompare(
+        String(
+          b?.kickoffUtc || ""
+        )
+      )
+    );
 }
 
 export function canonicalFixturesForDay(dayKey) {
@@ -89,9 +557,33 @@ export function canonicalFixturesForDay(dayKey) {
 
     // Defense-in-depth: collapse cross-source duplicates even if a stale store
     // file predates write-time dedup (same match under two canonical IDs).
-    const fixtures = dedupeLeagueDayFixtures(rawFixtures, {
-      slug
-    }).rows.filter(row => !isDisabledFixtureRow({ ...row, leagueSlug: row?.leagueSlug || slug }));
+    const fixtures =
+      dedupeLeagueDayFixtures(
+        rawFixtures,
+        {
+          slug
+        }
+      )
+        .rows
+        .map(row => ({
+          ...row,
+
+          leagueSlug:
+            row?.leagueSlug ||
+            slug
+        }))
+        .filter(row =>
+          !isDisabledFixtureRow(row)
+        )
+        .filter(row =>
+          fixtureBelongsToAthensDay(
+            row,
+            dayKey
+          )
+        )
+        .map(
+          canonicalizeFixtureDisplayNames
+        );
 
     for (const fixture of fixtures) {
       const matchId = normalizeMatchId(
@@ -156,79 +648,89 @@ function backfillCanonicalIds(rows, canonicalRows, dayKey) {
 }
 
 /**
- * The authoritative published fixture universe for a day: canonical ∪ runtime,
- * deduped per league, plus a shrink guard that rescues whole leagues absent
- * from a fresh (possibly source-degraded) universe. Returns metadata alongside
- * the rows so the export manifest can report counts.
+ * Authoritative published fixture universe.
+ *
+ * Membership is canonical-only. Runtime rows may update status/score only when
+ * an exact canonical/provider identity resolves to one canonical fixture.
+ * Runtime-only rows and archived snapshot rescue rows never create fixtures.
  */
-export function fixturesForSnapshotDay(dayKey) {
-  const fixturesPayload = readJsonSafe(resolveDataPath("fixtures.json"), { fixtures: [] });
-  const fixturesFromCanonical = canonicalFixturesForDay(dayKey);
-  const fixturesFromMain = backfillCanonicalIds(
-    dayFixtures(fixturesPayload, dayKey),
-    fixturesFromCanonical,
-    dayKey
-  );
-  const canonicalFixtureCount = fixturesFromCanonical.length;
-  const sourceFixtureJsonCount = fixturesFromMain.length;
+export function fixturesForSnapshotDay(
+  dayKey
+) {
+  const fixturesPayload =
+    readJsonSafe(
+      resolveDataPath(
+        "fixtures.json"
+      ),
+      {
+        fixtures: []
+      }
+    );
 
-  // UNION of runtime + canonical (dedup collapses same-match rows; runtime
-  // first so its fresher status/score wins ties). Picking one source XOR the
-  // other dropped rows the winner lacked — e.g. canonical-only FT rows next
-  // to runtime-only Flashscore-league rows on the same day.
-  const union = dedupeRowsPerLeague([...fixturesFromMain, ...fixturesFromCanonical]);
+  const fixturesFromCanonical =
+    canonicalFixturesForDay(
+      dayKey
+    );
 
-  // Day-universe shrink guard. A transient source failure on one runner must
-  // never shrink the published day: on 2026-07-05 an intraday refresh whose
-  // Flashscore harvest failed exported a 79-row universe over a 94-row
-  // snapshot and deleted 19 mar.1/mar.2/eth.1/tan.1 details as "orphans".
-  // Rescue is per-LEAGUE (league entirely missing from the fresh universe),
-  // so intentionally pruning a single phantom row keeps working.
-  const existingSnapshot = readJsonSafe(
-    path.join(resolveDataPath("deploy-snapshots", dayKey), "fixtures.json"),
-    null
-  );
-  const snapshotRows = (Array.isArray(existingSnapshot?.fixtures) ? existingSnapshot.fixtures : [])
-    .filter(row => String(row?.dayKey || existingSnapshot?.date || "") === String(dayKey))
-    .filter(row => !isDisabledFixtureRow(row));
+  const fixturesFromMain =
+    backfillCanonicalIds(
+      dayFixtures(
+        fixturesPayload,
+        dayKey
+      ),
+      fixturesFromCanonical,
+      dayKey
+    );
 
-  const freshLeagues = new Set(union.map(row => String(row?.leagueSlug || "")));
-  const rescuedRows = snapshotRows.filter(
-    row => !freshLeagues.has(String(row?.leagueSlug || ""))
-  );
-  const rescuedLeagues = [...new Set(rescuedRows.map(row => String(row?.leagueSlug || "")))];
-
-  if (rescuedRows.length) {
-    console.warn("[day-fixture-universe] day-universe shrink guard: rescuing leagues absent from fresh universe", {
-      dayKey,
-      rescuedLeagues,
-      rescuedCount: rescuedRows.length
-    });
-  }
-
-  // Rescued rows come straight from the archived snapshot and can predate
-  // canonicalId assignment (ESPN-only rows keyed by a numeric matchId). Unlike
-  // the runtime path (fixturesFromMain) they never passed through
-  // backfillCanonicalIds, so on an aged-out day — empty fresh universe → full
-  // rescue — their canonicalId stays blank and every details/value/UI join by
-  // canonicalId breaks (the export then prunes their detail as an orphan). Run
-  // the merged set through backfill so any row still missing a canonicalId gets
-  // one: exact source-id match against canonical first, then the deterministic
-  // buildCanonicalId fallback. Idempotent for rows already keyed.
-  const fixtures = backfillCanonicalIds(
-    dedupeRowsPerLeague([...union, ...rescuedRows]),
-    fixturesFromCanonical,
-    dayKey
-  ).sort((a, b) => String(a?.kickoffUtc || "").localeCompare(String(b?.kickoffUtc || "")));
+  const merged =
+    mergeCanonicalWithRuntimeOverlay(
+      fixturesFromCanonical,
+      fixturesFromMain,
+      dayKey
+    );
 
   return {
-    source: "union",
-    canonicalFixtureCount,
-    sourceFixtureJsonCount,
-    fixtureJsonCount: fixtures.length,
-    snapshotRescuedCount: rescuedRows.length,
-    snapshotRescuedLeagues: rescuedLeagues,
-    fixtures
+    source:
+      "canonical_with_runtime_overlay",
+
+    canonicalFixtureCount:
+      fixturesFromCanonical.length,
+
+    sourceFixtureJsonCount:
+      fixturesFromMain.length,
+
+    fixtureJsonCount:
+      merged.fixtures.length,
+
+    snapshotRescuedCount: 0,
+    snapshotRescuedLeagues: [],
+
+    runtimeOverlayCount:
+      merged.runtimeOverlayCount,
+
+    runtimeOnlyExcludedCount:
+      merged.runtimeOnlyExcludedCount,
+
+    runtimeOnlyExcludedIds:
+      merged.runtimeOnlyExcludedIds,
+
+    outsideTargetDayRuntimeCount:
+      merged
+        .outsideTargetDayRuntimeCount,
+
+    outsideTargetDayRuntimeIds:
+      merged
+        .outsideTargetDayRuntimeIds,
+
+    ambiguousRuntimeCount:
+      merged.ambiguousRuntimeCount,
+
+    ambiguousCanonicalAliasCount:
+      merged
+        .ambiguousCanonicalAliasCount,
+
+    fixtures:
+      merged.fixtures
   };
 }
 

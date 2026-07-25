@@ -101,6 +101,30 @@ const BUILTIN_ALIASES = {
       "liga deportiva universitaria",
       "liga deportiva universitaria de quito"
     ]
+  },
+
+  // Colombia Primera B. These spellings are league-scoped because the short
+  // "Boca Juniors" name must never globally resolve away from the Argentine club.
+  "col.2": {
+    "Deportes Quindío": [
+      "Quindio",
+      "Quindío",
+      "Deportes Quindio"
+    ],
+
+    "Boca Juniors de Cali": [
+      "Boca Juniors"
+    ],
+
+    "Tigres FC": [
+      "Tigres"
+    ],
+
+    "Itagüí Leones": [
+      "Leones",
+      "Itagui Leones",
+      "Itaguí Leones"
+    ]
   }
 };
 
