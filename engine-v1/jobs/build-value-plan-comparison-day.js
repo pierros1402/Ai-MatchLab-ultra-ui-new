@@ -141,6 +141,18 @@ export function exactIdentityAliases(row) {
       }
     }
   }
+  const settlementAliases =
+    row?.settlementIdentityAliases;
+
+  if (Array.isArray(settlementAliases)) {
+    for (const alias of settlementAliases) {
+      addExactIdentityAlias(
+        aliases,
+        alias
+      );
+    }
+  }
+
 
   return [...aliases];
 }
@@ -238,6 +250,149 @@ function homeName(row) {
 
 function awayName(row) {
   return clean(row?.awayTeam || row?.away || row?.awayName || row?.teams?.away?.name || row?.away?.name);
+}
+
+
+function exactProviderIdentity(value) {
+  const alias =
+    clean(value);
+
+  if (
+    !alias ||
+    !/^[A-Za-z0-9][A-Za-z0-9._:-]{3,127}$/u
+      .test(alias)
+  ) {
+    return "";
+  }
+
+  return alias;
+}
+
+export function canonicalProviderSettlementAliases(
+  finalResult,
+  canonicalFixture
+) {
+  if (
+    !finalResult ||
+    !canonicalFixture ||
+    finalResult?.verifiedFinalTruth !== true
+  ) {
+    return [];
+  }
+
+  const finalId =
+    rowId(finalResult);
+
+  const canonicalId =
+    clean(
+      canonicalFixture?.canonicalId
+    );
+
+  if (
+    !finalId ||
+    !canonicalId ||
+    finalId !== canonicalId
+  ) {
+    return [];
+  }
+
+  if (
+    verifiedFinalVetoReason(
+      canonicalFixture
+    )
+  ) {
+    return [];
+  }
+
+  const finalScore =
+    resolveVerifiedFinalScore(
+      finalResult
+    );
+
+  const canonicalScore =
+    resolveVerifiedFinalScore(
+      canonicalFixture
+    );
+
+  if (
+    !finalScore ||
+    !canonicalScore ||
+    finalScore.scoreKey !==
+      canonicalScore.scoreKey
+  ) {
+    return [];
+  }
+
+  const finalHome =
+    homeName(finalResult);
+
+  const finalAway =
+    awayName(finalResult);
+
+  const canonicalHome =
+    homeName(canonicalFixture);
+
+  const canonicalAway =
+    awayName(canonicalFixture);
+
+  if (
+    !finalHome ||
+    !finalAway ||
+    !canonicalHome ||
+    !canonicalAway ||
+    finalHome !== canonicalHome ||
+    finalAway !== canonicalAway
+  ) {
+    return [];
+  }
+
+  const aliases =
+    new Set();
+
+  for (const key of [
+    "sourceId",
+    "sourceMatchId",
+    "providerMatchId"
+  ]) {
+    const alias =
+      exactProviderIdentity(
+        canonicalFixture?.[key]
+      );
+
+    if (
+      alias &&
+      alias !== canonicalId &&
+      alias !== finalId
+    ) {
+      aliases.add(alias);
+    }
+  }
+
+  return [
+    ...aliases
+  ].sort();
+}
+
+export function enrichVerifiedFinalWithCanonicalAliases(
+  finalResult,
+  canonicalFixture
+) {
+  const aliases =
+    canonicalProviderSettlementAliases(
+      finalResult,
+      canonicalFixture
+    );
+
+  if (aliases.length === 0) {
+    return finalResult;
+  }
+
+  return {
+    ...finalResult,
+
+    settlementIdentityAliases:
+      aliases
+  };
 }
 
 function normalizeMarket(value) {
@@ -524,7 +679,12 @@ export function loadFinalResults(
         continue;
       }
 
-      rows.push(row);
+      rows.push(
+      enrichVerifiedFinalWithCanonicalAliases(
+        row,
+        fixture
+      )
+    );
     }
   }
 
