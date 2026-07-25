@@ -195,3 +195,274 @@ test(
     );
   }
 );
+
+test(
+  "suppresses an older stale-open occurrence when the same exact provider ID has a later kickoff",
+  () => {
+    const older = fixture({
+      canonicalId:
+        "cid_chi1_unionlacalera_everton_20260725",
+      providerMatchId:
+        "401850602",
+      sourceId:
+        "401850602",
+      sourceMatchId:
+        "401850602",
+      matchId:
+        "401850602",
+      kickoffUtc:
+        "2026-07-24T22:00:00.000Z"
+    });
+
+    const newer = fixture({
+      canonicalId:
+        "cid_chi1_unionlacalera_everton_20260728",
+      providerMatchId:
+        "401850602",
+      sourceId:
+        "401850602",
+      sourceMatchId:
+        "401850602",
+      matchId:
+        "401850602",
+      kickoffUtc:
+        "2026-07-27T23:00:00.000Z"
+    });
+
+    const report =
+      buildLiveStatusCompleteness(
+        [older],
+        {
+          now:
+            "2026-07-25T07:00:00.000Z",
+          lineageRows:
+            [older, newer]
+        }
+      );
+
+    assert.equal(
+      report.ok,
+      true
+    );
+
+    assert.equal(
+      report.staleOpenCount,
+      0
+    );
+
+    assert.equal(
+      report.supersededOpenCount,
+      1
+    );
+
+    assert.deepEqual(
+      report.supersededOpenCanonicalIds,
+      [
+        "cid_chi1_unionlacalera_everton_20260725"
+      ]
+    );
+
+    assert.equal(
+      report.supersededOpenFixtures[0]
+        .supersededByCanonicalId,
+      "cid_chi1_unionlacalera_everton_20260728"
+    );
+
+    assert.equal(
+      report.policy
+        .heuristicFinalPromotion,
+      false
+    );
+  }
+);
+
+test(
+  "supports multiple consecutive exact-provider reschedules",
+  () => {
+    const first = fixture({
+      canonicalId:
+        "cid_uru1_nacional_progreso_20260725",
+      providerMatchId:
+        "401872732",
+      sourceId:
+        "401872732",
+      sourceMatchId:
+        "401872732",
+      matchId:
+        "401872732",
+      kickoffUtc:
+        "2026-07-24T22:30:00.000Z"
+    });
+
+    const second = fixture({
+      canonicalId:
+        "cid_uru1_nacional_progreso_20260801",
+      providerMatchId:
+        "401872732",
+      sourceId:
+        "401872732",
+      sourceMatchId:
+        "401872732",
+      matchId:
+        "401872732",
+      kickoffUtc:
+        "2026-08-01T18:00:00.000Z"
+    });
+
+    const third = fixture({
+      canonicalId:
+        "cid_uru1_nacional_progreso_20260803",
+      providerMatchId:
+        "401872732",
+      sourceId:
+        "401872732",
+      sourceMatchId:
+        "401872732",
+      matchId:
+        "401872732",
+      kickoffUtc:
+        "2026-08-02T21:30:00.000Z"
+    });
+
+    const report =
+      buildLiveStatusCompleteness(
+        [first, second],
+        {
+          now:
+            "2026-08-02T00:00:00.000Z",
+          lineageRows:
+            [first, second, third]
+        }
+      );
+
+    assert.equal(
+      report.staleOpenCount,
+      0
+    );
+
+    assert.equal(
+      report.supersededOpenCount,
+      2
+    );
+
+    assert.deepEqual(
+      report.supersededOpenCanonicalIds,
+      [
+        "cid_uru1_nacional_progreso_20260725",
+        "cid_uru1_nacional_progreso_20260801"
+      ]
+    );
+  }
+);
+
+test(
+  "keeps the latest exact-provider occurrence subject to the stale-open gate",
+  () => {
+    const older = fixture({
+      canonicalId:
+        "cid_old",
+      providerMatchId:
+        "401900001",
+      sourceId:
+        "401900001",
+      sourceMatchId:
+        "401900001",
+      matchId:
+        "401900001",
+      kickoffUtc:
+        "2026-07-20T16:00:00.000Z"
+    });
+
+    const latest = fixture({
+      canonicalId:
+        "cid_latest",
+      providerMatchId:
+        "401900001",
+      sourceId:
+        "401900001",
+      sourceMatchId:
+        "401900001",
+      matchId:
+        "401900001",
+      kickoffUtc:
+        "2026-07-21T16:00:00.000Z"
+    });
+
+    const report =
+      buildLiveStatusCompleteness(
+        [older, latest],
+        {
+          now:
+            "2026-07-22T00:00:00.000Z",
+          lineageRows:
+            [older, latest]
+        }
+      );
+
+    assert.deepEqual(
+      report.staleOpenCanonicalIds,
+      ["cid_latest"]
+    );
+
+    assert.deepEqual(
+      report.supersededOpenCanonicalIds,
+      ["cid_old"]
+    );
+  }
+);
+
+test(
+  "does not supersede a stale fixture from a different provider ID",
+  () => {
+    const stale = fixture({
+      canonicalId:
+        "cid_stale",
+      providerMatchId:
+        "401900010",
+      sourceId:
+        "401900010",
+      sourceMatchId:
+        "401900010",
+      matchId:
+        "401900010",
+      kickoffUtc:
+        "2026-07-20T16:00:00.000Z"
+    });
+
+    const unrelated = fixture({
+      canonicalId:
+        "cid_unrelated",
+      providerMatchId:
+        "401900011",
+      sourceId:
+        "401900011",
+      sourceMatchId:
+        "401900011",
+      matchId:
+        "401900011",
+      kickoffUtc:
+        "2026-07-25T16:00:00.000Z"
+    });
+
+    const report =
+      buildLiveStatusCompleteness(
+        [stale],
+        {
+          now:
+            "2026-07-21T00:00:00.000Z",
+          lineageRows:
+            [stale, unrelated]
+        }
+      );
+
+    assert.deepEqual(
+      report.staleOpenCanonicalIds,
+      ["cid_stale"]
+    );
+
+    assert.equal(
+      report.supersededOpenCount,
+      0
+    );
+  }
+);

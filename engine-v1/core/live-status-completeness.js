@@ -68,6 +68,7 @@ function isOpenToken(token) {
 
 function providerIdOf(row) {
   return clean(
+    row?.providerMatchId ||
     row?.sourceId ||
     row?.sourceMatchId ||
     row?.matchId
@@ -173,28 +174,153 @@ export function classifyStaleOpenFixture(
   };
 }
 
+function kickoffMsOf(row) {
+  const parsed = Date.parse(
+    clean(row?.kickoffUtc)
+  );
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : null;
+}
+
+function latestExactProviderOccurrences(
+  rows = []
+) {
+  const latestByProviderId =
+    new Map();
+
+  for (
+    const row of
+    Array.isArray(rows)
+      ? rows
+      : []
+  ) {
+    const source =
+      clean(row?.source)
+        .toLowerCase();
+
+    if (!source.startsWith("espn")) {
+      continue;
+    }
+
+    const providerId =
+      providerIdOf(row);
+
+    const kickoffMs =
+      kickoffMsOf(row);
+
+    if (
+      !providerId ||
+      kickoffMs === null
+    ) {
+      continue;
+    }
+
+    const existing =
+      latestByProviderId.get(
+        providerId
+      );
+
+    if (
+      !existing ||
+      kickoffMs > existing.kickoffMs
+    ) {
+      latestByProviderId.set(
+        providerId,
+        {
+          row,
+          kickoffMs
+        }
+      );
+    }
+  }
+
+  return latestByProviderId;
+}
+
 export function buildLiveStatusCompleteness(
   rows = [],
   options = {}
 ) {
-  const staleOpenFixtures = (
+  const fixtureRows =
     Array.isArray(rows)
       ? rows
-      : []
-  )
-    .map(row =>
+      : [];
+
+  const lineageRows =
+    Array.isArray(options.lineageRows)
+      ? options.lineageRows
+      : fixtureRows;
+
+  const latestByProviderId =
+    latestExactProviderOccurrences(
+      lineageRows
+    );
+
+  const staleOpenFixtures = [];
+  const supersededOpenFixtures = [];
+
+  for (const row of fixtureRows) {
+    const classified =
       classifyStaleOpenFixture(
         row,
         options
-      )
-    )
-    .filter(Boolean)
-    .sort((a, b) =>
+      );
+
+    if (!classified) {
+      continue;
+    }
+
+    const rowKickoffMs =
+      kickoffMsOf(row);
+
+    const latest =
+      latestByProviderId.get(
+        classified.providerId
+      );
+
+    if (
+      rowKickoffMs !== null &&
+      latest &&
+      latest.kickoffMs > rowKickoffMs
+    ) {
+      supersededOpenFixtures.push({
+        ...classified,
+        classification:
+          "superseded_open_exact_provider_id",
+        supersededByCanonicalId:
+          canonicalIdOf(latest.row) ||
+          null,
+        supersededByKickoffUtc:
+          clean(
+            latest.row?.kickoffUtc
+          ) ||
+          null
+      });
+
+      continue;
+    }
+
+    staleOpenFixtures.push(
+      classified
+    );
+  }
+
+  const sortByCanonicalId =
+    (a, b) =>
       String(a.canonicalId)
         .localeCompare(
           String(b.canonicalId)
-        )
-    );
+        );
+
+  staleOpenFixtures.sort(
+    sortByCanonicalId
+  );
+
+  supersededOpenFixtures.sort(
+    sortByCanonicalId
+  );
 
   const staleAfterHours =
     Number.isFinite(
@@ -212,6 +338,8 @@ export function buildLiveStatusCompleteness(
     policy: {
       staleAfterHours,
       exactProviderIdOnly: true,
+      exactProviderLineageSupersession:
+        true,
       heuristicFinalPromotion: false
     },
     staleOpenCount:
@@ -220,7 +348,14 @@ export function buildLiveStatusCompleteness(
       staleOpenFixtures.map(
         row => row.canonicalId
       ),
-    staleOpenFixtures
+    staleOpenFixtures,
+    supersededOpenCount:
+      supersededOpenFixtures.length,
+    supersededOpenCanonicalIds:
+      supersededOpenFixtures.map(
+        row => row.canonicalId
+      ),
+    supersededOpenFixtures
   };
 }
 

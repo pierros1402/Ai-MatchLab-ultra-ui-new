@@ -35,12 +35,93 @@ function readJsonSafe(file) {
 
 function countByLeague(rows, slugField) {
   const out = {};
+
   for (const row of rows || []) {
-    const slug = String(row?.[slugField] || "").trim();
-    if (!slug) continue;
-    out[slug] = (out[slug] || 0) + 1;
+    const slug =
+      String(
+        row?.[slugField] || ""
+      ).trim();
+
+    if (!slug) {
+      continue;
+    }
+
+    out[slug] =
+      (out[slug] || 0) + 1;
   }
+
   return out;
+}
+
+function readCanonicalLineageRows(
+  dayKey
+) {
+  const canonicalRoot =
+    resolveDataPath(
+      "canonical-fixtures"
+    );
+
+  if (!fs.existsSync(canonicalRoot)) {
+    return [];
+  }
+
+  const rows = [];
+
+  const dayDirectories =
+    fs.readdirSync(
+      canonicalRoot,
+      {
+        withFileTypes: true
+      }
+    )
+      .filter(entry =>
+        entry.isDirectory() &&
+        /^\d{4}-\d{2}-\d{2}$/u
+          .test(entry.name) &&
+        entry.name >= dayKey
+      )
+      .map(entry => entry.name)
+      .sort();
+
+  for (
+    const lineageDay of
+    dayDirectories
+  ) {
+    const directory =
+      path.join(
+        canonicalRoot,
+        lineageDay
+      );
+
+    const files =
+      fs.readdirSync(directory)
+        .filter(name =>
+          name.endsWith(".json")
+        )
+        .sort();
+
+    for (const name of files) {
+      const payload =
+        readJsonSafe(
+          path.join(
+            directory,
+            name
+          )
+        );
+
+      if (
+        Array.isArray(
+          payload?.fixtures
+        )
+      ) {
+        rows.push(
+          ...payload.fixtures
+        );
+      }
+    }
+  }
+
+  return rows;
 }
 
 function planSummary(plan) {
@@ -91,13 +172,20 @@ export function buildDayReport(dayKey, options = {}) {
     }
   }
 
+  const canonicalLineageRows =
+    readCanonicalLineageRows(
+      dayKey
+    );
+
   report.liveStatusCompleteness =
     buildLiveStatusCompleteness(
       canonicalFixtures,
       {
         now: options.now,
         staleAfterHours:
-          options.staleAfterHours
+          options.staleAfterHours,
+        lineageRows:
+          canonicalLineageRows
       }
     );
 
