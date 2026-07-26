@@ -6,6 +6,7 @@ import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import { teamPairMatches } from "../core/team-identity.js";
 import { espnProviderFetchSlugs } from "../core/espn-league-identity.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import {
@@ -573,6 +574,14 @@ export function resolveEspnExactEventOccurrence(
       null,
     rawStatus:
       authoritativeRow?.rawStatus ||
+      null,
+
+    homeTeam:
+      authoritativeRow?.homeTeam ||
+      null,
+
+    awayTeam:
+      authoritativeRow?.awayTeam ||
       null
   };
 
@@ -597,6 +606,38 @@ export function resolveEspnExactEventOccurrence(
       authoritativeRow,
     evidence
   };
+}
+
+export function canRemoveEspnWrongDayCanonicalRow(
+  canonicalRow,
+  wrongDayEvidence
+) {
+  const canonicalProviderId =
+    stableFixtureId(
+      canonicalRow
+    );
+
+  const evidenceProviderId =
+    normalizeText(
+      wrongDayEvidence
+        ?.providerMatchId
+    );
+
+  if (
+    !canonicalProviderId ||
+    !evidenceProviderId ||
+    canonicalProviderId !==
+      evidenceProviderId
+  ) {
+    return false;
+  }
+
+  return teamPairMatches(
+    canonicalRow?.homeTeam,
+    canonicalRow?.awayTeam,
+    wrongDayEvidence?.homeTeam,
+    wrongDayEvidence?.awayTeam
+  );
 }
 
 export function mergeStatusRow(
@@ -1326,6 +1367,7 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       exactSummarySameDayMatches: 0,
       exactSummaryWrongDayMatches: 0,
       exactSummaryWrongDayRemovedRows: 0,
+      exactSummaryWrongDayIdentityRejectedRows: 0,
       exactSummaryFetches: [],
       written: false,
       error: null
@@ -1677,7 +1719,7 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
           ? current.fixtures
           : [];
 
-      const wrongDayRows =
+      const wrongDayIdRows =
         currentFixtures.filter(row => {
           const id =
             stableFixtureId(row);
@@ -1687,6 +1729,30 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
             wrongDayExactIds.has(id)
           );
         });
+
+      const wrongDayRows =
+        wrongDayIdRows.filter(row => {
+          const id =
+            stableFixtureId(row);
+
+          const evidence =
+            id
+              ? wrongDayExactIds.get(id)
+              : null;
+
+          return (
+            Boolean(evidence) &&
+            canRemoveEspnWrongDayCanonicalRow(
+              row,
+              evidence
+            )
+          );
+        });
+
+      leagueStats
+        .exactSummaryWrongDayIdentityRejectedRows +=
+          wrongDayIdRows.length -
+          wrongDayRows.length;
 
       if (wrongDayRows.length > 0) {
         changed = true;
@@ -1708,9 +1774,17 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
             const id =
               stableFixtureId(row);
 
+            const evidence =
+              id
+                ? wrongDayExactIds.get(id)
+                : null;
+
             return !(
-              Boolean(id) &&
-              wrongDayExactIds.has(id)
+              Boolean(evidence) &&
+              canRemoveEspnWrongDayCanonicalRow(
+                row,
+                evidence
+              )
             );
           })
           .map(row => {
@@ -1789,6 +1863,10 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
               leagueStats
                 .exactSummaryWrongDayRemovedRows,
 
+            wrongDayIdentityRejectedRows:
+              leagueStats
+                .exactSummaryWrongDayIdentityRejectedRows,
+
             fetches:
               leagueStats
                 .exactSummaryFetches,
@@ -1797,6 +1875,10 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
               exactProviderIdOnly:
                 true,
               authoritativeEventDayOnly:
+                true,
+              teamIdentityRequired:
+                true,
+              homeAwayOrientationRequired:
                 true,
               crossDayStatusPromotion:
                 false,

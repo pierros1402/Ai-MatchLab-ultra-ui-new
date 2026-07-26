@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  canRemoveEspnWrongDayCanonicalRow,
   normalizeSourceRows,
   resolveEspnExactEventOccurrence
 } from "./run-live-status-refresh-day.js";
@@ -309,6 +310,155 @@ test(
     assert.equal(
       result.incoming.scoreAway,
       0
+    );
+  }
+);
+
+
+test(
+  "wrong-day deletion accepts exact provider and ordered team identity",
+  () => {
+    assert.equal(
+      canRemoveEspnWrongDayCanonicalRow(
+        {
+          sourceId: "401886421",
+          homeTeam: "Dorados",
+          awayTeam: "Cancun"
+        },
+        {
+          providerMatchId: "401886421",
+          homeTeam: "Dorados de Sinaloa",
+          awayTeam: "Cancún FC"
+        }
+      ),
+      true
+    );
+  }
+);
+
+test(
+  "wrong-day deletion rejects a different team pair under the same provider ID",
+  () => {
+    assert.equal(
+      canRemoveEspnWrongDayCanonicalRow(
+        {
+          sourceId: "401886421",
+          homeTeam: "Dorados",
+          awayTeam: "Cancun"
+        },
+        {
+          providerMatchId: "401886421",
+          homeTeam: "Another Club",
+          awayTeam: "Cancún FC"
+        }
+      ),
+      false
+    );
+  }
+);
+
+test(
+  "wrong-day deletion rejects reversed home and away identity",
+  () => {
+    assert.equal(
+      canRemoveEspnWrongDayCanonicalRow(
+        {
+          sourceId: "401886421",
+          homeTeam: "Dorados",
+          awayTeam: "Cancun"
+        },
+        {
+          providerMatchId: "401886421",
+          homeTeam: "Cancún FC",
+          awayTeam: "Dorados de Sinaloa"
+        }
+      ),
+      false
+    );
+  }
+);
+
+test(
+  "wrong-day deletion rejects missing provider team identity",
+  () => {
+    assert.equal(
+      canRemoveEspnWrongDayCanonicalRow(
+        {
+          sourceId: "401886421",
+          homeTeam: "Dorados",
+          awayTeam: "Cancun"
+        },
+        {
+          providerMatchId: "401886421",
+          homeTeam: null,
+          awayTeam: "Cancún FC"
+        }
+      ),
+      false
+    );
+  }
+);
+
+test(
+  "wrong-day deletion rejects squad-marker identity mismatch",
+  () => {
+    assert.equal(
+      canRemoveEspnWrongDayCanonicalRow(
+        {
+          sourceId: "401886421",
+          homeTeam: "Ajax",
+          awayTeam: "PSV"
+        },
+        {
+          providerMatchId: "401886421",
+          homeTeam: "Ajax U21",
+          awayTeam: "PSV U21"
+        }
+      ),
+      false
+    );
+  }
+);
+
+test(
+  "wrong-day evidence exposes the authoritative ordered team pair",
+  () => {
+    const result =
+      resolveEspnExactEventOccurrence(
+        espnSummary({
+          id: "401886421",
+          date:
+            "2026-09-16T01:00Z",
+          statusName:
+            "STATUS_SCHEDULED",
+          statusState: "pre",
+          completed: false,
+          homeName:
+            "Dorados de Sinaloa",
+          awayName:
+            "Cancún FC"
+        }),
+        "mex.2",
+        "2026-07-26",
+        {
+          canonicalSlug:
+            "mex.2"
+        }
+      );
+
+    assert.equal(
+      result.kind,
+      "other_day"
+    );
+
+    assert.equal(
+      result.evidence.homeTeam,
+      "Dorados de Sinaloa"
+    );
+
+    assert.equal(
+      result.evidence.awayTeam,
+      "Cancún FC"
     );
   }
 );
