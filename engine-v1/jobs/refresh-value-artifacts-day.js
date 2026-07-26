@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 
 import { athensDayKey } from "../core/daykey.js";
 import { buildValueDay } from "../core/build-value-day.js";
-import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
 import { buildValuePlanComparisonDay } from "./build-value-plan-comparison-day.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
@@ -169,7 +169,15 @@ function parseArgs(argv = process.argv.slice(2)) {
 }
 
 function canonicalIdsForDay(dayKey) {
-  return canonicalFixturesForDay(dayKey)
+  /*
+   * Coverage must use the same canonical-only publishable universe
+   * as the deploy snapshot exporter.
+   *
+   * This prevents cross-source duplicate provider identities from
+   * producing false missing-canonical failures.
+   */
+  return fixturesForSnapshotDay(dayKey)
+    .fixtures
     .map(row => String(row?.canonicalId || row?.matchId || "").trim())
     .filter(Boolean);
 }
