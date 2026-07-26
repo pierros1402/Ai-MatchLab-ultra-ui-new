@@ -224,7 +224,37 @@ jobs:
 
       - name: Refresh value artifacts after final canonical snapshot
         if: env.SKIP_BUILD != 'true'
-        run: node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          REFRESH_OUTPUT="$(mktemp)"
+          trap 'rm -f "$REFRESH_OUTPUT"' EXIT
+
+          set +e
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" | tee "$REFRESH_OUTPUT"
+          REFRESH_STATUS=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$REFRESH_STATUS" -ne 0 ]; then
+            FULL_EXPORT_REQUIRED=false
+
+            if grep -q '"reason": "snapshot_fixtures_missing_canonical_rows_full_export_required"' "$REFRESH_OUTPUT"; then
+              FULL_EXPORT_REQUIRED=true
+            fi
+
+            if [ "$FULL_EXPORT_REQUIRED" != "true" ]; then
+              echo "Value refresh failed for a reason that is not safely self-healable."
+              exit "$REFRESH_STATUS"
+            fi
+
+            echo "Canonical fixture coverage changed after the first export."
+            echo "Rebuilding all details and the complete deploy snapshot before retrying Value."
+
+            node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+          fi
 
       - name: Build cumulative value comparison
         if: env.SKIP_BUILD != 'true'

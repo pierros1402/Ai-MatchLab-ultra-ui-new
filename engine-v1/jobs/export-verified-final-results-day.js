@@ -1226,6 +1226,355 @@ export function hasCanonicalPreKickoffNonPlayedVeto(target) {
   ) !== null;
 }
 
+
+function exactIntegerScore(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return null;
+  }
+
+  const number =
+    Number(value);
+
+  return (
+    Number.isInteger(number) &&
+    number >= 0
+  )
+    ? number
+    : null;
+}
+
+function artifactScore(existing) {
+  const home =
+    exactIntegerScore(
+      existing?.homeScore ??
+      existing?.scoreHome ??
+      existing?.finalScore?.homeScore ??
+      existing?.finalScore?.home
+    );
+
+  const away =
+    exactIntegerScore(
+      existing?.awayScore ??
+      existing?.scoreAway ??
+      existing?.finalScore?.awayScore ??
+      existing?.finalScore?.away
+    );
+
+  if (
+    home === null ||
+    away === null
+  ) {
+    return null;
+  }
+
+  const expectedKey =
+    home + "-" + away;
+
+  const declaredKeys = [
+    clean(existing?.scoreKey),
+    clean(existing?.finalScore?.scoreKey),
+    clean(existing?.sources?.[0]?.scoreKey)
+  ].filter(Boolean);
+
+  if (
+    declaredKeys.some(
+      value => value !== expectedKey
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    homeScore: home,
+    awayScore: away,
+    scoreKey: expectedKey
+  };
+}
+
+function isExactFlashscoreVerifiedArtifact(
+  existing,
+  target,
+  dayKey
+) {
+  if (
+    !existing ||
+    existing?.verifiedFinalTruth !== true ||
+    clean(existing?.source) !==
+      "flashscore_same_day_exact_team_match" ||
+    clean(existing?.dayKey) !==
+      clean(dayKey) ||
+    clean(existing?.matchId) !==
+      clean(target?.matchId)
+  ) {
+    return false;
+  }
+
+  const sources =
+    Array.isArray(existing?.sources)
+      ? existing.sources
+      : [];
+
+  if (
+    sources.length !== 1 ||
+    clean(sources[0]?.provider)
+      .toLowerCase() !==
+      "flashscore" ||
+    !clean(sources[0]?.providerMatchId)
+  ) {
+    return false;
+  }
+
+  if (
+    !teamPairMatches(
+      target?.homeTeam,
+      target?.awayTeam,
+      existing?.homeTeam,
+      existing?.awayTeam
+    ) ||
+    !teamPairMatches(
+      target?.homeTeam,
+      target?.awayTeam,
+      sources[0]?.home,
+      sources[0]?.away
+    )
+  ) {
+    return false;
+  }
+
+  const existingKickoff =
+    clean(existing?.kickoffUtc);
+
+  const targetKickoff =
+    clean(target?.kickoffUtc);
+
+  if (
+    !existingKickoff ||
+    !targetKickoff ||
+    Number.isNaN(
+      new Date(existingKickoff).getTime()
+    ) ||
+    Number.isNaN(
+      new Date(targetKickoff).getTime()
+    ) ||
+    new Date(existingKickoff).getTime() !==
+      new Date(targetKickoff).getTime()
+  ) {
+    return false;
+  }
+
+  return artifactScore(existing) !== null;
+}
+
+function hasExactFinalPenaltyStatus(row) {
+  return [
+    row?.rawStatus,
+    row?.statusType,
+    row?.operationalState
+  ].some(
+    value =>
+      clean(value).toUpperCase() ===
+      "STATUS_FINAL_PEN"
+  );
+}
+
+export function resolvePenaltyWinnerMarkerConflict({
+  existing,
+  target,
+  candidatePayload,
+  dayKey
+} = {}) {
+  if (
+    !isExactFlashscoreVerifiedArtifact(
+      existing,
+      target,
+      dayKey
+    )
+  ) {
+    return {
+      ok: false,
+      reason:
+        "existing_not_exact_flashscore_verified_artifact"
+    };
+  }
+
+  const canonical =
+    target?.canonicalFixture ||
+    null;
+
+  if (
+    !canonical ||
+    clean(canonical?.source)
+      .toLowerCase() !==
+      "espn" ||
+    !hasExactFinalPenaltyStatus(canonical)
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_not_exact_espn_final_pen"
+    };
+  }
+
+  const resolved =
+    resolveCanonicalEspnFinalFallback(
+      target,
+      dayKey
+    );
+
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      reason:
+        "canonical_espn_resolution_failed",
+      canonicalReason:
+        resolved.reason
+    };
+  }
+
+  if (
+    resolved.homeScore !==
+      resolved.awayScore
+  ) {
+    return {
+      ok: false,
+      reason:
+        "canonical_final_pen_score_not_tied"
+    };
+  }
+
+  if (
+    !candidatePayload ||
+    clean(candidatePayload?.scoreKey) !==
+      resolved.scoreKey
+  ) {
+    return {
+      ok: false,
+      reason:
+        "candidate_score_disagrees_with_canonical"
+    };
+  }
+
+  const previous =
+    artifactScore(existing);
+
+  if (!previous) {
+    return {
+      ok: false,
+      reason:
+        "existing_score_invalid"
+    };
+  }
+
+  const homeWinnerMarker =
+    previous.homeScore ===
+      resolved.homeScore + 1 &&
+    previous.awayScore ===
+      resolved.awayScore;
+
+  const awayWinnerMarker =
+    previous.homeScore ===
+      resolved.homeScore &&
+    previous.awayScore ===
+      resolved.awayScore + 1;
+
+  if (
+    !homeWinnerMarker &&
+    !awayWinnerMarker
+  ) {
+    return {
+      ok: false,
+      reason:
+        "existing_score_not_single_penalty_winner_marker"
+    };
+  }
+
+  const replacementPayload =
+    buildCanonicalEspnVerifiedFinalResult(
+      dayKey,
+      target,
+      resolved
+    );
+
+  replacementPayload.verification = {
+    ...replacementPayload.verification,
+
+    method:
+      "canonical_espn_final_pen_score_correction",
+
+    checks: {
+      ...replacementPayload.verification.checks,
+
+      explicitFinalPenaltyStatus:
+        true,
+
+      canonicalTiedScore:
+        true,
+
+      existingExactFlashscoreArtifact:
+        true,
+
+      singlePenaltyWinnerMarkerRemoved:
+        true
+    },
+
+    replacedArtifact: {
+      source:
+        clean(existing?.source),
+
+      provider:
+        clean(
+          existing?.sources?.[0]?.provider
+        ),
+
+      providerMatchId:
+        clean(
+          existing?.sources?.[0]
+            ?.providerMatchId
+        ),
+
+      scoreKey:
+        previous.scoreKey
+    }
+  };
+
+  replacementPayload.source =
+    "canonical_espn_final_pen_score_correction";
+
+  replacementPayload.settlement = {
+    ...replacementPayload.settlement,
+
+    scoreSemantics:
+      "played_score_excluding_penalty_shootout"
+  };
+
+  return {
+    ok: true,
+
+    reason:
+      "single_penalty_winner_marker_replaced",
+
+    previousScore:
+      previous,
+
+    canonicalScore: {
+      homeScore:
+        resolved.homeScore,
+
+      awayScore:
+        resolved.awayScore,
+
+      scoreKey:
+        resolved.scoreKey
+    },
+
+    replacementPayload
+  };
+}
+
 export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const safeDayKey = clean(dayKey);
 
@@ -1250,6 +1599,8 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const existingRows = [];
   const unresolved = [];
   const conflicts = [];
+  const correctedPenaltyScores = [];
+  const wouldCorrectPenaltyScores = [];
   const wouldRetract = [];
   const retracted = [];
   const retractionBlocked = [];
@@ -1482,11 +1833,60 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     if (existing) {
       const existingScore = clean(existing.scoreKey || existing?.finalScore?.scoreKey || `${existing.homeScore ?? existing.scoreHome}-${existing.awayScore ?? existing.scoreAway}`);
       if (existingScore && existingScore !== payload.scoreKey) {
+        const penaltyCorrection =
+          resolvePenaltyWinnerMarkerConflict({
+            existing,
+            target,
+            candidatePayload:
+              payload,
+            dayKey:
+              safeDayKey
+          });
+
+        if (penaltyCorrection.ok) {
+          const correctionRow = {
+            ...row,
+
+            previousScore:
+              penaltyCorrection
+                .previousScore
+                .scoreKey,
+
+            correctedScore:
+              penaltyCorrection
+                .canonicalScore
+                .scoreKey,
+
+            correctionReason:
+              penaltyCorrection.reason
+          };
+
+          if (options.write === true) {
+            writeJsonPretty(
+              filePath,
+              penaltyCorrection
+                .replacementPayload
+            );
+
+            correctedPenaltyScores.push(
+              correctionRow
+            );
+          } else {
+            wouldCorrectPenaltyScores.push(
+              correctionRow
+            );
+          }
+
+          continue;
+        }
+
         conflicts.push({
           matchId: target.matchId,
           existingScore,
           newScore: payload.scoreKey,
-          filePath
+          filePath,
+          penaltyCorrectionReason:
+            penaltyCorrection.reason
         });
         continue;
       }
@@ -1534,6 +1934,10 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
       retractionBlocked: retractionBlocked.length,
       unresolved: unresolved.length,
       conflicts: conflicts.length,
+      correctedPenaltyScores:
+        correctedPenaltyScores.length,
+      wouldCorrectPenaltyScores:
+        wouldCorrectPenaltyScores.length,
       canonicalEspnFallbackWouldWrite: wouldWrite.filter(
         row => row.resolutionMethod === "canonical_espn_terminal_final"
       ).length,
@@ -1552,6 +1956,8 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     retractionBlocked,
     unresolved,
     conflicts,
+    correctedPenaltyScores,
+    wouldCorrectPenaltyScores,
     guarantees: {
       canonicalWrites: 0,
       deploySnapshotWrites: 0,

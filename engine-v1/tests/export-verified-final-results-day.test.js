@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   buildCanonicalEspnVerifiedFinalResult,
-  resolveCanonicalEspnFinalFallback
+  resolveCanonicalEspnFinalFallback,
+  resolvePenaltyWinnerMarkerConflict
 } from "../jobs/export-verified-final-results-day.js";
 
 const dayKey = "2026-07-17";
@@ -157,5 +158,442 @@ test("builds a settlement-compatible artifact with explicit provenance", () => {
   assert.equal(
     payload.settlement.finalTruthVerdict,
     "verified_final_result"
+  );
+});
+
+
+function finalPenaltyTarget({
+  canonicalHome = 0,
+  canonicalAway = 0,
+  rawStatus = "STATUS_FINAL_PEN"
+} = {}) {
+  return validTarget({
+    canonicalId:
+      "cid_test_penalty_final_20260717",
+
+    matchId:
+      "401999999",
+
+    sourceMatchId:
+      "401999999",
+
+    sourceId:
+      "401999999",
+
+    leagueSlug:
+      "test.cup",
+
+    leagueName:
+      "Test Cup",
+
+    dayKey,
+
+    kickoffUtc:
+      "2026-07-16T21:30Z",
+
+    homeTeam:
+      "Home Club",
+
+    awayTeam:
+      "Away Club",
+
+    scoreHome:
+      canonicalHome,
+
+    scoreAway:
+      canonicalAway,
+
+    status:
+      "FT",
+
+    rawStatus,
+
+    statusType:
+      rawStatus,
+
+    lastSeenAt:
+      "2026-07-17T00:12:04.625Z"
+  });
+}
+
+function penaltyTarget(options = {}) {
+  const target =
+    finalPenaltyTarget(options);
+
+  return {
+    ...target,
+
+    matchId:
+      target.canonicalFixture
+        .canonicalId,
+
+    leagueSlug:
+      target.canonicalFixture
+        .leagueSlug,
+
+    leagueName:
+      target.canonicalFixture
+        .leagueName,
+
+    country:
+      "Test Country",
+
+    homeTeam:
+      target.canonicalFixture
+        .homeTeam,
+
+    awayTeam:
+      target.canonicalFixture
+        .awayTeam,
+
+    kickoffUtc:
+      target.canonicalFixture
+        .kickoffUtc
+  };
+}
+
+function flashscoreExisting({
+  target,
+  homeScore,
+  awayScore,
+  source =
+    "flashscore_same_day_exact_team_match",
+  provider =
+    "flashscore"
+}) {
+  const scoreKey =
+    homeScore + "-" + awayScore;
+
+  return {
+    schema:
+      "ai-matchlab.verified-final-result.v1",
+
+    verifiedFinalTruth:
+      true,
+
+    date:
+      dayKey,
+
+    dayKey,
+
+    matchId:
+      target.matchId,
+
+    leagueSlug:
+      target.leagueSlug,
+
+    homeTeam:
+      target.homeTeam,
+
+    awayTeam:
+      target.awayTeam,
+
+    homeScore,
+    awayScore,
+    scoreHome:
+      homeScore,
+    scoreAway:
+      awayScore,
+
+    finalScore: {
+      homeScore,
+      awayScore,
+      home:
+        homeScore,
+      away:
+        awayScore,
+      scoreKey
+    },
+
+    scoreKey,
+
+    kickoffUtc:
+      target.kickoffUtc,
+
+    source,
+
+    sources: [
+      {
+        provider,
+
+        providerMatchId:
+          "AbCd1234",
+
+        home:
+          target.homeTeam,
+
+        away:
+          target.awayTeam,
+
+        scoreHome:
+          homeScore,
+
+        scoreAway:
+          awayScore,
+
+        kickoffUtc:
+          target.kickoffUtc,
+
+        scoreKey
+      }
+    ]
+  };
+}
+
+function canonicalCandidate(
+  target
+) {
+  const resolved =
+    resolveCanonicalEspnFinalFallback(
+      target,
+      dayKey
+    );
+
+  assert.equal(
+    resolved.ok,
+    true
+  );
+
+  return buildCanonicalEspnVerifiedFinalResult(
+    dayKey,
+    target,
+    resolved
+  );
+}
+
+test("repairs an exact home penalty winner-marker artifact", () => {
+  const target =
+    penaltyTarget();
+
+  const result =
+    resolvePenaltyWinnerMarkerConflict({
+      existing:
+        flashscoreExisting({
+          target,
+          homeScore: 1,
+          awayScore: 0
+        }),
+
+      target,
+
+      candidatePayload:
+        canonicalCandidate(target),
+
+      dayKey
+    });
+
+  assert.equal(result.ok, true);
+  assert.equal(
+    result.previousScore.scoreKey,
+    "1-0"
+  );
+  assert.equal(
+    result.canonicalScore.scoreKey,
+    "0-0"
+  );
+  assert.equal(
+    result.replacementPayload.scoreKey,
+    "0-0"
+  );
+  assert.equal(
+    result.replacementPayload.source,
+    "canonical_espn_final_pen_score_correction"
+  );
+  assert.equal(
+    result.replacementPayload
+      .settlement
+      .scoreSemantics,
+    "played_score_excluding_penalty_shootout"
+  );
+});
+
+test("repairs an exact away penalty winner-marker artifact", () => {
+  const target =
+    penaltyTarget({
+      canonicalHome: 1,
+      canonicalAway: 1
+    });
+
+  const result =
+    resolvePenaltyWinnerMarkerConflict({
+      existing:
+        flashscoreExisting({
+          target,
+          homeScore: 1,
+          awayScore: 2
+        }),
+
+      target,
+
+      candidatePayload:
+        canonicalCandidate(target),
+
+      dayKey
+    });
+
+  assert.equal(result.ok, true);
+  assert.equal(
+    result.previousScore.scoreKey,
+    "1-2"
+  );
+  assert.equal(
+    result.canonicalScore.scoreKey,
+    "1-1"
+  );
+});
+
+test("does not repair a non-penalty terminal conflict", () => {
+  const target =
+    penaltyTarget({
+      rawStatus:
+        "STATUS_FULL_TIME"
+    });
+
+  const result =
+    resolvePenaltyWinnerMarkerConflict({
+      existing:
+        flashscoreExisting({
+          target,
+          homeScore: 1,
+          awayScore: 0
+        }),
+
+      target,
+
+      candidatePayload:
+        canonicalCandidate(target),
+
+      dayKey
+    });
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.reason,
+    "canonical_not_exact_espn_final_pen"
+  );
+});
+
+test("does not repair a non-tied canonical penalty score", () => {
+  const target =
+    penaltyTarget({
+      canonicalHome: 2,
+      canonicalAway: 1
+    });
+
+  const result =
+    resolvePenaltyWinnerMarkerConflict({
+      existing:
+        flashscoreExisting({
+          target,
+          homeScore: 3,
+          awayScore: 1
+        }),
+
+      target,
+
+      candidatePayload:
+        canonicalCandidate(target),
+
+      dayKey
+    });
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.reason,
+    "canonical_final_pen_score_not_tied"
+  );
+});
+
+test("does not repair a score difference larger than one winner marker", () => {
+  const target =
+    penaltyTarget();
+
+  const result =
+    resolvePenaltyWinnerMarkerConflict({
+      existing:
+        flashscoreExisting({
+          target,
+          homeScore: 2,
+          awayScore: 0
+        }),
+
+      target,
+
+      candidatePayload:
+        canonicalCandidate(target),
+
+      dayKey
+    });
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.reason,
+    "existing_score_not_single_penalty_winner_marker"
+  );
+});
+
+test("does not repair a non-Flashscore existing artifact", () => {
+  const target =
+    penaltyTarget();
+
+  const result =
+    resolvePenaltyWinnerMarkerConflict({
+      existing:
+        flashscoreExisting({
+          target,
+          homeScore: 1,
+          awayScore: 0,
+          source:
+            "canonical_espn_terminal_final",
+          provider:
+            "espn"
+        }),
+
+      target,
+
+      candidatePayload:
+        canonicalCandidate(target),
+
+      dayKey
+    });
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.reason,
+    "existing_not_exact_flashscore_verified_artifact"
+  );
+});
+
+test("does not repair when the candidate score disagrees with canonical", () => {
+  const target =
+    penaltyTarget();
+
+  const candidate =
+    canonicalCandidate(target);
+
+  candidate.scoreKey =
+    "1-0";
+
+  const result =
+    resolvePenaltyWinnerMarkerConflict({
+      existing:
+        flashscoreExisting({
+          target,
+          homeScore: 1,
+          awayScore: 0
+        }),
+
+      target,
+
+      candidatePayload:
+        candidate,
+
+      dayKey
+    });
+
+  assert.equal(result.ok, false);
+  assert.equal(
+    result.reason,
+    "candidate_score_disagrees_with_canonical"
   );
 });

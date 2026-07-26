@@ -23,6 +23,11 @@ import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { athensDayKey } from "../core/daykey.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { teamPairMatches } from "../core/team-identity.js";
+import {
+  resolveExpectedCanonicalIdentityDecision
+} from "../core/expected-canonical-identity-decisions.js";
 
 const EXPECTED_DIR    = resolveDataPath("expected-matches");
 const RESULTS_DIR     = resolveDataPath("league-memory", "results");
@@ -34,6 +39,343 @@ function normalizeTeam(name) {
   return String(name || "").toLowerCase()
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function clean(value) {
+  return String(value ?? "").trim();
+}
+
+function canonicalRowId(row) {
+  return clean(
+    row?.canonicalId ||
+    row?.matchId ||
+    row?.id
+  );
+}
+
+function canonicalHome(row) {
+  return clean(
+    row?.homeTeam ||
+    row?.home
+  );
+}
+
+function canonicalAway(row) {
+  return clean(
+    row?.awayTeam ||
+    row?.away
+  );
+}
+
+function canonicalRowDayKey(row) {
+  const explicit =
+    clean(row?.dayKey);
+
+  if (/^\d{4}-\d{2}-\d{2}$/u.test(explicit)) {
+    return explicit;
+  }
+
+  const kickoff =
+    clean(row?.kickoffUtc);
+
+  if (!kickoff) {
+    return "";
+  }
+
+  const date =
+    new Date(kickoff);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString(
+    "en-CA",
+    {
+      timeZone:
+        "Europe/Athens"
+    }
+  );
+}
+
+function kickoffMatches(left, right) {
+  const leftMs =
+    Date.parse(clean(left));
+
+  const rightMs =
+    Date.parse(clean(right));
+
+  return (
+    Number.isFinite(leftMs) &&
+    Number.isFinite(rightMs) &&
+    Math.abs(leftMs - rightMs) <=
+      2 * 60 * 1000
+  );
+}
+
+function statusEvidence(row) {
+  return [
+    row?.status,
+    row?.rawStatus,
+    row?.statusType,
+    row?.operationalState
+  ]
+    .map(value =>
+      clean(value).toUpperCase()
+    )
+    .filter(Boolean)
+    .join("|");
+}
+
+function explicitNonPlayedStatus(row) {
+  const evidence =
+    statusEvidence(row);
+
+  if (evidence.includes("POSTPON")) {
+    return "POSTPONED";
+  }
+
+  if (evidence.includes("CANCEL")) {
+    return "CANCELLED";
+  }
+
+  if (evidence.includes("ABANDON")) {
+    return "ABANDONED";
+  }
+
+  return null;
+}
+
+function hasExplicitFinalStatus(row) {
+  const status =
+    clean(row?.status).toUpperCase();
+
+  if (
+    [
+      "FT",
+      "FINAL",
+      "FULL_TIME",
+      "AET",
+      "PEN"
+    ].includes(status)
+  ) {
+    return true;
+  }
+
+  const evidence =
+    statusEvidence(row);
+
+  return (
+    evidence.includes("STATUS_FINAL") ||
+    evidence.includes("STATUS_FULL_TIME") ||
+    evidence.includes("AFTER_EXTRA_TIME") ||
+    evidence.includes("PENALT")
+  );
+}
+
+function strictCanonicalScore(row) {
+  const rawHome =
+    row?.scoreHome ??
+    row?.homeScore ??
+    null;
+
+  const rawAway =
+    row?.scoreAway ??
+    row?.awayScore ??
+    null;
+
+  if (
+    rawHome === null ||
+    rawHome === undefined ||
+    rawHome === "" ||
+    rawAway === null ||
+    rawAway === undefined ||
+    rawAway === ""
+  ) {
+    return null;
+  }
+
+  const home = Number(rawHome);
+  const away = Number(rawAway);
+
+  if (
+    !Number.isInteger(home) ||
+    home < 0 ||
+    !Number.isInteger(away) ||
+    away < 0
+  ) {
+    return null;
+  }
+
+  return {
+    home,
+    away,
+    scoreKey: `${home}-${away}`
+  };
+}
+
+export function resolveExpectedCanonicalOutcome(
+  expected,
+  canonicalRows,
+  dayKey
+) {
+  const requestedDay =
+    clean(dayKey);
+
+  const rows =
+    (
+      Array.isArray(canonicalRows)
+        ? canonicalRows
+        : []
+    ).filter(row =>
+      requestedDay &&
+      canonicalRowDayKey(row) ===
+        requestedDay
+    );
+
+  const expectedId =
+    clean(expected?.matchId);
+
+  const expectedLeague =
+    clean(expected?.leagueSlug);
+
+  const leagueRows =
+    rows.filter(row =>
+      clean(row?.leagueSlug) ===
+      expectedLeague
+    );
+
+  let candidates =
+    expectedId
+      ? leagueRows.filter(row =>
+          canonicalRowId(row) ===
+          expectedId
+        )
+      : [];
+
+  let matchMethod =
+    "exact_canonical_id";
+
+  if (candidates.length === 0) {
+    const identityDecision =
+      resolveExpectedCanonicalIdentityDecision({
+        dayKey:
+          requestedDay,
+        expectedMatchId:
+          expectedId
+      });
+
+    if (identityDecision) {
+      candidates =
+        leagueRows.filter(row =>
+          canonicalRowId(row) ===
+          identityDecision.canonicalId
+        );
+
+      matchMethod =
+        "immutable_day_scoped_canonical_identity";
+    }
+  }
+
+  if (candidates.length === 0) {
+    candidates =
+      leagueRows.filter(row =>
+        kickoffMatches(
+          expected?.kickoffUtc,
+          row?.kickoffUtc
+        ) &&
+        teamPairMatches(
+          clean(expected?.home),
+          clean(expected?.away),
+          canonicalHome(row),
+          canonicalAway(row)
+        )
+      );
+
+    matchMethod =
+      "unique_league_kickoff_team_identity";
+  }
+
+  if (candidates.length === 0) {
+    return {
+      ok: false,
+      reason:
+        "no_canonical_fixture_match",
+      candidateCount: 0
+    };
+  }
+
+  if (candidates.length !== 1) {
+    return {
+      ok: false,
+      reason:
+        "ambiguous_canonical_fixture_match",
+      candidateCount:
+        candidates.length
+    };
+  }
+
+  const row = candidates[0];
+
+  const nonPlayedStatus =
+    explicitNonPlayedStatus(row);
+
+  if (nonPlayedStatus) {
+    return {
+      ok: true,
+      classification:
+        "verified_non_played",
+      nonPlayedStatus,
+      scoreKey: null,
+      matchMethod,
+      canonicalMatchId:
+        canonicalRowId(row),
+      canonicalFixture: row
+    };
+  }
+
+  if (!hasExplicitFinalStatus(row)) {
+    return {
+      ok: false,
+      reason:
+        "matched_canonical_fixture_not_terminal",
+      candidateCount: 1,
+      matchMethod,
+      canonicalMatchId:
+        canonicalRowId(row)
+    };
+  }
+
+  const score =
+    strictCanonicalScore(row);
+
+  if (!score) {
+    return {
+      ok: false,
+      reason:
+        "matched_canonical_terminal_score_invalid",
+      candidateCount: 1,
+      matchMethod,
+      canonicalMatchId:
+        canonicalRowId(row)
+    };
+  }
+
+  return {
+    ok: true,
+    classification:
+      "verified_terminal",
+    scoreHome:
+      score.home,
+    scoreAway:
+      score.away,
+    scoreKey:
+      score.scoreKey,
+    matchMethod,
+    canonicalMatchId:
+      canonicalRowId(row),
+    canonicalFixture: row
+  };
 }
 
 /** Strip the "fs_" prefix that fixtures-all adds but results-memory omits. */
@@ -167,7 +509,8 @@ export function verifyResultsDay(dayKey) {
     return collectedCache.get(slug);
   }
 
-  // ESPN secondary index
+  // Canonical truth precedes the published snapshot fallback.
+  const canonicalRows = canonicalFixturesForDay(date);
   const espnIndex = buildEspnIndex(date);
 
   const foundPrimary   = [];
@@ -183,32 +526,117 @@ export function verifyResultsDay(dayKey) {
       continue;
     }
 
-    // Not in primary — check ESPN by normalised team pair
-    const homeN = normalizeTeam(m.home);
-    const awayN = normalizeTeam(m.away);
-    const espnMatch = espnIndex.get(`${homeN}|${awayN}`);
+    // Not in primary — check canonical truth first.
+    const canonicalOutcome =
+      resolveExpectedCanonicalOutcome(
+        m,
+        canonicalRows,
+        date
+      );
 
-    if (espnMatch && (espnMatch.scoreHome !== null || ["FT","FINAL","POST"].some(s => espnMatch.status?.includes(s)))) {
+    if (canonicalOutcome.ok) {
       foundSecondary.push({
-        matchId:        m.matchId,
-        home:           m.home,
-        away:           m.away,
-        leagueSlug:     slug,
-        espnMatchId:    espnMatch.matchId,
-        espnScore:      espnMatch.scoreHome !== null ? `${espnMatch.scoreHome}-${espnMatch.scoreAway}` : null,
-        espnStatus:     espnMatch.status,
+        matchId: m.matchId,
+        home: m.home,
+        away: m.away,
+        leagueSlug: slug,
+        source:
+          "canonical_fixture_store",
+        canonicalMatchId:
+          canonicalOutcome.canonicalMatchId,
+        score:
+          canonicalOutcome.scoreKey,
+        classification:
+          canonicalOutcome.classification,
+        nonPlayedStatus:
+          canonicalOutcome.nonPlayedStatus || null,
+        matchMethod:
+          canonicalOutcome.matchMethod
       });
+
       continue;
     }
 
-    // Neither source has it — genuine gap
+    // Published snapshot is the final fallback.
+    // A numeric score alone is never terminal evidence.
+    const homeN =
+      normalizeTeam(m.home);
+
+    const awayN =
+      normalizeTeam(m.away);
+
+    const espnMatch =
+      espnIndex.get(
+        `${homeN}|${awayN}`
+      );
+
+    const snapshotStatus =
+      clean(espnMatch?.status)
+        .toUpperCase();
+
+    const snapshotNonPlayed =
+      ["POST", "CANCEL", "ABANDON"]
+        .some(token =>
+          snapshotStatus.includes(token)
+        );
+
+    const snapshotFinal =
+      ["FT", "FINAL", "AET", "PEN"]
+        .some(token =>
+          snapshotStatus.includes(token)
+        );
+
+    const snapshotHasScore =
+      espnMatch?.scoreHome !== null &&
+      espnMatch?.scoreHome !== undefined &&
+      espnMatch?.scoreAway !== null &&
+      espnMatch?.scoreAway !== undefined;
+
+    if (
+      espnMatch &&
+      (
+        snapshotNonPlayed ||
+        (
+          snapshotFinal &&
+          snapshotHasScore
+        )
+      )
+    ) {
+      foundSecondary.push({
+        matchId: m.matchId,
+        home: m.home,
+        away: m.away,
+        leagueSlug: slug,
+        source:
+          "published_snapshot_fallback",
+        espnMatchId:
+          espnMatch.matchId,
+        espnScore:
+          snapshotHasScore
+            ? `${espnMatch.scoreHome}-${espnMatch.scoreAway}`
+            : null,
+        espnStatus:
+          espnMatch.status
+      });
+
+      continue;
+    }
+
     missing.push({
-      matchId:    m.matchId,
-      home:       m.home,
-      away:       m.away,
+      matchId: m.matchId,
+      home: m.home,
+      away: m.away,
       leagueSlug: slug,
       kickoffUtc: m.kickoffUtc,
-      checkedSources: ["flashscore-accumulated", "espn-snapshot"],
+      checkedSources: [
+        "flashscore-accumulated",
+        "canonical-fixture-store",
+        "published-snapshot"
+      ],
+      canonicalReason:
+        canonicalOutcome.reason,
+      canonicalCandidateCount:
+        canonicalOutcome.candidateCount || 0
     });
   }
 
