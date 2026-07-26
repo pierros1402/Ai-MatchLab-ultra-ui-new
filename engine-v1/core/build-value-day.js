@@ -951,10 +951,28 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   const { indexes, priors } = await getSeasonResources(season, rebuild);
 
   const picks = [];
+  const evaluatedFixtureIds = new Set();
+  const fixturesWithCandidateMarkets = new Set();
 
   for (const match of matches) {
+    const evaluatedFixtureId =
+      auditIdOf(match);
+
+    if (evaluatedFixtureId) {
+      evaluatedFixtureIds.add(
+        evaluatedFixtureId
+      );
+    }
+
     try {
       if (!isPlayable(match)) {
+        auditRejections.push({
+          matchId:
+            evaluatedFixtureId,
+          reason:
+            "not_playable"
+        });
+
         continue;
       }
 
@@ -1012,10 +1030,62 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
         continue;
       }
 
-      const enrichedValue = applyIntelligenceToValue(value, intelligence);
-      const finalValue = applyMatchProfileToValue(enrichedValue, matchProfile);
+      const enrichedValue =
+        applyIntelligenceToValue(
+          value,
+          intelligence
+        );
 
-      picks.push(...expandValueMarkets(match, finalValue));
+      const finalValue =
+        applyMatchProfileToValue(
+          enrichedValue,
+          matchProfile
+        );
+
+      const expandedMarkets =
+        expandValueMarkets(
+          match,
+          finalValue
+        );
+
+      if (
+        !Array.isArray(expandedMarkets) ||
+        expandedMarkets.length === 0
+      ) {
+        auditRejections.push({
+          matchId:
+            evaluatedFixtureId,
+          reason:
+            "value_object_without_expandable_market",
+          score:
+            Number.isFinite(
+              Number(finalValue?.score)
+            )
+              ? Number(finalValue.score)
+              : null,
+          band:
+            finalValue?.band ||
+            null,
+          market:
+            finalValue?.market ||
+            null,
+          pick:
+            finalValue?.pick ||
+            null
+        });
+
+        continue;
+      }
+
+      if (evaluatedFixtureId) {
+        fixturesWithCandidateMarkets.add(
+          evaluatedFixtureId
+        );
+      }
+
+      picks.push(
+        ...expandedMarkets
+      );
     } catch (err) {
       auditRejections.push({ matchId: auditIdOf(match), reason: "evaluation_error", error: err?.message || String(err) });
       console.log("[value] match failed", {
@@ -1058,9 +1128,100 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   // Production value-audit (rejection ledger) — observability only, derived from
   // the counters gathered above; does not affect `result`/picks in any way.
   const rejectionByReason = {};
+
   for (const r of auditRejections) {
-    rejectionByReason[r.reason] = (rejectionByReason[r.reason] || 0) + 1;
+    rejectionByReason[r.reason] =
+      (
+        rejectionByReason[
+          r.reason
+        ] || 0
+      ) + 1;
   }
+
+  const terminalOutcomeIds =
+    new Set([
+      ...auditRejections
+        .map(row =>
+          String(
+            row?.matchId || ""
+          ).trim()
+        )
+        .filter(Boolean),
+
+      ...fixturesWithCandidateMarkets
+    ]);
+
+  const unaccountedFixtureIds =
+    [...evaluatedFixtureIds]
+      .filter(id =>
+        !terminalOutcomeIds.has(id)
+      )
+      .sort();
+
+  const duplicateOutcomeIds =
+    [...evaluatedFixtureIds]
+      .filter(id => {
+        const rejectionCount =
+          auditRejections.filter(
+            row =>
+              String(
+                row?.matchId || ""
+              ).trim() === id
+          ).length;
+
+        const candidateCount =
+          fixturesWithCandidateMarkets
+            .has(id)
+              ? 1
+              : 0;
+
+        return (
+          rejectionCount +
+          candidateCount
+        ) > 1;
+      })
+      .sort();
+
+  const evaluationAccounting = {
+    evaluatedFixtureCount:
+      evaluatedFixtureIds.size,
+
+    rejectedFixtureCount:
+      new Set(
+        auditRejections
+          .map(row =>
+            String(
+              row?.matchId || ""
+            ).trim()
+          )
+          .filter(Boolean)
+      ).size,
+
+    fixturesWithCandidateMarkets:
+      fixturesWithCandidateMarkets.size,
+
+    terminalOutcomeCount:
+      terminalOutcomeIds.size,
+
+    unaccountedFixtureCount:
+      unaccountedFixtureIds.length,
+
+    duplicateOutcomeCount:
+      duplicateOutcomeIds.length,
+
+    unaccountedFixtureIds:
+      unaccountedFixtureIds.slice(
+        0,
+        100
+      ),
+
+    duplicateOutcomeIds:
+      duplicateOutcomeIds.slice(
+        0,
+        100
+      )
+  };
+
   const audit = {
     ok: true,
     date,
@@ -1076,6 +1237,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
       valueFixtureUniverseContract(
         valueUniverse
       ),
+    evaluationAccounting,
     universe: {
       fixturesSeen: sourceMatches.length,
       eligibleEvaluated: matches.length,
@@ -1089,6 +1251,27 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
       sample: auditRejections.slice(0, 100)
     }
   };
+  if (
+    evaluationAccounting
+      .unaccountedFixtureCount !== 0 ||
+    evaluationAccounting
+      .duplicateOutcomeCount !== 0 ||
+    evaluationAccounting
+      .terminalOutcomeCount !==
+      evaluationAccounting
+        .evaluatedFixtureCount
+  ) {
+    const accountingError =
+      new Error(
+        "PLAN_A_EVALUATION_ACCOUNTING_FAILED"
+      );
+
+    accountingError.details =
+      evaluationAccounting;
+
+    throw accountingError;
+  }
+
   try {
     writeValueAudit(date, audit);
   } catch (e) {
