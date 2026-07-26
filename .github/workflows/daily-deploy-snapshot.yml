@@ -218,6 +218,14 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
 
+      - name: Refresh final authoritative live status
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/run-live-status-refresh-day.js "$DAY_KEY"
+
+      - name: Rebuild details after final live refresh
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+
       - name: Export deploy snapshot
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
