@@ -7,7 +7,10 @@ import {
 } from "./value-engine-v1.js";
 import { buildMatchIntelligence } from "./build-match-intelligence.js";
 import { currentSeason } from "./season.js";
-import { canonicalFixturesForDay } from "./day-fixture-universe.js";
+import {
+  buildValueFixtureUniverse,
+  valueFixtureUniverseContract
+} from "./value-fixture-universe.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -898,11 +901,16 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   }
   const now = Date.now();
 
-  const sourceMatches = canonicalFixturesForDay(date);
+  const valueUniverse =
+    buildValueFixtureUniverse(date);
 
-  const inputSource = sourceMatches.length > 0
-    ? "canonical_fixtures"
-    : "empty";
+  const sourceMatches =
+    valueUniverse.fixtures;
+
+  const inputSource =
+    sourceMatches.length > 0
+      ? "canonical_fixtures"
+      : "empty";
 
   if (sourceMatches.length === 0) {
     console.log("[value] no canonical fixture input; deploy snapshot fallback disabled", {
@@ -911,18 +919,10 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     });
   }
 
-  const matches = sourceMatches.filter(m => {
-    if (!isPlayable(m)) return false;
-
-    if (rebuild) {
-      return true;
-    }
-
-    if (!isPreMatchFixtureStatus(m)) return false;
-
-    const kickoffTs = new Date(m?.kickoffUtc || 0).getTime();
-    return kickoffTs > now;
-  });
+  // Every canonical fixture enters Plan A evaluation.
+  // Existing Plan A eligibility rules remain below as algorithmic rejections.
+  const matches =
+    sourceMatches;
 
   // AUDIT (observability only). Recompute — never re-decide — why each canonical
   // fixture did/didn't reach evaluation, using the SAME predicates as the filter
@@ -954,6 +954,28 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
 
   for (const match of matches) {
     try {
+      if (!isPlayable(match)) {
+        continue;
+      }
+
+      if (
+        !rebuild &&
+        !isPreMatchFixtureStatus(match)
+      ) {
+        continue;
+      }
+
+      if (!rebuild) {
+        const kickoffTs =
+          new Date(
+            match?.kickoffUtc || 0
+          ).getTime();
+
+        if (!(kickoffTs > now)) {
+          continue;
+        }
+      }
+
       const details = readDetailsSnapshot(date, match.canonicalId, match.matchId);
       const matchProfile = details?.researchedFacts?.matchProfile || null;
 
@@ -1023,7 +1045,11 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     date,
     source: inputSource,
     count: dedupedPicks.length,
-    picks: dedupedPicks
+    picks: dedupedPicks,
+    fixtureUniverse:
+      valueFixtureUniverseContract(
+        valueUniverse
+      )
   };
 
   __valueDayCache.set(cacheKey, result);
@@ -1046,6 +1072,10 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
       realBookmakerOddsUsed: false
     },
     generatedAt: new Date().toISOString(),
+    fixtureUniverse:
+      valueFixtureUniverseContract(
+        valueUniverse
+      ),
     universe: {
       fixturesSeen: sourceMatches.length,
       eligibleEvaluated: matches.length,

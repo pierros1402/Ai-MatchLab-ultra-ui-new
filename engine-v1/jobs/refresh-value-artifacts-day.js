@@ -1,3 +1,6 @@
+import {
+  assertValueFixtureUniverseParity
+} from "../core/value-fixture-universe.js";
 /**
  * refresh-value-artifacts-day.js
  *
@@ -435,6 +438,15 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
         outputMode: "plan-b-observation"
       });
 
+  const universeParity =
+    planB
+      ? assertValueFixtureUniverseParity(
+          planA?.fixtureUniverse,
+          planB?.sourceContract
+            ?.fixtureUniverse
+        )
+      : null;
+
   const comparison = options.skipComparison === true
     ? null
     : buildValuePlanComparisonDay(date, { write: true });
@@ -459,6 +471,7 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     startedAt,
     finishedAt: new Date().toISOString(),
     coverage,
+    universeParity,
     planA: {
       ok: planA?.ok !== false,
       source: planA?.source || snapshotValue.valueOut?.source || null,

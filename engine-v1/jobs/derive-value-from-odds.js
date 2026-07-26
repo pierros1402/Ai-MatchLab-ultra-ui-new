@@ -57,7 +57,10 @@ import { fileURLToPath } from "url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
-import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import {
+  buildValueFixtureUniverse,
+  valueFixtureUniverseContract
+} from "../core/value-fixture-universe.js";
 import {
   joinCanonicalFixturesWithModelAssessments,
   validatePicksAgainstCanonicalFixtures
@@ -684,19 +687,87 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     oddsMemoryCanCreateFixture: false,
     deploySnapshotInput: false,
     realBookmakerOddsUsed: false,
-    note: "Plan B starts from canonicalFixturesForDay(dayKey) and joins odds-memory aiAssessment only through exact fixture identity."
+    note: "Plan A and Plan B receive the identical full canonical fixture universe. Assessment enrichment may affect picks but never fixture membership."
   };
 
-  const canonicalFixtures = canonicalFixturesForDay(dayKey);
-  const oddsPayload = getOddsForDay(dayKey);
-  const assessmentRows = Array.isArray(oddsPayload?.matches) ? oddsPayload.matches : [];
-  const membershipJoin = joinCanonicalFixturesWithModelAssessments(
-    canonicalFixtures,
-    assessmentRows
+  const valueUniverse =
+    buildValueFixtureUniverse(dayKey);
+
+  const canonicalFixtures =
+    valueUniverse.fixtures;
+
+  const oddsPayload =
+    getOddsForDay(dayKey);
+
+  const assessmentRows =
+    Array.isArray(
+      oddsPayload?.matches
+    )
+      ? oddsPayload.matches
+      : [];
+
+  const membershipJoin =
+    joinCanonicalFixturesWithModelAssessments(
+      canonicalFixtures,
+      assessmentRows
+    );
+
+  const joinedByCanonicalId =
+    new Map(
+      membershipJoin
+        .joinedMatches
+        .map(row => [
+          String(
+            row?.canonicalId ||
+            ""
+          ).trim(),
+          row
+        ])
+        .filter(
+          ([canonicalId]) =>
+            Boolean(canonicalId)
+        )
+    );
+
+  // Every canonical fixture enters Plan B evaluation.
+  // Missing assessment is an algorithmic no-pick outcome, not membership loss.
+  const sourceMatches =
+    canonicalFixtures.map(row => {
+      const canonicalId =
+        String(
+          row?.canonicalId ||
+          ""
+        ).trim();
+
+      return (
+        joinedByCanonicalId.get(
+          canonicalId
+        ) ||
+        row
+      );
+    });
+
+  const fixtureUniverseContract =
+    valueFixtureUniverseContract(
+      valueUniverse
+    );
+
+  Object.assign(
+    sourceContract,
+    {
+      fixtureUniverse:
+        fixtureUniverseContract
+    }
   );
-  const sourceMatches = membershipJoin.joinedMatches;
 
   const membership = {
+    fixtureUniverse:
+      fixtureUniverseContract,
+    evaluatedFixtureCount:
+      sourceMatches.length,
+    evaluatedCanonicalIds:
+      fixtureUniverseContract
+        .canonicalIds,
     ...membershipJoin.summary,
     orphanAssessmentMatchIds: membershipJoin.orphanAssessmentRows
       .map(row => String(row?.canonicalId || row?.matchId || "").trim())
