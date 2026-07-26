@@ -169,6 +169,58 @@ const __seasonResourceCache = new Map();
 const __valueDayCache = new Map();
 
 // ------------------------------
+export function isPreMatchFixtureStatus(match) {
+  const tokens = [
+    match?.status,
+    match?.statusType,
+    match?.rawStatus,
+    match?.operationalState
+  ]
+    .map(value =>
+      String(value || "")
+        .trim()
+        .toUpperCase()
+    )
+    .filter(Boolean);
+
+  const terminalOrLiveTokens = [
+    "LIVE",
+    "IN_PROGRESS",
+    "FIRST_HALF",
+    "SECOND_HALF",
+    "HALF_TIME",
+    "HALFTIME",
+    "FULL_TIME",
+    "STATUS_FINAL",
+    "FINAL",
+    "FT",
+    "POSTPONED",
+    "CANCELLED",
+    "CANCELED",
+    "ABANDONED",
+    "SUSPENDED"
+  ];
+
+  if (
+    tokens.some(token =>
+      terminalOrLiveTokens.some(blocked =>
+        token === blocked ||
+        token.includes(blocked)
+      )
+    )
+  ) {
+    return false;
+  }
+
+  return tokens.some(token =>
+    token === "PRE" ||
+    token === "SCHEDULED" ||
+    token === "STATUS_SCHEDULED" ||
+    token === "NOT_STARTED" ||
+    token === "STATUS_NOT_STARTED"
+  );
+}
+
 function isPlayable(match) {
   if (!match) return false;
   if (!match.homeTeam || !match.awayTeam) return false;
@@ -866,8 +918,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
       return true;
     }
 
-    const status = String(m?.status || "").toUpperCase();
-    if (status !== "PRE") return false;
+    if (!isPreMatchFixtureStatus(m)) return false;
 
     const kickoffTs = new Date(m?.kickoffUtc || 0).getTime();
     return kickoffTs > now;
@@ -882,8 +933,16 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   for (const m of sourceMatches) {
     if (!isPlayable(m)) { auditRejections.push({ matchId: auditIdOf(m), reason: "not_playable" }); continue; }
     if (rebuild) continue; // eligible under rebuild semantics
-    const status = String(m?.status || "").toUpperCase();
-    if (status !== "PRE") { auditRejections.push({ matchId: auditIdOf(m), reason: "not_pre_status", status }); continue; }
+    if (!isPreMatchFixtureStatus(m)) {
+      auditRejections.push({
+        matchId: auditIdOf(m),
+        reason: "not_pre_status",
+        status: String(m?.status || "").toUpperCase(),
+        statusType: String(m?.statusType || "").toUpperCase(),
+        rawStatus: String(m?.rawStatus || "").toUpperCase()
+      });
+      continue;
+    }
     if (!(new Date(m?.kickoffUtc || 0).getTime() > now)) {
       auditRejections.push({ matchId: auditIdOf(m), reason: "kickoff_passed" });
     }
