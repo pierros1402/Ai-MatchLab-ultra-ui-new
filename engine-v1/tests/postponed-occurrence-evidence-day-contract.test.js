@@ -7,7 +7,8 @@ import {
 
 import {
   isExactFlashscorePostponedRow,
-  buildFlashscorePostponedIncoming
+  buildFlashscorePostponedIncoming,
+  resolveFlashscoreRefreshOffsets
 } from "../jobs/run-live-status-refresh-day.js";
 
 import {
@@ -236,5 +237,128 @@ test(
         false
       );
     }
+  }
+);
+
+test(
+  "derives the closed-day and approved evidence-day offsets deterministically",
+  () => {
+    const decisions = [
+      {
+        dayKey:
+          "2026-07-25",
+        evidenceDayKey:
+          null
+      },
+      {
+        dayKey:
+          "2026-07-25",
+        evidenceDayKey:
+          "2026-07-26"
+      },
+      {
+        dayKey:
+          "2026-07-26",
+        evidenceDayKey:
+          "2026-07-27"
+      }
+    ];
+
+    assert.deepEqual(
+      resolveFlashscoreRefreshOffsets(
+        "2026-07-25",
+        decisions,
+        "2026-07-26"
+      ),
+      [-1, 0]
+    );
+  }
+);
+
+test(
+  "uses only the requested day when there is no different approved evidence day",
+  () => {
+    assert.deepEqual(
+      resolveFlashscoreRefreshOffsets(
+        "2026-07-25",
+        [
+          {
+            dayKey:
+              "2026-07-25",
+            evidenceDayKey:
+              null
+          }
+        ],
+        "2026-07-26"
+      ),
+      [-1]
+    );
+
+    assert.deepEqual(
+      resolveFlashscoreRefreshOffsets(
+        "2026-07-26",
+        [],
+        "2026-07-26"
+      ),
+      [0]
+    );
+  }
+);
+
+test(
+  "deduplicates evidence days and ignores decisions belonging to another occurrence day",
+  () => {
+    assert.deepEqual(
+      resolveFlashscoreRefreshOffsets(
+        "2026-07-25",
+        [
+          {
+            dayKey:
+              "2026-07-25",
+            evidenceDayKey:
+              "2026-07-26"
+          },
+          {
+            dayKey:
+              "2026-07-25",
+            evidenceDayKey:
+              "2026-07-26"
+          },
+          {
+            dayKey:
+              "2026-07-24",
+            evidenceDayKey:
+              "2026-07-27"
+          }
+        ],
+        "2026-07-26"
+      ),
+      [-1, 0]
+    );
+  }
+);
+
+test(
+  "fails closed for invalid requested or reference days",
+  () => {
+    assert.throws(
+      () =>
+        resolveFlashscoreRefreshOffsets(
+          "not-a-day",
+          [],
+          "2026-07-26"
+        ),
+      /invalid_flashscore_refresh_day/
+    );
+
+    assert.throws(
+      () =>
+        resolveFlashscoreRefreshOffsets(
+          "2026-07-25",
+          [],
+          "invalid-reference"
+        ),
+      /invalid_flashscore_refresh_day/
+    );
   }
 );

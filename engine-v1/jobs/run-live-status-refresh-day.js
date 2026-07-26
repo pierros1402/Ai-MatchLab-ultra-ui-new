@@ -22,6 +22,126 @@ function isValidDayKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(normalizeText(value));
 }
 
+function currentAthensDayKey(now = new Date()) {
+  const date =
+    now instanceof Date
+      ? now
+      : new Date(now);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(
+      "invalid Athens reference time"
+    );
+  }
+
+  return date.toLocaleDateString(
+    "en-CA",
+    {
+      timeZone:
+        "Europe/Athens"
+    }
+  );
+}
+
+function dayNumber(dayKey) {
+  const value =
+    normalizeText(dayKey);
+
+  if (!isValidDayKey(value)) {
+    return null;
+  }
+
+  const parsed =
+    Date.parse(
+      `${value}T12:00:00.000Z`
+    );
+
+  return Number.isFinite(parsed)
+    ? Math.floor(
+        parsed /
+        (24 * 60 * 60 * 1000)
+      )
+    : null;
+}
+
+export function resolveFlashscoreRefreshOffsets(
+  requestedDayKey,
+  approvedDecisions = [],
+  referenceDayKey =
+    currentAthensDayKey()
+) {
+  const requestedDay =
+    normalizeText(
+      requestedDayKey
+    );
+
+  const referenceDay =
+    normalizeText(
+      referenceDayKey
+    );
+
+  const requestedNumber =
+    dayNumber(requestedDay);
+
+  const referenceNumber =
+    dayNumber(referenceDay);
+
+  if (
+    requestedNumber === null ||
+    referenceNumber === null
+  ) {
+    throw new Error(
+      "invalid_flashscore_refresh_day"
+    );
+  }
+
+  const evidenceDays =
+    (
+      Array.isArray(approvedDecisions)
+        ? approvedDecisions
+        : []
+    )
+      .filter(decision =>
+        normalizeText(
+          decision?.dayKey
+        ) === requestedDay
+      )
+      .map(decision =>
+        normalizeText(
+          decision?.evidenceDayKey
+        )
+      )
+      .filter(isValidDayKey);
+
+  const targetDays = [
+    requestedDay,
+    ...evidenceDays
+  ];
+
+  return [
+    ...new Set(
+      targetDays.map(dayKey => {
+        const targetNumber =
+          dayNumber(dayKey);
+
+        if (targetNumber === null) {
+          throw new Error(
+            "invalid_flashscore_evidence_day"
+          );
+        }
+
+        return (
+          targetNumber -
+          referenceNumber
+        );
+      })
+    )
+  ].sort(
+    (left, right) =>
+      left - right
+  );
+}
+
 function espnDateFromDayKey(dayKey) {
   return String(dayKey || "").replace(/-/g, "");
 }
@@ -931,7 +1051,21 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
   }
 
   const startedAt = new Date().toISOString();
-  const targetLeagues = collectTargetLeagues(safeDayKey, options);
+
+  const targetLeagues =
+    collectTargetLeagues(
+      safeDayKey,
+      options
+    );
+
+  const approvedNonPlayedDecisions =
+    listApprovedFlashscoreNonPlayedDecisions()
+      .filter(decision =>
+        normalizeText(
+          decision?.dayKey
+        ) === safeDayKey
+      );
+
   const flashscoreTargetLeagues =
     mergeFlashscoreTargetLeaguesWithApprovedDecisions(
       collectFlashscoreTargetLeagues(
@@ -939,6 +1073,29 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       ),
       safeDayKey
     );
+
+  const flashscoreOffsets =
+    resolveFlashscoreRefreshOffsets(
+      safeDayKey,
+      approvedNonPlayedDecisions,
+      currentAthensDayKey(
+        options?.now ||
+        new Date()
+      )
+    );
+
+  const approvedEvidenceDayKeys =
+    new Set([
+      safeDayKey,
+
+      ...approvedNonPlayedDecisions
+        .map(decision =>
+          normalizeText(
+            decision?.evidenceDayKey
+          )
+        )
+        .filter(isValidDayKey)
+    ]);
 
   const stats = {
     ok: true,
@@ -965,7 +1122,8 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
   stats.flashscoreFinalRefresh = {
     attempted: false,
     ok: false,
-    offsets: [0],
+    offsets:
+      flashscoreOffsets,
     targetLeagueCount: flashscoreTargetLeagues.length,
     targetLeagues: flashscoreTargetLeagues,
     sourceRows: 0,
@@ -1310,9 +1468,11 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     flashscoreStats.attempted = true;
 
     try {
-      const feed = await fetchFlashscoreFixtures({
-        offsets: [0]
-      });
+      const feed =
+        await fetchFlashscoreFixtures({
+          offsets:
+            flashscoreOffsets
+        });
 
       const sourceRows = Array.isArray(feed?.rows)
         ? feed.rows
@@ -1322,12 +1482,17 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         isExactFlashscoreFinalRow(row, safeDayKey)
       );
 
-      const postponedRows = sourceRows.filter(row =>
-        isFlashscoreNonPlayedTerminalEvidence(
-          row,
-          safeDayKey
-        )
-      );
+      const postponedRows =
+        sourceRows.filter(row =>
+          [
+            ...approvedEvidenceDayKeys
+          ].some(evidenceDayKey =>
+            isFlashscoreNonPlayedTerminalEvidence(
+              row,
+              evidenceDayKey
+            )
+          )
+        );
 
       flashscoreStats.ok = Boolean(feed?.ok);
       flashscoreStats.sourceRows = sourceRows.length;
