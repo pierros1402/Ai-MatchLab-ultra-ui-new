@@ -33,6 +33,120 @@ const DECISIONS = Object.freeze([
         statusDetailCode: "4",
         scores: "absent"
       })
+  }),
+
+  Object.freeze({
+    decisionId:
+      "flashscore-nonplayed-20260725-r1CG9jwR-v1",
+
+    policyVersion:
+      "flashscore-nonplayed-decision-v1",
+
+    dayKey:
+      "2026-07-25",
+
+    canonicalId:
+      "cid_svn1_aluminij_celje_20260725",
+
+    leagueSlug:
+      "svn.1",
+
+    provider:
+      "flashscore",
+
+    providerMatchId:
+      "r1CG9jwR",
+
+    resolvedStatus:
+      "STATUS_POSTPONED",
+
+    decisionBasis:
+      "operator_confirmed_postponed_match",
+
+    requiredProviderEvidence:
+      Object.freeze({
+        statusCode: "3",
+        statusDetailCode: "4",
+        scores: "absent"
+      })
+  }),
+
+  Object.freeze({
+    decisionId:
+      "flashscore-nonplayed-20260725-88Qs0xvB-v1",
+
+    policyVersion:
+      "flashscore-nonplayed-decision-v1",
+
+    dayKey:
+      "2026-07-25",
+
+    canonicalId:
+      "cid_usa2_birmingham_newmexico_20260725",
+
+    leagueSlug:
+      "usa.2",
+
+    provider:
+      "flashscore",
+
+    providerMatchId:
+      "88Qs0xvB",
+
+    resolvedStatus:
+      "STATUS_POSTPONED",
+
+    decisionBasis:
+      "exact_provider_occurrence_rescheduled",
+
+    evidenceDayKey:
+      "2026-07-26",
+
+    evidenceKickoffUtc:
+      "2026-07-25T23:00:00.000Z",
+
+    requiredProviderEvidence:
+      Object.freeze({
+        statusCode: "3",
+        statusDetailCode: "4",
+        scores: "absent"
+      })
+  }),
+
+  Object.freeze({
+    decisionId:
+      "flashscore-nonplayed-20260726-88Qs0xvB-v1",
+
+    policyVersion:
+      "flashscore-nonplayed-decision-v1",
+
+    dayKey:
+      "2026-07-26",
+
+    canonicalId:
+      "cid_usa2_birmingham_newmexico_20260726",
+
+    leagueSlug:
+      "usa.2",
+
+    provider:
+      "flashscore",
+
+    providerMatchId:
+      "88Qs0xvB",
+
+    resolvedStatus:
+      "STATUS_POSTPONED",
+
+    decisionBasis:
+      "operator_confirmed_postponed_match",
+
+    requiredProviderEvidence:
+      Object.freeze({
+        statusCode: "3",
+        statusDetailCode: "4",
+        scores: "absent"
+      })
   })
 ]);
 
@@ -46,6 +160,14 @@ export function listApprovedFlashscoreNonPlayedDecisions() {
   return DECISIONS.map(
     decision => ({
       ...decision,
+
+      evidenceDayKey:
+        decision.evidenceDayKey ||
+        null,
+
+      evidenceKickoffUtc:
+        decision.evidenceKickoffUtc ||
+        null,
 
       requiredProviderEvidence: {
         ...decision
@@ -100,6 +222,14 @@ export function resolveApprovedFlashscoreNonPlayedDecision({
 
   return {
     ...matches[0],
+
+    evidenceDayKey:
+      matches[0].evidenceDayKey ||
+      null,
+
+    evidenceKickoffUtc:
+      matches[0].evidenceKickoffUtc ||
+      null,
 
     requiredProviderEvidence: {
       ...matches[0]

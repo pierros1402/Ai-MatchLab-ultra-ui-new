@@ -438,11 +438,31 @@ export function findExactFlashscorePostponedMatch(
       return false;
     }
 
-    return (
+    const evidenceDayKey =
+      decision.evidenceDayKey ||
+      dayKey;
+
+    if (
       athensDayFromUtc(
         row?.kickoffUtc
-      ) === dayKey
-    );
+      ) !== evidenceDayKey
+    ) {
+      return false;
+    }
+
+    if (
+      decision.evidenceKickoffUtc &&
+      Date.parse(
+        clean(row?.kickoffUtc)
+      ) !==
+        Date.parse(
+          decision.evidenceKickoffUtc
+        )
+    ) {
+      return false;
+    }
+
+    return true;
   });
 
   if (exactRows.length !== 1) {

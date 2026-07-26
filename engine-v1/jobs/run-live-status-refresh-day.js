@@ -633,15 +633,6 @@ export function isExactFlashscorePostponedRow(
   dayKey,
   canonicalRow
 ) {
-  if (
-    !isFlashscoreNonPlayedTerminalEvidence(
-      row,
-      dayKey
-    )
-  ) {
-    return false;
-  }
-
   const decision =
     resolveApprovedFlashscoreNonPlayedDecision({
       dayKey,
@@ -655,6 +646,31 @@ export function isExactFlashscorePostponedRow(
     });
 
   if (!decision) {
+    return false;
+  }
+
+  const evidenceDayKey =
+    decision.evidenceDayKey ||
+    dayKey;
+
+  if (
+    !isFlashscoreNonPlayedTerminalEvidence(
+      row,
+      evidenceDayKey
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    decision.evidenceKickoffUtc &&
+    Date.parse(
+      normalizeText(row?.kickoffUtc)
+    ) !==
+      Date.parse(
+        decision.evidenceKickoffUtc
+      )
+  ) {
     return false;
   }
 
@@ -695,11 +711,25 @@ export function buildFlashscorePostponedIncoming(
       providerMatchId
     });
 
+  const evidenceDayKey =
+    decision?.evidenceDayKey ||
+    dayKey;
+
+  const evidenceKickoffMatches =
+    !decision?.evidenceKickoffUtc ||
+    Date.parse(
+      normalizeText(sourceRow?.kickoffUtc)
+    ) ===
+      Date.parse(
+        decision.evidenceKickoffUtc
+      );
+
   if (
     !decision ||
+    !evidenceKickoffMatches ||
     !isFlashscoreNonPlayedTerminalEvidence(
       sourceRow,
-      dayKey
+      evidenceDayKey
     )
   ) {
     throw new Error(
