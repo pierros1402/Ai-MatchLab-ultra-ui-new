@@ -441,6 +441,164 @@ export function normalizeSourceRows(
   return byId;
 }
 
+export function resolveEspnExactEventOccurrence(
+  payload,
+  providerSlug,
+  requestedDayKey,
+  options = {}
+) {
+  const canonicalSlug =
+    normalizeText(options.canonicalSlug) ||
+    normalizeText(providerSlug);
+
+  const header =
+    payload?.header &&
+    typeof payload.header === "object"
+      ? payload.header
+      : {};
+
+  const competition =
+    Array.isArray(header?.competitions)
+      ? header.competitions[0]
+      : null;
+
+  const providerMatchId =
+    normalizeText(
+      header?.id ||
+      competition?.id
+    );
+
+  if (
+    !providerMatchId ||
+    !competition
+  ) {
+    return {
+      kind: "invalid",
+      providerMatchId:
+        providerMatchId || null,
+      authoritativeDayKey: null,
+      incoming: null,
+      reason:
+        "missing_exact_event_identity"
+    };
+  }
+
+  const event = {
+    id:
+      providerMatchId,
+
+    date:
+      competition?.date ||
+      header?.date ||
+      null,
+
+    competitions: [
+      competition
+    ]
+  };
+
+  const normalized =
+    normalizeFixture(
+      event,
+      providerSlug
+    );
+
+  const authoritativeDayKey =
+    normalizeText(
+      normalized?.dayKey
+    );
+
+  if (
+    !normalized ||
+    !isValidDayKey(
+      authoritativeDayKey
+    )
+  ) {
+    return {
+      kind: "invalid",
+      providerMatchId,
+      authoritativeDayKey:
+        authoritativeDayKey || null,
+      incoming: null,
+      reason:
+        "invalid_authoritative_event_day"
+    };
+  }
+
+  const normalizedRows =
+    normalizeSourceRows(
+      [event],
+      providerSlug,
+      authoritativeDayKey,
+      {
+        canonicalSlug
+      }
+    );
+
+  const authoritativeRow =
+    normalizedRows.get(
+      providerMatchId
+    ) || null;
+
+  if (
+    !authoritativeRow ||
+    stableFixtureId(
+      authoritativeRow
+    ) !== providerMatchId
+  ) {
+    return {
+      kind: "invalid",
+      providerMatchId,
+      authoritativeDayKey,
+      incoming: null,
+      reason:
+        "exact_event_normalization_failed"
+    };
+  }
+
+  const evidence = {
+    providerMatchId,
+    providerLeagueSlug:
+      normalizeText(providerSlug) ||
+      null,
+    authoritativeDayKey,
+    kickoffUtc:
+      authoritativeRow?.kickoffUtc ||
+      null,
+    status:
+      authoritativeRow?.status ||
+      null,
+    statusType:
+      authoritativeRow?.statusType ||
+      null,
+    rawStatus:
+      authoritativeRow?.rawStatus ||
+      null
+  };
+
+  if (
+    authoritativeDayKey !==
+    normalizeText(requestedDayKey)
+  ) {
+    return {
+      kind: "other_day",
+      providerMatchId,
+      authoritativeDayKey,
+      incoming: null,
+      evidence
+    };
+  }
+
+  return {
+    kind: "same_day",
+    providerMatchId,
+    authoritativeDayKey,
+    incoming:
+      authoritativeRow,
+    evidence
+  };
+}
+
 export function mergeStatusRow(
   previous,
   incoming
@@ -1164,6 +1322,11 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       exactIdFallbackCandidates: 0,
       exactIdFallbackMatches: 0,
       adjacentFetches: [],
+      exactSummaryCandidates: 0,
+      exactSummarySameDayMatches: 0,
+      exactSummaryWrongDayMatches: 0,
+      exactSummaryWrongDayRemovedRows: 0,
+      exactSummaryFetches: [],
       written: false,
       error: null
     };
@@ -1382,10 +1545,175 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
         }
       }
 
+      const wrongDayExactIds =
+        new Map();
+
+      leagueStats.exactSummaryCandidates =
+        missingExactIds.size;
+
+      if (missingExactIds.size > 0) {
+        for (
+          const id of [
+            ...missingExactIds
+          ]
+        ) {
+          for (
+            const providerSlug of
+            providerFetchSlugs
+          ) {
+            const summaryUrl =
+              ESPN_BASE +
+              "/" +
+              providerSlug +
+              "/summary?event=" +
+              encodeURIComponent(id);
+
+            try {
+              const summaryPayload =
+                await fetchJson(
+                  summaryUrl,
+                  "espn_exact_event_summary_" +
+                    providerSlug +
+                    "_" +
+                    id
+                );
+
+              const occurrence =
+                resolveEspnExactEventOccurrence(
+                  summaryPayload,
+                  providerSlug,
+                  safeDayKey,
+                  {
+                    canonicalSlug:
+                      slug
+                  }
+                );
+
+              leagueStats
+                .exactSummaryFetches
+                .push({
+                  providerSlug,
+                  providerMatchId:
+                    id,
+                  ok:
+                    true,
+                  kind:
+                    occurrence.kind,
+                  authoritativeDayKey:
+                    occurrence
+                      .authoritativeDayKey ||
+                    null,
+                  reason:
+                    occurrence.reason ||
+                    null
+                });
+
+              if (
+                occurrence.kind ===
+                  "same_day" &&
+                occurrence.incoming
+              ) {
+                sourceById.set(
+                  id,
+                  occurrence.incoming
+                );
+
+                missingExactIds.delete(
+                  id
+                );
+
+                leagueStats
+                  .exactSummarySameDayMatches++;
+
+                break;
+              }
+
+              if (
+                occurrence.kind ===
+                "other_day"
+              ) {
+                wrongDayExactIds.set(
+                  id,
+                  occurrence.evidence
+                );
+
+                missingExactIds.delete(
+                  id
+                );
+
+                leagueStats
+                  .exactSummaryWrongDayMatches++;
+
+                break;
+              }
+            }
+            catch (err) {
+              leagueStats
+                .exactSummaryFetches
+                .push({
+                  providerSlug,
+                  providerMatchId:
+                    id,
+                  ok:
+                    false,
+                  kind:
+                    null,
+                  authoritativeDayKey:
+                    null,
+                  error:
+                    err?.message ||
+                    String(err)
+                });
+            }
+          }
+        }
+      }
+
       let changed = false;
       const matchedIds = new Set();
 
-      let nextFixtures = (Array.isArray(current.fixtures) ? current.fixtures : []).map(row => {
+      const currentFixtures =
+        Array.isArray(current.fixtures)
+          ? current.fixtures
+          : [];
+
+      const wrongDayRows =
+        currentFixtures.filter(row => {
+          const id =
+            stableFixtureId(row);
+
+          return (
+            Boolean(id) &&
+            wrongDayExactIds.has(id)
+          );
+        });
+
+      if (wrongDayRows.length > 0) {
+        changed = true;
+
+        leagueStats
+          .exactSummaryWrongDayRemovedRows +=
+            wrongDayRows.length;
+
+        stats.changedRows +=
+          wrongDayRows.length;
+
+        leagueStats.changedRows +=
+          wrongDayRows.length;
+      }
+
+      let nextFixtures =
+        currentFixtures
+          .filter(row => {
+            const id =
+              stableFixtureId(row);
+
+            return !(
+              Boolean(id) &&
+              wrongDayExactIds.has(id)
+            );
+          })
+          .map(row => {
         const id = stableFixtureId(row);
         const incoming = id ? sourceById.get(id) : null;
         if (!incoming) return row;
@@ -1443,6 +1771,38 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
               leagueStats.exactIdFallbackMatches,
             fetches:
               leagueStats.adjacentFetches
+          },
+
+          exactEventSummaryReconciliation: {
+            candidates:
+              leagueStats.exactSummaryCandidates,
+
+            sameDayMatches:
+              leagueStats
+                .exactSummarySameDayMatches,
+
+            wrongDayMatches:
+              leagueStats
+                .exactSummaryWrongDayMatches,
+
+            wrongDayRemovedRows:
+              leagueStats
+                .exactSummaryWrongDayRemovedRows,
+
+            fetches:
+              leagueStats
+                .exactSummaryFetches,
+
+            policy: {
+              exactProviderIdOnly:
+                true,
+              authoritativeEventDayOnly:
+                true,
+              crossDayStatusPromotion:
+                false,
+              heuristicFinalPromotion:
+                false
+            }
           },
 
           mergedAt: new Date().toISOString(),
