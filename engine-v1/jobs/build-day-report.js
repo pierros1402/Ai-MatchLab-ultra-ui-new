@@ -255,7 +255,10 @@ export function buildDayReport(dayKey, options = {}) {
   const planBContract = planB?.sourceContract || planBAudit?.sourceContract || null;
   const planBMembership = planBAudit?.membership || null;
   const planBContractOk = Boolean(
-    planBContract?.fixtureUniverse === "canonical_fixtures" &&
+    (
+      planBContract?.fixtureUniverse === "canonical_fixtures" ||
+      planBContract?.fixtureUniverse?.source === "canonical_fixtures"
+    ) &&
     planBContract?.canonicalFixtureUniverseRequired === true &&
     planBContract?.exactIdentityJoinOnly === true &&
     planBContract?.oddsMemoryCanCreateFixture === false

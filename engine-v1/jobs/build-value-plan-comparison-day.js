@@ -924,7 +924,10 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
   );
   const planBContract = planBPayload?.sourceContract;
   const planBContractOk =
-    planBContract?.fixtureUniverse === "canonical_fixtures" &&
+    (
+      planBContract?.fixtureUniverse === "canonical_fixtures" ||
+      planBContract?.fixtureUniverse?.source === "canonical_fixtures"
+    ) &&
     planBContract?.canonicalFixtureUniverseRequired === true &&
     planBContract?.exactIdentityJoinOnly === true &&
     planBContract?.oddsMemoryCanCreateFixture === false;

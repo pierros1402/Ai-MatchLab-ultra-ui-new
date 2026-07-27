@@ -75,7 +75,10 @@ export function checkValueArtifactGate(dayKey) {
   if (planB && Number(planB?.count || 0) > 0) {
     const sourceContract = planB?.sourceContract || planBAudit?.sourceContract || null;
     const contractOk = Boolean(
-      sourceContract?.fixtureUniverse === "canonical_fixtures" &&
+      (
+        sourceContract?.fixtureUniverse === "canonical_fixtures" ||
+        sourceContract?.fixtureUniverse?.source === "canonical_fixtures"
+      ) &&
       sourceContract?.canonicalFixtureUniverseRequired === true &&
       sourceContract?.exactIdentityJoinOnly === true &&
       sourceContract?.oddsMemoryCanCreateFixture === false
