@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-07-27",
-  "generatedAt": "2026-07-27T16:04:43.840Z",
+  "generatedAt": "2026-07-27T17:58:09.484Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-07-27/fixtures.json",
     "finalResultsDir": "data/final-results/2026-07-27",
-    "verifiedFinalResults": 27,
+    "verifiedFinalResults": 38,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-07-27",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -84,12 +84,12 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 1,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
-        "unresolved": 2,
+        "settled": 2,
+        "wins": 1,
+        "losses": 1,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
+        "hitRate": 0.5,
         "oddsAvailable": 0,
         "averageOdds": null,
         "totalStake": null,
@@ -104,7 +104,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_viimsijk_20260727",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-07-27T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Viimsi JK",
@@ -118,11 +118,39 @@
           "aiFairOdds": 1.29,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-07-27T17:58:07.353Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dCYz74xH",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Viimsi JK",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-07-27T16:00:00.000Z",
+                "scoreKey": "0-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -130,7 +158,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_viimsijk_20260727",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-07-27T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Viimsi JK",
@@ -144,20 +172,48 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-07-27T17:58:07.353Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dCYz74xH",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Viimsi JK",
+                "scoreHome": 0,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-07-27T16:00:00.000Z",
+                "scoreKey": "0-3"
+              }
+            ]
+          }
         }
       ]
     }
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": 2,
-    "settledDeltaPlanBMinusPlanA": 0,
-    "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": 0,
+    "settledDeltaPlanBMinusPlanA": 2,
+    "winsDeltaPlanBMinusPlanA": 1,
+    "lossesDeltaPlanBMinusPlanA": 1,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
   }
