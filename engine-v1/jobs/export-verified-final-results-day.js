@@ -257,7 +257,24 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
     if (id) fixturesById.set(id, fixture);
   }
 
-  const rawTargets = allFixtures ? fixtures : valuePicks;
+  const allFixtureRows =
+    allFixtures && fixtures.length === 0
+      ? canonicalFixtures
+      : fixtures;
+
+  const rawTargets =
+    allFixtures
+      ? allFixtureRows
+      : valuePicks;
+
+  const targetSource =
+    allFixtures
+      ? (
+          fixtures.length > 0
+            ? "deploy_snapshot_fixtures"
+            : "canonical_fixtures_fallback"
+        )
+      : "deploy_snapshot_value_picks";
 
   const targetsById = new Map();
 
@@ -272,28 +289,96 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
       canonicalByKey.get(id) ||
       null;
 
+    const canonicalMatchId =
+      clean(
+        canonicalFixture?.canonicalId
+      );
+
+    const targetMatchId =
+      canonicalMatchId || id;
+
+    const providerMatchId =
+      clean(
+        canonicalFixture?.providerMatchId ||
+        canonicalFixture?.sourceMatchId ||
+        canonicalFixture?.sourceId ||
+        (
+          id !== targetMatchId
+            ? id
+            : ""
+        )
+      );
+
     const target = {
-      matchId: id,
-      leagueSlug: leagueSlug(fixture) || leagueSlug(row),
-      leagueName: clean(fixture?.leagueName || fixture?.competitionName || row?.leagueName || row?.competitionName),
-      country: clean(fixture?.country || row?.country),
-      homeTeam: homeName(fixture) || homeName(row),
-      awayTeam: awayName(fixture) || awayName(row),
-      kickoffUtc: clean(fixture?.kickoffUtc || row?.kickoffUtc),
-      source: allFixtures ? "deploy_snapshot_fixtures" : "deploy_snapshot_value_picks",
+      matchId: targetMatchId,
+      canonicalId:
+        canonicalMatchId ||
+        targetMatchId,
+      providerMatchId,
+      leagueSlug:
+        leagueSlug(canonicalFixture) ||
+        leagueSlug(fixture) ||
+        leagueSlug(row),
+      leagueName:
+        clean(
+          canonicalFixture?.leagueName ||
+          canonicalFixture?.competitionName ||
+          fixture?.leagueName ||
+          fixture?.competitionName ||
+          row?.leagueName ||
+          row?.competitionName
+        ),
+      country:
+        clean(
+          canonicalFixture?.country ||
+          fixture?.country ||
+          row?.country
+        ),
+      homeTeam:
+        homeName(canonicalFixture) ||
+        homeName(fixture) ||
+        homeName(row),
+      awayTeam:
+        awayName(canonicalFixture) ||
+        awayName(fixture) ||
+        awayName(row),
+      kickoffUtc:
+        clean(
+          canonicalFixture?.kickoffUtc ||
+          fixture?.kickoffUtc ||
+          row?.kickoffUtc
+        ),
+      source: targetSource,
       canonicalFixture
     };
 
-    if (!target.homeTeam || !target.awayTeam) continue;
-    targetsById.set(id, target);
+    if (
+      !target.matchId ||
+      !target.homeTeam ||
+      !target.awayTeam
+    ) {
+      continue;
+    }
+
+    targetsById.set(
+      target.matchId,
+      target
+    );
   }
 
   return {
+    allFixtures,
+    targetSource,
     fixturesPath,
     valuePath,
     fixtureRows: fixtures.length,
     valueRows: valuePicks.length,
     canonicalRows: canonicalFixtures.length,
+    targetRowsFromCanonicalFallback:
+      allFixtures &&
+      fixtures.length === 0
+        ? rawTargets.length
+        : 0,
     targets: [...targetsById.values()]
   };
 }
@@ -1935,6 +2020,7 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     generatedAt: new Date().toISOString(),
     mode: targetSource.allFixtures ? "all_fixtures" : "value_picks",
     inputs: {
+      targetSource: targetSource.targetSource,
       fixturesPath: targetSource.fixturesPath,
       valuePath: targetSource.valuePath,
       offsets: options.offsets || [0]
@@ -1944,6 +2030,8 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
       valueRows: targetSource.valueRows,
       canonicalRows: targetSource.canonicalRows,
       targetRows: targetSource.targets.length,
+      targetRowsFromCanonicalFallback:
+        targetSource.targetRowsFromCanonicalFallback,
       flashscoreRows: sourceRows.length,
       flashscoreRowsWithScore: sourceRows.filter(isScored).length,
       wouldWrite: wouldWrite.length,

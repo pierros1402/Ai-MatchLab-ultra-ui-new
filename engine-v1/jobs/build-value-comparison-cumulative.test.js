@@ -90,3 +90,181 @@ test("cumulative can still require clean integrity explicitly", () => {
   assert.equal(result.payload.dayCount, 0);
   assert.equal(result.payload.daysExcluded[0].reason, "build_report_missing");
 });
+
+test("cumulative explicitly excludes an unrecoverable Plan A observation gap", () => {
+  const dir = tempDir();
+
+  writeComparison(
+    dir,
+    "2026-07-25",
+    summary({
+      picks: 2,
+      wins: 1,
+      losses: 1
+    }),
+    summary({
+      picks: 3,
+      wins: 2,
+      losses: 1
+    })
+  );
+
+  fs.writeFileSync(
+    path.join(
+      dir,
+      "2026-07-26.json"
+    ),
+    JSON.stringify({
+      ok: true,
+      schema:
+        "ai-matchlab.value-plan-comparison.v1",
+      date:
+        "2026-07-26",
+      comparisonEligible:
+        false,
+
+      planAAvailability: {
+        status:
+          "unrecoverable",
+
+        reason:
+          "historical_plan_a_artifact_never_persisted",
+
+        historicalArtifactRecovered:
+          false,
+
+        retrospectivePlanASynthesisAllowed:
+          false
+      },
+
+      sourceContract: {
+        planA:
+          "unavailable_historical_observation",
+
+        planAImmutable:
+          false,
+
+        planAAvailability:
+          "unrecoverable"
+      },
+
+      plans: {
+        A:
+          null,
+
+        B: {
+          id:
+            "plan-b",
+
+          label:
+            "Plan B - retrospective strict value-policy-v2.3 observation",
+
+          count:
+            18,
+
+          summary:
+            summary({
+              picks: 18,
+              wins: 9,
+              losses: 7,
+              unresolved: 2
+            }),
+
+          picks:
+            []
+        }
+      },
+
+      comparison: {
+        pickDeltaPlanBMinusPlanA:
+          null
+      }
+    }),
+    "utf8"
+  );
+
+  const result =
+    buildValueComparisonCumulative({
+      dir,
+
+      output:
+        path.join(
+          dir,
+          "cumulative.json"
+        ),
+
+      write:
+        false,
+
+      requireIntegrityClean:
+        false,
+
+      requireImmutablePlanA:
+        false
+    });
+
+  assert.deepEqual(
+    result.payload.daysIncluded,
+    [
+      "2026-07-25"
+    ]
+  );
+
+  assert.equal(
+    result.payload.dayCount,
+    1
+  );
+
+  assert.equal(
+    result.payload.excludedDayCount,
+    1
+  );
+
+  assert.equal(
+    result.payload.daysExcluded[0].dayKey,
+    "2026-07-26"
+  );
+
+  assert.equal(
+    result.payload.daysExcluded[0].reason,
+    "historical_plan_a_artifact_never_persisted"
+  );
+
+  assert.equal(
+    result.payload.daysExcluded[0]
+      .details.comparisonEligible,
+    false
+  );
+
+  assert.equal(
+    result.payload.daysExcluded[0]
+      .details.planAAvailability.status,
+    "unrecoverable"
+  );
+
+  assert.equal(
+    result.payload.daysExcluded[0]
+      .details.planBPickCount,
+    18
+  );
+
+  assert.equal(
+    result.payload.plans.A.totals.picks,
+    2
+  );
+
+  assert.equal(
+    result.payload.plans.B.totals.picks,
+    3
+  );
+
+  assert.equal(
+    result.payload.plans.A.totals.wins,
+    1
+  );
+
+  assert.equal(
+    result.payload.plans.B.totals.wins,
+    2
+  );
+});

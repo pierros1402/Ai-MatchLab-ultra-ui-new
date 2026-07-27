@@ -164,6 +164,34 @@ export function buildValueComparisonCumulative(options = {}) {
 
   for (const day of days) {
     const payload = readJsonSafe(path.join(dir, `${day}.json`), null);
+
+    if (
+      payload?.comparisonEligible === false
+    ) {
+      daysExcluded.push({
+        dayKey: day,
+        reason:
+          payload?.planAAvailability?.reason ||
+          "comparison_ineligible",
+        details: {
+          comparisonEligible: false,
+          planAAvailability:
+            payload?.planAAvailability ||
+            null,
+          planBPickCount:
+            Number(
+              payload?.plans?.B
+                ?.summary?.picks ||
+              payload?.plans?.B
+                ?.count ||
+              0
+            )
+        }
+      });
+
+      continue;
+    }
+
     const A = payload?.plans?.A?.summary;
     const B = payload?.plans?.B?.summary;
     if (!A || !B) {

@@ -1,12 +1,12 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-07-25T01:23:23.238Z",
+  "generatedAt": "2026-07-27T14:29:29.948Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
   "trialStartDay": "2026-07-05",
-  "dayCount": 21,
+  "dayCount": 22,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-07-25",
+  "lastDay": "2026-07-27",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -30,10 +30,26 @@
     "2026-07-22",
     "2026-07-23",
     "2026-07-24",
-    "2026-07-25"
+    "2026-07-25",
+    "2026-07-27"
   ],
-  "daysExcluded": [],
-  "excludedDayCount": 0,
+  "daysExcluded": [
+    {
+      "dayKey": "2026-07-26",
+      "reason": "historical_plan_a_artifact_never_persisted",
+      "details": {
+        "comparisonEligible": false,
+        "planAAvailability": {
+          "status": "unrecoverable",
+          "reason": "historical_plan_a_artifact_never_persisted",
+          "historicalArtifactRecovered": false,
+          "retrospectivePlanASynthesisAllowed": false
+        },
+        "planBPickCount": 18
+      }
+    }
+  ],
+  "excludedDayCount": 1,
   "integrityDiagnostics": [
     {
       "dayKey": "2026-07-05",
@@ -312,45 +328,45 @@
       "totals": {
         "picks": 35,
         "uniqueMatches": 34,
-        "settled": 23,
-        "wins": 16,
-        "losses": 7,
-        "unresolved": 12,
+        "settled": 34,
+        "wins": 23,
+        "losses": 11,
+        "unresolved": 1,
         "unsupported": 0,
-        "oddsAvailable": 5,
-        "totalStake": 5,
-        "totalReturn": 2.9000000000000004,
-        "profit": -2.0999999999999996,
-        "hitRate": 0.6957,
-        "roi": -0.42
+        "oddsAvailable": 13,
+        "totalStake": 13,
+        "totalReturn": 11.81,
+        "profit": -1.1899999999999995,
+        "hitRate": 0.6765,
+        "roi": -0.0915
       }
     },
     "B": {
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 59,
-        "uniqueMatches": 33,
-        "settled": 53,
-        "wins": 37,
-        "losses": 16,
-        "unresolved": 6,
+        "picks": 61,
+        "uniqueMatches": 34,
+        "settled": 59,
+        "wins": 40,
+        "losses": 19,
+        "unresolved": 2,
         "unsupported": 0,
-        "oddsAvailable": 19,
-        "totalStake": 19,
-        "totalReturn": 26.410000000000004,
-        "profit": 7.41,
-        "hitRate": 0.6981,
-        "roi": 0.39
+        "oddsAvailable": 22,
+        "totalStake": 22,
+        "totalReturn": 29.770000000000003,
+        "profit": 7.7700000000000005,
+        "hitRate": 0.678,
+        "roi": 0.3532
       }
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 24,
-    "settledDeltaPlanBMinusPlanA": 30,
-    "winsDeltaPlanBMinusPlanA": 21,
-    "lossesDeltaPlanBMinusPlanA": 9,
-    "hitRateDeltaPlanBMinusPlanA": 0.0024,
-    "roiDeltaPlanBMinusPlanA": 0.81
+    "picksDeltaPlanBMinusPlanA": 26,
+    "settledDeltaPlanBMinusPlanA": 25,
+    "winsDeltaPlanBMinusPlanA": 17,
+    "lossesDeltaPlanBMinusPlanA": 8,
+    "hitRateDeltaPlanBMinusPlanA": 0.0015,
+    "roiDeltaPlanBMinusPlanA": 0.4447
   }
 }

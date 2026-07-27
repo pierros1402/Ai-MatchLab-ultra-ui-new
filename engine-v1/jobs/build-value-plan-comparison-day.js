@@ -703,6 +703,68 @@ export function loadFinalResults(
   };
 }
 
+export function resolveComparisonFinalStatus(finalResult) {
+  return (
+    clean(
+      finalResult?.finalTruthVerdict ||
+      finalResult?.verdict ||
+      finalResult?.settlement?.state ||
+      finalResult?.verification?.state
+    ) || null
+  );
+}
+
+export function resolveComparisonFinalStatusType(finalResult) {
+  const sources =
+    Array.isArray(finalResult?.sources)
+      ? finalResult.sources
+      : [];
+
+  for (const source of sources) {
+    const statusType =
+      clean(source?.statusType);
+
+    if (statusType) {
+      return statusType;
+    }
+  }
+
+  return null;
+}
+
+export function buildComparisonFinalResultProvenance(finalResult) {
+  if (!finalResult) {
+    return null;
+  }
+
+  return {
+    verifiedFinalTruth:
+      finalResult?.verifiedFinalTruth === true,
+    verdict:
+      resolveComparisonFinalStatus(finalResult),
+    source:
+      clean(finalResult?.source) || null,
+    method:
+      clean(finalResult?.verification?.method) || null,
+    authority:
+      clean(finalResult?.verification?.authority) || null,
+    sourceCount:
+      Number.isFinite(finalResult?.sourceCount)
+        ? finalResult.sourceCount
+        : null,
+    independentSourceCount:
+      Number.isFinite(finalResult?.independentSourceCount)
+        ? finalResult.independentSourceCount
+        : null,
+    generatedAt:
+      clean(finalResult?.generatedAt) || null,
+    sources:
+      Array.isArray(finalResult?.sources)
+        ? finalResult.sources
+        : []
+  };
+}
+
 export function resolveComparisonKickoff(
   row,
   fixture,
@@ -729,6 +791,19 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) 
   const id = rowId(row);
   const verifiedScore = resolveVerifiedFinalScore(finalResult);
   const win = finalResult ? evaluatePickResult(row, finalResult) : null;
+  const canonicalMatchId =
+    clean(
+      finalResult?.matchId ||
+      fixture?.canonicalId ||
+      row?.canonicalId ||
+      id
+    ) || id;
+  const finalStatus =
+    resolveComparisonFinalStatus(finalResult);
+  const finalStatusType =
+    resolveComparisonFinalStatusType(finalResult);
+  const finalResultProvenance =
+    buildComparisonFinalResultProvenance(finalResult);
 
   let settlement = "UNRESOLVED";
   if (finalResult && win === true) settlement = "WIN";
@@ -752,6 +827,7 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) 
   return {
     planId,
     matchId: id,
+    canonicalMatchId,
     country: clean(row?.country || fixture?.country || finalResult?.country || cat?.country),
     leagueSlug,
     leagueName: clean(row?.leagueName || row?.competitionName || fixture?.leagueName || fixture?.competitionName || finalResult?.leagueName || finalResult?.competitionName || cat?.name),
@@ -773,8 +849,11 @@ function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) 
     aiFairOdds: mkt.odds,
     oddsDecimal: odds,
     oddsUse: odds ? "display_settlement_only" : null,
+    finalStatus,
+    finalStatusType,
     finalScore: verifiedScore,
-    result: settlement
+    result: settlement,
+    finalResultProvenance
   };
 }
 
@@ -836,13 +915,102 @@ function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById
   };
 }
 
+export function buildPlanAUnavailableComparisonPayload({
+  dayKey,
+  reason,
+  planAPath,
+  planBPath,
+  outputPath,
+  planB,
+  fixturesPath,
+  finalResultsDir,
+  verifiedFinalResults,
+  canonicalFinalVetoDir,
+  canonicalContradictionsRejected = [],
+  canonicalIdentityAmbiguities = [],
+  fixtureIdentityAmbiguities = [],
+  finalIdentityAmbiguities = [],
+  planBMembership = null
+}) {
+  const unavailableReason =
+    clean(reason);
+
+  if (!unavailableReason) {
+    throw new Error(
+      "plan_a_unavailable_reason_required"
+    );
+  }
+
+  return {
+    ok: true,
+    schema: "ai-matchlab.value-plan-comparison.v1",
+    date: dayKey,
+    generatedAt:
+      new Date().toISOString(),
+    comparisonEligible: false,
+
+    planAAvailability: {
+      status: "unrecoverable",
+      reason: unavailableReason,
+      historicalArtifactRecovered: false,
+      retrospectivePlanASynthesisAllowed: false
+    },
+
+    sourceContract: {
+      planA: "unavailable_historical_observation",
+      planAObservationStartDate:
+        PLAN_A_OBSERVATION_START_DAY,
+      planAImmutable: false,
+      planAAvailability: "unrecoverable",
+      planB: "retrospective_strict_value_policy_v2.3_observation_artifact",
+      planBCanonicalFixtureMembershipRequired: true,
+      planBOddsMayCreateFixtures: false,
+      finalTruth: "verified_final_results",
+      deploySnapshotUsedAsFinalTruth: false,
+      realBookmakerOddsUsedForValue: false,
+      oddsUse: "display_settlement_only_when_present"
+    },
+
+    inputs: {
+      fixturesPath,
+      finalResultsDir,
+      verifiedFinalResults,
+      canonicalFinalVetoDir,
+      canonicalContradictionsRejected,
+      canonicalIdentityAmbiguities,
+      fixtureIdentityAmbiguities,
+      finalIdentityAmbiguities,
+      planAPath,
+      planBPath,
+      planBMembership,
+      planAFreeze: null,
+      outputPath
+    },
+
+    plans: {
+      A: null,
+      B: planB
+    },
+
+    comparison: {
+      pickDeltaPlanBMinusPlanA: null,
+      settledDeltaPlanBMinusPlanA: null,
+      winsDeltaPlanBMinusPlanA: null,
+      lossesDeltaPlanBMinusPlanA: null,
+      hitRateDeltaPlanBMinusPlanA: null,
+      roiDeltaPlanBMinusPlanA: null
+    }
+  };
+}
+
 function parseArgs(argv) {
   const out = {
     date: "",
     write: false,
     planA: "",
     planB: "",
-    output: ""
+    output: "",
+    planAUnavailableReason: ""
   };
 
   for (const arg of argv) {
@@ -852,6 +1020,12 @@ function parseArgs(argv) {
     else if (arg.startsWith("--plan-a=")) out.planA = arg.slice("--plan-a=".length);
     else if (arg.startsWith("--plan-b=")) out.planB = arg.slice("--plan-b=".length);
     else if (arg.startsWith("--output=")) out.output = arg.slice("--output=".length);
+    else if (arg.startsWith("--plan-a-unavailable=")) {
+      out.planAUnavailableReason =
+        arg.slice(
+          "--plan-a-unavailable=".length
+        );
+    }
   }
 
   return out;
@@ -887,11 +1061,22 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
   );
   const planBPath = path.resolve(options.planB || dataPath("value-plans", dayKey, "plan-b.json"));
   const outputPath = path.resolve(options.output || dataPath("value-comparison", `${dayKey}.json`));
+  const planAUnavailableReason =
+    clean(
+      options.planAUnavailableReason
+    );
+
+  const planAUnavailableRequested =
+    observationPeriod &&
+    Boolean(planAUnavailableReason);
 
   let planAPayload = null;
   if (observationPeriod) {
     const observation = readPlanAObservationDay(dayKey);
-    if (!observation.ok) {
+    if (
+      !observation.ok &&
+      !planAUnavailableRequested
+    ) {
       return {
         ok: false,
         reason: "invalid_immutable_plan_a_observation",
@@ -900,14 +1085,21 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
         trialStartDate: PLAN_A_OBSERVATION_START_DAY
       };
     }
-    planAPayload = observation.payload;
+
+    if (observation.ok) {
+      planAPayload =
+        observation.payload;
+    }
   } else {
     planAPayload = readJsonSafe(planAPath, null);
   }
 
   const planBPayload = readJsonSafe(planBPath, null);
 
-  if (!planAPayload) {
+  if (
+    !planAPayload &&
+    !planAUnavailableRequested
+  ) {
     return {
       ok: false,
       reason: observationPeriod ? "missing_immutable_plan_a_observation" : "missing_plan_a",
@@ -999,6 +1191,82 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
   const oddsById = loadOddsMap(dayKey);
   const multiOddsById = loadMultiOddsMap(dayKey);
 
+  const planB = buildPlan({
+    planId: "plan-b",
+    label: planAUnavailableRequested
+      ? "Plan B - retrospective strict value-policy-v2.3 observation"
+      : "Plan B - strict value-policy-v2.3 observation",
+    sourcePath: path.relative(ROOT, planBPath).replaceAll("\\", "/"),
+    payload: planBPayload,
+    fixturesById: fixtures.byId,
+    finalById: finalResults.byId,
+    oddsById,
+    multiOddsById
+  });
+
+  if (planAUnavailableRequested) {
+    const payload =
+      buildPlanAUnavailableComparisonPayload({
+        dayKey,
+        reason:
+          planAUnavailableReason,
+        planAPath:
+          path.relative(
+            ROOT,
+            planAPath
+          ).replaceAll("\\", "/"),
+        planBPath:
+          path.relative(
+            ROOT,
+            planBPath
+          ).replaceAll("\\", "/"),
+        outputPath:
+          path.relative(
+            ROOT,
+            outputPath
+          ).replaceAll("\\", "/"),
+        planB,
+        fixturesPath:
+          path.relative(
+            ROOT,
+            fixtures.file
+          ).replaceAll("\\", "/"),
+        finalResultsDir:
+          path.relative(
+            ROOT,
+            finalResults.dir
+          ).replaceAll("\\", "/"),
+        verifiedFinalResults:
+          finalResults.rows.length,
+        canonicalFinalVetoDir:
+          path.relative(
+            ROOT,
+            finalResults.canonicalDir
+          ).replaceAll("\\", "/"),
+        canonicalContradictionsRejected:
+          finalResults
+            .canonicalContradictions,
+        canonicalIdentityAmbiguities:
+          finalResults
+            .canonicalIdentityAmbiguities,
+        fixtureIdentityAmbiguities:
+          fixtures.ambiguousIds,
+        finalIdentityAmbiguities:
+          finalResults.ambiguousIds,
+        planBMembership:
+          planBMembership.summary
+      });
+
+    if (options.write === true) {
+      writeJsonPretty(
+        outputPath,
+        payload
+      );
+    }
+
+    return payload;
+  }
+
   const planA = buildPlan({
     planId: "plan-a",
     label: observationPeriod
@@ -1006,17 +1274,6 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       : "Plan A - current UI value",
     sourcePath: path.relative(ROOT, planAPath).replaceAll("\\", "/"),
     payload: planAPayload,
-    fixturesById: fixtures.byId,
-    finalById: finalResults.byId,
-    oddsById,
-    multiOddsById
-  });
-
-  const planB = buildPlan({
-    planId: "plan-b",
-    label: "Plan B - strict value-policy-v2.3 observation",
-    sourcePath: path.relative(ROOT, planBPath).replaceAll("\\", "/"),
-    payload: planBPayload,
     fixturesById: fixtures.byId,
     finalById: finalResults.byId,
     oddsById,
@@ -1094,7 +1351,7 @@ if (isCli) {
     console.error(JSON.stringify({
       ok: false,
       reason: "missing_date",
-      usage: "node engine-v1/jobs/build-value-plan-comparison-day.js --date=YYYY-MM-DD [--write]"
+      usage: "node engine-v1/jobs/build-value-plan-comparison-day.js --date=YYYY-MM-DD [--write] [--plan-a-unavailable=REASON]"
     }, null, 2));
     process.exitCode = 2;
   } else {
