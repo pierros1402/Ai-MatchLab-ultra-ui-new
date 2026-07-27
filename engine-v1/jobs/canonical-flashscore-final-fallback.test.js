@@ -49,9 +49,7 @@ function loadCanonicalRows() {
   const directory =
     path.join(
       ROOT,
-      "data",
-      "canonical-fixtures",
-      DAY
+      "engine-v1", "jobs", "test-fixtures", "canonical-fixtures", DAY
     );
 
   const rows = [];

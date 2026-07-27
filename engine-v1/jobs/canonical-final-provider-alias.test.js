@@ -349,9 +349,7 @@ test(
         fs.readFileSync(
           path.join(
             ROOT,
-            "data",
-            "canonical-fixtures",
-            "2026-07-23",
+            "engine-v1", "jobs", "test-fixtures", "canonical-fixtures", "2026-07-23",
             "usa.1.json"
           ),
           "utf8"
