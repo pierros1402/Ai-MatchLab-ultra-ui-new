@@ -2304,11 +2304,24 @@ function readValueComparisonArtifact(date) {
     };
   }
 
+  const ordinaryComparisonValid = Boolean(
+    payload?.plans?.A &&
+    payload?.plans?.B
+  );
+
+  const unrecoverablePlanAGapValid = Boolean(
+    payload?.comparisonEligible === false &&
+    payload?.planAAvailability?.status === "unrecoverable" &&
+    typeof payload?.planAAvailability?.reason === "string" &&
+    payload.planAAvailability.reason.trim().length > 0 &&
+    payload?.plans?.A === null &&
+    payload?.plans?.B
+  );
+
   if (
     payload?.ok !== true ||
     payload?.date !== date ||
-    !payload?.plans?.A ||
-    !payload?.plans?.B
+    (!ordinaryComparisonValid && !unrecoverablePlanAGapValid)
   ) {
     return { ok: false, reason: "value_comparison_payload_invalid", file };
   }
