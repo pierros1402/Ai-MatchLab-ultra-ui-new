@@ -1,26 +1,61 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
-  "dayKey": "2026-07-25",
-  "generatedAt": "2026-07-25T01:23:27.685Z",
+  "dayKey": "2026-07-27",
+  "generatedAt": "2026-07-27T04:53:02.123Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
-    "warning": 2,
-    "info": 2
+    "warning": 3,
+    "info": 4
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 4,
-  "actionableIssueCount": 2,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
+  "activeIssueCount": 7,
+  "actionableIssueCount": 3,
+  "newIssueCount": 4,
+  "newActionableIssueCount": 2,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 4,
+  "persistentIssueCount": 3,
   "activeIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-07-27.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "coverage_readiness",
+        "artifact": "coverage-readiness/2026-07-27.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_coverage_readiness",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:uru.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:uru.1"
+      }
+    },
     {
       "severity": "warning",
       "source": "build-report",
@@ -28,15 +63,14 @@
       "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
         "slugs": [
-          "aff.championship",
+          "caf.w.nations",
           "par.1",
           "crc.1",
           "gua.1",
           "slv.1",
-          "uefa.wchampions_qual",
-          "mex.campeon"
+          "aff.championship"
         ],
-        "raw": "acquisition_skipped_slugs:aff.championship,par.1,crc.1,gua.1,slv.1,uefa.wchampions_qual,mex.campeon",
+        "raw": "acquisition_skipped_slugs:caf.w.nations,par.1,crc.1,gua.1,slv.1,aff.championship",
         "contextOnly": false
       }
     },
@@ -57,9 +91,9 @@
       "type": "plan_b_unresolved_settlement",
       "message": "Plan B observation picks are still unresolved.",
       "details": {
-        "picks": 6,
+        "picks": 2,
         "settled": 0,
-        "unresolved": 6
+        "unresolved": 2
       }
     },
     {
@@ -69,41 +103,41 @@
       "message": "Value Plan A/B comparison artifact is available.",
       "details": {
         "planA": {
-          "count": 11,
+          "count": 0,
           "summary": {
-            "picks": 11,
-            "uniqueMatches": 11,
-            "settled": 11,
-            "wins": 7,
-            "losses": 4,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.6364,
-            "oddsAvailable": 8,
-            "averageOdds": 1.7688,
-            "totalStake": 8,
-            "totalReturn": 8.91,
-            "profit": 0.91,
-            "roi": 0.1138
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planB": {
-          "count": 6,
+          "count": 2,
           "summary": {
-            "picks": 6,
-            "uniqueMatches": 3,
-            "settled": 4,
-            "wins": 1,
-            "losses": 3,
+            "picks": 2,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
             "unresolved": 2,
             "unsupported": 0,
-            "hitRate": 0.25,
-            "oddsAvailable": 1,
-            "averageOdds": 2.41,
-            "totalStake": 1,
-            "totalReturn": 0,
-            "profit": -1,
-            "roi": -1
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         }
       }
@@ -113,19 +147,27 @@
     {
       "severity": "warning",
       "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:uru.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:uru.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
       "type": "acquisition_skipped_slugs",
       "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
         "slugs": [
-          "aff.championship",
+          "caf.w.nations",
           "par.1",
           "crc.1",
           "gua.1",
           "slv.1",
-          "uefa.wchampions_qual",
-          "mex.campeon"
+          "aff.championship"
         ],
-        "raw": "acquisition_skipped_slugs:aff.championship,par.1,crc.1,gua.1,slv.1,uefa.wchampions_qual,mex.campeon",
+        "raw": "acquisition_skipped_slugs:caf.w.nations,par.1,crc.1,gua.1,slv.1,aff.championship",
         "contextOnly": false
       }
     },
@@ -141,9 +183,7 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -151,14 +191,83 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-25.json",
+        "artifact": "expected-matches/2026-07-27.json",
         "at": null,
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
       }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "coverage_readiness",
+        "artifact": "coverage-readiness/2026-07-27.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_coverage_readiness",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:uru.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:uru.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "caf.w.nations",
+          "par.1",
+          "crc.1",
+          "gua.1",
+          "slv.1",
+          "aff.championship"
+        ],
+        "raw": "acquisition_skipped_slugs:caf.w.nations,par.1,crc.1,gua.1,slv.1,aff.championship",
+        "contextOnly": false
+      }
     }
   ],
-  "persistentIssues": [
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:uru.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:uru.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "caf.w.nations",
+          "par.1",
+          "crc.1",
+          "gua.1",
+          "slv.1",
+          "aff.championship"
+        ],
+        "raw": "acquisition_skipped_slugs:caf.w.nations,par.1,crc.1,gua.1,slv.1,aff.championship",
+        "contextOnly": false
+      }
+    }
+  ],
+  "resolvedIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -177,7 +286,9 @@
         "raw": "acquisition_skipped_slugs:aff.championship,par.1,crc.1,gua.1,slv.1,uefa.wchampions_qual,mex.campeon",
         "contextOnly": false
       }
-    },
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -195,9 +306,9 @@
       "type": "plan_b_unresolved_settlement",
       "message": "Plan B observation picks are still unresolved.",
       "details": {
-        "picks": 6,
+        "picks": 2,
         "settled": 0,
-        "unresolved": 6
+        "unresolved": 2
       }
     },
     {
@@ -207,14 +318,14 @@
       "message": "Value Plan A/B comparison artifact is available.",
       "details": {
         "planA": {
-          "count": 11,
+          "count": 0,
           "summary": {
-            "picks": 11,
-            "uniqueMatches": 11,
+            "picks": 0,
+            "uniqueMatches": 0,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 11,
+            "unresolved": 0,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -226,14 +337,14 @@
           }
         },
         "planB": {
-          "count": 6,
+          "count": 2,
           "summary": {
-            "picks": 6,
-            "uniqueMatches": 3,
+            "picks": 2,
+            "uniqueMatches": 1,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 6,
+            "unresolved": 2,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -247,5 +358,5 @@
       }
     }
   ],
-  "latestForDay": "2026-07-25"
+  "latestForDay": "2026-07-27"
 }
