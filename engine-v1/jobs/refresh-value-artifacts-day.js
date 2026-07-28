@@ -26,6 +26,7 @@ import { athensDayKey } from "../core/daykey.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
+import { buildValueA2B2Day } from "./build-value-a2-b2-day.js";
 import { buildValuePlanComparisonDay } from "./build-value-plan-comparison-day.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
@@ -438,14 +439,40 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
         outputMode: "plan-b-observation"
       });
 
-  const universeParity =
-    planB
+  const adjustedPlans = await buildValueA2B2Day(date);
+  const planA2 = adjustedPlans?.plans?.A2 || null;
+  const planB2 = adjustedPlans?.plans?.B2 || null;
+
+  if (
+    adjustedPlans?.ok !== true ||
+    planA2?.ok !== true ||
+    planB2?.ok !== true
+  ) {
+    return {
+      ok: false,
+      mode: "refresh_value_artifacts_after_canonical_change",
+      date,
+      reason: "adjusted_value_plans_build_failed",
+      adjustedPlans
+    };
+  }
+
+  const universeParity = {
+    A_B: planB
       ? assertValueFixtureUniverseParity(
           planA?.fixtureUniverse,
-          planB?.sourceContract
-            ?.fixtureUniverse
+          planB?.sourceContract?.fixtureUniverse
         )
-      : null;
+      : null,
+    A_A2: assertValueFixtureUniverseParity(
+      planA?.fixtureUniverse,
+      planA2?.fixtureUniverse
+    ),
+    A_B2: assertValueFixtureUniverseParity(
+      planA?.fixtureUniverse,
+      planB2?.sourceContract?.fixtureUniverse
+    )
+  };
 
   const comparison = options.skipComparison === true
     ? null
@@ -463,6 +490,9 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       && invariant?.ok !== false
       && manifestUpdate?.ok !== false
       && planAObservation?.ok !== false
+      && adjustedPlans?.ok === true
+      && planA2?.ok === true
+      && planB2?.ok === true
       && comparison?.ok !== false
       && buildReport?.hardFailures?.length === 0,
     mode: "refresh_value_artifacts_after_canonical_change",
@@ -505,11 +535,24 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
           count: Number(planB?.count || 0)
         }
       : null,
+    planA2: {
+      ok: planA2?.ok === true,
+      source: planA2?.source || null,
+      count: Number(planA2?.count ?? planA2?.picks?.length ?? 0)
+    },
+    planB2: {
+      ok: planB2?.ok === true,
+      source: planB2?.source || null,
+      outputMode: planB2?.outputMode || null,
+      count: Number(planB2?.count ?? planB2?.picks?.length ?? 0)
+    },
     comparison: comparison
       ? {
           ok: comparison?.ok !== false,
           planA: comparison?.plans?.A?.summary || null,
-          planB: comparison?.plans?.B?.summary || null
+          planA2: comparison?.plans?.A2?.summary || null,
+          planB: comparison?.plans?.B?.summary || null,
+          planB2: comparison?.plans?.B2?.summary || null
         }
       : null,
     freshness: {
@@ -539,6 +582,10 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       planAObservationAudit: observationPeriod ? `data/value-plans/${date}/plan-a-audit.json` : null,
       planB: options.skipPlanB === true ? null : `data/value-plans/${date}/plan-b.json`,
       planBAudit: options.skipPlanB === true ? null : `data/value-plans/${date}/plan-b-audit.json`,
+      planA2: `data/value-plans/${date}/plan-a2.json`,
+      planA2Audit: `data/value-plans/${date}/plan-a2-audit.json`,
+      planB2: `data/value-plans/${date}/plan-b2.json`,
+      planB2Audit: `data/value-plans/${date}/plan-b2-audit.json`,
       comparison: options.skipComparison === true ? null : `data/value-comparison/${date}.json`,
       freshness: `data/deploy-snapshots/${date}/freshness-report.json`,
       invariant: `data/deploy-snapshots/${date}/invariant-report.json`,
@@ -552,8 +599,8 @@ function usage() {
     "Usage:",
     "  node engine-v1/jobs/refresh-value-artifacts-day.js --date=YYYY-MM-DD",
     "",
-    "Rebuilds Plan A value/audit, deploy snapshot value/audit, Plan B observation,",
-    "value comparison, freshness, invariant, and build reports after canonical fixtures changed,",
+    "Rebuilds Plan A/A2 value artifacts, Plan B/B2 observations, deploy snapshot value/audit,",
+    "four-plan comparison, freshness, invariant, and build reports after canonical fixtures changed,",
     "without rewriting deploy snapshot fixtures.json."
   ].join("\n");
 }

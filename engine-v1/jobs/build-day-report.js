@@ -287,17 +287,43 @@ export function buildDayReport(dayKey, options = {}) {
 
   // ── Settlement ────────────────────────────────────────────────────────────
   const comparison = readJsonSafe(resolveDataPath("value-comparison", `${dayKey}.json`));
+  const requiredComparisonPlans = ["A", "A2", "B", "B2"];
+  const presentComparisonPlans = requiredComparisonPlans.filter(
+    planKey =>
+      comparison?.plans?.[planKey] &&
+      typeof comparison.plans[planKey] === "object"
+  );
+  const missingComparisonPlans = requiredComparisonPlans.filter(
+    planKey => !presentComparisonPlans.includes(planKey)
+  );
+
   if (comparison?.plans) {
     report.settlement = {
       generatedAt: comparison.generatedAt || null,
+      requiredPlans: requiredComparisonPlans,
+      presentPlans: presentComparisonPlans,
+      missingPlans: missingComparisonPlans,
+      complete: missingComparisonPlans.length === 0,
       planA: planSummary(comparison.plans.A),
-      planB: planSummary(comparison.plans.B)
+      planA2: planSummary(comparison.plans.A2),
+      planB: planSummary(comparison.plans.B),
+      planB2: planSummary(comparison.plans.B2)
     };
   }
 
   // ── Verdict ───────────────────────────────────────────────────────────────
   if (!manifest) report.hardFailures.push("manifest_missing");
   if (!freshness.ok) report.hardFailures.push("snapshot_stale");
+
+  if (!comparison) {
+    report.hardFailures.push("value_plan_comparison_missing");
+  } else if (missingComparisonPlans.length > 0) {
+    report.hardFailures.push(
+      "four_plan_comparison_incomplete:" +
+      missingComparisonPlans.join(",")
+    );
+  }
+
   if (report.invariant && (!report.invariant.ok || report.invariant.blocked > 0)) {
     report.hardFailures.push("invariant_blocked");
   }

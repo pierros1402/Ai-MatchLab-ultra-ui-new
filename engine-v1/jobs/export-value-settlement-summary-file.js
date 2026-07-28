@@ -68,8 +68,18 @@ function validateInputReport(report) {
     errors.push('missing_or_invalid_day_key');
   }
 
-  if (!Array.isArray(report?.settledRows)) {
-    errors.push('missing_settled_rows_array');
+  const hasUnifiedRows = Array.isArray(report?.rows);
+  const hasLegacySettledRows =
+    Array.isArray(report?.settledRows);
+  const hasLegacyUnresolvedRows =
+    Array.isArray(report?.unresolvedRows);
+
+  if (
+    !hasUnifiedRows &&
+    !hasLegacySettledRows &&
+    !hasLegacyUnresolvedRows
+  ) {
+    errors.push('missing_settlement_rows');
   }
 
   if (report?.guarantees?.fixtureWrites !== false) errors.push('input_fixture_writes_not_false');
@@ -80,25 +90,88 @@ function validateInputReport(report) {
 }
 
 function normalizeSettledRows(report) {
-  return (Array.isArray(report?.settledRows) ? report.settledRows : [])
-    .map((row, index) => ({
-      rowIndex: index,
-      matchId: clean(row?.matchId),
-      leagueSlug: clean(row?.leagueSlug),
-      homeTeam: clean(row?.homeTeam),
-      awayTeam: clean(row?.awayTeam),
-      terminalStatus: clean(row?.terminalStatus || row?.finalStatus || row?.status || "FT") || "FT",
-      ftHome: Number.isFinite(Number(row?.ftHome ?? row?.scoreHome)) ? Number(row?.ftHome ?? row?.scoreHome) : null,
-      ftAway: Number.isFinite(Number(row?.ftAway ?? row?.scoreAway)) ? Number(row?.ftAway ?? row?.scoreAway) : null,
-      ftScore: clean(row?.ftScore || row?.scoreKey),
-      scoreKey: clean(row?.scoreKey || row?.ftScore),
-      finalResultProvenance: clean(row?.finalResultProvenance || row?.provenance || row?.finalResultPath),
-      market: clean(row?.market),
-      pick: clean(row?.pick),
-      result: clean(row?.result).toUpperCase(),
-      finalResultPath: clean(row?.finalResultPath)
-    }))
-    .filter(row => row.matchId || row.market || row.pick || row.result);
+  const sourceRows = Array.isArray(report?.rows)
+    ? report.rows
+    : [
+        ...(Array.isArray(report?.settledRows)
+          ? report.settledRows
+          : []),
+        ...(Array.isArray(report?.unresolvedRows)
+          ? report.unresolvedRows
+          : [])
+      ];
+
+  return sourceRows
+    .map((row, index) => {
+      const result =
+        clean(row?.result).toUpperCase() ||
+        (row?.reason ? 'UNRESOLVED' : '');
+
+      return {
+        rowIndex: index,
+        planKey: clean(
+          row?.planKey ||
+          report?.planKey ||
+          'A'
+        ).toUpperCase(),
+        canonicalId: clean(
+          row?.canonicalId ||
+          row?.matchId ||
+          row?.matchKeys?.[0]
+        ),
+        matchId: clean(
+          row?.matchId ||
+          row?.canonicalId ||
+          row?.matchKeys?.[0]
+        ),
+        leagueSlug: clean(row?.leagueSlug),
+        homeTeam: clean(row?.homeTeam),
+        awayTeam: clean(row?.awayTeam),
+        terminalStatus:
+          clean(
+            row?.terminalStatus ||
+            row?.finalStatus ||
+            row?.status
+          ) || null,
+        ftHome: Number.isFinite(
+          Number(row?.ftHome ?? row?.scoreHome)
+        )
+          ? Number(row?.ftHome ?? row?.scoreHome)
+          : null,
+        ftAway: Number.isFinite(
+          Number(row?.ftAway ?? row?.scoreAway)
+        )
+          ? Number(row?.ftAway ?? row?.scoreAway)
+          : null,
+        ftScore: clean(
+          row?.ftScore ||
+          row?.scoreKey
+        ) || null,
+        scoreKey: clean(
+          row?.scoreKey ||
+          row?.ftScore
+        ) || null,
+        finalResultProvenance:
+          clean(
+            row?.finalResultProvenance ||
+            row?.provenance ||
+            row?.finalResultPath
+          ) || null,
+        market: clean(row?.market),
+        pick: clean(row?.pick),
+        result,
+        reason: clean(row?.reason) || null,
+        finalResultPath:
+          clean(row?.finalResultPath) || null
+      };
+    })
+    .filter(
+      row =>
+        row.matchId ||
+        row.market ||
+        row.pick ||
+        row.result
+    );
 }
 
 function buildSummary(report, options = {}) {
@@ -106,16 +179,35 @@ function buildSummary(report, options = {}) {
   const dayKey = clean(report?.dayKey || report?.draftValueData?.settlementDraft?.dayKey);
   const rows = normalizeSettledRows(report);
 
-  const winRows = rows.filter(row => row.result === 'WIN').length;
-  const lossRows = rows.filter(row => row.result === 'LOSS').length;
-  const voidRows = rows.filter(row => row.result === 'VOID').length;
-  const unknownRows = rows.filter(row => !['WIN', 'LOSS', 'VOID'].includes(row.result)).length;
+  const winRows =
+    rows.filter(row => row.result === 'WIN').length;
+  const lossRows =
+    rows.filter(row => row.result === 'LOSS').length;
+  const voidRows =
+    rows.filter(row => row.result === 'VOID').length;
+  const unresolvedRows =
+    rows.filter(row => row.result === 'UNRESOLVED').length;
+  const unknownRows =
+    rows.filter(
+      row =>
+        ![
+          'WIN',
+          'LOSS',
+          'VOID',
+          'UNRESOLVED'
+        ].includes(row.result)
+    ).length;
 
   return {
     ok: errors.length === 0,
     stage: errors.length === 0 ? 'value_settlement_summary_export_ready' : 'value_settlement_summary_export_blocked',
-    schema: 'ai-matchlab.value-settlement-summary.v1',
+    schema: 'ai-matchlab.value-settlement-summary.v2',
     dayKey,
+    planKey: clean(
+      report?.planKey ||
+      rows[0]?.planKey ||
+      'A'
+    ).toUpperCase(),
     generatedAt: new Date().toISOString(),
     input: options.inputPath ? repoRelative(options.inputPath) : null,
     source: {
@@ -127,8 +219,10 @@ function buildSummary(report, options = {}) {
     summary: {
       valuePicks: Number(report?.summary?.valuePicks || 0),
       verifiedFinalResults: Number(report?.summary?.verifiedFinalResults || 0),
-      settledRows: rows.length,
-      unresolvedRows: Number(report?.summary?.unresolvedRows || 0),
+      totalRows: rows.length,
+      settledRows:
+        winRows + lossRows + voidRows,
+      unresolvedRows,
       winRows,
       lossRows,
       voidRows,

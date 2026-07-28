@@ -95,8 +95,14 @@ export function verifyArtifactFreshnessDay(dayKey) {
     staleInputs: [],
     derivedArtifacts: [],
     staleDerivedArtifacts: [],
+    missingRequiredArtifacts: [],
     preservedHistoricalDerivedArtifacts: [],
     skippedInputs: [],
+    fourPlanContract: {
+      requiredPlans: ["A", "A2", "B", "B2"],
+      presentPlans: [],
+      complete: false
+    },
     reasons: []
   };
 
@@ -175,9 +181,87 @@ export function verifyArtifactFreshnessDay(dayKey) {
   if (latestCanonicalInputAt !== null) {
     const snapshotValue = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
     const snapshotAudit = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value-audit.json"));
+    const planA2 = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-a2.json"));
+    const planA2Audit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-a2-audit.json"));
     const planB = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b.json"));
     const planBAudit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"));
+    const planB2 = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b2.json"));
+    const planB2Audit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b2-audit.json"));
     const comparison = readJsonSafe(resolveDataPath("value-comparison", `${dayKey}.json`));
+
+    const requiredArtifacts = [
+      {
+        kind: "plan_a2",
+        artifact: `value-plans/${dayKey}/plan-a2.json`,
+        payload: planA2
+      },
+      {
+        kind: "plan_a2_audit",
+        artifact: `value-plans/${dayKey}/plan-a2-audit.json`,
+        payload: planA2Audit
+      },
+      {
+        kind: "plan_b",
+        artifact: `value-plans/${dayKey}/plan-b.json`,
+        payload: planB
+      },
+      {
+        kind: "plan_b_audit",
+        artifact: `value-plans/${dayKey}/plan-b-audit.json`,
+        payload: planBAudit
+      },
+      {
+        kind: "plan_b2",
+        artifact: `value-plans/${dayKey}/plan-b2.json`,
+        payload: planB2
+      },
+      {
+        kind: "plan_b2_audit",
+        artifact: `value-plans/${dayKey}/plan-b2-audit.json`,
+        payload: planB2Audit
+      },
+      {
+        kind: "value_plan_comparison",
+        artifact: `value-comparison/${dayKey}.json`,
+        payload: comparison
+      }
+    ];
+
+    for (const artifact of requiredArtifacts) {
+      if (!artifact.payload || typeof artifact.payload !== "object") {
+        report.missingRequiredArtifacts.push({
+          kind: artifact.kind,
+          artifact: artifact.artifact,
+          reason: "missing_or_unreadable"
+        });
+      }
+    }
+
+    const requiredPlanKeys = ["A", "A2", "B", "B2"];
+    const presentPlanKeys = requiredPlanKeys.filter(
+      key => comparison?.plans?.[key] && typeof comparison.plans[key] === "object"
+    );
+
+    report.fourPlanContract.presentPlans = presentPlanKeys;
+    report.fourPlanContract.complete =
+      presentPlanKeys.length === requiredPlanKeys.length;
+
+    if (!report.fourPlanContract.complete) {
+      report.missingRequiredArtifacts.push({
+        kind: "four_plan_comparison_contract",
+        artifact: `value-comparison/${dayKey}.json`,
+        reason: "comparison_missing_required_plans",
+        requiredPlans: requiredPlanKeys,
+        presentPlans: presentPlanKeys
+      });
+    }
+
+    if (
+      report.missingRequiredArtifacts.length > 0 &&
+      !report.reasons.includes("four_plan_artifacts_missing_or_invalid")
+    ) {
+      report.reasons.push("four_plan_artifacts_missing_or_invalid");
+    }
     const currentAthensDay = athensDayKey();
     const preserveHistoricalPlanBAudit = shouldPreserveHistoricalPlanBObservation({
       dayKey,
@@ -200,6 +284,32 @@ export function verifyArtifactFreshnessDay(dayKey) {
         staleReason: "snapshot_value_audit_stale_against_canonical"
       },
       {
+        kind: "plan_a2",
+        artifact: `value-plans/${dayKey}/plan-a2.json`,
+        at: maxTime([
+          planA2?.generatedAt,
+          planA2?.updatedAt,
+          planA2?.createdAt
+        ]),
+        staleReason: "plan_a2_stale_against_canonical"
+      },
+      {
+        kind: "plan_a2_audit",
+        artifact: `value-plans/${dayKey}/plan-a2-audit.json`,
+        at: planA2Audit?.generatedAt || null,
+        staleReason: "plan_a2_audit_stale_against_canonical"
+      },
+      {
+        kind: "plan_b",
+        artifact: `value-plans/${dayKey}/plan-b.json`,
+        at: maxTime([
+          planB?.generatedAt,
+          planB?.updatedAt,
+          planB?.createdAt
+        ]),
+        staleReason: "plan_b_stale_against_canonical"
+      },
+      {
         kind: "plan_b_audit",
         artifact: `value-plans/${dayKey}/plan-b-audit.json`,
         at: planBAudit?.generatedAt || null,
@@ -214,6 +324,22 @@ export function verifyArtifactFreshnessDay(dayKey) {
               sourceContract: planBAudit?.sourceContract || null
             }
           : null
+      },
+      {
+        kind: "plan_b2",
+        artifact: `value-plans/${dayKey}/plan-b2.json`,
+        at: maxTime([
+          planB2?.generatedAt,
+          planB2?.updatedAt,
+          planB2?.createdAt
+        ]),
+        staleReason: "plan_b2_stale_against_canonical"
+      },
+      {
+        kind: "plan_b2_audit",
+        artifact: `value-plans/${dayKey}/plan-b2-audit.json`,
+        at: planB2Audit?.generatedAt || null,
+        staleReason: "plan_b2_audit_stale_against_canonical"
       },
       {
         kind: "value_plan_comparison",
@@ -250,7 +376,12 @@ export function verifyArtifactFreshnessDay(dayKey) {
     }
   }
 
-  report.ok = report.staleInputs.length === 0 && report.staleDerivedArtifacts.length === 0;
+  report.ok =
+    report.staleInputs.length === 0 &&
+    report.staleDerivedArtifacts.length === 0 &&
+    report.missingRequiredArtifacts.length === 0 &&
+    report.fourPlanContract.complete === true;
+
   return report;
 }
 

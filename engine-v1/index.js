@@ -1632,21 +1632,66 @@ function buildSystemHealthReport(day) {
   }
 
   if (valueComparison) {
-    const planA = valueComparison.plans?.A;
-    const planB = valueComparison.plans?.B;
+    const requiredPlans = ["A", "A2", "B", "B2"];
+    const presentPlans = requiredPlans.filter(
+      key =>
+        valueComparison.plans?.[key] &&
+        typeof valueComparison.plans[key] === "object"
+    );
+    const missingPlans = requiredPlans.filter(
+      key => !presentPlans.includes(key)
+    );
 
-    if (planA || planB) {
+    if (missingPlans.length > 0) {
       issues.push(systemHealthIssue(
-        "info",
+        "error",
         "value-comparison",
-        "value_plan_comparison_summary",
-        "Value Plan A/B comparison artifact is available.",
+        "four_plan_comparison_incomplete",
+        "Value comparison is missing one or more required plans.",
         {
-          planA: planA ? { count: planA.count, summary: planA.summary } : null,
-          planB: planB ? { count: planB.count, summary: planB.summary } : null
+          requiredPlans,
+          presentPlans,
+          missingPlans
         }
       ));
     }
+
+    issues.push(systemHealthIssue(
+      "info",
+      "value-comparison",
+      "value_plan_comparison_summary",
+      "Four-plan Value comparison artifact is available.",
+      {
+        complete: missingPlans.length === 0,
+        requiredPlans,
+        presentPlans,
+        missingPlans,
+        planA: valueComparison.plans?.A
+          ? {
+              count: valueComparison.plans.A.count,
+              summary: valueComparison.plans.A.summary
+            }
+          : null,
+        planA2: valueComparison.plans?.A2
+          ? {
+              count: valueComparison.plans.A2.count,
+              summary: valueComparison.plans.A2.summary
+            }
+          : null,
+        planB: valueComparison.plans?.B
+          ? {
+              count: valueComparison.plans.B.count,
+              summary: valueComparison.plans.B.summary
+            }
+          : null,
+        planB2: valueComparison.plans?.B2
+          ? {
+              count: valueComparison.plans.B2.count,
+              summary: valueComparison.plans.B2.summary
+            }
+          : null
+      }
+    ));
   }
 
   const runtimeState = classifyRuntimeSystemHealth({
@@ -1694,6 +1739,10 @@ function buildSystemHealthReport(day) {
         reasons: freshness.reasons || [],
         staleInputs: freshness.staleInputs || [],
         staleDerivedArtifacts: freshness.staleDerivedArtifacts || [],
+        missingRequiredArtifacts:
+          freshness.missingRequiredArtifacts || [],
+        fourPlanContract:
+          freshness.fourPlanContract || null,
         skippedInputs: freshness.skippedInputs || []
       } : null,
       manifest: manifest ? {
@@ -1719,8 +1768,30 @@ function buildSystemHealthReport(day) {
           ok: valueComparison.ok,
           schema: valueComparison.schema,
           plans: valueComparison.plans ? {
-            A: valueComparison.plans.A ? { count: valueComparison.plans.A.count, summary: valueComparison.plans.A.summary } : null,
-            B: valueComparison.plans.B ? { count: valueComparison.plans.B.count, summary: valueComparison.plans.B.summary } : null
+            A: valueComparison.plans.A
+              ? {
+                  count: valueComparison.plans.A.count,
+                  summary: valueComparison.plans.A.summary
+                }
+              : null,
+            A2: valueComparison.plans.A2
+              ? {
+                  count: valueComparison.plans.A2.count,
+                  summary: valueComparison.plans.A2.summary
+                }
+              : null,
+            B: valueComparison.plans.B
+              ? {
+                  count: valueComparison.plans.B.count,
+                  summary: valueComparison.plans.B.summary
+                }
+              : null,
+            B2: valueComparison.plans.B2
+              ? {
+                  count: valueComparison.plans.B2.count,
+                  summary: valueComparison.plans.B2.summary
+                }
+              : null
           } : null
         } : null
       },

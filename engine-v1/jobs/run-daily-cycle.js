@@ -151,8 +151,9 @@ function runDailyCycleNodeJob(args, label) {
   return result;
 }
 
-// Value settlement chain for one day: verified final results for Plan A (and
-// Plan B when its artifact exists) + the plan comparison. Settlement only —
+// Value settlement chain for one day: verified final results for Plan A,
+// Plan A2, Plan B and Plan B2 when their artifacts exist, followed by the
+// four-plan comparison. Settlement only —
 // the frozen scoring never runs here, only the WIN/LOSS result field updates.
 //
 // offsetDays: export-verified-final-results-day.js re-verifies against a LIVE
@@ -193,15 +194,30 @@ function resettleValueDay(settleDayKey, label, offsetDays = 0) {
     offsetsArg
   ], `${label}-verified-final-results-plan-a`);
 
-  const planBPath = resolveDataPath("value-plans", settleDayKey, "plan-b.json");
-  if (fs.existsSync(planBPath)) {
+  const observationPlans = [
+    ["plan-a2.json", "plan-a2"],
+    ["plan-b.json", "plan-b"],
+    ["plan-b2.json", "plan-b2"]
+  ];
+
+  for (const [fileName, planLabel] of observationPlans) {
+    const planPath = resolveDataPath(
+      "value-plans",
+      settleDayKey,
+      fileName
+    );
+
+    if (!fs.existsSync(planPath)) {
+      continue;
+    }
+
     runDailyCycleNodeJob([
       "./engine-v1/jobs/export-verified-final-results-day.js",
       `--date=${settleDayKey}`,
       "--write",
       offsetsArg,
-      `--value-path=data/value-plans/${settleDayKey}/plan-b.json`
-    ], `${label}-verified-final-results-plan-b`);
+      `--value-path=data/value-plans/${settleDayKey}/${fileName}`
+    ], `${label}-verified-final-results-${planLabel}`);
   }
 
   runDailyCycleNodeJob([
@@ -1212,32 +1228,59 @@ export async function runDailyCycle(options = {}) {
     nullByClass: valueCoverageReport?.breakdown?.nullByClass || {}
   });
 
-  console.log("[daily-cycle] value-settlement-summary:start", { dayKey });
+  console.log("[daily-cycle] four-plan-settlement-bundle:start", {
+    dayKey
+  });
 
-  const valueSettlementReportPath = `data/football-truth/_diagnostics/value-settlement-daily-cycle/${dayKey}.value-settlement-report.json`;
-  const valueSettlementSummaryPath = `data/football-truth/_settlement-summaries/${dayKey}.value-settlement-summary.json`;
-  const valueSettlementStatisticsPath = `data/football-truth/_settlement-statistics/value-settlement-statistics-${dayKey}_to_${dayKey}.json`;
+  const valueSettlementBundlePath =
+    `data/football-truth/_diagnostics/value-settlement-daily-cycle/${dayKey}.four-plan-settlement-bundle.json`;
+
+  const valueSettlementSummaryPath =
+    `data/football-truth/_settlement-summaries/${dayKey}.value-settlement-summary.json`;
+
+  const valueSettlementStatisticsPath =
+    `data/football-truth/_settlement-statistics/value-settlement-statistics-${dayKey}_to_${dayKey}.json`;
 
   try {
     runDailyCycleNodeJob([
-      "./engine-v1/jobs/build-value-settlement-from-final-results-day.js",
+      "./engine-v1/jobs/build-four-plan-settlement-bundle-day.js",
       "--date",
-      dayKey,
-      "--output",
-      valueSettlementReportPath
-    ], "value-settlement-report");
+      dayKey
+    ], "four-plan-value-settlement-bundle");
 
-    valueSettlementReport = readJsonIfExists(valueSettlementReportPath);
+    valueSettlementReport =
+      readJsonIfExists(
+        valueSettlementBundlePath
+      );
 
-    runDailyCycleNodeJob([
-      "./engine-v1/jobs/export-value-settlement-summary-file.js",
-      "--input",
-      valueSettlementReportPath,
-      "--output",
-      valueSettlementSummaryPath
-    ], "value-settlement-summary-export");
+    valueSettlementSummary =
+      readJsonIfExists(
+        valueSettlementSummaryPath
+      );
 
-    valueSettlementSummary = readJsonIfExists(valueSettlementSummaryPath);
+    if (
+      valueSettlementReport?.ok !== true ||
+      valueSettlementReport?.guarantees
+        ?.fourPlanComplete !== true
+    ) {
+      throw new Error(
+        "four_plan_settlement_bundle_not_complete"
+      );
+    }
+
+    if (
+      valueSettlementSummary?.ok !== true ||
+      valueSettlementSummary?.planKey !==
+        "FOUR_PLAN" ||
+      Number(
+        valueSettlementSummary?.summary
+          ?.planCount || 0
+      ) !== 4
+    ) {
+      throw new Error(
+        "four_plan_aggregate_summary_invalid"
+      );
+    }
 
     runDailyCycleNodeJob([
       "./engine-v1/jobs/build-value-settlement-statistics-range.js",
@@ -1247,45 +1290,111 @@ export async function runDailyCycle(options = {}) {
       dayKey,
       "--output",
       valueSettlementStatisticsPath
-    ], "value-settlement-statistics");
+    ], "four-plan-value-settlement-statistics");
 
-    valueSettlementStatistics = readJsonIfExists(valueSettlementStatisticsPath);
+    valueSettlementStatistics =
+      readJsonIfExists(
+        valueSettlementStatisticsPath
+      );
 
-    console.log("[daily-cycle] value-settlement-summary:done", {
-      ok: valueSettlementSummary?.ok === true && valueSettlementStatistics?.ok === true,
-      dayKey,
-      settlementReport: valueSettlementReportPath,
-      settlementSummary: valueSettlementSummaryPath,
-      settlementStatistics: valueSettlementStatisticsPath,
-      settledRows: valueSettlementSummary?.summary?.settledRows ?? 0,
-      winRows: valueSettlementSummary?.summary?.winRows ?? 0,
-      lossRows: valueSettlementSummary?.summary?.lossRows ?? 0,
-      statisticsWinRate: valueSettlementStatistics?.summary?.winRate ?? null,
-      valueWrites: false,
-      fixtureWrites: false,
-      historyWrites: false,
-      detailsWrites: false
-    });
+    if (
+      valueSettlementStatistics?.ok !== true
+    ) {
+      throw new Error(
+        "four_plan_settlement_statistics_not_ok"
+      );
+    }
+
+    console.log(
+      "[daily-cycle] four-plan-settlement-bundle:done",
+      {
+        ok: true,
+        dayKey,
+        requiredPlans:
+          valueSettlementReport?.requiredPlans ||
+          [],
+        presentPlans:
+          valueSettlementReport?.presentPlans ||
+          [],
+        settlementBundle:
+          valueSettlementBundlePath,
+        settlementSummary:
+          valueSettlementSummaryPath,
+        settlementStatistics:
+          valueSettlementStatisticsPath,
+        totalRows:
+          valueSettlementSummary?.summary
+            ?.totalRows ?? 0,
+        settledRows:
+          valueSettlementSummary?.summary
+            ?.settledRows ?? 0,
+        unresolvedRows:
+          valueSettlementSummary?.summary
+            ?.unresolvedRows ?? 0,
+        winRows:
+          valueSettlementSummary?.summary
+            ?.winRows ?? 0,
+        lossRows:
+          valueSettlementSummary?.summary
+            ?.lossRows ?? 0,
+        byPlan:
+          valueSettlementStatistics?.byPlan ||
+          {},
+        statisticsWinRate:
+          valueSettlementStatistics?.summary
+            ?.winRate ?? null,
+        valueWrites: false,
+        fixtureWrites: false,
+        historyWrites: false,
+        detailsWrites: false,
+        finalResultWrites: false
+      }
+    );
   } catch (error) {
     valueSettlementReport = {
       ok: false,
+      stage:
+        "four_plan_settlement_bundle_failed",
       dayKey,
-      error: error?.message || String(error),
+      error:
+        error?.message || String(error),
+      requiredPlans: ["A", "A2", "B", "B2"],
       valueWrites: false,
       fixtureWrites: false,
       historyWrites: false,
-      detailsWrites: false
+      detailsWrites: false,
+      finalResultWrites: false
     };
 
-    console.warn("[daily-cycle] value-settlement-summary:warn", {
+    valueSettlementSummary = {
       ok: false,
       dayKey,
-      error: valueSettlementReport.error,
-      valueWrites: false,
-      fixtureWrites: false,
-      historyWrites: false,
-      detailsWrites: false
-    });
+      planKey: "FOUR_PLAN",
+      error: valueSettlementReport.error
+    };
+
+    valueSettlementStatistics = {
+      ok: false,
+      dayKey,
+      error: valueSettlementReport.error
+    };
+
+    console.warn(
+      "[daily-cycle] four-plan-settlement-bundle:warn",
+      {
+        ok: false,
+        dayKey,
+        error:
+          valueSettlementReport.error,
+        requiredPlans:
+          valueSettlementReport.requiredPlans,
+        valueWrites: false,
+        fixtureWrites: false,
+        historyWrites: false,
+        detailsWrites: false,
+        finalResultWrites: false
+      }
+    );
   }
   console.log("[daily-cycle] final-details-sync:start", { dayKey });
 

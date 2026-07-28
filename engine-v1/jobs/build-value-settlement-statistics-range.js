@@ -91,7 +91,9 @@ function defaultOutputPath(startDate, endDate) {
 
 function blankBucket() {
   return {
+    totalRows: 0,
     settledRows: 0,
+    unresolvedRows: 0,
     winRows: 0,
     lossRows: 0,
     voidRows: 0,
@@ -101,11 +103,22 @@ function blankBucket() {
 }
 
 function updateBucket(bucket, row) {
-  bucket.settledRows += 1;
-  if (row.result === 'WIN') bucket.winRows += 1;
-  else if (row.result === 'LOSS') bucket.lossRows += 1;
-  else if (row.result === 'VOID') bucket.voidRows += 1;
-  else bucket.unknownRows += 1;
+  bucket.totalRows += 1;
+
+  if (row.result === 'WIN') {
+    bucket.winRows += 1;
+    bucket.settledRows += 1;
+  } else if (row.result === 'LOSS') {
+    bucket.lossRows += 1;
+    bucket.settledRows += 1;
+  } else if (row.result === 'VOID') {
+    bucket.voidRows += 1;
+    bucket.settledRows += 1;
+  } else if (row.result === 'UNRESOLVED') {
+    bucket.unresolvedRows += 1;
+  } else {
+    bucket.unknownRows += 1;
+  }
 
   const denominator = bucket.winRows + bucket.lossRows;
   bucket.winRate = denominator > 0
@@ -117,7 +130,12 @@ function validateSummaryArtifact(summary, dayKey) {
   const errors = [];
 
   if (summary?.ok !== true) errors.push('summary_not_ok');
-  if (clean(summary?.schema) !== 'ai-matchlab.value-settlement-summary.v1') {
+  const acceptedSchemas = new Set([
+    'ai-matchlab.value-settlement-summary.v1',
+    'ai-matchlab.value-settlement-summary.v2'
+  ]);
+
+  if (!acceptedSchemas.has(clean(summary?.schema))) {
     errors.push('unexpected_summary_schema');
   }
   if (clean(summary?.dayKey) !== dayKey) errors.push('day_key_mismatch');
@@ -138,15 +156,47 @@ function normalizeSummaryRows(summary) {
     .map((row, index) => ({
       rowIndex: index,
       date: clean(summary?.dayKey),
-      matchId: clean(row?.matchId),
+      planKey: clean(
+        row?.planKey ||
+        summary?.planKey ||
+        'A'
+      ).toUpperCase(),
+      canonicalId: clean(
+        row?.canonicalId ||
+        row?.matchId
+      ),
+      matchId: clean(
+        row?.matchId ||
+        row?.canonicalId
+      ),
       leagueSlug: clean(row?.leagueSlug),
       homeTeam: clean(row?.homeTeam),
       awayTeam: clean(row?.awayTeam),
-      scoreKey: clean(row?.scoreKey),
+      terminalStatus:
+        clean(row?.terminalStatus) || null,
+      ftHome:
+        Number.isFinite(Number(row?.ftHome))
+          ? Number(row.ftHome)
+          : null,
+      ftAway:
+        Number.isFinite(Number(row?.ftAway))
+          ? Number(row.ftAway)
+          : null,
+      ftScore:
+        clean(row?.ftScore || row?.scoreKey) || null,
+      scoreKey:
+        clean(row?.scoreKey || row?.ftScore) || null,
+      finalResultProvenance:
+        clean(
+          row?.finalResultProvenance ||
+          row?.finalResultPath
+        ) || null,
       market: clean(row?.market),
       pick: clean(row?.pick),
       result: clean(row?.result).toUpperCase(),
-      finalResultPath: clean(row?.finalResultPath),
+      reason: clean(row?.reason) || null,
+      finalResultPath:
+        clean(row?.finalResultPath) || null,
       summaryPath: null
     }))
     .filter(row => row.matchId || row.market || row.pick || row.result);
@@ -160,7 +210,15 @@ function buildStatisticsRange(startDate, endDate, options = {}) {
   const rows = [];
 
   for (const dayKey of days) {
-    const summaryPath = defaultSummaryPath(dayKey);
+    const summaryPath =
+      typeof options.summaryPathForDay ===
+      'function'
+        ? path.resolve(
+            String(
+              options.summaryPathForDay(dayKey)
+            )
+          )
+        : defaultSummaryPath(dayKey);
     const summary = readJsonSafe(summaryPath, null);
 
     if (!summary) {
@@ -200,6 +258,7 @@ function buildStatisticsRange(startDate, endDate, options = {}) {
 
   const total = blankBucket();
   const byDate = {};
+  const byPlan = {};
   const byMarket = {};
   const byLeague = {};
 
@@ -207,14 +266,21 @@ function buildStatisticsRange(startDate, endDate, options = {}) {
     updateBucket(total, row);
 
     const dateKey = row.date || 'unknown_date';
+    const planKey = row.planKey || 'unknown_plan';
     const marketKey = row.market || 'unknown_market';
     const leagueKey = row.leagueSlug || 'unknown_league';
 
-    byDate[dateKey] = byDate[dateKey] || blankBucket();
-    byMarket[marketKey] = byMarket[marketKey] || blankBucket();
-    byLeague[leagueKey] = byLeague[leagueKey] || blankBucket();
+    byDate[dateKey] =
+      byDate[dateKey] || blankBucket();
+    byPlan[planKey] =
+      byPlan[planKey] || blankBucket();
+    byMarket[marketKey] =
+      byMarket[marketKey] || blankBucket();
+    byLeague[leagueKey] =
+      byLeague[leagueKey] || blankBucket();
 
     updateBucket(byDate[dateKey], row);
+    updateBucket(byPlan[planKey], row);
     updateBucket(byMarket[marketKey], row);
     updateBucket(byLeague[leagueKey], row);
   }
@@ -224,7 +290,7 @@ function buildStatisticsRange(startDate, endDate, options = {}) {
     stage: rejectedSummaries.length === 0
       ? 'value_settlement_statistics_range_ready'
       : 'value_settlement_statistics_range_has_rejected_summaries',
-    schema: 'ai-matchlab.value-settlement-statistics-range.v1',
+    schema: 'ai-matchlab.value-settlement-statistics-range.v2',
     generatedAt: new Date().toISOString(),
     range: {
       startDate,
@@ -241,7 +307,9 @@ function buildStatisticsRange(startDate, endDate, options = {}) {
       summaryArtifactsFound: foundSummaries.length,
       summaryArtifactsMissing: missingSummaries.length,
       summaryArtifactsRejected: rejectedSummaries.length,
+      totalRows: total.totalRows,
       settledRows: total.settledRows,
+      unresolvedRows: total.unresolvedRows,
       winRows: total.winRows,
       lossRows: total.lossRows,
       voidRows: total.voidRows,
@@ -249,6 +317,7 @@ function buildStatisticsRange(startDate, endDate, options = {}) {
       winRate: total.winRate
     },
     byDate,
+    byPlan,
     byMarket,
     byLeague,
     rows,

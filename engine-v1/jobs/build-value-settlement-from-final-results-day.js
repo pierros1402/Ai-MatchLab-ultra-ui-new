@@ -79,8 +79,27 @@ function loadValueData(dayKey, explicitValuePath = '') {
   for (const candidate of candidates) {
     const data = readJsonSafe(candidate, null);
     const rows = normalizeValueRows(data);
+    const artifactExists =
+      data !== null &&
+      data !== undefined;
+    const hasRecognizedRowsContainer =
+      Array.isArray(data) ||
+      Array.isArray(data?.picks) ||
+      Array.isArray(data?.valuePicks) ||
+      Array.isArray(data?.rows);
+    const declaresZeroPicks =
+      Number(data?.count) === 0 ||
+      Number(data?.summary?.picks) === 0 ||
+      Number(data?.summary?.valuePicks) === 0;
 
-    if (data && rows.length) {
+    if (
+      artifactExists &&
+      (
+        rows.length > 0 ||
+        hasRecognizedRowsContainer ||
+        declaresZeroPicks
+      )
+    ) {
       return {
         ok: true,
         path: candidate,
@@ -221,9 +240,26 @@ function normalizeFinalResultFile(filePath) {
   return normalizeFinalResultData(readJsonSafe(filePath, null), filePath);
 }
 
-function loadFinalResults(dayKey) {
-  const dir = resolveRepoPath('data', 'final-results', dayKey);
-  const canonicalDir = resolveRepoPath('data', 'canonical-fixtures', dayKey);
+function loadFinalResults(dayKey, options = {}) {
+  const dir = clean(options.finalResultsDir)
+    ? path.resolve(String(options.finalResultsDir))
+    : resolveRepoPath(
+        'data',
+        'final-results',
+        dayKey
+      );
+
+  const canonicalDir = clean(
+    options.canonicalFixturesDir
+  )
+    ? path.resolve(
+        String(options.canonicalFixturesDir)
+      )
+    : resolveRepoPath(
+        'data',
+        'canonical-fixtures',
+        dayKey
+      );
   const canonicalById = new Map();
   const canonicalIdentityAmbiguities = new Set();
 
@@ -390,7 +426,21 @@ function evaluatePickResult(pick, finalResult) {
 
 function buildSettlementReport(dayKey, options = {}) {
   const valueSource = loadValueData(dayKey, clean(options.valuePath));
-  const finalSource = loadFinalResults(dayKey);
+  const planKey = clean(
+    options.planKey ||
+    valueSource.data?.planKey ||
+    valueSource.data?.plan ||
+    "A"
+  ).toUpperCase();
+  const finalSource = loadFinalResults(
+    dayKey,
+    {
+      finalResultsDir:
+        options.finalResultsDir,
+      canonicalFixturesDir:
+        options.canonicalFixturesDir
+    }
+  );
   const finalMap = new Map();
 
   for (const row of finalSource.rows) {
@@ -407,10 +457,42 @@ function buildSettlementReport(dayKey, options = {}) {
 
     if (!finalResult) {
       unresolvedRows.push({
-        reason: 'missing_verified_final_result',
+        planKey,
+        canonicalId: clean(
+          pick?.canonicalId ||
+          pick?.matchId ||
+          pick?.id ||
+          keys[0]
+        ),
+        matchId: clean(
+          pick?.canonicalId ||
+          pick?.matchId ||
+          pick?.id ||
+          keys[0]
+        ),
         matchKeys: keys,
+        leagueSlug: clean(pick?.leagueSlug),
+        homeTeam: clean(
+          pick?.homeTeam ||
+          pick?.home ||
+          pick?.teams?.home
+        ),
+        awayTeam: clean(
+          pick?.awayTeam ||
+          pick?.away ||
+          pick?.teams?.away
+        ),
+        terminalStatus: null,
+        ftHome: null,
+        ftAway: null,
+        ftScore: null,
+        scoreKey: null,
         market: pick?.market || pick?.marketName || '',
-        pick: pick?.pick || pick?.selection || pick?.prediction || ''
+        pick: pick?.pick || pick?.selection || pick?.prediction || '',
+        result: 'UNRESOLVED',
+        finalResultProvenance: null,
+        finalResultPath: null,
+        reason: 'missing_verified_final_result'
       });
       settledPicks.push({ ...pick });
       continue;
@@ -420,10 +502,26 @@ function buildSettlementReport(dayKey, options = {}) {
 
     if (win === null) {
       unresolvedRows.push({
-        reason: 'unsupported_market_or_selection',
+        planKey,
+        canonicalId: finalResult.matchId,
         matchId: finalResult.matchId,
+        matchKeys: keys,
+        leagueSlug: finalResult.leagueSlug,
+        homeTeam: finalResult.homeTeam,
+        awayTeam: finalResult.awayTeam,
+        terminalStatus: 'FT',
+        ftHome: finalResult.homeScore,
+        ftAway: finalResult.awayScore,
+        ftScore: finalResult.scoreKey,
+        scoreKey: finalResult.scoreKey,
         market: pick?.market || pick?.marketName || '',
-        pick: pick?.pick || pick?.selection || pick?.prediction || ''
+        pick: pick?.pick || pick?.selection || pick?.prediction || '',
+        result: 'UNRESOLVED',
+        finalResultProvenance:
+          repoRelative(finalResult.path),
+        finalResultPath:
+          repoRelative(finalResult.path),
+        reason: 'unsupported_market_or_selection'
       });
       settledPicks.push({ ...pick });
       continue;
@@ -444,15 +542,24 @@ function buildSettlementReport(dayKey, options = {}) {
 
     settledPicks.push(settledPick);
     settledRows.push({
+      planKey,
+      canonicalId: finalResult.matchId,
       matchId: finalResult.matchId,
       leagueSlug: finalResult.leagueSlug,
       homeTeam: finalResult.homeTeam,
       awayTeam: finalResult.awayTeam,
+      terminalStatus: 'FT',
+      ftHome: finalResult.homeScore,
+      ftAway: finalResult.awayScore,
+      ftScore: finalResult.scoreKey,
       scoreKey: finalResult.scoreKey,
       market: pick?.market || pick?.marketName || '',
       pick: pick?.pick || pick?.selection || pick?.prediction || '',
       result,
-      finalResultPath: repoRelative(finalResult.path)
+      finalResultProvenance:
+        repoRelative(finalResult.path),
+      finalResultPath:
+        repoRelative(finalResult.path)
     });
   }
 
@@ -486,6 +593,7 @@ function buildSettlementReport(dayKey, options = {}) {
     ok: valueSource.ok,
     stage: 'value_settlement_from_verified_final_results_dry_run',
     dayKey,
+    planKey,
     generatedAt: new Date().toISOString(),
     inputs: {
       valuePath: valueSource.path ? repoRelative(valueSource.path) : null,
@@ -504,6 +612,7 @@ function buildSettlementReport(dayKey, options = {}) {
     },
     settledRows,
     unresolvedRows,
+    rows: [...settledRows, ...unresolvedRows],
     canonicalContradictions: finalSource.canonicalContradictions,
     canonicalIdentityAmbiguities: finalSource.canonicalIdentityAmbiguities,
     draftValueData,
@@ -632,7 +741,7 @@ function main() {
 
   const dayKey = clean(args.date || args.day || args.dayKey);
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(dayKey)) {
-    console.error('Usage: node engine-v1/jobs/build-value-settlement-from-final-results-day.js --date YYYY-MM-DD --output <report.json> [--value <value.json>]');
+    console.error('Usage: node engine-v1/jobs/build-value-settlement-from-final-results-day.js --date YYYY-MM-DD --output <report.json> [--value <value.json>] [--plan A|A2|B|B2]');
     process.exit(2);
   }
 
@@ -641,7 +750,8 @@ function main() {
     : resolveRepoPath('data', 'value', '_settlement-reports', `${dayKey}.verified-final-results.dry-run.json`);
 
   const report = buildSettlementReport(dayKey, {
-    valuePath: args.value ? String(args.value) : ''
+    valuePath: args.value ? String(args.value) : '',
+    planKey: args.plan ? String(args.plan) : 'A'
   });
 
   writeJson(outputPath, report);

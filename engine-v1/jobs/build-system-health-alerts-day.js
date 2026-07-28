@@ -395,13 +395,33 @@ export function buildSystemHealthAlertsDay(dayKey) {
       }));
     }
 
-    const planBUnresolved = Number(buildReport.settlement?.planB?.unresolved || 0);
-    if (planBUnresolved > 0) {
-      issues.push(issue("info", "build-report", "plan_b_unresolved_settlement", "Plan B observation picks are still unresolved.", {
-        picks: buildReport.settlement?.planB?.picks,
-        settled: buildReport.settlement?.planB?.settled,
-        unresolved: planBUnresolved
-      }));
+    const settlementPlans = [
+      ["A", "planA", "plan_a_unresolved_settlement"],
+      ["A2", "planA2", "plan_a2_unresolved_settlement"],
+      ["B", "planB", "plan_b_unresolved_settlement"],
+      ["B2", "planB2", "plan_b2_unresolved_settlement"]
+    ];
+
+    for (const [label, key, type] of settlementPlans) {
+      const unresolved = Number(
+        buildReport.settlement?.[key]?.unresolved || 0
+      );
+
+      if (unresolved <= 0) {
+        continue;
+      }
+
+      issues.push(issue(
+        "info",
+        "build-report",
+        type,
+        `Plan ${label} picks are still unresolved.`,
+        {
+          picks: buildReport.settlement?.[key]?.picks,
+          settled: buildReport.settlement?.[key]?.settled,
+          unresolved
+        }
+      ));
     }
   }
 
@@ -458,20 +478,70 @@ export function buildSystemHealthAlertsDay(dayKey) {
   }
 
   if (!valueComparison) {
-    issues.push(issue(systemHealthMissingArtifactSeverity("valueComparison"), "value-comparison", "artifact_missing", "Value Plan A/B comparison artifact is missing.", {
-      artifact: `data/value-comparison/${dayKey}.json`
-    }));
-  } else {
-    issues.push(issue("info", "value-comparison", "value_plan_comparison_summary", "Value Plan A/B comparison artifact is available.", {
-      planA: {
-        count: valueComparison.plans?.A?.count ?? null,
-        summary: valueComparison.plans?.A?.summary ?? null
-      },
-      planB: {
-        count: valueComparison.plans?.B?.count ?? null,
-        summary: valueComparison.plans?.B?.summary ?? null
+    issues.push(issue(
+      systemHealthMissingArtifactSeverity("valueComparison"),
+      "value-comparison",
+      "artifact_missing",
+      "Four-plan Value comparison artifact is missing.",
+      {
+        artifact: `data/value-comparison/${dayKey}.json`,
+        requiredPlans: ["A", "A2", "B", "B2"]
       }
-    }));
+    ));
+  } else {
+    const requiredPlans = ["A", "A2", "B", "B2"];
+    const presentPlans = requiredPlans.filter(
+      key =>
+        valueComparison.plans?.[key] &&
+        typeof valueComparison.plans[key] === "object"
+    );
+    const missingPlans = requiredPlans.filter(
+      key => !presentPlans.includes(key)
+    );
+
+    if (missingPlans.length > 0) {
+      issues.push(issue(
+        "error",
+        "value-comparison",
+        "four_plan_comparison_incomplete",
+        "Value comparison is missing one or more required plans.",
+        {
+          requiredPlans,
+          presentPlans,
+          missingPlans,
+          artifact: `data/value-comparison/${dayKey}.json`
+        }
+      ));
+    }
+
+    issues.push(issue(
+      "info",
+      "value-comparison",
+      "value_plan_comparison_summary",
+      "Four-plan Value comparison artifact is available.",
+      {
+        complete: missingPlans.length === 0,
+        requiredPlans,
+        presentPlans,
+        missingPlans,
+        planA: {
+          count: valueComparison.plans?.A?.count ?? null,
+          summary: valueComparison.plans?.A?.summary ?? null
+        },
+        planA2: {
+          count: valueComparison.plans?.A2?.count ?? null,
+          summary: valueComparison.plans?.A2?.summary ?? null
+        },
+        planB: {
+          count: valueComparison.plans?.B?.count ?? null,
+          summary: valueComparison.plans?.B?.summary ?? null
+        },
+        planB2: {
+          count: valueComparison.plans?.B2?.count ?? null,
+          summary: valueComparison.plans?.B2?.summary ?? null
+        }
+      }
+    ));
   }
 
   const activeIssues = issues;
