@@ -820,7 +820,17 @@ function renderPlanBlock(plan, title, information) {
   //window.AIML_PANEL?.set(root, "loading", "Loading value picks...");
     lastPayload = payload;
 
-    if (payload?.comparison?.plans?.A && payload?.comparison?.plans?.B) {
+    const comparisonPlans =
+      payload?.comparison?.plans;
+
+    const hasFourPlanComparison =
+      ["A", "A2", "B", "B2"].every(
+        planKey =>
+          comparisonPlans?.[planKey] &&
+          typeof comparisonPlans[planKey] === "object"
+      );
+
+    if (hasFourPlanComparison) {
       renderPlanComparison(payload);
       return;
     }

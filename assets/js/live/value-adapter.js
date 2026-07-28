@@ -104,7 +104,18 @@
 
       const data = await r.json();
 
-      if (data && data.ok && data.plans && data.plans.A && data.plans.B) {
+      const requiredPlans = ["A", "A2", "B", "B2"];
+      const hasAllRequiredPlans =
+        data &&
+        data.ok &&
+        data.plans &&
+        requiredPlans.every(
+          planKey =>
+            data.plans[planKey] &&
+            typeof data.plans[planKey] === "object"
+        );
+
+      if (hasAllRequiredPlans) {
         return data;
       }
 

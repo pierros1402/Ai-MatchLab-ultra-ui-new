@@ -83,8 +83,15 @@
       return `source: ${esc(issue.source)} · clean: <b>${esc(d.clean)}</b> · cleanStrict: <b>${esc(d.cleanStrict)}</b>`;
     }
 
-    if (type === "plan_b_unresolved_settlement") {
-      return `source: ${esc(issue.source)} · picks: <b>${esc(d.picks)}</b> · settled: <b>${esc(d.settled)}</b> · unresolved: <b>${esc(d.unresolved)}</b>`;
+    const unresolvedPlanLabels = {
+      plan_a_unresolved_settlement: "Plan A",
+      plan_a2_unresolved_settlement: "Plan A2",
+      plan_b_unresolved_settlement: "Plan B",
+      plan_b2_unresolved_settlement: "Plan B2"
+    };
+
+    if (unresolvedPlanLabels[type]) {
+      return `source: ${esc(issue.source)} · plan: <b>${esc(unresolvedPlanLabels[type])}</b> · picks: <b>${esc(d.picks)}</b> · settled: <b>${esc(d.settled)}</b> · unresolved: <b>${esc(d.unresolved)}</b>`;
     }
 
     if (type === "skipped_freshness_input") {
@@ -97,8 +104,15 @@
 
     if (type === "value_plan_comparison_summary") {
       const a = d.planA || {};
+      const a2 = d.planA2 || {};
       const b = d.planB || {};
-      return `source: ${esc(issue.source)} · Plan A picks: <b>${esc(a.count)}</b> · Plan B picks: <b>${esc(b.count)}</b>`;
+      const b2 = d.planB2 || {};
+
+      return `source: ${esc(issue.source)} · A: <b>${esc(a.count)}</b> · A2: <b>${esc(a2.count)}</b> · B: <b>${esc(b.count)}</b> · B2: <b>${esc(b2.count)}</b>`;
+    }
+
+    if (type === "four_plan_comparison_incomplete") {
+      return `source: ${esc(issue.source)} · present: <b>${esc((d.presentPlans || []).join(", ") || "—")}</b> · missing: <b>${esc((d.missingPlans || []).join(", ") || "—")}</b>`;
     }
 
     if (type === "artifact_missing" || type === "artifact_json_invalid") {
@@ -169,14 +183,27 @@
     const audit = value.audit || {};
     const comparison = value.comparison || {};
     const planA = comparison.plans?.A;
+    const planA2 = comparison.plans?.A2;
     const planB = comparison.plans?.B;
+    const planB2 = comparison.plans?.B2;
+
+    const requiredPlans = ["A", "A2", "B", "B2"];
+    const presentPlans = requiredPlans.filter(
+      planKey =>
+        comparison.plans?.[planKey] &&
+        typeof comparison.plans[planKey] === "object"
+    );
+    const missingPlans = requiredPlans.filter(
+      planKey => !presentPlans.includes(planKey)
+    );
 
     return `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(15,23,42,.75);border:1px solid rgba(255,255,255,.06);font-size:11px;color:#cbd5e1;">
       <div style="font-weight:700;color:#e2e8f0;margin-bottom:4px;">Value diagnostics</div>
       <div>Production: <b>${esc(prod.source || "—")}</b> · picks: <b>${esc(prod.count ?? "—")}</b> · ok: <b>${esc(prod.ok ?? "—")}</b></div>
       <div>Contract: canonicalOnly=<b>${esc(audit.sourceContract?.canonicalOnly ?? "—")}</b> · deploySnapshotInput=<b>${esc(audit.sourceContract?.deploySnapshotInput ?? "—")}</b></div>
       <div>Universe: fixtures=<b>${esc(audit.universe?.fixturesSeen ?? "—")}</b> · candidates=<b>${esc(audit.universe?.candidateMarkets ?? "—")}</b> · approved=<b>${esc(audit.universe?.approved ?? "—")}</b></div>
-      <div>Plan A/B: A=<b>${esc(planA?.count ?? "—")}</b> · B=<b>${esc(planB?.count ?? "—")}</b></div>
+      <div>Plans: A=<b>${esc(planA?.count ?? "—")}</b> · A2=<b>${esc(planA2?.count ?? "—")}</b> · B=<b>${esc(planB?.count ?? "—")}</b> · B2=<b>${esc(planB2?.count ?? "—")}</b></div>
+      <div>Four-plan contract: <b>${missingPlans.length === 0 ? "complete" : "incomplete"}</b>${missingPlans.length ? " · missing: " + esc(missingPlans.join(", ")) : ""}</div>
     </div>`;
   }
 
