@@ -21,6 +21,8 @@ import { getH2HForMatch } from "../storage/h2h-memory-db.js";
 import { normalizeTeamKey } from "./normalize.js";
 import { currentSeason } from "./season.js";
 import { computeMatchdayAxis, isLeagueIntegrityGreen, isKnownNonLeagueCompetition } from "./matchday-axis.js";
+import { loadOpponentAdjustedProfiles } from "./opponent-strength-profile-loader.js";
+import { describeProbabilityAdjustment } from "./opponent-strength-adjusted-form.js";
 
 // ── team-form index (season-scoped, read once per process) ───────────────────
 
@@ -176,17 +178,118 @@ export function buildStandingsBlock(leagueSlug) {
 }
 
 /**
- * Assemble all three rich blocks for a match. Single entry point the details
- * builder calls; keeps the gating rule in one place.
+ * Additive detail block using the same opponent-strength profiles and
+ * probability adjustment contract as Plan A2 and Plan B2.
+ */
+export function buildOpponentAdjustedFormBlock(match) {
+  const homeTeam = match?.homeTeam || null;
+  const awayTeam = match?.awayTeam || null;
+  const leagueSlug = match?.leagueSlug || null;
+
+  if (!homeTeam || !awayTeam || !leagueSlug) {
+    return {
+      status: "empty",
+      reason: "missing_fixture_identity",
+      leagueSlug,
+      home: null,
+      away: null
+    };
+  }
+
+  try {
+    const profiles = loadOpponentAdjustedProfiles(
+      leagueSlug,
+      homeTeam,
+      awayTeam
+    );
+
+    const homeSample =
+      Number(profiles?.home?.sample || 0);
+
+    const awaySample =
+      Number(profiles?.away?.sample || 0);
+
+    const sampleReliability = Math.min(
+      Number(
+        profiles?.home?.sampleReliability || 0
+      ),
+      Number(
+        profiles?.away?.sampleReliability || 0
+      )
+    );
+
+    const status =
+      homeSample > 0 && awaySample > 0
+        ? "ready"
+        : homeSample > 0 || awaySample > 0
+          ? "partial"
+          : "empty";
+
+    return {
+      schema:
+        "ai-matchlab.detail-opponent-adjusted-form.v1",
+      status,
+      reason:
+        status === "empty"
+          ? "no_opponent_strength_results"
+          : status === "partial"
+            ? "one_side_missing_opponent_strength_results"
+            : null,
+      leagueSlug,
+      standingsCoverage: Number(
+        profiles?.standingsCoverage || 0
+      ),
+      homeStrength: Number(
+        profiles?.homeStrength || 0
+      ),
+      awayStrength: Number(
+        profiles?.awayStrength || 0
+      ),
+      sampleReliability:
+        Math.round(
+          sampleReliability * 1000
+        ) / 1000,
+      home: profiles?.home || null,
+      away: profiles?.away || null,
+      probabilityImpact:
+        describeProbabilityAdjustment(
+          profiles?.home || null,
+          profiles?.away || null
+        )
+    };
+  } catch (error) {
+    return {
+      status: "empty",
+      reason:
+        "opponent_strength_profile_load_failed",
+      error: String(
+        error?.message || error
+      ),
+      leagueSlug,
+      home: null,
+      away: null
+    };
+  }
+}
+
+/**
+ * Assemble all rich context blocks for a match.
  */
 export function buildRichContextBlocks(match) {
   const home = match?.homeTeam || null;
   const away = match?.awayTeam || null;
   const slug = match?.leagueSlug || null;
   const season = currentSeason();
+
   return {
     standings: buildStandingsBlock(slug),
-    form: buildFormBlock(home, away, season),
+    form: buildFormBlock(
+      home,
+      away,
+      season
+    ),
+    opponentAdjustedForm:
+      buildOpponentAdjustedFormBlock(match),
     h2h: buildH2HBlock(home, away)
   };
 }

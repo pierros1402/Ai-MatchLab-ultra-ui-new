@@ -114,41 +114,156 @@ function normalized1X2(home, draw, away) {
   return { home: round3(home / sum), draw: round3(draw / sum), away: round3(away / sum) };
 }
 
+function probabilityAdjustmentComponents(homeProfile = null, awayProfile = null) {
+  const homeImpact = homeProfile?.impact || {};
+  const awayImpact = awayProfile?.impact || {};
+  const reliability = Math.min(
+    Number(homeProfile?.sampleReliability || 0),
+    Number(awayProfile?.sampleReliability || 0)
+  );
+  const adjustmentScale = 0.18 * clamp01(reliability);
+
+  const resultDelta = (
+    (
+      Number(homeImpact.ppg || 0) -
+      Number(awayImpact.ppg || 0)
+    ) /
+    3
+  ) * adjustmentScale;
+
+  const drawDelta =
+    -Math.abs(resultDelta) * 0.35;
+
+  const goalDelta = (
+    (
+      Number(homeImpact.over25Rate || 0) +
+      Number(awayImpact.over25Rate || 0)
+    ) /
+    2
+  ) * adjustmentScale;
+
+  const bttsDelta = (
+    (
+      Number(homeImpact.bttsRate || 0) +
+      Number(awayImpact.bttsRate || 0)
+    ) /
+    2
+  ) * adjustmentScale;
+
+  return {
+    reliability,
+    adjustmentScale,
+    resultDelta,
+    drawDelta,
+    goalDelta,
+    bttsDelta
+  };
+}
+
+/**
+ * Plan-independent description of the exact opponent-strength deltas used by
+ * the common probability layer.
+ */
+export function describeProbabilityAdjustment(homeProfile = null, awayProfile = null) {
+  const components = probabilityAdjustmentComponents(
+    homeProfile,
+    awayProfile
+  );
+
+  return {
+    reliability: round3(components.reliability),
+    adjustmentScale: round3(components.adjustmentScale),
+    "1X2": {
+      home: round3(components.resultDelta),
+      draw: round3(components.drawDelta),
+      away: round3(-components.resultDelta)
+    },
+    OU15: {
+      over: round3(components.goalDelta * 0.55),
+      under: round3(-components.goalDelta * 0.55)
+    },
+    OU25: {
+      over: round3(components.goalDelta),
+      under: round3(-components.goalDelta)
+    },
+    OU35: {
+      over: round3(components.goalDelta * 0.70),
+      under: round3(-components.goalDelta * 0.70)
+    },
+    BTTS: {
+      yes: round3(components.bttsDelta),
+      no: round3(-components.bttsDelta)
+    }
+  };
+}
+
 export function adjustMarketProbabilities(markets = {}, homeProfile = null, awayProfile = null) {
-  const h = homeProfile?.impact || {};
-  const a = awayProfile?.impact || {};
-  const reliability = Math.min(Number(homeProfile?.sampleReliability || 0), Number(awayProfile?.sampleReliability || 0));
-  const scale = 0.18 * clamp01(reliability);
+  const components = probabilityAdjustmentComponents(
+    homeProfile,
+    awayProfile
+  );
   const copy = JSON.parse(JSON.stringify(markets || {}));
 
-  const resultDelta = ((Number(h.ppg || 0) - Number(a.ppg || 0)) / 3) * scale;
-  const drawDelta = -Math.abs(resultDelta) * 0.35;
   const p1 = copy?.["1X2"]?.probs;
   if (p1) {
     copy["1X2"].probs = normalized1X2(
-      clamp01(Number(p1.home || 0) + resultDelta),
-      clamp01(Number(p1.draw || 0) + drawDelta),
-      clamp01(Number(p1.away || 0) - resultDelta)
+      clamp01(
+        Number(p1.home || 0) +
+        components.resultDelta
+      ),
+      clamp01(
+        Number(p1.draw || 0) +
+        components.drawDelta
+      ),
+      clamp01(
+        Number(p1.away || 0) -
+        components.resultDelta
+      )
     );
   }
 
-  const goalDelta = ((Number(h.over25Rate || 0) + Number(a.over25Rate || 0)) / 2) * scale;
   for (const key of ["OU15", "OU25", "OU35"]) {
     const probs = copy?.[key]?.probs;
     if (!probs) continue;
-    const multiplier = key === "OU15" ? 0.55 : key === "OU35" ? 0.70 : 1;
-    const over = clamp01(Number(probs.over || 0) + goalDelta * multiplier);
-    copy[key].probs = { over: round3(over), under: round3(1 - over) };
+
+    const multiplier =
+      key === "OU15"
+        ? 0.55
+        : key === "OU35"
+          ? 0.70
+          : 1;
+
+    const over = clamp01(
+      Number(probs.over || 0) +
+      components.goalDelta * multiplier
+    );
+
+    copy[key].probs = {
+      over: round3(over),
+      under: round3(1 - over)
+    };
   }
 
   const btts = copy?.BTTS?.probs;
   if (btts) {
-    const bttsDelta = ((Number(h.bttsRate || 0) + Number(a.bttsRate || 0)) / 2) * scale;
-    const yes = clamp01(Number(btts.yes || 0) + bttsDelta);
-    copy.BTTS.probs = { yes: round3(yes), no: round3(1 - yes) };
+    const yes = clamp01(
+      Number(btts.yes || 0) +
+      components.bttsDelta
+    );
+
+    copy.BTTS.probs = {
+      yes: round3(yes),
+      no: round3(1 - yes)
+    };
   }
 
-  return { markets: copy, reliability: round3(reliability), adjustmentScale: round3(scale) };
+  return {
+    markets: copy,
+    reliability: round3(components.reliability),
+    adjustmentScale: round3(
+      components.adjustmentScale
+    )
+  };
 }
 
 export function adjustPlanAValue(value = {}, homeProfile = null, awayProfile = null) {

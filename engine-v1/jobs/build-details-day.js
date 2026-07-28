@@ -1552,6 +1552,8 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     travel,
     standings: richBlocks.standings,
     form: richBlocks.form,
+    opponentAdjustedForm:
+      richBlocks.opponentAdjustedForm,
     h2h: richBlocks.h2h,
     value: Array.isArray(valuePicks) ? valuePicks : [],
     analysis,

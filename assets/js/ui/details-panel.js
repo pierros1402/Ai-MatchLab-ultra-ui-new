@@ -1801,6 +1801,152 @@ async function renderLocal(match, mountEl) {
       })()}
 
       ${(() => {
+        const adjusted =
+          snap.opponentAdjustedForm;
+
+        if (
+          !adjusted ||
+          !["ready", "partial"].includes(
+            adjusted.status
+          )
+        ) {
+          return "";
+        }
+
+        const homeRaw =
+          m.home ||
+          m.homeTeam ||
+          "Home";
+
+        const awayRaw =
+          m.away ||
+          m.awayTeam ||
+          "Away";
+
+        const signedPct = value => {
+          const parsed = Number(value);
+
+          if (!Number.isFinite(parsed)) {
+            return "—";
+          }
+
+          return (
+            (parsed >= 0 ? "+" : "") +
+            (parsed * 100).toFixed(1) +
+            "%"
+          );
+        };
+
+        const decimal = (
+          value,
+          digits = 2
+        ) => {
+          const parsed = Number(value);
+
+          return Number.isFinite(parsed)
+            ? parsed.toFixed(digits)
+            : "—";
+        };
+
+        const rate = value => {
+          const parsed = Number(value);
+
+          return Number.isFinite(parsed)
+            ? (parsed * 100).toFixed(1) + "%"
+            : "—";
+        };
+
+        const sideCard = (
+          title,
+          profile
+        ) => {
+          if (!profile) {
+            return `
+              <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+                <div style="font-weight:900;">${esc(title)}</div>
+                <div class="muted" style="margin-top:8px;font-size:12px;">No usable opponent-strength sample.</div>
+              </div>
+            `;
+          }
+
+          const raw = profile.raw || {};
+          const adjustedValues =
+            profile.adjusted || {};
+
+          const metric = (
+            label,
+            rawValue,
+            adjustedValue,
+            formatter = decimal
+          ) => `
+            <div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;font-size:11px;margin-top:5px;">
+              <span style="opacity:.72;">${esc(label)}</span>
+              <span title="Raw form">${esc(formatter(rawValue))}</span>
+              <b title="Opponent-adjusted form">${esc(formatter(adjustedValue))}</b>
+            </div>
+          `;
+
+          return `
+            <div style="padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+              <div style="font-weight:900;">${esc(title)}</div>
+              <div style="font-size:11px;opacity:.68;margin-top:5px;">
+                Sample ${esc(profile.sample ?? 0)}
+                · strong ${esc(profile.strongOpponentSample ?? 0)}
+                · peer ${esc(profile.peerStrengthSample ?? 0)}
+                · reliability ${esc(rate(profile.sampleReliability))}
+              </div>
+              <div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;font-size:10px;opacity:.58;margin-top:9px;">
+                <span>Metric</span>
+                <span>Raw</span>
+                <span>Adjusted</span>
+              </div>
+              ${metric("PPG", raw.ppg, adjustedValues.ppg)}
+              ${metric("Goals for", raw.gfRate, adjustedValues.gfRate)}
+              ${metric("Goals against", raw.gaRate, adjustedValues.gaRate)}
+              ${metric("Over 2.5", raw.over25Rate, adjustedValues.over25Rate, rate)}
+              ${metric("BTTS", raw.bttsRate, adjustedValues.bttsRate, rate)}
+            </div>
+          `;
+        };
+
+        const impact =
+          adjusted.probabilityImpact || {};
+
+        const oneXTwo =
+          impact["1X2"] || {};
+
+        return `
+          <div style="margin-top:14px;">
+            <div style="font-weight:900;margin-bottom:4px;">Opponent-Adjusted Form</div>
+            <div style="font-size:11px;opacity:.65;margin-bottom:8px;">
+              Same shared probability layer used by Plan A2 and Plan B2.
+              Overall reliability:
+              <b>${esc(rate(adjusted.sampleReliability))}</b>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">
+              ${sideCard(homeRaw, adjusted.home)}
+              ${sideCard(awayRaw, adjusted.away)}
+            </div>
+            <div style="margin-top:10px;padding:10px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:rgba(255,255,255,0.025);font-size:11px;">
+              <div style="font-weight:800;margin-bottom:6px;">Probability impact</div>
+              <div>
+                1 / X / 2:
+                <b>${esc(signedPct(oneXTwo.home))}</b> /
+                <b>${esc(signedPct(oneXTwo.draw))}</b> /
+                <b>${esc(signedPct(oneXTwo.away))}</b>
+              </div>
+              <div style="margin-top:4px;">
+                Over 1.5 <b>${esc(signedPct(impact.OU15?.over))}</b>
+                · Over 2.5 <b>${esc(signedPct(impact.OU25?.over))}</b>
+                · Over 3.5 <b>${esc(signedPct(impact.OU35?.over))}</b>
+                · BTTS Yes <b>${esc(signedPct(impact.BTTS?.yes))}</b>
+              </div>
+            </div>
+          </div>
+        `;
+      })()}
+
+      ${(() => {
         const h2h = snap.h2h;
         if (!h2h || !h2h.all?.length) return "";
         const homeRaw = m.home || m.homeTeam || "";
