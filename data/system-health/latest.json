@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-28",
-  "generatedAt": "2026-07-28T04:20:00.189Z",
+  "generatedAt": "2026-07-28T15:33:42.580Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 3,
-    "info": 5
+    "info": 8
   },
-  "alert": true,
+  "alert": false,
   "alertCounts": {
     "error": 0,
-    "warning": 1,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 8,
+  "activeIssueCount": 11,
   "actionableIssueCount": 3,
-  "newIssueCount": 5,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 3,
-  "persistentIssueCount": 3,
+  "newIssueCount": 3,
+  "newActionableIssueCount": 0,
+  "resolvedIssueCount": 0,
+  "persistentIssueCount": 8,
   "activeIssues": [
     {
       "severity": "info",
@@ -63,6 +63,32 @@
       }
     },
     {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-07-28/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-07-28/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
@@ -95,7 +121,18 @@
       "severity": "info",
       "source": "build-report",
       "type": "plan_b_unresolved_settlement",
-      "message": "Plan B observation picks are still unresolved.",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
       "details": {
         "picks": 2,
         "settled": 0,
@@ -106,8 +143,22 @@
       "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
-      "message": "Value Plan A/B comparison artifact is available.",
+      "message": "Four-plan Value comparison artifact is available.",
       "details": {
+        "complete": true,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
         "planA": {
           "count": 0,
           "summary": {
@@ -127,7 +178,45 @@
             "roi": null
           }
         },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
         "planB": {
+          "count": 2,
+          "summary": {
+            "picks": 2,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 2,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
           "count": 2,
           "summary": {
             "picks": 2,
@@ -183,6 +272,47 @@
   "newIssues": [
     {
       "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-07-28/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-07-28/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    }
+  ],
+  "newActionableIssues": [],
+  "resolvedIssues": [],
+  "persistentIssues": [
+    {
+      "severity": "info",
       "source": "invariant-report",
       "type": "coverage_floor_drop",
       "message": "Canonical fixtures are below static floor but meet the effective floor.",
@@ -226,88 +356,18 @@
       "severity": "warning",
       "source": "build-report",
       "type": "build_warning",
-      "message": "expected_leagues_missing_from_published:caf.afcon",
-      "details": {
-        "raw": "expected_leagues_missing_from_published:caf.afcon"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B observation picks are still unresolved.",
-      "details": {
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "expected_leagues_missing_from_published:caf.afcon",
-      "details": {
-        "raw": "expected_leagues_missing_from_published:caf.afcon"
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-07-27.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "coverage_readiness",
-        "artifact": "coverage-readiness/2026-07-27.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_coverage_readiness",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "caf.w.nations",
-          "par.1",
-          "crc.1",
-          "gua.1",
-          "slv.1",
-          "aff.championship"
-        ],
-        "raw": "acquisition_skipped_slugs:caf.w.nations,par.1,crc.1,gua.1,slv.1,aff.championship",
-        "contextOnly": false
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
       "message": "canonical_leagues_missing_from_published:uru.1",
       "details": {
         "raw": "canonical_leagues_missing_from_published:uru.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "expected_leagues_missing_from_published:caf.afcon",
+      "details": {
+        "raw": "expected_leagues_missing_from_published:caf.afcon"
       }
     },
     {
@@ -323,10 +383,35 @@
     },
     {
       "severity": "info",
+      "source": "build-report",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
-      "message": "Value Plan A/B comparison artifact is available.",
+      "message": "Four-plan Value comparison artifact is available.",
       "details": {
+        "complete": true,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
         "planA": {
           "count": 0,
           "summary": {
@@ -346,7 +431,45 @@
             "roi": null
           }
         },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
         "planB": {
+          "count": 2,
+          "summary": {
+            "picks": 2,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 2,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
           "count": 2,
           "summary": {
             "picks": 2,
