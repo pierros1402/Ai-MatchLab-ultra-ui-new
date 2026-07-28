@@ -633,68 +633,185 @@ function renderPlanSummary(summary) {
     hitRateLabel(summary?.hitRate);
 }
 
-function renderPlanBlock(plan, title) {
-  const picks = Array.isArray(plan?.picks) ? plan.picks : [];
-  const rows = picks.map(renderComparisonRow).join("");
+function renderPlanBlock(plan, title, information) {
+    const picks =
+      Array.isArray(plan?.picks)
+        ? plan.picks
+        : [];
 
-  return [
-    '<div class="value-plan-card">',
-    '  <div class="value-plan-title">' + esc(title) + '</div>',
-    '  <div class="value-plan-summary">' + esc(renderPlanSummary(plan?.summary || {})) + '</div>',
-    '  <div class="value-plan-rows">',
-    rows || '<div class="panel-empty">No picks.</div>',
-    '  </div>',
-    '</div>'
-  ].join("");
-}
+    const rows =
+      picks
+        .map(renderComparisonRow)
+        .join("");
 
-function renderPlanComparison(payload) {
-  if (!resolveDomRefs()) return;
+    const infoHtml =
+      information
+        ? [
+            '<details class="value-plan-info">',
+            '  <summary',
+            '    class="value-plan-info-button"',
+            '    aria-label="Information about ' + esc(title) + '"',
+            '    title="Information about ' + esc(title) + '"',
+            '  >i</summary>',
+            '  <div class="value-plan-info-popover" role="note">',
+            esc(information),
+            '  </div>',
+            '</details>'
+          ].join("")
+        : "";
 
-  lastPayload = payload;
-
-  const comparison = payload?.comparison || {};
-  const planA = comparisonPlan(comparison.plans, "A");
-  const planB = comparisonPlan(comparison.plans, "B");
-  const date = comparison?.date || payload?.date || "";
-  const totalA = Number(planA?.summary?.picks || 0);
-  const totalB = Number(planB?.summary?.picks || 0);
-
-  const headerHtml = [
-    '<div class="value-head value-compare-head">',
-    '  <div class="value-head-row">',
-    '    <div>',
-    '      <div class="value-head-title">' + esc(date) + ' • Plan A/B comparison</div>',
-    '      <div class="value-head-sub">Plan A ' + esc(totalA) + ' picks • Plan B ' + esc(totalB) + ' picks</div>',
-    '    </div>',
-    '  </div>',
-    '</div>'
-  ].join("");
-
-  const bodyHtml = [
-    '<div class="value-plan-compare">',
-    renderPlanBlock(planA, "Plan A - current UI value"),
-    renderPlanBlock(planB, "Plan B - strict value-policy-v2.3 observation"),
-    '</div>'
-  ].join("");
-
-  if (headWrapEl) {
-    headWrapEl.innerHTML = headerHtml;
-    bodyEl.innerHTML = bodyHtml;
-  } else {
-    bodyEl.innerHTML = headerHtml + bodyHtml;
+    return [
+      '<div class="value-plan-card">',
+      '  <div class="value-plan-title-row">',
+      '    <div class="value-plan-title">' +
+        esc(title) +
+      '    </div>',
+      infoHtml,
+      '  </div>',
+      '  <div class="value-plan-summary">' +
+        esc(
+          renderPlanSummary(
+            plan?.summary || {}
+          )
+        ) +
+      '  </div>',
+      '  <div class="value-plan-rows">',
+      rows ||
+        '<div class="panel-empty">No picks.</div>',
+      '  </div>',
+      '</div>'
+    ].join("");
   }
 
-  hideAnalyzingIfHasPicks(totalA + totalB);
-  window.AIML_PANEL?.set(root, "data");
+  function renderPlanComparison(payload) {
+    if (!resolveDomRefs()) return;
 
-  console.log("[value-picks] comparison render:html-written", {
-    date,
-    planA: totalA,
-    planB: totalB,
-    htmlLength: bodyEl.innerHTML.length
-  });
-}
+    lastPayload = payload;
+
+    const comparison =
+      payload?.comparison || {};
+
+    const plans =
+      comparison.plans || {};
+
+    const planA =
+      comparisonPlan(plans, "A");
+
+    const planB =
+      comparisonPlan(plans, "B");
+
+    const planA2 =
+      comparisonPlan(plans, "A2");
+
+    const planB2 =
+      comparisonPlan(plans, "B2");
+
+    const date =
+      comparison?.date ||
+      payload?.date ||
+      "";
+
+    const totalA =
+      Number(
+        planA?.summary?.picks || 0
+      );
+
+    const totalB =
+      Number(
+        planB?.summary?.picks || 0
+      );
+
+    const totalA2 =
+      Number(
+        planA2?.summary?.picks || 0
+      );
+
+    const totalB2 =
+      Number(
+        planB2?.summary?.picks || 0
+      );
+
+    const total =
+      totalA +
+      totalB +
+      totalA2 +
+      totalB2;
+
+    const headerHtml = [
+      '<div class="value-head value-compare-head">',
+      '  <div class="value-head-row">',
+      '    <div>',
+      '      <div class="value-head-title">' +
+        esc(date) +
+        ' • Value Plans</div>',
+      '      <div class="value-head-sub">' +
+        'A ' + esc(totalA) +
+        ' • B ' + esc(totalB) +
+        ' • A2 ' + esc(totalA2) +
+        ' • B2 ' + esc(totalB2) +
+        ' picks</div>',
+      '    </div>',
+      '  </div>',
+      '</div>'
+    ].join("");
+
+    const bodyHtml = [
+      '<div class="value-plan-compare">',
+      renderPlanBlock(
+        planA,
+        "Plan A",
+        "Production canonical-only Value. Uses the base statistical probability layer and the existing production thresholds and approval gates. Bookmaker odds do not determine its picks."
+      ),
+      renderPlanBlock(
+        planB,
+        "Plan B",
+        "Observation plan using the same canonical fixture universe. It depends on exact canonical identity joins, current model assessments and strict value-policy-v2.3. Bookmaker odds do not determine its picks."
+      ),
+      renderPlanBlock(
+        planA2,
+        "Plan A2",
+        "Uses the same fixtures, inputs, thresholds and approval gates as Plan A. The only difference is that the underlying probabilities are adjusted for opponent strength before the normal Plan A gates are applied."
+      ),
+      renderPlanBlock(
+        planB2,
+        "Plan B2",
+        "Uses the same canonical fixture universe, exact identity contract, thresholds and strict policy as Plan B. The model probabilities are first adjusted for opponent strength."
+      ),
+      '</div>'
+    ].join("");
+
+    if (headWrapEl) {
+      headWrapEl.innerHTML =
+        headerHtml;
+
+      bodyEl.innerHTML =
+        bodyHtml;
+    } else {
+      bodyEl.innerHTML =
+        headerHtml +
+        bodyHtml;
+    }
+
+    hideAnalyzingIfHasPicks(total);
+
+    window.AIML_PANEL?.set(
+      root,
+      "data"
+    );
+
+    console.log(
+      "[value-picks] four-plan render:html-written",
+      {
+        date,
+        planA: totalA,
+        planB: totalB,
+        planA2: totalA2,
+        planB2: totalB2,
+        htmlLength:
+          bodyEl.innerHTML.length
+      }
+    );
+  }
 
   function render(payload) {
     if (!resolveDomRefs()) return;

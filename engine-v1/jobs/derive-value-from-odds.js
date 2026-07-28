@@ -21,7 +21,7 @@
  *   ok: true,
  *   date: dayKey,
  *   count: N,
- *   source: "derive-value-from-model-assessment",
+ *   source: isPlanB2Observation ? "derive-value-from-opponent-adjusted-model-assessment" : "derive-value-from-model-assessment",
     policyVersion: "value-policy-v2.3",
     sourceContract: {
       valueInput: "odds_memory_ai_assessment",
@@ -66,6 +66,8 @@ import {
   validatePicksAgainstCanonicalFixtures
 } from "../core/plan-b-canonical-membership.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
+import { adjustMarketProbabilities } from "../core/opponent-strength-adjusted-form.js";
+import { loadOpponentAdjustedProfiles } from "../core/opponent-strength-profile-loader.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -602,7 +604,8 @@ function buildValueAudit({
   rejectedRows,
   sourceContract,
   inputFailure = null,
-  membership = null
+  membership = null,
+  isPlanB2Observation = false
 }) {
   const candidateLedger = buildCandidateLedger(candidatePicks, finalPicks, rejectedRows);
   const rejected = candidateLedger.filter((row) => row.status === "rejected");
@@ -614,7 +617,7 @@ function buildValueAudit({
     policyVersion: "value-policy-v2.3",
     generatedAt: new Date().toISOString(),
     date: dayKey,
-    source: "derive-value-from-model-assessment",
+    source: isPlanB2Observation ? "derive-value-from-opponent-adjusted-model-assessment" : "derive-value-from-model-assessment",
     sourceContract,
     inputFailure,
     membership,
@@ -639,36 +642,39 @@ function writeJsonFile(file, payload) {
 }
 export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, outputMode = "production" } = {}) {
   const isPlanBObservation = outputMode === "plan-b-observation";
+  const isPlanB2Observation = outputMode === "plan-b2-observation";
+  const isObservation = isPlanBObservation || isPlanB2Observation;
 
-  const outFile = isPlanBObservation
-    ? resolveDataPath("value-plans", dayKey, "plan-b.json")
+  const outFile = isObservation
+    ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2.json" : "plan-b.json")
     : resolveDataPath("deploy-snapshots", dayKey, "value.json");
 
-  const canonicalOut = isPlanBObservation
-    ? resolveDataPath("value-plans", dayKey, "plan-b.json")
+  const canonicalOut = isObservation
+    ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2.json" : "plan-b.json")
     : resolveDataPath("value", `${dayKey}.json`);
 
-  const canonicalAuditOut = isPlanBObservation
-    ? resolveDataPath("value-plans", dayKey, "plan-b-audit.json")
+  const canonicalAuditOut = isObservation
+    ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json")
     : resolveDataPath("value", "_audit", `${dayKey}.json`);
 
-  const snapshotAuditOut = isPlanBObservation
-    ? resolveDataPath("value-plans", dayKey, "plan-b-audit.json")
+  const snapshotAuditOut = isObservation
+    ? resolveDataPath("value-plans", dayKey, isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json")
     : resolveDataPath("deploy-snapshots", dayKey, "value-audit.json");
 
-  const snapshotDir = isPlanBObservation
+  const snapshotDir = isObservation
     ? resolveDataPath("value-plans", dayKey)
     : resolveDataPath("deploy-snapshots", dayKey);
 
-  const valueDir = isPlanBObservation
+  const valueDir = isObservation
     ? resolveDataPath("value-plans", dayKey)
     : resolveDataPath("value");
 
-  const auditPaths = isPlanBObservation
+  const auditFileName = isPlanB2Observation ? "plan-b2-audit.json" : "plan-b-audit.json";
+  const auditPaths = isObservation
     ? {
-        canonical: `data/value-plans/${dayKey}/plan-b-audit.json`,
+        canonical: `data/value-plans/${dayKey}/${auditFileName}`,
         snapshot: null,
-        observation: `data/value-plans/${dayKey}/plan-b-audit.json`
+        observation: `data/value-plans/${dayKey}/${auditFileName}`
       }
     : {
         canonical: `data/value/_audit/${dayKey}.json`,
@@ -756,7 +762,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     sourceContract,
     {
       fixtureUniverse:
-        fixtureUniverseContract
+        fixtureUniverseContract,
+      probabilityLayer: isPlanB2Observation ? "opponent_strength_adjusted" : "current"
     }
   );
 
@@ -819,7 +826,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       riskFlags: ["no_canonical_fixture_input"],
       sourceContract,
     outputMode,
-    planId: isPlanBObservation ? "plan-b" : "production",
+    planId: isPlanB2Observation ? "plan-b2" : (isPlanBObservation ? "plan-b" : "production"),
     audit: auditPaths
     };
 
@@ -831,7 +838,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       rejectedRows: [],
       sourceContract,
       inputFailure: "missing_canonical_fixture_universe",
-      membership
+      membership,
+      isPlanB2Observation
     });
 
     writeJsonFile(canonicalAuditOut, audit);
@@ -844,8 +852,34 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
 
   const candidatePicks = [];
 
-  for (const match of sourceMatches) {
-    if (!match.aiAssessment?.markets) continue;
+  for (const originalMatch of sourceMatches) {
+    if (!originalMatch.aiAssessment?.markets) continue;
+    let match = originalMatch;
+    if (isPlanB2Observation) {
+      const profiles = loadOpponentAdjustedProfiles(
+        String(originalMatch?.leagueSlug || ""),
+        String(originalMatch?.home || originalMatch?.homeTeam || ""),
+        String(originalMatch?.away || originalMatch?.awayTeam || "")
+      );
+      const adjustedAssessment = adjustMarketProbabilities(
+        originalMatch.aiAssessment.markets,
+        profiles.home,
+        profiles.away
+      );
+      match = {
+        ...originalMatch,
+        aiAssessment: {
+          ...originalMatch.aiAssessment,
+          markets: adjustedAssessment.markets,
+          model: {
+            ...originalMatch.aiAssessment.model,
+            opponentAdjusted: true,
+            opponentAdjustedProfiles: profiles,
+            adjustmentScale: adjustedAssessment.adjustmentScale
+          }
+        }
+      };
+    }
 
     const canonicalId = String(match?.canonicalId || "").trim();
     if (!canonicalId) continue;
@@ -898,7 +932,8 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     finalPicks,
     rejectedRows,
     sourceContract,
-    membership
+    membership,
+    isPlanB2Observation
   });
 
   const outputMembership = validatePicksAgainstCanonicalFixtures(
@@ -934,7 +969,7 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
       riskFlags: ["unsafe_plan_b_output_suppressed"],
       sourceContract,
       outputMode,
-      planId: isPlanBObservation ? "plan-b" : "production",
+      planId: isPlanB2Observation ? "plan-b2" : (isPlanBObservation ? "plan-b" : "production"),
       audit: auditPaths
     };
 
@@ -953,11 +988,11 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
     ok: true,
     date: dayKey,
     count: finalPicks.length,
-    source: "derive-value-from-model-assessment",
+    source: isPlanB2Observation ? "derive-value-from-opponent-adjusted-model-assessment" : "derive-value-from-model-assessment",
     policyVersion: "value-policy-v2.3",
     sourceContract,
     outputMode,
-    planId: isPlanBObservation ? "plan-b" : "production",
+    planId: isPlanB2Observation ? "plan-b2" : (isPlanBObservation ? "plan-b" : "production"),
     audit: auditPaths,
     verifiedValue: 0,
     modelLean: finalPicks.length,

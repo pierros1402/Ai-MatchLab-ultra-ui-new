@@ -920,6 +920,8 @@ export function buildPlanAUnavailableComparisonPayload({
   reason,
   planAPath,
   planBPath,
+  planA2Path = null,
+  planB2Path = null,
   outputPath,
   planB,
   fixturesPath,
@@ -982,6 +984,8 @@ export function buildPlanAUnavailableComparisonPayload({
       finalIdentityAmbiguities,
       planAPath,
       planBPath,
+      planA2Path,
+      planB2Path,
       planBMembership,
       planAFreeze: null,
       outputPath
@@ -1009,6 +1013,8 @@ function parseArgs(argv) {
     write: false,
     planA: "",
     planB: "",
+    planA2: "",
+    planB2: "",
     output: "",
     planAUnavailableReason: ""
   };
@@ -1019,6 +1025,8 @@ function parseArgs(argv) {
     else if (arg === "--write") out.write = true;
     else if (arg.startsWith("--plan-a=")) out.planA = arg.slice("--plan-a=".length);
     else if (arg.startsWith("--plan-b=")) out.planB = arg.slice("--plan-b=".length);
+    else if (arg.startsWith("--plan-a2=")) out.planA2 = arg.slice("--plan-a2=".length);
+    else if (arg.startsWith("--plan-b2=")) out.planB2 = arg.slice("--plan-b2=".length);
     else if (arg.startsWith("--output=")) out.output = arg.slice("--output=".length);
     else if (arg.startsWith("--plan-a-unavailable=")) {
       out.planAUnavailableReason =
@@ -1060,6 +1068,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       : snapshotPlanAPath)
   );
   const planBPath = path.resolve(options.planB || dataPath("value-plans", dayKey, "plan-b.json"));
+  const planA2Path = path.resolve(options.planA2 || dataPath("value-plans", dayKey, "plan-a2.json"));
+  const planB2Path = path.resolve(options.planB2 || dataPath("value-plans", dayKey, "plan-b2.json"));
   const outputPath = path.resolve(options.output || dataPath("value-comparison", `${dayKey}.json`));
   const planAUnavailableReason =
     clean(
@@ -1095,6 +1105,8 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
   }
 
   const planBPayload = readJsonSafe(planBPath, null);
+  const planA2Payload = readJsonSafe(planA2Path, null);
+  const planB2Payload = readJsonSafe(planB2Path, null);
 
   if (
     !planAPayload &&
@@ -1203,6 +1215,28 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     oddsById,
     multiOddsById
   });
+
+  const planA2 = planA2Payload ? buildPlan({
+    planId: "plan-a2",
+    label: "Plan A2 - opponent-strength adjusted observation",
+    sourcePath: path.relative(ROOT, planA2Path).replaceAll("\\", "/"),
+    payload: planA2Payload,
+    fixturesById: fixtures.byId,
+    finalById: finalResults.byId,
+    oddsById,
+    multiOddsById
+  }) : null;
+
+  const planB2 = planB2Payload ? buildPlan({
+    planId: "plan-b2",
+    label: "Plan B2 - opponent-strength adjusted observation",
+    sourcePath: path.relative(ROOT, planB2Path).replaceAll("\\", "/"),
+    payload: planB2Payload,
+    fixturesById: fixtures.byId,
+    finalById: finalResults.byId,
+    oddsById,
+    multiOddsById
+  }) : null;
 
   if (planAUnavailableRequested) {
     const payload =
@@ -1328,7 +1362,9 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
     },
     plans: {
       A: planA,
-      B: planB
+      A2: planA2,
+      B: planB,
+      B2: planB2
     },
     comparison
   };

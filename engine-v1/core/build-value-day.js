@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "node:path";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import {
   evaluateMatchValue,
@@ -11,6 +12,8 @@ import {
   buildValueFixtureUniverse,
   valueFixtureUniverseContract
 } from "./value-fixture-universe.js";
+import { adjustPlanAValue } from "./opponent-strength-adjusted-form.js";
+import { loadOpponentAdjustedProfiles } from "./opponent-strength-profile-loader.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -238,9 +241,9 @@ function isPlayable(match) {
 }
 
 // ------------------------------
-function writeValueSnapshot(date, result) {
-  ensureDir(resolveDataPath("value"));
-  const file = resolveDataPath("value", `${date}.json`);
+function writeValueSnapshot(date, result, outputPath = null) {
+  ensureDir(outputPath ? path.dirname(path.resolve(outputPath)) : resolveDataPath("value"));
+  const file = outputPath || resolveDataPath("value", `${date}.json`);
 
   const payload = {
     date,
@@ -261,9 +264,9 @@ function writeValueSnapshot(date, result) {
 // predicates and NEVER gates, mutates, or re-scores a pick (value scoring is
 // frozen — value-baseline-2026-07-06). Written to data/value/_audit/<day>.json;
 // the deploy exporter ships it as value-audit.json.
-function writeValueAudit(date, audit) {
-  ensureDir(resolveDataPath("value", "_audit"));
-  const file = resolveDataPath("value", "_audit", `${date}.json`);
+function writeValueAudit(date, audit, auditPath = null) {
+  ensureDir(auditPath ? path.dirname(path.resolve(auditPath)) : resolveDataPath("value", "_audit"));
+  const file = auditPath || resolveDataPath("value", "_audit", `${date}.json`);
   fs.writeFileSync(file, JSON.stringify(audit, null, 2));
 }
 // ------------------------------
@@ -835,9 +838,9 @@ function applyIntelligenceToValue(value, intelligence) {
 }
 
 // ------------------------------
-export async function buildValueDay(date, { rebuild = false, env } = {}) {
+export async function buildValueDay(date, { rebuild = false, env, opponentAdjusted = false, outputPath = null, auditPath = null } = {}) {
   const season = currentSeason();
-  const cacheKey = `${season}:${date}`;
+  const cacheKey = `${season}:${date}:${opponentAdjusted ? "a2" : "a"}`;
 
   if (!rebuild && __valueDayCache.has(cacheKey)) {
     return __valueDayCache.get(cacheKey);
@@ -1036,9 +1039,21 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
           intelligence
         );
 
+      const profileBundle = opponentAdjusted
+        ? loadOpponentAdjustedProfiles(
+            String(match?.leagueSlug || ""),
+            String(match?.homeTeam || ""),
+            String(match?.awayTeam || "")
+          )
+        : null;
+
+      const profileAdjustedValue = opponentAdjusted
+        ? adjustPlanAValue(enrichedValue, profileBundle?.home, profileBundle?.away)
+        : enrichedValue;
+
       const finalValue =
         applyMatchProfileToValue(
-          enrichedValue,
+          profileAdjustedValue,
           matchProfile
         );
 
@@ -1113,7 +1128,9 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   const result = {
     ok: true,
     date,
-    source: inputSource,
+    source: opponentAdjusted ? "canonical_fixtures_opponent_adjusted" : inputSource,
+    planId: opponentAdjusted ? "plan-a2" : "plan-a",
+    outputMode: opponentAdjusted ? "plan-a2-observation" : "production",
     count: dedupedPicks.length,
     picks: dedupedPicks,
     fixtureUniverse:
@@ -1123,7 +1140,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   };
 
   __valueDayCache.set(cacheKey, result);
-  writeValueSnapshot(date, result);
+  writeValueSnapshot(date, result, outputPath);
 
   // Production value-audit (rejection ledger) — observability only, derived from
   // the counters gathered above; does not affect `result`/picks in any way.
@@ -1226,7 +1243,9 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
     ok: true,
     date,
     policyVersion: STRICT_VALUE_POLICY_VERSION,
-    source: inputSource,
+    source: opponentAdjusted ? "canonical_fixtures_opponent_adjusted" : inputSource,
+    planId: opponentAdjusted ? "plan-a2" : "plan-a",
+    outputMode: opponentAdjusted ? "plan-a2-observation" : "production",
     sourceContract: {
       canonicalOnly: inputSource === "canonical_fixtures",
       deploySnapshotInput: false,
@@ -1273,7 +1292,7 @@ export async function buildValueDay(date, { rebuild = false, env } = {}) {
   }
 
   try {
-    writeValueAudit(date, audit);
+    writeValueAudit(date, audit, auditPath);
   } catch (e) {
     console.log("[value] audit write failed", e?.message || e);
   }

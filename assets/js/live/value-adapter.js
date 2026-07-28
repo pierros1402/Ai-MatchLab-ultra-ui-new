@@ -138,7 +138,15 @@
   function comparisonPayloadFrom(comparison, date) {
     const planA = comparisonRows(comparison, "A");
     const planB = comparisonRows(comparison, "B");
-    const allRows = planA.concat(planB);
+    const planA2 = comparisonRows(comparison, "A2");
+    const planB2 = comparisonRows(comparison, "B2");
+
+    const allRows = [
+      ...planA,
+      ...planB,
+      ...planA2,
+      ...planB2
+    ];
 
     return {
       ok: true,
@@ -148,7 +156,7 @@
       total: allRows.length,
       picks: allRows,
       items: allRows,
-      comparison: comparison
+      comparison
     };
   }
 

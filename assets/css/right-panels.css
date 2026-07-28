@@ -691,3 +691,107 @@
   border-color: transparent;
   color: rgba(154,164,178,0.75);
 }
+
+/* AI MatchLab four-plan information popovers */
+
+.value-plan-title-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.value-plan-title-row .value-plan-title {
+  min-width: 0;
+}
+
+.value-plan-info {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.value-plan-info > summary {
+  list-style: none;
+}
+
+.value-plan-info > summary::-webkit-details-marker {
+  display: none;
+}
+
+.value-plan-info-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  opacity: 0.78;
+}
+
+.value-plan-info-button:hover,
+.value-plan-info-button:focus-visible,
+.value-plan-info[open] .value-plan-info-button {
+  opacity: 1;
+}
+
+.value-plan-info-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.value-plan-info-popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(320px, 78vw);
+  padding: 11px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.98);
+  color: #f8fafc;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.value-plan-info-popover::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: 7px;
+  width: 9px;
+  height: 9px;
+  border-top: 1px solid rgba(148, 163, 184, 0.45);
+  border-left: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.98);
+  transform: rotate(45deg);
+}
+
+@media (max-width: 620px) {
+  .value-plan-info-popover {
+    position: fixed;
+    top: auto;
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    width: auto;
+    max-height: 45vh;
+    overflow: auto;
+  }
+
+  .value-plan-info-popover::before {
+    display: none;
+  }
+}
