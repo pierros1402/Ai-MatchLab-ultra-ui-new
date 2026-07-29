@@ -29,8 +29,39 @@
     return days[d.getUTCDay()] + " " + d.getUTCDate();
   }
 
-  var TODAY = athensToday();
+  var CALENDAR_TODAY = athensToday();
+  var TODAY = CALENDAR_TODAY;
   var activeDate = TODAY;
+
+  function validDay(value) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
+  }
+
+  async function resolvePublishedDay() {
+    try {
+      var response = await fetch("data/deploy-snapshots/latest.json?ts=" + Date.now(), { cache: "no-store" });
+      if (!response.ok) return TODAY;
+      var payload = await response.json();
+      var published = String(payload && (payload.date || payload.dayKey) || "").slice(0, 10);
+      if (!validDay(published) || published > CALENDAR_TODAY) return TODAY;
+      return published;
+    } catch (_) {
+      return TODAY;
+    }
+  }
+
+  async function syncOperationalDay(emitChange) {
+    CALENDAR_TODAY = athensToday();
+    var published = await resolvePublishedDay();
+    var changed = published !== TODAY;
+    TODAY = published;
+    window.__AIML_OPERATIONAL_DAY = TODAY;
+    if (changed || !activeDate) activeDate = TODAY;
+    render();
+    if (emitChange && changed) {
+      emit("date:change", { date: activeDate, isToday: activeDate === TODAY, operationalDay: TODAY });
+    }
+  }
 
   function emit(ev, detail) {
     window.dispatchEvent(new CustomEvent(ev, { detail: detail }));
@@ -71,13 +102,12 @@
     var msUntilMidnight =
       (24 * 60 - athens.getUTCHours() * 60 - athens.getUTCMinutes()) * 60 * 1000 - athens.getUTCSeconds() * 1000;
     setTimeout(function () {
-      TODAY = athensToday();
-      render();
-      scheduleRollover();
+      syncOperationalDay(true).finally(scheduleRollover);
     }, msUntilMidnight + 500);
   }
 
   render();
+  syncOperationalDay(true);
   scheduleRollover();
 
   // Expose for other modules

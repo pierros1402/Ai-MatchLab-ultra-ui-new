@@ -52,6 +52,7 @@ import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./fetch-multi-boo
 import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./fetch-oddsapiio-odds.js";
 import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
+import { promoteAuthoritativeTerminalOverlaysDay } from "./promote-authoritative-terminal-overlays-day.js";
 import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
@@ -640,6 +641,7 @@ export async function runDailyCycle(options = {}) {
   let teamNewsSourceEnrichmentTasks = null;
   let teamNewsResearchReview = null;
   let teamNewsBuild = null;
+  let authoritativeTerminalPromotion = null;
   let finalDetailsSync = null;
   let valueBuild = null;
   let fixtureAcquisitionReadiness = null;
@@ -1396,6 +1398,59 @@ export async function runDailyCycle(options = {}) {
       }
     );
   }
+  console.log(
+    "[daily-cycle] authoritative-terminal-promotion:start",
+    { dayKey }
+  );
+
+  authoritativeTerminalPromotion =
+    promoteAuthoritativeTerminalOverlaysDay(
+      dayKey,
+      {
+        write: true
+      }
+    );
+
+  if (authoritativeTerminalPromotion?.ok !== true) {
+    const error =
+      new Error(
+        "authoritative_terminal_promotion_failed"
+      );
+
+    error.code =
+      "AUTHORITATIVE_TERMINAL_PROMOTION_FAILED";
+
+    error.dayKey =
+      dayKey;
+
+    error.promotion =
+      authoritativeTerminalPromotion;
+
+    throw error;
+  }
+
+  console.log(
+    "[daily-cycle] authoritative-terminal-promotion:done",
+    {
+      ok:
+        authoritativeTerminalPromotion?.ok,
+      dayKey:
+        authoritativeTerminalPromotion?.dayKey,
+      candidateRows:
+        authoritativeTerminalPromotion?.candidateRows ?? 0,
+      promotedRows:
+        authoritativeTerminalPromotion?.promotedRows ?? 0,
+      unchangedRows:
+        authoritativeTerminalPromotion?.unchangedRows ?? 0,
+      rejectedRows:
+        authoritativeTerminalPromotion?.rejectedRows ?? 0,
+      ambiguousProviderIds:
+        authoritativeTerminalPromotion?.ambiguousProviderIds ?? 0,
+      byReason:
+        authoritativeTerminalPromotion?.byReason || {}
+    }
+  );
+
   console.log("[daily-cycle] final-details-sync:start", { dayKey });
 
   finalDetailsSync = await buildDetailsDay(dayKey, {
@@ -1517,6 +1572,61 @@ export async function runDailyCycle(options = {}) {
       console.warn("[daily-cycle] finalize-results-truth-sweep:failed", String(e?.message || e));
     }
 
+    console.log(
+      "[daily-cycle] finalize-authoritative-terminal-promotion:start",
+      {
+        finalizeDayKey
+      }
+    );
+
+    const finalizeAuthoritativeTerminalPromotion =
+      promoteAuthoritativeTerminalOverlaysDay(
+        finalizeDayKey,
+        {
+          write: true
+        }
+      );
+
+    if (finalizeAuthoritativeTerminalPromotion?.ok !== true) {
+      const error =
+        new Error(
+          "finalize_authoritative_terminal_promotion_failed"
+        );
+
+      error.code =
+        "FINALIZE_AUTHORITATIVE_TERMINAL_PROMOTION_FAILED";
+
+      error.dayKey =
+        finalizeDayKey;
+
+      error.promotion =
+        finalizeAuthoritativeTerminalPromotion;
+
+      throw error;
+    }
+
+    console.log(
+      "[daily-cycle] finalize-authoritative-terminal-promotion:done",
+      {
+        ok:
+          finalizeAuthoritativeTerminalPromotion.ok,
+        dayKey:
+          finalizeAuthoritativeTerminalPromotion.dayKey,
+        candidateRows:
+          finalizeAuthoritativeTerminalPromotion.candidateRows ?? 0,
+        promotedRows:
+          finalizeAuthoritativeTerminalPromotion.promotedRows ?? 0,
+        unchangedRows:
+          finalizeAuthoritativeTerminalPromotion.unchangedRows ?? 0,
+        rejectedRows:
+          finalizeAuthoritativeTerminalPromotion.rejectedRows ?? 0,
+        ambiguousProviderIds:
+          finalizeAuthoritativeTerminalPromotion.ambiguousProviderIds ?? 0,
+        byReason:
+          finalizeAuthoritativeTerminalPromotion.byReason || {}
+      }
+    );
+
     console.log("[daily-cycle] finalize-canonical-sync:start", { finalizeDayKey });
 
     const finalizeCanonicalSync = syncCanonicalFixturesToJsonDbDay(finalizeDayKey);
@@ -1567,6 +1677,25 @@ export async function runDailyCycle(options = {}) {
     // wait for the last unknown one; finalize.ok keeps gating only the
     // history append below.
     try {
+      console.log("[daily-cycle] finalized-detail-rebuild:start", { finalizeDayKey });
+
+      // The results-truth sweep above may terminalize canonical rows after the
+      // previous day's details were already built. A normal detail build skips
+      // existing files, so the snapshot can otherwise preserve STATUS_SCHEDULED
+      // and 0-0 while canonical truth is FT with a real score. Force one rebuild
+      // before the previous-day snapshot export so fixtures, details, final-result
+      // export and Value settlement all consume the same terminal truth.
+      const finalizedDetailRebuild = await buildDetailsDay(finalizeDayKey, {
+        rebuild: true
+      });
+
+      console.log("[daily-cycle] finalized-detail-rebuild:done", {
+        ok: finalizedDetailRebuild?.ok,
+        dayKey: finalizedDetailRebuild?.dayKey,
+        built: finalizedDetailRebuild?.built ?? 0,
+        skipped: finalizedDetailRebuild?.skipped ?? 0
+      });
+
       console.log("[daily-cycle] finalized-deploy-snapshot-export:start", { finalizeDayKey });
 
       // preserveValue: this re-export now runs every night regardless of

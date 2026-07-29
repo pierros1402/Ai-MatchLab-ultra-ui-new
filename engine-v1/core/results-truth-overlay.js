@@ -155,7 +155,33 @@ export function overlayResultsTruth(matches, dayKey) {
 
   return list.map(m => {
     try {
-      if (!isUpgradeable(m)) return m;
+            const currentRank = statusRankFromParts(
+        m?.status,
+        m?.rawStatus,
+        m?.statusType,
+        m?.statusName
+      );
+
+      if (currentRank === STATUS_RANK.FINAL) {
+        const rawStatus = String(m?.rawStatus || "").trim().toUpperCase();
+        const rawStatusIsTerminal =
+          rawStatus === "FT" ||
+          rawStatus === "FINAL" ||
+          rawStatus === "STATUS_FINAL" ||
+          rawStatus === "FULL_TIME" ||
+          rawStatus === "STATUS_FULL_TIME";
+
+        if (!rawStatusIsTerminal) {
+          return {
+            ...m,
+            rawStatus: "STATUS_FINAL",
+          };
+        }
+
+        return m;
+      }
+
+      if (currentRank === STATUS_RANK.SPECIAL) return m;
 
       const slug = String(m.leagueSlug || "");
       if (!slug) return m;
@@ -191,7 +217,7 @@ export function overlayResultsTruth(matches, dayKey) {
         ...m,
         status: "FT",
         statusType: "FT",
-        rawStatus: m.rawStatus || m.status || "",
+        rawStatus: "STATUS_FINAL",
         scoreHome: found.scoreHome,
         scoreAway: found.scoreAway,
         resultSource: "league-memory",

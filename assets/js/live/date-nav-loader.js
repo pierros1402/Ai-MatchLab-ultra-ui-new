@@ -30,10 +30,18 @@
     }
   }
 
+  function operationalToday() {
+    if (window.DateNav && typeof window.DateNav.getToday === "function") {
+      return window.DateNav.getToday();
+    }
+    return String(window.__AIML_OPERATIONAL_DAY || athensToday()).slice(0, 10);
+  }
+
   function setSelectedDate(date) {
-    var ymd = String(date || athensToday()).slice(0, 10);
+    var today = operationalToday();
+    var ymd = String(date || today).slice(0, 10);
     window.__AIML_SELECTED_DATE = ymd;
-    window.__AIML_VIEWING_NON_TODAY_DATE = ymd !== athensToday() ? ymd : null;
+    window.__AIML_VIEWING_NON_TODAY_DATE = ymd !== today ? ymd : null;
   }
 
 
@@ -94,7 +102,7 @@
   });
 
   // Selected date starts as today until the user navigates.
-  setSelectedDate(athensToday());
+  setSelectedDate(operationalToday());
 
   // Expose for debugging
   window.DateNavLoader = { loadDate: loadMatchesForDate };

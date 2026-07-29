@@ -482,6 +482,13 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
 
+      # FINAL PUBLISH CONTRACT — no snapshot commit is allowed unless every
+      # mandatory artifact exists, parses, belongs to DAY_KEY, is fresh, is
+      # invariant-safe, and latest.json points to this exact manifest.
+      - name: Complete daily publish contract gate
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --gate
+
       - name: Sync System Health GitHub issue
         if: env.SKIP_BUILD != 'true'
         continue-on-error: true
