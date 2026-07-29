@@ -7,6 +7,9 @@ import {
   ensureDetailsForFixtures,
   enrichFixtureRowsFromDisplaySnapshot
 } from "./build-details-day.js";
+import {
+  synchronizeDetailStatusState
+} from "../core/detail-status-sync.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -449,7 +452,13 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
   let totalBytes = 0;
   let largest = { file: null, bytes: 0, mb: 0 };
 
-  const preserveExistingDetails = options?.preserveDetails === true;
+  const preserveExistingDetails =
+    options?.preserveDetails === true;
+
+  const fixturesById =
+    options?.fixturesById instanceof Map
+      ? options.fixturesById
+      : new Map();
 
   // Snapshot details contract: a detail may only ship when it belongs to the
   // day's final fixture set. Orphans (built for fixtures that later dropped out
@@ -505,7 +514,67 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       Ξ£ΞΊΟΟ€ΞΉΞΌΞ± Ξ”Ξ•Ξ ΞΊΟΞ²ΞΏΟ…ΞΌΞµ UI sections.
       Ξ¤ΞΏ deploy snapshot ΞΊΟΞ±Ο„Ξ¬ Ο€Ξ»Ξ®ΟΞµΟ‚ detail payload Ξ³ΞΉΞ± Ξ½Ξ± Ξ±Ξ½ΞΏΞ―Ξ³ΞµΞΉ Ο„ΞΏ Details panel ΟƒΟ„ΞΏ Render ΟΟ€Ο‰Ο‚ Ο„ΞΏ local.
     */
-    writeJsonStable(outFile, detail);
+    const existingDeployDetail =
+      preserveExistingDetails
+        ? readJsonSafe(outFile, null)
+        : null;
+
+    const selectedExistingDetail =
+      preserveExistingDetails &&
+      existingDeployDetail &&
+      typeof existingDeployDetail === "object"
+        ? existingDeployDetail
+        : null;
+
+    const detailToWrite =
+      selectedExistingDetail ||
+      detail;
+
+    const fixtureRow =
+      fixturesById.get(
+        String(matchId || "").trim()
+      ) ||
+      fixturesById.get(
+        String(
+          detailToWrite?.basic?.canonicalId ||
+          detailToWrite?.matchId ||
+          detailToWrite?.basic?.matchId ||
+          detailToWrite?.fixture?.matchId ||
+          ""
+        ).trim()
+      ) ||
+      null;
+
+    let detailStateSync = null;
+
+    if (
+      fixtureRow &&
+      detailToWrite &&
+      typeof detailToWrite === "object"
+    ) {
+      detailStateSync =
+        synchronizeDetailStatusState(
+          detailToWrite,
+          fixtureRow
+        );
+
+      if (!detailStateSync.ok) {
+        throw new Error(
+          `detail_status_sync_failed:${matchId}:${detailStateSync.reason || "unknown"}`
+        );
+      }
+    }
+
+    const mustWriteDetail =
+      !selectedExistingDetail ||
+      detailStateSync?.changed === true;
+
+    if (mustWriteDetail) {
+      writeJsonStable(
+        outFile,
+        detailToWrite
+      );
+    }
 
     const bytes = canonicalDetailBytesOfFile(outFile);
     totalBytes += bytes;
@@ -522,7 +591,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       file: path.basename(outFile),
       bytes,
       mb: mb(bytes),
-      ...summarizeDetail(detail)
+      ...summarizeDetail(detailToWrite)
     });
   }
 
@@ -539,13 +608,68 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       // preserveDetails keeps expensive detail payloads across exports, but an
       // orphan is not a cache hit — it is a fixture that no longer exists in
       // the day's final set. Delete it so counts stay honest.
-      if (isOrphan(detail, path.basename(name, ".json"), path.basename(name, ".json"))) {
-        fs.rmSync(detailFile, { force: true });
+      const detailId =
+        path.basename(
+          name,
+          ".json"
+        );
+
+      if (
+        isOrphan(
+          detail,
+          detailId,
+          detailId
+        )
+      ) {
+        fs.rmSync(
+          detailFile,
+          {
+            force: true
+          }
+        );
+
         orphansRemoved.push(name);
         continue;
       }
 
-      const bytes = canonicalDetailBytesOfFile(detailFile);
+      const fixtureRow =
+        fixturesById.get(detailId) ||
+        fixturesById.get(
+          String(
+            detail?.basic?.canonicalId ||
+            detail?.matchId ||
+            detail?.basic?.matchId ||
+            detail?.fixture?.matchId ||
+            ""
+          ).trim()
+        ) ||
+        null;
+
+      if (fixtureRow) {
+        const detailStateSync =
+          synchronizeDetailStatusState(
+            detail,
+            fixtureRow
+          );
+
+        if (!detailStateSync.ok) {
+          throw new Error(
+            `preserved_detail_status_sync_failed:${detailId}:${detailStateSync.reason || "unknown"}`
+          );
+        }
+
+        if (detailStateSync.changed) {
+          writeJsonStable(
+            detailFile,
+            detail
+          );
+        }
+      }
+
+      const bytes =
+        canonicalDetailBytesOfFile(
+          detailFile
+        );
       totalBytes += bytes;
 
       if (bytes > largest.bytes) {
@@ -625,13 +749,58 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
   // exists — those can still carry a stale wrong-day twin (…20260708) that would
   // otherwise keep a duplicate detail alive.
   const canonicalNames = new Set();
+
   for (const fixture of fixtures) {
-    const cid = String(fixture?.canonicalId || "").trim();
-    const name = cid || String(fixture?.matchId || "").trim();
-    if (name) canonicalNames.add(name);
+    const cid =
+      String(
+        fixture?.canonicalId || ""
+      ).trim();
+
+    const name =
+      cid ||
+      String(
+        fixture?.matchId || ""
+      ).trim();
+
+    if (name) {
+      canonicalNames.add(name);
+    }
   }
 
-  let detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds, canonicalNames });
+  const fixturesById =
+    new Map();
+
+  for (const fixture of fixtures) {
+    const fixtureIds = [
+      fixture?.canonicalId,
+      fixture?.matchId,
+      fixture?.providerMatchId,
+      fixture?.sourceMatchId,
+      fixture?.matchKey
+    ]
+      .map(value =>
+        String(value || "").trim()
+      )
+      .filter(Boolean);
+
+    for (const fixtureId of fixtureIds) {
+      fixturesById.set(
+        fixtureId,
+        fixture
+      );
+    }
+  }
+
+  let detailsReport = copyDetails(
+    dayKey,
+    snapshotDetailsDir,
+    {
+      preserveDetails,
+      validIds,
+      canonicalNames,
+      fixturesById
+    }
+  );
 
   // Fixtures that ended the day without any detail file. Ground-truth check
   // against the snapshot details directory on disk (not the summaries list,
@@ -669,7 +838,16 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     await ensureDetailsForFixtures(dayKey, missingRows, { allRows: fixtures });
 
     // Bring the freshly built details into the snapshot, then re-check on disk.
-    detailsReport = copyDetails(dayKey, snapshotDetailsDir, { preserveDetails, validIds, canonicalNames });
+    detailsReport = copyDetails(
+    dayKey,
+    snapshotDetailsDir,
+    {
+      preserveDetails,
+      validIds,
+      canonicalNames,
+      fixturesById
+    }
+  );
     missingRows = missingRowsAgainst(detailIdsOnDisk());
 
     if (missingRows.length) {
