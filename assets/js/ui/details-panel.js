@@ -303,6 +303,38 @@ async function fetchIntelHealth(matchId) {
       </div>`;
   }
 
+
+  function renderLeagueTableRows(rows, highlightedTeams = []) {
+    const highlights = new Set(highlightedTeams.map(x => String(x || "").toLowerCase()));
+    return (Array.isArray(rows) ? rows : []).map(r => {
+      const name = String(r.teamName || "");
+      const hl = highlights.has(name.toLowerCase());
+      return `<tr style="${hl ? "background:rgba(120,170,255,0.10);" : ""}border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:5px 6px;text-align:right;opacity:.75;">${esc(r.position ?? "")}</td>
+        <td style="padding:5px 7px;font-weight:${hl ? "900" : "700"};">${esc(name)}</td>
+        <td style="padding:5px 5px;text-align:right;">${esc(r.played ?? r.matchCount ?? 0)}</td>
+        <td style="padding:5px 5px;text-align:right;">${esc(r.wins ?? 0)}</td>
+        <td style="padding:5px 5px;text-align:right;">${esc(r.draws ?? 0)}</td>
+        <td style="padding:5px 5px;text-align:right;">${esc(r.losses ?? 0)}</td>
+        <td style="padding:5px 5px;text-align:right;">${esc(r.goalsFor ?? 0)}</td>
+        <td style="padding:5px 5px;text-align:right;">${esc(r.goalsAgainst ?? 0)}</td>
+        <td style="padding:5px 7px;text-align:right;font-weight:900;">${esc(r.points ?? 0)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  function renderLeagueTableShell(rows, highlightedTeams = []) {
+    return `<div style="overflow:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="opacity:.65;text-align:right;">
+        <th style="padding:4px 6px;">Θ</th><th style="padding:4px 7px;text-align:left;">Ομάδα</th>
+        <th style="padding:4px 5px;">ΑΓ</th><th style="padding:4px 5px;">Ν</th>
+        <th style="padding:4px 5px;">Ι</th><th style="padding:4px 5px;">Η</th>
+        <th style="padding:4px 5px;">ΓΥ</th><th style="padding:4px 5px;">ΓΚ</th>
+        <th style="padding:4px 7px;">Β</th>
+      </tr></thead><tbody>${renderLeagueTableRows(rows, highlightedTeams)}</tbody>
+    </table></div>`;
+  }
+
   function renderStatsBlock(stats) {
     const arr = Array.isArray(stats) ? stats : [];
     if (!arr.length) return `<div class="muted">No stats.</div>`;
@@ -1712,58 +1744,28 @@ async function renderLocal(match, mountEl) {
       </div>
 
       ${(() => {
-        // League Table — full validated standings, fail-closed behind the
-        // integrity axis (status "gated" when the league is anomalous, so a
-        // corrupt/cumulative table never reaches the UI).
         const st = snap.standings;
         if (!st) return "";
         if (st.status === "gated") {
-          return `
-          <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
-            <div style="font-weight:900;margin-bottom:6px;">League Table</div>
-            <div class="muted" style="font-size:12px;opacity:.75;">Full table withheld pending an integrity check${st.reason ? ` (${esc(String(st.reason))})` : ""}.</div>
-          </div>`;
+          return `<div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);"><div style="font-weight:900;margin-bottom:6px;">Βαθμολογία</div><div class="muted" style="font-size:12px;opacity:.75;">Η βαθμολογία αποκρύφθηκε μέχρι να ολοκληρωθεί ο έλεγχος ακεραιότητας.</div></div>`;
         }
         if (st.status !== "ready" || !Array.isArray(st.rows) || !st.rows.length) return "";
-        const homeRaw = (m.home || m.homeTeam || "").toLowerCase();
-        const awayRaw = (m.away || m.awayTeam || "").toLowerCase();
-        const firstTok = s => String(s || "").toLowerCase().split(" ")[0];
-        const isSide = (name, sideRaw) => {
-          const n = String(name || "").toLowerCase();
-          const t = firstTok(sideRaw);
-          return Boolean(t) && (n.includes(t) || sideRaw.includes(firstTok(n)));
-        };
-        const body = st.rows.map(r => {
-          const hl = isSide(r.teamName, homeRaw) || isSide(r.teamName, awayRaw);
-          const gd = r.goalDifference != null ? (r.goalDifference > 0 ? "+" : "") + r.goalDifference : "—";
-          return `<tr style="${hl ? "background:rgba(120,170,255,0.10);" : ""}border-bottom:1px solid rgba(255,255,255,0.05);">
-            <td style="padding:5px 8px;opacity:.7;text-align:right;">${esc(r.position ?? "")}</td>
-            <td style="padding:5px 8px;font-weight:${hl ? "900" : "700"};">${esc(r.teamName || "")}</td>
-            <td style="padding:5px 6px;text-align:right;opacity:.85;">${esc(r.played ?? "")}</td>
-            <td style="padding:5px 6px;text-align:right;opacity:.7;">${esc(r.wins ?? "")}-${esc(r.draws ?? "")}-${esc(r.losses ?? "")}</td>
-            <td style="padding:5px 6px;text-align:right;opacity:.85;">${esc(gd)}</td>
-            <td style="padding:5px 8px;text-align:right;font-weight:900;">${esc(r.points ?? "")}</td>
-          </tr>`;
-        }).join("");
-        return `
-        <div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
-            <div style="font-weight:900;">League Table</div>
-            ${st.matchday != null ? `<div class="muted" style="font-size:12px;opacity:.75;">Matchday ${esc(st.matchday)}</div>` : ""}
-          </div>
-          <div style="overflow:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:12px;">
-              <thead><tr style="opacity:.6;text-align:right;">
-                <th style="padding:4px 8px;text-align:right;">#</th>
-                <th style="padding:4px 8px;text-align:left;">Team</th>
-                <th style="padding:4px 6px;">P</th>
-                <th style="padding:4px 6px;">W-D-L</th>
-                <th style="padding:4px 6px;">GD</th>
-                <th style="padding:4px 8px;">Pts</th>
-              </tr></thead>
-              <tbody>${body}</tbody>
-            </table>
-          </div>
+        const round = snap?.basic?.providerRound || st?.providerRound || m?.providerRound || null;
+        const roundNumber = round?.verified === true ? Number(round?.roundNumber) : null;
+        const maxPlayed = Math.max(0, ...st.rows.map(row => Number(row?.played) || 0));
+        const isHistoricalPostponedRound = Number.isInteger(roundNumber) && maxPlayed >= roundNumber;
+        const title = Number.isInteger(roundNumber) && !isHistoricalPostponedRound
+          ? `Βαθμολογία πριν από την ${roundNumber}η Αγωνιστική`
+          : "Τρέχουσα βαθμολογία";
+        const form5 = snap.leagueForm5;
+        const hasForm5 = form5?.status === "ready" && Array.isArray(form5.rows);
+        const id = `league-table-${String(m.id || m.matchId || "match").replace(/[^a-z0-9_-]/gi, "")}`;
+        const highlighted = [m.home || m.homeTeam, m.away || m.awayTeam];
+        return `<div style="margin-top:14px;padding:12px;border:1px solid rgba(255,255,255,0.10);border-radius:14px;background:rgba(255,255,255,0.03);">
+          <div style="font-weight:900;margin-bottom:9px;">${esc(title)}</div>
+          ${hasForm5 ? `<div style="display:flex;gap:6px;margin-bottom:10px;"><button type="button" data-table-toggle="standings" data-table-target="${id}">Βαθμολογία</button><button type="button" data-table-toggle="form5" data-table-target="${id}">Φόρμα 5</button></div>` : ""}
+          <div id="${id}-standings">${renderLeagueTableShell(st.rows, highlighted)}</div>
+          ${hasForm5 ? `<div id="${id}-form5" style="display:none;">${renderLeagueTableShell(form5.rows, highlighted)}</div>` : ""}
         </div>`;
       })()}
 
@@ -2327,6 +2329,18 @@ async function renderLocal(match, mountEl) {
     `;
   }
 // =====================================================
+  document.addEventListener("click", (event) => {
+    const button = event.target?.closest?.("[data-table-toggle]");
+    if (!button) return;
+    const target = button.getAttribute("data-table-target");
+    const mode = button.getAttribute("data-table-toggle");
+    const standings = document.getElementById(`${target}-standings`);
+    const form5 = document.getElementById(`${target}-form5`);
+    if (!standings || !form5) return;
+    standings.style.display = mode === "standings" ? "" : "none";
+    form5.style.display = mode === "form5" ? "" : "none";
+  });
+
   // EVENT BINDING: Today/Active panels emit("details-open", matchObj)
   // This connects that event to DetailsPanel.renderLocal(...)
   // =====================================================

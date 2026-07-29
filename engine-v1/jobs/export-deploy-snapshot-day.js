@@ -3,7 +3,10 @@ import path from "path";
 import crypto from "crypto";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fixturesForSnapshotDay, normalizeMatchId } from "../core/day-fixture-universe.js";
-import { ensureDetailsForFixtures } from "./build-details-day.js";
+import {
+  ensureDetailsForFixtures,
+  enrichFixtureRowsFromDisplaySnapshot
+} from "./build-details-day.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -585,7 +588,10 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
   ensureDir(snapshotDetailsDir);
 
   const fixturesSnapshot = fixturesForSnapshotDay(dayKey);
-  const fixtures = fixturesSnapshot.fixtures;
+  const fixtures = enrichFixtureRowsFromDisplaySnapshot(
+    dayKey,
+    fixturesSnapshot.fixtures
+  );
   const fixturesSource = fixturesSnapshot.source;
   const targetFixtureGate = resolveManifestTargetFixtureGate(fixturesSnapshot);
 

@@ -20,7 +20,7 @@ import { readStandings } from "../storage/standings-memory-db.js";
 import { getH2HForMatch } from "../storage/h2h-memory-db.js";
 import { normalizeTeamKey } from "./normalize.js";
 import { currentSeason } from "./season.js";
-import { computeMatchdayAxis, isLeagueIntegrityGreen, isKnownNonLeagueCompetition } from "./matchday-axis.js";
+import { isLeagueIntegrityGreen, isKnownNonLeagueCompetition } from "./matchday-axis.js";
 import { loadOpponentAdjustedProfiles } from "./opponent-strength-profile-loader.js";
 import { describeProbabilityAdjustment } from "./opponent-strength-adjusted-form.js";
 
@@ -90,6 +90,83 @@ export function buildFormBlock(homeTeam, awayTeam, season = currentSeason()) {
   };
 }
 
+
+function finiteScore(value) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
+function kickoffMs(row) {
+  const direct = Number(row?.kickoff_ms);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const parsed = Date.parse(row?.kickoff || row?.kickoffUtc || "");
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function semanticFormKey(row) {
+  const day = String(row?.dayKey || row?.day || row?.date || "").slice(0, 10);
+  return [
+    String(row?.leagueSlug || "").toLowerCase(),
+    day,
+    normalizeTeamKey(row?.homeTeam),
+    normalizeTeamKey(row?.awayTeam),
+    finiteScore(row?.scoreHome),
+    finiteScore(row?.scoreAway)
+  ].join("|");
+}
+
+function isTerminalFormRow(row) {
+  const status = String(row?.status || "").toUpperCase();
+  return (status === "FT" || status === "FINAL" || status === "AET" || status === "PEN" ||
+    status.includes("FULL_TIME") || status.includes("STATUS_FINAL") ||
+    status.includes("STATUS_AET") || status.includes("STATUS_PEN")) &&
+    finiteScore(row?.scoreHome) !== null && finiteScore(row?.scoreAway) !== null;
+}
+
+function formStatsForTeam(teamName, rows) {
+  let wins = 0, draws = 0, losses = 0, goalsFor = 0, goalsAgainst = 0;
+  const teamKey = normalizeTeamKey(teamName);
+  for (const row of rows) {
+    const home = normalizeTeamKey(row.homeTeam) === teamKey;
+    const gf = home ? finiteScore(row.scoreHome) : finiteScore(row.scoreAway);
+    const ga = home ? finiteScore(row.scoreAway) : finiteScore(row.scoreHome);
+    goalsFor += gf; goalsAgainst += ga;
+    if (gf > ga) wins += 1; else if (gf < ga) losses += 1; else draws += 1;
+  }
+  return { played: rows.length, wins, draws, losses, goalsFor, goalsAgainst, points: wins * 3 + draws };
+}
+
+export function buildLeagueFormTable(leagueSlug, standingsRows, fixtureKickoffUtc, season = currentSeason()) {
+  if (!leagueSlug || !Array.isArray(standingsRows) || !standingsRows.length) {
+    return { status: "empty", leagueSlug: leagueSlug || null, rows: [] };
+  }
+  const cutoff = Date.parse(fixtureKickoffUtc || "");
+  const index = loadTeamFormIndex(season);
+  const result = [];
+  for (const standing of standingsRows) {
+    const teamName = standing?.teamName;
+    const entry = resolveTeamForm(index, teamName);
+    const seen = new Set();
+    const matches = (Array.isArray(entry?.matches) ? entry.matches : [])
+      .filter(row => String(row?.leagueSlug || "") === String(leagueSlug))
+      .filter(isTerminalFormRow)
+      .filter(row => !Number.isFinite(cutoff) || kickoffMs(row) < cutoff)
+      .sort((a, b) => kickoffMs(b) - kickoffMs(a))
+      .filter(row => {
+        const key = semanticFormKey(row);
+        if (seen.has(key)) return false;
+        seen.add(key); return true;
+      })
+      .slice(0, 5);
+    result.push({ teamName, ...formStatsForTeam(teamName, matches), matchCount: matches.length });
+  }
+  result.sort((a, b) => b.points - a.points ||
+    (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst) ||
+    b.goalsFor - a.goalsFor || String(a.teamName).localeCompare(String(b.teamName)));
+  result.forEach((row, index) => { row.position = index + 1; });
+  return { status: result.some(row => row.played > 0) ? "ready" : "empty", leagueSlug, limit: 5, cutoffUtc: fixtureKickoffUtc || null, rows: result };
+}
+
 /**
  * H2H block: recent meetings split into all / at-home / at-away, each with its
  * own W-D-L summary (from the home team's perspective) — the exact shape the
@@ -137,7 +214,7 @@ export function buildH2HBlock(homeTeam, awayTeam, limit = 20) {
  * green. A red/anomalous league returns a gated stub carrying the reason so the
  * UI can explain the absence rather than showing a wrong table.
  */
-export function buildStandingsBlock(leagueSlug) {
+export function buildStandingsBlock(leagueSlug, match = null) {
   if (!leagueSlug) return { status: "empty", reason: "no_league", rows: [] };
 
   // Knockout / cup / national-team competitions have no league table. "empty"
@@ -146,12 +223,10 @@ export function buildStandingsBlock(leagueSlug) {
     return { status: "empty", reason: "not_league_competition", rows: [] };
   }
 
-  const axis = computeMatchdayAxis(leagueSlug);
   if (!isLeagueIntegrityGreen(leagueSlug)) {
     return {
       status: "gated",
-      reason: axis.matchdayAnomaly?.reason || "integrity_not_green",
-      matchday: axis.matchday ?? null,
+      reason: "integrity_not_green",
       rows: []
     };
   }
@@ -160,8 +235,8 @@ export function buildStandingsBlock(leagueSlug) {
   return {
     status: rows.length ? "ready" : "empty",
     leagueSlug,
-    matchday: axis.matchday ?? null,
     updatedAt: readStandings(leagueSlug)?.accepted?.fetchedAt || null,
+    providerRound: match?.providerRound || null,
     rows: rows.map(r => ({
       position: r.position,
       teamName: r.teamName,
@@ -282,7 +357,13 @@ export function buildRichContextBlocks(match) {
   const season = currentSeason();
 
   return {
-    standings: buildStandingsBlock(slug),
+    standings: buildStandingsBlock(slug, match),
+    leagueForm5: buildLeagueFormTable(
+      slug,
+      readStandings(slug)?.accepted?.rows || [],
+      match?.kickoffUtc || match?.kickoff || null,
+      season
+    ),
     form: buildFormBlock(
       home,
       away,

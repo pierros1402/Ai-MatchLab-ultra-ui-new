@@ -1362,6 +1362,95 @@ function compactPlayerUsageIntelForFacts(playerUsageIntel) {
     away: compactSide(playerUsageIntel?.away)
   };
 }
+
+function fixtureIdentityKeys(row) {
+  return [
+    row?.canonicalId,
+    row?.id,
+    row?.matchId,
+    row?.providerMatchId,
+    row?.sourceMatchId,
+    row?.sourceId,
+    row?.matchKey
+  ]
+    .map(value => String(value || "").trim())
+    .filter(Boolean);
+}
+
+/**
+ * Add provider-native display metadata from fixtures-all.json to the canonical
+ * fixture universe without allowing that display artifact to create fixtures.
+ * Identity is matched only against already-existing fixture rows. Missing,
+ * unverified or conflicting round evidence remains absent (fail closed).
+ */
+export function enrichFixtureRowsFromDisplaySnapshot(
+  dayKey,
+  fixtureRows = [],
+  options = {}
+) {
+  const rows = Array.isArray(fixtureRows) ? fixtureRows : [];
+  if (!rows.length) return [];
+
+  const file = resolveDataPath(
+    "deploy-snapshots",
+    dayKey,
+    "fixtures-all.json"
+  );
+
+  const payload = options?.displayPayload || readJsonSafe(file, null);
+  const displayRows = Array.isArray(options?.displayRows)
+    ? options.displayRows
+    : Array.isArray(payload?.matches)
+      ? payload.matches
+      : [];
+
+  if (!displayRows.length) return rows;
+
+  const byIdentity = new Map();
+  for (const displayRow of displayRows) {
+    for (const key of fixtureIdentityKeys(displayRow)) {
+      if (!byIdentity.has(key)) byIdentity.set(key, displayRow);
+    }
+  }
+
+  return rows.map(row => {
+    let displayRow = null;
+    for (const key of fixtureIdentityKeys(row)) {
+      if (byIdentity.has(key)) {
+        displayRow = byIdentity.get(key);
+        break;
+      }
+    }
+
+    const providerRound = displayRow?.providerRound;
+    if (
+      !providerRound ||
+      providerRound.verified !== true ||
+      !Number.isInteger(providerRound.roundNumber)
+    ) {
+      return row;
+    }
+
+    return {
+      ...row,
+      providerRound: {
+        status: providerRound.status || "ready",
+        verified: true,
+        reason: providerRound.reason || null,
+        source: providerRound.source || "flashscore_match_page",
+        roundNumber: providerRound.roundNumber,
+        roundLabel:
+          providerRound.roundLabel ||
+          `Round ${providerRound.roundNumber}`
+      },
+      roundNumber: providerRound.roundNumber,
+      roundLabel:
+        providerRound.roundLabel ||
+        `Round ${providerRound.roundNumber}`
+    };
+  });
+}
+
 function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
   const competitionContext = aiBlocks?.researchedFacts?.competitionContext || null;
   const refereeProfile = aiBlocks?.researchedFacts?.refereeProfile || null;
@@ -1495,6 +1584,9 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       homeTeam: match.homeTeam || null,
       awayTeam: match.awayTeam || null,
       kickoffUtc: toIsoOrNull(match.kickoffUtc),
+      providerRound: match?.providerRound || null,
+      roundNumber: Number.isInteger(match?.roundNumber) ? match.roundNumber : null,
+      roundLabel: match?.roundLabel || null,
       status: match.status || null,
       rawStatus: match.rawStatus || null,
       minute: match.minute || null,
@@ -1551,6 +1643,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
     },
     travel,
     standings: richBlocks.standings,
+    leagueForm5: richBlocks.leagueForm5,
     form: richBlocks.form,
     opponentAdjustedForm:
       richBlocks.opponentAdjustedForm,
@@ -1792,7 +1885,10 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
   // by row count and silently dropped canonical-only fixtures — so a Flashscore-
   // only match could be published without ever getting a detail. See
   // core/day-fixture-universe.js.
-  const rows = resolveDayFixtureRows(dayKey);
+  const rows = enrichFixtureRowsFromDisplaySnapshot(
+    dayKey,
+    resolveDayFixtureRows(dayKey)
+  );
 
   if (!rows.length) {
     return {
@@ -1845,7 +1941,10 @@ export async function buildDetailsDay(dayKey, { rebuild = false } = {}) {
  * the same data/details/<day>/ store buildDetailsDay uses.
  */
 export async function ensureDetailsForFixtures(dayKey, fixtureRows = [], { rebuild = false, allRows = null } = {}) {
-  const rows = Array.isArray(fixtureRows) ? fixtureRows.filter(Boolean) : [];
+  const rows = enrichFixtureRowsFromDisplaySnapshot(
+    dayKey,
+    Array.isArray(fixtureRows) ? fixtureRows.filter(Boolean) : []
+  );
   if (!rows.length) {
     return { ok: true, dayKey, total: 0, built: 0, skipped: 0, files: [] };
   }

@@ -137,7 +137,7 @@
           : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0)
     }));
 
-    const sig = matches.map(m => [m.id, m.status, m.rawStatus, m.minute, m.scoreHome, m.scoreAway, m?.penalties?.home, m?.penalties?.away, m.decidedBy].join(":")).join("|");
+    const sig = matches.map(m => [m.id, m.status, m.rawStatus, m.minute, m.scoreHome, m.scoreAway, m?.penalties?.home, m?.penalties?.away, m.decidedBy, m?.providerRound?.roundNumber, m?.roundNumber].join(":")).join("|");
     if (sig === LAST_SIG) return;
 
     LAST_SIG = sig;
@@ -243,7 +243,16 @@
 
         const header = document.createElement("div");
         header.className = "today-league";
-        header.textContent = league.name;
+        const verifiedRounds = league.arr
+          .map(m => m?.providerRound?.verified === true ? Number(m?.providerRound?.roundNumber) : (m?.roundNumber != null ? Number(m.roundNumber) : null))
+          .filter(Number.isInteger);
+        const counts = new Map();
+        for (const round of verifiedRounds) counts.set(round, (counts.get(round) || 0) + 1);
+        const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+        const dominantRound = ranked.length && (ranked.length === 1 || ranked[0][1] > ranked[1][1]) ? ranked[0][0] : null;
+        header.textContent = dominantRound != null
+          ? `${league.name} · ${dominantRound}η Αγωνιστική`
+          : league.name;
         sec.appendChild(header);
 
         for (const m of league.arr) {

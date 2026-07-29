@@ -3,6 +3,7 @@ import path from "path";
 import { spawnSync } from "node:child_process";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { discoverWindow } from "./discover-window.js";
+import { discoverProviderCompetitionsDay } from "./discover-provider-competitions-day.js";
 import { discoverActiveLeagues } from "./discover-active-leagues.js";
 import { monitorActiveLeagues } from "./monitor-active-leagues.js";
 import { finalizeDayIfSafe } from "./finalize-day.js";
@@ -14,6 +15,7 @@ import {
   collectIndexRebuildTargets
 } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
+import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
 import { buildMatchdayAxis } from "./build-matchday-axis.js";
 import { refreshStandingsFromFlashscore } from "./refresh-standings-from-flashscore.js";
@@ -558,6 +560,50 @@ export async function runDailyCycle(options = {}) {
   });
 
 
+  /*
+   * Provider-wide competition discovery runs before recovery and canonical
+   * synchronization. It observes the complete Flashscore fixture window,
+   * records every provider competition identity and updates the persistent
+   * provider registry. Candidate competitions remain non-publishable until
+   * their canonical identity is verified.
+   */
+  console.log("[daily-cycle] provider-competition-discovery:start", {
+    dayKey
+  });
+
+  const providerCompetitionDiscovery =
+    await discoverProviderCompetitionsDay(dayKey, {
+      write: true
+    });
+
+  console.log("[daily-cycle] provider-competition-discovery:done", {
+    ok:
+      providerCompetitionDiscovery?.ok,
+    dayKey:
+      providerCompetitionDiscovery?.dayKey,
+    fixtureRowCount:
+      providerCompetitionDiscovery
+        ?.summary?.fixtureRowCount ?? 0,
+    competitionCount:
+      providerCompetitionDiscovery
+        ?.summary?.competitionCount ?? 0,
+    resolvedCompetitionCount:
+      providerCompetitionDiscovery
+        ?.summary?.resolvedCompetitionCount ?? 0,
+    excludedCompetitionCount:
+      providerCompetitionDiscovery
+        ?.summary?.excludedCompetitionCount ?? 0,
+    candidateCompetitionCount:
+      providerCompetitionDiscovery
+        ?.summary?.candidateCompetitionCount ?? 0
+  });
+
+  if (!providerCompetitionDiscovery?.ok) {
+    throw new Error(
+      "provider_competition_discovery_failed"
+    );
+  }
+
   // Self-heal: re-acquire leagues that have expected matches but zero canonical
   // fixtures (season-calendar false negatives / provider zero-events) BEFORE
   // anything downstream consumes fixtures, so recovered matches get standings,
@@ -760,6 +806,25 @@ export async function runDailyCycle(options = {}) {
     coveragePct: teamGeoBuild?.coveragePct ?? 0,
     file: teamGeoBuild?.file || null
   });
+
+  // Provider-native round metadata must exist before details and the final deploy
+  // snapshot are built. fixtures-all remains enrichment-only: it may annotate
+  // existing canonical/display fixtures but cannot create match membership.
+  console.log("[daily-cycle] display-fixture-enrichment:start", { dayKey });
+  let displayFixtureEnrichment = null;
+  try {
+    displayFixtureEnrichment = await exportFixturesSnapshotDay(dayKey);
+    console.log("[daily-cycle] display-fixture-enrichment:done", {
+      ok: displayFixtureEnrichment?.ok,
+      count: displayFixtureEnrichment?.count ?? 0,
+      changed: displayFixtureEnrichment?.changed ?? null
+    });
+  } catch (error) {
+    console.warn("[daily-cycle] display-fixture-enrichment:failed", {
+      dayKey,
+      error: String(error?.message || error)
+    });
+  }
 
   console.log("[daily-cycle] details-build:start", {
     dayKey,
