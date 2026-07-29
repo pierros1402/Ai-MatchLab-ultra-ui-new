@@ -9,7 +9,17 @@
     "requestedLeagueSlug": "all",
     "requestedDayKey": "2026-07-29",
     "mergedAt": "2026-07-29T15:22:47.153Z",
-    "mode": "supplemental_target_seed_only"
+    "mode": "supplemental_target_seed_only",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-07-29T15:38:29.689Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -58,12 +68,35 @@
       "penalties": null,
       "decidedBy": null,
       "status": "FT",
-      "rawStatus": "STATUS_FINAL",
+      "rawStatus": "STATUS_SCHEDULED",
       "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-07-26T21:12:02.591Z",
       "lastSeenAt": "2026-07-29T15:21:38.722Z",
-      "statusType": "STATUS_FINAL"
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-07-29T15:38:29.689Z",
+        "provider": "reconciled",
+        "providerMatchId": "Qex0uuMi",
+        "dayKey": "2026-07-29",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": "STATUS_FINAL",
+          "rawStatus": "STATUS_SCHEDULED",
+          "scoreHome": 4,
+          "scoreAway": 2
+        }
+      }
     },
     {
       "canonicalId": "cid_conmebolsudamericana_santos_ucv_20260729",
@@ -89,7 +122,31 @@
       "minute": "90'+6'",
       "venue": "Estádio Vila Belmiro (Urbano Caldeira)",
       "firstSeenAt": "2026-07-29T15:22:47.141Z",
-      "lastSeenAt": "2026-07-29T15:22:47.141Z"
+      "lastSeenAt": "2026-07-29T15:22:47.141Z",
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-07-29T15:38:29.689Z",
+        "provider": "espn",
+        "providerMatchId": "401874146",
+        "dayKey": "2026-07-29",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 4,
+          "scoreAway": 2
+        }
+      }
     }
   ]
 }
