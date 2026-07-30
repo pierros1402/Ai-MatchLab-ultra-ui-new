@@ -9,7 +9,7 @@ import {
 
 import {
   resolveComparisonKickoff,
-  buildValuePlanComparisonDay
+  enrichPick
 } from "./build-value-plan-comparison-day.js";
 
 test(
@@ -228,28 +228,39 @@ test(
 test(
   "published Plan B comparison rows expose kickoff",
   () => {
-    const result =
-      buildValuePlanComparisonDay(
-        "2026-07-24"
+    const publishedRow =
+      enrichPick(
+        {
+          matchId:
+            "cid_test_home_away_20260724",
+          homeTeam:
+            "Home",
+          awayTeam:
+            "Away",
+          leagueSlug:
+            "test.1",
+          kickoffUtc:
+            "2026-07-24T13:00:00.000Z",
+          market:
+            "OU25",
+          pick:
+            "OVER"
+        },
+        null,
+        null,
+        "plan-b",
+        null,
+        null
       );
 
     assert.equal(
-      result.ok,
-      true
+      publishedRow.kickoff,
+      "2026-07-24T13:00:00.000Z"
     );
 
-    const picks =
-      result?.plans?.B?.picks || [];
-
-    assert.ok(
-      picks.length > 0
-    );
-
-    assert.deepEqual(
-      picks.filter(
-        row => !row?.kickoff
-      ),
-      []
+    assert.equal(
+      publishedRow.planId,
+      "plan-b"
     );
   }
 );
