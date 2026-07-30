@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-07-30",
-  "generatedAt": "2026-07-30T15:23:44.386Z",
+  "generatedAt": "2026-07-30T16:14:15.681Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-07-30/fixtures.json",
     "finalResultsDir": "data/final-results/2026-07-30",
-    "verifiedFinalResults": 17,
+    "verifiedFinalResults": 19,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-07-30",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,12 +55,12 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 4,
-        "settled": 3,
+        "settled": 4,
         "wins": 3,
-        "losses": 0,
-        "unresolved": 1,
+        "losses": 1,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 1,
+        "hitRate": 0.75,
         "oddsAvailable": 0,
         "averageOdds": null,
         "totalStake": null,
@@ -237,7 +237,7 @@
           "canonicalMatchId": "cid_kaz2_khantengri_turan_20260730",
           "country": "Kazakhstan",
           "leagueSlug": "kaz.2",
-          "leagueName": "Kazakhstan First Division",
+          "leagueName": "First League",
           "kickoff": "2026-07-30T14:00:00.000Z",
           "homeTeam": "Khan Tengri",
           "awayTeam": "Turan",
@@ -251,11 +251,39 @@
           "aiFairOdds": 1.44,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-07-30T16:14:11.538Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "bDn8fRLb",
+                "country": "Kazakhstan",
+                "leagueName": "First League",
+                "leaguePath": "/football/kazakhstan/first-league/",
+                "home": "Khan Tengri",
+                "away": "Turan",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-07-30T14:00:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -567,10 +595,10 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -2,
-    "settledDeltaPlanBMinusPlanA": -1,
+    "settledDeltaPlanBMinusPlanA": -2,
     "winsDeltaPlanBMinusPlanA": -1,
-    "lossesDeltaPlanBMinusPlanA": 0,
-    "hitRateDeltaPlanBMinusPlanA": 0,
+    "lossesDeltaPlanBMinusPlanA": -1,
+    "hitRateDeltaPlanBMinusPlanA": 0.25,
     "roiDeltaPlanBMinusPlanA": null
   }
 }
