@@ -787,7 +787,7 @@ export function resolveComparisonKickoff(
   );
 }
 
-function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) {
+export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) {
   const id = rowId(row);
   const verifiedScore = resolveVerifiedFinalScore(finalResult);
   const win = finalResult ? evaluatePickResult(row, finalResult) : null;
