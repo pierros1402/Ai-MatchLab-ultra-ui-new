@@ -34,11 +34,21 @@
   let SAVED_IDS = new Set();
 
   function todayISO() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
+    try {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Athens",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(new Date());
+
+      const y = parts.find(p => p.type === "year")?.value;
+      const m = parts.find(p => p.type === "month")?.value;
+      const d = parts.find(p => p.type === "day")?.value;
+      return `${y}-${m}-${d}`;
+    } catch {
+      return new Date().toISOString().slice(0, 10);
+    }
   }
 
   function fmtTime(ms) {

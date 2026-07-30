@@ -33,7 +33,7 @@
 import { normalizeTeamTokens, normalizeTeamKey } from "./normalize.js";
 import { repairCanonicalIdDay } from "./canonical-id.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
-import { sameSquadMarkers } from "./team-identity.js";
+import { sameSquadMarkers, teamNamesMatch } from "./team-identity.js";
 
 const KICKOFF_TOLERANCE_MS = 6 * 60 * 60 * 1000;
 
@@ -113,6 +113,7 @@ export function sameTeamName(slug, a, b) {
   const keyA = normalizeTeamKey(nameA);
   const keyB = normalizeTeamKey(nameB);
   if (keyA && keyA === keyB) return true;
+  if (teamNamesMatch(nameA, nameB)) return true;
 
   // Alias-db link (learned or seeded aliases).
   try {

@@ -70,20 +70,39 @@
   function formatFinalScore(m, h, a) {
     const penHome = m?.penalties?.home ?? m?.penaltyHome ?? m?.pensHome ?? m?.shootoutHome;
     const penAway = m?.penalties?.away ?? m?.penaltyAway ?? m?.pensAway ?? m?.shootoutAway;
+    const ftHome = m?.regulationScore?.home ?? m?.fullTimeScore?.home;
+    const ftAway = m?.regulationScore?.away ?? m?.fullTimeScore?.away;
+    const aetHome = m?.afterExtraTimeScore?.home;
+    const aetAway = m?.afterExtraTimeScore?.away;
     const raw = normStatus(m);
     const decidedByPens =
       String(m?.decidedBy || "").toLowerCase().includes("pen") ||
       raw.includes("PEN");
+    const decidedByAet =
+      decidedByPens ||
+      raw.includes("AET") ||
+      String(m?.decidedBy || "").toLowerCase().includes("aet") ||
+      (aetHome != null && aetAway != null);
+
+    const parts = [];
+
+    if (ftHome != null && ftAway != null) {
+      parts.push("FT " + ftHome + "-" + ftAway);
+    } else if (!decidedByAet) {
+      parts.push("FT " + h + "-" + a);
+    }
+
+    if (decidedByAet) {
+      parts.push("AET " + (aetHome ?? h) + "-" + (aetAway ?? a));
+    }
 
     if (decidedByPens && penHome != null && penAway != null) {
-      return "FT " + h + "-" + a + " (" + penHome + "-" + penAway + " pens)";
+      parts.push("PEN " + penHome + "-" + penAway);
     }
 
-    if (raw.includes("AET") || String(m?.decidedBy || "").toLowerCase().includes("aet")) {
-      return "AET " + h + "-" + a;
-    }
-
-    return "FT " + h + "-" + a;
+    // FT/AET/PEN are independent namespaces. They are displayed side-by-side
+    // and are never arithmetically combined.
+    return parts.join(" · ");
   }
 
   function sortMatches(a, b) {

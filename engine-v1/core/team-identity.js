@@ -32,6 +32,22 @@ const GENERIC_TOKENS = new Set([
   "if", "bk", "aif", "club", "de", "do", "da", "dos", "das", "e", "the",
 ]);
 
+
+const EXPLICIT_TEAM_ALIAS_GROUPS = [
+  ["agf", "aarhus"],
+  ["crvena zvezda", "red star belgrade"],
+  ["universitatea craiova", "univ craiova", "csu craiova"],
+];
+
+function explicitAliasKey(name) {
+  const withoutQualifier = String(name || "").replace(/\s*\([^)]*\)\s*$/, "").trim();
+  const normalized = teamTokens(withoutQualifier).join(" ");
+  for (const group of EXPLICIT_TEAM_ALIAS_GROUPS) {
+    if (group.includes(normalized)) return group[0];
+  }
+  return normalized;
+}
+
 /** Tokenize a team name into identity tokens (diacritics/affixes stripped). */
 export function teamTokens(name) {
   const base = String(name || "")
@@ -99,6 +115,9 @@ export function sameSquadMarkers(a, b) {
 
 /** True when two team NAMES refer to the same real-world team. */
 export function teamNamesMatch(a, b) {
+  const aliasA = explicitAliasKey(a);
+  const aliasB = explicitAliasKey(b);
+  if (aliasA && aliasA === aliasB) return true;
   return tokensMatch(teamTokens(a), teamTokens(b));
 }
 

@@ -2,6 +2,16 @@ import { LEAGUE_NAME_MAP } from "../config.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { mapStatus } from "./status-map.js";
 import { buildCanonicalId } from "./canonical-id.js";
+
+function parseLinescoreTotal(competitor, maxPeriods) {
+  const lines = Array.isArray(competitor?.linescores) ? competitor.linescores : [];
+  const values = lines
+    .slice(0, maxPeriods)
+    .map(row => parseScore(row?.value ?? row?.displayValue))
+    .filter(Number.isFinite);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) : null;
+}
+
 import { isPreKickoffNonPlayed } from "./non-played-state.js";
 
 function parseScore(value) {
@@ -101,6 +111,13 @@ export function normalizeFixture(event, slug) {
 
   let penalties = null;
 
+  const regulationHome = parseLinescoreTotal(home, 2);
+  const regulationAway = parseLinescoreTotal(away, 2);
+  const regulationScore =
+    Number.isFinite(regulationHome) && Number.isFinite(regulationAway)
+      ? { home: regulationHome, away: regulationAway }
+      : null;
+
   const homeShootout = parseScore(home?.shootoutScore);
   const awayShootout = parseScore(away?.shootoutScore);
 
@@ -154,6 +171,14 @@ export function normalizeFixture(event, slug) {
 
     scoreHome,
     scoreAway,
+    regulationScore,
+    afterExtraTimeScore:
+      regulationScore &&
+      Number.isFinite(scoreHome) &&
+      Number.isFinite(scoreAway) &&
+      (scoreHome !== regulationScore.home || scoreAway !== regulationScore.away)
+        ? { home: scoreHome, away: scoreAway }
+        : null,
     penalties,
     decidedBy: preKickoffNonPlayed ? null : (penalties ? "pens" : decidedBy),
 

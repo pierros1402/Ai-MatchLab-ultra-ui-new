@@ -31,10 +31,11 @@
   }
 
   function operationalToday() {
-    if (window.DateNav && typeof window.DateNav.getToday === "function") {
-      return window.DateNav.getToday();
-    }
-    return String(window.__AIML_OPERATIONAL_DAY || athensToday()).slice(0, 10);
+    // The browser clock in Europe/Athens is the sole authority for "Today".
+    // Never trust a stale DateNav/global value carried across midnight.
+    var today = athensToday();
+    window.__AIML_OPERATIONAL_DAY = today;
+    return today;
   }
 
   function setSelectedDate(date) {
@@ -103,6 +104,26 @@
 
   // Selected date starts as today until the user navigates.
   setSelectedDate(operationalToday());
+
+  // Keep long-lived tabs correct across the Athens midnight rollover.
+  var lastOperationalDay = operationalToday();
+  window.setInterval(function () {
+    var nextOperationalDay = operationalToday();
+    if (nextOperationalDay === lastOperationalDay) return;
+
+    var previousDay = lastOperationalDay;
+    lastOperationalDay = nextOperationalDay;
+
+    // Move only an untouched "today" view. A user-selected historical/future
+    // date remains selected.
+    if (
+      !window.__AIML_VIEWING_NON_TODAY_DATE &&
+      String(window.__AIML_SELECTED_DATE || previousDay).slice(0, 10) === previousDay
+    ) {
+      setSelectedDate(nextOperationalDay);
+      emit("date:change", { date: nextOperationalDay, reason: "athens_day_rollover" });
+    }
+  }, 60000);
 
   // Expose for debugging
   window.DateNavLoader = { loadDate: loadMatchesForDate };

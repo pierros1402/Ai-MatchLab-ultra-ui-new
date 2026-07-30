@@ -42,6 +42,7 @@ import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./core/matchday-axi
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
+import { teamPairMatches } from "./core/team-identity.js";
 import {
   parseAcquisitionSkippedSlugs,
   skippedSlugsContextOnly
@@ -2045,19 +2046,47 @@ function compareDateMatchQuality(a, b) {
   return 0;
 }
 
+function sameDisplayFixture(a, b, requestedDay) {
+  const slugA = FX_SLUG_ALIASES[String(a?.leagueSlug || "")] || String(a?.leagueSlug || "");
+  const slugB = FX_SLUG_ALIASES[String(b?.leagueSlug || "")] || String(b?.leagueSlug || "");
+  if (!slugA || slugA !== slugB) return false;
+
+  const dayA = matchDayKeyFromIso(a?.kickoffUtc) || requestedDay || "";
+  const dayB = matchDayKeyFromIso(b?.kickoffUtc) || requestedDay || "";
+  if (dayA !== dayB) return false;
+
+  const ta = Date.parse(a?.kickoffUtc || "");
+  const tb = Date.parse(b?.kickoffUtc || "");
+  if (Number.isFinite(ta) && Number.isFinite(tb) && Math.abs(ta - tb) > 6 * 60 * 60 * 1000) {
+    return false;
+  }
+
+  return teamPairMatches(a?.homeTeam, a?.awayTeam, b?.homeTeam, b?.awayTeam);
+}
+
 function dedupeDateMatches(matches, requestedDay) {
-  const best = new Map();
+  const kept = [];
 
   for (const match of Array.isArray(matches) ? matches : []) {
     if (!match?.matchId || !match?.homeTeam) continue;
-    const key = dateMatchDedupeKey(match, requestedDay);
-    const existing = best.get(key);
-    if (!existing || compareDateMatchQuality(existing, match) > 0) {
-      best.set(key, match);
+
+    const exactKey = dateMatchDedupeKey(match, requestedDay);
+    const existingIndex = kept.findIndex(existing =>
+      dateMatchDedupeKey(existing, requestedDay) === exactKey ||
+      sameDisplayFixture(existing, match, requestedDay)
+    );
+
+    if (existingIndex === -1) {
+      kept.push(match);
+      continue;
+    }
+
+    if (compareDateMatchQuality(kept[existingIndex], match) > 0) {
+      kept[existingIndex] = match;
     }
   }
 
-  return Array.from(best.values()).sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
+  return kept.sort((a, b) => (a.kickoffUtc > b.kickoffUtc ? 1 : -1));
 }
 
 // Athens-day ownership: a match belongs to exactly ONE calendar day — the Athens
