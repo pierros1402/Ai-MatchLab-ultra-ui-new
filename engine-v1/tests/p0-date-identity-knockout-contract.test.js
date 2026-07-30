@@ -44,3 +44,20 @@ test("operational today is anchored to Europe\/Athens", () => {
   assert.match(todayPanel, /timeZone:\s*"Europe\/Athens"/);
   assert.doesNotMatch(loader, /return window\.DateNav\.getToday\(\)/);
 });
+
+
+test("display universe preserves knockout score namespaces and provider authority", () => {
+  const source = fs.readFileSync(path.join(repoRoot, "engine-v1", "index.js"), "utf8");
+  assert.match(source, /regulationScore:\s*m\.regulationScore/);
+  assert.match(source, /afterExtraTimeScore:\s*m\.afterExtraTimeScore/);
+  assert.match(source, /authoritativeTerminalWriteback/);
+  assert.match(source, /dateMatchSourceAuthority/);
+});
+
+test("misclassified Kings World club rows are excluded without disabling the real World Cup slug", () => {
+  const source = fs.readFileSync(path.join(repoRoot, "engine-v1", "index.js"), "utf8");
+  assert.match(source, /MISCLASSIFIED_KINGS_WORLD_CLUB_TEAMS/);
+  assert.match(source, /isMisclassifiedKingsWorldClubRow/);
+  assert.match(source, /slug !== "fifa\.world"/);
+  assert.match(source, /"fifa\.world_cup":\s*"fifa\.world"/);
+});

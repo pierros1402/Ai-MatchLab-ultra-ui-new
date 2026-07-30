@@ -2026,6 +2026,17 @@ function dateMatchDedupeKey(match, requestedDay) {
   return `${slug}|${home}|${away}|${day}|${kickoffMinute}`;
 }
 
+function dateMatchSourceAuthority(match) {
+  // A terminal result promoted by the provider-ID writeback contract is the
+  // strongest row. For otherwise equivalent cross-provider rows, ESPN is the
+  // primary result authority; Flashscore remains a discovery/live supplement.
+  if (match?.authoritativeTerminalWriteback?.identityContract?.exactProviderId === true) return 3;
+  if (match?.truthSource) return 2;
+  const source = String(match?.source || "").toLowerCase();
+  if (source.includes("espn") || /^\d+$/.test(String(match?.sourceId || ""))) return 1;
+  return 0;
+}
+
 function compareDateMatchQuality(a, b) {
   const ar = dateMatchStatusRank(a);
   const br = dateMatchStatusRank(b);
@@ -2035,9 +2046,9 @@ function compareDateMatchQuality(a, b) {
   const bs = hasDateMatchScore(b) ? 1 : 0;
   if (as !== bs) return bs - as;
 
-  const at = a?.truthSource ? 1 : 0;
-  const bt = b?.truthSource ? 1 : 0;
-  if (at !== bt) return bt - at;
+  const aa = dateMatchSourceAuthority(a);
+  const ba = dateMatchSourceAuthority(b);
+  if (aa !== ba) return ba - aa;
 
   const al = a?.leagueName ? 1 : 0;
   const bl = b?.leagueName ? 1 : 0;
@@ -3079,8 +3090,22 @@ function isYouthOrWomenRow(m) {
   return displayHasExcludedMarker(m.homeTeam || m.home) ||
          displayHasExcludedMarker(m.awayTeam || m.away);
 }
-function excludeYouthWomenRows(matches) {
-  return Array.isArray(matches) ? matches.filter(m => !isYouthOrWomenRow(m)) : matches;
+const MISCLASSIFIED_KINGS_WORLD_CLUB_TEAMS = new Set([
+  "alpak", "atleticoparceros", "desimpain", "dr7", "furia", "fwz",
+  "karasu", "lacapital", "lostroncos", "norules", "porcinos", "stallions"
+]);
+function isMisclassifiedKingsWorldClubRow(m) {
+  const slug = FX_SLUG_ALIASES[String(m?.leagueSlug || "")] || String(m?.leagueSlug || "");
+  if (slug !== "fifa.world") return false;
+  const home = fxNormTeam(m?.homeTeam || m?.home);
+  const away = fxNormTeam(m?.awayTeam || m?.away);
+  return MISCLASSIFIED_KINGS_WORLD_CLUB_TEAMS.has(home) ||
+         MISCLASSIFIED_KINGS_WORLD_CLUB_TEAMS.has(away);
+}
+function excludeOutOfScopeDisplayRows(matches) {
+  return Array.isArray(matches)
+    ? matches.filter(m => !isYouthOrWomenRow(m) && !isMisclassifiedKingsWorldClubRow(m))
+    : matches;
 }
 
 // ── Display-only supplemental league metadata ───────────────────────────────
@@ -3279,6 +3304,15 @@ function buildDisplayMatchesForDateUncached(date) {
           leagueName: m.leagueName || "",
           scoreHome:  m.scoreHome ?? null,
           scoreAway:  m.scoreAway ?? null,
+          regulationScore: m.regulationScore || m.fullTimeScore || null,
+          afterExtraTimeScore: m.afterExtraTimeScore || null,
+          penalties: m.penalties || null,
+          decidedBy: m.decidedBy || null,
+          rawStatus: m.rawStatus || null,
+          statusType: m.statusType || null,
+          source: m.source || null,
+          sourceId: m.sourceId || m.sourceMatchId || null,
+          authoritativeTerminalWriteback: m.authoritativeTerminalWriteback || null,
         })).filter(m => m.matchId && m.homeTeam);
       // Build set of all slugs already covered by fixtures.json (both directions of aliases)
       for (const m of fixtureMatches) {
@@ -3414,7 +3448,7 @@ function buildDisplayMatchesForDateUncached(date) {
   if (snapshotFixtureArtifactLoaded) {
     return {
       source: "snapshot",
-      matches: excludeYouthWomenRows(merged),
+      matches: excludeOutOfScopeDisplayRows(merged),
       membership: displayUniverse.membership
     };
   }
@@ -3437,13 +3471,22 @@ function buildDisplayMatchesForDateUncached(date) {
               status:     m.status || "PRE",
               leagueSlug: m.leagueSlug || "",
               leagueName: m.leagueName || "",
-              scoreHome:  null,
-              scoreAway:  null,
+              scoreHome:  m.scoreHome ?? null,
+              scoreAway:  m.scoreAway ?? null,
+              regulationScore: m.regulationScore || m.fullTimeScore || null,
+              afterExtraTimeScore: m.afterExtraTimeScore || null,
+              penalties: m.penalties || null,
+              decidedBy: m.decidedBy || null,
+              rawStatus: m.rawStatus || null,
+              statusType: m.statusType || null,
+              source: m.source || null,
+              sourceId: m.sourceId || m.sourceMatchId || null,
+              authoritativeTerminalWriteback: m.authoritativeTerminalWriteback || null,
             })).filter(m => m.matchId && m.homeTeam);
           } catch { return []; }
         });
       const reconciled = reconcileDateMatchesForDisplay(matches, date);
-      if (reconciled.length) return { source: "canonical", matches: excludeYouthWomenRows(reconciled) };
+      if (reconciled.length) return { source: "canonical", matches: excludeOutOfScopeDisplayRows(reconciled) };
     }
   } catch { /**/ }
 
