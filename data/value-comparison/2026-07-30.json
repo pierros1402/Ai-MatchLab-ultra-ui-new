@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-07-30",
-  "generatedAt": "2026-07-30T06:07:01.390Z",
+  "generatedAt": "2026-07-30T14:39:03.871Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-07-30/fixtures.json",
     "finalResultsDir": "data/final-results/2026-07-30",
-    "verifiedFinalResults": 14,
+    "verifiedFinalResults": 15,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-07-30",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,12 +55,12 @@
       "summary": {
         "picks": 4,
         "uniqueMatches": 4,
-        "settled": 0,
-        "wins": 0,
+        "settled": 1,
+        "wins": 1,
         "losses": 0,
-        "unresolved": 4,
+        "unresolved": 3,
         "unsupported": 0,
-        "hitRate": null,
+        "hitRate": 1,
         "oddsAvailable": 0,
         "averageOdds": null,
         "totalStake": null,
@@ -127,7 +127,7 @@
           "canonicalMatchId": "cid_kaz2_batyr_yelimaysemey2_20260730",
           "country": "Kazakhstan",
           "leagueSlug": "kaz.2",
-          "leagueName": "Kazakhstan First Division",
+          "leagueName": "First League",
           "kickoff": "2026-07-30T12:00:00.000Z",
           "homeTeam": "FC Batyr",
           "awayTeam": "Yelimay Semey 2",
@@ -141,11 +141,39 @@
           "aiFairOdds": 1.51,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-07-30T14:39:00.682Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "pUpGh5jB",
+                "country": "Kazakhstan",
+                "leagueName": "First League",
+                "leaguePath": "/football/kazakhstan/first-league/",
+                "home": "FC Batyr",
+                "away": "Yelimay Semey 2",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-07-30T12:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -371,8 +399,8 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -2,
-    "settledDeltaPlanBMinusPlanA": 0,
-    "winsDeltaPlanBMinusPlanA": 0,
+    "settledDeltaPlanBMinusPlanA": -1,
+    "winsDeltaPlanBMinusPlanA": -1,
     "lossesDeltaPlanBMinusPlanA": 0,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
