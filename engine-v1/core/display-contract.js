@@ -294,13 +294,45 @@ export function selectAuthoritativeDisplayUniverse(
  * only [a-z0-9]. This is THE dedupe primitive — every endpoint uses it so the
  * same match never appears twice across snapshot / odds / fixtures-all sources.
  */
-export function normalizeDisplayTeam(name) {
+const DISPLAY_TEAM_IDENTITY_ALIASES = Object.freeze({
+  // Provider spelling variants that describe the same senior club. These are
+  // display-identity aliases only; they do not rewrite canonical/statistical
+  // truth stores.
+  argentinosjrs: "argentinosjuniors",
+  estudiantesderiocuarto: "estudiantesriocuarto",
+  lechpoznanpol: "lechpoznan",
+  aarhusden: "agf",
+});
+
+const DISPLAY_TEAM_CANONICAL_NAMES = Object.freeze({
+  argentinosjuniors: "Argentinos Juniors",
+  estudiantesriocuarto: "Estudiantes de Río Cuarto",
+  gimnasiamendoza: "Gimnasia Mendoza",
+  lechpoznan: "Lech Poznan",
+  agf: "AGF",
+});
+
+function rawDisplayTeamKey(name) {
   return String(name || "")
     .toLowerCase()
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "") // strip combining diacritics
     .replace(/[^a-z0-9]/g, "")
     .trim();
+}
+
+export function normalizeDisplayTeam(name) {
+  const key = rawDisplayTeamKey(name);
+  return DISPLAY_TEAM_IDENTITY_ALIASES[key] || key;
+}
+
+/**
+ * Stable public-facing team name for known provider spelling/casing variants.
+ * Unknown teams are preserved byte-for-byte rather than title-cased blindly.
+ */
+export function canonicalDisplayTeamName(name) {
+  const key = normalizeDisplayTeam(name);
+  return DISPLAY_TEAM_CANONICAL_NAMES[key] || String(name || "").trim();
 }
 
 /** Normalized home|away pair key for same-day dedupe. */

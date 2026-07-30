@@ -19,6 +19,7 @@ import { getDetailsPayload, enrichSnapshotWithAssessment } from "./api/details.j
 import { resolveDataPath } from "./storage/data-root.js";
 import {
   normalizeDisplayTeam,
+  canonicalDisplayTeamName,
   statusRankFromParts,
   filterByPanelMode,
   partitionDisplaySupplementsByFixtureIdentity,
@@ -737,12 +738,7 @@ function snapshotRuntimeRows(payload) {
 }
 
 function normalizeSnapshotRuntimeText(value) {
-  return String(value || "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "")
-    .trim();
+  return normalizeDisplayTeam(value);
 }
 
 function snapshotRuntimeKickoffKey(value) {
@@ -755,14 +751,59 @@ function snapshotRuntimeKickoffKey(value) {
   return raw.slice(0, 16);
 }
 
+function terminalMinuteSuggestsExtraTime(match) {
+  const statusBlob = String([
+    match?.status,
+    match?.rawStatus,
+    match?.statusType,
+    match?.statusName
+  ].filter(Boolean).join(" ")).toUpperCase();
+
+  if (/(^|[^A-Z])AET([^A-Z]|$)/.test(statusBlob)) return true;
+
+  const minuteText = String(match?.minute ?? "").trim();
+  const minute = Number.parseInt(minuteText.replace(/[^0-9].*$/u, ""), 10);
+  const terminal = statusRankFromParts(
+    match?.status,
+    match?.rawStatus,
+    match?.statusType,
+    match?.statusName
+  ) === 50;
+
+  return terminal && Number.isFinite(minute) && minute >= 120;
+}
+
+function withKnockoutScoreNamespaces(match) {
+  const scoreHome = match?.scoreHome ?? match?.homeScore ?? null;
+  const scoreAway = match?.scoreAway ?? match?.awayScore ?? null;
+  const regulationScore = match?.regulationScore || match?.fullTimeScore || null;
+  let afterExtraTimeScore = match?.afterExtraTimeScore || null;
+  let decidedBy = match?.decidedBy || null;
+
+  // A 120-minute terminal score is an AET total, not a regulation FT score.
+  // Preserve it in its own namespace. Never invent the unknown 90-minute score.
+  if (
+    !afterExtraTimeScore &&
+    scoreHome != null &&
+    scoreAway != null &&
+    terminalMinuteSuggestsExtraTime(match)
+  ) {
+    afterExtraTimeScore = { home: scoreHome, away: scoreAway };
+    decidedBy = decidedBy || "AET";
+  }
+
+  return { regulationScore, afterExtraTimeScore, decidedBy };
+}
+
 function normalizeSnapshotRuntimeMatch(match, fallbackSource) {
   const leagueSlug = canonicalSnapshotRuntimeSlug(match?.leagueSlug || match?.league || "");
+  const knockout = withKnockoutScoreNamespaces(match);
 
   return {
     ...match,
     matchId: String(match?.matchId || match?.id || ""),
-    homeTeam: match?.homeTeam || match?.home || "",
-    awayTeam: match?.awayTeam || match?.away || "",
+    homeTeam: canonicalDisplayTeamName(match?.homeTeam || match?.home || ""),
+    awayTeam: canonicalDisplayTeamName(match?.awayTeam || match?.away || ""),
     kickoffUtc: match?.kickoffUtc || match?.kickoff || "",
     status: match?.status || match?.statusType || "PRE",
     rawStatus: match?.rawStatus || match?.status || "",
@@ -772,8 +813,10 @@ function normalizeSnapshotRuntimeMatch(match, fallbackSource) {
     leagueName: match?.leagueName || "",
     scoreHome: match?.scoreHome ?? match?.homeScore ?? null,
     scoreAway: match?.scoreAway ?? match?.awayScore ?? null,
+    regulationScore: knockout.regulationScore,
+    afterExtraTimeScore: knockout.afterExtraTimeScore,
     penalties: match?.penalties || null,
-    decidedBy: match?.decidedBy || null,
+    decidedBy: knockout.decidedBy,
     minute: match?.minute ?? null,
     source: match?.source || fallbackSource,
   };
@@ -2072,7 +2115,13 @@ function sameDisplayFixture(a, b, requestedDay) {
     return false;
   }
 
-  return teamPairMatches(a?.homeTeam, a?.awayTeam, b?.homeTeam, b?.awayTeam);
+  return (
+    teamPairMatches(a?.homeTeam, a?.awayTeam, b?.homeTeam, b?.awayTeam) ||
+    (
+      fxNormTeam(a?.homeTeam) === fxNormTeam(b?.homeTeam) &&
+      fxNormTeam(a?.awayTeam) === fxNormTeam(b?.awayTeam)
+    )
+  );
 }
 
 function dedupeDateMatches(matches, requestedDay) {
@@ -3296,18 +3345,16 @@ function buildDisplayMatchesForDateUncached(date) {
       fixtureMatches = (Array.isArray(fj) ? fj : (fj.fixtures || fj.matches || []))
         .map(m => attachAssessment({
           matchId:    String(m.matchId || m.id || ""),
-          homeTeam:   m.homeTeam || m.home || "",
-          awayTeam:   m.awayTeam || m.away || "",
+          homeTeam:   canonicalDisplayTeamName(m.homeTeam || m.home || ""),
+          awayTeam:   canonicalDisplayTeamName(m.awayTeam || m.away || ""),
           kickoffUtc: m.kickoffUtc || m.kickoff || "",
           status:     m.status || "PRE",
           leagueSlug: m.leagueSlug || "",
           leagueName: m.leagueName || "",
           scoreHome:  m.scoreHome ?? null,
           scoreAway:  m.scoreAway ?? null,
-          regulationScore: m.regulationScore || m.fullTimeScore || null,
-          afterExtraTimeScore: m.afterExtraTimeScore || null,
+          ...withKnockoutScoreNamespaces(m),
           penalties: m.penalties || null,
-          decidedBy: m.decidedBy || null,
           rawStatus: m.rawStatus || null,
           statusType: m.statusType || null,
           source: m.source || null,
@@ -3335,8 +3382,8 @@ function buildDisplayMatchesForDateUncached(date) {
       oddsMatches = (oj.matches || [])
         .map(m => attachAssessment({
           matchId:    String(m.matchId || ""),
-          homeTeam:   m.homeTeam || m.home || "",
-          awayTeam:   m.awayTeam || m.away || "",
+          homeTeam:   canonicalDisplayTeamName(m.homeTeam || m.home || ""),
+          awayTeam:   canonicalDisplayTeamName(m.awayTeam || m.away || ""),
           kickoffUtc: m.kickoffUtc || m.kickoff || "",
           status:     m.status || "PRE",
           leagueSlug: m.leagueSlug || "",
@@ -3465,18 +3512,16 @@ function buildDisplayMatchesForDateUncached(date) {
             const j = JSON.parse(fs.readFileSync(path.join(resolveDataPath("canonical-fixtures", date), f), "utf8"));
             return (j.fixtures || []).map(m => attachAssessment({
               matchId:    String(m.matchId || ""),
-              homeTeam:   m.homeTeam || "",
-              awayTeam:   m.awayTeam || "",
+              homeTeam:   canonicalDisplayTeamName(m.homeTeam || ""),
+              awayTeam:   canonicalDisplayTeamName(m.awayTeam || ""),
               kickoffUtc: m.kickoffUtc || "",
               status:     m.status || "PRE",
               leagueSlug: m.leagueSlug || "",
               leagueName: m.leagueName || "",
               scoreHome:  m.scoreHome ?? null,
               scoreAway:  m.scoreAway ?? null,
-              regulationScore: m.regulationScore || m.fullTimeScore || null,
-              afterExtraTimeScore: m.afterExtraTimeScore || null,
+              ...withKnockoutScoreNamespaces(m),
               penalties: m.penalties || null,
-              decidedBy: m.decidedBy || null,
               rawStatus: m.rawStatus || null,
               statusType: m.statusType || null,
               source: m.source || null,

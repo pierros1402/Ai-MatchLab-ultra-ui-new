@@ -421,6 +421,8 @@ if (window.on) {
         existing.statusName = m.statusName;
         existing.scoreHome = m.scoreHome;
         existing.scoreAway = m.scoreAway;
+        existing.regulationScore = m.regulationScore || m.fullTimeScore || null;
+        existing.afterExtraTimeScore = m.afterExtraTimeScore || null;
         existing.penalties = m.penalties;
         existing.decidedBy = m.decidedBy;
         existing.minute    = m.minute;

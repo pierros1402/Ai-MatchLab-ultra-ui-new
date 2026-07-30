@@ -4,6 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { teamNamesMatch } from "../core/team-identity.js";
+import {
+  normalizeDisplayTeam,
+  canonicalDisplayTeamName
+} from "../core/display-contract.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..", "..");
@@ -12,6 +16,18 @@ test("known cross-provider senior-team aliases converge", () => {
   assert.equal(teamNamesMatch("AGF", "Aarhus"), true);
   assert.equal(teamNamesMatch("Crvena zvezda (Srb)", "Red Star Belgrade"), true);
   assert.equal(teamNamesMatch("Univ. Craiova (Rou)", "CSU Craiova"), true);
+});
+
+
+test("display aliases collapse provider duplicates and preserve canonical casing", () => {
+  assert.equal(normalizeDisplayTeam("Argentinos Jrs"), "argentinosjuniors");
+  assert.equal(normalizeDisplayTeam("Argentinos Juniors"), "argentinosjuniors");
+  assert.equal(normalizeDisplayTeam("Estudiantes Rio Cuarto"), "estudiantesriocuarto");
+  assert.equal(normalizeDisplayTeam("Estudiantes de Río Cuarto"), "estudiantesriocuarto");
+  assert.equal(normalizeDisplayTeam("Lech Poznan (Pol)"), "lechpoznan");
+  assert.equal(normalizeDisplayTeam("AGF"), normalizeDisplayTeam("Aarhus (Den)"));
+  assert.equal(canonicalDisplayTeamName("gimnasia mendoza"), "Gimnasia Mendoza");
+  assert.equal(canonicalDisplayTeamName("Argentinos Jrs"), "Argentinos Juniors");
 });
 
 test("squad markers remain identity boundaries", () => {
@@ -48,8 +64,10 @@ test("operational today is anchored to Europe\/Athens", () => {
 
 test("display universe preserves knockout score namespaces and provider authority", () => {
   const source = fs.readFileSync(path.join(repoRoot, "engine-v1", "index.js"), "utf8");
-  assert.match(source, /regulationScore:\s*m\.regulationScore/);
-  assert.match(source, /afterExtraTimeScore:\s*m\.afterExtraTimeScore/);
+  assert.match(source, /withKnockoutScoreNamespaces/);
+  assert.match(source, /terminalMinuteSuggestsExtraTime/);
+  assert.match(source, /afterExtraTimeScore = \{ home: scoreHome, away: scoreAway \}/);
+  assert.match(source, /decidedBy = decidedBy \|\| "AET"/);
   assert.match(source, /authoritativeTerminalWriteback/);
   assert.match(source, /dateMatchSourceAuthority/);
 });
