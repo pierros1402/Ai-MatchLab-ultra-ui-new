@@ -878,6 +878,231 @@ export function resolveCanonicalEspnFinalFallback(target, dayKey) {
   };
 }
 
+export function resolveTerminalScoreConvergence({
+  target,
+  dayKey,
+  flashscoreMatch
+} = {}) {
+  if (
+    !flashscoreMatch?.ok ||
+    !flashscoreMatch?.row
+  ) {
+    return {
+      state:
+        "flashscore_unavailable",
+      reason:
+        flashscoreMatch?.reason ||
+        "flashscore_match_missing"
+    };
+  }
+
+  const flashscoreHome =
+    exactIntegerScore(
+      flashscoreMatch.row?.scoreHome
+    );
+
+  const flashscoreAway =
+    exactIntegerScore(
+      flashscoreMatch.row?.scoreAway
+    );
+
+  if (
+    flashscoreHome === null ||
+    flashscoreAway === null
+  ) {
+    return {
+      state:
+        "flashscore_invalid_score",
+      reason:
+        "flashscore_terminal_score_invalid"
+    };
+  }
+
+  const flashscoreScoreKey =
+    flashscoreHome +
+    "-" +
+    flashscoreAway;
+
+  const canonicalSource =
+    clean(
+      target?.canonicalFixture?.source
+    ).toLowerCase();
+
+  if (canonicalSource !== "espn") {
+    return {
+      state:
+        "flashscore_only",
+      reason:
+        "canonical_espn_terminal_unavailable",
+      flashscoreHome,
+      flashscoreAway,
+      flashscoreScoreKey
+    };
+  }
+
+  const canonical =
+    resolveCanonicalEspnFinalFallback(
+      target,
+      dayKey
+    );
+
+  if (!canonical.ok) {
+    return {
+      state:
+        "flashscore_only",
+      reason:
+        canonical.reason,
+      flashscoreHome,
+      flashscoreAway,
+      flashscoreScoreKey
+    };
+  }
+
+  if (
+    canonical.scoreKey !==
+    flashscoreScoreKey
+  ) {
+    return {
+      state:
+        "pending_recheck",
+      reason:
+        "terminal_score_conflict_pending_recheck",
+      flashscoreHome,
+      flashscoreAway,
+      flashscoreScoreKey,
+      canonicalHome:
+        canonical.homeScore,
+      canonicalAway:
+        canonical.awayScore,
+      canonicalScoreKey:
+        canonical.scoreKey,
+      canonical
+    };
+  }
+
+  return {
+    state:
+      "converged",
+    reason:
+      "terminal_score_sources_converged",
+    flashscoreHome,
+    flashscoreAway,
+    flashscoreScoreKey,
+    canonicalHome:
+      canonical.homeScore,
+    canonicalAway:
+      canonical.awayScore,
+    canonicalScoreKey:
+      canonical.scoreKey,
+    canonical
+  };
+}
+
+export function buildConvergedVerifiedFinalResult(
+  dayKey,
+  target,
+  flashscoreRow,
+  convergence
+) {
+  const payload =
+    buildCanonicalEspnVerifiedFinalResult(
+      dayKey,
+      target,
+      convergence.canonical
+    );
+
+  const flashscoreSource = {
+    provider:
+      "flashscore",
+    providerMatchId:
+      clean(
+        flashscoreRow?.matchId
+      ),
+    country:
+      clean(
+        flashscoreRow?.country
+      ),
+    leagueName:
+      clean(
+        flashscoreRow?.leagueName
+      ),
+    leaguePath:
+      clean(
+        flashscoreRow?.leaguePath
+      ),
+    home:
+      clean(
+        flashscoreRow?.home
+      ),
+    away:
+      clean(
+        flashscoreRow?.away
+      ),
+    scoreHome:
+      convergence.flashscoreHome,
+    scoreAway:
+      convergence.flashscoreAway,
+    kickoffUtc:
+      clean(
+        flashscoreRow?.kickoffUtc
+      ),
+    scoreKey:
+      convergence.flashscoreScoreKey
+  };
+
+  payload.source =
+    "terminal_score_sources_converged";
+
+  payload.sourceCount =
+    2;
+
+  payload.independentSourceCount =
+    2;
+
+  payload.sources = [
+    ...payload.sources,
+    flashscoreSource
+  ];
+
+  payload.verification = {
+    ...payload.verification,
+
+    method:
+      "terminal_score_sources_converged",
+
+    sourceCount:
+      2,
+
+    independentSourceCount:
+      2,
+
+    checks: {
+      ...payload.verification?.checks,
+
+      canonicalEspnTerminal:
+        true,
+
+      flashscoreSameDayTeamMatch:
+        true,
+
+      terminalScoresConverged:
+        true
+    }
+  };
+
+  payload.settlement = {
+    ...payload.settlement,
+
+    convergenceRequired:
+      true,
+
+    convergenceState:
+      "converged"
+  };
+
+  return payload;
+}
+
 export function buildCanonicalEspnVerifiedFinalResult(
   dayKey,
   target,
@@ -1729,8 +1954,165 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     let fallbackReason = "";
 
     if (found.ok) {
-      payload = buildVerifiedFinalResult(safeDayKey, target, found.row);
-      resolutionMethod = "flashscore_same_day_exact_team_match";
+      const convergence =
+        resolveTerminalScoreConvergence({
+          target,
+          dayKey:
+            safeDayKey,
+          flashscoreMatch:
+            found
+        });
+
+      if (
+        convergence.state ===
+        "pending_recheck"
+      ) {
+        const pendingFilePath =
+          path.join(
+            outputDir,
+            `${target.matchId}.json`
+          );
+
+        const pendingExisting =
+          readJsonSafe(
+            pendingFilePath,
+            null
+          );
+
+        let retraction =
+          null;
+
+        if (
+          pendingExisting &&
+          isExactFlashscoreVerifiedArtifact(
+            pendingExisting,
+            target,
+            safeDayKey
+          )
+        ) {
+          const previousScore =
+            artifactScore(
+              pendingExisting
+            );
+
+          const retractionRow = {
+            matchId:
+              target.matchId,
+
+            homeTeam:
+              target.homeTeam,
+
+            awayTeam:
+              target.awayTeam,
+
+            filePath:
+              pendingFilePath,
+
+            evidence:
+              "terminal_score_conflict_pending_recheck",
+
+            previousScore:
+              previousScore?.scoreKey ||
+              null
+          };
+
+          if (options.write === true) {
+            fs.unlinkSync(
+              pendingFilePath
+            );
+
+            retracted.push(
+              retractionRow
+            );
+
+            retraction =
+              "retracted";
+          } else {
+            wouldRetract.push(
+              retractionRow
+            );
+
+            retraction =
+              "would_retract";
+          }
+        }
+
+        unresolved.push({
+          matchId:
+            target.matchId,
+
+          homeTeam:
+            target.homeTeam,
+
+          awayTeam:
+            target.awayTeam,
+
+          reason:
+            convergence.reason,
+
+          recheckRequired:
+            true,
+
+          retryPolicy:
+            "next_intraday_export_run",
+
+          flashscore: {
+            providerMatchId:
+              clean(
+                found.row?.matchId
+              ),
+
+            scoreKey:
+              convergence
+                .flashscoreScoreKey
+          },
+
+          canonical: {
+            provider:
+              "espn",
+
+            providerMatchId:
+              convergence
+                .canonical
+                ?.providerMatchId ||
+              null,
+
+            scoreKey:
+              convergence
+                .canonicalScoreKey
+          },
+
+          retraction
+        });
+
+        continue;
+      }
+
+      if (
+        convergence.state ===
+        "converged"
+      ) {
+        payload =
+          buildConvergedVerifiedFinalResult(
+            safeDayKey,
+            target,
+            found.row,
+            convergence
+          );
+
+        resolutionMethod =
+          "terminal_score_sources_converged";
+      } else {
+        payload =
+          buildVerifiedFinalResult(
+            safeDayKey,
+            target,
+            found.row
+          );
+
+        resolutionMethod =
+          "flashscore_same_day_exact_team_match";
+      }
     } else if (
       found.reason ===
       "no_exact_flashscore_match"
