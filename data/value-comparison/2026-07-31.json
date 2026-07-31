@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-07-31",
-  "generatedAt": "2026-07-31T20:31:29.280Z",
+  "generatedAt": "2026-07-31T21:28:45.503Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-07-31/fixtures.json",
     "finalResultsDir": "data/final-results/2026-07-31",
-    "verifiedFinalResults": 78,
+    "verifiedFinalResults": 96,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-07-31",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,18 +55,18 @@
       "summary": {
         "picks": 6,
         "uniqueMatches": 6,
-        "settled": 3,
-        "wins": 2,
-        "losses": 1,
-        "unresolved": 3,
+        "settled": 6,
+        "wins": 4,
+        "losses": 2,
+        "unresolved": 0,
         "unsupported": 0,
         "hitRate": 0.6667,
-        "oddsAvailable": 2,
-        "averageOdds": 1.76,
-        "totalStake": 2,
-        "totalReturn": 3.52,
-        "profit": 1.52,
-        "roi": 0.76
+        "oddsAvailable": 4,
+        "averageOdds": 1.7325,
+        "totalStake": 4,
+        "totalReturn": 5.28,
+        "profit": 1.28,
+        "roi": 0.32
       },
       "picks": [
         {
@@ -126,7 +126,7 @@
         {
           "planId": "plan-a",
           "matchId": "401873907",
-          "canonicalMatchId": "401873907",
+          "canonicalMatchId": "cid_nor1_bodoglimt_lillestrom_20260731",
           "country": "Norway",
           "leagueSlug": "nor.1",
           "leagueName": "Eliteserien",
@@ -143,11 +143,54 @@
           "aiFairOdds": null,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 0,
+            "scoreKey": "4-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-07-31T21:28:37.076Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401873907",
+                "canonicalId": "cid_nor1_bodoglimt_lillestrom_20260731",
+                "leagueName": "Eliteserien",
+                "home": "Bodo/Glimt",
+                "away": "Lillestrom",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-07-31T19:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-07-31T21:27:40.228Z",
+                "scoreKey": "4-0"
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4IWvDbX0",
+                "country": "Norway",
+                "leagueName": "Eliteserien",
+                "leaguePath": "/football/norway/eliteserien/",
+                "home": "Bodo/Glimt",
+                "away": "Lillestrom",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-07-31T19:00:00.000Z",
+                "scoreKey": "4-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -263,7 +306,7 @@
           "canonicalMatchId": "cid_irl2_bray_kerry_20260731",
           "country": "Ireland",
           "leagueSlug": "irl.2",
-          "leagueName": "League of Ireland First Division",
+          "leagueName": "Division 1",
           "kickoff": "2026-07-31T18:45:00.000Z",
           "homeTeam": "Bray",
           "awayTeam": "Kerry",
@@ -277,11 +320,39 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.76,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 4,
+            "scoreKey": "0-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-07-31T21:28:36.638Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "AuqbKzuK",
+                "country": "Ireland",
+                "leagueName": "Division 1",
+                "leaguePath": "/football/ireland/division-1/",
+                "home": "Bray",
+                "away": "Kerry",
+                "scoreHome": 0,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-07-31T18:45:00.000Z",
+                "scoreKey": "0-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -289,7 +360,7 @@
           "canonicalMatchId": "cid_irl2_cobhramblers_wexford_20260731",
           "country": "Ireland",
           "leagueSlug": "irl.2",
-          "leagueName": "League of Ireland First Division",
+          "leagueName": "Division 1",
           "kickoff": "2026-07-31T18:45:00.000Z",
           "homeTeam": "Cobh Ramblers",
           "awayTeam": "Wexford",
@@ -303,11 +374,39 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.65,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-07-31T21:28:36.668Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "SdPUEE2s",
+                "country": "Ireland",
+                "leagueName": "Division 1",
+                "leaguePath": "/football/ireland/division-1/",
+                "home": "Cobh Ramblers",
+                "away": "Wexford",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-07-31T18:45:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         }
       ]
     },
@@ -673,9 +772,9 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -3,
-    "settledDeltaPlanBMinusPlanA": 0,
-    "winsDeltaPlanBMinusPlanA": -1,
-    "lossesDeltaPlanBMinusPlanA": 1,
+    "settledDeltaPlanBMinusPlanA": -3,
+    "winsDeltaPlanBMinusPlanA": -3,
+    "lossesDeltaPlanBMinusPlanA": 0,
     "hitRateDeltaPlanBMinusPlanA": -0.3334,
     "roiDeltaPlanBMinusPlanA": null
   }
