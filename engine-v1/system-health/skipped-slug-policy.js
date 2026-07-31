@@ -1,6 +1,8 @@
 const KNOWN_CONTEXT_SKIPPED_SLUGS = new Set([
   "arg.3",
   "arg.copa",
+  "aff.championship",
+  "caf.w.nations",
   "can.w.nsl",
   "chi.copa_chi",
   "usa.nwsl",

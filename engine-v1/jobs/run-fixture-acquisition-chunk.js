@@ -19,6 +19,9 @@ import { registerMatch } from "../storage/canonical-match-registry.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { refreshValueArtifactsDay } from "./refresh-value-artifacts-day.js";
+import {
+  effectiveLeagueSeedsForDay
+} from "../core/daily-league-admission.js";
 
 function parseArgs(argv = process.argv.slice(2)) {
   const out = {
@@ -276,9 +279,16 @@ function recentHistoryEvidenceForSlug(slug, dateWindow, lookbackDays = 45) {
   };
 }
 
-function selectLeagueChunk({ cursor, chunkSize, dateWindow }) {
-  const rawSeeds = Array.isArray(LEAGUE_SEEDS)
-    ? LEAGUE_SEEDS.map(x => String(x || "").trim()).filter(Boolean)
+function selectLeagueChunk({
+  cursor,
+  chunkSize,
+  dateWindow,
+  effectiveSeeds = LEAGUE_SEEDS
+}) {
+  const rawSeeds = Array.isArray(effectiveSeeds)
+    ? effectiveSeeds
+        .map(x => String(x || "").trim())
+        .filter(Boolean)
     : [];
 
   const disabledSeeds = rawSeeds.filter(slug => isDisabledLeague(slug));
@@ -1039,13 +1049,17 @@ function existingCanonicalIdsForDay(dayKey) {
   return ids;
 }
 
-async function acquireEspnAllScoreboardSupplemental({ dayKey, allowedDays }) {
+async function acquireEspnAllScoreboardSupplemental({
+  dayKey,
+  allowedDays,
+  effectiveSeeds = LEAGUE_SEEDS
+}) {
   // Accept every DECLARED league here, in-season or not: an event actually
   // present in ESPN's all-scoreboard is a stronger fixture signal than the
   // season-calendar heuristic (which produced false negatives for leagues
   // like gab.1/mwi.1/zim.1). The declared-registry boundary still applies.
   const declaredSeedSet = new Set(
-    (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
+    (Array.isArray(effectiveSeeds) ? effectiveSeeds : [])
       .map(x => String(x || "").trim())
       .filter(Boolean)
       .filter(slug => !isDisabledLeague(slug))
@@ -1261,8 +1275,27 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     state.cursor = 0;
   }
 
-  const dateWindow = buildDateWindow(opts.dayKey, opts.daysBack, opts.daysForward);
-  const allowedDays = new Set(dateWindow);
+  const dateWindow = buildDateWindow(
+    opts.dayKey,
+    opts.daysBack,
+    opts.daysForward
+  );
+
+  const allowedDays =
+    new Set(dateWindow);
+
+  const leagueAdmission =
+    effectiveLeagueSeedsForDay(
+      opts.dayKey,
+      {
+        write:
+          opts.writeLeagueAdmission !==
+          false
+      }
+    );
+
+  const effectiveSeeds =
+    leagueAdmission.effectiveSeeds;
 
   // Explicit recovery mode: force-acquire exactly these leagues, ignoring the
   // season filter and cursor. Used by the self-heal recovery pass to re-fetch
@@ -1293,13 +1326,16 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     : opts.fullPass
       ? selectLeagueChunk({
           cursor: 0,
-          chunkSize: Number.MAX_SAFE_INTEGER,
-          dateWindow
+          chunkSize:
+            Number.MAX_SAFE_INTEGER,
+          dateWindow,
+          effectiveSeeds
         })
       : selectLeagueChunk({
           cursor: state.cursor,
           chunkSize: opts.chunkSize,
-          dateWindow
+          dateWindow,
+          effectiveSeeds
         });
 
   if (opts.fullPass) {
@@ -1322,7 +1358,28 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     totalSeedCount: chunk.allSeeds ? chunk.allSeeds.length : chunk.seeds.length,
     leagueSeedCount: chunk.seeds.length,
     seasonOverrides: chunk.seasonOverrides || [],
-    selectionDiagnostics: chunk.selectionDiagnostics || {},
+    selectionDiagnostics: {
+      ...(chunk.selectionDiagnostics || {}),
+      leagueAdmission: {
+        schema:
+          leagueAdmission.artifact
+            ?.schema || null,
+        admittedSlugs:
+          leagueAdmission.admittedSeeds,
+        admittedCount:
+          leagueAdmission
+            .admittedSeeds.length,
+        staticSeedCount:
+          leagueAdmission
+            .staticSeeds.length,
+        effectiveSeedCount:
+          leagueAdmission
+            .effectiveSeeds.length,
+        artifactSummary:
+          leagueAdmission.artifact
+            ?.summary || null
+      }
+    },
     chunkSize: opts.fullPass ? chunk.selected.length : opts.chunkSize,
     startCursor: chunk.startCursor,
     nextCursor: chunk.nextCursor,
@@ -1373,7 +1430,8 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     ? { provider: "skipped_explicit_mode", ok: true, rawEvents: 0, normalized: 0, accepted: 0, writtenByDay: {}, error: null, existingCanonicalUpdates: 0, skippedOtherDay: 0, skippedOutOfTargetSeeds: 0, skippedNoLeagueSlug: 0, byLeague: {} }
     : await acquireEspnAllScoreboardSupplemental({
         dayKey: opts.dayKey,
-        allowedDays
+        allowedDays,
+        effectiveSeeds
       });
 
   report.results.push({
