@@ -20,6 +20,7 @@ import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { refreshValueArtifactsDay } from "./refresh-value-artifacts-day.js";
 import {
+  buildAndWriteDailyLeagueAdmission,
   effectiveLeagueSeedsForDay
 } from "../core/daily-league-admission.js";
 
@@ -1052,7 +1053,8 @@ function existingCanonicalIdsForDay(dayKey) {
 async function acquireEspnAllScoreboardSupplemental({
   dayKey,
   allowedDays,
-  effectiveSeeds = LEAGUE_SEEDS
+  effectiveSeeds = LEAGUE_SEEDS,
+  recordSkippedSlugs = true
 }) {
   // Accept every DECLARED league here, in-season or not: an event actually
   // present in ESPN's all-scoreboard is a stronger fixture signal than the
@@ -1146,9 +1148,18 @@ async function acquireEspnAllScoreboardSupplemental({
       }
 
       if (!targetSeedSet.has(slug)) {
-        stats.skippedOutOfTargetSeeds++;
-        if (!stats.skippedSlugSample) stats.skippedSlugSample = {};
-        stats.skippedSlugSample[slug] = (stats.skippedSlugSample[slug] || 0) + 1;
+        if (recordSkippedSlugs) {
+          stats.skippedOutOfTargetSeeds++;
+
+          if (!stats.skippedSlugSample) {
+            stats.skippedSlugSample = {};
+          }
+
+          stats.skippedSlugSample[slug] =
+            (stats.skippedSlugSample[slug] || 0) +
+            1;
+        }
+
         continue;
       }
 
@@ -1260,10 +1271,116 @@ function readCanonicalCoverage(dayKey) {
 }
 
 function writeCoverageReport(dayKey, report) {
-  writeJson(resolveDataPath("coverage-reports", `${dayKey}.json`), report);
+  writeJson(
+    resolveDataPath(
+      "coverage-reports",
+      `${dayKey}.json`
+    ),
+    report
+  );
 }
 
-export async function runFixtureAcquisitionChunk(options = {}) {
+function mergeCountMaps(
+  base,
+  additional
+) {
+  const out = {
+    ...(base || {})
+  };
+
+  for (const [key, value] of Object.entries(additional || {})) {
+    out[key] =
+      Number(out[key] || 0) +
+      Number(value || 0);
+  }
+
+  return out;
+}
+
+export function mergeSameDayAdmissionSupplemental(
+  initial,
+  retry,
+  newlyAdmittedSlugs = []
+) {
+  const admittedSet =
+    new Set(
+      (Array.isArray(newlyAdmittedSlugs)
+        ? newlyAdmittedSlugs
+        : []
+      )
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+    );
+
+  const skippedSlugSample = {
+    ...(initial?.skippedSlugSample || {})
+  };
+
+  let removedSkippedCount = 0;
+
+  for (const slug of admittedSet) {
+    removedSkippedCount +=
+      Number(skippedSlugSample[slug] || 0);
+
+    delete skippedSlugSample[slug];
+  }
+
+  return {
+    ...(initial || {}),
+    accepted:
+      Number(initial?.accepted || 0) +
+      Number(retry?.accepted || 0),
+    normalized:
+      Number(initial?.normalized || 0) +
+      Number(retry?.normalized || 0),
+    existingCanonicalUpdates:
+      Number(initial?.existingCanonicalUpdates || 0) +
+      Number(retry?.existingCanonicalUpdates || 0),
+    skippedOutOfTargetSeeds:
+      Math.max(
+        0,
+        Number(initial?.skippedOutOfTargetSeeds || 0) -
+        removedSkippedCount
+      ),
+    writtenByDay:
+      mergeCountMaps(
+        initial?.writtenByDay,
+        retry?.writtenByDay
+      ),
+    byLeague:
+      mergeCountMaps(
+        initial?.byLeague,
+        retry?.byLeague
+      ),
+    skippedSlugSample:
+      Object.keys(skippedSlugSample).length > 0
+        ? skippedSlugSample
+        : undefined,
+    error:
+      initial?.error ||
+      retry?.error ||
+      null,
+    sameDayAdmissionRetry: {
+      attempted:
+        admittedSet.size > 0,
+      newlyAdmittedSlugs:
+        [...admittedSet],
+      ok:
+        retry?.ok !== false,
+      accepted:
+        Number(retry?.accepted || 0),
+      normalized:
+        Number(retry?.normalized || 0),
+      existingCanonicalUpdates:
+        Number(retry?.existingCanonicalUpdates || 0),
+      error:
+        retry?.error || null
+    }
+  };
+}
+
+export async function runFixtureAcquisitionChunk
+(options = {}) {
   const opts = {
     ...parseArgs([]),
     ...options
@@ -1464,30 +1581,210 @@ export async function runFixtureAcquisitionChunk(options = {}) {
     report.summary.failedFetches++;
   }
 
-  report.summary.supplementalAllScoreboard = {
-    provider: supplemental.provider,
-    ok: supplemental.ok,
-    rawEvents: supplemental.rawEvents,
-    normalized: supplemental.normalized,
-    accepted: supplemental.accepted,
-    existingCanonicalUpdates: supplemental.existingCanonicalUpdates,
-    skippedOtherDay: supplemental.skippedOtherDay,
-    skippedOutOfTargetSeeds: supplemental.skippedOutOfTargetSeeds,
-    skippedNoLeagueSlug: supplemental.skippedNoLeagueSlug,
-    skippedSlugSample: supplemental.skippedSlugSample,
-    aliasedSlugSample: supplemental.aliasedSlugSample,
-    byLeague: supplemental.byLeague,
-    error: supplemental.error
+  let finalSupplemental = {
+    ...supplemental
   };
 
-  report.coverage = readCanonicalCoverage(opts.dayKey);
-  report.finishedAt = new Date().toISOString();
-  report.type = isExplicit ? "fixture_acquisition_recovery" : report.type;
+  report.summary.supplementalAllScoreboard = {
+    provider: finalSupplemental.provider,
+    ok: finalSupplemental.ok,
+    rawEvents: finalSupplemental.rawEvents,
+    normalized: finalSupplemental.normalized,
+    accepted: finalSupplemental.accepted,
+    existingCanonicalUpdates:
+      finalSupplemental.existingCanonicalUpdates,
+    skippedOtherDay:
+      finalSupplemental.skippedOtherDay,
+    skippedOutOfTargetSeeds:
+      finalSupplemental.skippedOutOfTargetSeeds,
+    skippedNoLeagueSlug:
+      finalSupplemental.skippedNoLeagueSlug,
+    skippedSlugSample:
+      finalSupplemental.skippedSlugSample,
+    aliasedSlugSample:
+      finalSupplemental.aliasedSlugSample,
+    byLeague:
+      finalSupplemental.byLeague,
+    error:
+      finalSupplemental.error
+  };
 
-  // Recovery runs must not clobber the day's main coverage report (the gap
-  // report reads it) — write to a recovery-scoped file instead.
+  report.coverage =
+    readCanonicalCoverage(opts.dayKey);
+
+  report.finishedAt =
+    new Date().toISOString();
+
+  report.type =
+    isExplicit
+      ? "fixture_acquisition_recovery"
+      : report.type;
+
+  // Recovery runs must not clobber the day's main coverage report.
   if (!isExplicit) {
-    writeCoverageReport(opts.dayKey, report);
+    // Persist first-pass evidence so today's observation can satisfy the
+    // multi-day admission threshold during this same acquisition run.
+    writeCoverageReport(
+      opts.dayKey,
+      report
+    );
+
+    const refreshedArtifact =
+      buildAndWriteDailyLeagueAdmission(
+        opts.dayKey,
+        {
+          write:
+            opts.writeLeagueAdmission !==
+            false
+        }
+      );
+
+    const previouslyAdmitted =
+      new Set(
+        leagueAdmission.admittedSeeds
+      );
+
+    const newlyAdmittedSlugs =
+      (refreshedArtifact?.admittedSlugs || [])
+        .filter(slug =>
+          !previouslyAdmitted.has(slug)
+        );
+
+    if (newlyAdmittedSlugs.length > 0) {
+      const retrySupplemental =
+        await acquireEspnAllScoreboardSupplemental({
+          dayKey: opts.dayKey,
+          allowedDays,
+          effectiveSeeds:
+            newlyAdmittedSlugs,
+          recordSkippedSlugs:
+            false
+        });
+
+      finalSupplemental =
+        mergeSameDayAdmissionSupplemental(
+          supplemental,
+          retrySupplemental,
+          newlyAdmittedSlugs
+        );
+
+      report.summary.accepted +=
+        Number(retrySupplemental.accepted || 0);
+
+      report.summary.normalized +=
+        Number(retrySupplemental.normalized || 0);
+
+      if (retrySupplemental.error) {
+        report.summary.failedFetches++;
+      }
+
+      report.results.push({
+        slug: "all_same_day_admission_retry",
+        leagueName:
+          "ESPN All Scoreboard Same-Day Admission Retry",
+        dayKey:
+          opts.dayKey,
+        providerMode:
+          "supplemental_admission_retry",
+        providerExecution:
+          "newly_admitted_only",
+        provider:
+          retrySupplemental.provider,
+        ok:
+          retrySupplemental.ok,
+        rawEvents:
+          retrySupplemental.rawEvents,
+        normalized:
+          retrySupplemental.normalized,
+        accepted:
+          retrySupplemental.accepted,
+        writtenByDay:
+          retrySupplemental.writtenByDay,
+        error:
+          retrySupplemental.error,
+        existingCanonicalUpdates:
+          retrySupplemental.existingCanonicalUpdates,
+        byLeague:
+          retrySupplemental.byLeague,
+        newlyAdmittedSlugs
+      });
+
+      report.coverage =
+        readCanonicalCoverage(opts.dayKey);
+    }
+
+    report.selectionDiagnostics.leagueAdmission = {
+      schema:
+        refreshedArtifact?.schema || null,
+      admittedSlugs:
+        refreshedArtifact?.admittedSlugs || [],
+      admittedCount:
+        refreshedArtifact?.summary?.admittedCount || 0,
+      pendingCount:
+        refreshedArtifact?.summary?.pendingCount || 0,
+      rejectedCount:
+        refreshedArtifact?.summary?.rejectedCount || 0,
+      staticSeedCount:
+        leagueAdmission.staticSeeds.length,
+      effectiveSeedCount:
+        effectiveLeagueSeedsForDay(
+          opts.dayKey,
+          {
+            artifact:
+              refreshedArtifact
+          }
+        ).effectiveSeeds.length,
+      artifactSummary:
+        refreshedArtifact?.summary || null,
+      newlyAdmittedSlugs
+    };
+
+    report.summary.supplementalAllScoreboard = {
+      provider:
+        finalSupplemental.provider,
+      ok:
+        finalSupplemental.ok,
+      rawEvents:
+        finalSupplemental.rawEvents,
+      normalized:
+        finalSupplemental.normalized,
+      accepted:
+        finalSupplemental.accepted,
+      existingCanonicalUpdates:
+        finalSupplemental.existingCanonicalUpdates,
+      skippedOtherDay:
+        finalSupplemental.skippedOtherDay,
+      skippedOutOfTargetSeeds:
+        finalSupplemental.skippedOutOfTargetSeeds,
+      skippedNoLeagueSlug:
+        finalSupplemental.skippedNoLeagueSlug,
+      skippedSlugSample:
+        finalSupplemental.skippedSlugSample,
+      aliasedSlugSample:
+        finalSupplemental.aliasedSlugSample,
+      byLeague:
+        finalSupplemental.byLeague,
+      sameDayAdmissionRetry:
+        finalSupplemental.sameDayAdmissionRetry || {
+          attempted: false,
+          newlyAdmittedSlugs: []
+        },
+      error:
+        finalSupplemental.error
+    };
+
+    report.finishedAt =
+      new Date().toISOString();
+
+    writeCoverageReport(
+      opts.dayKey,
+      report
+    );
+
+    // Keep refreshedArtifact as the authoritative admission decision.
+    // Rebuilding from the finalized report would remove today's evidence
+    // after an admitted slug is cleared from skippedSlugSample and could
+    // incorrectly regress a same-day admission back to pending.
   }
 
   if (!opts.fullPass && !isExplicit) {

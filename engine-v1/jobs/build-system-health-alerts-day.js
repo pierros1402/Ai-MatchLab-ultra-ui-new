@@ -395,6 +395,50 @@ export function buildSystemHealthAlertsDay(dayKey) {
       }));
     }
 
+    const admission = buildReport.acquisition?.admission;
+
+    if (admission) {
+      const admittedSlugs = Array.isArray(admission.admittedSlugs)
+        ? admission.admittedSlugs
+        : [];
+      const pendingSlugs = Array.isArray(admission.pendingSlugs)
+        ? admission.pendingSlugs
+        : [];
+      const rejectedSlugs = Array.isArray(admission.rejectedSlugs)
+        ? admission.rejectedSlugs
+        : [];
+
+      if (admittedSlugs.length > 0) {
+        issues.push(issue(
+          "info",
+          "competition-admission",
+          "competition_admission_active",
+          "Persistent domestic competition admissions are active.",
+          { admittedSlugs, summary: admission.summary || null }
+        ));
+      }
+
+      if (pendingSlugs.length > 0) {
+        issues.push(issue(
+          "warning",
+          "competition-admission",
+          "competition_admission_pending",
+          "Domestic competition candidates are waiting for sufficient multi-day evidence.",
+          { pendingSlugs, summary: admission.summary || null }
+        ));
+      }
+
+      if (rejectedSlugs.length > 0) {
+        issues.push(issue(
+          "info",
+          "competition-admission",
+          "competition_admission_rejected",
+          "Observed competition slugs were rejected by the fail-closed admission policy.",
+          { rejectedSlugs, summary: admission.summary || null }
+        ));
+      }
+    }
+
     const settlementPlans = [
       ["A", "planA", "plan_a_unresolved_settlement"],
       ["A2", "planA2", "plan_a2_unresolved_settlement"],

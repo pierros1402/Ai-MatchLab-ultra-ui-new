@@ -216,14 +216,38 @@ export function buildDayReport(dayKey, options = {}) {
 
   // ── Acquisition ───────────────────────────────────────────────────────────
   const coverage = readJsonSafe(resolveDataPath("coverage-reports", `${dayKey}.json`));
-  if (coverage) {
+  const admission = readJsonSafe(resolveDataPath("competition-admission", `${dayKey}.json`));
+
+  if (coverage || admission) {
     const supplemental = coverage?.summary?.supplementalAllScoreboard || {};
+    const decisions = Array.isArray(admission?.decisions)
+      ? admission.decisions
+      : [];
+
     report.acquisition = {
-      finishedAt: coverage.finishedAt || null,
+      finishedAt: coverage?.finishedAt || null,
       accepted: Number(coverage?.summary?.accepted || 0),
       failedFetches: Number(coverage?.summary?.failedFetches || 0),
       skippedSlugSample: supplemental.skippedSlugSample || null,
-      aliasedSlugSample: supplemental.aliasedSlugSample || null
+      aliasedSlugSample: supplemental.aliasedSlugSample || null,
+      sameDayAdmissionRetry: supplemental.sameDayAdmissionRetry || null,
+      admission: admission
+        ? {
+            schema: admission.schema || null,
+            generatedAt: admission.generatedAt || null,
+            summary: admission.summary || null,
+            admittedSlugs: Array.isArray(admission.admittedSlugs)
+              ? admission.admittedSlugs
+              : [],
+            pendingSlugs: decisions
+              .filter(row => row.classification === "pending")
+              .map(row => row.slug),
+            rejectedSlugs: decisions
+              .filter(row => row.classification === "rejected")
+              .map(row => row.slug),
+            decisions
+          }
+        : null
     };
   }
 

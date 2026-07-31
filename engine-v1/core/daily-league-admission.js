@@ -194,6 +194,7 @@ export function collectLeagueAdmissionEvidence({
 export function buildDailyLeagueAdmission({
   dayKey,
   reports = [],
+  previousArtifact = null,
   minObservationDays =
     DEFAULT_MIN_OBSERVATION_DAYS,
   generatedAt =
@@ -271,6 +272,110 @@ export function buildDailyLeagueAdmission({
           "persistent_strict_domestic_tier_evidence"
       };
     });
+
+  const previousDecisions =
+    Array.isArray(previousArtifact?.decisions)
+      ? previousArtifact.decisions
+      : [];
+
+  const previousDecisionBySlug =
+    new Map(
+      previousDecisions
+        .map(row => [
+          clean(row?.slug),
+          row
+        ])
+        .filter(([slug]) => Boolean(slug))
+    );
+
+  const previouslyAdmittedSlugs =
+    (Array.isArray(previousArtifact?.admittedSlugs)
+      ? previousArtifact.admittedSlugs
+      : []
+    )
+      .map(clean)
+      .filter(Boolean);
+
+  const decisionIndexBySlug =
+    new Map(
+      decisions.map((row, index) => [
+        row.slug,
+        index
+      ])
+    );
+
+  for (const slug of previouslyAdmittedSlugs) {
+    const classification =
+      classifyAutomaticAdmissionSlug(slug);
+
+    if (
+      !classification.eligible ||
+      staticSeedSet.has(slug)
+    ) {
+      continue;
+    }
+
+    const existingIndex =
+      decisionIndexBySlug.get(slug);
+
+    const existingDecision =
+      existingIndex === undefined
+        ? null
+        : decisions[existingIndex];
+
+    if (existingDecision?.admitted) {
+      continue;
+    }
+
+    const previousDecision =
+      previousDecisionBySlug.get(slug) || {};
+
+    const carriedDecision = {
+      ...previousDecision,
+      ...(existingDecision || {}),
+      slug,
+      observationDays:
+        Math.max(
+          Number(previousDecision.observationDays || 0),
+          Number(existingDecision?.observationDays || 0),
+          Number(minObservationDays || 0)
+        ),
+      totalObservedFixtures:
+        Math.max(
+          Number(previousDecision.totalObservedFixtures || 0),
+          Number(existingDecision?.totalObservedFixtures || 0)
+        ),
+      byDay: {
+        ...(previousDecision.byDay || {}),
+        ...(existingDecision?.byDay || {})
+      },
+      classification:
+        "admitted",
+      admitted: true,
+      acquisitionEligible: true,
+      reasonCode:
+        "persistent_admission_carry_forward",
+      carriedForward: true,
+      carriedFromDay:
+        previousArtifact?.dayKey || null
+    };
+
+    if (existingIndex === undefined) {
+      decisionIndexBySlug.set(
+        slug,
+        decisions.length
+      );
+
+      decisions.push(carriedDecision);
+    } else {
+      decisions[existingIndex] =
+        carriedDecision;
+    }
+  }
+
+  decisions.sort((a, b) =>
+    a.slug.localeCompare(b.slug)
+  );
 
   const admittedSlugs =
     decisions
@@ -359,6 +464,27 @@ export function readCoverageReportsForAdmission(
     .filter(row => row.report);
 }
 
+export function selectPriorAdmissionArtifact(
+  dayKey,
+  candidate
+) {
+  const requestedDay =
+    String(dayKey || "").trim();
+
+  const candidateDay =
+    String(candidate?.dayKey || "").trim();
+
+  if (
+    !requestedDay ||
+    !candidateDay ||
+    candidateDay > requestedDay
+  ) {
+    return null;
+  }
+
+  return candidate;
+}
+
 export function buildAndWriteDailyLeagueAdmission(
   dayKey,
   options = {}
@@ -369,10 +495,28 @@ export function buildAndWriteDailyLeagueAdmission(
       dayKey
     );
 
+  const latestFile =
+    resolveDataPath(
+      "competition-admission",
+      "latest.json"
+    );
+
+  const previousCandidate =
+    options.previousArtifact !== undefined
+      ? options.previousArtifact
+      : readJson(latestFile, null);
+
+  const previousArtifact =
+    selectPriorAdmissionArtifact(
+      dayKey,
+      previousCandidate
+    );
+
   const artifact =
     buildDailyLeagueAdmission({
       dayKey,
       reports,
+      previousArtifact,
       minObservationDays:
         options.minObservationDays,
       generatedAt:
@@ -384,12 +528,6 @@ export function buildAndWriteDailyLeagueAdmission(
       resolveDataPath(
         "competition-admission",
         `${dayKey}.json`
-      );
-
-    const latestFile =
-      resolveDataPath(
-        "competition-admission",
-        "latest.json"
       );
 
     writeJsonAtomic(dayFile, artifact);
@@ -445,15 +583,24 @@ export function effectiveLeagueSeedsForDay(
       .map(clean)
       .filter(Boolean);
 
-  const effectiveSeeds =
-    [...new Set([
-      ...staticSeeds,
-      ...admittedSeeds
-    ])]
-      .filter(slug =>
-        !isDisabledLeague(slug)
-      )
-      .sort();
+  const effectiveSeeds = [];
+  const seen = new Set();
+
+  for (const slug of [
+    ...staticSeeds,
+    ...admittedSeeds
+  ]) {
+    if (
+      !slug ||
+      seen.has(slug) ||
+      isDisabledLeague(slug)
+    ) {
+      continue;
+    }
+
+    seen.add(slug);
+    effectiveSeeds.push(slug);
+  }
 
   return {
     artifact,
