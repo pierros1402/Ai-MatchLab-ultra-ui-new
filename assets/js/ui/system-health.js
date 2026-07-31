@@ -3,7 +3,7 @@
 
   const POLL_INTERVAL_MS = 5 * 60 * 1000; // refresh every 5 min while open
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Helpers έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
 
   function el(id) { return document.getElementById(id); }
 
@@ -45,7 +45,7 @@
   }
 
   function formatTime(iso) {
-    if (!iso) return "—";
+    if (!iso) return "έΑΦ";
     const d = new Date(iso);
     if (!Number.isFinite(d.getTime())) return esc(iso);
     return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Athens" }) + " (Athens)";
@@ -53,10 +53,10 @@
 
   function issueTone(severity) {
     const s = String(severity || "").toLowerCase();
-    if (s === "error") return { icon: "✗", color: "#ef4444", label: "ERROR" };
-    if (s === "warning") return { icon: "⚠", color: "#f59e0b", label: "WARNING" };
+    if (s === "error") return { icon: "έεΩ", color: "#ef4444", label: "ERROR" };
+    if (s === "warning") return { icon: "έγι", color: "#f59e0b", label: "WARNING" };
     if (s === "info") return { icon: "i", color: "#38bdf8", label: "INFO" };
-    return { icon: "✓", color: "#22c55e", label: "OK" };
+    return { icon: "έεΥ", color: "#22c55e", label: "OK" };
   }
 
   function compactJson(v) {
@@ -72,15 +72,15 @@
     const type = String(issue?.type || "");
 
     if (type === "coverage_floor_drop") {
-      return `source: ${esc(issue.source)} · static floor: <b>${esc(d.staticFloor)}</b> · effective floor: <b>${esc(d.effectiveFloor)}</b> · actual fixtures: <b>${esc(d.actualFixtures)}</b> · drop: <b>${esc(d.drop)}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ static floor: <b>${esc(d.staticFloor)}</b> ┬╖ effective floor: <b>${esc(d.effectiveFloor)}</b> ┬╖ actual fixtures: <b>${esc(d.actualFixtures)}</b> ┬╖ drop: <b>${esc(d.drop)}</b>`;
     }
 
     if (type === "acquisition_skipped_slugs") {
-      return `source: ${esc(issue.source)} · slugs: <b>${esc((d.slugs || []).join(", "))}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ slugs: <b>${esc((d.slugs || []).join(", "))}</b>`;
     }
 
     if (type === "build_not_strict_clean") {
-      return `source: ${esc(issue.source)} · clean: <b>${esc(d.clean)}</b> · cleanStrict: <b>${esc(d.cleanStrict)}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ clean: <b>${esc(d.clean)}</b> ┬╖ cleanStrict: <b>${esc(d.cleanStrict)}</b>`;
     }
 
     const unresolvedPlanLabels = {
@@ -91,15 +91,15 @@
     };
 
     if (unresolvedPlanLabels[type]) {
-      return `source: ${esc(issue.source)} · plan: <b>${esc(unresolvedPlanLabels[type])}</b> · picks: <b>${esc(d.picks)}</b> · settled: <b>${esc(d.settled)}</b> · unresolved: <b>${esc(d.unresolved)}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ plan: <b>${esc(unresolvedPlanLabels[type])}</b> ┬╖ picks: <b>${esc(d.picks)}</b> ┬╖ settled: <b>${esc(d.settled)}</b> ┬╖ unresolved: <b>${esc(d.unresolved)}</b>`;
     }
 
     if (type === "skipped_freshness_input") {
-      return `source: ${esc(issue.source)} · artifact: <b>${esc(d.artifact)}</b> · reason: <b>${esc(d.skipped || d.staleReason)}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ artifact: <b>${esc(d.artifact)}</b> ┬╖ reason: <b>${esc(d.skipped || d.staleReason)}</b>`;
     }
 
     if (type === "production_value_zero_candidates") {
-      return `source: ${esc(issue.source)} · fixturesSeen: <b>${esc(d.fixturesSeen)}</b> · eligible: <b>${esc(d.eligibleEvaluated)}</b> · candidateMarkets: <b>${esc(d.candidateMarkets)}</b> · approved: <b>${esc(d.approved)}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ fixturesSeen: <b>${esc(d.fixturesSeen)}</b> ┬╖ eligible: <b>${esc(d.eligibleEvaluated)}</b> ┬╖ candidateMarkets: <b>${esc(d.candidateMarkets)}</b> ┬╖ approved: <b>${esc(d.approved)}</b>`;
     }
 
     if (type === "value_plan_comparison_summary") {
@@ -108,21 +108,21 @@
       const b = d.planB || {};
       const b2 = d.planB2 || {};
 
-      return `source: ${esc(issue.source)} · A: <b>${esc(a.count)}</b> · A2: <b>${esc(a2.count)}</b> · B: <b>${esc(b.count)}</b> · B2: <b>${esc(b2.count)}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ A: <b>${esc(a.count)}</b> ┬╖ A2: <b>${esc(a2.count)}</b> ┬╖ B: <b>${esc(b.count)}</b> ┬╖ B2: <b>${esc(b2.count)}</b>`;
     }
 
     if (type === "four_plan_comparison_incomplete") {
-      return `source: ${esc(issue.source)} · present: <b>${esc((d.presentPlans || []).join(", ") || "—")}</b> · missing: <b>${esc((d.missingPlans || []).join(", ") || "—")}</b>`;
+      return `source: ${esc(issue.source)} ┬╖ present: <b>${esc((d.presentPlans || []).join(", ") || "έΑΦ")}</b> ┬╖ missing: <b>${esc((d.missingPlans || []).join(", ") || "έΑΦ")}</b>`;
     }
 
     if (type === "artifact_missing" || type === "artifact_json_invalid") {
-      return `source: ${esc(issue.source)} · artifact: <b>${esc(d.artifact)}</b>${d.error ? " · error: " + esc(d.error) : ""}`;
+      return `source: ${esc(issue.source)} ┬╖ artifact: <b>${esc(d.artifact)}</b>${d.error ? " ┬╖ error: " + esc(d.error) : ""}`;
     }
 
     const keys = Object.keys(d);
-    if (!keys.length) return `source: ${esc(issue.source || "—")}`;
+    if (!keys.length) return `source: ${esc(issue.source || "έΑΦ")}`;
 
-    return `source: ${esc(issue.source || "—")}<pre style="white-space:pre-wrap;margin:6px 0 0;color:#94a3b8;font-size:10px;line-height:1.35;">${compactJson(d)}</pre>`;
+    return `source: ${esc(issue.source || "έΑΦ")}<pre style="white-space:pre-wrap;margin:6px 0 0;color:#94a3b8;font-size:10px;line-height:1.35;">${compactJson(d)}</pre>`;
   }
 
   function issueRowFromIssue(issue) {
@@ -135,7 +135,7 @@
     return `<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);">
       <span style="color:${tone.color};font-size:14px;min-width:18px;">${tone.icon}</span>
       <div style="min-width:0;">
-        <div style="font-size:12px;color:${tone.color};font-weight:700;">${esc(tone.label)} · ${source}${esc(type)}</div>
+        <div style="font-size:12px;color:${tone.color};font-weight:700;">${esc(tone.label)} ┬╖ ${source}${esc(type)}</div>
         ${message}
         <div style="font-size:11px;color:#94a3b8;margin-top:3px;">${detail}</div>
       </div>
@@ -161,11 +161,11 @@
       const a = artifacts[k] || {};
       const ok = a.exists && a.ok;
       const color = ok ? "#22c55e" : "#ef4444";
-      const mark = ok ? "✓" : "✗";
+      const mark = ok ? "έεΥ" : "έεΩ";
       const stamp = a.generatedAt || a.checkedAt || a.updatedAt || "";
       return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#94a3b8;padding:2px 0;">
         <span><span style="color:${color};font-weight:700;">${mark}</span> ${esc(k)}</span>
-        <span style="text-align:right;">${esc(a.path || "")}${stamp ? " · " + esc(stamp) : ""}</span>
+        <span style="text-align:right;">${esc(a.path || "")}${stamp ? " ┬╖ " + esc(stamp) : ""}</span>
       </div>`;
     }).join("");
 
@@ -199,11 +199,11 @@
 
     return `<div style="margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(15,23,42,.75);border:1px solid rgba(255,255,255,.06);font-size:11px;color:#cbd5e1;">
       <div style="font-weight:700;color:#e2e8f0;margin-bottom:4px;">Value diagnostics</div>
-      <div>Production: <b>${esc(prod.source || "—")}</b> · picks: <b>${esc(prod.count ?? "—")}</b> · ok: <b>${esc(prod.ok ?? "—")}</b></div>
-      <div>Contract: canonicalOnly=<b>${esc(audit.sourceContract?.canonicalOnly ?? "—")}</b> · deploySnapshotInput=<b>${esc(audit.sourceContract?.deploySnapshotInput ?? "—")}</b></div>
-      <div>Universe: fixtures=<b>${esc(audit.universe?.fixturesSeen ?? "—")}</b> · candidates=<b>${esc(audit.universe?.candidateMarkets ?? "—")}</b> · approved=<b>${esc(audit.universe?.approved ?? "—")}</b></div>
-      <div>Plans: A=<b>${esc(planA?.count ?? "—")}</b> · A2=<b>${esc(planA2?.count ?? "—")}</b> · B=<b>${esc(planB?.count ?? "—")}</b> · B2=<b>${esc(planB2?.count ?? "—")}</b></div>
-      <div>Four-plan contract: <b>${missingPlans.length === 0 ? "complete" : "incomplete"}</b>${missingPlans.length ? " · missing: " + esc(missingPlans.join(", ")) : ""}</div>
+      <div>Production: <b>${esc(prod.source || "έΑΦ")}</b> ┬╖ picks: <b>${esc(prod.count ?? "έΑΦ")}</b> ┬╖ ok: <b>${esc(prod.ok ?? "έΑΦ")}</b></div>
+      <div>Contract: canonicalOnly=<b>${esc(audit.sourceContract?.canonicalOnly ?? "έΑΦ")}</b> ┬╖ deploySnapshotInput=<b>${esc(audit.sourceContract?.deploySnapshotInput ?? "έΑΦ")}</b></div>
+      <div>Universe: fixtures=<b>${esc(audit.universe?.fixturesSeen ?? "έΑΦ")}</b> ┬╖ candidates=<b>${esc(audit.universe?.candidateMarkets ?? "έΑΦ")}</b> ┬╖ approved=<b>${esc(audit.universe?.approved ?? "έΑΦ")}</b></div>
+      <div>Plans: A=<b>${esc(planA?.count ?? "έΑΦ")}</b> ┬╖ A2=<b>${esc(planA2?.count ?? "έΑΦ")}</b> ┬╖ B=<b>${esc(planB?.count ?? "έΑΦ")}</b> ┬╖ B2=<b>${esc(planB2?.count ?? "έΑΦ")}</b></div>
+      <div>Four-plan contract: <b>${missingPlans.length === 0 ? "complete" : "incomplete"}</b>${missingPlans.length ? " ┬╖ missing: " + esc(missingPlans.join(", ")) : ""}</div>
     </div>`;
   }
 
@@ -212,8 +212,8 @@
 
     if (report.status === "no_report") {
       return `<div style="padding:10px 0;">
-        <div style="font-size:14px;color:#fbbf24;font-weight:600;">⚠ UNKNOWN — No diagnostic report</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:6px;">The daily pipeline has not produced system-health diagnostics for this day.<br>Snapshot integrity is <b>unverified</b> — do not treat as clean.</div>
+        <div style="font-size:14px;color:#fbbf24;font-weight:600;">έγι UNKNOWN έΑΦ No diagnostic report</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px;">The daily pipeline has not produced system-health diagnostics for this day.<br>Snapshot integrity is <b>unverified</b> έΑΦ do not treat as clean.</div>
       </div>`;
     }
 
@@ -229,31 +229,31 @@
     } else {
       for (const b of (report.blocked || [])) {
         let detail = "";
-        if (b.type === "status_mismatch_unpatchable") detail = `${esc(b.match)} — fixture:<b>${esc(b.fixtureStatus)}</b> | details:<b>${esc(b.detailStatus)}</b>`;
-        else if (b.type === "manifest_value_count_mismatch") detail = `manifest.valuePicks=${esc(b.manifestValuePicks)} ≠ value.json.count=${esc(b.valueJsonCount)}`;
+        if (b.type === "status_mismatch_unpatchable") detail = `${esc(b.match)} έΑΦ fixture:<b>${esc(b.fixtureStatus)}</b> | details:<b>${esc(b.detailStatus)}</b>`;
+        else if (b.type === "manifest_value_count_mismatch") detail = `manifest.valuePicks=${esc(b.manifestValuePicks)} έΚι value.json.count=${esc(b.valueJsonCount)}`;
         else if (b.type === "value_count_array_mismatch") detail = `declared count=${esc(b.declaredCount)} but picks.length=${esc(b.actualCount)}`;
         else detail = compactJson(b);
-        rows.push(issueRow("✗", "#ef4444", String(b.type || "blocked").replace(/_/g, " "), detail));
+        rows.push(issueRow("έεΩ", "#ef4444", String(b.type || "blocked").replace(/_/g, " "), detail));
       }
 
       for (const a of (report.autoFixed || [])) {
         let detail = "";
-        if (a.type === "status_mismatch") detail = `${esc(a.match)} — ${esc(a.before)} → ${esc(a.after)} ✓`;
+        if (a.type === "status_mismatch") detail = `${esc(a.match)} έΑΦ ${esc(a.before)} έΗΤ ${esc(a.after)} έεΥ`;
         else detail = compactJson(a);
-        rows.push(issueRow("⚡", "#f59e0b", "auto-fixed: " + String(a.type || "issue").replace(/_/g, " "), detail));
+        rows.push(issueRow("έγκ", "#f59e0b", "auto-fixed: " + String(a.type || "issue").replace(/_/g, " "), detail));
       }
 
       for (const w of (report.warnings || [])) {
         let detail = "";
-        if (w.type === "coverage_floor_drop") detail = `floor ${esc(w.staticFloor)}→${esc(w.effectiveFloor)} (actual fixtures: ${esc(w.actualFixtures)})`;
+        if (w.type === "coverage_floor_drop") detail = `floor ${esc(w.staticFloor)}έΗΤ${esc(w.effectiveFloor)} (actual fixtures: ${esc(w.actualFixtures)})`;
         else if (w.type === "minute_double_apostrophe") detail = `match ${esc(w.matchId)}: minute="${esc(w.minute)}"`;
         else detail = compactJson(w);
-        rows.push(issueRow("⚠", "#f59e0b", String(w.type || "warning").replace(/_/g, " "), detail));
+        rows.push(issueRow("έγι", "#f59e0b", String(w.type || "warning").replace(/_/g, " "), detail));
       }
     }
 
     if (rows.length === 0) {
-      rows.push(issueRow("✓", "#22c55e", "All checks passed", "No issues found"));
+      rows.push(issueRow("έεΥ", "#22c55e", "All checks passed", "No issues found"));
     }
 
     const counts = report.issueCounts || {};
@@ -262,14 +262,14 @@
 
     const header = `<div style="margin-bottom:10px;padding:8px 10px;border-radius:6px;background:rgba(255,255,255,.04);border-left:3px solid ${headerColor};">
       <div style="font-size:13px;color:#e2e8f0;font-weight:700;">System Health: ${esc(severity)}</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Errors: <b>${esc(counts.error || 0)}</b> · Warnings: <b>${esc(counts.warning || 0)}</b> · Info: <b>${esc(counts.info || 0)}</b></div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Errors: <b>${esc(counts.error || 0)}</b> ┬╖ Warnings: <b>${esc(counts.warning || 0)}</b> ┬╖ Info: <b>${esc(counts.info || 0)}</b></div>
     </div>`;
 
     return `${header}<div>${rows.join("")}</div>${renderValueSummary(report)}${renderArtifacts(report)}
-      <div style="margin-top:12px;font-size:11px;color:#64748b;">Last check: ${formatTime(report.checkedAt)} · Day: ${esc(report.dayKey || "—")} · Manifest: ${esc(report.manifestGeneratedAt || "—")}</div>`;
+      <div style="margin-top:12px;font-size:11px;color:#64748b;">Last check: ${formatTime(report.checkedAt)} ┬╖ Day: ${esc(report.dayKey || "έΑΦ")} ┬╖ Manifest: ${esc(report.manifestGeneratedAt || "έΑΦ")}</div>`;
   }
 
-  // ── Modal ─────────────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Modal έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
 
   function buildModal() {
     const existing = el("system-health-modal");
@@ -295,14 +295,14 @@
         padding:16px;
       ">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <span style="font-size:14px;font-weight:600;color:#e2e8f0;">🛡 System Health</span>
+          <span style="font-size:14px;font-weight:600;color:#e2e8f0;">Ώθδκ System Health</span>
           <button id="system-health-close" style="
             background:none;border:none;cursor:pointer;
             color:#64748b;font-size:18px;line-height:1;padding:2px 6px;
-          ">×</button>
+          ">├Ω</button>
         </div>
         <div id="system-health-body" style="min-height:60px;">
-          <p style="color:#94a3b8;font-size:13px;">Loading…</p>
+          <p style="color:#94a3b8;font-size:13px;">LoadingέΑο</p>
         </div>
       </div>
     `;
@@ -364,13 +364,131 @@
   let _lastReport = null;
   let _lastAlertArtifact = null;
 
+  function reportDay(report) {
+    return String(
+      report?.dayKey ||
+      report?.date ||
+      report?.latestForDay ||
+      ""
+    ).slice(0, 10);
+  }
+
+  function appendParityIssue(report, type, message, details) {
+    if (!report) return report;
+
+    const issues = Array.isArray(report.issues)
+      ? report.issues.slice()
+      : [];
+
+    if (!issues.some(item => item?.type === type)) {
+      issues.unshift({
+        severity: "error",
+        source: "public-parity",
+        type,
+        message,
+        details: details || {}
+      });
+    }
+
+    const issueCounts = {
+      error: issues.filter(item => item?.severity === "error").length,
+      warning: issues.filter(item => item?.severity === "warning").length,
+      info: issues.filter(item => item?.severity === "info").length
+    };
+
+    return {
+      ...report,
+      ok: false,
+      severity: "error",
+      status: "error",
+      issues,
+      issueCounts
+    };
+  }
+
+  async function fetchStaticOperationalDay() {
+    try {
+      const res = await fetch(
+        `data/deploy-snapshots/latest.json?v=${Date.now()}`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) return "";
+      const payload = await res.json();
+      return String(payload?.date || payload?.dayKey || "").slice(0, 10);
+    } catch {
+      return "";
+    }
+  }
+
   async function fetchDiagnosticReport() {
     try {
-      const day = resolveSystemHealthDay();
-      const path = day ? `/system-health?day=${encodeURIComponent(day)}` : "/system-health";
-      const res = await fetch(engineUrl(path), { cache: "no-store" });
-      if (!res.ok) return null;
-      return await res.json();
+      const selectedDay = resolveSystemHealthDay();
+      const selectedPath = selectedDay
+        ? `/system-health?day=${encodeURIComponent(selectedDay)}`
+        : "/system-health";
+
+      const [selectedResponse, currentResponse, staticDay] = await Promise.all([
+        fetch(engineUrl(selectedPath), { cache: "no-store" }),
+        selectedPath === "/system-health"
+          ? Promise.resolve(null)
+          : fetch(engineUrl("/system-health"), { cache: "no-store" }),
+        fetchStaticOperationalDay()
+      ]);
+
+      if (!selectedResponse.ok) return null;
+
+      let report = await selectedResponse.json();
+      let currentReport = report;
+
+      if (currentResponse && currentResponse.ok) {
+        currentReport = await currentResponse.json();
+      }
+
+      const engineOperationalDay = reportDay(currentReport);
+      const displayedReportDay = reportDay(report);
+      const activePanelDay = String(
+        window.__AIML_LAST_ACTIVE?.date ||
+        ""
+      ).slice(0, 10);
+
+      if (
+        engineOperationalDay &&
+        staticDay &&
+        engineOperationalDay !== staticDay
+      ) {
+        report = appendParityIssue(
+          report,
+          "public_ui_operational_day_mismatch",
+          "The public UI snapshot day does not match the engine operational day.",
+          {
+            engineOperationalDay,
+            publicUiSnapshotDay: staticDay,
+            displayedReportDay,
+            selectedDay: selectedDay || null
+          }
+        );
+      }
+
+      if (
+        engineOperationalDay &&
+        activePanelDay &&
+        selectedDay === engineOperationalDay &&
+        activePanelDay !== engineOperationalDay
+      ) {
+        report = appendParityIssue(
+          report,
+          "active_panel_day_mismatch",
+          "The Active panel is displaying a different day from the engine operational day.",
+          {
+            engineOperationalDay,
+            activePanelDay,
+            publicUiSnapshotDay: staticDay || null,
+            selectedDay: selectedDay || null
+          }
+        );
+      }
+
+      return report;
     } catch {
       return null;
     }
@@ -402,6 +520,8 @@
   }
 
   function alertSeverity(artifact, fallbackReport) {
+    const severities = [];
+
     if (artifact) {
       const errors =
         numberValue(artifact.alertCounts?.error) ||
@@ -411,42 +531,52 @@
         numberValue(artifact.alertCounts?.warning) ||
         numberValue(artifact.issueCounts?.warning);
 
-      if (errors > 0) return "error";
-      if (warnings > 0) return "warning";
-
-      return String(artifact.severity || "info").toLowerCase();
+      severities.push(
+        errors > 0
+          ? "error"
+          : warnings > 0
+            ? "warning"
+            : String(artifact.severity || "info").toLowerCase()
+      );
     }
 
     if (fallbackReport) {
-      if (numberValue(fallbackReport.issueCounts?.error) > 0) return "error";
-      if (numberValue(fallbackReport.issueCounts?.warning) > 0) return "warning";
-
-      return String(
-        fallbackReport.severity ||
-        fallbackReport.status ||
-        "ok"
-      ).toLowerCase();
+      severities.push(
+        numberValue(fallbackReport.issueCounts?.error) > 0
+          ? "error"
+          : numberValue(fallbackReport.issueCounts?.warning) > 0
+            ? "warning"
+            : String(
+                fallbackReport.severity ||
+                fallbackReport.status ||
+                "ok"
+              ).toLowerCase()
+      );
     }
 
+    if (severities.includes("error")) return "error";
+    if (severities.includes("warning")) return "warning";
+    if (severities.includes("info")) return "info";
+    if (severities.includes("ok")) return "ok";
     return "unknown";
   }
 
   function badgeCount(artifact, fallbackReport) {
-    if (artifact) {
-      return (
-        numberValue(artifact.newActionableIssueCount) ||
-        numberValue(artifact.actionableIssueCount)
-      );
-    }
+    const artifactCount = artifact
+      ? (
+          numberValue(artifact.newActionableIssueCount) ||
+          numberValue(artifact.actionableIssueCount)
+        )
+      : 0;
 
-    if (fallbackReport) {
-      return (
-        numberValue(fallbackReport.issueCounts?.error) +
-        numberValue(fallbackReport.issueCounts?.warning)
-      );
-    }
+    const reportCount = fallbackReport
+      ? (
+          numberValue(fallbackReport.issueCounts?.error) +
+          numberValue(fallbackReport.issueCounts?.warning)
+        )
+      : 0;
 
-    return 0;
+    return Math.max(artifactCount, reportCount);
   }
 
   function shouldShowAlertBadge(artifact, fallbackReport) {
@@ -475,7 +605,7 @@
 
       if (button) {
         button.title = artifact
-          ? `System Health · ${String(artifact.severity || "info").toUpperCase()} · no actionable alerts`
+          ? `System Health ┬╖ ${String(artifact.severity || "info").toUpperCase()} ┬╖ no actionable alerts`
           : "System Health";
       }
 
@@ -512,8 +642,8 @@
 
     if (button) {
       button.title =
-        `System Health alert · ${severity.toUpperCase()}` +
-        (count > 0 ? ` · ${count} actionable issue${count === 1 ? "" : "s"}` : "");
+        `System Health alert ┬╖ ${severity.toUpperCase()}` +
+        (count > 0 ? ` ┬╖ ${count} actionable issue${count === 1 ? "" : "s"}` : "");
     }
   }
 
@@ -566,34 +696,31 @@
         <span style="color:#64748b;">Alert layer</span>
       </div>
       <div style="margin-top:5px;">
-        Active: <b>${esc(active)}</b> ·
-        Actionable: <b>${esc(actionable)}</b> ·
+        Active: <b>${esc(active)}</b> ┬╖
+        Actionable: <b>${esc(actionable)}</b> ┬╖
         New actionable: <b>${esc(newActionable)}</b>
       </div>
       <div style="margin-top:2px;">
-        Persistent: <b>${esc(persistent)}</b> ·
+        Persistent: <b>${esc(persistent)}</b> ┬╖
         Resolved: <b>${esc(resolved)}</b>
       </div>
     </div>`;
   }
 
   async function refreshBadge() {
-    const artifact = await fetchAlertArtifact();
+    const [artifact, report] = await Promise.all([
+      fetchAlertArtifact(),
+      fetchDiagnosticReport()
+    ]);
+
     const usableArtifact =
       artifact && alertArtifactMatchesSelectedDay(artifact)
         ? artifact
         : null;
 
     _lastAlertArtifact = usableArtifact;
-
-    if (usableArtifact) {
-      updateBadge(usableArtifact, null);
-      return;
-    }
-
-    const report = await fetchDiagnosticReport();
     _lastReport = report;
-    updateBadge(null, report);
+    updateBadge(usableArtifact, report);
   }
 
   async function fetchAndRender() {
@@ -601,7 +728,7 @@
 
     if (body) {
       body.innerHTML =
-        `<p style="color:#94a3b8;font-size:13px;">Loading…</p>`;
+        `<p style="color:#94a3b8;font-size:13px;">LoadingέΑο</p>`;
     }
 
     const [report, artifact] = await Promise.all([
@@ -626,7 +753,7 @@
     }
   }
 
-  // ── Boot ──────────────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Boot έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
 
   function boot() {
     const btn = el("btn-system-health");

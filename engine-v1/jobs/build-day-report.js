@@ -2,7 +2,7 @@
  * build-day-report.js
  *
  * One self-describing report per day: data/build-reports/<DAY>.json.
- * Pure aggregator — reads artifacts other jobs already wrote (coverage
+ * Pure aggregator έΑΦ reads artifacts other jobs already wrote (coverage
  * report, expected-matches, canonical store, deploy snapshot, invariant
  * report, freshness report, value plans, settlement comparison) and rolls
  * them into a single verdict. Nothing is recomputed, nothing is mutated.
@@ -10,11 +10,11 @@
  * This is the autonomy scoreboard: a day is `clean` when it has no hard
  * failures (stale snapshot, blocked invariants, missing value artifact,
  * missing details). The Definition-of-Done for the autonomous mechanism is
- * a streak of consecutive clean days — when something breaks, this file
+ * a streak of consecutive clean days έΑΦ when something breaks, this file
  * says what, without digging through ten artifacts.
  *
  * Usage: node engine-v1/jobs/build-day-report.js --date=YYYY-MM-DD
- * Exit code is always 0 — reporting must never block a pipeline.
+ * Exit code is always 0 έΑΦ reporting must never block a pipeline.
  */
 
 import fs from "fs";
@@ -22,6 +22,7 @@ import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { buildAcquisitionSkippedSlugsWarning } from "../system-health/skipped-slug-policy.js";
+import { reconcileSkippedSlugSample } from "../system-health/final-skipped-slugs.js";
 import { buildLiveStatusCompleteness } from "../core/live-status-completeness.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 
@@ -124,6 +125,8 @@ function readCanonicalLineageRows(
   return rows;
 }
 
+
+
 function planSummary(plan) {
   const s = plan?.summary || {};
   return {
@@ -154,7 +157,7 @@ export function buildDayReport(dayKey, options = {}) {
     cleanStrict: false
   };
 
-  // ── Universe: expected vs canonical vs published ──────────────────────────
+  // έΦΑέΦΑ Universe: expected vs canonical vs published έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
   const expected = readJsonSafe(resolveDataPath("expected-matches", `${dayKey}.json`));
   const expectedByLeague = countByLeague(expected?.matches, "leagueSlug");
 
@@ -214,7 +217,7 @@ export function buildDayReport(dayKey, options = {}) {
     expectedLeaguesMissingFromPublished: leaguesMissing(expectedByLeague, publishedByLeague)
   };
 
-  // ── Acquisition ───────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Acquisition έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
   const coverage = readJsonSafe(resolveDataPath("coverage-reports", `${dayKey}.json`));
   const admission = readJsonSafe(resolveDataPath("competition-admission", `${dayKey}.json`));
 
@@ -228,7 +231,12 @@ export function buildDayReport(dayKey, options = {}) {
       finishedAt: coverage?.finishedAt || null,
       accepted: Number(coverage?.summary?.accepted || 0),
       failedFetches: Number(coverage?.summary?.failedFetches || 0),
-      skippedSlugSample: supplemental.skippedSlugSample || null,
+      skippedSlugSample: reconcileSkippedSlugSample(
+        supplemental.skippedSlugSample,
+        admission
+      ),
+      skippedSlugSampleBeforeAdmissionRetry:
+        supplemental.skippedSlugSample || null,
       aliasedSlugSample: supplemental.aliasedSlugSample || null,
       sameDayAdmissionRetry: supplemental.sameDayAdmissionRetry || null,
       admission: admission
@@ -251,7 +259,7 @@ export function buildDayReport(dayKey, options = {}) {
     };
   }
 
-  // ── Freshness (recomputed live so the report never trusts a stale report) ─
+  // έΦΑέΦΑ Freshness (recomputed live so the report never trusts a stale report) έΦΑ
   const freshness = verifyArtifactFreshnessDay(dayKey);
   report.freshness = {
     ok: freshness.ok,
@@ -260,7 +268,7 @@ export function buildDayReport(dayKey, options = {}) {
     staleInputs: freshness.staleInputs.map(i => i.artifact)
   };
 
-  // ── Invariants ────────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Invariants έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
   const invariant = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "invariant-report.json"));
   if (invariant) {
     report.invariant = {
@@ -272,7 +280,7 @@ export function buildDayReport(dayKey, options = {}) {
     };
   }
 
-  // ── Value ─────────────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Value έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
   const value = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
   const planB = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b.json"));
   const planBAudit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"));
@@ -309,7 +317,7 @@ export function buildDayReport(dayKey, options = {}) {
     } : null
   };
 
-  // ── Settlement ────────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Settlement έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
   const comparison = readJsonSafe(resolveDataPath("value-comparison", `${dayKey}.json`));
   const requiredComparisonPlans = ["A", "A2", "B", "B2"];
   const presentComparisonPlans = requiredComparisonPlans.filter(
@@ -335,7 +343,7 @@ export function buildDayReport(dayKey, options = {}) {
     };
   }
 
-  // ── Verdict ───────────────────────────────────────────────────────────────
+  // έΦΑέΦΑ Verdict έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
   if (!manifest) report.hardFailures.push("manifest_missing");
   if (!freshness.ok) report.hardFailures.push("snapshot_stale");
 

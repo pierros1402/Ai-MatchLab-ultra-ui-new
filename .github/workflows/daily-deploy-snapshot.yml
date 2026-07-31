@@ -14,9 +14,9 @@ on:
   schedule:
     # GitHub scheduled workflows can start late or be dropped under load, so each
     # window keeps several retry slots.
-    # Evening UTC 17-20 ≈ 20:00-23:00 Europe/Athens → PRE-BUILD TOMORROW (+deploy)
+    # Evening UTC 17-20 έΚΙ 20:00-23:00 Europe/Athens έΗΤ PRE-BUILD TOMORROW (+deploy)
     #   so a day's full slate incl. 00:00-05:00 kickoffs is LIVE before midnight.
-    # Early-morning UTC 21,22,23,0 ≈ 00:00-03:00 Athens → catch-up TODAY for
+    # Early-morning UTC 21,22,23,0 έΚΙ 00:00-03:00 Athens έΗΤ catch-up TODAY for
     #   leagues that landed after the evening pre-build.
     - cron: "17 17,18,19,20,21,22,23,0 * * *"
 
@@ -62,17 +62,17 @@ jobs:
           if [ "$EVENT_NAME" = "schedule" ] && [ -z "$DAY_KEY" ]; then
             # Pick the target day from the Athens clock (a manual dispatch with an
             # explicit dayKey bypasses this entirely):
-            #   Evening 18:00-23:59 → build TOMORROW so its full slate (incl. the
+            #   Evening 18:00-23:59 έΗΤ build TOMORROW so its full slate (incl. the
             #     00:00-05:00 kickoffs) is ready + deployed BEFORE midnight.
-            #   Early morning 00:00-05:59 → catch-up build of TODAY for leagues
+            #   Early morning 00:00-05:59 έΗΤ catch-up build of TODAY for leagues
             #     that landed after the evening pre-build.
-            #   Any other hour → self-skip.
+            #   Any other hour έΗΤ self-skip.
             if [ "$ATHENS_HOUR_NUM" -ge 18 ] && [ "$ATHENS_HOUR_NUM" -le 23 ]; then
               DAY_KEY="$(TZ=Europe/Athens date -d 'tomorrow' +%F)"
-              echo "Evening pre-build window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) → TOMORROW $DAY_KEY"
+              echo "Evening pre-build window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) έΗΤ TOMORROW $DAY_KEY"
             elif [ "$ATHENS_HOUR_NUM" -le 5 ]; then
               DAY_KEY="$(TZ=Europe/Athens date +%F)"
-              echo "Early-morning catch-up window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) → TODAY $DAY_KEY"
+              echo "Early-morning catch-up window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) έΗΤ TODAY $DAY_KEY"
             else
               echo "Skipping scheduled run outside evening(18-23)/early-morning(00-05) Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
@@ -172,7 +172,7 @@ jobs:
           # canonical-fixtures/<day> and coverage-reports/<day>.json OUTSIDE the
           # rolling [-3,+30] retention window. These are a REGENERABLE rolling
           # acquisition store (permanent truth lives in league-memory/history),
-          # so their retention deletions are by-design — without this flag the
+          # so their retention deletions are by-design έΑΦ without this flag the
           # data-deletion guard fails the whole daily snapshot once the window
           # advances past a committed day (broke the pipeline from 2026-07-01).
           # Additions are still confined to the three prune dirs by --allow.
@@ -204,7 +204,7 @@ jobs:
           # Transfermarkt blocks the GitHub Actions IP range; the team-news
           # absences acquisition inside the cycle fetches TM through the proxy.
           TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
-          # Per-bookmaker odds (multi-odds → consensus middle line + EU/Asian/
+          # Per-bookmaker odds (multi-odds έΗΤ consensus middle line + EU/Asian/
           # Betfair right panels). Free tier; without it fetchMultiBookmakerOdds
           # returns no_key and every day's multi-odds file stays empty.
           ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
@@ -273,7 +273,7 @@ jobs:
         run: node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
 
       # Re-run AFTER the final export so the committed report describes THIS
-      # manifest — the in-cycle run predates the geo rebuild + re-export above
+      # manifest έΑΦ the in-cycle run predates the geo rebuild + re-export above
       # and was permanently stale vs manifest.generatedAt (audit P1). Auto-fixes
       # it applies to detail files are staged with the day dir. Never blocks
       # here; the pre-publish "Invariant gate" below is the hard stop.
@@ -318,8 +318,8 @@ jobs:
             valuePicks: value && Array.isArray(value.picks) ? value.picks.length : 0,
             detailsFiles: details.length,
             warnings: [
-              !value ? "value.json missing — low-fixture day (WC/tournament week?)" : null,
-              !details.length ? "zero detail files — low-fixture day (WC/tournament week?)" : null
+              !value ? "value.json missing έΑΦ low-fixture day (WC/tournament week?)" : null,
+              !details.length ? "zero detail files έΑΦ low-fixture day (WC/tournament week?)" : null
             ].filter(Boolean)
           }, null, 2));
 
@@ -328,7 +328,7 @@ jobs:
           }
 
           if (!details.length) {
-            console.warn("WARNING: snapshot has zero detail files — continuing (low-fixture day)");
+            console.warn("WARNING: snapshot has zero detail files έΑΦ continuing (low-fixture day)");
           }
           NODE
 
@@ -339,7 +339,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       # TRUTH FIRST, UNGATED: history, standings, team-geo, team-news,
-      # multi-odds and coverage-readiness are harvested truth — they commit
+      # multi-odds and coverage-readiness are harvested truth έΑΦ they commit
       # unconditionally BEFORE any publish gate. A gate failure must only ever
       # stop the snapshot publish, never discard collected truth (2026-07-07
       # Gap B lesson: a verify step that skipped the commit threw away every
@@ -377,20 +377,20 @@ jobs:
           # run-daily-cycle appends the finalized previous day into
           # data/history/<season>.json (appendFinalizedDayToHistory). This was
           # never committed, so every day's finalized matches were appended on
-          # the runner and discarded — the committed season history froze at
+          # the runner and discarded έΑΦ the committed season history froze at
           # its last manual commit and the form indexes were built stale.
           if compgen -G "data/history/????-????.json" > /dev/null; then
             git add data/history/????-????.json
           fi
 
-          # Derived store report (build-history-report.js) — regenerated by the
+          # Derived store report (build-history-report.js) έΑΦ regenerated by the
           # cycle right after the history append so it always mirrors the store.
           if compgen -G "data/history/????-????.report.json" > /dev/null; then
             git add data/history/????-????.report.json
           fi
 
           # buildStandingsDay rebuilds data/standings/<slug>.json on the runner
-          # every night, but nothing staged them — the committed store froze
+          # every night, but nothing staged them έΑΦ the committed store froze
           # (last real commit 2026-05-03) and Render served months-old tables
           # on /standings while details were built from runner-fresh ones.
           if compgen -G "data/standings/*.json" > /dev/null; then
@@ -435,9 +435,9 @@ jobs:
             bash tools/git-push-rebase-retry.sh
           fi
 
-      # PUBLISH GATE 1 — freshness: the snapshot must not be older than the
+      # PUBLISH GATE 1 έΑΦ freshness: the snapshot must not be older than the
       # canonical/expected/coverage inputs it was built from (2026-07-07:
-      # manifest 05:33Z shipped while uefa.champions canonical landed 07:31Z —
+      # manifest 05:33Z shipped while uefa.champions canonical landed 07:31Z έΑΦ
       # 10 CL qualifiers existed in the store but not in the UI). One
       # self-heal attempt re-exports; then the gate is hard. Truth is already
       # committed above, so failing here only stops the snapshot publish.
@@ -456,7 +456,7 @@ jobs:
           fi
           node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
 
-      # PUBLISH GATE 2 — invariants: blocked issues (duplicate canonicalId,
+      # PUBLISH GATE 2 έΑΦ invariants: blocked issues (duplicate canonicalId,
       # value-count mismatches, stale report vs manifest) stop the snapshot
       # BEFORE it is committed. Previously post-commit only, which shipped the
       # broken snapshot and merely turned the run red.
@@ -465,7 +465,7 @@ jobs:
         shell: bash
         run: node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
 
-      # PUBLISH GATE 3 — value artifact: value.json with
+      # PUBLISH GATE 3 έΑΦ value artifact: value.json with
       # source=missing_local_value_file while fixtures exist is a
       # value-pipeline failure dressed up as "no picks today" (2026-07-02
       # outage mode). It must not ship.
@@ -486,7 +486,7 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
 
-      # FINAL PUBLISH CONTRACT — no snapshot commit is allowed unless every
+      # FINAL PUBLISH CONTRACT έΑΦ no snapshot commit is allowed unless every
       # mandatory artifact exists, parses, belongs to DAY_KEY, is fresh, is
       # invariant-safe, and latest.json points to this exact manifest.
       - name: Complete daily publish contract gate
@@ -598,6 +598,38 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: |
+          PREVIOUS_UI_DAY="$(
+            git show HEAD:data/deploy-snapshots/latest.json 2>/dev/null |
+              node -e '
+                let raw="";
+                process.stdin.on("data", c => raw += c);
+                process.stdin.on("end", () => {
+                  try {
+                    const row = JSON.parse(raw);
+                    process.stdout.write(String(row.date || row.dayKey || "").slice(0, 10));
+                  } catch {}
+                });
+              '
+          )"
+
+          CURRENT_UI_DAY="$(
+            node -e '
+              const fs = require("fs");
+              try {
+                const row = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
+                process.stdout.write(String(row.date || row.dayKey || "").slice(0, 10));
+              } catch {}
+            '
+          )"
+
+          if [ -n "$CURRENT_UI_DAY" ] && [ "$CURRENT_UI_DAY" != "$PREVIOUS_UI_DAY" ]; then
+            echo "UI_OPERATIONAL_DAY_CHANGED=true" >> "$GITHUB_ENV"
+            echo "UI operational day changed: ${PREVIOUS_UI_DAY:-missing} -> ${CURRENT_UI_DAY}"
+          else
+            echo "UI_OPERATIONAL_DAY_CHANGED=false" >> "$GITHUB_ENV"
+            echo "UI operational day unchanged: ${CURRENT_UI_DAY:-missing}"
+          fi
+
           if git diff --cached --quiet; then
             echo "No snapshot changes to commit."
             echo "DAILY_SNAPSHOT_COMMITTED=false" >> "$GITHUB_ENV"
@@ -613,7 +645,7 @@ jobs:
         shell: bash
         run: |
           # Runtime snapshot sync: the engine pulls today's (and the finalized
-          # previous day's) artifacts from GitHub — zero Render pipeline minutes.
+          # previous day's) artifacts from GitHub έΑΦ zero Render pipeline minutes.
           # -m 150 tolerates a free-instance cold start; failures never fail
           # the build (the boot self-sync catches up on next wake anyway).
           for D in "${DAY_KEY}" "${FINALIZE_DAY_KEY}"; do
@@ -621,9 +653,25 @@ jobs:
             curl -fsS -m 150 "https://ai-matchlab-engine.onrender.com/ops/sync-snapshot?date=${D}" || echo "sync request for ${D} failed (non-fatal)"
           done
 
+      - name: Trigger required UI deploy on operational-day rollover
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.UI_OPERATIONAL_DAY_CHANGED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
+        shell: bash
+        env:
+          RENDER_UI_DEPLOY_HOOK_URL: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
+            echo "ERROR: RENDER_UI_DEPLOY_HOOK_URL is required when the public operational day changes."
+            exit 1
+          fi
+
+          echo "Triggering required Render UI deploy for operational day ${DAY_KEY}..."
+          curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
+
       - name: Skip Render redeploy for daily snapshot
-        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
-        run: echo "Daily snapshot committed, but Render redeploy is disabled for this run."
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true' && env.UI_OPERATIONAL_DAY_CHANGED != 'true'
+        run: echo "Daily snapshot committed without an operational-day rollover; Render redeploy is not required."
 
       - name: Trigger Render redeploy after daily snapshot
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY == 'true'
@@ -647,3 +695,41 @@ jobs:
           else
             echo "RENDER_UI_DEPLOY_HOOK_URL is not configured; skipping UI redeploy trigger."
           fi
+
+      - name: Verify public UI operational-day convergence
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.UI_OPERATIONAL_DAY_CHANGED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PUBLIC_POINTER_URL="https://ai-matchlab-ultra-ui-new.onrender.com/data/deploy-snapshots/latest.json"
+          MAX_ATTEMPTS=40
+          SLEEP_SECONDS=15
+
+          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+            PUBLIC_DAY="$(
+              curl -fsS -m 60 "${PUBLIC_POINTER_URL}?v=$(date +%s)-${attempt}" 2>/dev/null |
+                node -e '
+                  let raw="";
+                  process.stdin.on("data", c => raw += c);
+                  process.stdin.on("end", () => {
+                    try {
+                      const row = JSON.parse(raw);
+                      process.stdout.write(String(row.date || row.dayKey || "").slice(0, 10));
+                    } catch {}
+                  });
+                ' || true
+            )"
+
+            echo "PUBLIC_UI_DAY_ATTEMPT_${attempt}=${PUBLIC_DAY:-unavailable}"
+
+            if [ "$PUBLIC_DAY" = "$DAY_KEY" ]; then
+              echo "PUBLIC_UI_OPERATIONAL_DAY_CONVERGED=true"
+              exit 0
+            fi
+
+            sleep "$SLEEP_SECONDS"
+          done
+
+          echo "ERROR: public UI operational day did not converge to ${DAY_KEY}."
+          exit 1
