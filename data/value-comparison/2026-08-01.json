@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-01",
-  "generatedAt": "2026-08-01T14:18:47.790Z",
+  "generatedAt": "2026-08-01T14:59:00.284Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-08-01/fixtures.json",
     "finalResultsDir": "data/final-results/2026-08-01",
-    "verifiedFinalResults": 60,
+    "verifiedFinalResults": 72,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-01",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -30,7 +30,7 @@
       "validPicks": 15,
       "orphanPicks": 0,
       "ambiguousPicks": 0,
-      "canonicalFixtures": 240,
+      "canonicalFixtures": 239,
       "ambiguousCanonicalAliases": 0
     },
     "planAFreeze": null,
@@ -55,18 +55,18 @@
       "summary": {
         "picks": 12,
         "uniqueMatches": 11,
-        "settled": 4,
+        "settled": 5,
         "wins": 2,
-        "losses": 2,
-        "unresolved": 8,
+        "losses": 3,
+        "unresolved": 7,
         "unsupported": 0,
-        "hitRate": 0.5,
-        "oddsAvailable": 3,
-        "averageOdds": 1.5833,
-        "totalStake": 3,
+        "hitRate": 0.4,
+        "oddsAvailable": 4,
+        "averageOdds": 1.565,
+        "totalStake": 4,
         "totalReturn": 3.39,
-        "profit": 0.39,
-        "roi": 0.13
+        "profit": -0.61,
+        "roi": -0.1525
       },
       "picks": [
         {
@@ -487,7 +487,7 @@
         {
           "planId": "plan-a",
           "matchId": "401842776",
-          "canonicalMatchId": "401842776",
+          "canonicalMatchId": "cid_swe1_hacken_kalmarff_20260801",
           "country": "Sweden",
           "leagueSlug": "swe.1",
           "leagueName": "Allsvenskan",
@@ -504,11 +504,39 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.51,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T14:58:49.992Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Sjdjc0cm",
+                "country": "Sweden",
+                "leagueName": "Allsvenskan",
+                "leaguePath": "/football/sweden/allsvenskan/",
+                "home": "Hacken",
+                "away": "Kalmar",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T13:00:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -1440,10 +1468,10 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": 3,
-    "settledDeltaPlanBMinusPlanA": -3,
+    "settledDeltaPlanBMinusPlanA": -4,
     "winsDeltaPlanBMinusPlanA": -1,
-    "lossesDeltaPlanBMinusPlanA": -2,
-    "hitRateDeltaPlanBMinusPlanA": 0.5,
+    "lossesDeltaPlanBMinusPlanA": -3,
+    "hitRateDeltaPlanBMinusPlanA": 0.6,
     "roiDeltaPlanBMinusPlanA": null
   }
 }
