@@ -18,21 +18,41 @@
 const FSIGN = "SW9D1eZo";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36";
 
-async function fetchFeed(offset, timeoutMs = 15000) {
+function combinedAbortSignal(externalSignal, timeoutMs) {
+  const timeoutController = new AbortController();
+  const timer = setTimeout(() => {
+    timeoutController.abort(new Error("flashscore_fetch_timeout"));
+  }, timeoutMs);
+
+  const signals = [timeoutController.signal];
+  if (externalSignal) signals.push(externalSignal);
+  const signal = signals.length === 1
+    ? signals[0]
+    : AbortSignal.any(signals);
+
+  return { signal, clear: () => clearTimeout(timer) };
+}
+
+async function fetchFeed(offset, timeoutMs = 15000, externalSignal = null) {
   const url = `https://2.flashscore.ninja/2/x/feed/f_1_${offset}_3_en_1`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const abort = combinedAbortSignal(externalSignal, timeoutMs);
   try {
     const res = await fetch(url, {
-      signal: controller.signal,
+      signal: abort.signal,
       headers: { "x-fsign": FSIGN, "user-agent": UA, "referer": "https://www.flashscore.com/" }
     });
     const text = await res.text();
     return { ok: res.ok && text.length > 10, status: res.status, text };
   } catch (err) {
-    return { ok: false, status: 0, text: "", error: err?.name === "AbortError" ? "timeout" : String(err?.message || err) };
+    const aborted = abort.signal.aborted || err?.name === "AbortError";
+    return {
+      ok: false,
+      status: 0,
+      text: "",
+      error: aborted ? "aborted" : String(err?.message || err)
+    };
   } finally {
-    clearTimeout(timer);
+    abort.clear();
   }
 }
 
@@ -143,7 +163,8 @@ export async function fetchFlashscoreFixtures(options = {}) {
   const rows = [];
 
   for (const off of offsets) {
-    const res = await fetchFeed(off, options.timeoutMs || 15000);
+    if (options.signal?.aborted) break;
+    const res = await fetchFeed(off, options.timeoutMs || 15000, options.signal || null);
     const parsed = res.ok ? parseFlashscoreFeed(res.text) : [];
     attempts.push({ offset: off, ok: res.ok, status: res.status, rows: parsed.length, error: res.error || null });
 

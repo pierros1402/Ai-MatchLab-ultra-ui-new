@@ -119,12 +119,12 @@ jobs:
 
       - name: Install root dependencies
         if: env.SKIP_BUILD != 'true'
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Install engine dependencies
         if: env.SKIP_BUILD != 'true'
         working-directory: engine-v1
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Run rolling fixture acquisition chunks
         if: env.SKIP_BUILD != 'true'
@@ -598,37 +598,7 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: |
-          PREVIOUS_UI_DAY="$(
-            git show HEAD:data/deploy-snapshots/latest.json 2>/dev/null |
-              node -e '
-                let raw="";
-                process.stdin.on("data", c => raw += c);
-                process.stdin.on("end", () => {
-                  try {
-                    const row = JSON.parse(raw);
-                    process.stdout.write(String(row.date || row.dayKey || "").slice(0, 10));
-                  } catch {}
-                });
-              '
-          )"
-
-          CURRENT_UI_DAY="$(
-            node -e '
-              const fs = require("fs");
-              try {
-                const row = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
-                process.stdout.write(String(row.date || row.dayKey || "").slice(0, 10));
-              } catch {}
-            '
-          )"
-
-          if [ -n "$CURRENT_UI_DAY" ] && [ "$CURRENT_UI_DAY" != "$PREVIOUS_UI_DAY" ]; then
-            echo "UI_OPERATIONAL_DAY_CHANGED=true" >> "$GITHUB_ENV"
-            echo "UI operational day changed: ${PREVIOUS_UI_DAY:-missing} -> ${CURRENT_UI_DAY}"
-          else
-            echo "UI_OPERATIONAL_DAY_CHANGED=false" >> "$GITHUB_ENV"
-            echo "UI operational day unchanged: ${CURRENT_UI_DAY:-missing}"
-          fi
+          set -euo pipefail
 
           if git diff --cached --quiet; then
             echo "No snapshot changes to commit."
@@ -638,42 +608,32 @@ jobs:
 
           git commit -m "Auto refresh deploy snapshot for ${DAY_KEY}"
           bash tools/git-push-rebase-retry.sh
+          PUBLISHED_REF="$(git rev-parse HEAD)"
+          echo "PUBLISHED_REF=${PUBLISHED_REF}" >> "$GITHUB_ENV"
           echo "DAILY_SNAPSHOT_COMMITTED=true" >> "$GITHUB_ENV"
+          echo "Published immutable snapshot ref ${PUBLISHED_REF}"
 
-      - name: Notify Render to mirror the fresh snapshot (no deploy)
+      - name: Promote and verify public runtime snapshots
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true'
         shell: bash
-        run: |
-          # Runtime snapshot sync: the engine pulls today's (and the finalized
-          # previous day's) artifacts from GitHub έΑΦ zero Render pipeline minutes.
-          # -m 150 tolerates a free-instance cold start; failures never fail
-          # the build (the boot self-sync catches up on next wake anyway).
-          for D in "${DAY_KEY}" "${FINALIZE_DAY_KEY}"; do
-            echo "Requesting snapshot sync for ${D}..."
-            curl -fsS -m 150 "https://ai-matchlab-engine.onrender.com/ops/sync-snapshot?date=${D}" || echo "sync request for ${D} failed (non-fatal)"
-          done
-
-      - name: Trigger required UI deploy on operational-day rollover
-        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.UI_OPERATIONAL_DAY_CHANGED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
-        shell: bash
         env:
-          RENDER_UI_DEPLOY_HOOK_URL: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
 
-          if [ -z "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
-            echo "ERROR: RENDER_UI_DEPLOY_HOOK_URL is required when the public operational day changes."
-            exit 1
-          fi
+          # Publication is complete only after the engine child process promotes
+          # the exact commit-pinned release and the public snapshot endpoint
+          # returns the same manifest hash. A failed sync fails the workflow.
+          bash tools/sync-public-snapshot.sh "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"
+          bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"
 
-          echo "Triggering required Render UI deploy for operational day ${DAY_KEY}..."
-          curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
+      - name: Data publication requires no UI deploy
+        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
+        run: |
+          echo "Snapshot publication completed through the engine release contract."
+          echo "The static UI uses Europe/Athens as its day authority and does not require a data-only redeploy."
 
-      - name: Skip Render redeploy for daily snapshot
-        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true' && env.UI_OPERATIONAL_DAY_CHANGED != 'true'
-        run: echo "Daily snapshot committed without an operational-day rollover; Render redeploy is not required."
-
-      - name: Trigger Render redeploy after daily snapshot
+      - name: Trigger and verify optional manual Render redeploy
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY == 'true'
         shell: bash
         env:
@@ -682,54 +642,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ -n "${RENDER_ENGINE_DEPLOY_HOOK_URL:-}" ]; then
-            echo "Triggering Render engine redeploy after daily snapshot..."
-            curl -fsS -X POST "${RENDER_ENGINE_DEPLOY_HOOK_URL}"
-          else
-            echo "RENDER_ENGINE_DEPLOY_HOOK_URL is not configured; skipping engine redeploy trigger."
+          if [ -z "${RENDER_ENGINE_DEPLOY_HOOK_URL:-}" ] || [ -z "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
+            echo "ERROR: both Render deploy hooks are required for triggerRender=true."
+            exit 1
           fi
 
-          if [ -n "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
-            echo "Triggering Render UI redeploy after daily snapshot..."
-            curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
-          else
-            echo "RENDER_UI_DEPLOY_HOOK_URL is not configured; skipping UI redeploy trigger."
-          fi
-
-      - name: Verify public UI operational-day convergence
-        if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.UI_OPERATIONAL_DAY_CHANGED == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          PUBLIC_POINTER_URL="https://ai-matchlab-ultra-ui-new.onrender.com/data/deploy-snapshots/latest.json"
-          MAX_ATTEMPTS=40
-          SLEEP_SECONDS=15
-
-          for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-            PUBLIC_DAY="$(
-              curl -fsS -m 60 "${PUBLIC_POINTER_URL}?v=$(date +%s)-${attempt}" 2>/dev/null |
-                node -e '
-                  let raw="";
-                  process.stdin.on("data", c => raw += c);
-                  process.stdin.on("end", () => {
-                    try {
-                      const row = JSON.parse(raw);
-                      process.stdout.write(String(row.date || row.dayKey || "").slice(0, 10));
-                    } catch {}
-                  });
-                ' || true
-            )"
-
-            echo "PUBLIC_UI_DAY_ATTEMPT_${attempt}=${PUBLIC_DAY:-unavailable}"
-
-            if [ "$PUBLIC_DAY" = "$DAY_KEY" ]; then
-              echo "PUBLIC_UI_OPERATIONAL_DAY_CONVERGED=true"
-              exit 0
-            fi
-
-            sleep "$SLEEP_SECONDS"
-          done
-
-          echo "ERROR: public UI operational day did not converge to ${DAY_KEY}."
-          exit 1
+          curl -fsS -X POST "${RENDER_ENGINE_DEPLOY_HOOK_URL}"
+          curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
+          bash tools/wait-for-render-engine-release.sh "${PUBLISHED_REF}"
+          bash tools/verify-public-ui-release.sh "${PUBLISHED_REF}"

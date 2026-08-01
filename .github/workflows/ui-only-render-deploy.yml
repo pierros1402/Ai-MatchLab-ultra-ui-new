@@ -11,24 +11,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  trigger-ui-render-deploy:
+  deploy-and-verify-ui:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
-      # Intentionally no checkout, no snapshot build, no data commit, no engine deploy.
+      - name: Check out exact release
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
       - name: Trigger Render UI redeploy
         shell: bash
         env:
           RENDER_UI_DEPLOY_HOOK_URL: ${{ secrets.RENDER_UI_DEPLOY_HOOK_URL }}
         run: |
           set -euo pipefail
-
           if [ -z "${RENDER_UI_DEPLOY_HOOK_URL:-}" ]; then
             echo "ERROR: RENDER_UI_DEPLOY_HOOK_URL is not configured."
             exit 1
           fi
-
-          echo "Triggering Render UI redeploy..."
           curl -fsS -X POST "${RENDER_UI_DEPLOY_HOOK_URL}"
-          echo "Render UI redeploy hook triggered."
+
+      - name: Verify public UI release
+        shell: bash
+        run: bash tools/verify-public-ui-release.sh "${GITHUB_SHA}"

@@ -409,13 +409,34 @@
 
 
 <!-- =====================================================
-     CORE EVENT BUS (ΠΡΕΠΕΙ ΝΑ ΕΚΤΕΛΕΣΤΕΙ ΠΡΩΤΟ)
+     CORE EVENT BUS + SINGLE RUNTIME CONFIG
 ===================================================== -->
-<script src="assets/js/ui/app.js"></script>
+<script src="assets/js/ui/app.js?v=2"></script>
+<script>
+  (() => {
+    const isLocal =
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1";
+
+    const BASE = isLocal
+      ? "http://localhost:3010"
+      : "https://ai-matchlab-engine.onrender.com";
+
+    window.AIML_CONFIG = { BASE_URL: BASE };
+    window.AIML_LIVE_CFG = {
+      detailsBase: BASE,
+      fixturesBase: BASE,
+      season: "2025-2026"
+    };
+    window.AIML_VALUE_CFG = { valueBase: BASE };
+  })();
+</script>
+
 <!-- =====================================================
-     LIVE ENGINE (ΔΕΝ ΑΛΛΑΖΕΙ)
+     OPERATIONAL DAY + LIVE ENGINE
 ===================================================== -->
-<script src="assets/js/live/fixtures-loader.js?v=6"></script>
+<script src="assets/js/live/operational-day.js?v=1"></script>
+<script src="assets/js/live/fixtures-loader.js?v=7"></script>
 <script src="assets/js/ui/panel-state.js"></script>
 
 <!-- =====================================================
@@ -440,29 +461,6 @@
 
 
 <!-- =====================================================
-     GLOBAL CONFIG
-===================================================== -->
-<script>
-  const isLocal =
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1";
-
-  const BASE = isLocal
-    ? "http://localhost:3010"
-    : "https://ai-matchlab-engine.onrender.com";
-
-  window.AIML_LIVE_CFG = {
-    detailsBase: BASE,
-    fixturesBase: BASE,
-    season: "2025-2026"
-  };
-
-  window.AIML_VALUE_CFG = {
-    valueBase: BASE
-  };
-</script>
-
-<!-- =====================================================
      LEFT PANELS (ΔΕΝ ΑΛΛΑΖΟΥΝ)
 ===================================================== -->
 <!-- ✅ cache-bust για να πάρεις σίγουρα το νέο αρχείο -->
@@ -475,7 +473,7 @@
 <script src="assets/js/ui/today-panel.js?v=4"></script>
 <script src="assets/js/ui/active-leagues-panel.js?v=3"></script>
 <script src="assets/js/ui/matches-panel.js?v=2"></script>
-<script src="assets/js/ui/date-nav.js?v=2"></script>
+<script src="assets/js/ui/date-nav.js?v=3"></script>
 <script src="assets/js/ui/opener-panel.js"></script>
 <script src="assets/js/ui/saved-store.js"></script>
 <script src="assets/js/ui/saved-panel.js"></script>
@@ -484,22 +482,22 @@
      TOPBAR ORCHESTRATOR (ΜΕΤΑ THEME / STATE)
 ===================================================== -->
 <script defer src="assets/js/ui/topbar.js"></script>
-<script defer src="assets/js/ui/system-health.js"></script>
+<script defer src="assets/js/ui/system-health.js?v=2"></script>
 
 <!-- =====================================================
      VALUE ENGINE ADAPTER (Worker -> UI)
 ===================================================== -->
-<script src="assets/js/live/value-adapter.js"></script>
+<script src="assets/js/live/value-adapter.js?v=2"></script>
 
 <!-- =====================================================
      ODDS DATA PIPELINE
 ===================================================== -->
 <script src="assets/js/odds/odds-canonical-batch-to-core.js"></script>
 <script src="assets/js/odds/ai-odds-day.js?v=1"></script>
-<script src="assets/js/live/odds-loader.js?v=3"></script>
+<script src="assets/js/live/odds-loader.js?v=4"></script>
 <script src="assets/js/live/multi-odds-loader.js?v=2"></script>
-<script src="assets/js/live/date-nav-loader.js?v=2"></script>
-<script src="assets/js/live/live-overlay.js?v=3"></script>
+<script src="assets/js/live/date-nav-loader.js?v=3"></script>
+<script src="assets/js/live/live-overlay.js?v=4"></script>
 
 
 <!-- =====================================================

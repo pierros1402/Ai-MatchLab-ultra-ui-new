@@ -23,6 +23,7 @@ import { fetchFlashscoreFixtures } from "./flashscore-fixtures-source.js";
 const TTL_MS = 90 * 1000;
 
 let CACHE = { ts: 0, byPair: null };
+let IN_FLIGHT = null;
 
 function pairKey(home, away) {
   return normalizeTeamKey(home) + "|" + normalizeTeamKey(away);
@@ -58,30 +59,42 @@ function isLiveRow(match) {
 
 // Shared with the cross-source FT verifier so a stuck-live check reuses the same
 // cached Flashscore feed instead of fetching it a second time.
-export async function getFlashscoreLiveIndex() {
-  return getLiveIndex();
+export async function getFlashscoreLiveIndex(options = {}) {
+  return getLiveIndex(options);
 }
 
-async function getLiveIndex() {
+async function getLiveIndex(options = {}) {
   const now = Date.now();
   if (CACHE.byPair && now - CACHE.ts < TTL_MS) return CACHE.byPair;
 
-  try {
-    const feed = await fetchFlashscoreFixtures({ offsets: [0] });
-    if (feed.ok) {
-      const byPair = new Map();
-      for (const row of feed.rows) {
-        const key = pairKey(row.home, row.away);
-        if (!byPair.has(key)) byPair.set(key, []);
-        byPair.get(key).push(row);
-      }
-      CACHE = { ts: now, byPair };
-    }
-  } catch {
-    // keep whatever we had — stale live data beats none
-  }
+  if (options.signal?.aborted) return CACHE.byPair;
+  if (IN_FLIGHT) return IN_FLIGHT;
 
-  return CACHE.byPair;
+  IN_FLIGHT = (async () => {
+    try {
+      const feed = await fetchFlashscoreFixtures({
+        offsets: [0],
+        timeoutMs: 3500,
+        signal: options.signal || null
+      });
+      if (feed.ok) {
+        const byPair = new Map();
+        for (const row of feed.rows) {
+          const key = pairKey(row.home, row.away);
+          if (!byPair.has(key)) byPair.set(key, []);
+          byPair.get(key).push(row);
+        }
+        CACHE = { ts: Date.now(), byPair };
+      }
+    } catch {
+      // Preserve the last complete cache. An aborted/failed fetch never replaces it.
+    }
+    return CACHE.byPair;
+  })().finally(() => {
+    IN_FLIGHT = null;
+  });
+
+  return IN_FLIGHT;
 }
 
 function pickNearest(byPair, home, away, kickoffUtc) {
@@ -111,12 +124,12 @@ function pickNearest(byPair, home, away, kickoffUtc) {
  * Returns a possibly-new array (input is not mutated). No-op for non-today dates
  * or when the feed is unavailable.
  */
-export async function overlayFlashscoreLive(matches, requestedDay) {
+export async function overlayFlashscoreLive(matches, requestedDay, options = {}) {
   const list = Array.isArray(matches) ? matches : [];
   if (!list.length) return list;
   if (String(requestedDay || "").slice(0, 10) !== athensDayKey()) return list;
 
-  const byPair = await getLiveIndex();
+  const byPair = await getLiveIndex(options);
   if (!byPair || !byPair.size) return list;
 
   return list.map(m => {
@@ -166,4 +179,5 @@ export async function overlayFlashscoreLive(matches, requestedDay) {
 // Test/ops helper — force the next overlay call to refetch.
 export function _clearLiveOverlayCache() {
   CACHE = { ts: 0, byPair: null };
+  IN_FLIGHT = null;
 }

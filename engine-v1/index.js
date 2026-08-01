@@ -31,10 +31,6 @@ import { getLeagueMetaMap } from "./source-discovery/league-awareness-service.js
 import { isDisabledLeague } from "./source-discovery/disabled-leagues.js";
 import { fetchMultiBookmakerOdds, prefetchUpcomingOdds } from "./jobs/fetch-multi-bookmaker-odds.js";
 import { fetchOddsApiIoDay, createOddsApiIoBudget } from "./jobs/fetch-oddsapiio-odds.js";
-import {
-  syncDeploySnapshotFromGithub,
-  syncValueComparisonFromGithub
-} from "./jobs/sync-deploy-snapshot-from-github.js";
 import { overlayFlashscoreLive } from "./odds/flashscore-live-overlay.js";
 import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
 import { normTeam } from "./odds/multi-odds-merge.js";
@@ -43,6 +39,7 @@ import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./core/matchday-axi
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
+import { validateDeploySnapshotManifest } from "./core/deploy-snapshot-release-contract.js";
 import { teamPairMatches } from "./core/team-identity.js";
 import {
   parseAcquisitionSkippedSlugs,
@@ -61,12 +58,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const OPS_JOBS = new Map();
 const OPS_JOB_MAX_LOG = 16000;
+const PROCESS_STARTED_AT = new Date().toISOString();
 
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Cron-Secret");
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
@@ -93,6 +91,7 @@ function publicJob(job) {
     id: job.id,
     type: job.type,
     dayKey: job.dayKey,
+    ref: job.ref || null,
     status: job.status,
     startedAt: job.startedAt,
     finishedAt: job.finishedAt || null,
@@ -111,11 +110,12 @@ function publicJob(job) {
   };
 }
 
-function latestRunningJob(type, dayKey) {
+function latestRunningJob(type, dayKey, ref = null) {
   for (const job of OPS_JOBS.values()) {
     if (
       job.type === type &&
       job.dayKey === dayKey &&
+      (ref === null || job.ref === ref) &&
       ["queued", "running"].includes(job.status)
     ) {
       return job;
@@ -125,8 +125,8 @@ function latestRunningJob(type, dayKey) {
   return null;
 }
 
-function startOpsChildJob({ type, dayKey, command, args, cwd }) {
-  const existing = latestRunningJob(type, dayKey);
+function startOpsChildJob({ type, dayKey, ref = null, command, args, cwd }) {
+  const existing = latestRunningJob(type, dayKey, ref);
 
   if (existing) {
     return {
@@ -135,12 +135,13 @@ function startOpsChildJob({ type, dayKey, command, args, cwd }) {
     };
   }
 
-  const id = `${type}:${dayKey}:${Date.now()}`;
+  const id = `${type}:${dayKey}:${ref ? String(ref).slice(0, 12) + ":" : ""}${Date.now()}`;
 
   const job = {
     id,
     type,
     dayKey,
+    ref,
     status: "queued",
     startedAt: nowIso(),
     finishedAt: null,
@@ -192,14 +193,17 @@ function startOpsChildJob({ type, dayKey, command, args, cwd }) {
     job.finishedAt = nowIso();
     job.status = code === 0 ? "succeeded" : "failed";
 
-    const out = String(job.stdoutTail || "").trim();
-    const jsonStart = out.lastIndexOf("{");
+    const lines = String(job.stdoutTail || "")
+      .split(/\r?\n/u)
+      .map(line => line.trim())
+      .filter(Boolean);
 
-    if (jsonStart >= 0) {
+    for (let index = lines.length - 1; index >= 0; index -= 1) {
       try {
-        job.result = JSON.parse(out.slice(jsonStart));
+        job.result = JSON.parse(lines[index]);
+        break;
       } catch {
-        job.result = null;
+        // Keep scanning earlier complete lines.
       }
     }
   });
@@ -243,6 +247,23 @@ function startValueBuildJob(dayKey, { rebuild = false } = {}) {
   return startOpsChildJob({
     type: "value-build",
     dayKey,
+    command: process.execPath,
+    args,
+    cwd: __dirname
+  });
+}
+
+function startSnapshotSyncJob(dayKey, ref) {
+  const args = [
+    path.join(__dirname, "jobs", "sync-deploy-snapshot-from-github.js"),
+    `--day=${dayKey}`,
+    `--ref=${ref}`
+  ];
+
+  return startOpsChildJob({
+    type: "snapshot-sync",
+    dayKey,
+    ref,
     command: process.execPath,
     args,
     cwd: __dirname
@@ -356,8 +377,36 @@ function readDeploySnapshotLatest() {
   return readJsonFileSafe(deploySnapshotLatestFile(), null);
 }
 
+function runtimeSnapshotSyncStateFile() {
+  return resolveDataPath("deploy-snapshots", "runtime-sync-state.json");
+}
+
+function readRuntimeSnapshotSyncState() {
+  return readJsonFileSafe(runtimeSnapshotSyncStateFile(), null);
+}
+
+function deployedGitCommit() {
+  const value = String(
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.GIT_COMMIT ||
+    process.env.COMMIT_SHA ||
+    ""
+  ).trim().toLowerCase();
+
+  return /^[0-9a-f]{40}$/u.test(value) ? value : null;
+}
+
 function deploySnapshotManifestFile(dayKey) {
   return path.join(deploySnapshotRoot(dayKey), "manifest.json");
+}
+
+function deploySnapshotRuntimeArtifactFile(dayKey, name) {
+  return path.join(deploySnapshotRoot(dayKey), "runtime", name);
+}
+
+function preferRuntimeReleaseArtifact(dayKey, name, fallbackPath) {
+  const releasePath = deploySnapshotRuntimeArtifactFile(dayKey, name);
+  return fs.existsSync(releasePath) ? releasePath : fallbackPath;
 }
 
 function readDeploySnapshotManifest(dayKey) {
@@ -1099,26 +1148,70 @@ app.get("/ops/value-build-async", (req, res) => {
   });
 });
 
-// Runtime snapshot mirror: pull the day's deploy-snapshot artifacts straight
-// from GitHub into the local data dir — no Render build/deploy consumed.
-// Enabled only on Render (or with ALLOW_SNAPSHOT_SYNC=true) so a local dev
-// engine can't clobber its own freshly-generated data with the repo state.
+// Runtime snapshot mirror. The web process NEVER performs the sync itself:
+// an authenticated request starts a child process that assembles and validates
+// an immutable commit-pinned release before atomically promoting it.
 function snapshotSyncEnabled() {
   return isRenderRuntime() || truthyEnv(process.env.ALLOW_SNAPSHOT_SYNC);
 }
 
-app.get("/ops/sync-snapshot", async (req, res) => {
-  if (!snapshotSyncEnabled()) {
-    return res.status(403).json({ ok: false, reason: "snapshot_sync_disabled_outside_render" });
+function authorizeCronRequest(req, res) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    res.status(503).json({ ok: false, error: "cron_secret_not_configured" });
+    return false;
   }
-  const dayKey = String(req.query.date || athensDayKey());
-  try {
-    const summary = await syncDeploySnapshotFromGithub(dayKey);
-    res.status(summary.ok ? 200 : 502).json(summary);
-  } catch (err) {
-    res.status(500).json({ ok: false, dayKey, error: String(err?.message || err) });
+  if (req.headers["x-cron-secret"] !== secret) {
+    res.status(401).json({ ok: false, error: "unauthorized" });
+    return false;
   }
+  return true;
+}
+
+app.get("/ops/sync-snapshot", (_req, res) => {
+  res.status(405).json({
+    ok: false,
+    error: "method_not_allowed",
+    requiredMethod: "POST",
+    contract: "authenticated_commit_pinned_child_process"
+  });
 });
+
+app.post("/ops/sync-snapshot", (req, res) => {
+  if (!snapshotSyncEnabled()) {
+    return res.status(403).json({ ok: false, reason: "snapshot_sync_disabled" });
+  }
+  if (!authorizeCronRequest(req, res)) return;
+
+  const dayKey = String(req.query.date || "").slice(0, 10);
+  const ref = String(req.query.ref || "").trim().toLowerCase();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(dayKey)) {
+    return res.status(400).json({ ok: false, error: "invalid_day_key" });
+  }
+  if (!/^[0-9a-f]{40}$/u.test(ref)) {
+    return res.status(400).json({ ok: false, error: "immutable_ref_required" });
+  }
+
+  const { created, job } = startSnapshotSyncJob(dayKey, ref);
+  return res.status(202).json({
+    ok: true,
+    accepted: true,
+    created,
+    job: publicJob(job)
+  });
+});
+
+app.get("/ops/sync-snapshot/status", (req, res) => {
+  if (!authorizeCronRequest(req, res)) return;
+  const id = String(req.query.id || "");
+  const job = OPS_JOBS.get(id);
+  if (!job || job.type !== "snapshot-sync") {
+    return res.status(404).json({ ok: false, error: "snapshot_sync_job_not_found" });
+  }
+  return res.json({ ok: true, job: publicJob(job) });
+});
+
 
 app.get("/deploy-snapshot/latest", (_req, res) => {
   const latest = readDeploySnapshotLatest();
@@ -1135,6 +1228,63 @@ app.get("/deploy-snapshot/latest", (_req, res) => {
   res.json({
     ...latest,
     source: "snapshot"
+  });
+});
+
+app.get("/release", (_req, res) => {
+  const latest = readDeploySnapshotLatest();
+  const runtimeSync = readRuntimeSnapshotSyncState();
+
+  res.json({
+    ok: true,
+    service: "engine-v1",
+    gitCommit: deployedGitCommit(),
+    processStartedAt: PROCESS_STARTED_AT,
+    latestSnapshot: latest
+      ? {
+          date: latest.date || null,
+          hash: latest.hash || null,
+          generatedAt: latest.generatedAt || null
+        }
+      : null,
+    runtimeSync: runtimeSync
+      ? {
+          updatedAt: runtimeSync.updatedAt || null,
+          latestDay: runtimeSync.latestDay || null,
+          latestRef: runtimeSync.latestRef || null
+        }
+      : null
+  });
+});
+
+app.get("/ready", (_req, res) => {
+  const day = athensDayKey();
+  const latest = readDeploySnapshotLatest();
+  const manifest = readDeploySnapshotManifest(day);
+  const validation = manifest
+    ? validateDeploySnapshotManifest(manifest, day)
+    : { ok: false, errors: ["manifest_missing"] };
+
+  const latestMatches = Boolean(
+    latest &&
+    String(latest.date || "") === day &&
+    String(latest.hash || "").toLowerCase() === String(manifest?.hash || "").toLowerCase()
+  );
+  const ready = validation.ok && latestMatches;
+
+  res.status(ready ? 200 : 503).json({
+    ok: ready,
+    ready,
+    service: "engine-v1",
+    day,
+    gitCommit: deployedGitCommit(),
+    manifestHash: manifest?.hash || null,
+    latestDay: latest?.date || null,
+    latestHash: latest?.hash || null,
+    errors: [
+      ...(validation.errors || []),
+      ...(latestMatches ? [] : ["latest_pointer_mismatch"])
+    ]
   });
 });
 
@@ -1319,13 +1469,21 @@ function buildSystemHealthReport(day) {
   const checkedNow = new Date().toISOString();
 
   const files = {
-    buildReport: resolveDataPath("build-reports", day + ".json"),
+    buildReport: preferRuntimeReleaseArtifact(
+      day,
+      "build-report.json",
+      resolveDataPath("build-reports", day + ".json")
+    ),
     invariant: resolveDataPath("deploy-snapshots", day, "invariant-report.json"),
     freshness: resolveDataPath("deploy-snapshots", day, "freshness-report.json"),
     manifest: resolveDataPath("deploy-snapshots", day, "manifest.json"),
     valueAudit: resolveDataPath("deploy-snapshots", day, "value-audit.json"),
     value: resolveDataPath("deploy-snapshots", day, "value.json"),
-    valueComparison: resolveDataPath("value-comparison", day + ".json")
+    valueComparison: preferRuntimeReleaseArtifact(
+      day,
+      "value-comparison.json",
+      resolveDataPath("value-comparison", day + ".json")
+    )
   };
 
   const read = {};
@@ -1844,6 +2002,41 @@ function buildSystemHealthReport(day) {
   };
 }
 
+app.get("/system-health-alerts", (req, res) => {
+  const explicitDay = String(req.query.day || "").slice(0, 10);
+  if (explicitDay && !/^\d{4}-\d{2}-\d{2}$/u.test(explicitDay)) {
+    return res.status(400).json({ ok: false, error: "invalid_day_key" });
+  }
+
+  const file = explicitDay
+    ? preferRuntimeReleaseArtifact(
+        explicitDay,
+        "system-health-alerts.json",
+        resolveDataPath("system-health", `${explicitDay}.json`)
+      )
+    : resolveDataPath("system-health", "latest.json");
+  const payload = readJsonFileSafe(file, null);
+
+  if (!payload) {
+    return res.status(404).json({
+      ok: false,
+      error: "system_health_alerts_not_found",
+      dayKey: explicitDay || null
+    });
+  }
+
+  if (explicitDay && String(payload.dayKey || "") !== explicitDay) {
+    return res.status(409).json({
+      ok: false,
+      error: "system_health_alert_day_mismatch",
+      requestedDay: explicitDay,
+      artifactDay: payload.dayKey || null
+    });
+  }
+
+  return res.json(payload);
+});
+
 app.get("/system-health", (req, res) => {
   try {
     const day = String(req.query.day || athensDayKey()).slice(0, 10);
@@ -2232,10 +2425,9 @@ function mergeFlashscoreFixtures(result, requestedDay) {
 }
 
 // Best-effort overlay budget: an external overlay (Flashscore/ESPN) must NEVER
-// block the response. If it doesn't resolve within budgetMs we serve `fallback`
-// (the un-overlaid rows) and let the underlying promise keep running so its cache
-// warms for the next request. This is what makes the runtime endpoint stay fast on
-// Render's throttled 1-worker instance even when an upstream feed hangs.
+// block the response. If it does not resolve within budgetMs, abort its fetch tree
+// and serve `fallback`. The abort signal is propagated through Flashscore and ESPN
+// so a timeout cannot leave sockets/promises accumulating behind the response.
 // Circuit breaker: on Render's datacenter IP the Flashscore/ESPN overlay fetches
 // never complete — every request paid the FULL budget (4s + 4s = 8s serial) only
 // to fall back to base rows anyway, and left a hung socket/promise leaking behind.
@@ -2262,34 +2454,44 @@ function markOverlayFail(label) {
 }
 
 function overlayWithBudget(label, budgetMs, fallback, run) {
-  const b = overlayBreaker.get(label);
-  if (b && b.openUntil > Date.now()) {
-    // Breaker open — skip the overlay fetch entirely, serve base rows instantly.
+  const breaker = overlayBreaker.get(label);
+  if (breaker && breaker.openUntil > Date.now()) {
     return Promise.resolve(fallback);
   }
 
-  let timer;
-  let settledFast = false; // true if the timeout won the race (overlay too slow)
-  const capped = new Promise(resolve => {
-    timer = setTimeout(() => {
-      settledFast = true;
-      markOverlayFail(label);
-      console.warn(`[overlay-budget] ${label} exceeded ${budgetMs}ms — serving base rows`);
-      resolve(fallback);
-    }, budgetMs);
-  });
+  const controller = new AbortController();
+  let timer = null;
+  let completed = false;
 
-  return Promise.race([
-    Promise.resolve().then(run).then(
-      value => { if (!settledFast) markOverlayOk(label); return value; },
-      err => {
+  return new Promise(resolve => {
+    const finish = value => {
+      if (completed) return;
+      completed = true;
+      if (timer) clearTimeout(timer);
+      resolve(value);
+    };
+
+    timer = setTimeout(() => {
+      controller.abort(new Error(`overlay_budget_exceeded:${label}`));
+      markOverlayFail(label);
+      console.warn(`[overlay-budget] ${label} exceeded ${budgetMs}ms — aborted and serving base rows`);
+      finish(fallback);
+    }, budgetMs);
+
+    Promise.resolve()
+      .then(() => run(controller.signal))
+      .then(value => {
+        if (completed) return;
+        markOverlayOk(label);
+        finish(value);
+      })
+      .catch(error => {
+        if (completed) return;
         markOverlayFail(label);
-        console.warn(`[overlay-budget] ${label} failed`, String(err?.message || err));
-        return fallback;
-      }
-    ),
-    capped
-  ]).finally(() => clearTimeout(timer));
+        console.warn(`[overlay-budget] ${label} failed`, String(error?.message || error));
+        finish(fallback);
+      });
+  });
 }
 
 app.get("/fixtures-runtime", async (req, res) => {
@@ -2297,71 +2499,27 @@ app.get("/fixtures-runtime", async (req, res) => {
   const dayKey = String(req.query.date || athensDayKey()).slice(0, 10);
 
   try {
-    // Single shared universe — IDENTICAL to /api/matches-for-date so the two
-    // endpoints can never disagree for the same date. The builder already layers
-    // fixtures.json → odds.json → fixtures-all.json, so no separate flashscore
-    // merge is needed here (that was the old divergence source).
-    const {
-      source,
-      matches,
-      membership
-    } = buildDisplayMatchesForDate(dayKey);
+    const { source, matches, membership } = await buildRuntimeDisplayMatchesForDate(dayKey);
+    const filtered = filterByPanelMode(matches, mode);
 
-    // Overlay live/FT status (today only, odds-only leagues); no-op for past
-    // dates and when the feed is unavailable. Budgeted so a slow/hung Flashscore
-    // feed can never block the response — base rows are served and the cache warms
-    // in the background for the next request.
-    const base = matches;
-    let out = await overlayWithBudget(
-      "fixtures-runtime:flashscore-live", 4000, base,
-      () => overlayFlashscoreLive(base, dayKey)
-    );
-
-    // Overlay FINAL results from the league-memory truth store (any date):
-    // odds-only matches on past days get their FT + score here, since the
-    // snapshot never carries a status authority for them.
-    out = overlayResultsTruth(out, dayKey);
-
-    // Stuck-LIVE → FT ONLY via cross-source confirmation: a row still LIVE well
-    // past a normal match length is re-checked against independent sources (ESPN
-    // + Flashscore). FT is written only on a real finished+score report; when no
-    // source confirms, the row is flagged `statusUnconfirmed` (never faked FT).
-    // No-op with zero fetches unless a stuck candidate actually exists. Budgeted
-    // so a hung upstream can never block the response.
-    const beforeVerify = out;
-    out = await overlayWithBudget(
-      "fixtures-runtime:ft-verify", 4000, beforeVerify,
-      () => verifyStuckLiveFinals(beforeVerify, dayKey)
-    );
-
-    // Panel-mode filter (display-contract): the universe is shared with
-    // /api/matches-for-date, but each panel shows only its statuses —
-    //   today  = PRE + LIVE   (a match leaves the panel once it goes FT)
-    //   active = PRE + FT + SPECIAL, never LIVE (the day's per-league mirror)
-    // Applied AFTER the live overlay so overlay-produced LIVE/FT rows are
-    // routed to the correct panel.
-    out = filterByPanelMode(out, mode);
-
-    res.json({
+    return res.json({
       ok: true,
-      mode,
       date: dayKey,
-      count: out.length,
-      matches: out,
+      mode,
       source,
+      count: filtered.length,
+      matches: filtered,
       membership
     });
-  } catch (err) {
-    console.error("[fixtures-runtime] failed", err?.message || err);
-    res.status(503).json({
+  } catch (error) {
+    return res.status(500).json({
       ok: false,
-      error: "fixtures_runtime_unavailable",
-      message: String(err?.message || err)
+      date: dayKey,
+      mode,
+      error: String(error?.message || error)
     });
   }
 });
-
-
 
 
 function fileInfoSafe(...parts) {
@@ -2369,28 +2527,17 @@ function fileInfoSafe(...parts) {
 
   try {
     if (!fs.existsSync(filePath)) {
-      return {
-        exists: false,
-        path: filePath,
-        bytes: 0,
-        mb: 0
-      };
+      return { exists: false, path: filePath, bytes: 0, mb: 0 };
     }
-
     const stat = fs.statSync(filePath);
-
     return {
       exists: true,
       path: filePath,
       bytes: stat.size,
       mb: Number((stat.size / 1024 / 1024).toFixed(2))
     };
-  } catch (err) {
-    return {
-      exists: false,
-      path: filePath,
-      error: String(err?.message || err)
-    };
+  } catch (error) {
+    return { exists: false, path: filePath, error: String(error?.message || error) };
   }
 }
 
@@ -2399,28 +2546,17 @@ function dirInfoSafe(...parts) {
 
   try {
     if (!fs.existsSync(dirPath)) {
-      return {
-        exists: false,
-        path: dirPath,
-        fileCount: 0
-      };
+      return { exists: false, path: dirPath, fileCount: 0 };
     }
-
-    const files = fs.readdirSync(dirPath)
-      .filter(name => name.endsWith(".json"));
-
+    const files = fs.readdirSync(dirPath).filter(name => name.endsWith(".json"));
     return {
       exists: true,
       path: dirPath,
       fileCount: files.length,
       sample: files.slice(0, 10)
     };
-  } catch (err) {
-    return {
-      exists: false,
-      path: dirPath,
-      error: String(err?.message || err)
-    };
+  } catch (error) {
+    return { exists: false, path: dirPath, error: String(error?.message || error) };
   }
 }
 
@@ -2447,7 +2583,11 @@ app.get("/debug/value-inputs", (req, res) => {
 });
 
 function readValueComparisonArtifact(date) {
-  const file = resolveDataPath("value-comparison", `${date}.json`);
+  const file = preferRuntimeReleaseArtifact(
+    date,
+    "value-comparison.json",
+    resolveDataPath("value-comparison", `${date}.json`)
+  );
   if (!fs.existsSync(file)) {
     return { ok: false, reason: "value_comparison_not_found", file };
   }
@@ -2489,7 +2629,7 @@ function readValueComparisonArtifact(date) {
   return { ok: true, file, payload };
 }
 
-app.get("/value-comparison", async (req, res) => {
+app.get("/value-comparison", (req, res) => {
   const date = String(req.query.date || athensDayKey());
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(date)) {
     return res.status(400).json({
@@ -2499,27 +2639,7 @@ app.get("/value-comparison", async (req, res) => {
     });
   }
 
-  let artifact = readValueComparisonArtifact(date);
-  let syncSummary = null;
-
-  // The current day's settlement can change intraday even when a valid local
-  // file already exists. Refresh it on demand in Render; historical dates are
-  // fetched only when missing/invalid to avoid unnecessary raw-GitHub traffic.
-  const shouldSyncComparison = snapshotSyncEnabled()
-    && (!artifact.ok || date === athensDayKey());
-
-  if (shouldSyncComparison) {
-    try {
-      syncSummary = await syncValueComparisonFromGithub(date);
-      artifact = readValueComparisonArtifact(date);
-    } catch (error) {
-      syncSummary = {
-        ok: false,
-        error: error?.message || String(error)
-      };
-    }
-  }
-
+  const artifact = readValueComparisonArtifact(date);
   if (!artifact.ok) {
     const status = artifact.reason === "value_comparison_json_invalid"
       || artifact.reason === "value_comparison_payload_invalid"
@@ -2529,26 +2649,16 @@ app.get("/value-comparison", async (req, res) => {
       ok: false,
       date,
       reason: artifact.reason,
-      source: "value-comparison-runtime-mirror",
-      syncAttempted: Boolean(syncSummary),
-      sync: syncSummary
-        ? {
-            ok: syncSummary.ok === true,
-            valueComparisonPresent: syncSummary.valueComparisonPresent === true,
-            valueComparisonWritten: syncSummary.valueComparisonWritten === true,
-            errors: syncSummary.valueComparisonErrors || syncSummary.errors || []
-          }
-        : null
+      source: "value-comparison-release-artifact"
     });
   }
 
   return res.json({
     ...artifact.payload,
-    source: "value-comparison-runtime-mirror",
+    source: "value-comparison-release-artifact",
     runtimeMirror: {
       localArtifact: true,
-      syncAttempted: Boolean(syncSummary),
-      synced: syncSummary?.valueComparisonWritten === true
+      requestTimeNetworkFetch: false
     }
   });
 });
@@ -3205,28 +3315,94 @@ function resolveSupplementalLeagueMeta(slug) {
 // short TTL. Overlays run on the cached base and are immutable (they .map to new
 // objects — see flashscore-live-overlay.js), so sharing the array across requests
 // is safe.
-const __displayUniverseCache = new Map(); // date -> { ts, value }
+const __displayUniverseCache = new Map(); // date -> { ts, revision, value }
 const DISPLAY_UNIVERSE_TTL_MS = 20000;
+
+function snapshotRevisionForDay(day) {
+  try {
+    const file = deploySnapshotManifestFile(day);
+    const stat = fs.statSync(file);
+    return `${stat.size}:${Math.trunc(stat.mtimeMs)}`;
+  } catch {
+    return "missing";
+  }
+}
 
 function buildDisplayMatchesForDate(date) {
   const key = String(date || "");
   const now = Date.now();
+  const revision = snapshotRevisionForDay(key);
   const hit = __displayUniverseCache.get(key);
-  if (hit && (now - hit.ts) < DISPLAY_UNIVERSE_TTL_MS) return hit.value;
+  if (
+    hit &&
+    hit.revision === revision &&
+    (now - hit.ts) < DISPLAY_UNIVERSE_TTL_MS
+  ) {
+    return hit.value;
+  }
 
   const value = buildDisplayMatchesForDateUncached(date);
-  __displayUniverseCache.set(key, { ts: now, value });
+  __displayUniverseCache.set(key, { ts: now, revision, value });
 
-  // Bound the map to a handful of recent days.
   if (__displayUniverseCache.size > 8) {
-    let oldestKey = null, oldestTs = Infinity;
-    for (const [k, v] of __displayUniverseCache) {
-      if (v.ts < oldestTs) { oldestTs = v.ts; oldestKey = k; }
+    let oldestKey = null;
+    let oldestTs = Infinity;
+    for (const [candidateKey, entry] of __displayUniverseCache) {
+      if (entry.ts < oldestTs) {
+        oldestTs = entry.ts;
+        oldestKey = candidateKey;
+      }
     }
     if (oldestKey !== null) __displayUniverseCache.delete(oldestKey);
   }
   return value;
 }
+
+const __runtimeDisplayCache = new Map(); // date -> { ts, revision, promise }
+const RUNTIME_DISPLAY_TTL_MS = 12000;
+
+async function buildRuntimeDisplayMatchesForDate(date) {
+  const key = String(date || "");
+  const now = Date.now();
+  const revision = snapshotRevisionForDay(key);
+  const hit = __runtimeDisplayCache.get(key);
+  if (
+    hit &&
+    hit.revision === revision &&
+    (now - hit.ts) < RUNTIME_DISPLAY_TTL_MS
+  ) {
+    return hit.promise;
+  }
+
+  const promise = (async () => {
+    const baseUniverse = buildDisplayMatchesForDate(key);
+    const base = baseUniverse.matches;
+    let matches = await overlayWithBudget(
+      "shared-display:flashscore-live",
+      4000,
+      base,
+      signal => overlayFlashscoreLive(base, key, { signal })
+    );
+    matches = overlayResultsTruth(matches, key);
+    const beforeVerify = matches;
+    matches = await overlayWithBudget(
+      "shared-display:ft-verify",
+      4000,
+      beforeVerify,
+      signal => verifyStuckLiveFinals(beforeVerify, key, { signal })
+    );
+
+    return { ...baseUniverse, matches };
+  })();
+
+  __runtimeDisplayCache.set(key, { ts: now, revision, promise });
+  promise.catch(() => {
+    const current = __runtimeDisplayCache.get(key);
+    if (current?.promise === promise) __runtimeDisplayCache.delete(key);
+  });
+  return promise;
+}
+
 
 // Map an odds.json entry's frozen aiAssessment into the same `assessment` shape
 // attachAssessment produces from data/assessments, so a fixture reconciled to a
@@ -3549,38 +3725,26 @@ function buildDisplayMatchesForDateUncached(date) {
 
 app.get("/api/matches-for-date", async (req, res) => {
   const date = String(req.query.date || athensDayKey()).slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ ok: false, error: "invalid_date" });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return res.status(400).json({ ok: false, error: "invalid_date" });
+  }
 
-  const {
-    source,
-    matches,
-    membership
-  } = buildDisplayMatchesForDate(date);
-
-  // Overlay live/FT status from Flashscore for odds-only leagues (today only).
-  // No-op for past dates and when the feed is unavailable. Budgeted — see
-  // /fixtures-runtime — so a slow/hung feed can never block the response.
-  const base = matches;
-  let out = await overlayWithBudget(
-    "matches-for-date:flashscore-live", 4000, base,
-    () => overlayFlashscoreLive(base, date)
-  );
-
-  // Truth-store finals overlay (any date) — see /fixtures-runtime.
-  out = overlayResultsTruth(out, date);
-  // Stuck-LIVE → FT only via cross-source confirmation — see /fixtures-runtime.
-  const beforeVerify = out;
-  out = await overlayWithBudget(
-    "matches-for-date:ft-verify", 4000, beforeVerify,
-    () => verifyStuckLiveFinals(beforeVerify, date)
-  );
-  return res.json({
-    ok: true,
-    date,
-    source,
-    matches: out,
-    membership
-  });
+  try {
+    const { source, matches, membership } = await buildRuntimeDisplayMatchesForDate(date);
+    return res.json({
+      ok: true,
+      date,
+      source,
+      matches,
+      membership
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      date,
+      error: String(error?.message || error)
+    });
+  }
 });
 
 // All prefetched/fetched odds for a date — used by Opening Tracker panel.
@@ -3985,15 +4149,5 @@ if (command === "discover-window") {
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`engine-v1 listening on ${PORT}`);
-
-  // Boot self-sync (Render only): a free instance that spun down and woke up
-  // serves the snapshot frozen at deploy time — catch up from GitHub so the
-  // UI sees the current day without a redeploy. Fire-and-forget; a failure
-  // just leaves the deploy-time snapshot in place.
-  if (snapshotSyncEnabled()) {
-    setTimeout(() => {
-      syncDeploySnapshotFromGithub(athensDayKey())
-        .catch(err => console.error("[snapshot-sync] boot sync failed:", String(err?.message || err)));
-    }, 3000);
-  }
+  console.log("[snapshot-sync] boot sync disabled; releases are promoted only by authenticated commit-pinned workflow jobs");
 });

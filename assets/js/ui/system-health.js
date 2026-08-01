@@ -359,7 +359,7 @@
 
   // Fetch, alert artifact & badge update
 
-  const STATIC_ALERT_PATH = "data/system-health/latest.json";
+  const ALERT_ENDPOINT = "/system-health-alerts";
 
   let _lastReport = null;
   let _lastAlertArtifact = null;
@@ -406,19 +406,18 @@
     };
   }
 
-  async function fetchStaticOperationalDay() {
-    try {
-      const res = await fetch(
-        `data/deploy-snapshots/latest.json?v=${Date.now()}`,
-        { cache: "no-store" }
-      );
-      if (!res.ok) return "";
-      const payload = await res.json();
-      return String(payload?.date || payload?.dayKey || "").slice(0, 10);
-    } catch {
-      return "";
-    }
+  function operationalState() {
+    const state = window.AIML_OperationalDay?.getState?.() || {};
+    return {
+      day: String(state.day || window.__AIML_OPERATIONAL_DAY || "").slice(0, 10),
+      engineSnapshotReady: state.engineSnapshotReady,
+      engineSnapshotDay: String(state.engineSnapshotDay || "").slice(0, 10),
+      engineLatestDay: String(state.engineLatestDay || "").slice(0, 10),
+      engineLatestHash: state.engineLatestHash || null,
+      error: state.error || null
+    };
   }
+
 
   async function fetchDiagnosticReport() {
     try {
@@ -427,12 +426,11 @@
         ? `/system-health?day=${encodeURIComponent(selectedDay)}`
         : "/system-health";
 
-      const [selectedResponse, currentResponse, staticDay] = await Promise.all([
+      const [selectedResponse, currentResponse] = await Promise.all([
         fetch(engineUrl(selectedPath), { cache: "no-store" }),
         selectedPath === "/system-health"
           ? Promise.resolve(null)
-          : fetch(engineUrl("/system-health"), { cache: "no-store" }),
-        fetchStaticOperationalDay()
+          : fetch(engineUrl("/system-health"), { cache: "no-store" })
       ]);
 
       if (!selectedResponse.ok) return null;
@@ -450,21 +448,40 @@
         window.__AIML_LAST_ACTIVE?.date ||
         ""
       ).slice(0, 10);
+      const operational = operationalState();
 
       if (
         engineOperationalDay &&
-        staticDay &&
-        engineOperationalDay !== staticDay
+        operational.day &&
+        engineOperationalDay !== operational.day
       ) {
         report = appendParityIssue(
           report,
-          "public_ui_operational_day_mismatch",
-          "The public UI snapshot day does not match the engine operational day.",
+          "engine_operational_day_mismatch",
+          "The engine diagnostic day does not match the Europe/Athens operational day.",
           {
             engineOperationalDay,
-            publicUiSnapshotDay: staticDay,
+            uiOperationalDay: operational.day,
             displayedReportDay,
             selectedDay: selectedDay || null
+          }
+        );
+      }
+
+      if (
+        selectedDay === operational.day &&
+        operational.engineSnapshotReady === false
+      ) {
+        report = appendParityIssue(
+          report,
+          "operational_snapshot_unavailable",
+          "The engine does not have a ready snapshot for the Europe/Athens operational day.",
+          {
+            uiOperationalDay: operational.day,
+            engineSnapshotDay: operational.engineSnapshotDay || null,
+            engineLatestDay: operational.engineLatestDay || null,
+            engineLatestHash: operational.engineLatestHash,
+            readinessError: operational.error
           }
         );
       }
@@ -482,7 +499,7 @@
           {
             engineOperationalDay,
             activePanelDay,
-            publicUiSnapshotDay: staticDay || null,
+            uiOperationalDay: operational.day || null,
             selectedDay: selectedDay || null
           }
         );
@@ -496,9 +513,13 @@
 
   async function fetchAlertArtifact() {
     try {
-      const separator = STATIC_ALERT_PATH.includes("?") ? "&" : "?";
-      const url = `${STATIC_ALERT_PATH}${separator}v=${Date.now()}`;
-      const res = await fetch(url, { cache: "no-store" });
+      const selectedDay = resolveSystemHealthDay();
+      const query = selectedDay
+        ? `?day=${encodeURIComponent(selectedDay)}&_t=${Date.now()}`
+        : `?_t=${Date.now()}`;
+      const res = await fetch(engineUrl(`${ALERT_ENDPOINT}${query}`), {
+        cache: "no-store"
+      });
 
       if (!res.ok) return null;
 

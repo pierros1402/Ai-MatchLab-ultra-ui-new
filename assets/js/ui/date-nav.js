@@ -1,123 +1,151 @@
-/* date-nav.js — ±7 day navigation strip (Flashscore-style)
- * Emits: date:change { date: "YYYY-MM-DD", isToday: bool }
- * Listens: (none — self-contained)
+/* date-nav.js — ±7 day navigation strip.
+ *
+ * Operational-day authority: window.AIML_OperationalDay (Europe/Athens calendar).
+ * Static UI snapshot files are never used as a date source.
  */
-
 (function () {
   "use strict";
 
-  var container = document.getElementById("date-nav");
+  const container = document.getElementById("date-nav");
   if (!container) return;
 
-  var RANGE = 7; // days each side of today
-
-  // Athens "today" (UTC+3 in summer)
-  function athensToday() {
-    var now = new Date();
-    var athens = new Date(now.getTime() + 3 * 60 * 60 * 1000);
-    return athens.toISOString().slice(0, 10);
-  }
-
-  function addDays(ymd, n) {
-    return new Date(new Date(ymd + "T12:00:00Z").getTime() + n * 86400000)
-      .toISOString().slice(0, 10);
-  }
-
-  function shortLabel(ymd) {
-    var d = new Date(ymd + "T12:00:00Z");
-    var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    return days[d.getUTCDay()] + " " + d.getUTCDate();
-  }
-
-  var CALENDAR_TODAY = athensToday();
-  var TODAY = CALENDAR_TODAY;
-  var activeDate = TODAY;
+  const RANGE = 7;
 
   function validDay(value) {
     return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
   }
 
-  async function resolvePublishedDay() {
+  function fallbackAthensDay() {
     try {
-      var response = await fetch("data/deploy-snapshots/latest.json?ts=" + Date.now(), { cache: "no-store" });
-      if (!response.ok) return TODAY;
-      var payload = await response.json();
-      var published = String(payload && (payload.date || payload.dayKey) || "").slice(0, 10);
-      if (!validDay(published) || published > CALENDAR_TODAY) return TODAY;
-      return published;
-    } catch (_) {
-      return TODAY;
+      return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+    } catch {
+      return new Date().toISOString().slice(0, 10);
     }
   }
 
-  async function syncOperationalDay(emitChange) {
-    CALENDAR_TODAY = athensToday();
-    var published = await resolvePublishedDay();
-    var changed = published !== TODAY;
-    TODAY = published;
-    window.__AIML_OPERATIONAL_DAY = TODAY;
-    if (changed || !activeDate) activeDate = TODAY;
-    render();
-    if (emitChange && changed) {
-      emit("date:change", { date: activeDate, isToday: activeDate === TODAY, operationalDay: TODAY });
+  function operationalDay() {
+    const serviceDay = window.AIML_OperationalDay?.getDay?.();
+    return validDay(serviceDay) ? serviceDay : fallbackAthensDay();
+  }
+
+  function addDays(ymd, amount) {
+    return new Date(new Date(`${ymd}T12:00:00Z`).getTime() + amount * 86400000)
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  function shortLabel(ymd) {
+    const date = new Date(`${ymd}T12:00:00Z`);
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return `${days[date.getUTCDay()]} ${date.getUTCDate()}`;
+  }
+
+  function emit(name, detail) {
+    window.dispatchEvent(new CustomEvent(name, { detail }));
+    if (window.AIML && typeof window.AIML.emit === "function") {
+      window.AIML.emit(name, detail);
     }
   }
 
-  function emit(ev, detail) {
-    window.dispatchEvent(new CustomEvent(ev, { detail: detail }));
-    if (window.AIML && window.AIML.emit) window.AIML.emit(ev, detail);
+  let today = operationalDay();
+  let activeDate = today;
+
+  function publishSelection(date) {
+    const selected = validDay(date) ? date : today;
+    activeDate = selected;
+    window.__AIML_SELECTED_DATE = selected;
+    window.__AIML_VIEWING_NON_TODAY_DATE = selected !== today ? selected : null;
   }
 
   function render() {
-    var pills = [];
-    for (var i = -RANGE; i <= RANGE; i++) {
-      var d = addDays(TODAY, i);
-      var isToday = d === TODAY;
-      var isActive = d === activeDate;
-      var cls = "date-pill" + (isToday ? " date-pill-today" : "") + (isActive ? " date-pill-active" : "");
-      var label = isToday ? "Today" : shortLabel(d);
+    const pills = [];
+
+    for (let offset = -RANGE; offset <= RANGE; offset += 1) {
+      const day = addDays(today, offset);
+      const isToday = day === today;
+      const isActive = day === activeDate;
+      const className =
+        "date-pill" +
+        (isToday ? " date-pill-today" : "") +
+        (isActive ? " date-pill-active" : "");
+      const label = isToday ? "Today" : shortLabel(day);
+
       pills.push(
-        '<button class="' + cls + '" data-date="' + d + '">' + label + '</button>'
+        `<button class="${className}" data-date="${day}">${label}</button>`
       );
     }
-    container.innerHTML = '<div class="date-nav-inner">' + pills.join("") + "</div>";
 
-    container.querySelectorAll(".date-pill").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        activeDate = btn.getAttribute("data-date");
-        render(); // re-render to move active class
-        emit("date:change", { date: activeDate, isToday: activeDate === TODAY });
+    container.innerHTML = `<div class="date-nav-inner">${pills.join("")}</div>`;
+
+    container.querySelectorAll(".date-pill").forEach(button => {
+      button.addEventListener("click", () => {
+        publishSelection(button.getAttribute("data-date"));
+        render();
+        emit("date:change", {
+          date: activeDate,
+          isToday: activeDate === today,
+          operationalDay: today,
+          reason: "user_selection"
+        });
       });
     });
 
-    // Scroll active pill into view
-    var active = container.querySelector(".date-pill-active");
-    if (active) active.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    const active = container.querySelector(".date-pill-active");
+    active?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
   }
 
-  // Re-sync TODAY at midnight Athens time (handles day rollover)
-  function scheduleRollover() {
-    var now = new Date();
-    var athens = new Date(now.getTime() + 3 * 60 * 60 * 1000);
-    var msUntilMidnight =
-      (24 * 60 - athens.getUTCHours() * 60 - athens.getUTCMinutes()) * 60 * 1000 - athens.getUTCSeconds() * 1000;
-    setTimeout(function () {
-      syncOperationalDay(true).finally(scheduleRollover);
-    }, msUntilMidnight + 500);
+  function adoptOperationalDay(nextDay, reason) {
+    if (!validDay(nextDay) || nextDay === today) return;
+
+    const previousDay = today;
+    const wasFollowingToday =
+      !window.__AIML_VIEWING_NON_TODAY_DATE && activeDate === previousDay;
+
+    today = nextDay;
+    window.__AIML_OPERATIONAL_DAY = today;
+
+    if (wasFollowingToday) {
+      publishSelection(today);
+    }
+
+    render();
+
+    if (wasFollowingToday) {
+      emit("date:change", {
+        date: today,
+        isToday: true,
+        operationalDay: today,
+        reason: reason || "operational_day_change"
+      });
+    }
   }
 
+  publishSelection(today);
   render();
-  syncOperationalDay(true);
-  scheduleRollover();
 
-  // Expose for other modules
+  window.addEventListener("operational-day:change", event => {
+    adoptOperationalDay(event?.detail?.day, "athens_day_rollover");
+  });
+
+  // Initial authoritative selection event. This is emitted after all scripts in
+  // the current task are loaded via a zero-delay timer, avoiding a race with the
+  // date loader registered later in index.html.
+  window.setTimeout(() => {
+    emit("date:change", {
+      date: activeDate,
+      isToday: true,
+      operationalDay: today,
+      reason: "initial_operational_day"
+    });
+  }, 0);
+
   window.DateNav = {
-    getActiveDate: function () { return activeDate; },
-    getToday: function () { return TODAY; },
-    setDate: function (d) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
-      activeDate = d;
+    getActiveDate: () => activeDate,
+    getToday: () => today,
+    setDate: date => {
+      if (!validDay(date)) return;
+      publishSelection(date);
       render();
-    },
+    }
   };
 })();

@@ -22,18 +22,16 @@
     if (window.AIML && window.AIML.on) window.AIML.on(ev, fn);
   }
 
-  function athensToday() {
-    try {
-      return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
-    } catch (_) {
-      return new Date().toISOString().slice(0, 10);
-    }
-  }
-
   function operationalToday() {
-    // The browser clock in Europe/Athens is the sole authority for "Today".
-    // Never trust a stale DateNav/global value carried across midnight.
-    var today = athensToday();
+    var serviceDay = window.AIML_OperationalDay &&
+      typeof window.AIML_OperationalDay.getDay === "function"
+      ? window.AIML_OperationalDay.getDay()
+      : "";
+
+    var today = /^\d{4}-\d{2}-\d{2}$/.test(String(serviceDay || ""))
+      ? String(serviceDay)
+      : new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+
     window.__AIML_OPERATIONAL_DAY = today;
     return today;
   }
@@ -46,16 +44,27 @@
   }
 
 
+
   var activeDate = null;
-  var loading = false;
+  var activeController = null;
+  var requestGeneration = 0;
 
   async function loadMatchesForDate(date) {
-    if (loading) return;
-    loading = true;
+    var requestedDate = String(date || "").slice(0, 10);
+    var generation = ++requestGeneration;
+    if (activeController) activeController.abort();
+    var controller = new AbortController();
+    activeController = controller;
+    var timer = window.setTimeout(function () { controller.abort(); }, 12000);
     try {
-      var r = await fetch(BASE + "/api/matches-for-date?date=" + encodeURIComponent(date));
+      var r = await fetch(
+        BASE + "/api/matches-for-date?date=" + encodeURIComponent(requestedDate),
+        { cache: "no-store", signal: controller.signal }
+      );
+      if (!r.ok) throw new Error("HTTP " + r.status);
       var j = await r.json();
-      if (!j.ok) { console.warn("[date-nav-loader] not ok for", date, j); return; }
+      if (generation !== requestGeneration || activeDate !== requestedDate) return;
+      if (!j.ok) { console.warn("[date-nav-loader] not ok for", requestedDate, j); return; }
 
       // Normalise to the shape matches-panel.js expects
       var matches = (j.matches || []).map(function (m) {
@@ -76,19 +85,22 @@
           scoreAway: m.scoreAway,
           penalties: m.penalties || null,
           decidedBy: m.decidedBy || null,
-          date:     date,
+          date:     requestedDate,
         };
       });
 
       // Feed both panels — Active Leagues (compact) and Matches & Details (with assessments)
-      document.dispatchEvent(new CustomEvent("active-leagues:updated", { detail: { matches: matches, date: date } }));
-      emit("matches:set", { matches: matches, date: date });
-      emit("date-matches:loaded", { date: date, count: matches.length, source: j.source });
-      console.log("[date-nav-loader]", date, matches.length, "matches from", j.source);
+      document.dispatchEvent(new CustomEvent("active-leagues:updated", { detail: { matches: matches, date: requestedDate } }));
+      emit("matches:set", { matches: matches, date: requestedDate });
+      emit("date-matches:loaded", { date: requestedDate, count: matches.length, source: j.source });
+      console.log("[date-nav-loader]", requestedDate, matches.length, "matches from", j.source);
     } catch (e) {
-      console.error("[date-nav-loader] error loading", date, e);
+      if (e?.name !== "AbortError") {
+        console.error("[date-nav-loader] error loading", requestedDate, e);
+      }
     } finally {
-      loading = false;
+      window.clearTimeout(timer);
+      if (activeController === controller) activeController = null;
     }
   }
 
@@ -105,25 +117,8 @@
   // Selected date starts as today until the user navigates.
   setSelectedDate(operationalToday());
 
-  // Keep long-lived tabs correct across the Athens midnight rollover.
-  var lastOperationalDay = operationalToday();
-  window.setInterval(function () {
-    var nextOperationalDay = operationalToday();
-    if (nextOperationalDay === lastOperationalDay) return;
+  // Europe/Athens rollover is owned by operational-day.js.
 
-    var previousDay = lastOperationalDay;
-    lastOperationalDay = nextOperationalDay;
-
-    // Move only an untouched "today" view. A user-selected historical/future
-    // date remains selected.
-    if (
-      !window.__AIML_VIEWING_NON_TODAY_DATE &&
-      String(window.__AIML_SELECTED_DATE || previousDay).slice(0, 10) === previousDay
-    ) {
-      setSelectedDate(nextOperationalDay);
-      emit("date:change", { date: nextOperationalDay, reason: "athens_day_rollover" });
-    }
-  }, 60000);
 
   // Expose for debugging
   window.DateNavLoader = { loadDate: loadMatchesForDate };

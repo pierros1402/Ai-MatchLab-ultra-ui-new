@@ -47,18 +47,39 @@ test("knockout display keeps FT, AET and PEN separate", () => {
   assert.doesNotMatch(source, /scoreAway\s*\+\s*.*penalt/i);
 });
 
-test("operational today is anchored to Europe\/Athens", () => {
+test("operational today has one Europe/Athens authority", () => {
+  const authority = fs.readFileSync(
+    path.join(repoRoot, "assets", "js", "live", "operational-day.js"),
+    "utf8"
+  );
   const loader = fs.readFileSync(
     path.join(repoRoot, "assets", "js", "live", "date-nav-loader.js"),
     "utf8"
   );
-  const todayPanel = fs.readFileSync(
-    path.join(repoRoot, "assets", "js", "ui", "today-panel.js"),
+  const dateNav = fs.readFileSync(
+    path.join(repoRoot, "assets", "js", "ui", "date-nav.js"),
     "utf8"
   );
-  assert.match(loader, /timeZone:\s*"Europe\/Athens"/);
-  assert.match(todayPanel, /timeZone:\s*"Europe\/Athens"/);
-  assert.doesNotMatch(loader, /return window\.DateNav\.getToday\(\)/);
+  const app = fs.readFileSync(
+    path.join(repoRoot, "assets", "js", "ui", "app.js"),
+    "utf8"
+  );
+  const valueAdapter = fs.readFileSync(
+    path.join(repoRoot, "assets", "js", "live", "value-adapter.js"),
+    "utf8"
+  );
+  const html = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
+
+  assert.match(authority, /timeZone:\s*"Europe\/Athens"/);
+  assert.match(loader, /AIML_OperationalDay/);
+  assert.match(dateNav, /AIML_OperationalDay/);
+  assert.match(app, /AIML_OperationalDay/);
+  assert.match(valueAdapter, /AIML_OperationalDay/);
+  assert.doesNotMatch(authority, /data\/deploy-snapshots\/latest\.json/);
+  assert.ok(
+    html.indexOf("assets/js/live/operational-day.js") <
+    html.indexOf("assets/js/live/fixtures-loader.js")
+  );
 });
 
 

@@ -196,16 +196,23 @@
 // =====================================================
 // INITIAL DATA BOOTSTRAP (TODAY / ACTIVE / LIVE)
 // =====================================================
+function operationalDayForUi() {
+  const serviceDay = window.AIML_OperationalDay?.getDay?.();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(serviceDay || ""))) {
+    return String(serviceDay);
+  }
+  try {
+    return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
 window.on('app:ready', function () {
   try {
     if (!window.AIML_FixturesLoader) return;
 
-    const today = new Date();
-    const y = today.getFullYear();
-    const m = String(today.getMonth() + 1).padStart(2, '0');
-    const d = String(today.getDate()).padStart(2, '0');
-    const ymd = `${y}-${m}-${d}`;
-
+    const ymd = operationalDayForUi();
     window.AIML_FixturesLoader.loadToday(ymd);
     window.AIML_FixturesLoader.loadActive(ymd);
     window.AIML_FixturesLoader.loadLive();
@@ -229,11 +236,7 @@ window.reloadTodayPanel = function () {
   try {
     if (!window.AIML_FixturesLoader) return;
 
-    const today = new Date();
-    const y = today.getFullYear();
-    const m = String(today.getMonth() + 1).padStart(2, "0");
-    const d = String(today.getDate()).padStart(2, "0");
-    const ymd = `${y}-${m}-${d}`;
+    const ymd = operationalDayForUi();
 
     // refresh ONLY today fixtures (safe)
     window.AIML_FixturesLoader.loadToday(ymd);

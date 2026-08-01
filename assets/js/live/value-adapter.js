@@ -18,6 +18,7 @@
   const RAW_FETCH = window.__AIML_RAW_FETCH__ || window.fetch;
 
   const TZ = "Europe/Athens";
+  const REQUEST_TIMEOUT_MS = 12000;
   const BASE =
     (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.fixturesBase)
       ? window.AIML_LIVE_CFG.fixturesBase
@@ -33,27 +34,31 @@
     (window.AIML_LIVE_CFG && window.AIML_LIVE_CFG.valueComparisonPath) ||
     "/value-comparison";
 
-  function pad2(n) {
-    return String(n).padStart(2, "0");
+  function validDay(value) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
   }
 
   function ymdTodayAthens() {
+    const operational = window.AIML_OperationalDay?.getDay?.();
+    if (validDay(operational)) return operational;
+
     try {
-      const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: TZ,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).formatToParts(new Date());
-
-      const y = parts.find(p => p.type === "year")?.value;
-      const m = parts.find(p => p.type === "month")?.value;
-      const d = parts.find(p => p.type === "day")?.value;
-
-      return `${y}-${m}-${d}`;
+      return new Date().toLocaleDateString("en-CA", { timeZone: TZ });
     } catch {
-      const d = new Date();
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  async function rawFetchWithTimeout(url) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      return await RAW_FETCH(url, {
+        cache: "no-store",
+        signal: controller.signal
+      });
+    } finally {
+      window.clearTimeout(timer);
     }
   }
 
@@ -66,9 +71,7 @@
     try {
       console.log("[value-adapter] fetch:start", url);
 
-      const r = await RAW_FETCH(url, {
-        cache: "no-store"
-      });
+      const r = await rawFetchWithTimeout(url);
 
       console.log("[value-adapter] fetch:status", r.status, url);
 
@@ -89,9 +92,7 @@
     try {
       console.log("[value-adapter] comparison fetch:start", sourceLabel, url);
 
-      const r = await RAW_FETCH(url, {
-        cache: "no-store"
-      });
+      const r = await rawFetchWithTimeout(url);
 
       console.log("[value-adapter] comparison fetch:status", sourceLabel, r.status, url);
 
@@ -134,11 +135,9 @@
       COMPARISON_ENDPOINT +
       `?date=${encodedDate}`;
 
-    const engineComparison = await fetchComparisonUrl(engineUrl, "engine");
-    if (engineComparison) return engineComparison;
-
-    const staticUrl = "data/value-comparison/" + encodedDate + ".json";
-    return fetchComparisonUrl(staticUrl, "static-fallback");
+    // Engine release is the only public truth. A static fallback can be from a
+    // different UI deploy/day and would reintroduce cross-release panels.
+    return fetchComparisonUrl(engineUrl, "engine-release");
   }
 
   function comparisonRows(comparison, key) {
@@ -333,9 +332,14 @@ function normalizePick(p) {
   };
 }
 
+  let refreshGeneration = 0;
+
   async function refreshOnce(dateYmd) {
-    const date = dateYmd || ymdTodayAthens();
+    const date = validDay(dateYmd) ? dateYmd : ymdTodayAthens();
+    const generation = ++refreshGeneration;
     const comparison = await fetchValueComparison(date);
+
+    if (generation !== refreshGeneration) return;
 
     if (comparison) {
       const payload = comparisonPayloadFrom(comparison, date);
@@ -345,7 +349,20 @@ function normalizePick(p) {
 
     const data = await fetchValue(date);
 
-    if (!data) return;
+    if (generation !== refreshGeneration) return;
+
+    if (!data) {
+      emitValuePayload({
+        ok: false,
+        source: "engine-release-unavailable",
+        date,
+        total: 0,
+        picks: [],
+        items: [],
+        error: "value_release_unavailable"
+      });
+      return;
+    }
 
     const rawItems = Array.isArray(data?.picks)
       ? data.picks
@@ -388,8 +405,14 @@ function normalizePick(p) {
     emit("value:update", payload);
   }
 
+  on("date:change", payload => {
+    const date = String(payload?.date || "").slice(0, 10);
+    if (validDay(date)) refreshOnce(date);
+  });
+
   setTimeout(() => {
     console.log("[value-adapter] boot:initial-refresh");
-    refreshOnce();
+    const selected = String(window.__AIML_SELECTED_DATE || "").slice(0, 10);
+    refreshOnce(validDay(selected) ? selected : ymdTodayAthens());
   }, 100);
 })();

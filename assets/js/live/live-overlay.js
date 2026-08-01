@@ -16,6 +16,20 @@
     "https://aimatchlab-live.pierros1402.workers.dev/api/live";
 
   var POLL_MS = 45 * 1000;
+  var inFlight = false;
+
+  function operationalDay() {
+    var day = window.AIML_OperationalDay &&
+      typeof window.AIML_OperationalDay.getDay === "function"
+      ? window.AIML_OperationalDay.getDay()
+      : "";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(day || ""))) return String(day);
+    try {
+      return new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" });
+    } catch (_) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
 
   function emit(ev, data) {
     if (typeof window.emit === "function") window.emit(ev, data);
@@ -46,8 +60,13 @@
   }
 
   async function poll() {
+    if (inFlight) return;
+    inFlight = true;
+    var controller = new AbortController();
+    var timer = window.setTimeout(function () { controller.abort(); }, 12000);
     try {
-      var res = await fetch(URL_, { cache: "no-store" });
+      var rawFetch = window.__AIML_RAW_FETCH__ || window.fetch;
+      var res = await rawFetch(URL_, { cache: "no-store", signal: controller.signal });
       if (!res.ok) return;
       var json = await res.json();
       if (!json || !Array.isArray(json.matches)) return;
@@ -59,13 +78,16 @@
 
       if (matches.length) {
         window.AIML_LIVE_SCORES = matches;
-        const payload = { date: new Date().toISOString().slice(0, 10), matches: matches, total: matches.length };
+        const payload = { date: operationalDay(), matches: matches, total: matches.length };
         // Become the single live source the panels boot-replay from.
         window.__AIML_LAST_LIVE = payload;
         emit("live:update", payload);
       }
     } catch (err) {
       /* network blip — next poll retries */
+    } finally {
+      window.clearTimeout(timer);
+      inFlight = false;
     }
   }
 

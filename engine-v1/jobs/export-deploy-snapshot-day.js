@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import {
+  canonicalFileSha256,
+  computeDeploySnapshotManifestHash
+} from "../core/deploy-snapshot-release-contract.js";
 import { fixturesForSnapshotDay, normalizeMatchId } from "../core/day-fixture-universe.js";
 import {
   ensureDetailsForFixtures,
@@ -23,13 +26,6 @@ function readJsonSafe(filePath, fallback = null) {
 function writeJsonStable(filePath, payload) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), "utf8");
-}
-
-function sha256Json(payload) {
-  return crypto
-    .createHash("sha256")
-    .update(JSON.stringify(payload))
-    .digest("hex");
 }
 
 function bytesOfFile(filePath) {
@@ -590,6 +586,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
     summaries.push({
       file: path.basename(outFile),
       bytes,
+      sha256: canonicalFileSha256(outFile),
       mb: mb(bytes),
       ...summarizeDetail(detailToWrite)
     });
@@ -683,6 +680,7 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
       summaries.push({
         file: name,
         bytes,
+        sha256: canonicalFileSha256(detailFile),
         mb: mb(bytes),
         ...summarizeDetail(detail)
       });
@@ -980,7 +978,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     generatedAt: new Date().toISOString(),
     startedAt,
     source: "local_canonical_export",
-    version: "deploy-snapshot-v1",
+    version: "deploy-snapshot-v2",
     fixturesSource,
     sourceFixtureJsonCount: fixturesSnapshot.sourceFixtureJsonCount,
     fixtureJsonCount: fixturesSnapshot.fixtureJsonCount,
@@ -996,6 +994,13 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
       value: "value.json",
       valueAudit: valueAuditPresent ? "value-audit.json" : null,
       detailsDir: "details"
+    },
+    fileHashes: {
+      "fixtures.json": canonicalFileSha256(path.join(snapshotRoot, "fixtures.json")),
+      "value.json": canonicalFileSha256(path.join(snapshotRoot, "value.json")),
+      ...(valueAuditPresent
+        ? { "value-audit.json": canonicalFileSha256(snapshotValueAuditFile) }
+        : {})
     },
     counts: {
       fixtures: fixturesOut.count,
@@ -1042,25 +1047,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     details: detailsReport.summaries
   };
 
-  manifest.hash = sha256Json({
-    date: manifest.date,
-    counts: manifest.counts,
-    fixturesSource: manifest.fixturesSource,
-    staticMinTargetFixtures: manifest.staticMinTargetFixtures,
-    minTargetFixtures: manifest.minTargetFixtures,
-    minTargetFixtureSource: manifest.minTargetFixtureSource,
-    canonicalCoverageFixtureCount: manifest.canonicalCoverageFixtureCount,
-    coverage: manifest.coverage,
-    sizes: manifest.sizes,
-    details: manifest.details.map(x => ({
-      file: x.file,
-      bytes: x.bytes,
-      hasTravel: x.hasTravel,
-      hasPlayerUsage: x.hasPlayerUsage,
-      hasTeamNews: x.hasTeamNews,
-      hasValue: x.hasValue
-    }))
-  });
+  manifest.hash = computeDeploySnapshotManifestHash(manifest);
 
   writeJsonStable(path.join(snapshotRoot, "manifest.json"), manifest);
 

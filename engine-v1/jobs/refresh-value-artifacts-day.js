@@ -19,10 +19,13 @@ import {
 
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { athensDayKey } from "../core/daykey.js";
+import {
+  canonicalFileSha256,
+  computeDeploySnapshotManifestHash
+} from "../core/deploy-snapshot-release-contract.js";
 import { buildValueDay } from "../core/build-value-day.js";
 import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
@@ -66,13 +69,6 @@ function bytesOfFile(filePath) {
 
 function mb(bytes) {
   return Number((Number(bytes || 0) / 1024 / 1024).toFixed(2));
-}
-
-function sha256Json(payload) {
-  return crypto
-    .createHash("sha256")
-    .update(JSON.stringify(payload))
-    .digest("hex");
 }
 
 function parseArtifactTime(value) {
@@ -307,27 +303,31 @@ function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent, option
     valueMb: mb(bytesOfFile(valueFile))
   };
 
-  manifest.hash = sha256Json({
-    date: manifest.date,
-    counts: manifest.counts,
-    fixturesSource: manifest.fixturesSource,
-    staticMinTargetFixtures: manifest.staticMinTargetFixtures,
-    minTargetFixtures: manifest.minTargetFixtures,
-    minTargetFixtureSource: manifest.minTargetFixtureSource,
-    canonicalCoverageFixtureCount: manifest.canonicalCoverageFixtureCount,
-    coverage: manifest.coverage,
-    sizes: manifest.sizes,
-    details: Array.isArray(manifest.details)
-      ? manifest.details.map(x => ({
-          file: x.file,
-          bytes: x.bytes,
-          hasTravel: x.hasTravel,
-          hasPlayerUsage: x.hasPlayerUsage,
-          hasTeamNews: x.hasTeamNews,
-          hasValue: x.hasValue
-        }))
-      : []
-  });
+  manifest.version = "deploy-snapshot-v2";
+  manifest.fileHashes = {
+    "fixtures.json": canonicalFileSha256(fixturesFile),
+    "value.json": canonicalFileSha256(valueFile),
+    ...(valueAuditPresent
+      ? {
+          "value-audit.json": canonicalFileSha256(
+            path.join(snapshotRoot, "value-audit.json")
+          )
+        }
+      : {})
+  };
+
+  const detailsDir = path.join(snapshotRoot, "details");
+  manifest.details = Array.isArray(manifest.details)
+    ? manifest.details.map(row => {
+        const detailFile = path.join(detailsDir, String(row?.file || ""));
+        if (!fs.existsSync(detailFile)) {
+          throw new Error(`manifest_detail_missing:${String(row?.file || "")}`);
+        }
+        return { ...row, sha256: canonicalFileSha256(detailFile) };
+      })
+    : [];
+
+  manifest.hash = computeDeploySnapshotManifestHash(manifest);
 
   writeJsonStable(manifestFile, manifest);
 

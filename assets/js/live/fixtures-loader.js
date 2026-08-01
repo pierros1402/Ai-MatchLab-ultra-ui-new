@@ -64,14 +64,24 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
   }
 
   async function fetchJson(url) {
-    const r = await fetch(url, { method: "GET", cache: "no-store" });
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 12000);
+    try {
+      const r = await fetch(url, {
+        method: "GET",
+        cache: "no-store",
+        signal: controller.signal
+      });
 
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`HTTP ${r.status} ${r.statusText} :: ${t.slice(0, 200)}`);
+      if (!r.ok) {
+        const t = await r.text().catch(() => "");
+        throw new Error(`HTTP ${r.status} ${r.statusText} :: ${t.slice(0, 200)}`);
+      }
+
+      return await r.json();
+    } finally {
+      window.clearTimeout(timer);
     }
-
-    return await r.json();
   }
 
   // Coalesce identical runtime requests (same mode+date) that fire nearly
@@ -120,13 +130,20 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     }
   }
 
+  function operationalDayISO() {
+    const serviceDay = window.AIML_OperationalDay?.getDay?.();
+    return /^\d{4}-\d{2}-\d{2}$/.test(String(serviceDay || ""))
+      ? String(serviceDay)
+      : todayISO();
+  }
+
   function selectedDateISO() {
     const selected = window.__AIML_SELECTED_DATE;
-    return String(selected || todayISO()).slice(0, 10);
+    return String(selected || operationalDayISO()).slice(0, 10);
   }
 
   function shouldPublishForDate(dateYmd) {
-    return selectedDateISO() === String(dateYmd || todayISO()).slice(0, 10);
+    return selectedDateISO() === String(dateYmd || operationalDayISO()).slice(0, 10);
   }
 
 
@@ -278,9 +295,9 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     }
   }
 
-  const loadTodaySafe  = d => loadToday(d || todayISO());
-  const loadActiveSafe = d => loadActive(d || todayISO());
-  const loadLiveSafe   = d => loadLive(d || todayISO());
+  const loadTodaySafe  = d => loadToday(d || operationalDayISO());
+  const loadActiveSafe = d => loadActive(d || operationalDayISO());
+  const loadLiveSafe   = d => loadLive(d || operationalDayISO());
 
   async function loadToday(dateYmd) {
     const data = await fetchRuntime("today", dateYmd);
@@ -350,7 +367,7 @@ async function loadLive(dateYmd) {
   const ymd =
     (typeof dateYmd === "string" && dateYmd.length >= 10)
       ? dateYmd.slice(0, 10)
-      : todayISO();
+      : operationalDayISO();
 
   if (!dateYmd) {
     liveWarn("[LIVE] loadLive called with empty dateYmd -> using", ymd);
@@ -418,63 +435,47 @@ async function loadLive(dateYmd) {
   window.loadLiveFixtures = loadLiveSafe;
 
 (function startUnifiedLoop() {
+    let tickInFlight = null;
 
-  async function tick() {
-    try {
-      const day = todayISO();
+    async function tick(reason) {
+      if (tickInFlight) return tickInFlight;
 
-      // 1. LOAD ACTIVE FIRST (most complete)
-      const active = await loadActive(day);
-
-      // 2. LOAD TODAY SEPARATELY (CORRECT)
-      const today = await loadToday(day);
-
-      // 3. LIVE from TODAY
-      const liveMatches = today.matches.filter(m => isLiveStatus(m));
-
-      const livePayload = {
-        date: today.date,
-        matches: liveMatches,
-        total: liveMatches.length,
-        hash: buildHash(liveMatches)
-      };
-
-      window.__AIML_LAST_LIVE = livePayload;
-
-      if (typeof window.emit === "function") {
-        // live:update is now driven solely by live-overlay.js (worker).
-        // window.emit("live:update", livePayload);
-        void livePayload;
-      }
-
-    } catch (e) {
-      console.warn("[unified-loop]", e);
-    }
-  }
-
-  tick();
-  setInterval(tick, 15000);
-
-})();
-  (function startDayWatcher() {
-    let currentDay = todayISO();
-
-    setInterval(async () => {
-      const nowDay = todayISO();
-
-      if (nowDay !== currentDay) {
-        console.log("[DAY CHANGE]", currentDay, "→", nowDay);
-        currentDay = nowDay;
-
+      tickInFlight = (async () => {
         try {
-          await loadToday(nowDay);
-          await loadActive(nowDay);
-          await loadLive(nowDay);
+          const day = operationalDayISO();
+
+          // Active and Today share the same operational-day authority. Server-side
+          // request coalescing ensures these do not duplicate external overlays.
+          const active = await loadActive(day);
+          const today = await loadToday(day);
+
+          const liveMatches = today.matches.filter(m => isLiveStatus(m));
+          const livePayload = {
+            date: today.date,
+            matches: liveMatches,
+            total: liveMatches.length,
+            hash: buildHash(liveMatches)
+          };
+
+          window.__AIML_LAST_LIVE = livePayload;
+          void active;
+          void reason;
         } catch (e) {
-          console.warn("[DAY CHANGE] reload failed", e);
+          console.warn("[unified-loop]", e);
         }
-      }
-    }, 30000);
+      })().finally(() => {
+        tickInFlight = null;
+      });
+
+      return tickInFlight;
+    }
+
+    tick("initial");
+    window.setInterval(() => tick("poll"), 15000);
+
+    window.addEventListener("operational-day:change", () => {
+      tick("operational_day_change");
+    });
   })();
 
 })();

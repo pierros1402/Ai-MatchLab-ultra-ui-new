@@ -59,10 +59,12 @@ function espnStatusBlob(row) {
   return [row?.status, row?.statusType, row?.rawStatus].filter(Boolean).join(" ").toUpperCase();
 }
 
-async function fetchEspnLeagueIndex(slug, dayKey) {
+async function fetchEspnLeagueIndex(slug, dayKey, externalSignal = null) {
   const now = Date.now();
   const cached = __espnCache.get(slug);
   if (cached && now - cached.ts < ESPN_TTL_MS) return cached.byPair;
+
+  if (externalSignal?.aborted) return new Map();
 
   const yyyymmdd = String(dayKey || "").replace(/-/g, "");
   const url = `${ESPN_BASE}/${slug}/scoreboard?dates=${yyyymmdd}`;
@@ -72,11 +74,16 @@ async function fetchEspnLeagueIndex(slug, dayKey) {
   // open indefinitely. Without this, the whole /fixtures-runtime request hangs
   // past the client's abort budget and the UI shows "loading error". 4s is plenty
   // for a live scoreboard; on timeout we return an empty index (verify is best-effort).
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 4000);
+  const timeoutController = new AbortController();
+  const timer = setTimeout(() => {
+    timeoutController.abort(new Error("espn_ft_verifier_timeout"));
+  }, 3500);
+  const signal = externalSignal
+    ? AbortSignal.any([externalSignal, timeoutController.signal])
+    : timeoutController.signal;
   try {
     const res = await fetch(url, {
-      signal: controller.signal,
+      signal,
       headers: { "user-agent": "Mozilla/5.0 Ai-MatchLab ft-verifier", "accept": "application/json,text/plain,*/*" }
     });
     if (res.ok) {
@@ -104,7 +111,9 @@ async function fetchEspnLeagueIndex(slug, dayKey) {
     clearTimeout(timer);
   }
 
-  __espnCache.set(slug, { ts: now, byPair });
+  if (!externalSignal?.aborted) {
+    __espnCache.set(slug, { ts: now, byPair });
+  }
   return byPair;
 }
 
@@ -153,6 +162,8 @@ export async function verifyStuckLiveFinals(matches, dayKey, options = {}) {
 
   const now = options.now instanceof Date ? options.now.getTime() : Date.now();
   const day = String(dayKey || "").slice(0, 10);
+  const signal = options.signal || null;
+  if (signal?.aborted) return list;
 
   const stuckIdx = [];
   for (let i = 0; i < list.length; i++) if (isStuckLive(list[i], now)) stuckIdx.push(i);
@@ -160,7 +171,7 @@ export async function verifyStuckLiveFinals(matches, dayKey, options = {}) {
 
   // Flashscore index (shared cache). May be null if the feed is unavailable.
   let fsByPair = null;
-  try { fsByPair = await getFlashscoreLiveIndex(); } catch { fsByPair = null; }
+  try { fsByPair = await getFlashscoreLiveIndex({ signal }); } catch { fsByPair = null; }
 
   // ESPN: fetch per unique league slug among stuck rows, capped.
   const slugs = [];
@@ -169,9 +180,14 @@ export async function verifyStuckLiveFinals(matches, dayKey, options = {}) {
     if (slug && !slugs.includes(slug)) slugs.push(slug);
   }
   const espnIndexBySlug = new Map();
-  for (const slug of slugs.slice(0, MAX_ESPN_SLUGS_PER_RUN)) {
-    espnIndexBySlug.set(slug, await fetchEspnLeagueIndex(slug, day));
-  }
+  const selectedSlugs = slugs.slice(0, MAX_ESPN_SLUGS_PER_RUN);
+  const indexes = await Promise.all(
+    selectedSlugs.map(slug => fetchEspnLeagueIndex(slug, day, signal))
+  );
+  selectedSlugs.forEach((slug, index) => {
+    espnIndexBySlug.set(slug, indexes[index]);
+  });
+  if (signal?.aborted) return list;
 
   const out = list.slice();
   for (const i of stuckIdx) {

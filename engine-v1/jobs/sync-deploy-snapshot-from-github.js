@@ -1,282 +1,641 @@
 /**
- * sync-deploy-snapshot-from-github.js
+ * Strict runtime snapshot synchronizer.
  *
- * Pull a day's deploy-snapshot artifacts (fixtures/odds/value/manifest/reports
- * + details/) and latest.json from the GitHub repo into the LOCAL data dir at
- * runtime — no Render build/deploy needed.
- *
- * Why: the Render engine serves data from its own disk, which is frozen at the
- * last deploy. Auto-redeploys per data refresh burned the Render pipeline-
- * minutes budget (505/500 by 2026-07-12, deploy-budget firewall added the same
- * day). GitHub Actions keep committing fresh snapshots to the repo all day;
- * this job lets the running instance MIRROR them instead of being rebuilt.
- *
- * Sources: GitHub contents API for the file listing (2 calls/sync — the
- * unauthenticated 60/hr per-IP limit is plenty), raw file downloads via each
- * entry's download_url. Files whose git blob sha already matches the local
- * copy are skipped, so intraday re-syncs only transfer what changed.
- *
- * Writes are atomic (tmp + rename) and purely additive/overwriting — nothing
- * is ever deleted, so a failed sync can't take the served snapshot down.
+ * Contract:
+ *   - Every sync is pinned to one immutable Git commit SHA.
+ *   - The complete day directory is assembled in staging and validated before
+ *     the served directory is replaced.
+ *   - Stale/orphan files disappear because promotion replaces the whole day.
+ *   - The HTTP engine runs this module in a CHILD PROCESS; filesystem/network
+ *     work never blocks the web server event loop.
+ *   - latest.json is promoted last and only when it is bound to the same day and
+ *     manifest hash at the same immutable commit.
  */
 
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+import fs from "node:fs";
+import fsp from "node:fs/promises";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import {
+  canonicalTextBuffer,
+  canonicalBufferSha256,
+  computeDeploySnapshotManifestHash,
+  validateDeploySnapshotManifest
+} from "../core/deploy-snapshot-release-contract.js";
+import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 
-// Opening odds (data/multi-odds/<day>.json) are forward-looking — the Opening
-// Tracker offers today + the next 7 days. They live OUTSIDE the per-day
-// deploy-snapshot dir, so without this the live engine never mirrors them and
-// the tracker shows empty. Pull the same forward window on every sync.
-const MULTI_ODDS_DAYS_FORWARD = Number(process.env.SNAPSHOT_SYNC_MULTI_ODDS_DAYS || 7);
+const DEFAULT_REPO = process.env.SNAPSHOT_SYNC_REPO || "pierros1402/Ai-MatchLab-ultra-ui-new";
+const DEFAULT_REF = process.env.SNAPSHOT_SYNC_BRANCH || "main";
+const USER_AGENT = "aimatchlab-strict-snapshot-sync/2";
+const FETCH_TIMEOUT_MS = Number(process.env.SNAPSHOT_SYNC_FETCH_TIMEOUT_MS || 30000);
+const CONCURRENCY = Math.max(1, Math.min(8, Number(process.env.SNAPSHOT_SYNC_CONCURRENCY || 4)));
+const MULTI_ODDS_DAYS_FORWARD = Math.max(0, Number(process.env.SNAPSHOT_SYNC_MULTI_ODDS_DAYS || 7));
+const SHA_RE = /^[0-9a-f]{40}$/i;
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-const REPO   = process.env.SNAPSHOT_SYNC_REPO || "pierros1402/Ai-MatchLab-ultra-ui-new";
-const BRANCH = process.env.SNAPSHOT_SYNC_BRANCH || "main";
-const API    = `https://api.github.com/repos/${REPO}/contents`;
-const RAW    = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`;
-const UA     = "aimatchlab-snapshot-sync";
-const CONCURRENCY = 8;
-const FETCH_TIMEOUT_MS = 30000;
+const CORE_OPTIONAL_FILES = [
+  "fixtures-all.json",
+  "odds.json",
+  "freshness-report.json",
+  "invariant-report.json"
+];
 
-let inFlight = null; // serialize overlapping sync requests
+function log(...args) {
+  console.error("[snapshot-sync]", ...args);
+}
 
-function log(...a) { console.log("[snapshot-sync]", ...a); }
+function safeName(value) {
+  const name = String(value || "");
+  return /^[A-Za-z0-9._~-]+\.json$/.test(name) && !name.includes("..")
+    ? name
+    : null;
+}
+
+function parseJsonBuffer(buffer, label) {
+  try {
+    return JSON.parse(Buffer.from(buffer).toString("utf8"));
+  } catch (error) {
+    throw new Error(`${label}_json_invalid:${error?.message || error}`);
+  }
+}
 
 async function fetchWithTimeout(url, init = {}) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...init, signal: ctrl.signal, headers: { "user-agent": UA, ...(init.headers || {}) } });
-  } finally {
-    clearTimeout(t);
-  }
-}
-
-/** git blob sha of a local file (matches the contents API's `sha`). */
-function localBlobSha(filePath) {
-  try {
-    const buf = fs.readFileSync(filePath);
-    return crypto.createHash("sha1")
-      .update(`blob ${buf.length}\0`)
-      .update(buf)
-      .digest("hex");
-  } catch {
-    return null;
-  }
-}
-
-function writeAtomic(filePath, buf) {
-  ensureDir(path.dirname(filePath));
-  const tmp = `${filePath}.sync-tmp`;
-  fs.writeFileSync(tmp, buf);
-  fs.renameSync(tmp, filePath);
-}
-
-async function listDir(repoPath) {
-  const res = await fetchWithTimeout(`${API}/${repoPath}?ref=${BRANCH}`, {
-    headers: { accept: "application/vnd.github+json" }
-  });
-  if (res.status === 404) return [];
-  if (!res.ok) throw new Error(`list ${repoPath} → HTTP ${res.status}`);
-  const arr = await res.json();
-  return Array.isArray(arr) ? arr : [];
-}
-
-async function syncOne(entry, localPath, stats) {
-  if (entry.type !== "file" || !entry.download_url) return;
-  if (localBlobSha(localPath) === entry.sha) { stats.skippedUnchanged++; return; }
-  const res = await fetchWithTimeout(entry.download_url);
-  if (!res.ok) throw new Error(`fetch ${entry.path} → HTTP ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  writeAtomic(localPath, buf);
-  stats.filesWritten++;
-  stats.bytesWritten += buf.length;
-}
-
-async function syncRawOptional(repoPath, localPath, stats) {
-  const res = await fetchWithTimeout(`${RAW}/${repoPath}`);
-  if (res.status === 404) return { present: false, written: false };
-  if (!res.ok) throw new Error(`fetch ${repoPath} → HTTP ${res.status}`);
-
-  const buf = Buffer.from(await res.arrayBuffer());
-  try {
-    if (fs.existsSync(localPath) && fs.readFileSync(localPath).equals(buf)) {
-      stats.skippedUnchanged++;
-      return { present: true, written: false };
-    }
-  } catch {
-    // Fall through to the atomic write.
-  }
-
-  writeAtomic(localPath, buf);
-  stats.filesWritten++;
-  stats.bytesWritten += buf.length;
-  return { present: true, written: true };
-}
-
-async function runBatches(jobs) {
-  const errors = [];
-  for (let i = 0; i < jobs.length; i += CONCURRENCY) {
-    const slice = jobs.slice(i, i + CONCURRENCY);
-    const results = await Promise.allSettled(slice.map(fn => fn()));
-    for (const r of results) if (r.status === "rejected") errors.push(String(r.reason?.message || r.reason));
-  }
-  return errors;
-}
-async function syncValueComparisonArtifact(day, stats) {
-  const comparisonSync = await syncRawOptional(
-    `data/value-comparison/${day}.json`,
-    resolveDataPath("value-comparison", `${day}.json`),
-    stats
-  );
-  stats.valueComparisonPresent = comparisonSync.present;
-  stats.valueComparisonWritten = comparisonSync.written;
-  return comparisonSync;
-}
-
-export async function syncValueComparisonFromGithub(dayKey = athensDayKey()) {
-  const day = String(dayKey);
-  const stats = {
-    filesWritten: 0,
-    skippedUnchanged: 0,
-    bytesWritten: 0,
-    valueComparisonPresent: false,
-    valueComparisonWritten: false
-  };
-  try {
-    await syncValueComparisonArtifact(day, stats);
-    return {
-      ok: true,
-      dayKey: day,
-      repo: REPO,
-      branch: BRANCH,
-      ...stats,
-      errors: []
-    };
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        "user-agent": USER_AGENT,
+        accept: "application/vnd.github+json,application/json,text/plain,*/*",
+        ...(init.headers || {})
+      }
+    });
   } catch (error) {
-    return {
-      ok: false,
-      dayKey: day,
-      repo: REPO,
-      branch: BRANCH,
-      ...stats,
-      errors: [String(error?.message || error)]
-    };
+    if (error?.name === "AbortError") {
+      throw new Error(`fetch_timeout:${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
+async function fetchBuffer(url, { optional = false } = {}) {
+  const response = await fetchWithTimeout(url);
+  if (optional && response.status === 404) return null;
+  if (!response.ok) throw new Error(`fetch_failed:${response.status}:${url}`);
+  return Buffer.from(await response.arrayBuffer());
+}
 
-// Mirror data/multi-odds/<day>.json for baseDay .. baseDay+daysForward. One
-// directory listing (sha-gated like everything else) then transfer only the
-// windowed files that changed. Returns its own error list so a multi-odds hiccup
-// never gates latest.json — opening odds are a supplement, not the served slate.
-async function syncMultiOddsWindow(baseDay, daysForward, stats) {
-  const wanted = new Set();
-  for (let i = 0; i <= daysForward; i++) wanted.add(shiftDay(baseDay, i));
+function rawUrl(repo, ref, repoPath) {
+  const encodedPath = String(repoPath)
+    .split("/")
+    .map(segment => encodeURIComponent(segment))
+    .join("/");
+  return `https://raw.githubusercontent.com/${repo}/${ref}/${encodedPath}`;
+}
 
-  let entries;
+export async function resolveImmutableGithubRef(ref = DEFAULT_REF, repo = DEFAULT_REPO) {
+  const requested = String(ref || DEFAULT_REF).trim();
+  if (SHA_RE.test(requested)) return requested.toLowerCase();
+  if (!/^[A-Za-z0-9._/-]+$/.test(requested)) {
+    throw new Error("snapshot_ref_invalid");
+  }
+
+  const response = await fetchWithTimeout(
+    `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(requested)}`
+  );
+  if (!response.ok) throw new Error(`snapshot_ref_resolution_failed:${response.status}`);
+  const payload = await response.json();
+  const sha = String(payload?.sha || "").toLowerCase();
+  if (!SHA_RE.test(sha)) throw new Error("snapshot_ref_resolution_invalid_sha");
+  return sha;
+}
+
+async function ensureEmptyDir(dir) {
+  await fsp.rm(dir, { recursive: true, force: true });
+  await fsp.mkdir(dir, { recursive: true });
+}
+
+async function writeFileAtomic(filePath, buffer) {
+  await fsp.mkdir(path.dirname(filePath), { recursive: true });
+  const tmp = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+  await fsp.writeFile(tmp, buffer);
+  await fsp.rename(tmp, filePath);
+}
+
+async function runPool(tasks, concurrency = CONCURRENCY) {
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(concurrency, tasks.length || 1) }, async () => {
+    while (cursor < tasks.length) {
+      const index = cursor;
+      cursor += 1;
+      await tasks[index]();
+    }
+  });
+  await Promise.all(workers);
+}
+
+function expectedCoreFiles(manifest) {
+  const required = new Set(["manifest.json"]);
+  const fixtures = safeName(manifest?.files?.fixtures || "fixtures.json");
+  const value = safeName(manifest?.files?.value || "value.json");
+  const valueAudit = manifest?.files?.valueAudit
+    ? safeName(manifest.files.valueAudit)
+    : null;
+
+  if (!fixtures || !value || (manifest?.files?.valueAudit && !valueAudit)) {
+    throw new Error("manifest_core_file_name_invalid");
+  }
+
+  required.add(fixtures);
+  required.add(value);
+  if (valueAudit) required.add(valueAudit);
+
+  return {
+    required: [...required].sort(),
+    optional: CORE_OPTIONAL_FILES.filter(name => !required.has(name))
+  };
+}
+
+async function existingFileMatches(filePath, expectedSha, expectedBytes) {
+  if (!fs.existsSync(filePath)) return false;
   try {
-    entries = await listDir("data/multi-odds");
-  } catch (e) {
-    return [`multi-odds list: ${String(e?.message || e)}`];
+    const buffer = await fsp.readFile(filePath);
+    if (Number.isFinite(expectedBytes) && canonicalTextBuffer(buffer).length !== expectedBytes) {
+      return false;
+    }
+    if (expectedSha && canonicalBufferSha256(buffer) !== String(expectedSha).toLowerCase()) {
+      return false;
+    }
+    return Boolean(expectedSha || Number.isFinite(expectedBytes));
+  } catch {
+    return false;
   }
-
-  const jobs = [];
-  for (const e of entries) {
-    if (e.type !== "file" || !e.name.endsWith(".json")) continue;
-    if (!wanted.has(e.name.replace(/\.json$/, ""))) continue;
-    jobs.push(() => syncOne(e, resolveDataPath("multi-odds", e.name), stats));
-  }
-  stats.multiOddsListed = jobs.length;
-  return runBatches(jobs);
 }
 
-export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey()) {
-  if (inFlight) return inFlight; // coalesce concurrent callers onto the running sync
-  inFlight = (async () => {
-    const startedAt = Date.now();
-    const day = String(dayKey);
-    const stats = {
-      filesWritten: 0,
-      skippedUnchanged: 0,
-      bytesWritten: 0,
-      multiOddsListed: 0,
-      valueComparisonPresent: false,
-      valueComparisonWritten: false
-    };
-    const repoDir = `data/deploy-snapshots/${day}`;
+async function copyOrDownload({ sourcePath, destinationPath, url, sha256, bytes, stats, optional = false }) {
+  if (await existingFileMatches(sourcePath, sha256, bytes)) {
+    await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
+    await fsp.copyFile(sourcePath, destinationPath);
+    stats.filesReused += 1;
+    return true;
+  }
 
-    const [top, details] = await Promise.all([
-      listDir(repoDir),
-      listDir(`${repoDir}/details`)
-    ]);
-    if (!top.length) {
-      return { ok: false, dayKey: day, reason: "snapshot_day_not_in_repo", ...stats };
+  const buffer = await fetchBuffer(url, { optional });
+  if (buffer === null) return false;
+
+  if (Number.isFinite(bytes) && canonicalTextBuffer(buffer).length !== bytes) {
+    throw new Error(`download_bytes_mismatch:${path.basename(destinationPath)}`);
+  }
+  if (sha256 && canonicalBufferSha256(buffer) !== String(sha256).toLowerCase()) {
+    throw new Error(`download_sha256_mismatch:${path.basename(destinationPath)}`);
+  }
+
+  await fsp.mkdir(path.dirname(destinationPath), { recursive: true });
+  await fsp.writeFile(destinationPath, buffer);
+  stats.filesDownloaded += 1;
+  stats.bytesDownloaded += buffer.length;
+  return true;
+}
+
+function rowsOfFixtures(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.fixtures)) return payload.fixtures;
+  if (Array.isArray(payload?.matches)) return payload.matches;
+  return [];
+}
+
+function rowsOfValue(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.picks)) return payload.picks;
+  return [];
+}
+
+export async function validateStagedRelease(stageDayDir, manifest) {
+  const validation = validateDeploySnapshotManifest(manifest, manifest.date);
+  if (!validation.ok) {
+    throw new Error(`manifest_contract_failed:${validation.errors.join(",")}`);
+  }
+
+  const manifestFile = path.join(stageDayDir, "manifest.json");
+  const fixturesName = manifest.files?.fixtures || "fixtures.json";
+  const valueName = manifest.files?.value || "value.json";
+  const fixturesFile = path.join(stageDayDir, fixturesName);
+  const valueFile = path.join(stageDayDir, valueName);
+  const detailsDir = path.join(stageDayDir, "details");
+
+  for (const required of [manifestFile, fixturesFile, valueFile]) {
+    if (!fs.existsSync(required)) throw new Error(`staged_required_file_missing:${path.basename(required)}`);
+  }
+
+  const fixtures = parseJsonBuffer(await fsp.readFile(fixturesFile), "fixtures");
+  const value = parseJsonBuffer(await fsp.readFile(valueFile), "value");
+  const fixtureCount = rowsOfFixtures(fixtures).length;
+  const valueCount = rowsOfValue(value).length;
+
+  if (fixtureCount !== Number(manifest.counts?.fixtures || 0)) {
+    throw new Error(`staged_fixture_count_mismatch:${fixtureCount}:${manifest.counts?.fixtures}`);
+  }
+  if (valueCount !== Number(manifest.counts?.valuePicks || 0)) {
+    throw new Error(`staged_value_count_mismatch:${valueCount}:${manifest.counts?.valuePicks}`);
+  }
+
+  const actualDetails = fs.existsSync(detailsDir)
+    ? (await fsp.readdir(detailsDir)).filter(name => name.endsWith(".json")).sort()
+    : [];
+  const expectedDetails = validation.detailFiles;
+  if (JSON.stringify(actualDetails) !== JSON.stringify(expectedDetails)) {
+    throw new Error("staged_detail_set_mismatch");
+  }
+
+  for (const row of manifest.details) {
+    const filePath = path.join(detailsDir, row.file);
+    const buffer = await fsp.readFile(filePath);
+    const bytes = canonicalTextBuffer(buffer).length;
+    if (bytes !== Number(row.bytes)) throw new Error(`staged_detail_bytes_mismatch:${row.file}`);
+    if (row.sha256 && canonicalBufferSha256(buffer) !== String(row.sha256).toLowerCase()) {
+      throw new Error(`staged_detail_sha256_mismatch:${row.file}`);
     }
+  }
 
-    const jobs = [];
-    for (const e of top) {
-      if (e.type !== "file") continue;
-      jobs.push(() => syncOne(e, resolveDataPath("deploy-snapshots", day, e.name), stats));
+  for (const [name, sha] of Object.entries(manifest.fileHashes || {})) {
+    const safe = safeName(name);
+    if (!safe) throw new Error(`manifest_file_hash_name_invalid:${name}`);
+    const filePath = path.join(stageDayDir, safe);
+    if (!fs.existsSync(filePath)) throw new Error(`manifest_hashed_file_missing:${safe}`);
+    const actual = canonicalBufferSha256(await fsp.readFile(filePath));
+    if (actual !== String(sha).toLowerCase()) throw new Error(`manifest_file_hash_mismatch:${safe}`);
+  }
+
+  const recomputed = computeDeploySnapshotManifestHash(manifest);
+  if (recomputed !== String(manifest.hash).toLowerCase()) {
+    throw new Error("staged_manifest_hash_mismatch");
+  }
+
+  return { fixtureCount, valueCount, detailCount: actualDetails.length };
+}
+
+export async function promoteDirectory(stageDayDir, targetDayDir, backupDir) {
+  await fsp.rm(backupDir, { recursive: true, force: true });
+  const targetExists = fs.existsSync(targetDayDir);
+
+  try {
+    if (targetExists) await fsp.rename(targetDayDir, backupDir);
+    await fsp.rename(stageDayDir, targetDayDir);
+    await fsp.rm(backupDir, { recursive: true, force: true });
+  } catch (error) {
+    if (!fs.existsSync(targetDayDir) && fs.existsSync(backupDir)) {
+      await fsp.rename(backupDir, targetDayDir).catch(() => {});
     }
-    for (const e of details) {
-      jobs.push(() => syncOne(e, resolveDataPath("deploy-snapshots", day, "details", e.name), stats));
+    throw error;
+  }
+}
+
+async function updateRuntimeSyncState({ day, ref, manifest, latestPromoted, stats }) {
+  const file = resolveDataPath("deploy-snapshots", "runtime-sync-state.json");
+  let current = {};
+  try {
+    current = JSON.parse(await fsp.readFile(file, "utf8"));
+  } catch {
+    current = {};
+  }
+
+  const days = current?.days && typeof current.days === "object" ? current.days : {};
+  days[day] = {
+    ref,
+    manifestHash: manifest.hash,
+    generatedAt: manifest.generatedAt || null,
+    synchronizedAt: new Date().toISOString(),
+    latestPromoted,
+    filesDownloaded: stats.filesDownloaded,
+    filesReused: stats.filesReused
+  };
+
+  await writeFileAtomic(file, Buffer.from(JSON.stringify({
+    schema: "ai-matchlab.runtime-snapshot-sync.v2",
+    updatedAt: new Date().toISOString(),
+    latestDay: latestPromoted ? day : current?.latestDay || null,
+    latestRef: latestPromoted ? ref : current?.latestRef || null,
+    days
+  }, null, 2)));
+}
+
+async function stageRuntimeReleaseArtifacts({
+  repo,
+  ref,
+  day,
+  stageDayDir,
+  stats,
+  requireDiagnostics
+}) {
+  const runtimeDir = path.join(stageDayDir, "runtime");
+  await fsp.mkdir(runtimeDir, { recursive: true });
+
+  // Value comparison is part of the served day release for every synchronized day.
+  const comparisonBuffer = await fetchBuffer(
+    rawUrl(repo, ref, `data/value-comparison/${day}.json`)
+  );
+  const comparison = parseJsonBuffer(comparisonBuffer, "value_comparison");
+  if (comparison?.date !== day || comparison?.ok !== true) {
+    throw new Error("value_comparison_contract_failed");
+  }
+
+  // Current/latest releases must carry diagnostics. Historical days may predate
+  // those artifacts; when present they are still embedded and mirrored.
+  const buildBuffer = await fetchBuffer(
+    rawUrl(repo, ref, `data/build-reports/${day}.json`),
+    { optional: !requireDiagnostics }
+  );
+  if (buildBuffer) {
+    const build = parseJsonBuffer(buildBuffer, "build_report");
+    const buildDay = String(build?.dayKey || build?.date || "").slice(0, 10);
+    if (buildDay && buildDay !== day) throw new Error("build_report_day_mismatch");
+  }
+
+  const alertsBuffer = await fetchBuffer(
+    rawUrl(repo, ref, `data/system-health/${day}.json`),
+    { optional: !requireDiagnostics }
+  );
+  if (alertsBuffer) {
+    const alerts = parseJsonBuffer(alertsBuffer, "system_health_alerts");
+    if (String(alerts?.dayKey || "") !== day) {
+      throw new Error("system_health_alert_day_mismatch");
     }
-    const errors = await runBatches(jobs);
+  }
 
-    // Opening odds window — supplement, kept off the `errors` gate below.
-    const multiOddsErrors = await syncMultiOddsWindow(day, MULTI_ODDS_DAYS_FORWARD, stats);
+  const staged = [
+    ["value-comparison.json", comparisonBuffer],
+    ["build-report.json", buildBuffer],
+    ["system-health-alerts.json", alertsBuffer]
+  ].filter(([, buffer]) => buffer !== null);
 
-    // Plan A/B comparison is a day-level runtime artifact outside the deploy
-    // snapshot directory. Pull it by raw path (no extra Contents API listing)
-    // so the UI can receive both plans without a daily Render/UI deploy.
-    const valueComparisonErrors = [];
+  await Promise.all(staged.map(([name, buffer]) => (
+    fsp.writeFile(path.join(runtimeDir, name), buffer)
+  )));
+  stats.filesDownloaded += staged.length;
+  stats.bytesDownloaded += staged.reduce((sum, [, buffer]) => sum + buffer.length, 0);
+
+  return {
+    comparisonBuffer,
+    buildBuffer,
+    alertsBuffer,
+    comparisonPresent: true,
+    buildReportPresent: Boolean(buildBuffer),
+    systemHealthPresent: Boolean(alertsBuffer)
+  };
+}
+
+async function mirrorRuntimeReleaseArtifacts({ day, artifacts, stats, promoteLatestAlerts }) {
+  const writes = [
+    [resolveDataPath("value-comparison", `${day}.json`), artifacts.comparisonBuffer],
+    [resolveDataPath("build-reports", `${day}.json`), artifacts.buildBuffer],
+    [resolveDataPath("system-health", `${day}.json`), artifacts.alertsBuffer]
+  ].filter(([, buffer]) => buffer !== null);
+
+  await Promise.all(writes.map(([target, buffer]) => writeFileAtomic(target, buffer)));
+  stats.extraFilesWritten += writes.length;
+
+  if (promoteLatestAlerts && artifacts.alertsBuffer) {
+    await writeFileAtomic(resolveDataPath("system-health", "latest.json"), artifacts.alertsBuffer);
+    stats.extraFilesWritten += 1;
+  }
+}
+
+async function syncValueComparison({ repo, ref, day, stageRoot, stats }) {
+  const repoPath = `data/value-comparison/${day}.json`;
+  const buffer = await fetchBuffer(rawUrl(repo, ref, repoPath), { optional: true });
+  const target = resolveDataPath("value-comparison", `${day}.json`);
+  const staged = path.join(stageRoot, "extras", "value-comparison", `${day}.json`);
+
+  if (buffer === null) {
+    await fsp.rm(target, { force: true });
+    return { present: false };
+  }
+
+  const payload = parseJsonBuffer(buffer, "value_comparison");
+  if (payload?.date !== day || payload?.ok !== true) {
+    throw new Error("value_comparison_contract_failed");
+  }
+  await fsp.mkdir(path.dirname(staged), { recursive: true });
+  await fsp.writeFile(staged, buffer);
+  await writeFileAtomic(target, buffer);
+  stats.extraFilesWritten += 1;
+  return { present: true };
+}
+
+async function syncMultiOdds({ repo, ref, day, stats }) {
+  const results = [];
+  for (let offset = 0; offset <= MULTI_ODDS_DAYS_FORWARD; offset += 1) {
+    const targetDay = shiftDay(day, offset);
+    const repoPath = `data/multi-odds/${targetDay}.json`;
     try {
-      await syncValueComparisonArtifact(day, stats);
-    } catch (e) {
-      valueComparisonErrors.push(String(e?.message || e));
+      const buffer = await fetchBuffer(rawUrl(repo, ref, repoPath), { optional: true });
+      if (buffer === null) continue;
+      parseJsonBuffer(buffer, `multi_odds_${targetDay}`);
+      await writeFileAtomic(resolveDataPath("multi-odds", `${targetDay}.json`), buffer);
+      stats.extraFilesWritten += 1;
+      results.push(targetDay);
+    } catch (error) {
+      log("multi-odds optional sync failed", targetDay, error?.message || error);
+    }
+  }
+  return results;
+}
+
+export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), options = {}) {
+  const startedAt = Date.now();
+  const day = String(dayKey || "").slice(0, 10);
+  if (!DAY_RE.test(day)) throw new Error("snapshot_day_invalid");
+
+  const repo = String(options.repo || DEFAULT_REPO);
+  const ref = await resolveImmutableGithubRef(options.ref || DEFAULT_REF, repo);
+  const rawBase = `data/deploy-snapshots/${day}`;
+  const stageRoot = resolveDataPath(".snapshot-sync", `${day}-${ref}-${process.pid}-${Date.now()}`);
+  const stageDayDir = path.join(stageRoot, "deploy-snapshots", day);
+  const targetDayDir = resolveDataPath("deploy-snapshots", day);
+  const backupDir = resolveDataPath("deploy-snapshots", `.backup-${day}-${process.pid}`);
+  const stats = {
+    filesDownloaded: 0,
+    filesReused: 0,
+    bytesDownloaded: 0,
+    extraFilesWritten: 0
+  };
+
+  await ensureEmptyDir(stageDayDir);
+
+  try {
+    const manifestBuffer = await fetchBuffer(rawUrl(repo, ref, `${rawBase}/manifest.json`));
+    const manifest = parseJsonBuffer(manifestBuffer, "manifest");
+    const manifestValidation = validateDeploySnapshotManifest(manifest, day);
+    if (!manifestValidation.ok) {
+      throw new Error(`manifest_contract_failed:${manifestValidation.errors.join(",")}`);
     }
 
-    // latest.json LAST and only on a healthy sync: consumers that follow the
-    // pointer must never land on a half-written day.
-    if (!errors.length) {
-      try {
-        const res = await fetchWithTimeout(`${RAW}/data/deploy-snapshots/latest.json`);
-        if (res.ok) {
-          writeAtomic(resolveDataPath("deploy-snapshots", "latest.json"), Buffer.from(await res.arrayBuffer()));
-          stats.filesWritten++;
-        }
-      } catch (e) {
-        errors.push(`latest.json: ${String(e?.message || e)}`);
+    await fsp.writeFile(path.join(stageDayDir, "manifest.json"), manifestBuffer);
+    stats.filesDownloaded += 1;
+    stats.bytesDownloaded += manifestBuffer.length;
+
+    const coreFiles = expectedCoreFiles(manifest);
+    const tasks = [];
+
+    for (const name of coreFiles.required.filter(name => name !== "manifest.json")) {
+      const expectedSha = manifest.fileHashes?.[name] || null;
+      tasks.push(() => copyOrDownload({
+        sourcePath: path.join(targetDayDir, name),
+        destinationPath: path.join(stageDayDir, name),
+        url: rawUrl(repo, ref, `${rawBase}/${name}`),
+        sha256: expectedSha,
+        bytes: null,
+        stats
+      }));
+    }
+
+    for (const name of coreFiles.optional) {
+      tasks.push(() => copyOrDownload({
+        sourcePath: "",
+        destinationPath: path.join(stageDayDir, name),
+        url: rawUrl(repo, ref, `${rawBase}/${name}`),
+        sha256: null,
+        bytes: null,
+        stats,
+        optional: true
+      }));
+    }
+
+    for (const row of manifest.details) {
+      tasks.push(() => copyOrDownload({
+        sourcePath: path.join(targetDayDir, "details", row.file),
+        destinationPath: path.join(stageDayDir, "details", row.file),
+        url: rawUrl(repo, ref, `${rawBase}/details/${row.file}`),
+        sha256: row.sha256 || null,
+        bytes: Number(row.bytes),
+        stats
+      }));
+    }
+
+    await runPool(tasks);
+    const validation = await validateStagedRelease(stageDayDir, manifest);
+
+    // Read and bind latest.json before any served directory is promoted. The
+    // current/latest day has a stricter diagnostics contract than history.
+    const latestBuffer = await fetchBuffer(
+      rawUrl(repo, ref, "data/deploy-snapshots/latest.json"),
+      { optional: true }
+    );
+    let latest = null;
+    let latestPromoted = false;
+    if (latestBuffer) {
+      latest = parseJsonBuffer(latestBuffer, "latest");
+      if (
+        String(latest?.date || "") === day &&
+        String(latest?.hash || "").toLowerCase() !== String(manifest.hash).toLowerCase()
+      ) {
+        throw new Error("latest_manifest_hash_mismatch");
       }
     }
+    const promoteLatest = Boolean(latestBuffer && String(latest?.date || "") === day);
+
+    const runtimeArtifacts = await stageRuntimeReleaseArtifacts({
+      repo,
+      ref,
+      day,
+      stageDayDir,
+      stats,
+      requireDiagnostics: promoteLatest
+    });
+
+    await promoteDirectory(stageDayDir, targetDayDir, backupDir);
+
+    await mirrorRuntimeReleaseArtifacts({
+      day,
+      artifacts: runtimeArtifacts,
+      stats,
+      promoteLatestAlerts: promoteLatest
+    });
+    const multiOddsDays = await syncMultiOdds({ repo, ref, day, stats });
+
+    if (promoteLatest) {
+      await writeFileAtomic(resolveDataPath("deploy-snapshots", "latest.json"), latestBuffer);
+      latestPromoted = true;
+    }
+
+    await updateRuntimeSyncState({ day, ref, manifest, latestPromoted, stats });
 
     const summary = {
-      ok: errors.length === 0,
+      ok: true,
+      schema: "ai-matchlab.snapshot-sync-result.v2",
       dayKey: day,
-      repo: REPO,
-      branch: BRANCH,
-      listedTop: top.length,
-      listedDetails: details.length,
+      repo,
+      ref,
+      manifestHash: manifest.hash,
+      manifestVersion: manifest.version || null,
+      latestPromoted,
+      comparisonPresent: runtimeArtifacts.comparisonPresent,
+      diagnostics: {
+        buildReportPresent: runtimeArtifacts.buildReportPresent,
+        systemHealthPresent: runtimeArtifacts.systemHealthPresent,
+        latestSystemHealthPromoted: latestPromoted
+      },
+      multiOddsDays,
+      validation,
       ...stats,
-      errors: errors.slice(0, 10),
-      multiOddsErrors: (multiOddsErrors || []).slice(0, 10),
-      valueComparisonErrors: valueComparisonErrors.slice(0, 10),
       tookMs: Date.now() - startedAt
     };
-    log("done", summary);
+    log("completed", JSON.stringify(summary));
     return summary;
-  })().finally(() => { inFlight = null; });
-  return inFlight;
+  } finally {
+    await fsp.rm(stageRoot, { recursive: true, force: true }).catch(() => {});
+    await fsp.rm(backupDir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+export async function syncValueComparisonFromGithub(dayKey = athensDayKey(), options = {}) {
+  const day = String(dayKey || "").slice(0, 10);
+  if (!DAY_RE.test(day)) throw new Error("snapshot_day_invalid");
+  const repo = String(options.repo || DEFAULT_REPO);
+  const ref = await resolveImmutableGithubRef(options.ref || DEFAULT_REF, repo);
+  const stats = { extraFilesWritten: 0 };
+  const result = await syncValueComparison({
+    repo,
+    ref,
+    day,
+    stageRoot: resolveDataPath(".snapshot-sync", `comparison-${day}-${process.pid}`),
+    stats
+  });
+  return {
+    ok: true,
+    dayKey: day,
+    repo,
+    ref,
+    valueComparisonPresent: result.present,
+    valueComparisonWritten: result.present
+  };
+}
+
+function parseCliArgs(argv) {
+  const args = { day: "", ref: "" };
+  for (const token of argv) {
+    if (token.startsWith("--day=")) args.day = token.slice(6);
+    else if (token.startsWith("--ref=")) args.ref = token.slice(6);
+    else if (!token.startsWith("--") && !args.day) args.day = token;
+  }
+  return args;
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
 if (entryUrl === import.meta.url) {
-  const day = process.argv[2] || athensDayKey();
-  syncDeploySnapshotFromGithub(day)
-    .then(r => console.log(JSON.stringify(r, null, 2)))
-    .catch(err => { console.error("[snapshot-sync] fatal", String(err?.message || err)); process.exitCode = 1; });
+  const args = parseCliArgs(process.argv.slice(2));
+  syncDeploySnapshotFromGithub(args.day || athensDayKey(), { ref: args.ref || DEFAULT_REF })
+    .then(result => {
+      process.stdout.write(`${JSON.stringify(result)}\n`);
+    })
+    .catch(error => {
+      process.stderr.write(`[snapshot-sync] fatal ${String(error?.stack || error)}\n`);
+      process.stdout.write(`${JSON.stringify({ ok: false, error: String(error?.message || error) })}\n`);
+      process.exitCode = 1;
+    });
 }
