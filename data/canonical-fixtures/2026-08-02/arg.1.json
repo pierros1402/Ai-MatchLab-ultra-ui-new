@@ -2,14 +2,55 @@
   "dayKey": "2026-08-02",
   "leagueSlug": "arg.1",
   "leagueName": "Argentina Primera División",
-  "updatedAt": "2026-08-01T22:14:35.850Z",
+  "updatedAt": "2026-08-01T23:02:30.809Z",
   "count": 9,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "arg.1",
     "requestedDayKey": "2026-08-02",
-    "mergedAt": "2026-08-01T22:14:35.849Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "arg.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 3,
+      "matches": 3,
+      "fetches": [
+        {
+          "providerSlug": "arg.1",
+          "dayKey": "2026-08-01",
+          "ok": true,
+          "events": 5,
+          "matched": 3
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-01T23:02:28.423Z",
+    "mode": "targeted_live_status_refresh",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-08-02",
+      "offsets": [
+        0
+      ],
+      "changedRows": 2,
+      "mergedAt": "2026-08-01T23:02:30.809Z"
+    }
   },
   "fixtures": [
     {
@@ -26,16 +67,17 @@
       "kickoffUtc": "2026-08-01T21:00:00.000Z",
       "homeTeam": "Belgrano",
       "awayTeam": "Argentinos Jrs",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 0,
+      "scoreAway": 1,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-07-29T21:15:04.310Z",
-      "lastSeenAt": "2026-08-01T22:14:20.857Z"
+      "lastSeenAt": "2026-08-01T23:02:30.807Z",
+      "statusType": "STATUS_FINAL"
     },
     {
       "canonicalId": "cid_arg1_estudianteslp_defensayjusticia_20260802",
@@ -51,16 +93,17 @@
       "kickoffUtc": "2026-08-01T21:00:00.000Z",
       "homeTeam": "Estudiantes L.P.",
       "awayTeam": "Defensa y Justicia",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 3,
+      "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-07-29T21:15:04.310Z",
-      "lastSeenAt": "2026-08-01T22:14:20.858Z"
+      "lastSeenAt": "2026-08-01T23:02:30.807Z",
+      "statusType": "STATUS_FINAL"
     },
     {
       "canonicalId": "cid_arg1_belgranocordoba_argentinosjuniors_20260802",
@@ -80,12 +123,12 @@
       "scoreAway": 1,
       "penalties": null,
       "decidedBy": null,
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "52'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
       "venue": "El Gigante de Alberdi",
       "firstSeenAt": "2026-07-18T18:07:46.296Z",
-      "lastSeenAt": "2026-08-01T22:14:35.752Z",
+      "lastSeenAt": "2026-08-01T23:02:28.419Z",
       "providerLeagueSlug": "arg.1"
     },
     {
@@ -106,12 +149,12 @@
       "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "53'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "venue": "Estadio Jorge Luis Hirschi",
       "firstSeenAt": "2026-07-18T18:07:46.297Z",
-      "lastSeenAt": "2026-08-01T22:14:35.754Z",
+      "lastSeenAt": "2026-08-01T23:02:28.419Z",
       "providerLeagueSlug": "arg.1"
     },
     {
@@ -137,7 +180,7 @@
       "minute": "0'",
       "venue": "Presidente Perón (Cilindro de Avellaneda)",
       "firstSeenAt": "2026-07-18T18:07:46.297Z",
-      "lastSeenAt": "2026-08-01T22:14:35.755Z",
+      "lastSeenAt": "2026-08-01T23:02:28.419Z",
       "providerLeagueSlug": "arg.1"
     },
     {
@@ -188,7 +231,7 @@
       "minute": "0'",
       "venue": "Guillermo Laza",
       "firstSeenAt": "2026-07-18T18:07:46.351Z",
-      "lastSeenAt": "2026-08-01T22:14:35.813Z",
+      "lastSeenAt": "2026-08-01T23:02:28.354Z",
       "providerLeagueSlug": "arg.1"
     },
     {
@@ -214,7 +257,7 @@
       "minute": "0'",
       "venue": "José María Minella",
       "firstSeenAt": "2026-07-18T18:07:46.351Z",
-      "lastSeenAt": "2026-08-01T22:14:35.812Z",
+      "lastSeenAt": "2026-08-01T23:02:28.354Z",
       "providerLeagueSlug": "arg.1"
     },
     {
@@ -240,7 +283,7 @@
       "minute": "0'",
       "venue": "Marcelo Bielsa",
       "firstSeenAt": "2026-07-18T18:07:46.352Z",
-      "lastSeenAt": "2026-08-01T22:14:35.815Z",
+      "lastSeenAt": "2026-08-01T23:02:28.354Z",
       "providerLeagueSlug": "arg.1"
     }
   ]
