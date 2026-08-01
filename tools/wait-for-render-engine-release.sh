@@ -27,9 +27,15 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
     node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));if(p.ok!==true)process.exit(1)' "$HEALTH_FILE"
     rm -f "$HEALTH_FILE" "$RELEASE_FILE"
     trap - RETURN
-    echo "ENGINE_PUBLIC_RELEASE_VERIFIED=true"
-    echo "ENGINE_PUBLIC_RELEASE_SHA=${EXPECTED_SHA,,}"
-    exit 0
+
+    if node tools/verify-public-engine-runtime.mjs "${EXPECTED_SHA,,}"; then
+      echo "ENGINE_PUBLIC_RELEASE_VERIFIED=true"
+      echo "ENGINE_PUBLIC_RELEASE_SHA=${EXPECTED_SHA,,}"
+      echo "ENGINE_RUNTIME_STABILITY_VERIFIED=true"
+      exit 0
+    fi
+
+    echo "ENGINE_RUNTIME_STABILITY_VERIFIED=false attempt=${attempt}"
   fi
 
   rm -f "$HEALTH_FILE" "$RELEASE_FILE"

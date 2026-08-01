@@ -27,6 +27,10 @@ function liveWarn(...args) { if (LIVE_DEBUG) console.warn(...args); }
     return Date.now();
   }
 
+  function isAbortError(error) {
+    return error && (error.name === "AbortError" || error.code === 20);
+  }
+
   function getBaseUrl() {
     const host = String(window.location?.hostname || "").toLowerCase();
     const isLocalHost =
@@ -404,7 +408,9 @@ async function loadLive(dateYmd) {
     return payload;
 
   } catch (err) {
-    console.warn("[LIVE] today snapshot failed", err);
+    if (!isAbortError(err)) {
+      console.warn("[LIVE] today snapshot failed", err);
+    }
 
     const payload = {
       date: ymd,
@@ -461,7 +467,9 @@ async function loadLive(dateYmd) {
           void active;
           void reason;
         } catch (e) {
-          console.warn("[unified-loop]", e);
+          if (!isAbortError(e)) {
+            console.warn("[unified-loop]", e);
+          }
         }
       })().finally(() => {
         tickInFlight = null;

@@ -40,6 +40,11 @@ import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
 import { validateDeploySnapshotManifest } from "./core/deploy-snapshot-release-contract.js";
+import {
+  requestTimeDisplayOverlaysEnabled,
+  reusableDisplayRevision,
+  reusableRuntimeDisplayEntry
+} from "./core/runtime-display-policy.js";
 import { teamPairMatches } from "./core/team-identity.js";
 import {
   parseAcquisitionSkippedSlugs,
@@ -1240,6 +1245,10 @@ app.get("/release", (_req, res) => {
     service: "engine-v1",
     gitCommit: deployedGitCommit(),
     processStartedAt: PROCESS_STARTED_AT,
+    runtimeDisplay: {
+      requestTimeOverlaysEnabled: runtimeRequestOverlaysEnabled(),
+      cacheContract: "manifest-revision"
+    },
     latestSnapshot: latest
       ? {
           date: latest.date || null,
@@ -2499,7 +2508,8 @@ app.get("/fixtures-runtime", async (req, res) => {
   const dayKey = String(req.query.date || athensDayKey()).slice(0, 10);
 
   try {
-    const { source, matches, membership } = await buildRuntimeDisplayMatchesForDate(dayKey);
+    const runtimeDisplay = await buildRuntimeDisplayMatchesForDate(dayKey);
+    const { source, matches, membership, runtimeOverlay = null } = runtimeDisplay;
     const filtered = filterByPanelMode(matches, mode);
 
     return res.json({
@@ -2509,7 +2519,8 @@ app.get("/fixtures-runtime", async (req, res) => {
       source,
       count: filtered.length,
       matches: filtered,
-      membership
+      membership,
+      runtimeOverlay
     });
   } catch (error) {
     return res.status(500).json({
@@ -3311,12 +3322,11 @@ function resolveSupplementalLeagueMeta(slug) {
 // call. On Render's throttled 0.1-CPU instance those synchronous reads block the
 // event loop, so a burst of requests (15s poll × multiple panels/tabs) could stall
 // even the trivial /health route and trip a restart. The underlying snapshot only
-// changes on deploy/intraday refresh, so memoize the built universe per day for a
-// short TTL. Overlays run on the cached base and are immutable (they .map to new
-// objects — see flashscore-live-overlay.js), so sharing the array across requests
-// is safe.
-const __displayUniverseCache = new Map(); // date -> { ts, revision, value }
-const DISPLAY_UNIVERSE_TTL_MS = 20000;
+// changes only when the promoted manifest revision changes, so memoize the built
+// universe against that revision instead of a wall-clock TTL. Public snapshot
+// services serve this immutable base directly; live/truth overlays are publication
+// work, never request-time work.
+const __displayUniverseCache = new Map(); // date -> { revision, value }
 
 function snapshotRevisionForDay(day) {
   try {
@@ -3330,53 +3340,66 @@ function snapshotRevisionForDay(day) {
 
 function buildDisplayMatchesForDate(date) {
   const key = String(date || "");
-  const now = Date.now();
   const revision = snapshotRevisionForDay(key);
   const hit = __displayUniverseCache.get(key);
-  if (
-    hit &&
-    hit.revision === revision &&
-    (now - hit.ts) < DISPLAY_UNIVERSE_TTL_MS
-  ) {
+  if (reusableDisplayRevision(hit, revision)) {
     return hit.value;
   }
 
   const value = buildDisplayMatchesForDateUncached(date);
-  __displayUniverseCache.set(key, { ts: now, revision, value });
+  __displayUniverseCache.set(key, { revision, value });
 
   if (__displayUniverseCache.size > 8) {
-    let oldestKey = null;
-    let oldestTs = Infinity;
-    for (const [candidateKey, entry] of __displayUniverseCache) {
-      if (entry.ts < oldestTs) {
-        oldestTs = entry.ts;
-        oldestKey = candidateKey;
-      }
-    }
-    if (oldestKey !== null) __displayUniverseCache.delete(oldestKey);
+    const oldestKey = __displayUniverseCache.keys().next().value;
+    if (oldestKey !== undefined) __displayUniverseCache.delete(oldestKey);
   }
   return value;
 }
 
-const __runtimeDisplayCache = new Map(); // date -> { ts, revision, promise }
-const RUNTIME_DISPLAY_TTL_MS = 12000;
+const __runtimeDisplayCache = new Map(); // date -> { revision, promise, completedAt }
+const RUNTIME_DISPLAY_OVERLAY_TTL_MS = 12000;
+
+function runtimeRequestOverlaysEnabled() {
+  return requestTimeDisplayOverlaysEnabled({
+    renderRuntime: isRenderRuntime(),
+    snapshotOnly: snapshotOnlyMode(),
+    explicitValue: process.env.AIML_REQUEST_TIME_OVERLAYS
+  });
+}
 
 async function buildRuntimeDisplayMatchesForDate(date) {
   const key = String(date || "");
   const now = Date.now();
   const revision = snapshotRevisionForDay(key);
+  const overlaysEnabled = runtimeRequestOverlaysEnabled();
   const hit = __runtimeDisplayCache.get(key);
-  if (
-    hit &&
-    hit.revision === revision &&
-    (now - hit.ts) < RUNTIME_DISPLAY_TTL_MS
-  ) {
+  if (reusableRuntimeDisplayEntry(hit, {
+    revision,
+    overlaysEnabled,
+    now,
+    overlayTtlMs: RUNTIME_DISPLAY_OVERLAY_TTL_MS
+  })) {
     return hit.promise;
   }
 
+  const entry = { revision, promise: null, completedAt: null };
   const promise = (async () => {
     const baseUniverse = buildDisplayMatchesForDate(key);
     const base = baseUniverse.matches;
+
+    if (!overlaysEnabled) {
+      return {
+        ...baseUniverse,
+        matches: base,
+        runtimeOverlay: {
+          enabled: false,
+          source: "published-snapshot",
+          requestTimeNetwork: false,
+          requestTimeTruthScan: false
+        }
+      };
+    }
+
     let matches = await overlayWithBudget(
       "shared-display:flashscore-live",
       4000,
@@ -3392,13 +3415,26 @@ async function buildRuntimeDisplayMatchesForDate(date) {
       signal => verifyStuckLiveFinals(beforeVerify, key, { signal })
     );
 
-    return { ...baseUniverse, matches };
+    return {
+      ...baseUniverse,
+      matches,
+      runtimeOverlay: {
+        enabled: true,
+        source: "request-time-overlay",
+        requestTimeNetwork: true,
+        requestTimeTruthScan: true
+      }
+    };
   })();
 
-  __runtimeDisplayCache.set(key, { ts: now, revision, promise });
-  promise.catch(() => {
+  entry.promise = promise;
+  __runtimeDisplayCache.set(key, entry);
+  promise.then(() => {
     const current = __runtimeDisplayCache.get(key);
-    if (current?.promise === promise) __runtimeDisplayCache.delete(key);
+    if (current === entry) current.completedAt = Date.now();
+  }).catch(() => {
+    const current = __runtimeDisplayCache.get(key);
+    if (current === entry) __runtimeDisplayCache.delete(key);
   });
   return promise;
 }
@@ -4145,6 +4181,17 @@ if (command === "discover-window") {
   });
   console.log(JSON.stringify(result, null, 2));
   process.exit(0);
+}
+
+if (runtimeBuildsDisabled() || snapshotOnlyMode()) {
+  const prewarmDay = athensDayKey();
+  const prewarmStartedAt = Date.now();
+  try {
+    buildDisplayMatchesForDate(prewarmDay);
+    console.log(`[display-cache] prewarmed ${prewarmDay} in ${Date.now() - prewarmStartedAt}ms`);
+  } catch (error) {
+    console.warn("[display-cache] prewarm failed", String(error?.message || error));
+  }
 }
 
 app.listen(PORT, "0.0.0.0", () => {

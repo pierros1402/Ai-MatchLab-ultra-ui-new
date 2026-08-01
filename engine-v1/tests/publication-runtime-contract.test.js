@@ -21,12 +21,18 @@ test("web process never performs boot or request-time GitHub synchronization", (
   assert.match(index, /method_not_allowed/);
 });
 
-test("runtime overlays are shared, bounded and abortable", () => {
+test("public snapshot runtime never executes live or truth overlays inside requests", () => {
   const index = read("engine-v1/index.js");
+  const policy = read("engine-v1/core/runtime-display-policy.js");
   const flashscore = read("engine-v1/odds/flashscore-fixtures-source.js");
   const verifier = read("engine-v1/core/live-ft-verifier.js");
 
-  assert.match(index, /buildRuntimeDisplayMatchesForDate/);
+  assert.match(index, /runtimeRequestOverlaysEnabled/);
+  assert.match(index, /if \(!overlaysEnabled\)/);
+  assert.match(index, /requestTimeTruthScan: false/);
+  assert.match(index, /cacheContract: "manifest-revision"/);
+  assert.doesNotMatch(index, /DISPLAY_UNIVERSE_TTL_MS/);
+  assert.match(policy, /return !renderRuntime && !snapshotOnly/);
   assert.match(index, /controller\.abort/);
   assert.match(index, /signal => overlayFlashscoreLive/);
   assert.match(index, /signal => verifyStuckLiveFinals/);
@@ -45,12 +51,19 @@ test("release and readiness endpoints expose public deployment truth", () => {
   assert.match(index, /app\.get\("\/system-health-alerts"/);
 });
 
-test("deploy workflows verify public completion rather than hook acceptance", () => {
+test("deploy workflows verify sustained public runtime rather than hook acceptance", () => {
   const engine = read(".github/workflows/engine-only-render-deploy.yml");
+  const wait = read("tools/wait-for-render-engine-release.sh");
+  const stability = read("tools/verify-public-engine-runtime.mjs");
   const ui = read(".github/workflows/ui-only-render-deploy.yml");
 
   assert.match(engine, /actions\/checkout@v4/);
   assert.match(engine, /wait-for-render-engine-release\.sh/);
+  assert.match(wait, /verify-public-engine-runtime\.mjs/);
+  assert.match(stability, /fixtures-runtime\?mode=active/);
+  assert.match(stability, /value-comparison/);
+  assert.match(stability, /post_load_health_not_ok/);
+  assert.match(stability, /request_time_overlays_not_disabled/);
   assert.match(ui, /actions\/checkout@v4/);
   assert.match(ui, /verify-public-ui-release\.sh/);
 });
@@ -81,7 +94,7 @@ test("value panel follows selected day and never falls back to stale static rele
   assert.match(adapter, /on\("date:change"/);
   assert.match(adapter, /engine-release-unavailable/);
   assert.match(adapter, /AbortController/);
-  assert.match(html, /value-adapter\.js\?v=2/);
+  assert.match(html, /value-adapter\.js\?v=3/);
 });
 
 test("odds requests are bound to the selected match day and obsolete requests are aborted", () => {
@@ -101,6 +114,21 @@ test("live worker overlay is bounded and labeled with the shared operational day
   assert.match(overlay, /AbortController/);
   assert.match(overlay, /var inFlight = false/);
   assert.match(overlay, /date: operationalDay\(\)/);
+});
+
+test("UI aborts are terminal and are not retried as fetch failures", () => {
+  const app = read("assets/js/ui/app.js");
+  const fixtures = read("assets/js/live/fixtures-loader.js");
+  const value = read("assets/js/live/value-adapter.js");
+  const html = read("index.html");
+
+  assert.match(app, /err\?\.name === 'AbortError'/);
+  assert.match(app, /finally \{\s*if \(timeout\) clearTimeout\(timeout\)/s);
+  assert.match(fixtures, /if \(!isAbortError\(e\)\)/);
+  assert.match(value, /if \(!isAbortError\(err\)\)/);
+  assert.match(html, /app\.js\?v=3/);
+  assert.match(html, /fixtures-loader\.js\?v=8/);
+  assert.match(html, /value-adapter\.js\?v=3/);
 });
 
 test("engine package and lock dependencies are synchronized", () => {

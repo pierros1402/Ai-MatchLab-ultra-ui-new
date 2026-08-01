@@ -27,24 +27,23 @@
       const delay = 400;
 
       for (let attempt = 0; attempt < retries; attempt++) {
+        let timeout = null;
         try {
-          const controller = new AbortController();
           const mergedOptions = { ...options };
 
-          if (!mergedOptions.signal) {
-            mergedOptions.signal = controller.signal;
+          if (mergedOptions.signal?.aborted) {
+            throw mergedOptions.signal.reason || new DOMException('Aborted', 'AbortError');
           }
 
-          // 45s tolerates a Render free-tier cold start (spin-up ~50s) on the
-          // FIRST request after idle. A keep-warm cron normally prevents spin-down,
-          // so this is the belt-and-suspenders ceiling, not the common path.
-          const timeout = setTimeout(() => {
-            try { controller.abort(); } catch(_) {}
-          }, 45000);
+          if (!mergedOptions.signal) {
+            const controller = new AbortController();
+            mergedOptions.signal = controller.signal;
+            timeout = setTimeout(() => {
+              try { controller.abort(new DOMException('Fetch timeout', 'AbortError')); } catch(_) {}
+            }, 45000);
+          }
 
           const response = await originalFetch(resource, mergedOptions);
-          clearTimeout(timeout);
-          
 
           if (!response.ok) {
             if (response.status >= 500) {
@@ -56,12 +55,18 @@
           return response;
 
         } catch (err) {
+          if (err?.name === 'AbortError') {
+            throw err;
+          }
+
           if (attempt === retries - 1) {
             console.error('[FETCH FAILED]', resource, err);
             throw err;
           }
 
           await new Promise(r => setTimeout(r, delay));
+        } finally {
+          if (timeout) clearTimeout(timeout);
         }
       }
     }

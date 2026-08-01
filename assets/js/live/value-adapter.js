@@ -38,6 +38,10 @@
     return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
   }
 
+  function isAbortError(error) {
+    return error && (error.name === "AbortError" || error.code === 20);
+  }
+
   function ymdTodayAthens() {
     const operational = window.AIML_OperationalDay?.getDay?.();
     if (validDay(operational)) return operational;
@@ -82,7 +86,9 @@
 
       return await r.json();
     } catch (err) {
-      console.warn("[value-adapter] fetch error", err);
+      if (!isAbortError(err)) {
+        console.warn("[value-adapter] fetch error", err);
+      }
       return null;
     }
   }
@@ -123,7 +129,9 @@
       console.warn("[value-adapter] comparison payload invalid", sourceLabel, data);
       return null;
     } catch (err) {
-      console.warn("[value-adapter] comparison fetch error", sourceLabel, err);
+      if (!isAbortError(err)) {
+        console.warn("[value-adapter] comparison fetch error", sourceLabel, err);
+      }
       return null;
     }
   }
