@@ -138,3 +138,19 @@ test("engine package and lock dependencies are synchronized", () => {
   assert.deepEqual(lock.packages[""].dependencies, packageJson.dependencies);
   assert.equal(lock.packages["node_modules/dotenv"].version, "17.4.2");
 });
+
+
+test("Value export keeps four plans separate and computes range rates from accumulated settlements", () => {
+  const index = read("engine-v1/index.js");
+  const report = read("engine-v1/core/value-export-report.js");
+
+  assert.match(index, /VALUE_EXPORT_PLAN_ORDER/);
+  assert.match(index, /Daily Summary/);
+  assert.match(index, /Selected Range Summary/);
+  assert.match(index, /Market Breakdown/);
+  assert.match(report, /wins \/ decided/);
+  assert.doesNotMatch(report, /INSUFFICIENT_SAMPLE/);
+  assert.match(report, /A2/);
+  assert.match(report, /B2/);
+  assert.match(report, /VALUE_EXPORT_CLOSED_DAY_UNRESOLVED/);
+});

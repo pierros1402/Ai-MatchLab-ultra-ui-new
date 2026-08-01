@@ -45,6 +45,13 @@ import {
   reusableDisplayRevision,
   reusableRuntimeDisplayEntry
 } from "./core/runtime-display-policy.js";
+import {
+  VALUE_EXPORT_PLAN_ORDER,
+  buildValueExportReport,
+  comparisonToValueExportDay,
+  fallbackPlanAToValueExportDay,
+  valueExportCsvRecords
+} from "./core/value-export-report.js";
 import { teamPairMatches } from "./core/team-identity.js";
 import {
   parseAcquisitionSkippedSlugs,
@@ -2782,27 +2789,273 @@ function resolveValueExportOdds(oddsEntry, market, marketName, pick) {
   return Number.isFinite(v) ? v : null;
 }
 
-// Load both plans for a day: Plan A + Plan B from value-comparison/<date>.json
-// (settled, carries both), falling back to snapshot value.json (Plan A only)
-// for days before the comparison artifact existed.
-function loadValueExportDayPicks(date, { rebuild }) {
-  if (!rebuild) {
-    try {
-      const cmpFile = resolveDataPath("value-comparison", `${date}.json`);
-      if (fs.existsSync(cmpFile)) {
-        const cmp = JSON.parse(fs.readFileSync(cmpFile, "utf8"));
-        const out = [];
-        for (const [planKey, planLabel] of [["A", "Plan A"], ["B", "Plan B"]]) {
-          const picks = cmp?.plans?.[planKey]?.picks || [];
-          for (const p of picks) out.push({ plan: planLabel, source: "value_comparison", pick: p });
-        }
-        if (out.length) return out;
+// Load all four settled plans from value-comparison/<date>.json. A present
+// comparison artifact is authoritative for Value export: invalid JSON must be
+// surfaced, never silently replaced by the production snapshot.
+function loadValueExportComparisonDay(date) {
+  const cmpFile = resolveDataPath("value-comparison", `${date}.json`);
+  if (!fs.existsSync(cmpFile)) return null;
+
+  try {
+    const comparison = JSON.parse(fs.readFileSync(cmpFile, "utf8"));
+    return {
+      ok: true,
+      day: comparisonToValueExportDay({
+        date,
+        comparison,
+        source: "value_comparison"
+      })
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      issue: {
+        code: "VALUE_EXPORT_COMPARISON_INVALID",
+        date,
+        artifact: `data/value-comparison/${date}.json`,
+        message: String(error?.message || error)
       }
-    } catch {
-      /* fall through to snapshot */
+    };
+  }
+}
+
+function valueExportSourcePicks(result) {
+  if (Array.isArray(result?.picks)) return result.picks;
+  if (Array.isArray(result?.items)) return result.items;
+  if (Array.isArray(result?.valuePicks)) return result.valuePicks;
+  if (Array.isArray(result?.data?.picks)) return result.data.picks;
+  return [];
+}
+
+function valueExportDecorateDay(day, oddsMap) {
+  for (const plan of VALUE_EXPORT_PLAN_ORDER) {
+    const planDay = day?.plans?.[plan.key];
+    if (!planDay?.available || !Array.isArray(planDay.picks)) continue;
+
+    planDay.picks = planDay.picks.map(row => {
+      const matchId = row.matchId || row.canonicalMatchId;
+      const oddsEntry = oddsMap.get(String(matchId));
+      const resolvedOdds = resolveValueExportOdds(
+        oddsEntry,
+        row.market,
+        null,
+        row.pick
+      );
+
+      return {
+        ...row,
+        kickoff: row.kickoff || oddsEntry?.kickoff || null,
+        oddsDecimal:
+          row.oddsDecimal !== null &&
+          row.oddsDecimal !== undefined &&
+          row.oddsDecimal !== "" &&
+          Number.isFinite(Number(row.oddsDecimal))
+            ? Number(row.oddsDecimal)
+            : resolvedOdds
+      };
+    });
+  }
+
+  return day;
+}
+
+function valueExportPercent(value) {
+  if (value === null || value === undefined || value === "") return null;
+  return Number.isFinite(Number(value)) ? Number(value) : null;
+}
+
+function valueExportFinalScore(row) {
+  return row.finalScore || "";
+}
+
+function styleValueExportTitle(sheet, rowNumber, text) {
+  sheet.mergeCells(rowNumber, 1, rowNumber, 16);
+  const cell = sheet.getCell(rowNumber, 1);
+  cell.value = text;
+  cell.font = { bold: true, size: 14 };
+  cell.alignment = { vertical: "middle", horizontal: "left" };
+  sheet.getRow(rowNumber).height = 22;
+}
+
+function styleValueExportHeader(row) {
+  row.font = { bold: true };
+  row.alignment = { vertical: "middle", horizontal: "center" };
+}
+
+function addValueExportTableHeader(sheet, values) {
+  const row = sheet.addRow(values);
+  styleValueExportHeader(row);
+  return row;
+}
+
+function setValueExportPercentCell(row, columnNumber) {
+  const cell = row.getCell(columnNumber);
+  if (cell.value !== null && cell.value !== undefined && cell.value !== "") {
+    cell.numFmt = "0.00%";
+  }
+}
+
+function addValueExportPlanSection(sheet, plan) {
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Picks`);
+  addValueExportTableHeader(sheet, [
+    "Date", "Kickoff", "Country", "League", "Home", "Away", "Market", "Pick",
+    "Model Score", "Confidence", "Market Prob", "AI Fair Odds", "Display Odds",
+    "Final Score", "Result", "Source"
+  ]);
+
+  if (plan.picks.length === 0) {
+    sheet.addRow(["No picks in selected range"]);
+  } else {
+    for (const row of plan.picks) {
+      const added = sheet.addRow([
+        row.date,
+        row.kickoff,
+        row.country || "",
+        row.leagueName || row.leagueSlug || "",
+        row.homeTeam || "",
+        row.awayTeam || "",
+        row.marketLabel || row.market || "",
+        row.selectionLabel || row.pick || "",
+        row.score ?? "",
+        row.confidence ?? "",
+        row.marketProb ?? "",
+        row.aiFairOdds ?? "",
+        row.oddsDecimal ?? "",
+        valueExportFinalScore(row),
+        row.result,
+        row.source || ""
+      ]);
+      for (const column of [9, 10, 11, 12, 13]) {
+        added.getCell(column).numFmt = column >= 12 ? "0.00" : "0.000";
+      }
     }
   }
-  return null;
+
+  sheet.addRow([]);
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Daily Summary`);
+  addValueExportTableHeader(sheet, [
+    "Date", "Status", "Picks", "Wins", "Losses", "Voids", "Unresolved",
+    "Unsupported", "Win %"
+  ]);
+  for (const row of plan.daily) {
+    const added = sheet.addRow([
+      row.date,
+      row.status,
+      row.picks,
+      row.wins,
+      row.losses,
+      row.voids,
+      row.unresolved,
+      row.unsupported,
+      valueExportPercent(row.winRate)
+    ]);
+    setValueExportPercentCell(added, 9);
+  }
+
+  sheet.addRow([]);
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Selected Range Summary`);
+  addValueExportTableHeader(sheet, [
+    "From", "To", "Available Days", "Not Available Days", "Picks", "Wins",
+    "Losses", "Voids", "Unresolved", "Unsupported", "Win %"
+  ]);
+  const rangeRow = sheet.addRow([
+    plan.range.from,
+    plan.range.to,
+    plan.range.availableDays,
+    plan.range.notAvailableDays,
+    plan.range.picks,
+    plan.range.wins,
+    plan.range.losses,
+    plan.range.voids,
+    plan.range.unresolved,
+    plan.range.unsupported,
+    valueExportPercent(plan.range.winRate)
+  ]);
+  setValueExportPercentCell(rangeRow, 11);
+
+  sheet.addRow([]);
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Market Breakdown`);
+  addValueExportTableHeader(sheet, [
+    "Market", "Selection", "Picks", "Wins", "Losses", "Voids", "Unresolved",
+    "Unsupported", "Win %"
+  ]);
+  if (plan.markets.length === 0) {
+    sheet.addRow(["No markets in selected range"]);
+  } else {
+    for (const row of plan.markets) {
+      const added = sheet.addRow([
+        row.market,
+        row.selection,
+        row.picks,
+        row.wins,
+        row.losses,
+        row.voids,
+        row.unresolved,
+        row.unsupported,
+        valueExportPercent(row.winRate)
+      ]);
+      setValueExportPercentCell(added, 9);
+    }
+  }
+
+  sheet.addRow([]);
+  sheet.addRow([]);
+}
+
+function configureValueExportSheet(sheet) {
+  const widths = [14, 22, 16, 22, 24, 24, 22, 18, 13, 13, 13, 13, 13, 13, 12, 24];
+  widths.forEach((width, index) => {
+    sheet.getColumn(index + 1).width = width;
+    sheet.getColumn(index + 1).alignment = {
+      vertical: "middle",
+      horizontal: [5, 6].includes(index + 1) ? "left" : "center"
+    };
+  });
+
+  sheet.views = [{ state: "frozen", ySplit: 1 }];
+}
+
+function valueExportCsvHeader() {
+  return [
+    "recordType", "plan", "date", "from", "to", "status", "market", "selection",
+    "kickoff", "country", "league", "home", "away", "picks", "wins", "losses",
+    "voids", "unresolved", "unsupported", "winRate", "modelScore", "confidence",
+    "marketProb", "aiFairOdds", "odds", "finalScore", "result", "source"
+  ];
+}
+
+function valueExportCsvLine(record) {
+  const summary = record.recordType !== "PICK";
+  return [
+    record.recordType,
+    record.planLabel || "",
+    record.date || "",
+    record.from || "",
+    record.to || "",
+    record.status || "",
+    record.market || record.marketLabel || "",
+    record.selection || record.selectionLabel || "",
+    record.kickoff || "",
+    record.country || "",
+    record.leagueName || record.leagueSlug || "",
+    record.homeTeam || "",
+    record.awayTeam || "",
+    summary ? record.picks ?? "" : "",
+    summary ? record.wins ?? "" : "",
+    summary ? record.losses ?? "" : "",
+    summary ? record.voids ?? "" : "",
+    summary ? record.unresolved ?? "" : "",
+    summary ? record.unsupported ?? "" : "",
+    summary && record.winRate !== null ? record.winRate : "",
+    summary ? "" : record.score ?? "",
+    summary ? "" : record.confidence ?? "",
+    summary ? "" : record.marketProb ?? "",
+    summary ? "" : record.aiFairOdds ?? "",
+    summary ? "" : record.oddsDecimal ?? "",
+    summary ? "" : valueExportFinalScore(record),
+    summary ? "" : record.result || "",
+    summary ? "" : record.source || ""
+  ].map(csvEscape).join(",");
 }
 
 app.get("/value-export/range", async (req, res) => {
@@ -2816,217 +3069,129 @@ app.get("/value-export/range", async (req, res) => {
     return rejectRuntimeBuild(res, "/value-export/range?rebuild=true", from);
   }
 
-  const rows = [];
+  const dayRecords = [];
+  const sourceIssues = [];
 
   for (const date of days) {
     const oddsMap = loadValueExportOddsMap(date);
+    const comparisonResult = !rebuild ? loadValueExportComparisonDay(date) : null;
 
-    // Prefer both plans (A+B) from the comparison artifact; else Plan A only.
-    let planned = loadValueExportDayPicks(date, { rebuild });
-
-    if (!planned) {
-      let result = null;
-
-      if (!rebuild) {
-        const snapshotResult = snapshotValueResponse(date);
-        if (snapshotResult?.ok) result = snapshotResult;
-      }
-
-      if (!result) {
-        if (runtimeBuildsDisabled()) {
-          result = snapshotValueResponse(date);
-        } else {
-          result = await buildValueDay(date, { rebuild });
-        }
-      }
-
-      const picks = Array.isArray(result?.picks)
-        ? result.picks
-        : Array.isArray(result?.items)
-          ? result.items
-          : Array.isArray(result?.valuePicks)
-            ? result.valuePicks
-            : Array.isArray(result?.data?.picks)
-              ? result.data.picks
-              : [];
-
-      planned = picks
-        .filter((p) => p && typeof p === "object")
-        .map((p) => ({ plan: "Plan A", source: result?.source || null, pick: p }));
+    if (comparisonResult?.ok === false) {
+      sourceIssues.push(comparisonResult.issue);
+      continue;
     }
 
-    for (const { plan, source, pick: p } of planned) {
-      const matchId = p.matchId || p.canonicalId;
-      const oddsEntry = oddsMap.get(String(matchId));
-      const odds = resolveValueExportOdds(oddsEntry, p.market, p.marketName, p.pick);
+    if (comparisonResult?.ok === true) {
+      dayRecords.push(valueExportDecorateDay(comparisonResult.day, oddsMap));
+      continue;
+    }
 
-      rows.push({
+    let result = null;
+    if (!rebuild) {
+      const snapshotResult = snapshotValueResponse(date);
+      if (snapshotResult?.ok) result = snapshotResult;
+    }
+
+    if (!result) {
+      result = runtimeBuildsDisabled()
+        ? snapshotValueResponse(date)
+        : await buildValueDay(date, { rebuild });
+    }
+
+    if (!result?.ok && !Array.isArray(result?.picks)) {
+      sourceIssues.push({
+        code: "VALUE_EXPORT_DAY_SOURCE_MISSING",
         date,
-        plan,
-        kickoff: p.kickoff || oddsEntry?.kickoff || null,
-        league: p.leagueSlug,
-        home: p.homeTeam,
-        away: p.awayTeam,
-        market: p.market,
-        pick: p.pick,
-        odds,
-        score: p.score,
-        confidence: p.confidence,
-        result: p.result ?? null,
-        source: source || null
+        message: String(result?.reason || "value source unavailable").trim()
       });
+      continue;
     }
+
+    const day = fallbackPlanAToValueExportDay({
+      date,
+      picks: valueExportSourcePicks(result),
+      source: result?.source || "snapshot_value"
+    });
+    dayRecords.push(valueExportDecorateDay(day, oddsMap));
   }
 
-if (format === "json") {
-  return res.json({
-    ok: true,
-    from,
-    to,
-    count: rows.length,
-    picks: rows
-  });
-}
-
-if (format === "xlsx") {
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet("Value Picks");
-
-  sheet.columns = [
-    { header: "Date", key: "date", width: 14 },
-    { header: "Plan", key: "plan", width: 10 },
-    { header: "Kickoff", key: "kickoff", width: 22 },
-    { header: "League", key: "league", width: 16 },
-    { header: "Home", key: "home", width: 24 },
-    { header: "Away", key: "away", width: 24 },
-    { header: "Market", key: "market", width: 20 },
-    { header: "Pick", key: "pick", width: 16 },
-    { header: "Odds", key: "odds", width: 10 },
-    { header: "Score", key: "score", width: 10 },
-    { header: "Confidence", key: "confidence", width: 12 },
-    { header: "Result", key: "result", width: 12 },
-    { header: "Source", key: "source", width: 16 }
-  ];
-
-  for (const row of rows) {
-    sheet.addRow({
-      date: row.date,
-      plan: row.plan || "",
-      kickoff: row.kickoff,
-      league: row.league,
-      home: row.home,
-      away: row.away,
-      market: row.market,
-      pick: row.pick,
-      odds: Number.isFinite(Number(row.odds)) ? Number(row.odds) : "",
-      score: Number(row.score),
-      confidence: Number(row.confidence),
-      result: row.result || "",
-      source: row.source || ""
+  if (sourceIssues.length > 0) {
+    return res.status(409).json({
+      ok: false,
+      reason: "value_export_source_invalid",
+      from,
+      to,
+      issues: sourceIssues
     });
   }
 
-  // Header style
-  const headerRow = sheet.getRow(1);
-  headerRow.font = { bold: true };
-  headerRow.alignment = { vertical: "middle", horizontal: "center" };
-
-  // Columns: A Date, B Plan, C Kickoff, D League, E Home, F Away, G Market,
-  // H Pick, I Odds, J Score, K Confidence, L Result, M Source.
-  // Center everything except the team names (E, F).
-  ["A", "B", "C", "D", "G", "H", "I", "J", "K", "L", "M"].forEach((col) => {
-    sheet.getColumn(col).alignment = {
-      vertical: "middle",
-      horizontal: "center"
-    };
-  });
-
-  ["E", "F"].forEach((col) => {
-    sheet.getColumn(col).alignment = {
-      vertical: "middle",
-      horizontal: "left"
-    };
-  });
-
-  // Number formatting: Odds 2dp, Score/Confidence 3dp
-  sheet.getColumn("I").numFmt = "0.00";
-  sheet.getColumn("J").numFmt = "0.000";
-  sheet.getColumn("K").numFmt = "0.000";
-
-  // Freeze header
-  sheet.views = [{ state: "frozen", ySplit: 1 }];
-
-  // Auto filter
-  sheet.autoFilter = {
-    from: "A1",
-    to: "M1"
-  };
-
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  );
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="value-picks-${from}_to_${to}.xlsx"`
-  );
-
-  await workbook.xlsx.write(res);
-  return res.end();
-}
-
-if (format !== "csv") {
-  return res.json({
-    ok: true,
+  const report = buildValueExportReport({
     from,
     to,
-    count: rows.length,
-    picks: rows
+    days,
+    dayRecords,
+    today: athensDayKey()
   });
-}
 
-  const header = [
-    "date",
-    "plan",
-    "kickoff",
-    "league",
-    "home",
-    "away",
-    "market",
-    "pick",
-    "odds",
-    "score",
-    "confidence",
-    "result",
-    "source"
-  ];
-
-  const lines = [header.join(",")];
-
-  for (const row of rows) {
-    lines.push([
-      row.date,
-      csvEscape(row.plan || ""),
-      row.kickoff,
-      row.league,
-      csvEscape(row.home),
-      csvEscape(row.away),
-      csvEscape(row.market),
-      csvEscape(row.pick),
-      Number.isFinite(Number(row.odds)) ? Number(row.odds) : "",
-      row.score,
-      row.confidence,
-      csvEscape(row.result || ""),
-      csvEscape(row.source || "")
-    ].join(","));
+  if (format === "json") {
+    return res.json({
+      ...report,
+      count: report.totalRows,
+      picks: report.planOrder.flatMap(planKey => report.plans[planKey].picks)
+    });
   }
+
+  if (format === "xlsx") {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Value Report");
+    configureValueExportSheet(sheet);
+
+    for (const planKey of report.planOrder) {
+      addValueExportPlanSection(sheet, report.plans[planKey]);
+    }
+
+    styleValueExportTitle(sheet, sheet.rowCount + 1, "Integrity");
+    addValueExportTableHeader(sheet, ["Status", "Issue Count", "Code", "Date", "Plan", "Details"]);
+    if (report.integrity.issues.length === 0) {
+      sheet.addRow([report.integrity.status, 0, "", "", "", ""]);
+    } else {
+      for (const issue of report.integrity.issues) {
+        sheet.addRow([
+          report.integrity.status,
+          report.integrity.issues.length,
+          issue.code,
+          issue.date || "",
+          issue.plan || "",
+          JSON.stringify(issue)
+        ]);
+      }
+    }
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="value-picks-${from}_to_${to}.xlsx"`
+    );
+    await workbook.xlsx.write(res);
+    return res.end();
+  }
+
+  if (format !== "csv") {
+    return res.json(report);
+  }
+
+  const records = valueExportCsvRecords(report);
+  const lines = [valueExportCsvHeader().map(csvEscape).join(",")];
+  for (const record of records) lines.push(valueExportCsvLine(record));
 
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader(
     "Content-Disposition",
     `attachment; filename="value-picks-${from}_to_${to}.csv"`
   );
-
   res.send(lines.join("\n"));
 });
 
