@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-matchlab.local/contracts/production-global-club-id-registry.schema.v1.json",
+  "title": "AI MatchLab Production Global Club ID Registry V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "registryVersion",
+    "generatedAt",
+    "source",
+    "allocationPolicy",
+    "summary",
+    "bindings",
+    "authorization",
+    "immutableRegistryHash"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.production-global-club-id-registry.v1"
+    },
+    "registryVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object"
+    },
+    "allocationPolicy": {
+      "type": "object"
+    },
+    "summary": {
+      "type": "object"
+    },
+    "bindings": {
+      "type": "array",
+      "minItems": 70,
+      "maxItems": 70,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "bindingDecisionId",
+          "globalClubId",
+          "ledgerTeamIdentityKey",
+          "preferredDisplayName",
+          "genesisAliases",
+          "leagueSlugs",
+          "sourceDecisionIds",
+          "sourceIdentityHash",
+          "allocationOrigin",
+          "allocationStatus",
+          "globalClubIdImmutable",
+          "futureAliasChangesMustNotReallocateId",
+          "providerIdentifiersAreCrosswalksNotPrimaryIds",
+          "productionArtifactsUpdated",
+          "productionArtifactUpdateStatus",
+          "immutableBindingDecisionHash"
+        ],
+        "properties": {
+          "bindingDecisionId": {
+            "type": "string",
+            "pattern": "^p0cbind_[0-9a-f]{20}$"
+          },
+          "globalClubId": {
+            "type": "string",
+            "pattern": "^gcid_[0-9a-f]{24}$"
+          },
+          "ledgerTeamIdentityKey": {
+            "type": "string",
+            "pattern": "^p0cteam_[0-9a-f]{20}$"
+          },
+          "preferredDisplayName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "genesisAliases": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "leagueSlugs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "sourceDecisionIds": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^p0cdup_[0-9a-f]{20}$"
+            }
+          },
+          "sourceIdentityHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "allocationOrigin": {
+            "const": "P0C_IMMUTABLE_LEDGER_GENESIS"
+          },
+          "allocationStatus": {
+            "const": "FINALIZED_IDENTITY_BINDING"
+          },
+          "globalClubIdImmutable": {
+            "const": true
+          },
+          "futureAliasChangesMustNotReallocateId": {
+            "const": true
+          },
+          "providerIdentifiersAreCrosswalksNotPrimaryIds": {
+            "const": true
+          },
+          "productionArtifactsUpdated": {
+            "const": false
+          },
+          "productionArtifactUpdateStatus": {
+            "const": "NOT_APPLIED"
+          },
+          "immutableBindingDecisionHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "authorization": {
+      "type": "object"
+    },
+    "immutableRegistryHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

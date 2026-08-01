@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-matchlab.local/contracts/fixture-retention-decision-ledger.schema.v1.json",
+  "title": "AI MatchLab Fixture Retention Decision Ledger V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "ledgerVersion",
+    "generatedAt",
+    "source",
+    "policy",
+    "summary",
+    "decisions",
+    "authorization",
+    "immutableLedgerHash"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.fixture-retention-decision-ledger.v1"
+    },
+    "ledgerVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object"
+    },
+    "policy": {
+      "type": "object"
+    },
+    "summary": {
+      "type": "object"
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 53,
+      "maxItems": 53,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fixtureRetentionDecisionId",
+          "sourceSemanticDuplicateDecisionId",
+          "clusterOrdinal",
+          "dayKey",
+          "leagueSlug",
+          "homeGlobalClubId",
+          "awayGlobalClubId",
+          "homeTeamIdentityKey",
+          "awayTeamIdentityKey",
+          "sourceFixtures",
+          "retainedRepositoryFixtureId",
+          "suppressedRepositoryFixtureIds",
+          "selectionPolicy",
+          "selectionMeaning",
+          "selectionEvidence",
+          "retentionDecisionStatus",
+          "suppressedFixtureLineageAliases",
+          "productionFixturesUpdated",
+          "productionFixtureUpdateStatus",
+          "fixtureDeletionAuthorized",
+          "historyRewriteAuthorized",
+          "immutableFixtureRetentionDecisionHash"
+        ],
+        "properties": {
+          "fixtureRetentionDecisionId": {
+            "type": "string",
+            "pattern": "^p0cret_[0-9a-f]{20}$"
+          },
+          "sourceSemanticDuplicateDecisionId": {
+            "type": "string",
+            "pattern": "^p0cdup_[0-9a-f]{20}$"
+          },
+          "clusterOrdinal": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 53
+          },
+          "dayKey": {
+            "type": "string",
+            "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"
+          },
+          "leagueSlug": {
+            "type": "string",
+            "minLength": 1
+          },
+          "homeGlobalClubId": {
+            "type": "string",
+            "pattern": "^gcid_[0-9a-f]{24}$"
+          },
+          "awayGlobalClubId": {
+            "type": "string",
+            "pattern": "^gcid_[0-9a-f]{24}$"
+          },
+          "homeTeamIdentityKey": {
+            "type": "string",
+            "pattern": "^p0cteam_[0-9a-f]{20}$"
+          },
+          "awayTeamIdentityKey": {
+            "type": "string",
+            "pattern": "^p0cteam_[0-9a-f]{20}$"
+          },
+          "sourceFixtures": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "retainedRepositoryFixtureId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "suppressedRepositoryFixtureIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "selectionPolicy": {
+            "enum": [
+              "AUTHORITATIVE_TRUTH_MATCH_DOMINATES_RETENTION",
+              "UNIQUE_REPOSITORY_LINEAGE_DOMINANCE"
+            ]
+          },
+          "selectionMeaning": {
+            "enum": [
+              "AUTHORITATIVE_MATCH_TRUTH_RETENTION",
+              "REPOSITORY_ID_CONTINUITY_NOT_SOURCE_TRUTH_RANKING"
+            ]
+          },
+          "selectionEvidence": {
+            "type": "object"
+          },
+          "retentionDecisionStatus": {
+            "const": "FINALIZED_RETENTION_DECISION_NOT_APPLIED"
+          },
+          "suppressedFixtureLineageAliases": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1
+          },
+          "productionFixturesUpdated": {
+            "const": false
+          },
+          "productionFixtureUpdateStatus": {
+            "const": "NOT_APPLIED"
+          },
+          "fixtureDeletionAuthorized": {
+            "const": false
+          },
+          "historyRewriteAuthorized": {
+            "const": false
+          },
+          "immutableFixtureRetentionDecisionHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "authorization": {
+      "type": "object"
+    },
+    "immutableLedgerHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
