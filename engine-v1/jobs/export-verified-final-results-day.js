@@ -10,6 +10,10 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { teamPairMatches } from "../core/team-identity.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import { verifiedFinalVetoReason } from "../core/non-played-state.js";
+import {
+  bindProductionResultIdentity,
+  bindVerifiedFinalResultIdentity,
+} from "../core/production-result-identity-binding.js";
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -249,6 +253,19 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
   const fixtures = rowsFromPayload(readJsonSafe(fixturesPath, null), ["fixtures", "matches"]);
   const valuePicks = rowsFromPayload(readJsonSafe(valuePath, null), ["picks", "valuePicks", "rows"]);
   const canonicalFixtures = canonicalFixturesForDay(dayKey);
+
+  const canonicalFixtureIds =
+    new Set(
+      canonicalFixtures
+        .map(row =>
+          clean(
+            row?.canonicalId ||
+            row?.matchId,
+          ),
+        )
+        .filter(Boolean),
+    );
+
   const canonicalByKey = indexCanonicalFixtures(canonicalFixtures);
 
   const fixturesById = new Map();
@@ -360,9 +377,24 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
       continue;
     }
 
+    const identity =
+      bindProductionResultIdentity(
+        target,
+        {
+          canonicalFixtureIds,
+          requireCanonicalMembership:
+            true,
+        },
+      );
+
+    const resolvedTarget =
+      identity.managed
+        ? identity.row
+        : target;
+
     targetsById.set(
-      target.matchId,
-      target
+      resolvedTarget.matchId,
+      resolvedTarget
     );
   }
 
@@ -381,6 +413,16 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
         : 0,
     targets: [...targetsById.values()]
   };
+}
+
+export function bindVerifiedFinalResultPayloadIdentity(
+  payload,
+  options = {},
+) {
+  return bindVerifiedFinalResultIdentity(
+    payload,
+    options,
+  );
 }
 
 function sourceScoreKey(row) {
@@ -2175,6 +2217,13 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
         fallbackReason =
           fallback.reason;
       }
+    }
+
+    if (payload) {
+      payload =
+        bindVerifiedFinalResultPayloadIdentity(
+          payload,
+        );
     }
 
     if (!payload) {

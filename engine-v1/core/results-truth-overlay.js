@@ -23,6 +23,9 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { STATUS_RANK, statusRankFromParts } from "./display-contract.js";
 import { teamTokens, tokensMatch } from "./team-identity.js";
+import {
+  bindProductionResultIdentity,
+} from "./production-result-identity-binding.js";
 
 // Display slugs that differ from the truth-store slugs (BetExplorer vs ESPN).
 const SLUG_ALIASES = {
@@ -37,14 +40,26 @@ const SLUG_ALIASES = {
 // ── Per-league/day final-result index, cached on file mtime ────────────────
 const __indexCache = new Map(); // slug → { mtimeMs, byDay: Map<dayKey, rows[]> }
 
-function loadLeagueFinals(slug) {
+function loadLeagueFinals(slug, resolver = null) {
   const file = resolveDataPath("league-memory", "results", `${slug}.json`);
 
   let stat;
   try { stat = fs.statSync(file); } catch { return null; }
 
-  const cached = __indexCache.get(slug);
-  if (cached && cached.mtimeMs === stat.mtimeMs) return cached.byDay;
+  const useCache =
+    resolver == null;
+
+  const cached =
+    useCache
+      ? __indexCache.get(slug)
+      : null;
+
+  if (
+    cached &&
+    cached.mtimeMs === stat.mtimeMs
+  ) {
+    return cached.byDay;
+  }
 
   let data;
   try { data = JSON.parse(fs.readFileSync(file, "utf8")); } catch { return null; }
@@ -59,36 +74,121 @@ function loadLeagueFinals(slug) {
       const day = athensDayFromKickoff(e.date);
       if (!day) continue;
       if (!byDay.has(day)) byDay.set(day, []);
+      const sourceRow = {
+        matchId:
+          e.matchId || null,
+        homeTeam:
+          teamName,
+        awayTeam:
+          e.opp,
+        scoreHome:
+          Number(e.gf),
+        scoreAway:
+          Number(e.ga),
+      };
+
+      const identity =
+        bindProductionResultIdentity(
+          sourceRow,
+          resolver
+            ? { resolver }
+            : {},
+        );
+
       byDay.get(day).push({
-        homeTokens: teamTokens(teamName),
-        awayTokens: teamTokens(e.opp),
-        scoreHome: Number(e.gf),
-        scoreAway: Number(e.ga),
-        matchId: e.matchId || null,
+        homeTokens:
+          teamTokens(teamName),
+        awayTokens:
+          teamTokens(e.opp),
+        scoreHome:
+          Number(e.gf),
+        scoreAway:
+          Number(e.ga),
+        matchId:
+          e.matchId || null,
+        resolvedFixtureId:
+          identity.managed
+            ? identity.resolvedFixtureId
+            : null,
+        sourceFixtureRole:
+          identity.managed
+            ? identity.sourceFixtureRole
+            : null,
+        homeGlobalClubId:
+          identity.managed
+            ? identity.homeGlobalClubId
+            : null,
+        awayGlobalClubId:
+          identity.managed
+            ? identity.awayGlobalClubId
+            : null,
       });
     }
   }
 
-  __indexCache.set(slug, { mtimeMs: stat.mtimeMs, byDay });
+  if (useCache) {
+    __indexCache.set(slug, { mtimeMs: stat.mtimeMs, byDay });
+  }
   return byDay;
 }
 
-function findFinal(slug, dayKey, homeTeam, awayTeam) {
-  const byDay = loadLeagueFinals(slug);
+function findFinal(
+  slug,
+  dayKey,
+  homeTeam,
+  awayTeam,
+  fixtureIdentity,
+  resolver = null,
+) {
+  const byDay =
+    loadLeagueFinals(
+      slug,
+      resolver,
+    );
+
   if (!byDay) return null;
 
-  const rows = byDay.get(dayKey);
-  if (!rows || !rows.length) return null;
+  const rows =
+    byDay.get(dayKey);
 
-  const home = teamTokens(homeTeam);
-  const away = teamTokens(awayTeam);
+  if (!rows || !rows.length) {
+    return null;
+  }
 
-  const hits = rows.filter(r =>
-    tokensMatch(home, r.homeTokens) && tokensMatch(away, r.awayTokens)
-  );
+  if (fixtureIdentity?.managed) {
+    const hits =
+      rows.filter(
+        row =>
+          row.resolvedFixtureId ===
+          fixtureIdentity.resolvedFixtureId,
+      );
 
-  // Ambiguity within the same league+day means we cannot be sure — skip.
-  return hits.length === 1 ? hits[0] : null;
+    return hits.length === 1
+      ? hits[0]
+      : null;
+  }
+
+  const home =
+    teamTokens(homeTeam);
+
+  const away =
+    teamTokens(awayTeam);
+
+  const hits =
+    rows.filter(row =>
+      tokensMatch(
+        home,
+        row.homeTokens,
+      ) &&
+      tokensMatch(
+        away,
+        row.awayTokens,
+      ),
+    );
+
+  return hits.length === 1
+    ? hits[0]
+    : null;
 }
 
 // ── Global day-index fallback ───────────────────────────────────────────────
@@ -117,26 +217,80 @@ function listResultSlugs() {
   return __allSlugsCache.slugs;
 }
 
-function findFinalGlobal(dayKey, homeTeam, awayTeam, excludeSlugs) {
-  const home = teamTokens(homeTeam);
-  const away = teamTokens(awayTeam);
-  if (!home.length || !away.length) return null;
+function findFinalGlobal(
+  dayKey,
+  homeTeam,
+  awayTeam,
+  excludeSlugs,
+  fixtureIdentity,
+  resolver = null,
+) {
+  const home =
+    teamTokens(homeTeam);
+
+  const away =
+    teamTokens(awayTeam);
+
+  if (
+    !fixtureIdentity?.managed &&
+    (!home.length || !away.length)
+  ) {
+    return null;
+  }
 
   const hits = [];
+
   for (const slug of listResultSlugs()) {
-    if (excludeSlugs.has(slug)) continue;
-    const byDay = loadLeagueFinals(slug);
+    if (excludeSlugs.has(slug)) {
+      continue;
+    }
+
+    const byDay =
+      loadLeagueFinals(
+        slug,
+        resolver,
+      );
+
     if (!byDay) continue;
-    const rows = byDay.get(dayKey);
-    if (!rows || !rows.length) continue;
-    for (const r of rows) {
-      if (tokensMatch(home, r.homeTokens) && tokensMatch(away, r.awayTokens)) {
-        hits.push(r);
-        if (hits.length > 1) return null; // ambiguous across the day — skip
+
+    const rows =
+      byDay.get(dayKey);
+
+    if (!rows || !rows.length) {
+      continue;
+    }
+
+    for (const row of rows) {
+      const matches =
+        fixtureIdentity?.managed
+          ? (
+              row.resolvedFixtureId ===
+              fixtureIdentity.resolvedFixtureId
+            )
+          : (
+              tokensMatch(
+                home,
+                row.homeTokens,
+              ) &&
+              tokensMatch(
+                away,
+                row.awayTokens,
+              )
+            );
+
+      if (!matches) continue;
+
+      hits.push(row);
+
+      if (hits.length > 1) {
+        return null;
       }
     }
   }
-  return hits.length === 1 ? hits[0] : null;
+
+  return hits.length === 1
+    ? hits[0]
+    : null;
 }
 
 function isUpgradeable(m) {
@@ -148,22 +302,49 @@ function isUpgradeable(m) {
  * Overlay truth-store finals onto display matches for `dayKey`.
  * Synchronous (local JSON reads, mtime-cached); never throws.
  */
-export function overlayResultsTruth(matches, dayKey) {
+export function overlayResultsTruth(
+  matches,
+  dayKey,
+  {
+    resolver = null,
+  } = {},
+) {
   const list = Array.isArray(matches) ? matches : [];
   const day = String(dayKey || "").slice(0, 10);
   if (!list.length || !day) return list;
 
   return list.map(m => {
     try {
-            const currentRank = statusRankFromParts(
-        m?.status,
-        m?.rawStatus,
-        m?.statusType,
-        m?.statusName
+      const identity =
+        bindProductionResultIdentity(
+          m,
+          resolver
+            ? { resolver }
+            : {},
+        );
+
+      if (
+        identity.managed &&
+        identity.sourceFixtureRole ===
+          "suppressed_lineage_alias"
+      ) {
+        return m;
+      }
+
+      const displayRow =
+        identity.managed
+          ? identity.row
+          : m;
+
+      const currentRank = statusRankFromParts(
+        displayRow?.status,
+        displayRow?.rawStatus,
+        displayRow?.statusType,
+        displayRow?.statusName
       );
 
       if (currentRank === STATUS_RANK.FINAL) {
-        const rawStatus = String(m?.rawStatus || "").trim().toUpperCase();
+        const rawStatus = String(displayRow?.rawStatus || "").trim().toUpperCase();
         const rawStatusIsTerminal =
           rawStatus === "FT" ||
           rawStatus === "FINAL" ||
@@ -173,48 +354,69 @@ export function overlayResultsTruth(matches, dayKey) {
 
         if (!rawStatusIsTerminal) {
           return {
-            ...m,
+            ...displayRow,
             rawStatus: "STATUS_FINAL",
           };
         }
 
-        return m;
+        return displayRow;
       }
 
-      if (currentRank === STATUS_RANK.SPECIAL) return m;
+      if (currentRank === STATUS_RANK.SPECIAL) return displayRow;
 
-      const slug = String(m.leagueSlug || "");
-      if (!slug) return m;
+      const slug = String(displayRow.leagueSlug || "");
+      if (!slug) return displayRow;
 
       // Sources disagree on which day a cross-midnight match belongs to (a
       // 22:00Z kickoff is the NEXT Athens day); the truth store is keyed by the
       // kickoff's Athens day, so look that day up first, then the display day.
-      const kickDay = athensDayFromKickoff(m.kickoffUtc);
+      const kickDay = athensDayFromKickoff(displayRow.kickoffUtc);
       const days = kickDay && kickDay !== day ? [kickDay, day] : [day];
 
       let found = null;
       for (const d of days) {
         const tried = new Set([slug]);
-        found = findFinal(slug, d, m.homeTeam, m.awayTeam);
+        found = findFinal(
+          slug,
+          d,
+          displayRow.homeTeam,
+          displayRow.awayTeam,
+          identity,
+          resolver,
+        );
 
         if (!found && SLUG_ALIASES[slug]) {
           tried.add(SLUG_ALIASES[slug]);
-          found = findFinal(SLUG_ALIASES[slug], d, m.homeTeam, m.awayTeam);
+          found = findFinal(
+            SLUG_ALIASES[slug],
+            d,
+            displayRow.homeTeam,
+            displayRow.awayTeam,
+            identity,
+            resolver,
+          );
         }
 
         // Slug-agnostic fallback: unique team-pair hit across ALL leagues'
         // finals for the day (see findFinalGlobal).
         if (!found) {
-          found = findFinalGlobal(d, m.homeTeam, m.awayTeam, tried);
+          found = findFinalGlobal(
+            d,
+            displayRow.homeTeam,
+            displayRow.awayTeam,
+            tried,
+            identity,
+            resolver,
+          );
         }
 
         if (found) break;
       }
 
-      if (!found) return m;
+      if (!found) return displayRow;
 
       return {
-        ...m,
+        ...displayRow,
         status: "FT",
         statusType: "FT",
         rawStatus: "STATUS_FINAL",

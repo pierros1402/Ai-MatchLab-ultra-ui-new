@@ -15,6 +15,10 @@ import { resolveDataPath, ensureDir } from "./data-root.js";
 import { normalizeTeamKey } from "../core/normalize.js";
 import { sourceRank } from "./result-dedup.js";
 import { canonicalTeamName } from "./team-aliases-db.js";
+import {
+  bindProductionResultIdentity,
+  resultMemoryIdentityFields,
+} from "../core/production-result-identity-binding.js";
 
 const DIR = resolveDataPath("league-memory", "results");
 const PER_TEAM_CAP = 250;   // ~5 seasons of weekly league play per team
@@ -80,7 +84,10 @@ function pushResult(list, entry) {
 
   if (dupIdx >= 0) {
     // Replace only when the incoming record comes from a more authoritative source.
-    if (sourceRank(entry.matchId) < sourceRank(list[dupIdx].matchId)) {
+    if (
+      sourceRank(entry.sourceMatchId || entry.matchId) <
+      sourceRank(list[dupIdx].sourceMatchId || list[dupIdx].matchId)
+    ) {
       out = list.map((r, i) => (i === dupIdx ? entry : r));
     }
   } else {
@@ -93,41 +100,235 @@ function pushResult(list, entry) {
     .slice(0, PER_TEAM_CAP);
 }
 
+export function prepareResultMemoryMatch(
+  m,
+  {
+    resolver = null,
+  } = {},
+) {
+  if (
+    m?.scoreHome == null ||
+    m?.scoreAway == null
+  ) {
+    return {
+      ok: false,
+      reason:
+        "score_required",
+    };
+  }
+
+  const identity =
+    bindProductionResultIdentity(
+      m,
+      resolver
+        ? { resolver }
+        : {},
+    );
+
+  const row =
+    identity.managed
+      ? identity.row
+      : m;
+
+  const originalMatchId =
+    String(
+      m?.sourceMatchId ||
+      m?.providerMatchId ||
+      m?.matchId ||
+      "",
+    ).trim();
+
+  const matchId =
+    String(
+      row?.matchId ||
+      row?.canonicalId ||
+      originalMatchId,
+    ).trim();
+
+  if (!matchId) {
+    return {
+      ok: false,
+      reason:
+        "match_id_required",
+    };
+  }
+
+  return {
+    ok: true,
+    row,
+    identity,
+    matchId,
+    originalMatchId,
+    identityFields:
+      resultMemoryIdentityFields(
+        row,
+      ),
+  };
+}
+
 /**
  * Record one finished match for both teams. Returns true if anything new stored.
  * @param {{matchId,home,away,scoreHome,scoreAway,kickoffUtc}} m
  */
-export function recordMatchResult(slug, m) {
-  if (m.scoreHome == null || m.scoreAway == null) return false;
+export function recordMatchResult(
+  slug,
+  m,
+  {
+    resolver = null,
+  } = {},
+) {
+  const prepared =
+    prepareResultMemoryMatch(
+      m,
+      { resolver },
+    );
+
+  if (!prepared.ok) {
+    return false;
+  }
+
+  const {
+    row,
+    matchId,
+    originalMatchId,
+    identityFields,
+  } = prepared;
 
   ensureDir(DIR);
-  const data = readResults(slug);
-  data.teams = data.teams || {};
 
-  // Collapse cross-source spelling variants onto the team key already in the ledger
-  // so both feeds append to the same team (prevents the split-key double count).
-  const homeKey = resolveTeamKey(data.teams, slug, m.home);
-  const awayKey = resolveTeamKey(data.teams, slug, m.away);
+  const data =
+    readResults(slug);
 
-  const date = m.kickoffUtc || null;
-  const homeRes = m.scoreHome > m.scoreAway ? "W" : m.scoreHome < m.scoreAway ? "L" : "D";
-  const awayRes = homeRes === "W" ? "L" : homeRes === "L" ? "W" : "D";
+  data.teams =
+    data.teams || {};
 
-  const before = JSON.stringify(data.teams[homeKey] || []) + JSON.stringify(data.teams[awayKey] || []);
+  const home =
+    row.home ||
+    row.homeTeam;
 
-  data.teams[homeKey] = pushResult(data.teams[homeKey] || [], {
-    matchId: m.matchId, date, opp: awayKey, ha: "H", gf: m.scoreHome, ga: m.scoreAway, res: homeRes
-  });
-  data.teams[awayKey] = pushResult(data.teams[awayKey] || [], {
-    matchId: m.matchId, date, opp: homeKey, ha: "A", gf: m.scoreAway, ga: m.scoreHome, res: awayRes
-  });
+  const away =
+    row.away ||
+    row.awayTeam;
 
-  const changed = (JSON.stringify(data.teams[homeKey]) + JSON.stringify(data.teams[awayKey])) !== before;
-  if (changed) {
-    data.slug = slug;
-    data.updatedAt = new Date().toISOString();
-    fs.writeFileSync(fileFor(slug), JSON.stringify(data, null, 2), "utf8");
+  if (!home || !away) {
+    return false;
   }
+
+  const homeKey =
+    resolveTeamKey(
+      data.teams,
+      slug,
+      home,
+    );
+
+  const awayKey =
+    resolveTeamKey(
+      data.teams,
+      slug,
+      away,
+    );
+
+  const date =
+    row.kickoffUtc ||
+    row.date ||
+    null;
+
+  const homeRes =
+    row.scoreHome > row.scoreAway
+      ? "W"
+      : row.scoreHome < row.scoreAway
+        ? "L"
+        : "D";
+
+  const awayRes =
+    homeRes === "W"
+      ? "L"
+      : homeRes === "L"
+        ? "W"
+        : "D";
+
+  const before =
+    JSON.stringify(
+      data.teams[homeKey] || [],
+    ) +
+    JSON.stringify(
+      data.teams[awayKey] || [],
+    );
+
+  const shared = {
+    matchId,
+
+    sourceMatchId:
+      originalMatchId &&
+      originalMatchId !== matchId
+        ? originalMatchId
+        : undefined,
+
+    ...identityFields,
+  };
+
+  data.teams[homeKey] =
+    pushResult(
+      data.teams[homeKey] || [],
+      {
+        ...shared,
+        date,
+        opp:
+          awayKey,
+        ha:
+          "H",
+        gf:
+          row.scoreHome,
+        ga:
+          row.scoreAway,
+        res:
+          homeRes,
+      },
+    );
+
+  data.teams[awayKey] =
+    pushResult(
+      data.teams[awayKey] || [],
+      {
+        ...shared,
+        date,
+        opp:
+          homeKey,
+        ha:
+          "A",
+        gf:
+          row.scoreAway,
+        ga:
+          row.scoreHome,
+        res:
+          awayRes,
+      },
+    );
+
+  const changed =
+    (
+      JSON.stringify(data.teams[homeKey]) +
+      JSON.stringify(data.teams[awayKey])
+    ) !== before;
+
+  if (changed) {
+    data.slug =
+      slug;
+
+    data.updatedAt =
+      new Date().toISOString();
+
+    fs.writeFileSync(
+      fileFor(slug),
+      JSON.stringify(
+        data,
+        null,
+        2,
+      ),
+      "utf8",
+    );
+  }
+
   return changed;
 }
 

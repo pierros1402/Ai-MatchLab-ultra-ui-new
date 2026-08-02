@@ -95,7 +95,17 @@ test(
 
     assert.match(
       source,
-      /targetsById\.set\(\s*target\.matchId,\s*target\s*\)/u
+      /bindProductionResultIdentity/u
+    );
+
+    assert.match(
+      source,
+      /const resolvedTarget =\s*identity\.managed\s*\?\s*identity\.row\s*:\s*target/u
+    );
+
+    assert.match(
+      source,
+      /targetsById\.set\(\s*resolvedTarget\.matchId,\s*resolvedTarget\s*\)/u
     );
   }
 );

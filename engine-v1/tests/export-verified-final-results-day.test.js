@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  bindVerifiedFinalResultPayloadIdentity,
   buildCanonicalEspnVerifiedFinalResult,
   resolveCanonicalEspnFinalFallback,
   resolvePenaltyWinnerMarkerConflict
@@ -597,3 +598,126 @@ test("does not repair when the candidate score disagrees with canonical", () => 
     "candidate_score_disagrees_with_canonical"
   );
 });
+
+
+function resultIdentityResolver() {
+  return {
+    resolveFixtureId(value) {
+      if (
+        value ===
+        "cid_ecu1_aucas_independientedelvalle_20260717"
+      ) {
+        return {
+          ok: true,
+          resolvedFixtureId:
+            value,
+          sourceRole:
+            "retained",
+          fixtureRetentionDecisionId:
+            "frd_ecu_test",
+          homeGlobalClubId:
+            "gcid_aucas",
+          awayGlobalClubId:
+            "gcid_independiente",
+        };
+      }
+
+      return {
+        ok: false,
+        status:
+          "UNKNOWN_FIXTURE_ID",
+      };
+    },
+  };
+}
+
+test(
+  "verified-final identity binding adds retained IDs without changing score",
+  () => {
+    const target =
+      validTarget();
+
+    const resolved =
+      resolveCanonicalEspnFinalFallback(
+        target,
+        dayKey,
+      );
+
+    const payload =
+      buildCanonicalEspnVerifiedFinalResult(
+        dayKey,
+        target,
+        resolved,
+      );
+
+    const bound =
+      bindVerifiedFinalResultPayloadIdentity(
+        payload,
+        {
+          resolver:
+            resultIdentityResolver(),
+        },
+      );
+
+    assert.equal(
+      bound.matchId,
+      target.matchId,
+    );
+    assert.equal(
+      bound.canonicalId,
+      target.matchId,
+    );
+    assert.equal(
+      bound.homeGlobalClubId,
+      "gcid_aucas",
+    );
+    assert.equal(
+      bound.awayGlobalClubId,
+      "gcid_independiente",
+    );
+    assert.equal(
+      bound.scoreKey,
+      payload.scoreKey,
+    );
+    assert.deepEqual(
+      bound.finalScore,
+      payload.finalScore,
+    );
+    assert.deepEqual(
+      bound.settlement,
+      payload.settlement,
+    );
+  },
+);
+
+test(
+  "verified-final identity binding leaves unknown provider rows unchanged",
+  () => {
+    const payload = {
+      matchId:
+        "provider_unknown",
+      verifiedFinalTruth:
+        true,
+      status:
+        "FT",
+      scoreHome:
+        1,
+      scoreAway:
+        0,
+    };
+
+    const bound =
+      bindVerifiedFinalResultPayloadIdentity(
+        payload,
+        {
+          resolver:
+            resultIdentityResolver(),
+        },
+      );
+
+    assert.equal(
+      bound,
+      payload,
+    );
+  },
+);

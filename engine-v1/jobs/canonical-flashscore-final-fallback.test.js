@@ -7,6 +7,7 @@ import {
 } from "node:url";
 
 import {
+  bindVerifiedFinalResultPayloadIdentity,
   resolveCanonicalFlashscoreFinalFallback,
   buildCanonicalFlashscoreVerifiedFinalResult
 } from "./export-verified-final-results-day.js";
@@ -400,4 +401,116 @@ test(
       false
     );
   }
+);
+
+
+test(
+  "canonical Flashscore verified final identity metadata is additive",
+  () => {
+    const target = {
+      matchId:
+        "cid_test_flashscore_retained_20260723",
+      leagueSlug:
+        "test.1",
+      leagueName:
+        "Test League",
+      homeTeam:
+        "Home",
+      awayTeam:
+        "Away",
+      kickoffUtc:
+        "2026-07-23T12:00:00.000Z",
+    };
+
+    const payload =
+      buildCanonicalFlashscoreVerifiedFinalResult(
+        DAY,
+        target,
+        {
+          row: {
+            canonicalId:
+              target.matchId,
+            source:
+              "flashscore",
+            sourceId:
+              "ABC12345",
+            sourceMatchId:
+              "ABC12345",
+            leagueSlug:
+              "test.1",
+            leagueName:
+              "Test League",
+            homeTeam:
+              "Home",
+            awayTeam:
+              "Away",
+            kickoffUtc:
+              target.kickoffUtc,
+            rawStatus:
+              "STATUS_FINAL",
+            statusType:
+              "STATUS_FINAL",
+          },
+          providerMatchId:
+            "ABC12345",
+          observedAt:
+            "2026-07-23T15:00:00.000Z",
+          homeScore:
+            2,
+          awayScore:
+            1,
+          scoreKey:
+            "2-1",
+        },
+      );
+
+    const resolver = {
+      resolveFixtureId(value) {
+        if (value === target.matchId) {
+          return {
+            ok: true,
+            resolvedFixtureId:
+              target.matchId,
+            sourceRole:
+              "retained",
+            fixtureRetentionDecisionId:
+              "frd_test",
+            homeGlobalClubId:
+              "gcid_home",
+            awayGlobalClubId:
+              "gcid_away",
+          };
+        }
+
+        return {
+          ok: false,
+          status:
+            "UNKNOWN_FIXTURE_ID",
+        };
+      },
+    };
+
+    const bound =
+      bindVerifiedFinalResultPayloadIdentity(
+        payload,
+        { resolver },
+      );
+
+    assert.equal(
+      bound.homeGlobalClubId,
+      "gcid_home",
+    );
+    assert.equal(
+      bound.awayGlobalClubId,
+      "gcid_away",
+    );
+    assert.equal(
+      bound.scoreKey,
+      "2-1",
+    );
+    assert.equal(
+      bound.finalTruthVerdict,
+      "verified_final_result",
+    );
+  },
 );

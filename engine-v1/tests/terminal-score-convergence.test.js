@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  bindVerifiedFinalResultPayloadIdentity,
   resolveTerminalScoreConvergence,
   buildConvergedVerifiedFinalResult
 } from "../jobs/export-verified-final-results-day.js";
@@ -305,4 +306,100 @@ test(
       "canonical_espn_status_not_terminal"
     );
   }
+);
+
+
+test(
+  "identity binding is orthogonal to converged terminal score truth",
+  () => {
+    const target =
+      targetWithCanonical();
+
+    const convergence =
+      resolveTerminalScoreConvergence({
+        target,
+        dayKey,
+        flashscoreMatch:
+          flashscoreMatch({
+            homeScore:
+              1,
+            awayScore:
+              4,
+          }),
+      });
+
+    assert.equal(
+      convergence.state,
+      "converged",
+    );
+
+    const payload =
+      buildConvergedVerifiedFinalResult(
+        dayKey,
+        target,
+        flashscoreMatch({
+          homeScore:
+            1,
+          awayScore:
+            4,
+        }).row,
+        convergence,
+      );
+
+    const resolver = {
+      resolveFixtureId(value) {
+        if (
+          value ===
+          target.matchId
+        ) {
+          return {
+            ok: true,
+            resolvedFixtureId:
+              target.matchId,
+            sourceRole:
+              "retained",
+            fixtureRetentionDecisionId:
+              "frd_test",
+            homeGlobalClubId:
+              "gcid_lech",
+            awayGlobalClubId:
+              "gcid_agf",
+          };
+        }
+
+        return {
+          ok: false,
+          status:
+            "UNKNOWN_FIXTURE_ID",
+        };
+      },
+    };
+
+    const bound =
+      bindVerifiedFinalResultPayloadIdentity(
+        payload,
+        { resolver },
+      );
+
+    assert.equal(
+      bound.scoreKey,
+      "1-4",
+    );
+    assert.equal(
+      bound.scoreHome,
+      1,
+    );
+    assert.equal(
+      bound.scoreAway,
+      4,
+    );
+    assert.equal(
+      bound.homeGlobalClubId,
+      "gcid_lech",
+    );
+    assert.equal(
+      bound.awayGlobalClubId,
+      "gcid_agf",
+    );
+  },
 );

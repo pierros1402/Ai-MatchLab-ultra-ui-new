@@ -42,6 +42,10 @@
 
 import { normalizeTeamKey } from "../core/normalize.js";
 import { resolveAliasCandidates } from "./team-aliases-db.js";
+import {
+  bindProductionResultIdentity,
+  resultMemoryIdentityFields,
+} from "../core/production-result-identity-binding.js";
 
 const PER_TEAM_CAP = 250;   // keep in sync with results-memory-db.js
 const MAX_AGE_DAYS = 1825;  // 5 years
@@ -113,7 +117,48 @@ function reconstructRecords(teams) {
       const prev = byId.get(id);
       // Prefer the home-oriented view; otherwise take the first we see.
       if (!prev || (isHome && !prev.fromH)) {
-        byId.set(id, { id, date, dayKey: dayKeyOf(date), home, away, sh, sa, fromH: isHome });
+        byId.set(id, {
+          id,
+          sourceMatchId:
+            e.sourceMatchId ||
+            id,
+          canonicalId:
+            e.canonicalId ||
+            null,
+          date,
+          dayKey:
+            dayKeyOf(date),
+          home,
+          away,
+          sh,
+          sa,
+          fromH:
+            isHome,
+          sourceFixtureId:
+            e.sourceFixtureId ||
+            null,
+          sourceFixtureIds:
+            Array.isArray(
+              e.sourceFixtureIds,
+            )
+              ? [...e.sourceFixtureIds]
+              : undefined,
+          sourceFixtureRole:
+            e.sourceFixtureRole ||
+            null,
+          fixtureRetentionDecisionId:
+            e.fixtureRetentionDecisionId ||
+            null,
+          homeGlobalClubId:
+            e.homeGlobalClubId ||
+            null,
+          awayGlobalClubId:
+            e.awayGlobalClubId ||
+            null,
+          productionIdentityBinding:
+            e.productionIdentityBinding ||
+            null,
+        });
       } else if (!prev.date && date) {
         prev.date = date;
         prev.dayKey = dayKeyOf(date);
@@ -138,7 +183,67 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
     || ((name) => resolveAliasCandidates(slug, name));
 
   const teams = payload?.teams || {};
-  const records = reconstructRecords(teams);
+
+  const records =
+    reconstructRecords(teams)
+      .map(record => {
+        const identity =
+          bindProductionResultIdentity(
+            {
+              canonicalId:
+                record.canonicalId,
+              matchId:
+                record.id,
+              sourceFixtureId:
+                record.sourceFixtureId,
+              homeTeam:
+                record.home,
+              awayTeam:
+                record.away,
+              scoreHome:
+                record.sh,
+              scoreAway:
+                record.sa,
+            },
+            opts.resolver
+              ? {
+                  resolver:
+                    opts.resolver,
+                }
+              : {},
+          );
+
+        if (!identity.managed) {
+          return record;
+        }
+
+        return {
+          ...record,
+          id:
+            identity.resolvedFixtureId,
+          canonicalId:
+            identity.resolvedFixtureId,
+          sourceMatchId:
+            record.sourceMatchId ||
+            record.id,
+          sourceFixtureId:
+            identity.sourceFixtureId,
+          sourceFixtureIds:
+            identity.sourceFixtureIds,
+          sourceFixtureRole:
+            identity.sourceFixtureRole,
+          fixtureRetentionDecisionId:
+            identity.row
+              .fixtureRetentionDecisionId,
+          homeGlobalClubId:
+            identity.homeGlobalClubId,
+          awayGlobalClubId:
+            identity.awayGlobalClubId,
+          productionIdentityBinding:
+            identity.row
+              .productionIdentityBinding,
+        };
+      });
 
   const uf = makeUnionFind();
 
@@ -198,7 +303,10 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
           // other side" rule safe: it stops a team that genuinely played two same-score
           // matches on one day (e.g. Chania City 2-2 vs two Rhodes clubs) from merging
           // its two distinct opponents and avalanching the whole league into one blob.
-          if (sourceRank(a.id) === sourceRank(b.id)) continue;
+          if (
+            sourceRank(a.sourceMatchId || a.id) ===
+            sourceRank(b.sourceMatchId || b.id)
+          ) continue;
           const aligned = a.sh === b.sh && a.sa === b.sa;
           const flipped = a.sh === b.sa && a.sa === b.sh;
 
@@ -228,7 +336,7 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
     m.set(name, cur);
   };
   for (const r of records) {
-    const rank = sourceRank(r.id);
+    const rank = sourceRank(r.sourceMatchId || r.id);
     vote(r.home, rank);
     vote(r.away, rank);
   }
@@ -262,7 +370,8 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
     // Keep the better record: prefer a home-oriented one, then native source.
     const better =
       (Number(r.fromH) - Number(prev.fromH)) ||
-      (sourceRank(prev.id) - sourceRank(r.id));
+      (sourceRank(prev.sourceMatchId || prev.id) -
+        sourceRank(r.sourceMatchId || r.id));
     if (better > 0) matches.set(key, r);
   }
 
@@ -281,8 +390,51 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
     const homeRes = deriveRes(r.sh, r.sa);
     if (homeRes == null) continue;
     const awayRes = homeRes === "W" ? "L" : homeRes === "L" ? "W" : "D";
-    pushEntry(home, { matchId: r.id, date: r.date, opp: away, ha: "H", gf: r.sh, ga: r.sa, res: homeRes });
-    pushEntry(away, { matchId: r.id, date: r.date, opp: home, ha: "A", gf: r.sa, ga: r.sh, res: awayRes });
+    const identityFields =
+      resultMemoryIdentityFields(r);
+
+    const shared = {
+      matchId:
+        r.id,
+      sourceMatchId:
+        r.sourceMatchId &&
+        r.sourceMatchId !== r.id
+          ? r.sourceMatchId
+          : undefined,
+      ...identityFields,
+    };
+
+    pushEntry(home, {
+      ...shared,
+      date:
+        r.date,
+      opp:
+        away,
+      ha:
+        "H",
+      gf:
+        r.sh,
+      ga:
+        r.sa,
+      res:
+        homeRes,
+    });
+
+    pushEntry(away, {
+      ...shared,
+      date:
+        r.date,
+      opp:
+        home,
+      ha:
+        "A",
+      gf:
+        r.sa,
+      ga:
+        r.sh,
+      res:
+        awayRes,
+    });
   }
 
   // Per-team: newest-first, age-capped, count-capped (mirrors pushResult()).
