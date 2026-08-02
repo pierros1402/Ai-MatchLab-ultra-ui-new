@@ -21,6 +21,9 @@ import { buildCanonicalId } from "./canonical-id.js";
 import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { canonicalTeamName } from "../storage/team-aliases-db.js";
+import {
+  getProductionIdentityResolver
+} from "./production-identity-resolver-runtime.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -33,6 +36,227 @@ function readJsonSafe(filePath, fallback = null) {
 
 export function normalizeMatchId(value) {
   return String(value ?? "").trim();
+}
+
+export function repositoryFixtureIdForRow(row) {
+  return normalizeMatchId(
+    row?.canonicalId ||
+    row?.matchId
+  );
+}
+
+function applyManagedIdentityOverlay(
+  row,
+  resolution
+) {
+  for (const [field, expected] of [
+    [
+      "homeGlobalClubId",
+      resolution.homeGlobalClubId
+    ],
+    [
+      "awayGlobalClubId",
+      resolution.awayGlobalClubId
+    ]
+  ]) {
+    const existing =
+      normalizeMatchId(
+        row?.[field]
+      );
+
+    if (
+      existing &&
+      existing !== expected
+    ) {
+      throw new Error(
+        `production_identity_overlay_conflict:${field}:${repositoryFixtureIdForRow(row)}`
+      );
+    }
+  }
+
+  return {
+    ...row,
+
+    homeGlobalClubId:
+      resolution.homeGlobalClubId,
+
+    awayGlobalClubId:
+      resolution.awayGlobalClubId
+  };
+}
+
+export function applyProductionIdentityMembershipGate(
+  rows,
+  {
+    resolver =
+      getProductionIdentityResolver()
+  } = {}
+) {
+  if (
+    !resolver ||
+    typeof resolver.resolveFixtureId !==
+      "function"
+  ) {
+    throw new Error(
+      "production_identity_resolver_required"
+    );
+  }
+
+  const sourceRows =
+    Array.isArray(rows)
+      ? rows
+      : [];
+
+  const inspected =
+    sourceRows.map(row => {
+      const repositoryFixtureId =
+        repositoryFixtureIdForRow(row);
+
+      const resolution =
+        repositoryFixtureId
+          ? resolver.resolveFixtureId(
+              repositoryFixtureId
+            )
+          : {
+              ok: false,
+              status:
+                "UNKNOWN_FIXTURE_ID"
+            };
+
+      return {
+        row,
+        repositoryFixtureId,
+        resolution
+      };
+    });
+
+  const retainedTargetsPresent =
+    new Set(
+      inspected
+        .filter(item =>
+          item.resolution?.ok &&
+          item.resolution?.sourceRole ===
+            "retained"
+        )
+        .map(item =>
+          item.resolution.resolvedFixtureId
+        )
+    );
+
+  const outputRows = [];
+  const diagnostics = {
+    inputRows:
+      sourceRows.length,
+
+    outputRows: 0,
+
+    unmanagedRows: 0,
+
+    managedRetainedRows: 0,
+
+    managedSuppressedRows: 0,
+
+    suppressedWithRetainedTarget: 0,
+
+    suppressedWithoutRetainedTarget: 0,
+
+    identityOverlayRows: 0,
+
+    suppressedFixtureIds: [],
+
+    suppressedWithoutTargetFixtureIds: []
+  };
+
+  for (const item of inspected) {
+    const resolution =
+      item.resolution;
+
+    if (!resolution?.ok) {
+      if (
+        resolution?.status !==
+          "UNKNOWN_FIXTURE_ID"
+      ) {
+        throw new Error(
+          `production_identity_resolution_failed:${item.repositoryFixtureId || "missing"}:${resolution?.status || "unknown"}`
+        );
+      }
+
+      diagnostics.unmanagedRows += 1;
+      outputRows.push(item.row);
+      continue;
+    }
+
+    if (
+      resolution.sourceRole ===
+        "retained"
+    ) {
+      diagnostics
+        .managedRetainedRows += 1;
+
+      diagnostics
+        .identityOverlayRows += 1;
+
+      outputRows.push(
+        applyManagedIdentityOverlay(
+          item.row,
+          resolution
+        )
+      );
+
+      continue;
+    }
+
+    if (
+      resolution.sourceRole ===
+        "suppressed_lineage_alias"
+    ) {
+      diagnostics
+        .managedSuppressedRows += 1;
+
+      diagnostics
+        .suppressedFixtureIds.push(
+          item.repositoryFixtureId
+        );
+
+      if (
+        retainedTargetsPresent.has(
+          resolution.resolvedFixtureId
+        )
+      ) {
+        diagnostics
+          .suppressedWithRetainedTarget += 1;
+      }
+      else {
+        diagnostics
+          .suppressedWithoutRetainedTarget += 1;
+
+        diagnostics
+          .suppressedWithoutTargetFixtureIds
+          .push(
+            item.repositoryFixtureId
+          );
+      }
+
+      continue;
+    }
+
+    throw new Error(
+      `production_identity_source_role_invalid:${item.repositoryFixtureId}:${resolution.sourceRole}`
+    );
+  }
+
+  diagnostics.outputRows =
+    outputRows.length;
+
+  diagnostics.suppressedFixtureIds.sort();
+  diagnostics
+    .suppressedWithoutTargetFixtureIds
+    .sort();
+
+  return {
+    rows: outputRows,
+    diagnostics
+  };
 }
 
 // Collapse cross-source duplicates per league (same real match under two
@@ -546,6 +770,9 @@ export function canonicalFixturesForDay(dayKey) {
     return rows;
   }
 
+  const identityResolver =
+    getProductionIdentityResolver();
+
   for (const file of fs.readdirSync(dir).filter(name => name.endsWith(".json")).sort()) {
     const slug = path.basename(file, ".json");
     if (isDisabledLeague(slug)) {
@@ -555,23 +782,32 @@ export function canonicalFixturesForDay(dayKey) {
     const payload = readJsonSafe(path.join(dir, file), null);
     const rawFixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
 
-    // Defense-in-depth: collapse cross-source duplicates even if a stale store
-    // file predates write-time dedup (same match under two canonical IDs).
-    const fixtures =
-      dedupeLeagueDayFixtures(
-        rawFixtures,
-        {
-          slug
-        }
-      )
-        .rows
-        .map(row => ({
+    const identityGate =
+      applyProductionIdentityMembershipGate(
+        rawFixtures.map(row => ({
           ...row,
 
           leagueSlug:
             row?.leagueSlug ||
             slug
-        }))
+        })),
+        {
+          resolver:
+            identityResolver
+        }
+      );
+
+    // Defense-in-depth: resolve finalized retained/suppressed identities before
+    // generic semantic dedup. Generic dedup remains unchanged and cannot become
+    // an identity authority.
+    const fixtures =
+      dedupeLeagueDayFixtures(
+        identityGate.rows,
+        {
+          slug
+        }
+      )
+        .rows
         .filter(row =>
           !isDisabledFixtureRow(row)
         )

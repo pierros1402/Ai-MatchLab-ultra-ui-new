@@ -4,8 +4,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   buildProductionIdentityResolver,
+  buildProductionIdentityResolverFromCommittedDecisions,
   loadJsonBomSafe,
   validateResolverFoundation,
+  validateResolverRuntimeDecisions,
 } from "./production-identity-resolver.js";
 
 const root = path.resolve(
@@ -340,4 +342,131 @@ test("resolver exposes no mutation or integration authorization", () => {
     consumerIntegrationAuthorized: false,
     writePlanGenerated: false,
   });
+});
+
+
+test("committed decision artifacts validate without external phase evidence", () => {
+  const {
+    contract,
+    registry,
+    retentionLedger,
+    sourceLedger,
+  } = loadAll();
+
+  const validation =
+    validateResolverRuntimeDecisions({
+      contract,
+      registry,
+      retentionLedger,
+      sourceLedger,
+    });
+
+  assert.equal(validation.ok, true);
+  assert.equal(
+    validation.status,
+    "PASS_RESOLVER_RUNTIME_DECISIONS",
+  );
+  assert.equal(validation.issueCount, 0);
+});
+
+test("runtime resolver construction preserves exact finalized coverage", () => {
+  const {
+    contract,
+    registry,
+    retentionLedger,
+    sourceLedger,
+  } = loadAll();
+
+  const value =
+    buildProductionIdentityResolverFromCommittedDecisions({
+      contract,
+      registry,
+      retentionLedger,
+      sourceLedger,
+    });
+
+  assert.deepEqual(value.counts, {
+    identityBindings: 70,
+    retainedFixtureIds: 53,
+    suppressedFixtureAliases: 53,
+    sourceFixtureIds: 106,
+  });
+  assert.equal(
+    value.listManagedFixtureIds().length,
+    106,
+  );
+});
+
+test("managed fixture resolution exposes immutable identity metadata", () => {
+  const data = loadAll();
+  const value =
+    buildProductionIdentityResolverFromCommittedDecisions({
+      contract: data.contract,
+      registry: data.registry,
+      retentionLedger: data.retentionLedger,
+      sourceLedger: data.sourceLedger,
+    });
+
+  const decision =
+    data.retentionLedger.decisions[0];
+
+  for (const fixtureId of [
+    decision.retainedRepositoryFixtureId,
+    ...decision.suppressedRepositoryFixtureIds,
+  ]) {
+    const result =
+      value.resolveFixtureId(fixtureId);
+
+    assert.equal(result.ok, true);
+    assert.equal(
+      result.fixtureRetentionDecisionId,
+      decision.fixtureRetentionDecisionId,
+    );
+    assert.equal(result.dayKey, decision.dayKey);
+    assert.equal(
+      result.leagueSlug,
+      decision.leagueSlug,
+    );
+    assert.equal(
+      result.homeGlobalClubId,
+      decision.homeGlobalClubId,
+    );
+    assert.equal(
+      result.awayGlobalClubId,
+      decision.awayGlobalClubId,
+    );
+  }
+});
+
+test("managed fixture scope is exact and unknown IDs remain unmanaged", () => {
+  const data = loadAll();
+  const value =
+    buildProductionIdentityResolverFromCommittedDecisions({
+      contract: data.contract,
+      registry: data.registry,
+      retentionLedger: data.retentionLedger,
+      sourceLedger: data.sourceLedger,
+    });
+
+  const decision =
+    data.retentionLedger.decisions[0];
+
+  assert.equal(
+    value.isManagedFixtureId(
+      decision.retainedRepositoryFixtureId,
+    ),
+    true,
+  );
+  assert.equal(
+    value.isManagedFixtureId(
+      decision.suppressedRepositoryFixtureIds[0],
+    ),
+    true,
+  );
+  assert.equal(
+    value.isManagedFixtureId(
+      "cid_unmanaged_fixture_20990101",
+    ),
+    false,
+  );
 });

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  applyProductionIdentityMembershipGate,
   fixtureBelongsToAthensDay,
   mergeCanonicalWithRuntimeOverlay
 } from "./day-fixture-universe.js";
@@ -408,6 +409,222 @@ test(
       result
         .ambiguousCanonicalAliasCount >
       0
+    );
+  }
+);
+
+
+function fakeProductionIdentityResolver() {
+  const retained =
+    "cid_test_retained_20260725";
+
+  const suppressed =
+    "cid_test_suppressed_20260725";
+
+  return {
+    resolveFixtureId(fixtureId) {
+      if (fixtureId === retained) {
+        return {
+          ok: true,
+          status:
+            "RETAINED_FIXTURE_IDEMPOTENT",
+          sourceFixtureId: fixtureId,
+          resolvedFixtureId: retained,
+          sourceRole: "retained",
+          fixtureRetentionDecisionId:
+            "p0cret_test",
+          dayKey: "2026-07-25",
+          leagueSlug: "test.1",
+          homeGlobalClubId:
+            "gcid_test_home",
+          awayGlobalClubId:
+            "gcid_test_away",
+        };
+      }
+
+      if (fixtureId === suppressed) {
+        return {
+          ok: true,
+          status:
+            "SUPPRESSED_FIXTURE_LINEAGE_ALIAS_RESOLVED",
+          sourceFixtureId: fixtureId,
+          resolvedFixtureId: retained,
+          sourceRole:
+            "suppressed_lineage_alias",
+          fixtureRetentionDecisionId:
+            "p0cret_test",
+          dayKey: "2026-07-25",
+          leagueSlug: "test.1",
+          homeGlobalClubId:
+            "gcid_test_home",
+          awayGlobalClubId:
+            "gcid_test_away",
+        };
+      }
+
+      return {
+        ok: false,
+        status: "UNKNOWN_FIXTURE_ID",
+        sourceFixtureId: fixtureId,
+      };
+    }
+  };
+}
+
+test(
+  "unmanaged fixtures pass through the production identity gate",
+  () => {
+    const row =
+      canonicalFixture({
+        canonicalId:
+          "cid_unmanaged_fixture_20260725"
+      });
+
+    const result =
+      applyProductionIdentityMembershipGate(
+        [row],
+        {
+          resolver:
+            fakeProductionIdentityResolver()
+        }
+      );
+
+    assert.equal(result.rows.length, 1);
+    assert.equal(result.rows[0], row);
+    assert.equal(
+      result.diagnostics.unmanagedRows,
+      1
+    );
+  }
+);
+
+test(
+  "managed retained fixture receives an additive identity overlay",
+  () => {
+    const result =
+      applyProductionIdentityMembershipGate(
+        [
+          canonicalFixture({
+            canonicalId:
+              "cid_test_retained_20260725"
+          })
+        ],
+        {
+          resolver:
+            fakeProductionIdentityResolver()
+        }
+      );
+
+    assert.equal(result.rows.length, 1);
+    assert.equal(
+      result.rows[0].homeGlobalClubId,
+      "gcid_test_home"
+    );
+    assert.equal(
+      result.rows[0].awayGlobalClubId,
+      "gcid_test_away"
+    );
+    assert.equal(
+      result.diagnostics.identityOverlayRows,
+      1
+    );
+  }
+);
+
+test(
+  "suppressed alias is excluded when its retained target is present",
+  () => {
+    const result =
+      applyProductionIdentityMembershipGate(
+        [
+          canonicalFixture({
+            canonicalId:
+              "cid_test_suppressed_20260725"
+          }),
+          canonicalFixture({
+            canonicalId:
+              "cid_test_retained_20260725",
+            matchId:
+              "RETAINED"
+          })
+        ],
+        {
+          resolver:
+            fakeProductionIdentityResolver()
+        }
+      );
+
+    assert.equal(result.rows.length, 1);
+    assert.equal(
+      result.rows[0].canonicalId,
+      "cid_test_retained_20260725"
+    );
+    assert.equal(
+      result.diagnostics
+        .suppressedWithRetainedTarget,
+      1
+    );
+    assert.equal(
+      result.diagnostics
+        .suppressedWithoutRetainedTarget,
+      0
+    );
+  }
+);
+
+test(
+  "suppressed-only alias fails closed and cannot create membership",
+  () => {
+    const result =
+      applyProductionIdentityMembershipGate(
+        [
+          canonicalFixture({
+            canonicalId:
+              "cid_test_suppressed_20260725"
+          })
+        ],
+        {
+          resolver:
+            fakeProductionIdentityResolver()
+        }
+      );
+
+    assert.equal(result.rows.length, 0);
+    assert.equal(
+      result.diagnostics
+        .suppressedWithoutRetainedTarget,
+      1
+    );
+    assert.deepEqual(
+      result.diagnostics
+        .suppressedWithoutTargetFixtureIds,
+      [
+        "cid_test_suppressed_20260725"
+      ]
+    );
+  }
+);
+
+test(
+  "conflicting pre-existing global club IDs fail closed",
+  () => {
+    assert.throws(
+      () =>
+        applyProductionIdentityMembershipGate(
+          [
+            canonicalFixture({
+              canonicalId:
+                "cid_test_retained_20260725",
+              homeGlobalClubId:
+                "gcid_wrong_home"
+            })
+          ],
+          {
+            resolver:
+              fakeProductionIdentityResolver()
+          }
+        ),
+      /production_identity_overlay_conflict/
     );
   }
 );

@@ -308,31 +308,188 @@ export function validateResolverFoundation({
   };
 }
 
-export function buildProductionIdentityResolver({
+
+export function validateResolverRuntimeDecisions({
   contract,
   registry,
   retentionLedger,
   sourceLedger,
-  classificationAudit,
-  phaseContract,
 }) {
-  const validation = validateResolverFoundation({
-    contract,
-    registry,
-    retentionLedger,
-    sourceLedger,
-    classificationAudit,
-    phaseContract,
-  });
+  const issues = [];
 
-  if (!validation.ok) {
-    const error = new Error(
-      "production_identity_resolver_foundation_invalid",
-    );
-    error.validation = validation;
-    throw error;
+  if (
+    contract?.schema !==
+    PRODUCTION_IDENTITY_RESOLVER_CONTRACT_SCHEMA
+  ) {
+    issues.push(issue(
+      "RESOLVER_CONTRACT_SCHEMA_INVALID",
+      "Unexpected resolver contract schema.",
+    ));
   }
 
+  if (
+    sha256Canonical(
+      withoutField(contract, "immutableContractHash"),
+    ) !== contract?.immutableContractHash
+  ) {
+    issues.push(issue(
+      "RESOLVER_CONTRACT_HASH_INVALID",
+      "Resolver contract immutable hash is invalid.",
+    ));
+  }
+
+  for (const [field, expected] of Object.entries(
+    EXPECTED_RESOLVER_SOURCE,
+  )) {
+    if (contract?.source?.[field] !== expected) {
+      issues.push(issue(
+        "RESOLVER_SOURCE_BINDING_INVALID",
+        `Resolver source binding mismatch: ${field}.`,
+        { field, expected, actual: contract?.source?.[field] },
+      ));
+    }
+  }
+
+  for (const [field, expected] of Object.entries(
+    EXPECTED_RESOLVER_COUNTS,
+  )) {
+    if (Number(contract?.requiredCoverage?.[field]) !== expected) {
+      issues.push(issue(
+        "RESOLVER_COVERAGE_CONTRACT_INVALID",
+        `Resolver coverage mismatch: ${field}.`,
+        { field, expected, actual: contract?.requiredCoverage?.[field] },
+      ));
+    }
+  }
+
+  const requiredTruePolicy = [
+    "conflictingIdentitySignalsFailClosed",
+    "unknownIdentitySignalsFailClosed",
+    "retainedFixtureIdResolutionIsIdempotent",
+    "canonicalUniverseRequiredForMembershipResolution",
+    "identityOverlayIsAdditiveOnly",
+  ];
+
+  const requiredFalsePolicy = [
+    "fuzzyTeamIdentityMatchingAllowed",
+    "fixtureAliasChainsAllowed",
+    "fixtureAliasCyclesAllowed",
+    "resolverMayCreateFixtureMembership",
+    "resolverMayChangeScoreOrStatusTruth",
+    "resolverMayDeleteFixture",
+  ];
+
+  for (const field of requiredTruePolicy) {
+    if (contract?.resolutionPolicy?.[field] !== true) {
+      issues.push(issue(
+        "RESOLVER_REQUIRED_TRUE_POLICY_INVALID",
+        `Resolver policy must be true: ${field}.`,
+        { field },
+      ));
+    }
+  }
+
+  for (const field of requiredFalsePolicy) {
+    if (contract?.resolutionPolicy?.[field] !== false) {
+      issues.push(issue(
+        "RESOLVER_REQUIRED_FALSE_POLICY_INVALID",
+        `Resolver policy must be false: ${field}.`,
+        { field },
+      ));
+    }
+  }
+
+  if (
+    contract?.resolutionPolicy?.fixtureAliasDirection !==
+    "SUPPRESSED_TO_RETAINED_ONLY"
+  ) {
+    issues.push(issue(
+      "FIXTURE_ALIAS_DIRECTION_INVALID",
+      "Fixture alias direction must be suppressed-to-retained only.",
+    ));
+  }
+
+  for (const [field, value] of Object.entries(
+    contract?.integrationState || {},
+  )) {
+    if (value !== false) {
+      issues.push(issue(
+        "RESOLVER_INTEGRATION_STATE_INVALID",
+        `Integration state must remain false: ${field}.`,
+        { field },
+      ));
+    }
+  }
+
+  for (const [field, value] of Object.entries(
+    contract?.authorization || {},
+  )) {
+    if (value !== false) {
+      issues.push(issue(
+        "RESOLVER_AUTHORIZATION_INVALID",
+        `Authorization must remain false: ${field}.`,
+        { field },
+      ));
+    }
+  }
+
+  const finalizedValidation =
+    validateFinalizedIdentityRetention({
+      registry,
+      retentionLedger,
+      sourceLedger,
+    });
+
+  if (!finalizedValidation.ok) {
+    issues.push(issue(
+      "FINALIZED_DECISION_INPUT_INVALID",
+      "Finalized identity/retention inputs are not valid.",
+      { issues: finalizedValidation.issues },
+    ));
+  }
+
+  return {
+    schema:
+      "ai-matchlab.production-identity-resolver-runtime-validation.v1",
+    ok: issues.length === 0,
+    status:
+      issues.length === 0
+        ? "PASS_RESOLVER_RUNTIME_DECISIONS"
+        : "FAIL_RESOLVER_RUNTIME_DECISIONS",
+    summary: {
+      identityBindings:
+        Number(registry?.bindings?.length || 0),
+      fixtureRetentionDecisions:
+        Number(retentionLedger?.decisions?.length || 0),
+      sourceFixtureIds:
+        new Set(
+          (retentionLedger?.decisions || []).flatMap(
+            decision =>
+              (decision.sourceFixtures || []).map(
+                fixture => clean(fixture.repositoryFixtureId),
+              ),
+          ),
+        ).size,
+      finalizedDecisionValidationOk:
+        finalizedValidation.ok,
+    },
+    authorization: {
+      productionDataApplicationAuthorized: false,
+      repositoryRepairAuthorized: false,
+      fixtureRetentionApplicationAuthorized: false,
+      fixtureDeletionAuthorized: false,
+      historyRewriteAuthorized: false,
+      writePlanGenerated: false,
+    },
+    issueCount: issues.length,
+    issues,
+  };
+}
+
+function buildResolverFromValidatedDecisions({
+  registry,
+  retentionLedger,
+}) {
   const byGlobalClubId = new Map();
   const byLedgerTeamIdentityKey = new Map();
   const byNormalizedAlias = new Map();
@@ -565,6 +722,10 @@ export function buildProductionIdentityResolver({
         sourceRole: "retained",
         fixtureRetentionDecisionId:
           decision.fixtureRetentionDecisionId,
+        dayKey: decision.dayKey,
+        leagueSlug: decision.leagueSlug,
+        homeGlobalClubId: decision.homeGlobalClubId,
+        awayGlobalClubId: decision.awayGlobalClubId,
         deletionAuthorized: false,
         historyRewriteAuthorized: false,
         productionMutationAuthorized: false,
@@ -591,6 +752,10 @@ export function buildProductionIdentityResolver({
         sourceRole: "suppressed_lineage_alias",
         fixtureRetentionDecisionId:
           decision.fixtureRetentionDecisionId,
+        dayKey: decision.dayKey,
+        leagueSlug: decision.leagueSlug,
+        homeGlobalClubId: decision.homeGlobalClubId,
+        awayGlobalClubId: decision.awayGlobalClubId,
         deletionAuthorized: false,
         historyRewriteAuthorized: false,
         productionMutationAuthorized: false,
@@ -728,6 +893,21 @@ export function buildProductionIdentityResolver({
     };
   }
 
+  function isManagedFixtureId(repositoryFixtureId) {
+    const sourceFixtureId = clean(repositoryFixtureId);
+    return (
+      retainedFixtureIds.has(sourceFixtureId) ||
+      fixtureAliasToRetained.has(sourceFixtureId)
+    );
+  }
+
+  function listManagedFixtureIds() {
+    return [
+      ...retainedFixtureIds,
+      ...fixtureAliasToRetained.keys(),
+    ].sort();
+  }
+
   return Object.freeze({
     schema:
       "ai-matchlab.production-identity-resolver.v1",
@@ -744,6 +924,8 @@ export function buildProductionIdentityResolver({
     resolveFixtureId,
     resolveFixtureMembership,
     buildFixtureIdentityOverlay,
+    isManagedFixtureId,
+    listManagedFixtureIds,
     authorization: Object.freeze({
       productionDataApplicationAuthorized: false,
       repositoryRepairAuthorized: false,
@@ -753,5 +935,64 @@ export function buildProductionIdentityResolver({
       consumerIntegrationAuthorized: false,
       writePlanGenerated: false,
     }),
+  });
+}
+
+
+export function buildProductionIdentityResolver({
+  contract,
+  registry,
+  retentionLedger,
+  sourceLedger,
+  classificationAudit,
+  phaseContract,
+}) {
+  const validation = validateResolverFoundation({
+    contract,
+    registry,
+    retentionLedger,
+    sourceLedger,
+    classificationAudit,
+    phaseContract,
+  });
+
+  if (!validation.ok) {
+    const error = new Error(
+      "production_identity_resolver_foundation_invalid",
+    );
+    error.validation = validation;
+    throw error;
+  }
+
+  return buildResolverFromValidatedDecisions({
+    registry,
+    retentionLedger,
+  });
+}
+
+export function buildProductionIdentityResolverFromCommittedDecisions({
+  contract,
+  registry,
+  retentionLedger,
+  sourceLedger,
+}) {
+  const validation = validateResolverRuntimeDecisions({
+    contract,
+    registry,
+    retentionLedger,
+    sourceLedger,
+  });
+
+  if (!validation.ok) {
+    const error = new Error(
+      "production_identity_resolver_runtime_decisions_invalid",
+    );
+    error.validation = validation;
+    throw error;
+  }
+
+  return buildResolverFromValidatedDecisions({
+    registry,
+    retentionLedger,
   });
 }
