@@ -2,14 +2,46 @@
   "dayKey": "2026-08-03",
   "leagueSlug": "arg.1",
   "leagueName": "Argentina Primera División",
-  "updatedAt": "2026-08-02T22:15:35.208Z",
+  "updatedAt": "2026-08-02T22:47:38.484Z",
   "count": 3,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "arg.1",
     "requestedDayKey": "2026-08-03",
-    "mergedAt": "2026-08-02T22:15:35.208Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "arg.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 2,
+      "fetches": [
+        {
+          "providerSlug": "arg.1",
+          "dayKey": "2026-08-02",
+          "ok": true,
+          "events": 5,
+          "matched": 2
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-02T22:47:38.484Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -26,16 +58,16 @@
       "kickoffUtc": "2026-08-02T22:15Z",
       "homeTeam": "River Plate",
       "awayTeam": "Rosario Central",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 0,
+      "scoreAway": 1,
       "penalties": null,
       "decidedBy": null,
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
+      "status": "FIRST_HALF",
+      "rawStatus": "STATUS_FIRST_HALF",
+      "minute": "29'",
       "venue": "Estadio Más Monumental",
       "firstSeenAt": "2026-07-19T18:07:58.848Z",
-      "lastSeenAt": "2026-08-02T22:15:35.191Z",
+      "lastSeenAt": "2026-08-02T22:47:38.483Z",
       "providerLeagueSlug": "arg.1"
     },
     {
@@ -61,7 +93,7 @@
       "minute": "0'",
       "venue": "Ciudad de Lanús",
       "firstSeenAt": "2026-07-19T18:07:58.848Z",
-      "lastSeenAt": "2026-08-02T22:15:35.192Z",
+      "lastSeenAt": "2026-08-02T22:47:38.483Z",
       "providerLeagueSlug": "arg.1"
     },
     {
@@ -87,7 +119,7 @@
       "minute": "0'",
       "venue": "Eva Perón",
       "firstSeenAt": "2026-07-19T18:07:58.891Z",
-      "lastSeenAt": "2026-08-02T22:15:35.205Z",
+      "lastSeenAt": "2026-08-02T22:47:38.229Z",
       "providerLeagueSlug": "arg.1"
     }
   ]
