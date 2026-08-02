@@ -2,14 +2,55 @@
   "dayKey": "2026-08-02",
   "leagueSlug": "bol.1",
   "leagueName": "Bol 1",
-  "updatedAt": "2026-08-01T23:17:13.833Z",
+  "updatedAt": "2026-08-02T00:06:04.377Z",
   "count": 3,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "bol.1",
     "requestedDayKey": "2026-08-02",
-    "mergedAt": "2026-08-01T23:17:13.833Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "bol.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 1,
+      "fetches": [
+        {
+          "providerSlug": "bol.1",
+          "dayKey": "2026-08-01",
+          "ok": true,
+          "events": 2,
+          "matched": 1
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-02T00:06:01.038Z",
+    "mode": "targeted_live_status_refresh",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-08-02",
+      "offsets": [
+        0
+      ],
+      "changedRows": 1,
+      "mergedAt": "2026-08-02T00:06:04.377Z"
+    }
   },
   "fixtures": [
     {
@@ -26,16 +67,17 @@
       "kickoffUtc": "2026-08-01T21:15:00.000Z",
       "homeTeam": "SA Bulo Bulo",
       "awayTeam": "Blooming",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 2,
+      "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-07-29T21:15:16.265Z",
-      "lastSeenAt": "2026-08-01T23:17:13.001Z"
+      "lastSeenAt": "2026-08-02T00:06:04.377Z",
+      "statusType": "STATUS_FINAL"
     },
     {
       "canonicalId": "cid_bol1_sanantoniobulobulo_blooming_20260802",
@@ -56,12 +98,12 @@
       "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "90'+4'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "venue": "Estadio Félix Capriles",
       "firstSeenAt": "2026-08-01T18:14:51.368Z",
-      "lastSeenAt": "2026-08-01T23:17:13.756Z"
+      "lastSeenAt": "2026-08-02T00:06:01.037Z"
     },
     {
       "canonicalId": "cid_bol1_realpotosi_gvsanjose_20260802",
@@ -87,7 +129,7 @@
       "minute": "0'",
       "venue": "Estadio Víctor Agustín Ugarte",
       "firstSeenAt": "2026-07-30T22:32:39.058Z",
-      "lastSeenAt": "2026-08-01T23:17:13.822Z"
+      "lastSeenAt": "2026-08-02T00:06:00.936Z"
     }
   ]
 }
