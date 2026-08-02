@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-matchlab.production-identity-resolver-contract.schema.v1",
+  "title": "AI MatchLab Production Identity Resolver Contract V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contractVersion",
+    "generatedAt",
+    "source",
+    "requiredCoverage",
+    "resolutionPolicy",
+    "integrationState",
+    "authorization",
+    "immutableContractHash"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ai-matchlab.production-identity-resolver-contract.v1"
+    },
+    "contractVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch",
+        "commit",
+        "parent",
+        "tree",
+        "localCommitEvidenceSha256",
+        "globalClubIdRegistrySha256",
+        "fixtureRetentionLedgerSha256",
+        "semanticDuplicateLedgerSha256",
+        "classificationZipSha256",
+        "classificationManifestSha256",
+        "classificationAuditSha256",
+        "phaseContractSha256",
+        "impactZipSha256"
+      ],
+      "properties": {
+        "branch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tree": {
+          "type": "string",
+          "minLength": 1
+        },
+        "localCommitEvidenceSha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "globalClubIdRegistrySha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fixtureRetentionLedgerSha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "semanticDuplicateLedgerSha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classificationZipSha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classificationManifestSha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classificationAuditSha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "phaseContractSha256": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impactZipSha256": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "requiredCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identityBindings",
+        "uniqueGlobalClubIds",
+        "fixtureRetentionDecisions",
+        "sourceFixtureIds",
+        "suppressedFixtureAliases",
+        "classifiedImpactFiles",
+        "unclassifiedImpactFiles"
+      ],
+      "properties": {
+        "identityBindings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "uniqueGlobalClubIds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fixtureRetentionDecisions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sourceFixtureIds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "suppressedFixtureAliases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "classifiedImpactFiles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unclassifiedImpactFiles": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "resolutionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "teamIdentitySignals",
+        "fuzzyTeamIdentityMatchingAllowed",
+        "conflictingIdentitySignalsFailClosed",
+        "unknownIdentitySignalsFailClosed",
+        "fixtureAliasDirection",
+        "fixtureAliasChainsAllowed",
+        "fixtureAliasCyclesAllowed",
+        "retainedFixtureIdResolutionIsIdempotent",
+        "canonicalUniverseRequiredForMembershipResolution",
+        "resolverMayCreateFixtureMembership",
+        "resolverMayChangeScoreOrStatusTruth",
+        "resolverMayDeleteFixture",
+        "identityOverlayIsAdditiveOnly"
+      ],
+      "properties": {
+        "teamIdentitySignals": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "fuzzyTeamIdentityMatchingAllowed": {
+          "type": "boolean"
+        },
+        "conflictingIdentitySignalsFailClosed": {
+          "type": "boolean"
+        },
+        "unknownIdentitySignalsFailClosed": {
+          "type": "boolean"
+        },
+        "fixtureAliasChainsAllowed": {
+          "type": "boolean"
+        },
+        "fixtureAliasCyclesAllowed": {
+          "type": "boolean"
+        },
+        "retainedFixtureIdResolutionIsIdempotent": {
+          "type": "boolean"
+        },
+        "canonicalUniverseRequiredForMembershipResolution": {
+          "type": "boolean"
+        },
+        "resolverMayCreateFixtureMembership": {
+          "type": "boolean"
+        },
+        "resolverMayChangeScoreOrStatusTruth": {
+          "type": "boolean"
+        },
+        "resolverMayDeleteFixture": {
+          "type": "boolean"
+        },
+        "identityOverlayIsAdditiveOnly": {
+          "type": "boolean"
+        },
+        "fixtureAliasDirection": {
+          "const": "SUPPRESSED_TO_RETAINED_ONLY"
+        }
+      }
+    },
+    "integrationState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtimeConsumersIntegrated",
+        "canonicalFixturesUpdated",
+        "resultArtifactsUpdated",
+        "derivedArtifactsRebuilt",
+        "evidenceArtifactsRewritten",
+        "writePlanGenerated"
+      ],
+      "properties": {
+        "runtimeConsumersIntegrated": {
+          "const": false
+        },
+        "canonicalFixturesUpdated": {
+          "const": false
+        },
+        "resultArtifactsUpdated": {
+          "const": false
+        },
+        "derivedArtifactsRebuilt": {
+          "const": false
+        },
+        "evidenceArtifactsRewritten": {
+          "const": false
+        },
+        "writePlanGenerated": {
+          "const": false
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "productionDataApplicationAuthorized",
+        "repositoryRepairAuthorized",
+        "fixtureRetentionApplicationAuthorized",
+        "fixtureDeletionAuthorized",
+        "historyRewriteAuthorized",
+        "consumerIntegrationAuthorized",
+        "writePlanGenerated",
+        "pushAuthorized",
+        "workflowAuthorized",
+        "deployAuthorized"
+      ],
+      "properties": {
+        "productionDataApplicationAuthorized": {
+          "const": false
+        },
+        "repositoryRepairAuthorized": {
+          "const": false
+        },
+        "fixtureRetentionApplicationAuthorized": {
+          "const": false
+        },
+        "fixtureDeletionAuthorized": {
+          "const": false
+        },
+        "historyRewriteAuthorized": {
+          "const": false
+        },
+        "consumerIntegrationAuthorized": {
+          "const": false
+        },
+        "writePlanGenerated": {
+          "const": false
+        },
+        "pushAuthorized": {
+          "const": false
+        },
+        "workflowAuthorized": {
+          "const": false
+        },
+        "deployAuthorized": {
+          "const": false
+        }
+      }
+    },
+    "immutableContractHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
