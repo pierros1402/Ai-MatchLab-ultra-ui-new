@@ -202,7 +202,7 @@ test("pins all required producer source hashes", () => {
   });
 
   assert.equal(result.ok, true);
-  assert.equal(result.requiredSourceCount, 18);
+  assert.equal(result.requiredSourceCount, 19);
 
   const drifted = sourceRecords.map(row => ({ ...row }));
   drifted[0].sha256 = "0".repeat(64);
@@ -259,7 +259,7 @@ test("builds only an exact 13-runner registry", () => {
   );
 });
 
-test("marks the six integrated P0-C pure builders as ready", () => {
+test("marks the seven integrated P0-C pure builders as ready", () => {
   const contract = getP0CP4FamilyAdapterContract();
   const ready = contract.families
     .filter(row => row.adapterState === "PURE_BUILDER_READY")
@@ -267,6 +267,7 @@ test("marks the six integrated P0-C pure builders as ready", () => {
     .sort();
 
   assert.deepEqual(ready, [
+    "DEPLOY_SNAPSHOT_DETAILS",
     "DEPLOY_SNAPSHOT_FIXTURES",
     "DEPLOY_SNAPSHOT_FIXTURES_ALL",
     "DEPLOY_SNAPSHOT_ODDS",

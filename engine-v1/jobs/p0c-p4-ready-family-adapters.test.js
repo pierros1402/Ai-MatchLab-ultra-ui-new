@@ -30,6 +30,50 @@ function context(family, paths) {
 
 function builders(overrides = {}) {
   return {
+    deploySnapshotDetails: ({
+      dayKey,
+      inventoryPaths,
+      sourceDetails,
+      existingDeployDetails,
+      fixtureRows,
+      preserveExistingDetails,
+      patchedAt,
+    }) => ({
+      schema:
+        "ai-matchlab.p0c-p4-deploy-snapshot-details.v1",
+      ok:
+        true,
+      date:
+        dayKey,
+      completeFamilyOutput:
+        true,
+      outputs:
+        inventoryPaths.map(relativePath => ({
+          relativePath,
+          action:
+            "write",
+          content: {
+            dayKey,
+            relativePath,
+            sourceDetails:
+              sourceDetails.length,
+            existingDeployDetails:
+              existingDeployDetails.length,
+            fixtureRows:
+              fixtureRows.length,
+            preserveExistingDetails,
+            patchedAt,
+          },
+          bytes:
+            1,
+          sha256:
+            "b".repeat(64),
+        })),
+      diagnostics: {
+        inventoryPathCount:
+          inventoryPaths.length,
+      },
+    }),
     deploySnapshotFixturesFromArtifacts: ({
       dayKey,
       fixtureUniverse,
@@ -104,7 +148,7 @@ function builders(overrides = {}) {
   };
 }
 
-test("publishes the exact six pure-builder-ready families", () => {
+test("publishes the exact seven pure-builder-ready families", () => {
   assert.equal(
     P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
     "ai-matchlab.p0c-p4-ready-family-adapters.v1",
@@ -112,6 +156,7 @@ test("publishes the exact six pure-builder-ready families", () => {
   assert.deepEqual(
     P0C_P4_READY_FAMILY_NAMES,
     [
+      "DEPLOY_SNAPSHOT_DETAILS",
       "DEPLOY_SNAPSHOT_FIXTURES",
       "DEPLOY_SNAPSHOT_FIXTURES_ALL",
       "DEPLOY_SNAPSHOT_ODDS",
@@ -120,6 +165,151 @@ test("publishes the exact six pure-builder-ready families", () => {
       "LEGACY_FIXTURES_AGGREGATE",
     ],
   );
+});
+
+test("deploy-snapshot details adapter groups inventory by day and preserves explicit deletions", async () => {
+  const calls = [];
+  const implementations =
+    createP0CP4ReadyFamilyImplementations({
+      loadSourceDetailRecordsForDay:
+        async ({ dayKey }) => {
+          calls.push(`source:${dayKey}`);
+          return [
+            {
+              path:
+                `data/details/${dayKey}/source.json`,
+              detail: {
+                matchId:
+                  `source:${dayKey}`,
+              },
+            },
+          ];
+        },
+      loadExistingDeployDetailRecordsForDay:
+        async ({ dayKey }) => {
+          calls.push(`existing:${dayKey}`);
+          return [];
+        },
+      loadPublishedFixtureRowsForDay:
+        async ({ dayKey }) => {
+          calls.push(`fixtures:${dayKey}`);
+          return [
+            {
+              canonicalId:
+                `fixture:${dayKey}`,
+            },
+          ];
+        },
+      loadPreserveExistingDetailsForDay:
+        async ({ dayKey }) => {
+          calls.push(`preserve:${dayKey}`);
+          return true;
+        },
+      loadDetailsPatchedAtForDay:
+        async ({ dayKey }) => {
+          calls.push(`patched:${dayKey}`);
+          return `${dayKey}T06:00:00.000Z`;
+        },
+      builders: builders({
+        deploySnapshotDetails: ({
+          dayKey,
+          inventoryPaths,
+        }) => ({
+          schema:
+            "ai-matchlab.p0c-p4-deploy-snapshot-details.v1",
+          ok:
+            true,
+          date:
+            dayKey,
+          completeFamilyOutput:
+            true,
+          outputs:
+            inventoryPaths.map(relativePath =>
+              relativePath.endsWith(
+                "/stale.json",
+              )
+                ? {
+                    relativePath,
+                    action:
+                      "delete",
+                    reason:
+                      "detail_not_retained",
+                  }
+                : {
+                    relativePath,
+                    action:
+                      "write",
+                    content: {
+                      dayKey,
+                    },
+                    bytes:
+                      2,
+                    sha256:
+                      "c".repeat(64),
+                  },
+            ),
+          diagnostics: {
+            inventoryPathCount:
+              inventoryPaths.length,
+          },
+        }),
+      }),
+    });
+
+  const result =
+    await implementations
+      .DEPLOY_SNAPSHOT_DETAILS(
+        context(
+          "DEPLOY_SNAPSHOT_DETAILS",
+          [
+            "data/deploy-snapshots/2026-05-02/details/alpha.json",
+            "data/deploy-snapshots/2026-05-02/details/stale.json",
+            "data/deploy-snapshots/2026-05-03/details/beta.json",
+          ],
+        ),
+      );
+
+  assert.equal(
+    result.completeFamilyOutput,
+    true,
+  );
+  assert.equal(result.outputs.length, 3);
+  assert.equal(
+    result.outputs[0].relativePath,
+    "data/deploy-snapshots/2026-05-02/details/alpha.json",
+  );
+  assert.equal(
+    result.outputs[1].action,
+    "delete",
+  );
+  assert.equal(
+    result.diagnostics.emittedWriteCount,
+    2,
+  );
+  assert.equal(
+    result.diagnostics.emittedDeletionCount,
+    1,
+  );
+  assert.equal(
+    result.diagnostics.detailBuildPerformed,
+    false,
+  );
+  assert.equal(
+    result.diagnostics.deletionAwareOutputSupported,
+    true,
+  );
+  assert.deepEqual(calls, [
+    "source:2026-05-02",
+    "existing:2026-05-02",
+    "fixtures:2026-05-02",
+    "preserve:2026-05-02",
+    "patched:2026-05-02",
+    "source:2026-05-03",
+    "existing:2026-05-03",
+    "fixtures:2026-05-03",
+    "preserve:2026-05-03",
+    "patched:2026-05-03",
+  ]);
 });
 
 test("deploy-snapshot fixtures adapter emits one exact write per inventory day", async () => {

@@ -52,6 +52,20 @@ const SOURCE_BINDINGS = Object.freeze({
       "ensureDetailsForFixtures",
     ]),
   }),
+  deploySnapshotDetailsPureBuilder: Object.freeze({
+    path:
+      "engine-v1/jobs/p0c-p4-build-deploy-snapshot-details.js",
+    sha256:
+      "ad0fb6074814b70456c79621420504a01a1ba3e3dad24871115744b9b7e215e6",
+    exports: Object.freeze([
+      "P0C_P4_DEPLOY_SNAPSHOT_DETAILS_SCHEMA",
+      "p0cP4DetailIdCandidates",
+      "p0cP4DeployDetailOutputId",
+      "p0cP4DeployDetailCanonicalBytes",
+      "p0cP4DeployDetailCanonicalSha256",
+      "buildP0CP4DeploySnapshotDetails",
+    ]),
+  }),
   fixturesAllRebuilder: Object.freeze({
     path:
       "engine-v1/jobs/rebuild-fixtures-all-from-canonical-evidence-day.js",
@@ -183,10 +197,11 @@ const FAMILY_DESCRIPTORS = Object.freeze([
     pathPattern:
       "^data/deploy-snapshots/\\d{4}-\\d{2}-\\d{2}/details/[^/]+\\.json$",
     executionGroup: "DEPLOY_SNAPSHOT_BUNDLE",
-    adapterState: "REFACTOR_REQUIRED",
+    adapterState: "PURE_BUILDER_READY",
     strategy:
-      "Rebuild canonical snapshot details per day, then emit only retained detail paths.",
+      "Use the P0-C deploy-snapshot details pure builder over canonical detail sources, preserved deploy details and published fixture evidence, with deletion-aware complete-family output.",
     sourceBindings: Object.freeze([
+      "deploySnapshotDetailsPureBuilder",
       "detailsBuilder",
       "deploySnapshotExporter",
       "evidenceOverlay",

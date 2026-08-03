@@ -14,6 +14,10 @@ import {
   buildP0CP4DeploySnapshotFixturesFromArtifacts,
 } from "./p0c-p4-build-deploy-snapshot-fixtures.js";
 import {
+  P0C_P4_DEPLOY_SNAPSHOT_DETAILS_SCHEMA,
+  buildP0CP4DeploySnapshotDetails,
+} from "./p0c-p4-build-deploy-snapshot-details.js";
+import {
   buildP0CP4DeploySnapshotOdds,
 } from "./p0c-p4-build-deploy-snapshot-odds.js";
 import {
@@ -25,6 +29,7 @@ export const P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA =
   "ai-matchlab.p0c-p4-ready-family-adapters.v1";
 
 export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
+  "DEPLOY_SNAPSHOT_DETAILS",
   "DEPLOY_SNAPSHOT_FIXTURES",
   "DEPLOY_SNAPSHOT_FIXTURES_ALL",
   "DEPLOY_SNAPSHOT_ODDS",
@@ -34,6 +39,8 @@ export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
 ]);
 
 const DEFAULT_BUILDERS = Object.freeze({
+  deploySnapshotDetails:
+    buildP0CP4DeploySnapshotDetails,
   deploySnapshotFixturesFromArtifacts:
     buildP0CP4DeploySnapshotFixturesFromArtifacts,
   deploySnapshotOdds:
@@ -49,6 +56,8 @@ const DEFAULT_BUILDERS = Object.freeze({
 });
 
 const FAMILY_PATTERNS = Object.freeze({
+  DEPLOY_SNAPSHOT_DETAILS:
+    /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/details\/[^/]+\.json$/u,
   DEPLOY_SNAPSHOT_FIXTURES:
     /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/fixtures\.json$/u,
   DEPLOY_SNAPSHOT_FIXTURES_ALL:
@@ -195,6 +204,11 @@ function selectedBuilders(overrides = {}) {
     ...overrides,
   };
   return Object.freeze({
+    deploySnapshotDetails:
+      builderRequired(
+        source.deploySnapshotDetails,
+        "deploySnapshotDetails",
+      ),
     deploySnapshotFixturesFromArtifacts:
       builderRequired(
         source.deploySnapshotFixturesFromArtifacts,
@@ -237,6 +251,12 @@ function outputRow(relativePath, content) {
 }
 
 export function createP0CP4ReadyFamilyImplementations({
+  loadSourceDetailRecordsForDay,
+  loadExistingDeployDetailRecordsForDay,
+  loadPublishedFixtureRowsForDay,
+  loadDetailsPatchedAtForDay,
+  loadPreserveExistingDetailsForDay =
+    async () => true,
   loadFixtureUniverseArtifactForDay,
   loadCanonicalRowsForDay,
   loadProviderEvidenceRowsForDay =
@@ -253,6 +273,311 @@ export function createP0CP4ReadyFamilyImplementations({
   const build = selectedBuilders(builders);
 
   return Object.freeze({
+    async DEPLOY_SNAPSHOT_DETAILS(context) {
+      const normalized =
+        normalizedFamilyContext(
+          context,
+          "DEPLOY_SNAPSHOT_DETAILS",
+        );
+      const sourceLoader =
+        functionRequired(
+          loadSourceDetailRecordsForDay,
+          "loadSourceDetailRecordsForDay",
+        );
+      const existingLoader =
+        functionRequired(
+          loadExistingDeployDetailRecordsForDay,
+          "loadExistingDeployDetailRecordsForDay",
+        );
+      const fixturesLoader =
+        functionRequired(
+          loadPublishedFixtureRowsForDay,
+          "loadPublishedFixtureRowsForDay",
+        );
+      const patchedAtLoader =
+        functionRequired(
+          loadDetailsPatchedAtForDay,
+          "loadDetailsPatchedAtForDay",
+        );
+      const preserveLoader =
+        functionRequired(
+          loadPreserveExistingDetailsForDay,
+          "loadPreserveExistingDetailsForDay",
+        );
+
+      const rowsByDay =
+        new Map();
+
+      for (const row of normalized.rows) {
+        const match =
+          row.file.match(
+            FAMILY_PATTERNS.DEPLOY_SNAPSHOT_DETAILS,
+          );
+        const dayKey =
+          match[1];
+
+        if (!rowsByDay.has(dayKey)) {
+          rowsByDay.set(
+            dayKey,
+            [],
+          );
+        }
+
+        rowsByDay.get(dayKey).push(row);
+      }
+
+      const outputs = [];
+      const days = [];
+
+      for (const dayKey of [...rowsByDay.keys()].sort()) {
+        const dayRows =
+          rowsByDay.get(dayKey)
+            .slice()
+            .sort((left, right) =>
+              left.file.localeCompare(right.file),
+            );
+
+        const inventoryPaths =
+          dayRows.map(row => row.file);
+
+        const sourceDetails =
+          await sourceLoader({
+            dayKey,
+            inventoryRows: dayRows,
+            inventoryPaths,
+            context,
+          });
+
+        const existingDeployDetails =
+          await existingLoader({
+            dayKey,
+            inventoryRows: dayRows,
+            inventoryPaths,
+            context,
+          });
+
+        const fixtureRows =
+          await fixturesLoader({
+            dayKey,
+            inventoryRows: dayRows,
+            inventoryPaths,
+            context,
+          });
+
+        const preserveExistingDetails =
+          await preserveLoader({
+            dayKey,
+            inventoryRows: dayRows,
+            inventoryPaths,
+            context,
+          });
+
+        const patchedAt =
+          await patchedAtLoader({
+            dayKey,
+            inventoryRows: dayRows,
+            inventoryPaths,
+            context,
+          });
+
+        if (!Array.isArray(sourceDetails)) {
+          throw new Error(
+            `p0c_p4_ready_adapter_detail_sources_invalid:${dayKey}`,
+          );
+        }
+
+        if (!Array.isArray(existingDeployDetails)) {
+          throw new Error(
+            `p0c_p4_ready_adapter_existing_details_invalid:${dayKey}`,
+          );
+        }
+
+        if (!Array.isArray(fixtureRows)) {
+          throw new Error(
+            `p0c_p4_ready_adapter_detail_fixture_rows_invalid:${dayKey}`,
+          );
+        }
+
+        if (
+          typeof preserveExistingDetails !==
+          "boolean"
+        ) {
+          throw new Error(
+            `p0c_p4_ready_adapter_detail_preserve_flag_invalid:${dayKey}`,
+          );
+        }
+
+        const artifact =
+          await build.deploySnapshotDetails({
+            dayKey,
+            inventoryPaths,
+            sourceDetails,
+            existingDeployDetails,
+            fixtureRows,
+            preserveExistingDetails,
+            patchedAt,
+          });
+
+        if (
+          !artifact ||
+          typeof artifact !== "object" ||
+          artifact.schema !==
+            P0C_P4_DEPLOY_SNAPSHOT_DETAILS_SCHEMA ||
+          artifact.ok !== true ||
+          clean(artifact.date) !== dayKey ||
+          artifact.completeFamilyOutput !== true ||
+          !Array.isArray(artifact.outputs) ||
+          artifact.outputs.length !== dayRows.length
+        ) {
+          throw new Error(
+            `p0c_p4_ready_adapter_deploy_snapshot_details_artifact_invalid:${dayKey}`,
+          );
+        }
+
+        const expectedPaths =
+          new Set(inventoryPaths);
+        const emittedPaths =
+          new Set();
+        let emittedWriteCount =
+          0;
+        let emittedDeletionCount =
+          0;
+
+        for (const output of artifact.outputs) {
+          const relativePath =
+            normalizeRelativePath(
+              output?.relativePath,
+            );
+
+          if (
+            !expectedPaths.has(relativePath) ||
+            emittedPaths.has(relativePath)
+          ) {
+            throw new Error(
+              `p0c_p4_ready_adapter_deploy_snapshot_details_output_path_invalid:${dayKey}:${relativePath}`,
+            );
+          }
+
+          emittedPaths.add(relativePath);
+
+          if (output.action === "write") {
+            if (
+              !output.content ||
+              typeof output.content !== "object" ||
+              Array.isArray(output.content) ||
+              !Number.isInteger(output.bytes) ||
+              output.bytes < 0 ||
+              !/^[0-9a-f]{64}$/u.test(
+                clean(output.sha256),
+              )
+            ) {
+              throw new Error(
+                `p0c_p4_ready_adapter_deploy_snapshot_details_write_invalid:${dayKey}:${relativePath}`,
+              );
+            }
+
+            outputs.push(
+              Object.freeze({
+                relativePath,
+                action:
+                  "write",
+                content:
+                  output.content,
+                bytes:
+                  output.bytes,
+                sha256:
+                  clean(output.sha256),
+              }),
+            );
+            emittedWriteCount += 1;
+            continue;
+          }
+
+          if (
+            output.action !== "delete" ||
+            !clean(output.reason)
+          ) {
+            throw new Error(
+              `p0c_p4_ready_adapter_deploy_snapshot_details_delete_invalid:${dayKey}:${relativePath}`,
+            );
+          }
+
+          outputs.push(
+            Object.freeze({
+              relativePath,
+              action:
+                "delete",
+              reason:
+                clean(output.reason),
+            }),
+          );
+          emittedDeletionCount += 1;
+        }
+
+        if (
+          emittedPaths.size !==
+          expectedPaths.size
+        ) {
+          throw new Error(
+            `p0c_p4_ready_adapter_deploy_snapshot_details_output_set_incomplete:${dayKey}`,
+          );
+        }
+
+        days.push(
+          Object.freeze({
+            dayKey,
+            inventoryPathCount:
+              dayRows.length,
+            sourceDetailCount:
+              sourceDetails.length,
+            existingDeployDetailCount:
+              existingDeployDetails.length,
+            fixtureCount:
+              fixtureRows.length,
+            preserveExistingDetails,
+            patchedAt:
+              clean(patchedAt),
+            emittedWriteCount,
+            emittedDeletionCount,
+          }),
+        );
+      }
+
+      outputs.sort((left, right) =>
+        left.relativePath.localeCompare(
+          right.relativePath,
+        ),
+      );
+
+      return Object.freeze({
+        schema:
+          P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
+        family:
+          "DEPLOY_SNAPSHOT_DETAILS",
+        completeFamilyOutput: true,
+        outputs: Object.freeze(outputs),
+        diagnostics: Object.freeze({
+          inventoryPathCount:
+            normalized.rows.length,
+          emittedWriteCount:
+            outputs.filter(
+              row => row.action === "write",
+            ).length,
+          emittedDeletionCount:
+            outputs.filter(
+              row => row.action === "delete",
+            ).length,
+          days: Object.freeze(days),
+          detailBuildPerformed:
+            false,
+          deletionAwareOutputSupported:
+            true,
+          repositoryApplicationAuthorized:
+            false,
+        }),
+      });
+    },
+
     async DEPLOY_SNAPSHOT_FIXTURES(context) {
       const normalized =
         normalizedFamilyContext(
