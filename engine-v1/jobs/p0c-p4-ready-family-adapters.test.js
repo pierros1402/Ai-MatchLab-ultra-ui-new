@@ -43,6 +43,22 @@ function builders(overrides = {}) {
           providerEvidenceRows.length,
       })),
     }),
+    expectedMatchViewFromExisting: ({
+      dayKey,
+      fixturesAll,
+      existingArtifact,
+    }) => ({
+      schema: "test-expected-match",
+      dayKey,
+      recordedAt:
+        existingArtifact.recordedAt,
+      source:
+        existingArtifact.source,
+      matchCount:
+        fixturesAll.matches.length,
+      matches:
+        fixturesAll.matches,
+    }),
     h2h: () => ({
       ok: true,
       artifacts: [],
@@ -55,7 +71,7 @@ function builders(overrides = {}) {
   };
 }
 
-test("publishes the exact three pure-builder-ready families", () => {
+test("publishes the exact four pure-builder-ready families", () => {
   assert.equal(
     P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
     "ai-matchlab.p0c-p4-ready-family-adapters.v1",
@@ -64,6 +80,7 @@ test("publishes the exact three pure-builder-ready families", () => {
     P0C_P4_READY_FAMILY_NAMES,
     [
       "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+      "EXPECTED_MATCH_VIEW",
       "H2H_INDEX",
       "LEGACY_FIXTURES_AGGREGATE",
     ],
@@ -115,6 +132,68 @@ test("fixtures-all adapter emits one deterministic write per inventory day", asy
       "provider:2026-05-03",
     ],
   );
+});
+
+test("expected-match adapter rebuilds every inventory day from fixtures-all", async () => {
+  const calls = [];
+  const implementations =
+    createP0CP4ReadyFamilyImplementations({
+      loadFixturesAllArtifactForDay:
+        async ({ dayKey }) => {
+          calls.push(`fixtures:${dayKey}`);
+          return {
+            matches: [
+              {
+                matchId: `match:${dayKey}`,
+              },
+            ],
+          };
+        },
+      loadExistingExpectedMatchViewForDay:
+        async ({ dayKey }) => {
+          calls.push(`existing:${dayKey}`);
+          return {
+            dayKey,
+            recordedAt:
+              `${dayKey}T04:30:00.000Z`,
+            source:
+              "fixtures-all",
+          };
+        },
+      builders: builders(),
+    });
+
+  const result =
+    await implementations.EXPECTED_MATCH_VIEW(
+      context(
+        "EXPECTED_MATCH_VIEW",
+        [
+          "data/expected-matches/2026-05-02.json",
+          "data/expected-matches/2026-05-03.json",
+        ],
+      ),
+    );
+
+  assert.equal(result.completeFamilyOutput, true);
+  assert.equal(result.outputs.length, 2);
+  assert.equal(
+    result.outputs[0].relativePath,
+    "data/expected-matches/2026-05-02.json",
+  );
+  assert.equal(
+    result.outputs[0].content.recordedAt,
+    "2026-05-02T04:30:00.000Z",
+  );
+  assert.equal(
+    result.outputs[0].content.matchCount,
+    1,
+  );
+  assert.deepEqual(calls, [
+    "fixtures:2026-05-02",
+    "existing:2026-05-02",
+    "fixtures:2026-05-03",
+    "existing:2026-05-03",
+  ]);
 });
 
 test("ready adapters reject authorization and family-path drift", async () => {

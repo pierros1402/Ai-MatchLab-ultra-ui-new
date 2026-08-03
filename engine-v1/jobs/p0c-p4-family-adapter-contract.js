@@ -69,6 +69,17 @@ const SOURCE_BINDINGS = Object.freeze({
       "6cca3a560b0c7aac88811a3d59032d9582638312dccedb6db82f0f8ccf5dbd8a",
     exports: Object.freeze(["recordExpectedDay"]),
   }),
+  expectedMatchPureBuilder: Object.freeze({
+    path:
+      "engine-v1/jobs/p0c-p4-build-expected-match-view.js",
+    sha256:
+      "44b1f37f370ca39a344c0d844a0f2e5b2d815213e26c3c6f7007cc622e534cda",
+    exports: Object.freeze([
+      "P0C_P4_EXPECTED_MATCH_VIEW_SCHEMA",
+      "buildP0CP4ExpectedMatchView",
+      "buildP0CP4ExpectedMatchViewFromExisting",
+    ]),
+  }),
   h2hRebuilder: Object.freeze({
     path:
       "engine-v1/jobs/rebuild-h2h-index-from-identity-resolved-history.js",
@@ -247,10 +258,11 @@ const FAMILY_DESCRIPTORS = Object.freeze([
     pathPattern:
       "^data/expected-matches/\\d{4}-\\d{2}-\\d{2}\\.json$",
     executionGroup: "EXPECTED_MATCH_PROJECTION",
-    adapterState: "REFACTOR_REQUIRED",
+    adapterState: "PURE_BUILDER_READY",
     strategy:
-      "Refactor the morning expected-match projection into a pure builder over rebuilt fixtures-all.",
+      "Use the P0-C expected-match in-memory builder over rebuilt fixtures-all while preserving existing record metadata.",
     sourceBindings: Object.freeze([
+      "expectedMatchPureBuilder",
       "expectedMatchRecorder",
       "fixturesAllRebuilder",
     ]),

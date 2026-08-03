@@ -8,6 +8,9 @@ import {
   buildLegacyFixturesAggregateP0C,
 } from "./rebuild-legacy-fixtures-aggregate-p0c.js";
 import {
+  buildP0CP4ExpectedMatchViewFromExisting,
+} from "./p0c-p4-build-expected-match-view.js";
+import {
   buildP0CP4FamilyRunnerRegistry,
   getP0CP4FamilyAdapterContract,
 } from "./p0c-p4-family-adapter-contract.js";
@@ -17,6 +20,7 @@ export const P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA =
 
 export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
   "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+  "EXPECTED_MATCH_VIEW",
   "H2H_INDEX",
   "LEGACY_FIXTURES_AGGREGATE",
 ]);
@@ -24,6 +28,8 @@ export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
 const DEFAULT_BUILDERS = Object.freeze({
   fixturesAll:
     buildFixturesAllFromCanonicalEvidenceDay,
+  expectedMatchViewFromExisting:
+    buildP0CP4ExpectedMatchViewFromExisting,
   h2h:
     buildH2HArtifactsFromHistory,
   legacyFixtures:
@@ -33,6 +39,8 @@ const DEFAULT_BUILDERS = Object.freeze({
 const FAMILY_PATTERNS = Object.freeze({
   DEPLOY_SNAPSHOT_FIXTURES_ALL:
     /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/fixtures-all\.json$/u,
+  EXPECTED_MATCH_VIEW:
+    /^data\/expected-matches\/(\d{4}-\d{2}-\d{2})\.json$/u,
   H2H_INDEX:
     /^data\/h2h\/([^/]+\.json)$/u,
   LEGACY_FIXTURES_AGGREGATE:
@@ -176,6 +184,11 @@ function selectedBuilders(overrides = {}) {
         source.fixturesAll,
         "fixturesAll",
       ),
+    expectedMatchViewFromExisting:
+      builderRequired(
+        source.expectedMatchViewFromExisting,
+        "expectedMatchViewFromExisting",
+      ),
     h2h:
       builderRequired(
         source.h2h,
@@ -201,6 +214,8 @@ export function createP0CP4ReadyFamilyImplementations({
   loadCanonicalRowsForDay,
   loadProviderEvidenceRowsForDay =
     async () => [],
+  loadFixturesAllArtifactForDay,
+  loadExistingExpectedMatchViewForDay,
   loadHistoryDocuments,
   loadExistingLegacyAggregate,
   loadCanonicalByDay,
@@ -296,6 +311,98 @@ export function createP0CP4ReadyFamilyImplementations({
           P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
         family:
           "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+        completeFamilyOutput: true,
+        outputs: Object.freeze(outputs),
+        diagnostics: Object.freeze({
+          inventoryPathCount:
+            normalized.rows.length,
+          emittedWriteCount:
+            outputs.length,
+          days: Object.freeze(days),
+          repositoryApplicationAuthorized:
+            false,
+        }),
+      });
+    },
+
+    async EXPECTED_MATCH_VIEW(context) {
+      const normalized =
+        normalizedFamilyContext(
+          context,
+          "EXPECTED_MATCH_VIEW",
+        );
+      const fixturesLoader =
+        functionRequired(
+          loadFixturesAllArtifactForDay,
+          "loadFixturesAllArtifactForDay",
+        );
+      const existingLoader =
+        functionRequired(
+          loadExistingExpectedMatchViewForDay,
+          "loadExistingExpectedMatchViewForDay",
+        );
+
+      const outputs = [];
+      const days = [];
+
+      for (const row of normalized.rows) {
+        const match =
+          row.file.match(
+            FAMILY_PATTERNS.EXPECTED_MATCH_VIEW,
+          );
+        const dayKey = match[1];
+
+        const fixturesAll =
+          await fixturesLoader({
+            dayKey,
+            inventoryRow: row,
+            context,
+          });
+        const existingArtifact =
+          await existingLoader({
+            dayKey,
+            inventoryRow: row,
+            context,
+          });
+
+        const artifact =
+          await build.expectedMatchViewFromExisting({
+            dayKey,
+            fixturesAll,
+            existingArtifact,
+          });
+
+        if (
+          !artifact ||
+          typeof artifact !== "object" ||
+          clean(artifact.dayKey) !== dayKey ||
+          !Array.isArray(artifact.matches) ||
+          artifact.matchCount !== artifact.matches.length
+        ) {
+          throw new Error(
+            `p0c_p4_ready_adapter_expected_match_artifact_invalid:${dayKey}`,
+          );
+        }
+
+        outputs.push(
+          outputRow(row.file, artifact),
+        );
+        days.push({
+          dayKey,
+          outputMatches:
+            artifact.matches.length,
+          recordedAt:
+            clean(artifact.recordedAt),
+          source:
+            clean(artifact.source),
+        });
+      }
+
+      return Object.freeze({
+        schema:
+          P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
+        family:
+          "EXPECTED_MATCH_VIEW",
         completeFamilyOutput: true,
         outputs: Object.freeze(outputs),
         diagnostics: Object.freeze({
