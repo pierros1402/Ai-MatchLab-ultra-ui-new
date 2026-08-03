@@ -4,6 +4,11 @@ import { fileURLToPath } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { currentSeason } from "../core/season.js";
 import { priorArchiveSeasons } from "../core/season-model.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: immutable historical evidence used for model priors.
 
 const DATA_DIR = resolveDataPath();
 const ARCHIVE_ROOT = path.join(DATA_DIR, "history-archive");
@@ -27,8 +32,17 @@ async function ensureDir(dirPath) {
 async function readJsonSafe(filePath, fallback = null) {
   try {
     const raw = await fs.readFile(filePath, "utf8");
-    return JSON.parse(raw);
-  } catch {
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(raw),
+    );
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return fallback;
   }
 }

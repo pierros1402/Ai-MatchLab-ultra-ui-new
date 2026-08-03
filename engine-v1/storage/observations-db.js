@@ -1,5 +1,11 @@
 import fs from "fs";
 import { resolveDataPath } from "./data-root.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+  resolveProductionEvidenceFixtureIdReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: observation evidence identity views.
 
 const filePath = resolveDataPath("observations.json");
 
@@ -13,16 +19,24 @@ function ensureFile() {
   }
 }
 
-export function readObservations() {
+function readObservationsRaw() {
   ensureFile();
 
   try {
     const raw = fs.readFileSync(filePath, "utf8");
     const parsed = JSON.parse(raw || "{}");
-    return Array.isArray(parsed.observations) ? parsed.observations : [];
+    return Array.isArray(parsed.observations)
+      ? parsed.observations
+      : [];
   } catch {
     return [];
   }
+}
+
+export function readObservations() {
+  return overlayProductionEvidenceDocumentReadView(
+    readObservationsRaw(),
+  );
 }
 
 export function writeObservations(observations = []) {
@@ -44,7 +58,7 @@ export function writeObservations(observations = []) {
 export function appendObservations(items = []) {
   if (!Array.isArray(items) || !items.length) return 0;
 
-  const current = readObservations();
+  const current = readObservationsRaw();
   current.push(...items);
   writeObservations(current);
   return items.length;
@@ -57,8 +71,16 @@ export function appendObservation(item) {
 
 export function getObservationsByMatchId(matchId) {
   if (!matchId) return [];
+
+  const query =
+    resolveProductionEvidenceFixtureIdReadView(
+      matchId,
+    ).resolvedFixtureId;
+
   return readObservations().filter(
-    x => String(x?.matchId || "") === String(matchId)
+    x =>
+      String(x?.matchId || "") ===
+      String(query),
   );
 }
 

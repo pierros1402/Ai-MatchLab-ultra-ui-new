@@ -18,6 +18,11 @@ import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { getOddsForDay } from "../storage/odds-memory-db.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: existing deployed odds evidence view before material-change checks.
 
 // Hash only the meaningful odds content (not timestamps), so a re-export with no
 // real change leaves the file byte-identical → no git diff → no wasted deploy.
@@ -40,11 +45,22 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
 
   // Skip rewrite if nothing material changed (keeps deploys few).
   try {
-    const existing = JSON.parse(fs.readFileSync(file, "utf8"));
+    const existing = overlayProductionEvidenceDocumentReadView(
+      JSON.parse(fs.readFileSync(file, "utf8")),
+    );
     if (existing.hash === hash) {
       return { ok: true, dayKey, count: day.count, file, changed: false };
     }
-  } catch { /* no existing file */ }
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
+    /* no existing file */
+  }
 
   const payload = {
     ok: true,

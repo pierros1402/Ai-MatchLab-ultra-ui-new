@@ -5,6 +5,11 @@ import { currentSeason } from "../core/season.js";
 import { isCalendarYearLeague } from "../core/season-model.js";
 import { canonicalTeamName } from "../storage/team-aliases-db.js";
 import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: historical and matchup evidence views used for deterministic index rebuilds.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -809,13 +814,22 @@ async function readGlobalHistoryPrimary(
   let history;
 
   try {
-    history = JSON.parse(
-      await fs.readFile(
-        HISTORY_FILE,
-        "utf8"
+    history = overlayProductionEvidenceDocumentReadView(
+      JSON.parse(
+        await fs.readFile(
+          HISTORY_FILE,
+          "utf8"
+        )
       )
     );
-  } catch {
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return [];
   }
 
@@ -872,13 +886,22 @@ async function readExistingMatchupRows() {
   let payload;
 
   try {
-    payload = JSON.parse(
-      await fs.readFile(
-        currentMatchupIndexFile(),
-        "utf8"
+    payload = overlayProductionEvidenceDocumentReadView(
+      JSON.parse(
+        await fs.readFile(
+          currentMatchupIndexFile(),
+          "utf8"
+        )
       )
     );
-  } catch {
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return [];
   }
 
@@ -1608,15 +1631,24 @@ async function readArchiveSupplementForLeague(
     let payload;
 
     try {
-      payload = JSON.parse(
-        await fs.readFile(
-          file,
-          "utf8"
+      payload = overlayProductionEvidenceDocumentReadView(
+        JSON.parse(
+          await fs.readFile(
+            file,
+            "utf8"
+          )
         )
       );
 
       filesRead += 1;
-    } catch {
+    } catch (error) {
+      if (
+        String(error?.code || "").startsWith(
+          "production_evidence_read_",
+        )
+      ) {
+        throw error;
+      }
       continue;
     }
 

@@ -5,6 +5,11 @@ import { getFixturesByDay } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { readTeamNewsRecord } from "../storage/team-news-db.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
+import {
+  overlayProductionEvidenceMatchRowReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: canonical fixture identity views for team-news output.
 
 function writeJson(filePath, data) {
   ensureDir(path.dirname(filePath));
@@ -89,7 +94,8 @@ function importTemplateFilePath(dayKey) {
 }
 
 export async function buildTeamNewsDay(dayKey) {
-  const rows = getFixturesByDay(dayKey) || [];
+  const rows = (getFixturesByDay(dayKey) || [])
+    .map(row => overlayProductionEvidenceMatchRowReadView(row));
 
   if (!rows.length) {
     return {

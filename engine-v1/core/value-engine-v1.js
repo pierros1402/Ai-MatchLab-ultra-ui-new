@@ -17,6 +17,11 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { applyValueContextModifiers } from "./value-context-modifiers.js";
 import { applyValueContextIntegration } from "./value-context-integration.js";
 import { currentSeason } from "./season.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "./production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: model-prior, history-index and detail evidence views.
 
 const DATA_DIR = resolveDataPath();
 const HISTORY_INDEX_DIR = path.join(DATA_DIR, "history-index");
@@ -99,8 +104,17 @@ const TOKEN_ALIASES = new Map([
 async function readJsonSafe(filePath, fallback = null) {
   try {
     const raw = await fs.readFile(filePath, "utf8");
-    return JSON.parse(raw);
-  } catch {
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(raw),
+    );
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return fallback;
   }
 }
@@ -113,9 +127,18 @@ function loadAiFromDetails(dayKey, matchId) {
 
     if (!fsSync.existsSync(file)) return null;
 
-    const json = JSON.parse(fsSync.readFileSync(file, "utf8"));
+    const json = overlayProductionEvidenceDocumentReadView(
+      JSON.parse(fsSync.readFileSync(file, "utf8")),
+    );
     return json?.ai || null;
-  } catch {
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return null;
   }
 }

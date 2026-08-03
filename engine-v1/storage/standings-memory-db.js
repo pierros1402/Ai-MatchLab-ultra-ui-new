@@ -14,6 +14,11 @@
 
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
+import {
+  overlayProductionEvidenceTeamRowsReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: standings evidence team-identity views.
 
 const DIR = resolveDataPath("league-memory", "standings");
 
@@ -21,12 +26,31 @@ function fileFor(slug) {
   return resolveDataPath("league-memory", "standings", `${slug}.json`);
 }
 
-export function readStandings(slug) {
+function readStandingsRaw(slug) {
   try {
     return JSON.parse(fs.readFileSync(fileFor(slug), "utf8"));
   } catch {
     return null;
   }
+}
+
+export function readStandings(slug) {
+  const raw = readStandingsRaw(slug);
+  if (!raw) return null;
+
+  return {
+    ...raw,
+    accepted: raw.accepted
+      ? {
+          ...raw.accepted,
+          rows:
+            overlayProductionEvidenceTeamRowsReadView(
+              raw.accepted.rows,
+              { leagueSlug: slug },
+            ),
+        }
+      : raw.accepted,
+  };
 }
 
 export function hasAcceptedStandings(slug, season) {
@@ -71,7 +95,7 @@ export function recordStandingsResult(slug, result) {
   ensureDir(DIR);
 
   const now = new Date().toISOString();
-  const cur = readStandings(slug) || { slug, accepted: null, attempts: [] };
+  const cur = readStandingsRaw(slug) || { slug, accepted: null, attempts: [] };
 
   const accepted = result.status === "accepted" &&
     Array.isArray(result.rows) && result.rows.length > 0;
@@ -124,7 +148,7 @@ export function recordStandingsResult(slug, result) {
  * Keeps the attempts log and records why. Returns { cleared }.
  */
 export function clearAcceptedStandings(slug, reason = "cleared") {
-  const cur = readStandings(slug);
+  const cur = readStandingsRaw(slug);
   if (!cur?.accepted) return { cleared: false, slug, reason: "nothing_accepted" };
 
   const now = new Date().toISOString();

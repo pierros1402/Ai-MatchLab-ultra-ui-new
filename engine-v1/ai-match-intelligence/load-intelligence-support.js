@@ -1,12 +1,26 @@
 import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
 import { currentSeason } from "../core/season.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: model-prior and value-pick evidence views.
 
 function readJsonSafe(file, fallback = null) {
   try {
     if (!fs.existsSync(file)) return fallback;
-    return JSON.parse(fs.readFileSync(file, "utf8"));
-  } catch {
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(fs.readFileSync(file, "utf8")),
+    );
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return fallback;
   }
 }
@@ -25,7 +39,9 @@ export function loadIntelligenceSupport(dayKey, matchId, valuePicks = []) {
       Object.keys(priors?.matchupPriors || {}).length > 0
     );
 
-  const normalizedValue = Array.isArray(valuePicks) ? valuePicks : [];
+  const normalizedValue = overlayProductionEvidenceDocumentReadView(
+    Array.isArray(valuePicks) ? valuePicks : [],
+  );
 
   const sortedValue = normalizedValue
     .slice()

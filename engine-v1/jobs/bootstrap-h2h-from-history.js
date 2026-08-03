@@ -13,6 +13,11 @@ import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { recordH2H } from "../storage/h2h-memory-db.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: immutable history evidence before H2H accumulation.
 
 function log(...a) { console.log("[bootstrap-h2h]", ...a); }
 
@@ -28,8 +33,26 @@ export async function bootstrapH2HFromHistory() {
     const season = file.replace(".json", "");
     log(`processing ${season}…`);
     let data;
-    try { data = JSON.parse(fs.readFileSync(path.join(historyDir, file), "utf8")); }
-    catch (e) { log(`skip ${file}:`, e.message); continue; }
+    try {
+      data = overlayProductionEvidenceDocumentReadView(
+        JSON.parse(
+          fs.readFileSync(
+            path.join(historyDir, file),
+            "utf8",
+          ),
+        ),
+      );
+    } catch (e) {
+      if (
+        String(e?.code || "").startsWith(
+          "production_evidence_read_",
+        )
+      ) {
+        throw e;
+      }
+      log(`skip ${file}:`, e.message);
+      continue;
+    }
 
     const days = Array.isArray(data.days) ? data.days : [];
     let seasonMatches = 0, seasonStored = 0;

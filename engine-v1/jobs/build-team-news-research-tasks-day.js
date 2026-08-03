@@ -5,6 +5,12 @@ import { fileURLToPath } from "url";
 import { getFixturesByDay, getFixtureById } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { readTeamNewsRecord, getTeamNewsPath, normalizeTeamKey } from "../storage/team-news-db.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+  overlayProductionEvidenceMatchRowReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: team-news worksets, details and fixture views.
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -86,8 +92,17 @@ function sanitizeSerializedJsonText(text) {
 function readJsonSafe(filePath, fallback = null) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(fs.readFileSync(filePath, "utf8")),
+    );
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return fallback;
   }
 }
@@ -134,7 +149,7 @@ function buildMatchFromDetail(detail = {}) {
     return null;
   }
 
-  return {
+  return overlayProductionEvidenceMatchRowReadView({
     matchId,
     id: matchId,
     homeTeam,
@@ -154,7 +169,7 @@ function buildMatchFromDetail(detail = {}) {
       aiContext: detail?.aiContext || null,
       sourceIntelligence: detail?.sourceIntelligence || null
     }
-  };
+  });
 }
 
 function readDetailsMatches(dayKey) {
@@ -266,7 +281,10 @@ function pickMatchForTeam(item, fixtures = [], detailMatches = [], fixtureMap = 
   }
 
   if (targetMatchId) {
-    const direct = getFixtureById(targetMatchId);
+    const rawDirect = getFixtureById(targetMatchId);
+    const direct = rawDirect
+      ? overlayProductionEvidenceMatchRowReadView(rawDirect)
+      : null;
     if (direct) {
       const detailMatch = detailByMatchId.get(targetMatchId) || null;
       return enrichWithDetailMatch(direct, detailMatch);
@@ -495,7 +513,8 @@ export async function buildTeamNewsResearchTasksDay(dayKey, { maxTeams = Infinit
     return { ok: true, dayKey: safeDayKey, taskCount: 0, skipped: true, reason: "no_workset" };
   }
 
-  const fixtures = getFixturesByDay(safeDayKey) || [];
+  const fixtures = (getFixturesByDay(safeDayKey) || [])
+    .map(row => overlayProductionEvidenceMatchRowReadView(row));
   const detailMatches = readDetailsMatches(safeDayKey);
   const fixtureMap = buildFixtureCandidateMap(fixtures);
 

@@ -11,6 +11,11 @@ import {
 import { verifiedFinalVetoReason } from "../core/non-played-state.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import { validatePicksAgainstCanonicalFixtures } from "../core/plan-b-canonical-membership.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: value-plan, odds, fixture and final-result evidence views.
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,8 +28,17 @@ function dataPath(...parts) {
 function readJsonSafe(file, fallback = null) {
   try {
     if (!fs.existsSync(file)) return fallback;
-    return JSON.parse(fs.readFileSync(file, "utf8"));
-  } catch {
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(fs.readFileSync(file, "utf8")),
+    );
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return fallback;
   }
 }
@@ -1098,7 +1112,9 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
 
     if (observation.ok) {
       planAPayload =
-        observation.payload;
+        overlayProductionEvidenceDocumentReadView(
+          observation.payload,
+        );
     }
   } else {
     planAPayload = readJsonSafe(planAPath, null);

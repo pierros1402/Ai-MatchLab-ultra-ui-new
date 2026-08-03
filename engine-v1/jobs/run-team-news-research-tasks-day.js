@@ -4,6 +4,12 @@ import { fileURLToPath } from "url";
 import { getFixturesByDay } from "../storage/json-db.js";
 import { ensureDir, resolveDataPath } from "../storage/data-root.js";
 import { runTeamNewsAIProvider } from "../ai-match-intelligence/team-news-ai-provider.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+  overlayProductionEvidenceMatchRowReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: team-news research tasks, details and fixture views.
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -126,8 +132,17 @@ function isStrongCanonicalNote(note) {
 function readJsonSafe(filePath, fallback = null) {
   try {
     if (!fs.existsSync(filePath)) return fallback;
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(fs.readFileSync(filePath, "utf8")),
+    );
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return fallback;
   }
 }
@@ -236,7 +251,8 @@ function readDetailsMap(dayKey) {
 }
 
 function buildFixtureMap(dayKey) {
-  const rows = getFixturesByDay(dayKey) || [];
+  const rows = (getFixturesByDay(dayKey) || [])
+    .map(row => overlayProductionEvidenceMatchRowReadView(row));
   const out = new Map();
 
   for (const row of rows) {

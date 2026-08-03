@@ -11,6 +11,11 @@
 
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
+import {
+  overlayProductionEvidenceTeamRowsReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: multi-season standings evidence team-identity views.
 
 const DIR = resolveDataPath("league-memory", "standings-history");
 
@@ -18,9 +23,37 @@ function fileFor(slug) {
   return resolveDataPath("league-memory", "standings-history", `${slug}.json`);
 }
 
+function readHistoryRaw(slug) {
+  try {
+    return JSON.parse(
+      fs.readFileSync(fileFor(slug), "utf8"),
+    );
+  } catch {
+    return { slug, seasons: {} };
+  }
+}
+
 export function readHistory(slug) {
-  try { return JSON.parse(fs.readFileSync(fileFor(slug), "utf8")); }
-  catch { return { slug, seasons: {} }; }
+  const raw = readHistoryRaw(slug);
+  const seasons = {};
+
+  for (const [season, value] of Object.entries(
+    raw?.seasons || {},
+  )) {
+    seasons[season] = {
+      ...value,
+      rows:
+        overlayProductionEvidenceTeamRowsReadView(
+          value?.rows,
+          { leagueSlug: slug },
+        ),
+    };
+  }
+
+  return {
+    ...raw,
+    seasons,
+  };
 }
 
 export function hasSeasonHistory(slug, season) {
@@ -38,7 +71,7 @@ export function recordSeasonHistory(slug, season, research) {
     return false;
   }
   ensureDir(DIR);
-  const h = readHistory(slug);
+  const h = readHistoryRaw(slug);
   h.seasons = h.seasons || {};
   h.seasons[season] = {
     rows: research.rows,

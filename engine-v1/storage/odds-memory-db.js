@@ -14,6 +14,12 @@ import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
 import { normalizeTeamKey as normTeamKey } from "../core/normalize.js";
 import { buildConsensusIndex, resolveConsensusMarket } from "../odds/multi-odds-consensus.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+  resolveProductionEvidenceFixtureIdReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: odds-memory and deployed odds evidence views.
 
 const DIR = resolveDataPath("odds-memory");
 const HISTORY_CAP = 50;
@@ -27,12 +33,19 @@ function fileFor(matchId) {
   return resolveDataPath("odds-memory", `${safeId(matchId)}.json`);
 }
 
-export function readOdds(matchId) {
+function readOddsRaw(matchId) {
   try {
     return JSON.parse(fs.readFileSync(fileFor(matchId), "utf8"));
   } catch {
     return null;
   }
+}
+
+export function readOdds(matchId) {
+  const raw = readOddsRaw(matchId);
+  return raw
+    ? overlayProductionEvidenceDocumentReadView(raw)
+    : null;
 }
 
 /**
@@ -41,7 +54,7 @@ export function readOdds(matchId) {
  * Stored on the record as `settlement`. Returns true if written.
  */
 export function recordSettlement(matchId, scoreHome, scoreAway) {
-  const rec = readOdds(matchId);
+  const rec = readOddsRaw(matchId);
   if (!rec || !rec.aiAssessment?.markets) return false;
   if (scoreHome == null || scoreAway == null) return false;
   const h = Number(scoreHome), a = Number(scoreAway);
@@ -130,7 +143,7 @@ export function recordOddsSnapshot(matchId, meta, pricing) {
   ensureDir(DIR);
 
   const now = new Date().toISOString();
-  const cur = readOdds(matchId) || {
+  const cur = readOddsRaw(matchId) || {
     matchId: String(matchId),
     markets: {}
   };
@@ -205,9 +218,18 @@ export function recordOddsSnapshot(matchId, meta, pricing) {
  * open / current / delta. Here the "book" is the AI model itself.
  */
 export function getOddsSnapshot(matchId, market = "1X2") {
+  const resolvedMatchId =
+    resolveProductionEvidenceFixtureIdReadView(
+      matchId,
+    ).resolvedFixtureId;
   const data = readOdds(matchId);
   if (!data || !data.markets?.[market]) {
-    return { ok: false, matchId: String(matchId), market, snapshot: {} };
+    return {
+      ok: false,
+      matchId: resolvedMatchId,
+      market,
+      snapshot: {},
+    };
   }
 
   const m = data.markets[market];
@@ -220,7 +242,8 @@ export function getOddsSnapshot(matchId, market = "1X2") {
 
   return {
     ok: true,
-    matchId: String(matchId),
+    matchId:
+      data.matchId || resolvedMatchId,
     market,
     openedAt: m.openedAt,
     updatedAt: m.updatedAt,
@@ -291,8 +314,26 @@ export function getOddsForDay(dayKey) {
 
 function readDeployedOddsFile(dayKey) {
   try {
-    return JSON.parse(fs.readFileSync(resolveDataPath("deploy-snapshots", dayKey, "odds.json"), "utf8"));
-  } catch {
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(
+        fs.readFileSync(
+          resolveDataPath(
+            "deploy-snapshots",
+            dayKey,
+            "odds.json",
+          ),
+          "utf8",
+        ),
+      ),
+    );
+  } catch (error) {
+    if (
+      String(error?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw error;
+    }
     return null;
   }
 }
@@ -308,7 +349,10 @@ export function getDeployedOddsDay(dayKey) {
 // Per-match snapshot (frontend shape) sourced from the deployed day file, with a
 // fallback to the live store. Matches by our matchId.
 export function getDeployedOddsSnapshot(matchId, market = "1X2", dayKey) {
-  const id = String(matchId);
+  const id =
+    resolveProductionEvidenceFixtureIdReadView(
+      matchId,
+    ).resolvedFixtureId;
   const days = dayKey ? [dayKey] : [];
   for (const d of days) {
     const snap = readDeployedOddsFile(d);

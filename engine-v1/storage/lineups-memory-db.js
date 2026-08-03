@@ -13,6 +13,11 @@
 
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
+import {
+  overlayProductionEvidenceTeamKeyedEntriesReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: lineup-memory match and team identity views.
 
 const DIR = resolveDataPath("league-memory", "lineups");
 const PER_TEAM_CAP = 15;
@@ -20,9 +25,21 @@ const MAX_AGE_DAYS = 120;
 
 function fileFor(slug) { return resolveDataPath("league-memory", "lineups", `${slug}.json`); }
 
+function readLineupsRaw(slug) {
+  try {
+    return JSON.parse(
+      fs.readFileSync(fileFor(slug), "utf8"),
+    );
+  } catch {
+    return { slug, teams: {} };
+  }
+}
+
 export function readLineups(slug) {
-  try { return JSON.parse(fs.readFileSync(fileFor(slug), "utf8")); }
-  catch { return { slug, teams: {} }; }
+  return overlayProductionEvidenceTeamKeyedEntriesReadView(
+    readLineupsRaw(slug),
+    { leagueSlug: slug },
+  );
 }
 
 function pushEntry(list, entry) {
@@ -41,7 +58,7 @@ export function recordMatchLineups(slug, m, lineups) {
   if (hs.length < 7 && as.length < 7) return false;     // not a real lineup
 
   ensureDir(DIR);
-  const data = readLineups(slug);
+  const data = readLineupsRaw(slug);
   data.teams = data.teams || {};
   const date = m.kickoffUtc || null;
   const before = JSON.stringify(data.teams[m.home] || []) + JSON.stringify(data.teams[m.away] || []);

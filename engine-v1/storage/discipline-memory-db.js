@@ -14,6 +14,11 @@
 
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
+import {
+  overlayProductionEvidenceTeamKeyedEntriesReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: discipline-memory match and team identity views.
 
 const DIR = resolveDataPath("league-memory", "discipline");
 const PER_TEAM_CAP = 20;
@@ -23,9 +28,21 @@ function fileFor(slug) {
   return resolveDataPath("league-memory", "discipline", `${slug}.json`);
 }
 
+function readDisciplineRaw(slug) {
+  try {
+    return JSON.parse(
+      fs.readFileSync(fileFor(slug), "utf8"),
+    );
+  } catch {
+    return { slug, teams: {} };
+  }
+}
+
 export function readDiscipline(slug) {
-  try { return JSON.parse(fs.readFileSync(fileFor(slug), "utf8")); }
-  catch { return { slug, teams: {} }; }
+  return overlayProductionEvidenceTeamKeyedEntriesReadView(
+    readDisciplineRaw(slug),
+    { leagueSlug: slug },
+  );
 }
 
 function pushEntry(list, entry) {
@@ -47,7 +64,7 @@ export function recordMatchDiscipline(slug, m, d) {
   if (!d || !d.hasStats) return false;
 
   ensureDir(DIR);
-  const data = readDiscipline(slug);
+  const data = readDisciplineRaw(slug);
   data.teams = data.teams || {};
   const date = m.kickoffUtc || null;
 

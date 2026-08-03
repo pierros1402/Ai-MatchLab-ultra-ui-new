@@ -3,6 +3,11 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { normalizeTeamKey } from "../storage/team-news-db.js";
 import { validateTeamNewsSeedRecord } from "./validate-team-news-seeds-day.js";
+import {
+  overlayProductionEvidenceDocumentReadView,
+} from "../core/production-evidence-identity-overlay.js";
+
+// P0-C P5 READ BOUNDARY: reviewed team-news evidence views.
 
 const __filename = fileURLToPath(import.meta.url);
 const MODULE_DIR = path.dirname(__filename);
@@ -15,8 +20,17 @@ function clean(value) {
 function readJson(file, fallback = null) {
   try {
     if (!fs.existsSync(file)) return fallback;
-    return JSON.parse(fs.readFileSync(file, "utf8"));
+    return overlayProductionEvidenceDocumentReadView(
+      JSON.parse(fs.readFileSync(file, "utf8")),
+    );
   } catch (err) {
+    if (
+      String(err?.code || "").startsWith(
+        "production_evidence_read_",
+      )
+    ) {
+      throw err;
+    }
     return {
       __readError: err?.message || String(err),
       file
