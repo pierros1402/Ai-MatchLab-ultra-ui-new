@@ -14,6 +14,9 @@ import {
   buildP0CP4DeploySnapshotFixturesFromArtifacts,
 } from "./p0c-p4-build-deploy-snapshot-fixtures.js";
 import {
+  buildP0CP4DeploySnapshotOdds,
+} from "./p0c-p4-build-deploy-snapshot-odds.js";
+import {
   buildP0CP4FamilyRunnerRegistry,
   getP0CP4FamilyAdapterContract,
 } from "./p0c-p4-family-adapter-contract.js";
@@ -24,6 +27,7 @@ export const P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA =
 export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
   "DEPLOY_SNAPSHOT_FIXTURES",
   "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+  "DEPLOY_SNAPSHOT_ODDS",
   "EXPECTED_MATCH_VIEW",
   "H2H_INDEX",
   "LEGACY_FIXTURES_AGGREGATE",
@@ -32,6 +36,8 @@ export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
 const DEFAULT_BUILDERS = Object.freeze({
   deploySnapshotFixturesFromArtifacts:
     buildP0CP4DeploySnapshotFixturesFromArtifacts,
+  deploySnapshotOdds:
+    buildP0CP4DeploySnapshotOdds,
   fixturesAll:
     buildFixturesAllFromCanonicalEvidenceDay,
   expectedMatchViewFromExisting:
@@ -47,6 +53,8 @@ const FAMILY_PATTERNS = Object.freeze({
     /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/fixtures\.json$/u,
   DEPLOY_SNAPSHOT_FIXTURES_ALL:
     /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/fixtures-all\.json$/u,
+  DEPLOY_SNAPSHOT_ODDS:
+    /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/odds\.json$/u,
   EXPECTED_MATCH_VIEW:
     /^data\/expected-matches\/(\d{4}-\d{2}-\d{2})\.json$/u,
   H2H_INDEX:
@@ -197,6 +205,11 @@ function selectedBuilders(overrides = {}) {
         source.fixturesAll,
         "fixturesAll",
       ),
+    deploySnapshotOdds:
+      builderRequired(
+        source.deploySnapshotOdds,
+        "deploySnapshotOdds",
+      ),
     expectedMatchViewFromExisting:
       builderRequired(
         source.expectedMatchViewFromExisting,
@@ -229,6 +242,8 @@ export function createP0CP4ReadyFamilyImplementations({
   loadProviderEvidenceRowsForDay =
     async () => [],
   loadFixturesAllArtifactForDay,
+  loadOddsDayForDay,
+  loadOddsGeneratedAtForDay,
   loadExistingExpectedMatchViewForDay,
   loadHistoryDocuments,
   loadExistingLegacyAggregate,
@@ -431,6 +446,118 @@ export function createP0CP4ReadyFamilyImplementations({
           emittedWriteCount:
             outputs.length,
           days: Object.freeze(days),
+          repositoryApplicationAuthorized:
+            false,
+        }),
+      });
+    },
+
+    async DEPLOY_SNAPSHOT_ODDS(context) {
+      const normalized =
+        normalizedFamilyContext(
+          context,
+          "DEPLOY_SNAPSHOT_ODDS",
+        );
+      const oddsLoader =
+        functionRequired(
+          loadOddsDayForDay,
+          "loadOddsDayForDay",
+        );
+      const generatedAtLoader =
+        functionRequired(
+          loadOddsGeneratedAtForDay,
+          "loadOddsGeneratedAtForDay",
+        );
+
+      const outputs = [];
+      const days = [];
+
+      for (const row of normalized.rows) {
+        const match =
+          row.file.match(
+            FAMILY_PATTERNS.DEPLOY_SNAPSHOT_ODDS,
+          );
+        const dayKey = match[1];
+
+        const oddsDay =
+          await oddsLoader({
+            dayKey,
+            inventoryRow: row,
+            context,
+          });
+
+        const generatedAt =
+          await generatedAtLoader({
+            dayKey,
+            inventoryRow: row,
+            context,
+          });
+
+        const artifact =
+          await build.deploySnapshotOdds({
+            dayKey,
+            generatedAt,
+            oddsDay,
+          });
+
+        if (
+          !artifact ||
+          typeof artifact !== "object" ||
+          artifact.ok !== true ||
+          clean(artifact.date) !== dayKey ||
+          clean(artifact.source) !==
+            "autonomous-odds-capture" ||
+          !/^[0-9a-f]{40}$/u.test(
+            clean(artifact.hash),
+          ) ||
+          !Number.isInteger(artifact.count) ||
+          artifact.count < 0 ||
+          !Array.isArray(artifact.matches)
+        ) {
+          throw new Error(
+            `p0c_p4_ready_adapter_deploy_snapshot_odds_artifact_invalid:${dayKey}`,
+          );
+        }
+
+        outputs.push(
+          outputRow(row.file, artifact),
+        );
+        days.push({
+          dayKey,
+          sourceCount:
+            Number.isInteger(oddsDay?.count)
+              ? oddsDay.count
+              : null,
+          sourceMatches:
+            Array.isArray(oddsDay?.matches)
+              ? oddsDay.matches.length
+              : 0,
+          outputCount:
+            artifact.count,
+          outputMatches:
+            artifact.matches.length,
+          generatedAt:
+            clean(artifact.generatedAt),
+          hash:
+            clean(artifact.hash),
+        });
+      }
+
+      return Object.freeze({
+        schema:
+          P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
+        family:
+          "DEPLOY_SNAPSHOT_ODDS",
+        completeFamilyOutput: true,
+        outputs: Object.freeze(outputs),
+        diagnostics: Object.freeze({
+          inventoryPathCount:
+            normalized.rows.length,
+          emittedWriteCount:
+            outputs.length,
+          days: Object.freeze(days),
+          oddsCapturePerformed:
+            false,
           repositoryApplicationAuthorized:
             false,
         }),

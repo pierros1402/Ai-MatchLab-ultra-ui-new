@@ -68,6 +68,19 @@ const SOURCE_BINDINGS = Object.freeze({
       "368d806c2e02277d3c9cee32ef87a05166bb4517b5929c36f979c95266c35e01",
     exports: Object.freeze(["exportOddsSnapshotDay"]),
   }),
+  deploySnapshotOddsPureBuilder: Object.freeze({
+    path:
+      "engine-v1/jobs/p0c-p4-build-deploy-snapshot-odds.js",
+    sha256:
+      "15193d61b127dc4624310ff579c6d60887c4a6c48845a16763255c24030901b7",
+    exports: Object.freeze([
+      "P0C_P4_DEPLOY_SNAPSHOT_ODDS_SCHEMA",
+      "P0C_P4_DEPLOY_SNAPSHOT_ODDS_SOURCE",
+      "computeP0CP4DeploySnapshotOddsContentHash",
+      "buildP0CP4DeploySnapshotOdds",
+      "buildP0CP4DeploySnapshotOddsFromMatches",
+    ]),
+  }),
   valueRefreshPipeline: Object.freeze({
     path: "engine-v1/jobs/refresh-value-artifacts-day.js",
     sha256:
@@ -228,10 +241,11 @@ const FAMILY_DESCRIPTORS = Object.freeze([
     pathPattern:
       "^data/deploy-snapshots/\\d{4}-\\d{2}-\\d{2}/odds\\.json$",
     executionGroup: "ODDS_VIEW",
-    adapterState: "REFACTOR_REQUIRED",
+    adapterState: "PURE_BUILDER_READY",
     strategy:
-      "Project odds-memory evidence through the production identity read view with an injected build timestamp.",
+      "Use the P0-C deploy-snapshot odds pure builder over identity-resolved odds-memory evidence with an injected deterministic build timestamp.",
     sourceBindings: Object.freeze([
+      "deploySnapshotOddsPureBuilder",
       "oddsSnapshotExporter",
       "evidenceOverlay",
     ]),

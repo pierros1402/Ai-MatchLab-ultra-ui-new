@@ -59,6 +59,23 @@ function builders(overrides = {}) {
           providerEvidenceRows.length,
       })),
     }),
+    deploySnapshotOdds: ({
+      dayKey,
+      generatedAt,
+      oddsDay,
+    }) => ({
+      ok: true,
+      date: dayKey,
+      generatedAt,
+      source:
+        "autonomous-odds-capture",
+      hash:
+        "a".repeat(40),
+      count:
+        oddsDay.count,
+      matches:
+        oddsDay.matches,
+    }),
     expectedMatchViewFromExisting: ({
       dayKey,
       fixturesAll,
@@ -87,7 +104,7 @@ function builders(overrides = {}) {
   };
 }
 
-test("publishes the exact five pure-builder-ready families", () => {
+test("publishes the exact six pure-builder-ready families", () => {
   assert.equal(
     P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
     "ai-matchlab.p0c-p4-ready-family-adapters.v1",
@@ -97,6 +114,7 @@ test("publishes the exact five pure-builder-ready families", () => {
     [
       "DEPLOY_SNAPSHOT_FIXTURES",
       "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+      "DEPLOY_SNAPSHOT_ODDS",
       "EXPECTED_MATCH_VIEW",
       "H2H_INDEX",
       "LEGACY_FIXTURES_AGGREGATE",
@@ -212,6 +230,68 @@ test("fixtures-all adapter emits one deterministic write per inventory day", asy
       "provider:2026-05-03",
     ],
   );
+});
+
+test("deploy-snapshot odds adapter emits one exact write per inventory day", async () => {
+  const calls = [];
+  const implementations =
+    createP0CP4ReadyFamilyImplementations({
+      loadOddsDayForDay:
+        async ({ dayKey }) => {
+          calls.push(`odds:${dayKey}`);
+          return {
+            count:
+              7,
+            matches: [
+              {
+                matchId:
+                  `match:${dayKey}`,
+              },
+            ],
+          };
+        },
+      loadOddsGeneratedAtForDay:
+        async ({ dayKey }) => {
+          calls.push(`generated:${dayKey}`);
+          return `${dayKey}T05:00:00.000Z`;
+        },
+      builders: builders(),
+    });
+
+  const result =
+    await implementations
+      .DEPLOY_SNAPSHOT_ODDS(
+        context(
+          "DEPLOY_SNAPSHOT_ODDS",
+          [
+            "data/deploy-snapshots/2026-05-02/odds.json",
+            "data/deploy-snapshots/2026-05-03/odds.json",
+          ],
+        ),
+      );
+
+  assert.equal(result.completeFamilyOutput, true);
+  assert.equal(result.outputs.length, 2);
+  assert.equal(
+    result.outputs[0].relativePath,
+    "data/deploy-snapshots/2026-05-02/odds.json",
+  );
+  assert.equal(result.outputs[0].action, "write");
+  assert.equal(result.outputs[0].content.count, 7);
+  assert.equal(
+    result.outputs[0].content.matches.length,
+    1,
+  );
+  assert.equal(
+    result.diagnostics.oddsCapturePerformed,
+    false,
+  );
+  assert.deepEqual(calls, [
+    "odds:2026-05-02",
+    "generated:2026-05-02",
+    "odds:2026-05-03",
+    "generated:2026-05-03",
+  ]);
 });
 
 test("expected-match adapter rebuilds every inventory day from fixtures-all", async () => {
