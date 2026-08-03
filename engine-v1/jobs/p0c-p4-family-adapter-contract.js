@@ -31,6 +31,17 @@ const SOURCE_BINDINGS = Object.freeze({
       "65c13e9b388e834f4874a5d8f80114261572b474f22e12ca82fbdb60b25c47c4",
     exports: Object.freeze(["exportDeploySnapshotDay"]),
   }),
+  deploySnapshotFixturesPureBuilder: Object.freeze({
+    path:
+      "engine-v1/jobs/p0c-p4-build-deploy-snapshot-fixtures.js",
+    sha256:
+      "94971cf7df8ed93b0e29aa3cb4a1f7deb0c3c9321c770d7bac8bbbbc34bc34d0",
+    exports: Object.freeze([
+      "P0C_P4_DEPLOY_SNAPSHOT_FIXTURES_SCHEMA",
+      "buildP0CP4DeploySnapshotFixtures",
+      "buildP0CP4DeploySnapshotFixturesFromArtifacts",
+    ]),
+  }),
   detailsBuilder: Object.freeze({
     path: "engine-v1/jobs/build-details-day.js",
     sha256:
@@ -174,11 +185,13 @@ const FAMILY_DESCRIPTORS = Object.freeze([
     pathPattern:
       "^data/deploy-snapshots/\\d{4}-\\d{2}-\\d{2}/fixtures\\.json$",
     executionGroup: "DEPLOY_SNAPSHOT_BUNDLE",
-    adapterState: "REFACTOR_REQUIRED",
+    adapterState: "PURE_BUILDER_READY",
     strategy:
-      "Build the display fixture universe from propagated canonical inputs without writing the repository.",
+      "Use the P0-C deploy-snapshot fixtures pure builder over the rebuilt fixture universe and fixtures-all display evidence.",
     sourceBindings: Object.freeze([
+      "deploySnapshotFixturesPureBuilder",
       "deploySnapshotExporter",
+      "fixturesAllRebuilder",
       "evidenceOverlay",
     ]),
   }),

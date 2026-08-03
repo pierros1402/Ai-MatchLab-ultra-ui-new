@@ -30,6 +30,22 @@ function context(family, paths) {
 
 function builders(overrides = {}) {
   return {
+    deploySnapshotFixturesFromArtifacts: ({
+      dayKey,
+      fixtureUniverse,
+      fixturesAll,
+    }) => ({
+      ok: true,
+      date: dayKey,
+      count:
+        fixtureUniverse.fixtures.length,
+      fixtures:
+        fixtureUniverse.fixtures.map(row => ({
+          ...row,
+          displayRows:
+            fixturesAll.matches.length,
+        })),
+    }),
     fixturesAll: ({
       dayKey,
       canonicalRows,
@@ -71,7 +87,7 @@ function builders(overrides = {}) {
   };
 }
 
-test("publishes the exact four pure-builder-ready families", () => {
+test("publishes the exact five pure-builder-ready families", () => {
   assert.equal(
     P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
     "ai-matchlab.p0c-p4-ready-family-adapters.v1",
@@ -79,12 +95,76 @@ test("publishes the exact four pure-builder-ready families", () => {
   assert.deepEqual(
     P0C_P4_READY_FAMILY_NAMES,
     [
+      "DEPLOY_SNAPSHOT_FIXTURES",
       "DEPLOY_SNAPSHOT_FIXTURES_ALL",
       "EXPECTED_MATCH_VIEW",
       "H2H_INDEX",
       "LEGACY_FIXTURES_AGGREGATE",
     ],
   );
+});
+
+test("deploy-snapshot fixtures adapter emits one exact write per inventory day", async () => {
+  const calls = [];
+  const implementations =
+    createP0CP4ReadyFamilyImplementations({
+      loadFixtureUniverseArtifactForDay:
+        async ({ dayKey }) => {
+          calls.push(`universe:${dayKey}`);
+          return {
+            fixtures: [
+              {
+                canonicalId:
+                  `cid:${dayKey}`,
+              },
+            ],
+          };
+        },
+      loadFixturesAllArtifactForDay:
+        async ({ dayKey }) => {
+          calls.push(`fixtures-all:${dayKey}`);
+          return {
+            matches: [
+              {
+                canonicalId:
+                  `cid:${dayKey}`,
+              },
+            ],
+          };
+        },
+      builders: builders(),
+    });
+
+  const result =
+    await implementations
+      .DEPLOY_SNAPSHOT_FIXTURES(
+        context(
+          "DEPLOY_SNAPSHOT_FIXTURES",
+          [
+            "data/deploy-snapshots/2026-05-02/fixtures.json",
+            "data/deploy-snapshots/2026-05-03/fixtures.json",
+          ],
+        ),
+      );
+
+  assert.equal(result.completeFamilyOutput, true);
+  assert.equal(result.outputs.length, 2);
+  assert.equal(
+    result.outputs[0].relativePath,
+    "data/deploy-snapshots/2026-05-02/fixtures.json",
+  );
+  assert.equal(result.outputs[0].action, "write");
+  assert.equal(result.outputs[0].content.count, 1);
+  assert.equal(
+    result.outputs[0].content.fixtures[0].displayRows,
+    1,
+  );
+  assert.deepEqual(calls, [
+    "universe:2026-05-02",
+    "fixtures-all:2026-05-02",
+    "universe:2026-05-03",
+    "fixtures-all:2026-05-03",
+  ]);
 });
 
 test("fixtures-all adapter emits one deterministic write per inventory day", async () => {

@@ -11,6 +11,9 @@ import {
   buildP0CP4ExpectedMatchViewFromExisting,
 } from "./p0c-p4-build-expected-match-view.js";
 import {
+  buildP0CP4DeploySnapshotFixturesFromArtifacts,
+} from "./p0c-p4-build-deploy-snapshot-fixtures.js";
+import {
   buildP0CP4FamilyRunnerRegistry,
   getP0CP4FamilyAdapterContract,
 } from "./p0c-p4-family-adapter-contract.js";
@@ -19,6 +22,7 @@ export const P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA =
   "ai-matchlab.p0c-p4-ready-family-adapters.v1";
 
 export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
+  "DEPLOY_SNAPSHOT_FIXTURES",
   "DEPLOY_SNAPSHOT_FIXTURES_ALL",
   "EXPECTED_MATCH_VIEW",
   "H2H_INDEX",
@@ -26,6 +30,8 @@ export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
 ]);
 
 const DEFAULT_BUILDERS = Object.freeze({
+  deploySnapshotFixturesFromArtifacts:
+    buildP0CP4DeploySnapshotFixturesFromArtifacts,
   fixturesAll:
     buildFixturesAllFromCanonicalEvidenceDay,
   expectedMatchViewFromExisting:
@@ -37,6 +43,8 @@ const DEFAULT_BUILDERS = Object.freeze({
 });
 
 const FAMILY_PATTERNS = Object.freeze({
+  DEPLOY_SNAPSHOT_FIXTURES:
+    /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/fixtures\.json$/u,
   DEPLOY_SNAPSHOT_FIXTURES_ALL:
     /^data\/deploy-snapshots\/(\d{4}-\d{2}-\d{2})\/fixtures-all\.json$/u,
   EXPECTED_MATCH_VIEW:
@@ -179,6 +187,11 @@ function selectedBuilders(overrides = {}) {
     ...overrides,
   };
   return Object.freeze({
+    deploySnapshotFixturesFromArtifacts:
+      builderRequired(
+        source.deploySnapshotFixturesFromArtifacts,
+        "deploySnapshotFixturesFromArtifacts",
+      ),
     fixturesAll:
       builderRequired(
         source.fixturesAll,
@@ -211,6 +224,7 @@ function outputRow(relativePath, content) {
 }
 
 export function createP0CP4ReadyFamilyImplementations({
+  loadFixtureUniverseArtifactForDay,
   loadCanonicalRowsForDay,
   loadProviderEvidenceRowsForDay =
     async () => [],
@@ -224,6 +238,104 @@ export function createP0CP4ReadyFamilyImplementations({
   const build = selectedBuilders(builders);
 
   return Object.freeze({
+    async DEPLOY_SNAPSHOT_FIXTURES(context) {
+      const normalized =
+        normalizedFamilyContext(
+          context,
+          "DEPLOY_SNAPSHOT_FIXTURES",
+        );
+      const universeLoader =
+        functionRequired(
+          loadFixtureUniverseArtifactForDay,
+          "loadFixtureUniverseArtifactForDay",
+        );
+      const fixturesAllLoader =
+        functionRequired(
+          loadFixturesAllArtifactForDay,
+          "loadFixturesAllArtifactForDay",
+        );
+
+      const outputs = [];
+      const days = [];
+
+      for (const row of normalized.rows) {
+        const match =
+          row.file.match(
+            FAMILY_PATTERNS.DEPLOY_SNAPSHOT_FIXTURES,
+          );
+        const dayKey = match[1];
+
+        const fixtureUniverse =
+          await universeLoader({
+            dayKey,
+            inventoryRow: row,
+            context,
+          });
+        const fixturesAll =
+          await fixturesAllLoader({
+            dayKey,
+            inventoryRow: row,
+            context,
+          });
+
+        const artifact =
+          await build
+            .deploySnapshotFixturesFromArtifacts({
+              dayKey,
+              fixtureUniverse,
+              fixturesAll,
+            });
+
+        if (
+          !artifact ||
+          typeof artifact !== "object" ||
+          artifact.ok !== true ||
+          clean(artifact.date) !== dayKey ||
+          !Array.isArray(artifact.fixtures) ||
+          artifact.count !== artifact.fixtures.length
+        ) {
+          throw new Error(
+            `p0c_p4_ready_adapter_deploy_snapshot_fixtures_artifact_invalid:${dayKey}`,
+          );
+        }
+
+        outputs.push(
+          outputRow(row.file, artifact),
+        );
+        days.push({
+          dayKey,
+          fixtureUniverseRows:
+            Array.isArray(fixtureUniverse?.fixtures)
+              ? fixtureUniverse.fixtures.length
+              : 0,
+          fixturesAllRows:
+            Array.isArray(fixturesAll?.matches)
+              ? fixturesAll.matches.length
+              : 0,
+          outputFixtures:
+            artifact.fixtures.length,
+        });
+      }
+
+      return Object.freeze({
+        schema:
+          P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
+        family:
+          "DEPLOY_SNAPSHOT_FIXTURES",
+        completeFamilyOutput: true,
+        outputs: Object.freeze(outputs),
+        diagnostics: Object.freeze({
+          inventoryPathCount:
+            normalized.rows.length,
+          emittedWriteCount:
+            outputs.length,
+          days: Object.freeze(days),
+          repositoryApplicationAuthorized:
+            false,
+        }),
+      });
+    },
+
     async DEPLOY_SNAPSHOT_FIXTURES_ALL(context) {
       const normalized =
         normalizedFamilyContext(
