@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 export const P0C_P4_SANDBOX_MANIFEST_SCHEMA =
-  "ai-matchlab.p0c-p4-sandbox-manifest.v1";
+  "ai-matchlab.p0c-p4-sandbox-manifest.v2";
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -45,6 +45,16 @@ function outputRows(result) {
     }));
   }
   throw new Error("p0c_p4_sandbox_task_outputs_invalid");
+}
+
+function outputAction(row) {
+  const action = clean(row?.action || "write").toLowerCase();
+  if (action !== "write" && action !== "delete") {
+    throw new Error(
+      `p0c_p4_sandbox_output_action_invalid:${action || "missing"}`,
+    );
+  }
+  return action;
 }
 
 function outputBuffer(content) {
@@ -137,7 +147,7 @@ export async function runP0CP4SandboxFoundation({
         applicationAuthorized: false,
       });
       const rows = outputRows(result);
-      const taskPaths = [];
+      const taskOutputs = [];
 
       for (const row of rows) {
         const relativePath = normalizedRelativePath(
@@ -153,6 +163,32 @@ export async function runP0CP4SandboxFoundation({
             `p0c_p4_duplicate_output_path:${relativePath}`,
           );
         }
+
+        const action = outputAction(row);
+        if (
+          action === "delete" &&
+          Object.hasOwn(row || {}, "content") &&
+          row.content !== undefined
+        ) {
+          throw new Error(
+            `p0c_p4_delete_output_content_forbidden:${relativePath}`,
+          );
+        }
+
+        if (action === "delete") {
+          emitted.set(relativePath, {
+            taskId: id,
+            action,
+            bytes: 0,
+            sha256: null,
+          });
+          taskOutputs.push({
+            relativePath,
+            action,
+          });
+          continue;
+        }
+
         const content = outputBuffer(row.content);
         const target = path.resolve(staging, relativePath);
         if (!target.startsWith(`${staging}${path.sep}`)) {
@@ -162,16 +198,31 @@ export async function runP0CP4SandboxFoundation({
         fs.writeFileSync(target, content);
         emitted.set(relativePath, {
           taskId: id,
+          action,
           bytes: content.length,
           sha256: sha256Buffer(content),
         });
-        taskPaths.push(relativePath);
+        taskOutputs.push({
+          relativePath,
+          action,
+        });
       }
+
+      taskOutputs.sort((a, b) =>
+        a.relativePath.localeCompare(b.relativePath),
+      );
 
       taskReports.push({
         id,
-        outputCount: taskPaths.length,
-        outputPaths: taskPaths.sort(),
+        outputCount: taskOutputs.length,
+        writeCount: taskOutputs.filter(
+          row => row.action === "write",
+        ).length,
+        deleteCount: taskOutputs.filter(
+          row => row.action === "delete",
+        ).length,
+        outputPaths: taskOutputs.map(row => row.relativePath),
+        outputs: taskOutputs,
       });
     }
 
@@ -196,6 +247,13 @@ export async function runP0CP4SandboxFoundation({
         a.relativePath.localeCompare(b.relativePath),
       );
 
+    const writeFileCount = files.filter(
+      row => row.action === "write",
+    ).length;
+    const deletePathCount = files.filter(
+      row => row.action === "delete",
+    ).length;
+
     const manifest = {
       schema: P0C_P4_SANDBOX_MANIFEST_SCHEMA,
       source: {
@@ -205,7 +263,10 @@ export async function runP0CP4SandboxFoundation({
       buildTimestamp: clean(buildTimestamp),
       sandboxRoot: ".",
       inventoryPathCount: inventory.size,
-      outputFileCount: files.length,
+      outputPathCount: files.length,
+      outputFileCount: writeFileCount,
+      materializedFileCount: writeFileCount,
+      deletePathCount,
       exactInventorySatisfied:
         setsEqual(new Set(emitted.keys()), inventory),
       files,
@@ -215,6 +276,9 @@ export async function runP0CP4SandboxFoundation({
         unplannedOutputs: 0,
         duplicateOutputs: 0,
         sourceEvidenceRewritten: false,
+        writeActions: writeFileCount,
+        deletionActions: deletePathCount,
+        deletionPathsMaterialized: false,
       },
     };
 
@@ -231,7 +295,8 @@ export async function runP0CP4SandboxFoundation({
 
     return {
       ok: true,
-      status: "PASS_P0C_P4_SANDBOX_OUTPUTS_MATERIALIZED_NO_APPLICATION",
+      status:
+        "PASS_P0C_P4_SANDBOX_OUTPUTS_AND_DELETIONS_MATERIALIZED_NO_APPLICATION",
       sandboxRoot: ".",
       manifest,
       manifestSha256: sha256Buffer(manifestContent),

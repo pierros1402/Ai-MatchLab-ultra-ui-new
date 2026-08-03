@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
+  P0C_P4_SANDBOX_MANIFEST_SCHEMA,
   runP0CP4SandboxFoundation,
 } from "./p0c-p4-sandbox-orchestrator.js";
 
@@ -26,7 +27,7 @@ function baseArgs(target) {
   };
 }
 
-test("exact inventory outputs are materialized with deterministic manifest", async () => {
+test("exact write inventory is materialized with deterministic v2 manifest", async () => {
   const temp = tempTarget("output");
   try {
     const result = await runP0CP4SandboxFoundation({
@@ -43,7 +44,18 @@ test("exact inventory outputs are materialized with deterministic manifest", asy
       }],
     });
     assert.equal(result.ok, true);
+    assert.equal(
+      result.status,
+      "PASS_P0C_P4_SANDBOX_OUTPUTS_AND_DELETIONS_MATERIALIZED_NO_APPLICATION",
+    );
+    assert.equal(
+      result.manifest.schema,
+      P0C_P4_SANDBOX_MANIFEST_SCHEMA,
+    );
+    assert.equal(result.manifest.outputPathCount, 2);
     assert.equal(result.manifest.outputFileCount, 2);
+    assert.equal(result.manifest.materializedFileCount, 2);
+    assert.equal(result.manifest.deletePathCount, 0);
     assert.equal(result.manifest.exactInventorySatisfied, true);
     assert.equal(result.repositoryApplicationAuthorized, false);
     assert.equal(
@@ -55,6 +67,127 @@ test("exact inventory outputs are materialized with deterministic manifest", asy
   }
   finally {
     fs.rmSync(temp.parent, { recursive: true, force: true });
+  }
+});
+
+test("mixed write and delete actions satisfy exact inventory without materializing deletion paths", async () => {
+  const temp = tempTarget("output");
+  try {
+    const result = await runP0CP4SandboxFoundation({
+      ...baseArgs(temp.target),
+      inventoryPaths: [
+        "data/retained.json",
+        "data/suppressed.json",
+      ],
+      tasks: [{
+        id: "mixed",
+        run: () => [
+          {
+            relativePath: "data/retained.json",
+            action: "write",
+            content: { fixtureId: "retained" },
+          },
+          {
+            relativePath: "data/suppressed.json",
+            action: "delete",
+          },
+        ],
+      }],
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(result.manifest.outputPathCount, 2);
+    assert.equal(result.manifest.outputFileCount, 1);
+    assert.equal(result.manifest.materializedFileCount, 1);
+    assert.equal(result.manifest.deletePathCount, 1);
+    assert.equal(result.manifest.exactInventorySatisfied, true);
+    assert.equal(
+      fs.existsSync(
+        path.join(temp.target, "data", "retained.json"),
+      ),
+      true,
+    );
+    assert.equal(
+      fs.existsSync(
+        path.join(temp.target, "data", "suppressed.json"),
+      ),
+      false,
+    );
+
+    const deleted = result.manifest.files.find(
+      row => row.relativePath === "data/suppressed.json",
+    );
+    assert.deepEqual(deleted, {
+      relativePath: "data/suppressed.json",
+      taskId: "mixed",
+      action: "delete",
+      bytes: 0,
+      sha256: null,
+    });
+    assert.equal(
+      result.manifest.invariants.deletionPathsMaterialized,
+      false,
+    );
+    assert.equal(
+      result.manifest.tasks[0].deleteCount,
+      1,
+    );
+  }
+  finally {
+    fs.rmSync(temp.parent, { recursive: true, force: true });
+  }
+});
+
+test("delete actions reject content and invalid actions", async () => {
+  const withContent = tempTarget("delete-content");
+  try {
+    await assert.rejects(
+      () => runP0CP4SandboxFoundation({
+        ...baseArgs(withContent.target),
+        inventoryPaths: ["data/a.json"],
+        tasks: [{
+          id: "bad-delete",
+          run: () => [{
+            relativePath: "data/a.json",
+            action: "delete",
+            content: null,
+          }],
+        }],
+      }),
+      /p0c_p4_delete_output_content_forbidden:data\/a.json/,
+    );
+    assert.equal(fs.existsSync(withContent.target), false);
+  }
+  finally {
+    fs.rmSync(
+      withContent.parent,
+      { recursive: true, force: true },
+    );
+  }
+
+  const invalid = tempTarget("invalid-action");
+  try {
+    await assert.rejects(
+      () => runP0CP4SandboxFoundation({
+        ...baseArgs(invalid.target),
+        inventoryPaths: ["data/a.json"],
+        tasks: [{
+          id: "bad-action",
+          run: () => [{
+            relativePath: "data/a.json",
+            action: "rename",
+          }],
+        }],
+      }),
+      /p0c_p4_sandbox_output_action_invalid:rename/,
+    );
+    assert.equal(fs.existsSync(invalid.target), false);
+  }
+  finally {
+    fs.rmSync(
+      invalid.parent,
+      { recursive: true, force: true },
+    );
   }
 });
 
@@ -105,7 +238,7 @@ test("missing exact inventory output fails closed", async () => {
   }
 });
 
-test("path traversal and duplicate output paths are rejected", async () => {
+test("path traversal and duplicate output actions are rejected", async () => {
   const traversal = tempTarget("traversal");
   try {
     await assert.rejects(
@@ -128,8 +261,21 @@ test("path traversal and duplicate output paths are rejected", async () => {
         ...baseArgs(duplicate.target),
         inventoryPaths: ["data/a.json"],
         tasks: [
-          { id: "one", run: () => [{ relativePath: "data/a.json", content: "1" }] },
-          { id: "two", run: () => [{ relativePath: "data/a.json", content: "2" }] },
+          {
+            id: "write",
+            run: () => [{
+              relativePath: "data/a.json",
+              action: "write",
+              content: "1",
+            }],
+          },
+          {
+            id: "delete",
+            run: () => [{
+              relativePath: "data/a.json",
+              action: "delete",
+            }],
+          },
         ],
       }),
       /p0c_p4_duplicate_output_path:data\/a.json/,
