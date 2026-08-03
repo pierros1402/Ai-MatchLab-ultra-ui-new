@@ -1,26 +1,41 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
-  "dayKey": "2026-08-03",
-  "generatedAt": "2026-08-03T20:52:25.039Z",
+  "dayKey": "2026-08-04",
+  "generatedAt": "2026-08-03T19:29:41.806Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
     "info": 8
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 1,
     "info": 0
   },
   "activeIssueCount": 10,
   "actionableIssueCount": 2,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 10,
+  "newIssueCount": 5,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 6,
+  "persistentIssueCount": 5,
   "activeIssues": [
+    {
+      "severity": "info",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
+      "details": {
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 37,
+        "actualFixtures": 40,
+        "drop": 8,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -28,7 +43,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "expected_matches",
-        "artifact": "expected-matches/2026-08-03.json",
+        "artifact": "expected-matches/2026-08-04.json",
         "at": null,
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -41,7 +56,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b",
-        "artifact": "value-plans/2026-08-03/plan-b.json",
+        "artifact": "value-plans/2026-08-04/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -54,7 +69,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b2",
-        "artifact": "value-plans/2026-08-03/plan-b2.json",
+        "artifact": "value-plans/2026-08-04/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -68,9 +83,11 @@
       "details": {
         "slugs": [
           "bra.copa_do_brazil",
-          "ned.supercup"
+          "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
+          "uefa.wchampions_qual"
         ],
-        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,ned.supercup",
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,uefa.wchampions_qual",
         "contextOnly": false
       }
     },
@@ -99,10 +116,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 16,
+          "evidenceSlugCount": 17,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 13,
+          "rejectedCount": 15,
           "alreadyDeclaredCount": 0
         }
       }
@@ -119,33 +136,24 @@
           "bra.copa_do_brazil",
           "caf.w.nations",
           "can.w.nsl",
+          "chi.copa_chi",
           "club.friendly",
-          "col.copa",
           "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
           "ned.supercup",
           "sco.tennents_qual",
+          "uefa.wchampions_qual",
           "usa.nwsl",
           "usa.usl.1",
           "usa.usl.l1"
         ],
         "summary": {
-          "evidenceSlugCount": 16,
+          "evidenceSlugCount": 17,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 13,
+          "rejectedCount": 15,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "picks": 7,
-        "settled": 5,
-        "unresolved": 2
       }
     },
     {
@@ -154,9 +162,9 @@
       "type": "plan_b2_unresolved_settlement",
       "message": "Plan B2 picks are still unresolved.",
       "details": {
-        "picks": 7,
-        "settled": 5,
-        "unresolved": 2
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
       }
     },
     {
@@ -180,22 +188,22 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 1,
+          "count": 0,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 1,
-            "wins": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
             "losses": 0,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
-            "oddsAvailable": 1,
-            "averageOdds": 1.75,
-            "totalStake": 1,
-            "totalReturn": 1.75,
-            "profit": 0.75,
-            "roi": 0.75
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planA2": {
@@ -218,41 +226,41 @@
           }
         },
         "planB": {
-          "count": 7,
+          "count": 0,
           "summary": {
-            "picks": 7,
-            "uniqueMatches": 4,
-            "settled": 5,
-            "wins": 4,
-            "losses": 1,
-            "unresolved": 2,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.8,
-            "oddsAvailable": 3,
-            "averageOdds": 1.7767,
-            "totalStake": 3,
-            "totalReturn": 3.3,
-            "profit": 0.3,
-            "roi": 0.1
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planB2": {
-          "count": 7,
+          "count": 1,
           "summary": {
-            "picks": 7,
-            "uniqueMatches": 4,
-            "settled": 5,
-            "wins": 4,
-            "losses": 1,
-            "unresolved": 2,
+            "picks": 1,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": 0.8,
-            "oddsAvailable": 3,
-            "averageOdds": 1.7767,
-            "totalStake": 3,
-            "totalReturn": 3.3,
-            "profit": 0.3,
-            "roi": 0.1
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         }
       }
@@ -267,9 +275,11 @@
       "details": {
         "slugs": [
           "bra.copa_do_brazil",
-          "ned.supercup"
+          "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
+          "uefa.wchampions_qual"
         ],
-        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,ned.supercup",
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,uefa.wchampions_qual",
         "contextOnly": false
       }
     },
@@ -285,22 +295,97 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
       "details": {
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 37,
+        "actualFixtures": 40,
+        "drop": 8,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-08-04.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-08-04/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-08-04/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bra.copa_do_brazil",
+          "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
+          "uefa.wchampions_qual"
+        ],
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,uefa.wchampions_qual",
+        "contextOnly": false
       }
     }
   ],
-  "persistentIssues": [
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bra.copa_do_brazil",
+          "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
+          "uefa.wchampions_qual"
+        ],
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,uefa.wchampions_qual",
+        "contextOnly": false
+      }
+    }
+  ],
+  "resolvedIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -355,6 +440,30 @@
       }
     },
     {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
+      "details": {
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "picks": 7,
+        "settled": 2,
+        "unresolved": 5
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_not_strict_clean",
@@ -379,10 +488,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 16,
+          "evidenceSlugCount": 19,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 13,
+          "rejectedCount": 16,
           "alreadyDeclaredCount": 0
         }
       }
@@ -399,33 +508,25 @@
           "bra.copa_do_brazil",
           "caf.w.nations",
           "can.w.nsl",
+          "chi.copa_chi",
           "club.friendly",
           "col.copa",
           "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
           "ned.supercup",
           "sco.tennents_qual",
+          "uefa.wchampions_qual",
           "usa.nwsl",
           "usa.usl.1",
           "usa.usl.l1"
         ],
         "summary": {
-          "evidenceSlugCount": 16,
+          "evidenceSlugCount": 19,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 13,
+          "rejectedCount": 16,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "picks": 7,
-        "settled": 5,
-        "unresolved": 2
       }
     },
     {
@@ -434,9 +535,9 @@
       "type": "plan_b2_unresolved_settlement",
       "message": "Plan B2 picks are still unresolved.",
       "details": {
-        "picks": 7,
-        "settled": 5,
-        "unresolved": 2
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
       }
     },
     {
@@ -460,22 +561,22 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 1,
+          "count": 0,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 1,
-            "wins": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
             "losses": 0,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 1,
-            "oddsAvailable": 1,
-            "averageOdds": 1.75,
-            "totalStake": 1,
-            "totalReturn": 1.75,
-            "profit": 0.75,
-            "roi": 0.75
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planA2": {
@@ -498,45 +599,45 @@
           }
         },
         "planB": {
-          "count": 7,
+          "count": 0,
           "summary": {
-            "picks": 7,
-            "uniqueMatches": 4,
-            "settled": 5,
-            "wins": 4,
-            "losses": 1,
-            "unresolved": 2,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.8,
-            "oddsAvailable": 3,
-            "averageOdds": 1.7767,
-            "totalStake": 3,
-            "totalReturn": 3.3,
-            "profit": 0.3,
-            "roi": 0.1
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planB2": {
-          "count": 7,
+          "count": 1,
           "summary": {
-            "picks": 7,
-            "uniqueMatches": 4,
-            "settled": 5,
-            "wins": 4,
-            "losses": 1,
-            "unresolved": 2,
+            "picks": 1,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "unresolved": 1,
             "unsupported": 0,
-            "hitRate": 0.8,
-            "oddsAvailable": 3,
-            "averageOdds": 1.7767,
-            "totalStake": 3,
-            "totalReturn": 3.3,
-            "profit": 0.3,
-            "roi": 0.1
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         }
       }
     }
   ],
-  "latestForDay": "2026-08-03"
+  "latestForDay": "2026-08-04"
 }
