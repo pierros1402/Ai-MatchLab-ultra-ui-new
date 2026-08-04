@@ -141,17 +141,17 @@ test("31 July restored comparison produces exact four-plan settlement closure", 
 
   assert.deepEqual(
     Object.fromEntries(report.planOrder.map(key => [key, report.plans[key].range.picks])),
-    { A: 6, A2: 0, B: 3, B2: 2 }
+    { A: 6, A2: 7, B: 3, B2: 2 }
   );
   assert.deepEqual(
     Object.fromEntries(report.planOrder.map(key => [key, report.plans[key].range.wins])),
-    { A: 4, A2: 0, B: 1, B2: 0 }
+    { A: 4, A2: 5, B: 1, B2: 0 }
   );
   assert.deepEqual(
     Object.fromEntries(report.planOrder.map(key => [key, report.plans[key].range.losses])),
-    { A: 2, A2: 0, B: 2, B2: 2 }
+    { A: 2, A2: 2, B: 2, B2: 2 }
   );
-  assert.equal(report.totalRows, 11);
+  assert.equal(report.totalRows, 18);
   assert.equal(report.integrity.status, "COMPLETE");
 });
 

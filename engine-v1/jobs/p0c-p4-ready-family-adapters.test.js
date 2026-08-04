@@ -148,7 +148,7 @@ function builders(overrides = {}) {
   };
 }
 
-test("publishes the exact seven pure-builder-ready families", () => {
+test("publishes the exact twelve pure-builder-ready families", () => {
   assert.equal(
     P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
     "ai-matchlab.p0c-p4-ready-family-adapters.v1",
@@ -163,6 +163,11 @@ test("publishes the exact seven pure-builder-ready families", () => {
       "EXPECTED_MATCH_VIEW",
       "H2H_INDEX",
       "LEGACY_FIXTURES_AGGREGATE",
+      "VALUE_PLAN_ARTIFACT",
+      "VALUE_AUDIT_ARTIFACT",
+      "VALUE_COMPARISON",
+      "DEPLOY_SNAPSHOT_VALUE",
+      "DEPLOY_SNAPSHOT_VALUE_AUDIT",
     ],
   );
 });

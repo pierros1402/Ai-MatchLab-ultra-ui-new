@@ -24,18 +24,28 @@ import {
   buildP0CP4FamilyRunnerRegistry,
   getP0CP4FamilyAdapterContract,
 } from "./p0c-p4-family-adapter-contract.js";
+import {
+  P0C_P4_VALUE_FAMILY_NAMES,
+  createP0CP4ValueFamilyImplementations,
+} from "./p0c-p4-value-family-adapters.js";
 
 export const P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA =
   "ai-matchlab.p0c-p4-ready-family-adapters.v1";
 
+export const P0C_P4_NON_VALUE_READY_FAMILY_NAMES =
+  Object.freeze([
+    "DEPLOY_SNAPSHOT_DETAILS",
+    "DEPLOY_SNAPSHOT_FIXTURES",
+    "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+    "DEPLOY_SNAPSHOT_ODDS",
+    "EXPECTED_MATCH_VIEW",
+    "H2H_INDEX",
+    "LEGACY_FIXTURES_AGGREGATE",
+  ]);
+
 export const P0C_P4_READY_FAMILY_NAMES = Object.freeze([
-  "DEPLOY_SNAPSHOT_DETAILS",
-  "DEPLOY_SNAPSHOT_FIXTURES",
-  "DEPLOY_SNAPSHOT_FIXTURES_ALL",
-  "DEPLOY_SNAPSHOT_ODDS",
-  "EXPECTED_MATCH_VIEW",
-  "H2H_INDEX",
-  "LEGACY_FIXTURES_AGGREGATE",
+  ...P0C_P4_NON_VALUE_READY_FAMILY_NAMES,
+  ...P0C_P4_VALUE_FAMILY_NAMES,
 ]);
 
 const DEFAULT_BUILDERS = Object.freeze({
@@ -268,11 +278,21 @@ export function createP0CP4ReadyFamilyImplementations({
   loadHistoryDocuments,
   loadExistingLegacyAggregate,
   loadCanonicalByDay,
+  loadExistingValueArtifact,
+  buildExistingValueArtifact,
+  valueIdentityOverlay,
   builders,
 } = {}) {
   const build = selectedBuilders(builders);
+  const valueImplementations =
+    createP0CP4ValueFamilyImplementations({
+      loadExistingValueArtifact,
+      buildExistingValueArtifact,
+      overlay: valueIdentityOverlay,
+    });
 
   return Object.freeze({
+    ...valueImplementations,
     async DEPLOY_SNAPSHOT_DETAILS(context) {
       const normalized =
         normalizedFamilyContext(

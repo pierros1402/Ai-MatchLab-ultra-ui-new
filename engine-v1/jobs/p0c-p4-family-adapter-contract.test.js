@@ -1,5 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   P0C_P4_FAMILY_ADAPTER_CONTRACT_SCHEMA,
@@ -9,6 +13,38 @@ import {
   validateP0CP4FamilyAdapterInventory,
   validateP0CP4ProducerEvidence,
 } from "./p0c-p4-family-adapter-contract.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const PROJECT_ROOT = path.resolve(
+  path.dirname(__filename),
+  "..",
+  "..",
+);
+
+function sha256(value) {
+  return crypto
+    .createHash("sha256")
+    .update(value)
+    .digest("hex");
+}
+
+function sourceBindingSha256(relativePath, expectedSha256) {
+  const content = fs.readFileSync(
+    path.join(PROJECT_ROOT, relativePath),
+  );
+  const rawSha256 = sha256(content);
+  if (rawSha256 === expectedSha256) return rawSha256;
+
+  const normalizedLfSha256 = sha256(
+    Buffer.from(
+      content
+        .toString("utf8")
+        .replaceAll("\r\n", "\n"),
+      "utf8",
+    ),
+  );
+  return normalizedLfSha256;
+}
 
 const FAMILY_COUNTS = Object.freeze({
   DEPLOY_SNAPSHOT_DETAILS: 628,
@@ -194,7 +230,10 @@ test("pins all required producer source hashes", () => {
     contract.sourceBindings,
   ).map(row => ({
     path: row.path,
-    sha256: row.sha256,
+    sha256: sourceBindingSha256(
+      row.path,
+      row.sha256,
+    ),
   }));
 
   const result = validateP0CP4ProducerEvidence({
@@ -202,7 +241,7 @@ test("pins all required producer source hashes", () => {
   });
 
   assert.equal(result.ok, true);
-  assert.equal(result.requiredSourceCount, 19);
+  assert.equal(result.requiredSourceCount, 20);
 
   const drifted = sourceRecords.map(row => ({ ...row }));
   drifted[0].sha256 = "0".repeat(64);
@@ -259,7 +298,7 @@ test("builds only an exact 13-runner registry", () => {
   );
 });
 
-test("marks the seven integrated P0-C pure builders as ready", () => {
+test("marks the twelve integrated P0-C pure builders as ready", () => {
   const contract = getP0CP4FamilyAdapterContract();
   const ready = contract.families
     .filter(row => row.adapterState === "PURE_BUILDER_READY")
@@ -271,8 +310,13 @@ test("marks the seven integrated P0-C pure builders as ready", () => {
     "DEPLOY_SNAPSHOT_FIXTURES",
     "DEPLOY_SNAPSHOT_FIXTURES_ALL",
     "DEPLOY_SNAPSHOT_ODDS",
+    "DEPLOY_SNAPSHOT_VALUE",
+    "DEPLOY_SNAPSHOT_VALUE_AUDIT",
     "EXPECTED_MATCH_VIEW",
     "H2H_INDEX",
     "LEGACY_FIXTURES_AGGREGATE",
+    "VALUE_AUDIT_ARTIFACT",
+    "VALUE_COMPARISON",
+    "VALUE_PLAN_ARTIFACT",
   ]);
 });
