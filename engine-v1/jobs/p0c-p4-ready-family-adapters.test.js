@@ -148,7 +148,7 @@ function builders(overrides = {}) {
   };
 }
 
-test("publishes the exact twelve pure-builder-ready families", () => {
+test("publishes the exact thirteen pure-builder-ready families", () => {
   assert.equal(
     P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA,
     "ai-matchlab.p0c-p4-ready-family-adapters.v1",
@@ -159,6 +159,7 @@ test("publishes the exact twelve pure-builder-ready families", () => {
       "DEPLOY_SNAPSHOT_DETAILS",
       "DEPLOY_SNAPSHOT_FIXTURES",
       "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+      "DEPLOY_SNAPSHOT_MANIFEST",
       "DEPLOY_SNAPSHOT_ODDS",
       "EXPECTED_MATCH_VIEW",
       "H2H_INDEX",
@@ -713,6 +714,78 @@ test("legacy fixture adapter emits exactly data/fixtures.json", async () => {
   assert.equal(
     result.outputs[0].content.fixtures.length,
     2,
+  );
+});
+
+test("deploy-snapshot manifest adapter is integrated only through complete fixed bundle inputs", async () => {
+  const implementations =
+    createP0CP4ReadyFamilyImplementations({
+      loadFixedDeploySnapshotManifestInputsForDay:
+        async ({ dayKey }) => ({
+          marker: dayKey,
+        }),
+      buildDeploySnapshotManifest:
+        async ({ dayKey, relativePath, buildTimestamp }) => ({
+          schema:
+            "ai-matchlab.p0c-p4-deploy-snapshot-manifest.v1",
+          ok: true,
+          date: dayKey,
+          relativePath,
+          content: Buffer.from(
+            `${JSON.stringify({ dayKey, buildTimestamp })}\n`,
+            "utf8",
+          ),
+          sourceSha256:
+            "1".repeat(64),
+          outputSha256:
+            "2".repeat(64),
+          manifestHash:
+            "3".repeat(64),
+          validation: { ok: true },
+          diagnostics: {
+            fixtureCount: 1,
+            valuePickCount: 0,
+            detailWriteCount: 1,
+            detailDeleteCount: 0,
+            changedFixtureIdCount: 0,
+          },
+        }),
+      manifestIdentityOverlay: {
+        resolveEvidenceFixtureId(value) {
+          return {
+            ok: true,
+            managed: false,
+            sourceFixtureId: value,
+            resolvedFixtureId: value,
+          };
+        },
+      },
+      builders: builders(),
+    });
+
+  const manifestContext = context(
+    "DEPLOY_SNAPSHOT_MANIFEST",
+    [
+      "data/deploy-snapshots/2026-07-08/manifest.json",
+    ],
+  );
+  manifestContext.buildTimestamp =
+    "2026-08-04T17:45:00.000Z";
+
+  const result =
+    await implementations.DEPLOY_SNAPSHOT_MANIFEST(
+      manifestContext,
+    );
+
+  assert.equal(result.completeFamilyOutput, true);
+  assert.equal(result.outputs.length, 1);
+  assert.equal(
+    result.outputs[0].relativePath,
+    "data/deploy-snapshots/2026-07-08/manifest.json",
+  );
+  assert.equal(
+    result.diagnostics.fixedBundleRequired,
+    true,
   );
 });
 

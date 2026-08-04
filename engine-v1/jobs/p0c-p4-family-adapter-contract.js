@@ -25,6 +25,17 @@ export const P0C_P4_FAMILY_ADAPTER_DISCOVERY_BINDING =
   });
 
 const SOURCE_BINDINGS = Object.freeze({
+  deploySnapshotManifestPureBuilder: Object.freeze({
+    path:
+      "engine-v1/jobs/p0c-p4-build-deploy-snapshot-manifest.js",
+    sha256:
+      "4e5adf8f3dbe80913e05fe05caaa3d5e4eb1e23c922f432b701eda0da4e21676",
+    exports: Object.freeze([
+      "P0C_P4_DEPLOY_SNAPSHOT_MANIFEST_SCHEMA",
+      "P0C_P4_DEPLOY_SNAPSHOT_MANIFEST_REQUIRED_FAMILIES",
+      "buildP0CP4DeploySnapshotManifest",
+    ]),
+  }),
   deploySnapshotExporter: Object.freeze({
     path: "engine-v1/jobs/export-deploy-snapshot-day.js",
     sha256:
@@ -254,11 +265,13 @@ const FAMILY_DESCRIPTORS = Object.freeze([
     pathPattern:
       "^data/deploy-snapshots/\\d{4}-\\d{2}-\\d{2}/manifest\\.json$",
     executionGroup: "DEPLOY_SNAPSHOT_BUNDLE",
-    adapterState: "REFACTOR_REQUIRED",
+    adapterState: "PURE_BUILDER_READY",
     strategy:
-      "Compute the manifest only after fixtures, details, value and audit outputs are fixed.",
+      "Use the P0-C pure manifest builder only after the complete fixed fixtures, details, Value and Value-audit output sets are supplied for the day; preserve source operational metadata and recompute all output-bound counts, hashes, coverage and release hash.",
     sourceBindings: Object.freeze([
+      "deploySnapshotManifestPureBuilder",
       "deploySnapshotExporter",
+      "evidenceOverlay",
     ]),
   }),
   Object.freeze({

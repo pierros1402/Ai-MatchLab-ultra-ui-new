@@ -28,6 +28,10 @@ import {
   P0C_P4_VALUE_FAMILY_NAMES,
   createP0CP4ValueFamilyImplementations,
 } from "./p0c-p4-value-family-adapters.js";
+import {
+  P0C_P4_DEPLOY_SNAPSHOT_MANIFEST_FAMILY,
+  createP0CP4DeploySnapshotManifestFamilyImplementation,
+} from "./p0c-p4-deploy-snapshot-manifest-adapter.js";
 
 export const P0C_P4_READY_FAMILY_ADAPTERS_SCHEMA =
   "ai-matchlab.p0c-p4-ready-family-adapters.v1";
@@ -37,6 +41,7 @@ export const P0C_P4_NON_VALUE_READY_FAMILY_NAMES =
     "DEPLOY_SNAPSHOT_DETAILS",
     "DEPLOY_SNAPSHOT_FIXTURES",
     "DEPLOY_SNAPSHOT_FIXTURES_ALL",
+    P0C_P4_DEPLOY_SNAPSHOT_MANIFEST_FAMILY,
     "DEPLOY_SNAPSHOT_ODDS",
     "EXPECTED_MATCH_VIEW",
     "H2H_INDEX",
@@ -281,6 +286,9 @@ export function createP0CP4ReadyFamilyImplementations({
   loadExistingValueArtifact,
   buildExistingValueArtifact,
   valueIdentityOverlay,
+  loadFixedDeploySnapshotManifestInputsForDay,
+  buildDeploySnapshotManifest,
+  manifestIdentityOverlay,
   builders,
 } = {}) {
   const build = selectedBuilders(builders);
@@ -290,9 +298,19 @@ export function createP0CP4ReadyFamilyImplementations({
       buildExistingValueArtifact,
       overlay: valueIdentityOverlay,
     });
+  const manifestImplementation =
+    createP0CP4DeploySnapshotManifestFamilyImplementation({
+      loadFixedDeploySnapshotManifestInputsForDay,
+      buildDeploySnapshotManifest,
+      overlay:
+        manifestIdentityOverlay ||
+        valueIdentityOverlay,
+    });
 
   return Object.freeze({
     ...valueImplementations,
+    [P0C_P4_DEPLOY_SNAPSHOT_MANIFEST_FAMILY]:
+      manifestImplementation,
     async DEPLOY_SNAPSHOT_DETAILS(context) {
       const normalized =
         normalizedFamilyContext(
