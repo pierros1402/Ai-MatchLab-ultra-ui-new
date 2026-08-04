@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-01",
-  "generatedAt": "2026-08-04T04:17:09.929Z",
+  "generatedAt": "2026-08-04T07:33:18.193Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-08-01/fixtures.json",
     "finalResultsDir": "data/final-results/2026-08-01",
-    "verifiedFinalResults": 22,
+    "verifiedFinalResults": 38,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-01",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -57,18 +57,18 @@
       "summary": {
         "picks": 12,
         "uniqueMatches": 11,
-        "settled": 1,
-        "wins": 0,
-        "losses": 1,
-        "unresolved": 11,
+        "settled": 12,
+        "wins": 7,
+        "losses": 5,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5833,
+        "oddsAvailable": 9,
+        "averageOdds": 2.0478,
+        "totalStake": 9,
+        "totalReturn": 8.97,
+        "profit": -0.03,
+        "roi": -0.0033
       },
       "picks": [
         {
@@ -77,7 +77,7 @@
           "canonicalMatchId": "401873326",
           "country": "Bolivia",
           "leagueSlug": "bol.1",
-          "leagueName": "Bol 1",
+          "leagueName": "Liga Profesional",
           "kickoff": "2026-08-01T19:00Z",
           "homeTeam": "Real Oruro",
           "awayTeam": "Independiente Petrolero",
@@ -91,11 +91,55 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.37,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 3,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401873326",
+                "url": "https://www.espn.com.au/football/match/_/gameId/401873326/independiente-petrolero-real-oruro",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "AjZcsLnud",
+                "url": "https://www.sofascore.com/football/match/cdt-real-oruro-club-independiente-petrolero/AjZcsLnud",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "futbol24",
+                "url": "https://www.futbol24.com/match/2026/08/01/national/Bolivia/Liga-de-Futbol-Prof/2026/Real-Oruro/vs/Inde-Petrolero",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -103,7 +147,7 @@
           "canonicalMatchId": "cid_est2_tallinn_florau21_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "FC Tallinn",
           "awayTeam": "Flora U21",
@@ -117,11 +161,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.963Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KQoBrqCk",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "FC Tallinn",
+                "away": "Flora U21",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -129,7 +201,7 @@
           "canonicalMatchId": "cid_isl1_vestmannaeyjar_fram_20260801",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "Vestmannaeyjar",
           "awayTeam": "Fram",
@@ -143,11 +215,39 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.41,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T16:23:13.303Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6idgQZwB",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Vestmannaeyjar",
+                "away": "Fram",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -155,7 +255,7 @@
           "canonicalMatchId": "cid_est2_nommekaljuu21_maardu_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Kalju U21",
           "awayTeam": "Maardu",
@@ -169,11 +269,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.801Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "GUdXkRJF",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Kalju U21",
+                "away": "Maardu",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -181,7 +309,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_tartuwelco_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Tartu Welco",
@@ -195,16 +323,44 @@
           "aiFairOdds": 1.11,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.860Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "SjkJtNt2",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
           "matchId": "401873323",
-          "canonicalMatchId": "cid_bol1_tomayapo_academiadelbalompie_20260801",
+          "canonicalMatchId": "401873323",
           "country": "Bolivia",
           "leagueSlug": "bol.1",
           "leagueName": "Bol 1",
@@ -263,7 +419,7 @@
           "canonicalMatchId": "401873326",
           "country": "Bolivia",
           "leagueSlug": "bol.1",
-          "leagueName": "Bol 1",
+          "leagueName": "Liga Profesional",
           "kickoff": "2026-08-01T19:00Z",
           "homeTeam": "Real Oruro",
           "awayTeam": "Independiente Petrolero",
@@ -277,11 +433,55 @@
           "aiFairOdds": null,
           "oddsDecimal": 6.59,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 3,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401873326",
+                "url": "https://www.espn.com.au/football/match/_/gameId/401873326/independiente-petrolero-real-oruro",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "AjZcsLnud",
+                "url": "https://www.sofascore.com/football/match/cdt-real-oruro-club-independiente-petrolero/AjZcsLnud",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "futbol24",
+                "url": "https://www.futbol24.com/match/2026/08/01/national/Bolivia/Liga-de-Futbol-Prof/2026/Real-Oruro/vs/Inde-Petrolero",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -303,11 +503,46 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.58,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 2,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401873931",
+                "url": "https://www.espn.com/soccer/match/_/gameId/401873931/viking-fk-ik-start",
+                "statusType": "STATUS_FINAL",
+                "home": "IK Start",
+                "away": "Viking FK",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "rnsoy",
+                "url": "https://www.sofascore.com/football/match/viking-fk-ik-start/rnsoy",
+                "statusType": "STATUS_FINAL",
+                "home": "IK Start",
+                "away": "Viking FK",
+                "scoreHome": 0,
+                "scoreAway": 3
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -315,7 +550,7 @@
           "canonicalMatchId": "cid_chn2_daliankuncity_shaanxiunion_20260801",
           "country": "China",
           "leagueSlug": "chn.2",
-          "leagueName": "China League One",
+          "leagueName": "League One",
           "kickoff": "2026-08-01T11:00:00.000Z",
           "homeTeam": "Dalian K'un City",
           "awayTeam": "Shaanxi Union",
@@ -329,11 +564,39 @@
           "aiFairOdds": 1.82,
           "oddsDecimal": 1.69,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T13:57:58.323Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "OWJJjv5M",
+                "country": "China",
+                "leagueName": "League One",
+                "leaguePath": "/football/china/league-one/",
+                "home": "Dalian K'un City",
+                "away": "Shaanxi Union",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T11:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -341,7 +604,7 @@
           "canonicalMatchId": "cid_chn2_ningboprofessional_guangxihengchen_20260801",
           "country": "China",
           "leagueSlug": "chn.2",
-          "leagueName": "China League One",
+          "leagueName": "League One",
           "kickoff": "2026-08-01T11:00:00.000Z",
           "homeTeam": "Ningbo Professional",
           "awayTeam": "Guangxi Hengchen",
@@ -355,11 +618,39 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 4,
+            "scoreKey": "2-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T13:57:58.342Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "G6GBh0zA",
+                "country": "China",
+                "leagueName": "League One",
+                "leaguePath": "/football/china/league-one/",
+                "home": "Ningbo Professional",
+                "away": "Guangxi Hengchen",
+                "scoreHome": 2,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T11:00:00.000Z",
+                "scoreKey": "2-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -381,11 +672,55 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.36,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 3,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401861438",
+                "url": "https://www.espn.com/soccer/match/_/gameId/401861438/shandong-taishan-shanghai-port",
+                "statusType": "STATUS_FINAL",
+                "home": "Shanghai Port",
+                "away": "Shandong Taishan",
+                "scoreHome": 0,
+                "scoreAway": 1
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "wrbsMFq",
+                "url": "https://www.sofascore.com/football/match/shanghai-port-shandong-taishan/wrbsMFq",
+                "statusType": "STATUS_FINAL",
+                "home": "Shanghai Port",
+                "away": "Shandong Taishan",
+                "scoreHome": 0,
+                "scoreAway": 1
+              },
+              {
+                "provider": "futbol24",
+                "url": "https://www.futbol24.com/match/2026/08/01/national/China/Super-League/2026/Shanghai-Port/vs/Shandong-T",
+                "statusType": "STATUS_FINAL",
+                "home": "Shanghai Port",
+                "away": "Shandong Taishan",
+                "scoreHome": 0,
+                "scoreAway": 1
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -407,11 +742,55 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.51,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 3,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401842776",
+                "url": "https://www.espn.co.uk/football/match/_/gameId/401842776/kalmar-ff-bk-hacken",
+                "statusType": "STATUS_FINAL",
+                "home": "BK Häcken",
+                "away": "Kalmar FF",
+                "scoreHome": 1,
+                "scoreAway": 1
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "kKsQM",
+                "url": "https://www.sofascore.com/football/match/kalmar-ff-bk-hacken/kKsQM",
+                "statusType": "STATUS_FINAL",
+                "home": "BK Häcken",
+                "away": "Kalmar FF",
+                "scoreHome": 1,
+                "scoreAway": 1
+              },
+              {
+                "provider": "futbol24",
+                "url": "https://www.futbol24.com/match/2026/08/01/national/Sweden/Allsvenskan/2026/Hacken/vs/Kalmar",
+                "statusType": "STATUS_FINAL",
+                "home": "BK Häcken",
+                "away": "Kalmar FF",
+                "scoreHome": 1,
+                "scoreAway": 1
+              }
+            ]
+          }
         }
       ]
     },
@@ -429,18 +808,18 @@
       "summary": {
         "picks": 11,
         "uniqueMatches": 10,
-        "settled": 1,
-        "wins": 0,
-        "losses": 1,
-        "unresolved": 10,
+        "settled": 11,
+        "wins": 7,
+        "losses": 4,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.6364,
+        "oddsAvailable": 8,
+        "averageOdds": 2.115,
+        "totalStake": 8,
+        "totalReturn": 8.97,
+        "profit": 0.97,
+        "roi": 0.1212
       },
       "picks": [
         {
@@ -449,7 +828,7 @@
           "canonicalMatchId": "401873326",
           "country": "Bolivia",
           "leagueSlug": "bol.1",
-          "leagueName": "Bol 1",
+          "leagueName": "Liga Profesional",
           "kickoff": "2026-08-01T19:00Z",
           "homeTeam": "Real Oruro",
           "awayTeam": "Independiente Petrolero",
@@ -463,11 +842,55 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.37,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 3,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401873326",
+                "url": "https://www.espn.com.au/football/match/_/gameId/401873326/independiente-petrolero-real-oruro",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "AjZcsLnud",
+                "url": "https://www.sofascore.com/football/match/cdt-real-oruro-club-independiente-petrolero/AjZcsLnud",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "futbol24",
+                "url": "https://www.futbol24.com/match/2026/08/01/national/Bolivia/Liga-de-Futbol-Prof/2026/Real-Oruro/vs/Inde-Petrolero",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -475,7 +898,7 @@
           "canonicalMatchId": "cid_est2_tallinn_florau21_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "FC Tallinn",
           "awayTeam": "Flora U21",
@@ -489,11 +912,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.963Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KQoBrqCk",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "FC Tallinn",
+                "away": "Flora U21",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -501,7 +952,7 @@
           "canonicalMatchId": "cid_isl1_vestmannaeyjar_fram_20260801",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "Vestmannaeyjar",
           "awayTeam": "Fram",
@@ -515,11 +966,39 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.41,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T16:23:13.303Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6idgQZwB",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Vestmannaeyjar",
+                "away": "Fram",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -527,7 +1006,7 @@
           "canonicalMatchId": "cid_est2_nommekaljuu21_maardu_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Kalju U21",
           "awayTeam": "Maardu",
@@ -541,11 +1020,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.801Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "GUdXkRJF",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Kalju U21",
+                "away": "Maardu",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -553,7 +1060,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_tartuwelco_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Tartu Welco",
@@ -567,16 +1074,44 @@
           "aiFairOdds": 1.11,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.860Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "SjkJtNt2",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
           "matchId": "401873323",
-          "canonicalMatchId": "cid_bol1_tomayapo_academiadelbalompie_20260801",
+          "canonicalMatchId": "401873323",
           "country": "Bolivia",
           "leagueSlug": "bol.1",
           "leagueName": "Bol 1",
@@ -635,7 +1170,7 @@
           "canonicalMatchId": "401873326",
           "country": "Bolivia",
           "leagueSlug": "bol.1",
-          "leagueName": "Bol 1",
+          "leagueName": "Liga Profesional",
           "kickoff": "2026-08-01T19:00Z",
           "homeTeam": "Real Oruro",
           "awayTeam": "Independiente Petrolero",
@@ -649,11 +1184,55 @@
           "aiFairOdds": null,
           "oddsDecimal": 6.59,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 3,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401873326",
+                "url": "https://www.espn.com.au/football/match/_/gameId/401873326/independiente-petrolero-real-oruro",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "AjZcsLnud",
+                "url": "https://www.sofascore.com/football/match/cdt-real-oruro-club-independiente-petrolero/AjZcsLnud",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "futbol24",
+                "url": "https://www.futbol24.com/match/2026/08/01/national/Bolivia/Liga-de-Futbol-Prof/2026/Real-Oruro/vs/Inde-Petrolero",
+                "statusType": "STATUS_FINAL",
+                "home": "Real Oruro",
+                "away": "Independiente Petrolero",
+                "scoreHome": 0,
+                "scoreAway": 3
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -675,11 +1254,46 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.58,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 3,
+            "scoreKey": "0-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 2,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401873931",
+                "url": "https://www.espn.com/soccer/match/_/gameId/401873931/viking-fk-ik-start",
+                "statusType": "STATUS_FINAL",
+                "home": "IK Start",
+                "away": "Viking FK",
+                "scoreHome": 0,
+                "scoreAway": 3
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "rnsoy",
+                "url": "https://www.sofascore.com/football/match/viking-fk-ik-start/rnsoy",
+                "statusType": "STATUS_FINAL",
+                "home": "IK Start",
+                "away": "Viking FK",
+                "scoreHome": 0,
+                "scoreAway": 3
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -687,7 +1301,7 @@
           "canonicalMatchId": "cid_chn2_daliankuncity_shaanxiunion_20260801",
           "country": "China",
           "leagueSlug": "chn.2",
-          "leagueName": "China League One",
+          "leagueName": "League One",
           "kickoff": "2026-08-01T11:00:00.000Z",
           "homeTeam": "Dalian K'un City",
           "awayTeam": "Shaanxi Union",
@@ -701,11 +1315,39 @@
           "aiFairOdds": 1.82,
           "oddsDecimal": 1.69,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T13:57:58.323Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "OWJJjv5M",
+                "country": "China",
+                "leagueName": "League One",
+                "leaguePath": "/football/china/league-one/",
+                "home": "Dalian K'un City",
+                "away": "Shaanxi Union",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T11:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -713,7 +1355,7 @@
           "canonicalMatchId": "cid_chn2_ningboprofessional_guangxihengchen_20260801",
           "country": "China",
           "leagueSlug": "chn.2",
-          "leagueName": "China League One",
+          "leagueName": "League One",
           "kickoff": "2026-08-01T11:00:00.000Z",
           "homeTeam": "Ningbo Professional",
           "awayTeam": "Guangxi Hengchen",
@@ -727,11 +1369,39 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 4,
+            "scoreKey": "2-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T13:57:58.342Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "G6GBh0zA",
+                "country": "China",
+                "leagueName": "League One",
+                "leaguePath": "/football/china/league-one/",
+                "home": "Ningbo Professional",
+                "away": "Guangxi Hengchen",
+                "scoreHome": 2,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T11:00:00.000Z",
+                "scoreKey": "2-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -753,11 +1423,55 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.36,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "manual_multi_source_exact_match_review",
+            "method": "manual_two_source_final_score_validated",
+            "authority": "source_bound_exact_match_review",
+            "sourceCount": 3,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-04T04:26:00.000Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401861438",
+                "url": "https://www.espn.com/soccer/match/_/gameId/401861438/shandong-taishan-shanghai-port",
+                "statusType": "STATUS_FINAL",
+                "home": "Shanghai Port",
+                "away": "Shandong Taishan",
+                "scoreHome": 0,
+                "scoreAway": 1
+              },
+              {
+                "provider": "sofascore",
+                "providerMatchId": "wrbsMFq",
+                "url": "https://www.sofascore.com/football/match/shanghai-port-shandong-taishan/wrbsMFq",
+                "statusType": "STATUS_FINAL",
+                "home": "Shanghai Port",
+                "away": "Shandong Taishan",
+                "scoreHome": 0,
+                "scoreAway": 1
+              },
+              {
+                "provider": "futbol24",
+                "url": "https://www.futbol24.com/match/2026/08/01/national/China/Super-League/2026/Shanghai-Port/vs/Shandong-T",
+                "statusType": "STATUS_FINAL",
+                "home": "Shanghai Port",
+                "away": "Shandong Taishan",
+                "scoreHome": 0,
+                "scoreAway": 1
+              }
+            ]
+          }
         }
       ]
     },
@@ -775,18 +1489,18 @@
       "summary": {
         "picks": 15,
         "uniqueMatches": 9,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
-        "unresolved": 15,
+        "settled": 15,
+        "wins": 8,
+        "losses": 7,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5333,
+        "oddsAvailable": 2,
+        "averageOdds": 4.905,
+        "totalStake": 2,
+        "totalReturn": 9.81,
+        "profit": 7.81,
+        "roi": 3.905
       },
       "picks": [
         {
@@ -795,7 +1509,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_tartuwelco_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Tartu Welco",
@@ -809,11 +1523,39 @@
           "aiFairOdds": 1.11,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.860Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "SjkJtNt2",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -821,7 +1563,7 @@
           "canonicalMatchId": "cid_fro2_vikingur2_hoyvik_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "Vikingur 2",
           "awayTeam": "Hoyvik",
@@ -835,11 +1577,39 @@
           "aiFairOdds": 1.13,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:56.189Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Cr0VlSye",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Vikingur 2",
+                "away": "Hoyvik",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -847,7 +1617,7 @@
           "canonicalMatchId": "cid_est2_nommekaljuu21_maardu_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Kalju U21",
           "awayTeam": "Maardu",
@@ -861,11 +1631,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.801Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "GUdXkRJF",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Kalju U21",
+                "away": "Maardu",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -873,7 +1671,7 @@
           "canonicalMatchId": "cid_est2_tallinn_florau21_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "FC Tallinn",
           "awayTeam": "Flora U21",
@@ -887,11 +1685,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.963Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KQoBrqCk",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "FC Tallinn",
+                "away": "Flora U21",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -899,7 +1725,7 @@
           "canonicalMatchId": "cid_ecu2_gualaceo_indjuniors_20260801",
           "country": "Ecuador",
           "leagueSlug": "ecu.2",
-          "leagueName": "Ecuador Serie B",
+          "leagueName": "Serie B",
           "kickoff": "2026-08-01T20:30:00.000Z",
           "homeTeam": "Gualaceo",
           "awayTeam": "Ind. Juniors",
@@ -913,11 +1739,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 3,
+            "scoreKey": "2-3"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T22:49:52.425Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "nq8ol0Jo",
+                "country": "Ecuador",
+                "leagueName": "Serie B",
+                "leaguePath": "/football/ecuador/serie-b/",
+                "home": "Gualaceo",
+                "away": "Ind. Juniors",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-08-01T20:30:00.000Z",
+                "scoreKey": "2-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -925,7 +1779,7 @@
           "canonicalMatchId": "cid_blr2_slonim_osipovichi_20260801",
           "country": "Belarus",
           "leagueSlug": "blr.2",
-          "leagueName": "Belarusian First League",
+          "leagueName": "Pershaya Liga",
           "kickoff": "2026-08-01T13:00:00.000Z",
           "homeTeam": "FC Slonim",
           "awayTeam": "Osipovichi",
@@ -939,11 +1793,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:55.016Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "8j4gFZgd",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "FC Slonim",
+                "away": "Osipovichi",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T13:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -951,7 +1833,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_tartuwelco_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Tartu Welco",
@@ -965,11 +1847,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.860Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "SjkJtNt2",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -977,7 +1887,7 @@
           "canonicalMatchId": "cid_fro2_vikingur2_hoyvik_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "Vikingur 2",
           "awayTeam": "Hoyvik",
@@ -991,11 +1901,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:56.189Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Cr0VlSye",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Vikingur 2",
+                "away": "Hoyvik",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1003,7 +1941,7 @@
           "canonicalMatchId": "cid_est2_nommekaljuu21_maardu_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Kalju U21",
           "awayTeam": "Maardu",
@@ -1017,11 +1955,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": 8.59,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.801Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "GUdXkRJF",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Kalju U21",
+                "away": "Maardu",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1029,7 +1995,7 @@
           "canonicalMatchId": "cid_est2_tallinn_florau21_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "FC Tallinn",
           "awayTeam": "Flora U21",
@@ -1043,11 +2009,39 @@
           "aiFairOdds": 1.21,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.963Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KQoBrqCk",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "FC Tallinn",
+                "away": "Flora U21",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1055,7 +2049,7 @@
           "canonicalMatchId": "cid_fro2_fuglafjordur_streymur2_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T12:00:00.000Z",
           "homeTeam": "IF Fuglafjordur",
           "awayTeam": "Streymur 2",
@@ -1069,11 +2063,39 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 1,
+            "scoreKey": "3-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T13:57:58.632Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dWZY8mTQ",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "IF Fuglafjordur",
+                "away": "Streymur 2",
+                "scoreHome": 3,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T12:00:00.000Z",
+                "scoreKey": "3-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1081,7 +2103,7 @@
           "canonicalMatchId": "cid_est2_levadiau21_elva_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Levadia U21",
           "awayTeam": "Elva",
@@ -1095,11 +2117,39 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.742Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lreul5lS",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Levadia U21",
+                "away": "Elva",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1107,7 +2157,7 @@
           "canonicalMatchId": "cid_fro2_suduroy_b36torshavn2_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "FC Suduroy",
           "awayTeam": "B36 Torshavn 2",
@@ -1121,11 +2171,39 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:56.163Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "8Agvm667",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "FC Suduroy",
+                "away": "B36 Torshavn 2",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1133,7 +2211,7 @@
           "canonicalMatchId": "cid_blr2_slonim_osipovichi_20260801",
           "country": "Belarus",
           "leagueSlug": "blr.2",
-          "leagueName": "Belarusian First League",
+          "leagueName": "Pershaya Liga",
           "kickoff": "2026-08-01T13:00:00.000Z",
           "homeTeam": "FC Slonim",
           "awayTeam": "Osipovichi",
@@ -1147,11 +2225,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:55.016Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "8j4gFZgd",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "FC Slonim",
+                "away": "Osipovichi",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T13:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1159,7 +2265,7 @@
           "canonicalMatchId": "cid_est2_levadiau21_elva_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Levadia U21",
           "awayTeam": "Elva",
@@ -1173,11 +2279,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.742Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lreul5lS",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Levadia U21",
+                "away": "Elva",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         }
       ]
     },
@@ -1195,18 +2329,18 @@
       "summary": {
         "picks": 15,
         "uniqueMatches": 9,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
-        "unresolved": 15,
+        "settled": 15,
+        "wins": 8,
+        "losses": 7,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5333,
+        "oddsAvailable": 2,
+        "averageOdds": 4.905,
+        "totalStake": 2,
+        "totalReturn": 9.81,
+        "profit": 7.81,
+        "roi": 3.905
       },
       "picks": [
         {
@@ -1215,7 +2349,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_tartuwelco_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Tartu Welco",
@@ -1229,11 +2363,39 @@
           "aiFairOdds": 1.11,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.860Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "SjkJtNt2",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1241,7 +2403,7 @@
           "canonicalMatchId": "cid_fro2_vikingur2_hoyvik_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "Vikingur 2",
           "awayTeam": "Hoyvik",
@@ -1255,11 +2417,39 @@
           "aiFairOdds": 1.13,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:56.189Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Cr0VlSye",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Vikingur 2",
+                "away": "Hoyvik",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1267,7 +2457,7 @@
           "canonicalMatchId": "cid_est2_nommekaljuu21_maardu_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Kalju U21",
           "awayTeam": "Maardu",
@@ -1281,11 +2471,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.801Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "GUdXkRJF",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Kalju U21",
+                "away": "Maardu",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1293,7 +2511,7 @@
           "canonicalMatchId": "cid_est2_tallinn_florau21_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "FC Tallinn",
           "awayTeam": "Flora U21",
@@ -1307,11 +2525,39 @@
           "aiFairOdds": 1.17,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.963Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KQoBrqCk",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "FC Tallinn",
+                "away": "Flora U21",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1319,7 +2565,7 @@
           "canonicalMatchId": "cid_ecu2_gualaceo_indjuniors_20260801",
           "country": "Ecuador",
           "leagueSlug": "ecu.2",
-          "leagueName": "Ecuador Serie B",
+          "leagueName": "Serie B",
           "kickoff": "2026-08-01T20:30:00.000Z",
           "homeTeam": "Gualaceo",
           "awayTeam": "Ind. Juniors",
@@ -1333,11 +2579,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 3,
+            "scoreKey": "2-3"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T22:49:52.425Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "nq8ol0Jo",
+                "country": "Ecuador",
+                "leagueName": "Serie B",
+                "leaguePath": "/football/ecuador/serie-b/",
+                "home": "Gualaceo",
+                "away": "Ind. Juniors",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-08-01T20:30:00.000Z",
+                "scoreKey": "2-3"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1345,7 +2619,7 @@
           "canonicalMatchId": "cid_blr2_slonim_osipovichi_20260801",
           "country": "Belarus",
           "leagueSlug": "blr.2",
-          "leagueName": "Belarusian First League",
+          "leagueName": "Pershaya Liga",
           "kickoff": "2026-08-01T13:00:00.000Z",
           "homeTeam": "FC Slonim",
           "awayTeam": "Osipovichi",
@@ -1359,11 +2633,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:55.016Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "8j4gFZgd",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "FC Slonim",
+                "away": "Osipovichi",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T13:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1371,7 +2673,7 @@
           "canonicalMatchId": "cid_est2_nommeutdu21_tartuwelco_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Utd U21",
           "awayTeam": "Tartu Welco",
@@ -1385,11 +2687,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.860Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "SjkJtNt2",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Utd U21",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1397,7 +2727,7 @@
           "canonicalMatchId": "cid_fro2_vikingur2_hoyvik_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "Vikingur 2",
           "awayTeam": "Hoyvik",
@@ -1411,11 +2741,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:56.189Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Cr0VlSye",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Vikingur 2",
+                "away": "Hoyvik",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1423,7 +2781,7 @@
           "canonicalMatchId": "cid_est2_nommekaljuu21_maardu_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Nomme Kalju U21",
           "awayTeam": "Maardu",
@@ -1437,11 +2795,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": 8.59,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.801Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "GUdXkRJF",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Nomme Kalju U21",
+                "away": "Maardu",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1449,7 +2835,7 @@
           "canonicalMatchId": "cid_fro2_fuglafjordur_streymur2_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T12:00:00.000Z",
           "homeTeam": "IF Fuglafjordur",
           "awayTeam": "Streymur 2",
@@ -1463,11 +2849,39 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 1,
+            "scoreKey": "3-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T13:57:58.632Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dWZY8mTQ",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "IF Fuglafjordur",
+                "away": "Streymur 2",
+                "scoreHome": 3,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T12:00:00.000Z",
+                "scoreKey": "3-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1475,7 +2889,7 @@
           "canonicalMatchId": "cid_est2_tallinn_florau21_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "FC Tallinn",
           "awayTeam": "Flora U21",
@@ -1489,11 +2903,39 @@
           "aiFairOdds": 1.21,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.963Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KQoBrqCk",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "FC Tallinn",
+                "away": "Flora U21",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1501,7 +2943,7 @@
           "canonicalMatchId": "cid_fro2_suduroy_b36torshavn2_20260801",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-01T14:00:00.000Z",
           "homeTeam": "FC Suduroy",
           "awayTeam": "B36 Torshavn 2",
@@ -1515,11 +2957,39 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:56.163Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "8Agvm667",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "FC Suduroy",
+                "away": "B36 Torshavn 2",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-01T14:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1527,7 +2997,7 @@
           "canonicalMatchId": "cid_est2_levadiau21_elva_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Levadia U21",
           "awayTeam": "Elva",
@@ -1541,11 +3011,39 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.742Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lreul5lS",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Levadia U21",
+                "away": "Elva",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1553,7 +3051,7 @@
           "canonicalMatchId": "cid_blr2_slonim_osipovichi_20260801",
           "country": "Belarus",
           "leagueSlug": "blr.2",
-          "leagueName": "Belarusian First League",
+          "leagueName": "Pershaya Liga",
           "kickoff": "2026-08-01T13:00:00.000Z",
           "homeTeam": "FC Slonim",
           "awayTeam": "Osipovichi",
@@ -1567,11 +3065,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T15:59:55.016Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "8j4gFZgd",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "FC Slonim",
+                "away": "Osipovichi",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T13:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1579,7 +3105,7 @@
           "canonicalMatchId": "cid_est2_levadiau21_elva_20260801",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-01T16:00:00.000Z",
           "homeTeam": "Levadia U21",
           "awayTeam": "Elva",
@@ -1593,21 +3119,49 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-01T18:05:08.742Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lreul5lS",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Levadia U21",
+                "away": "Elva",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-01T16:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         }
       ]
     }
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": 3,
-    "settledDeltaPlanBMinusPlanA": -1,
-    "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": -1,
-    "hitRateDeltaPlanBMinusPlanA": null,
-    "roiDeltaPlanBMinusPlanA": null
+    "settledDeltaPlanBMinusPlanA": 3,
+    "winsDeltaPlanBMinusPlanA": 1,
+    "lossesDeltaPlanBMinusPlanA": 2,
+    "hitRateDeltaPlanBMinusPlanA": -0.05,
+    "roiDeltaPlanBMinusPlanA": 3.9083
   }
 }
