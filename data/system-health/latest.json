@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
-  "dayKey": "2026-08-05",
-  "generatedAt": "2026-08-05T19:48:56.919Z",
+  "dayKey": "2026-08-06",
+  "generatedAt": "2026-08-05T19:32:49.510Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
-    "info": 6
+    "info": 10
   },
   "alert": false,
   "alertCounts": {
@@ -14,26 +14,24 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 8,
+  "activeIssueCount": 12,
   "actionableIssueCount": 2,
-  "newIssueCount": 3,
+  "newIssueCount": 5,
   "newActionableIssueCount": 0,
-  "resolvedIssueCount": 7,
-  "persistentIssueCount": 5,
+  "resolvedIssueCount": 3,
+  "persistentIssueCount": 7,
   "activeIssues": [
     {
       "severity": "info",
-      "source": "invariant-report",
-      "type": "coverage_floor_drop",
-      "message": "Canonical fixtures are below static floor but meet the effective floor.",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "type": "coverage_floor_drop",
-        "staticFloor": 45,
-        "effectiveFloor": 30,
-        "actualFixtures": 33,
-        "drop": 15,
-        "reason": "canonical_fixture_count_below_static_floor",
-        "effectiveFloorMet": true
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-08-06.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
@@ -43,7 +41,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b",
-        "artifact": "value-plans/2026-08-05/plan-b.json",
+        "artifact": "value-plans/2026-08-06/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -56,7 +54,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b2",
-        "artifact": "value-plans/2026-08-05/plan-b2.json",
+        "artifact": "value-plans/2026-08-06/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -104,10 +102,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 16,
+          "evidenceSlugCount": 15,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 16,
+          "rejectedCount": 15,
           "alreadyDeclaredCount": 0
         }
       }
@@ -130,19 +128,62 @@
           "concacaf.central.american.cup",
           "concacaf.leagues.cup",
           "ned.supercup",
-          "sco.tennents_qual",
           "uefa.wchampions_qual",
           "usa.nwsl",
           "usa.usl.1",
           "usa.usl.l1"
         ],
         "summary": {
-          "evidenceSlugCount": 16,
+          "evidenceSlugCount": 15,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 16,
+          "rejectedCount": 15,
           "alreadyDeclaredCount": 0
         }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
+      "details": {
+        "picks": 3,
+        "settled": 0,
+        "unresolved": 3
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "picks": 3,
+        "settled": 0,
+        "unresolved": 3
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "picks": 8,
+        "settled": 0,
+        "unresolved": 8
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "picks": 7,
+        "settled": 0,
+        "unresolved": 7
       }
     },
     {
@@ -166,16 +207,16 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 1,
+          "count": 3,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 1,
+            "picks": 3,
+            "uniqueMatches": 3,
+            "settled": 0,
             "wins": 0,
-            "losses": 1,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 3,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -185,14 +226,14 @@
           }
         },
         "planA2": {
-          "count": 0,
+          "count": 3,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 3,
+            "uniqueMatches": 3,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 0,
+            "unresolved": 3,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -204,16 +245,16 @@
           }
         },
         "planB": {
-          "count": 2,
+          "count": 8,
           "summary": {
-            "picks": 2,
-            "uniqueMatches": 1,
-            "settled": 2,
+            "picks": 8,
+            "uniqueMatches": 4,
+            "settled": 0,
             "wins": 0,
-            "losses": 2,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 8,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -223,16 +264,16 @@
           }
         },
         "planB2": {
-          "count": 2,
+          "count": 7,
           "summary": {
-            "picks": 2,
-            "uniqueMatches": 1,
-            "settled": 2,
+            "picks": 7,
+            "uniqueMatches": 4,
+            "settled": 0,
             "wins": 0,
-            "losses": 2,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 7,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -275,50 +316,6 @@
     }
   ],
   "newIssues": [
-    {
-      "severity": "info",
-      "source": "invariant-report",
-      "type": "coverage_floor_drop",
-      "message": "Canonical fixtures are below static floor but meet the effective floor.",
-      "details": {
-        "type": "coverage_floor_drop",
-        "staticFloor": 45,
-        "effectiveFloor": 30,
-        "actualFixtures": 33,
-        "drop": 15,
-        "reason": "canonical_fixture_count_below_static_floor",
-        "effectiveFloorMet": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b",
-        "artifact": "value-plans/2026-08-05/plan-b.json",
-        "at": null,
-        "staleReason": "plan_b_stale_against_canonical",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b2",
-        "artifact": "value-plans/2026-08-05/plan-b2.json",
-        "at": null,
-        "staleReason": "plan_b2_stale_against_canonical",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    }
-  ],
-  "newActionableIssues": [],
-  "resolvedIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -379,27 +376,49 @@
         "settled": 0,
         "unresolved": 3
       }
-    },
+    }
+  ],
+  "newActionableIssues": [],
+  "resolvedIssues": [
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
+      "source": "invariant-report",
+      "type": "coverage_floor_drop",
+      "message": "Canonical fixtures are below static floor but meet the effective floor.",
       "details": {
-        "picks": 8,
-        "settled": 0,
-        "unresolved": 8
+        "type": "coverage_floor_drop",
+        "staticFloor": 45,
+        "effectiveFloor": 30,
+        "actualFixtures": 33,
+        "drop": 15,
+        "reason": "canonical_fixture_count_below_static_floor",
+        "effectiveFloorMet": true
       }
     },
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "picks": 7,
-        "settled": 0,
-        "unresolved": 7
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-08-05/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-08-05/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     }
   ],
@@ -489,6 +508,28 @@
     },
     {
       "severity": "info",
+      "source": "build-report",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "picks": 8,
+        "settled": 0,
+        "unresolved": 8
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "picks": 7,
+        "settled": 0,
+        "unresolved": 7
+      }
+    },
+    {
+      "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
       "message": "Four-plan Value comparison artifact is available.",
@@ -508,16 +549,16 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 1,
+          "count": 3,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 1,
+            "picks": 3,
+            "uniqueMatches": 3,
+            "settled": 0,
             "wins": 0,
-            "losses": 1,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 3,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -527,14 +568,14 @@
           }
         },
         "planA2": {
-          "count": 0,
+          "count": 3,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 3,
+            "uniqueMatches": 3,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 0,
+            "unresolved": 3,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -546,16 +587,16 @@
           }
         },
         "planB": {
-          "count": 2,
+          "count": 8,
           "summary": {
-            "picks": 2,
-            "uniqueMatches": 1,
-            "settled": 2,
+            "picks": 8,
+            "uniqueMatches": 4,
+            "settled": 0,
             "wins": 0,
-            "losses": 2,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 8,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -565,16 +606,16 @@
           }
         },
         "planB2": {
-          "count": 2,
+          "count": 7,
           "summary": {
-            "picks": 2,
-            "uniqueMatches": 1,
-            "settled": 2,
+            "picks": 7,
+            "uniqueMatches": 4,
+            "settled": 0,
             "wins": 0,
-            "losses": 2,
-            "unresolved": 0,
+            "losses": 0,
+            "unresolved": 7,
             "unsupported": 0,
-            "hitRate": 0,
+            "hitRate": null,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -586,5 +627,5 @@
       }
     }
   ],
-  "latestForDay": "2026-08-05"
+  "latestForDay": "2026-08-06"
 }
