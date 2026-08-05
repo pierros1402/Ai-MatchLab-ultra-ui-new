@@ -117,20 +117,35 @@ function productionOverlay() {
 }
 
 function fakeOverlay(mapping = {}) {
+  const retainedTargets = new Set(Object.values(mapping));
   return {
     resolveEvidenceFixtureId(value) {
       if (Object.hasOwn(mapping, value)) {
         return {
           ok: true,
           managed: true,
+          changed: value !== mapping[value],
           sourceFixtureId: value,
           resolvedFixtureId: mapping[value],
-          sourceRole: "suppressed_lineage_alias",
+          sourceRole: value === mapping[value]
+            ? "retained"
+            : "suppressed_lineage_alias",
+        };
+      }
+      if (retainedTargets.has(value)) {
+        return {
+          ok: true,
+          managed: true,
+          changed: false,
+          sourceFixtureId: value,
+          resolvedFixtureId: value,
+          sourceRole: "retained",
         };
       }
       return {
         ok: true,
         managed: false,
+        changed: false,
         sourceFixtureId: value,
         resolvedFixtureId: value,
         sourceRole: "unmanaged",
@@ -202,6 +217,28 @@ test("builds an additive existing-artifact identity overlay without changing pic
     2,
   );
   assert.equal(
+    output.productionIdentityOverlay
+      .suppressedSourceFixtureIdOmission.count,
+    2,
+  );
+  assert.equal(
+    output.productionIdentityOverlay.entries
+      .every(entry => entry.changed !== true || (
+        entry.sourceFixtureIdOmitted === true &&
+        !Object.hasOwn(entry, "sourceFixtureId") &&
+        /^[a-f0-9]{64}$/u.test(
+          entry.sourceFixtureIdSha256,
+        )
+      )),
+    true,
+  );
+  assert.equal(
+    result.content.toString("utf8").includes(
+      "suppressed-id",
+    ),
+    false,
+  );
+  assert.equal(
     output.productionIdentityOverlay.invariants.modelEvaluationPerformed,
     false,
   );
@@ -249,9 +286,9 @@ test("preserves immutable Plan A bytes exactly and rejects a required fixture re
   );
 });
 
-test("is deterministic and fails closed on invalid paths, JSON and pre-existing overlay fields", () => {
+test("is deterministic, validates applied overlays idempotently and fails closed on tampering", () => {
   const source = Buffer.from(
-    '{"date":"2026-08-01","picks":[]}\n',
+    '{"date":"2026-08-01","picks":[{"matchId":"suppressed-id"}]}\n',
     "utf8",
   );
   const options = {
@@ -259,12 +296,28 @@ test("is deterministic and fails closed on invalid paths, JSON and pre-existing 
       "data/value-comparison/2026-08-01.json",
     family: "VALUE_COMPARISON",
     sourceBytes: source,
-    overlay: fakeOverlay(),
+    overlay: fakeOverlay({
+      "suppressed-id": "retained-id",
+    }),
   };
   const first = buildP0CP4ExistingValueArtifact(options);
   const second = buildP0CP4ExistingValueArtifact(options);
   assert.deepEqual(first.content, second.content);
   assert.equal(first.outputSha256, second.outputSha256);
+
+  const applied = buildP0CP4ExistingValueArtifact({
+    ...options,
+    sourceBytes: first.content,
+  });
+  assert.deepEqual(applied.content, first.content);
+  assert.equal(
+    applied.identityOverlay.alreadyAppliedOverlayValidated,
+    true,
+  );
+  assert.equal(
+    applied.identityOverlay.idempotentPassThrough,
+    true,
+  );
 
   assert.throws(
     () => buildP0CP4ExistingValueArtifact({
@@ -287,7 +340,22 @@ test("is deterministic and fails closed on invalid paths, JSON and pre-existing 
         '{"productionIdentityOverlay":{}}\n',
       ),
     }),
-    /existing_overlay_forbidden/,
+    /existing_overlay_invalid/,
+  );
+
+  const tampered = JSON.parse(
+    first.content.toString("utf8"),
+  );
+  tampered.productionIdentityOverlay.entries[0]
+    .sourceFixtureId = "suppressed-id";
+  assert.throws(
+    () => buildP0CP4ExistingValueArtifact({
+      ...options,
+      sourceBytes: Buffer.from(
+        `${JSON.stringify(tampered, null, 2)}\n`,
+      ),
+    }),
+    /suppressed_source_not_omitted/,
   );
 });
 

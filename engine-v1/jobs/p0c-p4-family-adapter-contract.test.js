@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import {
   P0C_P4_FAMILY_ADAPTER_CONTRACT_SCHEMA,
   P0C_P4_FAMILY_ADAPTER_DISCOVERY_BINDING,
+  P0C_P4_FAMILY_ADAPTER_APPLICATION_BINDING_V2,
   buildP0CP4FamilyRunnerRegistry,
   getP0CP4FamilyAdapterContract,
   validateP0CP4FamilyAdapterInventory,
@@ -47,7 +48,7 @@ function sourceBindingSha256(relativePath, expectedSha256) {
 }
 
 const FAMILY_COUNTS = Object.freeze({
-  DEPLOY_SNAPSHOT_DETAILS: 628,
+  DEPLOY_SNAPSHOT_DETAILS: 631,
   DEPLOY_SNAPSHOT_FIXTURES: 61,
   DEPLOY_SNAPSHOT_FIXTURES_ALL: 40,
   DEPLOY_SNAPSHOT_MANIFEST: 15,
@@ -147,7 +148,7 @@ test("publishes the exact source-bound 13-family contract", () => {
       (sum, row) => sum + row.inventoryPathCount,
       0,
     ),
-    1291,
+    1294,
   );
   assert.equal(
     P0C_P4_FAMILY_ADAPTER_DISCOVERY_BINDING.unresolvedRelativeImportCount,
@@ -163,13 +164,55 @@ test("publishes the exact source-bound 13-family contract", () => {
   );
 });
 
-test("validates the exact 1291-row family inventory", () => {
+test("pins the exact V2 application inventory and three retained detail creates", () => {
+  const binding =
+    P0C_P4_FAMILY_ADAPTER_APPLICATION_BINDING_V2;
+  const inventoryPath = path.join(
+    PROJECT_ROOT,
+    binding.applicationInventoryPath,
+  );
+  const bytes = fs.readFileSync(inventoryPath);
+  assert.equal(
+    sha256(bytes),
+    binding.applicationInventorySha256,
+  );
+  const rows = bytes
+    .toString("utf8")
+    .split(/\r?\n/u)
+    .filter(Boolean)
+    .map(line => JSON.parse(line));
+
+  assert.equal(rows.length, 1294);
+  assert.equal(binding.originalInventoryPathCount, 1291);
+  assert.equal(binding.applicationInventoryPathCount, 1294);
+  assert.equal(
+    binding.repositoryApplicationAuthorized,
+    false,
+  );
+
+  const added = rows
+    .filter(row => row.existsInRepository === false)
+    .map(row => row.file)
+    .sort();
+  assert.deepEqual(
+    added,
+    [...binding.addedRetainedDetailCreatePaths].sort(),
+  );
+
+  const validation = validateP0CP4FamilyAdapterInventory({
+    inventoryRows: rows,
+  });
+  assert.equal(validation.ok, true);
+  assert.equal(validation.inventoryPathCount, 1294);
+});
+
+test("validates the exact 1294-row family inventory", () => {
   const result = validateP0CP4FamilyAdapterInventory({
     inventoryRows: inventoryRows(),
   });
 
   assert.equal(result.ok, true);
-  assert.equal(result.inventoryPathCount, 1291);
+  assert.equal(result.inventoryPathCount, 1294);
   assert.equal(result.familyCount, 13);
   assert.equal(
     result.repositoryApplicationAuthorized,
@@ -241,7 +284,7 @@ test("pins all required producer source hashes", () => {
   });
 
   assert.equal(result.ok, true);
-  assert.equal(result.requiredSourceCount, 21);
+  assert.equal(result.requiredSourceCount, 23);
 
   const drifted = sourceRecords.map(row => ({ ...row }));
   drifted[0].sha256 = "0".repeat(64);

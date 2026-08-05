@@ -24,7 +24,71 @@ export const P0C_P4_FAMILY_ADAPTER_DISCOVERY_BINDING =
     unresolvedRelativeImportCount: 0,
   });
 
+
+export const P0C_P4_FAMILY_ADAPTER_APPLICATION_BINDING_V2 =
+  Object.freeze({
+    schema:
+      "ai-matchlab.p0c-p4-family-adapter-application-binding.v2",
+    branch:
+      "work/p0c-identity-duplicate-ledger-20260801",
+    sourceHead:
+      "20317c767ab10bae13f3bca42671fa490406334c",
+    sourceTree:
+      "177c1ef6d7db783ced93a15257bdc181c063b7f2",
+    authoritativeCanonicalResultSha256:
+      "3fd00f8e59343765bab48ae750854692b84863e6b374ec94936dcc9e63bef11f",
+    originalInventoryPathCount: 1291,
+    originalInventorySha256:
+      "6e4bcb5209ed8e5e49b55c809cbf0d53617ad4971bec73f56d4f7cf37b66d5cc",
+    applicationInventoryPath:
+      "engine-v1/contracts/p0c-p4-normalized-inventory.v2.jsonl",
+    applicationInventoryPathCount: 1294,
+    applicationInventorySha256:
+      "acac6db0c2b928dff8700d76448838d3138b0acb7734cc6dc72a282d879c41ef",
+    addedRetainedDetailCreatePaths: Object.freeze([
+      "data/deploy-snapshots/2026-07-29/details/cid_uefachampions_crvenazvezdasrb_larnenir_20260729.json",
+      "data/deploy-snapshots/2026-07-29/details/cid_uefachampions_univcraiovarou_levskisofiabul_20260729.json",
+      "data/deploy-snapshots/2026-08-01/details/cid_arg2_colegiales_gimnasiajujuy_20260801.json",
+    ]),
+    externalCompositionManifestSha256:
+      "e8a78e16de4dfd90a210532570a4b3791f4858b13016dce5c465ec6f8b0793ea",
+    externalApplicationGatePackageSha256:
+      "30d21472e68dd782ed68970813b11cc52a0393b200ccb62c007cc3f2550186b7",
+    expectedWriteCount: 1128,
+    expectedDeleteCount: 166,
+    expectedIdentityDetailDeleteCount: 41,
+    expectedCanonicalStaleDetailDeleteCount: 10,
+    expectedH2HStaleDeleteCount: 115,
+    repositoryApplicationAuthorized: false,
+    commitAuthorized: false,
+    pushAuthorized: false,
+    workflowAuthorized: false,
+    deployAuthorized: false,
+  });
+
 const SOURCE_BINDINGS = Object.freeze({
+  compositionApplicationInventoryV2: Object.freeze({
+    path:
+      "engine-v1/contracts/p0c-p4-normalized-inventory.v2.jsonl",
+    sha256:
+      "acac6db0c2b928dff8700d76448838d3138b0acb7734cc6dc72a282d879c41ef",
+    exports: Object.freeze([]),
+  }),
+  identitySafeCompositionLoaders: Object.freeze({
+    path:
+      "engine-v1/jobs/p0c-p4-identity-safe-composition-loaders.js",
+    sha256:
+      "f5d7dc5f9d573ae73320eda665449d35852ca5cc182043a3bfde6dbc05e09d7a",
+    exports: Object.freeze([
+      "P0C_P4_IDENTITY_SAFE_COMPOSITION_LOADERS_SCHEMA",
+      "P0C_P4_CANONICAL_ALIAS_RECONCILIATION_SCHEMA",
+      "P0C_P4_H2H_FIXTURE_ONLY_FALLBACK_SCHEMA",
+      "p0cP4TruthVector",
+      "p0cP4TruthVectorKey",
+      "reconcileP0CP4CanonicalAliasGroup",
+      "createP0CP4H2HFixtureIdOnlyOverlay",
+    ]),
+  }),
   deploySnapshotManifestPureBuilder: Object.freeze({
     path:
       "engine-v1/jobs/p0c-p4-build-deploy-snapshot-manifest.js",
@@ -67,7 +131,7 @@ const SOURCE_BINDINGS = Object.freeze({
     path:
       "engine-v1/jobs/p0c-p4-build-deploy-snapshot-details.js",
     sha256:
-      "ad0fb6074814b70456c79621420504a01a1ba3e3dad24871115744b9b7e215e6",
+      "ad02d716813f046f1b8ea161a543417013db7361e709f1a60114b8fbfb5a0529",
     exports: Object.freeze([
       "P0C_P4_DEPLOY_SNAPSHOT_DETAILS_SCHEMA",
       "p0cP4DetailIdCandidates",
@@ -110,7 +174,7 @@ const SOURCE_BINDINGS = Object.freeze({
     path:
       "engine-v1/jobs/p0c-p4-build-existing-value-artifact.js",
     sha256:
-      "5bbaaa6ac1e66f9000335861d2245bf4b79a3d59a6d87a5b4acb2aab245b8e54",
+      "a5185ed6635c2ac9809d801f114a7193c943fe44f417f937550f2d705da23c4c",
     exports: Object.freeze([
       "P0C_P4_EXISTING_VALUE_ARTIFACT_SCHEMA",
       "P0C_P4_VALUE_IDENTITY_OVERLAY_SCHEMA",
@@ -215,7 +279,7 @@ const SOURCE_BINDINGS = Object.freeze({
 const FAMILY_DESCRIPTORS = Object.freeze([
   Object.freeze({
     family: "DEPLOY_SNAPSHOT_DETAILS",
-    inventoryPathCount: 628,
+    inventoryPathCount: 631,
     pathPattern:
       "^data/deploy-snapshots/\\d{4}-\\d{2}-\\d{2}/details/[^/]+\\.json$",
     executionGroup: "DEPLOY_SNAPSHOT_BUNDLE",
@@ -256,6 +320,7 @@ const FAMILY_DESCRIPTORS = Object.freeze([
       "Use the P0-C canonical-evidence in-memory rebuild and emit one artifact per inventory day.",
     sourceBindings: Object.freeze([
       "fixturesAllRebuilder",
+      "identitySafeCompositionLoaders",
       "evidenceOverlay",
     ]),
   }),
@@ -343,6 +408,7 @@ const FAMILY_DESCRIPTORS = Object.freeze([
       "Use identity-resolved history to build the complete retained H2H index in memory.",
     sourceBindings: Object.freeze([
       "h2hRebuilder",
+      "identitySafeCompositionLoaders",
       "evidenceOverlay",
     ]),
   }),
@@ -444,13 +510,16 @@ export function getP0CP4FamilyAdapterContract() {
     discoveryBinding: clone(
       P0C_P4_FAMILY_ADAPTER_DISCOVERY_BINDING,
     ),
+    applicationBindingV2: clone(
+      P0C_P4_FAMILY_ADAPTER_APPLICATION_BINDING_V2,
+    ),
     sourceBindings: clone(SOURCE_BINDINGS),
     families: clone(FAMILY_DESCRIPTORS),
     invariants: Object.freeze({
       repositoryApplicationAuthorized: false,
       producerDiscoveryComplete: true,
       unresolvedRelativeImports: 0,
-      inventoryPathCount: 1291,
+      inventoryPathCount: 1294,
       familyCount: 13,
       directArtifactEditingAuthorized: false,
     }),
@@ -459,7 +528,7 @@ export function getP0CP4FamilyAdapterContract() {
 
 export function validateP0CP4FamilyAdapterInventory({
   inventoryRows,
-  expectedInventoryCount = 1291,
+  expectedInventoryCount = 1294,
 } = {}) {
   if (!Array.isArray(inventoryRows)) {
     throw new Error("p0c_p4_adapter_contract_inventory_required");

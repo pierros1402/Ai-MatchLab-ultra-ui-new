@@ -216,10 +216,73 @@ function inventoryContract(
   );
 }
 
+function overlayManagedFixtureStrings(
+  value,
+  identityOverlay,
+) {
+  if (Array.isArray(value)) {
+    let changed = false;
+    const view = value.map(item => {
+      const child = overlayManagedFixtureStrings(
+        item,
+        identityOverlay,
+      );
+      changed = changed || child.changed;
+      return child.view;
+    });
+    return { view, changed };
+  }
+
+  if (
+    value &&
+    typeof value === "object"
+  ) {
+    let changed = false;
+    const view = Object.fromEntries(
+      Object.entries(value).map(([key, childValue]) => {
+        const child = overlayManagedFixtureStrings(
+          childValue,
+          identityOverlay,
+        );
+        changed = changed || child.changed;
+        return [key, child.view];
+      }),
+    );
+    return { view, changed };
+  }
+
+  if (
+    typeof value !== "string" ||
+    !identityOverlay
+  ) {
+    return { view: value, changed: false };
+  }
+
+  const resolution =
+    identityOverlay.resolveEvidenceFixtureId(
+      value,
+      { allowUnmanaged: true },
+    );
+
+  if (
+    !resolution?.ok ||
+    resolution.managed !== true ||
+    resolution.changed !== true
+  ) {
+    return { view: value, changed: false };
+  }
+
+  return {
+    view: resolution.resolvedFixtureId,
+    changed: true,
+  };
+}
+
 function detailRecordMap({
   records,
   kind,
   sourceNaming,
+  identityOverlay,
 }) {
   if (!Array.isArray(records)) {
     throw new Error(
@@ -227,72 +290,125 @@ function detailRecordMap({
     );
   }
 
-  const map =
-    new Map();
+  if (
+    identityOverlay &&
+    typeof identityOverlay.resolveEvidenceFixtureId !== "function"
+  ) {
+    throw new Error(
+      "p0c_p4_deploy_snapshot_details_identity_overlay_invalid",
+    );
+  }
 
-  const sorted =
-    records
-      .map(
-        (record, index) => ({
+  const map = new Map();
+
+  const sorted = records
+    .map((record, index) => ({
+      record,
+      index,
+      relativePath:
+        detailRecordPath(
           record,
           index,
-          relativePath:
-            detailRecordPath(
-              record,
-              index,
-              kind,
-            ),
-        }),
-      )
-      .sort(
-        (left, right) =>
-          left.relativePath.localeCompare(
-            right.relativePath,
-          ),
-      );
+          kind,
+        ),
+    }))
+    .sort(
+      (left, right) =>
+        left.relativePath.localeCompare(
+          right.relativePath,
+        ),
+    );
+
+  function indexCandidate({
+    id,
+    rank,
+    relativePath,
+    detail,
+    identityResolvedFromSource,
+  }) {
+    if (!id) return;
+    const prior = map.get(id);
+    if (prior) {
+      if (prior.rank < rank) return;
+      if (prior.rank === rank) {
+        throw new Error(
+          `p0c_p4_deploy_snapshot_details_${kind}_duplicate:${id}`,
+        );
+      }
+    }
+    map.set(
+      id,
+      Object.freeze({
+        relativePath,
+        detail,
+        rank,
+        identityResolvedFromSource,
+      }),
+    );
+  }
 
   for (const item of sorted) {
-    const payload =
-      detailPayload(
-        item.record,
-        item.index,
-        kind,
-      );
+    const payload = detailPayload(
+      item.record,
+      item.index,
+      kind,
+    );
+    const base = fileBaseName(
+      item.relativePath,
+    );
+    const directId = sourceNaming
+      ? p0cP4DeployDetailOutputId(
+          payload,
+          base,
+        )
+      : base;
 
-    const base =
-      fileBaseName(
-        item.relativePath,
-      );
-
-    const id =
-      sourceNaming
-        ? p0cP4DeployDetailOutputId(
-            payload,
-            base,
-          )
-        : base;
-
-    if (!id) {
+    if (!directId) {
       throw new Error(
         `p0c_p4_deploy_snapshot_details_${kind}_id_missing:${item.index}`,
       );
     }
 
-    if (map.has(id)) {
-      throw new Error(
-        `p0c_p4_deploy_snapshot_details_${kind}_duplicate:${id}`,
-      );
-    }
+    indexCandidate({
+      id: directId,
+      rank: 0,
+      relativePath: item.relativePath,
+      detail: payload,
+      identityResolvedFromSource: false,
+    });
 
-    map.set(
-      id,
-      Object.freeze({
-        relativePath:
-          item.relativePath,
-        detail:
+    if (!identityOverlay) continue;
+
+    const candidates = [
+      ...new Set(
+        p0cP4DetailIdCandidates(
           payload,
-      }),
-    );
+          base,
+        ),
+      ),
+    ];
+
+    for (const candidate of candidates) {
+      const resolution =
+        identityOverlay.resolveEvidenceFixtureId(
+          candidate,
+          { allowUnmanaged: true },
+        );
+      if (
+        !resolution?.ok ||
+        resolution.managed !== true ||
+        resolution.changed !== true
+      ) {
+        continue;
+      }
+      indexCandidate({
+        id: resolution.resolvedFixtureId,
+        rank: 1,
+        relativePath: item.relativePath,
+        detail: payload,
+        identityResolvedFromSource: true,
+      });
+    }
   }
 
   return map;
@@ -398,6 +514,22 @@ export function p0cP4DeployDetailCanonicalSha256(
     .digest("hex");
 }
 
+function isStatusSyncCompatibleDetail(detail) {
+  return Boolean(
+    detail &&
+    typeof detail === "object" &&
+    !Array.isArray(detail) &&
+    detail.basic &&
+    typeof detail.basic === "object" &&
+    !Array.isArray(detail.basic) &&
+    detail.meta &&
+    typeof detail.meta === "object" &&
+    !Array.isArray(detail.meta) &&
+    typeof detail.meta.signature === "string" &&
+    detail.meta.signature.trim()
+  );
+}
+
 function fixtureForDetail({
   fixturesById,
   targetId,
@@ -462,6 +594,7 @@ export function buildP0CP4DeploySnapshotDetails({
   fixtureRows = [],
   preserveExistingDetails = true,
   patchedAt,
+  identityOverlay = null,
 } = {}) {
   const normalizedDayKey =
     assertDayKey(dayKey);
@@ -492,6 +625,7 @@ export function buildP0CP4DeploySnapshotDetails({
         "source",
       sourceNaming:
         true,
+      identityOverlay,
     });
 
   const existing =
@@ -502,6 +636,7 @@ export function buildP0CP4DeploySnapshotDetails({
         "existing",
       sourceNaming:
         false,
+      identityOverlay,
     });
 
   const fixtures =
@@ -583,9 +718,15 @@ export function buildP0CP4DeploySnapshotDetails({
       );
     }
 
+    const identityView =
+      overlayManagedFixtureStrings(
+        selected.detail,
+        identityOverlay,
+      );
+
     const detail =
       clone(
-        selected.detail,
+        identityView.view,
       );
 
     if (
@@ -624,7 +765,13 @@ export function buildP0CP4DeploySnapshotDetails({
     let statusChanged =
       false;
 
-    if (fixture) {
+    let statusSyncSkippedReason =
+      null;
+
+    if (
+      fixture &&
+      isStatusSyncCompatibleDetail(detail)
+    ) {
       const sync =
         synchronizeDetailStatusState(
           detail,
@@ -643,6 +790,10 @@ export function buildP0CP4DeploySnapshotDetails({
 
       statusChanged =
         sync.changed === true;
+    }
+    else if (fixture) {
+      statusSyncSkippedReason =
+        "legacy_detail_status_sync_schema_unavailable_preserved";
     }
 
     const write =
@@ -663,7 +814,12 @@ export function buildP0CP4DeploySnapshotDetails({
           existingRecord
             ? "existing_deploy_detail"
             : "canonical_detail_source",
+        identityResolvedFromSource:
+          selected.identityResolvedFromSource === true,
+        identityOverlayChanged:
+          identityView.changed === true,
         statusChanged,
+        statusSyncSkippedReason,
       }),
     );
   }
@@ -699,6 +855,8 @@ export function buildP0CP4DeploySnapshotDetails({
             strictCanonicalAllowList,
           ),
         preserveExistingDetails,
+        identityOverlayApplied:
+          Boolean(identityOverlay),
         writes:
           Object.freeze(writes),
         deletions:

@@ -226,8 +226,73 @@ test("2026-07-21 odds-only rows cannot enter the display universe", () => {
     "cid_isl2_fylkir_afturelding_20260721"
   ];
 
-  assert.equal(fixtures.length, 63);
-  assert.equal(odds.length, 127);
+  const oddsIds = new Set(
+    odds
+      .map(displayFixtureIdentity)
+      .filter(Boolean)
+  );
+
+  const p4RemovedOddsOnlyIds = [
+    "cid_fsindiacalcuttapremierdivision_calcuttacustoms_pathachakra_20260721",
+    "cid_fsindiacalcuttapremierdivision_railway_georgetelegrapher_20260721",
+    "cid_fsworldclubfriendly_braintreeeng_wokingeng_20260721",
+    "cid_fsworldclubfriendly_grosupljeslo_epitsentrukr_20260721",
+    "cid_fsworldclubfriendly_queensunivnir_carrickrangersnir_20260721",
+    "cid_fsworldclubfriendly_wienerneustadtaut_gloggnitzaut_20260721",
+    "cid_fsworldclubfriendly_zeljeznicarbih_nkbistricaslo_20260721",
+  ];
+
+  const p4RemovedOddsOnlyIdsPresent =
+    p4RemovedOddsOnlyIds.filter(id => oddsIds.has(id)).length;
+
+  assert.equal(
+    [0, p4RemovedOddsOnlyIds.length].includes(
+      p4RemovedOddsOnlyIdsPresent,
+    ),
+    true,
+  );
+  assert.equal(
+    odds.length,
+    120 + p4RemovedOddsOnlyIdsPresent,
+  );
+
+  const identityTransitions = [
+    [
+      "cid_arg2_quilmes_gimnasiajujuy_20260721",
+      "cid_arg2_quilmes_gimnasiayesgrimajujuy_20260721",
+    ],
+    [
+      "cid_uefachampions_agf_lechpoznan_20260721",
+      "cid_uefachampions_aarhusden_lechpoznanpol_20260721",
+    ],
+    [
+      "cid_uefachampions_larne_redstarbelgrade_20260721",
+      "cid_uefachampions_larnenir_crvenazvezdasrb_20260721",
+    ],
+  ];
+
+  const suppressedIdsPresent = identityTransitions
+    .filter(([suppressedId]) => outputIds.has(suppressedId))
+    .length;
+
+  assert.equal(
+    [0, identityTransitions.length].includes(
+      suppressedIdsPresent,
+    ),
+    true,
+  );
+  assert.equal(
+    fixtures.length,
+    60 + suppressedIdsPresent,
+  );
+
+  for (const [suppressedId, retainedId] of identityTransitions) {
+    assert.equal(outputIds.has(retainedId), true);
+    assert.equal(
+      outputIds.has(suppressedId),
+      suppressedIdsPresent === identityTransitions.length,
+    );
+  }
 
   for (const id of knownOrphans) {
     assert.equal(outputIds.has(id), false);

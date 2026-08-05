@@ -539,6 +539,141 @@ test("does not rewrite a terminal minute display-equivalent detail", () => {
   );
 });
 
+test("creates a retained detail path from an exact suppressed fixture alias without preserving suppressed references", () => {
+  const suppressed =
+    "cid_suppressed_20260803";
+  const retained =
+    "cid_retained_20260803";
+  const identityOverlay = {
+    resolveEvidenceFixtureId(value) {
+      if (value === suppressed) {
+        return {
+          ok: true,
+          managed: true,
+          changed: true,
+          sourceFixtureId: suppressed,
+          resolvedFixtureId: retained,
+          sourceRole: "suppressed_lineage_alias",
+        };
+      }
+      if (value === retained) {
+        return {
+          ok: true,
+          managed: true,
+          changed: false,
+          sourceFixtureId: retained,
+          resolvedFixtureId: retained,
+          sourceRole: "retained",
+        };
+      }
+      return {
+        ok: true,
+        managed: false,
+        changed: false,
+        sourceFixtureId: value,
+        resolvedFixtureId: value,
+        sourceRole: "unmanaged",
+      };
+    },
+  };
+
+  const payload = detail({
+    canonicalId: suppressed,
+    matchId: suppressed,
+    marker: "suppressed-source",
+  });
+  payload.productionIdentityBinding = {
+    sourceFixtureId: suppressed,
+    resolvedFixtureId: retained,
+  };
+
+  const result = buildP0CP4DeploySnapshotDetails({
+    dayKey: DAY,
+    inventoryPaths: inventory(retained),
+    existingDeployDetails: [
+      record(
+        `data/deploy-snapshots/${DAY}/details/${suppressed}.json`,
+        payload,
+      ),
+    ],
+    fixtureRows: [
+      fixture({
+        canonicalId: retained,
+        matchId: retained,
+      }),
+    ],
+    preserveExistingDetails: true,
+    patchedAt: PATCHED_AT,
+    identityOverlay,
+  });
+
+  assert.equal(result.outputs.length, 1);
+  assert.equal(result.outputs[0].action, "write");
+  assert.equal(
+    result.outputs[0].relativePath,
+    inventory(retained)[0],
+  );
+  assert.equal(
+    result.outputs[0].content.basic.canonicalId,
+    retained,
+  );
+  assert.equal(result.outputs[0].content.matchId, retained);
+  assert.equal(
+    JSON.stringify(result.outputs[0].content)
+      .includes(suppressed),
+    false,
+  );
+  assert.equal(
+    result.diagnostics.writes[0]
+      .identityResolvedFromSource,
+    true,
+  );
+  assert.equal(
+    result.diagnostics.writes[0]
+      .identityOverlayChanged,
+    true,
+  );
+});
+
+test("preserves a retained legacy detail when status-sync schema is unavailable", () => {
+  const cid = "legacy-provider-id";
+  const legacy = {
+    matchId: cid,
+    home: "Legacy Home",
+    away: "Legacy Away",
+    status: "SCHEDULED",
+  };
+
+  const result = buildP0CP4DeploySnapshotDetails({
+    dayKey: DAY,
+    inventoryPaths: inventory(cid),
+    existingDeployDetails: [
+      record(inventory(cid)[0], legacy),
+    ],
+    fixtureRows: [
+      fixture({
+        canonicalId: cid,
+        status: "FT",
+        rawStatus: "FULL_TIME",
+        scoreHome: 1,
+        scoreAway: 0,
+      }),
+    ],
+    patchedAt: PATCHED_AT,
+  });
+
+  assert.equal(result.outputs[0].action, "write");
+  assert.deepEqual(result.outputs[0].content, legacy);
+  assert.equal(
+    result.diagnostics.writes[0].statusChanged,
+    false,
+  );
+  assert.equal(
+    result.diagnostics.writes[0].statusSyncSkippedReason,
+    "legacy_detail_status_sync_schema_unavailable_preserved",
+  );
+});
+
 test("fails closed when a retained fixture has no source or preserved detail", () => {
   const cid =
     "cid_missing_20260803";
