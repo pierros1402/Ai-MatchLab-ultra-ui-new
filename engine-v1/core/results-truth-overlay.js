@@ -336,12 +336,22 @@ export function overlayResultsTruth(
           ? identity.row
           : m;
 
-      const currentRank = statusRankFromParts(
+      const displayStatusRank = statusRankFromParts(
         displayRow?.status,
-        displayRow?.rawStatus,
+        null,
         displayRow?.statusType,
         displayRow?.statusName
       );
+
+      const currentRank =
+        displayStatusRank === STATUS_RANK.FINAL
+          ? STATUS_RANK.FINAL
+          : statusRankFromParts(
+              displayRow?.status,
+              displayRow?.rawStatus,
+              displayRow?.statusType,
+              displayRow?.statusName
+            );
 
       if (currentRank === STATUS_RANK.FINAL) {
         const rawStatus = String(displayRow?.rawStatus || "").trim().toUpperCase();
