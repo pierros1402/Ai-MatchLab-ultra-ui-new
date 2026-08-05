@@ -2,7 +2,7 @@
   "dayKey": "2026-08-05",
   "leagueSlug": "bol.1",
   "leagueName": "Bol 1",
-  "updatedAt": "2026-08-05T20:50:24.187Z",
+  "updatedAt": "2026-08-05T23:02:21.899Z",
   "count": 4,
   "sourceMeta": {
     "acquisitionProvider": "espn_direct_league_status",
@@ -32,8 +32,27 @@
         "heuristicFinalPromotion": false
       }
     },
-    "mergedAt": "2026-08-05T20:50:24.187Z",
-    "mode": "targeted_live_status_refresh"
+    "mergedAt": "2026-08-05T23:02:20.309Z",
+    "mode": "targeted_live_status_refresh",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-08-05",
+      "offsets": [
+        0
+      ],
+      "changedRows": 1,
+      "mergedAt": "2026-08-05T23:02:21.899Z"
+    },
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-05T23:02:21.956Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -127,16 +146,17 @@
       "kickoffUtc": "2026-08-05T19:00:00.000Z",
       "homeTeam": "GV San Jose",
       "awayTeam": "SA Bulo Bulo",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 0,
+      "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-08-02T21:15:03.957Z",
-      "lastSeenAt": "2026-08-05T20:44:09.590Z"
+      "lastSeenAt": "2026-08-05T23:02:21.899Z",
+      "statusType": "STATUS_FINAL"
     },
     {
       "canonicalId": "cid_bol1_gvsanjose_sanantoniobulobulo_20260805",
@@ -157,12 +177,36 @@
       "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "90'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+6'",
       "venue": "Estadio Jesús Bermúdez",
       "firstSeenAt": "2026-08-04T18:57:48.156Z",
-      "lastSeenAt": "2026-08-05T20:50:24.184Z"
+      "lastSeenAt": "2026-08-05T23:02:20.308Z",
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-05T23:02:21.956Z",
+        "provider": "espn",
+        "providerMatchId": "401873333",
+        "dayKey": "2026-08-05",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 0
+        }
+      }
     }
   ]
 }
