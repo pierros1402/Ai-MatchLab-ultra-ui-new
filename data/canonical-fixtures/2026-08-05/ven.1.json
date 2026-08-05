@@ -2,14 +2,55 @@
   "dayKey": "2026-08-05",
   "leagueSlug": "ven.1",
   "leagueName": "Venezuelan Primera División",
-  "updatedAt": "2026-08-05T00:17:49.591Z",
+  "updatedAt": "2026-08-05T00:46:37.586Z",
   "count": 11,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "ven.1",
     "requestedDayKey": "2026-08-05",
-    "mergedAt": "2026-08-05T00:17:49.591Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "ven.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 1,
+      "fetches": [
+        {
+          "providerSlug": "ven.1",
+          "dayKey": "2026-08-04",
+          "ok": true,
+          "events": 3,
+          "matched": 1
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-05T00:46:36.307Z",
+    "mode": "targeted_live_status_refresh",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-08-05",
+      "offsets": [
+        0
+      ],
+      "changedRows": 1,
+      "mergedAt": "2026-08-05T00:46:37.586Z"
+    }
   },
   "fixtures": [
     {
@@ -27,17 +68,40 @@
       "kickoffUtc": "2026-08-04T21:00Z",
       "homeTeam": "Carabobo",
       "awayTeam": "Trujillanos",
-      "scoreHome": 2,
+      "scoreHome": 0,
       "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "FT",
-      "rawStatus": "STATUS_FULL_TIME",
-      "minute": "90'+5'",
+      "status": "STATUS_SCHEDULED",
+      "rawStatus": "STATUS_SCHEDULED",
+      "minute": "FT",
       "venue": "Estadio Misael Delgado",
       "firstSeenAt": "2026-08-03T19:01:01.847Z",
       "lastSeenAt": "2026-08-05T00:17:49.582Z",
-      "statusType": "STATUS_FINAL"
+      "statusType": "STATUS_FINAL",
+      "operationalState": "UNKNOWN",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-05T00:35:13.946Z",
+        "provider": "reconciled",
+        "providerMatchId": "401903391",
+        "dayKey": "2026-08-05",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": "STATUS_FINAL",
+          "rawStatus": "STATUS_SCHEDULED",
+          "scoreHome": 0,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_ven1_universidadcentral_monagas_20260805",
@@ -53,16 +117,17 @@
       "kickoffUtc": "2026-08-04T22:00:00.000Z",
       "homeTeam": "Universidad Central",
       "awayTeam": "Monagas",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 2,
+      "scoreAway": 1,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-08-03T19:01:01.847Z",
-      "lastSeenAt": "2026-08-05T00:17:47.751Z"
+      "lastSeenAt": "2026-08-05T00:46:37.585Z",
+      "statusType": "STATUS_FINAL"
     },
     {
       "canonicalId": "cid_ven1_ucv_monagas_20260805",
@@ -110,12 +175,12 @@
       "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "LIVE",
-      "rawStatus": "STATUS_IN_PROGRESS",
-      "minute": "88'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "venue": "Estadio Pueblo Nuevo",
       "firstSeenAt": "2026-08-03T19:01:01.848Z",
-      "lastSeenAt": "2026-08-05T00:17:49.582Z"
+      "lastSeenAt": "2026-08-05T00:46:36.306Z"
     },
     {
       "canonicalId": "cid_ven1_zamora_academiapuertocabello_20260805",
@@ -141,7 +206,7 @@
       "minute": null,
       "venue": "Estadio Agustín Tovar",
       "firstSeenAt": "2026-08-04T18:57:48.155Z",
-      "lastSeenAt": "2026-08-05T00:17:49.589Z",
+      "lastSeenAt": "2026-08-05T00:46:36.255Z",
       "homeScore": null,
       "awayScore": null,
       "isDisplayFinal": false
@@ -170,7 +235,7 @@
       "minute": null,
       "venue": "Estadio Olímpico de la UCV",
       "firstSeenAt": "2026-08-04T18:57:48.153Z",
-      "lastSeenAt": "2026-08-05T00:17:49.587Z",
+      "lastSeenAt": "2026-08-05T00:46:36.254Z",
       "homeScore": null,
       "awayScore": null,
       "isDisplayFinal": false
@@ -199,7 +264,7 @@
       "minute": null,
       "venue": "Estadio Olímpico General José Antonio Anzoátegui",
       "firstSeenAt": "2026-08-04T18:57:48.153Z",
-      "lastSeenAt": "2026-08-05T00:17:49.587Z",
+      "lastSeenAt": "2026-08-05T00:46:36.254Z",
       "homeScore": null,
       "awayScore": null,
       "isDisplayFinal": false
@@ -228,7 +293,7 @@
       "minute": null,
       "venue": "Estadio Monumental de Maturín",
       "firstSeenAt": "2026-08-04T18:57:48.154Z",
-      "lastSeenAt": "2026-08-05T00:17:49.588Z",
+      "lastSeenAt": "2026-08-05T00:46:36.255Z",
       "homeScore": null,
       "awayScore": null,
       "isDisplayFinal": false
@@ -257,7 +322,7 @@
       "minute": null,
       "venue": "Estadio José Alberto Pérez",
       "firstSeenAt": "2026-08-04T18:57:48.155Z",
-      "lastSeenAt": "2026-08-05T00:17:49.589Z",
+      "lastSeenAt": "2026-08-05T00:46:36.255Z",
       "homeScore": null,
       "awayScore": null,
       "isDisplayFinal": false
@@ -286,7 +351,7 @@
       "minute": null,
       "venue": "Estadio Olímpico de la UCV",
       "firstSeenAt": "2026-08-04T18:57:48.154Z",
-      "lastSeenAt": "2026-08-05T00:17:49.587Z",
+      "lastSeenAt": "2026-08-05T00:46:36.254Z",
       "homeScore": null,
       "awayScore": null,
       "isDisplayFinal": false
@@ -315,7 +380,7 @@
       "minute": null,
       "venue": "Estadio José Encarnación Romero",
       "firstSeenAt": "2026-08-04T18:57:48.155Z",
-      "lastSeenAt": "2026-08-05T00:17:49.588Z",
+      "lastSeenAt": "2026-08-05T00:46:36.255Z",
       "homeScore": null,
       "awayScore": null,
       "isDisplayFinal": false
