@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-05",
-  "generatedAt": "2026-08-05T00:48:12.169Z",
+  "generatedAt": "2026-08-05T04:20:41.264Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 2,
-    "info": 8
+    "info": 9
   },
   "alert": false,
   "alertCounts": {
@@ -14,12 +14,12 @@
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 10,
+  "activeIssueCount": 11,
   "actionableIssueCount": 2,
-  "newIssueCount": 0,
+  "newIssueCount": 2,
   "newActionableIssueCount": 0,
   "resolvedIssueCount": 1,
-  "persistentIssueCount": 10,
+  "persistentIssueCount": 9,
   "activeIssues": [
     {
       "severity": "info",
@@ -159,12 +159,23 @@
     {
       "severity": "info",
       "source": "build-report",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
       "details": {
-        "picks": 1,
+        "picks": 2,
         "settled": 0,
-        "unresolved": 1
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
       }
     },
     {
@@ -207,14 +218,14 @@
           }
         },
         "planA2": {
-          "count": 1,
+          "count": 0,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -226,14 +237,14 @@
           }
         },
         "planB": {
-          "count": 0,
+          "count": 2,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 2,
+            "uniqueMatches": 1,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -245,14 +256,14 @@
           }
         },
         "planB2": {
-          "count": 0,
+          "count": 2,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 2,
+            "uniqueMatches": 1,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -296,20 +307,41 @@
       }
     }
   ],
-  "newIssues": [],
+  "newIssues": [
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "build-report",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    }
+  ],
   "newActionableIssues": [],
   "resolvedIssues": [
     {
       "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
+      "source": "build-report",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
       "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-08-05.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
       }
     }
   ],
@@ -451,17 +483,6 @@
     },
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
       "message": "Four-plan Value comparison artifact is available.",
@@ -500,14 +521,14 @@
           }
         },
         "planA2": {
-          "count": 1,
+          "count": 0,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -519,14 +540,14 @@
           }
         },
         "planB": {
-          "count": 0,
+          "count": 2,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 2,
+            "uniqueMatches": 1,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -538,14 +559,14 @@
           }
         },
         "planB2": {
-          "count": 0,
+          "count": 2,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 2,
+            "uniqueMatches": 1,
             "settled": 0,
             "wins": 0,
             "losses": 0,
-            "unresolved": 0,
+            "unresolved": 2,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
