@@ -103,6 +103,17 @@ const BUILTIN_ALIASES = {
     ]
   },
 
+  // Argentina Primera División. Flashscore abbreviates "La Plata" as "L.P."
+  // while ESPN uses the full city name. League-scoped to avoid any global
+  // collision with other clubs named Estudiantes.
+  "arg.1": {
+    "Estudiantes de La Plata": [
+      "Estudiantes L.P.",
+      "Estudiantes LP",
+      "Estudiantes de La Plata"
+    ]
+  },
+
   // Colombia Primera B. These spellings are league-scoped because the short
   // "Boca Juniors" name must never globally resolve away from the Argentine club.
   "col.2": {

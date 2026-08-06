@@ -215,7 +215,16 @@ function meaningful(value) {
 }
 
 function stableFixtureId(row) {
-  return normalizeText(row?.matchId || row?.sourceMatchId || row?.sourceId || row?.id);
+  // Canonical rows expose canonicalId through matchId. Exact provider refresh,
+  // wrong-day occurrence checks and source fetch maps must instead key on the
+  // source-scoped provider identity whenever it exists.
+  return normalizeText(
+    row?.sourceMatchId ||
+    row?.sourceId ||
+    row?.providerMatchId ||
+    row?.matchId ||
+    row?.id
+  );
 }
 
 function statusBucket(row) {
@@ -408,15 +417,17 @@ export function normalizeSourceRows(
     const id = stableFixtureId(normalized);
     if (!id) continue;
 
+    const canonicalId = buildCanonicalId(
+      canonicalSlug,
+      normalized.homeTeam,
+      normalized.awayTeam,
+      normalized.dayKey || dayKey
+    );
+
     byId.set(id, {
-      matchId: normalized.matchId,
+      matchId: canonicalId,
       matchKey: normalized.matchKey,
-      canonicalId: buildCanonicalId(
-        canonicalSlug,
-        normalized.homeTeam,
-        normalized.awayTeam,
-        normalized.dayKey || dayKey
-      ),
+      canonicalId,
       source: normalized.source || "espn_direct_league_status",
       sourceId: normalized.sourceId || normalized.sourceMatchId || normalized.matchId,
       sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
