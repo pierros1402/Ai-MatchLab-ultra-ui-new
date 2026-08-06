@@ -173,7 +173,10 @@ test("pins the exact V2 application inventory and three retained detail creates"
   );
   const bytes = fs.readFileSync(inventoryPath);
   assert.equal(
-    sha256(bytes),
+    sourceBindingSha256(
+      binding.applicationInventoryPath,
+      binding.applicationInventorySha256,
+    ),
     binding.applicationInventorySha256,
   );
   const rows = bytes
