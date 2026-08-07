@@ -42,6 +42,9 @@
 
   function emit(name, detail) {
     window.dispatchEvent(new CustomEvent(name, { detail }));
+    if (typeof window.emit === "function") {
+      window.emit(name, detail);
+    }
     if (window.AIML && typeof window.AIML.emit === "function") {
       window.AIML.emit(name, detail);
     }
