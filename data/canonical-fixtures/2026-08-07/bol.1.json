@@ -9,7 +9,17 @@
     "requestedLeagueSlug": "all",
     "requestedDayKey": "2026-08-07",
     "mergedAt": "2026-08-07T20:41:24.110Z",
-    "mode": "supplemental_target_seed_only"
+    "mode": "supplemental_target_seed_only",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-07T21:33:46.642Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -32,12 +42,35 @@
       "penalties": null,
       "decidedBy": null,
       "status": "FT",
-      "rawStatus": "STATUS_FULL_TIME",
-      "minute": "90'+12'",
+      "rawStatus": "STATUS_SCHEDULED",
+      "minute": "FT",
       "venue": "Estadio Ramón Tahuichi",
       "firstSeenAt": "2026-08-04T22:31:42.676Z",
       "lastSeenAt": "2026-08-07T20:41:24.093Z",
-      "statusType": "STATUS_FINAL"
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-07T21:33:46.642Z",
+        "provider": "reconciled",
+        "providerMatchId": "401873331",
+        "dayKey": "2026-08-07",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": "STATUS_FINAL",
+          "rawStatus": "STATUS_SCHEDULED",
+          "scoreHome": 0,
+          "scoreAway": 0
+        }
+      }
     }
   ]
 }

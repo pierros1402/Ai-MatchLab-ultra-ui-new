@@ -8,32 +8,18 @@
     "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "eng.league_cup",
     "requestedDayKey": "2026-08-07",
-    "providerFetchSlugs": [
-      "eng.league_cup"
-    ],
-    "exactIdAdjacentDateFallback": {
-      "candidates": 0,
-      "matches": 0,
-      "fetches": []
-    },
-    "exactEventSummaryReconciliation": {
-      "candidates": 0,
-      "sameDayMatches": 0,
-      "wrongDayMatches": 0,
-      "wrongDayRemovedRows": 0,
-      "wrongDayIdentityRejectedRows": 0,
-      "fetches": [],
-      "policy": {
-        "exactProviderIdOnly": true,
-        "authoritativeEventDayOnly": true,
-        "teamIdentityRequired": true,
-        "homeAwayOrientationRequired": true,
-        "crossDayStatusPromotion": false,
-        "heuristicFinalPromotion": false
-      }
-    },
-    "mergedAt": "2026-08-07T20:58:49.669Z",
-    "mode": "targeted_live_status_refresh"
+    "mergedAt": "2026-08-07T20:41:24.110Z",
+    "mode": "supplemental_target_seed_only",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-07T21:33:46.642Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -113,8 +99,32 @@
       "minute": "90'+4'",
       "venue": "Riverside Stadium",
       "firstSeenAt": "2026-07-23T18:22:44.916Z",
-      "lastSeenAt": "2026-08-07T20:58:49.668Z",
-      "providerLeagueSlug": "eng.league_cup"
+      "lastSeenAt": 1786136757554,
+      "providerLeagueSlug": "eng.league_cup",
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-07T21:33:46.642Z",
+        "provider": "espn",
+        "providerMatchId": "401881129",
+        "dayKey": "2026-08-07",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 0
+        }
+      }
     }
   ]
 }
