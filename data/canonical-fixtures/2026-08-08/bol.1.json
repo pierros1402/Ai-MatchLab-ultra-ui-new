@@ -2,14 +2,55 @@
   "dayKey": "2026-08-08",
   "leagueSlug": "bol.1",
   "leagueName": "Bol 1",
-  "updatedAt": "2026-08-07T22:11:47.009Z",
+  "updatedAt": "2026-08-07T23:27:13.677Z",
   "count": 5,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "bol.1",
     "requestedDayKey": "2026-08-08",
-    "mergedAt": "2026-08-07T22:11:47.009Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "bol.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 2,
+      "fetches": [
+        {
+          "providerSlug": "bol.1",
+          "dayKey": "2026-08-07",
+          "ok": true,
+          "events": 2,
+          "matched": 2
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-07T23:27:09.198Z",
+    "mode": "targeted_live_status_refresh",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-08-08",
+      "offsets": [
+        0
+      ],
+      "changedRows": 1,
+      "mergedAt": "2026-08-07T23:27:13.677Z"
+    }
   },
   "fixtures": [
     {
@@ -26,16 +67,17 @@
       "kickoffUtc": "2026-08-07T21:15:00.000Z",
       "homeTeam": "Academia del Balompie",
       "awayTeam": "Guabira",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 0,
+      "scoreAway": 1,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-08-04T22:31:42.677Z",
-      "lastSeenAt": "2026-08-07T22:11:45.983Z"
+      "lastSeenAt": "2026-08-07T23:27:13.676Z",
+      "statusType": "STATUS_FINAL"
     },
     {
       "canonicalId": "cid_bol1_abb_guabira_20260808",
@@ -53,15 +95,15 @@
       "homeTeam": "ABB",
       "awayTeam": "Guabirá",
       "scoreHome": 0,
-      "scoreAway": 0,
+      "scoreAway": 1,
       "penalties": null,
       "decidedBy": null,
-      "status": "HALF_TIME",
-      "rawStatus": "STATUS_HALFTIME",
-      "minute": "45'+4'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+8'",
       "venue": "Municipal Villa Ingenio",
       "firstSeenAt": "2026-08-07T18:08:39.407Z",
-      "lastSeenAt": "2026-08-07T22:11:46.729Z"
+      "lastSeenAt": "2026-08-07T23:27:09.196Z"
     },
     {
       "canonicalId": "cid_bol1_realtomayapo_realoruro_20260808",
@@ -87,7 +129,7 @@
       "minute": "0'",
       "venue": "Estadio IV Centenário",
       "firstSeenAt": "2026-08-05T22:33:10.658Z",
-      "lastSeenAt": "2026-08-07T22:11:46.731Z"
+      "lastSeenAt": "2026-08-07T23:27:09.196Z"
     },
     {
       "canonicalId": "cid_bol1_sabulobulo_nacionalpotosi_20260808",
@@ -138,7 +180,7 @@
       "minute": "0'",
       "venue": "Estadio Félix Capriles",
       "firstSeenAt": "2026-08-07T18:08:39.665Z",
-      "lastSeenAt": "2026-08-07T22:11:46.990Z"
+      "lastSeenAt": "2026-08-07T23:27:09.086Z"
     }
   ]
 }
