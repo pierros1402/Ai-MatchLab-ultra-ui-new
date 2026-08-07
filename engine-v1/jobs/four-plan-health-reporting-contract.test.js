@@ -81,14 +81,18 @@ test(
 );
 
 test(
-  "system health reports unresolved A2 and B2 picks",
+  "system health reports unresolved A2 and B2 picks through settlement policy",
   () => {
-    const source = read(
+    const healthSource = read(
       "engine-v1/jobs/build-system-health-alerts-day.js"
     );
+    const policySource = read(
+      "engine-v1/system-health/value-settlement-policy.js"
+    );
 
-    requireToken(source, '"plan_a2_unresolved_settlement"');
-    requireToken(source, '"plan_b2_unresolved_settlement"');
+    requireToken(healthSource, "collectValueSettlementIssues");
+    requireToken(policySource, '"plan_a2_unresolved_settlement"');
+    requireToken(policySource, '"plan_b2_unresolved_settlement"');
   }
 );
 

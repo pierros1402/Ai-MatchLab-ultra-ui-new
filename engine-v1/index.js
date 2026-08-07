@@ -61,6 +61,12 @@ import {
   collectRuntimeArtifactIssues,
   classifyRuntimeSystemHealth
 } from "./system-health/runtime-report-policy.js";
+import {
+  collectValueSettlementIssues
+} from "./system-health/value-settlement-policy.js";
+import {
+  collectActiveCompetitionCompletenessIssues
+} from "./system-health/active-competition-completeness-policy.js";
 import 'dotenv/config';
 
 const app = express();
@@ -1518,6 +1524,13 @@ function buildSystemHealthReport(day) {
   const valueAudit = read.valueAudit.data;
   const value = read.value.data;
   const valueComparison = read.valueComparison.data;
+  const coverageReadiness =
+    systemHealthReadJson(
+      resolveDataPath(
+        "coverage-readiness",
+        day + ".json"
+      )
+    ).data;
 
   if (invariant) {
     for (const b of invariant.blocked || []) {
@@ -1619,21 +1632,21 @@ function buildSystemHealthReport(day) {
       ));
     }
 
-    const planBUnresolved = Number(buildReport.settlement?.planB?.unresolved || 0);
-    if (planBUnresolved > 0) {
-      issues.push(systemHealthIssue(
-        "info",
-        "build-report",
-        "plan_b_unresolved_settlement",
-        "Plan B observation picks are still unresolved.",
-        {
-          picks: buildReport.settlement?.planB?.picks,
-          settled: buildReport.settlement?.planB?.settled,
-          unresolved: planBUnresolved
-        }
-      ));
-    }
   }
+
+  issues.push(...collectValueSettlementIssues({
+    dayKey: day,
+    todayDayKey: athensDayKey(),
+    buildReport,
+    valueComparison
+  }));
+
+  issues.push(
+    ...collectActiveCompetitionCompletenessIssues({
+      dayKey: day,
+      coverageReadiness
+    })
+  );
 
   if (freshness) {
     if (freshness.ok === false) {

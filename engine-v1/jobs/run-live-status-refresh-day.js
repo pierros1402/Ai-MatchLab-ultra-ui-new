@@ -2206,8 +2206,22 @@ const isCli =
   process.argv[1] &&
   fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 
+export function parseLiveStatusRefreshCliArgs(args = []) {
+  const values = Array.isArray(args) ? args.map(value => String(value || "").trim()) : [];
+  const dayKey = values.find(value => isValidDayKey(value)) || values.find(value => value && !value.startsWith("--")) || "";
+
+  return {
+    dayKey,
+    options: {
+      appendNewFixtures: values.includes("--append-new-fixtures"),
+      includeAllOpenStates: values.includes("--include-all-open-states")
+    }
+  };
+}
+
 if (isCli) {
-  runLiveStatusRefreshDay(process.argv[2])
+  const cli = parseLiveStatusRefreshCliArgs(process.argv.slice(2));
+  runLiveStatusRefreshDay(cli.dayKey, cli.options)
     .then(result => {
       console.log(JSON.stringify(result, null, 2));
       if (!result.ok) process.exit(1);

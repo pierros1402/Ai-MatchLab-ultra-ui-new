@@ -74,6 +74,84 @@ test(
 );
 
 test(
+  "discovery records exact Athens target-day fixture coverage",
+  () => {
+    const result =
+      buildProviderCompetitionDiscovery({
+        dayKey:
+          "2026-08-07",
+
+        rows: [
+          fixture({
+            matchId:
+              "athens-target-day",
+            kickoffUtc:
+              "2026-08-06T22:30:00.000Z"
+          }),
+          fixture({
+            matchId:
+              "next-athens-day",
+            kickoffUtc:
+              "2026-08-07T22:30:00.000Z"
+          }),
+          fixture({
+            matchId:
+              "cancelled-target-day",
+            kickoffUtc:
+              "2026-08-07T15:00:00.000Z",
+            nonPlayedTerminal: true
+          })
+        ],
+
+        generatedAt:
+          GENERATED_AT
+      });
+
+    const row =
+      result.artifact
+        .competitions[0];
+
+    assert.equal(
+      row.fixtureCount,
+      3
+    );
+
+    assert.equal(
+      row.targetDayFixtureCount,
+      1
+    );
+
+    assert.deepEqual(
+      row.targetDaySourceIds,
+      ["athens-target-day"]
+    );
+
+    assert.equal(
+      row.targetDayNonPlayedTerminalCount,
+      1
+    );
+
+    assert.equal(
+      result.artifact.summary
+        .targetDayFixtureRowCount,
+      1
+    );
+
+    assert.equal(
+      result.artifact.summary
+        .targetDayNonPlayedTerminalRowCount,
+      1
+    );
+
+    assert.equal(
+      result.artifact.summary
+        .targetDayResolvedCompetitionCount,
+      1
+    );
+  }
+);
+
+test(
   "new unknown competition is retained as non-publishable candidate",
   () => {
     const result =
@@ -288,5 +366,39 @@ test(
         .resolvedCompetitionCount,
       1
     );
+  }
+);
+
+test(
+  "daily discovery fails closed when provider-wide feed fails",
+  async () => {
+    const result =
+      await discoverProviderCompetitionsDay(
+        "2026-08-07",
+        {
+          write: false,
+          offsets: [0],
+          fetchFixtures:
+            async () => ({
+              ok: false,
+              rows: [],
+              attempts: [
+                {
+                  offset: 0,
+                  ok: false,
+                  status: 503
+                }
+              ]
+            })
+        }
+      );
+
+    assert.equal(result.ok, false);
+    assert.equal(
+      result.error,
+      "provider_competition_feed_failed"
+    );
+    assert.equal(result.artifact, null);
+    assert.equal(result.registry, null);
   }
 );

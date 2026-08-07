@@ -85,6 +85,47 @@ jobs:
         working-directory: engine-v1
         run: npm ci --no-audit --no-fund
 
+      # Truth is checkpointed BEFORE any Value/snapshot gate. A later Value
+      # failure must never discard provider-verified LIVE/FT changes collected
+      # by this run (2026-08-07 regression: the runner saw truth, then Value
+      # self-heal failed and the canonical status changes disappeared with it).
+      - name: Refresh authoritative intraday truth checkpoint
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/run-live-status-refresh-day.js "$DAY_KEY" --append-new-fixtures --include-all-open-states
+
+      - name: Persist authoritative intraday truth checkpoint
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+
+          if [ -d "data/canonical-fixtures/${DAY_KEY}" ]; then
+            git add "data/canonical-fixtures/${DAY_KEY}/"
+          fi
+
+          STAGED="$(git diff --cached --name-only || true)"
+          if [ -n "$STAGED" ]; then
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev "^data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$" || true)"
+            if [ -n "$BAD" ]; then
+              echo "ERROR: unexpected intraday truth checkpoint paths:"
+              echo "$BAD"
+              exit 1
+            fi
+
+            node engine-v1/jobs/guard-staged-data-boundary.js \
+              --label=intraday-authoritative-truth-checkpoint \
+              --dayKey="${DAY_KEY}" \
+              --allow="^data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$"
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Persist intraday canonical truth for ${DAY_KEY}"
+            bash tools/git-push-rebase-retry.sh
+          else
+            echo "No authoritative intraday truth changes to checkpoint."
+          fi
+
       - name: Run intraday snapshot refresh
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=0 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
@@ -211,6 +252,31 @@ jobs:
           else
             echo "No publishable fixture-backed Value repair is required — skipping targeted refresh."
           fi
+
+      # Persist the diagnostic even when a prior intraday step failed. This is
+      # intentionally health-only; broken/partial snapshot artifacts are never
+      # staged by this failure path.
+      - name: Persist intraday failure System Health
+        if: failure() && env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -u
+          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY" || true
+          git restore --staged . || true
+          test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json"
+          test -f "data/system-health/latest.json" && git add "data/system-health/latest.json"
+
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Record intraday System Health failure for ${DAY_KEY}"
+            bash tools/git-push-rebase-retry.sh || true
+          fi
+
+          node ./engine-v1/jobs/sync-system-health-github-issue.js --date="$DAY_KEY" || true
 
       # Intraday re-exports the snapshot, which would leave the committed
       # invariant report stale vs manifest.generatedAt — refresh it so the
