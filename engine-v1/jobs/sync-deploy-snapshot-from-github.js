@@ -279,19 +279,97 @@ export async function validateStagedRelease(stageDayDir, manifest) {
   return { fixtureCount, valueCount, detailCount: actualDetails.length };
 }
 
-export async function promoteDirectory(stageDayDir, targetDayDir, backupDir) {
-  await fsp.rm(backupDir, { recursive: true, force: true });
-  const targetExists = fs.existsSync(targetDayDir);
+function isCrossDeviceRename(error) {
+  return error?.code === "EXDEV";
+}
+
+async function promoteDirectoryInPlace(stageDayDir, targetDayDir) {
+  await fsp.mkdir(targetDayDir, { recursive: true });
+
+  const token = `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const incomingName = `.snapshot-incoming-${token}`;
+  const rollbackName = `.snapshot-rollback-${token}`;
+  const incomingDir = path.join(targetDayDir, incomingName);
+  const rollbackDir = path.join(targetDayDir, rollbackName);
+  const promotedNames = [];
+
+  await fsp.rm(incomingDir, { recursive: true, force: true });
+  await fsp.rm(rollbackDir, { recursive: true, force: true });
 
   try {
-    if (targetExists) await fsp.rename(targetDayDir, backupDir);
-    await fsp.rename(stageDayDir, targetDayDir);
-    await fsp.rm(backupDir, { recursive: true, force: true });
+    await fsp.cp(stageDayDir, incomingDir, { recursive: true, force: true });
+    await fsp.mkdir(rollbackDir, { recursive: true });
+
+    const previousNames = (await fsp.readdir(targetDayDir))
+      .filter(name => name !== incomingName && name !== rollbackName);
+
+    for (const name of previousNames) {
+      await fsp.rename(path.join(targetDayDir, name), path.join(rollbackDir, name));
+    }
+
+    const nextNames = await fsp.readdir(incomingDir);
+    for (const name of nextNames) {
+      await fsp.rename(path.join(incomingDir, name), path.join(targetDayDir, name));
+      promotedNames.push(name);
+    }
+
+    await fsp.rm(incomingDir, { recursive: true, force: true });
+    await fsp.rm(rollbackDir, { recursive: true, force: true });
+    await fsp.rm(stageDayDir, { recursive: true, force: true });
   } catch (error) {
-    if (!fs.existsSync(targetDayDir) && fs.existsSync(backupDir)) {
-      await fsp.rename(backupDir, targetDayDir).catch(() => {});
+    for (const name of promotedNames.reverse()) {
+      await fsp.rm(path.join(targetDayDir, name), { recursive: true, force: true }).catch(() => {});
+    }
+
+    let rollbackError = null;
+    if (fs.existsSync(rollbackDir)) {
+      try {
+        for (const name of await fsp.readdir(rollbackDir)) {
+          await fsp.rename(path.join(rollbackDir, name), path.join(targetDayDir, name));
+        }
+      } catch (restoreError) {
+        rollbackError = restoreError;
+      }
+    }
+
+    await fsp.rm(incomingDir, { recursive: true, force: true }).catch(() => {});
+    await fsp.rm(rollbackDir, { recursive: true, force: true }).catch(() => {});
+
+    if (rollbackError) {
+      throw new AggregateError([error, rollbackError], "snapshot_promotion_rollback_failed");
     }
     throw error;
+  }
+}
+
+export async function promoteDirectory(stageDayDir, targetDayDir, backupDir, options = {}) {
+  const rename = typeof options.rename === "function" ? options.rename : fsp.rename;
+  await fsp.rm(backupDir, { recursive: true, force: true });
+  const targetExists = fs.existsSync(targetDayDir);
+  let targetMovedToBackup = false;
+
+  try {
+    if (targetExists) {
+      await rename(targetDayDir, backupDir);
+      targetMovedToBackup = true;
+    }
+    await rename(stageDayDir, targetDayDir);
+    await fsp.rm(backupDir, { recursive: true, force: true });
+    return;
+  } catch (error) {
+    if (targetMovedToBackup && !fs.existsSync(targetDayDir) && fs.existsSync(backupDir)) {
+      try {
+        await fsp.rename(backupDir, targetDayDir);
+        targetMovedToBackup = false;
+      } catch (restoreError) {
+        throw new AggregateError([error, restoreError], "snapshot_promotion_rollback_failed");
+      }
+    }
+
+    if (!isCrossDeviceRename(error)) throw error;
+
+    await promoteDirectoryInPlace(stageDayDir, targetDayDir);
+    await fsp.rm(backupDir, { recursive: true, force: true });
   }
 }
 
