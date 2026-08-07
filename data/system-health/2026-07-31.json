@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-07-31",
-  "generatedAt": "2026-07-31T18:20:47.509Z",
+  "generatedAt": "2026-08-07T17:36:22.047Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
     "warning": 3,
-    "info": 7
+    "info": 6
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 10,
+  "activeIssueCount": 9,
   "actionableIssueCount": 3,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 10,
+  "newIssueCount": 5,
+  "newActionableIssueCount": 2,
+  "resolvedIssueCount": 9,
+  "persistentIssueCount": 4,
   "activeIssues": [
     {
       "severity": "info",
@@ -152,17 +152,6 @@
     },
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "picks": 6,
-        "settled": 3,
-        "unresolved": 3
-      }
-    },
-    {
-      "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
       "message": "Four-plan Value comparison artifact is available.",
@@ -186,37 +175,37 @@
           "summary": {
             "picks": 6,
             "uniqueMatches": 6,
-            "settled": 3,
-            "wins": 2,
-            "losses": 1,
-            "unresolved": 3,
+            "settled": 6,
+            "wins": 4,
+            "losses": 2,
+            "unresolved": 0,
             "unsupported": 0,
             "hitRate": 0.6667,
-            "oddsAvailable": 2,
-            "averageOdds": 1.76,
-            "totalStake": 2,
-            "totalReturn": 3.52,
-            "profit": 1.52,
-            "roi": 0.76
+            "oddsAvailable": 4,
+            "averageOdds": 1.7325,
+            "totalStake": 4,
+            "totalReturn": 5.28,
+            "profit": 1.28,
+            "roi": 0.32
           }
         },
         "planA2": {
-          "count": 0,
+          "count": 7,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "picks": 7,
+            "uniqueMatches": 6,
+            "settled": 7,
+            "wins": 5,
+            "losses": 2,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 0.7143,
+            "oddsAvailable": 5,
+            "averageOdds": 1.636,
+            "totalStake": 5,
+            "totalReturn": 6.53,
+            "profit": 1.53,
+            "roi": 0.306
           }
         },
         "planB": {
@@ -306,22 +295,7 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "build-report",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
-      }
-    }
-  ],
-  "persistentIssues": [
+  "newIssues": [
     {
       "severity": "info",
       "source": "freshness-report",
@@ -378,6 +352,183 @@
     },
     {
       "severity": "warning",
+      "source": "competition-admission",
+      "type": "competition_admission_pending",
+      "message": "Domestic competition candidates are waiting for sufficient multi-day evidence.",
+      "details": {
+        "pendingSlugs": [
+          "hon.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 13,
+          "admittedCount": 2,
+          "pendingCount": 1,
+          "rejectedCount": 10,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "col.copa",
+          "concacaf.central.american.cup",
+          "hon.1"
+        ],
+        "raw": "acquisition_skipped_slugs:col.copa,concacaf.central.american.cup,hon.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "competition-admission",
+      "type": "competition_admission_pending",
+      "message": "Domestic competition candidates are waiting for sufficient multi-day evidence.",
+      "details": {
+        "pendingSlugs": [
+          "hon.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 13,
+          "admittedCount": 2,
+          "pendingCount": 1,
+          "rejectedCount": 10,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-08-07.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "coverage_readiness",
+        "artifact": "coverage-readiness/2026-08-07.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_coverage_readiness",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-08-07/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-08-07/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:col.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:col.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bra.copa_do_brazil",
+          "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
+          "eng.fa_qual",
+          "uefa.wchampions_qual"
+        ],
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,eng.fa_qual,uefa.wchampions_qual",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-07",
+        "todayDayKey": "2026-08-07",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 3,
+        "settled": 2,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-07",
+        "todayDayKey": "2026-08-07",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 3,
+        "settled": 2,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "error",
+      "source": "active-competition-completeness",
+      "type": "active_competition_completeness_missing",
+      "message": "Independent target-day active competition coverage proof is missing.",
+      "details": {
+        "dayKey": "2026-08-07",
+        "artifact": "data/coverage-readiness/2026-08-07.json"
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
+      "severity": "warning",
       "source": "build-report",
       "type": "build_not_strict_clean",
       "message": "Build report is clean but not strict-clean.",
@@ -396,24 +547,6 @@
         "admittedSlugs": [
           "par.1",
           "slv.1"
-        ],
-        "summary": {
-          "evidenceSlugCount": 13,
-          "admittedCount": 2,
-          "pendingCount": 1,
-          "rejectedCount": 10,
-          "alreadyDeclaredCount": 0
-        }
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "competition-admission",
-      "type": "competition_admission_pending",
-      "message": "Domestic competition candidates are waiting for sufficient multi-day evidence.",
-      "details": {
-        "pendingSlugs": [
-          "hon.1"
         ],
         "summary": {
           "evidenceSlugCount": 13,
@@ -453,17 +586,6 @@
     },
     {
       "severity": "info",
-      "source": "build-report",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "picks": 6,
-        "settled": 3,
-        "unresolved": 3
-      }
-    },
-    {
-      "severity": "info",
       "source": "value-comparison",
       "type": "value_plan_comparison_summary",
       "message": "Four-plan Value comparison artifact is available.",
@@ -487,37 +609,37 @@
           "summary": {
             "picks": 6,
             "uniqueMatches": 6,
-            "settled": 3,
-            "wins": 2,
-            "losses": 1,
-            "unresolved": 3,
+            "settled": 6,
+            "wins": 4,
+            "losses": 2,
+            "unresolved": 0,
             "unsupported": 0,
             "hitRate": 0.6667,
-            "oddsAvailable": 2,
-            "averageOdds": 1.76,
-            "totalStake": 2,
-            "totalReturn": 3.52,
-            "profit": 1.52,
-            "roi": 0.76
+            "oddsAvailable": 4,
+            "averageOdds": 1.7325,
+            "totalStake": 4,
+            "totalReturn": 5.28,
+            "profit": 1.28,
+            "roi": 0.32
           }
         },
         "planA2": {
-          "count": 0,
+          "count": 7,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "picks": 7,
+            "uniqueMatches": 6,
+            "settled": 7,
+            "wins": 5,
+            "losses": 2,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 0.7143,
+            "oddsAvailable": 5,
+            "averageOdds": 1.636,
+            "totalStake": 5,
+            "totalReturn": 6.53,
+            "profit": 1.53,
+            "roi": 0.306
           }
         },
         "planB": {
