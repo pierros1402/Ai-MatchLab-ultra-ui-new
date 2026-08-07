@@ -283,56 +283,119 @@ function isCrossDeviceRename(error) {
   return error?.code === "EXDEV";
 }
 
-async function promoteDirectoryInPlace(stageDayDir, targetDayDir) {
-  await fsp.mkdir(targetDayDir, { recursive: true });
+async function statOrNull(filePath) {
+  try {
+    return await fsp.stat(filePath);
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
 
-  const token = `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const incomingName = `.snapshot-incoming-${token}`;
-  const rollbackName = `.snapshot-rollback-${token}`;
-  const incomingDir = path.join(targetDayDir, incomingName);
-  const rollbackDir = path.join(targetDayDir, rollbackName);
-  const promotedNames = [];
+async function syncDirectoryByCopy(sourceDir, targetDir) {
+  await fsp.mkdir(targetDir, { recursive: true });
 
-  await fsp.rm(incomingDir, { recursive: true, force: true });
+  const sourceNames = (await fsp.readdir(sourceDir)).sort();
+  const targetNames = (await fsp.readdir(targetDir)).sort();
+  const sourceSet = new Set(sourceNames);
+
+  for (const name of targetNames) {
+    if (sourceSet.has(name)) continue;
+    await fsp.rm(path.join(targetDir, name), { recursive: true, force: true });
+  }
+
+  for (const name of sourceNames) {
+    const sourcePath = path.join(sourceDir, name);
+    const targetPath = path.join(targetDir, name);
+    const sourceStat = await fsp.stat(sourcePath);
+    const targetStat = await statOrNull(targetPath);
+
+    if (sourceStat.isDirectory()) {
+      if (targetStat && !targetStat.isDirectory()) {
+        await fsp.rm(targetPath, { recursive: true, force: true });
+      } else if (!targetStat && fs.existsSync(targetPath)) {
+        await fsp.rm(targetPath, { recursive: true, force: true });
+      }
+      await fsp.mkdir(targetPath, { recursive: true });
+      await syncDirectoryByCopy(sourcePath, targetPath);
+      continue;
+    }
+
+    if (!sourceStat.isFile()) {
+      throw new Error(`snapshot_promotion_unsupported_entry:${sourcePath}`);
+    }
+
+    if (targetStat?.isDirectory()) {
+      await fsp.rm(targetPath, { recursive: true, force: true });
+    } else if (!targetStat && fs.existsSync(targetPath)) {
+      await fsp.rm(targetPath, { recursive: true, force: true });
+    }
+    await fsp.copyFile(sourcePath, targetPath);
+  }
+}
+
+async function verifyDirectoryCopy(sourceDir, targetDir) {
+  const sourceNames = (await fsp.readdir(sourceDir)).sort();
+  const targetNames = (await fsp.readdir(targetDir)).sort();
+  if (JSON.stringify(sourceNames) !== JSON.stringify(targetNames)) {
+    throw new Error("snapshot_promotion_copy_set_mismatch");
+  }
+
+  for (const name of sourceNames) {
+    const sourcePath = path.join(sourceDir, name);
+    const targetPath = path.join(targetDir, name);
+    const sourceStat = await fsp.stat(sourcePath);
+    const targetStat = await fsp.stat(targetPath);
+
+    if (sourceStat.isDirectory()) {
+      if (!targetStat.isDirectory()) {
+        throw new Error(`snapshot_promotion_copy_type_mismatch:${name}`);
+      }
+      await verifyDirectoryCopy(sourcePath, targetPath);
+      continue;
+    }
+
+    if (!sourceStat.isFile() || !targetStat.isFile()) {
+      throw new Error(`snapshot_promotion_copy_type_mismatch:${name}`);
+    }
+
+    const [sourceBuffer, targetBuffer] = await Promise.all([
+      fsp.readFile(sourcePath),
+      fsp.readFile(targetPath)
+    ]);
+    if (!sourceBuffer.equals(targetBuffer)) {
+      throw new Error(`snapshot_promotion_copy_bytes_mismatch:${name}`);
+    }
+  }
+}
+
+async function promoteDirectoryInPlace(stageDayDir, targetDayDir, rollbackDir) {
+  const targetExists = fs.existsSync(targetDayDir);
   await fsp.rm(rollbackDir, { recursive: true, force: true });
 
+  if (targetExists) {
+    await syncDirectoryByCopy(targetDayDir, rollbackDir);
+    await verifyDirectoryCopy(targetDayDir, rollbackDir);
+  }
+
   try {
-    await fsp.cp(stageDayDir, incomingDir, { recursive: true, force: true });
-    await fsp.mkdir(rollbackDir, { recursive: true });
-
-    const previousNames = (await fsp.readdir(targetDayDir))
-      .filter(name => name !== incomingName && name !== rollbackName);
-
-    for (const name of previousNames) {
-      await fsp.rename(path.join(targetDayDir, name), path.join(rollbackDir, name));
-    }
-
-    const nextNames = await fsp.readdir(incomingDir);
-    for (const name of nextNames) {
-      await fsp.rename(path.join(incomingDir, name), path.join(targetDayDir, name));
-      promotedNames.push(name);
-    }
-
-    await fsp.rm(incomingDir, { recursive: true, force: true });
-    await fsp.rm(rollbackDir, { recursive: true, force: true });
+    await syncDirectoryByCopy(stageDayDir, targetDayDir);
+    await verifyDirectoryCopy(stageDayDir, targetDayDir);
     await fsp.rm(stageDayDir, { recursive: true, force: true });
+    await fsp.rm(rollbackDir, { recursive: true, force: true });
   } catch (error) {
-    for (const name of promotedNames.reverse()) {
-      await fsp.rm(path.join(targetDayDir, name), { recursive: true, force: true }).catch(() => {});
-    }
-
     let rollbackError = null;
-    if (fs.existsSync(rollbackDir)) {
-      try {
-        for (const name of await fsp.readdir(rollbackDir)) {
-          await fsp.rename(path.join(rollbackDir, name), path.join(targetDayDir, name));
-        }
-      } catch (restoreError) {
-        rollbackError = restoreError;
+    try {
+      if (targetExists && fs.existsSync(rollbackDir)) {
+        await syncDirectoryByCopy(rollbackDir, targetDayDir);
+        await verifyDirectoryCopy(rollbackDir, targetDayDir);
+      } else if (!targetExists) {
+        await fsp.rm(targetDayDir, { recursive: true, force: true });
       }
+    } catch (restoreError) {
+      rollbackError = restoreError;
     }
 
-    await fsp.rm(incomingDir, { recursive: true, force: true }).catch(() => {});
     await fsp.rm(rollbackDir, { recursive: true, force: true }).catch(() => {});
 
     if (rollbackError) {
@@ -359,7 +422,9 @@ export async function promoteDirectory(stageDayDir, targetDayDir, backupDir, opt
   } catch (error) {
     if (targetMovedToBackup && !fs.existsSync(targetDayDir) && fs.existsSync(backupDir)) {
       try {
-        await fsp.rename(backupDir, targetDayDir);
+        await syncDirectoryByCopy(backupDir, targetDayDir);
+        await verifyDirectoryCopy(backupDir, targetDayDir);
+        await fsp.rm(backupDir, { recursive: true, force: true });
         targetMovedToBackup = false;
       } catch (restoreError) {
         throw new AggregateError([error, restoreError], "snapshot_promotion_rollback_failed");
@@ -368,7 +433,7 @@ export async function promoteDirectory(stageDayDir, targetDayDir, backupDir, opt
 
     if (!isCrossDeviceRename(error)) throw error;
 
-    await promoteDirectoryInPlace(stageDayDir, targetDayDir);
+    await promoteDirectoryInPlace(stageDayDir, targetDayDir, backupDir);
     await fsp.rm(backupDir, { recursive: true, force: true });
   }
 }
