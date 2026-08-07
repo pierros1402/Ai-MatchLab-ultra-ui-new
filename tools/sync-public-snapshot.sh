@@ -7,6 +7,10 @@ ENGINE_BASE="${ENGINE_BASE:-https://ai-matchlab-engine.onrender.com}"
 CRON_SECRET="${CRON_SECRET:-}"
 MAX_ATTEMPTS="${SNAPSHOT_SYNC_MAX_ATTEMPTS:-90}"
 SLEEP_SECONDS="${SNAPSHOT_SYNC_POLL_SECONDS:-5}"
+# Render can queue the authenticated start request while the service is busy.
+# Keep the start budget above the observed multi-minute queue delay; once the
+# job id is returned, the existing short status polls remain unchanged.
+START_TIMEOUT_SECONDS="${SNAPSHOT_SYNC_START_TIMEOUT_SECONDS:-300}"
 
 if ! [[ "$DAY_KEY" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
   echo "ERROR: invalid day key: $DAY_KEY" >&2
@@ -23,7 +27,7 @@ fi
 
 ENGINE_BASE="${ENGINE_BASE%/}"
 START_RESPONSE="$(
-  curl -fsS --connect-timeout 20 --max-time 45 \
+  curl -fsS --connect-timeout 20 --max-time "$START_TIMEOUT_SECONDS" \
     -X POST \
     -H "X-Cron-Secret: ${CRON_SECRET}" \
     "${ENGINE_BASE}/ops/sync-snapshot?date=${DAY_KEY}&ref=${REF}"
