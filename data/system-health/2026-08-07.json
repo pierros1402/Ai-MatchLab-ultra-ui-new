@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-07",
-  "generatedAt": "2026-08-07T21:56:12.692Z",
+  "generatedAt": "2026-08-07T22:12:16.412Z",
   "severity": "warning",
   "issueCounts": {
     "error": 0,
-    "warning": 8,
+    "warning": 6,
     "info": 5
   },
   "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 4,
+    "warning": 5,
     "info": 0
   },
-  "activeIssueCount": 13,
-  "actionableIssueCount": 8,
-  "newIssueCount": 4,
-  "newActionableIssueCount": 4,
-  "resolvedIssueCount": 4,
-  "persistentIssueCount": 9,
+  "activeIssueCount": 11,
+  "actionableIssueCount": 6,
+  "newIssueCount": 8,
+  "newActionableIssueCount": 5,
+  "resolvedIssueCount": 5,
+  "persistentIssueCount": 3,
   "activeIssues": [
     {
       "severity": "info",
@@ -152,38 +152,6 @@
           "rejectedCount": 15,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
       }
     },
     {
@@ -901,12 +869,12 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 2,
-            "settled": 2,
-            "wins": 1,
+            "settled": 3,
+            "wins": 2,
             "losses": 1,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.5,
+            "hitRate": 0.6667,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -920,12 +888,12 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 2,
-            "settled": 2,
-            "wins": 1,
+            "settled": 3,
+            "wins": 2,
             "losses": 1,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.5,
+            "hitRate": 0.6667,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -998,38 +966,6 @@
           "rejectedCount": 15,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
-      "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
       }
     },
     {
@@ -1687,35 +1623,93 @@
   ],
   "newIssues": [
     {
-      "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-08-07.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-08-07/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-08-07/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
       "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:col.1",
       "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
+        "raw": "canonical_leagues_missing_from_published:col.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bra.copa_do_brazil",
+          "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
+          "crc.1",
+          "eng.fa_qual",
+          "gua.1",
+          "par.1",
+          "slv.1",
+          "uefa.wchampions_qual"
+        ],
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,crc.1,eng.fa_qual,gua.1,par.1,slv.1,uefa.wchampions_qual",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "competition-admission",
+      "type": "competition_admission_pending",
+      "message": "Domestic competition candidates are waiting for sufficient multi-day evidence.",
+      "details": {
+        "pendingSlugs": [
+          "crc.1",
+          "gua.1",
+          "par.1",
+          "slv.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 19,
+          "admittedCount": 0,
+          "pendingCount": 4,
+          "rejectedCount": 15,
+          "alreadyDeclaredCount": 0
+        }
       }
     },
     {
@@ -2374,34 +2368,53 @@
   "newActionableIssues": [
     {
       "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks remain unresolved 1 day after fixture day.",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:col.1",
       "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
+        "raw": "canonical_leagues_missing_from_published:col.1"
       }
     },
     {
       "severity": "warning",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks remain unresolved 1 day after fixture day.",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-08",
-        "ageDays": 1,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
+        "slugs": [
+          "bra.copa_do_brazil",
+          "concacaf.central.american.cup",
+          "concacaf.leagues.cup",
+          "crc.1",
+          "eng.fa_qual",
+          "gua.1",
+          "par.1",
+          "slv.1",
+          "uefa.wchampions_qual"
+        ],
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,crc.1,eng.fa_qual,gua.1,par.1,slv.1,uefa.wchampions_qual",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "competition-admission",
+      "type": "competition_admission_pending",
+      "message": "Domestic competition candidates are waiting for sufficient multi-day evidence.",
+      "details": {
+        "pendingSlugs": [
+          "crc.1",
+          "gua.1",
+          "par.1",
+          "slv.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 19,
+          "admittedCount": 0,
+          "pendingCount": 4,
+          "rejectedCount": 15,
+          "alreadyDeclaredCount": 0
+        }
       }
     },
     {
@@ -3064,65 +3077,8 @@
       "type": "skipped_freshness_input",
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "kind": "coverage_readiness",
-        "artifact": "coverage-readiness/2026-08-07.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_coverage_readiness",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-07",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-07",
-        "todayDayKey": "2026-08-07",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 3,
-        "settled": 2,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "error",
-      "source": "active-competition-completeness",
-      "type": "active_competition_completeness_missing",
-      "message": "Independent target-day active competition coverage proof is missing.",
-      "details": {
-        "dayKey": "2026-08-07",
-        "artifact": "data/coverage-readiness/2026-08-07.json"
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
         "kind": "expected_matches",
-        "artifact": "expected-matches/2026-08-07.json",
+        "artifact": "expected-matches/2026-08-06.json",
         "at": null,
         "staleReason": "snapshot_stale_against_expected_matches",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -3135,7 +3091,7 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b",
-        "artifact": "value-plans/2026-08-07/plan-b.json",
+        "artifact": "value-plans/2026-08-06/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
@@ -3148,19 +3104,10 @@
       "message": "Freshness report skipped an optional/missing input.",
       "details": {
         "kind": "plan_b2",
-        "artifact": "value-plans/2026-08-07/plan-b2.json",
+        "artifact": "value-plans/2026-08-06/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:col.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:col.1"
       }
     },
     {
@@ -3171,19 +3118,39 @@
       "details": {
         "slugs": [
           "bra.copa_do_brazil",
+          "col.copa",
           "concacaf.central.american.cup",
           "concacaf.leagues.cup",
-          "crc.1",
-          "eng.fa_qual",
-          "gua.1",
-          "par.1",
-          "slv.1",
           "uefa.wchampions_qual"
         ],
-        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,crc.1,eng.fa_qual,gua.1,par.1,slv.1,uefa.wchampions_qual",
+        "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,col.copa,concacaf.central.american.cup,concacaf.leagues.cup,uefa.wchampions_qual",
         "contextOnly": false
       }
     },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_active",
+      "message": "Persistent domestic competition admissions are active.",
+      "details": {
+        "admittedSlugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 15,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 15,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "warning",
       "source": "build-report",
@@ -3193,27 +3160,6 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "competition-admission",
-      "type": "competition_admission_pending",
-      "message": "Domestic competition candidates are waiting for sufficient multi-day evidence.",
-      "details": {
-        "pendingSlugs": [
-          "crc.1",
-          "gua.1",
-          "par.1",
-          "slv.1"
-        ],
-        "summary": {
-          "evidenceSlugCount": 19,
-          "admittedCount": 0,
-          "pendingCount": 4,
-          "rejectedCount": 15,
-          "alreadyDeclaredCount": 0
-        }
       }
     },
     {
@@ -3311,12 +3257,12 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 2,
-            "settled": 2,
-            "wins": 1,
+            "settled": 3,
+            "wins": 2,
             "losses": 1,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.5,
+            "hitRate": 0.6667,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -3330,12 +3276,12 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 2,
-            "settled": 2,
-            "wins": 1,
+            "settled": 3,
+            "wins": 2,
             "losses": 1,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.5,
+            "hitRate": 0.6667,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
