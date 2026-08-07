@@ -103,6 +103,31 @@ const BUILTIN_ALIASES = {
     ]
   },
 
+  // Argentina Primera División. Provider spellings are league-scoped so
+  // current-season standings, fixture identity and research layers converge on
+  // one club identity without creating global collisions.
+  "arg.1": {
+    "Estudiantes de La Plata": [
+      "Estudiantes L.P.",
+      "Estudiantes LP",
+      "Estudiantes de La Plata"
+    ],
+    "Gimnasia La Plata": [
+      "Gimnasia L.P.",
+      "Gimnasia LP",
+      "Gimnasia La Plata"
+    ],
+    "Argentinos Juniors": [
+      "Argentinos Jrs",
+      "Argentinos Juniors"
+    ],
+    "Belgrano (Córdoba)": [
+      "Belgrano",
+      "Belgrano Córdoba",
+      "Belgrano (Córdoba)"
+    ]
+  },
+
   // Colombia Primera B. These spellings are league-scoped because the short
   // "Boca Juniors" name must never globally resolve away from the Argentine club.
   "col.2": {

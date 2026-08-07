@@ -36,11 +36,109 @@
     else document.dispatchEvent(new CustomEvent(ev, { detail: data }));
   }
 
+  function providerIdentityToken(value) {
+    var token = String(value == null ? "" : value).trim();
+    if (!token) return "";
+    if (/^cid_/i.test(token)) return token.toLowerCase();
+    return token.replace(/^(?:fs|flashscore)[:_-]+/i, "").toLowerCase();
+  }
+
+  function identityTokens(match) {
+    return matchIds(match)
+      .map(providerIdentityToken)
+      .filter(Boolean);
+  }
+
+  function kickoffMs(match) {
+    var raw = match && (
+      match.kickoff_ms != null ? match.kickoff_ms :
+      match.kickoffMs != null ? match.kickoffMs :
+      match.kickoffUtc != null ? match.kickoffUtc :
+      match.kickoff != null ? match.kickoff :
+      match.startTimeUtc != null ? match.startTimeUtc :
+      match.startTime != null ? match.startTime : null
+    );
+    if (raw == null || raw === "") return 0;
+    if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+    var parsed = new Date(raw).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function canonicalPanelId(match) {
+    var ids = [
+      match && match.canonicalId,
+      match && match.canonicalMatchId,
+      match && match.repositoryFixtureId,
+      match && match.id,
+      match && match.matchId
+    ].filter(function (value) {
+      return value !== null && value !== undefined && value !== "";
+    }).map(function (value) { return String(value); });
+    return ids.find(function (value) { return /^cid_/i.test(value); }) || ids[0] || "";
+  }
+
+  function currentCanonicalPanelMatches() {
+    var rows = [];
+    var seen = {};
+    [safeMatches(window.__AIML_LAST_TODAY), safeMatches(window.__AIML_LAST_ACTIVE)]
+      .forEach(function (source) {
+        source.forEach(function (match) {
+          if (!match || typeof match !== "object") return;
+          var key = canonicalPanelId(match) || identityTokens(match).join("|");
+          if (key && seen[key]) return;
+          if (key) seen[key] = true;
+          rows.push(match);
+        });
+      });
+    return rows;
+  }
+
+  function reconcileWorkerMatch(workerMatch) {
+    var baseMatches = currentCanonicalPanelMatches();
+    if (!baseMatches.length) return null;
+
+    var workerTokens = identityTokens(workerMatch);
+    if (workerTokens.length) {
+      var exact = baseMatches.filter(function (base) {
+        var baseTokens = identityTokens(base);
+        return workerTokens.some(function (token) { return baseTokens.indexOf(token) !== -1; });
+      });
+      if (exact.length === 1) return exact[0];
+    }
+
+    var home = normalizeTeam(workerMatch && (workerMatch.home || workerMatch.homeTeam));
+    var away = normalizeTeam(workerMatch && (workerMatch.away || workerMatch.awayTeam));
+    if (!home || !away) return null;
+
+    var sameTeams = baseMatches.filter(function (base) {
+      return normalizeTeam(base.home || base.homeTeam || base.homeName) === home &&
+        normalizeTeam(base.away || base.awayTeam || base.awayName) === away;
+    });
+    var workerKickoff = kickoffMs(workerMatch);
+    if (!workerKickoff) return null;
+    var withinKickoffWindow = sameTeams.filter(function (base) {
+      var baseKickoff = kickoffMs(base);
+      return baseKickoff && Math.abs(baseKickoff - workerKickoff) <= 15 * 60 * 1000;
+    });
+    return withinKickoffWindow.length === 1 ? withinKickoffWindow[0] : null;
+  }
+
   function toPanelMatch(m) {
     var isLive = m.status === "LIVE";
+    var canonical = reconcileWorkerMatch(m);
+    var canonicalId = canonicalPanelId(canonical);
+    var providerMatchId = String(m.matchId || m.id || "");
     return {
-      matchId: m.matchId,
-      id: m.matchId,
+      matchId: canonicalId || providerMatchId,
+      id: canonicalId || providerMatchId,
+      canonicalId: canonicalId || null,
+      providerMatchId: providerMatchId || null,
+      sourceId: canonical && canonical.sourceId != null
+        ? canonical.sourceId
+        : providerIdentityToken(providerMatchId) || null,
+      sourceMatchId: canonical && canonical.sourceMatchId != null
+        ? canonical.sourceMatchId
+        : providerIdentityToken(providerMatchId) || null,
       home: m.home,
       away: m.away,
       homeTeam: m.home,
@@ -55,7 +153,7 @@
       isLive: isLive,
       live: isLive,
       minute: m.minute != null ? m.minute : null,
-      kickoff_ms: m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0
+      kickoff_ms: kickoffMs(canonical) || kickoffMs(m)
     };
   }
 
@@ -70,17 +168,42 @@
   }
 
   function normalizeTeam(value) {
+    var noise = {
+      fc: true,
+      cf: true,
+      sc: true,
+      ac: true,
+      afc: true,
+      fk: true,
+      sk: true,
+      nk: true,
+      club: true,
+      de: true,
+      del: true,
+      da: true,
+      do: true,
+      la: true,
+      el: true,
+      the: true
+    };
+
     return String(value || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(function (token) { return token && !noise[token]; })
+      .join("");
   }
 
   function matchIds(match) {
-    return [match && match.matchId, match && match.id, match && match.canonicalMatchId,
-      match && match.fixtureId, match && match.sourceFixtureId]
+    return [match && match.matchId, match && match.id, match && match.canonicalId,
+      match && match.canonicalMatchId, match && match.fixtureId,
+      match && match.repositoryFixtureId, match && match.sourceId,
+      match && match.sourceMatchId, match && match.providerMatchId,
+      match && match.sourceFixtureId]
       .filter(function (value) { return value !== null && value !== undefined && value !== ""; })
       .map(function (value) { return String(value); });
   }

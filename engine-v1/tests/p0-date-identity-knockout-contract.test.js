@@ -73,6 +73,7 @@ test("operational today has one Europe/Athens authority", () => {
   assert.match(authority, /timeZone:\s*"Europe\/Athens"/);
   assert.match(loader, /AIML_OperationalDay/);
   assert.match(dateNav, /AIML_OperationalDay/);
+  assert.match(dateNav, /typeof window\.emit === "function"/);
   assert.match(app, /AIML_OperationalDay/);
   assert.match(valueAdapter, /AIML_OperationalDay/);
   assert.doesNotMatch(authority, /data\/deploy-snapshots\/latest\.json/);

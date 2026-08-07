@@ -21,6 +21,12 @@ import {
 import {
   systemHealthMissingArtifactSeverity
 } from "../system-health/runtime-report-policy.js";
+import {
+  collectValueSettlementIssues
+} from "../system-health/value-settlement-policy.js";
+import {
+  collectActiveCompetitionCompletenessIssues
+} from "../system-health/active-competition-completeness-policy.js";
 
 function readJsonSafe(file, fallback = null) {
   try {
@@ -281,6 +287,12 @@ export function buildSystemHealthAlertsDay(dayKey) {
   const valueAudit = readJsonSafe(path.join(snapshotDir, "value-audit.json"));
   const value = readJsonSafe(path.join(snapshotDir, "value.json"));
   const valueComparison = readJsonSafe(resolveDataPath("value-comparison", `${dayKey}.json`));
+  const coverageReadiness = readJsonSafe(
+    resolveDataPath(
+      "coverage-readiness",
+      `${dayKey}.json`
+    )
+  );
 
   const issues = [];
 
@@ -439,35 +451,21 @@ export function buildSystemHealthAlertsDay(dayKey) {
       }
     }
 
-    const settlementPlans = [
-      ["A", "planA", "plan_a_unresolved_settlement"],
-      ["A2", "planA2", "plan_a2_unresolved_settlement"],
-      ["B", "planB", "plan_b_unresolved_settlement"],
-      ["B2", "planB2", "plan_b2_unresolved_settlement"]
-    ];
-
-    for (const [label, key, type] of settlementPlans) {
-      const unresolved = Number(
-        buildReport.settlement?.[key]?.unresolved || 0
-      );
-
-      if (unresolved <= 0) {
-        continue;
-      }
-
-      issues.push(issue(
-        "info",
-        "build-report",
-        type,
-        `Plan ${label} picks are still unresolved.`,
-        {
-          picks: buildReport.settlement?.[key]?.picks,
-          settled: buildReport.settlement?.[key]?.settled,
-          unresolved
-        }
-      ));
-    }
   }
+
+  issues.push(...collectValueSettlementIssues({
+    dayKey,
+    todayDayKey: new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Athens" }),
+    buildReport,
+    valueComparison
+  }));
+
+  issues.push(
+    ...collectActiveCompetitionCompletenessIssues({
+      dayKey,
+      coverageReadiness
+    })
+  );
 
   if (!value) {
     issues.push(issue(systemHealthMissingArtifactSeverity("value"), "value", "artifact_missing", "Production value artifact is missing.", {

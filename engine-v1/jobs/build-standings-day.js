@@ -13,6 +13,7 @@ import { currentSeason } from "../core/season.js";
 import { readStandings, recordStandingsResult } from "../storage/standings-memory-db.js";
 import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
+import { canonicalTeamName } from "../storage/team-aliases-db.js";
 
 const DEFAULT_SEASON = currentSeason();
 
@@ -207,9 +208,17 @@ function getOrCreateTeam(tableMap, teamName) {
   return tableMap.get(key);
 }
 
-function applyMatchToTable(tableMap, row) {
-  const homeTeam = getHomeTeam(row);
-  const awayTeam = getAwayTeam(row);
+function applyMatchToTable(tableMap, row, slug = "") {
+  const rawHomeTeam = getHomeTeam(row);
+  const rawAwayTeam = getAwayTeam(row);
+
+  const homeTeam =
+    canonicalTeamName(slug, rawHomeTeam) ||
+    rawHomeTeam;
+
+  const awayTeam =
+    canonicalTeamName(slug, rawAwayTeam) ||
+    rawAwayTeam;
 
   const scoreHome = getScoreHome(row);
   const scoreAway = getScoreAway(row);
@@ -295,7 +304,7 @@ function buildTableFromHistoryRows(rows, slug) {
   const tableMap = new Map();
 
   for (const row of filtered) {
-    applyMatchToTable(tableMap, row);
+    applyMatchToTable(tableMap, row, slug);
   }
 
   return finalizeTableRows(tableMap);
@@ -329,7 +338,7 @@ function buildPhaseTablesFromHistoryRows(rows, slug) {
       phaseMaps.set(phase, new Map());
     }
 
-    applyMatchToTable(phaseMaps.get(phase), row);
+    applyMatchToTable(phaseMaps.get(phase), row, slug);
   }
 
   const phases = {};
@@ -443,6 +452,33 @@ function collectStandingsCandidatesForLeague(slug, dayKey, options = {}) {
 // Candidates are ranked by confidence SCALED BY COMPLETENESS so a partial
 // history table (e.g. 6/20 teams) cannot shadow a full table from the
 // league-memory store or a previously built artifact.
+function candidateHasCanonicalAliasCollision(slug, rows = []) {
+  const seen = new Set();
+
+  for (const row of safeArray(rows)) {
+    const rawTeam =
+      row?.team ||
+      row?.teamName ||
+      row?.name ||
+      null;
+
+    const canonical =
+      canonicalTeamName(slug, rawTeam) ||
+      rawTeam;
+
+    const key = normalizeText(canonical);
+    if (!key) continue;
+
+    if (seen.has(key)) {
+      return true;
+    }
+
+    seen.add(key);
+  }
+
+  return false;
+}
+
 function chooseBestCandidate(candidates = [], slug = "") {
   const effectiveConfidence = c => {
     const conf = Number(c?.confidence) || 0;
@@ -451,13 +487,20 @@ function chooseBestCandidate(candidates = [], slug = "") {
   };
 
   const valid = safeArray(candidates)
-    .filter(c => c?.ok && safeArray(c?.rows).length > 0)
+    .filter(c =>
+      c?.ok &&
+      safeArray(c?.rows).length > 0 &&
+      !candidateHasCanonicalAliasCollision(
+        slug,
+        c?.rows
+      )
+    )
     .sort((a, b) => effectiveConfidence(b) - effectiveConfidence(a));
 
   return valid[0] || null;
 }
 
-function normalizeStandingsRow(row, index = 0) {
+function normalizeStandingsRow(row, index = 0, slug = "") {
   const goalsFor = toNumber(row?.goalsFor, toNumber(row?.gf, 0));
   const goalsAgainst = toNumber(row?.goalsAgainst, toNumber(row?.ga, 0));
 
@@ -471,18 +514,36 @@ function normalizeStandingsRow(row, index = 0) {
         : null,
 
     team:
+      canonicalTeamName(
+        slug,
+        row?.team ||
+        row?.teamName ||
+        row?.name
+      ) ||
       row?.team ||
       row?.teamName ||
       row?.name ||
       null,
 
     teamName:
+      canonicalTeamName(
+        slug,
+        row?.teamName ||
+        row?.team ||
+        row?.name
+      ) ||
       row?.teamName ||
       row?.team ||
       row?.name ||
       null,
 
     name:
+      canonicalTeamName(
+        slug,
+        row?.name ||
+        row?.teamName ||
+        row?.team
+      ) ||
       row?.name ||
       row?.teamName ||
       row?.team ||
@@ -531,7 +592,7 @@ function estimateExpectedLeagueSize(slug) {
     "swe.1": 16,
     "nor.1": 16,
     "usa.1": 15,
-    "arg.1": 28,
+    "arg.1": 30,
     "arg.2": 18,
     "bra.1": 20,
     "bra.2": 20,
@@ -704,7 +765,7 @@ function reconcileStandingsRows(slug, candidates = []) {
   }
 
   const normalized = safeArray(best.rows)
-    .map((row, idx) => normalizeStandingsRow(row, idx))
+    .map((row, idx) => normalizeStandingsRow(row, idx, slug))
     .filter(row => !!normalizeText(row.team || row.teamName || row.name))
     .sort((a, b) => {
       const pa = toNumber(a.position, 999);
@@ -716,7 +777,7 @@ function reconcileStandingsRows(slug, candidates = []) {
     Object.entries(best?.phases || {}).map(([phase, rows]) => [
       phase,
       safeArray(rows)
-        .map((row, idx) => normalizeStandingsRow(row, idx))
+        .map((row, idx) => normalizeStandingsRow(row, idx, slug))
         .filter(row => !!normalizeText(row.team || row.teamName || row.name))
         .sort((a, b) => {
           const pa = toNumber(a.position, 999);
@@ -879,6 +940,7 @@ export async function buildStandingsDay(dayKey, leagues = [], options = {}) {
       // or a higher-confidence accepted table.
       let memorySync = null;
       if (
+        options.syncMemory !== false &&
         state?.chosenType === "local_truth_history" &&
         safeArray(state?.table).length > 0 &&
         (Number(state?.confidence) || 0) > 0

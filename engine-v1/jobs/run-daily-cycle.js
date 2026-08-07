@@ -173,7 +173,7 @@ function runDailyCycleNodeJob(args, label) {
 // exact offset is safe because findFlashscoreMatch re-filters every
 // candidate row by Athens day equality, so extra offsets can only add
 // same-day-filtered candidates, never a wrong-day match.
-function resettleValueDay(settleDayKey, label, offsetDays = 0) {
+export function resettleValueDay(settleDayKey, label, offsetDays = 0) {
   const offsets = [...new Set([offsetDays - 1, offsetDays, offsetDays + 1])];
   const offsetsArg = `--offsets=${offsets.join(",")}`;
 
@@ -232,7 +232,7 @@ function resettleValueDay(settleDayKey, label, offsetDays = 0) {
 
 // Unresolved pick count across all plans in a day's committed comparison.
 // null = no comparison artifact exists yet (distinct from 0 = all settled).
-function countUnresolvedComparisonPicks(checkDayKey) {
+export function countUnresolvedComparisonPicks(checkDayKey) {
   try {
     const file = resolveDataPath("value-comparison", `${checkDayKey}.json`);
     if (!fs.existsSync(file)) return null;

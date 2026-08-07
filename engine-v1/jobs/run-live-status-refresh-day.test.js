@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   canRemoveEspnWrongDayCanonicalRow,
   normalizeSourceRows,
+  parseLiveStatusRefreshCliArgs,
   resolveEspnExactEventOccurrence
 } from "./run-live-status-refresh-day.js";
 
@@ -462,3 +463,27 @@ test(
     );
   }
 );
+
+test("live status CLI enables independent intraday truth options explicitly", () => {
+  const parsed = parseLiveStatusRefreshCliArgs([
+    "2026-08-07",
+    "--append-new-fixtures",
+    "--include-all-open-states"
+  ]);
+
+  assert.equal(parsed.dayKey, "2026-08-07");
+  assert.deepEqual(parsed.options, {
+    appendNewFixtures: true,
+    includeAllOpenStates: true
+  });
+});
+
+test("live status CLI keeps legacy status-refresh behavior by default", () => {
+  const parsed = parseLiveStatusRefreshCliArgs(["2026-08-07"]);
+
+  assert.equal(parsed.dayKey, "2026-08-07");
+  assert.deepEqual(parsed.options, {
+    appendNewFixtures: false,
+    includeAllOpenStates: false
+  });
+});

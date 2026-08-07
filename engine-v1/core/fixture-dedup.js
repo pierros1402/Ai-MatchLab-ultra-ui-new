@@ -141,6 +141,20 @@ function meaningful(value) {
 function absorbRow(winner, loser) {
   const merged = { ...winner };
 
+  // Canonical/publishable fixture identity must not retain a provider event ID
+  // in matchId. Provider identity remains source-scoped in sourceId/sourceMatchId.
+  const canonicalId = String(merged?.canonicalId || "").trim();
+  const previousMatchId = String(merged?.matchId || "").trim();
+  if (canonicalId) {
+    if (!merged.sourceId && previousMatchId && previousMatchId !== canonicalId) {
+      merged.sourceId = previousMatchId;
+    }
+    if (!merged.sourceMatchId && previousMatchId && previousMatchId !== canonicalId) {
+      merged.sourceMatchId = previousMatchId;
+    }
+    merged.matchId = canonicalId;
+  }
+
   for (const key of Object.keys(loser || {})) {
     if (!meaningful(merged[key]) && meaningful(loser[key])) {
       merged[key] = loser[key];
@@ -243,5 +257,23 @@ export function dedupeLeagueDayFixtures(rows, { slug } = {}) {
     out.push(...kept);
   }
 
-  return { rows: out, removed };
+  const canonicalRows = out.map(row => {
+    const canonicalId = String(row?.canonicalId || "").trim();
+    if (!canonicalId) return row;
+
+    const matchId = String(row?.matchId || "").trim();
+    const normalized = { ...row };
+
+    if (!normalized.sourceId && matchId && matchId !== canonicalId) {
+      normalized.sourceId = matchId;
+    }
+    if (!normalized.sourceMatchId && matchId && matchId !== canonicalId) {
+      normalized.sourceMatchId = matchId;
+    }
+
+    normalized.matchId = canonicalId;
+    return normalized;
+  });
+
+  return { rows: canonicalRows, removed };
 }

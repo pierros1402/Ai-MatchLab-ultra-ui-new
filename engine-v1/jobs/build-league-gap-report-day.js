@@ -31,6 +31,9 @@ import { computeMatchdayAxis } from "../core/matchday-axis.js";
 import { isInSeason } from "../source-discovery/season-calendar.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import {
+  buildActiveCompetitionCompleteness
+} from "../system-health/active-competition-completeness-policy.js";
 
 function log(...a) { console.log("[league-gap-report]", ...a); }
 
@@ -284,15 +287,61 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
   // registry for UI naming only, so they must not appear as declared coverage
   // targets in the gap report (audit V2 §ε). Track them separately for
   // transparency instead of counting them as perpetual OUT_OF_SEASON gaps.
-  const allDeclared = (Array.isArray(LEAGUE_SEEDS) ? LEAGUE_SEEDS : [])
+  const admission = readJsonSafe(
+    resolveDataPath(
+      "competition-admission",
+      `${date}.json`
+    ),
+    null
+  );
+
+  const admittedSlugs = (
+    Array.isArray(admission?.admittedSlugs)
+      ? admission.admittedSlugs
+      : []
+  )
     .map(x => String(x || "").trim())
     .filter(Boolean);
+
+  const admittedSet =
+    new Set(admittedSlugs);
+
+  const allDeclared = [
+    ...new Set([
+      ...(Array.isArray(LEAGUE_SEEDS)
+        ? LEAGUE_SEEDS
+        : []
+      ),
+      ...admittedSlugs
+    ]
+      .map(x => String(x || "").trim())
+      .filter(Boolean))
+  ];
   const declared = allDeclared.filter(slug => !isDisabledLeague(slug));
   const disabledDeclared = allDeclared.filter(slug => isDisabledLeague(slug));
 
   const acquisition = acquisitionResultsForDay(date);
   const expected = expectedCountsForDay(date);
   const canonical = canonicalCountsForDay(date);
+  const providerDiscovery =
+    readJsonSafe(
+      resolveDataPath(
+        "competition-discovery",
+        `${date}.json`
+      ),
+      null
+    );
+
+  const activeCompetitionCompleteness =
+    buildActiveCompetitionCompleteness({
+      dayKey: date,
+      discovery: providerDiscovery,
+      effectiveSlugs: declared,
+      acquisitionRows:
+        [...acquisition.bySlug.values()],
+      canonicalCounts: canonical
+    });
+
   const snapshot = snapshotStateForDay(date);
   // Full-season matchday ledger stamps (jobs/build-matchday-ledger.js), read once
   // from league-memory. The axis gives ONE round per league; the ledger gives
@@ -315,9 +364,17 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
     const row = {
       slug,
       leagueName: leagueName(slug),
-      type: LEAGUES_BY_SLUG[slug]?.type || "unknown",
-      isLeague: isLeagueCompetition(slug),
+      type:
+        LEAGUES_BY_SLUG[slug]?.type ||
+        (admittedSet.has(slug)
+          ? "league"
+          : "unknown"),
+      isLeague:
+        isLeagueCompetition(slug) ||
+        admittedSet.has(slug),
       declared: true,
+      dynamicallyAdmitted:
+        admittedSet.has(slug),
       inSeason: inSeasonOn(slug, date),
       seasonOverride: acquisition.seasonOverrides.has(slug),
       expectedMatches: expected.get(slug) || 0,
@@ -327,6 +384,10 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       rawEvents: Number(acq?.rawEvents ?? 0),
       accepted: Number(acq?.accepted ?? 0),
       acquisitionError: acq?.error || null,
+      providerObservedFixtures:
+        activeCompetitionCompleteness
+          .bySlug?.[slug]
+          ?.providerFixtureCount || 0,
       canonicalFixtures: canonical.get(slug) || 0,
       snapshotFixtures: snapshot.fixtureCounts.get(slug) || 0,
       detailsFiles: snapshot.detailCounts.get(slug) || 0,
@@ -394,7 +455,8 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
   const lostMatches = broken.reduce((s, b) => s + b.expectedMatches, 0);
 
   const report = {
-    ok: true,
+    ok:
+      activeCompetitionCompleteness.ok,
     dayKey: date,
     generatedAt: new Date().toISOString(),
     summary: {
@@ -403,7 +465,11 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       // `leagueOnly` block below is the honest LEAGUE coverage view (audit
       // §8.2); cups/continental must not inflate league counts.
       declaredLeagues: declared.length,
+      admittedLeagues:
+        admittedSlugs.length,
       disabledLeagues: disabledDeclared,
+      activeCompetitionCompleteness:
+        activeCompetitionCompleteness.summary,
       leagueOnly: {
         declaredLeagues: rows.filter(r => r.isLeague).length,
         leaguesWithCanonicalFixtures: rows.filter(r => r.isLeague && r.canonicalFixtures > 0).length,
@@ -465,6 +531,7 @@ export function buildLeagueGapReportDay(dayKey = athensDayKey()) {
       },
       byStatus
     },
+    activeCompetitionCompleteness,
     broken,
     undeclaredSlugs,
     leagues: rows

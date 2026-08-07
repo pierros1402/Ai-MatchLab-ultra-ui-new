@@ -268,7 +268,7 @@ const SOURCE_BINDINGS = Object.freeze({
     path:
       "engine-v1/core/production-evidence-identity-overlay.js",
     sha256:
-      "f24691554e9a25c8e96023ee8402216d076281b66ee5f22ddfdb96ccd21cc175",
+      "8035b378e63ad89c5a45d16bb639fc5062ac71bb8cad02f6a5cef68ce356967e",
     exports: Object.freeze([
       "createProductionEvidenceIdentityOverlay",
       "overlayProductionEvidenceDocumentReadView",

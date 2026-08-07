@@ -13,7 +13,8 @@ import path from "node:path";
 import crypto from "node:crypto";
 
 import {
-  athensDayKey
+  athensDayKey,
+  athensDayFromKickoff
 } from "../core/daykey.js";
 
 import {
@@ -165,6 +166,15 @@ function stableCompetitionRow(row) {
     fixtureCount:
       row.fixtureCount,
 
+    targetDayFixtureCount:
+      row.targetDayFixtureCount,
+
+    targetDaySourceIds:
+      row.targetDaySourceIds,
+
+    targetDayNonPlayedTerminalCount:
+      row.targetDayNonPlayedTerminalCount,
+
     firstKickoffUtc:
       row.firstKickoffUtc,
 
@@ -290,6 +300,38 @@ export function buildProviderCompetitionDiscovery({
       )
     ].sort();
 
+    const rowsOnTargetDay =
+      groupedRows.filter(row => {
+        const kickoff = validIso(
+          row?.kickoffUtc
+        );
+
+        return Boolean(kickoff) &&
+          athensDayFromKickoff(
+            kickoff
+          ) === dayKey;
+      });
+
+    // Cancelled/postponed/non-played terminal rows are useful discovery
+    // evidence, but they are not a fixture-coverage obligation. Counting them
+    // in the denominator would create a false canonical shortfall.
+    const targetDayRows =
+      rowsOnTargetDay.filter(row =>
+        row?.nonPlayedTerminal !== true
+      );
+
+    const targetDayNonPlayedTerminalCount =
+      rowsOnTargetDay.length -
+      targetDayRows.length;
+
+    const targetDaySourceIds = [
+      ...new Set(
+        targetDayRows
+          .map(providerSourceId)
+          .filter(Boolean)
+      )
+    ].sort();
+
     const sampleFixtures =
       groupedRows
         .slice()
@@ -346,6 +388,13 @@ export function buildProviderCompetitionDiscovery({
 
       fixtureCount:
         groupedRows.length,
+
+      targetDayFixtureCount:
+        targetDayRows.length,
+
+      targetDaySourceIds,
+
+      targetDayNonPlayedTerminalCount,
 
       firstKickoffUtc:
         kickoffs[0] || null,
@@ -488,13 +537,49 @@ export function buildProviderCompetitionDiscovery({
     fixtureRowCount:
       rows.length,
 
+    targetDayFixtureRowCount:
+      competitions.reduce(
+        (sum, row) =>
+          sum + Number(
+            row.targetDayFixtureCount || 0
+          ),
+        0
+      ),
+
+    targetDayNonPlayedTerminalRowCount:
+      competitions.reduce(
+        (sum, row) =>
+          sum + Number(
+            row
+              .targetDayNonPlayedTerminalCount ||
+            0
+          ),
+        0
+      ),
+
     competitionCount:
       competitions.length,
+
+    targetDayCompetitionCount:
+      competitions.filter(row =>
+        Number(
+          row.targetDayFixtureCount || 0
+        ) > 0
+      ).length,
 
     resolvedCompetitionCount:
       competitions.filter(row =>
         row.classification ===
         "known_active"
+      ).length,
+
+    targetDayResolvedCompetitionCount:
+      competitions.filter(row =>
+        row.classification ===
+          "known_active" &&
+        Number(
+          row.targetDayFixtureCount || 0
+        ) > 0
       ).length,
 
     excludedCompetitionCount:
@@ -509,9 +594,26 @@ export function buildProviderCompetitionDiscovery({
         "candidate"
       ).length,
 
+    targetDayCandidateCompetitionCount:
+      competitions.filter(row =>
+        row.classification ===
+          "candidate" &&
+        Number(
+          row.targetDayFixtureCount || 0
+        ) > 0
+      ).length,
+
     publishableCompetitionCount:
       competitions.filter(row =>
         row.publicationEligible
+      ).length,
+
+    targetDayPublishableCompetitionCount:
+      competitions.filter(row =>
+        row.publicationEligible &&
+        Number(
+          row.targetDayFixtureCount || 0
+        ) > 0
       ).length
   };
 
@@ -584,6 +686,25 @@ export async function discoverProviderCompetitionsDay(
     await fetchFixtures({
       offsets: [...offsets]
     });
+
+  if (feed?.ok === false) {
+    return {
+      ok: false,
+      dayKey,
+      offsets: [...offsets],
+      error:
+        "provider_competition_feed_failed",
+      attempts:
+        Array.isArray(feed?.attempts)
+          ? feed.attempts
+          : [],
+      discoveryFile: null,
+      registryFile: null,
+      summary: null,
+      artifact: null,
+      registry: null
+    };
+  }
 
   const rows =
     Array.isArray(feed?.rows)
