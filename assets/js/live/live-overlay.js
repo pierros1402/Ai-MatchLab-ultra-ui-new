@@ -70,17 +70,42 @@
   }
 
   function normalizeTeam(value) {
+    var noise = {
+      fc: true,
+      cf: true,
+      sc: true,
+      ac: true,
+      afc: true,
+      fk: true,
+      sk: true,
+      nk: true,
+      club: true,
+      de: true,
+      del: true,
+      da: true,
+      do: true,
+      la: true,
+      el: true,
+      the: true
+    };
+
     return String(value || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "")
-      .trim();
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(function (token) { return token && !noise[token]; })
+      .join("");
   }
 
   function matchIds(match) {
-    return [match && match.matchId, match && match.id, match && match.canonicalMatchId,
-      match && match.fixtureId, match && match.sourceFixtureId]
+    return [match && match.matchId, match && match.id, match && match.canonicalId,
+      match && match.canonicalMatchId, match && match.fixtureId,
+      match && match.repositoryFixtureId, match && match.sourceId,
+      match && match.sourceMatchId, match && match.providerMatchId,
+      match && match.sourceFixtureId]
       .filter(function (value) { return value !== null && value !== undefined && value !== ""; })
       .map(function (value) { return String(value); });
   }

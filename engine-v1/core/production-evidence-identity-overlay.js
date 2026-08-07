@@ -534,6 +534,57 @@ function readViewClone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function isCanonicalRepositoryFixtureId(value) {
+  return /^cid_[a-z0-9]+(?:_|$)/iu.test(clean(value));
+}
+
+function normalizeLegacyProviderMatchIdReadView(row = {}) {
+  const view = readViewClone(row);
+  const canonicalId = clean(view?.canonicalId);
+  const matchId = clean(view?.matchId);
+
+  if (
+    !isCanonicalRepositoryFixtureId(canonicalId) ||
+    !matchId ||
+    matchId === canonicalId ||
+    isCanonicalRepositoryFixtureId(matchId)
+  ) {
+    return view;
+  }
+
+  const explicitProviderIds = [
+    view?.sourceId,
+    view?.sourceMatchId,
+    view?.providerMatchId,
+  ].map(clean).filter(Boolean);
+  const hasExplicitProviderBinding =
+    explicitProviderIds.includes(matchId);
+  const hasLegacyProviderShape =
+    /^\d+$/u.test(matchId) ||
+    /^fs_[a-z0-9]+$/iu.test(matchId);
+
+  if (
+    !hasExplicitProviderBinding &&
+    !hasLegacyProviderShape
+  ) {
+    return view;
+  }
+
+  // Older canonical fixtures and frozen Value rows kept the provider event ID
+  // in matchId while canonicalId already held the repository identity. Treat
+  // that proven legacy shape as source provenance in the read view only. Two
+  // different canonical cid_* signals still reach the conflict guard below.
+  if (!clean(view.sourceId)) {
+    view.sourceId = matchId;
+  }
+  if (!clean(view.sourceMatchId)) {
+    view.sourceMatchId = matchId;
+  }
+  view.matchId = canonicalId;
+
+  return view;
+}
+
 function readViewFixtureSignals(row = {}) {
   const signals = [];
 
@@ -664,7 +715,8 @@ export function overlayProductionEvidenceFixtureIdReadView(
     return readViewClone(row);
   }
 
-  const source = readViewClone(row);
+  const source =
+    normalizeLegacyProviderMatchIdReadView(row);
   const signals = readViewFixtureSignals(source);
 
   if (!signals.length) {
@@ -730,7 +782,8 @@ export function overlayProductionEvidenceMatchRowReadView(
     return readViewClone(row);
   }
 
-  const source = readViewClone(row);
+  const source =
+    normalizeLegacyProviderMatchIdReadView(row);
   const signals = readViewFixtureSignals(source);
 
   if (!signals.length) {

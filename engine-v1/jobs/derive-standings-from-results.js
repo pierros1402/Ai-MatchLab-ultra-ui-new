@@ -22,6 +22,7 @@ import { recordStandingsResult, readStandings, clearAcceptedStandings } from "..
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { currentSeasonLabel, seasonWindow } from "../source-discovery/season-calendar.js";
 import { maxPlayableGames, isKnownNonLeagueCompetition } from "../core/matchday-axis.js";
+import { canonicalTeamName } from "../storage/team-aliases-db.js";
 
 const MIN_TEAMS = 4;
 const MIN_GAMES = 3;   // need a few games before a table is meaningful
@@ -55,7 +56,23 @@ function matchTime(r) {
 function tableFromResults(slug, meta = {}) {
   const data = readResults(slug);
   const teams = data.teams || {};
-  const names = Object.keys(teams);
+  const canonicalTeams = new Map();
+
+  for (const [rawName, results] of Object.entries(teams)) {
+    const canonicalName =
+      canonicalTeamName(slug, rawName) ||
+      rawName;
+
+    if (!canonicalTeams.has(canonicalName)) {
+      canonicalTeams.set(canonicalName, []);
+    }
+
+    canonicalTeams.get(canonicalName).push(
+      ...(Array.isArray(results) ? results : [])
+    );
+  }
+
+  const names = [...canonicalTeams.keys()];
   if (names.length < MIN_TEAMS) return null;
 
   const { from, to } = currentSeasonBounds(slug, meta);
@@ -64,7 +81,7 @@ function tableFromResults(slug, meta = {}) {
   let totalGames = 0;
   for (const name of names) {
     let P = 0, W = 0, D = 0, L = 0, GF = 0, GA = 0;
-    for (const r of teams[name]) {
+    for (const r of canonicalTeams.get(name) || []) {
       // Current season only — drop earlier seasons still in results-memory.
       const t = matchTime(r);
       if (t == null || t < from || t >= to) continue;

@@ -233,6 +233,63 @@ test("fixture-only read view resolves suppressed IDs without source mutation", (
   assert.equal(JSON.stringify(source), before);
 });
 
+test("legacy provider matchId is preserved as provenance beside canonicalId", () => {
+  const source = {
+    canonicalId: "cid_arg1_unionsantafe_lanus_20260807",
+    matchId: "401841450",
+    sourceId: "401841450",
+    sourceMatchId: "401841450",
+    homeTeam: "Union",
+    awayTeam: "Lanus",
+    status: "FT",
+  };
+  const before = JSON.stringify(source);
+  const view =
+    overlayProductionEvidenceMatchRowReadView(source);
+
+  assert.equal(
+    view.canonicalId,
+    "cid_arg1_unionsantafe_lanus_20260807",
+  );
+  assert.equal(
+    view.matchId,
+    "cid_arg1_unionsantafe_lanus_20260807",
+  );
+  assert.equal(view.sourceId, "401841450");
+  assert.equal(view.sourceMatchId, "401841450");
+  assert.equal(view.status, "FT");
+  assert.equal(JSON.stringify(source), before);
+});
+
+test("legacy Flashscore matchId is normalized only in the read view", () => {
+  const source = {
+    canonicalId: "cid_fin1_hjk_ilves_20260701",
+    matchId: "fs_OAEeiPsQ",
+    home: "HJK",
+    away: "Ilves",
+  };
+  const view =
+    overlayProductionEvidenceMatchRowReadView(source);
+
+  assert.equal(view.matchId, source.canonicalId);
+  assert.equal(view.sourceId, "fs_OAEeiPsQ");
+  assert.equal(view.sourceMatchId, "fs_OAEeiPsQ");
+  assert.equal(source.sourceId, undefined);
+});
+
+test("different canonical fixture signals still fail closed", () => {
+  assert.throws(
+    () =>
+      overlayProductionEvidenceMatchRowReadView({
+        canonicalId: "cid_arg1_one_two_20260807",
+        matchId: "cid_arg1_three_four_20260807",
+        home: "One",
+        away: "Two",
+      }),
+    /production_evidence_read_match_overlay_failed/,
+  );
+});
+
 test("recursive document read view overlays nested match evidence only", () => {
   const overlay = createProductionEvidenceIdentityOverlay({
     resolver: fakeResolver(),
