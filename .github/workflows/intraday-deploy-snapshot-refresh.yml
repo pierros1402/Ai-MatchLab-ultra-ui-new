@@ -537,6 +537,7 @@ jobs:
           test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
 
           test -d "data/final-results/${DAY_KEY}" && git add "data/final-results/${DAY_KEY}/"
+          test -f "data/final-result-conflicts/${DAY_KEY}.json" && git add "data/final-result-conflicts/${DAY_KEY}.json"
           test -e "data/value-comparison/${DAY_KEY}.json" && git add "data/value-comparison/${DAY_KEY}.json"
 
           STAGED="$(git diff --cached --name-only || true)"
@@ -547,9 +548,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/final-results/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"

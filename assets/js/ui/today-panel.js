@@ -59,19 +59,18 @@
     });
   }
 
-  // No reliable live-minute feed exists, so — exactly like the Live panel — the
-  // minute is derived from kickoff and the DISPLAYED value is capped so it never
-  // shows absurd values (anything ≥ 90 → "90+'"). Empty/zero → no label.
+  // Only display an explicit provider minute. Kickoff elapsed time is not a
+  // football match clock (half-time, VAR, stoppage and delays make it wrong),
+  // so the UI must not manufacture an exact-looking minute when the live source
+  // does not provide one.
   const LIVE_MINUTE_CAP = 90;
   function clampMinuteLabel(n) {
     if (!Number.isFinite(n) || n <= 0) return "";
     return n >= LIVE_MINUTE_CAP ? `${LIVE_MINUTE_CAP}+'` : `${n}'`;
   }
 
-  // Minute label for a live row: a match the cross-source verifier could not
-  // confirm shows "⏳" (frozen, awaiting confirmation) instead of a running
-  // clock. Otherwise prefer an explicit numeric feed minute (keeping stoppage
-  // like "45+2"), else derive from elapsed time since kickoff.
+  // A match the cross-source verifier could not confirm shows "⏳". Otherwise
+  // use only an explicit numeric feed minute (including stoppage like "45+2").
   function liveMinuteLabel(m) {
     if (m.statusUnconfirmed === true) return "⏳";
 
@@ -80,10 +79,7 @@
       return raw[2] ? `${raw[1]}+${raw[2]}'` : clampMinuteLabel(Number(raw[1]));
     }
 
-    const ko = Number(m.kickoff_ms) ||
-      (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0);
-    if (!ko) return "";
-    return clampMinuteLabel(Math.floor((Date.now() - ko) / 60000));
+    return "";
   }
 
  function isLiveStatus(st) {
@@ -120,6 +116,19 @@
      .filter(Boolean)
      .map(x => String(x).toUpperCase())
      .join(" ");
+ }
+
+ function isFinalMatch(m) {
+   const s = matchStatusText(m);
+   return (
+     /(^|\s)FT(\s|$)/.test(s) ||
+     s.includes("FULL_TIME") ||
+     s.includes("STATUS_FINAL") ||
+     s.includes("FINAL") ||
+     s.includes("AET") ||
+     s.includes("PEN") ||
+     s.includes("ENDED")
+   );
  }
 
  function isStaleLiveMatch(m) {
@@ -538,6 +547,10 @@ if (window.on) {
       const existing = map.get(id);
 
       if (!existing) continue;
+
+      // Terminal is monotonic across panel state too: no later live/snapshot
+      // payload may resurrect a match that this panel already knows is final.
+      if (isFinalMatch(existing) && !isFinalMatch(m)) continue;
 
       // Never downgrade a snapshot-confirmed final: a STALE_LIVE overlay row
       // means "no confirmed live info", not new evidence about the result.

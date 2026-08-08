@@ -262,6 +262,8 @@ export function applyProductionIdentityMembershipGate(
 // Collapse cross-source duplicates per league (same real match under two
 // canonical IDs / matchIds from different providers) for a mixed-league row set.
 function dedupeRowsPerLeague(rows) {
+  const identityResolver =
+    getProductionIdentityResolver();
   const byLeague = new Map();
   for (const row of rows) {
     const slug = String(row?.leagueSlug || "unknown");
@@ -271,7 +273,10 @@ function dedupeRowsPerLeague(rows) {
 
   const out = [];
   for (const [slug, leagueRows] of byLeague) {
-    out.push(...dedupeLeagueDayFixtures(leagueRows, { slug }).rows);
+    out.push(...dedupeLeagueDayFixtures(
+      leagueRows,
+      { slug, identityResolver }
+    ).rows);
   }
   return out;
 }
@@ -804,7 +809,8 @@ export function canonicalFixturesForDay(dayKey) {
       dedupeLeagueDayFixtures(
         identityGate.rows,
         {
-          slug
+          slug,
+          identityResolver
         }
       )
         .rows

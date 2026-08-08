@@ -15,6 +15,7 @@ import {
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { canonicalEspnLeagueSlug } from "../core/espn-league-identity.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import { getProductionIdentityResolver } from "../core/production-identity-resolver-runtime.js";
 import { registerMatch } from "../storage/canonical-match-registry.js";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
@@ -455,7 +456,10 @@ function writeCanonicalLeague(dayKey, slug, fixtures, meta = {}) {
 
   // Collapse cross-source duplicates (same real match under two canonical IDs
   // because providers spell the teams differently) before persisting.
-  const deduped = dedupeLeagueDayFixtures(fixtures, { slug });
+  const deduped = dedupeLeagueDayFixtures(fixtures, {
+    slug,
+    identityResolver: getProductionIdentityResolver()
+  });
   if (deduped.removed.length) {
     console.log("[fixture-acquisition] cross_source_duplicates_merged", {
       dayKey,
@@ -619,6 +623,13 @@ function canonicalMergeIdentityKeys(row) {
     keys.push(`canonical:${canonicalId}`);
   }
 
+  for (const value of Array.isArray(row?.canonicalAliases)
+    ? row.canonicalAliases
+    : []) {
+    const aliasId = String(value ?? "").trim();
+    if (aliasId) keys.push(`canonical:${aliasId}`);
+  }
+
   const source = String(
     row?.source ||
     row?.provider ||
@@ -637,6 +648,20 @@ function canonicalMergeIdentityKeys(row) {
       const providerId = String(value ?? "").trim();
       if (providerId && providerId !== canonicalId) {
         keys.push(`provider:${source}:${providerId}`);
+      }
+    }
+  }
+
+  if (
+    row?.providerIds &&
+    typeof row.providerIds === "object" &&
+    !Array.isArray(row.providerIds)
+  ) {
+    for (const [provider, value] of Object.entries(row.providerIds)) {
+      const providerName = String(provider || "").trim().toLowerCase();
+      const providerId = String(value ?? "").trim();
+      if (providerName && providerId) {
+        keys.push(`provider:${providerName}:${providerId}`);
       }
     }
   }
@@ -765,13 +790,21 @@ export function serializeFixture(normalized, adapterId, fetchedDayKey) {
     });
   }
 
+  const source = normalized.source || adapterId;
+  const sourceId = normalized.sourceId || normalized.sourceMatchId || normalized.matchId;
+  const providerName = String(source || "").trim().toLowerCase();
+  const providerId = String(sourceId ?? "").trim();
+
   return sanitizePreKickoffNonPlayed({
     canonicalId,
     matchId: normalized.matchId,
     matchKey: normalized.matchKey,
-    source: normalized.source || adapterId,
-    sourceId: normalized.sourceId || normalized.sourceMatchId || normalized.matchId,
+    source,
+    sourceId,
     sourceMatchId: normalized.sourceMatchId || normalized.sourceId || normalized.matchId,
+    ...(providerName && providerId
+      ? { providerIds: { [providerName]: providerId } }
+      : {}),
     ...(normalized.providerLeagueSlug
       ? { providerLeagueSlug: normalized.providerLeagueSlug }
       : {}),

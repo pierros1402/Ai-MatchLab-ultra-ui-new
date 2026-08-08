@@ -26,12 +26,35 @@ test(
 
     assert.match(
       workflow,
-      /--allow='\^\(data\/canonical-fixtures\/\|data\/coverage-reports\/\|data\/ingest-state\/\|data\/competition-admission\/\)'/u
+      /git add data\/identity-recovery/u
     );
 
     assert.match(
       workflow,
-      /grep -Ev '\^\(data\/canonical-fixtures\/\|data\/coverage-reports\/\|data\/ingest-state\/\|data\/competition-admission\/\)'/u
+      /promote-identity-recovery-window\.js/u
+    );
+
+    const buildRecovery = workflow.indexOf("build-identity-recovery-window.js");
+    const confirmRecovery = workflow.indexOf("confirm-identity-recovery-window.js");
+    const promoteRecovery = workflow.indexOf("promote-identity-recovery-window.js");
+    assert.ok(buildRecovery >= 0);
+    assert.ok(confirmRecovery > buildRecovery);
+    assert.ok(promoteRecovery > confirmRecovery);
+    assert.match(workflow, /API_FOOTBALL_KEY: \$\{\{ secrets\.API_FOOTBALL_KEY \}\}/u);
+
+    assert.match(
+      workflow,
+      /git add data\/identity-decisions\/production-identity-extension-ledger\.v1\.json/u
+    );
+
+    assert.match(
+      workflow,
+      /--allow='\^\(data\/canonical-fixtures\/\|data\/coverage-reports\/\|data\/ingest-state\/\|data\/competition-admission\/\|data\/identity-recovery\/\|data\/identity-decisions\/production-identity-extension-ledger\\\.v1\\\.json\$\)'/u
+    );
+
+    assert.match(
+      workflow,
+      /grep -Ev '\^\(data\/canonical-fixtures\/\|data\/coverage-reports\/\|data\/ingest-state\/\|data\/competition-admission\/\|data\/identity-recovery\/\|data\/identity-decisions\/production-identity-extension-ledger\\\.v1\\\.json\$\)'/u
     );
   }
 );

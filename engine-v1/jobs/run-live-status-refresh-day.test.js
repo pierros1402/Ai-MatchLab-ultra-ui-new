@@ -5,6 +5,7 @@ import {
   canRemoveEspnWrongDayCanonicalRow,
   normalizeSourceRows,
   parseLiveStatusRefreshCliArgs,
+  resolveApprovedFlashscoreFinalScoreRevision,
   resolveEspnExactEventOccurrence
 } from "./run-live-status-refresh-day.js";
 
@@ -74,6 +75,124 @@ test("source rows outside the requested Athens day are rejected", () => {
   );
 
   assert.equal(rows.size, 0);
+});
+
+test("mature exact Flashscore final-score revision may repair an immutable canonical FT", () => {
+  const canonical = {
+    canonicalId: "cid_test_home_away_20260808",
+    matchId: "cid_test_home_away_20260808",
+    source: "flashscore",
+    sourceId: "provider-1",
+    sourceMatchId: "provider-1",
+    homeTeam: "Home",
+    awayTeam: "Away",
+    kickoffUtc: "2026-08-08T12:00:00.000Z",
+    status: "FT",
+    statusType: "STATUS_FINAL",
+    rawStatus: "STATUS_FINAL",
+    scoreHome: 1,
+    scoreAway: 0
+  };
+  const source = {
+    matchId: "provider-1",
+    home: "Home",
+    away: "Away",
+    kickoffUtc: "2026-08-08T12:00:00.000Z",
+    finished: true,
+    playedFinal: true,
+    nonPlayedTerminal: false,
+    statusCode: "3",
+    scoreHome: 1,
+    scoreAway: 2
+  };
+  const finalArtifact = {
+    verifiedFinalTruth: true,
+    matchId: canonical.matchId,
+    homeTeam: "Home",
+    awayTeam: "Away",
+    kickoffUtc: canonical.kickoffUtc,
+    scoreKey: "1-2",
+    scoreHome: 1,
+    scoreAway: 2,
+    terminalScoreRevision: {
+      policyVersion: "flashscore-terminal-revision-v1",
+      state: "APPLIED",
+      provider: "flashscore",
+      providerMatchId: "provider-1",
+      previousScore: "1-0",
+      correctedScore: "1-2",
+      observationCount: 2,
+      stableForMs: 240001,
+      appliedAt: "2026-08-08T18:05:00.000Z"
+    }
+  };
+
+  const resolved = resolveApprovedFlashscoreFinalScoreRevision(
+    canonical,
+    source,
+    finalArtifact,
+    "2026-08-08"
+  );
+
+  assert.equal(resolved.ok, true);
+  assert.equal(resolved.previousScore, "1-0");
+  assert.equal(resolved.correctedScore, "1-2");
+});
+
+test("one observation or a mismatched provider cannot revise canonical FT", () => {
+  const canonical = {
+    canonicalId: "cid_test_home_away_20260808",
+    matchId: "cid_test_home_away_20260808",
+    source: "flashscore",
+    sourceId: "provider-1",
+    homeTeam: "Home",
+    awayTeam: "Away",
+    kickoffUtc: "2026-08-08T12:00:00.000Z",
+    status: "FT",
+    statusType: "STATUS_FINAL",
+    scoreHome: 1,
+    scoreAway: 0
+  };
+  const source = {
+    matchId: "provider-1",
+    kickoffUtc: canonical.kickoffUtc,
+    finished: true,
+    playedFinal: true,
+    nonPlayedTerminal: false,
+    statusCode: "3",
+    scoreHome: 1,
+    scoreAway: 2
+  };
+  const artifact = {
+    verifiedFinalTruth: true,
+    matchId: canonical.matchId,
+    homeTeam: "Home",
+    awayTeam: "Away",
+    kickoffUtc: canonical.kickoffUtc,
+    scoreKey: "1-2",
+    terminalScoreRevision: {
+      policyVersion: "flashscore-terminal-revision-v1",
+      state: "APPLIED",
+      provider: "flashscore",
+      providerMatchId: "provider-1",
+      previousScore: "1-0",
+      correctedScore: "1-2",
+      observationCount: 1,
+      stableForMs: 240001
+    }
+  };
+
+  assert.equal(
+    resolveApprovedFlashscoreFinalScoreRevision(canonical, source, artifact, "2026-08-08").ok,
+    false
+  );
+
+  artifact.terminalScoreRevision.observationCount = 2;
+  artifact.terminalScoreRevision.providerMatchId = "provider-2";
+  assert.equal(
+    resolveApprovedFlashscoreFinalScoreRevision(canonical, source, artifact, "2026-08-08").ok,
+    false
+  );
 });
 
 

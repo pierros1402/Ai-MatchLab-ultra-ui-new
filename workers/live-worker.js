@@ -37,17 +37,6 @@ function mapStatus(ab, hasScore, kickoffSec, nowSec) {
   return "STALE_LIVE";                    // unknown code with a score — flagged, not faked
 }
 
-// Approximate live minute from kickoff (the feed has no clean minute field).
-// Crude HT handling: clamp around 45' and subtract the ~15' break in 2nd half.
-function liveMinute(kickoffSec, nowSec) {
-  if (!kickoffSec) return null;
-  let el = Math.floor((nowSec - kickoffSec) / 60);
-  if (el < 0) return null;
-  if (el > 60) el -= 15;
-  else if (el > 45) el = 45;
-  return Math.max(1, Math.min(el, 130));
-}
-
 function cleanLeague(za) {
   const i = String(za || "").indexOf(":");
   return i >= 0 ? za.slice(i + 1).trim() : String(za || "").trim();
@@ -82,7 +71,10 @@ function parseFeed(text) {
       status,
       staleLive: status === "STALE_LIVE" || undefined,
       statusUnconfirmed: status === "STALE_LIVE" || undefined,
-      minute: status === "LIVE" ? liveMinute(koSec, nowSec) : null,
+      // This feed does not expose a trustworthy provider-native match clock.
+      // Do not manufacture an exact-looking minute from wall-clock elapsed time.
+      minute: null,
+      minuteSource: "unavailable",
       kickoffUtc: koSec ? new Date(koSec * 1000).toISOString() : null
     });
   }

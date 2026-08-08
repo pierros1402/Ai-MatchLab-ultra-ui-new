@@ -60,6 +60,8 @@ function isTruthPath(p) {
     p.startsWith("data/history/") ||
     p.startsWith("data/current-season/") ||
     p.startsWith("data/canonical-fixtures/") ||
+    p.startsWith("data/identity-recovery/") ||
+    p.startsWith("data/identity-decisions/") ||
     p.startsWith("data/football-truth/") ||
     p.startsWith("data/ingest-state/") ||
     p.startsWith("data/standings/") ||

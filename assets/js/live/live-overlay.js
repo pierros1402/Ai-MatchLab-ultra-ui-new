@@ -152,9 +152,52 @@
       statusUnconfirmed: m.statusUnconfirmed === true,
       isLive: isLive,
       live: isLive,
-      minute: m.minute != null ? m.minute : null,
+      // The worker feed does not expose a provider-native match clock. Never
+      // present its kickoff-derived approximation as an exact minute.
+      minute: null,
+      minuteSource: "unavailable",
       kickoff_ms: kickoffMs(canonical) || kickoffMs(m)
     };
+  }
+
+  function authoritativeWorkerKey(match) {
+    return providerIdentityToken(match && match.providerMatchId) ||
+      providerIdentityToken(match && match.sourceMatchId) ||
+      String(canonicalPanelId(match) || "").toLowerCase();
+  }
+
+  function workerStateIsFt(match) {
+    var status = statusText(match);
+    return /(^|\s)FT($|\s)/.test(status) || valueLiveState(match)?.kind === "ft";
+  }
+
+  function mergeAuthoritativeWorkerMatches(previousRows, nextRows) {
+    var previousByKey = {};
+    (Array.isArray(previousRows) ? previousRows : []).forEach(function (match) {
+      var key = authoritativeWorkerKey(match);
+      if (key) previousByKey[key] = match;
+    });
+
+    var seen = {};
+    var merged = (Array.isArray(nextRows) ? nextRows : []).map(function (next) {
+      var key = authoritativeWorkerKey(next);
+      if (key) seen[key] = true;
+      var previous = key ? previousByKey[key] : null;
+
+      // Terminal is sticky. A later worker payload may revise an FT score, but
+      // it may never regress a previously observed FT back to LIVE/PRE/stale.
+      if (previous && workerStateIsFt(previous) && !workerStateIsFt(next)) {
+        return previous;
+      }
+      return next;
+    });
+
+    Object.keys(previousByKey).forEach(function (key) {
+      var previous = previousByKey[key];
+      if (!seen[key] && workerStateIsFt(previous)) merged.push(previous);
+    });
+
+    return merged;
   }
 
 
@@ -250,7 +293,7 @@
     var unconfirmed = match.statusUnconfirmed === true;
     var isPen = status.indexOf("PENALT") !== -1 || /(^|\s)PEN($|\s)/.test(status);
     var isAet = status.indexOf("AFTER_EXTRA_TIME") !== -1 || /(^|\s)AET($|\s)/.test(status);
-    var isFt = status === "FT" || status.indexOf("FULL_TIME") !== -1 ||
+    var isFt = /(^|\s)FT($|\s)/.test(status) || status.indexOf("FULL_TIME") !== -1 ||
       status.indexOf("STATUS_FINAL") !== -1 || status.indexOf("FINAL") !== -1 ||
       status.indexOf("ENDED") !== -1 || isPen || isAet;
     if (isFt) {
@@ -275,8 +318,10 @@
 
   function collectValueMatches(extraMatches) {
     var rows = [];
-    [extraMatches, window.AIML_LIVE_SCORES, safeMatches(window.__AIML_LAST_LIVE),
-      safeMatches(window.__AIML_LAST_TODAY), safeMatches(window.__AIML_LAST_ACTIVE)]
+    // Value live decoration consumes only the worker-owned authoritative live
+    // cache. Today/Active snapshots are identity baselines, never live-state
+    // writers; mixing them here caused stale SECOND_HALF ↔ FT flicker.
+    [extraMatches, window.AIML_LIVE_SCORES, safeMatches(window.__AIML_LAST_LIVE)]
       .forEach(function (source) {
         if (Array.isArray(source)) source.forEach(function (match) {
           if (match && typeof match === "object") rows.push(match);
@@ -289,7 +334,9 @@
     var rowId = String(row.getAttribute("data-match-id") || "").trim();
     if (rowId) {
       var exact = matches.find(function (match) { return matchIds(match).indexOf(rowId) !== -1; });
-      if (exact) return exact;
+      // A canonical Value row must resolve by exact identity. Falling through
+      // to a team-name-only match can attach a worker row from another fixture.
+      return exact || null;
     }
     var home = normalizeTeam(row.querySelector(".value-home") && row.querySelector(".value-home").textContent);
     var away = normalizeTeam(row.querySelector(".value-away") && row.querySelector(".value-away").textContent);
@@ -347,7 +394,11 @@
     ["today-matches:loaded", "active-leagues:updated", "live:update", "value:update", "value-picks:loaded"]
       .forEach(function (eventName) {
         document.addEventListener(eventName, function (event) {
-          scheduleValuePatch(event && event.detail && event.detail.matches);
+          scheduleValuePatch(
+            eventName === "live:update" && event && event.detail
+              ? event.detail.matches
+              : null
+          );
         });
       });
   }
@@ -365,9 +416,14 @@
       if (!json || !Array.isArray(json.matches)) return;
 
       // Only push matches that actually have a score / live state (avoid wiping PRE).
-      var matches = json.matches
+      var freshMatches = json.matches
         .filter(function (m) { return m.scoreHome != null || m.status === "LIVE" || m.status === "FT"; })
         .map(toPanelMatch);
+
+      var matches = mergeAuthoritativeWorkerMatches(
+        window.AIML_LIVE_SCORES,
+        freshMatches
+      );
 
       if (matches.length) {
         window.AIML_LIVE_SCORES = matches;

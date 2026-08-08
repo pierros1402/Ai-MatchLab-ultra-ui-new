@@ -51,7 +51,7 @@ export function isSource2TargetLeague(slug) {
   return SOURCE2_TARGET_SLUGS.has(String(slug || "").trim());
 }
 
-function getSource2LeagueId(slug) {
+export function getSource2LeagueId(slug) {
   const key = String(slug || "").trim();
   if (!key) return null;
 
@@ -69,6 +69,143 @@ function buildHeaders() {
   return {
     "x-apisports-key": API_KEY
   };
+}
+
+function identityConfirmationRow(row, expectedSlug, expectedLeagueId, requestedDayKey) {
+  const fixture = row?.fixture || {};
+  const league = row?.league || {};
+  const teams = row?.teams || {};
+  const providerMatchId = fixture?.id == null ? "" : String(fixture.id).trim();
+  const kickoffUtc = String(fixture?.date || "").trim();
+  const homeTeam = String(teams?.home?.name || "").trim();
+  const awayTeam = String(teams?.away?.name || "").trim();
+
+  if (!providerMatchId || !Number.isFinite(Date.parse(kickoffUtc)) || !homeTeam || !awayTeam) {
+    return null;
+  }
+  if (Number(league?.id) !== Number(expectedLeagueId)) return null;
+  if (mapLeagueIdToSlug(league?.id) !== expectedSlug) return null;
+
+  return {
+    source: "api_football",
+    sourceFamily: "api_football",
+    providerMatchId,
+    leagueSlug: expectedSlug,
+    providerLeagueId: Number(league.id),
+    providerLeagueName: String(league?.name || "").trim() || null,
+    providerCountry: String(league?.country || "").trim() || null,
+    requestedDayKey,
+    kickoffUtc,
+    homeTeam,
+    awayTeam,
+    homeTeamId: teams?.home?.id == null ? null : String(teams.home.id),
+    awayTeamId: teams?.away?.id == null ? null : String(teams.away.id),
+    round: String(league?.round || "").trim() || null,
+    season: league?.season == null ? null : String(league.season),
+    evidenceUrl: `${BASE_URL}/fixtures?id=${encodeURIComponent(providerMatchId)}`,
+    evidencePurpose: "fixture_identity_confirmation_only",
+    oddsRequested: false,
+  };
+}
+
+/**
+ * Dedicated third-source fixture lookup for identity recovery.
+ *
+ * This deliberately exposes only fixture identity facts. It never requests or
+ * returns bookmaker odds/predictions and is kept separate from Value inputs.
+ * Failures are structured so the caller can persist a retryable backlog rather
+ * than silently treating provider failure as "no fixture".
+ */
+export async function fetchIdentityConfirmationFixturesSource2(
+  slug,
+  dayKey,
+  {
+    apiKey = API_KEY,
+    fetchImpl = globalThis.fetch,
+    timeoutMs = 12_000,
+  } = {},
+) {
+  const safeSlug = String(slug || "").trim();
+  const safeDay = String(dayKey || "").trim();
+  const leagueId = getSource2LeagueId(safeSlug);
+  const base = {
+    source: "api_football",
+    leagueSlug: safeSlug,
+    dayKey: safeDay,
+    providerLeagueId: leagueId,
+    endpointKind: "fixtures",
+    oddsRequested: false,
+    rows: [],
+  };
+
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(safeDay)) {
+    return { ...base, ok: false, retryable: false, status: "INVALID_DAY_KEY" };
+  }
+  if (!isSource2TargetLeague(safeSlug) || !leagueId) {
+    return { ...base, ok: false, retryable: false, status: "UNMAPPED_LEAGUE" };
+  }
+  if (!String(apiKey || "").trim()) {
+    return { ...base, ok: false, retryable: true, status: "MISSING_API_KEY" };
+  }
+  if (typeof fetchImpl !== "function") {
+    return { ...base, ok: false, retryable: true, status: "FETCH_UNAVAILABLE" };
+  }
+
+  // Explicit Athens timezone keeps the provider date slice aligned with the
+  // canonical day-key contract around midnight.
+  const endpoint = `${BASE_URL}/fixtures?date=${encodeURIComponent(safeDay)}` +
+    `&league=${encodeURIComponent(leagueId)}&timezone=${encodeURIComponent("Europe/Athens")}`;
+  let signal;
+  try {
+    signal = AbortSignal.timeout(Math.max(1_000, Number(timeoutMs) || 12_000));
+  } catch {
+    signal = undefined;
+  }
+
+  try {
+    const res = await fetchImpl(endpoint, {
+      method: "GET",
+      headers: { "x-apisports-key": String(apiKey).trim() },
+      ...(signal ? { signal } : {}),
+    });
+    if (res?.status === 429) {
+      return { ...base, ok: false, retryable: true, status: "RATE_LIMITED", httpStatus: 429 };
+    }
+    if (!res?.ok) {
+      return {
+        ...base,
+        ok: false,
+        retryable: true,
+        status: "PROVIDER_HTTP_ERROR",
+        httpStatus: Number(res?.status || 0) || null,
+      };
+    }
+    const json = await res.json();
+    const providerErrors = json?.errors && typeof json.errors === "object"
+      ? Object.values(json.errors).filter(Boolean)
+      : [];
+    if (providerErrors.length) {
+      return { ...base, ok: false, retryable: true, status: "PROVIDER_API_ERROR" };
+    }
+    const rows = safeArray(json?.response)
+      .map(row => identityConfirmationRow(row, safeSlug, leagueId, safeDay))
+      .filter(Boolean);
+    return {
+      ...base,
+      ok: true,
+      retryable: false,
+      status: "OK",
+      rows,
+    };
+  } catch (error) {
+    const timeout = error?.name === "TimeoutError" || error?.name === "AbortError";
+    return {
+      ...base,
+      ok: false,
+      retryable: true,
+      status: timeout ? "PROVIDER_TIMEOUT" : "PROVIDER_FETCH_FAILED",
+    };
+  }
 }
 
 function safeArray(value) {

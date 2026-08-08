@@ -7,6 +7,12 @@ import {
   loadJsonBomSafe,
   sha256File,
 } from "./production-identity-resolver.js";
+import {
+  buildExtendedProductionIdentityResolver,
+} from "./production-identity-extension.js";
+
+export const PRODUCTION_IDENTITY_EXTENSION_RELATIVE_PATH =
+  "data/identity-decisions/production-identity-extension-ledger.v1.json";
 
 export const EXPECTED_PRODUCTION_IDENTITY_ARTIFACTS =
   Object.freeze({
@@ -42,8 +48,8 @@ function normalizePaths(paths = {}) {
   const projectRoot =
     String(paths.projectRoot || getProjectRoot());
 
-  return Object.freeze(
-    Object.fromEntries(
+  return Object.freeze({
+    ...Object.fromEntries(
       Object.entries(
         EXPECTED_PRODUCTION_IDENTITY_ARTIFACTS,
       ).map(([key, artifact]) => [
@@ -57,7 +63,14 @@ function normalizePaths(paths = {}) {
         ),
       ]),
     ),
-  );
+    extensionLedger: path.resolve(
+      paths.extensionLedger ||
+      path.join(
+        projectRoot,
+        PRODUCTION_IDENTITY_EXTENSION_RELATIVE_PATH,
+      ),
+    ),
+  });
 }
 
 function readVerifiedArtifacts(paths) {
@@ -94,13 +107,43 @@ function readVerifiedArtifacts(paths) {
   };
 }
 
+function readStableExtensionLedger(filePath) {
+  let beforeHash;
+  try {
+    beforeHash = sha256File(filePath);
+  }
+  catch {
+    throw new Error(
+      "production_identity_extension_ledger_missing",
+    );
+  }
+
+  const value = loadJsonBomSafe(filePath);
+  const afterHash = sha256File(filePath);
+
+  if (afterHash !== beforeHash) {
+    throw new Error(
+      "production_identity_extension_changed_during_read",
+    );
+  }
+
+  return Object.freeze({
+    value,
+    sha256: beforeHash,
+  });
+}
+
 export function createProductionIdentityResolverRuntime({
   paths = {},
 } = {}) {
   const resolvedPaths = normalizePaths(paths);
   const loaded = readVerifiedArtifacts(resolvedPaths);
+  const extension =
+    readStableExtensionLedger(
+      resolvedPaths.extensionLedger,
+    );
 
-  const resolver =
+  const baseResolver =
     buildProductionIdentityResolverFromCommittedDecisions({
       contract: loaded.values.contract,
       registry: loaded.values.registry,
@@ -110,13 +153,31 @@ export function createProductionIdentityResolverRuntime({
         loaded.values.sourceLedger,
     });
 
+  const resolver =
+    buildExtendedProductionIdentityResolver({
+      baseResolver,
+      ledger: extension.value,
+    });
+
   return Object.freeze({
     schema:
-      "ai-matchlab.production-identity-resolver-runtime.v1",
+      "ai-matchlab.production-identity-resolver-runtime.v2",
     resolver,
+    // Exposed read-only for the source-bound extension promoter. Promotion
+    // validation must be anchored to the immutable P0-C resolver, not to a
+    // candidate ledger that could otherwise prove its own new identities.
+    baseResolver,
     paths: resolvedPaths,
-    hashes: loaded.hashes,
+    hashes: Object.freeze({
+      ...loaded.hashes,
+      extensionLedger:
+        extension.sha256,
+    }),
     counts: resolver.counts,
+    effectiveCounts:
+      resolver.effectiveCounts,
+    extension:
+      resolver.extension,
     readOnly: true,
     authorization: Object.freeze({
       productionDataApplicationAuthorized: false,

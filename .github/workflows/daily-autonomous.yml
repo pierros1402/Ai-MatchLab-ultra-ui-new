@@ -134,6 +134,7 @@ jobs:
           [ -d "data/verification" ] && git add data/verification
           [ -d "data/canonical-fixtures/${YESTERDAY}" ] && git add "data/canonical-fixtures/${YESTERDAY}"
           [ -d "data/final-results/${YESTERDAY}" ] && git add "data/final-results/${YESTERDAY}"
+          [ -f "data/final-result-conflicts/${YESTERDAY}.json" ] && git add "data/final-result-conflicts/${YESTERDAY}.json"
           [ -d "data/value-plans/${YESTERDAY}" ] && git add "data/value-plans/${YESTERDAY}/"
           [ -f "data/value-comparison/${YESTERDAY}.json" ] && git add "data/value-comparison/${YESTERDAY}.json"
 
@@ -156,10 +157,10 @@ jobs:
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-autonomous \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/canonical-fixtures/${YESTERDAY}/|data/final-results/${YESTERDAY}/|data/value-plans/${YESTERDAY}/|data/value-comparison/${YESTERDAY}\.json$|data/history-index/|data/model-priors/|data/history-archive/)"
+            --allow="^(data/deploy-snapshots/${DAY_KEY}/(odds\.json|fixtures-all\.json)$|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/canonical-fixtures/${YESTERDAY}/|data/final-results/${YESTERDAY}/|data/final-result-conflicts/${YESTERDAY}\.json$|data/value-plans/${YESTERDAY}/|data/value-comparison/${YESTERDAY}\.json$|data/history-index/|data/model-priors/|data/history-archive/)"
 
           # Only our autonomous artifacts may be staged.
-          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/canonical-fixtures/|data/final-results/|data/value-plans/|data/value-comparison/|data/history-index/|data/model-priors/|data/history-archive/)' || true)"
+          BAD="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/league-memory/|data/odds-memory/|data/expected-matches/|data/verification/|data/canonical-fixtures/|data/final-results/|data/final-result-conflicts/|data/value-plans/|data/value-comparison/|data/history-index/|data/model-priors/|data/history-archive/)' || true)"
           if [ -n "$BAD" ]; then echo "ERROR: unexpected staged files:"; echo "$BAD"; exit 1; fi
 
           if git diff --cached --quiet; then

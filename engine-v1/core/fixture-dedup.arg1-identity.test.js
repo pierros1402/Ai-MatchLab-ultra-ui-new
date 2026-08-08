@@ -73,11 +73,19 @@ test("Boca Juniors v Estudiantes cross-source rows collapse to one canonical row
 
 test("canonical identity normalization preserves squad separation", () => {
   assert.equal(
+    sameTeamName("arg.1", "Argentinos Jrs", "Argentinos Juniors"),
+    true
+  );
+  assert.equal(
     sameTeamName("arg.1", "Estudiantes L.P.", "Estudiantes de La Plata W"),
     false
   );
   assert.equal(
     sameTeamName("arg.1", "Estudiantes L.P. U20", "Estudiantes de La Plata"),
+    false
+  );
+  assert.equal(
+    sameTeamName("arg.1", "Argentinos Jrs U20", "Argentinos Juniors"),
     false
   );
 });

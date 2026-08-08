@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
+import {
+  resolveVerifiedFinalExportCompletion
+} from "./export-verified-final-results-day.js";
 
 const source = fs.readFileSync(
   new URL(
@@ -134,3 +137,23 @@ test(
     );
   }
 );
+
+test("write-time per-match conflicts do not abort unrelated final persistence", () => {
+  assert.deepEqual(
+    resolveVerifiedFinalExportCompletion({ write: true, conflictCount: 2 }),
+    {
+      ok: true,
+      truthComplete: false,
+      conflictsIsolated: true
+    }
+  );
+
+  assert.deepEqual(
+    resolveVerifiedFinalExportCompletion({ write: false, conflictCount: 2 }),
+    {
+      ok: false,
+      truthComplete: false,
+      conflictsIsolated: false
+    }
+  );
+});

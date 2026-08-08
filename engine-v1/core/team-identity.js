@@ -22,6 +22,11 @@
 const TOKEN_ALIASES = new Map([
   ["utd", "united"],
   ["intl", "international"],
+  // Provider abbreviation used in senior club names such as
+  // "Argentinos Jrs". Keep it mapped to the SAME squad marker as "Juniors"
+  // so the safety gate does not invent a senior/youth mismatch.
+  ["jrs", "juniors"],
+  ["jr", "junior"],
   // Brazilian state-abbreviation convention: "America MG" ↔ "América Mineiro",
   // "Atletico MG" ↔ "Atlético Mineiro" (Flashscore vs ESPN naming).
   ["mg", "mineiro"],

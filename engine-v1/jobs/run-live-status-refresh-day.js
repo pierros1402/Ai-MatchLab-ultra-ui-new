@@ -6,8 +6,10 @@ import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import { getProductionIdentityResolver } from "../core/production-identity-resolver-runtime.js";
 import { teamPairMatches } from "../core/team-identity.js";
 import { espnProviderFetchSlugs } from "../core/espn-league-identity.js";
+import { FINAL_SCORE_REVISION_POLICY } from "../core/final-score-revision-backlog.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import {
   listApprovedFlashscoreNonPlayedDecisions,
@@ -1226,6 +1228,119 @@ function buildFlashscoreFinalIncoming(previous, sourceRow) {
   };
 }
 
+function finalScoreKey(value) {
+  const direct = normalizeText(
+    value?.scoreKey ||
+    value?.finalScore?.scoreKey
+  );
+  if (direct) return direct;
+
+  const home = Number(
+    value?.scoreHome ??
+    value?.homeScore ??
+    value?.finalScore?.homeScore
+  );
+  const away = Number(
+    value?.scoreAway ??
+    value?.awayScore ??
+    value?.finalScore?.awayScore
+  );
+
+  return Number.isInteger(home) && home >= 0 && Number.isInteger(away) && away >= 0
+    ? `${home}-${away}`
+    : "";
+}
+
+export function resolveApprovedFlashscoreFinalScoreRevision(
+  canonicalRow,
+  sourceRow,
+  finalArtifact,
+  dayKey
+) {
+  if (!isFinalLike(canonicalRow)) {
+    return { ok: false, reason: "canonical_not_final" };
+  }
+  if (normalizeText(canonicalRow?.source).toLowerCase() !== "flashscore") {
+    return { ok: false, reason: "canonical_not_flashscore" };
+  }
+
+  const providerMatchId = normalizeText(
+    canonicalRow?.sourceId || canonicalRow?.sourceMatchId
+  );
+  if (!providerMatchId || normalizeText(sourceRow?.matchId) !== providerMatchId) {
+    return { ok: false, reason: "provider_id_mismatch" };
+  }
+  if (!isExactFlashscoreFinalRow(sourceRow, dayKey)) {
+    return { ok: false, reason: "source_not_exact_terminal" };
+  }
+  if (finalArtifact?.verifiedFinalTruth !== true) {
+    return { ok: false, reason: "verified_final_artifact_required" };
+  }
+  if (normalizeText(finalArtifact?.matchId) !== normalizeText(canonicalRow?.canonicalId || canonicalRow?.matchId)) {
+    return { ok: false, reason: "canonical_id_mismatch" };
+  }
+
+  const revision = finalArtifact?.terminalScoreRevision;
+  if (
+    revision?.policyVersion !== FINAL_SCORE_REVISION_POLICY.policyVersion ||
+    revision?.state !== "APPLIED" ||
+    normalizeText(revision?.provider).toLowerCase() !== "flashscore" ||
+    normalizeText(revision?.providerMatchId) !== providerMatchId ||
+    Number(revision?.observationCount || 0) < FINAL_SCORE_REVISION_POLICY.minStableObservations ||
+    Number(revision?.stableForMs || 0) < FINAL_SCORE_REVISION_POLICY.minStableMs
+  ) {
+    return { ok: false, reason: "mature_revision_proof_required" };
+  }
+
+  if (!teamPairMatches(
+    canonicalRow?.homeTeam,
+    canonicalRow?.awayTeam,
+    finalArtifact?.homeTeam,
+    finalArtifact?.awayTeam
+  )) {
+    return { ok: false, reason: "team_pair_mismatch" };
+  }
+
+  const canonicalKickoff = Date.parse(normalizeText(canonicalRow?.kickoffUtc));
+  const artifactKickoff = Date.parse(normalizeText(finalArtifact?.kickoffUtc));
+  if (
+    !Number.isFinite(canonicalKickoff) ||
+    !Number.isFinite(artifactKickoff) ||
+    Math.abs(canonicalKickoff - artifactKickoff) > 60_000
+  ) {
+    return { ok: false, reason: "kickoff_mismatch" };
+  }
+
+  const canonicalScore = finalScoreKey(canonicalRow);
+  const sourceScore = finalScoreKey({
+    scoreHome: sourceRow?.scoreHome,
+    scoreAway: sourceRow?.scoreAway
+  });
+  const artifactScore = finalScoreKey(finalArtifact);
+
+  if (!canonicalScore || !sourceScore || !artifactScore) {
+    return { ok: false, reason: "numeric_score_required" };
+  }
+  if (canonicalScore === sourceScore) {
+    return { ok: false, reason: "no_score_revision" };
+  }
+  if (
+    artifactScore !== sourceScore ||
+    normalizeText(revision?.previousScore) !== canonicalScore ||
+    normalizeText(revision?.correctedScore) !== sourceScore
+  ) {
+    return { ok: false, reason: "revision_score_proof_mismatch" };
+  }
+
+  return {
+    ok: true,
+    providerMatchId,
+    previousScore: canonicalScore,
+    correctedScore: sourceScore,
+    revision
+  };
+}
+
 export function finalizeLiveStatusRefreshStats(
   stats
 ) {
@@ -1342,6 +1457,7 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
     exactIdCandidates: 0,
     exactIdMatches: 0,
     postponedExactIdMatches: 0,
+    finalScoreRevisionAppliedRows: 0,
     unapprovedNonPlayedMatches: 0,
     changedRows: 0,
     writtenLeagueCount: 0,
@@ -1839,7 +1955,10 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       }
 
       if (changed) {
-        const deduped = dedupeLeagueDayFixtures(nextFixtures, { slug });
+        const deduped = dedupeLeagueDayFixtures(nextFixtures, {
+          slug,
+          identityResolver: getProductionIdentityResolver()
+        });
         nextFixtures = deduped.rows;
 
         writeCanonicalLeague(safeDayKey, slug, nextFixtures, {
@@ -2090,17 +2209,74 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
               .unapprovedNonPlayedMatches++;
           }
 
-          /*
-           * A current canonical final remains immutable unless
-           * the exact provider ID carries explicit AC=4
-           * non-played terminal evidence.
-           */
-          if (isFinalLike(row)) {
-            return row;
-          }
-
           const sourceRow =
             finalByProviderId.get(providerMatchId);
+
+          /*
+           * A current canonical final is normally immutable. The only played-
+           * score exception is a mature same-provider terminal revision that
+           * has already passed the persistent final-result conflict policy.
+           * This is intentionally a one-way correction: an unproven feed
+           * disagreement still leaves the frozen canonical FT untouched.
+           */
+          if (isFinalLike(row)) {
+            if (!sourceRow) {
+              return row;
+            }
+
+            const finalResultArtifact = readJson(
+              resolveDataPath(
+                "final-results",
+                safeDayKey,
+                `${normalizeText(row?.canonicalId || row?.matchId)}.json`
+              ),
+              null
+            );
+            const revision = resolveApprovedFlashscoreFinalScoreRevision(
+              row,
+              sourceRow,
+              finalResultArtifact,
+              safeDayKey
+            );
+
+            if (!revision.ok) {
+              return row;
+            }
+
+            const merged = {
+              ...mergeStatusRow(
+                row,
+                buildFlashscoreFinalIncoming(row, sourceRow)
+              ),
+              terminalScoreRevision: {
+                policyVersion: revision.revision.policyVersion,
+                state: "CANONICAL_APPLIED",
+                appliedAt: new Date().toISOString(),
+                provider: "flashscore",
+                providerMatchId,
+                previousScore: revision.previousScore,
+                correctedScore: revision.correctedScore,
+                finalResultRevisionAppliedAt: revision.revision.appliedAt || null
+              }
+            };
+
+            const before = rowStatusSignature(row);
+            const after = rowStatusSignature(merged);
+
+            if (before === after) {
+              return row;
+            }
+
+            leagueChanged = true;
+            leagueChangedRows++;
+            flashscoreStats.exactIdMatches++;
+            flashscoreStats.finalScoreRevisionAppliedRows++;
+            flashscoreStats.changedRows++;
+            stats.changedRows++;
+            stats.changedFixtures.push(merged);
+
+            return merged;
+          }
 
           if (!sourceRow) {
             notFinishedSourceIds.add(providerMatchId);
@@ -2137,7 +2313,10 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
 
         const deduped = dedupeLeagueDayFixtures(
           nextFixtures,
-          { slug }
+          {
+            slug,
+            identityResolver: getProductionIdentityResolver()
+          }
         );
 
         const previousSourceMeta =

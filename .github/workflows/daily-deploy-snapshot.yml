@@ -146,6 +146,23 @@ jobs:
             echo "WARNING: no fixture acquisition coverage report written for ${DAY_KEY}"
           fi
 
+      - name: Persist rolling identity recovery backlog
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/build-identity-recovery-window.js "$DAY_KEY" --days-back 1 --days-forward 14
+
+      - name: Confirm two-sided unknown fixture identities independently
+        if: env.SKIP_BUILD != 'true'
+        env:
+          # Independent fixture identity evidence only. The confirmer calls the
+          # API-Football /fixtures endpoint and has an explicit odds=false
+          # contract; bookmaker prices never enter identity or Value decisions.
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: node ./engine-v1/jobs/confirm-identity-recovery-window.js "$DAY_KEY"
+
+      - name: Promote source-bound identity recovery
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/promote-identity-recovery-window.js "$DAY_KEY"
+
       - name: Prune canonical fixture store
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/prune-canonical-fixture-store.js "$DAY_KEY" --days-back 3 --days-forward 30
@@ -172,6 +189,14 @@ jobs:
             git add data/competition-admission
           fi
 
+          if [ -d "data/identity-recovery" ]; then
+            git add data/identity-recovery
+          fi
+
+          if [ -f "data/identity-decisions/production-identity-extension-ledger.v1.json" ]; then
+            git add data/identity-decisions/production-identity-extension-ledger.v1.json
+          fi
+
           # --allow-data-deletions: the prune step above intentionally drops
           # canonical-fixtures/<day> and coverage-reports/<day>.json OUTSIDE the
           # rolling [-3,+30] retention window. These are a REGENERABLE rolling
@@ -179,13 +204,14 @@ jobs:
           # so their retention deletions are by-design έΑΦ without this flag the
           # data-deletion guard fails the whole daily snapshot once the window
           # advances past a committed day (broke the pipeline from 2026-07-01).
-          # Additions are still confined to the three prune dirs by --allow.
+          # Additions are still confined to the guarded acquisition/recovery
+          # data paths below by --allow.
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-canonical-store \
             --allow-data-deletions \
-            --allow='^(data/canonical-fixtures/|data/coverage-reports/|data/ingest-state/|data/competition-admission/)'
+            --allow='^(data/canonical-fixtures/|data/coverage-reports/|data/ingest-state/|data/competition-admission/|data/identity-recovery/|data/identity-decisions/production-identity-extension-ledger\.v1\.json$)'
           echo "=== CANONICAL STORE STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/canonical-fixtures/|data/coverage-reports/|data/ingest-state/|data/competition-admission/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/canonical-fixtures/|data/coverage-reports/|data/ingest-state/|data/competition-admission/|data/identity-recovery/|data/identity-decisions/production-identity-extension-ledger\.v1\.json$)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed canonical store files staged:"
@@ -221,6 +247,7 @@ jobs:
             k="$(TZ=Europe/Athens date -d "${ATHENS_TODAY} -${back} day" +%F)"
             test -d "data/canonical-fixtures/$k" && git add "data/canonical-fixtures/$k/"
             test -d "data/final-results/$k" && git add "data/final-results/$k/"
+            test -f "data/final-result-conflicts/$k.json" && git add "data/final-result-conflicts/$k.json"
             test -f "data/value-comparison/$k.json" && git add "data/value-comparison/$k.json"
             test -f "data/system-health/$k.json" && git add "data/system-health/$k.json"
           done
@@ -231,7 +258,7 @@ jobs:
 
           STAGED="$(git diff --cached --name-only || true)"
           if [ -n "$STAGED" ]; then
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-results/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/value-comparison/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|cumulative\.json)$|data/system-health/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|latest\.json)$)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-results/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-result-conflicts/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/value-comparison/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|cumulative\.json)$|data/system-health/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|latest\.json)$)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected prior-settlement checkpoint paths:"
               echo "$BAD"
@@ -240,7 +267,7 @@ jobs:
 
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=daily-prior-value-settlement-checkpoint \
-              --allow='^(data/canonical-fixtures/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-results/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/value-comparison/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|cumulative\.json)$|data/system-health/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|latest\.json)$)'
+              --allow='^(data/canonical-fixtures/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-results/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-result-conflicts/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/value-comparison/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|cumulative\.json)$|data/system-health/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|latest\.json)$)'
 
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -761,10 +788,16 @@ jobs:
             if [ -d "data/final-results/$k" ]; then
               git add "data/final-results/$k/"
             fi
+            if [ -f "data/final-result-conflicts/$k.json" ]; then
+              git add "data/final-result-conflicts/$k.json"
+            fi
           done
 
           if [ -d "data/final-results/${DAY_KEY}" ]; then
             git add "data/final-results/${DAY_KEY}/"
+          fi
+          if [ -f "data/final-result-conflicts/${DAY_KEY}.json" ]; then
+            git add "data/final-result-conflicts/${DAY_KEY}.json"
           fi
 
           if [ -f "data/value-comparison/cumulative.json" ]; then
@@ -778,10 +811,10 @@ jobs:
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
             --extra-days="${RECENT_CSV}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/|data/final-result-conflicts/(${DAY_KEY}|${RECENT_ALT})\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/value-comparison/|data/final-results/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/value-comparison/|data/final-results/|data/final-result-conflicts/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"

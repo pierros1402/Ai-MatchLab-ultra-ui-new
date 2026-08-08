@@ -82,6 +82,54 @@ test(
         'PLAN_PATH="data/value-plans/${DAY_KEY}/${PLAN_FILE}"'
       )
     );
+
+    assert.ok(
+      source.includes(
+        'data/final-result-conflicts/${DAY_KEY}.json'
+      ),
+      "intraday must persist the per-match final-score conflict backlog"
+    );
+  }
+);
+
+test(
+  "verified-final exporter isolates write-time score conflicts instead of aborting unrelated settlement",
+  () => {
+    const source = read(
+      "engine-v1/jobs/export-verified-final-results-day.js"
+    );
+
+    for (const token of [
+      "buildFinalScoreConflictBacklog",
+      '"final-result-conflicts"',
+      "resolveVerifiedFinalExportCompletion",
+      "conflictsIsolated: completion.conflictsIsolated",
+      "unresolvedScoreConflictNeverOverwritesVerifiedFinal: true"
+    ]) {
+      assert.ok(
+        source.includes(token),
+        `missing isolated-conflict contract: ${token}`
+      );
+    }
+  }
+);
+
+test(
+  "every production settlement workflow persists the final-score conflict backlog",
+  () => {
+    const dailyDeploy = read(
+      ".github/workflows/daily-deploy-snapshot.yml"
+    );
+    const intraday = read(
+      ".github/workflows/intraday-deploy-snapshot-refresh.yml"
+    );
+    const autonomous = read(
+      ".github/workflows/daily-autonomous.yml"
+    );
+
+    assert.match(dailyDeploy, /data\/final-result-conflicts\//u);
+    assert.match(intraday, /data\/final-result-conflicts\//u);
+    assert.match(autonomous, /data\/final-result-conflicts\//u);
   }
 );
 

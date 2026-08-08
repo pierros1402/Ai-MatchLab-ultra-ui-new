@@ -12,7 +12,8 @@
    - Stores:
        window.__AIML_LAST_TODAY
        window.__AIML_LAST_ACTIVE
-       window.__AIML_LAST_LIVE
+       window.__AIML_LAST_SNAPSHOT_LIVE (read-only snapshot-derived live cache;
+       authoritative window.__AIML_LAST_LIVE is owned only by live-overlay.js)
 ============================================================ */
 
 const LIVE_DEBUG = false;
@@ -384,7 +385,7 @@ async function loadLive(dateYmd) {
     const liveMatches = matches.filter(m => isLiveStatus(m));
 
     const mergedLiveMatches = mergeStableMatches(
-      window.__AIML_LAST_LIVE?.matches,
+      window.__AIML_LAST_SNAPSHOT_LIVE?.matches,
       liveMatches
     );
 
@@ -395,7 +396,7 @@ async function loadLive(dateYmd) {
       hash: buildHash(mergedLiveMatches)
     };
 
-    window.__AIML_LAST_LIVE = payload;
+    window.__AIML_LAST_SNAPSHOT_LIVE = payload;
 
     if (typeof window.emit === "function") {
       // live:update is now driven solely by live-overlay.js (worker). Emitting
@@ -414,12 +415,12 @@ async function loadLive(dateYmd) {
 
     const payload = {
       date: ymd,
-      matches: safeArray(window.__AIML_LAST_LIVE?.matches),
-      total: safeArray(window.__AIML_LAST_LIVE?.matches).length,
-      hash: buildHash(window.__AIML_LAST_LIVE?.matches || [])
+      matches: safeArray(window.__AIML_LAST_SNAPSHOT_LIVE?.matches),
+      total: safeArray(window.__AIML_LAST_SNAPSHOT_LIVE?.matches).length,
+      hash: buildHash(window.__AIML_LAST_SNAPSHOT_LIVE?.matches || [])
     };
 
-    window.__AIML_LAST_LIVE = payload;
+    window.__AIML_LAST_SNAPSHOT_LIVE = payload;
 
     if (typeof window.emit === "function") {
       // live:update is now driven solely by live-overlay.js (worker). Emitting
@@ -463,7 +464,10 @@ async function loadLive(dateYmd) {
             hash: buildHash(liveMatches)
           };
 
-          window.__AIML_LAST_LIVE = livePayload;
+          // Snapshot-derived live rows are diagnostic/fallback data only.
+          // Never overwrite the worker-owned authoritative live cache here:
+          // that race previously resurrected stale SECOND_HALF rows after FT.
+          window.__AIML_LAST_SNAPSHOT_LIVE = livePayload;
           void active;
           void reason;
         } catch (e) {

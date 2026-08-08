@@ -14,6 +14,12 @@ import {
   bindProductionResultIdentity,
   bindVerifiedFinalResultIdentity,
 } from "../core/production-result-identity-binding.js";
+import {
+  buildAutoCorrectedFinalPayload,
+  buildFinalScoreConflictBacklog,
+  isAutoCorrectableFlashscoreRevision,
+  markBacklogAutoCorrected
+} from "../core/final-score-revision-backlog.js";
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -412,6 +418,21 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
         ? rawTargets.length
         : 0,
     targets: [...targetsById.values()]
+  };
+}
+
+export function resolveVerifiedFinalExportCompletion({
+  write = false,
+  conflictCount = 0
+} = {}) {
+  const conflicts = Math.max(0, Number(conflictCount) || 0);
+  const truthComplete = conflicts === 0;
+  const conflictsIsolated = write === true && conflicts > 0;
+
+  return {
+    ok: truthComplete || conflictsIsolated,
+    truthComplete,
+    conflictsIsolated
   };
 }
 
@@ -1971,6 +1992,7 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
   const existingRows = [];
   const unresolved = [];
   const conflicts = [];
+  const terminalScoreRevisionCandidates = new Map();
   const correctedPenaltyScores = [];
   const wouldCorrectPenaltyScores = [];
   const wouldRetract = [];
@@ -2416,14 +2438,35 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
           continue;
         }
 
-        conflicts.push({
+        const conflictRow = {
           matchId: target.matchId,
+          homeTeam: target.homeTeam,
+          awayTeam: target.awayTeam,
           existingScore,
           newScore: payload.scoreKey,
+          provider: row.provider || null,
+          providerMatchId: row.providerMatchId || null,
           filePath,
           penaltyCorrectionReason:
-            penaltyCorrection.reason
-        });
+            penaltyCorrection.reason,
+          autoCorrectionEligible:
+            isAutoCorrectableFlashscoreRevision({
+              existingArtifact: existing,
+              target,
+              candidatePayload: payload
+            })
+        };
+
+        conflicts.push(conflictRow);
+        terminalScoreRevisionCandidates.set(
+          target.matchId,
+          {
+            existingArtifact: existing,
+            target,
+            candidatePayload: payload,
+            conflictRow
+          }
+        );
         continue;
       }
 
@@ -2442,8 +2485,95 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     }
   }
 
+  let finalScoreConflictBacklog = null;
+  let finalScoreConflictBacklogPath = null;
+  const correctedTerminalScores = [];
+  const wouldCorrectTerminalScores = [];
+  const correctedTerminalIds = new Set();
+
+  if (targetSource.allFixtures) {
+    finalScoreConflictBacklogPath = resolveDataPath(
+      "final-result-conflicts",
+      `${safeDayKey}.json`
+    );
+
+    const previousBacklog = readJsonSafe(
+      finalScoreConflictBacklogPath,
+      null
+    );
+    const revisionNowMs = Date.now();
+
+    finalScoreConflictBacklog = buildFinalScoreConflictBacklog({
+      dayKey: safeDayKey,
+      previousBacklog,
+      conflicts,
+      nowMs: revisionNowMs
+    });
+
+    for (const entry of finalScoreConflictBacklog.activeConflicts) {
+      if (entry.state !== "READY_FOR_AUTO_CORRECTION") continue;
+
+      const candidate = terminalScoreRevisionCandidates.get(entry.matchId);
+      if (!candidate) continue;
+      if (!isAutoCorrectableFlashscoreRevision(candidate)) continue;
+
+      const replacementPayload = buildAutoCorrectedFinalPayload(
+        candidate.candidatePayload,
+        candidate.existingArtifact,
+        entry,
+        revisionNowMs
+      );
+      const correctionRow = {
+        matchId: entry.matchId,
+        homeTeam: entry.homeTeam,
+        awayTeam: entry.awayTeam,
+        previousScore: entry.existingScore,
+        correctedScore: entry.newScore,
+        provider: entry.provider,
+        providerMatchId: entry.providerMatchId,
+        observationCount: entry.observationCount,
+        stableForMs: entry.stableForMs,
+        filePath: candidate.conflictRow.filePath,
+        correctionReason: "stable_same_provider_terminal_revision"
+      };
+
+      if (options.write === true) {
+        writeJsonPretty(candidate.conflictRow.filePath, replacementPayload);
+        correctedTerminalScores.push(correctionRow);
+        correctedTerminalIds.add(entry.matchId);
+      } else {
+        wouldCorrectTerminalScores.push(correctionRow);
+      }
+    }
+
+    if (correctedTerminalScores.length > 0) {
+      finalScoreConflictBacklog = markBacklogAutoCorrected(
+        finalScoreConflictBacklog,
+        correctedTerminalScores,
+        revisionNowMs
+      );
+    }
+
+    if (options.write === true) {
+      writeJsonPretty(
+        finalScoreConflictBacklogPath,
+        finalScoreConflictBacklog
+      );
+    }
+  }
+
+  const remainingConflicts = conflicts.filter(
+    row => !correctedTerminalIds.has(row.matchId)
+  );
+  const completion = resolveVerifiedFinalExportCompletion({
+    write: options.write === true,
+    conflictCount: remainingConflicts.length
+  });
+
   return {
-    ok: conflicts.length === 0,
+    ok: completion.ok,
+    truthComplete: completion.truthComplete,
+    conflictsIsolated: completion.conflictsIsolated,
     stage: options.write === true
       ? "verified_final_results_export_completed"
       : "verified_final_results_export_dry_run",
@@ -2472,7 +2602,12 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
       retracted: retracted.length,
       retractionBlocked: retractionBlocked.length,
       unresolved: unresolved.length,
-      conflicts: conflicts.length,
+      conflictsDetected: conflicts.length,
+      conflicts: remainingConflicts.length,
+      correctedTerminalScores:
+        correctedTerminalScores.length,
+      wouldCorrectTerminalScores:
+        wouldCorrectTerminalScores.length,
       correctedPenaltyScores:
         correctedPenaltyScores.length,
       wouldCorrectPenaltyScores:
@@ -2494,15 +2629,30 @@ export async function exportVerifiedFinalResultsDay(dayKey, options = {}) {
     retracted,
     retractionBlocked,
     unresolved,
-    conflicts,
+    conflicts: remainingConflicts,
+    detectedConflicts: conflicts,
     correctedPenaltyScores,
     wouldCorrectPenaltyScores,
+    correctedTerminalScores,
+    wouldCorrectTerminalScores,
+    finalScoreConflictBacklog: finalScoreConflictBacklog
+      ? {
+          path: finalScoreConflictBacklogPath,
+          persisted: options.write === true,
+          summary: finalScoreConflictBacklog.summary,
+          policyVersion: finalScoreConflictBacklog.policyVersion
+        }
+      : null,
     guarantees: {
       canonicalWrites: 0,
       deploySnapshotWrites: 0,
       valueWrites: 0,
       detailsWrites: 0,
       finalResultsWrites: options.write === true,
+      perMatchScoreConflictIsolation: true,
+      scoreConflictBacklogPersistentOnAllFixturesWrite:
+        targetSource.allFixtures && options.write === true,
+      unresolvedScoreConflictNeverOverwritesVerifiedFinal: true,
       requiresExactTeamPairMatch: true,
       requiresNumericScore: true,
       canonicalEspnFallback: {

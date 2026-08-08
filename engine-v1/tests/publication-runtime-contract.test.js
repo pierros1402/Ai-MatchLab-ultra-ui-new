@@ -109,11 +109,22 @@ test("odds requests are bound to the selected match day and obsolete requests ar
 
 test("live worker overlay is bounded and labeled with the shared operational day", () => {
   const overlay = read("assets/js/live/live-overlay.js");
+  const today = read("assets/js/ui/today-panel.js");
+  const active = read("assets/js/ui/active-leagues-panel.js");
+  const html = read("index.html");
 
   assert.match(overlay, /AIML_OperationalDay/);
   assert.match(overlay, /AbortController/);
   assert.match(overlay, /var inFlight = false/);
   assert.match(overlay, /date: operationalDay\(\)/);
+  assert.match(overlay, /minute:\s*null/);
+  assert.match(overlay, /return exact \|\| null/);
+  assert.match(today, /if \(isFinalMatch\(existing\) && !isFinalMatch\(m\)\) continue/);
+  assert.match(active, /if \(isFinalStatus\(existing\) && !isFinalStatus\(m\)\) continue/);
+  assert.doesNotMatch(today, /Date\.now\(\) - ko/);
+  assert.match(html, /today-panel\.js\?v=5/);
+  assert.match(html, /active-leagues-panel\.js\?v=4/);
+  assert.match(html, /live-overlay\.js\?v=7/);
 });
 
 test("UI aborts are terminal and are not retried as fetch failures", () => {
@@ -127,7 +138,7 @@ test("UI aborts are terminal and are not retried as fetch failures", () => {
   assert.match(fixtures, /if \(!isAbortError\(e\)\)/);
   assert.match(value, /if \(!isAbortError\(err\)\)/);
   assert.match(html, /app\.js\?v=3/);
-  assert.match(html, /fixtures-loader\.js\?v=8/);
+  assert.match(html, /fixtures-loader\.js\?v=9/);
   assert.match(html, /value-adapter\.js\?v=3/);
 });
 

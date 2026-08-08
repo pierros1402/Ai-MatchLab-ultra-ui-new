@@ -11,8 +11,15 @@ const OVERLAY_SOURCE = fs.readFileSync(
   "utf8"
 );
 
-async function runOverlay({ todayMatches, activeMatches = [], workerMatches }) {
+async function runOverlay({
+  todayMatches,
+  activeMatches = [],
+  workerMatches,
+  subsequentWorkerMatches = null
+}) {
   const events = [];
+  const intervalCallbacks = [];
+  let fetchCount = 0;
   let timerId = 0;
 
   const document = {
@@ -29,7 +36,12 @@ async function runOverlay({ todayMatches, activeMatches = [], workerMatches }) {
     __AIML_LAST_ACTIVE: { date: "2026-08-07", matches: activeMatches },
     fetch: async () => ({
       ok: true,
-      json: async () => ({ matches: workerMatches })
+      json: async () => ({
+        matches:
+          fetchCount++ === 0 || !Array.isArray(subsequentWorkerMatches)
+            ? workerMatches
+            : subsequentWorkerMatches
+      })
     }),
     emit(event, payload) { events.push({ event, payload }); },
     setTimeout(callback, delay) {
@@ -38,7 +50,10 @@ async function runOverlay({ todayMatches, activeMatches = [], workerMatches }) {
       return timerId;
     },
     clearTimeout() {},
-    setInterval() { return ++timerId; },
+    setInterval(callback) {
+      intervalCallbacks.push(callback);
+      return ++timerId;
+    },
     clearInterval() {}
   };
 
@@ -56,7 +71,12 @@ async function runOverlay({ todayMatches, activeMatches = [], workerMatches }) {
   vm.runInContext(OVERLAY_SOURCE, context, { filename: "live-overlay.js" });
   for (let i = 0; i < 8; i += 1) await Promise.resolve();
 
-  return events.find(entry => entry.event === "live:update")?.payload || null;
+  if (Array.isArray(subsequentWorkerMatches) && intervalCallbacks.length) {
+    intervalCallbacks[0]();
+    for (let i = 0; i < 8; i += 1) await Promise.resolve();
+  }
+
+  return events.filter(entry => entry.event === "live:update").at(-1)?.payload || null;
 }
 
 test("Flashscore worker source ID is emitted as the canonical Today ID", async () => {
@@ -86,6 +106,8 @@ test("Flashscore worker source ID is emitted as the canonical Today ID", async (
   assert.equal(payload.matches[0].id, "cid_col2_atletico_realsantander_20260807");
   assert.equal(payload.matches[0].matchId, "cid_col2_atletico_realsantander_20260807");
   assert.equal(payload.matches[0].providerMatchId, "fs_AiEjXZZp");
+  assert.equal(payload.matches[0].minute, null);
+  assert.equal(payload.matches[0].minuteSource, "unavailable");
 });
 
 test("cross-provider worker row uses unique ordered teams plus kickoff fallback", async () => {
@@ -135,4 +157,55 @@ test("ambiguous or time-mismatched fallback stays fail-closed on provider ID", a
 
   assert.equal(payload.matches[0].id, "fs_ZyXwVu12");
   assert.equal(payload.matches[0].canonicalId, null);
+});
+
+test("worker FT is terminal-sticky when a later payload regresses to LIVE", async () => {
+  const todayMatches = [{
+    id: "cid_terminal_sticky_20260807",
+    canonicalId: "cid_terminal_sticky_20260807",
+    sourceId: "Sticky123",
+    home: "Sticky Home",
+    away: "Sticky Away",
+    kickoffUtc: "2026-08-07T17:00:00.000Z"
+  }];
+  const payload = await runOverlay({
+    todayMatches,
+    workerMatches: [{
+      matchId: "fs_Sticky123",
+      home: "Sticky Home",
+      away: "Sticky Away",
+      kickoffUtc: "2026-08-07T17:00:00.000Z",
+      status: "FT",
+      scoreHome: 2,
+      scoreAway: 1,
+      minute: null
+    }],
+    subsequentWorkerMatches: [{
+      matchId: "fs_Sticky123",
+      home: "Sticky Home",
+      away: "Sticky Away",
+      kickoffUtc: "2026-08-07T17:00:00.000Z",
+      status: "LIVE",
+      scoreHome: 1,
+      scoreAway: 1,
+      minute: 77
+    }]
+  });
+
+  assert.equal(payload.matches.length, 1);
+  assert.equal(payload.matches[0].status, "FT");
+  assert.equal(payload.matches[0].scoreHome, 2);
+  assert.equal(payload.matches[0].scoreAway, 1);
+  assert.equal(payload.matches[0].minute, null);
+});
+
+test("fixtures snapshot loader cannot write the authoritative browser live cache", () => {
+  const loader = fs.readFileSync(
+    path.join(REPO_ROOT, "assets/js/live/fixtures-loader.js"),
+    "utf8"
+  );
+
+  assert.doesNotMatch(loader, /window\.__AIML_LAST_LIVE\s*=/u);
+  assert.match(loader, /window\.__AIML_LAST_SNAPSHOT_LIVE\s*=/u);
+  assert.match(OVERLAY_SOURCE, /window\.__AIML_LAST_LIVE\s*=\s*payload/u);
 });

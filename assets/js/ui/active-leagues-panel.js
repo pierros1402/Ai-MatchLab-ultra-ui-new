@@ -411,6 +411,9 @@ if (window.on) {
       for (const m of payload.matches) {
         const existing = map.get(String(m.id || m.matchId));
         if (!existing) continue;
+        // FT/AET/PEN is terminal. Never let an older or transient worker LIVE
+        // observation resurrect a match that Active already knows is finished.
+        if (isFinalStatus(existing) && !isFinalStatus(m)) continue;
         // Never downgrade a snapshot-confirmed final: a STALE_LIVE overlay row
         // means "no confirmed live info", not new evidence about the result.
         if ((m.staleLive === true || String(m.status || "").toUpperCase() === "STALE_LIVE") &&

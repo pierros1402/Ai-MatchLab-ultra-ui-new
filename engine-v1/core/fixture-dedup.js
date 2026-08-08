@@ -95,7 +95,37 @@ function stripTrailingQualifier(name) {
   return stripped || String(name || "").trim();
 }
 
-export function sameTeamName(slug, a, b) {
+function productionTeamIdentityMatch(identityResolver, slug, a, b) {
+  if (
+    !identityResolver ||
+    typeof identityResolver.resolveTeamReference !== "function"
+  ) {
+    return null;
+  }
+
+  const left = identityResolver.resolveTeamReference({
+    alias: a,
+    leagueSlug: slug
+  });
+  const right = identityResolver.resolveTeamReference({
+    alias: b,
+    leagueSlug: slug
+  });
+
+  // Only exact, finalized production identities are authoritative here. If
+  // either spelling is unknown, the legacy conservative comparison below gets
+  // a chance to handle it. If BOTH are known, a different globalClubId is an
+  // explicit non-match and must veto every fuzzy/alias heuristic.
+  if (!left?.ok || !right?.ok) return null;
+
+  const leftId = String(left.globalClubId || "").trim();
+  const rightId = String(right.globalClubId || "").trim();
+  if (!leftId || !rightId) return null;
+
+  return leftId === rightId;
+}
+
+export function sameTeamName(slug, a, b, { identityResolver = null } = {}) {
   const rawA = String(a || "").trim();
   const rawB = String(b || "").trim();
   if (!rawA || !rawB) return false;
@@ -109,6 +139,14 @@ export function sameTeamName(slug, a, b) {
 
   const nameA = stripTrailingQualifier(rawA);
   const nameB = stripTrailingQualifier(rawB);
+
+  const productionIdentityMatch = productionTeamIdentityMatch(
+    identityResolver,
+    slug,
+    nameA,
+    nameB
+  );
+  if (productionIdentityMatch !== null) return productionIdentityMatch;
 
   const keyA = normalizeTeamKey(nameA);
   const keyB = normalizeTeamKey(nameB);
@@ -137,6 +175,59 @@ function meaningful(value) {
   return value !== null && value !== undefined && value !== "";
 }
 
+function providerIdentityMap(row) {
+  const out = {};
+
+  if (
+    row?.providerIds &&
+    typeof row.providerIds === "object" &&
+    !Array.isArray(row.providerIds)
+  ) {
+    for (const [provider, value] of Object.entries(row.providerIds)) {
+      const key = String(provider || "").trim().toLowerCase();
+      const id = String(value ?? "").trim();
+      if (key && id) out[key] = id;
+    }
+  }
+
+  const provider = sourceFamily(row);
+  const canonicalId = String(row?.canonicalId || "").trim();
+  const providerId = String(
+    row?.sourceId ||
+    row?.sourceMatchId ||
+    row?.providerMatchId ||
+    row?.matchId ||
+    ""
+  ).trim();
+
+  if (
+    provider &&
+    provider !== "unknown" &&
+    providerId &&
+    providerId !== canonicalId
+  ) {
+    out[provider] = providerId;
+  }
+
+  return out;
+}
+
+function canonicalIdentityAliases(row) {
+  const out = new Set();
+
+  for (const value of Array.isArray(row?.canonicalAliases)
+    ? row.canonicalAliases
+    : []) {
+    const id = String(value ?? "").trim();
+    if (id) out.add(id);
+  }
+
+  const canonicalId = String(row?.canonicalId || "").trim();
+  if (canonicalId) out.add(canonicalId);
+
+  return out;
+}
+
 // Keep `winner`'s identity (ids, naming, canonicalId); backfill missing fields.
 function absorbRow(winner, loser) {
   const merged = { ...winner };
@@ -161,6 +252,28 @@ function absorbRow(winner, loser) {
     }
   }
 
+  // Provider IDs are durable lineage, not winner-only display fields. Preserve
+  // every known provider→event binding on the surviving canonical fixture so a
+  // later clean workflow checkout can still recover the cross-provider match
+  // identity without relying on the gitignored local canonical-registry cache.
+  const providerIds = {
+    ...providerIdentityMap(loser),
+    ...providerIdentityMap(winner)
+  };
+  if (Object.keys(providerIds).length) {
+    merged.providerIds = providerIds;
+  }
+
+  const retainedCanonicalId = String(merged?.canonicalId || "").trim();
+  const canonicalAliases = new Set([
+    ...canonicalIdentityAliases(winner),
+    ...canonicalIdentityAliases(loser)
+  ]);
+  if (retainedCanonicalId) canonicalAliases.delete(retainedCanonicalId);
+  if (canonicalAliases.size) {
+    merged.canonicalAliases = [...canonicalAliases].sort();
+  }
+
   const firstSeen = [winner?.firstSeenAt, loser?.firstSeenAt].filter(Boolean).sort()[0];
   if (firstSeen) merged.firstSeenAt = firstSeen;
   const lastSeen = [winner?.lastSeenAt, loser?.lastSeenAt].filter(Boolean).sort().pop();
@@ -173,7 +286,7 @@ function absorbRow(winner, loser) {
  * Dedupe one league's fixture rows (typically one canonical day file).
  * Returns { rows, removed } where removed lists { keptId, droppedId } pairs.
  */
-export function dedupeLeagueDayFixtures(rows, { slug } = {}) {
+export function dedupeLeagueDayFixtures(rows, { slug, identityResolver = null } = {}) {
   let list = (Array.isArray(rows) ? rows : []).filter(Boolean);
   const leagueSlug = String(slug || list[0]?.leagueSlug || "").trim();
   const removed = [];
@@ -231,8 +344,18 @@ export function dedupeLeagueDayFixtures(rows, { slug } = {}) {
         const other = kept[i];
         if (sourceFamily(other) === rowFamily) continue;
         if (!kickoffCompatible(row, other)) continue;
-        if (!sameTeamName(leagueSlug, row?.homeTeam, other?.homeTeam)) continue;
-        if (!sameTeamName(leagueSlug, row?.awayTeam, other?.awayTeam)) continue;
+        if (!sameTeamName(
+          leagueSlug,
+          row?.homeTeam,
+          other?.homeTeam,
+          { identityResolver }
+        )) continue;
+        if (!sameTeamName(
+          leagueSlug,
+          row?.awayTeam,
+          other?.awayTeam,
+          { identityResolver }
+        )) continue;
         mergedInto = i;
         break;
       }
