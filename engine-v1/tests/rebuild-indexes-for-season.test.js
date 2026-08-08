@@ -8,6 +8,7 @@ import {
 
 import {
   resolveTargetDateFromDay,
+  resolveIndexBuildTarget,
   resolveGlobalSeasonBounds,
   archiveLabelsForGlobalSeason,
   isTerminalHistoryRow,
@@ -135,6 +136,27 @@ test(
         "invalid"
       ),
       null
+    );
+  }
+);
+test(
+  "imported index rebuild derives season from its explicit day instead of parent argv",
+  () => {
+    const target =
+      resolveIndexBuildTarget({
+        dayKey: "2026-08-08",
+        now: new Date(
+          "2026-07-31T23:59:59.000Z"
+        )
+      });
+
+    assert.equal(
+      target.season,
+      "2026-2027"
+    );
+    assert.equal(
+      target.targetDay,
+      "2026-08-08"
     );
   }
 );
