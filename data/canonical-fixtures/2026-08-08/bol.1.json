@@ -2,14 +2,46 @@
   "dayKey": "2026-08-08",
   "leagueSlug": "bol.1",
   "leagueName": "Bol 1",
-  "updatedAt": "2026-08-07T23:49:38.446Z",
+  "updatedAt": "2026-08-08T01:23:45.157Z",
   "count": 5,
   "sourceMeta": {
     "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "bol.1",
     "requestedDayKey": "2026-08-08",
-    "mergedAt": "2026-08-07T23:49:38.446Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "bol.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 1,
+      "matches": 1,
+      "fetches": [
+        {
+          "providerSlug": "bol.1",
+          "dayKey": "2026-08-07",
+          "ok": true,
+          "events": 2,
+          "matched": 1
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-08T01:23:45.157Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,11 +63,35 @@
       "penalties": null,
       "decidedBy": null,
       "status": "FT",
-      "rawStatus": "STATUS_FINAL",
+      "rawStatus": "STATUS_SCHEDULED",
       "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-08-04T22:31:42.677Z",
-      "lastSeenAt": "2026-08-07T23:49:37.518Z"
+      "lastSeenAt": "2026-08-07T23:49:37.518Z",
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-08T01:02:51.559Z",
+        "provider": "reconciled",
+        "providerMatchId": "Me9qhggM",
+        "dayKey": "2026-08-08",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "scoreHome": 0,
+          "scoreAway": 1
+        }
+      }
     },
     {
       "canonicalId": "cid_bol1_abb_guabira_20260808",
@@ -79,16 +135,16 @@
       "kickoffUtc": "2026-08-07T23:30Z",
       "homeTeam": "Real Tomayapo",
       "awayTeam": "Real Oruro",
-      "scoreHome": 0,
-      "scoreAway": 1,
+      "scoreHome": 1,
+      "scoreAway": 2,
       "penalties": null,
       "decidedBy": null,
-      "status": "FIRST_HALF",
-      "rawStatus": "STATUS_FIRST_HALF",
-      "minute": "19'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+5'",
       "venue": "Estadio IV Centenário",
       "firstSeenAt": "2026-08-05T22:33:10.658Z",
-      "lastSeenAt": "2026-08-07T23:49:38.151Z"
+      "lastSeenAt": "2026-08-08T01:23:45.156Z"
     },
     {
       "canonicalId": "cid_bol1_sabulobulo_nacionalpotosi_20260808",
@@ -139,7 +195,7 @@
       "minute": "0'",
       "venue": "Estadio Félix Capriles",
       "firstSeenAt": "2026-08-07T18:08:39.665Z",
-      "lastSeenAt": "2026-08-07T23:49:38.425Z"
+      "lastSeenAt": "2026-08-08T01:23:44.988Z"
     }
   ]
 }
