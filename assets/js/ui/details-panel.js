@@ -417,12 +417,16 @@ async function fetchIntelHealth(matchId) {
     const row = (x) => {
       const name = esc(x.name || x.player || x.playerName || "Player");
       const reason = esc(x.reason || x.type || x.status || "");
-      const pct =
-        x.probability != null ? ` • ${esc(String(x.probability))}%` : "";
+      const probabilityValue = Number(x.probability);
+      const probabilityDecimal = Number.isFinite(probabilityValue)
+        ? (probabilityValue > 1 ? probabilityValue / 100 : probabilityValue).toFixed(3)
+        : null;
+      const probabilityText =
+        probabilityDecimal != null ? ` • ${esc(probabilityDecimal)}` : "";
       return `
         <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
           <div style="font-weight:800;">${name}</div>
-          <div class="muted" style="text-align:right;">${reason}${pct}</div>
+          <div class="muted" style="text-align:right;">${reason}${probabilityText}</div>
         </div>
       `;
     };
@@ -1595,10 +1599,10 @@ async function renderLocal(match, mountEl) {
                     Pick: <b>${esc(v.pick || "—")}</b>
                     ${v.fairOdds != null ? `<span style="margin-left:10px;">Fair odds: <b>${esc(v.fairOdds)}</b></span>` : ""}
                     <span style="margin-left:10px;">Score: <b>${esc(
-                      v.score != null ? (Number(v.score) * 100).toFixed(1) + "%" : "—"
+                      v.score != null ? Number(v.score).toFixed(3) : "—"
                     )}</b></span>
                     <span style="margin-left:10px;">Confidence: <b>${esc(
-                      v.confidence != null ? (Number(v.confidence) * 100).toFixed(1) + "%" : "—"
+                      v.confidence != null ? Number(v.confidence).toFixed(3) : "—"
                     )}</b></span>
                   </div>
                   <div style="margin-top:4px;">
@@ -1825,7 +1829,7 @@ async function renderLocal(match, mountEl) {
           m.awayTeam ||
           "Away";
 
-        const signedPct = value => {
+        const signedDecimal = value => {
           const parsed = Number(value);
 
           if (!Number.isFinite(parsed)) {
@@ -1834,8 +1838,7 @@ async function renderLocal(match, mountEl) {
 
           return (
             (parsed >= 0 ? "+" : "") +
-            (parsed * 100).toFixed(1) +
-            "%"
+            parsed.toFixed(3)
           );
         };
 
@@ -1850,11 +1853,11 @@ async function renderLocal(match, mountEl) {
             : "—";
         };
 
-        const rate = value => {
+        const probabilityDecimal = value => {
           const parsed = Number(value);
 
           return Number.isFinite(parsed)
-            ? (parsed * 100).toFixed(1) + "%"
+            ? parsed.toFixed(3)
             : "—";
         };
 
@@ -1895,7 +1898,7 @@ async function renderLocal(match, mountEl) {
                 Sample ${esc(profile.sample ?? 0)}
                 · strong ${esc(profile.strongOpponentSample ?? 0)}
                 · peer ${esc(profile.peerStrengthSample ?? 0)}
-                · reliability ${esc(rate(profile.sampleReliability))}
+                · reliability ${esc(probabilityDecimal(profile.sampleReliability))}
               </div>
               <div style="display:grid;grid-template-columns:1fr auto auto;gap:10px;font-size:10px;opacity:.58;margin-top:9px;">
                 <span>Metric</span>
@@ -1905,8 +1908,8 @@ async function renderLocal(match, mountEl) {
               ${metric("PPG", raw.ppg, adjustedValues.ppg)}
               ${metric("Goals for", raw.gfRate, adjustedValues.gfRate)}
               ${metric("Goals against", raw.gaRate, adjustedValues.gaRate)}
-              ${metric("Over 2.5", raw.over25Rate, adjustedValues.over25Rate, rate)}
-              ${metric("BTTS", raw.bttsRate, adjustedValues.bttsRate, rate)}
+              ${metric("Over 2.5", raw.over25Rate, adjustedValues.over25Rate, probabilityDecimal)}
+              ${metric("BTTS", raw.bttsRate, adjustedValues.bttsRate, probabilityDecimal)}
             </div>
           `;
         };
@@ -1923,7 +1926,7 @@ async function renderLocal(match, mountEl) {
             <div style="font-size:11px;opacity:.65;margin-bottom:8px;">
               Same shared probability layer used by Plan A2 and Plan B2.
               Overall reliability:
-              <b>${esc(rate(adjusted.sampleReliability))}</b>
+              <b>${esc(probabilityDecimal(adjusted.sampleReliability))}</b>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;">
               ${sideCard(homeRaw, adjusted.home)}
@@ -1933,15 +1936,15 @@ async function renderLocal(match, mountEl) {
               <div style="font-weight:800;margin-bottom:6px;">Probability impact</div>
               <div>
                 1 / X / 2:
-                <b>${esc(signedPct(oneXTwo.home))}</b> /
-                <b>${esc(signedPct(oneXTwo.draw))}</b> /
-                <b>${esc(signedPct(oneXTwo.away))}</b>
+                <b>${esc(signedDecimal(oneXTwo.home))}</b> /
+                <b>${esc(signedDecimal(oneXTwo.draw))}</b> /
+                <b>${esc(signedDecimal(oneXTwo.away))}</b>
               </div>
               <div style="margin-top:4px;">
-                Over 1.5 <b>${esc(signedPct(impact.OU15?.over))}</b>
-                · Over 2.5 <b>${esc(signedPct(impact.OU25?.over))}</b>
-                · Over 3.5 <b>${esc(signedPct(impact.OU35?.over))}</b>
-                · BTTS Yes <b>${esc(signedPct(impact.BTTS?.yes))}</b>
+                Over 1.5 <b>${esc(signedDecimal(impact.OU15?.over))}</b>
+                · Over 2.5 <b>${esc(signedDecimal(impact.OU25?.over))}</b>
+                · Over 3.5 <b>${esc(signedDecimal(impact.OU35?.over))}</b>
+                · BTTS Yes <b>${esc(signedDecimal(impact.BTTS?.yes))}</b>
               </div>
             </div>
           </div>
@@ -2426,9 +2429,9 @@ function renderAIStructuralBlock(payload) {
   const consistency = ai.consistency || {};
   const risk = ai.risk || {};
 
-  function pct(v) {
+  function probabilityDecimal(v) {
     if (v == null || isNaN(v)) return "–";
-    return (Math.max(0, Math.min(1, v)) * 100).toFixed(0) + "%";
+    return Math.max(0, Math.min(1, v)).toFixed(3);
   }
 
   function bar(label, value) {
@@ -2446,7 +2449,7 @@ function renderAIStructuralBlock(payload) {
      </div>
 
      <div style="font-size:11px;opacity:.7;margin-top:2px;">
-       ${pct(value)}
+       ${probabilityDecimal(value)}
      </div>
    </div>
  `;

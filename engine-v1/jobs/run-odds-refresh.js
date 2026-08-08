@@ -35,10 +35,19 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const kickoffsUtc = (existing?.matches || [])
     .map(m => m.kickoffUtc ? Date.parse(m.kickoffUtc) : kickoffToUtcMs(m.kickoffLocal))
     .filter(Boolean);
+  const existingAssessmentRows = (existing?.matches || []).filter(
+    match => match?.aiAssessment?.markets && Object.keys(match.aiAssessment.markets).length > 0
+  ).length;
+  const missingAssessmentInput =
+    Array.isArray(existing?.matches) &&
+    existing.matches.length > 0 &&
+    existingAssessmentRows === 0;
 
   const decision = opts.force
     ? { due: true, reason: "forced", hoursSinceLast: null }
-    : oddsUpdateDecision({ lastScrapeAt, kickoffsUtc });
+    : missingAssessmentInput
+      ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
+      : oddsUpdateDecision({ lastScrapeAt, kickoffsUtc });
 
   // Fixtures snapshot refreshes on every gated run (cheap; new fixtures appear).
   let fixturesChanged = false;

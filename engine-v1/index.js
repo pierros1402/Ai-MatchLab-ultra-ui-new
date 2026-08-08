@@ -2881,8 +2881,8 @@ function valueExportFinalScore(row) {
   return row.finalScore || "";
 }
 
-function styleValueExportTitle(sheet, rowNumber, text) {
-  sheet.mergeCells(rowNumber, 1, rowNumber, 16);
+function styleValueExportTitle(sheet, rowNumber, text, columnCount = 16) {
+  sheet.mergeCells(rowNumber, 1, rowNumber, columnCount);
   const cell = sheet.getCell(rowNumber, 1);
   cell.value = text;
   cell.font = { bold: true, size: 14 };
@@ -3013,6 +3013,136 @@ function addValueExportPlanSection(sheet, plan) {
 
   sheet.addRow([]);
   sheet.addRow([]);
+}
+
+function valueExportKickoffTime(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+
+  const timeOnly = raw.match(/^(\d{2}):(\d{2})(?::\d{2})?$/u);
+  if (timeOnly) return `${timeOnly[1]}:${timeOnly[2]}`;
+
+  const date = new Date(raw);
+  if (!Number.isFinite(date.getTime())) return raw;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Athens",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(date);
+}
+
+function valueExportMatchLabel(row) {
+  const home = String(row?.homeTeam || "").trim();
+  const away = String(row?.awayTeam || "").trim();
+  return [home, away].filter(Boolean).join(" – ");
+}
+
+function addCompactDailyValuePicks(sheet, report) {
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `Value Picks — ${report.from}`, 11);
+  addValueExportTableHeader(sheet, [
+    "Plan", "Country", "League", "Match", "Kickoff", "Pick",
+    "Model Score", "Confidence", "Display Odds", "Final Score", "Result"
+  ]);
+
+  let rowCount = 0;
+  for (const planKey of report.planOrder) {
+    const plan = report.plans[planKey];
+    for (const row of plan.picks) {
+      const added = sheet.addRow([
+        plan.label,
+        row.country || "",
+        row.leagueName || row.leagueSlug || "",
+        valueExportMatchLabel(row),
+        valueExportKickoffTime(row.kickoff),
+        row.selectionLabel || row.pick || "",
+        row.score ?? "",
+        row.confidence ?? "",
+        row.oddsDecimal ?? "",
+        valueExportFinalScore(row),
+        row.result || ""
+      ]);
+      added.getCell(7).numFmt = "0.000";
+      if (typeof added.getCell(8).value === "number") added.getCell(8).numFmt = "0.000";
+      added.getCell(9).numFmt = "0.00";
+      rowCount += 1;
+    }
+  }
+
+  if (rowCount === 0) {
+    const row = sheet.addRow(["No picks for selected day"]);
+    sheet.mergeCells(row.number, 1, row.number, 11);
+  }
+}
+
+function addCompactDailyPlanAnalysis(sheet, plan) {
+  const summary = plan.daily[0] || {
+    status: "NOT_AVAILABLE",
+    picks: 0,
+    wins: 0,
+    losses: 0,
+    voids: 0,
+    unresolved: 0,
+    unsupported: 0,
+    winRate: null
+  };
+
+  styleValueExportTitle(sheet, sheet.rowCount + 1, `${plan.label} — Analysis`, 11);
+  addValueExportTableHeader(sheet, [
+    "Status", "Picks", "Wins", "Losses", "Voids", "Unresolved",
+    "Unsupported", "Win %"
+  ]);
+  const summaryRow = sheet.addRow([
+    summary.status,
+    summary.picks,
+    summary.wins,
+    summary.losses,
+    summary.voids,
+    summary.unresolved,
+    summary.unsupported,
+    valueExportPercent(summary.winRate)
+  ]);
+  setValueExportPercentCell(summaryRow, 8);
+
+  sheet.addRow([]);
+  addValueExportTableHeader(sheet, [
+    "Market", "Pick", "Picks", "Wins", "Losses", "Voids", "Unresolved",
+    "Unsupported", "Win %"
+  ]);
+  if (plan.markets.length === 0) {
+    sheet.addRow(["No picks for selected day"]);
+  } else {
+    for (const row of plan.markets) {
+      const added = sheet.addRow([
+        row.market,
+        row.selection,
+        row.picks,
+        row.wins,
+        row.losses,
+        row.voids,
+        row.unresolved,
+        row.unsupported,
+        valueExportPercent(row.winRate)
+      ]);
+      setValueExportPercentCell(added, 9);
+    }
+  }
+
+  sheet.addRow([]);
+}
+
+function configureCompactDailyValueExportSheet(sheet) {
+  const widths = [12, 16, 24, 38, 10, 20, 13, 13, 13, 13, 12];
+  widths.forEach((width, index) => {
+    sheet.getColumn(index + 1).width = width;
+    sheet.getColumn(index + 1).alignment = {
+      vertical: "middle",
+      horizontal: [2, 3, 4, 6].includes(index + 1) ? "left" : "center"
+    };
+  });
+
+  sheet.views = [{ state: "frozen", ySplit: 2 }];
 }
 
 function configureValueExportSheet(sheet) {
@@ -3157,13 +3287,25 @@ app.get("/value-export/range", async (req, res) => {
   if (format === "xlsx") {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Value Report");
-    configureValueExportSheet(sheet);
+    const compactDaily = from === to;
 
-    for (const planKey of report.planOrder) {
-      addValueExportPlanSection(sheet, report.plans[planKey]);
+    if (compactDaily) {
+      configureCompactDailyValueExportSheet(sheet);
+      addCompactDailyValuePicks(sheet, report);
+      sheet.addRow([]);
+      styleValueExportTitle(sheet, sheet.rowCount + 1, "Plan Analysis", 11);
+      sheet.addRow([]);
+      for (const planKey of report.planOrder) {
+        addCompactDailyPlanAnalysis(sheet, report.plans[planKey]);
+      }
+    } else {
+      configureValueExportSheet(sheet);
+      for (const planKey of report.planOrder) {
+        addValueExportPlanSection(sheet, report.plans[planKey]);
+      }
     }
 
-    styleValueExportTitle(sheet, sheet.rowCount + 1, "Integrity");
+    styleValueExportTitle(sheet, sheet.rowCount + 1, "Integrity", compactDaily ? 11 : 16);
     addValueExportTableHeader(sheet, ["Status", "Issue Count", "Code", "Date", "Plan", "Details"]);
     if (report.integrity.issues.length === 0) {
       sheet.addRow([report.integrity.status, 0, "", "", "", ""]);
