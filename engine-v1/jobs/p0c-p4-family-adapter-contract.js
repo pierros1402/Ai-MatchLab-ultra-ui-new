@@ -233,7 +233,7 @@ const SOURCE_BINDINGS = Object.freeze({
   planBBuilder: Object.freeze({
     path: "engine-v1/jobs/derive-value-from-odds.js",
     sha256:
-      "cdb10555966416aae3c08e11d66fefda6bc1449a69666a08940a856d587c82b9",
+      "076a4d199d5363153e0b98270759f195129d23b8634b9a9c487cf538745e7c1a",
     exports: Object.freeze(["deriveValueFromOdds"]),
   }),
   planA2B2Builder: Object.freeze({

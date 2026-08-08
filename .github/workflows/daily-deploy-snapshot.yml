@@ -296,6 +296,43 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
 
+      # Plan B/B2 consume our aiAssessment layer, never bookmaker odds. Actions
+      # runners do not retain data/odds-memory between jobs, so a day without a
+      # committed assessed odds snapshot must be primed inside the daily build
+      # itself. This also makes the evening D+1 pre-build self-contained.
+      - name: Ensure persistent model assessment input for Value Plans B/B2
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if node - <<'NODE'
+          const fs = require("fs");
+          const day = process.env.DAY_KEY;
+          const file = `data/deploy-snapshots/${day}/odds.json`;
+
+          let payload = null;
+          try {
+            payload = JSON.parse(fs.readFileSync(file, "utf8"));
+          } catch {
+            payload = null;
+          }
+
+          const matches = Array.isArray(payload?.matches) ? payload.matches : [];
+          const assessmentRows = matches.filter(row =>
+            row?.aiAssessment?.markets && Object.keys(row.aiAssessment.markets).length > 0
+          ).length;
+
+          console.log(JSON.stringify({ file, matches: matches.length, assessmentRows }, null, 2));
+          process.exit(assessmentRows > 0 ? 1 : 0);
+          NODE
+          then
+            echo "Persistent aiAssessment input is missing; priming ${DAY_KEY}."
+            node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY" --force
+          else
+            echo "Persistent aiAssessment input already exists; no extra opening refresh required."
+          fi
+
       - name: Export deploy snapshot
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
@@ -333,6 +370,56 @@ jobs:
             node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
             node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
           fi
+
+      # A successful build with canonical fixtures but zero model-assessment
+      # input is a pipeline failure, not a legitimate "0 picks" result. Fail
+      # closed so the public UI can never silently publish that state again.
+      - name: Enforce Value Plans B/B2 assessment input
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require("fs");
+          const day = process.env.DAY_KEY;
+          const plans = [
+            ["B", `data/value-plans/${day}/plan-b-audit.json`],
+            ["B2", `data/value-plans/${day}/plan-b2-audit.json`]
+          ];
+
+          for (const [plan, file] of plans) {
+            if (!fs.existsSync(file)) {
+              throw new Error(`Plan ${plan} assessment audit missing: ${file}`);
+            }
+
+            const audit = JSON.parse(fs.readFileSync(file, "utf8"));
+            const membership = audit?.membership || {};
+            const canonicalFixtures = Number(
+              membership.canonicalFixtures ??
+              membership.fixtureUniverse?.count ??
+              membership.evaluatedFixtureCount ??
+              0
+            );
+            const assessmentRows = Number(membership.assessmentRows ?? 0);
+            const joinedMatches = Number(membership.joinedMatches ?? 0);
+
+            console.log(JSON.stringify({
+              plan,
+              canonicalFixtures,
+              assessmentRows,
+              joinedMatches,
+              assessmentInputSource: audit?.sourceContract?.assessmentInputSource || null
+            }));
+
+            if (canonicalFixtures > 0 && assessmentRows <= 0) {
+              throw new Error(`Plan ${plan} has ${canonicalFixtures} fixtures but zero aiAssessment rows`);
+            }
+
+            if (assessmentRows > 0 && joinedMatches <= 0) {
+              throw new Error(`Plan ${plan} has aiAssessment rows but zero canonical identity joins`);
+            }
+          }
+          NODE
 
       - name: Build cumulative value comparison
         if: env.SKIP_BUILD != 'true'

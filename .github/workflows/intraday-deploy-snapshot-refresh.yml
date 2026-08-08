@@ -147,8 +147,11 @@ jobs:
             freshness: `data/deploy-snapshots/${day}/freshness-report.json`,
             manifest: `data/deploy-snapshots/${day}/manifest.json`,
             fixtures: `data/deploy-snapshots/${day}/fixtures.json`,
+            oddsSnapshot: `data/deploy-snapshots/${day}/odds.json`,
             localValue: `data/value/${day}.json`,
-            snapshotValue: `data/deploy-snapshots/${day}/value.json`
+            snapshotValue: `data/deploy-snapshots/${day}/value.json`,
+            planBAudit: `data/value-plans/${day}/plan-b-audit.json`,
+            planB2Audit: `data/value-plans/${day}/plan-b2-audit.json`
           };
 
           function readJsonSafe(file) {
@@ -173,8 +176,11 @@ jobs:
           const report = readJsonSafe(files.freshness) || {};
           const manifest = readJsonSafe(files.manifest);
           const fixtures = readJsonSafe(files.fixtures);
+          const oddsSnapshot = readJsonSafe(files.oddsSnapshot);
           const localValue = readJsonSafe(files.localValue);
           const snapshotValue = readJsonSafe(files.snapshotValue);
+          const planBAudit = readJsonSafe(files.planBAudit);
+          const planB2Audit = readJsonSafe(files.planB2Audit);
 
           const valueKinds = new Set([
             "snapshot_value",
@@ -218,6 +224,35 @@ jobs:
             });
           }
 
+          const oddsAssessmentRows = (Array.isArray(oddsSnapshot?.matches)
+            ? oddsSnapshot.matches
+            : []
+          ).filter(row =>
+            row?.aiAssessment?.markets && Object.keys(row.aiAssessment.markets).length > 0
+          ).length;
+
+          for (const [plan, audit, artifact] of [
+            ["B", planBAudit, files.planBAudit],
+            ["B2", planB2Audit, files.planB2Audit]
+          ]) {
+            const auditAssessmentRows = Number(audit?.membership?.assessmentRows ?? 0);
+            const joinedMatches = Number(audit?.membership?.joinedMatches ?? 0);
+
+            if (
+              oddsAssessmentRows > auditAssessmentRows ||
+              (oddsAssessmentRows > 0 && joinedMatches <= 0)
+            ) {
+              valueBaselineIssues.push({
+                kind: "persistent_model_assessment_input_advanced",
+                plan,
+                artifact,
+                oddsAssessmentRows,
+                auditAssessmentRows,
+                joinedMatches
+              });
+            }
+          }
+
           const fixtureCount = Number(
             fixtures?.count ??
             manifest?.counts?.fixtures ??
@@ -252,6 +287,53 @@ jobs:
           else
             echo "No publishable fixture-backed Value repair is required — skipping targeted refresh."
           fi
+
+      - name: Enforce Value Plans B/B2 assessment input
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require("fs");
+          const day = process.env.DAY_KEY;
+          const plans = [
+            ["B", `data/value-plans/${day}/plan-b-audit.json`],
+            ["B2", `data/value-plans/${day}/plan-b2-audit.json`]
+          ];
+
+          for (const [plan, file] of plans) {
+            if (!fs.existsSync(file)) {
+              throw new Error(`Plan ${plan} assessment audit missing: ${file}`);
+            }
+
+            const audit = JSON.parse(fs.readFileSync(file, "utf8"));
+            const membership = audit?.membership || {};
+            const canonicalFixtures = Number(
+              membership.canonicalFixtures ??
+              membership.fixtureUniverse?.count ??
+              membership.evaluatedFixtureCount ??
+              0
+            );
+            const assessmentRows = Number(membership.assessmentRows ?? 0);
+            const joinedMatches = Number(membership.joinedMatches ?? 0);
+
+            console.log(JSON.stringify({
+              plan,
+              canonicalFixtures,
+              assessmentRows,
+              joinedMatches,
+              assessmentInputSource: audit?.sourceContract?.assessmentInputSource || null
+            }));
+
+            if (canonicalFixtures > 0 && assessmentRows <= 0) {
+              throw new Error(`Plan ${plan} has ${canonicalFixtures} fixtures but zero aiAssessment rows`);
+            }
+
+            if (assessmentRows > 0 && joinedMatches <= 0) {
+              throw new Error(`Plan ${plan} has aiAssessment rows but zero canonical identity joins`);
+            }
+          }
+          NODE
 
       # Persist the diagnostic even when a prior intraday step failed. This is
       # intentionally health-only; broken/partial snapshot artifacts are never

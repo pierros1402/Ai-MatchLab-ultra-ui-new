@@ -24,10 +24,10 @@
  *   source: isPlanB2Observation ? "derive-value-from-opponent-adjusted-model-assessment" : "derive-value-from-model-assessment",
     policyVersion: "value-policy-v2.3",
     sourceContract: {
-      valueInput: "odds_memory_ai_assessment",
-      deploySnapshotInput: false,
+      valueInput: "persistent_ai_assessment",
+      deploySnapshotInput: "runtime_selected",
       realBookmakerOddsUsed: false,
-      note: "Transitional model-assessment bridge; value reads aiAssessment from memory, not deploy snapshot odds.json."
+      note: "Value reads aiAssessment only; the runtime may use live memory or its committed deploy-snapshot persistence fallback."
     },
  *   picks: [
  *     {
@@ -686,14 +686,14 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
   ensureDir(path.dirname(canonicalAuditOut));
 
   const sourceContract = {
-    valueInput: "canonical_fixture_universe_joined_with_odds_memory_ai_assessment",
+    valueInput: "canonical_fixture_universe_joined_with_persistent_ai_assessment",
     fixtureUniverse: "canonical_fixtures",
     canonicalFixtureUniverseRequired: true,
     exactIdentityJoinOnly: true,
     oddsMemoryCanCreateFixture: false,
-    deploySnapshotInput: false,
+    deploySnapshotInput: "runtime_selected",
     realBookmakerOddsUsed: false,
-    note: "Plan A and Plan B receive the identical full canonical fixture universe. Assessment enrichment may affect picks but never fixture membership."
+    note: "Plan A and Plan B receive the identical full canonical fixture universe. Plan B assessment enrichment may come from live memory or its committed persistence fallback; it never changes fixture membership."
   };
 
   const valueUniverse =
@@ -704,6 +704,15 @@ export function deriveValueFromOdds(dayKey = athensDayKey(), { freeze = false, o
 
   const oddsPayload =
     getOddsForDay(dayKey);
+
+  const assessmentInputSource =
+    String(oddsPayload?.source || "live_store");
+
+  Object.assign(sourceContract, {
+    assessmentInputSource,
+    deploySnapshotInput:
+      assessmentInputSource === "deploy_snapshot_assessment_fallback"
+  });
 
   const assessmentRows =
     Array.isArray(

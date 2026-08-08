@@ -304,7 +304,41 @@ export function getOddsForDay(dayKey) {
     // dir not created yet
   }
   matches.sort((a, b) => String(a.kickoffUtc || a.kickoffLocal || "").localeCompare(String(b.kickoffUtc || b.kickoffLocal || "")));
-  return { ok: true, dayKey: dayKey || null, count: matches.length, matches };
+
+  // GitHub Actions runners are ephemeral. The live odds-memory directory is
+  // therefore often empty even though the previous odds workflow already
+  // committed the same aiAssessment rows into the deploy snapshot. Never let
+  // that runner-local storage boundary masquerade as a legitimate zero-input
+  // Plan B/B2 day. Prefer the committed assessment set only when it is more
+  // complete; fresh live memory remains authoritative otherwise.
+  const liveAssessmentRows = matches.filter(
+    row => row?.aiAssessment?.markets && Object.keys(row.aiAssessment.markets).length > 0
+  ).length;
+  const deployed = dayKey ? readDeployedOddsFile(dayKey) : null;
+  const deployedMatches = Array.isArray(deployed?.matches) ? deployed.matches : [];
+  const deployedAssessmentRows = deployedMatches.filter(
+    row => row?.aiAssessment?.markets && Object.keys(row.aiAssessment.markets).length > 0
+  ).length;
+
+  if (deployedAssessmentRows > liveAssessmentRows) {
+    return {
+      ok: true,
+      dayKey: dayKey || null,
+      count: deployedMatches.length,
+      matches: deployedMatches,
+      source: "deploy_snapshot_assessment_fallback",
+      assessmentRows: deployedAssessmentRows
+    };
+  }
+
+  return {
+    ok: true,
+    dayKey: dayKey || null,
+    count: matches.length,
+    matches,
+    source: "live_store",
+    assessmentRows: liveAssessmentRows
+  };
 }
 
 // ─── Deployed artifact readers (what the committed snapshot serves) ─────────────
