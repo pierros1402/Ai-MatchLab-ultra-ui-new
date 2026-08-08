@@ -1,11 +1,11 @@
 {
   "ok": true,
   "date": "2026-08-08",
-  "count": 0,
+  "count": 16,
   "source": "derive-value-from-opponent-adjusted-model-assessment",
   "policyVersion": "value-policy-v2.3",
   "sourceContract": {
-    "valueInput": "canonical_fixture_universe_joined_with_odds_memory_ai_assessment",
+    "valueInput": "canonical_fixture_universe_joined_with_persistent_ai_assessment",
     "fixtureUniverse": {
       "schema": "ai-matchlab.value-fixture-universe.v1",
       "source": "canonical_fixtures",
@@ -422,9 +422,10 @@
     "canonicalFixtureUniverseRequired": true,
     "exactIdentityJoinOnly": true,
     "oddsMemoryCanCreateFixture": false,
-    "deploySnapshotInput": false,
+    "deploySnapshotInput": true,
     "realBookmakerOddsUsed": false,
-    "note": "Plan A and Plan B receive the identical full canonical fixture universe. Assessment enrichment may affect picks but never fixture membership.",
+    "note": "Plan A and Plan B receive the identical full canonical fixture universe. Plan B assessment enrichment may come from live memory or its committed persistence fallback; it never changes fixture membership.",
+    "assessmentInputSource": "deploy_snapshot_assessment_fallback",
     "probabilityLayer": "opponent_strength_adjusted"
   },
   "outputMode": "plan-b2-observation",
@@ -435,9 +436,778 @@
     "observation": "data/value-plans/2026-08-08/plan-b2-audit.json"
   },
   "verifiedValue": 0,
-  "modelLean": 0,
+  "modelLean": 16,
   "bookEdge": 0,
-  "highConfidence": 0,
+  "highConfidence": 16,
   "mediumConfidence": 0,
-  "picks": []
+  "picks": [
+    {
+      "canonicalId": "cid_est2_tallinnakalev_tallinn_20260808",
+      "matchId": "cid_est2_tallinnakalev_tallinn_20260808",
+      "leagueSlug": "est.2",
+      "home": "Tallinna Kalev",
+      "away": "FC Tallinn",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.792,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.263,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_est2_nommeutdu21_levadiau21_20260808",
+      "matchId": "cid_est2_nommeutdu21_levadiau21_20260808",
+      "leagueSlug": "est.2",
+      "home": "Nomme Utd U21",
+      "away": "Levadia U21",
+      "kickoffUtc": "2026-08-08T16:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.791,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.264,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_est2_elva_tartuwelco_20260808",
+      "matchId": "cid_est2_elva_tartuwelco_20260808",
+      "leagueSlug": "est.2",
+      "home": "Elva",
+      "away": "Tartu Welco",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.787,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.271,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_fro2_tbtvoroyri_fuglafjordur_20260808",
+      "matchId": "cid_fro2_tbtvoroyri_fuglafjordur_20260808",
+      "leagueSlug": "fro.2",
+      "home": "TB Tvoroyri",
+      "away": "IF Fuglafjordur",
+      "kickoffUtc": "2026-08-08T14:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.784,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.276,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_fro2_nsirunavik2_vikingur2_20260808",
+      "matchId": "cid_fro2_nsirunavik2_vikingur2_20260808",
+      "leagueSlug": "fro.2",
+      "home": "NSI Runavik 2",
+      "away": "Vikingur 2",
+      "kickoffUtc": "2026-08-08T11:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.775,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.29,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_fro2_hoyvik_suduroy_20260808",
+      "matchId": "cid_fro2_hoyvik_suduroy_20260808",
+      "leagueSlug": "fro.2",
+      "home": "Hoyvik",
+      "away": "FC Suduroy",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.768,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.302,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_est2_nommeutdu21_levadiau21_20260808",
+      "matchId": "cid_est2_nommeutdu21_levadiau21_20260808",
+      "leagueSlug": "est.2",
+      "home": "Nomme Utd U21",
+      "away": "Levadia U21",
+      "kickoffUtc": "2026-08-08T16:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.767,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.304,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_est2_elva_tartuwelco_20260808",
+      "matchId": "cid_est2_elva_tartuwelco_20260808",
+      "leagueSlug": "est.2",
+      "home": "Elva",
+      "away": "Tartu Welco",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.763,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.311,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_fro2_tbtvoroyri_fuglafjordur_20260808",
+      "matchId": "cid_fro2_tbtvoroyri_fuglafjordur_20260808",
+      "leagueSlug": "fro.2",
+      "home": "TB Tvoroyri",
+      "away": "IF Fuglafjordur",
+      "kickoffUtc": "2026-08-08T14:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.762,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.312,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_sui1_lausanne_youngboys_20260808",
+      "matchId": "cid_sui1_lausanne_youngboys_20260808",
+      "leagueSlug": "sui.1",
+      "home": "Lausanne",
+      "away": "Young Boys",
+      "kickoffUtc": "2026-08-08T16:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.753,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.328,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_fro2_hoyvik_suduroy_20260808",
+      "matchId": "cid_fro2_hoyvik_suduroy_20260808",
+      "leagueSlug": "fro.2",
+      "home": "Hoyvik",
+      "away": "FC Suduroy",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.749,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.335,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_est2_tallinnakalev_tallinn_20260808",
+      "matchId": "cid_est2_tallinnakalev_tallinn_20260808",
+      "leagueSlug": "est.2",
+      "home": "Tallinna Kalev",
+      "away": "FC Tallinn",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.741,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.35,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_est2_maardu_viimsijk_20260808",
+      "matchId": "cid_est2_maardu_viimsijk_20260808",
+      "leagueSlug": "est.2",
+      "home": "Maardu",
+      "away": "Viimsi JK",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "OU25",
+      "pick": "over",
+      "modelProb": 0.74,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.351,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_fro2_nsirunavik2_vikingur2_20260808",
+      "matchId": "cid_fro2_nsirunavik2_vikingur2_20260808",
+      "leagueSlug": "fro.2",
+      "home": "NSI Runavik 2",
+      "away": "Vikingur 2",
+      "kickoffUtc": "2026-08-08T11:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.735,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.361,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_est2_maardu_viimsijk_20260808",
+      "matchId": "cid_est2_maardu_viimsijk_20260808",
+      "leagueSlug": "est.2",
+      "home": "Maardu",
+      "away": "Viimsi JK",
+      "kickoffUtc": "2026-08-08T12:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.73,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.37,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    },
+    {
+      "canonicalId": "cid_sui1_lausanne_youngboys_20260808",
+      "matchId": "cid_sui1_lausanne_youngboys_20260808",
+      "leagueSlug": "sui.1",
+      "home": "Lausanne",
+      "away": "Young Boys",
+      "kickoffUtc": "2026-08-08T16:00:00.000Z",
+      "type": "model_lean",
+      "market": "BTTS",
+      "pick": "yes",
+      "modelProb": 0.721,
+      "impliedProb": null,
+      "edge": null,
+      "bookOdds": null,
+      "modelOdds": 1.387,
+      "confidence": "high",
+      "basis": "model_only",
+      "flags": [
+        "form_used"
+      ],
+      "policyVersion": "value-policy-v2.3",
+      "reasonCodes": [
+        "passed_model_probability_gate",
+        "passed_strict_value_policy",
+        "passed_non_contradictory_value_filter"
+      ],
+      "riskFlags": [
+        "context_coverage_not_bound_to_value_pick",
+        "lineups_missing",
+        "referee_missing",
+        "weather_missing",
+        "xg_missing"
+      ],
+      "dataCoverage": {
+        "modelAssessment": "available",
+        "odds": "not_used",
+        "standings": "partial",
+        "form": "available",
+        "h2h": "missing",
+        "teamNews": "missing",
+        "playerUsage": "missing",
+        "travel": "missing",
+        "lineups": "missing",
+        "referee": "missing",
+        "weather": "missing",
+        "xg": "missing"
+      }
+    }
+  ]
 }
