@@ -11,6 +11,10 @@ on:
         description: "Manual only: trigger Render redeploy after a daily snapshot commit."
         required: false
         default: "false"
+      recoverPlanAObservationSignature:
+        description: "Exact signed zero-pick Plan A observation to recover after a proven pipeline defect"
+        required: false
+        default: ""
   schedule:
     # GitHub scheduled workflows can start late or be dropped under load, so each
     # window keeps several retry slots.
@@ -370,6 +374,34 @@ jobs:
             node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
             node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
           fi
+
+      # Immutable Plan A observations stay immutable by default. This narrow
+      # recovery path exists only for a signed zero-pick observation that was
+      # frozen by a proven pipeline defect (the 2026-08-08 season rollover
+      # incident). The old signed observation + audit are archived before the
+      # replacement is created, and a positive v2.3 candidate is mandatory.
+      - name: Recover explicitly signed defective Plan A zero freeze
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        env:
+          PLAN_A_RECOVERY_SIGNATURE: ${{ inputs.recoverPlanAObservationSignature }}
+        run: |
+          set -euo pipefail
+
+          SIGNATURE="${PLAN_A_RECOVERY_SIGNATURE:-}"
+          if [ -z "$SIGNATURE" ]; then
+            echo "No Plan A zero-freeze recovery requested."
+            exit 0
+          fi
+
+          if ! printf "%s" "$SIGNATURE" | grep -Eq '^[a-f0-9]{64}$'; then
+            echo "ERROR: invalid Plan A recovery signature."
+            exit 1
+          fi
+
+          node ./engine-v1/jobs/recover-plan-a-zero-freeze-day.js \
+            --date="$DAY_KEY" \
+            --expected-signature="$SIGNATURE"
 
       # A successful build with canonical fixtures but zero model-assessment
       # input is a pipeline failure, not a legitimate "0 picks" result. Fail
