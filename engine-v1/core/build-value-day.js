@@ -44,7 +44,7 @@ function readDetailsSnapshot(dayKey, ...ids) {
   return null;
 }
 
-const STRICT_VALUE_POLICY_VERSION = "statistical-value-policy-v2.2";
+const STRICT_VALUE_POLICY_VERSION = "statistical-value-policy-v2.3";
 
 function valueNum(value, fallback = 0) {
   const n = Number(value);
@@ -95,10 +95,15 @@ function getValueRecencyEntries(value) {
   ].filter(Boolean);
 }
 
-function computeStatisticalReadiness(value, confidence) {
+export function computeStatisticalReadiness(value, confidence) {
   const entries = getValueRecencyEntries(value);
   const sampleScore = valueAvg(
-    entries.map(e => Math.min(1, valueNum(e?.rawSample ?? e?.sample, 0) / 5)),
+    // `sample` is the Value engine's effective sample: current-season rows plus
+    // at most three prior observations. That cap is the rollover bridge defined
+    // by value-engine-v1; the other readiness terms below still measure current
+    // freshness/continuity, so priors can prevent an Aug-1 blackout without
+    // making a team with no current evidence look fully ready.
+    entries.map(e => Math.min(1, valueNum(e?.sample ?? e?.rawSample, 0) / 5)),
     0.55
   );
   const freshnessScore = valueAvg(entries.map(e => e?.freshnessScore), 0.55);

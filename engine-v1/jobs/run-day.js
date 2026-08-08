@@ -170,10 +170,20 @@ export async function runDay(dayKey) {
   //     season history, so value form stays fresh and — at rollover — the new
   //     season's index is created automatically (season derived from season.js).
   try {
-    await buildCurrentSeasonIndexes();
-    log("current-season-indexes", { season: currentSeason() });
+    const indexBuild =
+      await buildCurrentSeasonIndexes({
+        dayKey: today
+      });
+    log("current-season-indexes", {
+      season: indexBuild.season,
+      matches: indexBuild.matchCount,
+      teams: indexBuild.teamCount,
+      leagues: indexBuild.leagueCount,
+      matchups: indexBuild.matchupCount
+    });
   } catch (e) {
-    log("current-season-indexes:skip", String(e?.message || e));
+    log("current-season-indexes:failed", String(e?.message || e));
+    throw e;
   }
 
   // 2d) Weekly (Mondays): refresh per-referee tendencies — slow-changing, and TM

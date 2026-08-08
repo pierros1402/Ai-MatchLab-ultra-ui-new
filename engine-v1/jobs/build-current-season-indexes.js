@@ -42,17 +42,31 @@ export function resolveTargetDateFromDay(dayKey) {
   return date;
 }
 
-const TARGET_DAY =
-  process.argv[3] ||
-  null;
+export function resolveIndexBuildTarget({
+  season = null,
+  dayKey = null,
+  now = new Date()
+} = {}) {
+  const parsedTargetDate =
+    resolveTargetDateFromDay(dayKey);
 
-const TARGET_DATE =
-  resolveTargetDateFromDay(TARGET_DAY) ||
-  new Date();
+  const targetDate =
+    parsedTargetDate ||
+    now;
 
-const SEASON =
-  process.argv[2] ||
-  currentSeason(TARGET_DATE);
+  return {
+    season:
+      String(
+        season ||
+        currentSeason(targetDate)
+      ),
+    targetDay:
+      parsedTargetDate
+        ? String(dayKey)
+        : null,
+    targetDate
+  };
+}
 
 export function resolveGlobalSeasonBounds(
   seasonLabel
@@ -183,12 +197,7 @@ export function isTerminalHistoryRow(row) {
 // universal Aug→Jul and coverage-thin. The consolidated file survives only as a
 // fallback for leagues that have no archive yet, so coverage never regresses.
 const ARCHIVE_DIR = path.join(DATA_ROOT, "history-archive");
-const HISTORY_FILE = path.join(DATA_ROOT, "history", `${SEASON}.json`);
 const OUT_DIR = path.join(DATA_ROOT, "history-index");
-
-const TEAM_OUT = path.join(OUT_DIR, "team-form", `${SEASON}.json`);
-const LEAGUE_OUT = path.join(OUT_DIR, "league-form", `${SEASON}.json`);
-const MATCHUP_OUT = path.join(OUT_DIR, "matchups", `${SEASON}.json`);
 
 function safeNum(v, d = 0) {
   const n = Number(v);
@@ -809,7 +818,8 @@ export function mergeIdentityStableRows(
 // It is populated only from finalized canonical rows and preserves the match
 // IDs already consumed by Value, form and H2H readers.
 async function readGlobalHistoryPrimary(
-  bounds
+  bounds,
+  historyFile
 ) {
   let history;
 
@@ -817,7 +827,7 @@ async function readGlobalHistoryPrimary(
     history = overlayProductionEvidenceDocumentReadView(
       JSON.parse(
         await fs.readFile(
-          HISTORY_FILE,
+          historyFile,
           "utf8"
         )
       )
@@ -873,23 +883,23 @@ async function readGlobalHistoryPrimary(
 // Archive data supplements only leagues absent from the consolidated history.
 // Calendar-year leagues need both calendar files touched by one Aug-to-Jul
 // global season. Non-terminal or scoreless archive rows are never admitted.
-function currentMatchupIndexFile() {
+function currentMatchupIndexFile(season) {
   return path.join(
     path.dirname(ARCHIVE_DIR),
     "history-index",
     "matchups",
-    `${SEASON}.json`
+    `${season}.json`
   );
 }
 
-async function readExistingMatchupRows() {
+async function readExistingMatchupRows(season) {
   let payload;
 
   try {
     payload = overlayProductionEvidenceDocumentReadView(
       JSON.parse(
         await fs.readFile(
-          currentMatchupIndexFile(),
+          currentMatchupIndexFile(season),
           "utf8"
         )
       )
@@ -1603,12 +1613,13 @@ export function applyLegacyIdentityLineage(
 
 async function readArchiveSupplementForLeague(
   slug,
-  bounds
+  bounds,
+  season
 ) {
   const labels =
     archiveLabelsForGlobalSeason(
       slug,
-      SEASON
+      season
     );
 
   const leagueName =
@@ -1631,24 +1642,15 @@ async function readArchiveSupplementForLeague(
     let payload;
 
     try {
-      payload = overlayProductionEvidenceDocumentReadView(
-        JSON.parse(
-          await fs.readFile(
-            file,
-            "utf8"
-          )
+      payload = JSON.parse(
+        await fs.readFile(
+          file,
+          "utf8"
         )
       );
 
       filesRead += 1;
     } catch (error) {
-      if (
-        String(error?.code || "").startsWith(
-          "production_evidence_read_",
-        )
-      ) {
-        throw error;
-      }
       continue;
     }
 
@@ -1658,16 +1660,13 @@ async function readArchiveSupplementForLeague(
         : [];
 
     for (const rawRow of matches) {
-      const row = canonicalizeTeams({
-        ...rawRow,
-        leagueName:
-          rawRow?.leagueName ||
-          leagueName
-      });
-
+      // Filter by the target season BEFORE applying the production identity
+      // overlay. Calendar-year archive files legitimately contain rows from
+      // both sides of the Aug-to-Jul global boundary. An identity conflict in
+      // an out-of-season row must not abort the current-season index rebuild.
       if (
         !rowIsInsideGlobalSeason(
-          row,
+          rawRow,
           bounds
         )
       ) {
@@ -1676,12 +1675,21 @@ async function readArchiveSupplementForLeague(
       }
 
       if (
-        !isTerminalHistoryRow(row) ||
-        !rowHasFiniteScore(row)
+        !isTerminalHistoryRow(rawRow) ||
+        !rowHasFiniteScore(rawRow)
       ) {
         rejectedNonTerminal += 1;
         continue;
       }
+
+      const row = canonicalizeTeams(
+        overlayProductionEvidenceDocumentReadView({
+          ...rawRow,
+          leagueName:
+            rawRow?.leagueName ||
+            leagueName
+        })
+      );
 
       const key = archiveRowKey(row);
 
@@ -1700,29 +1708,59 @@ async function readArchiveSupplementForLeague(
   };
 }
 
-export async function buildCurrentSeasonIndexes() {
-  console.log("[index] season:", SEASON);
-  console.log("[index] target day:", TARGET_DAY);
+export async function buildCurrentSeasonIndexes(options = {}) {
+  const target =
+    resolveIndexBuildTarget(options);
+
+  const season = target.season;
+  const historyFile =
+    path.join(
+      DATA_ROOT,
+      "history",
+      `${season}.json`
+    );
+  const teamOut =
+    path.join(
+      OUT_DIR,
+      "team-form",
+      `${season}.json`
+    );
+  const leagueOut =
+    path.join(
+      OUT_DIR,
+      "league-form",
+      `${season}.json`
+    );
+  const matchupOut =
+    path.join(
+      OUT_DIR,
+      "matchups",
+      `${season}.json`
+    );
+
+  console.log("[index] season:", season);
+  console.log("[index] target day:", target.targetDay);
   console.log(
     "[index] target date:",
-    TARGET_DATE.toISOString()
+    target.targetDate.toISOString()
   );
   console.log("[index] archive dir:", ARCHIVE_DIR);
 
   const bounds =
     resolveGlobalSeasonBounds(
-      SEASON
+      season
     );
 
   if (!bounds) {
     throw new Error(
-      `invalid_global_season:${SEASON}`
+      `invalid_global_season:${season}`
     );
   }
 
   const historyPrimary =
     await readGlobalHistoryPrimary(
-      bounds
+      bounds,
+      historyFile
     );
 
   const historyCoveredSlugs =
@@ -1750,7 +1788,8 @@ export async function buildCurrentSeasonIndexes() {
     const result =
       await readArchiveSupplementForLeague(
         slug,
-        bounds
+        bounds,
+        season
       );
 
     archiveFilesRead +=
@@ -1778,7 +1817,9 @@ export async function buildCurrentSeasonIndexes() {
     );
 
   const existingMatchupRows =
-    await readExistingMatchupRows();
+    await readExistingMatchupRows(
+      season
+    );
 
   const lineage =
     applyLegacyIdentityLineage(
@@ -1859,19 +1900,32 @@ export async function buildCurrentSeasonIndexes() {
   const leagueIndex = buildLeagueIndex(allMatches);
   const matchupIndex = buildMatchupIndex(allMatches);
 
-  await writeJson(TEAM_OUT, teamIndex);
-  await writeJson(LEAGUE_OUT, leagueIndex);
-  await writeJson(MATCHUP_OUT, matchupIndex);
+  await writeJson(teamOut, teamIndex);
+  await writeJson(leagueOut, leagueIndex);
+  await writeJson(matchupOut, matchupIndex);
 
   console.log("[index] done");
-  console.log("[index] wrote:", TEAM_OUT);
-  console.log("[index] wrote:", LEAGUE_OUT);
-  console.log("[index] wrote:", MATCHUP_OUT);
+  console.log("[index] wrote:", teamOut);
+  console.log("[index] wrote:", leagueOut);
+  console.log("[index] wrote:", matchupOut);
+
+  return {
+    ok: true,
+    season,
+    targetDay: target.targetDay,
+    matchCount: allMatches.length,
+    teamCount: Object.keys(teamIndex).length,
+    leagueCount: Object.keys(leagueIndex).length,
+    matchupCount: Object.keys(matchupIndex).length
+  };
 }
 
 const isCli = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
 if (isCli) {
-  buildCurrentSeasonIndexes().catch(err => {
+  buildCurrentSeasonIndexes({
+    season: process.argv[2] || null,
+    dayKey: process.argv[3] || null
+  }).catch(err => {
     console.error("[index] failed", err);
     process.exit(1);
   });
