@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-08",
-  "generatedAt": "2026-08-08T13:21:05.132Z",
+  "generatedAt": "2026-08-08T14:12:58.469Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-08-08/fixtures.json",
     "finalResultsDir": "data/final-results/2026-08-08",
-    "verifiedFinalResults": 69,
+    "verifiedFinalResults": 90,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-08",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -586,18 +586,18 @@
       "summary": {
         "picks": 16,
         "uniqueMatches": 8,
-        "settled": 2,
-        "wins": 2,
-        "losses": 0,
-        "unresolved": 14,
+        "settled": 10,
+        "wins": 7,
+        "losses": 3,
+        "unresolved": 6,
         "unsupported": 0,
-        "hitRate": 1,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.7,
+        "oddsAvailable": 1,
+        "averageOdds": 1.3,
+        "totalStake": 1,
+        "totalReturn": 1.3,
+        "profit": 0.3,
+        "roi": 0.3
       },
       "picks": [
         {
@@ -606,7 +606,7 @@
           "canonicalMatchId": "cid_est2_tallinnakalev_tallinn_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Tallinna Kalev",
           "awayTeam": "FC Tallinn",
@@ -620,11 +620,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.062Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "xpRrcrRr",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Tallinna Kalev",
+                "away": "FC Tallinn",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -658,7 +686,7 @@
           "canonicalMatchId": "cid_est2_elva_tartuwelco_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Elva",
           "awayTeam": "Tartu Welco",
@@ -672,11 +700,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.018Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "61zD243L",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Elva",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -764,7 +820,7 @@
           "canonicalMatchId": "cid_fro2_hoyvik_suduroy_20260808",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Hoyvik",
           "awayTeam": "FC Suduroy",
@@ -778,11 +834,39 @@
           "aiFairOdds": 1.23,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:41.930Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6J0wIQ5s",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Hoyvik",
+                "away": "FC Suduroy",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -842,7 +926,7 @@
           "canonicalMatchId": "cid_est2_elva_tartuwelco_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Elva",
           "awayTeam": "Tartu Welco",
@@ -856,11 +940,39 @@
           "aiFairOdds": 1.24,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.018Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "61zD243L",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Elva",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -894,7 +1006,7 @@
           "canonicalMatchId": "cid_est2_tallinnakalev_tallinn_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Tallinna Kalev",
           "awayTeam": "FC Tallinn",
@@ -908,11 +1020,39 @@
           "aiFairOdds": 1.26,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.062Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "xpRrcrRr",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Tallinna Kalev",
+                "away": "FC Tallinn",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -920,7 +1060,7 @@
           "canonicalMatchId": "cid_fro2_hoyvik_suduroy_20260808",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Hoyvik",
           "awayTeam": "FC Suduroy",
@@ -934,11 +1074,39 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:41.930Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6J0wIQ5s",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Hoyvik",
+                "away": "FC Suduroy",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -946,7 +1114,7 @@
           "canonicalMatchId": "cid_est2_maardu_viimsijk_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Maardu",
           "awayTeam": "Viimsi JK",
@@ -960,11 +1128,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 1.3,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.040Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "INSbg0Q7",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Maardu",
+                "away": "Viimsi JK",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1026,7 +1222,7 @@
           "canonicalMatchId": "cid_est2_maardu_viimsijk_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Maardu",
           "awayTeam": "Viimsi JK",
@@ -1040,11 +1236,39 @@
           "aiFairOdds": 1.29,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.040Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "INSbg0Q7",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Maardu",
+                "away": "Viimsi JK",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1088,18 +1312,18 @@
       "summary": {
         "picks": 16,
         "uniqueMatches": 8,
-        "settled": 2,
-        "wins": 2,
-        "losses": 0,
-        "unresolved": 14,
+        "settled": 10,
+        "wins": 7,
+        "losses": 3,
+        "unresolved": 6,
         "unsupported": 0,
-        "hitRate": 1,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.7,
+        "oddsAvailable": 1,
+        "averageOdds": 1.3,
+        "totalStake": 1,
+        "totalReturn": 1.3,
+        "profit": 0.3,
+        "roi": 0.3
       },
       "picks": [
         {
@@ -1108,7 +1332,7 @@
           "canonicalMatchId": "cid_est2_tallinnakalev_tallinn_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Tallinna Kalev",
           "awayTeam": "FC Tallinn",
@@ -1122,11 +1346,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.062Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "xpRrcrRr",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Tallinna Kalev",
+                "away": "FC Tallinn",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1160,7 +1412,7 @@
           "canonicalMatchId": "cid_est2_elva_tartuwelco_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Elva",
           "awayTeam": "Tartu Welco",
@@ -1174,11 +1426,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.018Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "61zD243L",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Elva",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1266,7 +1546,7 @@
           "canonicalMatchId": "cid_fro2_hoyvik_suduroy_20260808",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Hoyvik",
           "awayTeam": "FC Suduroy",
@@ -1280,11 +1560,39 @@
           "aiFairOdds": 1.23,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:41.930Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6J0wIQ5s",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Hoyvik",
+                "away": "FC Suduroy",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1318,7 +1626,7 @@
           "canonicalMatchId": "cid_est2_elva_tartuwelco_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Elva",
           "awayTeam": "Tartu Welco",
@@ -1332,11 +1640,39 @@
           "aiFairOdds": 1.24,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.018Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "61zD243L",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Elva",
+                "away": "Tartu Welco",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1396,7 +1732,7 @@
           "canonicalMatchId": "cid_fro2_hoyvik_suduroy_20260808",
           "country": "Faroe Islands",
           "leagueSlug": "fro.2",
-          "leagueName": "Faroe Islands 1. deild",
+          "leagueName": "1. Deild",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Hoyvik",
           "awayTeam": "FC Suduroy",
@@ -1410,11 +1746,39 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:41.930Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "6J0wIQ5s",
+                "country": "Faroe Islands",
+                "leagueName": "1. Deild",
+                "leaguePath": "/football/faroe-islands/1-deild/",
+                "home": "Hoyvik",
+                "away": "FC Suduroy",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1422,7 +1786,7 @@
           "canonicalMatchId": "cid_est2_tallinnakalev_tallinn_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Tallinna Kalev",
           "awayTeam": "FC Tallinn",
@@ -1436,11 +1800,39 @@
           "aiFairOdds": 1.26,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.062Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "xpRrcrRr",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Tallinna Kalev",
+                "away": "FC Tallinn",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1448,7 +1840,7 @@
           "canonicalMatchId": "cid_est2_maardu_viimsijk_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Maardu",
           "awayTeam": "Viimsi JK",
@@ -1462,11 +1854,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 1.3,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.040Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "INSbg0Q7",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Maardu",
+                "away": "Viimsi JK",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1528,7 +1948,7 @@
           "canonicalMatchId": "cid_est2_maardu_viimsijk_20260808",
           "country": "Estonia",
           "leagueSlug": "est.2",
-          "leagueName": "Estonian Esiliiga",
+          "leagueName": "Esiliiga",
           "kickoff": "2026-08-08T12:00:00.000Z",
           "homeTeam": "Maardu",
           "awayTeam": "Viimsi JK",
@@ -1542,11 +1962,39 @@
           "aiFairOdds": 1.29,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T14:12:42.040Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "INSbg0Q7",
+                "country": "Estonia",
+                "leagueName": "Esiliiga",
+                "leaguePath": "/football/estonia/esiliiga/",
+                "home": "Maardu",
+                "away": "Viimsi JK",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-08T12:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1579,9 +2027,9 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": 7,
-    "settledDeltaPlanBMinusPlanA": 2,
-    "winsDeltaPlanBMinusPlanA": 2,
-    "lossesDeltaPlanBMinusPlanA": 0,
+    "settledDeltaPlanBMinusPlanA": 10,
+    "winsDeltaPlanBMinusPlanA": 7,
+    "lossesDeltaPlanBMinusPlanA": 3,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
   }
