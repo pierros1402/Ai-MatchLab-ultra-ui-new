@@ -111,6 +111,7 @@ test("live worker overlay is bounded and labeled with the shared operational day
   const overlay = read("assets/js/live/live-overlay.js");
   const today = read("assets/js/ui/today-panel.js");
   const active = read("assets/js/ui/active-leagues-panel.js");
+  const valuePicks = read("assets/js/ui/value-picks.js");
   const html = read("index.html");
 
   assert.match(overlay, /AIML_OperationalDay/);
@@ -119,12 +120,18 @@ test("live worker overlay is bounded and labeled with the shared operational day
   assert.match(overlay, /date: operationalDay\(\)/);
   assert.match(overlay, /minute:\s*null/);
   assert.match(overlay, /return exact \|\| null/);
+  assert.match(
+    overlay,
+    /state\.kind === "ft" && row\.classList\.contains\("value-compare-row"\)/
+  );
+  assert.match(overlay, /phase \+ " • " \+ score/);
+  assert.match(valuePicks, /parts\.push\("FT " \+ p\.finalScore\.scoreKey\)/);
   assert.match(today, /if \(isFinalMatch\(existing\) && !isFinalMatch\(m\)\) continue/);
   assert.match(active, /if \(isFinalStatus\(existing\) && !isFinalStatus\(m\)\) continue/);
   assert.doesNotMatch(today, /Date\.now\(\) - ko/);
   assert.match(html, /today-panel\.js\?v=5/);
   assert.match(html, /active-leagues-panel\.js\?v=4/);
-  assert.match(html, /live-overlay\.js\?v=7/);
+  assert.match(html, /live-overlay\.js\?v=8/);
 });
 
 test("UI aborts are terminal and are not retried as fetch failures", () => {
