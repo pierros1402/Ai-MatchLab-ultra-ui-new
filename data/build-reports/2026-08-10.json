@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-08-10",
-  "generatedAt": "2026-08-09T21:13:38.007Z",
+  "generatedAt": "2026-08-09T21:47:08.684Z",
   "universe": {
     "expected": null,
     "canonical": 81,
@@ -455,9 +455,15 @@
   },
   "freshness": {
     "ok": false,
-    "manifestGeneratedAt": "2026-08-09T21:13:37.946Z",
+    "manifestGeneratedAt": "2026-08-09T21:47:08.621Z",
     "reasons": [
-      "four_plan_artifacts_missing_or_invalid"
+      "snapshot_value_stale_against_canonical",
+      "snapshot_value_audit_stale_against_canonical",
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
     ],
     "staleInputs": []
   },
@@ -466,15 +472,77 @@
     "blocked": 0,
     "warnings": 0,
     "autoFixed": 0,
-    "checkedAt": "2026-08-09T21:13:37.949Z"
+    "checkedAt": "2026-08-09T21:47:08.624Z"
   },
   "value": {
-    "source": "missing_local_value_file",
-    "count": 0,
-    "gateOk": false,
-    "planB": null
+    "source": "canonical_fixtures",
+    "count": 5,
+    "gateOk": true,
+    "planB": {
+      "ok": true,
+      "count": 2,
+      "approved": 2,
+      "rejected": 13,
+      "canonicalMembershipContractOk": true,
+      "membership": {
+        "canonicalFixtures": 80,
+        "assessmentRows": 126,
+        "joinedMatches": 43,
+        "orphanAssessmentRows": 83,
+        "outputOrphanPicks": 0,
+        "outputAmbiguousPicks": 0
+      }
+    }
   },
-  "settlement": null,
+  "settlement": {
+    "generatedAt": "2026-08-09T21:17:03.065Z",
+    "requiredPlans": [
+      "A",
+      "A2",
+      "B",
+      "B2"
+    ],
+    "presentPlans": [
+      "A",
+      "A2",
+      "B",
+      "B2"
+    ],
+    "missingPlans": [],
+    "complete": true,
+    "planA": {
+      "picks": 5,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 5
+    },
+    "planA2": {
+      "picks": 5,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 5
+    },
+    "planB": {
+      "picks": 2,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 2
+    },
+    "planB2": {
+      "picks": 2,
+      "settled": 0,
+      "wins": 0,
+      "losses": 0,
+      "voids": 0,
+      "unresolved": 2
+    }
+  },
   "liveStatusCompleteness": {
     "schema": "ai-matchlab.live-status-completeness.v1",
     "ok": true,
@@ -492,9 +560,7 @@
     "supersededOpenFixtures": []
   },
   "hardFailures": [
-    "snapshot_stale",
-    "value_plan_comparison_missing",
-    "value_artifact_missing"
+    "snapshot_stale"
   ],
   "warnings": [
     "acquisition_skipped_slugs:concacaf.leagues.cup,eng.fa_qual"
