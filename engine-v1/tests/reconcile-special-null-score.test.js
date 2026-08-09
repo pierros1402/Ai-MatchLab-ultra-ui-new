@@ -350,3 +350,88 @@ test(
     );
   }
 );
+
+test(
+  "autonomous exact-provider non-played correction survives reconciliation",
+  async () => {
+    const autoCanonicalId =
+      "cid_blr1_belshina_dinminsk_20260808";
+
+    const existing = {
+      canonicalId: autoCanonicalId,
+      matchId: autoCanonicalId,
+      dayKey: "2026-08-08",
+      leagueSlug: "blr.1",
+      source: "flashscore",
+      sourceId: "4nadNw3N",
+      sourceMatchId: "4nadNw3N",
+      homeTeam: "Belshina",
+      awayTeam: "Din. Minsk",
+      kickoffUtc: "2026-08-08T11:00:00.000Z",
+      status: "STATUS_SCHEDULED",
+      rawStatus: "STATUS_SCHEDULED",
+      statusType: null,
+      minute: null,
+      scoreHome: null,
+      scoreAway: null
+    };
+
+    const observation = {
+      ...existing,
+      ts: Date.now(),
+      status: "STATUS_POSTPONED",
+      rawStatus: "STATUS_POSTPONED",
+      statusType: "STATUS_POSTPONED",
+      statusCorrection: {
+        decisionId:
+          "flashscore-nonplayed-auto-20260808-4nadNw3N-v1",
+        policyVersion:
+          "flashscore-nonplayed-autonomous-v1",
+        decisionMode:
+          "autonomous_exact_provider_occurrence",
+        reason:
+          "verified_flashscore_nonplayed_decision",
+        correctedTo: {
+          status: "STATUS_POSTPONED",
+          rawStatus: "STATUS_POSTPONED",
+          statusType: "STATUS_POSTPONED",
+          minute: null,
+          scoreHome: null,
+          scoreAway: null
+        },
+        providerEvidence: {
+          provider: "flashscore",
+          providerMatchId: "4nadNw3N",
+          canonicalSource: "flashscore",
+          canonicalProviderMatchId: "4nadNw3N",
+          home: "Belshina",
+          away: "Din. Minsk",
+          kickoffUtc: "2026-08-08T11:00:00.000Z",
+          statusCode: "3",
+          statusDetailCode: "4",
+          playedFinal: false,
+          finished: false,
+          nonPlayedTerminal: true,
+          scoreHome: null,
+          scoreAway: null
+        }
+      }
+    };
+
+    const result =
+      await reconcileObservations({
+        env: {},
+        sideEffects: false,
+        existing,
+        observations: [observation]
+      });
+
+    assert.equal(result.status, "STATUS_POSTPONED");
+    assert.equal(result.scoreHome, null);
+    assert.equal(result.scoreAway, null);
+    assert.equal(
+      result.statusCorrection?.decisionId,
+      "flashscore-nonplayed-auto-20260808-4nadNw3N-v1"
+    );
+  }
+);

@@ -134,6 +134,7 @@ function planSummary(plan) {
     settled: Number(s.settled || 0),
     wins: Number(s.wins || 0),
     losses: Number(s.losses || 0),
+    voids: Number(s.voids || 0),
     unresolved: Number(s.unresolved || 0)
   };
 }

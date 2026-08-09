@@ -8,7 +8,10 @@ import {
   readPlanAObservationDay,
   PLAN_A_OBSERVATION_START_DAY
 } from "../value/plan-a-observation.js";
-import { verifiedFinalVetoReason } from "../core/non-played-state.js";
+import {
+  isValueSettlementVoidState,
+  verifiedFinalVetoReason
+} from "../core/non-played-state.js";
 import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
 import { validatePicksAgainstCanonicalFixtures } from "../core/plan-b-canonical-membership.js";
 import {
@@ -779,6 +782,37 @@ export function buildComparisonFinalResultProvenance(finalResult) {
   };
 }
 
+export function buildComparisonNonPlayedProvenance(fixture) {
+  if (!isValueSettlementVoidState(fixture)) {
+    return null;
+  }
+
+  return {
+    verifiedFinalTruth: false,
+    verifiedNonPlayedTruth: true,
+    verdict: "verified_non_played_void",
+    source: clean(fixture?.source) || null,
+    method: "canonical_non_played_match_state",
+    authority: "canonical_fixture_store",
+    sourceCount: 1,
+    independentSourceCount: 1,
+    generatedAt: clean(fixture?.lastSeenAt) || null,
+    sources: [
+      {
+        provider: clean(fixture?.source) || null,
+        providerMatchId:
+          clean(
+            fixture?.sourceMatchId ||
+            fixture?.sourceId
+          ) || null,
+        status: clean(fixture?.status) || null,
+        statusType: clean(fixture?.statusType) || null,
+        rawStatus: clean(fixture?.rawStatus) || null
+      }
+    ]
+  };
+}
+
 export function resolveComparisonKickoff(
   row,
   fixture,
@@ -803,8 +837,11 @@ export function resolveComparisonKickoff(
 
 export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMarkets) {
   const id = rowId(row);
+  const nonPlayedVoid = isValueSettlementVoidState(fixture);
   const verifiedScore = resolveVerifiedFinalScore(finalResult);
-  const win = finalResult ? evaluatePickResult(row, finalResult) : null;
+  const win = finalResult && !nonPlayedVoid
+    ? evaluatePickResult(row, finalResult)
+    : null;
   const canonicalMatchId =
     clean(
       finalResult?.matchId ||
@@ -813,16 +850,36 @@ export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMa
       id
     ) || id;
   const finalStatus =
-    resolveComparisonFinalStatus(finalResult);
+    resolveComparisonFinalStatus(finalResult) ||
+    (
+      nonPlayedVoid
+        ? clean(
+            fixture?.rawStatus ||
+            fixture?.status
+          ) || null
+        : null
+    );
   const finalStatusType =
-    resolveComparisonFinalStatusType(finalResult);
+    resolveComparisonFinalStatusType(finalResult) ||
+    (
+      nonPlayedVoid
+        ? clean(
+            fixture?.statusType ||
+            fixture?.rawStatus ||
+            fixture?.status
+          ) || null
+        : null
+    );
   const finalResultProvenance =
-    buildComparisonFinalResultProvenance(finalResult);
+    nonPlayedVoid
+      ? buildComparisonNonPlayedProvenance(fixture)
+      : buildComparisonFinalResultProvenance(finalResult);
 
   let settlement = "UNRESOLVED";
-  if (finalResult && win === true) settlement = "WIN";
-  if (finalResult && win === false) settlement = "LOSS";
-  if (finalResult && win === null) settlement = "UNSUPPORTED";
+  if (nonPlayedVoid) settlement = "VOID";
+  else if (finalResult && win === true) settlement = "WIN";
+  else if (finalResult && win === false) settlement = "LOSS";
+  else if (finalResult && win === null) settlement = "UNSUPPORTED";
 
   const leagueSlug = clean(row?.leagueSlug || row?.league || fixture?.leagueSlug || fixture?.league || finalResult?.leagueSlug);
   const cat = leagueCatalogueMap().get(leagueSlug) || null;
@@ -865,7 +922,7 @@ export function enrichPick(row, fixture, finalResult, planId, oddsEntry, multiMa
     oddsUse: odds ? "display_settlement_only" : null,
     finalStatus,
     finalStatusType,
-    finalScore: verifiedScore,
+    finalScore: nonPlayedVoid ? null : verifiedScore,
     result: settlement,
     finalResultProvenance
   };
@@ -877,6 +934,7 @@ function summarize(rows) {
   const settledRows = rows.filter(row => row.result === "WIN" || row.result === "LOSS");
   const wins = rows.filter(row => row.result === "WIN").length;
   const losses = rows.filter(row => row.result === "LOSS").length;
+  const voids = rows.filter(row => row.result === "VOID").length;
   const unresolved = rows.filter(row => row.result === "UNRESOLVED").length;
   const unsupported = rows.filter(row => row.result === "UNSUPPORTED").length;
   const oddsRows = settledRows.filter(row => Number.isFinite(row.oddsDecimal) && row.oddsDecimal > 1);
@@ -891,6 +949,7 @@ function summarize(rows) {
     settled: settledRows.length,
     wins,
     losses,
+    voids,
     unresolved,
     unsupported,
     hitRate: settledRows.length ? Number((wins / settledRows.length).toFixed(4)) : null,
@@ -981,7 +1040,7 @@ export function buildPlanAUnavailableComparisonPayload({
       planB: "retrospective_strict_value_policy_v2.3_observation_artifact",
       planBCanonicalFixtureMembershipRequired: true,
       planBOddsMayCreateFixtures: false,
-      finalTruth: "verified_final_results",
+      finalTruth: "verified_final_results_or_canonical_non_played_state",
       deploySnapshotUsedAsFinalTruth: false,
       realBookmakerOddsUsedForValue: false,
       oddsUse: "display_settlement_only_when_present"
@@ -1357,7 +1416,7 @@ export function buildValuePlanComparisonDay(dayKey, options = {}) {
       planB: "strict_value_policy_v2.3_observation_artifact",
       planBCanonicalFixtureMembershipRequired: true,
       planBOddsMayCreateFixtures: false,
-      finalTruth: "verified_final_results",
+      finalTruth: "verified_final_results_or_canonical_non_played_state",
       deploySnapshotUsedAsFinalTruth: false,
       realBookmakerOddsUsedForValue: false,
       oddsUse: "display_settlement_only_when_present"

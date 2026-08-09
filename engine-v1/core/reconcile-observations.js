@@ -16,7 +16,7 @@ import {
   persistDisagreements
 } from "./disagreement-log.js";
 import {
-  resolveApprovedFlashscoreNonPlayedDecision
+  resolveVerifiedFlashscoreNonPlayedDecision
 } from "../source-discovery/flashscore-nonplayed-decisions.js";
 
 const SOURCE_PROFILE = {
@@ -303,10 +303,59 @@ function resolveDecisionBackedSpecialObservation(
       );
 
     const decision =
-      resolveApprovedFlashscoreNonPlayedDecision({
+      resolveVerifiedFlashscoreNonPlayedDecision({
         dayKey,
         canonicalId,
-        providerMatchId
+        providerMatchId,
+        leagueSlug:
+          row?.leagueSlug ||
+          existing?.leagueSlug,
+        canonicalSource:
+          providerEvidence?.canonicalSource ||
+          existing?.source,
+        canonicalProviderMatchId:
+          providerEvidence?.canonicalProviderMatchId ||
+          existing?.sourceId ||
+          existing?.sourceMatchId,
+        canonicalHomeTeam:
+          existing?.homeTeam ||
+          row?.homeTeam,
+        canonicalAwayTeam:
+          existing?.awayTeam ||
+          row?.awayTeam,
+        canonicalKickoffUtc:
+          existing?.kickoffUtc ||
+          row?.kickoffUtc,
+        canonicalStatus:
+          existing?.status,
+        canonicalRawStatus:
+          existing?.rawStatus,
+        canonicalStatusType:
+          existing?.statusType,
+        canonicalScoreHome:
+          existing?.scoreHome,
+        canonicalScoreAway:
+          existing?.scoreAway,
+        sourceHomeTeam:
+          providerEvidence?.home,
+        sourceAwayTeam:
+          providerEvidence?.away,
+        sourceKickoffUtc:
+          providerEvidence?.kickoffUtc,
+        statusCode:
+          providerEvidence?.statusCode,
+        statusDetailCode:
+          providerEvidence?.statusDetailCode,
+        nonPlayedTerminal:
+          providerEvidence?.nonPlayedTerminal,
+        playedFinal:
+          providerEvidence?.playedFinal,
+        finished:
+          providerEvidence?.finished,
+        scoreHome:
+          providerEvidence?.scoreHome,
+        scoreAway:
+          providerEvidence?.scoreAway
       });
 
     if (!decision) {
@@ -345,8 +394,10 @@ function resolveDecisionBackedSpecialObservation(
         decision.decisionId ||
       correction?.policyVersion !==
         decision.policyVersion ||
-      correction?.reason !==
-        "approved_flashscore_nonplayed_decision" ||
+      ![
+        "approved_flashscore_nonplayed_decision",
+        "verified_flashscore_nonplayed_decision"
+      ].includes(correction?.reason) ||
       source !==
         decision.provider ||
       status !==

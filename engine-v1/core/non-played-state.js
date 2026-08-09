@@ -114,6 +114,18 @@ export function isPreKickoffNonPlayed(row) {
   return classifyMatchState(row) === MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED;
 }
 
+// Value picks on a fixture that is conclusively non-played must close as VOID,
+// not remain UNRESOLVED forever. Interrupted/delayed/unknown states stay open:
+// they may still resume or acquire an official result later.
+export function isValueSettlementVoidState(row) {
+  const state = classifyMatchState(row);
+
+  return (
+    state === MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED ||
+    state === MATCH_STATE_CLASS.RESULT_INVALIDATED
+  );
+}
+
 export function hasMatchStateConflict(row) {
   return classifyMatchState(row) === MATCH_STATE_CLASS.CONFLICT;
 }

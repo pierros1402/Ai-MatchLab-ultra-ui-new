@@ -7,6 +7,7 @@ import {
   hasMatchStateConflict,
   hasPreKickoffNonPlayedDisplayViolation,
   isPreKickoffNonPlayed,
+  isValueSettlementVoidState,
   isVerifiedFinalVetoState,
   sanitizePreKickoffNonPlayed,
   verifiedFinalVetoReason
@@ -45,6 +46,41 @@ test("provider-independent match-state taxonomy stays fail-closed", () => {
     classifyMatchState({ status: "SPECIAL" }),
     MATCH_STATE_CLASS.UNKNOWN
   );
+});
+
+test("Value settlement voids terminal non-played states and keeps temporary states open", () => {
+  for (const rawStatus of [
+    "STATUS_POSTPONED",
+    "STATUS_CANCELLED",
+    "STATUS_NOT_PLAYED",
+    "STATUS_VOID",
+    "STATUS_NO_CONTEST"
+  ]) {
+    assert.equal(
+      isValueSettlementVoidState({
+        status: "SPECIAL",
+        rawStatus
+      }),
+      true,
+      rawStatus
+    );
+  }
+
+  for (const rawStatus of [
+    "STATUS_ABANDONED",
+    "STATUS_SUSPENDED",
+    "STATUS_DELAYED",
+    "STATUS_SCHEDULED"
+  ]) {
+    assert.equal(
+      isValueSettlementVoidState({
+        status: "SPECIAL",
+        rawStatus
+      }),
+      false,
+      rawStatus
+    );
+  }
 });
 
 test("conflicting played-final and non-played evidence fails closed", () => {

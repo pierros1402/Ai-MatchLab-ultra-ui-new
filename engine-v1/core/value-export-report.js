@@ -6,6 +6,14 @@ export const VALUE_EXPORT_PLAN_ORDER = Object.freeze([
 ]);
 
 function finiteNumber(value) {
+  if (
+    value === null ||
+    value === undefined ||
+    (typeof value === "string" && value.trim() === "")
+  ) {
+    return null;
+  }
+
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
 }
@@ -324,12 +332,14 @@ export function buildValueExportReport({ from, to, days, dayRecords, today }) {
           picks: declaredCount(planDay.declaredSummary, "picks"),
           wins: declaredCount(planDay.declaredSummary, "wins"),
           losses: declaredCount(planDay.declaredSummary, "losses"),
+          voids: declaredCount(planDay.declaredSummary, "voids"),
           unresolved: declaredCount(planDay.declaredSummary, "unresolved")
         };
         const actual = {
           picks: summary.picks,
           wins: summary.wins,
           losses: summary.losses,
+          voids: summary.voids,
           unresolved: summary.unresolved
         };
 

@@ -13,7 +13,7 @@ import { FINAL_SCORE_REVISION_POLICY } from "../core/final-score-revision-backlo
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import {
   listApprovedFlashscoreNonPlayedDecisions,
-  resolveApprovedFlashscoreNonPlayedDecision
+  resolveVerifiedFlashscoreNonPlayedDecision
 } from "../source-discovery/flashscore-nonplayed-decisions.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 
@@ -960,22 +960,54 @@ export function isFlashscoreNonPlayedTerminalEvidence(
   );
 }
 
+export function resolveFlashscoreNonPlayedDecisionForRows(
+  row,
+  dayKey,
+  canonicalRow
+) {
+  return resolveVerifiedFlashscoreNonPlayedDecision({
+    dayKey,
+    canonicalId:
+      canonicalRow?.canonicalId ||
+      canonicalRow?.matchId,
+    leagueSlug: canonicalRow?.leagueSlug,
+    providerMatchId: row?.matchId,
+    canonicalSource: canonicalRow?.source,
+    canonicalProviderMatchId:
+      canonicalRow?.sourceId ||
+      canonicalRow?.sourceMatchId,
+    canonicalHomeTeam: canonicalRow?.homeTeam,
+    canonicalAwayTeam: canonicalRow?.awayTeam,
+    canonicalKickoffUtc: canonicalRow?.kickoffUtc,
+    canonicalStatus: canonicalRow?.status,
+    canonicalRawStatus: canonicalRow?.rawStatus,
+    canonicalStatusType: canonicalRow?.statusType,
+    canonicalScoreHome: canonicalRow?.scoreHome,
+    canonicalScoreAway: canonicalRow?.scoreAway,
+    sourceHomeTeam: row?.home,
+    sourceAwayTeam: row?.away,
+    sourceKickoffUtc: row?.kickoffUtc,
+    statusCode: row?.statusCode,
+    statusDetailCode: row?.statusDetailCode,
+    nonPlayedTerminal: row?.nonPlayedTerminal,
+    playedFinal: row?.playedFinal,
+    finished: row?.finished,
+    scoreHome: row?.scoreHome,
+    scoreAway: row?.scoreAway
+  });
+}
+
 export function isExactFlashscorePostponedRow(
   row,
   dayKey,
   canonicalRow
 ) {
   const decision =
-    resolveApprovedFlashscoreNonPlayedDecision({
+    resolveFlashscoreNonPlayedDecisionForRows(
+      row,
       dayKey,
-
-      canonicalId:
-        canonicalRow?.canonicalId ||
-        canonicalRow?.matchId,
-
-      providerMatchId:
-        row?.matchId
-    });
+      canonicalRow
+    );
 
   if (!decision) {
     return false;
@@ -1030,18 +1062,12 @@ export function buildFlashscorePostponedIncoming(
       sourceRow?.matchId
     );
 
-  const canonicalId =
-    normalizeText(
-      previous?.canonicalId ||
-      previous?.matchId
-    );
-
   const decision =
-    resolveApprovedFlashscoreNonPlayedDecision({
+    resolveFlashscoreNonPlayedDecisionForRows(
+      sourceRow,
       dayKey,
-      canonicalId,
-      providerMatchId
-    });
+      previous
+    );
 
   const evidenceDayKey =
     decision?.evidenceDayKey ||
@@ -1065,7 +1091,7 @@ export function buildFlashscorePostponedIncoming(
     )
   ) {
     throw new Error(
-      "unapproved_flashscore_nonplayed_status_mutation"
+      "unverified_flashscore_nonplayed_status_mutation"
     );
   }
 
@@ -1138,16 +1164,46 @@ export function buildFlashscorePostponedIncoming(
       },
 
       reason:
-        "approved_flashscore_nonplayed_decision",
+        "verified_flashscore_nonplayed_decision",
 
       decisionBasis:
         decision.decisionBasis,
+
+      decisionMode:
+        decision.decisionMode ||
+        "approved_occurrence",
 
       providerEvidence: {
         provider:
           decision.provider,
 
         providerMatchId,
+
+        home:
+          normalizeText(
+            sourceRow?.home
+          ),
+
+        away:
+          normalizeText(
+            sourceRow?.away
+          ),
+
+        kickoffUtc:
+          normalizeText(
+            sourceRow?.kickoffUtc
+          ),
+
+        canonicalSource:
+          normalizeText(
+            previous?.source
+          ),
+
+        canonicalProviderMatchId:
+          normalizeText(
+            previous?.sourceId ||
+            previous?.sourceMatchId
+          ),
 
         statusCode:
           normalizeText(
@@ -1162,6 +1218,10 @@ export function buildFlashscorePostponedIncoming(
 
         playedFinal:
           sourceRow?.playedFinal ===
+          true,
+
+        finished:
+          sourceRow?.finished ===
           true,
 
         nonPlayedTerminal:

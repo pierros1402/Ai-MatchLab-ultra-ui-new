@@ -5,7 +5,8 @@ import {
   mergeFlashscoreTargetLeaguesWithApprovedDecisions,
   isFlashscoreNonPlayedTerminalEvidence,
   isExactFlashscorePostponedRow,
-  buildFlashscorePostponedIncoming
+  buildFlashscorePostponedIncoming,
+  resolveFlashscoreNonPlayedDecisionForRows
 } from "../jobs/run-live-status-refresh-day.js";
 
 import {
@@ -185,6 +186,70 @@ test(
         .statusCorrection
         ?.decisionId,
       "flashscore-nonplayed-20260719-ldvtm1Wg-v1"
+    );
+  }
+);
+
+test(
+  "new exact same-provider non-played occurrence self-promotes without an operator row",
+  () => {
+    const source = postponedRow({
+      matchId: "4nadNw3N",
+      home: "Belshina",
+      away: "Din. Minsk",
+      kickoffUtc: "2026-08-08T11:00:00.000Z"
+    });
+
+    const canonical = canonicalRow({
+      canonicalId: "cid_blr1_belshina_dinminsk_20260808",
+      matchId: "cid_blr1_belshina_dinminsk_20260808",
+      sourceId: "4nadNw3N",
+      sourceMatchId: "4nadNw3N",
+      dayKey: "2026-08-08",
+      homeTeam: "Belshina",
+      awayTeam: "Din. Minsk",
+      kickoffUtc: "2026-08-08T11:00:00.000Z",
+      status: "STATUS_SCHEDULED",
+      rawStatus: "STATUS_SCHEDULED",
+      statusType: null,
+      minute: null,
+      scoreHome: null,
+      scoreAway: null
+    });
+
+    const decision =
+      resolveFlashscoreNonPlayedDecisionForRows(
+        source,
+        "2026-08-08",
+        canonical
+      );
+
+    assert.equal(
+      decision?.decisionMode,
+      "autonomous_exact_provider_occurrence"
+    );
+    assert.equal(
+      isExactFlashscorePostponedRow(
+        source,
+        "2026-08-08",
+        canonical
+      ),
+      true
+    );
+
+    const corrected =
+      buildFlashscorePostponedIncoming(
+        canonical,
+        source,
+        "2026-08-08"
+      );
+
+    assert.equal(corrected.status, "STATUS_POSTPONED");
+    assert.equal(corrected.scoreHome, null);
+    assert.equal(corrected.scoreAway, null);
+    assert.equal(
+      corrected.statusCorrection?.reason,
+      "verified_flashscore_nonplayed_decision"
     );
   }
 );
