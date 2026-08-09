@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-08",
-  "generatedAt": "2026-08-09T02:36:53.513Z",
+  "generatedAt": "2026-08-09T05:03:27.927Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -10,7 +10,7 @@
     "planB": "strict_value_policy_v2.3_observation_artifact",
     "planBCanonicalFixtureMembershipRequired": true,
     "planBOddsMayCreateFixtures": false,
-    "finalTruth": "verified_final_results",
+    "finalTruth": "verified_final_results_or_canonical_non_played_state",
     "deploySnapshotUsedAsFinalTruth": false,
     "realBookmakerOddsUsedForValue": false,
     "oddsUse": "display_settlement_only_when_present"
@@ -18,19 +18,55 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-08-08/fixtures.json",
     "finalResultsDir": "data/final-results/2026-08-08",
-    "verifiedFinalResults": 396,
+    "verifiedFinalResults": 388,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-08",
-    "canonicalContradictionsRejected": [],
-    "canonicalIdentityAmbiguities": [],
+    "canonicalContradictionsRejected": [
+      {
+        "matchId": "cid_bol1_abb_guabira_20260808",
+        "reason": "canonical_identity_ambiguous"
+      },
+      {
+        "matchId": "cid_bol1_sanantoniobulobulo_nacionalpotosi_20260808",
+        "reason": "canonical_identity_ambiguous"
+      },
+      {
+        "matchId": "cid_bol1_sanantoniobulobulo_nacionalpotosi_20260808",
+        "reason": "canonical_identity_ambiguous"
+      },
+      {
+        "matchId": "cid_rus1_kryliasovetov_baltikakaliningrad_20260808",
+        "reason": "canonical_identity_ambiguous"
+      },
+      {
+        "matchId": "cid_rus1_lokomotivmoscow_akrontolyatti_20260808",
+        "reason": "canonical_identity_ambiguous"
+      },
+      {
+        "matchId": "cid_rus1_lokomotivmoscow_akrontolyatti_20260808",
+        "reason": "canonical_identity_ambiguous"
+      }
+    ],
+    "canonicalIdentityAmbiguities": [
+      "cid_bol1_abb_guabira_20260808",
+      "cid_bol1_sanantoniobulobulo_nacionalpotosi_20260808",
+      "cid_rus1_kryliasovetov_baltikakaliningrad_20260808",
+      "cid_rus1_lokomotivmoscow_akrontolyatti_20260808"
+    ],
     "fixtureIdentityAmbiguities": [],
-    "finalIdentityAmbiguities": [],
+    "finalIdentityAmbiguities": [
+      "cid_bel1_kvcwesterlo_unionstgilloise_20260808",
+      "cid_bel1_sinttruidense_lommelsk_20260808",
+      "cid_fra2_sochaux_saintetienne_20260808",
+      "cid_ned1_goaheadeagles_willemii_20260808",
+      "cid_per1_utc_adt_20260808"
+    ],
     "planAPath": "data/value-plans/2026-08-08/plan-a.json",
     "planBMembership": {
       "picks": 16,
       "validPicks": 16,
       "orphanPicks": 0,
       "ambiguousPicks": 0,
-      "canonicalFixtures": 409,
+      "canonicalFixtures": 400,
       "ambiguousCanonicalAliases": 0
     },
     "planAFreeze": null,
@@ -61,6 +97,7 @@
         "settled": 6,
         "wins": 5,
         "losses": 1,
+        "voids": 0,
         "unresolved": 3,
         "unsupported": 0,
         "hitRate": 0.8333,
@@ -529,6 +566,7 @@
         "settled": 6,
         "wins": 5,
         "losses": 1,
+        "voids": 0,
         "unresolved": 3,
         "unsupported": 0,
         "hitRate": 0.8333,
@@ -997,6 +1035,7 @@
         "settled": 16,
         "wins": 12,
         "losses": 4,
+        "voids": 0,
         "unresolved": 0,
         "unsupported": 0,
         "hitRate": 0.75,
@@ -1891,6 +1930,7 @@
         "settled": 16,
         "wins": 12,
         "losses": 4,
+        "voids": 0,
         "unresolved": 0,
         "unsupported": 0,
         "hitRate": 0.75,
