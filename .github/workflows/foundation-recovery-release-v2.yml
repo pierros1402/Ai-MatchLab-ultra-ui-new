@@ -1,0 +1,170 @@
+name: Foundation recovery release v2
+
+on:
+  push:
+    branches:
+      - recovery/foundation-release-20260809-v2
+    paths:
+      - .github/workflows/foundation-recovery-release-v2.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout recovery branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Merge latest main under writer lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          RELEASE_BASE="$(git rev-parse origin/main)"
+          git merge-base --is-ancestor 2221b41c19bed2ad460d107b48f96a4faa859a40 "$RELEASE_BASE"
+          git merge --no-edit "$RELEASE_BASE"
+          echo "RELEASE_BASE=$RELEASE_BASE" >> "$GITHUB_ENV"
+          echo "Recovery release base: $RELEASE_BASE"
+
+      - name: Verify and reconstruct recovery patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib
+          root=pathlib.Path('.github/recovery')
+          manifest=json.loads((root/'v2.manifest.json').read_text())
+          chunks=[]
+          for p in manifest['parts']:
+              f=root/p['name']
+              if not f.is_file():
+                  raise SystemExit(f"missing recovery part: {f}")
+              b=f.read_bytes()
+              if len(b)!=p['size']:
+                  raise SystemExit(f"size mismatch: {f}: {len(b)} != {p['size']}")
+              h=hashlib.sha256(b).hexdigest()
+              if h!=p['sha256']:
+                  raise SystemExit(f"sha mismatch: {f}: {h} != {p['sha256']}")
+              chunks.append(b)
+          b64=b''.join(chunks)
+          if len(b64)!=manifest['concatenatedBase64']['size']:
+              raise SystemExit('concatenated base64 size mismatch')
+          h=hashlib.sha256(b64).hexdigest()
+          if h!=manifest['concatenatedBase64']['sha256']:
+              raise SystemExit('concatenated base64 sha mismatch')
+          pathlib.Path('/tmp/foundation.patch.xz.b64').write_bytes(b64)
+          print(f"Verified {len(chunks)} recovery chunks")
+          PY
+          base64 -d /tmp/foundation.patch.xz.b64 > /tmp/foundation.patch.xz
+          test "$(stat -c%s /tmp/foundation.patch.xz)" = "55400"
+          echo "9b6bf5086c3a845e7d311360668551467b11ce46b9ff24d225933ee8602bcbdf  /tmp/foundation.patch.xz" | sha256sum -c -
+          xz -dc /tmp/foundation.patch.xz > /tmp/foundation.patch
+          test "$(stat -c%s /tmp/foundation.patch)" = "288479"
+          echo "b95e37a472d4c98bfceb3cf14044b72cbfc9b534f81ac5b794852c86b885bc49  /tmp/foundation.patch" | sha256sum -c -
+          git apply --check --whitespace=nowarn /tmp/foundation.patch
+
+      - name: Apply recovery source and control patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --whitespace=nowarn /tmp/foundation.patch
+          echo "Changed source/control paths:"
+          git diff --name-status "$RELEASE_BASE" -- . ':!.github/recovery' ':!.github/workflows/foundation-recovery-release-v2.yml'
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Syntax check recovery JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git diff --name-only "$RELEASE_BASE" -- engine-v1 | grep -E '\.js$' || true)
+          test "${#files[@]}" -gt 0
+          for f in "${files[@]}"; do node --check "$f"; done
+          echo "Syntax PASS: ${#files[@]} files"
+
+      - name: Run checkout-independent recovery regression set
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/core/authoritative-terminal-writeback.test.js \
+            engine-v1/core/production-evidence-identity-overlay.test.js \
+            engine-v1/jobs/rebuild-h2h-index-from-identity-resolved-history.test.js \
+            engine-v1/jobs/build-standings-day.test.js \
+            engine-v1/tests/value-plan-comparison-nonplayed.test.js \
+            engine-v1/tests/value-comparison-exact-identity.test.js \
+            engine-v1/tests/build-details-nonplayed-score.test.js
+
+      - name: Run deterministic foundation recovery
+        env:
+          AIML_RECOVERY_TEMP: ${{ runner.temp }}/aiml-foundation-recovery
+        run: node engine-v1/jobs/run-foundation-recovery-release.js
+
+      - name: Re-run final publication gate
+        run: node engine-v1/jobs/build-foundation-integrity-report.js --date=2026-08-09 --gate
+
+      - name: Assert release verdict
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='data/foundation-integrity/2026-08-09.json';
+          const r=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(r.modelReady!==true || r.publicationReady!==true) {
+            console.error(JSON.stringify({modelReady:r.modelReady,publicationReady:r.publicationReady,blockers:r.blockers},null,2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({modelReady:r.modelReady,publicationReady:r.publicationReady,blockers:r.blockers||[]},null,2));
+          NODE
+
+      - name: Require stable main before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          NOW="$(git rev-parse origin/main)"
+          test "$NOW" = "$RELEASE_BASE" || { echo "main advanced during recovery: $RELEASE_BASE -> $NOW"; exit 1; }
+
+      - name: Commit validated recovery result to branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .github/recovery
+          rm -f .github/workflows/foundation-recovery-release-v2.yml
+          git add -A
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "Recover foundation integrity and publication gates"
+          git push origin HEAD:recovery/foundation-release-20260809-v2
+          echo "RECOVERY_RESULT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Final branch evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "release_base=$RELEASE_BASE"
+          echo "result_sha=$(git rev-parse HEAD)"
+          git status --short
