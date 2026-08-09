@@ -2,14 +2,46 @@
   "dayKey": "2026-08-10",
   "leagueSlug": "hon.1",
   "leagueName": "hon.1",
-  "updatedAt": "2026-08-09T22:54:49.676Z",
+  "updatedAt": "2026-08-09T23:40:44.188Z",
   "count": 3,
   "sourceMeta": {
     "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "hon.1",
     "requestedDayKey": "2026-08-10",
-    "mergedAt": "2026-08-09T22:54:49.676Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "hon.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 2,
+      "fetches": [
+        {
+          "providerSlug": "hon.1",
+          "dayKey": "2026-08-09",
+          "ok": true,
+          "events": 3,
+          "matched": 2
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-09T23:40:44.188Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -31,15 +63,39 @@
       "homeTeam": "Juticalpa FC",
       "awayTeam": "Club Deportivo Olimpia",
       "scoreHome": 1,
-      "scoreAway": 2,
+      "scoreAway": 3,
       "penalties": null,
       "decidedBy": null,
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "90'+4'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+9'",
       "venue": null,
       "firstSeenAt": "2026-08-09T17:51:58.441Z",
-      "lastSeenAt": "2026-08-09T22:54:49.653Z"
+      "lastSeenAt": 1786316997662,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-09T23:22:07.777Z",
+        "provider": "espn",
+        "providerMatchId": "401897985",
+        "dayKey": "2026-08-10",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 3
+        }
+      }
     },
     {
       "canonicalId": "cid_hon1_motagua_estrellaroja_20260810",
@@ -59,16 +115,16 @@
       "kickoffUtc": "2026-08-09T23:15Z",
       "homeTeam": "FC Motagua",
       "awayTeam": "CD Estrella Roja",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 0,
+      "scoreAway": 0,
       "penalties": null,
       "decidedBy": null,
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
+      "status": "FIRST_HALF",
+      "rawStatus": "STATUS_FIRST_HALF",
+      "minute": "24'",
       "venue": "Estadio José de la Paz Herrera Uclés",
       "firstSeenAt": "2026-08-09T17:51:58.441Z",
-      "lastSeenAt": "2026-08-09T22:54:49.654Z"
+      "lastSeenAt": "2026-08-09T23:40:44.188Z"
     },
     {
       "canonicalId": "cid_hon1_independientesiguatepeque_choloma_20260810",
@@ -97,7 +153,7 @@
       "minute": "0'",
       "venue": "Estadio Municipal Carlos Miranda",
       "firstSeenAt": "2026-08-09T17:51:58.442Z",
-      "lastSeenAt": "2026-08-09T22:54:49.654Z"
+      "lastSeenAt": "2026-08-09T23:40:44.188Z"
     }
   ]
 }
