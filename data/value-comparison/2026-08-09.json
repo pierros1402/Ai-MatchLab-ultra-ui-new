@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-09",
-  "generatedAt": "2026-08-09T04:36:30.877Z",
+  "generatedAt": "2026-08-09T21:58:52.377Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -10,7 +10,7 @@
     "planB": "strict_value_policy_v2.3_observation_artifact",
     "planBCanonicalFixtureMembershipRequired": true,
     "planBOddsMayCreateFixtures": false,
-    "finalTruth": "verified_final_results",
+    "finalTruth": "verified_final_results_or_canonical_non_played_state",
     "deploySnapshotUsedAsFinalTruth": false,
     "realBookmakerOddsUsedForValue": false,
     "oddsUse": "display_settlement_only_when_present"
@@ -18,12 +18,10 @@
   "inputs": {
     "fixturesPath": "data/deploy-snapshots/2026-08-09/fixtures.json",
     "finalResultsDir": "data/final-results/2026-08-09",
-    "verifiedFinalResults": 44,
+    "verifiedFinalResults": 268,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-09",
     "canonicalContradictionsRejected": [],
-    "canonicalIdentityAmbiguities": [
-      "cid_aut1_joskoried_rapidvienna_20260809"
-    ],
+    "canonicalIdentityAmbiguities": [],
     "fixtureIdentityAmbiguities": [],
     "finalIdentityAmbiguities": [],
     "planAPath": "data/value-plans/2026-08-09/plan-a.json",
@@ -57,18 +55,19 @@
       "summary": {
         "picks": 11,
         "uniqueMatches": 11,
-        "settled": 1,
-        "wins": 0,
-        "losses": 1,
-        "unresolved": 10,
+        "settled": 11,
+        "wins": 5,
+        "losses": 6,
+        "voids": 0,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 1,
-        "averageOdds": 1.65,
-        "totalStake": 1,
-        "totalReturn": 0,
-        "profit": -1,
-        "roi": -1
+        "hitRate": 0.4545,
+        "oddsAvailable": 8,
+        "averageOdds": 1.6475,
+        "totalStake": 8,
+        "totalReturn": 3.2,
+        "profit": -4.8,
+        "roi": -0.6
       },
       "picks": [
         {
@@ -77,7 +76,7 @@
           "canonicalMatchId": "cid_sui1_basel_thun_20260809",
           "country": "Switzerland",
           "leagueSlug": "sui.1",
-          "leagueName": "Swiss Super League",
+          "leagueName": "Super League",
           "kickoff": "2026-08-09T14:30:00.000Z",
           "homeTeam": "Basel",
           "awayTeam": "Thun",
@@ -91,11 +90,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 2,
+            "scoreKey": "4-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:42.100Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KGGZJaqn",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "Basel",
+                "away": "Thun",
+                "scoreHome": 4,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:30:00.000Z",
+                "scoreKey": "4-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -157,7 +184,7 @@
           "canonicalMatchId": "cid_lva2_rigamariners_tukums20002_20260809",
           "country": "Latvia",
           "leagueSlug": "lva.2",
-          "leagueName": "Latvian 1. Liga",
+          "leagueName": "Nakotnes liga",
           "kickoff": "2026-08-09T14:00:00.000Z",
           "homeTeam": "Riga Mariners",
           "awayTeam": "Tukums 2000 2",
@@ -171,11 +198,39 @@
           "aiFairOdds": 1.32,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 2,
+            "scoreKey": "4-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:40.410Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "ENeIsw5b",
+                "country": "Latvia",
+                "leagueName": "Nakotnes liga",
+                "leaguePath": "/football/latvia/nakotnes-liga/",
+                "home": "Riga Mariners",
+                "away": "Tukums 2000 2",
+                "scoreHome": 4,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:00:00.000Z",
+                "scoreKey": "4-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -197,11 +252,39 @@
           "aiFairOdds": 1.81,
           "oddsDecimal": 2,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:53.803Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "WhZpaOLb",
+                "country": "Poland",
+                "leagueName": "Ekstraklasa",
+                "leaguePath": "/football/poland/ekstraklasa/",
+                "home": "Jagiellonia",
+                "away": "Widzew Lodz",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T18:15:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -223,11 +306,39 @@
           "aiFairOdds": 1.33,
           "oddsDecimal": 1.57,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:37.775Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "rm6b5Wgn",
+                "country": "Sweden",
+                "leagueName": "Superettan",
+                "leaguePath": "/football/sweden/superettan/",
+                "home": "Varberg",
+                "away": "Sandviken",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T13:00:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -249,11 +360,75 @@
           "aiFairOdds": 1.54,
           "oddsDecimal": 1.65,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-09T21:57:34.814Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401842781",
+                "canonicalId": "cid_swe1_malmoff_degerfors_20260809",
+                "leagueName": "Allsvenskan",
+                "home": "Malmö FF",
+                "away": "Degerfors IF",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T12:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-09T21:53:19.203Z",
+                "scoreKey": "1-2",
+                "homeTeam": "Malmö FF",
+                "awayTeam": "Degerfors IF",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_swe1_malmoff_degerfors_20260809"
+                  ],
+                  "sourceFixtureId": "cid_swe1_malmoff_degerfors_20260809",
+                  "resolvedFixtureId": "cid_swe1_malmoff_degerfors_20260809",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Malmö FF",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Degerfors IF",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "vTKd4ZAU",
+                "country": "Sweden",
+                "leagueName": "Allsvenskan",
+                "leaguePath": "/football/sweden/allsvenskan/",
+                "home": "Malmo FF",
+                "away": "Degerfors",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T12:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -261,7 +436,7 @@
           "canonicalMatchId": "cid_arm1_pyunikyerevan_van_20260809",
           "country": "Armenia",
           "leagueSlug": "arm.1",
-          "leagueName": "Armenian Premier League",
+          "leagueName": "Premier League",
           "kickoff": "2026-08-09T13:00:00.000Z",
           "homeTeam": "Pyunik Yerevan",
           "awayTeam": "Van",
@@ -275,11 +450,39 @@
           "aiFairOdds": 1.36,
           "oddsDecimal": 1.55,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 0,
+            "scoreKey": "3-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:36.938Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "fo75tGe3",
+                "country": "Armenia",
+                "leagueName": "Premier League",
+                "leaguePath": "/football/armenia/premier-league/",
+                "home": "Pyunik Yerevan",
+                "away": "Van",
+                "scoreHome": 3,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T13:00:00.000Z",
+                "scoreKey": "3-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -301,11 +504,39 @@
           "aiFairOdds": 1.75,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:47.880Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "CW3w7Ch5",
+                "country": "Finland",
+                "leagueName": "Veikkausliiga",
+                "leaguePath": "/football/finland/veikkausliiga/",
+                "home": "AC Oulu",
+                "away": "HJK",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -327,11 +558,39 @@
           "aiFairOdds": 1.36,
           "oddsDecimal": 1.44,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:43.143Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "vqef3UiU",
+                "country": "Finland",
+                "leagueName": "Veikkausliiga",
+                "leaguePath": "/football/finland/veikkausliiga/",
+                "home": "Ilves",
+                "away": "Mariehamn",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -353,11 +612,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.62,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-09T21:57:45.908Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401881811",
+                "canonicalId": "cid_aut1_wolfsberger_rbsalzburg_20260809",
+                "leagueName": "Austrian Bundesliga",
+                "home": "Wolfsberger",
+                "away": "RB Salzburg",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-09T21:53:14.590Z",
+                "scoreKey": "1-1",
+                "homeTeam": "Wolfsberger",
+                "awayTeam": "RB Salzburg",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_aut1_wolfsberger_rbsalzburg_20260809"
+                  ],
+                  "sourceFixtureId": "cid_aut1_wolfsberger_rbsalzburg_20260809",
+                  "resolvedFixtureId": "cid_aut1_wolfsberger_rbsalzburg_20260809",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Wolfsberger",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "RB Salzburg",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "0Guy0BMt",
+                "country": "Austria",
+                "leagueName": "Bundesliga",
+                "leaguePath": "/football/austria/bundesliga/",
+                "home": "Wolfsberger AC",
+                "away": "Salzburg",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -365,7 +688,7 @@
           "canonicalMatchId": "cid_blr2_nivadolbizno_ska1938_20260809",
           "country": "Belarus",
           "leagueSlug": "blr.2",
-          "leagueName": "Belarusian First League",
+          "leagueName": "Pershaya Liga",
           "kickoff": "2026-08-09T11:00:00.000Z",
           "homeTeam": "Niva Dolbizno",
           "awayTeam": "SKA-1938",
@@ -379,11 +702,39 @@
           "aiFairOdds": 1.31,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:32.412Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "v5ypBNcn",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "Niva Dolbizno",
+                "away": "SKA-1938",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T11:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -401,18 +752,19 @@
       "summary": {
         "picks": 12,
         "uniqueMatches": 12,
-        "settled": 1,
-        "wins": 0,
-        "losses": 1,
-        "unresolved": 11,
+        "settled": 12,
+        "wins": 6,
+        "losses": 6,
+        "voids": 0,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": 0,
-        "oddsAvailable": 1,
+        "hitRate": 0.5,
+        "oddsAvailable": 9,
         "averageOdds": 1.65,
-        "totalStake": 1,
-        "totalReturn": 0,
-        "profit": -1,
-        "roi": -1
+        "totalStake": 9,
+        "totalReturn": 4.87,
+        "profit": -4.13,
+        "roi": -0.4589
       },
       "picks": [
         {
@@ -421,7 +773,7 @@
           "canonicalMatchId": "cid_sui1_basel_thun_20260809",
           "country": "Switzerland",
           "leagueSlug": "sui.1",
-          "leagueName": "Swiss Super League",
+          "leagueName": "Super League",
           "kickoff": "2026-08-09T14:30:00.000Z",
           "homeTeam": "Basel",
           "awayTeam": "Thun",
@@ -435,11 +787,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 2,
+            "scoreKey": "4-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:42.100Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KGGZJaqn",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "Basel",
+                "away": "Thun",
+                "scoreHome": 4,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:30:00.000Z",
+                "scoreKey": "4-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -447,7 +827,7 @@
           "canonicalMatchId": "cid_lva2_rigamariners_tukums20002_20260809",
           "country": "Latvia",
           "leagueSlug": "lva.2",
-          "leagueName": "Latvian 1. Liga",
+          "leagueName": "Nakotnes liga",
           "kickoff": "2026-08-09T14:00:00.000Z",
           "homeTeam": "Riga Mariners",
           "awayTeam": "Tukums 2000 2",
@@ -461,11 +841,39 @@
           "aiFairOdds": 1.32,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 2,
+            "scoreKey": "4-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:40.410Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "ENeIsw5b",
+                "country": "Latvia",
+                "leagueName": "Nakotnes liga",
+                "leaguePath": "/football/latvia/nakotnes-liga/",
+                "home": "Riga Mariners",
+                "away": "Tukums 2000 2",
+                "scoreHome": 4,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:00:00.000Z",
+                "scoreKey": "4-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -473,7 +881,7 @@
           "canonicalMatchId": "cid_lva1_supernova_liepaja_20260809",
           "country": "Latvia",
           "leagueSlug": "lva.1",
-          "leagueName": "Latvian Virsliga",
+          "leagueName": "Virsliga",
           "kickoff": "2026-08-09T13:00:00.000Z",
           "homeTeam": "Super Nova",
           "awayTeam": "FK Liepaja",
@@ -487,11 +895,39 @@
           "aiFairOdds": 1.53,
           "oddsDecimal": 1.67,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:37.666Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "8MtZSQnp",
+                "country": "Latvia",
+                "leagueName": "Virsliga",
+                "leaguePath": "/football/latvia/virsliga/",
+                "home": "Super Nova",
+                "away": "FK Liepaja",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T13:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -567,11 +1003,39 @@
           "aiFairOdds": 1.33,
           "oddsDecimal": 1.57,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:37.775Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "rm6b5Wgn",
+                "country": "Sweden",
+                "leagueName": "Superettan",
+                "leaguePath": "/football/sweden/superettan/",
+                "home": "Varberg",
+                "away": "Sandviken",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T13:00:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -593,11 +1057,39 @@
           "aiFairOdds": 1.81,
           "oddsDecimal": 2,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:53.803Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "WhZpaOLb",
+                "country": "Poland",
+                "leagueName": "Ekstraklasa",
+                "leaguePath": "/football/poland/ekstraklasa/",
+                "home": "Jagiellonia",
+                "away": "Widzew Lodz",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T18:15:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -619,11 +1111,75 @@
           "aiFairOdds": 1.54,
           "oddsDecimal": 1.65,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-09T21:57:34.814Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401842781",
+                "canonicalId": "cid_swe1_malmoff_degerfors_20260809",
+                "leagueName": "Allsvenskan",
+                "home": "Malmö FF",
+                "away": "Degerfors IF",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T12:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-09T21:53:19.203Z",
+                "scoreKey": "1-2",
+                "homeTeam": "Malmö FF",
+                "awayTeam": "Degerfors IF",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_swe1_malmoff_degerfors_20260809"
+                  ],
+                  "sourceFixtureId": "cid_swe1_malmoff_degerfors_20260809",
+                  "resolvedFixtureId": "cid_swe1_malmoff_degerfors_20260809",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Malmö FF",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Degerfors IF",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "vTKd4ZAU",
+                "country": "Sweden",
+                "leagueName": "Allsvenskan",
+                "leaguePath": "/football/sweden/allsvenskan/",
+                "home": "Malmo FF",
+                "away": "Degerfors",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T12:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -645,11 +1201,39 @@
           "aiFairOdds": 1.75,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 1,
+            "scoreKey": "0-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:47.880Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "CW3w7Ch5",
+                "country": "Finland",
+                "leagueName": "Veikkausliiga",
+                "leaguePath": "/football/finland/veikkausliiga/",
+                "home": "AC Oulu",
+                "away": "HJK",
+                "scoreHome": 0,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "0-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -657,7 +1241,7 @@
           "canonicalMatchId": "cid_arm1_pyunikyerevan_van_20260809",
           "country": "Armenia",
           "leagueSlug": "arm.1",
-          "leagueName": "Armenian Premier League",
+          "leagueName": "Premier League",
           "kickoff": "2026-08-09T13:00:00.000Z",
           "homeTeam": "Pyunik Yerevan",
           "awayTeam": "Van",
@@ -671,11 +1255,39 @@
           "aiFairOdds": 1.36,
           "oddsDecimal": 1.55,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 0,
+            "scoreKey": "3-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:36.938Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "fo75tGe3",
+                "country": "Armenia",
+                "leagueName": "Premier League",
+                "leaguePath": "/football/armenia/premier-league/",
+                "home": "Pyunik Yerevan",
+                "away": "Van",
+                "scoreHome": 3,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T13:00:00.000Z",
+                "scoreKey": "3-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -697,11 +1309,39 @@
           "aiFairOdds": 1.36,
           "oddsDecimal": 1.44,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:43.143Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "vqef3UiU",
+                "country": "Finland",
+                "leagueName": "Veikkausliiga",
+                "leaguePath": "/football/finland/veikkausliiga/",
+                "home": "Ilves",
+                "away": "Mariehamn",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -723,11 +1363,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.62,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-09T21:57:45.908Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401881811",
+                "canonicalId": "cid_aut1_wolfsberger_rbsalzburg_20260809",
+                "leagueName": "Austrian Bundesliga",
+                "home": "Wolfsberger",
+                "away": "RB Salzburg",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-09T21:53:14.590Z",
+                "scoreKey": "1-1",
+                "homeTeam": "Wolfsberger",
+                "awayTeam": "RB Salzburg",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_aut1_wolfsberger_rbsalzburg_20260809"
+                  ],
+                  "sourceFixtureId": "cid_aut1_wolfsberger_rbsalzburg_20260809",
+                  "resolvedFixtureId": "cid_aut1_wolfsberger_rbsalzburg_20260809",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Wolfsberger",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "RB Salzburg",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "0Guy0BMt",
+                "country": "Austria",
+                "leagueName": "Bundesliga",
+                "leaguePath": "/football/austria/bundesliga/",
+                "home": "Wolfsberger AC",
+                "away": "Salzburg",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -735,7 +1439,7 @@
           "canonicalMatchId": "cid_blr2_nivadolbizno_ska1938_20260809",
           "country": "Belarus",
           "leagueSlug": "blr.2",
-          "leagueName": "Belarusian First League",
+          "leagueName": "Pershaya Liga",
           "kickoff": "2026-08-09T11:00:00.000Z",
           "homeTeam": "Niva Dolbizno",
           "awayTeam": "SKA-1938",
@@ -749,11 +1453,39 @@
           "aiFairOdds": 1.31,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:32.412Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "v5ypBNcn",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "Niva Dolbizno",
+                "away": "SKA-1938",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T11:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -771,18 +1503,19 @@
       "summary": {
         "picks": 23,
         "uniqueMatches": 14,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
-        "unresolved": 23,
+        "settled": 23,
+        "wins": 15,
+        "losses": 8,
+        "voids": 0,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.6522,
+        "oddsAvailable": 14,
+        "averageOdds": 1.6757,
+        "totalStake": 14,
+        "totalReturn": 11.22,
+        "profit": -2.78,
+        "roi": -0.1986
       },
       "picks": [
         {
@@ -805,11 +1538,39 @@
           "aiFairOdds": 1.13,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.600Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dC7HCp6U",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Asane",
+                "away": "Kongsvinger",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -831,11 +1592,39 @@
           "aiFairOdds": 1.14,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.218Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Ob99E6yI",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Stromsgodset",
+                "away": "Egersund",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -857,11 +1646,39 @@
           "aiFairOdds": 1.15,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 2,
+            "scoreKey": "7-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.770Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "WUFR3kNa",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Haugesund",
+                "away": "Raufoss",
+                "scoreHome": 7,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "7-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -869,7 +1686,7 @@
           "canonicalMatchId": "cid_isl2_volsungur_kopavogur_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.2",
-          "leagueName": "Icelandic 1. deild karla",
+          "leagueName": "Division 1",
           "kickoff": "2026-08-09T16:00:00.000Z",
           "homeTeam": "Volsungur",
           "awayTeam": "Kopavogur",
@@ -883,11 +1700,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:48.784Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jijSvs3e",
+                "country": "Iceland",
+                "leagueName": "Division 1",
+                "leaguePath": "/football/iceland/division-1/",
+                "home": "Volsungur",
+                "away": "Kopavogur",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -909,11 +1754,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": 1.82,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.600Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dC7HCp6U",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Asane",
+                "away": "Kongsvinger",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -935,11 +1808,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.107Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "UaG0GS65",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Strommen",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -961,11 +1862,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": 2.33,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.218Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Ob99E6yI",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Stromsgodset",
+                "away": "Egersund",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -973,7 +1902,7 @@
           "canonicalMatchId": "cid_lva1_riga_ogreunited_20260809",
           "country": "Latvia",
           "leagueSlug": "lva.1",
-          "leagueName": "Latvian Virsliga",
+          "leagueName": "Virsliga",
           "kickoff": "2026-08-09T15:00:00.000Z",
           "homeTeam": "Riga FC",
           "awayTeam": "Ogre United",
@@ -987,11 +1916,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": 1.06,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 1,
+            "scoreKey": "4-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:43.877Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "A9JQYGz3",
+                "country": "Latvia",
+                "leagueName": "Virsliga",
+                "leaguePath": "/football/latvia/virsliga/",
+                "home": "Riga FC",
+                "away": "Ogre United",
+                "scoreHome": 4,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "4-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -999,7 +1956,7 @@
           "canonicalMatchId": "cid_isl1_stjarnan_keflavik_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Stjarnan",
           "awayTeam": "Keflavik",
@@ -1013,11 +1970,39 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": 1.25,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.282Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "nVuAiCxA",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Stjarnan",
+                "away": "Keflavik",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1039,11 +2024,39 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.107Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "UaG0GS65",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Strommen",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1051,7 +2064,7 @@
           "canonicalMatchId": "cid_isl2_volsungur_kopavogur_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.2",
-          "leagueName": "Icelandic 1. deild karla",
+          "leagueName": "Division 1",
           "kickoff": "2026-08-09T16:00:00.000Z",
           "homeTeam": "Volsungur",
           "awayTeam": "Kopavogur",
@@ -1065,11 +2078,39 @@
           "aiFairOdds": 1.23,
           "oddsDecimal": 1.98,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:48.784Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jijSvs3e",
+                "country": "Iceland",
+                "leagueName": "Division 1",
+                "leaguePath": "/football/iceland/division-1/",
+                "home": "Volsungur",
+                "away": "Kopavogur",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1091,11 +2132,39 @@
           "aiFairOdds": 1.23,
           "oddsDecimal": 2.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 2,
+            "scoreKey": "7-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.770Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "WUFR3kNa",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Haugesund",
+                "away": "Raufoss",
+                "scoreHome": 7,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "7-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1103,7 +2172,7 @@
           "canonicalMatchId": "cid_isl1_akranes_thorakureyri_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Akranes",
           "awayTeam": "Thor Akureyri",
@@ -1117,11 +2186,39 @@
           "aiFairOdds": 1.24,
           "oddsDecimal": 1.3,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.168Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lzEqyihT",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Akranes",
+                "away": "Thor Akureyri",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1129,7 +2226,7 @@
           "canonicalMatchId": "cid_isl1_stjarnan_keflavik_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Stjarnan",
           "awayTeam": "Keflavik",
@@ -1143,11 +2240,39 @@
           "aiFairOdds": 1.25,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.282Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "nVuAiCxA",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Stjarnan",
+                "away": "Keflavik",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1169,11 +2294,39 @@
           "aiFairOdds": 1.25,
           "oddsDecimal": 1.44,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.995Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "0KOqKA7t",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Sogndal",
+                "away": "Bryne",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1195,11 +2348,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 2.31,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.995Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "0KOqKA7t",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Sogndal",
+                "away": "Bryne",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1207,7 +2388,7 @@
           "canonicalMatchId": "cid_isl1_akranes_thorakureyri_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Akranes",
           "awayTeam": "Thor Akureyri",
@@ -1221,11 +2402,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 1.91,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.168Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lzEqyihT",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Akranes",
+                "away": "Thor Akureyri",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1233,7 +2442,7 @@
           "canonicalMatchId": "cid_sui1_stgallen_luzern_20260809",
           "country": "Switzerland",
           "leagueSlug": "sui.1",
-          "leagueName": "Swiss Super League",
+          "leagueName": "Super League",
           "kickoff": "2026-08-09T14:30:00.000Z",
           "homeTeam": "St. Gallen",
           "awayTeam": "Luzern",
@@ -1247,11 +2456,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:42.362Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "44MS8Zzo",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "St. Gallen",
+                "away": "Luzern",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:30:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1259,7 +2496,7 @@
           "canonicalMatchId": "cid_sui1_basel_thun_20260809",
           "country": "Switzerland",
           "leagueSlug": "sui.1",
-          "leagueName": "Swiss Super League",
+          "leagueName": "Super League",
           "kickoff": "2026-08-09T14:30:00.000Z",
           "homeTeam": "Basel",
           "awayTeam": "Thun",
@@ -1273,11 +2510,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 2,
+            "scoreKey": "4-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:42.100Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KGGZJaqn",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "Basel",
+                "away": "Thun",
+                "scoreHome": 4,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:30:00.000Z",
+                "scoreKey": "4-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1285,7 +2550,7 @@
           "canonicalMatchId": "cid_isl1_vikingurreykjavik_vestmannaeyjar_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Vikingur Reykjavik",
           "awayTeam": "Vestmannaeyjar",
@@ -1299,11 +2564,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.393Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KI4FVUFj",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Vikingur Reykjavik",
+                "away": "Vestmannaeyjar",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1311,7 +2604,7 @@
           "canonicalMatchId": "cid_lva1_riga_ogreunited_20260809",
           "country": "Latvia",
           "leagueSlug": "lva.1",
-          "leagueName": "Latvian Virsliga",
+          "leagueName": "Virsliga",
           "kickoff": "2026-08-09T15:00:00.000Z",
           "homeTeam": "Riga FC",
           "awayTeam": "Ogre United",
@@ -1325,11 +2618,39 @@
           "aiFairOdds": 1.31,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 1,
+            "scoreKey": "4-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:43.877Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "A9JQYGz3",
+                "country": "Latvia",
+                "leagueName": "Virsliga",
+                "leaguePath": "/football/latvia/virsliga/",
+                "home": "Riga FC",
+                "away": "Ogre United",
+                "scoreHome": 4,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "4-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1337,7 +2658,7 @@
           "canonicalMatchId": "cid_est1_levadia_nommeutd_20260809",
           "country": "Estonia",
           "leagueSlug": "est.1",
-          "leagueName": "Estonian Meistriliiga",
+          "leagueName": "Meistriliiga",
           "kickoff": "2026-08-09T16:00:00.000Z",
           "homeTeam": "Levadia",
           "awayTeam": "Nomme Utd",
@@ -1351,11 +2672,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 5,
+            "awayScore": 0,
+            "scoreKey": "5-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:48.674Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "hOjBPk3t",
+                "country": "Estonia",
+                "leagueName": "Meistriliiga",
+                "leaguePath": "/football/estonia/meistriliiga/",
+                "home": "Levadia",
+                "away": "Nomme Utd",
+                "scoreHome": 5,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "5-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -1363,7 +2712,7 @@
           "canonicalMatchId": "cid_blr2_nivadolbizno_ska1938_20260809",
           "country": "Belarus",
           "leagueSlug": "blr.2",
-          "leagueName": "Belarusian First League",
+          "leagueName": "Pershaya Liga",
           "kickoff": "2026-08-09T11:00:00.000Z",
           "homeTeam": "Niva Dolbizno",
           "awayTeam": "SKA-1938",
@@ -1377,11 +2726,39 @@
           "aiFairOdds": 1.31,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 1,
+            "scoreKey": "2-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:32.412Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "v5ypBNcn",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "Niva Dolbizno",
+                "away": "SKA-1938",
+                "scoreHome": 2,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T11:00:00.000Z",
+                "scoreKey": "2-1"
+              }
+            ]
+          }
         }
       ]
     },
@@ -1399,18 +2776,19 @@
       "summary": {
         "picks": 22,
         "uniqueMatches": 13,
-        "settled": 0,
-        "wins": 0,
-        "losses": 0,
-        "unresolved": 22,
+        "settled": 22,
+        "wins": 14,
+        "losses": 8,
+        "voids": 0,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.6364,
+        "oddsAvailable": 14,
+        "averageOdds": 1.6757,
+        "totalStake": 14,
+        "totalReturn": 11.22,
+        "profit": -2.78,
+        "roi": -0.1986
       },
       "picks": [
         {
@@ -1433,11 +2811,39 @@
           "aiFairOdds": 1.13,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.600Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dC7HCp6U",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Asane",
+                "away": "Kongsvinger",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1459,11 +2865,39 @@
           "aiFairOdds": 1.14,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.218Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Ob99E6yI",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Stromsgodset",
+                "away": "Egersund",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1485,11 +2919,39 @@
           "aiFairOdds": 1.15,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 2,
+            "scoreKey": "7-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.770Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "WUFR3kNa",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Haugesund",
+                "away": "Raufoss",
+                "scoreHome": 7,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "7-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1511,11 +2973,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": 1.82,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.600Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "dC7HCp6U",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Asane",
+                "away": "Kongsvinger",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1523,7 +3013,7 @@
           "canonicalMatchId": "cid_isl2_volsungur_kopavogur_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.2",
-          "leagueName": "Icelandic 1. deild karla",
+          "leagueName": "Division 1",
           "kickoff": "2026-08-09T16:00:00.000Z",
           "homeTeam": "Volsungur",
           "awayTeam": "Kopavogur",
@@ -1537,11 +3027,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": 1.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:48.784Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jijSvs3e",
+                "country": "Iceland",
+                "leagueName": "Division 1",
+                "leaguePath": "/football/iceland/division-1/",
+                "home": "Volsungur",
+                "away": "Kopavogur",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1563,11 +3081,39 @@
           "aiFairOdds": 1.18,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.107Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "UaG0GS65",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Strommen",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1589,11 +3135,39 @@
           "aiFairOdds": 1.19,
           "oddsDecimal": 2.33,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.218Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Ob99E6yI",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Stromsgodset",
+                "away": "Egersund",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1601,7 +3175,7 @@
           "canonicalMatchId": "cid_lva1_riga_ogreunited_20260809",
           "country": "Latvia",
           "leagueSlug": "lva.1",
-          "leagueName": "Latvian Virsliga",
+          "leagueName": "Virsliga",
           "kickoff": "2026-08-09T15:00:00.000Z",
           "homeTeam": "Riga FC",
           "awayTeam": "Ogre United",
@@ -1615,11 +3189,39 @@
           "aiFairOdds": 1.2,
           "oddsDecimal": 1.06,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 1,
+            "scoreKey": "4-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:43.877Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "A9JQYGz3",
+                "country": "Latvia",
+                "leagueName": "Virsliga",
+                "leaguePath": "/football/latvia/virsliga/",
+                "home": "Riga FC",
+                "away": "Ogre United",
+                "scoreHome": 4,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "4-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1641,11 +3243,39 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 4,
+            "scoreKey": "1-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:45.107Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "UaG0GS65",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Strommen",
+                "away": "Ranheim",
+                "scoreHome": 1,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "1-4"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1653,7 +3283,7 @@
           "canonicalMatchId": "cid_isl1_stjarnan_keflavik_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Stjarnan",
           "awayTeam": "Keflavik",
@@ -1667,11 +3297,39 @@
           "aiFairOdds": 1.22,
           "oddsDecimal": 1.25,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.282Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "nVuAiCxA",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Stjarnan",
+                "away": "Keflavik",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1693,11 +3351,39 @@
           "aiFairOdds": 1.23,
           "oddsDecimal": 2.22,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 7,
+            "awayScore": 2,
+            "scoreKey": "7-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.770Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "WUFR3kNa",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Haugesund",
+                "away": "Raufoss",
+                "scoreHome": 7,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "7-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1705,7 +3391,7 @@
           "canonicalMatchId": "cid_isl2_volsungur_kopavogur_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.2",
-          "leagueName": "Icelandic 1. deild karla",
+          "leagueName": "Division 1",
           "kickoff": "2026-08-09T16:00:00.000Z",
           "homeTeam": "Volsungur",
           "awayTeam": "Kopavogur",
@@ -1719,11 +3405,39 @@
           "aiFairOdds": 1.23,
           "oddsDecimal": 1.98,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 2,
+            "scoreKey": "3-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:48.784Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jijSvs3e",
+                "country": "Iceland",
+                "leagueName": "Division 1",
+                "leaguePath": "/football/iceland/division-1/",
+                "home": "Volsungur",
+                "away": "Kopavogur",
+                "scoreHome": 3,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "3-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1731,7 +3445,7 @@
           "canonicalMatchId": "cid_isl1_akranes_thorakureyri_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Akranes",
           "awayTeam": "Thor Akureyri",
@@ -1745,11 +3459,39 @@
           "aiFairOdds": 1.24,
           "oddsDecimal": 1.3,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.168Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lzEqyihT",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Akranes",
+                "away": "Thor Akureyri",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1757,7 +3499,7 @@
           "canonicalMatchId": "cid_isl1_stjarnan_keflavik_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Stjarnan",
           "awayTeam": "Keflavik",
@@ -1771,11 +3513,39 @@
           "aiFairOdds": 1.25,
           "oddsDecimal": 1.7,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.282Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "nVuAiCxA",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Stjarnan",
+                "away": "Keflavik",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1797,11 +3567,39 @@
           "aiFairOdds": 1.25,
           "oddsDecimal": 1.44,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.995Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "0KOqKA7t",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Sogndal",
+                "away": "Bryne",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1823,11 +3621,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 2.31,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 0,
+            "awayScore": 2,
+            "scoreKey": "0-2"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:44.995Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "0KOqKA7t",
+                "country": "Norway",
+                "leagueName": "OBOS-ligaen",
+                "leaguePath": "/football/norway/obos-ligaen/",
+                "home": "Sogndal",
+                "away": "Bryne",
+                "scoreHome": 0,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "0-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1835,7 +3661,7 @@
           "canonicalMatchId": "cid_isl1_akranes_thorakureyri_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Akranes",
           "awayTeam": "Thor Akureyri",
@@ -1849,11 +3675,39 @@
           "aiFairOdds": 1.28,
           "oddsDecimal": 1.91,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.168Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "lzEqyihT",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Akranes",
+                "away": "Thor Akureyri",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "2-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1861,7 +3715,7 @@
           "canonicalMatchId": "cid_sui1_stgallen_luzern_20260809",
           "country": "Switzerland",
           "leagueSlug": "sui.1",
-          "leagueName": "Swiss Super League",
+          "leagueName": "Super League",
           "kickoff": "2026-08-09T14:30:00.000Z",
           "homeTeam": "St. Gallen",
           "awayTeam": "Luzern",
@@ -1875,11 +3729,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:42.362Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "44MS8Zzo",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "St. Gallen",
+                "away": "Luzern",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:30:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1887,7 +3769,7 @@
           "canonicalMatchId": "cid_est1_levadia_nommeutd_20260809",
           "country": "Estonia",
           "leagueSlug": "est.1",
-          "leagueName": "Estonian Meistriliiga",
+          "leagueName": "Meistriliiga",
           "kickoff": "2026-08-09T16:00:00.000Z",
           "homeTeam": "Levadia",
           "awayTeam": "Nomme Utd",
@@ -1901,11 +3783,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 5,
+            "awayScore": 0,
+            "scoreKey": "5-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:48.674Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "hOjBPk3t",
+                "country": "Estonia",
+                "leagueName": "Meistriliiga",
+                "leaguePath": "/football/estonia/meistriliiga/",
+                "home": "Levadia",
+                "away": "Nomme Utd",
+                "scoreHome": 5,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-09T16:00:00.000Z",
+                "scoreKey": "5-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1913,7 +3823,7 @@
           "canonicalMatchId": "cid_isl1_vikingurreykjavik_vestmannaeyjar_20260809",
           "country": "Iceland",
           "leagueSlug": "isl.1",
-          "leagueName": "Icelandic Besta deild karla",
+          "leagueName": "Besta deild karla",
           "kickoff": "2026-08-09T18:00:00.000Z",
           "homeTeam": "Vikingur Reykjavik",
           "awayTeam": "Vestmannaeyjar",
@@ -1927,11 +3837,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 2,
+            "scoreKey": "2-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:52.393Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KI4FVUFj",
+                "country": "Iceland",
+                "leagueName": "Besta deild karla",
+                "leaguePath": "/football/iceland/besta-deild-karla/",
+                "home": "Vikingur Reykjavik",
+                "away": "Vestmannaeyjar",
+                "scoreHome": 2,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T18:00:00.000Z",
+                "scoreKey": "2-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1939,7 +3877,7 @@
           "canonicalMatchId": "cid_sui1_basel_thun_20260809",
           "country": "Switzerland",
           "leagueSlug": "sui.1",
-          "leagueName": "Swiss Super League",
+          "leagueName": "Super League",
           "kickoff": "2026-08-09T14:30:00.000Z",
           "homeTeam": "Basel",
           "awayTeam": "Thun",
@@ -1953,11 +3891,39 @@
           "aiFairOdds": 1.3,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 2,
+            "scoreKey": "4-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:42.100Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "KGGZJaqn",
+                "country": "Switzerland",
+                "leagueName": "Super League",
+                "leaguePath": "/football/switzerland/super-league/",
+                "home": "Basel",
+                "away": "Thun",
+                "scoreHome": 4,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-09T14:30:00.000Z",
+                "scoreKey": "4-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -1965,7 +3931,7 @@
           "canonicalMatchId": "cid_lva1_riga_ogreunited_20260809",
           "country": "Latvia",
           "leagueSlug": "lva.1",
-          "leagueName": "Latvian Virsliga",
+          "leagueName": "Virsliga",
           "kickoff": "2026-08-09T15:00:00.000Z",
           "homeTeam": "Riga FC",
           "awayTeam": "Ogre United",
@@ -1979,21 +3945,49 @@
           "aiFairOdds": 1.31,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 1,
+            "scoreKey": "4-1"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T21:57:43.877Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "A9JQYGz3",
+                "country": "Latvia",
+                "leagueName": "Virsliga",
+                "leaguePath": "/football/latvia/virsliga/",
+                "home": "Riga FC",
+                "away": "Ogre United",
+                "scoreHome": 4,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-09T15:00:00.000Z",
+                "scoreKey": "4-1"
+              }
+            ]
+          }
         }
       ]
     }
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": 12,
-    "settledDeltaPlanBMinusPlanA": -1,
-    "winsDeltaPlanBMinusPlanA": 0,
-    "lossesDeltaPlanBMinusPlanA": -1,
-    "hitRateDeltaPlanBMinusPlanA": null,
-    "roiDeltaPlanBMinusPlanA": null
+    "settledDeltaPlanBMinusPlanA": 12,
+    "winsDeltaPlanBMinusPlanA": 10,
+    "lossesDeltaPlanBMinusPlanA": 2,
+    "hitRateDeltaPlanBMinusPlanA": 0.1977,
+    "roiDeltaPlanBMinusPlanA": 0.4014
   }
 }
