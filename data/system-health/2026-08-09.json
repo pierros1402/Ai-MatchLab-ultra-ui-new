@@ -1,12 +1,12 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-09",
-  "generatedAt": "2026-08-09T21:58:52.446Z",
+  "generatedAt": "2026-08-10T18:08:37.836Z",
   "severity": "error",
   "issueCounts": {
     "error": 2,
     "warning": 11,
-    "info": 5
+    "info": 6
   },
   "alert": true,
   "alertCounts": {
@@ -14,11 +14,11 @@
     "warning": 8,
     "info": 0
   },
-  "activeIssueCount": 18,
+  "activeIssueCount": 19,
   "actionableIssueCount": 13,
-  "newIssueCount": 12,
+  "newIssueCount": 13,
   "newActionableIssueCount": 10,
-  "resolvedIssueCount": 6,
+  "resolvedIssueCount": 5,
   "persistentIssueCount": 6,
   "activeIssues": [
     {
@@ -154,6 +154,18 @@
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 300,
+        "informational": true
       }
     },
     {
@@ -1918,6 +1930,18 @@
       }
     },
     {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 300,
+        "informational": true
+      }
+    },
+    {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
@@ -2108,6 +2132,15 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-08.json"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "build_not_strict_clean",
@@ -2116,38 +2149,6 @@
         "clean": true,
         "cleanStrict": false,
         "contextOnlyWarnings": false
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks remain unresolved 2 days after fixture day.",
-      "details": {
-        "dayKey": "2026-08-08",
-        "todayDayKey": "2026-08-10",
-        "ageDays": 2,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 9,
-        "settled": 6,
-        "unresolved": 3
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks remain unresolved 2 days after fixture day.",
-      "details": {
-        "dayKey": "2026-08-08",
-        "todayDayKey": "2026-08-10",
-        "ageDays": 2,
-        "overdue": true,
-        "settlementSource": "value-comparison",
-        "picks": 9,
-        "settled": 6,
-        "unresolved": 3
       }
     }
   ],
