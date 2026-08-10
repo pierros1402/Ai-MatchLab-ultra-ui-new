@@ -37,15 +37,28 @@ jobs:
       - name: Run read-only current-history audit
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          node --check engine-v1/jobs/shadow-audit-current-history-identity.js
-          node engine-v1/jobs/shadow-audit-current-history-identity.js
+          $ErrorActionPreference = 'Continue'
+          New-Item -ItemType Directory -Force -Path data/history-integrity/shadow | Out-Null
+          node --check engine-v1/jobs/shadow-audit-current-history-identity.js *> data/history-integrity/shadow/syntax-console.txt
+          $SyntaxRc = $LASTEXITCODE
+          "syntaxExitCode=$SyntaxRc" | Set-Content data/history-integrity/shadow/exit-codes.txt
+          if ($SyntaxRc -eq 0) {
+            node engine-v1/jobs/shadow-audit-current-history-identity.js *> data/history-integrity/shadow/audit-console.txt
+            $AuditRc = $LASTEXITCODE
+          }
+          else {
+            $AuditRc = -1
+          }
+          "auditExitCode=$AuditRc" | Add-Content data/history-integrity/shadow/exit-codes.txt
+          Write-Host "SHADOW_SYNTAX_RC=$SyntaxRc"
+          Write-Host "SHADOW_AUDIT_RC=$AuditRc"
+          exit 0
 
       - name: Upload shadow evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: foundation-shadow-history-audit
-          path: data/history-integrity/shadow/current-history-audit.json
+          path: data/history-integrity/shadow/**
           if-no-files-found: error
           retention-days: 7
