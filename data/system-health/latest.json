@@ -1,26 +1,99 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-10",
-  "generatedAt": "2026-08-10T00:43:01.589Z",
-  "severity": "warning",
+  "generatedAt": "2026-08-10T14:36:46.352Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 4,
-    "info": 10
+    "error": 10,
+    "warning": 3,
+    "info": 9
   },
   "alert": true,
   "alertCounts": {
-    "error": 0,
-    "warning": 1,
+    "error": 10,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 14,
-  "actionableIssueCount": 4,
-  "newIssueCount": 1,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 10,
-  "persistentIssueCount": 13,
+  "activeIssueCount": 22,
+  "actionableIssueCount": 13,
+  "newIssueCount": 10,
+  "newActionableIssueCount": 10,
+  "resolvedIssueCount": 2,
+  "persistentIssueCount": 12,
   "activeIssues": [
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "file": "details/cid_usa2_indyeleven_hartfordathletic_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "file": "details/cid_ecu1_delfin_orense_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "invariant_not_ok",
+      "message": "Invariant report marked the snapshot as not OK.",
+      "details": {
+        "ok": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "value_unsafe",
+      "message": "Invariant report marked Value output as unsafe.",
+      "details": {
+        "valueSafe": false,
+        "valueCount": 0
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -61,6 +134,33 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-10.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "invariant_blocked",
+      "details": {
+        "failure": "invariant_blocked"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -75,14 +175,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -143,22 +242,6 @@
       "source": "value-comparison",
       "type": "plan_a_unresolved_settlement",
       "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-10",
-        "todayDayKey": "2026-08-10",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 5,
-        "settled": 0,
-        "unresolved": 5
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-10",
         "todayDayKey": "2026-08-10",
@@ -828,15 +911,15 @@
           }
         },
         "planA2": {
-          "count": 5,
+          "count": 0,
           "summary": {
-            "picks": 5,
-            "uniqueMatches": 5,
+            "picks": 0,
+            "uniqueMatches": 0,
             "settled": 0,
             "wins": 0,
             "losses": 0,
             "voids": 0,
-            "unresolved": 5,
+            "unresolved": 0,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -892,6 +975,106 @@
   ],
   "actionableIssues": [
     {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "file": "details/cid_usa2_indyeleven_hartfordathletic_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "file": "details/cid_ecu1_delfin_orense_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "invariant_not_ok",
+      "message": "Invariant report marked the snapshot as not OK.",
+      "details": {
+        "ok": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "value_unsafe",
+      "message": "Invariant report marked Value output as unsafe.",
+      "details": {
+        "valueSafe": false,
+        "valueCount": 0
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-10.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "invariant_blocked",
+      "details": {
+        "failure": "invariant_blocked"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -906,14 +1089,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1504,147 +1686,103 @@
   ],
   "newIssues": [
     {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_stale_against_canonical",
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
       }
     },
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
       "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-10/value.json",
-        "at": 1786318981458,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -167569
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
       }
     },
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
       "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-10/value-audit.json",
-        "at": "2026-08-09T23:43:01.459Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -167568
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "file": "details/cid_usa2_indyeleven_hartfordathletic_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
       }
     },
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
       "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-10/plan-a2.json",
-        "at": 1786319075830,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -73197
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "file": "details/cid_ecu1_delfin_orense_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
       }
     },
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "invariant_not_ok",
+      "message": "Invariant report marked the snapshot as not OK.",
       "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-10/plan-a2-audit.json",
-        "at": "2026-08-09T23:44:35.831Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -73196
+        "ok": false
       }
     },
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "value_unsafe",
+      "message": "Invariant report marked Value output as unsafe.",
       "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-10/plan-b-audit.json",
-        "at": "2026-08-09T23:43:02.609Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -166418
+        "valueSafe": false,
+        "valueCount": 0
       }
     },
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
       "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-10/plan-b2-audit.json",
-        "at": "2026-08-09T23:44:37.065Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -71962
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-10.json",
-        "at": "2026-08-09T23:44:37.114Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -71913
+        "artifact": "data/foundation-integrity/2026-08-10.json"
       }
     },
     {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "snapshot_stale",
+      "message": "foundation_integrity_missing",
       "details": {
-        "failure": "snapshot_stale"
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "invariant_blocked",
+      "details": {
+        "failure": "invariant_blocked"
       }
     },
     {
@@ -1655,6 +1793,147 @@
       "details": {
         "clean": false,
         "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "fixture_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "fixture_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_usa2_indyeleven_hartfordathletic_20260810",
+        "file": "details/cid_usa2_indyeleven_hartfordathletic_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "detail_status_truth_conflict",
+      "message": "Snapshot invariant blocked the build.",
+      "details": {
+        "type": "detail_status_truth_conflict",
+        "matchId": "cid_ecu1_delfin_orense_20260810",
+        "file": "details/cid_ecu1_delfin_orense_20260810.json",
+        "status": "FT",
+        "rawStatus": "STATUS_SCHEDULED",
+        "impact": "verified_final_truth_unsafe"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "invariant_not_ok",
+      "message": "Invariant report marked the snapshot as not OK.",
+      "details": {
+        "ok": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "invariant-report",
+      "type": "value_unsafe",
+      "message": "Invariant report marked Value output as unsafe.",
+      "details": {
+        "valueSafe": false,
+        "valueCount": 0
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-10.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "invariant_blocked",
+      "details": {
+        "failure": "invariant_blocked"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-10",
+        "todayDayKey": "2026-08-10",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 5,
+        "settled": 0,
+        "unresolved": 5
       }
     }
   ],
@@ -1779,22 +2058,6 @@
         "picks": 5,
         "settled": 0,
         "unresolved": 5
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-10",
-        "todayDayKey": "2026-08-10",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 7,
-        "settled": 1,
-        "unresolved": 6
       }
     },
     {
@@ -2455,23 +2718,23 @@
           }
         },
         "planA2": {
-          "count": 7,
+          "count": 0,
           "summary": {
-            "picks": 7,
-            "uniqueMatches": 6,
-            "settled": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
             "wins": 0,
-            "losses": 1,
+            "losses": 0,
             "voids": 0,
-            "unresolved": 6,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0,
-            "oddsAvailable": 1,
-            "averageOdds": 1.53,
-            "totalStake": 1,
-            "totalReturn": 0,
-            "profit": -1,
-            "roi": -1
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
           }
         },
         "planB": {
