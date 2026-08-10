@@ -306,7 +306,7 @@ test(
         "arg.1",
         "Boca Juniors"
       ),
-      null
+      "Boca Juniors"
     );
 
     assert.equal(

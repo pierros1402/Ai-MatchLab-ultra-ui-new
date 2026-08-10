@@ -106,6 +106,18 @@ function createContractFixture() {
   );
 
   writeJson(
+    resolve("foundation-integrity", `${dayKey}.json`),
+    {
+      schema: "ai-matchlab.foundation-integrity.v1",
+      dayKey,
+      modelReady: true,
+      publicationReady: true,
+      blocked: [],
+      warnings: []
+    }
+  );
+
+  writeJson(
     resolve("system-health", `${dayKey}.json`),
     {
       schema: "ai-matchlab.system-health-alerts.v1",
@@ -422,5 +434,55 @@ test(
     } finally {
       fixture.cleanup();
     }
+  }
+);
+
+
+test(
+  "missing foundation integrity artifact is rejected",
+  () => {
+    const fixture = createContractFixture();
+    try {
+      fs.rmSync(fixture.resolve("foundation-integrity", `${fixture.dayKey}.json`));
+      const report = verifyDailyPublishContract(fixture.dayKey, { resolveDataPath: fixture.resolve });
+      assert.equal(report.ok, false);
+      assert.ok(report.blocked.some(row => row.code === "required_artifact_missing" && row.artifact === "foundationIntegrity"));
+    } finally {
+      fixture.cleanup();
+    }
+  }
+);
+
+test(
+  "foundation not publication-ready is rejected",
+  () => {
+    const fixture = createContractFixture();
+    try {
+      writeJson(fixture.resolve("foundation-integrity", `${fixture.dayKey}.json`), {
+        schema: "ai-matchlab.foundation-integrity.v1",
+        dayKey: fixture.dayKey,
+        modelReady: true,
+        publicationReady: false,
+        blocked: [{ component: "details", reason: "details_foundation_not_ready" }],
+        warnings: []
+      });
+      const report = verifyDailyPublishContract(fixture.dayKey, { resolveDataPath: fixture.resolve });
+      assert.equal(report.ok, false);
+      assert.ok(blockedCodes(report).includes("foundation_publication_not_ready"));
+    } finally {
+      fixture.cleanup();
+    }
+  }
+);
+
+test(
+  "foundation gate runs before build report and final publish contract",
+  () => {
+    const foundation = workflow.indexOf('build-foundation-integrity-report.js --date="$DAY_KEY" --gate');
+    const build = workflow.indexOf("- name: Build day report");
+    const publish = workflow.indexOf('verify-daily-publish-contract.js --date="$DAY_KEY" --gate');
+    assert.ok(foundation >= 0, "foundation gate missing");
+    assert.ok(build > foundation, "build report must follow foundation gate");
+    assert.ok(publish > build, "final publish contract must follow build report");
   }
 );

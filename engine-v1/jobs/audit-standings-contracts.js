@@ -127,10 +127,19 @@ export function auditStandingsContracts(options = {}) {
   for (const file of files) {
     try {
       const read = readJsonWithHash(file.filePath);
+      const foundationObserved =
+        read.payload?.foundation &&
+        Array.isArray(read.payload.foundation.observedTable)
+          ? {
+              ...read.payload,
+              table: read.payload.foundation.observedTable,
+            }
+          : read.payload;
+
       artifacts.push({
         leagueSlug: file.leagueSlug,
         seasonReference: options.seasonReference || null,
-        standings: read.payload
+        standings: foundationObserved
       });
       fileEvidence.push({
         leagueSlug: file.leagueSlug,

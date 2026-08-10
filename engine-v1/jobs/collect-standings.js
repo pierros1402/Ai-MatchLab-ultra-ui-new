@@ -1,8 +1,8 @@
 // ============================================================
 // COLLECT STANDINGS FOR DAY
-// Writes standings artifacts for active leagues of a day
-// Shape must match core/competition-context.js expectations:
-// data/standings/<leagueSlug>.json with top-level { table: [...] }
+// Collects source standings as research evidence only.
+// Consumer truth is exclusively written by build-standings-day.js from clean history.
+// Writes: data/standings-research/collected/<leagueSlug>.json
 // ============================================================
 
 import fs from "fs";
@@ -26,7 +26,7 @@ function resolveLeagueSlug(leagueEntry) {
 }
 
 export async function collectStandingsForDay(dayKey, leagues = []) {
-  const outDir = path.resolve("./data/standings");
+  const outDir = path.resolve("./data/standings-research/collected");
   ensureDir(outDir);
 
   const results = [];
@@ -85,6 +85,8 @@ export async function collectStandingsForDay(dayKey, leagues = []) {
     leagues: results.length,
     collected: results.filter(x => x.ok).length,
     withData: results.filter(x => x.ok && x.found).length,
+    consumerWrites: 0,
+    evidenceOnly: true,
     results
   };
 }

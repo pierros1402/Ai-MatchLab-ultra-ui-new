@@ -1,4 +1,4 @@
-﻿import fs from "fs";
+import fs from "fs";
 import path from "path";
 import { shiftDay, athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
@@ -80,21 +80,37 @@ export function pruneCanonicalFixtureStore(options = {}) {
 
   const keep = allowedDays(opts.baseDay, opts.daysBack, opts.daysForward);
 
+  const canonicalRoot =
+    opts.canonicalRoot ||
+    resolveDataPath("canonical-fixtures");
+
+  const coverageReportsRoot =
+    opts.coverageReportsRoot ||
+    resolveDataPath("coverage-reports");
+
+  // Canonical fixture acquisition is truth-bearing evidence. It is append/update
+  // only and MUST NOT be deleted by rolling retention. Coverage reports remain
+  // cache/audit artifacts and may be pruned independently.
   const roots = [
     {
-      label: "canonical-fixtures",
-      root: resolveDataPath("canonical-fixtures"),
-      type: "day-dirs"
-    },
-    {
       label: "coverage-reports",
-      root: resolveDataPath("coverage-reports"),
+      root: coverageReportsRoot,
       type: "day-json"
     }
   ];
 
   const removed = [];
   const kept = [];
+
+  const protectedCanonicalDays = listDayDirs(canonicalRoot);
+  for (const dir of protectedCanonicalDays) {
+    kept.push({
+      root: "canonical-fixtures",
+      dayKey: dir.name,
+      path: dir.path,
+      retention: "permanent_truth_no_prune"
+    });
+  }
 
   for (const item of roots) {
     if (!fs.existsSync(item.root)) continue;
@@ -138,6 +154,12 @@ export function pruneCanonicalFixtureStore(options = {}) {
     daysBack: opts.daysBack,
     daysForward: opts.daysForward,
     dryRun: opts.dryRun,
+    canonicalRetention: {
+      policy: "append_update_only_no_prune",
+      deletionsAllowed: false,
+      protectedDayCount: protectedCanonicalDays.length,
+      protectedDays: protectedCanonicalDays.map(x => x.name)
+    },
     keepCount: kept.length,
     removedCount: removed.length,
     kept,

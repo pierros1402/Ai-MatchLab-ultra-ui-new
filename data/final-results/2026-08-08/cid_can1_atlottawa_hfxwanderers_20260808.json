@@ -9,49 +9,46 @@
   "country": "",
   "homeTeam": "Atlético Ottawa",
   "awayTeam": "HFX Wanderers",
-  "homeScore": 1,
+  "homeScore": 2,
   "awayScore": 1,
-  "scoreHome": 1,
+  "scoreHome": 2,
   "scoreAway": 1,
   "finalScore": {
-    "homeScore": 1,
+    "homeScore": 2,
     "awayScore": 1,
-    "home": 1,
+    "home": 2,
     "away": 1,
-    "scoreKey": "1-1"
+    "scoreKey": "2-1"
   },
-  "scoreKey": "1-1",
+  "scoreKey": "2-1",
   "kickoffUtc": "2026-08-08T17:00:00.000Z",
   "finalTruthVerdict": "verified_final_result",
   "verdict": "verified_final_result",
-  "sourceCount": 1,
-  "independentSourceCount": 1,
-  "source": "canonical_flashscore_terminal_final",
+  "sourceCount": 2,
+  "independentSourceCount": 2,
+  "source": "manual_versioned_truth_adjudication",
   "sources": [
     {
-      "provider": "flashscore",
+      "authority": "recovered_prior_repair_result_verification",
       "providerMatchId": "z9fBL0H6",
-      "canonicalId": "cid_can1_atlottawa_hfxwanderers_20260808",
-      "leagueName": "Canadian Premier League",
-      "home": "Atlético Ottawa",
-      "away": "HFX Wanderers",
-      "scoreHome": 1,
-      "scoreAway": 1,
-      "kickoffUtc": "2026-08-08T17:00:00.000Z",
-      "rawStatus": "STATUS_FINAL",
-      "statusType": "",
-      "terminalObservedAt": "2026-08-08T19:18:23.729Z",
-      "scoreKey": "1-1"
+      "reference": "recovered-session:2ff130e375919c9ac2a6467123607dbaf52ab8d6892d7edeefbf8bd298626944:Ottawa-HFX=2-1",
+      "note": "Prior repair identified the stored 1-1 as an early Flashscore terminal observation at 19:18 and established the later final as 2-1."
+    },
+    {
+      "authority": "onesoccer",
+      "reference": "recovered-session:2ff130e375919c9ac2a6467123607dbaf52ab8d6892d7edeefbf8bd298626944:OneSoccer-postmatch-Ottawa-HFX-2-1",
+      "note": "Prior repair records a OneSoccer post-match publication confirming 2-1; original URL was not retained in the exported transcript.",
+      "sourceLocatorMissing": true
     }
   ],
   "verification": {
     "verdict": "verified_final_result",
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result",
-    "method": "canonical_flashscore_terminal_final",
-    "authority": "canonical_fixture_store",
-    "sourceCount": 1,
-    "independentSourceCount": 1,
+    "method": "manual_versioned_truth_adjudication",
+    "authority": "final_truth_adjudication_ledger",
+    "sourceCount": 2,
+    "independentSourceCount": 2,
     "checks": {
       "canonicalIdExact": true,
       "provider": "flashscore",
@@ -63,11 +60,46 @@
       "terminalObservationPresent": true,
       "liveFlashscoreScoredMatchAbsent": true
     },
-    "generatedAt": "2026-08-08T20:11:18.849Z"
+    "generatedAt": "2026-08-10T12:26:12.919Z",
+    "adjudicationId": "adj_9f706fa7e1a945190de8a64f"
   },
   "settlement": {
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result"
   },
-  "generatedAt": "2026-08-08T20:11:18.849Z"
+  "generatedAt": "2026-08-10T12:26:12.919Z",
+  "finalTruthAdjudication": {
+    "schema": "ai-matchlab.final-truth-adjudication.v1",
+    "adjudicationId": "adj_9f706fa7e1a945190de8a64f",
+    "state": "APPLIED",
+    "appliedAt": "2026-08-10T12:26:12.919Z",
+    "dayKey": "2026-08-08",
+    "matchId": "cid_can1_atlottawa_hfxwanderers_20260808",
+    "homeTeam": "Atlético Ottawa",
+    "awayTeam": "HFX Wanderers",
+    "correctedScore": {
+      "home": 2,
+      "away": 1,
+      "scoreKey": "2-1"
+    },
+    "reason": "early_terminal_1_1_observation_revised_to_later_final_2_1",
+    "evidencePolicy": "recovered_two_source_prior_repair_adjudication",
+    "evidenceRecoveredFromPriorRepairSession": true,
+    "evidence": [
+      {
+        "authority": "recovered_prior_repair_result_verification",
+        "providerMatchId": "z9fBL0H6",
+        "reference": "recovered-session:2ff130e375919c9ac2a6467123607dbaf52ab8d6892d7edeefbf8bd298626944:Ottawa-HFX=2-1",
+        "note": "Prior repair identified the stored 1-1 as an early Flashscore terminal observation at 19:18 and established the later final as 2-1."
+      },
+      {
+        "authority": "onesoccer",
+        "reference": "recovered-session:2ff130e375919c9ac2a6467123607dbaf52ab8d6892d7edeefbf8bd298626944:OneSoccer-postmatch-Ottawa-HFX-2-1",
+        "note": "Prior repair records a OneSoccer post-match publication confirming 2-1; original URL was not retained in the exported transcript.",
+        "sourceLocatorMissing": true
+      }
+    ],
+    "silentOverwriteForbidden": true,
+    "oddsUsed": false
+  }
 }

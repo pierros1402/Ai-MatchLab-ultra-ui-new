@@ -139,6 +139,13 @@ function planSummary(plan) {
   };
 }
 
+export function finalizeDayReportVerdict(report) {
+  report.clean = Array.isArray(report.hardFailures) && report.hardFailures.length === 0;
+  report.cleanStrict = report.clean && Array.isArray(report.warnings) && report.warnings.length === 0;
+  report.ok = report.clean;
+  return report;
+}
+
 export function buildDayReport(dayKey, options = {}) {
   const report = {
     ok: true,
@@ -151,6 +158,7 @@ export function buildDayReport(dayKey, options = {}) {
     invariant: null,
     value: null,
     settlement: null,
+    foundationIntegrity: null,
     liveStatusCompleteness: null,
     hardFailures: [],
     warnings: [],
@@ -197,6 +205,18 @@ export function buildDayReport(dayKey, options = {}) {
   const publishedByLeague = countByLeague(snapshotFixtures?.fixtures, "leagueSlug");
 
   const manifest = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "manifest.json"));
+  const foundationIntegrity = readJsonSafe(resolveDataPath("foundation-integrity", `${dayKey}.json`));
+  report.foundationIntegrity = foundationIntegrity
+    ? {
+        schema: foundationIntegrity.schema || null,
+        generatedAt: foundationIntegrity.generatedAt || null,
+        season: foundationIntegrity.season || null,
+        modelReady: foundationIntegrity.modelReady === true,
+        publicationReady: foundationIntegrity.publicationReady === true,
+        blocked: Array.isArray(foundationIntegrity.blocked) ? foundationIntegrity.blocked : [],
+        warnings: Array.isArray(foundationIntegrity.warnings) ? foundationIntegrity.warnings : []
+      }
+    : null;
   const publishedCount = Number(manifest?.counts?.fixtures ?? snapshotFixtures?.count ?? 0);
   const detailsCount = Number(manifest?.counts?.details ?? 0);
 
@@ -346,6 +366,16 @@ export function buildDayReport(dayKey, options = {}) {
 
   // έΦΑέΦΑ Verdict έΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑέΦΑ
   if (!manifest) report.hardFailures.push("manifest_missing");
+  if (!foundationIntegrity) {
+    report.hardFailures.push("foundation_integrity_missing");
+  } else {
+    if (foundationIntegrity.modelReady !== true) {
+      report.hardFailures.push("foundation_model_not_ready");
+    }
+    if (foundationIntegrity.publicationReady !== true) {
+      report.hardFailures.push("foundation_publication_not_ready");
+    }
+  }
   if (!freshness.ok) report.hardFailures.push("snapshot_stale");
 
   if (!comparison) {
@@ -406,10 +436,7 @@ export function buildDayReport(dayKey, options = {}) {
     }
   }
 
-  report.clean = report.hardFailures.length === 0;
-  report.cleanStrict = report.clean && report.warnings.length === 0;
-  report.ok = true;
-  return report;
+  return finalizeDayReportVerdict(report);
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;

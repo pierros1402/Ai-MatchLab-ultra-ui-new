@@ -46,6 +46,14 @@ test("provider-independent match-state taxonomy stays fail-closed", () => {
     classifyMatchState({ status: "SPECIAL" }),
     MATCH_STATE_CLASS.UNKNOWN
   );
+  assert.equal(
+    classifyMatchState({ status: "PRE", rawStatus: "STATUS_SCHEDULED" }),
+    MATCH_STATE_CLASS.PRE_KICKOFF_SCHEDULED
+  );
+  assert.equal(
+    classifyMatchState({ status: "STATUS_SCHEDULED", statusType: "FINAL" }),
+    MATCH_STATE_CLASS.CONFLICT
+  );
 });
 
 test("Value settlement voids terminal non-played states and keeps temporary states open", () => {

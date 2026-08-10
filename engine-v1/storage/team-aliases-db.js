@@ -125,6 +125,12 @@ const BUILTIN_ALIASES = {
       "Belgrano",
       "Belgrano Córdoba",
       "Belgrano (Córdoba)"
+    ],
+    // Explicitly declare the Argentine canonical so the league-agnostic
+    // reverse index marks the spelling "Boca Juniors" ambiguous against the
+    // Colombia Primera B alias instead of resolving it to Boca Juniors de Cali.
+    "Boca Juniors": [
+      "Boca Juniors"
     ]
   },
 

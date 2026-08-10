@@ -1,42 +1,77 @@
 {
+  "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "fifa.world",
-  "updatedAt": 1786313525343,
+  "seasonReference": null,
+  "updatedAt": "2026-08-10T12:27:37.360Z",
   "confidence": 0,
-  "completeness": 0.2,
+  "completeness": 0,
   "sourceAudit": [
     {
-      "type": "local_truth_history",
+      "type": "history_foundation",
       "label": "history-2026-2027",
       "ok": true
     },
     {
-      "type": "existing_artifact",
-      "label": "existing-standings-artifact",
-      "ok": false
-    },
-    {
-      "type": "league_memory",
-      "label": "league-memory-unknown",
-      "ok": false
-    },
-    {
-      "type": "validation",
-      "label": "low-confidence:0.00",
+      "type": "competition_contract",
+      "label": "no-contract",
       "ok": false
     }
   ],
   "phaseSummary": {
     "hasPhaseTables": false,
-    "phaseKeys": [
-      "regular"
-    ]
+    "phaseKeys": []
   },
-  "phaseTables": {
-    "regular": [
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "CONTRACT_NOT_FOUND",
+      "NO_COMPETITION_FORMAT_CONTRACT"
+    ],
+    "builtAt": "2026-08-10T12:27:37.360Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 3,
+    "historyLeagueSha256": "995ced8f54188bf38fd2bf8dffca0f6c97eaf51170eb1bf753d5f186524280c9",
+    "competitionFormatRegistrySha256": "4e57e77ec6bc8edaab203ceb7b45b5095dc00447d973d44c7076dbb9542f30e8",
+    "teamAliasesSha256": "MISSING",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": null,
+    "contractSeasonReference": null,
+    "contractAuthorityScopes": [],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "NO_CONTRACT",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "fifa.world",
+      "seasonReference": null,
+      "contractId": null,
+      "authority": null,
+      "summary": null,
+      "issues": [
+        {
+          "code": "CONTRACT_NOT_FOUND",
+          "severity": "error",
+          "scope": "contract",
+          "message": "No competition-format contract matches this league and season."
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 4,
+    "observedTable": [
       {
         "position": 1,
         "rank": 1,
-        "teamId": null,
+        "canonicalTeamId": "stid_fa996e7929e2f870ad95e243",
         "team": "G3X",
         "teamName": "G3X",
         "name": "G3X",
@@ -47,13 +82,14 @@
         "goalsFor": 17,
         "goalsAgainst": 7,
         "goalDiff": 10,
+        "goalDifference": 10,
         "points": 6,
-        "confidence": 0.9
+        "confidence": 1
       },
       {
         "position": 2,
         "rank": 2,
-        "teamId": null,
+        "canonicalTeamId": "stid_fffba193c4fec8ff76c0cd2d",
         "team": "Alpak FC",
         "teamName": "Alpak FC",
         "name": "Alpak FC",
@@ -64,13 +100,14 @@
         "goalsFor": 11,
         "goalsAgainst": 13,
         "goalDiff": -2,
+        "goalDifference": -2,
         "points": 3,
-        "confidence": 0.9
+        "confidence": 1
       },
       {
         "position": 3,
         "rank": 3,
-        "teamId": null,
+        "canonicalTeamId": "stid_7d7cbaf6660d0371fd10e8a5",
         "team": "Furia",
         "teamName": "Furia",
         "name": "Furia",
@@ -81,13 +118,14 @@
         "goalsFor": 4,
         "goalsAgainst": 6,
         "goalDiff": -2,
+        "goalDifference": -2,
         "points": 0,
-        "confidence": 0.9
+        "confidence": 1
       },
       {
         "position": 4,
         "rank": 4,
-        "teamId": null,
+        "canonicalTeamId": "stid_b36990198235c15fe7c181a8",
         "team": "Ultimate Mostoles",
         "teamName": "Ultimate Mostoles",
         "name": "Ultimate Mostoles",
@@ -98,82 +136,12 @@
         "goalsFor": 2,
         "goalsAgainst": 8,
         "goalDiff": -6,
+        "goalDifference": -6,
         "points": 0,
-        "confidence": 0.9
+        "confidence": 1
       }
-    ]
-  },
-  "phases": {
-    "regular": [
-      {
-        "position": 1,
-        "rank": 1,
-        "teamId": null,
-        "team": "G3X",
-        "teamName": "G3X",
-        "name": "G3X",
-        "played": 2,
-        "wins": 2,
-        "draws": 0,
-        "losses": 0,
-        "goalsFor": 17,
-        "goalsAgainst": 7,
-        "goalDiff": 10,
-        "points": 6,
-        "confidence": 0.9
-      },
-      {
-        "position": 2,
-        "rank": 2,
-        "teamId": null,
-        "team": "Alpak FC",
-        "teamName": "Alpak FC",
-        "name": "Alpak FC",
-        "played": 2,
-        "wins": 1,
-        "draws": 0,
-        "losses": 1,
-        "goalsFor": 11,
-        "goalsAgainst": 13,
-        "goalDiff": -2,
-        "points": 3,
-        "confidence": 0.9
-      },
-      {
-        "position": 3,
-        "rank": 3,
-        "teamId": null,
-        "team": "Furia",
-        "teamName": "Furia",
-        "name": "Furia",
-        "played": 1,
-        "wins": 0,
-        "draws": 0,
-        "losses": 1,
-        "goalsFor": 4,
-        "goalsAgainst": 6,
-        "goalDiff": -2,
-        "points": 0,
-        "confidence": 0.9
-      },
-      {
-        "position": 4,
-        "rank": 4,
-        "teamId": null,
-        "team": "Ultimate Mostoles",
-        "teamName": "Ultimate Mostoles",
-        "name": "Ultimate Mostoles",
-        "played": 1,
-        "wins": 0,
-        "draws": 0,
-        "losses": 1,
-        "goalsFor": 2,
-        "goalsAgainst": 8,
-        "goalDiff": -6,
-        "points": 0,
-        "confidence": 0.9
-      }
-    ]
-  },
-  "table": []
+    ],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
 }

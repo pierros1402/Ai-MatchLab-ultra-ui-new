@@ -1,5 +1,9 @@
 import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
+import {
+  listTrustedStandingsSlugs,
+  readTrustedStandingsArtifact,
+} from "../storage/trusted-standings-db.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 import { normalizeTeamTokens } from "./normalize.js";
 
@@ -288,16 +292,9 @@ function listStandingsSlugs() {
   if (__standingsSlugs.slugs.length && now - __standingsSlugs.ts < 5 * 60 * 1000) {
     return __standingsSlugs.slugs;
   }
-  try {
-    const dir = resolveDataPath("standings");
-    const slugs = fs.readdirSync(dir)
-      .filter(f => f.endsWith(".json"))
-      .map(f => f.replace(/\.json$/i, ""));
-    __standingsSlugs = { ts: now, slugs };
-  } catch {
-    __standingsSlugs = { ts: now, slugs: [] };
-  }
-  return __standingsSlugs.slugs;
+  const slugs = listTrustedStandingsSlugs();
+  __standingsSlugs = { ts: now, slugs };
+  return slugs;
 }
 
 // Domestic league slugs look like "eng.1", "arg.2" (country code + division
@@ -310,15 +307,12 @@ function isDomesticLeagueSlug(slug) {
 }
 
 function loadStandingsForSlug(slug) {
-  const file = resolveDataPath("standings", `${slug}.json`);
-  let stat;
-  try { stat = fs.statSync(file); } catch { return null; }
-
+  const parsed = readTrustedStandingsArtifact(slug);
+  if (!parsed) return null;
+  const fingerprint = String(parsed?.foundation?.historyLeagueSha256 || "");
   const cached = __standingsCache.get(slug);
-  if (cached && cached.mtimeMs === stat.mtimeMs) return cached.parsed;
-
-  const parsed = readJsonSafe(file, null);
-  __standingsCache.set(slug, { mtimeMs: stat.mtimeMs, parsed });
+  if (cached && cached.fingerprint === fingerprint) return cached.parsed;
+  __standingsCache.set(slug, { fingerprint, parsed });
   return parsed;
 }
 
@@ -466,7 +460,7 @@ function buildCrossLeagueContext(match) {
 
 export function buildCompetitionContext(match) {
   const standingsFile = resolveDataPath("standings", `${match?.leagueSlug}.json`);
-  const standings = readJsonSafe(standingsFile, null);
+  const standings = readTrustedStandingsArtifact(match?.leagueSlug);
 
   const standingsConfidence = Number(standings?.confidence || 0);
   const MIN_STANDINGS_CONFIDENCE = 0.25;

@@ -13,9 +13,39 @@ import { inferAbsencesFromUsage } from "../ai-match-intelligence/player-usage/ab
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { resolveDayFixtureRows } from "../core/day-fixture-universe.js";
 import { buildRichContextBlocks } from "../core/details-rich-blocks.js";
+import { currentSeason } from "../core/season.js";
+import {
+  validateHistoryIndexFoundationSync,
+  validateH2HFoundationSync,
+} from "../core/derived-history-foundation.js";
 
 const DETAILS_SCHEMA_VERSION = "details-snapshot-v3";
 const DETAILS_BUILDER_VERSION = "2026-05-01-player-usage-travel-geo-signature";
+
+const DETAILS_FOUNDATION_CACHE = new Map();
+
+function detailsFoundationStamp(match) {
+  const kickoff = new Date(match?.kickoffUtc || match?.kickoff || Date.now());
+  const season = currentSeason(Number.isNaN(kickoff.getTime()) ? new Date() : kickoff);
+  if (DETAILS_FOUNDATION_CACHE.has(season)) return DETAILS_FOUNDATION_CACHE.get(season);
+  const index = validateHistoryIndexFoundationSync(season);
+  const h2h = validateH2HFoundationSync();
+  if (!index.ok || !h2h.ok) {
+    const error = new Error("details_foundation_not_ready");
+    error.details = { season, index: { ok: index.ok, reason: index.reason }, h2h: { ok: h2h.ok, reason: h2h.reason } };
+    throw error;
+  }
+  const stamp = Object.freeze({
+    schema: "ai-matchlab.details-derived-foundation.v1",
+    season,
+    historyIndexFingerprint: index.artifact.foundationFingerprint,
+    historicalTruthFingerprint: index.artifact.source.sha256,
+    h2hFingerprint: h2h.artifact.foundationFingerprint,
+    currentHistoryFingerprint: h2h.artifact.source.sha256,
+  });
+  DETAILS_FOUNDATION_CACHE.set(season, stamp);
+  return stamp;
+}
 
 
 function readJsonSafe(filePath, fallback = null) {
@@ -1470,6 +1500,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
   // Flashscore-style rich context (standings table / form / H2H) from data we
   // already hold. The standings table is fail-closed behind the league
   // integrity gate (core/details-rich-blocks.js); form & H2H are independent.
+  const foundation = detailsFoundationStamp(match);
   const richBlocks = buildRichContextBlocks(match);
   const analysis = buildAnalysisBlock(
     match,
@@ -1658,6 +1689,7 @@ function buildDetailsPayload(match, valuePicks, aiBlocks = {}) {
       source: "engine-v1",
       snapshotMode: "update_on_change",
       signature: null,
+      foundation,
       pendingSignals: {
         standings: competitionContext?.status !== "ready",
         refereeStats: !refereeProfile?.data && referee.status !== "ready",

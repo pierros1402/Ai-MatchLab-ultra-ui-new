@@ -81,6 +81,39 @@ function issue(severity, source, type, message, details = {}) {
   return { severity, source, type, message, details };
 }
 
+export function collectFoundationIntegrityIssues(foundationIntegrity, dayKey) {
+  const issues = [];
+  if (!foundationIntegrity) {
+    issues.push(issue(
+      systemHealthMissingArtifactSeverity("foundationIntegrity"),
+      "foundation-integrity",
+      "artifact_missing",
+      "Foundation integrity report is missing.",
+      { artifact: `data/foundation-integrity/${dayKey}.json` }
+    ));
+    return issues;
+  }
+  if (String(foundationIntegrity.dayKey || "") !== dayKey) {
+    issues.push(issue("error", "foundation-integrity", "foundation_day_mismatch", "Foundation integrity report belongs to a different day.", {
+      expected: dayKey, actual: foundationIntegrity.dayKey || null
+    }));
+  }
+  if (foundationIntegrity.modelReady !== true) {
+    issues.push(issue("error", "foundation-integrity", "foundation_model_not_ready", "Model foundation is not ready.", {
+      blocked: foundationIntegrity.blocked || []
+    }));
+  }
+  if (foundationIntegrity.publicationReady !== true) {
+    issues.push(issue("error", "foundation-integrity", "foundation_publication_not_ready", "Publication foundation is not ready.", {
+      blocked: foundationIntegrity.blocked || []
+    }));
+  }
+  for (const warning of foundationIntegrity.warnings || []) {
+    issues.push(issue("info", "foundation-integrity", warning.reason || "foundation_info", "Foundation integrity informational condition.", warning));
+  }
+  return issues;
+}
+
 function num(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
@@ -281,6 +314,7 @@ export function buildSystemHealthAlertsDay(dayKey) {
   const snapshotDir = resolveDataPath("deploy-snapshots", dayKey);
 
   const buildReport = readJsonSafe(resolveDataPath("build-reports", `${dayKey}.json`));
+  const foundationIntegrity = readJsonSafe(resolveDataPath("foundation-integrity", `${dayKey}.json`));
   const invariant = readJsonSafe(path.join(snapshotDir, "invariant-report.json"));
   const freshness = readJsonSafe(path.join(snapshotDir, "freshness-report.json"));
   const manifest = readJsonSafe(path.join(snapshotDir, "manifest.json"));
@@ -356,6 +390,8 @@ export function buildSystemHealthAlertsDay(dayKey) {
       issues.push(issue("info", "freshness-report", "skipped_freshness_input", "Freshness report skipped an optional/missing input.", skipped));
     }
   }
+
+  issues.push(...collectFoundationIntegrityIssues(foundationIntegrity, dayKey));
 
   if (!buildReport) {
     issues.push(issue(systemHealthMissingArtifactSeverity("buildReport"), "build-report", "artifact_missing", "Build report is missing.", {

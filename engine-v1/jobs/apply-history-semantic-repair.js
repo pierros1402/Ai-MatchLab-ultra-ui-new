@@ -615,8 +615,18 @@ function buildPostAuditSummary(audit) {
   };
 }
 
-function assertPostAudit(plan, execution, audit) {
-  const expectedRows = execution.files.reduce((sum, file) => sum + file.rowsAfter, 0);
+export function expectedCurrentHistoryRowCount(preAudit, execution) {
+  const preRows = Number(preAudit?.currentHistory?.rowCount);
+  const touchedBefore = execution.files.reduce((sum, file) => sum + Number(file.rowsBefore || 0), 0);
+  const touchedAfter = execution.files.reduce((sum, file) => sum + Number(file.rowsAfter || 0), 0);
+  if (!Number.isFinite(preRows)) {
+    throw new Error("Pre-repair current-history row count is required for post-write verification.");
+  }
+  return preRows - touchedBefore + touchedAfter;
+}
+
+function assertPostAudit(plan, execution, audit, preAudit) {
+  const expectedRows = expectedCurrentHistoryRowCount(preAudit, execution);
   const expectedScoreConflicts = Number(
     plan?.summary?.blocked?.currentHistoryScoreConflicts || 0
   );
@@ -769,12 +779,13 @@ if (isCli) {
       const backups = backupSourceFiles(historyInput.sourceFiles, backupDir);
       let rolledBack = false;
       let postAudit = null;
+      const preAudit = buildSemanticHistoryAudit({ maxExamples: 100000 });
       try {
         for (const source of historyInput.sourceFiles) {
           writeJsonAtomic(source.filePath, execution.outputs.get(source.container));
         }
         const audit = buildSemanticHistoryAudit({ maxExamples: 100000 });
-        assertPostAudit(planInput.report, execution, audit);
+        assertPostAudit(planInput.report, execution, audit, preAudit);
         postAudit = buildPostAuditSummary(audit);
       } catch (error) {
         restoreBackups(backups);

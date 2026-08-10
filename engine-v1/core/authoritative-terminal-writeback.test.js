@@ -277,3 +277,41 @@ test(
     );
   }
 );
+
+test(
+  "rejects mixed scheduled and final evidence",
+  () => {
+    const result = evaluateAuthoritativeTerminalWriteback({
+      canonicalRow: canonical(),
+      observationRow: terminal({
+        status: "STATUS_SCHEDULED",
+        statusType: "FINAL",
+        rawStatus: "STATUS_FULL_TIME"
+      }),
+      dayKey: "2026-07-29"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, "conflicting_match_state_evidence");
+  }
+);
+
+test(
+  "normalizes a secondary-only terminal observation to primary FT",
+  () => {
+    const result = applyAuthoritativeTerminalWriteback({
+      canonicalRow: canonical(),
+      observationRow: terminal({
+        status: "SPECIAL",
+        statusType: "STATUS_FINAL",
+        rawStatus: "STATUS_FULL_TIME"
+      }),
+      dayKey: "2026-07-29"
+    });
+
+    assert.equal(result.changed, true);
+    assert.equal(result.row.status, "FT");
+    assert.equal(result.row.scoreHome, 3);
+    assert.equal(result.row.scoreAway, 0);
+  }
+);

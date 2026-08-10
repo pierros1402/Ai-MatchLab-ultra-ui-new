@@ -45,6 +45,32 @@ function dayOf(row, fallback = null) {
   return match ? match[0] : null;
 }
 
+function kickoffMsOf(row, fallbackDay = null) {
+  const candidate = clean(
+    row?.kickoffUtc ||
+    row?.kickoff ||
+    row?.startTime ||
+    row?.date ||
+    fallbackDay,
+  );
+  const parsed = Date.parse(candidate);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function sameSemanticSourceTruth(a, b) {
+  if (!Number.isFinite(a?.kickoffMs) || !Number.isFinite(b?.kickoffMs)) {
+    return false;
+  }
+  return (
+    Math.abs(a.kickoffMs - b.kickoffMs) <= 6 * 60 * 60 * 1000 &&
+    a.homeTeam === b.homeTeam &&
+    a.awayTeam === b.awayTeam &&
+    a.scoreHome === b.scoreHome &&
+    a.scoreAway === b.scoreAway &&
+    a.leagueSlug === b.leagueSlug
+  );
+}
+
 function rowsFromHistoryDocuments(historyDocuments = []) {
   const rows = [];
   for (const document of historyDocuments) {
@@ -157,10 +183,13 @@ export function buildH2HArtifactsFromHistory({
       continue;
     }
 
+    // H2H persistence and H2H audits MUST use the same collision-safe global
+    // canonicalization policy. The production evidence overlay resolves club
+    // identity first; the H2H key policy then folds only globally unambiguous
+    // display aliases (for example Hertha Berlin -> Hertha BSC).
     const pair = canonicalH2HPairIdentity(
       homeTeam,
       awayTeam,
-      { resolveCanonical: value => value },
     );
     if (!pair.valid || !pair.key) {
       throw new Error(
@@ -168,13 +197,15 @@ export function buildH2HArtifactsFromHistory({
       );
     }
 
+    const canonicalHomeTeam = clean(pair.left?.canonicalName || homeTeam);
+    const canonicalAwayTeam = clean(pair.right?.canonicalName || awayTeam);
     const date = dayOf(row, fallbackDay);
     const match = {
       matchId:
         overlaid.fixtureResolution.resolvedFixtureId,
       date,
-      homeTeam,
-      awayTeam,
+      homeTeam: canonicalHomeTeam,
+      awayTeam: canonicalAwayTeam,
       scoreHome,
       scoreAway,
       competition:
@@ -198,6 +229,7 @@ export function buildH2HArtifactsFromHistory({
         teamA: pair.teamA,
         teamB: pair.teamB,
         byMatchId: new Map(),
+        semanticRows: [],
       };
       pairMap.set(pair.key, state);
     }
@@ -213,6 +245,25 @@ export function buildH2HArtifactsFromHistory({
       continue;
     }
 
+    const semanticSource = {
+      matchId: match.matchId,
+      kickoffMs: kickoffMsOf(row, fallbackDay),
+      homeTeam: match.homeTeam,
+      awayTeam: match.awayTeam,
+      scoreHome: match.scoreHome,
+      scoreAway: match.scoreAway,
+      leagueSlug: match.leagueSlug,
+    };
+    const semanticDuplicate = state.semanticRows.find(
+      candidate => sameSemanticSourceTruth(candidate, semanticSource),
+    );
+    if (semanticDuplicate) {
+      throw new Error(
+        `p0c_h2h_semantic_duplicate_source_truth:${semanticDuplicate.matchId}:${match.matchId}`,
+      );
+    }
+
+    state.semanticRows.push(semanticSource);
     state.byMatchId.set(match.matchId, match);
     stats.eligibleRows++;
   }

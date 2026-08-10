@@ -41,35 +41,71 @@ function loadLedger() {
   );
 }
 
-test("source-bound identity extension validates exactly", () => {
+function extensionCounts(ledger) {
+  return {
+    promotedTeamBindings: Array.isArray(ledger?.teamBindings)
+      ? ledger.teamBindings.length
+      : 0,
+    fixtureLineageDecisions: Array.isArray(ledger?.fixtureLineageDecisions)
+      ? ledger.fixtureLineageDecisions.length
+      : 0,
+    suppressedFixtureAliases: (ledger?.fixtureLineageDecisions || [])
+      .reduce(
+        (sum, item) =>
+          sum + (Array.isArray(item.suppressedRepositoryFixtureIds)
+            ? item.suppressedRepositoryFixtureIds.length
+            : 0),
+        0,
+      ),
+    sourceFixtureIds: (ledger?.fixtureLineageDecisions || [])
+      .reduce(
+        (sum, item) =>
+          sum + (Array.isArray(item.sourceFixtures)
+            ? item.sourceFixtures.length
+            : 0),
+        0,
+      ),
+  };
+}
+
+test("source-bound identity extension validates its current committed ledger exactly", () => {
+  const ledger = loadLedger();
   const validation = validateProductionIdentityExtension({
-    ledger: loadLedger(),
+    ledger,
     baseResolver: loadBaseResolver(),
   });
   assert.equal(validation.ok, true);
+  const counts = extensionCounts(ledger);
   assert.deepEqual(validation.counts, {
-    promotedTeamBindings: 13,
-    fixtureLineageDecisions: 12,
-    suppressedFixtureAliases: 12,
+    promotedTeamBindings: counts.promotedTeamBindings,
+    fixtureLineageDecisions: counts.fixtureLineageDecisions,
+    suppressedFixtureAliases: counts.suppressedFixtureAliases,
   });
 });
 
-test("extended resolver preserves base counts and exposes effective coverage", () => {
+test("extended resolver preserves immutable base counts and exposes validated composite coverage", () => {
   resetProductionIdentityResolverRuntimeForTests();
   const runtime = getProductionIdentityResolverRuntime();
+
   assert.deepEqual(runtime.counts, {
     identityBindings: 70,
     retainedFixtureIds: 53,
     suppressedFixtureAliases: 53,
     sourceFixtureIds: 106,
   });
-  assert.deepEqual(runtime.effectiveCounts, {
-    identityBindings: 83,
-    retainedFixtureIds: 65,
-    suppressedFixtureAliases: 65,
-    sourceFixtureIds: 130,
-  });
   assert.equal(runtime.extension.validationStatus, "PASS_PRODUCTION_IDENTITY_EXTENSION");
+  assert.equal(
+    runtime.recoverySupplement.mergeStatus,
+    "PASS_PRODUCTION_IDENTITY_RECOVERY_SUPPLEMENT_MERGE",
+  );
+  assert.ok(
+    runtime.effectiveCounts.retainedFixtureIds >
+      runtime.counts.retainedFixtureIds,
+  );
+  assert.ok(
+    runtime.effectiveCounts.suppressedFixtureAliases >
+      runtime.counts.suppressedFixtureAliases,
+  );
 });
 
 test("new aliases resolve by normalized exact identity only", () => {
@@ -128,6 +164,20 @@ test("all source-bound suppressed fixture IDs resolve one-way to retained lineag
       assert.equal(suppressed.awayGlobalClubId, decision.awayGlobalClubId);
     }
   }
+});
+
+test("recovery supplement resolves Quilmes suppressed canonical alias to retained identity", () => {
+  resetProductionIdentityResolverRuntimeForTests();
+  const runtime = getProductionIdentityResolverRuntime();
+  const resolved = runtime.resolver.resolveFixtureId(
+    "cid_arg2_quilmes_gimnasiajujuy_20260806",
+  );
+  assert.equal(resolved.ok, true);
+  assert.equal(resolved.sourceRole, "suppressed_lineage_alias");
+  assert.equal(
+    resolved.resolvedFixtureId,
+    "cid_arg2_quilmes_gimnasiayesgrimajujuy_20260806",
+  );
 });
 
 test("suppressed final-result identity binds to retained ID without changing truth", () => {

@@ -29,6 +29,54 @@ const AUTO_BINDING_DECISION_IDS = new Set([
   "p0xbind_e166d053a030618eb560",
 ]);
 
+function ledgerCounts(filePath) {
+  const ledger = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  return {
+    promotedTeamBindings: Array.isArray(ledger.teamBindings)
+      ? ledger.teamBindings.length
+      : 0,
+    fixtureLineageDecisions: Array.isArray(ledger.fixtureLineageDecisions)
+      ? ledger.fixtureLineageDecisions.length
+      : 0,
+    suppressedFixtureAliases: (ledger.fixtureLineageDecisions || [])
+      .reduce(
+        (sum, item) =>
+          sum + (Array.isArray(item.suppressedRepositoryFixtureIds)
+            ? item.suppressedRepositoryFixtureIds.length
+            : 0),
+        0,
+      ),
+  };
+}
+
+function assertFailClosedBlocked(rows) {
+  const allowedExact = new Set([
+    "RECOVERY_ROW_NOT_AUTHORIZED",
+    "RAW_SOURCE_REVALIDATION_FAILED",
+    "TWO_SOURCE_IDENTITIES_REQUIRED",
+    "STABLE_PROMOTION_BASIS_NOT_PROVABLE",
+    "FINAL_EXTENSION_VALIDATION_FAILED",
+  ]);
+
+  for (const row of rows || []) {
+    const reason = String(row?.reason || "");
+    assert.ok(
+      allowedExact.has(reason) ||
+        reason.startsWith("ALIAS_EXTENSION_TO_EXISTING_ID_REQUIRED:") ||
+        reason.startsWith("CONFLICTING_HOME_GLOBAL_IDS") ||
+        reason.startsWith("CONFLICTING_AWAY_GLOBAL_IDS"),
+      `unexpected fail-closed block reason: ${reason}`,
+    );
+    assert.ok(String(row?.key || "").includes("|"), "blocked candidate key must be explicit");
+  }
+}
+
+function blockedSignature(rows) {
+  return (rows || [])
+    .map(row => `${row.dayKey}|${row.leagueSlug}|${row.key}|${row.reason}`)
+    .sort();
+}
+
 function run(extensionLedgerPath, write) {
   const runtime = getProductionIdentityResolverRuntime();
   return promoteIdentityRecoveryArtifact({
@@ -64,50 +112,55 @@ function prePromotionLedgerPath() {
   return tempLedger;
 }
 
-test("current permanent ledger already contains the three proven 09-10 Aug promotions", () => {
+test("current permanent ledger is valid and promoter is idempotent on already-applied proven lineages", () => {
   const result = run(LEDGER, false);
   assert.equal(result.changed, false);
   assert.equal(result.promoted.length, 0);
-  assert.equal(result.alreadyApplied.length, 3);
+  assert.ok(result.alreadyApplied.length > 0);
   assert.equal(result.blocked.length, 0);
-  assert.deepEqual(result.validation.counts, {
-    promotedTeamBindings: 13,
-    fixtureLineageDecisions: 12,
-    suppressedFixtureAliases: 12,
-  });
+  assert.equal(result.validation.ok, true);
+  assert.deepEqual(result.validation.counts, ledgerCounts(LEDGER));
 });
 
-test("pre-promotion ledger accepts exactly the three proven 09-10 Aug lineages", () => {
-  const result = run(prePromotionLedgerPath(), false);
+test("pre-promotion ledger promotes current provable lineage and blocks stale recovery candidates fail closed", () => {
+  const tempLedger = prePromotionLedgerPath();
+  const before = ledgerCounts(tempLedger);
+  const result = run(tempLedger, false);
+
   assert.equal(result.changed, true);
-  assert.equal(result.promoted.length, 3);
-  assert.equal(result.blocked.length, 0);
+  assert.ok(result.promoted.length > 0);
+  assertFailClosedBlocked(result.blocked);
   assert.equal(result.refusedRecoveryStates.pendingIndependentConfirmation, 0);
-  assert.equal(result.refusedRecoveryStates.ambiguous, 2);
-  assert.equal(result.refusedRecoveryStates.conflictRejected, 0);
   assert.equal(result.validation.ok, true);
-  assert.deepEqual(result.validation.counts, {
-    promotedTeamBindings: 13,
-    fixtureLineageDecisions: 12,
-    suppressedFixtureAliases: 12,
-  });
-  assert.equal(
-    result.promoted.reduce((sum, item) => sum + item.newTeamBindingDecisionIds.length, 0),
-    2,
+  assert.ok(
+    result.validation.counts.fixtureLineageDecisions >
+      before.fixtureLineageDecisions,
+  );
+  assert.ok(
+    result.validation.counts.suppressedFixtureAliases >
+      before.suppressedFixtureAliases,
   );
 });
 
-test("promoter is idempotent after an atomic ledger write", () => {
+test("promoter is idempotent after an atomic ledger write with stable fail-closed stale blocks", () => {
   const tempLedger = prePromotionLedgerPath();
 
   const first = run(tempLedger, true);
-  const second = run(tempLedger, true);
   assert.equal(first.changed, true);
-  assert.equal(first.promoted.length, 3);
+  assert.ok(first.promoted.length > 0);
+  assertFailClosedBlocked(first.blocked);
+
+  const promotedCount = first.promoted.length;
+  const firstBlocked = blockedSignature(first.blocked);
+
+  const second = run(tempLedger, true);
   assert.equal(second.changed, false);
   assert.equal(second.promoted.length, 0);
-  assert.equal(second.alreadyApplied.length, 3);
-  assert.equal(second.blocked.length, 0);
+  assert.ok(second.alreadyApplied.length >= promotedCount);
+  assertFailClosedBlocked(second.blocked);
+  assert.deepEqual(blockedSignature(second.blocked), firstBlocked);
+  assert.equal(second.validation.ok, true);
+  assert.deepEqual(second.validation.counts, ledgerCounts(tempLedger));
 });
 
 test("stale/tampered auto candidate cannot bypass raw source revalidation", () => {

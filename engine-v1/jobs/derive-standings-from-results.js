@@ -18,7 +18,7 @@ import fs from "fs";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { readResults } from "../storage/results-memory-db.js";
-import { recordStandingsResult, readStandings, clearAcceptedStandings } from "../storage/standings-memory-db.js";
+import { recordStandingsResult, readStandingsEvidence, clearAcceptedStandings } from "../storage/standings-memory-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { currentSeasonLabel, seasonWindow } from "../source-discovery/season-calendar.js";
 import { maxPlayableGames, isKnownNonLeagueCompetition } from "../core/matchday-axis.js";
@@ -129,7 +129,7 @@ export function deriveStandingsFromResults({ force = false, leagues = null } = {
     // rows — see uefa.champions 2026-07-14). Never derive for them, and clear any
     // previously-derived table so the stored garbage self-heals.
     if (isKnownNonLeagueCompetition(slug)) {
-      if (readStandings(slug)?.accepted?.source === "derived-from-results") {
+      if (readStandingsEvidence(slug)?.accepted?.source === "derived-from-results") {
         clearAcceptedStandings(slug, "not_league_competition");
         stats.clearedCorrupt++;
       }
@@ -140,7 +140,7 @@ export function deriveStandingsFromResults({ force = false, leagues = null } = {
     const meta = getLeagueMeta(slug);
     const season = currentSeasonLabel(slug, meta);
 
-    let accepted = readStandings(slug)?.accepted;
+    let accepted = readStandingsEvidence(slug)?.accepted;
 
     // Drop a previously-DERIVED table that is a corrupt all-time aggregate
     // (played beyond a quadruple round-robin) BEFORE anything else. Done up

@@ -13,7 +13,7 @@
 import fs from "fs";
 import { resolveDataPath, ensureDir } from "./data-root.js";
 import { normalizeTeamKey } from "../core/normalize.js";
-import { sourceRank } from "./result-dedup.js";
+import { applyMatchLevelRetention, sourceRank } from "./result-dedup.js";
 import { canonicalTeamName } from "./team-aliases-db.js";
 import {
   bindProductionResultIdentity,
@@ -96,8 +96,7 @@ function pushResult(list, entry) {
 
   return out
     .filter(r => !r.date || Date.parse(r.date) >= cutoff)
-    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
-    .slice(0, PER_TEAM_CAP);
+    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
 }
 
 export function prepareResultMemoryMatch(
@@ -247,13 +246,7 @@ export function recordMatchResult(
         ? "W"
         : "D";
 
-  const before =
-    JSON.stringify(
-      data.teams[homeKey] || [],
-    ) +
-    JSON.stringify(
-      data.teams[awayKey] || [],
-    );
+  const before = JSON.stringify(data.teams);
 
   const shared = {
     matchId,
@@ -305,11 +298,12 @@ export function recordMatchResult(
       },
     );
 
-  const changed =
-    (
-      JSON.stringify(data.teams[homeKey]) +
-      JSON.stringify(data.teams[awayKey])
-    ) !== before;
+  data.teams = applyMatchLevelRetention(data.teams, {
+    perTeamCap: PER_TEAM_CAP,
+    maxAgeDays: MAX_AGE_DAYS
+  });
+
+  const changed = JSON.stringify(data.teams) !== before;
 
   if (changed) {
     data.slug =

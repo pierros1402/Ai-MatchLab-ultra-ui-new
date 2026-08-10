@@ -1,42 +1,95 @@
 {
+  "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "ita.coppa_italia",
-  "updatedAt": 1786320545527,
+  "seasonReference": null,
+  "updatedAt": "2026-08-10T12:27:37.375Z",
   "confidence": 0,
-  "completeness": 0.2,
+  "completeness": 0,
   "sourceAudit": [
     {
-      "type": "local_truth_history",
+      "type": "history_foundation",
       "label": "history-2026-2027",
       "ok": true
     },
     {
-      "type": "existing_artifact",
-      "label": "existing-standings-artifact",
-      "ok": false
-    },
-    {
-      "type": "league_memory",
-      "label": "league-memory-unknown",
-      "ok": false
-    },
-    {
-      "type": "validation",
-      "label": "low-confidence:0.00",
+      "type": "competition_contract",
+      "label": "no-contract",
       "ok": false
     }
   ],
   "phaseSummary": {
     "hasPhaseTables": false,
-    "phaseKeys": [
-      "regular"
-    ]
+    "phaseKeys": []
   },
-  "phaseTables": {
-    "regular": [
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "CONTRACT_NOT_FOUND",
+      "NO_COMPETITION_FORMAT_CONTRACT"
+    ],
+    "builtAt": "2026-08-10T12:27:37.375Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 4,
+    "historyLeagueSha256": "7b916e265b9e418059d73de831ace54a180fcb97baea28cf8142fb06195af091",
+    "competitionFormatRegistrySha256": "4e57e77ec6bc8edaab203ceb7b45b5095dc00447d973d44c7076dbb9542f30e8",
+    "teamAliasesSha256": "MISSING",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": null,
+    "contractSeasonReference": null,
+    "contractAuthorityScopes": [],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "NO_CONTRACT",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "ita.coppa_italia",
+      "seasonReference": null,
+      "contractId": null,
+      "authority": null,
+      "summary": null,
+      "issues": [
+        {
+          "code": "CONTRACT_NOT_FOUND",
+          "severity": "error",
+          "scope": "contract",
+          "message": "No competition-format contract matches this league and season."
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 8,
+    "observedTable": [
       {
         "position": 1,
         "rank": 1,
-        "teamId": null,
+        "canonicalTeamId": "stid_c524c9dc0696335a5e7cb921",
+        "team": "Benevento",
+        "teamName": "Benevento",
+        "name": "Benevento",
+        "played": 1,
+        "wins": 1,
+        "draws": 0,
+        "losses": 0,
+        "goalsFor": 5,
+        "goalsAgainst": 3,
+        "goalDiff": 2,
+        "goalDifference": 2,
+        "points": 3,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_ca7b72903b6aadbf91637301",
         "team": "Ascoli",
         "teamName": "Ascoli",
         "name": "Ascoli",
@@ -47,85 +100,32 @@
         "goalsFor": 3,
         "goalsAgainst": 1,
         "goalDiff": 2,
+        "goalDifference": 2,
         "points": 3,
-        "confidence": 0.9
-      },
-      {
-        "position": 2,
-        "rank": 2,
-        "teamId": null,
-        "team": "Catania",
-        "teamName": "Catania",
-        "name": "Catania",
-        "played": 1,
-        "wins": 0,
-        "draws": 1,
-        "losses": 0,
-        "goalsFor": 1,
-        "goalsAgainst": 1,
-        "goalDiff": 0,
-        "points": 1,
-        "confidence": 0.9
+        "confidence": 1
       },
       {
         "position": 3,
         "rank": 3,
-        "teamId": null,
-        "team": "Vicenza",
-        "teamName": "Vicenza",
-        "name": "Vicenza",
-        "played": 1,
-        "wins": 0,
-        "draws": 1,
-        "losses": 0,
-        "goalsFor": 1,
-        "goalsAgainst": 1,
-        "goalDiff": 0,
-        "points": 1,
-        "confidence": 0.9
-      },
-      {
-        "position": 4,
-        "rank": 4,
-        "teamId": null,
-        "team": "Potenza",
-        "teamName": "Potenza",
-        "name": "Potenza",
-        "played": 1,
-        "wins": 0,
-        "draws": 0,
-        "losses": 1,
-        "goalsFor": 1,
-        "goalsAgainst": 3,
-        "goalDiff": -2,
-        "points": 0,
-        "confidence": 0.9
-      }
-    ]
-  },
-  "phases": {
-    "regular": [
-      {
-        "position": 1,
-        "rank": 1,
-        "teamId": null,
-        "team": "Ascoli",
-        "teamName": "Ascoli",
-        "name": "Ascoli",
+        "canonicalTeamId": "stid_f19ddd9542804bf882bce1e0",
+        "team": "Arezzo",
+        "teamName": "Arezzo",
+        "name": "Arezzo",
         "played": 1,
         "wins": 1,
         "draws": 0,
         "losses": 0,
-        "goalsFor": 3,
-        "goalsAgainst": 1,
+        "goalsFor": 2,
+        "goalsAgainst": 0,
         "goalDiff": 2,
+        "goalDifference": 2,
         "points": 3,
-        "confidence": 0.9
+        "confidence": 1
       },
       {
-        "position": 2,
-        "rank": 2,
-        "teamId": null,
+        "position": 4,
+        "rank": 4,
+        "canonicalTeamId": "stid_cb1a7a5234bd1829846050cf",
         "team": "Catania",
         "teamName": "Catania",
         "name": "Catania",
@@ -136,13 +136,14 @@
         "goalsFor": 1,
         "goalsAgainst": 1,
         "goalDiff": 0,
+        "goalDifference": 0,
         "points": 1,
-        "confidence": 0.9
+        "confidence": 1
       },
       {
-        "position": 3,
-        "rank": 3,
-        "teamId": null,
+        "position": 5,
+        "rank": 5,
+        "canonicalTeamId": "stid_7bd9e7ff791271b3718e88b3",
         "team": "Vicenza",
         "teamName": "Vicenza",
         "name": "Vicenza",
@@ -153,13 +154,32 @@
         "goalsFor": 1,
         "goalsAgainst": 1,
         "goalDiff": 0,
+        "goalDifference": 0,
         "points": 1,
-        "confidence": 0.9
+        "confidence": 1
       },
       {
-        "position": 4,
-        "rank": 4,
-        "teamId": null,
+        "position": 6,
+        "rank": 6,
+        "canonicalTeamId": "stid_f6b1943473689140a136d6ef",
+        "team": "Ravenna",
+        "teamName": "Ravenna",
+        "name": "Ravenna",
+        "played": 1,
+        "wins": 0,
+        "draws": 0,
+        "losses": 1,
+        "goalsFor": 3,
+        "goalsAgainst": 5,
+        "goalDiff": -2,
+        "goalDifference": -2,
+        "points": 0,
+        "confidence": 1
+      },
+      {
+        "position": 7,
+        "rank": 7,
+        "canonicalTeamId": "stid_f5fa87eea9ad3612eee3a621",
         "team": "Potenza",
         "teamName": "Potenza",
         "name": "Potenza",
@@ -170,10 +190,30 @@
         "goalsFor": 1,
         "goalsAgainst": 3,
         "goalDiff": -2,
+        "goalDifference": -2,
         "points": 0,
-        "confidence": 0.9
+        "confidence": 1
+      },
+      {
+        "position": 8,
+        "rank": 8,
+        "canonicalTeamId": "stid_91b006ae90ac78c07d47d5b9",
+        "team": "Union Brescia",
+        "teamName": "Union Brescia",
+        "name": "Union Brescia",
+        "played": 1,
+        "wins": 0,
+        "draws": 0,
+        "losses": 1,
+        "goalsFor": 0,
+        "goalsAgainst": 2,
+        "goalDiff": -2,
+        "goalDifference": -2,
+        "points": 0,
+        "confidence": 1
       }
-    ]
-  },
-  "table": []
+    ],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
 }

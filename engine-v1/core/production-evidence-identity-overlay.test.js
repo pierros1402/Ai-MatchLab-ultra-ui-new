@@ -538,3 +538,62 @@ test("P5 write-capable stores keep source writes on raw reads", () => {
     }
   }
 });
+
+test("production evidence overlay disambiguates FC Cajamarca from UTC without changing truth", () => {
+  const overlay = createProductionEvidenceIdentityOverlay();
+  const source = {
+    id: "espn_401857491",
+    season: "2025-2026",
+    dayKey: "2026-05-08",
+    kickoff: "2026-05-08T20:00Z",
+    leagueSlug: "per.1",
+    homeTeam: "UTC",
+    awayTeam: "FC Cajamarca",
+    scoreHome: 1,
+    scoreAway: 2,
+    status: "FT",
+  };
+  const before = JSON.stringify(source);
+  const result = overlay.overlayEvidenceMatchRow(source);
+
+  assert.equal(result.ok, true);
+  assert.equal(result.homeResolution.preferredDisplayName, "UTC");
+  assert.equal(result.awayResolution.preferredDisplayName, "FC Cajamarca");
+  assert.notEqual(
+    result.homeResolution.globalClubId,
+    result.awayResolution.globalClubId,
+  );
+  assert.equal(
+    result.awayResolution.status,
+    "RESOLVED_LEAGUE_SCOPED_EXACT_DISAMBIGUATION",
+  );
+  assert.equal(result.view.scoreHome, 1);
+  assert.equal(result.view.scoreAway, 2);
+  assert.equal(result.view.status, "FT");
+  assert.equal(JSON.stringify(source), before);
+});
+
+test("production evidence overlay validates explicit FC Cajamarca disambiguation identity", () => {
+  const overlay = createProductionEvidenceIdentityOverlay();
+  const first = overlay.overlayEvidenceMatchRow({
+    id: "fixture-a",
+    leagueSlug: "per.1",
+    homeTeam: "UTC",
+    awayTeam: "FC Cajamarca",
+    scoreHome: 1,
+    scoreAway: 2,
+    status: "FT",
+  });
+  assert.equal(first.ok, true);
+  const view = first.view;
+  const second = overlay.overlayEvidenceMatchRow(view);
+  assert.equal(second.ok, true);
+  assert.equal(
+    second.awayResolution.globalClubId,
+    first.awayResolution.globalClubId,
+  );
+  assert.equal(
+    second.awayResolution.status,
+    "VALIDATED_LEAGUE_SCOPED_EXACT_DISAMBIGUATION_IDENTITY",
+  );
+});

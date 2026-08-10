@@ -24,36 +24,71 @@
   "kickoffUtc": "2026-08-07T20:15:00.000Z",
   "finalTruthVerdict": "verified_final_result",
   "verdict": "verified_final_result",
-  "sourceCount": 1,
-  "independentSourceCount": 1,
-  "source": "flashscore_same_day_exact_team_match",
+  "sourceCount": 2,
+  "independentSourceCount": 2,
+  "source": "manual_versioned_truth_adjudication",
   "sources": [
     {
-      "provider": "flashscore",
+      "authority": "flashscore",
       "providerMatchId": "0tXXstll",
-      "country": "Peru",
-      "leagueName": "Liga 2",
-      "leaguePath": "/football/peru/liga-2/",
-      "home": "Union Comercio",
-      "away": "AD Cantolao",
-      "scoreHome": 4,
-      "scoreAway": 0,
-      "kickoffUtc": "2026-08-07T20:15:00.000Z",
-      "scoreKey": "4-0"
+      "reference": "data/final-results/2026-08-07/cid_per2_unioncomercio_cantolao_20260807.json",
+      "note": "Exact same-day/team/provider verified-final artifact records 4-0."
+    },
+    {
+      "authority": "prior_repair_external_crosscheck",
+      "reference": "recovered-session:2ff130e375919c9ac2a6467123607dbaf52ab8d6892d7edeefbf8bd298626944:Union Comercio-Cantolao=4-0",
+      "note": "The lost repair session records an independent external cross-check confirming 4-0; original external URL was not retained in the exported transcript.",
+      "sourceLocatorMissing": true
     }
   ],
   "verification": {
     "verdict": "verified_final_result",
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result",
-    "method": "flashscore_same_day_exact_team_match",
-    "sourceCount": 1,
-    "independentSourceCount": 1,
-    "generatedAt": "2026-08-07T22:12:00.798Z"
+    "method": "manual_versioned_truth_adjudication",
+    "sourceCount": 2,
+    "independentSourceCount": 2,
+    "generatedAt": "2026-08-10T12:26:12.919Z",
+    "authority": "final_truth_adjudication_ledger",
+    "adjudicationId": "adj_57bf041e428c51bf62e78e36"
   },
   "settlement": {
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result"
   },
-  "generatedAt": "2026-08-07T22:12:00.798Z"
+  "generatedAt": "2026-08-10T12:26:12.919Z",
+  "finalTruthAdjudication": {
+    "schema": "ai-matchlab.final-truth-adjudication.v1",
+    "adjudicationId": "adj_57bf041e428c51bf62e78e36",
+    "state": "APPLIED",
+    "appliedAt": "2026-08-10T12:26:12.919Z",
+    "dayKey": "2026-08-07",
+    "matchId": "cid_per2_unioncomercio_cantolao_20260807",
+    "homeTeam": "Union Comercio",
+    "awayTeam": "AD Cantolao",
+    "correctedScore": {
+      "home": 4,
+      "away": 0,
+      "scoreKey": "4-0"
+    },
+    "reason": "canonical_0_0_conflicted_with_exact_verified_final_4_0",
+    "evidencePolicy": "recovered_two_source_prior_repair_adjudication",
+    "evidenceRecoveredFromPriorRepairSession": true,
+    "evidence": [
+      {
+        "authority": "flashscore",
+        "providerMatchId": "0tXXstll",
+        "reference": "data/final-results/2026-08-07/cid_per2_unioncomercio_cantolao_20260807.json",
+        "note": "Exact same-day/team/provider verified-final artifact records 4-0."
+      },
+      {
+        "authority": "prior_repair_external_crosscheck",
+        "reference": "recovered-session:2ff130e375919c9ac2a6467123607dbaf52ab8d6892d7edeefbf8bd298626944:Union Comercio-Cantolao=4-0",
+        "note": "The lost repair session records an independent external cross-check confirming 4-0; original external URL was not retained in the exported transcript.",
+        "sourceLocatorMissing": true
+      }
+    ],
+    "silentOverwriteForbidden": true,
+    "oddsUsed": false
+  }
 }

@@ -19,18 +19,35 @@ import { resolveDataPath } from "../storage/data-root.js";
 import { readStandings } from "../storage/standings-memory-db.js";
 import { getH2HForMatch } from "../storage/h2h-memory-db.js";
 import { normalizeTeamKey } from "./normalize.js";
+import { globalCanonicalTeamName } from "../storage/team-aliases-db.js";
 import { currentSeason } from "./season.js";
 import { isLeagueIntegrityGreen, isKnownNonLeagueCompetition } from "./matchday-axis.js";
 import { loadOpponentAdjustedProfiles } from "./opponent-strength-profile-loader.js";
 import { describeProbabilityAdjustment } from "./opponent-strength-adjusted-form.js";
+import {
+  validateHistoryIndexFoundationSync,
+  validateH2HFoundationSync,
+} from "./derived-history-foundation.js";
 
 // ── team-form index (season-scoped, read once per process) ───────────────────
 
 let _teamFormCache = null;
 let _teamFormSeason = null;
+let _h2hFoundationOk = null;
+
+function canonicalUtc(value) {
+  const ts = Date.parse(value || "");
+  return Number.isFinite(ts) ? new Date(ts).toISOString() : null;
+}
 
 function loadTeamFormIndex(season = currentSeason()) {
   if (_teamFormCache && _teamFormSeason === season) return _teamFormCache;
+  const foundation = validateHistoryIndexFoundationSync(season);
+  if (!foundation.ok) {
+    _teamFormCache = {};
+    _teamFormSeason = season;
+    return _teamFormCache;
+  }
   const file = resolveDataPath("history-index", "team-form", `${season}.json`);
   try {
     _teamFormCache = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -52,46 +69,95 @@ function resolveTeamForm(index, teamName) {
   return null;
 }
 
-function compactForm(entry) {
-  if (!entry) return null;
-  const pick = w => w ? {
-    played: w.played ?? 0,
-    wins: w.wins ?? 0,
-    draws: w.draws ?? 0,
-    losses: w.losses ?? 0,
-    gf: w.gf ?? 0,
-    ga: w.ga ?? 0,
-    points: w.points ?? 0,
-    ppg: Number.isFinite(w.ppg) ? +w.ppg.toFixed(2) : null
-  } : null;
+function formWindowStats(teamName, rows) {
+  let wins = 0;
+  let draws = 0;
+  let losses = 0;
+  let gf = 0;
+  let ga = 0;
+  const teamKey = normalizeTeamKey(teamName);
+
+  for (const row of rows) {
+    const isHome = row?.isHome === true || normalizeTeamKey(row?.homeTeam) === teamKey;
+    const goalsFor = isHome ? finiteScore(row?.scoreHome) : finiteScore(row?.scoreAway);
+    const goalsAgainst = isHome ? finiteScore(row?.scoreAway) : finiteScore(row?.scoreHome);
+    if (goalsFor === null || goalsAgainst === null) continue;
+    gf += goalsFor;
+    ga += goalsAgainst;
+    if (goalsFor > goalsAgainst) wins += 1;
+    else if (goalsFor < goalsAgainst) losses += 1;
+    else draws += 1;
+  }
+
+  const played = wins + draws + losses;
+  const points = wins * 3 + draws;
   return {
-    team: entry.team || null,
-    total: pick(entry.total),
-    last5: pick(entry.last5),
-    last10: pick(entry.last10),
-    homeLast5: pick(entry.homeLast5),
-    awayLast5: pick(entry.awayLast5)
+    played,
+    wins,
+    draws,
+    losses,
+    gf,
+    ga,
+    points,
+    ppg: played ? points / played : 0
+  };
+}
+
+export function historicalFormRowsBeforeKickoff(entry, fixtureKickoffUtc) {
+  const cutoff = Date.parse(fixtureKickoffUtc || "");
+  const rows = Array.isArray(entry?.matches) ? entry.matches : [];
+  if (!Number.isFinite(cutoff)) return [];
+  return rows
+    .filter(isTerminalFormRow)
+    .filter(row => {
+      const ts = kickoffMs(row);
+      return Number.isFinite(ts) && ts > 0 && ts < cutoff;
+    })
+    .sort((a, b) => kickoffMs(a) - kickoffMs(b));
+}
+
+function compactFormBeforeKickoff(entry, fixtureKickoffUtc) {
+  if (!entry) return null;
+  const rows = historicalFormRowsBeforeKickoff(entry, fixtureKickoffUtc);
+  const team = entry.team || null;
+  const homeRows = rows.filter(row => row?.isHome === true || normalizeTeamKey(row?.homeTeam) === normalizeTeamKey(team));
+  const awayRows = rows.filter(row => !homeRows.includes(row));
+  const last = (list, n) => list.slice(Math.max(0, list.length - n));
+  return {
+    team,
+    total: formWindowStats(team, rows),
+    last5: formWindowStats(team, last(rows, 5)),
+    last10: formWindowStats(team, last(rows, 10)),
+    homeLast5: formWindowStats(team, last(homeRows, 5)),
+    awayLast5: formWindowStats(team, last(awayRows, 5))
   };
 }
 
 /**
- * Form block: last5 / last10 aggregates for both sides from the team-form index.
- * `status` is "ready" when at least one side resolved, else "empty".
+ * Form block at the fixture's own kickoff. Historical details must never see
+ * the fixture itself or any later result from the same season index.
  */
-export function buildFormBlock(homeTeam, awayTeam, season = currentSeason()) {
+export function buildFormBlock(homeTeam, awayTeam, season = currentSeason(), fixtureKickoffUtc = null) {
   const index = loadTeamFormIndex(season);
-  const home = compactForm(resolveTeamForm(index, homeTeam));
-  const away = compactForm(resolveTeamForm(index, awayTeam));
+  const homeEntry = resolveTeamForm(index, homeTeam);
+  const awayEntry = resolveTeamForm(index, awayTeam);
+  const home = fixtureKickoffUtc
+    ? compactFormBeforeKickoff(homeEntry, fixtureKickoffUtc)
+    : null;
+  const away = fixtureKickoffUtc
+    ? compactFormBeforeKickoff(awayEntry, fixtureKickoffUtc)
+    : null;
   return {
     status: home || away ? "ready" : "empty",
     season,
+    cutoffUtc: fixtureKickoffUtc || null,
     home,
     away
   };
 }
 
-
 function finiteScore(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
   const n = Number(value);
   return Number.isInteger(n) && n >= 0 ? n : null;
 }
@@ -138,7 +204,13 @@ function formStatsForTeam(teamName, rows) {
 
 export function buildLeagueFormTable(leagueSlug, standingsRows, fixtureKickoffUtc, season = currentSeason()) {
   if (!leagueSlug || !Array.isArray(standingsRows) || !standingsRows.length) {
-    return { status: "empty", leagueSlug: leagueSlug || null, rows: [] };
+    return {
+      status: "empty",
+      leagueSlug: leagueSlug || null,
+      limit: 5,
+      cutoffUtc: canonicalUtc(fixtureKickoffUtc),
+      rows: []
+    };
   }
   const cutoff = Date.parse(fixtureKickoffUtc || "");
   const index = loadTeamFormIndex(season);
@@ -174,38 +246,101 @@ export function buildLeagueFormTable(leagueSlug, standingsRows, fixtureKickoffUt
  * getH2HForMatch already builds these; we only most-recent-sort and cap each list
  * for payload size (the summaries stay computed over the full history).
  */
-export function buildH2HBlock(homeTeam, awayTeam, limit = 20) {
+function h2hCanonicalKey(value) {
+  return normalizeTeamKey(globalCanonicalTeamName(value) || value);
+}
+
+export function isH2HRowBeforeKickoff(row, fixtureKickoffUtc) {
+  const cutoff = Date.parse(fixtureKickoffUtc || "");
+  if (!Number.isFinite(cutoff)) return false;
+  const raw = String(row?.date || row?.kickoffUtc || row?.kickoff || "").trim();
+  if (!raw) return false;
+  const cutoffDay = new Date(cutoff).toISOString().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    // Day-only H2H rows cannot prove an earlier kickoff on the same day. Exclude
+    // that day entirely so the current fixture can never leak into its own H2H.
+    return raw < cutoffDay;
+  }
+  const ts = Date.parse(raw);
+  return Number.isFinite(ts) && ts < cutoff;
+}
+
+function summarizeH2H(matches, perspectiveTeam) {
+  const perspective = h2hCanonicalKey(perspectiveTeam);
+  let wins = 0, draws = 0, losses = 0, gf = 0, ga = 0;
+  for (const m of matches) {
+    const homePerspective = h2hCanonicalKey(m?.homeTeam) === perspective;
+    const mGf = homePerspective ? finiteScore(m?.scoreHome) : finiteScore(m?.scoreAway);
+    const mGa = homePerspective ? finiteScore(m?.scoreAway) : finiteScore(m?.scoreHome);
+    if (mGf === null || mGa === null) continue;
+    gf += mGf; ga += mGa;
+    if (mGf > mGa) wins += 1; else if (mGf < mGa) losses += 1; else draws += 1;
+  }
+  const sample = wins + draws + losses;
+  return sample ? {
+    wins, draws, losses,
+    gfPerGame: +(gf / sample).toFixed(2),
+    gaPerGame: +(ga / sample).toFixed(2),
+    sample
+  } : null;
+}
+
+export function buildH2HBlock(homeTeam, awayTeam, limit = 20, fixtureKickoffUtc = null) {
+  if (_h2hFoundationOk === null) {
+    _h2hFoundationOk = validateH2HFoundationSync().ok;
+  }
+  if (!_h2hFoundationOk) {
+    return {
+      status: "gated",
+      reason: "h2h_foundation_stale",
+      homeTeam,
+      awayTeam,
+      cutoffUtc: fixtureKickoffUtc || null,
+      all: [], atHome: [], atAway: [],
+      summary: { all: null, atHome: null, atAway: null }
+    };
+  }
   const h2h = getH2HForMatch(homeTeam, awayTeam);
   if (!h2h || !Array.isArray(h2h.all) || !h2h.all.length) {
     return {
       status: "empty",
       homeTeam,
       awayTeam,
+      cutoffUtc: fixtureKickoffUtc || null,
       all: [], atHome: [], atAway: [],
       summary: { all: null, atHome: null, atAway: null }
     };
   }
-  const trim = list => [...(list || [])]
+  const beforeCutoff = list => (list || []).filter(row => isH2HRowBeforeKickoff(row, fixtureKickoffUtc));
+  const allRaw = beforeCutoff(h2h.all);
+  const atHomeRaw = beforeCutoff(h2h.atHome);
+  const atAwayRaw = beforeCutoff(h2h.atAway);
+  const trim = list => [...list]
     .sort((a, b) => String(b.date).localeCompare(String(a.date)))
     .slice(0, limit)
     .map(m => ({
       date: m.date || null,
       homeTeam: m.homeTeam,
       awayTeam: m.awayTeam,
-      scoreHome: Number.isFinite(Number(m.scoreHome)) ? Number(m.scoreHome) : null,
-      scoreAway: Number.isFinite(Number(m.scoreAway)) ? Number(m.scoreAway) : null,
+      scoreHome: finiteScore(m.scoreHome),
+      scoreAway: finiteScore(m.scoreAway),
       competition: m.competition || null,
       leagueSlug: m.leagueSlug || null
     }));
   return {
-    status: "ready",
+    status: allRaw.length ? "ready" : "empty",
     homeTeam,
     awayTeam,
-    totalMeetings: h2h.all.length,
-    all: trim(h2h.all),
-    atHome: trim(h2h.atHome),
-    atAway: trim(h2h.atAway),
-    summary: h2h.summary || { all: null, atHome: null, atAway: null }
+    cutoffUtc: fixtureKickoffUtc || null,
+    totalMeetings: allRaw.length,
+    all: trim(allRaw),
+    atHome: trim(atHomeRaw),
+    atAway: trim(atAwayRaw),
+    summary: {
+      all: summarizeH2H(allRaw, homeTeam),
+      atHome: summarizeH2H(atHomeRaw, homeTeam),
+      atAway: summarizeH2H(atAwayRaw, homeTeam)
+    }
   };
 }
 
@@ -355,22 +490,29 @@ export function buildRichContextBlocks(match) {
   const away = match?.awayTeam || null;
   const slug = match?.leagueSlug || null;
   const season = currentSeason();
+  const cutoffUtc = canonicalUtc(match?.kickoffUtc || match?.kickoff || null);
 
   return {
     standings: buildStandingsBlock(slug, match),
     leagueForm5: buildLeagueFormTable(
       slug,
       readStandings(slug)?.accepted?.rows || [],
-      match?.kickoffUtc || match?.kickoff || null,
+      cutoffUtc,
       season
     ),
     form: buildFormBlock(
       home,
       away,
-      season
+      season,
+      cutoffUtc
     ),
     opponentAdjustedForm:
       buildOpponentAdjustedFormBlock(match),
-    h2h: buildH2HBlock(home, away)
+    h2h: buildH2HBlock(
+      home,
+      away,
+      20,
+      cutoffUtc
+    )
   };
 }

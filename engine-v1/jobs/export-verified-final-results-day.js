@@ -280,10 +280,10 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
     if (id) fixturesById.set(id, fixture);
   }
 
-  const allFixtureRows =
-    allFixtures && fixtures.length === 0
-      ? canonicalFixtures
-      : fixtures;
+  // Final-result export must never let a derived deploy snapshot decide the
+  // match universe. In all-fixtures mode canonical truth is the sole source of
+  // membership; the snapshot is telemetry/display input only.
+  const allFixtureRows = canonicalFixtures;
 
   const rawTargets =
     allFixtures
@@ -292,11 +292,7 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
 
   const targetSource =
     allFixtures
-      ? (
-          fixtures.length > 0
-            ? "deploy_snapshot_fixtures"
-            : "canonical_fixtures_fallback"
-        )
+      ? "canonical_fixtures"
       : "deploy_snapshot_value_picks";
 
   const targetsById = new Map();
@@ -412,11 +408,10 @@ function buildTargets(dayKey, { allFixtures = false, valuePathOverride = "" } = 
     fixtureRows: fixtures.length,
     valueRows: valuePicks.length,
     canonicalRows: canonicalFixtures.length,
-    targetRowsFromCanonicalFallback:
-      allFixtures &&
-      fixtures.length === 0
-        ? rawTargets.length
-        : 0,
+    targetRowsFromCanonicalFallback: 0,
+    targetRowsFromCanonicalTruth:
+      allFixtures ? rawTargets.length : 0,
+    deploySnapshotFixturesUsedForTargetMembership: false,
     targets: [...targetsById.values()]
   };
 }

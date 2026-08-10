@@ -1,6 +1,9 @@
 import {
-  getProductionIdentityResolver,
+  getProductionIdentityResolverRuntime,
 } from "./production-identity-resolver-runtime.js";
+import {
+  createProductionTeamIdentityDisambiguator,
+} from "./production-team-identity-disambiguation.js";
 
 export const PRODUCTION_EVIDENCE_IDENTITY_OVERLAY_SCHEMA =
   "ai-matchlab.production-evidence-identity-overlay.v1";
@@ -113,9 +116,19 @@ function assertTruthUnchanged(before, after) {
   }
 }
 
-export function createProductionEvidenceIdentityOverlay({
-  resolver = getProductionIdentityResolver(),
-} = {}) {
+export function createProductionEvidenceIdentityOverlay(options = {}) {
+  const hasInjectedResolver = Boolean(options?.resolver);
+  const runtime = hasInjectedResolver
+    ? null
+    : getProductionIdentityResolverRuntime();
+  const resolver = options?.resolver || runtime.resolver;
+  const teamDisambiguator = options?.teamDisambiguator === undefined
+    ? (runtime
+        ? createProductionTeamIdentityDisambiguator({
+            baseResolver: runtime.baseResolver,
+          })
+        : null)
+    : options.teamDisambiguator;
   if (
     !resolver ||
     typeof resolver.resolveFixtureId !== "function" ||
@@ -250,6 +263,26 @@ export function createProductionEvidenceIdentityOverlay({
     const hasExplicitManagedSignal =
       Boolean(globalClubId || ledgerTeamIdentityKey);
 
+    if (
+      !hasExplicitManagedSignal &&
+      alias &&
+      teamDisambiguator &&
+      typeof teamDisambiguator.resolve === "function"
+    ) {
+      const disambiguated = teamDisambiguator.resolve({
+        alias,
+        leagueSlug: clean(reference.leagueSlug) || undefined,
+      });
+      if (disambiguated?.ok) {
+        return {
+          ...disambiguated,
+          sourceAlias: alias,
+          overlayOnly: true,
+          productionMutationAuthorized: false,
+        };
+      }
+    }
+
     const resolution = resolver.resolveTeamReference({
       globalClubId: globalClubId || undefined,
       ledgerTeamIdentityKey:
@@ -266,6 +299,28 @@ export function createProductionEvidenceIdentityOverlay({
         overlayOnly: true,
         productionMutationAuthorized: false,
       };
+    }
+
+    if (
+      hasExplicitManagedSignal &&
+      alias &&
+      teamDisambiguator &&
+      typeof teamDisambiguator.resolveBoundReference === "function"
+    ) {
+      const bound = teamDisambiguator.resolveBoundReference({
+        alias,
+        leagueSlug: clean(reference.leagueSlug) || undefined,
+        globalClubId: globalClubId || undefined,
+        ledgerTeamIdentityKey: ledgerTeamIdentityKey || undefined,
+      });
+      if (bound?.ok) {
+        return {
+          ...bound,
+          sourceAlias: alias,
+          overlayOnly: true,
+          productionMutationAuthorized: false,
+        };
+      }
     }
 
     if (hasExplicitManagedSignal) {

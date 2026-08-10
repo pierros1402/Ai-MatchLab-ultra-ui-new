@@ -19,7 +19,7 @@ import fs from "fs";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { readResults } from "../storage/results-memory-db.js";
-import { readStandings, clearAcceptedStandings } from "../storage/standings-memory-db.js";
+import { readStandingsEvidence, clearAcceptedStandings } from "../storage/standings-memory-db.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { isClubSeasonUrl } from "../source-discovery/standings-researcher.js";
 
@@ -72,7 +72,7 @@ export function clearWrongLeagueStandings({ dryRun = false } = {}) {
     const slug = file.replace(/\.json$/, "");
     stats.considered++;
 
-    const accepted = readStandings(slug)?.accepted;
+    const accepted = readStandingsEvidence(slug)?.accepted;
     const stdTeams = (accepted?.rows || []).map(r => r.teamName).filter(Boolean);
     if (!stdTeams.length) continue;
 

@@ -507,8 +507,11 @@ export function evaluatePickResult(pick, finalResult) {
 }
 
 function loadFixtures(dayKey) {
-  const file = dataPath("deploy-snapshots", dayKey, "fixtures.json");
-  const rows = rowsFromPayload(readJsonSafe(file, null));
+  // Settlement/status truth must come from the resolved canonical universe.
+  // Deploy snapshots are presentation artifacts and may be stale; allowing
+  // them to decide VOID/WIN/LOSS recreates a truth -> derived -> truth loop.
+  const file = dataPath("canonical-fixtures", dayKey);
+  const rows = canonicalFixturesForDay(dayKey);
   const identity = buildExactIdentityIndex(rows);
 
   return {
@@ -964,6 +967,23 @@ function summarize(rows) {
   };
 }
 
+export function summarizeByMarket(rows) {
+  const groups = new Map();
+
+  for (const row of Array.isArray(rows) ? rows : []) {
+    const market = clean(row?.market || row?.marketName || row?.type) || "UNKNOWN";
+    if (!groups.has(market)) groups.set(market, []);
+    groups.get(market).push(row);
+  }
+
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([market, marketRows]) => ({
+      market,
+      ...summarize(marketRows)
+    }));
+}
+
 function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById, oddsById, multiOddsById }) {
   const rawRows = rowsFromPayload(payload);
 
@@ -984,6 +1004,7 @@ function buildPlan({ planId, label, sourcePath, payload, fixturesById, finalById
     provenance: payload?.provenance || null,
     count: picks.length,
     summary: summarize(picks),
+    marketSummary: summarizeByMarket(picks),
     picks
   };
 }

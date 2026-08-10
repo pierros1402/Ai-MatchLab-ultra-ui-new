@@ -20,6 +20,10 @@ import { currentSeason } from "./season.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "./production-evidence-identity-overlay.js";
+import {
+  validateHistoryIndexFoundationSync,
+  validateModelPriorsFoundationSync,
+} from "./derived-history-foundation.js";
 
 // P0-C P5 READ BOUNDARY: model-prior, history-index and detail evidence views.
 
@@ -345,6 +349,15 @@ function scoreTeamNameMatch(inputName, candidateName) {
 // PRIORS LOADING
 // ------------------------------------------------------------
 async function loadModelPriors(season) {
+  const foundation = validateModelPriorsFoundationSync(season);
+  if (!foundation.ok) {
+    return {
+      teamPriors: {},
+      leaguePriors: {},
+      matchupPriors: {},
+      foundationGate: foundation.reason || "model_priors_foundation_invalid"
+    };
+  }
   const file = path.join(DATA_DIR, "model-priors", `${season}.json`);
   return await readJsonSafe(file, {
     teamPriors: {},
@@ -359,6 +372,19 @@ async function loadModelPriors(season) {
 export async function loadValueIndexes(season = DEFAULT_SEASON) {
   if (__indexesCache.has(season)) {
     return __indexesCache.get(season);
+  }
+
+  const foundation = validateHistoryIndexFoundationSync(season);
+  if (!foundation.ok) {
+    const gated = {
+      season,
+      teamForm: {},
+      leagueForm: {},
+      matchups: {},
+      foundationGate: foundation.reason || "history_index_foundation_invalid"
+    };
+    __indexesCache.set(season, gated);
+    return gated;
   }
 
   const teamFormPath = path.join(HISTORY_INDEX_DIR, "team-form", `${season}.json`);

@@ -163,8 +163,10 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/promote-identity-recovery-window.js "$DAY_KEY"
 
-      - name: Prune canonical fixture store
+      - name: Prune rolling coverage reports
         if: env.SKIP_BUILD != 'true'
+        # Canonical fixture truth is permanent append/update-only evidence.
+        # The compatibility job may prune coverage reports, never canonical days.
         run: node ./engine-v1/jobs/prune-canonical-fixture-store.js "$DAY_KEY" --days-back 3 --days-forward 30
 
       - name: Commit canonical fixture acquisition store
@@ -197,15 +199,16 @@ jobs:
             git add data/identity-decisions/production-identity-extension-ledger.v1.json
           fi
 
-          # --allow-data-deletions: the prune step above intentionally drops
-          # canonical-fixtures/<day> and coverage-reports/<day>.json OUTSIDE the
-          # rolling [-3,+30] retention window. These are a REGENERABLE rolling
-          # acquisition store (permanent truth lives in league-memory/history),
-          # so their retention deletions are by-design έΑΦ without this flag the
-          # data-deletion guard fails the whole daily snapshot once the window
-          # advances past a committed day (broke the pipeline from 2026-07-01).
-          # Additions are still confined to the guarded acquisition/recovery
-          # data paths below by --allow.
+          # Coverage reports may be pruned, but canonical fixture truth is
+          # append/update-only. Veto canonical deletions before the generic
+          # deletion-enabled data guard is allowed to run.
+          CANONICAL_DELETIONS="$(git diff --cached --name-status --diff-filter=D -- data/canonical-fixtures || true)"
+          if [ -n "$CANONICAL_DELETIONS" ]; then
+            echo "ERROR: canonical fixture deletion is forbidden:"
+            echo "$CANONICAL_DELETIONS"
+            exit 1
+          fi
+
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-canonical-store \
             --allow-data-deletions \
@@ -698,6 +701,15 @@ jobs:
         if: env.SKIP_BUILD != 'true'
         shell: bash
         run: node engine-v1/jobs/check-value-artifact-gate.js --date="${DAY_KEY}"
+
+      # FOUNDATION GATE — the final details/model inputs must still be bound
+      # to the current clean history, standings, H2H and derived fingerprints.
+      # This runs after freshness/invariant/value refresh and before any report
+      # can claim the day is publishable.
+      - name: Foundation integrity gate (pre-publish)
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
 
       # Autonomy scoreboard: one self-describing report per day rolling up
       # universe parity, acquisition, freshness, invariants, value and

@@ -14,6 +14,11 @@ import { readStandings, recordStandingsResult } from "../storage/standings-memor
 import { currentSeasonLabel } from "../source-discovery/season-calendar.js";
 import { getLeagueMeta } from "../source-discovery/league-awareness-service.js";
 import { canonicalTeamName } from "../storage/team-aliases-db.js";
+import {
+  buildHistoryBackedStandingsArtifact,
+  loadStandingsFoundationRegistry,
+  readHistoryRows,
+} from "../core/standings-foundation.js";
 
 const DEFAULT_SEASON = currentSeason();
 
@@ -893,105 +898,81 @@ function writeLeagueStandingsArtifact(slug, state) {
 }
 
 export async function buildStandingsDay(dayKey, leagues = [], options = {}) {
-  if (!Array.isArray(leagues) || leagues.length === 0) {
-    try {
-      const historyRows = getCurrentSeasonHistoryRows(String(options.season || DEFAULT_SEASON));
-
-      const slugs = Array.from(
-        new Set(
-          safeArray(historyRows)
-            .map(row => getLeagueSlugFromRow(row))
-            .filter(Boolean)
-        )
-      );
-
-      leagues = slugs.map(slug => ({ slug }));
-    } catch (err) {
-      console.warn("[buildStandingsDay] failed to derive leagues from history:",   err.message);
-      leagues = [];
-    }
-  }
   const season = String(options.season || DEFAULT_SEASON);
+  const historyRows = readHistoryRows(season);
+  const registryBundle = loadStandingsFoundationRegistry();
+
+  if (!Array.isArray(leagues) || leagues.length === 0) {
+    // Rebuild the existing consumer universe plus any league currently present
+    // in clean history. This intentionally does NOT discover from league-memory:
+    // league-memory is research evidence, never standings consumer truth.
+    const slugs = new Set();
+    const standingsDir = resolveDataPath("standings");
+    try {
+      for (const name of fs.readdirSync(standingsDir)) {
+        if (name.endsWith(".json")) slugs.add(name.slice(0, -5));
+      }
+    } catch {
+      // no existing consumer store yet
+    }
+    for (const row of historyRows) {
+      const slug = getLeagueSlugFromRow(row);
+      if (slug) slugs.add(slug);
+    }
+    leagues = [...slugs].sort().map(slug => ({ slug }));
+  }
+
   const results = [];
+  const outDir = resolveDataPath("standings");
+  ensureDir(outDir);
 
   for (const leagueEntry of leagues) {
     const slug = resolveLeagueSlug(leagueEntry);
-
     if (!slug) {
-      results.push({
-        league: null,
-        ok: false,
-        reason: "missing_slug"
-      });
+      results.push({ league: null, ok: false, reason: "missing_slug" });
       continue;
     }
 
     try {
-      const candidates = collectStandingsCandidatesForLeague(slug, dayKey, { season });
-      const state = reconcileStandingsRows(slug, candidates);
-      const written = writeLeagueStandingsArtifact(slug, state);
-
-      // Sync fresh local-history truth back into league-memory so assessment
-      // and odds attribution (which read that store) see the same table as
-      // details. Only when local truth WON the reconciliation — a table that
-      // came FROM league-memory or from a previous artifact carries no new
-      // information and must not overwrite scraped provenance (source/url).
-      // recordStandingsResult itself guards against clobbering a newer season
-      // or a higher-confidence accepted table.
-      let memorySync = null;
-      if (
-        options.syncMemory !== false &&
-        state?.chosenType === "local_truth_history" &&
-        safeArray(state?.table).length > 0 &&
-        (Number(state?.confidence) || 0) > 0
-      ) {
-        try {
-          const leagueSeason = currentSeasonLabel(slug, getLeagueMeta(slug));
-          const rows = state.table.map(row => ({
-            ...row,
-            goalDifference: toNumber(row?.goalDifference, toNumber(row?.goalDiff, 0))
-          }));
-
-          memorySync = recordStandingsResult(slug, {
-            status: "accepted",
-            season: leagueSeason,
-            source: "daily-standings-build",
-            confidence: Number(state.confidence) || 0,
-            rowCount: rows.length,
-            rows
-          });
-        } catch (e) {
-          memorySync = { written: false, reason: e?.message || "memory_sync_failed" };
-        }
-      }
+      const artifact = buildHistoryBackedStandingsArtifact({
+        slug,
+        historySeason: season,
+        historyRows,
+        registryBundle,
+      });
+      const filePath = path.join(outDir, `${slug}.json`);
+      fs.writeFileSync(filePath, JSON.stringify(artifact, null, 2), "utf8");
 
       results.push({
         league: slug,
         ok: true,
-        found: written.rowsCount > 0,
-        rowsCount: written.rowsCount,
-        confidence: Number(state?.confidence) || 0,
-        source: state?.chosenType || null,
-        memorySync: memorySync
-          ? { written: !!memorySync.written, reason: memorySync.reason || null }
-          : null
+        found: artifact.foundation?.usable === true,
+        rowsCount: artifact.table.length,
+        observedRows: artifact.foundation?.observedRowCount || 0,
+        confidence: Number(artifact.confidence) || 0,
+        source: "history-backed-standings-foundation",
+        foundationStatus: artifact.foundation?.status || "GATED",
+        gateReasons: artifact.foundation?.reasonCodes || [],
+        contractStatus: artifact.foundation?.contractValidation?.status || null,
+        memorySync: null,
       });
     } catch (err) {
       results.push({
         league: slug,
         ok: false,
-        reason: err?.message || "standings_build_failed"
+        reason: err?.message || "standings_build_failed",
       });
     }
   }
 
   return {
-    ok: true,
+    ok: results.every(item => item.ok),
     dayKey,
     season,
     leagues: results.length,
     collected: results.filter(x => x.ok).length,
     withData: results.filter(x => x.ok && x.found).length,
-    results
+    gated: results.filter(x => x.ok && !x.found).length,
+    results,
   };
 }

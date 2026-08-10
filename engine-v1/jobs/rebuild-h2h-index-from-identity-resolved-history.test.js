@@ -186,3 +186,59 @@ test("materializer refuses implicit replacement", () => {
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("builder uses the same global canonical names as H2H filename policy", () => {
+  const build = buildH2HArtifactsFromHistory({
+    overlay: overlayStub(),
+    historyDocuments: [{
+      rows: [{
+        id: "m-hertha",
+        dayKey: "2026-07-01",
+        homeTeam: "SV 07 Elversberg",
+        awayTeam: "Hertha Berlin",
+        scoreHome: 1,
+        scoreAway: 1,
+        leagueSlug: "ger.2",
+      }],
+    }],
+  });
+
+  assert.equal(build.artifactCount, 1);
+  assert.equal(
+    build.artifacts[0].relativePath,
+    "07elversberg~herthabsc.json",
+  );
+  assert.equal(build.artifacts[0].payload.teamB, "Hertha BSC");
+  assert.equal(build.artifacts[0].payload.matches[0].awayTeam, "Hertha BSC");
+});
+
+test("different fixture IDs for the same canonical source truth fail closed", () => {
+  assert.throws(
+    () => buildH2HArtifactsFromHistory({
+      overlay: overlayStub(),
+      historyDocuments: [{
+        rows: [
+          {
+            id: "provider-dup",
+            kickoff: "2026-07-01T18:00:00Z",
+            leagueSlug: "test.1",
+            homeTeam: "Alpha FC",
+            awayTeam: "Beta FC",
+            scoreHome: 2,
+            scoreAway: 1,
+          },
+          {
+            id: "cid_dup",
+            kickoff: "2026-07-01T18:05:00Z",
+            leagueSlug: "test.1",
+            homeTeam: "Alpha FC",
+            awayTeam: "Beta FC",
+            scoreHome: 2,
+            scoreAway: 1,
+          },
+        ],
+      }],
+    }),
+    /p0c_h2h_semantic_duplicate_source_truth:provider-dup:cid_dup/,
+  );
+});

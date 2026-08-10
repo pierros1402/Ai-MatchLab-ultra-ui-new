@@ -2,6 +2,10 @@ import fs from "fs";
 import path from "path";
 import { resolveDataPath, normalizeFixtureRows } from "../storage/data-root.js";
 import { currentSeason } from "./season.js";
+import {
+  listTrustedStandingsSlugs,
+  readTrustedStandingsArtifact,
+} from "../storage/trusted-standings-db.js";
 
 function safeArray(v) {
   return Array.isArray(v) ? v : [];
@@ -131,29 +135,11 @@ function getAllFixturesLocal() {
 }
 
 function getStandingsMap() {
-  const dirPath = resolveDataPath("standings");
   const byLeague = new Map();
-
-  try {
-    if (!fs.existsSync(dirPath)) return byLeague;
-
-    const files = fs.readdirSync(dirPath);
-
-    for (const file of files) {
-      if (!file.endsWith(".json")) continue;
-
-      const slug = file.replace(".json", "");
-      const filePath = path.join(dirPath, file);
-
-      const data = readJsonSafe(filePath, null);
-      if (!data) continue;
-
-      byLeague.set(slug, data);
-    }
-  } catch {
-    return byLeague;
+  for (const slug of listTrustedStandingsSlugs()) {
+    const data = readTrustedStandingsArtifact(slug);
+    if (data) byLeague.set(slug, data);
   }
-
   return byLeague;
 }
 

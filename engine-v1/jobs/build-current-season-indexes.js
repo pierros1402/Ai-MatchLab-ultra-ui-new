@@ -8,6 +8,13 @@ import { LEAGUE_NAME_MAP } from "../../workers/_shared/leagues-registry.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
+import {
+  classifyMatchState,
+  MATCH_STATE_CLASS,
+} from "../core/non-played-state.js";
+import {
+  writeHistoryIndexFoundationSync,
+} from "../core/derived-history-foundation.js";
 
 // P0-C P5 READ BOUNDARY: historical and matchup evidence views used for deterministic index rebuilds.
 
@@ -116,78 +123,7 @@ export function archiveLabelsForGlobalSeason(
 }
 
 export function isTerminalHistoryRow(row) {
-  const status = String(
-    row?.status || ""
-  ).toUpperCase();
-
-  const rawStatus = String(
-    row?.rawStatus || ""
-  ).toUpperCase();
-
-  const operationalState = String(
-    row?.operationalState || ""
-  ).toUpperCase();
-
-  if (Number(row?.finalized) === 1) {
-    return true;
-  }
-
-  if (
-    String(row?.state || "")
-      .toLowerCase() === "final"
-  ) {
-    return true;
-  }
-
-  if (row?.isDisplayFinal === true) {
-    return true;
-  }
-
-  if (
-    status === "FT" ||
-    status === "AET" ||
-    status === "PEN" ||
-    status === "POST" ||
-    status === "FINAL" ||
-    status.includes(
-      "STATUS_FULL_TIME"
-    ) ||
-    status.includes(
-      "STATUS_FINAL"
-    ) ||
-    status.includes(
-      "STATUS_AET"
-    ) ||
-    status.includes(
-      "STATUS_PEN"
-    )
-  ) {
-    return true;
-  }
-
-  if (
-    rawStatus.includes(
-      "STATUS_FULL_TIME"
-    ) ||
-    rawStatus.includes(
-      "STATUS_FINAL"
-    ) ||
-    rawStatus.includes(
-      "STATUS_AET"
-    ) ||
-    rawStatus.includes(
-      "STATUS_PEN"
-    )
-  ) {
-    return true;
-  }
-
-  return (
-    operationalState ===
-      "TERMINAL_CONFIRMED" ||
-    operationalState ===
-      "TERMINAL"
-  );
+  return classifyMatchState(row) === MATCH_STATE_CLASS.PLAYED_FINAL;
 }
 
 // Primary source: the per-league, per-season, Flashscore-canonical archive that
@@ -864,6 +800,7 @@ async function readGlobalHistoryPrimary(
           row,
           bounds
         ) ||
+        !isTerminalHistoryRow(row) ||
         !rowHasFiniteScore(row)
       ) {
         continue;
@@ -1076,6 +1013,7 @@ export function applyLegacyIdentityLineage(
 
     excludedOutsideSeason: 0,
     excludedNonTerminalWithoutTruth: 0,
+    excludedLegacyNoTruth: 0,
 
     exactIdMapped: 0,
     semanticMapped: 0,
@@ -1405,11 +1343,10 @@ export function applyLegacyIdentityLineage(
       continue;
     }
 
-    unresolved.push({
-      legacyId,
-      reason:
-        "no_truth_event_match"
-    });
+    // Existing indexes are derived continuity evidence, never truth. A legacy
+    // row with no clean-history/archive counterpart is stale residue and must
+    // be dropped rather than blocking a rebuild from authoritative truth.
+    metrics.excludedLegacyNoTruth += 1;
   }
 
   const outputRows = [];
@@ -1881,6 +1818,7 @@ export async function buildCurrentSeasonIndexes(options = {}) {
     `${lineage.metrics.excludedOutsideSeason}, ` +
     `legacy-non-terminal-only ` +
     `${lineage.metrics.excludedNonTerminalWithoutTruth}, ` +
+    `legacy-no-truth ${lineage.metrics.excludedLegacyNoTruth}, ` +
     `legacy-mapped ` +
     `${lineage.metrics.mappedLegacyIds}, ` +
     `legacy-represented ` +
@@ -1903,6 +1841,7 @@ export async function buildCurrentSeasonIndexes(options = {}) {
   await writeJson(teamOut, teamIndex);
   await writeJson(leagueOut, leagueIndex);
   await writeJson(matchupOut, matchupIndex);
+  const foundation = writeHistoryIndexFoundationSync(season);
 
   console.log("[index] done");
   console.log("[index] wrote:", teamOut);
@@ -1916,7 +1855,8 @@ export async function buildCurrentSeasonIndexes(options = {}) {
     matchCount: allMatches.length,
     teamCount: Object.keys(teamIndex).length,
     leagueCount: Object.keys(leagueIndex).length,
-    matchupCount: Object.keys(matchupIndex).length
+    matchupCount: Object.keys(matchupIndex).length,
+    foundationFingerprint: foundation.foundationFingerprint
   };
 }
 

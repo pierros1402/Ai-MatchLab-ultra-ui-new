@@ -57,6 +57,8 @@ import { runLiveStatusRefreshDay } from "./run-live-status-refresh-day.js";
 import { promoteAuthoritativeTerminalOverlaysDay } from "./promote-authoritative-terminal-overlays-day.js";
 import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { rebuildH2HFoundationFromCurrentHistory } from "./rebuild-h2h-foundation-from-current-history.js";
+import { validateH2HFoundationSync } from "../core/derived-history-foundation.js";
 
 function readJsonIfExists(filePath) {
   try {
@@ -703,6 +705,7 @@ export async function runDailyCycle(options = {}) {
   let historyAppend = null;
   let indexesRebuild = null;
   let catchUpIndexesRebuild = [];
+  let h2hFoundationRebuild = null;
 
   console.log("[daily-cycle] standings-build:start", { dayKey });
 
@@ -2031,6 +2034,38 @@ export async function runDailyCycle(options = {}) {
     }
   }
 
+
+  // H2H is derived from the complete current-history store. Any history append
+  // invalidates its foundation fingerprint. Rebuild when history changed, and
+  // self-heal a missing/stale foundation even when no append happened in this run.
+  const historyChangedForH2H =
+    historyAppend?.ok === true ||
+    historyCatchUp.some(row => row?.appended === true);
+  const h2hFoundationBefore = validateH2HFoundationSync();
+  if (historyChangedForH2H || h2hFoundationBefore?.ok !== true) {
+    console.log("[daily-cycle] h2h-foundation-rebuild:start", {
+      historyChanged: historyChangedForH2H,
+      previousOk: h2hFoundationBefore?.ok === true,
+      previousReason: h2hFoundationBefore?.reason || null,
+    });
+    h2hFoundationRebuild = rebuildH2HFoundationFromCurrentHistory();
+    console.log("[daily-cycle] h2h-foundation-rebuild:done", {
+      ok: h2hFoundationRebuild?.ok === true,
+      artifactCount: h2hFoundationRebuild?.artifactCount ?? 0,
+      foundationFingerprint:
+        h2hFoundationRebuild?.foundation?.foundationFingerprint || null,
+      validationOk: h2hFoundationRebuild?.validation?.ok === true,
+    });
+  } else {
+    h2hFoundationRebuild = {
+      ok: true,
+      skipped: true,
+      reason: "h2h_foundation_current",
+      foundationFingerprint:
+        h2hFoundationBefore?.artifact?.foundationFingerprint || null,
+    };
+  }
+
   const finishedAt = Date.now();
 
   console.log("[daily-cycle] done", {
@@ -2085,7 +2120,8 @@ export async function runDailyCycle(options = {}) {
     finalize,
     historyAppend,
     indexesRebuild,
-    catchUpIndexesRebuild
+    catchUpIndexesRebuild,
+    h2hFoundationRebuild
   };
 }
 

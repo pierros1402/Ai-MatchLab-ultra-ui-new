@@ -61,6 +61,7 @@ test("complete diagnostic absence is an error and value-unsafe", () => {
       value: "error",
       valueAudit: "warning",
       buildReport: "warning",
+      foundationIntegrity: "error",
       valueComparison: "info"
     }
   );

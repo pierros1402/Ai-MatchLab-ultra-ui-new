@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-08",
-  "generatedAt": "2026-08-10T00:26:55.918Z",
+  "generatedAt": "2026-08-10T12:32:04.136Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -16,9 +16,9 @@
     "oddsUse": "display_settlement_only_when_present"
   },
   "inputs": {
-    "fixturesPath": "data/deploy-snapshots/2026-08-08/fixtures.json",
+    "fixturesPath": "data/canonical-fixtures/2026-08-08",
     "finalResultsDir": "data/final-results/2026-08-08",
-    "verifiedFinalResults": 388,
+    "verifiedFinalResults": 383,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-08",
     "canonicalContradictionsRejected": [
       {
@@ -30,15 +30,7 @@
         "reason": "canonical_identity_ambiguous"
       },
       {
-        "matchId": "cid_bol1_sanantoniobulobulo_nacionalpotosi_20260808",
-        "reason": "canonical_identity_ambiguous"
-      },
-      {
         "matchId": "cid_rus1_kryliasovetov_baltikakaliningrad_20260808",
-        "reason": "canonical_identity_ambiguous"
-      },
-      {
-        "matchId": "cid_rus1_lokomotivmoscow_akrontolyatti_20260808",
         "reason": "canonical_identity_ambiguous"
       },
       {
@@ -53,13 +45,7 @@
       "cid_rus1_lokomotivmoscow_akrontolyatti_20260808"
     ],
     "fixtureIdentityAmbiguities": [],
-    "finalIdentityAmbiguities": [
-      "cid_bel1_kvcwesterlo_unionstgilloise_20260808",
-      "cid_bel1_sinttruidense_lommelsk_20260808",
-      "cid_fra2_sochaux_saintetienne_20260808",
-      "cid_ned1_goaheadeagles_willemii_20260808",
-      "cid_per1_utc_adt_20260808"
-    ],
+    "finalIdentityAmbiguities": [],
     "planAPath": "data/value-plans/2026-08-08/plan-a.json",
     "planBMembership": {
       "picks": 16,
@@ -97,8 +83,8 @@
         "settled": 6,
         "wins": 5,
         "losses": 1,
-        "voids": 0,
-        "unresolved": 3,
+        "voids": 3,
+        "unresolved": 0,
         "unsupported": 0,
         "hitRate": 0.8333,
         "oddsAvailable": 3,
@@ -108,6 +94,44 @@
         "profit": 0.86,
         "roi": 0.2867
       },
+      "marketSummary": [
+        {
+          "market": "1X2",
+          "picks": 2,
+          "uniqueMatches": 2,
+          "settled": 1,
+          "wins": 1,
+          "losses": 0,
+          "voids": 1,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 1,
+          "oddsAvailable": 0,
+          "averageOdds": null,
+          "totalStake": null,
+          "totalReturn": null,
+          "profit": null,
+          "roi": null
+        },
+        {
+          "market": "Over / Under 2.5",
+          "picks": 7,
+          "uniqueMatches": 7,
+          "settled": 5,
+          "wins": 4,
+          "losses": 1,
+          "voids": 2,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 0.8,
+          "oddsAvailable": 3,
+          "averageOdds": 1.8833,
+          "totalStake": 3,
+          "totalReturn": 3.86,
+          "profit": 0.86,
+          "roi": 0.2867
+        }
+      ],
       "picks": [
         {
           "planId": "plan-a",
@@ -237,11 +261,30 @@
           "aiFairOdds": 1.47,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_POSTPONED",
+          "finalStatusType": "STATUS_POSTPONED",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": true,
+            "verdict": "verified_non_played_void",
+            "source": "espn",
+            "method": "canonical_non_played_match_state",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T20:43:10.665Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401861443",
+                "status": "SPECIAL",
+                "statusType": null,
+                "rawStatus": "STATUS_POSTPONED"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -357,7 +400,7 @@
           "canonicalMatchId": "cid_blr1_belshina_dinminsk_20260808",
           "country": "Belarus",
           "leagueSlug": "blr.1",
-          "leagueName": "Belarusian Premier League",
+          "leagueName": "Vysshaya Liga",
           "kickoff": "2026-08-08T11:00:00.000Z",
           "homeTeam": "Belshina",
           "awayTeam": "Din. Minsk",
@@ -371,11 +414,30 @@
           "aiFairOdds": 2.03,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_POSTPONED",
+          "finalStatusType": "STATUS_POSTPONED",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": true,
+            "verdict": "verified_non_played_void",
+            "source": "flashscore",
+            "method": "canonical_non_played_match_state",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T05:01:35.529Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4nadNw3N",
+                "status": "STATUS_POSTPONED",
+                "statusType": "STATUS_POSTPONED",
+                "rawStatus": "STATUS_POSTPONED"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -473,7 +535,7 @@
           "canonicalMatchId": "cid_blr1_belshina_dinminsk_20260808",
           "country": "Belarus",
           "leagueSlug": "blr.1",
-          "leagueName": "Belarusian Premier League",
+          "leagueName": "Vysshaya Liga",
           "kickoff": "2026-08-08T11:00:00.000Z",
           "homeTeam": "Belshina",
           "awayTeam": "Din. Minsk",
@@ -487,11 +549,30 @@
           "aiFairOdds": 1.6,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_POSTPONED",
+          "finalStatusType": "STATUS_POSTPONED",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": true,
+            "verdict": "verified_non_played_void",
+            "source": "flashscore",
+            "method": "canonical_non_played_match_state",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T05:01:35.529Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4nadNw3N",
+                "status": "STATUS_POSTPONED",
+                "statusType": "STATUS_POSTPONED",
+                "rawStatus": "STATUS_POSTPONED"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -566,8 +647,8 @@
         "settled": 6,
         "wins": 5,
         "losses": 1,
-        "voids": 0,
-        "unresolved": 3,
+        "voids": 3,
+        "unresolved": 0,
         "unsupported": 0,
         "hitRate": 0.8333,
         "oddsAvailable": 3,
@@ -577,6 +658,44 @@
         "profit": 0.86,
         "roi": 0.2867
       },
+      "marketSummary": [
+        {
+          "market": "1X2",
+          "picks": 2,
+          "uniqueMatches": 2,
+          "settled": 1,
+          "wins": 1,
+          "losses": 0,
+          "voids": 1,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 1,
+          "oddsAvailable": 0,
+          "averageOdds": null,
+          "totalStake": null,
+          "totalReturn": null,
+          "profit": null,
+          "roi": null
+        },
+        {
+          "market": "Over / Under 2.5",
+          "picks": 7,
+          "uniqueMatches": 7,
+          "settled": 5,
+          "wins": 4,
+          "losses": 1,
+          "voids": 2,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 0.8,
+          "oddsAvailable": 3,
+          "averageOdds": 1.8833,
+          "totalStake": 3,
+          "totalReturn": 3.86,
+          "profit": 0.86,
+          "roi": 0.2867
+        }
+      ],
       "picks": [
         {
           "planId": "plan-a2",
@@ -706,11 +825,30 @@
           "aiFairOdds": 1.47,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_POSTPONED",
+          "finalStatusType": "STATUS_POSTPONED",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": true,
+            "verdict": "verified_non_played_void",
+            "source": "espn",
+            "method": "canonical_non_played_match_state",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-08T20:43:10.665Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401861443",
+                "status": "SPECIAL",
+                "statusType": null,
+                "rawStatus": "STATUS_POSTPONED"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -826,7 +964,7 @@
           "canonicalMatchId": "cid_blr1_belshina_dinminsk_20260808",
           "country": "Belarus",
           "leagueSlug": "blr.1",
-          "leagueName": "Belarusian Premier League",
+          "leagueName": "Vysshaya Liga",
           "kickoff": "2026-08-08T11:00:00.000Z",
           "homeTeam": "Belshina",
           "awayTeam": "Din. Minsk",
@@ -840,11 +978,30 @@
           "aiFairOdds": 2.03,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_POSTPONED",
+          "finalStatusType": "STATUS_POSTPONED",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": true,
+            "verdict": "verified_non_played_void",
+            "source": "flashscore",
+            "method": "canonical_non_played_match_state",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T05:01:35.529Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4nadNw3N",
+                "status": "STATUS_POSTPONED",
+                "statusType": "STATUS_POSTPONED",
+                "rawStatus": "STATUS_POSTPONED"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -942,7 +1099,7 @@
           "canonicalMatchId": "cid_blr1_belshina_dinminsk_20260808",
           "country": "Belarus",
           "leagueSlug": "blr.1",
-          "leagueName": "Belarusian Premier League",
+          "leagueName": "Vysshaya Liga",
           "kickoff": "2026-08-08T11:00:00.000Z",
           "homeTeam": "Belshina",
           "awayTeam": "Din. Minsk",
@@ -956,11 +1113,30 @@
           "aiFairOdds": 1.6,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
+          "finalStatus": "STATUS_POSTPONED",
+          "finalStatusType": "STATUS_POSTPONED",
           "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "result": "VOID",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": false,
+            "verifiedNonPlayedTruth": true,
+            "verdict": "verified_non_played_void",
+            "source": "flashscore",
+            "method": "canonical_non_played_match_state",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-09T05:01:35.529Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "4nadNw3N",
+                "status": "STATUS_POSTPONED",
+                "statusType": "STATUS_POSTPONED",
+                "rawStatus": "STATUS_POSTPONED"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -1046,6 +1222,44 @@
         "profit": 1.63,
         "roi": 0.815
       },
+      "marketSummary": [
+        {
+          "market": "BTTS",
+          "picks": 8,
+          "uniqueMatches": 8,
+          "settled": 8,
+          "wins": 6,
+          "losses": 2,
+          "voids": 0,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 0.75,
+          "oddsAvailable": 1,
+          "averageOdds": 2.33,
+          "totalStake": 1,
+          "totalReturn": 2.33,
+          "profit": 1.33,
+          "roi": 1.33
+        },
+        {
+          "market": "OU25",
+          "picks": 8,
+          "uniqueMatches": 8,
+          "settled": 8,
+          "wins": 6,
+          "losses": 2,
+          "voids": 0,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 0.75,
+          "oddsAvailable": 1,
+          "averageOdds": 1.3,
+          "totalStake": 1,
+          "totalReturn": 1.3,
+          "profit": 0.3,
+          "roi": 0.3
+        }
+      ],
       "picks": [
         {
           "planId": "plan-b",
@@ -1941,6 +2155,44 @@
         "profit": 1.63,
         "roi": 0.815
       },
+      "marketSummary": [
+        {
+          "market": "BTTS",
+          "picks": 8,
+          "uniqueMatches": 8,
+          "settled": 8,
+          "wins": 6,
+          "losses": 2,
+          "voids": 0,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 0.75,
+          "oddsAvailable": 1,
+          "averageOdds": 2.33,
+          "totalStake": 1,
+          "totalReturn": 2.33,
+          "profit": 1.33,
+          "roi": 1.33
+        },
+        {
+          "market": "OU25",
+          "picks": 8,
+          "uniqueMatches": 8,
+          "settled": 8,
+          "wins": 6,
+          "losses": 2,
+          "voids": 0,
+          "unresolved": 0,
+          "unsupported": 0,
+          "hitRate": 0.75,
+          "oddsAvailable": 1,
+          "averageOdds": 1.3,
+          "totalStake": 1,
+          "totalReturn": 1.3,
+          "profit": 0.3,
+          "roi": 0.3
+        }
+      ],
       "picks": [
         {
           "planId": "plan-b2",

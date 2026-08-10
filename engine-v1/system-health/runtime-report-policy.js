@@ -5,6 +5,7 @@ export const RUNTIME_ARTIFACT_POLICY = Object.freeze([
   Object.freeze({ key: "value", severity: "error" }),
   Object.freeze({ key: "valueAudit", severity: "warning" }),
   Object.freeze({ key: "buildReport", severity: "warning" }),
+  Object.freeze({ key: "foundationIntegrity", severity: "error" }),
   Object.freeze({ key: "valueComparison", severity: "info" })
 ]);
 

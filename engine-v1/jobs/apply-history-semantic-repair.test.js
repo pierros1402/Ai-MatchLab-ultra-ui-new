@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildDeterministicHistoryExecution,
+  expectedCurrentHistoryRowCount,
   sha256Json
 } from "./apply-history-semantic-repair.js";
 
@@ -279,4 +280,11 @@ test("declared day disambiguates an identical duplicate ID stored in two buckets
   assert.equal(output.days.length, 1);
   assert.equal(output.days[0].dayKey, "2026-07-09");
   assert.equal(output.days[0].rows[0].id, "cid_same");
+});
+
+
+test("post-audit expected row count includes untouched history files", () => {
+  const execution = { files: [{ rowsBefore: 100, rowsAfter: 98 }] };
+  const preAudit = { currentHistory: { rowCount: 150 } };
+  assert.equal(expectedCurrentHistoryRowCount(preAudit, execution), 148);
 });

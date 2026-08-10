@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {repairMultiSidePayload} from './repair-results-memory-multiside.js';
+const e=(matchId,date,opp,ha,gf,ga)=>({matchId,date,opp,ha,gf,ga,res:gf>ga?'W':gf<ga?'L':'D'});
+test('keeps the unique mutually consistent pair and removes extra side',()=>{const p={slug:'x.1',teams:{A:[e('m','2026-08-01T00:00Z','B','H',1,0)],B:[e('m','2026-08-01T00:00Z','A','A',0,1)],C:[e('m','2026-08-01T00:00Z','A','A',0,1)]}};const r=repairMultiSidePayload('x.1',p);assert.equal(r.decisions.length,1);assert.equal(r.decisions[0].removed,1);assert.equal(r.payload.teams.C,undefined);assert.equal(r.audit.multiSideMatchIdCount,0);});
+test('fails closed when two valid pairs exist',()=>{const p={slug:'x.1',teams:{A:[e('m','2026-08-01T00:00Z','B','H',1,0),e('m','2026-08-01T00:00Z','B','H',1,0)],B:[e('m','2026-08-01T00:00Z','A','A',0,1)]}};assert.throws(()=>repairMultiSidePayload('x.1',p));});

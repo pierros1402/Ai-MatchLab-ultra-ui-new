@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { verifiedFinalVetoReason } from '../core/non-played-state.js';
+import { verifiedFinalVetoReason, isValueSettlementVoidState } from '../core/non-played-state.js';
 
 const currentFile = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(currentFile), '../..');
@@ -269,17 +269,22 @@ function loadFinalResults(dayKey, options = {}) {
       const fixtures = Array.isArray(payload?.fixtures) ? payload.fixtures : [];
 
       for (const fixture of fixtures) {
-        const canonicalId = clean(fixture?.canonicalId);
-        if (!canonicalId) continue;
+        const fixtureKeys = [...new Set([
+          clean(fixture?.canonicalId),
+          clean(fixture?.matchId),
+          clean(fixture?.id)
+        ].filter(Boolean))];
 
-        if (canonicalById.has(canonicalId)) {
-          canonicalIdentityAmbiguities.add(canonicalId);
-          canonicalById.delete(canonicalId);
-          continue;
-        }
+        for (const fixtureKey of fixtureKeys) {
+          if (canonicalById.has(fixtureKey) && canonicalById.get(fixtureKey) !== fixture) {
+            canonicalIdentityAmbiguities.add(fixtureKey);
+            canonicalById.delete(fixtureKey);
+            continue;
+          }
 
-        if (!canonicalIdentityAmbiguities.has(canonicalId)) {
-          canonicalById.set(canonicalId, fixture);
+          if (!canonicalIdentityAmbiguities.has(fixtureKey)) {
+            canonicalById.set(fixtureKey, fixture);
+          }
         }
       }
     }
@@ -290,7 +295,8 @@ function loadFinalResults(dayKey, options = {}) {
       dir,
       rows: [],
       canonicalContradictions: [],
-      canonicalIdentityAmbiguities: [...canonicalIdentityAmbiguities].sort()
+      canonicalIdentityAmbiguities: [...canonicalIdentityAmbiguities].sort(),
+      canonicalById
     };
   }
 
@@ -335,7 +341,8 @@ function loadFinalResults(dayKey, options = {}) {
     dir,
     rows,
     canonicalContradictions,
-    canonicalIdentityAmbiguities: [...canonicalIdentityAmbiguities].sort()
+    canonicalIdentityAmbiguities: [...canonicalIdentityAmbiguities].sort(),
+    canonicalById
   };
 }
 
@@ -456,6 +463,60 @@ function buildSettlementReport(dayKey, options = {}) {
     const finalResult = keys.map(key => finalMap.get(key)).find(Boolean);
 
     if (!finalResult) {
+      const canonicalFixture = keys
+        .filter(key => !finalSource.canonicalIdentityAmbiguities.includes(key))
+        .map(key => finalSource.canonicalById.get(key))
+        .find(Boolean);
+
+      if (canonicalFixture && isValueSettlementVoidState(canonicalFixture)) {
+        const canonicalId = clean(
+          canonicalFixture?.canonicalId ||
+          canonicalFixture?.matchId ||
+          canonicalFixture?.id ||
+          pick?.canonicalId ||
+          pick?.matchId ||
+          keys[0]
+        );
+        const terminalStatus = clean(
+          canonicalFixture?.status ||
+          canonicalFixture?.rawStatus ||
+          canonicalFixture?.operationalState ||
+          'VOID'
+        );
+        const voidRow = {
+          planKey,
+          canonicalId,
+          matchId: canonicalId,
+          matchKeys: keys,
+          leagueSlug: clean(canonicalFixture?.leagueSlug || pick?.leagueSlug),
+          homeTeam: clean(canonicalFixture?.homeTeam || pick?.homeTeam || pick?.home || pick?.teams?.home),
+          awayTeam: clean(canonicalFixture?.awayTeam || pick?.awayTeam || pick?.away || pick?.teams?.away),
+          terminalStatus,
+          ftHome: null,
+          ftAway: null,
+          ftScore: null,
+          scoreKey: null,
+          market: pick?.market || pick?.marketName || '',
+          pick: pick?.pick || pick?.selection || pick?.prediction || '',
+          result: 'VOID',
+          finalResultProvenance: 'canonical_non_played_match_state',
+          finalResultPath: null,
+          reason: 'canonical_non_played_match_state'
+        };
+        settledRows.push(voidRow);
+        settledPicks.push({
+          ...pick,
+          result: 'VOID',
+          settlement: {
+            source: 'canonical_non_played_match_state',
+            terminalStatus,
+            settledBy: 'build-value-settlement-from-final-results-day',
+            dryRun: true
+          }
+        });
+        continue;
+      }
+
       unresolvedRows.push({
         planKey,
         canonicalId: clean(
@@ -608,7 +669,8 @@ function buildSettlementReport(dayKey, options = {}) {
       settledRows: settledRows.length,
       unresolvedRows: unresolvedRows.length,
       winRows: settledRows.filter(row => row.result === 'WIN').length,
-      lossRows: settledRows.filter(row => row.result === 'LOSS').length
+      lossRows: settledRows.filter(row => row.result === 'LOSS').length,
+      voidRows: settledRows.filter(row => row.result === 'VOID').length
     },
     settledRows,
     unresolvedRows,
@@ -623,6 +685,8 @@ function buildSettlementReport(dayKey, options = {}) {
       requiresVerifiedFinalTruth: true,
       strictVerifiedFinalTruthGuard: true,
       acceptedFinalTruthVerdict: 'verified_final_result',
+      allowsCanonicalNonPlayedVoid: true,
+      requiresVerifiedFinalTruthForScoredSettlement: true,
       fixtureWrites: false,
       historyWrites: false,
       valueWrites: false,

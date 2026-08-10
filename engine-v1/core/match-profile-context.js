@@ -2,6 +2,7 @@ import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
 import { isSameTeamName } from "./history-layer.js";
 import { readPlayerUsageRecord } from "../storage/player-usage-db.js";
+import { readTrustedStandingsArtifact } from "../storage/trusted-standings-db.js";
 
 function safeNum(value, fallback = null) {
   const n = Number(value);
@@ -25,7 +26,7 @@ function readJsonSafe(filePath, fallback = null) {
 
 function getStandingsTable(leagueSlug) {
   const file = resolveDataPath("standings", `${leagueSlug}.json`);
-  const payload = readJsonSafe(file, null);
+  const payload = readTrustedStandingsArtifact(leagueSlug);
 
   const table =
     Array.isArray(payload?.table) ? payload.table :

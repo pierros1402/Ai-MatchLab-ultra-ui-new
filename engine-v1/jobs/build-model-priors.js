@@ -7,6 +7,13 @@ import { priorArchiveSeasons } from "../core/season-model.js";
 import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
+import {
+  classifyMatchState,
+  MATCH_STATE_CLASS,
+} from "../core/non-played-state.js";
+import {
+  writeModelPriorsFoundationSync,
+} from "../core/derived-history-foundation.js";
 
 // P0-C P5 READ BOUNDARY: immutable historical evidence used for model priors.
 
@@ -23,6 +30,18 @@ const DEFAULT_TARGET_SEASON = currentSeason();
 function safeNum(v, d = 0) {
   const n = Number(v);
   return Number.isFinite(n) ? n : d;
+}
+
+export function isUsableModelPriorRow(row) {
+  if (!row || typeof row !== "object") return false;
+  if (classifyMatchState(row) !== MATCH_STATE_CLASS.PLAYED_FINAL) return false;
+  const rawHome = row.scoreHome;
+  const rawAway = row.scoreAway;
+  if (rawHome === null || rawHome === undefined || rawAway === null || rawAway === undefined) return false;
+  if (String(rawHome).trim() === "" || String(rawAway).trim() === "") return false;
+  const home = Number(rawHome);
+  const away = Number(rawAway);
+  return Number.isInteger(home) && home >= 0 && Number.isInteger(away) && away >= 0;
 }
 
 async function ensureDir(dirPath) {
@@ -310,6 +329,7 @@ async function collectArchiveMatches(sourceSeasonsOverride) {
     leaguesScanned: 0,
     filesRead: 0,
     matchesLoaded: 0,
+    rejectedNonTerminalOrInvalidScore: 0,
     seasons: sourceSeasonsOverride || "per-league"
   };
 
@@ -325,7 +345,14 @@ async function collectArchiveMatches(sourceSeasonsOverride) {
       meta.filesRead += 1;
 
       for (const row of payload.matches) {
-        if (!row?.leagueSlug || !row?.homeTeam || !row?.awayTeam) continue;
+        if (!row?.leagueSlug || !row?.homeTeam || !row?.awayTeam) {
+          meta.rejectedNonTerminalOrInvalidScore += 1;
+          continue;
+        }
+        if (!isUsableModelPriorRow(row)) {
+          meta.rejectedNonTerminalOrInvalidScore += 1;
+          continue;
+        }
         allMatches.push(row);
       }
     }
@@ -364,6 +391,7 @@ export async function buildModelPriors(opts = {}) {
 
   const outFile = path.join(OUT_DIR, `${targetSeason}.json`);
   await writeJson(outFile, out);
+  const foundation = writeModelPriorsFoundationSync(targetSeason);
 
   return {
     ok: true,
@@ -373,7 +401,9 @@ export async function buildModelPriors(opts = {}) {
     archiveMatches: meta.matchesLoaded,
     teamPriors: Object.keys(teamPriors).length,
     leaguePriors: Object.keys(leaguePriors).length,
-    matchupPriors: Object.keys(matchupPriors).length
+    matchupPriors: Object.keys(matchupPriors).length,
+    rejectedNonTerminalOrInvalidScore: meta.rejectedNonTerminalOrInvalidScore,
+    foundationFingerprint: foundation.foundationFingerprint
   };
 }
 

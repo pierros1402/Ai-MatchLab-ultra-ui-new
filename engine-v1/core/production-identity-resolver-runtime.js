@@ -10,9 +10,15 @@ import {
 import {
   buildExtendedProductionIdentityResolver,
 } from "./production-identity-extension.js";
+import {
+  mergeProductionIdentityExtensionLedgers,
+} from "./production-identity-extension-composite.js";
 
 export const PRODUCTION_IDENTITY_EXTENSION_RELATIVE_PATH =
   "data/identity-decisions/production-identity-extension-ledger.v1.json";
+
+export const PRODUCTION_IDENTITY_RECOVERY_SUPPLEMENT_RELATIVE_PATH =
+  "data/identity-decisions/production-identity-recovery-supplement.v1.json";
 
 export const EXPECTED_PRODUCTION_IDENTITY_ARTIFACTS =
   Object.freeze({
@@ -68,6 +74,13 @@ function normalizePaths(paths = {}) {
       path.join(
         projectRoot,
         PRODUCTION_IDENTITY_EXTENSION_RELATIVE_PATH,
+      ),
+    ),
+    recoverySupplementLedger: path.resolve(
+      paths.recoverySupplementLedger ||
+      path.join(
+        projectRoot,
+        PRODUCTION_IDENTITY_RECOVERY_SUPPLEMENT_RELATIVE_PATH,
       ),
     ),
   });
@@ -142,6 +155,10 @@ export function createProductionIdentityResolverRuntime({
     readStableExtensionLedger(
       resolvedPaths.extensionLedger,
     );
+  const recoverySupplement =
+    readStableExtensionLedger(
+      resolvedPaths.recoverySupplementLedger,
+    );
 
   const baseResolver =
     buildProductionIdentityResolverFromCommittedDecisions({
@@ -153,10 +170,17 @@ export function createProductionIdentityResolverRuntime({
         loaded.values.sourceLedger,
     });
 
+  const composite =
+    mergeProductionIdentityExtensionLedgers({
+      primary: extension.value,
+      supplement: recoverySupplement.value,
+      baseResolver,
+    });
+
   const resolver =
     buildExtendedProductionIdentityResolver({
       baseResolver,
-      ledger: extension.value,
+      ledger: composite.ledger,
     });
 
   return Object.freeze({
@@ -172,12 +196,19 @@ export function createProductionIdentityResolverRuntime({
       ...loaded.hashes,
       extensionLedger:
         extension.sha256,
+      recoverySupplementLedger:
+        recoverySupplement.sha256,
     }),
     counts: resolver.counts,
     effectiveCounts:
       resolver.effectiveCounts,
     extension:
       resolver.extension,
+    recoverySupplement: Object.freeze({
+      mergeStatus: "PASS_PRODUCTION_IDENTITY_RECOVERY_SUPPLEMENT_MERGE",
+      sha256: recoverySupplement.sha256,
+      diagnostics: composite.diagnostics,
+    }),
     readOnly: true,
     authorization: Object.freeze({
       productionDataApplicationAuthorized: false,

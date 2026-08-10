@@ -243,6 +243,14 @@ test(
       }),
       true
     );
+
+    assert.equal(
+      isTerminalHistoryRow({
+        status: "STATUS_SCHEDULED",
+        statusType: "FINAL"
+      }),
+      false
+    );
   }
 );
 test(
@@ -1043,7 +1051,7 @@ test(
 );
 
 test(
-  "unmatched terminal current-season identity fails closed",
+  "unmatched legacy-derived terminal row is excluded and cannot veto clean truth",
   () => {
     const result =
       applyLegacyIdentityLineage(
@@ -1066,15 +1074,10 @@ test(
         }
       );
 
-    assert.equal(
-      result.ok,
-      false
-    );
-
-    assert.equal(
-      result.unresolved.length,
-      1
-    );
+    assert.equal(result.ok, true);
+    assert.equal(result.unresolved.length, 0);
+    assert.equal(result.rows.length, 0);
+    assert.equal(result.metrics.excludedLegacyNoTruth, 1);
   }
 );
 test(

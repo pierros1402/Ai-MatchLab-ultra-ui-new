@@ -14,31 +14,40 @@ const source = fs.readFileSync(
 );
 
 test(
-  "all-fixtures export uses canonical rows when snapshot fixtures are absent",
+  "all-fixtures export always uses canonical truth for target membership",
   () => {
     assert.match(
       source,
-      /allFixtures && fixtures\.length === 0\s*\?\s*canonicalFixtures\s*:\s*fixtures/u
+      /const allFixtureRows = canonicalFixtures/u
     );
 
     assert.match(
       source,
-      /canonical_fixtures_fallback/u
+      /allFixtures\s*\? "canonical_fixtures"/u
     );
 
     assert.match(
       source,
-      /targetRowsFromCanonicalFallback/u
+      /targetRowsFromCanonicalTruth/u
+    );
+
+    assert.match(
+      source,
+      /deploySnapshotFixturesUsedForTargetMembership: false/u
     );
   }
 );
 
 test(
-  "snapshot fixtures remain preferred when present",
+  "snapshot fixtures cannot become all-fixtures truth membership",
   () => {
-    assert.match(
+    assert.doesNotMatch(
       source,
-      /fixtures\.length > 0\s*\?\s*"deploy_snapshot_fixtures"\s*:\s*"canonical_fixtures_fallback"/u
+      /deploy_snapshot_fixtures/u
+    );
+    assert.doesNotMatch(
+      source,
+      /canonical_fixtures_fallback/u
     );
   }
 );

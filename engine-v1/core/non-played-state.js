@@ -1,4 +1,5 @@
 export const MATCH_STATE_CLASS = Object.freeze({
+  PRE_KICKOFF_SCHEDULED: "PRE_KICKOFF_SCHEDULED",
   PRE_KICKOFF_NON_PLAYED: "PRE_KICKOFF_NON_PLAYED",
   PLAY_INTERRUPTED: "PLAY_INTERRUPTED",
   TEMPORARY_DELAY: "TEMPORARY_DELAY",
@@ -7,6 +8,17 @@ export const MATCH_STATE_CLASS = Object.freeze({
   CONFLICT: "CONFLICT",
   UNKNOWN: "UNKNOWN"
 });
+
+const PRE_KICKOFF_SCHEDULED_TOKENS = new Set([
+  "PRE",
+  "PRE_KICKOFF",
+  "SCHEDULED",
+  "STATUS_SCHEDULED",
+  "STATUS_PRE",
+  "STATUS_PRE_KICKOFF",
+  "NOT_STARTED",
+  "STATUS_NOT_STARTED"
+]);
 
 const PRE_KICKOFF_NON_PLAYED_TOKENS = new Set([
   "STATUS_POSTPONED",
@@ -52,10 +64,13 @@ const PLAYED_FINAL_TOKENS = new Set([
   "STATUS_FULL_TIME_PEN",
   "STATUS_AET",
   "STATUS_PEN",
+  "STATUS_PENALTIES",
   "AET",
   "PEN",
   "AFTER_EXTRA_TIME",
-  "AFTER_PENALTIES"
+  "AFTER_PENALTIES",
+  "TERMINAL_CONFIRMED",
+  "TERMINAL"
 ]);
 
 function cleanToken(value) {
@@ -73,7 +88,8 @@ export function matchStateTokens(row) {
     row.sourceStatusType,
     row.providerStatus,
     row.providerStatusType,
-    row.statusName
+    row.statusName,
+    row.operationalState
   ]
     .map(cleanToken)
     .filter(Boolean);
@@ -82,6 +98,10 @@ export function matchStateTokens(row) {
 export function classifyMatchState(row) {
   const tokens = matchStateTokens(row);
   const matchedClasses = [];
+
+  if (tokens.some(token => PRE_KICKOFF_SCHEDULED_TOKENS.has(token))) {
+    matchedClasses.push(MATCH_STATE_CLASS.PRE_KICKOFF_SCHEDULED);
+  }
 
   if (tokens.some(token => PRE_KICKOFF_NON_PLAYED_TOKENS.has(token))) {
     matchedClasses.push(MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED);
@@ -99,7 +119,11 @@ export function classifyMatchState(row) {
     matchedClasses.push(MATCH_STATE_CLASS.RESULT_INVALIDATED);
   }
 
-  if (tokens.some(token => PLAYED_FINAL_TOKENS.has(token))) {
+  if (
+    tokens.some(token => PLAYED_FINAL_TOKENS.has(token)) ||
+    Number(row?.finalized) === 1 ||
+    cleanToken(row?.state) === "FINAL"
+  ) {
     matchedClasses.push(MATCH_STATE_CLASS.PLAYED_FINAL);
   }
 

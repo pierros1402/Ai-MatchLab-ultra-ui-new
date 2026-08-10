@@ -1,6 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { resolveDataPath, normalizeFixtureRows } from "../storage/data-root.js";
+import { validateHistoryIndexFoundationSync } from "./derived-history-foundation.js";
 
 // ============================================================
 // VALUE CONTEXT MODIFIERS — STABLE v1.0
@@ -211,6 +212,15 @@ export async function applyValueContextModifiers({
 // ------------------------------------------------------------
 
 async function loadIndexes(season) {
+  const foundation = validateHistoryIndexFoundationSync(season);
+  if (!foundation.ok) {
+    return {
+      teamForm: {},
+      leagueForm: {},
+      matchups: {},
+      foundationGate: foundation.reason || "history_index_foundation_invalid"
+    };
+  }
   const teamFormPath = path.join(INDEX_ROOT, "team-form", `${season}.json`);
   const leagueFormPath = path.join(INDEX_ROOT, "league-form", `${season}.json`);
   const matchupsPath = path.join(INDEX_ROOT, "matchups", `${season}.json`);

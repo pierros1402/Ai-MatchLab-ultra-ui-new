@@ -17,6 +17,7 @@ import { resolveDataPath, ensureDir } from "./data-root.js";
 import {
   overlayProductionEvidenceTeamRowsReadView,
 } from "../core/production-evidence-identity-overlay.js";
+import { readTrustedStandingsState } from "./trusted-standings-db.js";
 
 // P0-C P5 READ BOUNDARY: standings evidence team-identity views.
 
@@ -34,7 +35,7 @@ function readStandingsRaw(slug) {
   }
 }
 
-export function readStandings(slug) {
+export function readStandingsEvidence(slug) {
   const raw = readStandingsRaw(slug);
   if (!raw) return null;
 
@@ -50,6 +51,48 @@ export function readStandings(slug) {
             ),
         }
       : raw.accepted,
+  };
+}
+
+/**
+ * Consumer-safe standings boundary. Research/legacy league-memory is evidence
+ * only and can never become model truth through this API. The accepted view is
+ * materialized exclusively from a PASS history-backed standings artifact whose
+ * lineage fingerprints still match current history/registry/team-alias inputs.
+ */
+export function readStandings(slug) {
+  const trusted = readTrustedStandingsState(slug);
+  if (!trusted.ok || !trusted.artifact) {
+    return {
+      slug,
+      accepted: null,
+      attempts: [],
+      gate: {
+        status: "GATED",
+        issues: trusted.validation?.issues || ["TRUSTED_STANDINGS_UNAVAILABLE"],
+      },
+    };
+  }
+
+  const artifact = trusted.artifact;
+  return {
+    slug,
+    updatedAt: artifact.updatedAt || null,
+    accepted: {
+      season: artifact.seasonReference || null,
+      source: "history-backed-standings-foundation",
+      url: null,
+      confidence: Number(artifact.confidence) || 0,
+      rowCount: Array.isArray(artifact.table) ? artifact.table.length : 0,
+      rows: overlayProductionEvidenceTeamRowsReadView(
+        artifact.table,
+        { leagueSlug: slug },
+      ),
+      fetchedAt: artifact.updatedAt || null,
+      foundation: artifact.foundation || null,
+    },
+    attempts: [],
+    gate: { status: "PASS", issues: [] },
   };
 }
 

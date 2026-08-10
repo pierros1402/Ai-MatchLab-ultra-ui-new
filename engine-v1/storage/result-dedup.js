@@ -77,6 +77,62 @@ function deriveRes(sh, sa) {
   return sh > sa ? "W" : sh < sa ? "L" : "D";
 }
 
+/**
+ * Enforce age/count retention at MATCH level, never independently per team.
+ * A matchId is either retained for every stored perspective or removed from all
+ * perspectives. This prevents the old per-team slice(0, 250) behavior from
+ * creating one-sided results-memory rows when only one participant crossed cap.
+ */
+export function applyMatchLevelRetention(teams, opts = {}) {
+  const perTeamCap = Number.isFinite(Number(opts.perTeamCap))
+    ? Math.max(0, Number(opts.perTeamCap))
+    : PER_TEAM_CAP;
+  const nowMs = Number.isFinite(Number(opts.nowMs)) ? Number(opts.nowMs) : Date.now();
+  const maxAgeDays = Number.isFinite(Number(opts.maxAgeDays))
+    ? Math.max(0, Number(opts.maxAgeDays))
+    : MAX_AGE_DAYS;
+  const cutoff = nowMs - maxAgeDays * 86400000;
+
+  const groups = new Map();
+  for (const [teamName, list] of Object.entries(teams || {})) {
+    for (const entry of Array.isArray(list) ? list : []) {
+      const matchId = String(entry?.matchId || "").trim();
+      if (!matchId) continue;
+      const dateMs = Date.parse(entry?.date || "");
+      if (Number.isFinite(dateMs) && dateMs < cutoff) continue;
+      if (!groups.has(matchId)) {
+        groups.set(matchId, { matchId, entries: [], dateMs: Number.isFinite(dateMs) ? dateMs : -Infinity });
+      }
+      const group = groups.get(matchId);
+      group.entries.push({ teamName, entry });
+      if (Number.isFinite(dateMs)) group.dateMs = Math.max(group.dateMs, dateMs);
+    }
+  }
+
+  const counts = new Map();
+  const keptIds = new Set();
+  const ordered = [...groups.values()].sort((a, b) =>
+    (b.dateMs - a.dateMs) || a.matchId.localeCompare(b.matchId)
+  );
+
+  for (const group of ordered) {
+    const participants = [...new Set(group.entries.map(item => item.teamName).filter(Boolean))];
+    if (!participants.length) continue;
+    if (participants.some(team => (counts.get(team) || 0) >= perTeamCap)) continue;
+    keptIds.add(group.matchId);
+    for (const team of participants) counts.set(team, (counts.get(team) || 0) + 1);
+  }
+
+  const out = {};
+  for (const [teamName, list] of Object.entries(teams || {})) {
+    const kept = (Array.isArray(list) ? list : [])
+      .filter(entry => keptIds.has(String(entry?.matchId || "").trim()))
+      .sort((a, b) => Date.parse(b?.date || "") - Date.parse(a?.date || ""));
+    if (kept.length) out[teamName] = kept;
+  }
+  return out;
+}
+
 // ─── Union-find ────────────────────────────────────────────────────────────────
 function makeUnionFind() {
   const parent = new Map();
@@ -437,13 +493,12 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
     });
   }
 
-  // Per-team: newest-first, age-capped, count-capped (mirrors pushResult()).
-  for (const team of Object.keys(outTeams)) {
-    outTeams[team] = outTeams[team]
-      .filter(e => !e.date || Date.parse(e.date) >= cutoff)
-      .sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
-      .slice(0, PER_TEAM_CAP);
-  }
+  // Retain at MATCH level: a match is kept/removed from every team perspective
+  // together. Independent per-team slicing created one-sided form records.
+  const retainedTeams = applyMatchLevelRetention(outTeams, {
+    perTeamCap: PER_TEAM_CAP,
+    maxAgeDays: MAX_AGE_DAYS
+  });
 
   // Learned aliases: for every cluster with >1 spelling, map canonical → [variants].
   const learnedAliases = {};
@@ -456,14 +511,14 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
 
   // Stats
   const beforeEntries = Object.values(teams).reduce((s, l) => s + (Array.isArray(l) ? l.length : 0), 0);
-  const afterEntries = Object.values(outTeams).reduce((s, l) => s + l.length, 0);
+  const afterEntries = Object.values(retainedTeams).reduce((s, l) => s + l.length, 0);
   const stats = {
     slug,
     sourceRecords: records.length,
     dedupedMatches: matches.size,
     matchesMerged: records.length - matches.size,
     teamsBefore: Object.keys(teams).length,
-    teamsAfter: Object.keys(outTeams).length,
+    teamsAfter: Object.keys(retainedTeams).length,
     entriesBefore: beforeEntries,
     entriesAfter: afterEntries,
     entriesRemoved: beforeEntries - afterEntries,
@@ -473,7 +528,7 @@ export function canonicalizeLeagueResults(payload, opts = {}) {
   const outPayload = {
     ...payload,
     slug: slug || payload?.slug,
-    teams: outTeams
+    teams: retainedTeams
   };
 
   return { payload: outPayload, stats, learnedAliases };

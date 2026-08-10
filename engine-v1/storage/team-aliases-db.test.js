@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildGlobalReverseMap } from "./team-aliases-db.js";
+import {
+  buildGlobalReverseMap,
+  canonicalTeamName,
+  clearAliasCache,
+  globalCanonicalTeamName
+} from "./team-aliases-db.js";
 
 test("folds variants of one club onto a single canonical", () => {
   const m = buildGlobalReverseMap([
@@ -41,4 +46,12 @@ test("idempotent: re-adding the same mapping does not make it ambiguous", () => 
     { "Din. Minsk": ["Dinamo Minsk", "Dinamo Minsk"] }
   ]);
   assert.equal(m.get("dinamo minsk"), "Din. Minsk");
+});
+
+
+test("Boca Juniors remains globally ambiguous but resolves inside Colombia Primera B", () => {
+  clearAliasCache();
+  assert.equal(globalCanonicalTeamName("Boca Juniors"), null);
+  assert.equal(canonicalTeamName("col.2", "Boca Juniors"), "Boca Juniors de Cali");
+  assert.equal(canonicalTeamName("arg.1", "Boca Juniors"), "Boca Juniors");
 });

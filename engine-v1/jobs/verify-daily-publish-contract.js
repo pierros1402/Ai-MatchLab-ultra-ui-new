@@ -38,6 +38,7 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
     freshness: path.join(snapshotRoot, "freshness-report.json"),
     valueAudit: path.join(snapshotRoot, "value-audit.json"),
     buildReport: dataPath("build-reports", `${dayKey}.json`),
+    foundationIntegrity: dataPath("foundation-integrity", `${dayKey}.json`),
     systemHealth: dataPath("system-health", `${dayKey}.json`)
   };
 
@@ -58,6 +59,7 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
   const freshness = artifacts.freshness?.payload;
   const valueAudit = artifacts.valueAudit?.payload;
   const buildReport = artifacts.buildReport?.payload;
+  const foundationIntegrity = artifacts.foundationIntegrity?.payload;
   const systemHealth = artifacts.systemHealth?.payload;
 
   if (manifest && String(manifest.date || manifest.dayKey || "") !== dayKey) {
@@ -83,6 +85,18 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
   }
   if (valueAudit && valueAudit.ok === false) {
     blocked.push({ code: "value_audit_not_ok" });
+  }
+
+  if (foundationIntegrity) {
+    if (String(foundationIntegrity.dayKey || "") !== dayKey) {
+      blocked.push({ code: "foundation_integrity_day_mismatch", expected: dayKey, actual: foundationIntegrity.dayKey || null });
+    }
+    if (foundationIntegrity.modelReady !== true) {
+      blocked.push({ code: "foundation_model_not_ready", blocked: foundationIntegrity.blocked || [] });
+    }
+    if (foundationIntegrity.publicationReady !== true) {
+      blocked.push({ code: "foundation_publication_not_ready", blocked: foundationIntegrity.blocked || [] });
+    }
   }
 
   if (buildReport) {

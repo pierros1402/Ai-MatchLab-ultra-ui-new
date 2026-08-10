@@ -1,4 +1,5 @@
 import { teamPairMatches } from "./team-identity.js";
+import { classifyMatchState, MATCH_STATE_CLASS } from "./non-played-state.js";
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -49,36 +50,27 @@ function athensDayOf(value) {
   );
 }
 
-function statusTokens(row) {
-  return [
-    row?.status,
-    row?.statusType,
-    row?.rawStatus,
-    row?.operationalState
-  ]
-    .map(value =>
-      clean(value).toUpperCase()
-    )
-    .filter(Boolean);
+function cleanUpper(value) {
+  return clean(value).toUpperCase();
 }
 
-function isPlayedTerminal(row) {
-  const tokens =
-    statusTokens(row);
+const PRIMARY_TERMINAL_STATUS = new Set([
+  "FT",
+  "FULL_TIME",
+  "FINAL",
+  "AET",
+  "PEN"
+]);
 
-  return tokens.some(token =>
-    token === "FT" ||
-    token === "FULL_TIME" ||
-    token === "FINAL" ||
-    token === "STATUS_FINAL" ||
-    token === "STATUS_FULL_TIME" ||
-    token === "STATUS_FINAL_AET" ||
-    token === "STATUS_FINAL_PEN" ||
-    token === "STATUS_FULL_TIME_AET" ||
-    token === "STATUS_FULL_TIME_PEN" ||
-    token === "AET" ||
-    token === "PEN"
-  );
+function normalizedPrimaryTerminalStatus(row) {
+  const status = cleanUpper(row?.status);
+
+  if (PRIMARY_TERMINAL_STATUS.has(status)) {
+    if (status === "FULL_TIME" || status === "FINAL") return "FT";
+    return status;
+  }
+
+  return "FT";
 }
 
 function strictScore(value) {
@@ -166,11 +158,20 @@ export function evaluateAuthoritativeTerminalWriteback({
     };
   }
 
-  if (
-    !isPlayedTerminal(
+  const matchState =
+    classifyMatchState(
       observationRow
-    )
-  ) {
+    );
+
+  if (matchState === MATCH_STATE_CLASS.CONFLICT) {
+    return {
+      ok: false,
+      reason:
+        "conflicting_match_state_evidence"
+    };
+  }
+
+  if (matchState !== MATCH_STATE_CLASS.PLAYED_FINAL) {
     return {
       ok: false,
       reason:
@@ -237,9 +238,12 @@ export function applyAuthoritativeTerminalWriteback({
   const next = {
     ...canonicalRow,
 
+    // Primary state is normalized to an unambiguous played-terminal token.
+    // Secondary provider fields are preserved below for provenance only.
     status:
-      observationRow?.status ||
-      "FT",
+      normalizedPrimaryTerminalStatus(
+        observationRow
+      ),
 
     statusType:
       observationRow?.statusType ||
