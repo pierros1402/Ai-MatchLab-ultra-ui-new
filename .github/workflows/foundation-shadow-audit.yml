@@ -1,0 +1,51 @@
+name: Foundation shadow history audit
+
+on:
+  push:
+    branches:
+      - diagnostic/foundation-shadow-audit-final-20260810
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact diagnostic branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Verify immutable base ancestry
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $Base = '750a4cd859fe426ef25dd01cf582799abec3d1e9'
+          git merge-base --is-ancestor $Base HEAD
+          if ($LASTEXITCODE -ne 0) { throw 'Diagnostic branch is not descended from the exact failing SHA.' }
+          Write-Host "SHADOW_BASE_SHA=$Base"
+          Write-Host "SHADOW_HEAD_SHA=$(git rev-parse HEAD)"
+
+      - name: Run read-only current-history audit
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          node --check engine-v1/jobs/shadow-audit-current-history-identity.js
+          node engine-v1/jobs/shadow-audit-current-history-identity.js
+
+      - name: Upload shadow evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: foundation-shadow-history-audit
+          path: data/history-integrity/shadow/current-history-audit.json
+          if-no-files-found: error
+          retention-days: 7
