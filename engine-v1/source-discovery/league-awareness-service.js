@@ -48,6 +48,16 @@ function hemisphereForCountry(country) {
   return SOUTHERN_COUNTRIES.has(key) ? "southern" : "northern";
 }
 
+export function canonicalDomesticDivisionLevel(slug, type = "league") {
+  if (String(type || "") !== "league") return null;
+
+  const match = String(slug || "").trim().match(/\.([1-9]\d*)$/u);
+  if (!match) return null;
+
+  const level = Number(match[1]);
+  return Number.isInteger(level) && level > 0 ? level : null;
+}
+
 // All competition types: leagues, cups, continental, national.
 // Cups and continental competitions have different season patterns but the same
 // observation logic — if we see them in the feed they're active.
@@ -59,13 +69,32 @@ const LEAGUE_META = Object.fromEntries(
       return [entry.slug, {
         name:       leagueName(entry.slug),
         country,
+        // `tier` is the pre-existing coverage/priority tier used by awareness
+        // internals. It is NOT the football pyramid division number.
         tier:       entry.tier,
+        coverageTier: entry.tier,
+        divisionLevel: canonicalDomesticDivisionLevel(entry.slug, entry.type),
         region:     entry.region,
         trust:      entry.trust,
         type:       entry.type,
         hemisphere: hemisphereForCountry(entry.country)
       }];
     })
+);
+
+// Runtime/UI historically consumed meta.tier as `leagueTier`, which leaked the
+// coverage priority bucket into football semantics (e.g. ukr.2 appeared as 3).
+// Keep getLeagueMeta() unchanged for internal awareness logic, while the map used
+// by display enrichment exposes the real senior domestic division in `tier` and
+// retains the original value separately as `coverageTier`.
+const LEAGUE_DISPLAY_META = Object.fromEntries(
+  Object.entries(LEAGUE_META).map(([slug, meta]) => [
+    slug,
+    {
+      ...meta,
+      tier: meta.divisionLevel ?? meta.tier
+    }
+  ])
 );
 
 export function getLeagueMeta(slug) {
@@ -77,7 +106,7 @@ export function getAllKnownSlugs() {
 }
 
 export function getLeagueMetaMap() {
-  return LEAGUE_META;
+  return LEAGUE_DISPLAY_META;
 }
 
 // ─── Skip filter ──────────────────────────────────────────────────────────────
@@ -151,7 +180,7 @@ function combineState(cal, pulse) {
   };
 }
 
-// ─── Pulse update ─────────────────────────────────────────────────────────────
+// ─── Pulse update ──────────────────────────────────────────────────────────────
 
 export async function updateLeaguePulse(slug, options = {}) {
   const meta = getLeagueMeta(slug);
@@ -225,7 +254,6 @@ export async function refreshStaleLeagues(options = {}) {
     : allStates;
 
   const batch = candidates.slice(0, maxLeagues);
-
   console.log("[league-awareness] refresh-stale:start", {
     staleCount: allStates.length,
     batchSize: batch.length,
@@ -316,7 +344,7 @@ export function classifyAllByCalendar(options = {}) {
   return { ok: true, classified: results.length, results, summary: getSummary() };
 }
 
-// ─── Seed from known list ─────────────────────────────────────────────────────
+// ─── Seed from known list ──────────────────────────────────────────────────────
 // Initialises all known leagues as "unknown" if they have no state yet.
 // This gives the pulse checker a starting point without any search calls.
 
