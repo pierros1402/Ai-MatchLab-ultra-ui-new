@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-08-11T19:24:42.932Z",
+  "sourceLatestUpdatedAt": "2026-08-11T21:07:48.448Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "7bb3275734901e8198fdb22b3398c355c093c90aa03d3e36803252719118b0ba",
@@ -17,7 +17,7 @@
       "sourceFixtureIds": 136
     }
   },
-  "status": "CLEAN",
+  "status": "REVIEW_REQUIRED",
   "promotionPolicy": {
     "broadFuzzyAllowed": false,
     "unresolvedTwoSidedAutoPromotionAllowed": false,
@@ -25,13 +25,15 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 282,
-    "inputRows": 980,
+    "scannedLeagueFiles": 331,
+    "inputRows": 1080,
     "autoPromotable": 0,
-    "pendingIndependentConfirmation": 0,
+    "pendingIndependentConfirmation": 2,
     "ambiguous": 0,
-    "conflictRejected": 0,
-    "alreadyManagedPairs": 0
+    "conflictRejected": 1,
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 2
   },
   "targetDays": [
     {
@@ -51,8 +53,206 @@
     },
     {
       "dayKey": "2026-08-14",
-      "leagueFiles": 21,
-      "recoveryLeagueReports": []
+      "leagueFiles": 70,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "conmebol.libertadores",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "conmebol.libertadores",
+              "kickoffUtc": "2026-08-13T22:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "zPjrqgkn",
+                "canonicalId": "cid_conmebollibertadores_mirassolbra_lduquitoecu_20260814",
+                "kickoffUtc": "2026-08-13T22:00:00.000Z",
+                "homeTeam": "Mirassol (Bra)",
+                "awayTeam": "LDU Quito (Ecu)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401874073",
+                "canonicalId": "cid_conmebollibertadores_mirassol_ligaquito_20260814",
+                "kickoffUtc": "2026-08-13T22:00Z",
+                "homeTeam": "Mirassol",
+                "awayTeam": "Liga de Quito"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-08-11T21:07:48.753Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "eng.2",
+          "inputRows": 2,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "eng.2",
+              "kickoffUtc": "2026-08-14T19:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "dQVxcCm3",
+                "canonicalId": "cid_eng2_wolves_blackburn_20260814",
+                "kickoffUtc": "2026-08-14T19:00:00.000Z",
+                "homeTeam": "Wolves",
+                "awayTeam": "Blackburn"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401880340",
+                "canonicalId": "cid_eng2_wolverhamptonwanderers_blackburnrovers_20260814",
+                "kickoffUtc": "2026-08-14T19:00Z",
+                "homeTeam": "Wolverhampton Wanderers",
+                "awayTeam": "Blackburn Rovers"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-08-11T21:07:48.754Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 2,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-08-14T18:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "WIn5JxjK",
+                "canonicalId": "cid_esp2_realsociedadb_castellon_20260814",
+                "kickoffUtc": "2026-08-14T18:30:00.000Z",
+                "homeTeam": "Real Sociedad B",
+                "awayTeam": "Castellon"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883226",
+                "canonicalId": "cid_esp2_realsociedadii_castellon_20260814",
+                "kickoffUtc": "2026-08-14T18:30Z",
+                "homeTeam": "Real Sociedad II",
+                "awayTeam": "Castellón"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-08-15",
@@ -114,5 +314,30 @@
       "leagueFiles": 6,
       "recoveryLeagueReports": []
     }
-  ]
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-08-11T21:07:48.754Z",
+    "attempts": [
+      {
+        "dayKey": "2026-08-14",
+        "leagueSlug": "conmebol.libertadores",
+        "key": "cid_conmebollibertadores_mirassol_ligaquito_20260814|cid_conmebollibertadores_mirassolbra_lduquitoecu_20260814",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-08-14",
+        "leagueSlug": "eng.2",
+        "key": "cid_eng2_wolverhamptonwanderers_blackburnrovers_20260814|cid_eng2_wolves_blackburn_20260814",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
 }
