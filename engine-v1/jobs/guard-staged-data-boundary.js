@@ -1,5 +1,7 @@
 import { execFileSync } from "child_process";
 
+import { findCanonicalStatusConflicts } from "../core/canonical-status-coherence.js";
+
 function argValue(name, fallback = "") {
   const prefix = `--${name}=`;
   const hit = process.argv.find(x => x.startsWith(prefix));
@@ -54,6 +56,10 @@ function isDeploySnapshot(p) {
   return p.startsWith("data/deploy-snapshots/");
 }
 
+function isCanonicalFixtureFile(p) {
+  return /^data\/canonical-fixtures\/\d{4}-\d{2}-\d{2}\/[^/]+\.json$/i.test(p);
+}
+
 function isTruthPath(p) {
   return (
     p.startsWith("data/league-memory/") ||
@@ -92,6 +98,30 @@ function isPrunableSnapshotDetail(p) {
     if (p.startsWith(`data/deploy-snapshots/${d}/details/`)) return true;
   }
   return false;
+}
+
+function inspectStagedCanonicalFile(p, violations) {
+  let payload;
+
+  try {
+    payload = JSON.parse(git(["show", `:${p}`]));
+  } catch (error) {
+    violations.push({
+      reason: "staged_canonical_json_invalid",
+      path: p,
+      error: String(error?.message || error)
+    });
+    return;
+  }
+
+  const conflicts = findCanonicalStatusConflicts(payload, { path: p });
+
+  for (const conflict of conflicts) {
+    violations.push({
+      reason: "staged_canonical_status_conflict",
+      ...conflict
+    });
+  }
 }
 
 const staged = parseNameStatus(git(["diff", "--cached", "--name-status"]));
@@ -144,6 +174,10 @@ for (const item of staged) {
         dayKey
       });
     }
+  }
+
+  if (statusLetter !== "D" && isCanonicalFixtureFile(item.path)) {
+    inspectStagedCanonicalFile(item.path, violations);
   }
 }
 
