@@ -41,6 +41,7 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Targeted P0-02 regression tests
+        id: targeted
         run: |
           set -euo pipefail
           node --test \
@@ -49,6 +50,8 @@ jobs:
             engine-v1/jobs/verify-daily-publish-contract.test.js
 
       - name: Full engine test suite
+        id: full_suite
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -61,6 +64,8 @@ jobs:
           node --test "${TESTS[@]}"
 
       - name: Ephemeral D-1 frozen snapshot repair validation
+        id: d1
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
@@ -155,3 +160,14 @@ jobs:
           git diff --stat -- data/deploy-snapshots/2026-08-10 data/deploy-snapshots/latest.json || true
           echo "=== D-1 EPHEMERAL CHANGED FILES ==="
           git diff --name-only -- data/deploy-snapshots/2026-08-10 data/deploy-snapshots/latest.json || true
+
+      - name: Final validation outcome
+        if: always()
+        shell: bash
+        run: |
+          echo "TARGETED_OUTCOME=${{ steps.targeted.outcome }}"
+          echo "FULL_SUITE_OUTCOME=${{ steps.full_suite.outcome }}"
+          echo "D1_OUTCOME=${{ steps.d1.outcome }}"
+          if [ "${{ steps.targeted.outcome }}" != "success" ]; then exit 1; fi
+          if [ "${{ steps.full_suite.outcome }}" != "success" ]; then exit 1; fi
+          if [ "${{ steps.d1.outcome }}" != "success" ]; then exit 1; fi
