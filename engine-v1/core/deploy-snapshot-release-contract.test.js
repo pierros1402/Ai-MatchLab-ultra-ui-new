@@ -57,6 +57,35 @@ test("manifest hash rejects detail or file-hash drift", () => {
   assert.match(validateDeploySnapshotManifest(manifest, manifest.date).errors.join(","), /manifest_hash_mismatch/);
 });
 
+test("present red Value gate cannot be masked by top-level manifest ok", () => {
+  const manifest = baseManifest();
+  manifest.valueGate = {
+    fixtures: 1,
+    valuePicks: 0,
+    valueFreshAgainstCanonical: false,
+    ok: false
+  };
+  // v2 hash semantics remain unchanged in this repair; release validation is
+  // the fail-closed publication gate for the new field.
+  manifest.hash = computeDeploySnapshotManifestHash(manifest);
+
+  const result = validateDeploySnapshotManifest(manifest, manifest.date);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join(","), /manifest_value_gate_not_ok/);
+});
+
+test("present green Value gate validates without changing v2 hash semantics", () => {
+  const manifest = baseManifest();
+  manifest.valueGate = {
+    fixtures: 1,
+    valuePicks: 0,
+    valueFreshAgainstCanonical: true,
+    ok: true
+  };
+  manifest.hash = computeDeploySnapshotManifestHash(manifest);
+  assert.equal(validateDeploySnapshotManifest(manifest, manifest.date).ok, true);
+});
+
 test("legacy manifest remains hash-compatible when v2 fields are absent", () => {
   const manifest = baseManifest();
   delete manifest.fileHashes;
