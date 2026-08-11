@@ -4,7 +4,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
-  canonicalDetailBytesOfFile
+  canonicalDetailBytesOfFile,
+  selectValueArtifactForSnapshot
 } from "../jobs/export-deploy-snapshot-day.js";
 
 test("deploy manifest detail bytes are canonical across LF and CRLF checkouts", () => {
@@ -73,4 +74,86 @@ test("preserveValue keeps existing snapshot value and audit bytes", () => {
     source,
     /valueAuditPresent &&[\s\S]*!preserveSnapshotValueAuditBytes/
   );
+});
+
+test("preserveValue keeps manifest semantics on the frozen 7-pick artifact when current value shrinks to 5", () => {
+  const snapshotPayload = {
+    ok: true,
+    date: "2099-08-17",
+    source: "canonical_fixtures",
+    count: 7,
+    picks: Array.from(
+      { length: 7 },
+      (_, index) => ({ id: `frozen-${index + 1}` })
+    )
+  };
+
+  const currentPayload = {
+    ok: true,
+    date: "2099-08-17",
+    source: "canonical_fixtures",
+    count: 5,
+    picks: Array.from(
+      { length: 5 },
+      (_, index) => ({ id: `current-${index + 1}` })
+    )
+  };
+
+  const selected = selectValueArtifactForSnapshot({
+    currentPayload,
+    snapshotPayload,
+    preserveValue: true
+  });
+
+  assert.equal(selected, snapshotPayload);
+  assert.equal(selected.count, 7);
+  assert.equal(selected.picks.length, 7);
+});
+
+test("snapshot Value is not selected when preservation is disabled", () => {
+  const snapshotPayload = {
+    ok: true,
+    source: "canonical_fixtures",
+    count: 7,
+    picks: Array.from({ length: 7 }, (_, index) => ({ id: `frozen-${index + 1}` }))
+  };
+
+  const currentPayload = {
+    ok: true,
+    source: "canonical_fixtures",
+    count: 5,
+    picks: Array.from({ length: 5 }, (_, index) => ({ id: `current-${index + 1}` }))
+  };
+
+  const selected = selectValueArtifactForSnapshot({
+    currentPayload,
+    snapshotPayload,
+    preserveValue: false
+  });
+
+  assert.equal(selected, currentPayload);
+});
+
+test("invalid frozen Value cannot override the current artifact", () => {
+  const snapshotPayload = {
+    ok: false,
+    source: "canonical_fixtures",
+    count: 7,
+    picks: Array.from({ length: 7 }, (_, index) => ({ id: `invalid-${index + 1}` }))
+  };
+
+  const currentPayload = {
+    ok: true,
+    source: "canonical_fixtures",
+    count: 5,
+    picks: Array.from({ length: 5 }, (_, index) => ({ id: `current-${index + 1}` }))
+  };
+
+  const selected = selectValueArtifactForSnapshot({
+    currentPayload,
+    snapshotPayload,
+    preserveValue: true
+  });
+
+  assert.equal(selected, currentPayload);
 });
