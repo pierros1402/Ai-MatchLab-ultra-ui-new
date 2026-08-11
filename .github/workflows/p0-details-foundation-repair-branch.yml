@@ -1,0 +1,99 @@
+name: P0 details foundation repair branch
+
+on:
+  push:
+    branches:
+      - work/p0-details-foundation-bootstrap-20260811
+    paths:
+      - ".github/workflows/p0-details-foundation-repair-branch.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: p0-details-foundation-repair-branch
+  cancel-in-progress: false
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/p0-details-foundation-bootstrap-20260811
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply exact daily-cycle foundation patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require("fs");
+          const file = "engine-v1/jobs/run-daily-cycle.js";
+          let source = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+
+          const importAnchor = `import {\n  rebuildIndexesForSeason,\n  collectIndexRebuildTargets\n} from "./rebuild-indexes-for-season.js";\nimport { buildDetailsDay } from "./build-details-day.js";`;
+          const importReplacement = `import {\n  rebuildIndexesForSeason,\n  collectIndexRebuildTargets\n} from "./rebuild-indexes-for-season.js";\nimport { ensureDetailsHistoryIndexFoundationDay } from "./ensure-details-history-index-foundation-day.js";\nimport { buildDetailsDay } from "./build-details-day.js";`;
+
+          const detailsAnchor = `  console.log("[daily-cycle] details-build:start", {\n    dayKey,\n    rebuild: detailsRebuild\n  });`;
+          const detailsReplacement = `  console.log("[daily-cycle] details-history-index-foundation:start", { dayKey });\n\n  const detailsHistoryIndexFoundation =\n    await ensureDetailsHistoryIndexFoundationDay(dayKey);\n\n  console.log("[daily-cycle] details-history-index-foundation:done", {\n    ok: detailsHistoryIndexFoundation?.ok === true,\n    dayKey,\n    season: detailsHistoryIndexFoundation?.season || null,\n    rebuilt: detailsHistoryIndexFoundation?.rebuilt === true,\n    previousReason: detailsHistoryIndexFoundation?.previousReason || null,\n    foundationFingerprint:\n      detailsHistoryIndexFoundation?.foundationFingerprint || null\n  });\n\n  console.log("[daily-cycle] details-build:start", {\n    dayKey,\n    rebuild: detailsRebuild\n  });`;
+
+          function replaceExactlyOnce(text, anchor, replacement, label) {
+            const first = text.indexOf(anchor);
+            const last = text.lastIndexOf(anchor);
+            if (first < 0 || first !== last) {
+              throw new Error(`${label}_anchor_count_not_one`);
+            }
+            return text.slice(0, first) + replacement + text.slice(first + anchor.length);
+          }
+
+          source = replaceExactlyOnce(source, importAnchor, importReplacement, "import");
+          source = replaceExactlyOnce(source, detailsAnchor, detailsReplacement, "details");
+          fs.writeFileSync(file, source, "utf8");
+          NODE
+
+      - name: Validate syntax and targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/ensure-details-history-index-foundation-day.js
+          node --check engine-v1/jobs/run-daily-cycle.js
+          node --check engine-v1/tests/details-history-index-foundation-self-heal.test.js
+          node --check engine-v1/tests/daily-details-foundation-order.test.js
+          node --test \
+            engine-v1/tests/details-history-index-foundation-self-heal.test.js \
+            engine-v1/tests/daily-details-foundation-order.test.js \
+            engine-v1/tests/rebuild-indexes-for-season.test.js
+
+      - name: Verify patch scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          CHANGED="$(git diff --name-only)"
+          test "$CHANGED" = "engine-v1/jobs/run-daily-cycle.js"
+          git diff --check
+
+      - name: Commit validated production patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add engine-v1/jobs/run-daily-cycle.js
+          git commit -m "Self-heal details history index before daily build"
+          git push origin HEAD:work/p0-details-foundation-bootstrap-20260811
