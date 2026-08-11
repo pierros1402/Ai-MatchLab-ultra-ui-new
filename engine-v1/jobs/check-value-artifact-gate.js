@@ -15,6 +15,7 @@
 import fs from "fs";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
+import { isFrozenValueGateReleaseSafe } from "../core/frozen-value-release-contract.js";
 
 export function checkValueArtifactGate(dayKey) {
   const manifestFile = resolveDataPath("deploy-snapshots", dayKey, "manifest.json");
@@ -52,9 +53,11 @@ export function checkValueArtifactGate(dayKey) {
       ? "value_artifact_stale_against_canonical"
       : "value_artifact_gate_failed";
 
-  if (gate?.valueFreshAgainstCanonical === false) {
-    return { ok: false, code: 2, reason: "value_artifact_stale_against_canonical", gate };
-  }
+const frozenReleaseSafe = isFrozenValueGateReleaseSafe(gate);
+
+if (gate?.valueFreshAgainstCanonical === false && !frozenReleaseSafe) {
+  return { ok: false, code: 2, reason: "value_artifact_stale_against_canonical", gate };
+}
 
   const planB = (() => {
     try {

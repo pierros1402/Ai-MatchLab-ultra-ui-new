@@ -7,6 +7,9 @@ import path from "node:path";
 import {
   verifyDailyPublishContract
 } from "../jobs/verify-daily-publish-contract.js";
+import {
+  computeDeploySnapshotManifestHash
+} from "../core/deploy-snapshot-release-contract.js";
 
 const workflow = fs.readFileSync(
   new URL(
@@ -37,7 +40,6 @@ function createContractFixture() {
 
   const dayKey = "2099-08-17";
   const generatedAt = "2099-08-16T20:55:00.000Z";
-  const manifestHash = "strict-contract-test-hash";
 
   const resolve = (...parts) => path.join(root, ...parts);
   const snapshotRoot = resolve("deploy-snapshots", dayKey);
@@ -50,14 +52,22 @@ function createContractFixture() {
     }
   );
 
-  writeJson(
-    path.join(snapshotRoot, "manifest.json"),
-    {
-      date: dayKey,
-      generatedAt,
-      hash: manifestHash
-    }
-  );
+const manifest = {
+  ok: true,
+  date: dayKey,
+  generatedAt,
+  counts: { fixtures: 0, valuePicks: 0, details: 0 },
+  details: [],
+  valueGate: {
+    fixtures: 0,
+    valuePicks: 0,
+    valueSource: "canonical_fixtures",
+    valueFreshAgainstCanonical: true,
+    ok: true
+  }
+};
+manifest.hash = computeDeploySnapshotManifestHash(manifest);
+writeJson(path.join(snapshotRoot, "manifest.json"), manifest);
 
   writeJson(
     path.join(snapshotRoot, "invariant-report.json"),
@@ -135,7 +145,7 @@ function createContractFixture() {
     resolve("deploy-snapshots", "latest.json"),
     {
       date: dayKey,
-      hash: manifestHash
+      hash: manifest.hash
     }
   );
 

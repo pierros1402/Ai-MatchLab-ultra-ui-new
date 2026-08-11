@@ -755,7 +755,7 @@ function findFlashscoreMatch(target, sourceRows, dayKey) {
   };
 }
 
-function buildVerifiedFinalResult(dayKey, target, sourceRow) {
+export function buildVerifiedFinalResult(dayKey, target, sourceRow) {
   const homeScore = Number(sourceRow.scoreHome);
   const awayScore = Number(sourceRow.scoreAway);
   const scoreKey = `${homeScore}-${awayScore}`;
@@ -794,6 +794,11 @@ function buildVerifiedFinalResult(dayKey, target, sourceRow) {
       {
         provider: "flashscore",
         providerMatchId: clean(sourceRow.matchId),
+        finished: sourceRow?.finished === true,
+        playedFinal: sourceRow?.playedFinal === true,
+        nonPlayedTerminal: sourceRow?.nonPlayedTerminal === true,
+        statusCode: clean(sourceRow?.statusCode),
+        statusDetailCode: clean(sourceRow?.statusDetailCode),
         country: clean(sourceRow.country),
         leagueName: clean(sourceRow.leagueName),
         leaguePath: clean(sourceRow.leaguePath),

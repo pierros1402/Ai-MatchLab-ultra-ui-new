@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey } from "../core/daykey.js";
+import { validateDeploySnapshotManifest } from "../core/deploy-snapshot-release-contract.js";
 
 function readJson(file) {
   if (!fs.existsSync(file)) return { exists: false, payload: null, error: null };
@@ -62,8 +63,18 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
   const foundationIntegrity = artifacts.foundationIntegrity?.payload;
   const systemHealth = artifacts.systemHealth?.payload;
 
-  if (manifest && String(manifest.date || manifest.dayKey || "") !== dayKey) {
-    blocked.push({ code: "manifest_day_mismatch", expected: dayKey, actual: manifest.date || manifest.dayKey || null });
+  if (manifest) {
+    const releaseValidation = validateDeploySnapshotManifest(manifest, dayKey);
+    if (!releaseValidation.ok) {
+      blocked.push({
+        code: "manifest_release_contract_failed",
+        errors: releaseValidation.errors
+      });
+    }
+
+    if (String(manifest.date || manifest.dayKey || "") !== dayKey) {
+      blocked.push({ code: "manifest_day_mismatch", expected: dayKey, actual: manifest.date || manifest.dayKey || null });
+    }
   }
   if (fixtures && String(fixtures.date || fixtures.dayKey || dayKey) !== dayKey) {
     blocked.push({ code: "fixtures_day_mismatch", expected: dayKey, actual: fixtures.date || fixtures.dayKey || null });

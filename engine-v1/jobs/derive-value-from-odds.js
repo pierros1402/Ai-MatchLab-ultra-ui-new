@@ -97,9 +97,85 @@ function fairOdds(prob) {
 // (aiAssessment), never from real bookmaker odds. 1X2 qualifies on model
 // probability alone — identical treatment to OU25/BTTS. Real scraped odds are
 // display-only (opening→current drift) and live exclusively in the odds panels.
-function evaluate1X2(match) {
+const EXPLICIT_VALUE_STAGE_PATTERNS = Object.freeze([
+  ["apertura", /\bapertura\b/iu],
+  ["clausura", /\bclausura\b/iu],
+  ["opening", /\bopening(?:\s+(?:stage|phase|tournament|championship))?\b/iu],
+  ["closing", /\bclosing(?:\s+(?:stage|phase|tournament|championship))?\b/iu],
+]);
+
+export function explicitCompetitionStage(...values) {
+  for (const value of values) {
+    const text = String(value || "").trim().toLowerCase();
+    if (!text) continue;
+
+    for (const [stage, pattern] of EXPLICIT_VALUE_STAGE_PATTERNS) {
+      if (pattern.test(text)) return stage;
+    }
+  }
+
+  return null;
+}
+
+export function assessModelStageCoherence(match) {
+  const requiredStage = explicitCompetitionStage(
+    match?.competition,
+    match?.leagueName,
+    match?.competitionName,
+    match?.stage,
+    match?.phase,
+    match?.canonicalFixture?.competition,
+    match?.canonicalFixture?.leagueName,
+    match?.canonicalFixture?.competitionName,
+    match?.canonicalFixture?.stage,
+    match?.canonicalFixture?.phase
+  );
+
+  if (!requiredStage) {
+    return {
+      required: false,
+      requiredStage: null,
+      ok: true,
+      reason: "explicit_stage_not_required"
+    };
+  }
+
+  const evidence =
+    match?.aiAssessment?.model?.stageCoherence ||
+    match?.model?.stageCoherence ||
+    null;
+
+  const declaredRequiredStage =
+    explicitCompetitionStage(evidence?.requiredStage);
+  const formStage =
+    explicitCompetitionStage(evidence?.formStage);
+  const standingsStage =
+    explicitCompetitionStage(evidence?.standingsStage);
+
+  const ok = Boolean(
+    evidence &&
+    evidence.status === "proven" &&
+    evidence.kickoffBound === true &&
+    declaredRequiredStage === requiredStage &&
+    formStage === requiredStage &&
+    standingsStage === requiredStage
+  );
+
+  return {
+    required: true,
+    requiredStage,
+    ok,
+    reason: ok
+      ? "explicit_stage_evidence_proven"
+      : "stage_coherence_unproven",
+    evidence
+  };
+}
+
+export function evaluate1X2(match) {
   const probs = match.aiAssessment?.markets?.["1X2"]?.probs;
   const model = match.aiAssessment?.model;
+  const stageCoherence = assessModelStageCoherence(match);
   if (!probs) return [];
 
   const isCrossLeague = Boolean(match.aiAssessment?.crossLeague);
@@ -121,6 +197,9 @@ function evaluate1X2(match) {
     if (!formUsed || minFormSample < MODEL_ONLY_MIN_SAMPLE) continue;
 
     const flags = [];
+    if (stageCoherence.required && !stageCoherence.ok) {
+      flags.push("stage_coherence_unproven");
+    }
     if (formUsed) flags.push("form_used");
     if (xgUsed)   flags.push("xg_used");
     if (isCrossLeague) flags.push("cross_league");
@@ -143,9 +222,10 @@ function evaluate1X2(match) {
   return picks;
 }
 
-function evaluateOU25(match) {
+export function evaluateOU25(match) {
   const probs = match.aiAssessment?.markets?.["OU25"]?.probs;
   const model = match.aiAssessment?.model;
+  const stageCoherence = assessModelStageCoherence(match);
   if (!probs) return [];
 
   const isCrossLeague = Boolean(match.aiAssessment?.crossLeague);
@@ -166,6 +246,9 @@ function evaluateOU25(match) {
     if (!formUsed || minFormSample < MODEL_ONLY_MIN_SAMPLE) continue;
 
     const flags = [];
+    if (stageCoherence.required && !stageCoherence.ok) {
+      flags.push("stage_coherence_unproven");
+    }
     if (formUsed) flags.push("form_used");
     if (isCrossLeague) flags.push("cross_league");
 
@@ -187,9 +270,10 @@ function evaluateOU25(match) {
   return picks;
 }
 
-function evaluateBTTS(match) {
+export function evaluateBTTS(match) {
   const probs = match.aiAssessment?.markets?.["BTTS"]?.probs;
   const model = match.aiAssessment?.model;
+  const stageCoherence = assessModelStageCoherence(match);
   if (!probs) return [];
 
   const formUsed = Boolean(model?.formUsed);
@@ -206,6 +290,9 @@ function evaluateBTTS(match) {
     if (!formUsed || minFormSample < MODEL_ONLY_MIN_SAMPLE) continue;
 
     const flags = [];
+    if (stageCoherence.required && !stageCoherence.ok) {
+      flags.push("stage_coherence_unproven");
+    }
     if (formUsed) flags.push("form_used");
 
     picks.push({
@@ -436,7 +523,7 @@ function isOutOfScopeValueLeague(pick) {
   return false;
 }
 
-function strictValuePolicyRejectionReason(pick) {
+export function strictValuePolicyRejectionReason(pick) {
   const market = normalizeMarket(pick?.market);
   const selection = normalizeSelection(pick?.pick);
   const modelProb = Number(pick?.modelProb || 0);
@@ -449,6 +536,13 @@ function strictValuePolicyRejectionReason(pick) {
 
   if (isOutOfScopeValueLeague(pick)) {
     return "out_of_scope_league_suppressed";
+  }
+
+  if (
+    Array.isArray(pick?.flags) &&
+    pick.flags.includes("stage_coherence_unproven")
+  ) {
+    return "stage_coherence_unproven";
   }
 
   if (market === "OU25" && selection === "under") {

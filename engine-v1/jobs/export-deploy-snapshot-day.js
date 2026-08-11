@@ -13,6 +13,9 @@ import {
 import {
   synchronizeDetailStatusState
 } from "../core/detail-status-sync.js";
+import {
+  evaluateFrozenValueFixtureBinding
+} from "../core/frozen-value-release-contract.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -134,6 +137,53 @@ function isValidValueArtifact(payload) {
   );
 }
 
+export function selectValueArtifactForSnapshot({
+  currentPayload,
+  snapshotPayload,
+  preserveValue = false
+} = {}) {
+  if (
+    preserveValue === true &&
+    isValidValueArtifact(snapshotPayload)
+  ) {
+    return snapshotPayload;
+  }
+
+  return currentPayload;
+}
+
+export function validatedPersistedSnapshotValueArtifact(
+  payload,
+  dayKey = ""
+) {
+  const label = String(dayKey || "unknown");
+
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    !Array.isArray(payload.picks)
+  ) {
+    throw new Error(
+      `snapshot_value_invalid_after_export:${label}`
+    );
+  }
+
+  const declaredCount = payload.count;
+  const actualCount = payload.picks.length;
+
+  if (
+    !Number.isInteger(declaredCount) ||
+    declaredCount < 0 ||
+    declaredCount !== actualCount
+  ) {
+    throw new Error(
+      `snapshot_value_count_mismatch_after_export:${label}:declared=${String(declaredCount)}:actual=${actualCount}`
+    );
+  }
+
+  return payload;
+}
+
 function valueForDay(dayKey, options = {}) {
   const file = resolveDataPath("value", `${dayKey}.json`);
   const payload = readJsonSafe(file, null);
@@ -144,16 +194,14 @@ function valueForDay(dayKey, options = {}) {
   const snapshotPayload = options?.preserveValue === true && snapshotValueFile
     ? readJsonSafe(snapshotValueFile, null)
     : null;
-  const snapshotHasPicks = Array.isArray(snapshotPayload?.picks) && snapshotPayload.picks.length > 0;
 
-  if (!payload || typeof payload !== "object") {
-    if (isValidValueArtifact(snapshotPayload)) {
-      return {
-        ...snapshotPayload,
-        source: snapshotPayload?.source || "preserved_snapshot_value"
-      };
-    }
+  const selectedPayload = selectValueArtifactForSnapshot({
+    currentPayload: payload,
+    snapshotPayload,
+    preserveValue: options?.preserveValue === true
+  });
 
+  if (!selectedPayload || typeof selectedPayload !== "object") {
     return {
       ok: true,
       date: dayKey,
@@ -163,15 +211,7 @@ function valueForDay(dayKey, options = {}) {
     };
   }
 
-  const payloadHasPicks = Array.isArray(payload?.picks) && payload.picks.length > 0;
-  if (options?.preserveValue === true && !payloadHasPicks && snapshotHasPicks) {
-    return {
-      ...snapshotPayload,
-      source: snapshotPayload?.source || "preserved_snapshot_value"
-    };
-  }
-
-  return payload;
+  return selectedPayload;
 }
 
 function detailFilesForDay(dayKey) {
@@ -918,6 +958,18 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     writeJsonStable(snapshotValueFile, valueOut);
   }
 
+  // Manifest semantics must describe the artifact that is actually on disk.
+  // This is especially important for intraday preserveValue: if the frozen
+  // snapshot has 7 picks while the current daily artifact has shrunk to 5,
+  // the preserved bytes and every published count/source/freshness field must
+  // stay on the same 7-pick artifact. Any malformed or internally inconsistent
+  // persisted Value file blocks export before manifest publication.
+  const persistedValueOut =
+    validatedPersistedSnapshotValueArtifact(
+      readJsonSafe(snapshotValueFile, null),
+      dayKey
+    );
+
   // Ship the production value-audit (rejection ledger) next to value.json so a
   // published 0-pick day is explained, not mistaken for a broken pipeline
   // (report 2026-07-07 #5). Written by buildValueDay at data/value/_audit/<day>;
@@ -963,16 +1015,27 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
 
   const latestCanonicalAt = latestCanonicalFixtureUpdatedAt(dayKey);
   const valueArtifactAt = maxArtifactTime(
-    valueOut?.updatedAt,
-    valueOut?.createdAt,
-    valueOut?.generatedAt,
+    persistedValueOut?.updatedAt,
+    persistedValueOut?.createdAt,
+    persistedValueOut?.generatedAt,
     valueAudit?.generatedAt
   );
-  const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
-    ? null
-    : valueArtifactAt >= latestCanonicalAt;
+const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
+  ? null
+  : valueArtifactAt >= latestCanonicalAt;
 
-  const manifest = {
+// Historical Plan A is immutable after freeze. Later canonical status/FT
+// timestamps may advance, but a stale timestamp is waivable only when an
+// explicitly preserved artifact is exact-identity bound to this day's
+// canonical fixture universe with zero orphan or missing-id picks.
+const frozenValueBinding = evaluateFrozenValueFixtureBinding({
+  preserveSnapshotValueBytes,
+  dayKey,
+  valueArtifact: persistedValueOut,
+  fixtures
+});
+
+const manifest = {
     ok: true,
     date: dayKey,
     generatedAt: new Date().toISOString(),
@@ -1004,7 +1067,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     },
     counts: {
       fixtures: fixturesOut.count,
-      valuePicks: valueOut.count,
+      valuePicks: persistedValueOut.count,
       details: detailsReport.count,
       detailsMatchedToFixtures: detailsReport.count,
       orphanDetailsRemoved: detailsReport.orphansRemoved.length,
@@ -1014,16 +1077,28 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     // PIPELINE failure (the value build never produced data/value/<day>.json),
     // not a legitimate "no picks today" — the exact silent failure mode of the
     // 2026-07-02 outage. check-value-artifact-gate.js turns the workflow red on it.
-    valueGate: {
-      fixtures: fixturesOut.count,
-      valuePicks: valueOut.count,
-      valueSource: String(valueOut?.source || "local_value_file"),
-      latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
-      valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
-      valueFreshAgainstCanonical,
-      ok: !(fixturesOut.count > 0 && String(valueOut?.source || "") === "missing_local_value_file") && valueFreshAgainstCanonical !== false
-    },
-    fixturesByLeague,
+valueGate: {
+  fixtures: fixturesOut.count,
+  valuePicks: persistedValueOut.count,
+  valueSource: String(persistedValueOut?.source || "local_value_file"),
+  latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
+  valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
+  valueFreshAgainstCanonical,
+  mode: frozenValueBinding.mode,
+  frozenIdentityBound: frozenValueBinding.frozenIdentityBound,
+  frozenReleaseSafe: frozenValueBinding.releaseSafe,
+  frozenPickCount: frozenValueBinding.frozenPickCount,
+  orphanPickCount: frozenValueBinding.orphanPickCount,
+  orphanPickIds: frozenValueBinding.orphanPickIds,
+  missingMatchIdPickCount: frozenValueBinding.missingMatchIdPickCount,
+  missingMatchIdPickIndexes: frozenValueBinding.missingMatchIdPickIndexes,
+  dayBound: frozenValueBinding.dayBound,
+  canonicalSourceBound: frozenValueBinding.canonicalSourceBound,
+  ok: !(fixturesOut.count > 0 && String(persistedValueOut?.source || "") === "missing_local_value_file") && (
+    valueFreshAgainstCanonical !== false || frozenValueBinding.releaseSafe === true
+  )
+},
+fixturesByLeague,
     orphanDetailsRemoved: detailsReport.orphansRemoved,
     detailsMissingForFixtures,
     coverage: {

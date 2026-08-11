@@ -85,6 +85,20 @@ export function validateDeploySnapshotManifest(manifest, expectedDay = "") {
   }
   if (!Array.isArray(manifest?.details)) errors.push("manifest_details_missing");
 
+  // A manifest that explicitly exposes a Value readiness gate is publishable
+  // only when that gate is green. Keep legacy manifests without valueGate
+  // compatible, but never allow top-level ok:true to mask a present red gate.
+  if (Object.prototype.hasOwnProperty.call(manifest || {}, "valueGate")) {
+    if (
+      !manifest?.valueGate ||
+      typeof manifest.valueGate !== "object" ||
+      Array.isArray(manifest.valueGate) ||
+      manifest.valueGate.ok !== true
+    ) {
+      errors.push("manifest_value_gate_not_ok");
+    }
+  }
+
   const v2 = String(manifest?.version || "") === "deploy-snapshot-v2";
   const fileHashes = manifest?.fileHashes;
   if (v2 && (!fileHashes || typeof fileHashes !== "object" || Array.isArray(fileHashes))) {
