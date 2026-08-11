@@ -222,6 +222,26 @@ test(
 );
 
 test(
+  "rejects exact production regression FT/final with scheduled raw status",
+  () => {
+    const result = evaluateAuthoritativeTerminalWriteback({
+      canonicalRow: canonical(),
+      observationRow: terminal({
+        status: "FT",
+        statusType: "STATUS_FINAL",
+        rawStatus: "STATUS_SCHEDULED",
+        scoreHome: 1,
+        scoreAway: 1
+      }),
+      dayKey: "2026-07-29"
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, "conflicting_match_state_evidence");
+  }
+);
+
+test(
   "rejects a missing or invalid score",
   () => {
     const result =
