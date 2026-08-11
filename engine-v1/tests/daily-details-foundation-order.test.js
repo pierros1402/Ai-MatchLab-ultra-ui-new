@@ -2,34 +2,34 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-const workflow = fs.readFileSync(
+const source = fs.readFileSync(
   new URL(
-    "../../.github/workflows/daily-deploy-snapshot.yml",
+    "../jobs/run-daily-cycle.js",
     import.meta.url,
   ),
   "utf8",
 ).replace(/\r\n/g, "\n");
 
-test("daily workflow ensures the target-season history index before the daily cycle builds details", () => {
-  const priorSettlementIndex = workflow.indexOf(
-    "- name: Promote prior Value settlement checkpoint",
+test("daily cycle ensures the target-season history index before building details", () => {
+  const foundationImportIndex = source.indexOf(
+    "ensureDetailsHistoryIndexFoundationDay",
   );
-  const foundationIndex = workflow.indexOf(
-    "- name: Ensure details history-index foundation",
+  const foundationCallIndex = source.indexOf(
+    "await ensureDetailsHistoryIndexFoundationDay(dayKey)",
   );
-  const dailyCycleIndex = workflow.indexOf(
-    "- name: Run daily cycle",
+  const detailsBuildIndex = source.indexOf(
+    "const detailsBuild = await buildDetailsDay(dayKey",
   );
 
-  assert.ok(priorSettlementIndex >= 0);
-  assert.ok(foundationIndex > priorSettlementIndex);
-  assert.ok(dailyCycleIndex > foundationIndex);
+  assert.ok(foundationImportIndex >= 0);
+  assert.ok(foundationCallIndex > foundationImportIndex);
+  assert.ok(detailsBuildIndex > foundationCallIndex);
   assert.match(
-    workflow,
-    /node \.\/engine-v1\/jobs\/ensure-details-history-index-foundation-day\.js "\$DAY_KEY"/,
+    source,
+    /details-history-index-foundation:start/,
   );
   assert.match(
-    workflow,
-    /node \.\/engine-v1\/jobs\/run-daily-cycle\.js "\$DAY_KEY"/,
+    source,
+    /details-history-index-foundation:done/,
   );
 });
