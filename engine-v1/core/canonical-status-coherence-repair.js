@@ -89,7 +89,17 @@ export function evaluateCanonicalStatusCoherenceRepair({ canonicalRow, finalResu
     return { ok: false, reason: "exact_provider_terminal_evidence_required" };
   }
 
-  if (classifyMatchState(evidence) !== MATCH_STATE_CLASS.PLAYED_FINAL) {
+  const explicitFlashscorePlayedFinal =
+    clean(evidence?.provider).toLowerCase() === "flashscore" &&
+    evidence?.finished === true &&
+    evidence?.playedFinal === true &&
+    evidence?.nonPlayedTerminal !== true &&
+    clean(evidence?.statusCode) === "3";
+
+  if (
+    classifyMatchState(evidence) !== MATCH_STATE_CLASS.PLAYED_FINAL &&
+    !explicitFlashscorePlayedFinal
+  ) {
     return { ok: false, reason: "provider_evidence_not_played_final" };
   }
 
