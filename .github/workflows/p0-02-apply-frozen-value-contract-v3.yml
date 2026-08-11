@@ -1,0 +1,116 @@
+name: P0-02 apply frozen Value contract v3
+
+on:
+  push:
+    branches:
+      - work/p0-production-day-closure-20260811
+    paths:
+      - ".github/workflows/p0-02-apply-frozen-value-contract-v3.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/p0-production-day-closure-20260811
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund --prefix engine-v1
+
+      - name: Reuse exact validated v2 semantic patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          src = Path('.github/workflows/p0-02-apply-frozen-value-contract-v2.yml').read_text(encoding='utf-8').splitlines()
+          start = next(i for i, line in enumerate(src) if line.strip() == '- name: Apply semantic frozen Value patch')
+          run_line = next(i for i in range(start + 1, len(src)) if src[i].strip() == 'run: |')
+          run_indent = len(src[run_line]) - len(src[run_line].lstrip())
+          body = []
+          for line in src[run_line + 1:]:
+              if line.strip() and (len(line) - len(line.lstrip())) <= run_indent:
+                  break
+              body.append(line[run_indent + 2:] if len(line) >= run_indent + 2 else '')
+          if not body:
+              raise SystemExit('V2_PATCH_BODY_NOT_FOUND')
+          Path('/tmp/p0-02-v2-apply.sh').write_text('\n'.join(body) + '\n', encoding='utf-8')
+          PY
+          bash /tmp/p0-02-v2-apply.sh
+
+      - name: P0-02 targeted tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/frozen-value-release-contract.js
+          node --check engine-v1/jobs/export-deploy-snapshot-day.js
+          node --check engine-v1/jobs/check-value-artifact-gate.js
+          node --test \
+            engine-v1/tests/frozen-value-release-contract.test.js \
+            engine-v1/tests/export-deploy-snapshot-preservation.test.js \
+            engine-v1/tests/daily-publish-contract.test.js \
+            engine-v1/jobs/verify-daily-publish-contract.test.js \
+            engine-v1/core/deploy-snapshot-release-contract.test.js
+
+      - name: Verify only changed exporter P0-C source pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+
+          exporter = Path('engine-v1/jobs/export-deploy-snapshot-day.js').read_bytes().replace(b'\r\n', b'\n')
+          actual = hashlib.sha256(exporter).hexdigest()
+          contract = Path('engine-v1/jobs/p0c-p4-family-adapter-contract.js').read_text(encoding='utf-8')
+          match = re.search(
+              r'deploySnapshotExporter: Object\.freeze\(\{\s*path: "engine-v1/jobs/export-deploy-snapshot-day\.js",\s*sha256:\s*"([0-9a-f]{64})"',
+              contract,
+              re.S,
+          )
+          if not match:
+              raise SystemExit('EXPORTER_P0C_PIN_NOT_FOUND')
+          expected = match.group(1)
+          print(f'EXPORTER_NORMALIZED_SHA256={actual}')
+          print(f'EXPORTER_PINNED_SHA256={expected}')
+          if actual != expected:
+              raise SystemExit('EXPORTER_P0C_PIN_MISMATCH')
+          PY
+
+      - name: Commit validated P0-02 code only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git status --short
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            engine-v1/core/frozen-value-release-contract.js \
+            engine-v1/jobs/export-deploy-snapshot-day.js \
+            engine-v1/jobs/check-value-artifact-gate.js \
+            engine-v1/jobs/p0c-p4-family-adapter-contract.js \
+            engine-v1/tests/frozen-value-release-contract.test.js \
+            engine-v1/tests/daily-publish-contract.test.js
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "Harden frozen Value release contract"
+          git push origin HEAD:work/p0-production-day-closure-20260811
