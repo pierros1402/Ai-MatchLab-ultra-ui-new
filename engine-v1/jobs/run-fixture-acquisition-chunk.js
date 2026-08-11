@@ -8,6 +8,8 @@ import { isDisabledLeague } from "../source-discovery/disabled-leagues.js";
 import { getFixtureAdapters, getFixtureProviderPlan } from "../adapters/registry.js";
 import { normalizeFixture } from "../core/normalize.js";
 import {
+  MATCH_STATE_CLASS,
+  classifyMatchState,
   isPreKickoffNonPlayed,
   isVerifiedFinalVetoState,
   sanitizePreKickoffNonPlayed
@@ -544,6 +546,59 @@ function explicitFinalBundle(row) {
   return bundle;
 }
 
+function hasEvidenceBackedCanonicalNonPlayed(row) {
+  if (!isPreKickoffNonPlayed(row)) return false;
+
+  return [
+    row?.statusEvidence,
+    row?.statusCorrection,
+    row?.nonPlayedStateEvidence
+  ].some(value =>
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.keys(value).length > 0
+  );
+}
+
+function preserveCanonicalNonPlayedTruth(merged, previous) {
+  const out = { ...merged };
+
+  for (const key of [
+    "status",
+    "rawStatus",
+    "statusType",
+    "sourceStatus",
+    "sourceStatusType",
+    "operationalState",
+    "normalizedStatus",
+    "nonPlayedState",
+    "stateClass",
+    "nonPlayedKind",
+    "isNonPlayed",
+    "isPreKickoffNonPlayed",
+    "terminal",
+    "statusEvidence",
+    "statusCorrection",
+    "nonPlayedStateEvidence"
+  ]) {
+    if (Object.prototype.hasOwnProperty.call(previous, key)) {
+      out[key] = previous[key];
+    }
+  }
+
+  out.scoreHome = null;
+  out.scoreAway = null;
+  if (Object.prototype.hasOwnProperty.call(out, "homeScore")) out.homeScore = null;
+  if (Object.prototype.hasOwnProperty.call(out, "awayScore")) out.awayScore = null;
+  out.minute = null;
+  out.penalties = null;
+  out.decidedBy = null;
+  out.isDisplayFinal = false;
+
+  return out;
+}
+
 function mergeCanonicalFixturesBase(existing, incoming) {
   const map = new Map();
 
@@ -585,11 +640,19 @@ function mergeCanonicalFixturesBase(existing, incoming) {
 
     const previousFinal = explicitFinalBundle(previous);
     const nextFinal = explicitFinalBundle(next);
+    const preservePreviousNonPlayed =
+      hasEvidenceBackedCanonicalNonPlayed(previous) &&
+      classifyMatchState(next) === MATCH_STATE_CLASS.PRE_KICKOFF_SCHEDULED;
 
     if (nextFinal) {
       Object.assign(merged, nextFinal);
     } else if (previousFinal) {
       Object.assign(merged, previousFinal);
+    } else if (preservePreviousNonPlayed) {
+      Object.assign(
+        merged,
+        preserveCanonicalNonPlayedTruth(merged, previous)
+      );
     }
 
     merged.firstSeenAt = previous.firstSeenAt || next.firstSeenAt || new Date().toISOString();
