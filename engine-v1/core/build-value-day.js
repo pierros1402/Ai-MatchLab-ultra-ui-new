@@ -939,7 +939,10 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
   const auditRejections = [];
   const auditIdOf = m => String(m?.canonicalId || m?.matchId || m?.id || "").trim() || null;
   for (const m of sourceMatches) {
-    if (!isPlayable(m)) { auditRejections.push({ matchId: auditIdOf(m), reason: "not_playable" }); continue; }
+    // Non-playable fixtures are terminally accounted exactly once in the
+    // evaluation loop below. The pre-audit pass owns only predicates that the
+    // evaluation loop intentionally skips without emitting a rejection.
+    if (!isPlayable(m)) { continue; }
     if (rebuild) continue; // eligible under rebuild semantics
     if (!isPreMatchFixtureStatus(m)) {
       auditRejections.push({
