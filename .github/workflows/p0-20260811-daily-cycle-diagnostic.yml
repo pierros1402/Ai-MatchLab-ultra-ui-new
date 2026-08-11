@@ -1,0 +1,104 @@
+name: P0 2026-08-11 daily cycle diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/p0-20260811-daily-cycle-diagnostic.yml"
+
+permissions:
+  contents: read
+
+env:
+  TARGET_DAY_KEY: "2026-08-11"
+  TARGET_REF: "635c99faaa15854593132ec7115800da35778af8"
+
+concurrency:
+  group: p0-20260811-daily-cycle-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout exact pre-failure state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_REF }}
+          fetch-depth: 0
+
+      - name: Verify exact checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_REF"
+          test -z "$(git status --porcelain)"
+          echo "Diagnostic checkpoint: $(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Capture exact daily-cycle failure
+        id: daily_cycle
+        shell: bash
+        env:
+          TM_PROXY_URL: ${{ secrets.TM_PROXY_URL }}
+          ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
+          ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
+        run: |
+          set -uo pipefail
+          set +e
+          node ./engine-v1/jobs/run-daily-cycle.js "$TARGET_DAY_KEY" 2>&1 | tee daily-cycle-diagnostic.log
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$STATUS" > daily-cycle-exit-code.txt
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "Captured run-daily-cycle exit code: $STATUS"
+          exit 0
+
+      - name: Capture diagnostic repository status
+        if: always()
+        shell: bash
+        run: |
+          git status --porcelain=v1 > daily-cycle-git-status.txt
+          git diff --stat > daily-cycle-diff-stat.txt
+          git diff --name-only > daily-cycle-diff-paths.txt
+
+      - name: Upload daily-cycle diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0-20260811-daily-cycle-diagnostic
+          path: |
+            daily-cycle-diagnostic.log
+            daily-cycle-exit-code.txt
+            daily-cycle-git-status.txt
+            daily-cycle-diff-stat.txt
+            daily-cycle-diff-paths.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Preserve diagnostic failure signal
+        if: always()
+        shell: bash
+        env:
+          DAILY_CYCLE_STATUS: ${{ steps.daily_cycle.outputs.status }}
+        run: |
+          set -euo pipefail
+          test -n "$DAILY_CYCLE_STATUS"
+          if [ "$DAILY_CYCLE_STATUS" -ne 0 ]; then
+            echo "run-daily-cycle reproduced failure with exit code $DAILY_CYCLE_STATUS"
+            exit "$DAILY_CYCLE_STATUS"
+          fi
+          echo "run-daily-cycle completed successfully at the exact checkpoint"
