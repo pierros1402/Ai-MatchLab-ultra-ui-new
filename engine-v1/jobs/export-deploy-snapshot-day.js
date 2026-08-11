@@ -134,6 +134,21 @@ function isValidValueArtifact(payload) {
   );
 }
 
+export function selectValueArtifactForSnapshot({
+  currentPayload,
+  snapshotPayload,
+  preserveValue = false
+} = {}) {
+  if (
+    preserveValue === true &&
+    isValidValueArtifact(snapshotPayload)
+  ) {
+    return snapshotPayload;
+  }
+
+  return currentPayload;
+}
+
 function valueForDay(dayKey, options = {}) {
   const file = resolveDataPath("value", `${dayKey}.json`);
   const payload = readJsonSafe(file, null);
@@ -144,16 +159,14 @@ function valueForDay(dayKey, options = {}) {
   const snapshotPayload = options?.preserveValue === true && snapshotValueFile
     ? readJsonSafe(snapshotValueFile, null)
     : null;
-  const snapshotHasPicks = Array.isArray(snapshotPayload?.picks) && snapshotPayload.picks.length > 0;
 
-  if (!payload || typeof payload !== "object") {
-    if (isValidValueArtifact(snapshotPayload)) {
-      return {
-        ...snapshotPayload,
-        source: snapshotPayload?.source || "preserved_snapshot_value"
-      };
-    }
+  const selectedPayload = selectValueArtifactForSnapshot({
+    currentPayload: payload,
+    snapshotPayload,
+    preserveValue: options?.preserveValue === true
+  });
 
+  if (!selectedPayload || typeof selectedPayload !== "object") {
     return {
       ok: true,
       date: dayKey,
@@ -163,15 +176,7 @@ function valueForDay(dayKey, options = {}) {
     };
   }
 
-  const payloadHasPicks = Array.isArray(payload?.picks) && payload.picks.length > 0;
-  if (options?.preserveValue === true && !payloadHasPicks && snapshotHasPicks) {
-    return {
-      ...snapshotPayload,
-      source: snapshotPayload?.source || "preserved_snapshot_value"
-    };
-  }
-
-  return payload;
+  return selectedPayload;
 }
 
 function detailFilesForDay(dayKey) {
