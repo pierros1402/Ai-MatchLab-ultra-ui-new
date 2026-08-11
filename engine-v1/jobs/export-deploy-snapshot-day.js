@@ -13,6 +13,9 @@ import {
 import {
   synchronizeDetailStatusState
 } from "../core/detail-status-sync.js";
+import {
+  evaluateFrozenValueFixtureBinding
+} from "../core/frozen-value-release-contract.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -1017,11 +1020,22 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     persistedValueOut?.generatedAt,
     valueAudit?.generatedAt
   );
-  const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
-    ? null
-    : valueArtifactAt >= latestCanonicalAt;
+const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
+  ? null
+  : valueArtifactAt >= latestCanonicalAt;
 
-  const manifest = {
+// Historical Plan A is immutable after freeze. Later canonical status/FT
+// timestamps may advance, but a stale timestamp is waivable only when an
+// explicitly preserved artifact is exact-identity bound to this day's
+// canonical fixture universe with zero orphan or missing-id picks.
+const frozenValueBinding = evaluateFrozenValueFixtureBinding({
+  preserveSnapshotValueBytes,
+  dayKey,
+  valueArtifact: persistedValueOut,
+  fixtures
+});
+
+const manifest = {
     ok: true,
     date: dayKey,
     generatedAt: new Date().toISOString(),
@@ -1063,16 +1077,28 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     // PIPELINE failure (the value build never produced data/value/<day>.json),
     // not a legitimate "no picks today" — the exact silent failure mode of the
     // 2026-07-02 outage. check-value-artifact-gate.js turns the workflow red on it.
-    valueGate: {
-      fixtures: fixturesOut.count,
-      valuePicks: persistedValueOut.count,
-      valueSource: String(persistedValueOut?.source || "local_value_file"),
-      latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
-      valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
-      valueFreshAgainstCanonical,
-      ok: !(fixturesOut.count > 0 && String(persistedValueOut?.source || "") === "missing_local_value_file") && valueFreshAgainstCanonical !== false
-    },
-    fixturesByLeague,
+valueGate: {
+  fixtures: fixturesOut.count,
+  valuePicks: persistedValueOut.count,
+  valueSource: String(persistedValueOut?.source || "local_value_file"),
+  latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
+  valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
+  valueFreshAgainstCanonical,
+  mode: frozenValueBinding.mode,
+  frozenIdentityBound: frozenValueBinding.frozenIdentityBound,
+  frozenReleaseSafe: frozenValueBinding.releaseSafe,
+  frozenPickCount: frozenValueBinding.frozenPickCount,
+  orphanPickCount: frozenValueBinding.orphanPickCount,
+  orphanPickIds: frozenValueBinding.orphanPickIds,
+  missingMatchIdPickCount: frozenValueBinding.missingMatchIdPickCount,
+  missingMatchIdPickIndexes: frozenValueBinding.missingMatchIdPickIndexes,
+  dayBound: frozenValueBinding.dayBound,
+  canonicalSourceBound: frozenValueBinding.canonicalSourceBound,
+  ok: !(fixturesOut.count > 0 && String(persistedValueOut?.source || "") === "missing_local_value_file") && (
+    valueFreshAgainstCanonical !== false || frozenValueBinding.releaseSafe === true
+  )
+},
+fixturesByLeague,
     orphanDetailsRemoved: detailsReport.orphansRemoved,
     detailsMissingForFixtures,
     coverage: {

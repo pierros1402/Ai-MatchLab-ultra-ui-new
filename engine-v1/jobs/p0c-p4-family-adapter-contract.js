@@ -103,7 +103,7 @@ const SOURCE_BINDINGS = Object.freeze({
   deploySnapshotExporter: Object.freeze({
     path: "engine-v1/jobs/export-deploy-snapshot-day.js",
     sha256:
-      "65c13e9b388e834f4874a5d8f80114261572b474f22e12ca82fbdb60b25c47c4",
+      "b60038124aabba2e545f462fbd403078571f7afaedc0ca90abebf2a4109bbd61",
     exports: Object.freeze(["exportDeploySnapshotDay"]),
   }),
   deploySnapshotFixturesPureBuilder: Object.freeze({
