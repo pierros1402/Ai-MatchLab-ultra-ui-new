@@ -1,0 +1,157 @@
+name: P0-02 branch validation
+
+on:
+  push:
+    branches:
+      - work/p0-production-day-closure-20260811
+    paths:
+      - ".github/workflows/p0-02-branch-validation.yml"
+      - "engine-v1/**"
+      - "data/deploy-snapshots/2026-08-10/**"
+      - "data/value/2026-08-10.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p0-02-branch-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Targeted P0-02 regression tests
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/tests/export-deploy-snapshot-preservation.test.js \
+            engine-v1/core/deploy-snapshot-release-contract.test.js \
+            engine-v1/jobs/verify-daily-publish-contract.test.js
+
+      - name: Full engine test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' TESTS < <(find engine-v1 -type f -name '*.test.js' -print0 | sort -z)
+          echo "ENGINE_TEST_FILES=${#TESTS[@]}"
+          if [ "${#TESTS[@]}" -eq 0 ]; then
+            echo "ERROR: no engine tests discovered"
+            exit 1
+          fi
+          node --test "${TESTS[@]}"
+
+      - name: Ephemeral D-1 frozen snapshot repair validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          import { exportDeploySnapshotDay } from './engine-v1/jobs/export-deploy-snapshot-day.js';
+          import { runSnapshotInvariantCheck } from './engine-v1/jobs/run-snapshot-invariant-check.js';
+          import { validateDeploySnapshotManifest } from './engine-v1/core/deploy-snapshot-release-contract.js';
+          import { checkValueArtifactGate } from './engine-v1/jobs/check-value-artifact-gate.js';
+
+          const day = '2026-08-10';
+          const valueFile = `data/deploy-snapshots/${day}/value.json`;
+          const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
+          const sha256 = buffer => crypto.createHash('sha256').update(buffer).digest('hex');
+
+          const beforeValueBytes = fs.readFileSync(valueFile);
+          const beforeValue = JSON.parse(beforeValueBytes.toString('utf8'));
+
+          if (beforeValue.count !== 7 || !Array.isArray(beforeValue.picks) || beforeValue.picks.length !== 7) {
+            throw new Error(`unexpected_frozen_baseline:count=${beforeValue.count}:picks=${beforeValue?.picks?.length}`);
+          }
+
+          const exportResult = await exportDeploySnapshotDay(day, {
+            preserveDetails: true,
+            preserveValue: true
+          });
+
+          const afterValueBytes = fs.readFileSync(valueFile);
+          const afterValue = JSON.parse(afterValueBytes.toString('utf8'));
+          const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+          const invariant = await runSnapshotInvariantCheck(day);
+          const release = validateDeploySnapshotManifest(manifest, day);
+          const valueGate = checkValueArtifactGate(day);
+
+          const report = {
+            day,
+            frozenValue: {
+              beforeCount: beforeValue.count,
+              beforePicks: beforeValue.picks.length,
+              afterCount: afterValue.count,
+              afterPicks: afterValue.picks.length,
+              beforeSha256: sha256(beforeValueBytes),
+              afterSha256: sha256(afterValueBytes),
+              byteIdentical: beforeValueBytes.equals(afterValueBytes)
+            },
+            manifest: {
+              valuePicks: manifest?.counts?.valuePicks ?? null,
+              valueGate: manifest?.valueGate ?? null,
+              hash: manifest?.hash ?? null
+            },
+            invariant: {
+              ok: invariant?.ok === true,
+              valueSafe: invariant?.valueSafe === true,
+              blocked: invariant?.blocked ?? []
+            },
+            release: {
+              ok: release?.ok === true,
+              errors: release?.errors ?? []
+            },
+            valueArtifactGate: valueGate,
+            exportResult
+          };
+
+          console.log('P0_02_D1_VALIDATION=' + JSON.stringify(report, null, 2));
+
+          if (!report.frozenValue.byteIdentical) {
+            throw new Error('frozen_value_bytes_changed');
+          }
+          if (afterValue.count !== 7 || afterValue.picks.length !== 7) {
+            throw new Error('frozen_value_semantics_changed');
+          }
+          if (manifest?.counts?.valuePicks !== 7 || manifest?.valueGate?.valuePicks !== 7) {
+            throw new Error('manifest_not_rebound_to_persisted_frozen_value');
+          }
+          if (invariant?.ok !== true || invariant?.valueSafe !== true) {
+            throw new Error('snapshot_invariant_failed_after_reexport');
+          }
+          if (release?.ok !== true) {
+            throw new Error(`release_contract_failed:${(release?.errors || []).join(',')}`);
+          }
+          if (valueGate?.ok !== true) {
+            throw new Error(`value_artifact_gate_failed:${valueGate?.reason || 'unknown'}`);
+          }
+          NODE
+
+      - name: Show ephemeral D-1 changes
+        if: always()
+        shell: bash
+        run: |
+          echo "=== D-1 EPHEMERAL DIFF STAT ==="
+          git diff --stat -- data/deploy-snapshots/2026-08-10 data/deploy-snapshots/latest.json || true
+          echo "=== D-1 EPHEMERAL CHANGED FILES ==="
+          git diff --name-only -- data/deploy-snapshots/2026-08-10 data/deploy-snapshots/latest.json || true
