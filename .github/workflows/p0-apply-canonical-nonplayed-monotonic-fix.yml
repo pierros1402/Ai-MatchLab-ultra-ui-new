@@ -1,0 +1,175 @@
+name: P0 apply canonical nonplayed monotonic fix
+
+on:
+  push:
+    branches:
+      - work/p0-canonical-nonplayed-monotonic-20260811
+    paths:
+      - .github/workflows/p0-apply-canonical-nonplayed-monotonic-fix.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout fix branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/p0-canonical-nonplayed-monotonic-20260811
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply exact monotonic merge patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('engine-v1/jobs/run-fixture-acquisition-chunk.js')
+          text = path.read_text(encoding='utf-8')
+
+          old_import = '''import {
+            isPreKickoffNonPlayed,
+            isVerifiedFinalVetoState,
+            sanitizePreKickoffNonPlayed
+          } from "../core/non-played-state.js";'''
+          new_import = '''import {
+            MATCH_STATE_CLASS,
+            classifyMatchState,
+            isPreKickoffNonPlayed,
+            isVerifiedFinalVetoState,
+            sanitizePreKickoffNonPlayed
+          } from "../core/non-played-state.js";'''
+
+          if text.count(old_import) != 1:
+              raise SystemExit(f'import anchor count={text.count(old_import)}')
+          text = text.replace(old_import, new_import, 1)
+
+          anchor = '''function mergeCanonicalFixturesBase(existing, incoming) {'''
+          helper = '''function hasEvidenceBackedCanonicalNonPlayed(row) {
+            if (!isPreKickoffNonPlayed(row)) return false;
+
+            return [
+              row?.statusEvidence,
+              row?.statusCorrection,
+              row?.nonPlayedStateEvidence
+            ].some(value =>
+              value &&
+              typeof value === "object" &&
+              !Array.isArray(value) &&
+              Object.keys(value).length > 0
+            );
+          }
+
+          function preserveCanonicalNonPlayedTruth(merged, previous) {
+            const out = { ...merged };
+
+            for (const key of [
+              "status",
+              "rawStatus",
+              "statusType",
+              "sourceStatus",
+              "sourceStatusType",
+              "operationalState",
+              "normalizedStatus",
+              "nonPlayedState",
+              "stateClass",
+              "nonPlayedKind",
+              "isNonPlayed",
+              "isPreKickoffNonPlayed",
+              "terminal",
+              "statusEvidence",
+              "statusCorrection",
+              "nonPlayedStateEvidence"
+            ]) {
+              if (Object.prototype.hasOwnProperty.call(previous, key)) {
+                out[key] = previous[key];
+              }
+            }
+
+            out.scoreHome = null;
+            out.scoreAway = null;
+            if (Object.prototype.hasOwnProperty.call(out, "homeScore")) out.homeScore = null;
+            if (Object.prototype.hasOwnProperty.call(out, "awayScore")) out.awayScore = null;
+            out.minute = null;
+            out.penalties = null;
+            out.decidedBy = null;
+            out.isDisplayFinal = false;
+
+            return out;
+          }
+
+          function mergeCanonicalFixturesBase(existing, incoming) {'''
+
+          if text.count(anchor) != 1:
+              raise SystemExit(f'base anchor count={text.count(anchor)}')
+          text = text.replace(anchor, helper, 1)
+
+          old_block = '''    const previousFinal = explicitFinalBundle(previous);
+              const nextFinal = explicitFinalBundle(next);
+
+              if (nextFinal) {
+                Object.assign(merged, nextFinal);
+              } else if (previousFinal) {
+                Object.assign(merged, previousFinal);
+              }
+
+              merged.firstSeenAt = previous.firstSeenAt || next.firstSeenAt || new Date().toISOString();'''
+          new_block = '''    const previousFinal = explicitFinalBundle(previous);
+              const nextFinal = explicitFinalBundle(next);
+              const preservePreviousNonPlayed =
+                hasEvidenceBackedCanonicalNonPlayed(previous) &&
+                classifyMatchState(next) === MATCH_STATE_CLASS.PRE_KICKOFF_SCHEDULED;
+
+              if (nextFinal) {
+                Object.assign(merged, nextFinal);
+              } else if (previousFinal) {
+                Object.assign(merged, previousFinal);
+              } else if (preservePreviousNonPlayed) {
+                Object.assign(
+                  merged,
+                  preserveCanonicalNonPlayedTruth(merged, previous)
+                );
+              }
+
+              merged.firstSeenAt = previous.firstSeenAt || next.firstSeenAt || new Date().toISOString();'''
+
+          if text.count(old_block) != 1:
+              raise SystemExit(f'merge block anchor count={text.count(old_block)}')
+          text = text.replace(old_block, new_block, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+          git diff -- engine-v1/jobs/run-fixture-acquisition-chunk.js
+
+      - name: Require focused regression green
+        run: node --test engine-v1/tests/canonical-nonplayed-monotonic-merge.test.js
+
+      - name: Commit source fix only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add engine-v1/jobs/run-fixture-acquisition-chunk.js
+          git diff --cached --quiet && { echo 'No source change to commit'; exit 1; }
+          git commit -m "Preserve authoritative canonical nonplayed truth during acquisition merge"
+          git push origin HEAD:work/p0-canonical-nonplayed-monotonic-20260811
