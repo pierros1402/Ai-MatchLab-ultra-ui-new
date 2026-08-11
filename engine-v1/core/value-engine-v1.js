@@ -60,6 +60,35 @@ const BOUNDS = Object.freeze({
   maxConfidence: 0.95
 });
 
+export function evaluateMinimumRecentSampleGate({
+  rawHomeMetrics,
+  rawAwayMetrics,
+  homeMetrics,
+  awayMetrics
+} = {}) {
+  const readSample = metrics => {
+    const n = Number(metrics?.sample);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+
+  const homeRawSample = readSample(rawHomeMetrics);
+  const awayRawSample = readSample(rawAwayMetrics);
+  const homeBlendedSample = readSample(homeMetrics);
+  const awayBlendedSample = readSample(awayMetrics);
+
+  return {
+    ok:
+      homeRawSample >= MIN_REQUIRED_RECENT_MATCHES &&
+      awayRawSample >= MIN_REQUIRED_RECENT_MATCHES,
+    basis: "current_season_raw",
+    minRequiredRecentMatches: MIN_REQUIRED_RECENT_MATCHES,
+    homeRawSample,
+    awayRawSample,
+    homeBlendedSample,
+    awayBlendedSample
+  };
+}
+
 const GENERIC_CLUB_TOKENS = new Set([
   "fc",
   "cf",
@@ -2039,17 +2068,22 @@ export async function evaluateMatchValue(input, opts = {}) {
   const homeSideMetrics = blendTeamMetrics(rawHomeSideMetrics, homePriorResolved?.value, "home");
   const awaySideMetrics = blendTeamMetrics(rawAwaySideMetrics, awayPriorResolved?.value, "away");
 
-  const hasMinimumRecentSample =
-    homeMetrics.sample >= MIN_REQUIRED_RECENT_MATCHES &&
-    awayMetrics.sample >= MIN_REQUIRED_RECENT_MATCHES;
+  const minimumRecentSampleGate =
+    evaluateMinimumRecentSampleGate({
+      rawHomeMetrics,
+      rawAwayMetrics,
+      homeMetrics,
+      awayMetrics
+    });
 
-  if (!hasMinimumRecentSample) {
+  if (!minimumRecentSampleGate.ok) {
     if (opts.returnNullDiagnostics === true) {
       return {
         __valueNullDiagnostic: true,
         reason: "minimum_recent_sample",
         minimumRecentSample: {
           minRequiredRecentMatches: MIN_REQUIRED_RECENT_MATCHES,
+          sampleBasis: minimumRecentSampleGate.basis,
           formMaxAgeDays: FORM_MAX_AGE_DAYS,
           formWindow: FORM_WINDOW,
           homeTeam,

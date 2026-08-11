@@ -98,12 +98,12 @@ function getValueRecencyEntries(value) {
 export function computeStatisticalReadiness(value, confidence) {
   const entries = getValueRecencyEntries(value);
   const sampleScore = valueAvg(
-    // `sample` is the Value engine's effective sample: current-season rows plus
-    // at most three prior observations. That cap is the rollover bridge defined
-    // by value-engine-v1; the other readiness terms below still measure current
-    // freshness/continuity, so priors can prevent an Aug-1 blackout without
-    // making a team with no current evidence look fully ready.
-    entries.map(e => Math.min(1, valueNum(e?.sample ?? e?.rawSample, 0) / 5)),
+    // Readiness represents real current-season form evidence. `sample` may
+    // include up to three prior observations after model blending, so only
+    // `rawSample` is allowed to contribute to this readiness component.
+    // Priors remain available to the statistical model after the hard
+    // current-form admission gate has passed.
+    entries.map(e => Math.min(1, valueNum(e?.rawSample, 0) / 5)),
     0.55
   );
   const freshnessScore = valueAvg(entries.map(e => e?.freshnessScore), 0.55);
