@@ -14,6 +14,7 @@ import {
   rebuildIndexesForSeason,
   collectIndexRebuildTargets
 } from "./rebuild-indexes-for-season.js";
+import { ensureDetailsHistoryIndexFoundationDay } from "./ensure-details-history-index-foundation-day.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { buildStandingsDay } from "./build-standings-day.js";
@@ -828,6 +829,21 @@ export async function runDailyCycle(options = {}) {
       error: String(error?.message || error)
     });
   }
+
+  console.log("[daily-cycle] details-history-index-foundation:start", { dayKey });
+
+  const detailsHistoryIndexFoundation =
+    await ensureDetailsHistoryIndexFoundationDay(dayKey);
+
+  console.log("[daily-cycle] details-history-index-foundation:done", {
+    ok: detailsHistoryIndexFoundation?.ok === true,
+    dayKey,
+    season: detailsHistoryIndexFoundation?.season || null,
+    rebuilt: detailsHistoryIndexFoundation?.rebuilt === true,
+    previousReason: detailsHistoryIndexFoundation?.previousReason || null,
+    foundationFingerprint:
+      detailsHistoryIndexFoundation?.foundationFingerprint || null
+  });
 
   console.log("[daily-cycle] details-build:start", {
     dayKey,
