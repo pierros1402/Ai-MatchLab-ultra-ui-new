@@ -149,6 +149,38 @@ export function selectValueArtifactForSnapshot({
   return currentPayload;
 }
 
+export function validatedPersistedSnapshotValueArtifact(
+  payload,
+  dayKey = ""
+) {
+  const label = String(dayKey || "unknown");
+
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    !Array.isArray(payload.picks)
+  ) {
+    throw new Error(
+      `snapshot_value_invalid_after_export:${label}`
+    );
+  }
+
+  const declaredCount = payload.count;
+  const actualCount = payload.picks.length;
+
+  if (
+    !Number.isInteger(declaredCount) ||
+    declaredCount < 0 ||
+    declaredCount !== actualCount
+  ) {
+    throw new Error(
+      `snapshot_value_count_mismatch_after_export:${label}:declared=${String(declaredCount)}:actual=${actualCount}`
+    );
+  }
+
+  return payload;
+}
+
 function valueForDay(dayKey, options = {}) {
   const file = resolveDataPath("value", `${dayKey}.json`);
   const payload = readJsonSafe(file, null);
@@ -923,6 +955,18 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     writeJsonStable(snapshotValueFile, valueOut);
   }
 
+  // Manifest semantics must describe the artifact that is actually on disk.
+  // This is especially important for intraday preserveValue: if the frozen
+  // snapshot has 7 picks while the current daily artifact has shrunk to 5,
+  // the preserved bytes and every published count/source/freshness field must
+  // stay on the same 7-pick artifact. Any malformed or internally inconsistent
+  // persisted Value file blocks export before manifest publication.
+  const persistedValueOut =
+    validatedPersistedSnapshotValueArtifact(
+      readJsonSafe(snapshotValueFile, null),
+      dayKey
+    );
+
   // Ship the production value-audit (rejection ledger) next to value.json so a
   // published 0-pick day is explained, not mistaken for a broken pipeline
   // (report 2026-07-07 #5). Written by buildValueDay at data/value/_audit/<day>;
@@ -968,9 +1012,9 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
 
   const latestCanonicalAt = latestCanonicalFixtureUpdatedAt(dayKey);
   const valueArtifactAt = maxArtifactTime(
-    valueOut?.updatedAt,
-    valueOut?.createdAt,
-    valueOut?.generatedAt,
+    persistedValueOut?.updatedAt,
+    persistedValueOut?.createdAt,
+    persistedValueOut?.generatedAt,
     valueAudit?.generatedAt
   );
   const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
@@ -1009,7 +1053,7 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     },
     counts: {
       fixtures: fixturesOut.count,
-      valuePicks: valueOut.count,
+      valuePicks: persistedValueOut.count,
       details: detailsReport.count,
       detailsMatchedToFixtures: detailsReport.count,
       orphanDetailsRemoved: detailsReport.orphansRemoved.length,
@@ -1021,12 +1065,12 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     // 2026-07-02 outage. check-value-artifact-gate.js turns the workflow red on it.
     valueGate: {
       fixtures: fixturesOut.count,
-      valuePicks: valueOut.count,
-      valueSource: String(valueOut?.source || "local_value_file"),
+      valuePicks: persistedValueOut.count,
+      valueSource: String(persistedValueOut?.source || "local_value_file"),
       latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
       valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
       valueFreshAgainstCanonical,
-      ok: !(fixturesOut.count > 0 && String(valueOut?.source || "") === "missing_local_value_file") && valueFreshAgainstCanonical !== false
+      ok: !(fixturesOut.count > 0 && String(persistedValueOut?.source || "") === "missing_local_value_file") && valueFreshAgainstCanonical !== false
     },
     fixturesByLeague,
     orphanDetailsRemoved: detailsReport.orphansRemoved,

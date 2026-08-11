@@ -5,7 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import {
   canonicalDetailBytesOfFile,
-  selectValueArtifactForSnapshot
+  selectValueArtifactForSnapshot,
+  validatedPersistedSnapshotValueArtifact
 } from "../jobs/export-deploy-snapshot-day.js";
 
 test("deploy manifest detail bytes are canonical across LF and CRLF checkouts", () => {
@@ -156,4 +157,72 @@ test("invalid frozen Value cannot override the current artifact", () => {
   });
 
   assert.equal(selected, currentPayload);
+});
+
+test("persisted snapshot Value accepts coherent frozen 7-pick bytes", () => {
+  const persisted = {
+    ok: true,
+    date: "2099-08-17",
+    source: "canonical_fixtures",
+    count: 7,
+    picks: Array.from(
+      { length: 7 },
+      (_, index) => ({ id: `persisted-${index + 1}` })
+    )
+  };
+
+  const validated = validatedPersistedSnapshotValueArtifact(
+    persisted,
+    "2099-08-17"
+  );
+
+  assert.equal(validated, persisted);
+  assert.equal(validated.count, 7);
+  assert.equal(validated.picks.length, 7);
+});
+
+test("persisted snapshot Value fails closed when declared 5 but bytes contain 7 picks", () => {
+  const persisted = {
+    ok: true,
+    date: "2099-08-17",
+    source: "canonical_fixtures",
+    count: 5,
+    picks: Array.from(
+      { length: 7 },
+      (_, index) => ({ id: `persisted-${index + 1}` })
+    )
+  };
+
+  assert.throws(
+    () => validatedPersistedSnapshotValueArtifact(
+      persisted,
+      "2099-08-17"
+    ),
+    /snapshot_value_count_mismatch_after_export:2099-08-17:declared=5:actual=7/
+  );
+});
+
+test("manifest Value metadata is sourced from the persisted snapshot artifact", () => {
+  const source = fs.readFileSync(
+    new URL(
+      "../jobs/export-deploy-snapshot-day.js",
+      import.meta.url
+    ),
+    "utf8"
+  ).replace(/\r\n/g, "\n");
+
+  assert.match(
+    source,
+    /const persistedValueOut =[\s\S]*validatedPersistedSnapshotValueArtifact\([\s\S]*readJsonSafe\(snapshotValueFile, null\)/
+  );
+
+  assert.match(
+    source,
+    /valuePicks: persistedValueOut\.count/
+  );
+
+  assert.match(
+    source,
+    /valueSource: String\(persistedValueOut\?\.source \|\| "local_value_file"\)/
+  );
 });
