@@ -1,0 +1,517 @@
+name: P0-02 apply frozen Value contract
+
+on:
+  push:
+    branches:
+      - work/p0-production-day-closure-20260811
+    paths:
+      - ".github/workflows/p0-02-apply-frozen-value-contract.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/p0-production-day-closure-20260811
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply exact frozen Value contract patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import re
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"ANCHOR_COUNT_MISMATCH:{path}:{count}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8", newline="\n")
+
+          helper = Path("engine-v1/core/frozen-value-release-contract.js")
+          if helper.exists():
+              raise SystemExit("HELPER_ALREADY_EXISTS")
+          helper.write_text('''function clean(value) {
+            return String(value ?? "").trim();
+          }
+
+          function fixtureIdentitySet(fixtures) {
+            const ids = new Set();
+            for (const fixture of Array.isArray(fixtures) ? fixtures : []) {
+              for (const value of [
+                fixture?.canonicalId,
+                fixture?.matchId,
+                fixture?.providerMatchId,
+                fixture?.sourceMatchId,
+                fixture?.sourceId,
+                fixture?.matchKey
+              ]) {
+                const id = clean(value);
+                if (id) ids.add(id);
+              }
+            }
+            return ids;
+          }
+
+          export function evaluateFrozenValueFixtureBinding({
+            preserveSnapshotValueBytes = false,
+            dayKey = "",
+            valueArtifact = null,
+            fixtures = []
+          } = {}) {
+            if (preserveSnapshotValueBytes !== true) {
+              return Object.freeze({
+                mode: "current_value",
+                frozenIdentityBound: false,
+                releaseSafe: false,
+                frozenPickCount: 0,
+                orphanPickCount: 0,
+                orphanPickIds: Object.freeze([]),
+                missingMatchIdPickCount: 0,
+                missingMatchIdPickIndexes: Object.freeze([]),
+                dayBound: false,
+                canonicalSourceBound: false
+              });
+            }
+
+            const picks = Array.isArray(valueArtifact?.picks)
+              ? valueArtifact.picks
+              : [];
+            const fixtureIds = fixtureIdentitySet(fixtures);
+            const orphanPickIds = [];
+            const missingMatchIdPickIndexes = [];
+
+            for (let index = 0; index < picks.length; index += 1) {
+              const matchId = clean(picks[index]?.matchId);
+              if (!matchId) {
+                missingMatchIdPickIndexes.push(index);
+                continue;
+              }
+              if (!fixtureIds.has(matchId)) orphanPickIds.push(matchId);
+            }
+
+            const expectedDay = clean(dayKey);
+            const artifactDay = clean(valueArtifact?.date);
+            const dayBound = Boolean(expectedDay) && artifactDay === expectedDay;
+            const canonicalSourceBound = clean(valueArtifact?.source) === "canonical_fixtures";
+            const coherentCount = Number.isInteger(valueArtifact?.count) &&
+              valueArtifact.count >= 0 &&
+              valueArtifact.count === picks.length;
+            const frozenIdentityBound = Boolean(
+              valueArtifact &&
+              typeof valueArtifact === "object" &&
+              coherentCount &&
+              dayBound &&
+              canonicalSourceBound &&
+              missingMatchIdPickIndexes.length === 0 &&
+              orphanPickIds.length === 0
+            );
+
+            return Object.freeze({
+              mode: "frozen_snapshot",
+              frozenIdentityBound,
+              releaseSafe: frozenIdentityBound,
+              frozenPickCount: picks.length,
+              orphanPickCount: orphanPickIds.length,
+              orphanPickIds: Object.freeze([...orphanPickIds]),
+              missingMatchIdPickCount: missingMatchIdPickIndexes.length,
+              missingMatchIdPickIndexes: Object.freeze([...missingMatchIdPickIndexes]),
+              dayBound,
+              canonicalSourceBound
+            });
+          }
+
+          export function isFrozenValueGateReleaseSafe(gate) {
+            return Boolean(
+              gate &&
+              typeof gate === "object" &&
+              gate.mode === "frozen_snapshot" &&
+              gate.frozenIdentityBound === true &&
+              gate.frozenReleaseSafe === true &&
+              Number(gate.orphanPickCount || 0) === 0 &&
+              Number(gate.missingMatchIdPickCount || 0) === 0
+            );
+          }
+          ''', encoding="utf-8", newline="\n")
+
+          helper_test = Path("engine-v1/tests/frozen-value-release-contract.test.js")
+          if helper_test.exists():
+              raise SystemExit("HELPER_TEST_ALREADY_EXISTS")
+          helper_test.write_text('''import test from "node:test";
+          import assert from "node:assert/strict";
+          import {
+            evaluateFrozenValueFixtureBinding,
+            isFrozenValueGateReleaseSafe
+          } from "../core/frozen-value-release-contract.js";
+
+          const fixtures = [
+            {
+              canonicalId: "cid_test_home_away_20990817",
+              matchId: "provider-17"
+            }
+          ];
+
+          test("frozen Value is release-safe only when every pick is identity-bound to the same day", () => {
+            const binding = evaluateFrozenValueFixtureBinding({
+              preserveSnapshotValueBytes: true,
+              dayKey: "2099-08-17",
+              valueArtifact: {
+                date: "2099-08-17",
+                source: "canonical_fixtures",
+                count: 2,
+                picks: [
+                  { matchId: "cid_test_home_away_20990817", market: "1X2" },
+                  { matchId: "cid_test_home_away_20990817", market: "BTTS" }
+                ]
+              },
+              fixtures
+            });
+
+            assert.equal(binding.mode, "frozen_snapshot");
+            assert.equal(binding.frozenIdentityBound, true);
+            assert.equal(binding.releaseSafe, true);
+            assert.equal(binding.orphanPickCount, 0);
+            assert.equal(binding.missingMatchIdPickCount, 0);
+          });
+
+          test("orphan frozen pick fails closed", () => {
+            const binding = evaluateFrozenValueFixtureBinding({
+              preserveSnapshotValueBytes: true,
+              dayKey: "2099-08-17",
+              valueArtifact: {
+                date: "2099-08-17",
+                source: "canonical_fixtures",
+                count: 1,
+                picks: [{ matchId: "cid_orphan_20990817" }]
+              },
+              fixtures
+            });
+
+            assert.equal(binding.frozenIdentityBound, false);
+            assert.equal(binding.releaseSafe, false);
+            assert.deepEqual(binding.orphanPickIds, ["cid_orphan_20990817"]);
+          });
+
+          test("wrong-day or non-canonical frozen artifact fails closed", () => {
+            const wrongDay = evaluateFrozenValueFixtureBinding({
+              preserveSnapshotValueBytes: true,
+              dayKey: "2099-08-17",
+              valueArtifact: {
+                date: "2099-08-16",
+                source: "canonical_fixtures",
+                count: 0,
+                picks: []
+              },
+              fixtures
+            });
+            const wrongSource = evaluateFrozenValueFixtureBinding({
+              preserveSnapshotValueBytes: true,
+              dayKey: "2099-08-17",
+              valueArtifact: {
+                date: "2099-08-17",
+                source: "legacy_value",
+                count: 0,
+                picks: []
+              },
+              fixtures
+            });
+
+            assert.equal(wrongDay.releaseSafe, false);
+            assert.equal(wrongSource.releaseSafe, false);
+          });
+
+          test("frozen gate waiver requires explicit complete binding evidence", () => {
+            assert.equal(isFrozenValueGateReleaseSafe({
+              mode: "frozen_snapshot",
+              frozenIdentityBound: true,
+              frozenReleaseSafe: true,
+              orphanPickCount: 0,
+              missingMatchIdPickCount: 0
+            }), true);
+
+            assert.equal(isFrozenValueGateReleaseSafe({
+              mode: "frozen_snapshot",
+              frozenIdentityBound: true,
+              frozenReleaseSafe: true,
+              orphanPickCount: 1,
+              missingMatchIdPickCount: 0
+            }), false);
+
+            assert.equal(isFrozenValueGateReleaseSafe({
+              mode: "current_value",
+              frozenIdentityBound: true,
+              frozenReleaseSafe: true,
+              orphanPickCount: 0,
+              missingMatchIdPickCount: 0
+            }), false);
+          });
+          ''', encoding="utf-8", newline="\n")
+
+          replace_once(
+              "engine-v1/jobs/export-deploy-snapshot-day.js",
+              '''import {
+            synchronizeDetailStatusState
+          } from "../core/detail-status-sync.js";
+          ''',
+              '''import {
+            synchronizeDetailStatusState
+          } from "../core/detail-status-sync.js";
+          import {
+            evaluateFrozenValueFixtureBinding
+          } from "../core/frozen-value-release-contract.js";
+          '''
+          )
+
+          replace_once(
+              "engine-v1/jobs/export-deploy-snapshot-day.js",
+              '''  const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
+            ? null
+            : valueArtifactAt >= latestCanonicalAt;
+
+          const manifest = {
+          ''',
+              '''  const valueFreshAgainstCanonical = (latestCanonicalAt === null || valueArtifactAt === null)
+            ? null
+            : valueArtifactAt >= latestCanonicalAt;
+
+          // Historical Plan A is immutable after it is frozen. Later canonical
+          // status/FT timestamps can legitimately advance without invalidating the
+          // original pre-kickoff picks. A stale timestamp is therefore waivable
+          // only for an explicitly preserved snapshot whose every pick remains
+          // exact-identity bound to the same-day canonical fixture universe.
+          const frozenValueBinding = evaluateFrozenValueFixtureBinding({
+            preserveSnapshotValueBytes,
+            dayKey,
+            valueArtifact: persistedValueOut,
+            fixtures
+          });
+
+          const manifest = {
+          '''
+          )
+
+          replace_once(
+              "engine-v1/jobs/export-deploy-snapshot-day.js",
+              '''    valueGate: {
+                fixtures: fixturesOut.count,
+                valuePicks: persistedValueOut.count,
+                valueSource: String(persistedValueOut?.source || "local_value_file"),
+                latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
+                valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
+                valueFreshAgainstCanonical,
+                ok: !(fixturesOut.count > 0 && String(persistedValueOut?.source || "") === "missing_local_value_file") && valueFreshAgainstCanonical !== false
+              },
+          ''',
+              '''    valueGate: {
+                fixtures: fixturesOut.count,
+                valuePicks: persistedValueOut.count,
+                valueSource: String(persistedValueOut?.source || "local_value_file"),
+                latestCanonicalUpdatedAt: latestCanonicalAt === null ? null : new Date(latestCanonicalAt).toISOString(),
+                valueArtifactAt: valueArtifactAt === null ? null : new Date(valueArtifactAt).toISOString(),
+                valueFreshAgainstCanonical,
+                mode: frozenValueBinding.mode,
+                frozenIdentityBound: frozenValueBinding.frozenIdentityBound,
+                frozenReleaseSafe: frozenValueBinding.releaseSafe,
+                frozenPickCount: frozenValueBinding.frozenPickCount,
+                orphanPickCount: frozenValueBinding.orphanPickCount,
+                orphanPickIds: frozenValueBinding.orphanPickIds,
+                missingMatchIdPickCount: frozenValueBinding.missingMatchIdPickCount,
+                missingMatchIdPickIndexes: frozenValueBinding.missingMatchIdPickIndexes,
+                dayBound: frozenValueBinding.dayBound,
+                canonicalSourceBound: frozenValueBinding.canonicalSourceBound,
+                ok: !(fixturesOut.count > 0 && String(persistedValueOut?.source || "") === "missing_local_value_file") && (
+                  valueFreshAgainstCanonical !== false ||
+                  frozenValueBinding.releaseSafe === true
+                )
+              },
+          '''
+          )
+
+          replace_once(
+              "engine-v1/jobs/check-value-artifact-gate.js",
+              '''import { resolveDataPath } from "../storage/data-root.js";
+          ''',
+              '''import { resolveDataPath } from "../storage/data-root.js";
+          import { isFrozenValueGateReleaseSafe } from "../core/frozen-value-release-contract.js";
+          '''
+          )
+
+          replace_once(
+              "engine-v1/jobs/check-value-artifact-gate.js",
+              '''  if (gate?.valueFreshAgainstCanonical === false) {
+              return { ok: false, code: 2, reason: "value_artifact_stale_against_canonical", gate };
+            }
+          ''',
+              '''  const frozenReleaseSafe = isFrozenValueGateReleaseSafe(gate);
+
+            if (
+              gate?.valueFreshAgainstCanonical === false &&
+              !frozenReleaseSafe
+            ) {
+              return { ok: false, code: 2, reason: "value_artifact_stale_against_canonical", gate };
+            }
+          '''
+          )
+
+          replace_once(
+              "engine-v1/tests/daily-publish-contract.test.js",
+              '''import {
+            verifyDailyPublishContract
+          } from "../jobs/verify-daily-publish-contract.js";
+          ''',
+              '''import {
+            verifyDailyPublishContract
+          } from "../jobs/verify-daily-publish-contract.js";
+          import {
+            computeDeploySnapshotManifestHash
+          } from "../core/deploy-snapshot-release-contract.js";
+          '''
+          )
+
+          replace_once(
+              "engine-v1/tests/daily-publish-contract.test.js",
+              '''  writeJson(
+              path.join(snapshotRoot, "manifest.json"),
+              {
+                date: dayKey,
+                generatedAt,
+                hash: manifestHash
+              }
+            );
+          ''',
+              '''  const manifest = {
+              ok: true,
+              date: dayKey,
+              generatedAt,
+              counts: {
+                fixtures: 0,
+                valuePicks: 0,
+                details: 0
+              },
+              details: [],
+              valueGate: {
+                fixtures: 0,
+                valuePicks: 0,
+                valueSource: "canonical_fixtures",
+                valueFreshAgainstCanonical: true,
+                ok: true
+              }
+            };
+            manifest.hash = computeDeploySnapshotManifestHash(manifest);
+            writeJson(
+              path.join(snapshotRoot, "manifest.json"),
+              manifest
+            );
+          '''
+          )
+
+          replace_once(
+              "engine-v1/tests/daily-publish-contract.test.js",
+              '''  const manifestHash = "strict-contract-test-hash";
+          ''',
+              '''  let manifestHash = "";
+          '''
+          )
+
+          replace_once(
+              "engine-v1/tests/daily-publish-contract.test.js",
+              '''    resolve("deploy-snapshots", "latest.json"),
+              {
+                date: dayKey,
+                hash: manifestHash
+              }
+          ''',
+              '''    resolve("deploy-snapshots", "latest.json"),
+              {
+                date: dayKey,
+                hash: manifest.hash
+              }
+          '''
+          )
+
+          # Update the source-bound P0-C pin only after all exporter edits are final.
+          exporter_bytes = Path("engine-v1/jobs/export-deploy-snapshot-day.js").read_bytes().replace(b"\r\n", b"\n")
+          exporter_sha = hashlib.sha256(exporter_bytes).hexdigest()
+          contract_path = Path("engine-v1/jobs/p0c-p4-family-adapter-contract.js")
+          contract = contract_path.read_text(encoding="utf-8")
+          pattern = re.compile(
+              r'(deploySnapshotExporter: Object\.freeze\(\{\s*path: "engine-v1/jobs/export-deploy-snapshot-day\.js",\s*sha256:\s*")[0-9a-f]{64}("\s*,)',
+              re.S,
+          )
+          contract, count = pattern.subn(lambda m: m.group(1) + exporter_sha + m.group(2), contract, count=1)
+          if count != 1:
+              raise SystemExit(f"P0C_EXPORTER_PIN_ANCHOR_COUNT_MISMATCH:{count}")
+          contract_path.write_text(contract, encoding="utf-8", newline="\n")
+          print(f"FINAL_EXPORTER_SHA256={exporter_sha}")
+          PY
+
+      - name: Syntax and targeted contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/frozen-value-release-contract.js
+          node --check engine-v1/jobs/export-deploy-snapshot-day.js
+          node --check engine-v1/jobs/check-value-artifact-gate.js
+          node --check engine-v1/jobs/p0c-p4-family-adapter-contract.js
+          node --test \
+            engine-v1/tests/frozen-value-release-contract.test.js \
+            engine-v1/tests/export-deploy-snapshot-preservation.test.js \
+            engine-v1/tests/daily-publish-contract.test.js \
+            engine-v1/jobs/verify-daily-publish-contract.test.js \
+            engine-v1/jobs/p0c-p4-family-adapter-contract.test.js
+
+      - name: Review exact branch diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git status --short
+          git diff --stat
+          git diff -- \
+            engine-v1/core/frozen-value-release-contract.js \
+            engine-v1/jobs/export-deploy-snapshot-day.js \
+            engine-v1/jobs/check-value-artifact-gate.js \
+            engine-v1/jobs/p0c-p4-family-adapter-contract.js \
+            engine-v1/tests/frozen-value-release-contract.test.js \
+            engine-v1/tests/daily-publish-contract.test.js
+
+      - name: Commit validated repair branch patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            engine-v1/core/frozen-value-release-contract.js \
+            engine-v1/jobs/export-deploy-snapshot-day.js \
+            engine-v1/jobs/check-value-artifact-gate.js \
+            engine-v1/jobs/p0c-p4-family-adapter-contract.js \
+            engine-v1/tests/frozen-value-release-contract.test.js \
+            engine-v1/tests/daily-publish-contract.test.js
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "Harden frozen Value release contract"
+          git push origin HEAD:work/p0-production-day-closure-20260811
