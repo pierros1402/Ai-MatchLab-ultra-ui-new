@@ -35,24 +35,28 @@ jobs:
           set -euo pipefail
           npm ci --ignore-scripts
           npm ci --ignore-scripts --prefix engine-v1
-      - name: Apply firewall and regression
+      - name: Apply structural canonical truth firewall
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import re
+          import textwrap
 
-          p = Path('engine-v1/core/day-fixture-universe.js')
-          s = p.read_text(encoding='utf-8')
+          path = Path('engine-v1/core/day-fixture-universe.js')
+          source = path.read_text(encoding='utf-8')
 
-          ia = 'import {\n  getProductionIdentityResolver\n} from "./production-identity-resolver-runtime.js";\n'
-          ib = ia + 'import {\n  MATCH_STATE_CLASS,\n  classifyMatchState\n} from "./non-played-state.js";\n'
-          if 'classifyMatchState' not in s:
-              if ia not in s: raise SystemExit('missing-import-anchor')
-              s = s.replace(ia, ib, 1)
+          import_anchor = 'import {\n  getProductionIdentityResolver\n} from "./production-identity-resolver-runtime.js";\n'
+          import_block = import_anchor + 'import {\n  MATCH_STATE_CLASS,\n  classifyMatchState\n} from "./non-played-state.js";\n'
+          if 'from "./non-played-state.js"' not in source:
+              if source.count(import_anchor) != 1:
+                  raise SystemExit(f'import-anchor-count:{source.count(import_anchor)}')
+              source = source.replace(import_anchor, import_block, 1)
 
-          ha = 'export function mergeCanonicalWithRuntimeOverlay(\n'
-          helper = '''const CANONICAL_RUNTIME_TRUTH_LOCKS = new Set([
+          helper_anchor = 'export function mergeCanonicalWithRuntimeOverlay(\n'
+          helper = textwrap.dedent('''\
+          const CANONICAL_RUNTIME_TRUTH_LOCKS = new Set([
             MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED,
             MATCH_STATE_CLASS.PLAY_INTERRUPTED,
             MATCH_STATE_CLASS.TEMPORARY_DELAY,
@@ -61,12 +65,22 @@ jobs:
           ]);
 
           const CANONICAL_RUNTIME_TRUTH_FIELDS = Object.freeze([
-            "status", "rawStatus", "statusType",
-            "sourceStatus", "sourceStatusType",
-            "providerStatus", "providerStatusType",
-            "statusName", "operationalState",
-            "scoreHome", "scoreAway", "homeScore", "awayScore",
-            "minute", "penalties", "decidedBy"
+            "status",
+            "rawStatus",
+            "statusType",
+            "sourceStatus",
+            "sourceStatusType",
+            "providerStatus",
+            "providerStatusType",
+            "statusName",
+            "operationalState",
+            "scoreHome",
+            "scoreAway",
+            "homeScore",
+            "awayScore",
+            "minute",
+            "penalties",
+            "decidedBy"
           ]);
 
           function applyCanonicalTruthFirewall(canonical, runtime) {
@@ -89,9 +103,11 @@ jobs:
               if (!Object.prototype.hasOwnProperty.call(canonical || {}, "finalized") && Number(overlay.finalized) === 1) {
                 delete overlay.finalized;
               }
+
               if (!Object.prototype.hasOwnProperty.call(canonical || {}, "state") && String(overlay.state || "").trim().toUpperCase() === "FINAL") {
                 delete overlay.state;
               }
+
               overlay.isDisplayLive = false;
               overlay.isDisplayPre = false;
               overlay.isDisplayFinal = false;
@@ -106,59 +122,114 @@ jobs:
             return overlay;
           }
 
-          '''
-          if 'function applyCanonicalTruthFirewall' not in s:
-              if ha not in s: raise SystemExit('missing-helper-anchor')
-              s = s.replace(ha, helper + ha, 1)
+          ''')
 
-          old = '''        runtimeOverlayCount += 1;
+          if 'function applyCanonicalTruthFirewall' not in source:
+              if source.count(helper_anchor) != 1:
+                  raise SystemExit(f'helper-anchor-count:{source.count(helper_anchor)}')
+              source = source.replace(helper_anchor, helper + helper_anchor, 1)
 
-                return canonicalizeFixtureDisplayNames({
-                  ...canonical,
-                  ...runtime,
-          '''
-          new = '''        runtimeOverlayCount += 1;
+          pattern = re.compile(
+              r'(?m)^(?P<indent>[ \t]*)runtimeOverlayCount \+= 1;[ \t]*\n'
+              r'(?:[ \t]*\n)*'
+              r'(?P=indent)return canonicalizeFixtureDisplayNames\(\{[ \t]*\n'
+              r'(?P=indent)  \.\.\.canonical,[ \t]*\n'
+              r'(?P=indent)  \.\.\.runtime,'
+          )
 
-                const runtimeOverlay =
-                  applyCanonicalTruthFirewall(
-                    canonical,
-                    runtime
-                  );
+          def replacement(match):
+              indent = match.group('indent')
+              return (
+                  f'{indent}runtimeOverlayCount += 1;\n\n'
+                  f'{indent}const runtimeOverlay =\n'
+                  f'{indent}  applyCanonicalTruthFirewall(\n'
+                  f'{indent}    canonical,\n'
+                  f'{indent}    runtime\n'
+                  f'{indent}  );\n\n'
+                  f'{indent}return canonicalizeFixtureDisplayNames({{\n'
+                  f'{indent}  ...canonical,\n'
+                  f'{indent}  ...runtimeOverlay,'
+              )
 
-                return canonicalizeFixtureDisplayNames({
-                  ...canonical,
-                  ...runtimeOverlay,
-          '''
-          if old not in s: raise SystemExit('missing-merge-anchor')
-          s = s.replace(old, new, 1)
-          p.write_text(s, encoding='utf-8')
+          source, replace_count = pattern.subn(replacement, source, count=1)
+          if replace_count != 1:
+              raise SystemExit(f'merge-structural-replace-count:{replace_count}')
 
-          t = Path('engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js')
-          t.write_text('''import assert from "node:assert/strict";
+          if source.count('function applyCanonicalTruthFirewall') != 1:
+              raise SystemExit('firewall-helper-postcondition-failed')
+          if source.count('...runtimeOverlay,') != 1:
+              raise SystemExit('runtime-overlay-postcondition-failed')
+
+          path.write_text(source, encoding='utf-8')
+
+          test_path = Path('engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js')
+          test_path.write_text(textwrap.dedent('''\
+          import assert from "node:assert/strict";
           import test from "node:test";
-          import { mergeCanonicalWithRuntimeOverlay } from "../core/day-fixture-universe.js";
-          import { MATCH_STATE_CLASS, classifyMatchState, hasMatchStateConflict } from "../core/non-played-state.js";
 
-          function merged(canonical, runtime) {
-            return mergeCanonicalWithRuntimeOverlay([canonical], [runtime], "2026-08-12").fixtures[0];
+          import {
+            mergeCanonicalWithRuntimeOverlay
+          } from "../core/day-fixture-universe.js";
+          import {
+            MATCH_STATE_CLASS,
+            classifyMatchState,
+            hasMatchStateConflict
+          } from "../core/non-played-state.js";
+
+          function merge(canonical, runtime) {
+            const result = mergeCanonicalWithRuntimeOverlay(
+              [canonical],
+              [runtime],
+              "2026-08-12"
+            );
+            assert.equal(result.fixtures.length, 1);
+            return result.fixtures[0];
           }
 
-          test("snapshot overlay cannot regress canonical POSTPONED to stale terminal truth", () => {
+          test("canonical POSTPONED truth survives stale terminal runtime overlay", () => {
             const canonical = {
-              canonicalId: "cid_col2_cartagena_bogota_20260812", matchId: "cid_col2_cartagena_bogota_20260812",
-              leagueSlug: "col.2", homeTeam: "Cartagena", awayTeam: "Bogota", dayKey: "2026-08-12",
-              kickoffUtc: "2026-08-11T22:45:00.000Z", status: "STATUS_POSTPONED", rawStatus: "STATUS_POSTPONED",
-              statusType: "STATUS_POSTPONED", scoreHome: null, scoreAway: null, minute: null, penalties: null, decidedBy: null
+              canonicalId: "cid_col2_cartagena_bogota_20260812",
+              matchId: "cid_col2_cartagena_bogota_20260812",
+              leagueSlug: "col.2",
+              homeTeam: "Cartagena",
+              awayTeam: "Bogota",
+              dayKey: "2026-08-12",
+              kickoffUtc: "2026-08-11T22:45:00.000Z",
+              status: "STATUS_POSTPONED",
+              rawStatus: "STATUS_POSTPONED",
+              statusType: "STATUS_POSTPONED",
+              scoreHome: null,
+              scoreAway: null,
+              minute: null,
+              penalties: null,
+              decidedBy: null
             };
+
             const runtime = {
-              ...canonical, status: "FT", rawStatus: "STATUS_FULL_TIME", statusType: "STATUS_FINAL",
-              sourceStatus: "FT", providerStatus: "STATUS_FINAL", operationalState: "TERMINAL_CONFIRMED",
-              scoreHome: 2, scoreAway: 1, minute: "FT", finalized: 1, state: "final", isDisplayFinal: true
+              ...canonical,
+              status: "FT",
+              rawStatus: "STATUS_FULL_TIME",
+              statusType: "STATUS_FINAL",
+              sourceStatus: "FT",
+              providerStatus: "STATUS_FINAL",
+              operationalState: "TERMINAL_CONFIRMED",
+              scoreHome: 2,
+              scoreAway: 1,
+              minute: "FT",
+              finalized: 1,
+              state: "final",
+              isDisplayLive: false,
+              isDisplayPre: false,
+              isDisplayFinal: true
             };
-            const row = merged(canonical, runtime);
+
+            const row = merge(canonical, runtime);
+
             assert.equal(classifyMatchState(row), MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED);
             assert.equal(hasMatchStateConflict(row), false);
             assert.equal(row.status, "STATUS_POSTPONED");
+            assert.equal(row.rawStatus, "STATUS_POSTPONED");
+            assert.equal(row.statusType, "STATUS_POSTPONED");
             assert.equal(row.scoreHome, null);
             assert.equal(row.scoreAway, null);
             assert.equal(row.minute, null);
@@ -167,24 +238,48 @@ jobs:
             assert.equal(row.providerStatus, undefined);
             assert.equal(row.finalized, undefined);
             assert.equal(row.state, undefined);
-            assert.equal(row.isDisplayFinal, false);
-            assert.equal(row.isDisplayPre, false);
             assert.equal(row.isDisplayLive, false);
+            assert.equal(row.isDisplayPre, false);
+            assert.equal(row.isDisplayFinal, false);
           });
 
-          test("snapshot overlay cannot regress canonical FT to stale PRE truth", () => {
+          test("canonical FT truth survives stale PRE runtime overlay", () => {
             const canonical = {
-              canonicalId: "cid_bra2_avai_crb_20260812", matchId: "cid_bra2_avai_crb_20260812",
-              leagueSlug: "bra.2", homeTeam: "Avaí", awayTeam: "CRB", dayKey: "2026-08-12",
-              kickoffUtc: "2026-08-11T22:30:00.000Z", status: "FT", rawStatus: "STATUS_FULL_TIME",
-              statusType: "STATUS_FINAL", scoreHome: 0, scoreAway: 1, minute: "90+5", penalties: null, decidedBy: null
+              canonicalId: "cid_bra2_avai_crb_20260812",
+              matchId: "cid_bra2_avai_crb_20260812",
+              leagueSlug: "bra.2",
+              homeTeam: "Avaí",
+              awayTeam: "CRB",
+              dayKey: "2026-08-12",
+              kickoffUtc: "2026-08-11T22:30:00.000Z",
+              status: "FT",
+              rawStatus: "STATUS_FULL_TIME",
+              statusType: "STATUS_FINAL",
+              scoreHome: 0,
+              scoreAway: 1,
+              minute: "90+5",
+              penalties: null,
+              decidedBy: null
             };
+
             const runtime = {
-              ...canonical, status: "PRE", rawStatus: "STATUS_SCHEDULED", statusType: "STATUS_SCHEDULED",
-              sourceStatus: "STATUS_SCHEDULED", providerStatus: "PRE", operationalState: "PRE",
-              scoreHome: null, scoreAway: null, minute: null, isDisplayPre: true, isDisplayFinal: false
+              ...canonical,
+              status: "PRE",
+              rawStatus: "STATUS_SCHEDULED",
+              statusType: "STATUS_SCHEDULED",
+              sourceStatus: "STATUS_SCHEDULED",
+              providerStatus: "PRE",
+              operationalState: "PRE",
+              scoreHome: null,
+              scoreAway: null,
+              minute: null,
+              isDisplayLive: false,
+              isDisplayPre: true,
+              isDisplayFinal: false
             };
-            const row = merged(canonical, runtime);
+
+            const row = merge(canonical, runtime);
+
             assert.equal(classifyMatchState(row), MATCH_STATE_CLASS.PLAYED_FINAL);
             assert.equal(hasMatchStateConflict(row), false);
             assert.equal(row.status, "FT");
@@ -196,22 +291,27 @@ jobs:
             assert.equal(row.operationalState, undefined);
             assert.equal(row.sourceStatus, undefined);
             assert.equal(row.providerStatus, undefined);
-            assert.equal(row.isDisplayFinal, true);
-            assert.equal(row.isDisplayPre, false);
             assert.equal(row.isDisplayLive, false);
+            assert.equal(row.isDisplayPre, false);
+            assert.equal(row.isDisplayFinal, true);
           });
-          '''.replace('          ', ''), encoding='utf-8')
+          '''), encoding='utf-8')
           PY
-      - name: Validate
+      - name: Validate firewall
         shell: bash
         run: |
           set -euo pipefail
           node --check engine-v1/core/day-fixture-universe.js
           node --check engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js
-          node --test engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js engine-v1/tests/non-played-state-contract.test.js engine-v1/tests/intraday-snapshot-invariant-gate.test.js
+          node --test \
+            engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js \
+            engine-v1/tests/non-played-state-contract.test.js \
+            engine-v1/tests/intraday-snapshot-invariant-gate.test.js \
+            engine-v1/tests/daily-snapshot-final-live-refresh.test.js
           node --test engine-v1/tests/*.test.js
           git diff --check
           mapfile -t changed < <(git status --porcelain | sed -E 's/^.. //')
+          printf '%s\n' "${changed[@]}"
           test "${#changed[@]}" -eq 2
           printf '%s\n' "${changed[@]}" | grep -Fx 'engine-v1/core/day-fixture-universe.js'
           printf '%s\n' "${changed[@]}" | grep -Fx 'engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js'
