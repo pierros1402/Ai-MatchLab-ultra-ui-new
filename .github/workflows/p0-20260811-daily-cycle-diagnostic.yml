@@ -1,4 +1,4 @@
-name: P0 2026-08-11 daily cycle diagnostic
+name: P0 2026-08-12 daily cycle diagnostic
 
 on:
   push:
@@ -11,11 +11,11 @@ permissions:
   contents: read
 
 env:
-  TARGET_DAY_KEY: "2026-08-11"
-  TARGET_REF: "635c99faaa15854593132ec7115800da35778af8"
+  TARGET_DAY_KEY: "2026-08-12"
+  TARGET_REF: "ba3ef41f8ca658e62127cea244ab3f0a4791ed39"
 
 concurrency:
-  group: p0-20260811-daily-cycle-diagnostic
+  group: p0-20260812-daily-cycle-diagnostic
   cancel-in-progress: false
 
 jobs:
@@ -79,7 +79,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p0-20260811-daily-cycle-diagnostic
+          name: p0-20260812-daily-cycle-diagnostic
           path: |
             daily-cycle-diagnostic.log
             daily-cycle-exit-code.txt
