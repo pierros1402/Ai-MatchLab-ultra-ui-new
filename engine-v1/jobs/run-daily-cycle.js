@@ -12,7 +12,8 @@ import { buildHistoryReport } from "./build-history-report.js";
 import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canonical-day.js";
 import {
   rebuildIndexesForSeason,
-  collectIndexRebuildTargets
+  collectIndexRebuildTargets,
+  ensureHistoryIndexFoundationForDay
 } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
@@ -827,6 +828,35 @@ export async function runDailyCycle(options = {}) {
       dayKey,
       error: String(error?.message || error)
     });
+  }
+
+
+  console.log("[daily-cycle] details-history-index-foundation:start", {
+    dayKey
+  });
+
+  const detailsHistoryIndexFoundation =
+    await ensureHistoryIndexFoundationForDay(dayKey);
+
+  console.log("[daily-cycle] details-history-index-foundation:done", {
+    ok: detailsHistoryIndexFoundation?.ok === true,
+    dayKey,
+    season: detailsHistoryIndexFoundation?.season || null,
+    rebuilt: detailsHistoryIndexFoundation?.rebuilt === true,
+    previousReason: detailsHistoryIndexFoundation?.previousReason || null,
+    reason: detailsHistoryIndexFoundation?.reason || null,
+    foundationFingerprint:
+      detailsHistoryIndexFoundation?.foundationFingerprint || null
+  });
+
+  if (detailsHistoryIndexFoundation?.ok !== true) {
+    const error = new Error(
+      "details_history_index_foundation_not_ready"
+    );
+    error.code = "DETAILS_HISTORY_INDEX_FOUNDATION_NOT_READY";
+    error.dayKey = dayKey;
+    error.details = detailsHistoryIndexFoundation;
+    throw error;
   }
 
   console.log("[daily-cycle] details-build:start", {

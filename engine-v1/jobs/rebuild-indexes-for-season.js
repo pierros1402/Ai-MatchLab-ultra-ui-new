@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { currentSeason } from "../core/season.js";
+import { validateHistoryIndexFoundationSync } from "../core/derived-history-foundation.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -70,6 +71,81 @@ export function collectIndexRebuildTargets(
   }
 
   return [...bySeason.values()];
+}
+
+
+export async function ensureHistoryIndexFoundationForDay(
+  dayKey,
+  {
+    validateFoundation = validateHistoryIndexFoundationSync,
+    rebuild = rebuildIndexesForSeason
+  } = {}
+) {
+  const season = resolveSeasonFromDay(dayKey);
+
+  if (season === "unknown-season") {
+    return {
+      ok: false,
+      reason: "invalid_day_key",
+      dayKey,
+      season,
+      rebuilt: false
+    };
+  }
+
+  const before = validateFoundation(season);
+
+  if (before?.ok === true) {
+    return {
+      ok: true,
+      dayKey,
+      season,
+      rebuilt: false,
+      previousReason: null,
+      foundationFingerprint:
+        before?.artifact?.foundationFingerprint || null
+    };
+  }
+
+  const rebuildResult = await rebuild(dayKey);
+
+  if (rebuildResult?.ok !== true) {
+    return {
+      ok: false,
+      reason: "history_index_rebuild_failed",
+      dayKey,
+      season,
+      rebuilt: false,
+      previousReason: before?.reason || null,
+      rebuild: rebuildResult
+    };
+  }
+
+  const after = validateFoundation(season);
+
+  if (after?.ok !== true) {
+    return {
+      ok: false,
+      reason: "history_index_foundation_not_ready_after_rebuild",
+      dayKey,
+      season,
+      rebuilt: true,
+      previousReason: before?.reason || null,
+      currentReason: after?.reason || null,
+      rebuild: rebuildResult
+    };
+  }
+
+  return {
+    ok: true,
+    dayKey,
+    season,
+    rebuilt: true,
+    previousReason: before?.reason || null,
+    foundationFingerprint:
+      after?.artifact?.foundationFingerprint || null,
+    rebuild: rebuildResult
+  };
 }
 
 export async function rebuildIndexesForSeason(dayKey) {
