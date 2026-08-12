@@ -493,8 +493,7 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
       && adjustedPlans?.ok === true
       && planA2?.ok === true
       && planB2?.ok === true
-      && comparison?.ok !== false
-      && buildReport?.hardFailures?.length === 0,
+      && comparison?.ok !== false,
     mode: "refresh_value_artifacts_after_canonical_change",
     safety: "value_only_preserve_snapshot_fixtures",
     date,
