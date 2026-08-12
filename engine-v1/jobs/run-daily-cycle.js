@@ -706,6 +706,7 @@ export async function runDailyCycle(options = {}) {
   let historyAppend = null;
   let indexesRebuild = null;
   let catchUpIndexesRebuild = [];
+  let historyCatchUp = [];
   let h2hFoundationRebuild = null;
 
   console.log("[daily-cycle] standings-build:start", { dayKey });
@@ -1903,7 +1904,7 @@ export async function runDailyCycle(options = {}) {
     // lands under the next day) join on a later pass, and a postponed match
     // can no longer hold a hundred real finals hostage. Gates kept: no
     // terminal row without a score, no duplicate ids — never fabricates.
-    const historyCatchUp = [];
+    historyCatchUp = [];
     for (let back = 2; back <= 7; back++) {
       const day = shiftDay(dayKey, -back);
       try {
