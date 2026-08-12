@@ -24,6 +24,10 @@ import { canonicalTeamName } from "../storage/team-aliases-db.js";
 import {
   getProductionIdentityResolver
 } from "./production-identity-resolver-runtime.js";
+import {
+  MATCH_STATE_CLASS,
+  classifyMatchState
+} from "./non-played-state.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -485,6 +489,72 @@ function runtimeFreshness(row) {
     : 0;
 }
 
+const CANONICAL_RUNTIME_TRUTH_LOCKS = new Set([
+  MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED,
+  MATCH_STATE_CLASS.PLAY_INTERRUPTED,
+  MATCH_STATE_CLASS.TEMPORARY_DELAY,
+  MATCH_STATE_CLASS.RESULT_INVALIDATED,
+  MATCH_STATE_CLASS.PLAYED_FINAL
+]);
+
+const CANONICAL_RUNTIME_TRUTH_FIELDS = Object.freeze([
+  "status",
+  "rawStatus",
+  "statusType",
+  "sourceStatus",
+  "sourceStatusType",
+  "providerStatus",
+  "providerStatusType",
+  "statusName",
+  "operationalState",
+  "scoreHome",
+  "scoreAway",
+  "homeScore",
+  "awayScore",
+  "minute",
+  "penalties",
+  "decidedBy"
+]);
+
+function applyCanonicalTruthFirewall(canonical, runtime) {
+  const overlay = { ...(runtime || {}) };
+  const canonicalState = classifyMatchState(canonical);
+
+  if (!CANONICAL_RUNTIME_TRUTH_LOCKS.has(canonicalState)) {
+    return overlay;
+  }
+
+  for (const field of CANONICAL_RUNTIME_TRUTH_FIELDS) {
+    if (Object.prototype.hasOwnProperty.call(canonical || {}, field)) {
+      overlay[field] = canonical[field];
+    } else {
+      delete overlay[field];
+    }
+  }
+
+  if (canonicalState === MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED) {
+    if (!Object.prototype.hasOwnProperty.call(canonical || {}, "finalized") && Number(overlay.finalized) === 1) {
+      delete overlay.finalized;
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(canonical || {}, "state") && String(overlay.state || "").trim().toUpperCase() === "FINAL") {
+      delete overlay.state;
+    }
+
+    overlay.isDisplayLive = false;
+    overlay.isDisplayPre = false;
+    overlay.isDisplayFinal = false;
+  }
+
+  if (canonicalState === MATCH_STATE_CLASS.PLAYED_FINAL) {
+    overlay.isDisplayLive = false;
+    overlay.isDisplayPre = false;
+    overlay.isDisplayFinal = true;
+  }
+
+  return overlay;
+}
+
 export function mergeCanonicalWithRuntimeOverlay(
   canonicalRows,
   runtimeRows,
@@ -639,9 +709,15 @@ export function mergeCanonicalWithRuntimeOverlay(
 
         runtimeOverlayCount += 1;
 
+        const runtimeOverlay =
+          applyCanonicalTruthFirewall(
+            canonical,
+            runtime
+          );
+
         return canonicalizeFixtureDisplayNames({
           ...canonical,
-          ...runtime,
+          ...runtimeOverlay,
 
           canonicalId:
             canonical?.canonicalId ||
