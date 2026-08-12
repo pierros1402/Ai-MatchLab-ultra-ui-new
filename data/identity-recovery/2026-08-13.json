@@ -1,0 +1,376 @@
+{
+  "schema": "ai-matchlab.identity-recovery-window.v1",
+  "runDayKey": "2026-08-13",
+  "source": "raw_canonical_fixtures_pre_dedup",
+  "window": {
+    "daysBack": 1,
+    "daysForward": 14
+  },
+  "sourceLatestUpdatedAt": "2026-08-12T18:09:45.348Z",
+  "resolver": {
+    "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
+    "extensionLedgerSha256": "7bb3275734901e8198fdb22b3398c355c093c90aa03d3e36803252719118b0ba",
+    "effectiveCounts": {
+      "identityBindings": 86,
+      "retainedFixtureIds": 68,
+      "suppressedFixtureAliases": 68,
+      "sourceFixtureIds": 136
+    }
+  },
+  "status": "REVIEW_REQUIRED",
+  "promotionPolicy": {
+    "broadFuzzyAllowed": false,
+    "unresolvedTwoSidedAutoPromotionAllowed": false,
+    "independentConfirmationRequiredForTwoSidedUnknown": true
+  },
+  "summary": {
+    "scannedDays": 16,
+    "scannedLeagueFiles": 322,
+    "inputRows": 1034,
+    "autoPromotable": 0,
+    "pendingIndependentConfirmation": 2,
+    "ambiguous": 1,
+    "conflictRejected": 1,
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 2
+  },
+  "targetDays": [
+    {
+      "dayKey": "2026-08-12",
+      "leagueFiles": 13,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "conmebol.libertadores",
+          "inputRows": 4,
+          "temporalCrossProviderPairs": 2,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "conmebol.libertadores",
+              "kickoffUtc": "2026-08-12T00:30:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_conmebollibertadores_deportestolima_independientedelvalle_20260812",
+                "cid_conmebollibertadores_estudianteslaplata_universidadcatolica_20260812",
+                "cid_conmebollibertadores_estudianteslparg_ucatolicachi_20260812"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-08-13",
+      "leagueFiles": 12,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-14",
+      "leagueFiles": 70,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "conmebol.libertadores",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "conmebol.libertadores",
+              "kickoffUtc": "2026-08-13T22:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "zPjrqgkn",
+                "canonicalId": "cid_conmebollibertadores_mirassolbra_lduquitoecu_20260814",
+                "kickoffUtc": "2026-08-13T22:00:00.000Z",
+                "homeTeam": "Mirassol (Bra)",
+                "awayTeam": "LDU Quito (Ecu)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401874073",
+                "canonicalId": "cid_conmebollibertadores_mirassol_ligaquito_20260814",
+                "kickoffUtc": "2026-08-13T22:00Z",
+                "homeTeam": "Mirassol",
+                "awayTeam": "Liga de Quito"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-08-12T18:09:45.657Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "eng.2",
+          "inputRows": 2,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "eng.2",
+              "kickoffUtc": "2026-08-14T19:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "dQVxcCm3",
+                "canonicalId": "cid_eng2_wolves_blackburn_20260814",
+                "kickoffUtc": "2026-08-14T19:00:00.000Z",
+                "homeTeam": "Wolves",
+                "awayTeam": "Blackburn"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401880340",
+                "canonicalId": "cid_eng2_wolverhamptonwanderers_blackburnrovers_20260814",
+                "kickoffUtc": "2026-08-14T19:00Z",
+                "homeTeam": "Wolverhampton Wanderers",
+                "awayTeam": "Blackburn Rovers"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-08-12T18:09:45.657Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 2,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-08-14T18:30:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "WIn5JxjK",
+                "canonicalId": "cid_esp2_realsociedadb_castellon_20260814",
+                "kickoffUtc": "2026-08-14T18:30:00.000Z",
+                "homeTeam": "Real Sociedad B",
+                "awayTeam": "Castellon"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883226",
+                "canonicalId": "cid_esp2_realsociedadii_castellon_20260814",
+                "kickoffUtc": "2026-08-14T18:30Z",
+                "homeTeam": "Real Sociedad II",
+                "awayTeam": "Castellón"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
+    },
+    {
+      "dayKey": "2026-08-15",
+      "leagueFiles": 28,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-16",
+      "leagueFiles": 26,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-17",
+      "leagueFiles": 19,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-18",
+      "leagueFiles": 8,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-19",
+      "leagueFiles": 6,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-20",
+      "leagueFiles": 6,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-21",
+      "leagueFiles": 23,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-22",
+      "leagueFiles": 33,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-23",
+      "leagueFiles": 29,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-24",
+      "leagueFiles": 23,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-25",
+      "leagueFiles": 12,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-26",
+      "leagueFiles": 8,
+      "recoveryLeagueReports": []
+    },
+    {
+      "dayKey": "2026-08-27",
+      "leagueFiles": 6,
+      "recoveryLeagueReports": []
+    }
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-08-12T18:09:45.658Z",
+    "attempts": [
+      {
+        "dayKey": "2026-08-14",
+        "leagueSlug": "conmebol.libertadores",
+        "key": "cid_conmebollibertadores_mirassol_ligaquito_20260814|cid_conmebollibertadores_mirassolbra_lduquitoecu_20260814",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-08-14",
+        "leagueSlug": "eng.2",
+        "key": "cid_eng2_wolverhamptonwanderers_blackburnrovers_20260814|cid_eng2_wolves_blackburn_20260814",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
+}
