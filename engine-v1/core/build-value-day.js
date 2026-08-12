@@ -974,13 +974,10 @@ export async function buildValueDay(date, { rebuild = false, env, opponentAdjust
 
     try {
       if (!isPlayable(match)) {
-        auditRejections.push({
-          matchId:
-            evaluatedFixtureId,
-          reason:
-            "not_playable"
-        });
-
+        // The pre-audit pass already owns the single terminal rejection for
+        // non-playable fixtures. Do not emit the same outcome twice here: the
+        // evaluation-accounting invariant requires exactly one terminal
+        // outcome per canonical fixture.
         continue;
       }
 
