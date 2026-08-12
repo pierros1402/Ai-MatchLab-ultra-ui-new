@@ -1,0 +1,381 @@
+name: P0 canonical runtime truth firewall patch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/p0-canonical-runtime-truth-firewall.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify clean patch base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          test -z "$(git status --porcelain)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm ci --ignore-scripts --prefix engine-v1
+
+      - name: Apply canonical runtime truth firewall
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          target = Path('engine-v1/core/day-fixture-universe.js')
+          source = target.read_text(encoding='utf-8')
+
+          import_anchor = '''import {
+            getProductionIdentityResolver
+          } from "./production-identity-resolver-runtime.js";
+          '''
+          import_block = import_anchor + '''import {
+            MATCH_STATE_CLASS,
+            classifyMatchState,
+            sanitizePreKickoffNonPlayed
+          } from "./non-played-state.js";
+          '''
+          if 'sanitizePreKickoffNonPlayed' not in source:
+              if import_anchor not in source:
+                  raise SystemExit('missing import anchor')
+              source = source.replace(import_anchor, import_block, 1)
+
+          helper_anchor = '''export function mergeCanonicalWithRuntimeOverlay(
+          '''
+          helper = '''const CANONICAL_RUNTIME_TRUTH_LOCKS = new Set([
+            MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED,
+            MATCH_STATE_CLASS.PLAY_INTERRUPTED,
+            MATCH_STATE_CLASS.TEMPORARY_DELAY,
+            MATCH_STATE_CLASS.RESULT_INVALIDATED,
+            MATCH_STATE_CLASS.PLAYED_FINAL
+          ]);
+
+          const CANONICAL_RUNTIME_TRUTH_FIELDS = Object.freeze([
+            "status",
+            "rawStatus",
+            "statusType",
+            "sourceStatus",
+            "sourceStatusType",
+            "providerStatus",
+            "providerStatusType",
+            "statusName",
+            "operationalState",
+            "scoreHome",
+            "scoreAway",
+            "homeScore",
+            "awayScore",
+            "minute",
+            "penalties",
+            "decidedBy"
+          ]);
+
+          export function mergeRuntimeOverlayWithCanonicalTruth(
+            canonical,
+            runtime
+          ) {
+            const merged = {
+              ...(canonical || {}),
+              ...(runtime || {})
+            };
+
+            const canonicalState =
+              classifyMatchState(canonical);
+
+            if (
+              !CANONICAL_RUNTIME_TRUTH_LOCKS.has(
+                canonicalState
+              )
+            ) {
+              return merged;
+            }
+
+            for (
+              const field of
+              CANONICAL_RUNTIME_TRUTH_FIELDS
+            ) {
+              if (
+                Object.prototype.hasOwnProperty.call(
+                  canonical || {},
+                  field
+                )
+              ) {
+                merged[field] = canonical[field];
+              }
+              else {
+                delete merged[field];
+              }
+            }
+
+            if (
+              canonicalState ===
+                MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED
+            ) {
+              if (
+                !Object.prototype.hasOwnProperty.call(
+                  canonical || {},
+                  "finalized"
+                ) &&
+                Number(merged.finalized) === 1
+              ) {
+                delete merged.finalized;
+              }
+
+              if (
+                !Object.prototype.hasOwnProperty.call(
+                  canonical || {},
+                  "state"
+                ) &&
+                String(merged.state || "")
+                  .trim()
+                  .toUpperCase() === "FINAL"
+              ) {
+                delete merged.state;
+              }
+
+              const sanitized =
+                sanitizePreKickoffNonPlayed(
+                  merged
+                );
+
+              return {
+                ...sanitized,
+                isDisplayLive: false,
+                isDisplayPre: false,
+                isDisplayFinal: false
+              };
+            }
+
+            if (
+              canonicalState ===
+                MATCH_STATE_CLASS.PLAYED_FINAL
+            ) {
+              merged.isDisplayLive = false;
+              merged.isDisplayPre = false;
+              merged.isDisplayFinal = true;
+            }
+
+            return merged;
+          }
+
+          '''
+          if 'export function mergeRuntimeOverlayWithCanonicalTruth' not in source:
+              if helper_anchor not in source:
+                  raise SystemExit('missing helper anchor')
+              source = source.replace(helper_anchor, helper + helper_anchor, 1)
+
+          merge_anchor = '''        return canonicalizeFixtureDisplayNames({
+                  ...canonical,
+                  ...runtime,
+          '''
+          merge_replacement = '''        return canonicalizeFixtureDisplayNames({
+                  ...mergeRuntimeOverlayWithCanonicalTruth(
+                    canonical,
+                    runtime
+                  ),
+          '''
+          if merge_anchor not in source:
+              raise SystemExit('missing runtime overlay merge anchor')
+          source = source.replace(merge_anchor, merge_replacement, 1)
+
+          target.write_text(source, encoding='utf-8')
+
+          test_file = Path('engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js')
+          test_file.write_text(r'''import assert from "node:assert/strict";
+          import test from "node:test";
+
+          import {
+            mergeRuntimeOverlayWithCanonicalTruth
+          } from "../core/day-fixture-universe.js";
+          import {
+            MATCH_STATE_CLASS,
+            classifyMatchState,
+            hasMatchStateConflict
+          } from "../core/non-played-state.js";
+
+          test("canonical POSTPONED truth rejects stale runtime terminal overlay", () => {
+            const canonical = {
+              canonicalId: "cid_col2_cartagena_bogota_20260812",
+              matchId: "cid_col2_cartagena_bogota_20260812",
+              status: "STATUS_POSTPONED",
+              rawStatus: "STATUS_POSTPONED",
+              statusType: "STATUS_POSTPONED",
+              scoreHome: null,
+              scoreAway: null,
+              minute: null,
+              penalties: null,
+              decidedBy: null,
+              isDisplayFinal: false
+            };
+
+            const runtime = {
+              ...canonical,
+              status: "FT",
+              rawStatus: "STATUS_FULL_TIME",
+              statusType: "STATUS_FINAL",
+              sourceStatus: "FT",
+              providerStatus: "STATUS_FINAL",
+              operationalState: "TERMINAL_CONFIRMED",
+              scoreHome: 2,
+              scoreAway: 1,
+              minute: "FT",
+              finalized: 1,
+              state: "final",
+              isDisplayLive: false,
+              isDisplayPre: false,
+              isDisplayFinal: true
+            };
+
+            const merged =
+              mergeRuntimeOverlayWithCanonicalTruth(
+                canonical,
+                runtime
+              );
+
+            assert.equal(
+              classifyMatchState(merged),
+              MATCH_STATE_CLASS.PRE_KICKOFF_NON_PLAYED
+            );
+            assert.equal(hasMatchStateConflict(merged), false);
+            assert.equal(merged.status, "STATUS_POSTPONED");
+            assert.equal(merged.rawStatus, "STATUS_POSTPONED");
+            assert.equal(merged.statusType, "STATUS_POSTPONED");
+            assert.equal(merged.scoreHome, null);
+            assert.equal(merged.scoreAway, null);
+            assert.equal(merged.minute, null);
+            assert.equal(merged.operationalState, undefined);
+            assert.equal(merged.sourceStatus, undefined);
+            assert.equal(merged.providerStatus, undefined);
+            assert.equal(merged.finalized, undefined);
+            assert.equal(merged.state, undefined);
+            assert.equal(merged.isDisplayFinal, false);
+            assert.equal(merged.isDisplayPre, false);
+            assert.equal(merged.isDisplayLive, false);
+          });
+
+          test("canonical FT truth rejects stale runtime PRE overlay", () => {
+            const canonical = {
+              canonicalId: "cid_bra2_avai_crb_20260812",
+              matchId: "cid_bra2_avai_crb_20260812",
+              status: "FT",
+              rawStatus: "STATUS_FULL_TIME",
+              statusType: "STATUS_FINAL",
+              scoreHome: 0,
+              scoreAway: 1,
+              minute: "90'+5'",
+              penalties: null,
+              decidedBy: null
+            };
+
+            const runtime = {
+              ...canonical,
+              status: "PRE",
+              rawStatus: "STATUS_SCHEDULED",
+              statusType: "STATUS_SCHEDULED",
+              sourceStatus: "STATUS_SCHEDULED",
+              providerStatus: "PRE",
+              operationalState: "PRE",
+              scoreHome: null,
+              scoreAway: null,
+              minute: null,
+              isDisplayLive: false,
+              isDisplayPre: true,
+              isDisplayFinal: false
+            };
+
+            const merged =
+              mergeRuntimeOverlayWithCanonicalTruth(
+                canonical,
+                runtime
+              );
+
+            assert.equal(
+              classifyMatchState(merged),
+              MATCH_STATE_CLASS.PLAYED_FINAL
+            );
+            assert.equal(hasMatchStateConflict(merged), false);
+            assert.equal(merged.status, "FT");
+            assert.equal(merged.rawStatus, "STATUS_FULL_TIME");
+            assert.equal(merged.statusType, "STATUS_FINAL");
+            assert.equal(merged.scoreHome, 0);
+            assert.equal(merged.scoreAway, 1);
+            assert.equal(merged.minute, "90'+5'");
+            assert.equal(merged.operationalState, undefined);
+            assert.equal(merged.sourceStatus, undefined);
+            assert.equal(merged.providerStatus, undefined);
+            assert.equal(merged.isDisplayFinal, true);
+            assert.equal(merged.isDisplayPre, false);
+            assert.equal(merged.isDisplayLive, false);
+          });
+          '''.replace('          ', ''), encoding='utf-8')
+          PY
+
+      - name: Syntax and targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/day-fixture-universe.js
+          node --check engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js
+          node --test \
+            engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js \
+            engine-v1/tests/non-played-state-contract.test.js \
+            engine-v1/tests/daily-snapshot-final-live-refresh.test.js \
+            engine-v1/tests/intraday-snapshot-invariant-gate.test.js
+
+      - name: Full engine regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/*.test.js
+
+      - name: Verify exact write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git status --porcelain | sed -E 's/^.. //')
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          printf '%s\n' "${changed[@]}" | grep -Fx 'engine-v1/core/day-fixture-universe.js'
+          printf '%s\n' "${changed[@]}" | grep -Fx 'engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js'
+
+      - name: Commit permanent canonical runtime truth firewall
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            engine-v1/core/day-fixture-universe.js \
+            engine-v1/tests/day-fixture-universe-canonical-truth-firewall.test.js
+          git diff --cached --check
+          git commit -m 'Protect canonical match truth from runtime overlay'
+          git pull --rebase origin main
+          git push origin HEAD:main
