@@ -1,0 +1,97 @@
+name: P0 final live runtime resync fix
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/p0-final-live-runtime-resync-fix.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+env:
+  EXPECTED_PARENT: "d95510cdbbd447a37887869bc1af7d6e911163ae"
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify patch base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          test -z "$(git status --porcelain)"
+          echo "Patch base verified: $EXPECTED_PARENT"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply exact final-live runtime resync patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/p0-final-live-runtime-resync-fix.py
+
+      - name: Syntax and targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/tests/daily-snapshot-final-live-refresh.test.js
+          git diff --check
+          node --test \
+            engine-v1/tests/daily-snapshot-final-live-refresh.test.js \
+            engine-v1/tests/daily-publish-contract.test.js \
+            engine-v1/tests/canonical-nonplayed-monotonic-merge.test.js \
+            engine-v1/tests/build-details-nonplayed-score.test.js
+
+      - name: Full engine regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test engine-v1/tests/*.test.js
+
+      - name: Verify exact write set
+        shell: bash
+        run: |
+          set -euo pipefail
+          { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u > /tmp/changed.txt
+          cat > /tmp/expected.txt <<'EOF'
+          .github/workflows/daily-deploy-snapshot.yml
+          engine-v1/tests/daily-snapshot-final-live-refresh.test.js
+          EOF
+          sort -o /tmp/expected.txt /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/changed.txt
+
+      - name: Commit permanent final-live runtime resync fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/daily-deploy-snapshot.yml \
+            engine-v1/tests/daily-snapshot-final-live-refresh.test.js
+          git diff --cached --check
+          git commit -m "Resync runtime fixtures after final live refresh"
+          git push origin HEAD:main
