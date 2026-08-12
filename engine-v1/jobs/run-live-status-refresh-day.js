@@ -16,6 +16,7 @@ import {
   resolveVerifiedFlashscoreNonPlayedDecision
 } from "../source-discovery/flashscore-nonplayed-decisions.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
+import { syncCanonicalFixturesToJsonDbDay } from "./sync-canonical-fixtures-to-json-db-day.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -2432,6 +2433,36 @@ export async function runLiveStatusRefreshDay(dayKey, options = {}) {
       });
     }
   }
+
+  // Canonical status writes above are the authoritative truth. Keep the runtime
+  // fixture DB in the same state before any caller can rebuild details or a
+  // deploy snapshot; otherwise stale runtime status fields can be overlaid onto
+  // newer canonical non-played/final truth and create a false state conflict.
+  const canonicalRuntimeSync =
+    syncCanonicalFixturesToJsonDbDay(
+      safeDayKey,
+      { write: true }
+    );
+
+  if (canonicalRuntimeSync?.ok !== true) {
+    throw new Error(
+      "live_status_canonical_runtime_sync_failed"
+    );
+  }
+
+  stats.canonicalRuntimeSync = {
+    ok: true,
+    rawRows:
+      canonicalRuntimeSync.rawRows ?? 0,
+    acceptedRows:
+      canonicalRuntimeSync.acceptedRows ?? 0,
+    inserted:
+      canonicalRuntimeSync.inserted ?? 0,
+    updated:
+      canonicalRuntimeSync.updated ?? 0,
+    unchanged:
+      canonicalRuntimeSync.unchanged ?? 0
+  };
 
   stats.finishedAt =
     new Date().toISOString();

@@ -74,3 +74,49 @@ test(
     assert.ok(sweepIndex > liveIndex);
   }
 );
+
+test(
+  "live status refresh re-syncs runtime fixtures after canonical mutations",
+  () => {
+    const source = read(
+      "engine-v1/jobs/run-live-status-refresh-day.js"
+    );
+
+    assert.match(
+      source,
+      /syncCanonicalFixturesToJsonDbDay/u
+    );
+
+    const canonicalWriteIndex =
+      source.lastIndexOf(
+        "writeCanonicalLeague("
+      );
+
+    const runtimeSyncIndex =
+      source.lastIndexOf(
+        "syncCanonicalFixturesToJsonDbDay("
+      );
+
+    const finishedIndex =
+      source.indexOf(
+        "stats.finishedAt",
+        runtimeSyncIndex
+      );
+
+    const returnIndex =
+      source.indexOf(
+        "return finalizeLiveStatusRefreshStats",
+        runtimeSyncIndex
+      );
+
+    assert.ok(canonicalWriteIndex >= 0);
+    assert.ok(runtimeSyncIndex > canonicalWriteIndex);
+    assert.ok(finishedIndex > runtimeSyncIndex);
+    assert.ok(returnIndex > finishedIndex);
+
+    assert.match(
+      source,
+      /live_status_canonical_runtime_sync_failed/u
+    );
+  }
+);
