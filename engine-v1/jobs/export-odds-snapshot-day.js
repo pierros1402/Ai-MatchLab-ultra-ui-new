@@ -24,13 +24,16 @@ import {
 
 // P0-C P5 READ BOUNDARY: existing deployed odds evidence view before material-change checks.
 
-// Hash only the meaningful odds content (not timestamps), so a re-export with no
-// real change leaves the file byte-identical → no git diff → no wasted deploy.
-function contentHash(matches) {
+// Hash only meaningful odds/assessment content (not timestamps), so a re-export
+// with no real change leaves the file byte-identical. The complete aiAssessment
+// must participate: the model stores probabilities under aiAssessment.markets,
+// not aiAssessment.odds. Omitting it can make a forced assessment refresh look
+// like a no-op and leave a stale odds.json with zero assessment rows.
+export function contentHash(matches) {
   const stable = matches.map(m => ({
     matchId: m.matchId, leagueSlug: m.leagueSlug, competition: m.competition,
     home: m.home, away: m.away, dayKey: m.dayKey, kickoffUtc: m.kickoffUtc || m.kickoffLocal,
-    market: m.market, ai: m.aiAssessment?.odds || null
+    market: m.market, aiAssessment: m.aiAssessment || null
   }));
   return crypto.createHash("sha1").update(JSON.stringify(stable)).digest("hex");
 }
