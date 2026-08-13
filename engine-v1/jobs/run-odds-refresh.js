@@ -29,6 +29,37 @@ function readExistingSnapshot(dayKey) {
   }
 }
 
+export function persistedAssessmentSummary(snapshot) {
+  const matches = Array.isArray(snapshot?.matches) ? snapshot.matches : [];
+  const assessmentRows = matches.filter(
+    match => match?.aiAssessment?.markets &&
+      typeof match.aiAssessment.markets === "object" &&
+      Object.keys(match.aiAssessment.markets).length > 0
+  ).length;
+
+  return {
+    matchRows: matches.length,
+    assessmentRows
+  };
+}
+
+export function assertPersistedAssessmentPostcondition(snapshot, dayKey) {
+  const summary = persistedAssessmentSummary(snapshot);
+
+  if (summary.matchRows > 0 && summary.assessmentRows === 0) {
+    const error = new Error(
+      `persisted_model_assessments_missing:${dayKey}:matches=${summary.matchRows}`
+    );
+    error.code = "persisted_model_assessments_missing";
+    error.dayKey = dayKey;
+    error.matchRows = summary.matchRows;
+    error.assessmentRows = summary.assessmentRows;
+    throw error;
+  }
+
+  return summary;
+}
+
 export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   const existing = readExistingSnapshot(dayKey);
   const lastScrapeAt = existing?.generatedAt ? Date.parse(existing.generatedAt) : null;
@@ -64,8 +95,19 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
 
   await runOddsOpening();
   const snap = exportOddsSnapshotDay(dayKey);
+  const persisted = readExistingSnapshot(dayKey);
+  const persistence = assertPersistedAssessmentPostcondition(persisted, dayKey);
 
-  return { ok: true, dayKey, due: true, reason: decision.reason, changed: snap.changed || fixturesChanged, fixturesChanged, count: snap.count };
+  return {
+    ok: true,
+    dayKey,
+    due: true,
+    reason: decision.reason,
+    changed: snap.changed || fixturesChanged,
+    fixturesChanged,
+    count: snap.count,
+    assessmentRows: persistence.assessmentRows
+  };
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   exactFixtureAliases,
+  hasModelAssessment,
   joinCanonicalFixturesWithModelAssessments,
   validatePicksAgainstCanonicalFixtures
 } from "./plan-b-canonical-membership.js";
@@ -60,7 +61,9 @@ test("Plan B joins assessment only through an exact canonical identity", () => {
 
   assert.deepEqual(result.summary, {
     canonicalFixtures: 1,
+    inputRows: 1,
     assessmentRows: 1,
+    nonAssessmentInputRows: 0,
     joinedMatches: 1,
     orphanAssessmentRows: 0,
     canonicalRowsWithoutAssessment: 0,
@@ -74,6 +77,21 @@ test("Plan B joins assessment only through an exact canonical identity", () => {
   assert.equal(result.joinedMatches[0].home, "HJK");
   assert.equal(result.joinedMatches[0].away, "Ilves");
   assert.ok(result.joinedMatches[0].aiAssessment?.markets?.OU25);
+});
+
+test("rows without model markets are not counted as assessment rows", () => {
+  const rowWithoutAssessment = assessment({ aiAssessment: null });
+  const result = joinCanonicalFixturesWithModelAssessments(
+    [canonical()],
+    [rowWithoutAssessment]
+  );
+
+  assert.equal(hasModelAssessment(rowWithoutAssessment), false);
+  assert.equal(result.summary.inputRows, 1);
+  assert.equal(result.summary.assessmentRows, 0);
+  assert.equal(result.summary.nonAssessmentInputRows, 1);
+  assert.equal(result.joinedMatches.length, 0);
+  assert.equal(result.canonicalRowsWithoutAssessment.length, 1);
 });
 
 test("odds-only assessment cannot create a Plan B fixture", () => {

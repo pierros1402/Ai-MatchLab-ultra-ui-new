@@ -50,6 +50,15 @@ function canonicalOutputId(row) {
   return clean(row?.canonicalId) || clean(row?.matchId) || null;
 }
 
+export function hasModelAssessment(row) {
+  const markets = row?.aiAssessment?.markets;
+  return Boolean(
+    markets &&
+    typeof markets === "object" &&
+    Object.keys(markets).length > 0
+  );
+}
+
 function buildUniqueAliasIndex(rows = []) {
   const byAlias = new Map();
   const ambiguousAliases = new Set();
@@ -118,7 +127,9 @@ export function joinCanonicalFixturesWithModelAssessments(
   assessmentRows = []
 ) {
   const canonicalRows = Array.isArray(canonicalFixtures) ? canonicalFixtures : [];
-  const assessments = Array.isArray(assessmentRows) ? assessmentRows : [];
+  const inputRows = Array.isArray(assessmentRows) ? assessmentRows : [];
+  const assessments = inputRows.filter(hasModelAssessment);
+  const nonAssessmentInputRows = inputRows.filter(row => !hasModelAssessment(row));
   const assessmentIndex = buildUniqueAliasIndex(assessments);
   const usedAssessments = new Set();
   const joinedMatches = [];
@@ -188,13 +199,16 @@ export function joinCanonicalFixturesWithModelAssessments(
   return {
     joinedMatches,
     orphanAssessmentRows,
+    nonAssessmentInputRows,
     canonicalRowsWithoutAssessment,
     ambiguousCanonicalMatches,
     canonicalRowsMissingIdentity,
     ambiguousAssessmentAliases: [...assessmentIndex.ambiguousAliases].sort(),
     summary: {
       canonicalFixtures: canonicalRows.length,
+      inputRows: inputRows.length,
       assessmentRows: assessments.length,
+      nonAssessmentInputRows: nonAssessmentInputRows.length,
       joinedMatches: joinedMatches.length,
       orphanAssessmentRows: orphanAssessmentRows.length,
       canonicalRowsWithoutAssessment: canonicalRowsWithoutAssessment.length,
