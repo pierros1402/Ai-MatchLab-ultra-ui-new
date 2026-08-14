@@ -15,6 +15,8 @@ import {
   overlayProductionEvidenceDocumentReadView,
 } from "../core/production-evidence-identity-overlay.js";
 
+// P0-C P5 READ BOUNDARY: existing deployed odds evidence view before material-change checks.
+
 export function assessmentRowCount(matches = []) {
   return (Array.isArray(matches) ? matches : []).filter(
     match =>
