@@ -3,13 +3,6 @@
  *
  * Writes the odds part of the deploy artifact: data/deploy-snapshots/{day}/odds.json
  * from odds memory (real bookmaker market line + drift + our AI assessment).
- *
- * This is what gets committed so the deployed UI can read the odds without any
- * live odds API. It is deliberately a SEPARATE, small file so odds refreshes
- * (every 8h, hourly near kickoff) only touch odds.json — keeping commits small
- * and letting material-change gating skip no-op deploys.
- *
- * Usage: node engine-v1/jobs/export-odds-snapshot-day.js [YYYY-MM-DD]
  */
 
 import fs from "fs";
@@ -24,10 +17,30 @@ import {
 
 // P0-C P5 READ BOUNDARY: existing deployed odds evidence view before material-change checks.
 
-// Hash only meaningful persisted content (not generatedAt/updatedAt timestamps), so
-// a re-export with no real change leaves the file byte-identical and avoids a deploy.
-// aiAssessment is part of the persistent Value input contract: model-market changes
-// must invalidate the hash even when bookmaker odds are unchanged.
+export function assessmentRowCount(matches = []) {
+  return (Array.isArray(matches) ? matches : []).filter(
+    match =>
+      match?.aiAssessment?.markets &&
+      typeof match.aiAssessment.markets === "object" &&
+      Object.keys(match.aiAssessment.markets).length > 0
+  ).length;
+}
+
+export function snapshotRegressionReason(existingMatches = [], candidateMatches = []) {
+  const existing = Array.isArray(existingMatches) ? existingMatches : [];
+  const candidate = Array.isArray(candidateMatches) ? candidateMatches : [];
+
+  if (existing.length > 0 && candidate.length === 0) {
+    return "candidate_empty_regression";
+  }
+
+  if (assessmentRowCount(existing) > assessmentRowCount(candidate)) {
+    return "assessment_coverage_regression";
+  }
+
+  return null;
+}
+
 export function contentHash(matches) {
   const stable = matches.map(m => ({
     matchId: m.matchId,
@@ -50,25 +63,46 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
   ensureDir(dir);
 
   const file = resolveDataPath("deploy-snapshots", dayKey, "odds.json");
-  const hash = contentHash(day.matches);
+  const candidateMatches = Array.isArray(day?.matches) ? day.matches : [];
+  const hash = contentHash(candidateMatches);
 
-  // Skip rewrite if nothing material changed (keeps deploys few).
+  let existing = null;
   try {
-    const existing = overlayProductionEvidenceDocumentReadView(
+    existing = overlayProductionEvidenceDocumentReadView(
       JSON.parse(fs.readFileSync(file, "utf8")),
     );
-    if (existing.hash === hash) {
-      return { ok: true, dayKey, count: day.count, file, changed: false };
-    }
   } catch (error) {
-    if (
-      String(error?.code || "").startsWith(
-        "production_evidence_read_",
-      )
-    ) {
+    if (String(error?.code || "").startsWith("production_evidence_read_")) {
       throw error;
     }
-    /* no existing file */
+  }
+
+  if (existing) {
+    const existingMatches = Array.isArray(existing?.matches) ? existing.matches : [];
+    const regressionReason = snapshotRegressionReason(existingMatches, candidateMatches);
+    if (regressionReason) {
+      return {
+        ok: true,
+        dayKey,
+        count: existingMatches.length,
+        assessmentRows: assessmentRowCount(existingMatches),
+        file,
+        changed: false,
+        preservedExisting: true,
+        reason: regressionReason
+      };
+    }
+
+    if (existing.hash === hash) {
+      return {
+        ok: true,
+        dayKey,
+        count: candidateMatches.length,
+        assessmentRows: assessmentRowCount(candidateMatches),
+        file,
+        changed: false
+      };
+    }
   }
 
   const payload = {
@@ -77,12 +111,20 @@ export function exportOddsSnapshotDay(dayKey = athensDayKey()) {
     generatedAt: new Date().toISOString(),
     source: "autonomous-odds-capture",
     hash,
-    count: day.count,
-    matches: day.matches
+    count: candidateMatches.length,
+    assessmentRows: assessmentRowCount(candidateMatches),
+    matches: candidateMatches
   };
 
   fs.writeFileSync(file, JSON.stringify(payload, null, 2), "utf8");
-  return { ok: true, dayKey, count: day.count, file, changed: true };
+  return {
+    ok: true,
+    dayKey,
+    count: candidateMatches.length,
+    assessmentRows: payload.assessmentRows,
+    file,
+    changed: true
+  };
 }
 
 const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
