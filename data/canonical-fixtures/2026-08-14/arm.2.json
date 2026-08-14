@@ -2,13 +2,22 @@
   "dayKey": "2026-08-14",
   "leagueSlug": "arm.2",
   "leagueName": "Armenian First League",
-  "updatedAt": "2026-08-14T09:23:53.075Z",
+  "updatedAt": "2026-08-14T14:29:08.037Z",
   "count": 3,
   "sourceMeta": {
     "acquisitionProvider": "flashscore",
     "requestedLeagueSlug": "arm.2",
     "requestedDayKey": "2026-08-28",
-    "mergedAt": "2026-08-14T09:23:53.075Z"
+    "mergedAt": "2026-08-14T09:23:53.075Z",
+    "flashscoreFinalRefresh": {
+      "matchedBy": "exact_source_id",
+      "requestedDayKey": "2026-08-14",
+      "offsets": [
+        0
+      ],
+      "changedRows": 2,
+      "mergedAt": "2026-08-14T14:29:08.037Z"
+    }
   },
   "fixtures": [
     {
@@ -28,16 +37,17 @@
       "kickoffUtc": "2026-08-14T12:00:00.000Z",
       "homeTeam": "BKMA 2",
       "awayTeam": "Mika",
-      "scoreHome": null,
-      "scoreAway": null,
+      "scoreHome": 0,
+      "scoreAway": 1,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": null,
+      "status": "FT",
+      "rawStatus": "STATUS_FINAL",
+      "minute": "FT",
       "venue": null,
       "firstSeenAt": "2026-08-11T21:07:13.664Z",
-      "lastSeenAt": "2026-08-14T09:23:53.070Z"
+      "lastSeenAt": "2026-08-14T14:29:08.035Z",
+      "statusType": "STATUS_FINAL"
     },
     {
       "canonicalId": "cid_arm2_hayq_andranik_20260814",
@@ -60,12 +70,53 @@
       "scoreAway": null,
       "penalties": null,
       "decidedBy": null,
-      "status": "STATUS_SCHEDULED",
-      "rawStatus": "STATUS_SCHEDULED",
+      "status": "STATUS_POSTPONED",
+      "rawStatus": "STATUS_POSTPONED",
       "minute": null,
       "venue": null,
       "firstSeenAt": "2026-08-11T21:07:13.665Z",
-      "lastSeenAt": "2026-08-14T09:23:53.070Z"
+      "lastSeenAt": "2026-08-14T14:29:08.037Z",
+      "statusType": "STATUS_POSTPONED",
+      "statusCorrection": {
+        "correctedAt": "2026-08-14T14:29:08.037Z",
+        "decisionId": "flashscore-nonplayed-auto-20260814-6aJgCE53-v1",
+        "policyVersion": "flashscore-nonplayed-autonomous-v1",
+        "correctedFrom": {
+          "status": "STATUS_SCHEDULED",
+          "statusType": null,
+          "rawStatus": "STATUS_SCHEDULED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "correctedTo": {
+          "status": "STATUS_POSTPONED",
+          "statusType": "STATUS_POSTPONED",
+          "rawStatus": "STATUS_POSTPONED",
+          "minute": null,
+          "scoreHome": null,
+          "scoreAway": null
+        },
+        "reason": "verified_flashscore_nonplayed_decision",
+        "decisionBasis": "exact_provider_id_same_day_ordered_team_terminal_nonplayed",
+        "decisionMode": "autonomous_exact_provider_occurrence",
+        "providerEvidence": {
+          "provider": "flashscore",
+          "providerMatchId": "6aJgCE53",
+          "home": "Hayq",
+          "away": "Andranik",
+          "kickoffUtc": "2026-08-14T12:00:00.000Z",
+          "canonicalSource": "flashscore",
+          "canonicalProviderMatchId": "6aJgCE53",
+          "statusCode": "3",
+          "statusDetailCode": "4",
+          "playedFinal": false,
+          "finished": false,
+          "nonPlayedTerminal": true,
+          "scoreHome": null,
+          "scoreAway": null
+        }
+      }
     },
     {
       "canonicalId": "cid_arm2_noah2_bentonit_20260814",
