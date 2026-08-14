@@ -72,9 +72,17 @@ function leagueTeamIndex(slug, standingsDoc, resolveAliases, normalize) {
   };
 }
 
-function kickoffHasStarted(fixture, nowMs) {
-  const kickoffMs = Date.parse(fixture?.kickoffUtc || "");
-  return Number.isFinite(kickoffMs) && kickoffMs <= nowMs;
+function kickoffTimestamp(fixture) {
+  const kickoffUtc = fixture?.kickoffUtc;
+  if (
+    typeof kickoffUtc !== "string" ||
+    !kickoffUtc.trim() ||
+    !/(?:Z|[+-]\d{2}:\d{2})$/i.test(kickoffUtc)
+  ) {
+    return null;
+  }
+  const kickoffMs = Date.parse(kickoffUtc);
+  return Number.isFinite(kickoffMs) ? kickoffMs : null;
 }
 
 export function supplementCanonicalAssessments(dayKey, options = {}) {
@@ -98,6 +106,7 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     canonicalFixtures: fixtures.length,
     eligibleUpcomingFixtures: 0,
     assessmentRowsWritten: 0,
+    skippedInvalidKickoff: 0,
     skippedStarted: 0,
     skippedMissingIdentity: 0,
     skippedMissingStandings: 0,
@@ -115,7 +124,12 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
       summary.skippedMissingIdentity++;
       continue;
     }
-    if (kickoffHasStarted(fixture, nowMs)) {
+    const kickoffMs = kickoffTimestamp(fixture);
+    if (kickoffMs === null) {
+      summary.skippedInvalidKickoff++;
+      continue;
+    }
+    if (kickoffMs <= nowMs) {
       summary.skippedStarted++;
       continue;
     }

@@ -77,3 +77,64 @@ test("canonical supplement never creates a new assessment after kickoff", () => 
   assert.equal(summary.assessmentRowsWritten, 0);
   assert.equal(recorded.length, 0);
 });
+test("canonical supplement fails closed on missing or invalid kickoff", () => {
+  const recorded = [];
+  let standingsReads = 0;
+  let priceCalls = 0;
+
+  const summary = supplementCanonicalAssessments("2026-08-14", {
+    nowMs: NOW,
+    canonicalFixtures: [
+      {
+        canonicalId: "cid_test_missing_kickoff_20260814",
+        leagueSlug: "test.1",
+        dayKey: "2026-08-14",
+        homeTeam: "Home",
+        awayTeam: "Away"
+      },
+      {
+        canonicalId: "cid_test_invalid_kickoff_20260814",
+        leagueSlug: "test.1",
+        dayKey: "2026-08-14",
+        homeTeam: "Home",
+        awayTeam: "Away",
+        kickoffUtc: "not-a-valid-kickoff"
+      },
+      {
+        canonicalId: "cid_test_timezone_less_kickoff_20260814",
+        leagueSlug: "test.1",
+        dayKey: "2026-08-14",
+        homeTeam: "Home",
+        awayTeam: "Away",
+        kickoffUtc: "2026-08-14T18:00:00.000"
+      }
+    ],
+    readStandingsFn: (...args) => {
+      standingsReads++;
+      return standings(...args);
+    },
+    resolveAliasesFn: (_slug, name) => [name],
+    formFn: noRates,
+    xgFn: noRates,
+    priceFn: () => {
+      priceCalls++;
+      return {
+        model: {},
+        markets: {
+          OU25: {
+            probs: { over: 0.6, under: 0.4 }
+          }
+        }
+      };
+    },
+    recordFn: (...args) => recorded.push(args)
+  });
+
+  assert.equal(summary.skippedInvalidKickoff, 3);
+  assert.equal(summary.skippedStarted, 0);
+  assert.equal(summary.eligibleUpcomingFixtures, 0);
+  assert.equal(summary.assessmentRowsWritten, 0);
+  assert.equal(standingsReads, 0);
+  assert.equal(priceCalls, 0);
+  assert.equal(recorded.length, 0);
+});
