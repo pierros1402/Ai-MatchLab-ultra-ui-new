@@ -138,3 +138,98 @@ test("canonical supplement fails closed on missing or invalid kickoff", () => {
   assert.equal(priceCalls, 0);
   assert.equal(recorded.length, 0);
 });
+
+
+test("canonical supplement uses strict six-match team-form fallback when trusted standings are unavailable", () => {
+  const recorded = [];
+  let priceOptions = null;
+
+  const summary = supplementCanonicalAssessments("2026-08-14", {
+    nowMs: NOW,
+    canonicalFixtures: [{
+      canonicalId: "cid_test_form_fallback_20260814",
+      leagueSlug: "test.1",
+      leagueName: "Test League",
+      dayKey: "2026-08-14",
+      homeTeam: "Home FC",
+      awayTeam: "Away FC",
+      kickoffUtc: "2026-08-14T18:00:00.000Z"
+    }],
+    readStandingsFn: () => ({ accepted: null }),
+    resolveAliasesFn: (_slug, name) => {
+      if (name === "Home FC") return ["Home", "Home FC"];
+      if (name === "Away FC") return ["Away", "Away FC"];
+      return [name];
+    },
+    formFn: (_slug, name) => {
+      if (name === "Home") {
+        return { sample: 6, gfRate: 1.8, gaRate: 0.9, ppg: 2.0 };
+      }
+      if (name === "Away") {
+        return { sample: 6, gfRate: 1.2, gaRate: 1.1, ppg: 1.5 };
+      }
+      return { sample: 0, gfRate: null, gaRate: null, ppg: null };
+    },
+    xgFn: () => ({ sample: 0, xgForRate: null, xgAgainstRate: null }),
+    priceFn: (homeRow, awayRow, options) => {
+      assert.deepEqual(homeRow, {});
+      assert.deepEqual(awayRow, {});
+      priceOptions = options;
+      return {
+        model: { source: "ai_poisson_standings_plus_form", formUsed: true, xgUsed: false },
+        markets: { OU25: { probs: { over: 0.57, under: 0.43 } } }
+      };
+    },
+    recordFn: (id, meta, pricing) => recorded.push({ id, meta, pricing })
+  });
+
+  assert.equal(summary.eligibleUpcomingFixtures, 1);
+  assert.equal(summary.assessmentRowsWritten, 1);
+  assert.equal(summary.assessmentRowsFromTrustedStandings, 0);
+  assert.equal(summary.assessmentRowsFromTeamFormFallback, 1);
+  assert.equal(summary.skippedMissingStandings, 0);
+  assert.equal(summary.skippedInsufficientTeamEvidence, 0);
+  assert.equal(recorded.length, 1);
+  assert.equal(recorded[0].meta.aiAssessment.inputSource, "canonical_fixture_team_form_fallback");
+  assert.equal(recorded[0].meta.aiAssessment.model.source, "ai_poisson_team_form_fallback");
+  assert.equal(recorded[0].meta.aiAssessment.model.trustedStandingsUsed, false);
+  assert.equal(recorded[0].meta.aiAssessment.model.minimumFormSamplePerSide, 6);
+  assert.equal(priceOptions.homeForm.sample, 6);
+  assert.equal(priceOptions.awayForm.sample, 6);
+});
+
+test("canonical team-form fallback fails closed below six form samples on either side", () => {
+  const recorded = [];
+  let priceCalls = 0;
+
+  const summary = supplementCanonicalAssessments("2026-08-14", {
+    nowMs: NOW,
+    canonicalFixtures: [{
+      canonicalId: "cid_test_form_fallback_insufficient_20260814",
+      leagueSlug: "test.1",
+      dayKey: "2026-08-14",
+      homeTeam: "Home",
+      awayTeam: "Away",
+      kickoffUtc: "2026-08-14T18:00:00.000Z"
+    }],
+    readStandingsFn: () => ({ accepted: null }),
+    resolveAliasesFn: (_slug, name) => [name],
+    formFn: (_slug, name) => name === "Home"
+      ? { sample: 6, gfRate: 1.5, gaRate: 1.0, ppg: 1.8 }
+      : { sample: 5, gfRate: 1.2, gaRate: 1.2, ppg: 1.4 },
+    xgFn: () => ({ sample: 10, xgForRate: 1.4, xgAgainstRate: 1.0 }),
+    priceFn: () => {
+      priceCalls++;
+      return { model: {}, markets: { OU25: { probs: { over: 0.5, under: 0.5 } } } };
+    },
+    recordFn: (...args) => recorded.push(args)
+  });
+
+  assert.equal(summary.eligibleUpcomingFixtures, 1);
+  assert.equal(summary.assessmentRowsWritten, 0);
+  assert.equal(summary.assessmentRowsFromTeamFormFallback, 0);
+  assert.equal(summary.skippedMissingStandings, 1);
+  assert.equal(summary.skippedInsufficientTeamEvidence, 1);
+  assert.equal(priceCalls, 0);
+  assert.equal(recorded.length, 0);
+});

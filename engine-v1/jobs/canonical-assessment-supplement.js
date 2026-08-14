@@ -5,9 +5,11 @@
  * receive the same Poisson aiAssessment used by the autonomous odds-opening
  * path when the live fixture/odds feed is temporarily incomplete.
  *
- * Safety: canonical identity drives membership; trusted standings drive the
- * model; already-started fixtures are never newly assessed; bookmaker odds are
- * never fabricated or replaced.
+ * Safety: canonical identity drives membership; trusted standings are preferred.
+ * When trusted standings are unavailable, a model-only fallback is allowed only
+ * when BOTH teams have a full six-match recent-form sample. xG may enrich that
+ * evidence but never substitutes for the six-match form threshold. Already-started
+ * fixtures are never newly assessed; bookmaker odds are never fabricated/replaced.
  */
 
 import fs from "fs";
@@ -85,6 +87,53 @@ function kickoffTimestamp(fixture) {
   return Number.isFinite(kickoffMs) ? kickoffMs : null;
 }
 
+const MIN_FALLBACK_FORM_SAMPLE = 6;
+
+function uniqueEvidenceNames(slug, teamName, resolveAliases) {
+  const out = [];
+  const seen = new Set();
+  const aliases = resolveAliases(slug, teamName);
+  const values = [
+    teamName,
+    ...(Array.isArray(aliases) ? aliases : [])
+  ];
+
+  for (const value of values) {
+    const name = String(value || "").trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    out.push(name);
+  }
+
+  return out;
+}
+
+function bestTeamEvidence(slug, teamName, resolveAliases, formFn, xgFn) {
+  let best = {
+    name: String(teamName || "").trim(),
+    form: { sample: 0, gfRate: null, gaRate: null, ppg: null },
+    xg: { sample: 0, xgForRate: null, xgAgainstRate: null },
+    formSample: 0,
+    xgSample: 0
+  };
+
+  for (const name of uniqueEvidenceNames(slug, teamName, resolveAliases)) {
+    const form = formFn(slug, name) || {};
+    const xg = xgFn(slug, name) || {};
+    const formSample = Number(form?.sample) || 0;
+    const xgSample = Number(xg?.sample) || 0;
+
+    if (
+      formSample > best.formSample ||
+      (formSample === best.formSample && xgSample > best.xgSample)
+    ) {
+      best = { name, form, xg, formSample, xgSample };
+    }
+  }
+
+  return best;
+}
+
 export function supplementCanonicalAssessments(dayKey, options = {}) {
   const fixtures = Array.isArray(options.canonicalFixtures)
     ? options.canonicalFixtures
@@ -106,11 +155,14 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     canonicalFixtures: fixtures.length,
     eligibleUpcomingFixtures: 0,
     assessmentRowsWritten: 0,
+    assessmentRowsFromTrustedStandings: 0,
+    assessmentRowsFromTeamFormFallback: 0,
     skippedInvalidKickoff: 0,
     skippedStarted: 0,
     skippedMissingIdentity: 0,
     skippedMissingStandings: 0,
     skippedTeamResolution: 0,
+    skippedInsufficientTeamEvidence: 0,
     skippedEmptyAssessment: 0
   };
 
@@ -145,25 +197,57 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
     }
 
     const league = leagueCache.get(leagueSlug);
-    if (!league) {
-      summary.skippedMissingStandings++;
-      continue;
-    }
+    const homeHit = league ? findTeamFn(home, league.teams) : null;
+    const awayHit = league ? findTeamFn(away, league.teams) : null;
 
-    const homeHit = findTeamFn(home, league.teams);
-    const awayHit = findTeamFn(away, league.teams);
-    if (!homeHit || !awayHit) {
-      summary.skippedTeamResolution++;
-      continue;
-    }
+    const homeEvidence = bestTeamEvidence(
+      leagueSlug,
+      home,
+      resolveAliasesFn,
+      formFn,
+      xgFn
+    );
+    const awayEvidence = bestTeamEvidence(
+      leagueSlug,
+      away,
+      resolveAliasesFn,
+      formFn,
+      xgFn
+    );
 
-    const priced = priceFn(homeHit.row, awayHit.row, {
-      leagueAvgGoalsPerTeam: league.leagueAvg,
-      homeForm: formFn(leagueSlug, home),
-      awayForm: formFn(leagueSlug, away),
-      homeXg: xgFn(leagueSlug, home),
-      awayXg: xgFn(leagueSlug, away)
-    });
+    let priced = null;
+    let assessmentPath = null;
+
+    if (league && homeHit && awayHit) {
+      priced = priceFn(homeHit.row, awayHit.row, {
+        leagueAvgGoalsPerTeam: league.leagueAvg,
+        homeForm: homeEvidence.form,
+        awayForm: awayEvidence.form,
+        homeXg: homeEvidence.xg,
+        awayXg: awayEvidence.xg
+      });
+      assessmentPath = "trusted_standings";
+    } else {
+      const fallbackEligible =
+        homeEvidence.formSample >= MIN_FALLBACK_FORM_SAMPLE &&
+        awayEvidence.formSample >= MIN_FALLBACK_FORM_SAMPLE;
+
+      if (!fallbackEligible) {
+        if (!league) summary.skippedMissingStandings++;
+        else summary.skippedTeamResolution++;
+        summary.skippedInsufficientTeamEvidence++;
+        continue;
+      }
+
+      priced = priceFn({}, {}, {
+        leagueAvgGoalsPerTeam: 1.35,
+        homeForm: homeEvidence.form,
+        awayForm: awayEvidence.form,
+        homeXg: homeEvidence.xg,
+        awayXg: awayEvidence.xg
+      });
+      assessmentPath = "team_form_fallback";
+    }
 
     const markets = priced?.markets;
     if (!markets || typeof markets !== "object" || Object.keys(markets).length === 0) {
@@ -182,14 +266,36 @@ export function supplementCanonicalAssessments(dayKey, options = {}) {
         dayKey,
         kickoffUtc: fixture?.kickoffUtc || null,
         aiAssessment: {
-          model: priced?.model || null,
+          model: assessmentPath === "team_form_fallback"
+            ? {
+                ...(priced?.model || {}),
+                source: priced?.model?.xgUsed
+                  ? "ai_poisson_team_form_xg_fallback"
+                  : "ai_poisson_team_form_fallback",
+                trustedStandingsUsed: false,
+                minimumFormSamplePerSide: MIN_FALLBACK_FORM_SAMPLE
+              }
+            : priced?.model
+              ? {
+                  ...priced.model,
+                  trustedStandingsUsed: true
+                }
+              : null,
           markets,
-          inputSource: "canonical_fixture_trusted_standings"
+          inputSource: assessmentPath === "team_form_fallback"
+            ? "canonical_fixture_team_form_fallback"
+            : "canonical_fixture_trusted_standings"
         }
       },
       { markets: {} }
     );
+
     summary.assessmentRowsWritten++;
+    if (assessmentPath === "team_form_fallback") {
+      summary.assessmentRowsFromTeamFormFallback++;
+    } else {
+      summary.assessmentRowsFromTrustedStandings++;
+    }
   }
 
   return summary;
