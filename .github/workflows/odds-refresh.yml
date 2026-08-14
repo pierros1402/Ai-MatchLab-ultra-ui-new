@@ -22,9 +22,11 @@ on:
 permissions:
   contents: write
 
+# Serialize every repository data writer. Odds refresh must never race the Daily
+# snapshot pipeline over deploy-snapshots/{day}/odds.json.
 concurrency:
-  group: odds-refresh
-  cancel-in-progress: true
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
 
 jobs:
   refresh-odds:

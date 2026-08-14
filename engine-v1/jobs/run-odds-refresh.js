@@ -1,15 +1,7 @@
 /**
  * run-odds-refresh.js
  *
- * CI-friendly, self-gating odds refresh. Designed to be invoked hourly but only
- * actually re-scrape per policy (every 8h, or hourly within 4h before a kickoff),
- * so deploys stay few. State is derived from the committed odds.json itself
- * (generatedAt = last scrape, kickoffs = tracked matches) — no extra storage.
- *
- * Exits with `changed=true` in its JSON only when odds.json materially changed,
- * which the workflow uses to decide whether to commit/push.
- *
- * Usage: node engine-v1/jobs/run-odds-refresh.js [YYYY-MM-DD] [--force]
+ * CI-friendly, self-gating odds refresh.
  */
 
 import fs from "fs";
@@ -17,6 +9,7 @@ import { pathToFileURL } from "node:url";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { runOddsOpening } from "./run-odds-opening.js";
+import { supplementCanonicalAssessments } from "./canonical-assessment-supplement.js";
 import { exportOddsSnapshotDay } from "./export-odds-snapshot-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
 import { oddsUpdateDecision, kickoffToUtcMs } from "../odds/odds-schedule.js";
@@ -36,24 +29,27 @@ export function persistedAssessmentSummary(snapshot) {
       typeof match.aiAssessment.markets === "object" &&
       Object.keys(match.aiAssessment.markets).length > 0
   ).length;
-
-  return {
-    matchRows: matches.length,
-    assessmentRows
-  };
+  return { matchRows: matches.length, assessmentRows };
 }
 
-export function assertPersistedAssessmentPostcondition(snapshot, dayKey) {
+export function assertPersistedAssessmentPostcondition(
+  snapshot,
+  dayKey,
+  { canonicalFixtureCount = 0 } = {}
+) {
   const summary = persistedAssessmentSummary(snapshot);
+  const canonicalCount = Number(canonicalFixtureCount) || 0;
+  const requiresAssessment = canonicalCount > 0 || summary.matchRows > 0;
 
-  if (summary.matchRows > 0 && summary.assessmentRows === 0) {
+  if (requiresAssessment && summary.assessmentRows === 0) {
     const error = new Error(
-      `persisted_model_assessments_missing:${dayKey}:matches=${summary.matchRows}`
+      `persisted_model_assessments_missing:${dayKey}:matches=${summary.matchRows}:canonical=${canonicalCount}`
     );
     error.code = "persisted_model_assessments_missing";
     error.dayKey = dayKey;
     error.matchRows = summary.matchRows;
     error.assessmentRows = summary.assessmentRows;
+    error.canonicalFixtureCount = canonicalCount;
     throw error;
   }
 
@@ -67,7 +63,9 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     .map(m => m.kickoffUtc ? Date.parse(m.kickoffUtc) : kickoffToUtcMs(m.kickoffLocal))
     .filter(Boolean);
   const existingAssessmentRows = (existing?.matches || []).filter(
-    match => match?.aiAssessment?.markets && Object.keys(match.aiAssessment.markets).length > 0
+    match => match?.aiAssessment?.markets &&
+      typeof match.aiAssessment.markets === "object" &&
+      Object.keys(match.aiAssessment.markets).length > 0
   ).length;
   const missingAssessmentInput =
     Array.isArray(existing?.matches) &&
@@ -80,7 +78,6 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
       ? { due: true, reason: "missing_model_assessments", hoursSinceLast: null }
       : oddsUpdateDecision({ lastScrapeAt, kickoffsUtc });
 
-  // Fixtures snapshot refreshes on every gated run (cheap; new fixtures appear).
   let fixturesChanged = false;
   try {
     const fx = await exportFixturesSnapshotDay(dayKey);
@@ -94,9 +91,18 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
   }
 
   await runOddsOpening();
+
+  // Model-only canonical supplement. No bookmaker odds are fabricated and no
+  // already-started fixture receives a new assessment.
+  const canonicalSupplement = supplementCanonicalAssessments(dayKey);
+
   const snap = exportOddsSnapshotDay(dayKey);
   const persisted = readExistingSnapshot(dayKey);
-  const persistence = assertPersistedAssessmentPostcondition(persisted, dayKey);
+  const persistence = assertPersistedAssessmentPostcondition(
+    persisted,
+    dayKey,
+    { canonicalFixtureCount: canonicalSupplement.canonicalFixtures }
+  );
 
   return {
     ok: true,
@@ -106,7 +112,8 @@ export async function runOddsRefresh(dayKey = athensDayKey(), opts = {}) {
     changed: snap.changed || fixturesChanged,
     fixturesChanged,
     count: snap.count,
-    assessmentRows: persistence.assessmentRows
+    assessmentRows: persistence.assessmentRows,
+    canonicalSupplement
   };
 }
 
