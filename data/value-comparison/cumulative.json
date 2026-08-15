@@ -1,12 +1,12 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-08-15T06:01:55.456Z",
+  "generatedAt": "2026-08-15T07:47:30.046Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
   "trialStartDay": "2026-07-05",
-  "dayCount": 36,
+  "dayCount": 39,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-08-10",
+  "lastDay": "2026-08-15",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -45,7 +45,10 @@
     "2026-08-07",
     "2026-08-08",
     "2026-08-09",
-    "2026-08-10"
+    "2026-08-10",
+    "2026-08-13",
+    "2026-08-14",
+    "2026-08-15"
   ],
   "daysExcluded": [
     {
@@ -59,11 +62,48 @@
           "historicalArtifactRecovered": false,
           "retrospectivePlanASynthesisAllowed": false
         },
+        "planBAvailability": null,
         "planBPickCount": 18
+      }
+    },
+    {
+      "dayKey": "2026-08-11",
+      "reason": "plan_b_was_not_observed_by_the_historical_pipeline",
+      "details": {
+        "comparisonEligible": false,
+        "planAAvailability": {
+          "available": true,
+          "count": 0,
+          "immutable": true,
+          "observationSignature": "67ba9f17dca8a53c5821043274694b0223f3219602fe6a75d5743acba730e5a0"
+        },
+        "planBAvailability": {
+          "available": false,
+          "reason": "plan_b_was_not_observed_by_the_historical_pipeline"
+        },
+        "planBPickCount": 0
+      }
+    },
+    {
+      "dayKey": "2026-08-12",
+      "reason": "plan_b_was_not_observed_by_the_historical_pipeline",
+      "details": {
+        "comparisonEligible": false,
+        "planAAvailability": {
+          "available": true,
+          "count": 0,
+          "immutable": true,
+          "observationSignature": "43750a753a62804a6ebe14f0b0d145667456754e64eb83e1f2d0bb81471df36e"
+        },
+        "planBAvailability": {
+          "available": false,
+          "reason": "plan_b_was_not_observed_by_the_historical_pipeline"
+        },
+        "planBPickCount": 0
       }
     }
   ],
-  "excludedDayCount": 1,
+  "excludedDayCount": 3,
   "integrityDiagnostics": [
     {
       "dayKey": "2026-07-05",
@@ -476,19 +516,44 @@
           "invariant_blocked"
         ]
       }
+    },
+    {
+      "dayKey": "2026-08-13",
+      "reason": "build_report_missing",
+      "details": {
+        "ok": false,
+        "reason": "build_report_missing"
+      }
+    },
+    {
+      "dayKey": "2026-08-14",
+      "reason": "build_report_missing",
+      "details": {
+        "ok": false,
+        "reason": "build_report_missing"
+      }
+    },
+    {
+      "dayKey": "2026-08-15",
+      "reason": "build_report_missing",
+      "details": {
+        "ok": false,
+        "reason": "build_report_missing"
+      }
     }
   ],
-  "integrityWarningDayCount": 32,
+  "integrityWarningDayCount": 35,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 87,
-        "uniqueMatches": 84,
+        "picks": 88,
+        "uniqueMatches": 85,
         "settled": 83,
         "wins": 55,
         "losses": 28,
+        "voids": 4,
         "unresolved": 1,
         "unsupported": 0,
         "oddsAvailable": 41,
@@ -503,12 +568,13 @@
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 161,
-        "uniqueMatches": 91,
+        "picks": 163,
+        "uniqueMatches": 92,
         "settled": 161,
         "wins": 108,
         "losses": 53,
-        "unresolved": 0,
+        "voids": 0,
+        "unresolved": 2,
         "unsupported": 0,
         "oddsAvailable": 56,
         "totalStake": 56,
@@ -520,7 +586,7 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 74,
+    "picksDeltaPlanBMinusPlanA": 75,
     "settledDeltaPlanBMinusPlanA": 78,
     "winsDeltaPlanBMinusPlanA": 53,
     "lossesDeltaPlanBMinusPlanA": 25,

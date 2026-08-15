@@ -293,3 +293,31 @@ test("cumulative reports VOID picks separately without treating them as settled"
   assert.equal(result.payload.plans.A.totals.voids, 1);
   assert.equal(result.payload.plans.A.totals.hitRate, 1);
 });
+
+test("cumulative preserves the explicit reason when Plan B was never observed", () => {
+  const dir = tempDir();
+  fs.writeFileSync(path.join(dir, "2026-08-11.json"), JSON.stringify({
+    ok: true,
+    date: "2026-08-11",
+    comparisonEligible: false,
+    planAAvailability: { available: true, count: 0 },
+    planBAvailability: {
+      available: false,
+      reason: "plan_b_was_not_observed_by_the_historical_pipeline"
+    }
+  }), "utf8");
+
+  const result = buildValueComparisonCumulative({
+    dir,
+    output: path.join(dir, "cumulative.json"),
+    write: false,
+    requireIntegrityClean: false,
+    requireImmutablePlanA: false
+  });
+
+  assert.equal(
+    result.payload.daysExcluded[0].reason,
+    "plan_b_was_not_observed_by_the_historical_pipeline"
+  );
+  assert.equal(result.payload.daysExcluded[0].details.planBAvailability.available, false);
+});
