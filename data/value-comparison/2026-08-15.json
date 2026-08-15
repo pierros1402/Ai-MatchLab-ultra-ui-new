@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-15",
-  "generatedAt": "2026-08-15T16:57:14.218Z",
+  "generatedAt": "2026-08-15T21:40:55.415Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-08-15",
     "finalResultsDir": "data/final-results/2026-08-15",
-    "verifiedFinalResults": 291,
+    "verifiedFinalResults": 430,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-15",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -57,13 +57,13 @@
       "summary": {
         "picks": 1,
         "uniqueMatches": 1,
-        "settled": 0,
-        "wins": 0,
+        "settled": 1,
+        "wins": 1,
         "losses": 0,
         "voids": 0,
-        "unresolved": 1,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
+        "hitRate": 1,
         "oddsAvailable": 0,
         "averageOdds": null,
         "totalStake": null,
@@ -76,13 +76,13 @@
           "market": "Over / Under 2.5",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
+          "hitRate": 1,
           "oddsAvailable": 0,
           "averageOdds": null,
           "totalStake": null,
@@ -112,11 +112,75 @@
           "aiFairOdds": null,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 3,
+            "scoreKey": "2-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-15T21:39:45.068Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401906506",
+                "canonicalId": "cid_bol1_realoruro_orientepetrolero_20260815",
+                "leagueName": "Bol 1",
+                "home": "Real Oruro",
+                "away": "Oriente Petrolero",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-08-15T19:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-08-15T21:38:44.961Z",
+                "scoreKey": "2-3",
+                "homeTeam": "Real Oruro",
+                "awayTeam": "Oriente Petrolero",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_bol1_realoruro_orientepetrolero_20260815"
+                  ],
+                  "sourceFixtureId": "cid_bol1_realoruro_orientepetrolero_20260815",
+                  "resolvedFixtureId": "cid_bol1_realoruro_orientepetrolero_20260815",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Real Oruro",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Oriente Petrolero",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "UFH0RpDs",
+                "country": "Bolivia",
+                "leagueName": "Division Profesional",
+                "leaguePath": "/football/bolivia/division-profesional/",
+                "home": "Real Oruro",
+                "away": "Oriente Petrolero",
+                "scoreHome": 2,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-08-15T19:00:00.000Z",
+                "scoreKey": "2-3"
+              }
+            ]
+          }
         }
       ]
     },
@@ -528,10 +592,10 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": 1,
-    "settledDeltaPlanBMinusPlanA": 2,
-    "winsDeltaPlanBMinusPlanA": 2,
+    "settledDeltaPlanBMinusPlanA": 1,
+    "winsDeltaPlanBMinusPlanA": 1,
     "lossesDeltaPlanBMinusPlanA": 0,
-    "hitRateDeltaPlanBMinusPlanA": null,
+    "hitRateDeltaPlanBMinusPlanA": 0,
     "roiDeltaPlanBMinusPlanA": null
   }
 }
