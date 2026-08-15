@@ -10,7 +10,7 @@ function tempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "aiml-value-cumulative-"));
 }
 
-function summary({ picks = 0, wins = 0, losses = 0, unresolved = 0 }) {
+function summary({ picks = 0, wins = 0, losses = 0, voids = 0, unresolved = 0 }) {
   const settled = wins + losses;
   return {
     picks,
@@ -18,6 +18,7 @@ function summary({ picks = 0, wins = 0, losses = 0, unresolved = 0 }) {
     settled,
     wins,
     losses,
+    voids,
     unresolved,
     unsupported: 0,
     hitRate: settled ? wins / settled : null,
@@ -72,6 +73,7 @@ test("cumulative trial starts on 2026-07-05 and includes zero-pick days", () => 
   assert.equal(result.payload.plans.A.totals.picks, 5);
   assert.equal(result.payload.plans.A.totals.wins, 4);
   assert.equal(result.payload.plans.A.totals.losses, 1);
+  assert.equal(result.payload.plans.A.totals.voids, 0);
   assert.equal(result.payload.plans.B.totals.picks, 4);
 });
 
@@ -267,4 +269,27 @@ test("cumulative explicitly excludes an unrecoverable Plan A observation gap", (
     result.payload.plans.B.totals.wins,
     2
   );
+});
+
+test("cumulative reports VOID picks separately without treating them as settled", () => {
+  const dir = tempDir();
+  writeComparison(
+    dir,
+    "2026-07-19",
+    summary({ picks: 2, wins: 1, voids: 1 }),
+    summary({ picks: 1, wins: 1 })
+  );
+
+  const result = buildValueComparisonCumulative({
+    dir,
+    output: path.join(dir, "cumulative.json"),
+    write: false,
+    requireIntegrityClean: false,
+    requireImmutablePlanA: false
+  });
+
+  assert.equal(result.payload.plans.A.totals.picks, 2);
+  assert.equal(result.payload.plans.A.totals.settled, 1);
+  assert.equal(result.payload.plans.A.totals.voids, 1);
+  assert.equal(result.payload.plans.A.totals.hitRate, 1);
 });
