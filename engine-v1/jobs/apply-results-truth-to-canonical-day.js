@@ -25,6 +25,7 @@ import path from "path";
 import { pathToFileURL } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { overlayResultsTruth } from "../core/results-truth-overlay.js";
+import { assertCanonicalStatusCoherence } from "../core/canonical-status-coherence.js";
 
 export function applyResultsTruthToCanonicalDay(dayKey) {
   const safeDayKey = String(dayKey || "").trim();
@@ -79,6 +80,7 @@ export function applyResultsTruthToCanonicalDay(dayKey) {
       mode: "results_truth_finalize_sweep"
     };
 
+    assertCanonicalStatusCoherence(payload, { path: file });
     fs.writeFileSync(file, JSON.stringify(payload, null, 2) + "\n", "utf8");
 
     stats.leaguesWritten++;

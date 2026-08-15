@@ -5,7 +5,7 @@ import {
   overlayResultsTruth,
 } from "./results-truth-overlay.js";
 
-test("repairs an already-final match whose rawStatus is still scheduled", () => {
+test("does not perform a rawStatus-only repair without trusted result truth", () => {
   const input = [{
     canonicalId: "cid_test_final_raw_status",
     leagueSlug: "test.1",
@@ -20,11 +20,11 @@ test("repairs an already-final match whose rawStatus is still scheduled", () => 
 
   const [result] = overlayResultsTruth(input, "2026-07-28");
 
-  assert.equal(result.status, "FT");
-  assert.equal(result.statusType, "FT");
-  assert.equal(result.rawStatus, "STATUS_FINAL");
-  assert.equal(result.scoreHome, 0);
-  assert.equal(result.scoreAway, 1);
+  // Step31 forbids a rawStatus-only terminal mutation.  Without an exact
+  // trusted result-truth row, the overlay must fail closed and leave the
+  // internally conflicting source row untouched.  Canonical writers repair
+  // or reject incoherent terminal truth through the monotonicity contract.
+  assert.deepEqual(result, input[0]);
 });
 
 test("leaves an already-consistent final match unchanged", () => {

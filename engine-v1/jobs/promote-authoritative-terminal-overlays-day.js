@@ -13,6 +13,10 @@ import {
 } from "../core/authoritative-terminal-writeback.js";
 
 import {
+  assertCanonicalStatusCoherence
+} from "../core/canonical-status-coherence.js";
+
+import {
   resolveDataPath
 } from "../storage/data-root.js";
 
@@ -315,41 +319,51 @@ export function promoteAuthoritativeTerminalOverlaysDay(
       changed &&
       options.write !== false
     ) {
-      writeJsonStable(
-        file,
-        {
-          ...payload,
-          fixtures:
-            nextFixtures,
-          sourceMeta: {
-            ...(
-              payload?.sourceMeta &&
-              typeof payload.sourceMeta ===
-                "object"
-                ? payload.sourceMeta
-                : {}
-            ),
+      const nextPayload = {
+        ...payload,
+        fixtures:
+          nextFixtures,
+        sourceMeta: {
+          ...(
+            payload?.sourceMeta &&
+            typeof payload.sourceMeta ===
+              "object"
+              ? payload.sourceMeta
+              : {}
+          ),
 
-            authoritativeTerminalOverlayPromotion: {
-              schema:
-                report.schema,
-              promotedAt:
-                report.generatedAt,
-              exactProviderIdOnly:
-                true,
-              orderedTeamIdentityRequired:
-                true,
-              athensDayRequired:
-                true,
-              explicitTerminalStatusRequired:
-                true,
-              numericScoreRequired:
-                true,
-              heuristicIdentity:
-                false
-            }
+          authoritativeTerminalOverlayPromotion: {
+            schema:
+              report.schema,
+            promotedAt:
+              report.generatedAt,
+            exactProviderIdOnly:
+              true,
+            orderedTeamIdentityRequired:
+              true,
+            athensDayRequired:
+              true,
+            explicitTerminalStatusRequired:
+              true,
+            numericScoreRequired:
+              true,
+            heuristicIdentity:
+              false
           }
         }
+      };
+
+      assertCanonicalStatusCoherence(
+        nextPayload,
+        {
+          path:
+            file
+        }
+      );
+
+      writeJsonStable(
+        file,
+        nextPayload
       );
     }
   }

@@ -34,6 +34,10 @@ import { normalizeTeamTokens, normalizeTeamKey } from "./normalize.js";
 import { repairCanonicalIdDay } from "./canonical-id.js";
 import { resolveAliasCandidates } from "../storage/team-aliases-db.js";
 import { sameSquadMarkers, teamNamesMatch } from "./team-identity.js";
+import {
+  isCanonicalStatusBundleField,
+  mergeDuplicateCanonicalStatus
+} from "./canonical-status-monotonicity.js";
 
 const KICKOFF_TOLERANCE_MS = 6 * 60 * 60 * 1000;
 
@@ -230,7 +234,7 @@ function canonicalIdentityAliases(row) {
 
 // Keep `winner`'s identity (ids, naming, canonicalId); backfill missing fields.
 function absorbRow(winner, loser) {
-  const merged = { ...winner };
+  let merged = { ...winner };
 
   // Canonical/publishable fixture identity must not retain a provider event ID
   // in matchId. Provider identity remains source-scoped in sourceId/sourceMatchId.
@@ -247,10 +251,13 @@ function absorbRow(winner, loser) {
   }
 
   for (const key of Object.keys(loser || {})) {
+    if (isCanonicalStatusBundleField(key)) continue;
     if (!meaningful(merged[key]) && meaningful(loser[key])) {
       merged[key] = loser[key];
     }
   }
+
+  merged = mergeDuplicateCanonicalStatus(merged, winner, loser);
 
   // Provider IDs are durable lineage, not winner-only display fields. Preserve
   // every known provider→event binding on the surviving canonical fixture so a

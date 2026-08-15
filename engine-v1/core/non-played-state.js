@@ -95,6 +95,17 @@ export function matchStateTokens(row) {
     .filter(Boolean);
 }
 
+export function hasProtectedNonPlayedSignal(row) {
+  const tokens = matchStateTokens(row);
+
+  return tokens.some(token =>
+    PRE_KICKOFF_NON_PLAYED_TOKENS.has(token) ||
+    PLAY_INTERRUPTED_TOKENS.has(token) ||
+    TEMPORARY_DELAY_TOKENS.has(token) ||
+    RESULT_INVALIDATED_TOKENS.has(token)
+  );
+}
+
 export function classifyMatchState(row) {
   const tokens = matchStateTokens(row);
   const matchedClasses = [];

@@ -6,6 +6,8 @@ import { ESPN_BASE, leagueName } from "../config.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { dedupeLeagueDayFixtures } from "../core/fixture-dedup.js";
+import { mergeMonotonicStatusObservation } from "../core/canonical-status-monotonicity.js";
+import { assertCanonicalStatusCoherence } from "../core/canonical-status-coherence.js";
 import { getProductionIdentityResolver } from "../core/production-identity-resolver-runtime.js";
 import { teamPairMatches } from "../core/team-identity.js";
 import { espnProviderFetchSlugs } from "../core/espn-league-identity.js";
@@ -207,7 +209,9 @@ function writeCanonicalLeague(dayKey, slug, fixtures, sourceMeta = {}) {
     fixtures: cleanFixtures
   };
 
-  writeJson(canonicalLeagueFile(dayKey, slug), payload);
+  const file = canonicalLeagueFile(dayKey, slug);
+  assertCanonicalStatusCoherence(payload, { path: file });
+  writeJson(file, payload);
   return payload;
 }
 
@@ -658,40 +662,10 @@ export function mergeStatusRow(
   previous,
   incoming
 ) {
-  const merged = {
-    ...previous
-  };
-
-  const mutableStatusFields = [
-    "providerLeagueSlug",
-    "fetchedDayKey",
-    "status",
-    "statusType",
-    "rawStatus",
-    "operationalState",
-    "minute",
-    "scoreHome",
-    "scoreAway",
-    "penalties",
-    "decidedBy",
-    "lastSeenAt"
-  ];
-
-  for (
-    const key of
-    mutableStatusFields
-  ) {
-    if (
-      meaningful(
-        incoming?.[key]
-      )
-    ) {
-      merged[key] =
-        incoming[key];
-    }
-  }
-
-  return merged;
+  return mergeMonotonicStatusObservation(
+    previous,
+    incoming
+  );
 }
 
 function rowStatusSignature(row) {

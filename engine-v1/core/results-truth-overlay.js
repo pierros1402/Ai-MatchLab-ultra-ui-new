@@ -22,6 +22,10 @@ import fs from "fs";
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayFromKickoff } from "./daykey.js";
 import { STATUS_RANK, statusRankFromParts } from "./display-contract.js";
+import {
+  projectTrustedResultsTruthFinal,
+  shouldAttemptResultsTruthFinal
+} from "./canonical-status-monotonicity.js";
 import { teamTokens, tokensMatch } from "./team-identity.js";
 import {
   bindProductionResultIdentity,
@@ -336,43 +340,9 @@ export function overlayResultsTruth(
           ? identity.row
           : m;
 
-      const displayStatusRank = statusRankFromParts(
-        displayRow?.status,
-        null,
-        displayRow?.statusType,
-        displayRow?.statusName
-      );
-
-      const currentRank =
-        displayStatusRank === STATUS_RANK.FINAL
-          ? STATUS_RANK.FINAL
-          : statusRankFromParts(
-              displayRow?.status,
-              displayRow?.rawStatus,
-              displayRow?.statusType,
-              displayRow?.statusName
-            );
-
-      if (currentRank === STATUS_RANK.FINAL) {
-        const rawStatus = String(displayRow?.rawStatus || "").trim().toUpperCase();
-        const rawStatusIsTerminal =
-          rawStatus === "FT" ||
-          rawStatus === "FINAL" ||
-          rawStatus === "STATUS_FINAL" ||
-          rawStatus === "FULL_TIME" ||
-          rawStatus === "STATUS_FULL_TIME";
-
-        if (!rawStatusIsTerminal) {
-          return {
-            ...displayRow,
-            rawStatus: "STATUS_FINAL",
-          };
-        }
-
+      if (!shouldAttemptResultsTruthFinal(displayRow)) {
         return displayRow;
       }
-
-      if (currentRank === STATUS_RANK.SPECIAL) return displayRow;
 
       const slug = String(displayRow.leagueSlug || "");
       if (!slug) return displayRow;
@@ -425,15 +395,11 @@ export function overlayResultsTruth(
 
       if (!found) return displayRow;
 
-      return {
-        ...displayRow,
-        status: "FT",
-        statusType: "FT",
-        rawStatus: "STATUS_FINAL",
-        scoreHome: found.scoreHome,
-        scoreAway: found.scoreAway,
-        resultSource: "league-memory",
-      };
+      return projectTrustedResultsTruthFinal(
+        displayRow,
+        found,
+        { resultSource: "league-memory" }
+      );
     } catch {
       return m;
     }
