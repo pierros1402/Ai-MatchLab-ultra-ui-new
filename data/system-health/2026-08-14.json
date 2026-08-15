@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-14",
-  "generatedAt": "2026-08-13T21:07:20.296Z",
+  "generatedAt": "2026-08-15T07:54:32.536Z",
   "severity": "error",
   "issueCounts": {
-    "error": 5,
+    "error": 6,
     "warning": 3,
     "info": 1
   },
   "alert": true,
   "alertCounts": {
-    "error": 5,
+    "error": 6,
     "warning": 3,
     "info": 0
   },
-  "activeIssueCount": 9,
-  "actionableIssueCount": 8,
+  "activeIssueCount": 10,
+  "actionableIssueCount": 9,
   "newIssueCount": 9,
-  "newActionableIssueCount": 8,
+  "newActionableIssueCount": 9,
   "resolvedIssueCount": 9,
-  "persistentIssueCount": 0,
+  "persistentIssueCount": 1,
   "activeIssues": [
     {
       "severity": "error",
@@ -95,18 +95,97 @@
       }
     },
     {
-      "severity": "info",
+      "severity": "error",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "four_plan_comparison_incomplete",
+      "message": "Value comparison is missing one or more required plans.",
       "details": {
-        "artifact": "data/value-comparison/2026-08-14.json",
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "B"
+        ],
+        "missingPlans": [
+          "A2",
+          "B2"
+        ],
+        "artifact": "data/value-comparison/2026-08-14.json"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
+      "details": {
+        "complete": false,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "B"
+        ],
+        "missingPlans": [
+          "A2",
+          "B2"
+        ],
+        "planA": {
+          "count": null,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": null,
+          "summary": null
+        },
+        "planB": {
+          "count": null,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": null,
+          "summary": null
+        }
       }
     }
   ],
@@ -182,6 +261,29 @@
       "message": "Production value audit artifact is missing.",
       "details": {
         "artifact": "data/deploy-snapshots/2026-08-14/value-audit.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "value-comparison",
+      "type": "four_plan_comparison_incomplete",
+      "message": "Value comparison is missing one or more required plans.",
+      "details": {
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "B"
+        ],
+        "missingPlans": [
+          "A2",
+          "B2"
+        ],
+        "artifact": "data/value-comparison/2026-08-14.json"
       }
     }
   ],
@@ -260,18 +362,26 @@
       }
     },
     {
-      "severity": "info",
+      "severity": "error",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "four_plan_comparison_incomplete",
+      "message": "Value comparison is missing one or more required plans.",
       "details": {
-        "artifact": "data/value-comparison/2026-08-14.json",
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "B"
+        ],
+        "missingPlans": [
+          "A2",
+          "B2"
+        ],
+        "artifact": "data/value-comparison/2026-08-14.json"
       }
     }
   ],
@@ -347,6 +457,29 @@
       "message": "Production value audit artifact is missing.",
       "details": {
         "artifact": "data/deploy-snapshots/2026-08-14/value-audit.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "value-comparison",
+      "type": "four_plan_comparison_incomplete",
+      "message": "Value comparison is missing one or more required plans.",
+      "details": {
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "B"
+        ],
+        "missingPlans": [
+          "A2",
+          "B2"
+        ],
+        "artifact": "data/value-comparison/2026-08-14.json"
       }
     }
   ],
@@ -425,20 +558,100 @@
       }
     },
     {
-      "severity": "info",
+      "severity": "error",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "four_plan_comparison_incomplete",
+      "message": "Value comparison is missing one or more required plans.",
       "details": {
-        "artifact": "data/value-comparison/2026-08-13.json",
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "B"
+        ],
+        "missingPlans": [
+          "A2",
+          "B2"
+        ],
+        "artifact": "data/value-comparison/2026-08-13.json"
       }
     }
   ],
-  "persistentIssues": []
+  "persistentIssues": [
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
+      "details": {
+        "complete": false,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "B"
+        ],
+        "missingPlans": [
+          "A2",
+          "B2"
+        ],
+        "planA": {
+          "count": null,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": null,
+          "summary": null
+        },
+        "planB": {
+          "count": null,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": null,
+          "summary": null
+        }
+      }
+    }
+  ]
 }
