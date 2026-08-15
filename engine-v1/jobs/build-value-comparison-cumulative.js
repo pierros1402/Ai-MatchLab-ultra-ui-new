@@ -173,11 +173,15 @@ export function buildValueComparisonCumulative(options = {}) {
         dayKey: day,
         reason:
           payload?.planAAvailability?.reason ||
+          payload?.planBAvailability?.reason ||
           "comparison_ineligible",
         details: {
           comparisonEligible: false,
           planAAvailability:
             payload?.planAAvailability ||
+            null,
+          planBAvailability:
+            payload?.planBAvailability ||
             null,
           planBPickCount:
             Number(
