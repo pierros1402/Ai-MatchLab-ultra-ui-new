@@ -67,6 +67,42 @@ import {
 import { auditStandingsFoundation } from "./audit-standings-foundation.js";
 import { buildModelPriors } from "./build-model-priors.js";
 
+export function ensureH2HFoundationBeforeDetails({
+  validate = validateH2HFoundationSync,
+  rebuild = rebuildH2HFoundationFromCurrentHistory,
+} = {}) {
+  const before = validate();
+  if (before?.ok === true) {
+    return {
+      ok: true,
+      rebuilt: false,
+      previousReason: null,
+      validation: before,
+    };
+  }
+
+  const rebuilt = rebuild();
+  const validation = rebuilt?.validation || validate();
+  if (rebuilt?.ok !== true || validation?.ok !== true) {
+    const error = new Error("details_h2h_foundation_not_ready");
+    error.code = "DETAILS_H2H_FOUNDATION_NOT_READY";
+    error.details = { previous: before, rebuilt, validation };
+    throw error;
+  }
+
+  return {
+    ok: true,
+    rebuilt: true,
+    previousReason: before?.reason || null,
+    artifactCount: rebuilt?.artifactCount ?? 0,
+    foundationFingerprint:
+      rebuilt?.foundation?.foundationFingerprint ||
+      validation?.artifact?.foundationFingerprint ||
+      null,
+    validation,
+  };
+}
+
 function readJsonIfExists(filePath) {
   try {
     if (!fs.existsSync(filePath)) return null;
@@ -865,6 +901,29 @@ export async function runDailyCycle(options = {}) {
     error.details = detailsHistoryIndexFoundation;
     throw error;
   }
+
+  // Details validates both history-index and H2H foundations. A clean runner
+  // can legitimately start with a missing/stale H2H foundation, so heal it
+  // before the first detail is built. The final post-history rebuild remains
+  // in place because settlement can mutate history later in this same run.
+  console.log("[daily-cycle] details-h2h-foundation:start", {
+    dayKey
+  });
+
+  const detailsH2HFoundation =
+    ensureH2HFoundationBeforeDetails();
+
+  console.log("[daily-cycle] details-h2h-foundation:done", {
+    ok: detailsH2HFoundation?.ok === true,
+    dayKey,
+    rebuilt: detailsH2HFoundation?.rebuilt === true,
+    previousReason: detailsH2HFoundation?.previousReason || null,
+    artifactCount: detailsH2HFoundation?.artifactCount ?? 0,
+    foundationFingerprint:
+      detailsH2HFoundation?.foundationFingerprint ||
+      detailsH2HFoundation?.validation?.artifact?.foundationFingerprint ||
+      null
+  });
 
   console.log("[daily-cycle] details-build:start", {
     dayKey,
