@@ -2,13 +2,48 @@
   "dayKey": "2026-08-15",
   "leagueSlug": "esp.1",
   "leagueName": "LaLiga",
-  "updatedAt": "2026-08-15T19:36:14.605Z",
+  "updatedAt": "2026-08-15T20:09:12.532Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "esp.1",
-    "requestedDayKey": "2026-08-18",
-    "mergedAt": "2026-08-15T19:36:14.605Z"
+    "requestedDayKey": "2026-08-15",
+    "providerFetchSlugs": [
+      "esp.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-15T20:09:12.532Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-15T20:09:48.993Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -27,20 +62,43 @@
       "awayTeam": "Getafe",
       "venue": "Mendizorrotza",
       "firstSeenAt": "2026-07-31T18:47:37.379Z",
-      "lastSeenAt": "2026-08-15T19:36:14.603Z",
+      "lastSeenAt": "2026-08-15T20:09:12.532Z",
       "providerIds": {
         "flashscore": "E75kfwuq",
         "espn": "401882926"
       },
       "providerLeagueSlug": "esp.1",
       "status": "FT",
-      "statusType": "STATUS_FINAL",
       "rawStatus": "STATUS_FULL_TIME",
       "minute": "90'+9'",
       "scoreHome": 3,
       "scoreAway": 0,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-15T20:09:48.993Z",
+        "provider": "espn",
+        "providerMatchId": "401882926",
+        "dayKey": "2026-08-15",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 3,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_esp1_sevilla_rayovallecano_20260815",
@@ -58,19 +116,17 @@
       "awayTeam": "Rayo Vallecano",
       "venue": "Ramón Sánchez Pizjuán Stadium",
       "firstSeenAt": "2026-07-31T18:47:37.379Z",
-      "lastSeenAt": "2026-08-15T19:36:14.604Z",
+      "lastSeenAt": "2026-08-15T20:09:12.532Z",
       "providerIds": {
         "flashscore": "6RZt3GwK",
         "espn": "401882918"
       },
       "providerLeagueSlug": "esp.1",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "status": "LIVE",
+      "rawStatus": "STATUS_IN_PROGRESS",
+      "minute": "31'",
+      "scoreHome": 0,
+      "scoreAway": 1
     }
   ]
 }
