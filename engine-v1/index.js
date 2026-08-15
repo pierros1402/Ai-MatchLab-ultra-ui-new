@@ -36,6 +36,7 @@ import { resolveOddsForFixtures } from "./odds/odds-fixture-bridge.js";
 import { normTeam } from "./odds/multi-odds-merge.js";
 import { buildStandingsBlock } from "./core/details-rich-blocks.js";
 import { computeMatchdayAxis, isLeagueIntegrityGreen } from "./core/matchday-axis.js";
+import { applyTrustedLeaguePresentation } from "./core/league-display-identity.js";
 import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
@@ -3825,15 +3826,12 @@ function buildDisplayMatchesForDateUncached(date) {
   function attachCountry(m) {
     const meta = resolveLeagueMeta(m.leagueSlug);
     const matchday = leagueMatchday(m.leagueSlug);
-    if (!meta) return matchday == null ? m : { ...m, matchday };
-    const country = meta.country && meta.country !== "Unknown" ? meta.country : null;
-    // Fill a friendly league name only when the row carries none or just the raw
-    // slug — never override a real source name (so "Brazil Serie B" is kept).
-    const rawName = String(m.leagueName || "").trim();
-    const leagueName = (!rawName || rawName === String(m.leagueSlug || "")) && meta.name
-      ? meta.name
-      : m.leagueName;
-    return { ...m, leagueName, country: m.country || country, leagueTier: m.leagueTier ?? meta.tier ?? null, matchday: m.matchday ?? matchday };
+
+    return applyTrustedLeaguePresentation(
+      m,
+      meta,
+      matchday
+    );
   }
 
   function attachAssessment(rawMatch) {

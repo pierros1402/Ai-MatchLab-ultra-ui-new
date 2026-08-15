@@ -135,6 +135,262 @@
     return m && m.id != null && SAVED_IDS.has(String(m.id));
   }
 
+  function normalizedLeagueText(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function leagueNameOf(m) {
+    if (m?.competitionIdentityMismatch === true && m?.leagueName) {
+      return String(m.leagueName).trim();
+    }
+
+    return String(
+      m?.canonicalLeagueName ||
+      m?.leagueDisplayName ||
+      m?.leagueName ||
+      m?.leagueSlug ||
+      "Other"
+    ).trim();
+  }
+
+  function leagueIdentityKey(m) {
+    const explicit =
+      m?.canonicalCompetitionKey ||
+      m?.competitionKey ||
+      m?.canonicalCompetitionId ||
+      m?.competitionId ||
+      m?.tournamentId ||
+      m?.leagueId ||
+      "";
+
+    if (String(explicit).trim()) {
+      return "id:" + normalizedLeagueText(explicit);
+    }
+
+    const realName = leagueNameOf(m);
+
+    // Correctly resolved competitions remain grouped by canonical slug.
+    // Only a proven slug/name mismatch falls back to the real competition
+    // name, preventing broad acquisition partitions such as eng.1 from
+    // merging unrelated lower leagues.
+    if (
+      m?.competitionIdentityMismatch === true &&
+      realName
+    ) {
+      return "name:" + normalizedLeagueText(realName);
+    }
+
+    const slug = normalizedLeagueText(m?.leagueSlug);
+
+    if (slug) {
+      return "slug:" + slug;
+    }
+
+    if (realName) {
+      return "name:" + normalizedLeagueText(realName);
+    }
+
+    return "name:other";
+  }
+
+  function leagueTierOf(m) {
+    if (m?.competitionIdentityMismatch === true) return null;
+
+    const value =
+      m?.canonicalLeagueTier ??
+      m?.competitionTier ??
+      m?.leagueTier ??
+      null;
+
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function roundNumberOf(m) {
+    if (m?.providerRound?.verified === true) {
+      const provider = Number(
+        m?.providerRound?.roundNumber ??
+        m?.providerRound?.matchday
+      );
+
+      if (Number.isInteger(provider) && provider > 0) {
+        return provider;
+      }
+    }
+
+    const direct = Number(m?.roundNumber);
+    if (Number.isInteger(direct) && direct > 0) {
+      return direct;
+    }
+
+    if (m?.competitionIdentityMismatch !== true) {
+      const matchday = Number(m?.matchday);
+      if (Number.isInteger(matchday) && matchday > 0) {
+        return matchday;
+      }
+    }
+
+    return null;
+  }
+
+  function dominantRoundOf(rows) {
+    const counts = new Map();
+
+    for (const m of Array.isArray(rows) ? rows : []) {
+      const round = roundNumberOf(m);
+      if (round == null) continue;
+      counts.set(round, (counts.get(round) || 0) + 1);
+    }
+
+    const ranked = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+
+    if (!ranked.length) return null;
+    if (ranked.length > 1 && ranked[0][1] === ranked[1][1]) {
+      return null;
+    }
+
+    return ranked[0][0];
+  }
+
+  function displayTeamKey(value) {
+    const generic = new Set([
+      "fc", "afc", "cf", "sc", "ac", "club", "the"
+    ]);
+
+    const aliases = new Map([
+      ["utd", "united"],
+      ["intl", "international"]
+    ]);
+
+    const tokens = String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(token => aliases.get(token) || token)
+      .filter(token => !generic.has(token));
+
+    let key = tokens.join(" ");
+
+    if (key === "mk dons") {
+      key = "milton keynes dons";
+    }
+
+    return key;
+  }
+
+  function scorePairOf(m) {
+    const home = Number(m?.scoreHome);
+    const away = Number(m?.scoreAway);
+
+    if (
+      m?.scoreHome == null ||
+      m?.scoreAway == null ||
+      !Number.isFinite(home) ||
+      !Number.isFinite(away)
+    ) {
+      return null;
+    }
+
+    return [home, away];
+  }
+
+  function isDisplayDuplicate(a, b) {
+    if (leagueIdentityKey(a) !== leagueIdentityKey(b)) return false;
+
+    const ta = Number(a?.kickoff_ms || 0);
+    const tb = Number(b?.kickoff_ms || 0);
+
+    if (
+      !Number.isFinite(ta) ||
+      !Number.isFinite(tb) ||
+      ta <= 0 ||
+      tb <= 0 ||
+      Math.abs(ta - tb) > 60000
+    ) {
+      return false;
+    }
+
+    if (displayTeamKey(a?.home) !== displayTeamKey(b?.home)) {
+      return false;
+    }
+
+    if (displayTeamKey(a?.away) !== displayTeamKey(b?.away)) {
+      return false;
+    }
+
+    const sa = scorePairOf(a);
+    const sb = scorePairOf(b);
+
+    if (
+      sa &&
+      sb &&
+      (sa[0] !== sb[0] || sa[1] !== sb[1])
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function mergeDisplayDuplicate(a, b) {
+    const aFinal = isFinalStatus(a);
+    const bFinal = isFinalStatus(b);
+
+    let winner = a;
+
+    if (bFinal && !aFinal) {
+      winner = b;
+    } else if (aFinal === bFinal) {
+      const aLength =
+        String(a?.home || "").length +
+        String(a?.away || "").length;
+
+      const bLength =
+        String(b?.home || "").length +
+        String(b?.away || "").length;
+
+      if (bLength > aLength) winner = b;
+    }
+
+    const loser = winner === a ? b : a;
+
+    return {
+      ...loser,
+      ...winner
+    };
+  }
+
+  function dedupeForDisplay(rows) {
+    const out = [];
+
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const index = out.findIndex(
+        existing => isDisplayDuplicate(existing, row)
+      );
+
+      if (index === -1) {
+        out.push(row);
+        continue;
+      }
+
+      out[index] = mergeDisplayDuplicate(out[index], row);
+    }
+
+    return out;
+  }
+
   function getMount() {
     return document.getElementById("active-leagues-list");
   }
@@ -145,7 +401,7 @@
 
     const rawMatches = Array.isArray(payload?.matches) ? payload.matches : [];
 
-    const matches = rawMatches.map(m => ({
+    const matches = dedupeForDisplay(rawMatches.map(m => ({
       ...m,
       id: m.id ?? m.matchId,
       home: m.home ?? m.homeTeam,
@@ -154,9 +410,9 @@
         m.kickoff_ms != null
           ? Number(m.kickoff_ms)
           : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0)
-    }));
+    })));
 
-    const sig = matches.map(m => [m.id, m.status, m.rawStatus, m.minute, m.scoreHome, m.scoreAway, m?.penalties?.home, m?.penalties?.away, m.decidedBy, m?.providerRound?.roundNumber, m?.roundNumber].join(":")).join("|");
+    const sig = matches.map(m => [m.id, m.status, m.rawStatus, m.minute, m.scoreHome, m.scoreAway, m?.penalties?.home, m?.penalties?.away, m.decidedBy, leagueIdentityKey(m), m?.providerRound?.roundNumber, m?.roundNumber, m?.matchday, m?.competitionIdentityMismatch].join(":")).join("|");
     if (sig === LAST_SIG) return;
 
     LAST_SIG = sig;
@@ -177,23 +433,11 @@
 
     for (const m of matches) {
       const country = m.country || "";
-      // League identity is the canonical slug, never the provider display name.
-      // Different source labels such as "Colombia Primera B" and
-      // "Primera B - Clausura" must remain one league group when both are col.2.
-      const leagueKey = String(
-        m.leagueSlug ||
-        m.leagueName ||
-        "Other"
-      )
-        .trim()
-        .toLowerCase();
-      const leagueName = String(
-        m.canonicalLeagueName ||
-        m.leagueDisplayName ||
-        m.leagueName ||
-        m.leagueSlug ||
-        "Other"
-      ).trim();
+      // Group by the real competition identity, not by a broad acquisition
+      // partition slug. Different lower leagues may legitimately share eng.1
+      // as historical/provider partition metadata and must remain separate.
+      const leagueKey = leagueIdentityKey(m);
+      const leagueName = leagueNameOf(m);
 
       if (!byCountry.has(country)) {
         byCountry.set(country, new Map());
@@ -204,7 +448,7 @@
       if (!leagues.has(leagueKey)) {
         leagues.set(leagueKey, {
           name: leagueName,
-          tier: m.leagueTier ?? null,
+          tier: leagueTierOf(m),
           arr: []
         });
       } else {
@@ -222,11 +466,13 @@
           existing.name = leagueName;
         }
 
+        const candidateTier = leagueTierOf(m);
+
         if (
           existing.tier == null &&
-          m.leagueTier != null
+          candidateTier != null
         ) {
-          existing.tier = m.leagueTier;
+          existing.tier = candidateTier;
         }
       }
 
@@ -262,13 +508,7 @@
 
         const header = document.createElement("div");
         header.className = "today-league";
-        const verifiedRounds = league.arr
-          .map(m => m?.providerRound?.verified === true ? Number(m?.providerRound?.roundNumber) : (m?.roundNumber != null ? Number(m.roundNumber) : null))
-          .filter(Number.isInteger);
-        const counts = new Map();
-        for (const round of verifiedRounds) counts.set(round, (counts.get(round) || 0) + 1);
-        const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0]);
-        const dominantRound = ranked.length && (ranked.length === 1 || ranked[0][1] > ranked[1][1]) ? ranked[0][0] : null;
+        const dominantRound = dominantRoundOf(league.arr);
         header.textContent = dominantRound != null
           ? `${league.name} · ${dominantRound}η Αγωνιστική`
           : league.name;

@@ -12,91 +12,142 @@ const source = fs
   )
   .replace(/\r\n/g, "\n");
 
-test("active panel uses canonical league slug as group identity", () => {
-  assert.ok(
-    source.includes(
-      "const leagueKey = String(\n" +
-      "        m.leagueSlug ||\n" +
-      "        m.leagueName ||\n" +
-      "        \"Other\""
-    )
-  );
+function normalize(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
 
-  assert.ok(
-    !source.includes(
-      "const leagueKey = m.leagueName || m.leagueSlug || \"Other\";"
-    )
-  );
-});
+function identityKey(match) {
+  const explicit =
+    match.canonicalCompetitionKey ||
+    match.competitionKey ||
+    match.canonicalCompetitionId ||
+    match.competitionId ||
+    match.tournamentId ||
+    match.leagueId ||
+    "";
 
-test("active panel preserves a human league display name", () => {
-  assert.ok(
-    source.includes(
-      "m.canonicalLeagueName ||\n" +
-      "        m.leagueDisplayName ||\n" +
-      "        m.leagueName ||\n" +
-      "        m.leagueSlug"
-    )
-  );
+  if (String(explicit).trim()) {
+    return "id:" + normalize(explicit);
+  }
 
-  assert.ok(
-    !source.includes(
-      "leagues.set(leagueKey, { name: leagueKey"
-    )
-  );
-});
+  const realName =
+    match.canonicalLeagueName ||
+    match.leagueDisplayName ||
+    match.leagueName ||
+    match.leagueSlug ||
+    "Other";
 
-test("two provider labels for col.2 produce one group", () => {
-  const matches = [
+  if (
+    match.competitionIdentityMismatch === true &&
+    realName
+  ) {
+    return "name:" + normalize(realName);
+  }
+
+  const slug = normalize(match.leagueSlug);
+
+  if (slug) {
+    return "slug:" + slug;
+  }
+
+  return "name:" + normalize(realName);
+}
+
+test("resolved provider labels retain one canonical-slug group", () => {
+  const rows = [
     {
       leagueSlug: "col.2",
-      leagueName: "Primera B - Clausura"
+      leagueName: "Primera B - Clausura",
+      competitionIdentityMismatch: false
     },
     {
       leagueSlug: "col.2",
-      leagueName: "Colombia Primera B"
+      leagueName: "Colombia Primera B",
+      competitionIdentityMismatch: false
     }
   ];
 
-  const groups = new Map();
-
-  for (const match of matches) {
-    const key = String(
-      match.leagueSlug ||
-      match.leagueName ||
-      "Other"
-    )
-      .trim()
-      .toLowerCase();
-
-    const name = String(
-      match.canonicalLeagueName ||
-      match.leagueDisplayName ||
-      match.leagueName ||
-      match.leagueSlug ||
-      "Other"
-    ).trim();
-
-    if (!groups.has(key)) {
-      groups.set(key, {
-        name,
-        rows: []
-      });
-    } else if (
-      name.length >
-      groups.get(key).name.length
-    ) {
-      groups.get(key).name = name;
-    }
-
-    groups.get(key).rows.push(match);
-  }
-
-  assert.equal(groups.size, 1);
-  assert.ok(groups.has("col.2"));
-  assert.equal(groups.get("col.2").rows.length, 2);
-  assert.equal(
-    groups.get("col.2").name,
-    "Primera B - Clausura"
+  assert.deepEqual(
+    [...new Set(rows.map(identityKey))],
+    ["slug:col 2"]
   );
+
+  assert.match(
+    source,
+    /if \(slug\) \{\s+return "slug:" \+ slug;/
+  );
+});
+
+test("proven broad eng.1 mismatch separates real competitions", () => {
+  const rows = [
+    {
+      leagueSlug: "eng.1",
+      leagueName: "Isthmian League Premier Division",
+      competitionIdentityMismatch: true
+    },
+    {
+      leagueSlug: "eng.1",
+      leagueName: "Southern League Premier Central",
+      competitionIdentityMismatch: true
+    },
+    {
+      leagueSlug: "eng.1",
+      leagueName: "Southern League Premier South",
+      competitionIdentityMismatch: true
+    }
+  ];
+
+  const keys = rows.map(identityKey);
+
+  assert.equal(new Set(keys).size, 3);
+
+  assert.deepEqual(
+    keys,
+    [
+      "name:isthmian league premier division",
+      "name:southern league premier central",
+      "name:southern league premier south"
+    ]
+  );
+});
+
+test("human competition display-name resolution remains present", () => {
+  assert.match(
+    source,
+    /function leagueNameOf\(m\)/
+  );
+
+  assert.match(
+    source,
+    /m\?\.canonicalLeagueName \|\|/
+  );
+
+  assert.match(
+    source,
+    /m\?\.leagueDisplayName \|\|/
+  );
+
+  assert.match(
+    source,
+    /m\?\.leagueName \|\|/
+  );
+});
+
+test("explicit competition identity outranks slug and source label", () => {
+  const a = {
+    canonicalCompetitionKey: "colombia-primera-b",
+    leagueSlug: "col.2",
+    leagueName: "Primera B - Clausura"
+  };
+
+  const b = {
+    canonicalCompetitionKey: "colombia-primera-b",
+    leagueSlug: "wrong.partition",
+    leagueName: "Colombia Primera B"
+  };
+
+  assert.equal(identityKey(a),identityKey(b));
 });

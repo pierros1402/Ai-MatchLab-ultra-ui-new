@@ -191,6 +191,262 @@
     return m && m.id != null && SAVED_IDS.has(String(m.id));
   }
 
+  function normalizedLeagueText(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+  }
+
+  function leagueNameOf(m) {
+    if (m?.competitionIdentityMismatch === true && m?.leagueName) {
+      return String(m.leagueName).trim();
+    }
+
+    return String(
+      m?.canonicalLeagueName ||
+      m?.leagueDisplayName ||
+      m?.leagueName ||
+      m?.leagueSlug ||
+      "Other"
+    ).trim();
+  }
+
+  function leagueIdentityKey(m) {
+    const explicit =
+      m?.canonicalCompetitionKey ||
+      m?.competitionKey ||
+      m?.canonicalCompetitionId ||
+      m?.competitionId ||
+      m?.tournamentId ||
+      m?.leagueId ||
+      "";
+
+    if (String(explicit).trim()) {
+      return "id:" + normalizedLeagueText(explicit);
+    }
+
+    const realName = leagueNameOf(m);
+
+    // Correctly resolved competitions remain grouped by canonical slug.
+    // Only a proven slug/name mismatch falls back to the real competition
+    // name, preventing broad acquisition partitions such as eng.1 from
+    // merging unrelated lower leagues.
+    if (
+      m?.competitionIdentityMismatch === true &&
+      realName
+    ) {
+      return "name:" + normalizedLeagueText(realName);
+    }
+
+    const slug = normalizedLeagueText(m?.leagueSlug);
+
+    if (slug) {
+      return "slug:" + slug;
+    }
+
+    if (realName) {
+      return "name:" + normalizedLeagueText(realName);
+    }
+
+    return "name:other";
+  }
+
+  function leagueTierOf(m) {
+    if (m?.competitionIdentityMismatch === true) return null;
+
+    const value =
+      m?.canonicalLeagueTier ??
+      m?.competitionTier ??
+      m?.leagueTier ??
+      null;
+
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function roundNumberOf(m) {
+    if (m?.providerRound?.verified === true) {
+      const provider = Number(
+        m?.providerRound?.roundNumber ??
+        m?.providerRound?.matchday
+      );
+
+      if (Number.isInteger(provider) && provider > 0) {
+        return provider;
+      }
+    }
+
+    const direct = Number(m?.roundNumber);
+    if (Number.isInteger(direct) && direct > 0) {
+      return direct;
+    }
+
+    if (m?.competitionIdentityMismatch !== true) {
+      const matchday = Number(m?.matchday);
+      if (Number.isInteger(matchday) && matchday > 0) {
+        return matchday;
+      }
+    }
+
+    return null;
+  }
+
+  function dominantRoundOf(rows) {
+    const counts = new Map();
+
+    for (const m of Array.isArray(rows) ? rows : []) {
+      const round = roundNumberOf(m);
+      if (round == null) continue;
+      counts.set(round, (counts.get(round) || 0) + 1);
+    }
+
+    const ranked = [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || b[0] - a[0]);
+
+    if (!ranked.length) return null;
+    if (ranked.length > 1 && ranked[0][1] === ranked[1][1]) {
+      return null;
+    }
+
+    return ranked[0][0];
+  }
+
+  function displayTeamKey(value) {
+    const generic = new Set([
+      "fc", "afc", "cf", "sc", "ac", "club", "the"
+    ]);
+
+    const aliases = new Map([
+      ["utd", "united"],
+      ["intl", "international"]
+    ]);
+
+    const tokens = String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(token => aliases.get(token) || token)
+      .filter(token => !generic.has(token));
+
+    let key = tokens.join(" ");
+
+    if (key === "mk dons") {
+      key = "milton keynes dons";
+    }
+
+    return key;
+  }
+
+  function scorePairOf(m) {
+    const home = Number(m?.scoreHome);
+    const away = Number(m?.scoreAway);
+
+    if (
+      m?.scoreHome == null ||
+      m?.scoreAway == null ||
+      !Number.isFinite(home) ||
+      !Number.isFinite(away)
+    ) {
+      return null;
+    }
+
+    return [home, away];
+  }
+
+  function isDisplayDuplicate(a, b) {
+    if (leagueIdentityKey(a) !== leagueIdentityKey(b)) return false;
+
+    const ta = Number(a?.kickoff_ms || 0);
+    const tb = Number(b?.kickoff_ms || 0);
+
+    if (
+      !Number.isFinite(ta) ||
+      !Number.isFinite(tb) ||
+      ta <= 0 ||
+      tb <= 0 ||
+      Math.abs(ta - tb) > 60000
+    ) {
+      return false;
+    }
+
+    if (displayTeamKey(a?.home) !== displayTeamKey(b?.home)) {
+      return false;
+    }
+
+    if (displayTeamKey(a?.away) !== displayTeamKey(b?.away)) {
+      return false;
+    }
+
+    const sa = scorePairOf(a);
+    const sb = scorePairOf(b);
+
+    if (
+      sa &&
+      sb &&
+      (sa[0] !== sb[0] || sa[1] !== sb[1])
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function mergeDisplayDuplicate(a, b) {
+    const aFinal = isFinalMatch(a);
+    const bFinal = isFinalMatch(b);
+
+    let winner = a;
+
+    if (bFinal && !aFinal) {
+      winner = b;
+    } else if (aFinal === bFinal) {
+      const aLength =
+        String(a?.home || "").length +
+        String(a?.away || "").length;
+
+      const bLength =
+        String(b?.home || "").length +
+        String(b?.away || "").length;
+
+      if (bLength > aLength) winner = b;
+    }
+
+    const loser = winner === a ? b : a;
+
+    return {
+      ...loser,
+      ...winner
+    };
+  }
+
+  function dedupeForDisplay(rows) {
+    const out = [];
+
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const index = out.findIndex(
+        existing => isDisplayDuplicate(existing, row)
+      );
+
+      if (index === -1) {
+        out.push(row);
+        continue;
+      }
+
+      out[index] = mergeDisplayDuplicate(out[index], row);
+    }
+
+    return out;
+  }
+
   // Normalize a raw runtime match (homeTeam/kickoffUtc/matchId) into the shape
   // render() expects (home/kickoff_ms/id). The Active panel maps the same way
   // inside its render — Today now consumes the SAME unified payload, so it must
@@ -202,8 +458,22 @@
       away: m.away ?? m.awayTeam,
       leagueName: m.leagueName,
       leagueSlug: m.leagueSlug,
+      canonicalLeagueName: m.canonicalLeagueName,
+      leagueDisplayName: m.leagueDisplayName,
+      canonicalCompetitionKey: m.canonicalCompetitionKey,
+      competitionKey: m.competitionKey,
+      canonicalCompetitionId: m.canonicalCompetitionId,
+      competitionId: m.competitionId,
+      tournamentId: m.tournamentId,
+      leagueId: m.leagueId,
       country: m.country,
       leagueTier: m.leagueTier,
+      canonicalLeagueTier: m.canonicalLeagueTier,
+      competitionTier: m.competitionTier,
+      competitionIdentityMismatch: m.competitionIdentityMismatch,
+      providerRound: m.providerRound,
+      roundNumber: m.roundNumber,
+      matchday: m.matchday,
       status: m.status,
       rawStatus: m.rawStatus,
       statusType: m.statusType,
@@ -230,7 +500,9 @@
   function render(matches, dateYmd) {
     panel.innerHTML = "";
 
-    LAST_MATCHES = Array.isArray(matches) ? matches : [];
+    LAST_MATCHES = dedupeForDisplay(
+      Array.isArray(matches) ? matches : []
+    );
 
     const dayKey =
       (typeof dateYmd === "string" && dateYmd.length >= 10)
@@ -262,22 +534,32 @@
         return ko >= startDay && ko <= endDay;
       })
       .sort((a, b) => {
+        const ca = String(a.country || "");
+        const cb = String(b.country || "");
+
+        if (ca !== cb) return ca.localeCompare(cb);
+
+        const ta = leagueTierOf(a);
+        const tb = leagueTierOf(b);
+        const safeTa = ta == null ? 99 : ta;
+        const safeTb = tb == null ? 99 : tb;
+
+        if (safeTa !== safeTb) return safeTa - safeTb;
+
+        const la = leagueNameOf(a);
+        const lb = leagueNameOf(b);
+
+        if (la !== lb) return la.localeCompare(lb);
 
         const ka = Number(a.kickoff_ms || 0);
         const kb = Number(b.kickoff_ms || 0);
 
         if (ka !== kb) return ka - kb;
 
-        const la = (a.leagueSlug || "").toLowerCase();
-        const lb = (b.leagueSlug || "").toLowerCase();
-
-        if (la !== lb) return la.localeCompare(lb);
-
-        const ha = (a.home || "").toLowerCase();
-        const hb = (b.home || "").toLowerCase();
+        const ha = String(a.home || "").toLowerCase();
+        const hb = String(b.home || "").toLowerCase();
 
         return ha.localeCompare(hb);
-
       });
 
     if (!arr.length) {
@@ -285,26 +567,51 @@
       return;
     }
 
-    let lastTime = null;
+    const rowsByLeague = new Map();
+
+    for (const m of arr) {
+      const groupKey =
+        String(m.country || "") +
+        "|" +
+        leagueIdentityKey(m);
+
+      if (!rowsByLeague.has(groupKey)) {
+        rowsByLeague.set(groupKey, []);
+      }
+
+      rowsByLeague.get(groupKey).push(m);
+    }
+
     let lastLeague = null;
 
     arr.forEach(m => {
-
       const time = fmtTime(m.kickoff_ms);
 
-      if (time !== lastTime) {
-        lastTime = time;
-      }
+      const groupKey =
+        String(m.country || "") +
+        "|" +
+        leagueIdentityKey(m);
 
-      const lgName = m.leagueName || m.leagueSlug || "—";
-      // Country goes on the same line as the league, before it.
-      const lgLabel = m.country ? `${m.country} · ${lgName}` : lgName;
-      if (lgLabel !== lastLeague) {
+      const lgName = leagueNameOf(m);
+      const baseLabel =
+        m.country
+          ? String(m.country) + " · " + lgName
+          : lgName;
+
+      const dominantRound =
+        dominantRoundOf(rowsByLeague.get(groupKey) || []);
+
+      const lgLabel =
+        dominantRound != null
+          ? baseLabel + " · " + dominantRound + "η Αγωνιστική"
+          : baseLabel;
+
+      if (groupKey !== lastLeague) {
         const lg = document.createElement("div");
         lg.className = "today-league";
         lg.textContent = lgLabel;
         panel.appendChild(lg);
-        lastLeague = lgLabel;
+        lastLeague = groupKey;
       }
 
       const row = document.createElement("div");
@@ -389,7 +696,9 @@
     // 👇 ΝΕΟ BLOCK ΕΔΩ
       if (window.__AIML_SNAPSHOT?.live?.matches?.length) {
 
-        const matches = window.__AIML_SNAPSHOT.live.matches;
+        const matches = dedupeForDisplay(
+          window.__AIML_SNAPSHOT.live.matches.map(mapMatch)
+        );
 
         window.AIML_FIXTURES_TODAY = { matches };
 
@@ -411,37 +720,7 @@
       const data = await res.json();
       const raw = Array.isArray(data.matches) ? data.matches : [];
 
-      const matches = raw.map(m => ({
-        id: m.id ?? m.matchId,
-        home: m.home ?? m.homeTeam,
-        away: m.away ?? m.awayTeam,
-        leagueName: m.leagueName,
-        leagueSlug: m.leagueSlug,
-        country: m.country,
-        leagueTier: m.leagueTier,
-        status: m.status,
-        rawStatus: m.rawStatus,
-        statusType: m.statusType,
-        statusName: m.statusName,
-        state: m.state,
-        phase: m.phase,
-        live: m.live,
-        isLive: m.isLive,
-        staleLive: m.staleLive,
-        staleLiveReason: m.staleLiveReason,
-        statusUnconfirmed: m.statusUnconfirmed,
-        ftSource: m.ftSource,
-        scoreHome: m.scoreHome,
-        scoreAway: m.scoreAway,
-        minute: m.minute,
-
-        kickoff_ms:
-          m.kickoff_ms != null
-            ? Number(m.kickoff_ms)
-            : (m.kickoffUtc ? new Date(m.kickoffUtc).getTime() : 0),
-
-        __raw: m
-      }));
+      const matches = dedupeForDisplay(raw.map(mapMatch));
 
       window.AIML_FIXTURES_TODAY = { matches };
 
@@ -506,7 +785,7 @@
   document.addEventListener("today-matches:loaded", (event) => {
     const payload = event?.detail || {};
     const raw = Array.isArray(payload.matches) ? payload.matches : [];
-    const matches = raw.map(mapMatch);
+    const matches = dedupeForDisplay(raw.map(mapMatch));
 
     window.AIML_FIXTURES_TODAY = { matches, date: payload.date };
     render(matches, payload.date);
@@ -515,7 +794,9 @@
   // Replay latest Today payload if fixtures-loader emitted before this panel loaded.
   if (window.__AIML_LAST_TODAY?.matches?.length) {
     const payload = window.__AIML_LAST_TODAY;
-    const matches = (Array.isArray(payload.matches) ? payload.matches : []).map(mapMatch);
+    const matches = dedupeForDisplay(
+      (Array.isArray(payload.matches) ? payload.matches : []).map(mapMatch)
+    );
 
     setTimeout(() => {
       window.AIML_FIXTURES_TODAY = { matches, date: payload.date };

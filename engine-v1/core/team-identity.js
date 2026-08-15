@@ -40,6 +40,7 @@ const GENERIC_TOKENS = new Set([
 
 const EXPLICIT_TEAM_ALIAS_GROUPS = [
   ["agf", "aarhus"],
+  ["mk dons", "milton keynes dons"],
   ["crvena zvezda", "red star belgrade"],
   ["universitatea craiova", "univ craiova", "csu craiova"],
 ];
