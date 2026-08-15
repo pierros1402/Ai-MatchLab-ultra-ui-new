@@ -1,12 +1,12 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-08-15T21:40:55.565Z",
+  "generatedAt": "2026-08-15T22:51:02.429Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
   "trialStartDay": "2026-07-05",
-  "dayCount": 39,
+  "dayCount": 40,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-08-15",
+  "lastDay": "2026-08-16",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -48,7 +48,8 @@
     "2026-08-10",
     "2026-08-13",
     "2026-08-14",
-    "2026-08-15"
+    "2026-08-15",
+    "2026-08-16"
   ],
   "daysExcluded": [
     {
@@ -544,21 +545,32 @@
           "snapshot_stale"
         ]
       }
+    },
+    {
+      "dayKey": "2026-08-16",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "foundation_integrity_missing"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 35,
+  "integrityWarningDayCount": 36,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 88,
-        "uniqueMatches": 85,
+        "picks": 89,
+        "uniqueMatches": 86,
         "settled": 84,
         "wins": 56,
         "losses": 28,
         "voids": 4,
-        "unresolved": 0,
+        "unresolved": 1,
         "unsupported": 0,
         "oddsAvailable": 41,
         "totalStake": 41,
@@ -572,13 +584,13 @@
       "id": "plan-b",
       "label": "Plan B - strict value-policy-v2.3 observation",
       "totals": {
-        "picks": 163,
-        "uniqueMatches": 92,
+        "picks": 165,
+        "uniqueMatches": 93,
         "settled": 163,
         "wins": 110,
         "losses": 53,
         "voids": 0,
-        "unresolved": 0,
+        "unresolved": 2,
         "unsupported": 0,
         "oddsAvailable": 57,
         "totalStake": 57,
@@ -590,7 +602,7 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 75,
+    "picksDeltaPlanBMinusPlanA": 76,
     "settledDeltaPlanBMinusPlanA": 79,
     "winsDeltaPlanBMinusPlanA": 54,
     "lossesDeltaPlanBMinusPlanA": 25,
