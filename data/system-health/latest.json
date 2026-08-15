@@ -1,26 +1,50 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-16",
-  "generatedAt": "2026-08-15T22:51:41.480Z",
-  "severity": "warning",
+  "generatedAt": "2026-08-15T23:01:11.014Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 4,
-    "info": 11
+    "error": 4,
+    "warning": 5,
+    "info": 9
   },
   "alert": true,
   "alertCounts": {
-    "error": 0,
+    "error": 4,
     "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 15,
-  "actionableIssueCount": 4,
-  "newIssueCount": 13,
-  "newActionableIssueCount": 2,
-  "resolvedIssueCount": 8,
-  "persistentIssueCount": 2,
+  "activeIssueCount": 18,
+  "actionableIssueCount": 9,
+  "newIssueCount": 6,
+  "newActionableIssueCount": 6,
+  "resolvedIssueCount": 3,
+  "persistentIssueCount": 12,
   "activeIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-08-16/value.json",
+        "at": 1786833842535,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -827136
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -61,15 +85,30 @@
       }
     },
     {
-      "severity": "info",
+      "severity": "error",
       "source": "foundation-integrity",
-      "type": "age_expired_results_rows_present",
-      "message": "Foundation integrity informational condition.",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
       "details": {
-        "component": "historySemantic",
-        "reason": "age_expired_results_rows_present",
-        "count": 1912,
-        "informational": true
+        "artifact": "data/foundation-integrity/2026-08-16.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
       }
     },
     {
@@ -90,14 +129,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -163,22 +201,6 @@
       "source": "value-comparison",
       "type": "plan_a_unresolved_settlement",
       "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-16",
-        "todayDayKey": "2026-08-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-16",
         "todayDayKey": "2026-08-16",
@@ -921,15 +943,15 @@
           }
         },
         "planA2": {
-          "count": 1,
+          "count": 0,
           "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
+            "picks": 0,
+            "uniqueMatches": 0,
             "settled": 0,
             "wins": 0,
             "losses": 0,
             "voids": 0,
-            "unresolved": 1,
+            "unresolved": 0,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -986,6 +1008,57 @@
   "actionableIssues": [
     {
       "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-08-16/value.json",
+        "at": 1786833842535,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -827136
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-16.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
       "message": "Acquisition skipped slugs during fixture acquisition.",
@@ -1002,14 +1075,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1673,6 +1745,173 @@
   ],
   "newIssues": [
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-08-16/value.json",
+        "at": 1786833842535,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -827136
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-16.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-08-16/value.json",
+        "at": 1786833842535,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -827136
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-16.json"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 1912,
+        "informational": true
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-16",
+        "todayDayKey": "2026-08-16",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
       "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
@@ -1712,18 +1951,6 @@
       }
     },
     {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "age_expired_results_rows_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "age_expired_results_rows_present",
-        "count": 1912,
-        "informational": true
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1738,17 +1965,6 @@
         ],
         "raw": "acquisition_skipped_slugs:eng.charity,ksa.kings.cup,ned.w.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     },
     {
@@ -1828,22 +2044,6 @@
     {
       "severity": "info",
       "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-16",
-        "todayDayKey": "2026-08-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
       "type": "plan_b_unresolved_settlement",
       "message": "Plan B picks are still unresolved.",
       "details": {
@@ -1873,220 +2073,6 @@
         "unresolved": 2
       }
     },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "value_plan_comparison_summary",
-      "message": "Four-plan Value comparison artifact is available.",
-      "details": {
-        "complete": true,
-        "requiredPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
-        ],
-        "presentPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
-        ],
-        "missingPlans": [],
-        "planA": {
-          "count": 1,
-          "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 1,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        },
-        "planA2": {
-          "count": 1,
-          "summary": {
-            "picks": 1,
-            "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 1,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        },
-        "planB": {
-          "count": 2,
-          "summary": {
-            "picks": 2,
-            "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 2,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        },
-        "planB2": {
-          "count": 2,
-          "summary": {
-            "picks": 2,
-            "uniqueMatches": 1,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
-            "voids": 0,
-            "unresolved": 2,
-            "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
-          }
-        }
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "eng.charity",
-          "ksa.kings.cup",
-          "ned.w.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:eng.charity,ksa.kings.cup,ned.w.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-16/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-16/invariant-report.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-16/freshness-report.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-16.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "artifact_missing",
-      "message": "Build report is missing.",
-      "details": {
-        "artifact": "data/build-reports/2026-08-16.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-16/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-16/value-audit.json"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
-      "details": {
-        "artifact": "data/value-comparison/2026-08-16.json",
-        "requiredPlans": [
-          "A",
-          "A2",
-          "B",
-          "B2"
-        ]
-      }
-    }
-  ],
-  "persistentIssues": [
     {
       "severity": "warning",
       "source": "active-competition-completeness",
@@ -2743,6 +2729,108 @@
           "par.1",
           "slv.1"
         ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
+      "details": {
+        "complete": true,
+        "requiredPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 1,
+          "summary": {
+            "picks": 1,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 1,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB": {
+          "count": 2,
+          "summary": {
+            "picks": 2,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 2,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        },
+        "planB2": {
+          "count": 2,
+          "summary": {
+            "picks": 2,
+            "uniqueMatches": 1,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 2,
+            "unsupported": 0,
+            "hitRate": null,
+            "oddsAvailable": 0,
+            "averageOdds": null,
+            "totalStake": null,
+            "totalReturn": null,
+            "profit": null,
+            "roi": null
+          }
+        }
       }
     }
   ],
