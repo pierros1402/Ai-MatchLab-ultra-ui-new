@@ -40,6 +40,9 @@ import {
   isPlanAObservationDay,
   readPlanAObservationDay
 } from "../value/plan-a-observation.js";
+import {
+  resolvePlanAPublicationPayload
+} from "../value/plan-a-publication-authority.js";
 
 function isDayKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/u.test(String(value || ""));
@@ -205,22 +208,52 @@ function validateSnapshotCoversCanonical(dayKey) {
 }
 
 function normalizedSnapshotValue(dayKey, planAResult) {
-  const valueFile = resolveDataPath("value", `${dayKey}.json`);
-  const valuePayload = readJsonSafe(valueFile, planAResult || {});
-  const picks = Array.isArray(valuePayload?.picks)
-    ? valuePayload.picks
-    : Array.isArray(planAResult?.picks)
-      ? planAResult.picks
+  const valueFile =
+    resolveDataPath(
+      "value",
+      `${dayKey}.json`
+    );
+
+  const currentValuePayload =
+    readJsonSafe(
+      valueFile,
+      planAResult || {}
+    );
+
+  const publication =
+    resolvePlanAPublicationPayload(
+      dayKey,
+      currentValuePayload
+    );
+
+  const valuePayload =
+    publication?.payload ||
+    currentValuePayload ||
+    planAResult ||
+    {};
+
+  const picks =
+    Array.isArray(valuePayload?.picks)
+      ? valuePayload.picks
       : [];
 
   return {
     ...valuePayload,
     ok: valuePayload?.ok !== false,
     date: dayKey,
-    source: valuePayload?.source || planAResult?.source || "canonical_fixtures",
+    source:
+      valuePayload?.source ||
+      planAResult?.source ||
+      "canonical_fixtures",
     count: picks.length,
     picks,
-    updatedAt: valuePayload?.updatedAt || valuePayload?.generatedAt || new Date().toISOString()
+    publicationAuthority:
+      publication?.authority ||
+      "current_value_artifact",
+    updatedAt:
+      valuePayload?.updatedAt ||
+      valuePayload?.generatedAt ||
+      new Date().toISOString()
   };
 }
 

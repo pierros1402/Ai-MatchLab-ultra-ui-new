@@ -16,6 +16,9 @@ import {
 import {
   evaluateFrozenValueFixtureBinding
 } from "../core/frozen-value-release-contract.js";
+import {
+  resolvePlanAPublicationPayload
+} from "../value/plan-a-publication-authority.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -185,33 +188,80 @@ export function validatedPersistedSnapshotValueArtifact(
 }
 
 function valueForDay(dayKey, options = {}) {
-  const file = resolveDataPath("value", `${dayKey}.json`);
-  const payload = readJsonSafe(file, null);
+  const file =
+    resolveDataPath(
+      "value",
+      `${dayKey}.json`
+    );
 
-  const snapshotValueFile = options?.snapshotRoot
-    ? path.join(options.snapshotRoot, "value.json")
-    : null;
-  const snapshotPayload = options?.preserveValue === true && snapshotValueFile
-    ? readJsonSafe(snapshotValueFile, null)
-    : null;
+  const payload =
+    readJsonSafe(
+      file,
+      null
+    );
 
-  const selectedPayload = selectValueArtifactForSnapshot({
-    currentPayload: payload,
-    snapshotPayload,
-    preserveValue: options?.preserveValue === true
-  });
+  const publication =
+    resolvePlanAPublicationPayload(
+      dayKey,
+      payload
+    );
 
-  if (!selectedPayload || typeof selectedPayload !== "object") {
+  const publicationPayload =
+    publication?.payload ||
+    payload;
+
+  const snapshotValueFile =
+    options?.snapshotRoot
+      ? path.join(
+          options.snapshotRoot,
+          "value.json"
+        )
+      : null;
+
+  const snapshotPayload =
+    options?.preserveValue === true &&
+    snapshotValueFile
+      ? readJsonSafe(
+          snapshotValueFile,
+          null
+        )
+      : null;
+
+  const selectedPayload =
+    selectValueArtifactForSnapshot({
+      currentPayload:
+        publicationPayload,
+      snapshotPayload,
+      preserveValue:
+        options?.preserveValue === true
+    });
+
+  if (
+    !selectedPayload ||
+    typeof selectedPayload !== "object"
+  ) {
     return {
       ok: true,
       date: dayKey,
       count: 0,
       picks: [],
-      source: "missing_local_value_file"
+      source:
+        "missing_local_value_file"
     };
   }
 
-  return selectedPayload;
+  const preservedSnapshot =
+    options?.preserveValue === true &&
+    snapshotPayload === selectedPayload;
+
+  return {
+    ...selectedPayload,
+    publicationAuthority:
+      preservedSnapshot
+        ? "preserved_snapshot_value"
+        : publication?.authority ||
+          "current_value_artifact"
+  };
 }
 
 function detailFilesForDay(dayKey) {
