@@ -1,13 +1,38 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import {
   buildHistoryBackedStandingsArtifact,
   isStrictStandingsHistoryRow,
   loadStandingsFoundationRegistry,
   readHistoryRows,
+  sha256FileOrMissing,
   validateStandingsFoundationArtifact,
 } from "./standings-foundation.js";
+
+test("standings JSON fingerprints are checkout-newline invariant", () => {
+  const dir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "aiml-standings-fingerprint-")
+  );
+  const lf = path.join(dir, "lf.json");
+  const crlf = path.join(dir, "crlf.json");
+
+  try {
+    const payload = "{\n  \"Silkeborg IF\": [\n    \"Silkeborg\"\n  ]\n}\n";
+    fs.writeFileSync(lf, payload, "utf8");
+    fs.writeFileSync(crlf, payload.replace(/\n/g, "\r\n"), "utf8");
+
+    assert.equal(
+      sha256FileOrMissing(lf),
+      sha256FileOrMissing(crlf)
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test("standings history rows reject scheduled/null score contamination", () => {
   assert.equal(isStrictStandingsHistoryRow({

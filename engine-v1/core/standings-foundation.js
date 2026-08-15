@@ -45,7 +45,10 @@ function readJson(filePath) {
 
 export function sha256FileOrMissing(filePath) {
   try {
-    return sha256Bytes(fs.readFileSync(filePath));
+    const text = fs.readFileSync(filePath, "utf8")
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n");
+    return sha256Bytes(Buffer.from(text, "utf8"));
   } catch {
     return "MISSING";
   }

@@ -13,7 +13,8 @@ import { applyResultsTruthToCanonicalDay } from "./apply-results-truth-to-canoni
 import {
   rebuildIndexesForSeason,
   collectIndexRebuildTargets,
-  ensureHistoryIndexFoundationForDay
+  ensureHistoryIndexFoundationForDay,
+  resolveSeasonFromDay
 } from "./rebuild-indexes-for-season.js";
 import { buildDetailsDay } from "./build-details-day.js";
 import { exportFixturesSnapshotDay } from "./export-fixtures-snapshot-day.js";
@@ -59,7 +60,12 @@ import { promoteAuthoritativeTerminalOverlaysDay } from "./promote-authoritative
 import { auditFinalizationReadinessDay } from "./audit-finalization-readiness-day.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { rebuildH2HFoundationFromCurrentHistory } from "./rebuild-h2h-foundation-from-current-history.js";
-import { validateH2HFoundationSync } from "../core/derived-history-foundation.js";
+import {
+  validateH2HFoundationSync,
+  validateModelPriorsFoundationSync
+} from "../core/derived-history-foundation.js";
+import { auditStandingsFoundation } from "./audit-standings-foundation.js";
+import { buildModelPriors } from "./build-model-priors.js";
 
 function readJsonIfExists(filePath) {
   try {
@@ -2097,6 +2103,78 @@ export async function runDailyCycle(options = {}) {
     };
   }
 
+  // History append/catch-up happens after the first standings build. Rebuild the
+  // complete consumer universe against the final history/registry/alias state so
+  // a previously-PASS table can never reach the publication gate with stale
+  // lineage merely because its league was absent from today's active set.
+  const finalFoundationSeason = resolveSeasonFromDay(dayKey);
+  console.log("[daily-cycle] final-standings-foundation:start", {
+    dayKey,
+    season: finalFoundationSeason
+  });
+  const finalStandingsBuild = await buildStandingsDay(
+    dayKey,
+    [],
+    { season: finalFoundationSeason }
+  );
+  const finalStandingsAudit = auditStandingsFoundation({
+    season: finalFoundationSeason
+  });
+  console.log("[daily-cycle] final-standings-foundation:done", {
+    buildOk: finalStandingsBuild?.ok === true,
+    auditOk: finalStandingsAudit?.ok === true,
+    leagues: finalStandingsBuild?.leagues ?? 0,
+    pass: finalStandingsAudit?.summary?.pass ?? 0,
+    gated: finalStandingsAudit?.summary?.gated ?? 0,
+    invalid: finalStandingsAudit?.summary?.invalid ?? 0
+  });
+  if (
+    finalStandingsBuild?.ok !== true ||
+    finalStandingsAudit?.ok !== true
+  ) {
+    const error = new Error(
+      "final_standings_foundation_not_ready"
+    );
+    error.code = "FINAL_STANDINGS_FOUNDATION_NOT_READY";
+    error.build = finalStandingsBuild;
+    error.audit = finalStandingsAudit;
+    throw error;
+  }
+
+  // The conservative model-priors lineage includes historical truth, aliases and
+  // identity decisions. Those inputs can change during this cycle even when the
+  // prior-season set did not roll over, so refresh the output and fingerprint only
+  // after every history mutation has completed.
+  console.log("[daily-cycle] final-model-priors-foundation:start", {
+    dayKey,
+    season: finalFoundationSeason
+  });
+  const modelPriorsRebuild = await buildModelPriors({
+    targetSeason: finalFoundationSeason
+  });
+  const modelPriorsFoundation =
+    validateModelPriorsFoundationSync(finalFoundationSeason);
+  console.log("[daily-cycle] final-model-priors-foundation:done", {
+    buildOk: modelPriorsRebuild?.ok === true,
+    validationOk: modelPriorsFoundation?.ok === true,
+    teamPriors: modelPriorsRebuild?.teamPriors ?? 0,
+    leaguePriors: modelPriorsRebuild?.leaguePriors ?? 0,
+    foundationFingerprint:
+      modelPriorsFoundation?.artifact?.foundationFingerprint || null
+  });
+  if (
+    modelPriorsRebuild?.ok !== true ||
+    modelPriorsFoundation?.ok !== true
+  ) {
+    const error = new Error(
+      "final_model_priors_foundation_not_ready"
+    );
+    error.code = "FINAL_MODEL_PRIORS_FOUNDATION_NOT_READY";
+    error.build = modelPriorsRebuild;
+    error.validation = modelPriorsFoundation;
+    throw error;
+  }
+
   const finishedAt = Date.now();
 
   console.log("[daily-cycle] done", {
@@ -2152,7 +2230,11 @@ export async function runDailyCycle(options = {}) {
     historyAppend,
     indexesRebuild,
     catchUpIndexesRebuild,
-    h2hFoundationRebuild
+    h2hFoundationRebuild,
+    finalStandingsBuild,
+    finalStandingsAudit,
+    modelPriorsRebuild,
+    modelPriorsFoundation
   };
 }
 
