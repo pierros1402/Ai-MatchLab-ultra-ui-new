@@ -49,6 +49,7 @@ const SUM_FIELDS = [
   "settled",
   "wins",
   "losses",
+  "voids",
   "unresolved",
   "unsupported",
   "oddsAvailable",
