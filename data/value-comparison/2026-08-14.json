@@ -1,0 +1,91 @@
+{
+  "ok": true,
+  "schema": "ai-matchlab.value-plan-comparison.v1",
+  "date": "2026-08-14",
+  "generatedAt": "2026-08-15T08:00:00.000Z",
+  "comparisonEligible": true,
+  "sourceContract": {
+    "planA": "immutable_plan_a_observation_artifact",
+    "planAObservationStartDate": "2026-07-05",
+    "planAImmutable": true,
+    "planB": "evidence_bound_historical_runner_observation",
+    "historicalArtifactsSurvived": false,
+    "historicalLogCountsRecovered": true,
+    "deploySnapshotUsedAsFinalTruth": false
+  },
+  "inputs": {
+    "planAPath": "data/value-plans/2026-08-14/plan-a.json",
+    "planBRunEvidence": [
+      "31768406803",
+      "31787780743"
+    ],
+    "outputPath": "data/value-comparison/2026-08-14.json"
+  },
+  "plans": {
+    "A": {
+      "id": "plan-a",
+      "label": "Plan A - frozen production observation",
+      "immutable": true,
+      "summary": {
+        "picks": 0,
+        "uniqueMatches": 0,
+        "settled": 0,
+        "wins": 0,
+        "losses": 0,
+        "voids": 0,
+        "unresolved": 0,
+        "unsupported": 0,
+        "hitRate": null,
+        "oddsAvailable": 0,
+        "averageOdds": null,
+        "totalStake": null,
+        "totalReturn": null,
+        "profit": null,
+        "roi": null
+      }
+    },
+    "B": {
+      "id": "plan-b",
+      "label": "Plan B - recovered historical zero observation",
+      "immutable": true,
+      "summary": {
+        "picks": 0,
+        "uniqueMatches": 0,
+        "settled": 0,
+        "wins": 0,
+        "losses": 0,
+        "voids": 0,
+        "unresolved": 0,
+        "unsupported": 0,
+        "hitRate": null,
+        "oddsAvailable": 0,
+        "averageOdds": null,
+        "totalStake": null,
+        "totalReturn": null,
+        "profit": null,
+        "roi": null
+      }
+    }
+  },
+  "comparison": {
+    "pickDeltaPlanBMinusPlanA": 0,
+    "settledDeltaPlanBMinusPlanA": 0,
+    "winsDeltaPlanBMinusPlanA": 0,
+    "lossesDeltaPlanBMinusPlanA": 0,
+    "hitRateDeltaPlanBMinusPlanA": null,
+    "roiDeltaPlanBMinusPlanA": null
+  },
+  "provenance": {
+    "kind": "evidence_bound_runner_recovery",
+    "evidencePath": "data/value-plans/zero-observation-recovery-2026-08-11_2026-08-14.json",
+    "runIds": [
+      "31768406803",
+      "31787780743"
+    ],
+    "headShas": [
+      "0909e20a22b06b94803d49cc2d4bd73dd46f5dee",
+      "0d5affa220e898031fcad490bf797ae8c43443ad"
+    ],
+    "note": "Two runner logs independently record the immutable Plan A signature and zero counts for Plan A and Plan B."
+  }
+}
