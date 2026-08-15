@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-16",
-  "generatedAt": "2026-08-15T23:01:11.014Z",
+  "generatedAt": "2026-08-15T23:41:48.307Z",
   "severity": "error",
   "issueCounts": {
     "error": 4,
-    "warning": 5,
-    "info": 9
+    "warning": 11,
+    "info": 10
   },
   "alert": true,
   "alertCounts": {
-    "error": 4,
-    "warning": 2,
+    "error": 1,
+    "warning": 8,
     "info": 0
   },
-  "activeIssueCount": 18,
-  "actionableIssueCount": 9,
-  "newIssueCount": 6,
-  "newActionableIssueCount": 6,
-  "resolvedIssueCount": 3,
-  "persistentIssueCount": 12,
+  "activeIssueCount": 25,
+  "actionableIssueCount": 15,
+  "newIssueCount": 16,
+  "newActionableIssueCount": 9,
+  "resolvedIssueCount": 12,
+  "persistentIssueCount": 9,
   "activeIssues": [
     {
       "severity": "warning",
@@ -28,7 +28,13 @@
       "message": "Freshness report is not OK.",
       "details": {
         "reasons": [
-          "snapshot_value_stale_against_canonical"
+          "snapshot_value_stale_against_canonical",
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
         ]
       }
     },
@@ -43,6 +49,85 @@
         "at": 1786833842535,
         "staleReason": "snapshot_value_stale_against_canonical",
         "olderThanLatestCanonicalMs": -1770144
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-08-16/value-audit.json",
+        "at": "2026-08-15T22:44:02.538Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1770141
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-08-16/plan-a2.json",
+        "at": 1786834260188,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352491
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-08-16/plan-a2-audit.json",
+        "at": "2026-08-15T22:51:00.192Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352487
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-08-16/plan-b-audit.json",
+        "at": "2026-08-15T22:44:03.937Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -1768742
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-08-16/plan-b2-audit.json",
+        "at": "2026-08-15T22:51:01.890Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350789
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-16.json",
+        "at": "2026-08-15T22:51:02.008Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350671
       }
     },
     {
@@ -201,6 +286,22 @@
       "source": "value-comparison",
       "type": "plan_a_unresolved_settlement",
       "message": "Plan A picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-16",
+        "todayDayKey": "2026-08-16",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-16",
         "todayDayKey": "2026-08-16",
@@ -943,15 +1044,15 @@
           }
         },
         "planA2": {
-          "count": 0,
+          "count": 1,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 1,
+            "uniqueMatches": 1,
             "settled": 0,
             "wins": 0,
             "losses": 0,
             "voids": 0,
-            "unresolved": 0,
+            "unresolved": 1,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
@@ -1013,7 +1114,13 @@
       "message": "Freshness report is not OK.",
       "details": {
         "reasons": [
-          "snapshot_value_stale_against_canonical"
+          "snapshot_value_stale_against_canonical",
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
         ]
       }
     },
@@ -1028,6 +1135,85 @@
         "at": 1786833842535,
         "staleReason": "snapshot_value_stale_against_canonical",
         "olderThanLatestCanonicalMs": -1770144
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-08-16/value-audit.json",
+        "at": "2026-08-15T22:44:02.538Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1770141
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-08-16/plan-a2.json",
+        "at": 1786834260188,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352491
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-08-16/plan-a2-audit.json",
+        "at": "2026-08-15T22:51:00.192Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352487
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-08-16/plan-b-audit.json",
+        "at": "2026-08-15T22:44:03.937Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -1768742
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-08-16/plan-b2-audit.json",
+        "at": "2026-08-15T22:51:01.890Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350789
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-16.json",
+        "at": "2026-08-15T22:51:02.008Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350671
       }
     },
     {
@@ -1747,12 +1933,14 @@
     {
       "severity": "warning",
       "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
       "details": {
-        "reasons": [
-          "snapshot_value_stale_against_canonical"
-        ]
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-08-16/value.json",
+        "at": 1786833842535,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1770144
       }
     },
     {
@@ -1761,61 +1949,11 @@
       "type": "stale_derived_artifact",
       "message": "Freshness report found stale derived artifact.",
       "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-16/value.json",
-        "at": 1786833842535,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -827136
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-16.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
-      "details": {
-        "failure": "foundation_integrity_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_stale_against_canonical"
-        ]
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-08-16/value-audit.json",
+        "at": "2026-08-15T22:44:02.538Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1770141
       }
     },
     {
@@ -1824,93 +1962,66 @@
       "type": "stale_derived_artifact",
       "message": "Freshness report found stale derived artifact.",
       "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-16/value.json",
-        "at": 1786833842535,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -827136
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-16.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
-      "details": {
-        "failure": "foundation_integrity_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "age_expired_results_rows_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "age_expired_results_rows_present",
-        "count": 1912,
-        "informational": true
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-08-16/plan-a2.json",
+        "at": 1786834260188,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352491
       }
     },
     {
       "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-08-16/plan-a2-audit.json",
+        "at": "2026-08-15T22:51:00.192Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352487
       }
     },
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
       "details": {
-        "dayKey": "2026-08-16",
-        "todayDayKey": "2026-08-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-08-16/plan-b-audit.json",
+        "at": "2026-08-15T22:44:03.937Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -1768742
       }
-    }
-  ],
-  "persistentIssues": [
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-08-16/plan-b2-audit.json",
+        "at": "2026-08-15T22:51:01.890Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350789
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-16.json",
+        "at": "2026-08-15T22:51:02.008Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350671
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -1951,6 +2062,15 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-16.json"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1965,6 +2085,394 @@
         ],
         "raw": "acquisition_skipped_slugs:eng.charity,ksa.kings.cup,ned.w.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-16",
+        "todayDayKey": "2026-08-16",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-16",
+        "todayDayKey": "2026-08-16",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 1,
+        "settled": 0,
+        "unresolved": 1
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-16",
+        "todayDayKey": "2026-08-16",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-16",
+        "todayDayKey": "2026-08-16",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-08-16/value.json",
+        "at": 1786833842535,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1770144
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-08-16/value-audit.json",
+        "at": "2026-08-15T22:44:02.538Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1770141
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-08-16/plan-a2.json",
+        "at": 1786834260188,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352491
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-08-16/plan-a2-audit.json",
+        "at": "2026-08-15T22:51:00.192Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1352487
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-08-16/plan-b-audit.json",
+        "at": "2026-08-15T22:44:03.937Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -1768742
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-08-16/plan-b2-audit.json",
+        "at": "2026-08-15T22:51:01.890Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350789
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-16.json",
+        "at": "2026-08-15T22:51:02.008Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -1350671
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-16.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "eng.charity",
+          "ksa.kings.cup",
+          "ned.w.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:eng.charity,ksa.kings.cup,ned.w.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value",
+        "artifact": "deploy-snapshots/2026-08-15/value.json",
+        "at": 1786812866470,
+        "staleReason": "snapshot_value_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9322987
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "snapshot_value_audit",
+        "artifact": "deploy-snapshots/2026-08-15/value-audit.json",
+        "at": "2026-08-15T16:54:26.474Z",
+        "staleReason": "snapshot_value_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9322983
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-08-15/plan-a2.json",
+        "at": 1786813002030,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9187427
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-08-15/plan-a2-audit.json",
+        "at": "2026-08-15T16:56:42.035Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9187422
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-08-15/plan-b-audit.json",
+        "at": "2026-08-15T16:54:27.644Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -9321813
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-08-15/plan-b2-audit.json",
+        "at": "2026-08-15T16:56:43.557Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9185900
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-15.json",
+        "at": "2026-08-15T16:57:14.218Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -9155239
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-08-15.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-08-15/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-08-15/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-15.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "col.copa",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:col.copa,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_stale_against_canonical",
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_integrity_missing",
+      "details": {
+        "failure": "foundation_integrity_missing"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -2023,54 +2531,6 @@
           "rejectedCount": 19,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-16",
-        "todayDayKey": "2026-08-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 1,
-        "settled": 0,
-        "unresolved": 1
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-16",
-        "todayDayKey": "2026-08-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-16",
-        "todayDayKey": "2026-08-16",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
       }
     },
     {
@@ -2772,15 +3232,15 @@
           }
         },
         "planA2": {
-          "count": 0,
+          "count": 1,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
+            "picks": 1,
+            "uniqueMatches": 1,
             "settled": 0,
             "wins": 0,
             "losses": 0,
             "voids": 0,
-            "unresolved": 0,
+            "unresolved": 1,
             "unsupported": 0,
             "hitRate": null,
             "oddsAvailable": 0,
