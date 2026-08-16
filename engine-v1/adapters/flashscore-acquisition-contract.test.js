@@ -7,13 +7,19 @@ import {
   flashscoreRowMatchesRequestedAthensDay,
   resolveFlashscoreAcquisitionIdentity
 } from "./flashscore-acquisition-contract.js";
+import { getFixtureAdapterById } from "./registry.js";
 
 function row(leaguePath, leagueName = "") {
   return {
+    matchId: "fs_test_match",
     leaguePath,
     leagueName,
     country: "England",
-    kickoffUtc: "2026-08-15T14:00:00.000Z"
+    kickoffUtc: "2026-08-15T14:00:00.000Z",
+    home: "Home FC",
+    away: "Away FC",
+    tournamentId: "tournament_test",
+    stageId: "stage_test"
   };
 }
 
@@ -150,4 +156,37 @@ test("filters provider rows by exact Athens kickoff day", () => {
     ),
     true
   );
+});
+
+test("Flashscore adapter normalize independently rechecks exact competition identity", () => {
+  const adapter = getFixtureAdapterById("flashscore");
+  assert.ok(adapter);
+
+  const contaminatedNorth = adapter.normalize(
+    row("/football/england/national-league-north/", "National League North"),
+    "eng.5"
+  );
+  assert.equal(contaminatedNorth, null);
+
+  const contaminatedIsthmian = adapter.normalize(
+    row("/football/england/isthmian-league-premier-division/", "Isthmian League Premier Division"),
+    "eng.1"
+  );
+  assert.equal(contaminatedIsthmian, null);
+});
+
+test("Flashscore adapter preserves provider competition evidence for admitted rows", () => {
+  const adapter = getFixtureAdapterById("flashscore");
+  const normalized = adapter.normalize(
+    row("/football/england/national-league/", "National League"),
+    "eng.5"
+  );
+
+  assert.ok(normalized);
+  assert.equal(normalized.leagueSlug, "eng.5");
+  assert.equal(normalized.providerLeagueSlug, "eng.5");
+  assert.equal(normalized.providerLeaguePath, "/football/england/national-league/");
+  assert.equal(normalized.providerTournamentId, "tournament_test");
+  assert.equal(normalized.providerStageId, "stage_test");
+  assert.equal(normalized.providerCompetitionIdentity, "exact_path");
 });
