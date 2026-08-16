@@ -13,6 +13,10 @@ import { buildDayReport } from "./build-day-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import {
+  intradayPublicationFixtureId,
+  resolveIntradayPublishedUniverse
+} from "../core/intraday-publication-universe.js";
+import {
   isPreKickoffNonPlayed,
   sanitizePreKickoffNonPlayed
 } from "../core/non-played-state.js";
@@ -27,6 +31,57 @@ function normalizeText(value) {
 
 function isValidDayKey(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(normalizeText(value));
+}
+
+function readJsonSafe(filePath, fallback = null) {
+  try {
+    if (!fs.existsSync(filePath)) return fallback;
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
+}
+
+function rowsOf(payload) {
+  if (Array.isArray(payload)) return payload;
+
+  for (const key of ["fixtures", "matches", "items"]) {
+    if (Array.isArray(payload?.[key])) return payload[key];
+  }
+
+  return [];
+}
+
+function publishedSnapshotState(dayKey) {
+  const snapshotRoot = resolveDataPath(
+    "deploy-snapshots",
+    dayKey
+  );
+
+  const publishedFixtures = rowsOf(
+    readJsonSafe(
+      path.join(snapshotRoot, "fixtures.json"),
+      null
+    )
+  );
+
+  const snapshotDetailsDir = path.join(
+    snapshotRoot,
+    "details"
+  );
+
+  const publishedDetailIds =
+    fs.existsSync(snapshotDetailsDir)
+      ? fs.readdirSync(snapshotDetailsDir)
+          .filter(name => name.endsWith(".json"))
+          .map(name => name.slice(0, -".json".length))
+          .sort()
+      : [];
+
+  return {
+    publishedFixtures,
+    publishedDetailIds
+  };
 }
 
 function runNodeScript(scriptPath, args = []) {
@@ -267,8 +322,9 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   const { runLiveStatusRefreshDay } = await import("./run-live-status-refresh-day.js");
   // appendNewFixtures: the status fetch already carries the league's full
   // day slate — same-day rows canonical lacks (late-added fixtures) join here
-  // instead of waiting for the nightly full pass. Intraday-only; the finalize
-  // path keeps its status-only semantics.
+  // instead of waiting for the nightly full pass. Canonical truth keeps those
+  // rows immediately; status-only publication below defers them until a full
+  // detail-ready build can publish them without violating fixture/detail parity.
   const liveStats = await runLiveStatusRefreshDay(safeDayKey, { appendNewFixtures: true });
   console.log("[intraday-snapshot-refresh] live-status-refresh:done", {
     dayKey: safeDayKey,
@@ -322,27 +378,74 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   });
 
   // The detail sweep must use the exact fixture projection that the snapshot
-  // exporter will publish. Raw canonical rows can differ from the publishable
-  // projection after reconciliation and normalization, for example null scores
-  // versus explicit zeroes or a provider "0'" clock versus a null PRE minute.
-  // patchDetailsBasic writes only rows with actual mutable state/signature drift.
-  // Missing, malformed or invalid detail signatures remain fail-closed.
+  // exporter can publish. Status-only refresh is intentionally locked to the
+  // already-published, detail-complete universe. Newly discovered canonical
+  // fixtures remain source truth immediately but are deferred from publication
+  // until a normal full/detail-ready build.
   const publishableStatusRows =
     fixturesForSnapshotDay(
       safeDayKey
     ).fixtures;
 
+  const previousSnapshot =
+    publishedSnapshotState(
+      safeDayKey
+    );
+
+  const publicationLock =
+    resolveIntradayPublishedUniverse({
+      publishedFixtures:
+        previousSnapshot.publishedFixtures,
+      currentFixtures:
+        publishableStatusRows,
+      publishedDetailIds:
+        previousSnapshot.publishedDetailIds
+    });
+
+  if (!publicationLock.ok) {
+    throw new Error(
+      `intraday_status_only_publication_universe_invalid:${safeDayKey}:${publicationLock.reason || "unknown"}` +
+      `:missingCurrent=${publicationLock.missingCurrentFixtureIds.join(",")}` +
+      `:missingDetails=${publicationLock.missingPublishedDetailIds.join(",")}`
+    );
+  }
+
+  const allowedFixtureIdSet =
+    new Set(publicationLock.allowedFixtureIds);
+
+  const lockedPublishableStatusRows =
+    publishableStatusRows.filter(row =>
+      allowedFixtureIdSet.has(
+        intradayPublicationFixtureId(row)
+      )
+    );
+
+  console.log(
+    "[intraday-snapshot-refresh] publication-universe:locked",
+    {
+      dayKey: safeDayKey,
+      currentFixtures:
+        publicationLock.currentFixtureCount,
+      publishedFixtures:
+        publicationLock.publishedFixtureCount,
+      deferredFixtures:
+        publicationLock.deferredFixtureIds.length,
+      deferredFixtureIds:
+        publicationLock.deferredFixtureIds
+    }
+  );
+
   const authoritativePatchStats =
     patchDetailsBasic(
       safeDayKey,
-      publishableStatusRows
+      lockedPublishableStatusRows
     );
 
   console.log(
     "[intraday-snapshot-refresh] patch-details-basic-publishable-fixtures:done",
     {
       dayKey: safeDayKey,
-      publishableRows: publishableStatusRows.length,
+      publishableRows: lockedPublishableStatusRows.length,
       ...authoritativePatchStats
     }
   );
@@ -374,14 +477,28 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
   // unchanged. The old intraday deriveValueFromOdds call was REMOVED.
 
   console.log("[intraday-snapshot-refresh] export-snapshot:start", { dayKey: safeDayKey });
-  const snapshot = await exportDeploySnapshotDay(safeDayKey, { preserveDetails: true, preserveValue: true });
+  const snapshot = await exportDeploySnapshotDay(
+    safeDayKey,
+    {
+      preserveDetails: true,
+      preserveValue: true,
+      publicationMode:
+        "intraday_status_only",
+      fixtureIdAllowlist:
+        publicationLock.allowedFixtureIds,
+      buildMissingDetails: false,
+      failOnMissingDetails: true
+    }
+  );
   console.log("[intraday-snapshot-refresh] export-snapshot:done", {
     dayKey: safeDayKey,
     hash: snapshot?.hash,
     manifest: snapshot?.manifest,
     fixtures: snapshot?.fixtures,
     value: snapshot?.value,
-    detailsDir: snapshot?.detailsDir
+    detailsDir: snapshot?.detailsDir,
+    deferredFixtures:
+      publicationLock.deferredFixtureIds.length
   });
 
   // Invariant check after snapshot
@@ -438,6 +555,14 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
     startedAt,
     finishedAt: new Date().toISOString(),
     sync,
+    publicationUniverse: {
+      publishedFixtureCount:
+        publicationLock.publishedFixtureCount,
+      currentFixtureCount:
+        publicationLock.currentFixtureCount,
+      deferredFixtureIds:
+        publicationLock.deferredFixtureIds
+    },
     value: {
       ok: value?.ok,
       count: value?.count,

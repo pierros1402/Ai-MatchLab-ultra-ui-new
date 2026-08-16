@@ -786,6 +786,34 @@ function copyDetails(dayKey, snapshotDetailsDir, options = {}) {
   };
 }
 
+function fixturePublicationId(fixture) {
+  return String(
+    fixture?.canonicalId ||
+    fixture?.matchId ||
+    ""
+  ).trim();
+}
+
+function normalizeFixtureIdAllowlist(values) {
+  if (values instanceof Set) {
+    return new Set(
+      [...values]
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+    );
+  }
+
+  if (Array.isArray(values)) {
+    return new Set(
+      values
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+    );
+  }
+
+  return null;
+}
+
 export async function exportDeploySnapshotDay(dayKey, options = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dayKey || ""))) {
     throw new Error(`invalid dayKey: ${dayKey}`);
@@ -800,10 +828,70 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
   ensureDir(snapshotDetailsDir);
 
   const fixturesSnapshot = fixturesForSnapshotDay(dayKey);
-  const fixtures = enrichFixtureRowsFromDisplaySnapshot(
+  const allFixtures = enrichFixtureRowsFromDisplaySnapshot(
     dayKey,
     fixturesSnapshot.fixtures
   );
+
+  const publicationMode =
+    options?.publicationMode === "intraday_status_only"
+      ? "intraday_status_only"
+      : "full_current_universe";
+
+  const fixtureIdAllowlist =
+    publicationMode === "intraday_status_only"
+      ? normalizeFixtureIdAllowlist(
+          options?.fixtureIdAllowlist
+        )
+      : null;
+
+  if (
+    publicationMode === "intraday_status_only" &&
+    allFixtures.length > 0 &&
+    (!fixtureIdAllowlist || fixtureIdAllowlist.size === 0)
+  ) {
+    throw new Error(
+      `intraday_status_only_fixture_allowlist_missing:${dayKey}`
+    );
+  }
+
+  const fixtures =
+    fixtureIdAllowlist
+      ? allFixtures.filter(fixture =>
+          fixtureIdAllowlist.has(
+            fixturePublicationId(fixture)
+          )
+        )
+      : allFixtures;
+
+  const realizedFixtureIds =
+    new Set(
+      fixtures
+        .map(fixturePublicationId)
+        .filter(Boolean)
+    );
+
+  const allowlistMissingFromCurrent =
+    fixtureIdAllowlist
+      ? [...fixtureIdAllowlist]
+          .filter(id => !realizedFixtureIds.has(id))
+          .sort()
+      : [];
+
+  if (allowlistMissingFromCurrent.length > 0) {
+    throw new Error(
+      `intraday_status_only_allowlist_missing_current_fixture:${dayKey}:${allowlistMissingFromCurrent.join(",")}`
+    );
+  }
+
+  const deferredFixtureIds =
+    fixtureIdAllowlist
+      ? allFixtures
+          .map(fixturePublicationId)
+          .filter(id => id && !fixtureIdAllowlist.has(id))
+          .sort()
+      : [];
+
   const fixturesSource = fixturesSnapshot.source;
   const targetFixtureGate = resolveManifestTargetFixtureGate(fixturesSnapshot);
 
@@ -909,6 +997,24 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
 
   let missingRows = missingRowsAgainst(detailIdsOnDisk());
 
+  // Status-only publication is not a detail-building path. The caller has
+  // already locked this export to the previously published detail-complete
+  // universe. If that invariant is broken, fail closed instead of silently
+  // invoking the full detail foundation pipeline.
+  if (
+    missingRows.length &&
+    publicationMode === "intraday_status_only"
+  ) {
+    throw new Error(
+      `intraday_status_only_missing_published_details:${dayKey}:` +
+      missingRows
+        .map(fixture => fixturePublicationId(fixture))
+        .filter(Boolean)
+        .sort()
+        .join(",")
+    );
+  }
+
   // Missing-detail GUARANTEE. Every publishable fixture must ship a detail page
   // (even a sparse one — buildDetails never skips, it writes empty blocks). If
   // any fixture lacks a detail on disk, build it NOW from the same published
@@ -927,15 +1033,15 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
 
     // Bring the freshly built details into the snapshot, then re-check on disk.
     detailsReport = copyDetails(
-    dayKey,
-    snapshotDetailsDir,
-    {
-      preserveDetails,
-      validIds,
-      canonicalNames,
-      fixturesById
-    }
-  );
+      dayKey,
+      snapshotDetailsDir,
+      {
+        preserveDetails,
+        validIds,
+        canonicalNames,
+        fixturesById
+      }
+    );
     missingRows = missingRowsAgainst(detailIdsOnDisk());
 
     if (missingRows.length) {
@@ -945,6 +1051,20 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
         fixtures: missingRows.map(f => String(f?.canonicalId || f?.matchId || ""))
       });
     }
+  }
+
+  if (
+    missingRows.length &&
+    options?.failOnMissingDetails === true
+  ) {
+    throw new Error(
+      `snapshot_missing_details_fail_closed:${dayKey}:` +
+      missingRows
+        .map(fixture => fixturePublicationId(fixture))
+        .filter(Boolean)
+        .sort()
+        .join(",")
+    );
   }
 
   const detailsMissingForFixtures = missingRows
@@ -1102,6 +1222,13 @@ const manifest = {
     staticMinTargetFixtures: targetFixtureGate.staticMinTargetFixtures,
     minTargetFixtures: targetFixtureGate.minTargetFixtures,
     minTargetFixtureSource: targetFixtureGate.minTargetFixtureSource,
+    publicationUniverse: {
+      mode: publicationMode,
+      currentFixtureCount: allFixtures.length,
+      publishedFixtureCount: fixtures.length,
+      deferredFixtureCount: deferredFixtureIds.length,
+      deferredFixtureIds
+    },
     files: {
       fixtures: "fixtures.json",
       value: "value.json",
