@@ -59,6 +59,31 @@ function maxTime(values) {
   return times.length ? Math.max(...times) : null;
 }
 
+export function snapshotValueFreshnessTime({ snapshotValue, manifest } = {}) {
+  const frozenPlanAPublication = Boolean(
+    snapshotValue?.publicationAuthority === "frozen_plan_a_observation" ||
+    (
+      snapshotValue?.immutable === true &&
+      snapshotValue?.planId === "plan-a" &&
+      snapshotValue?.outputMode === "plan-a-observation"
+    )
+  );
+
+  if (frozenPlanAPublication) {
+    const publicationAt = maxTime([
+      manifest?.valueGate?.valueArtifactAt,
+      manifest?.generatedAt
+    ]);
+    if (publicationAt !== null) return publicationAt;
+  }
+
+  return maxTime([
+    snapshotValue?.updatedAt,
+    snapshotValue?.createdAt,
+    snapshotValue?.generatedAt
+  ]);
+}
+
 export function shouldPreserveHistoricalPlanBObservation({
   dayKey,
   currentAthensDay = athensDayKey(),
@@ -274,7 +299,7 @@ export function verifyArtifactFreshnessDay(dayKey) {
       {
         kind: "snapshot_value",
         artifact: `deploy-snapshots/${dayKey}/value.json`,
-        at: maxTime([snapshotValue?.updatedAt, snapshotValue?.createdAt, snapshotValue?.generatedAt]),
+        at: snapshotValueFreshnessTime({ snapshotValue, manifest }),
         staleReason: "snapshot_value_stale_against_canonical"
       },
       {

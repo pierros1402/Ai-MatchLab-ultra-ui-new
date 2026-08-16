@@ -34,6 +34,7 @@ import { buildValuePlanComparisonDay } from "./build-value-plan-comparison-day.j
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { buildDayReport } from "./build-day-report.js";
+import { buildFoundationIntegrityReport } from "./build-foundation-integrity-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import {
   ensurePlanAObservationDay,
@@ -515,6 +516,11 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
   writeFreshnessReport(date, freshness);
 
   const invariant = await runSnapshotInvariantCheck(date);
+  const foundationIntegrityReport = buildFoundationIntegrityReport(date);
+  writeJsonStable(
+    resolveDataPath("foundation-integrity", `${date}.json`),
+    foundationIntegrityReport
+  );
   const buildReport = buildDayReport(date);
   writeJsonStable(resolveDataPath("build-reports", `${date}.json`), buildReport);
 

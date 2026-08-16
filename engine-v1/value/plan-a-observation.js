@@ -58,7 +58,10 @@ function sha256Text(value) {
 }
 
 function sha256File(filePath) {
-  return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+  const canonicalText = fs
+    .readFileSync(filePath, "utf8")
+    .replace(/\r\n?/gu, "\n");
+  return crypto.createHash("sha256").update(canonicalText, "utf8").digest("hex");
 }
 
 function readJsonSafe(filePath, fallback = null) {
