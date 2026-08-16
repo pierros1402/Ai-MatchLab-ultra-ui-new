@@ -1,11 +1,15 @@
 import { fetchLeagueFixtures } from "./espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
-import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
 import { resolveInternational } from "../odds/international-competitions.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
+import {
+  flashscoreOffsetsForRequestedDay,
+  flashscoreRowMatchesRequestedAthensDay,
+  resolveFlashscoreAcquisitionIdentity
+} from "./flashscore-acquisition-contract.js";
 
 const ESPN_SUPPORTED = new Set([
   "eng.1",
@@ -96,22 +100,28 @@ const ESPN_SUPPORTED = new Set([
 // Flashscore covers EVERY declared league: primary provider for leagues ESPN
 // does not support, and fallback for ESPN leagues when ESPN returns zero
 // events or errors (ESPN-supported leagues must not be single-provider risk).
-// Its fetch slices the cached full-day feed by resolved slug, so widening
-// support adds no extra HTTP calls and cannot misattribute rows.
 const FLASHSCORE_SUPPORTED = new Set(
   LEAGUES_COVERAGE
     .map(s => String(s?.slug || "").trim())
     .filter(Boolean)
 );
 
-// Flashscore fetches the full day feed once and caches it per day.
-// Individual league queries slice from that cache — no per-league HTTP calls.
-const _fsCache = new Map(); // dayKey → { rows, fetchedAt }
+// Flashscore exposes offset-based day feeds, not a calendar-date query. Cache
+// each requested Athens day only after fetching the offsets that actually cover
+// that day. Rows are hard-filtered to the exact Athens kickoff day below.
+const _fsCache = new Map(); // dayKey → { rows, fetchedAt, offsets }
 
 async function getFlashscoreRows(dayKey) {
   if (_fsCache.has(dayKey)) return _fsCache.get(dayKey);
-  const feed = await fetchFlashscoreFixtures({ offsets: [0, 1, 2] });
-  const result = { rows: feed.rows || [], fetchedAt: Date.now() };
+
+  const offsets = flashscoreOffsetsForRequestedDay(dayKey);
+  const feed = await fetchFlashscoreFixtures({ offsets });
+  const result = {
+    rows: feed.rows || [],
+    fetchedAt: Date.now(),
+    offsets
+  };
+
   _fsCache.set(dayKey, result);
   return result;
 }
@@ -152,33 +162,37 @@ const FIXTURE_ADAPTERS = [
     supportsLeague(slug) {
       return FLASHSCORE_SUPPORTED.has(slug);
     },
-    // Returns raw Flashscore row objects filtered to the requested slug + dayKey.
+    // Admission is fail-closed: a row must belong to the exact requested Athens
+    // day and its provider competition must resolve through an admitted exact
+    // path (or the explicit international classifier). Fuzzy domestic name
+    // matching is intentionally forbidden in canonical fixture acquisition.
     async fetch({ slug, dayKey }) {
       const { rows } = await getFlashscoreRows(dayKey);
+
       return rows.filter(fx => {
-        const intl = resolveInternational(fx.leagueName, fx.country);
-        const resolved = intl?.slug
-          || resolveSlugFromPath(fx.leaguePath)
-          || resolveSlug(fx.country, fx.leagueName);
-        return resolved === slug;
+        if (!flashscoreRowMatchesRequestedAthensDay(fx, dayKey)) {
+          return false;
+        }
+
+        const identity = resolveFlashscoreAcquisitionIdentity(fx);
+        return identity.ok && identity.slug === slug;
       });
     },
-    // Converts a Flashscore row to the canonical fixture shape.
+    // Converts an admitted Flashscore row to the canonical fixture shape.
     normalize(fx, slug) {
       if (!fx?.kickoffUtc || !fx?.home || !fx?.away) return null;
 
-      const intl = resolveInternational(fx.leagueName, fx.country);
-      const leagueSlug = intl?.slug
-        || resolveSlugFromPath(fx.leaguePath)
-        || resolveSlug(fx.country, fx.leagueName)
-        || slug;
+      const identity = resolveFlashscoreAcquisitionIdentity(fx);
+      if (!identity.ok || identity.slug !== slug) return null;
 
-      // Identity and bucketing must use the Athens calendar day of the
-      // kickoff, like the ESPN path (normalize.js) — NOT the feed's raw
-      // dayKey, which is UTC-based. A 21:00Z kickoff is already the next
-      // Athens day; the raw dayKey filed it (and its cid_*) one day early,
-      // so the match vanished from the day universe the UI actually shows
-      // (2026-07-07: uru.2 Miramar–Atenas, 21:00Z = 00:00 Athens).
+      const leagueSlug = identity.slug;
+      const intl = identity.identityMode === "explicit_international_classifier"
+        ? resolveInternational(fx.leagueName, fx.country)
+        : null;
+
+      // Identity and bucketing use the Athens calendar day of the kickoff,
+      // exactly like the ESPN path. The raw Flashscore feed day is not trusted
+      // as canonical calendar identity.
       const canonicalId = buildCanonicalId(leagueSlug, fx.home, fx.away, fx.kickoffUtc);
       if (!canonicalId) return null;
 
@@ -193,6 +207,11 @@ const FIXTURE_ADAPTERS = [
 
         leagueSlug,
         leagueName: intl ? intl.label : fx.leagueName,
+        providerLeagueSlug: leagueSlug,
+        providerLeaguePath: identity.providerPath,
+        providerTournamentId: fx.tournamentId || null,
+        providerStageId: fx.stageId || null,
+        providerCompetitionIdentity: identity.identityMode,
 
         dayKey: athensDayFromKickoff(fx.kickoffUtc),
         kickoffUtc: fx.kickoffUtc,
