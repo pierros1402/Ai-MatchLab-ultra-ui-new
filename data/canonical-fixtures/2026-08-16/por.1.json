@@ -2,13 +2,48 @@
   "dayKey": "2026-08-16",
   "leagueSlug": "por.1",
   "leagueName": "Primeira Liga",
-  "updatedAt": "2026-08-16T17:35:39.245Z",
+  "updatedAt": "2026-08-16T17:57:07.837Z",
   "count": 4,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "por.1",
-    "requestedDayKey": "2026-08-27",
-    "mergedAt": "2026-08-16T17:35:39.245Z"
+    "requestedDayKey": "2026-08-16",
+    "providerFetchSlugs": [
+      "por.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-16T17:57:07.837Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-16T17:57:39.192Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -27,20 +62,43 @@
       "awayTeam": "Estoril",
       "venue": "Estádio da Madeira",
       "firstSeenAt": "2026-08-01T18:13:47.965Z",
-      "lastSeenAt": "2026-08-16T17:35:39.243Z",
+      "lastSeenAt": "2026-08-16T17:57:07.836Z",
       "providerIds": {
         "flashscore": "fga2tkho",
         "espn": "401885477"
       },
       "providerLeagueSlug": "por.1",
       "status": "FT",
-      "statusType": "STATUS_FINAL",
       "rawStatus": "STATUS_FULL_TIME",
       "minute": "90'+6'",
       "scoreHome": 2,
       "scoreAway": 0,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-16T17:57:39.192Z",
+        "provider": "espn",
+        "providerMatchId": "401885477",
+        "dayKey": "2026-08-16",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 2,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_por1_arouca_moreirense_20260816",
@@ -58,19 +116,17 @@
       "awayTeam": "Moreirense",
       "venue": "Estádio Municipal de Arouca",
       "firstSeenAt": "2026-08-03T18:59:49.573Z",
-      "lastSeenAt": "2026-08-16T17:35:39.244Z",
+      "lastSeenAt": "2026-08-16T17:57:07.837Z",
       "providerIds": {
         "flashscore": "dG88iF0n",
         "espn": "401885481"
       },
       "providerLeagueSlug": "por.1",
-      "status": "LIVE",
-      "rawStatus": "STATUS_IN_PROGRESS",
-      "minute": "29'",
-      "scoreHome": 1,
-      "scoreAway": 0,
-      "penalties": null,
-      "decidedBy": null
+      "status": "HALF_TIME",
+      "rawStatus": "STATUS_HALFTIME",
+      "minute": "45'+4'",
+      "scoreHome": 3,
+      "scoreAway": 0
     },
     {
       "canonicalId": "cid_por1_braga_gilvicente_20260816",
@@ -88,7 +144,7 @@
       "awayTeam": "Gil Vicente",
       "venue": "Estádio Municipal de Braga",
       "firstSeenAt": "2026-08-01T18:13:47.965Z",
-      "lastSeenAt": "2026-08-16T17:35:39.244Z",
+      "lastSeenAt": "2026-08-16T17:57:07.837Z",
       "providerIds": {
         "flashscore": "rX6GkgVb",
         "espn": "401885480"
@@ -121,7 +177,7 @@
       "awayTeam": "Maritimo",
       "venue": "Estádio Municipal 22 de Junho",
       "firstSeenAt": "2026-08-01T18:13:47.966Z",
-      "lastSeenAt": "2026-08-16T17:35:39.245Z",
+      "lastSeenAt": "2026-08-16T17:57:07.837Z",
       "providerIds": {
         "flashscore": "OA8WoBUN",
         "espn": "401885478"
@@ -131,9 +187,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
