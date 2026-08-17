@@ -12,9 +12,11 @@ import {
  *     metadata that canonical fixture rows do not carry.
  *   - It copies fresh Plan A value/audit into the deploy snapshot, rebuilds Plan B
  *     observation and value-comparison, then updates manifest value metadata only.
- *   - If the existing deploy snapshot does not already cover every canonical
- *     fixture id for the day, the job fails loudly instead of shrinking/rewriting
- *     fixtures. A full snapshot export/merge must handle that case.
+ *   - If the deploy snapshot is missing canonical fixture ids, only an exact
+ *     intraday publicationUniverse.deferredFixtureIds gap may proceed.
+ *     Every other canonical/snapshot mismatch still fails loudly.
+ *   - Even for an accepted deferred publication gap, publication-facing Value
+ *     picks must remain inside the already-published snapshot fixture universe.
  */
 
 import fs from "node:fs";
@@ -34,6 +36,7 @@ import { buildValuePlanComparisonDay } from "./build-value-plan-comparison-day.j
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
 import { buildDayReport } from "./build-day-report.js";
+import { buildFoundationIntegrityReport } from "./build-foundation-integrity-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import {
   ensurePlanAObservationDay,
@@ -193,17 +196,255 @@ function snapshotFixtureIds(dayKey) {
     .filter(Boolean);
 }
 
-function validateSnapshotCoversCanonical(dayKey) {
-  const canonicalIds = canonicalIdsForDay(dayKey);
-  const snapshotIds = snapshotFixtureIds(dayKey);
-  const snapshotSet = new Set(snapshotIds);
-  const missingCanonicalIds = canonicalIds.filter(id => !snapshotSet.has(id));
+function cleanFixtureId(value) {
+  return String(value || "").trim();
+}
+
+function cleanedFixtureIds(values) {
+  return (Array.isArray(values) ? values : [])
+    .map(cleanFixtureId)
+    .filter(Boolean);
+}
+
+function uniqueFixtureIds(values) {
+  return [...new Set(cleanedFixtureIds(values))];
+}
+
+function sameFixtureIdSet(left, right) {
+  const a = [...left].sort();
+  const b = [...right].sort();
+
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export function evaluateValueRefreshSnapshotCoverage({
+  canonicalIds = [],
+  snapshotIds = [],
+  publicationUniverse = null
+} = {}) {
+  const canonicalRaw = cleanedFixtureIds(canonicalIds);
+  const snapshotRaw = cleanedFixtureIds(snapshotIds);
+
+  const canonical = uniqueFixtureIds(canonicalRaw);
+  const snapshot = uniqueFixtureIds(snapshotRaw);
+
+  const identitiesUnique =
+    canonical.length === canonicalRaw.length &&
+    snapshot.length === snapshotRaw.length;
+
+  const canonicalSet = new Set(canonical);
+  const snapshotSet = new Set(snapshot);
+
+  const missingCanonicalIds = canonical
+    .filter(id => !snapshotSet.has(id))
+    .sort();
+
+  const extraSnapshotIds = snapshot
+    .filter(id => !canonicalSet.has(id))
+    .sort();
+
+  const fullCanonicalCoverage =
+    identitiesUnique &&
+    missingCanonicalIds.length === 0 &&
+    extraSnapshotIds.length === 0;
+
+  const rawDeferredFixtureIds = cleanedFixtureIds(
+    publicationUniverse?.deferredFixtureIds
+  );
+
+  const deferredFixtureIds =
+    uniqueFixtureIds(rawDeferredFixtureIds)
+      .sort();
+
+  const deferredIdsUnique =
+    rawDeferredFixtureIds.length ===
+    deferredFixtureIds.length;
+
+  const declaredDeferredFixtureCount =
+    Number(publicationUniverse?.deferredFixtureCount);
+
+  const declaredCurrentFixtureCount =
+    Number(publicationUniverse?.currentFixtureCount);
+
+  const declaredPublishedFixtureCount =
+    Number(publicationUniverse?.publishedFixtureCount);
+
+  const exactDeferredPublicationGap = Boolean(
+    identitiesUnique &&
+    publicationUniverse &&
+    typeof publicationUniverse === "object" &&
+    publicationUniverse.mode === "intraday_status_only" &&
+    deferredFixtureIds.length > 0 &&
+    deferredIdsUnique &&
+    Number.isInteger(declaredDeferredFixtureCount) &&
+    Number.isInteger(declaredCurrentFixtureCount) &&
+    Number.isInteger(declaredPublishedFixtureCount) &&
+    declaredDeferredFixtureCount === deferredFixtureIds.length &&
+    declaredCurrentFixtureCount === canonical.length &&
+    declaredPublishedFixtureCount === snapshot.length &&
+    declaredCurrentFixtureCount -
+      declaredPublishedFixtureCount ===
+      declaredDeferredFixtureCount &&
+    extraSnapshotIds.length === 0 &&
+    sameFixtureIdSet(
+      missingCanonicalIds,
+      deferredFixtureIds
+    )
+  );
 
   return {
-    ok: missingCanonicalIds.length === 0,
-    canonicalFixtures: canonicalIds.length,
-    snapshotFixtures: snapshotIds.length,
-    missingCanonicalIds
+    ok:
+      fullCanonicalCoverage ||
+      exactDeferredPublicationGap,
+
+    mode:
+      fullCanonicalCoverage
+        ? "full_canonical"
+        : (
+            exactDeferredPublicationGap
+              ? "intraday_deferred_publication"
+              : "coverage_mismatch"
+          ),
+
+    canonicalFixtures:
+      canonical.length,
+
+    snapshotFixtures:
+      snapshot.length,
+
+    missingCanonicalIds,
+    extraSnapshotIds,
+
+    publicationMode:
+      publicationUniverse?.mode || null,
+
+    declaredCurrentFixtureCount:
+      Number.isInteger(declaredCurrentFixtureCount)
+        ? declaredCurrentFixtureCount
+        : null,
+
+    declaredPublishedFixtureCount:
+      Number.isInteger(declaredPublishedFixtureCount)
+        ? declaredPublishedFixtureCount
+        : null,
+
+    declaredDeferredFixtureCount:
+      Number.isInteger(declaredDeferredFixtureCount)
+        ? declaredDeferredFixtureCount
+        : null,
+
+    declaredDeferredFixtureIds:
+      deferredFixtureIds,
+
+    deferredPublicationGapAccepted:
+      exactDeferredPublicationGap
+  };
+}
+
+function validateSnapshotCoverageForValueRefresh(dayKey) {
+  const canonicalIds = canonicalIdsForDay(dayKey);
+  const snapshotIds = snapshotFixtureIds(dayKey);
+
+  const manifest = readJsonSafe(
+    resolveDataPath(
+      "deploy-snapshots",
+      dayKey,
+      "manifest.json"
+    ),
+    null
+  );
+
+  return evaluateValueRefreshSnapshotCoverage({
+    canonicalIds,
+    snapshotIds,
+    publicationUniverse:
+      manifest?.publicationUniverse || null
+  });
+}
+
+function valuePickIdentityCandidates(pick) {
+  return uniqueFixtureIds([
+    pick?.canonicalId,
+    pick?.matchId,
+    pick?.id,
+    pick?.fixtureId
+  ]);
+}
+
+export function validateValuePlanPicksAgainstPublishedSnapshot(
+  snapshotIds,
+  plans = {}
+) {
+  const publishedIds =
+    uniqueFixtureIds(snapshotIds);
+
+  const publishedSet =
+    new Set(publishedIds);
+
+  const violations = [];
+
+  for (const [planId, payload] of Object.entries(plans || {})) {
+    if (!payload || typeof payload !== "object") {
+      continue;
+    }
+
+    const picks =
+      Array.isArray(payload?.picks)
+        ? payload.picks
+        : [];
+
+    const unpublishedPickIds = [];
+    let missingIdentityPickCount = 0;
+
+    for (const pick of picks) {
+      const candidates =
+        valuePickIdentityCandidates(pick);
+
+      if (!candidates.length) {
+        missingIdentityPickCount += 1;
+        continue;
+      }
+
+      if (
+        !candidates.some(id =>
+          publishedSet.has(id)
+        )
+      ) {
+        unpublishedPickIds.push(
+          candidates[0]
+        );
+      }
+    }
+
+    const uniqueUnpublished =
+      [...new Set(unpublishedPickIds)]
+        .sort();
+
+    if (
+      uniqueUnpublished.length > 0 ||
+      missingIdentityPickCount > 0
+    ) {
+      violations.push({
+        planId,
+        pickCount: picks.length,
+        unpublishedPickCount:
+          uniqueUnpublished.length,
+        unpublishedPickIds:
+          uniqueUnpublished,
+        missingIdentityPickCount
+      });
+    }
+  }
+
+  return {
+    ok: violations.length === 0,
+    publishedFixtureCount:
+      publishedIds.length,
+    checkedPlanCount:
+      Object.values(plans || {})
+        .filter(Boolean)
+        .length,
+    violations
   };
 }
 
@@ -322,6 +563,7 @@ function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent, option
   );
 
   manifest.valueGate = {
+    ...(manifest.valueGate || {}),
     fixtures: Number(manifest.counts?.fixtures || 0),
     valuePicks: Number(valueOut?.count || 0),
     valueSource,
@@ -436,7 +678,7 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     }
   }
 
-  const coverage = validateSnapshotCoversCanonical(date);
+  const coverage = validateSnapshotCoverageForValueRefresh(date);
   if (!coverage.ok) {
     return {
       ok: false,
@@ -490,6 +732,42 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     };
   }
 
+  const publicationValueGuard =
+    coverage.deferredPublicationGapAccepted
+      ? {
+          required: true,
+          ...validateValuePlanPicksAgainstPublishedSnapshot(
+            snapshotFixtureIds(date),
+            {
+              A_candidate: planA,
+              A: snapshotValue.valueOut,
+              A2: planA2,
+              B: planB,
+              B2: planB2
+            }
+          )
+        }
+      : {
+          required: false,
+          ok: true,
+          publishedFixtureCount:
+            coverage.snapshotFixtures,
+          checkedPlanCount: 0,
+          violations: []
+        };
+
+  if (!publicationValueGuard.ok) {
+    return {
+      ok: false,
+      mode: "refresh_value_artifacts_after_canonical_change",
+      date,
+      reason:
+        "value_plan_contains_unpublished_fixture_pick",
+      coverage,
+      publicationValueGuard
+    };
+  }
+
   const universeParity = {
     A_B: planB
       ? assertValueFixtureUniverseParity(
@@ -515,6 +793,11 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
   writeFreshnessReport(date, freshness);
 
   const invariant = await runSnapshotInvariantCheck(date);
+  const foundationIntegrityReport = buildFoundationIntegrityReport(date);
+  writeJsonStable(
+    resolveDataPath("foundation-integrity", `${date}.json`),
+    foundationIntegrityReport
+  );
   const buildReport = buildDayReport(date);
   writeJsonStable(resolveDataPath("build-reports", `${date}.json`), buildReport);
 
@@ -533,6 +816,7 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     startedAt,
     finishedAt: new Date().toISOString(),
     coverage,
+    publicationValueGuard,
     universeParity,
     planA: {
       ok: planA?.ok !== false,

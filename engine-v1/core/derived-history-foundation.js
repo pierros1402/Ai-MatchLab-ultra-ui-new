@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { resolveDataPath } from "../storage/data-root.js";
+import { priorArchiveSeasons } from "./season-model.js";
 
 export const DERIVED_FOUNDATION_SCHEMA = "ai-matchlab.derived-history-foundation.v1";
 
@@ -11,8 +12,39 @@ function sha256Buffer(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
-function fileSha256(file) {
-  return sha256Buffer(fs.readFileSync(file));
+export function normalizeDerivedFoundationBytes(value) {
+  const input = Buffer.isBuffer(value)
+    ? value
+    : Buffer.from(value);
+
+  if (!input.includes(13)) {
+    return Buffer.from(input);
+  }
+
+  const bytes = [];
+  for (let index = 0; index < input.length; index += 1) {
+    if (
+      input[index] === 13 &&
+      index + 1 < input.length &&
+      input[index + 1] === 10
+    ) {
+      bytes.push(10);
+      index += 1;
+    } else {
+      bytes.push(input[index]);
+    }
+  }
+  return Buffer.from(bytes);
+}
+
+export function derivedFoundationFileFingerprintSync(file) {
+  const content = normalizeDerivedFoundationBytes(
+    fs.readFileSync(file),
+  );
+  return {
+    bytes: content.length,
+    sha256: sha256Buffer(content),
+  };
 }
 
 function listFilesRecursive(root, predicate = () => true) {
@@ -41,11 +73,15 @@ function aggregateFiles(files, baseRoot) {
   const key = inventoryKey(existing);
   const cacheKey = `${baseRoot}|${key}`;
   if (HASH_CACHE.has(cacheKey)) return HASH_CACHE.get(cacheKey);
-  const members = existing.map(file => ({
-    path: path.relative(baseRoot, file).replaceAll(path.sep, "/"),
-    bytes: fs.statSync(file).size,
-    sha256: fileSha256(file),
-  }));
+  const members = existing.map(file => {
+    const fingerprint =
+      derivedFoundationFileFingerprintSync(file);
+    return {
+      path: path.relative(baseRoot, file).replaceAll(path.sep, "/"),
+      bytes: fingerprint.bytes,
+      sha256: fingerprint.sha256,
+    };
+  });
   const sha256 = sha256Buffer(members.map(x => `${x.path}\0${x.bytes}\0${x.sha256}\n`).join(""));
   const result = {
     sha256,
@@ -62,6 +98,103 @@ export function computeCurrentHistoryFingerprintSync() {
   return aggregateFiles(
     listFilesRecursive(root, file => file.endsWith(".json") && !file.endsWith(".report.json")),
     resolveDataPath(),
+  );
+}
+
+export function modelPriorsArchiveInputFilesSync({
+  now = new Date(),
+  archiveRoot = resolveDataPath("history-archive"),
+} = {}) {
+  if (!fs.existsSync(archiveRoot)) {
+    return [];
+  }
+
+  const leagueDirs =
+    fs.readdirSync(
+      archiveRoot,
+      { withFileTypes: true },
+    )
+      .filter(entry => entry.isDirectory())
+      .sort(
+        (left, right) =>
+          left.name.localeCompare(right.name),
+      );
+
+  const files = [];
+
+  for (const entry of leagueDirs) {
+    const sourceSeasons =
+      priorArchiveSeasons(
+        entry.name,
+        5,
+        now,
+      );
+
+    for (const season of sourceSeasons) {
+      const file =
+        path.join(
+          archiveRoot,
+          entry.name,
+          `${season}.json`,
+        );
+
+      if (
+        fs.existsSync(file) &&
+        fs.statSync(file).isFile()
+      ) {
+        files.push(file);
+      }
+    }
+  }
+
+  return files.sort(
+    (left, right) =>
+      left.localeCompare(right),
+  );
+}
+
+export function computeModelPriorsSourceFingerprintSync({
+  now = new Date(),
+} = {}) {
+  const dataRoot =
+    resolveDataPath();
+
+  const files = [
+    ...modelPriorsArchiveInputFilesSync({
+      now,
+      archiveRoot:
+        resolveDataPath("history-archive"),
+    }),
+  ];
+
+  files.push(
+    ...listFilesRecursive(
+      resolveDataPath("team-aliases"),
+      file => file.endsWith(".json"),
+    ),
+  );
+
+  for (const name of [
+    "production-global-club-id-registry.v1.json",
+    "fixture-retention-decision-ledger.v1.json",
+    "production-identity-extension-ledger.v1.json",
+    "production-team-identity-disambiguation-ledger.v1.json",
+    "semantic-duplicate-decision-ledger.v1.json",
+  ]) {
+    const file =
+      resolveDataPath(
+        "identity-decisions",
+        name,
+      );
+
+    if (fs.existsSync(file)) {
+      files.push(file);
+    }
+  }
+
+  return aggregateFiles(
+    [...new Set(files)],
+    dataRoot,
   );
 }
 
@@ -147,7 +280,7 @@ export function validateHistoryIndexFoundationSync(season) {
 }
 
 export function writeModelPriorsFoundationSync(season) {
-  const source = computeHistoricalTruthFingerprintSync(season);
+  const source = computeModelPriorsSourceFingerprintSync();
   const outputs = outputAggregate([resolveDataPath("model-priors", `${season}.json`)]);
   const artifact = {
     schema: DERIVED_FOUNDATION_SCHEMA,
@@ -167,7 +300,7 @@ export function validateModelPriorsFoundationSync(season) {
   if (!artifact || artifact.schema !== DERIVED_FOUNDATION_SCHEMA || artifact.artifactType !== "model-priors") {
     return { ok: false, reason: "missing_or_invalid_model_priors_foundation", artifact };
   }
-  const source = computeHistoricalTruthFingerprintSync(season);
+  const source = computeModelPriorsSourceFingerprintSync();
   const outputs = outputAggregate([resolveDataPath("model-priors", `${season}.json`)]);
   const expected = sha256Buffer(`${source.sha256}\0${outputs.sha256}`);
   const ok = source.sha256 === artifact.source?.sha256 && outputs.sha256 === artifact.outputs?.sha256 && expected === artifact.foundationFingerprint;

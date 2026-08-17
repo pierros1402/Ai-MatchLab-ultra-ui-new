@@ -56,17 +56,32 @@ test(
   () => {
     assert.match(
       source,
-      /const snapshotSet = new Set\(snapshotIds\);/
+      /export function evaluateValueRefreshSnapshotCoverage/
     );
 
     assert.match(
       source,
-      /const missingCanonicalIds = canonicalIds\.filter\(id => !snapshotSet\.has\(id\)\);/
+      /const snapshotSet = new Set\(snapshot\);/
     );
 
     assert.match(
       source,
-      /ok: missingCanonicalIds\.length === 0/
+      /const missingCanonicalIds = canonical\s*\.filter\(id => !snapshotSet\.has\(id\)\)\s*\.sort\(\);/
+    );
+
+    assert.match(
+      source,
+      /const fullCanonicalCoverage =\s*identitiesUnique &&\s*missingCanonicalIds\.length === 0 &&\s*extraSnapshotIds\.length === 0;/
+    );
+
+    assert.match(
+      source,
+      /sameFixtureIdSet\(\s*missingCanonicalIds,\s*deferredFixtureIds\s*\)/
+    );
+
+    assert.match(
+      source,
+      /ok:\s*fullCanonicalCoverage \|\|\s*exactDeferredPublicationGap/
     );
   }
 );
