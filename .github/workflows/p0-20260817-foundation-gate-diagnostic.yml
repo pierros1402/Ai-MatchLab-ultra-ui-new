@@ -1,0 +1,137 @@
+name: P0 2026-08-17 foundation gate diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/p0-20260817-foundation-gate-diagnostic.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p0-20260817-foundation-gate-diagnostic
+  cancel-in-progress: false
+
+env:
+  TARGET_DAY_KEY: "2026-08-17"
+  TARGET_REF: "a5e7a0c9a07154632d27917f1b2319a316a5c880"
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact persisted truth checkpoint
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_REF }}
+          fetch-depth: 0
+
+      - name: Verify exact checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_REF"
+          test -z "$(git status --porcelain)"
+          echo "Diagnostic checkpoint: $(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Capture history semantic audit
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p foundation-diagnostic
+          set +e
+          node ./engine-v1/jobs/audit-history-semantic-integrity.js \
+            --output=foundation-diagnostic/history-semantic.json \
+            > foundation-diagnostic/history-semantic-cli.json 2>&1
+          STATUS=$?
+          set -e
+          printf '%s\n' "$STATUS" > foundation-diagnostic/history-semantic-exit-code.txt
+          cat foundation-diagnostic/history-semantic-cli.json
+          cat foundation-diagnostic/history-semantic.json
+
+      - name: Capture pre-rebuild foundation report
+        shell: bash
+        run: |
+          set -uo pipefail
+          set +e
+          node ./engine-v1/jobs/build-foundation-integrity-report.js \
+            --date="$TARGET_DAY_KEY" --json \
+            > foundation-diagnostic/foundation-pre-rebuild.json 2>&1
+          STATUS=$?
+          set -e
+          printf '%s\n' "$STATUS" > foundation-diagnostic/foundation-pre-rebuild-exit-code.txt
+          cat foundation-diagnostic/foundation-pre-rebuild.json
+
+      - name: Reconstruct deterministic details snapshot from persisted truth
+        shell: bash
+        run: |
+          set -uo pipefail
+          set +e
+          node ./engine-v1/jobs/build-details-day.js "$TARGET_DAY_KEY" --rebuild \
+            > foundation-diagnostic/details-rebuild.log 2>&1
+          DETAILS_STATUS=$?
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$TARGET_DAY_KEY" \
+            > foundation-diagnostic/snapshot-export.log 2>&1
+          EXPORT_STATUS=$?
+          set -e
+          printf '%s\n' "$DETAILS_STATUS" > foundation-diagnostic/details-rebuild-exit-code.txt
+          printf '%s\n' "$EXPORT_STATUS" > foundation-diagnostic/snapshot-export-exit-code.txt
+          cat foundation-diagnostic/details-rebuild.log
+          cat foundation-diagnostic/snapshot-export.log
+
+      - name: Capture details foundation audit
+        shell: bash
+        run: |
+          set -uo pipefail
+          set +e
+          node ./engine-v1/jobs/audit-details-foundation-day.js "$TARGET_DAY_KEY" \
+            > foundation-diagnostic/details-foundation.json 2>&1
+          STATUS=$?
+          set -e
+          printf '%s\n' "$STATUS" > foundation-diagnostic/details-foundation-exit-code.txt
+          cat foundation-diagnostic/details-foundation.json
+
+      - name: Capture post-rebuild foundation report
+        shell: bash
+        run: |
+          set -uo pipefail
+          set +e
+          node ./engine-v1/jobs/build-foundation-integrity-report.js \
+            --date="$TARGET_DAY_KEY" --json \
+            > foundation-diagnostic/foundation-post-rebuild.json 2>&1
+          STATUS=$?
+          set -e
+          printf '%s\n' "$STATUS" > foundation-diagnostic/foundation-post-rebuild-exit-code.txt
+          cat foundation-diagnostic/foundation-post-rebuild.json
+
+      - name: Capture repository mutation surface
+        if: always()
+        shell: bash
+        run: |
+          git status --porcelain=v1 > foundation-diagnostic/git-status.txt || true
+          git diff --name-only > foundation-diagnostic/git-diff-paths.txt || true
+          git diff --stat > foundation-diagnostic/git-diff-stat.txt || true
+
+      - name: Upload foundation diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p0-20260817-foundation-gate-diagnostic
+          path: foundation-diagnostic/
+          if-no-files-found: error
+          retention-days: 7
