@@ -16,6 +16,9 @@ test("known cross-provider senior-team aliases converge", () => {
   assert.equal(teamNamesMatch("AGF", "Aarhus"), true);
   assert.equal(teamNamesMatch("Crvena zvezda (Srb)", "Red Star Belgrade"), true);
   assert.equal(teamNamesMatch("Univ. Craiova (Rou)", "CSU Craiova"), true);
+  assert.equal(teamNamesMatch("Estudiantes de La Plata", "Estudiantes L.P."), true);
+  assert.equal(teamNamesMatch("Gimnasia La Plata", "Gimnasia L.P."), true);
+  assert.equal(teamNamesMatch("Sint-Truidense", "St. Truiden"), true);
 });
 
 

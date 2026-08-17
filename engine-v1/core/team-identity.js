@@ -43,6 +43,12 @@ const EXPLICIT_TEAM_ALIAS_GROUPS = [
   ["mk dons", "milton keynes dons"],
   ["crvena zvezda", "red star belgrade"],
   ["universitatea craiova", "univ craiova", "csu craiova"],
+
+  // Provider aliases observed in the Issue #53 semantic duplicate set.
+  // Keep these explicit: do not broaden the fuzzy matching contract.
+  ["estudiantes la plata", "estudiantes lp"],
+  ["gimnasia la plata", "gimnasia lp"],
+  ["sint truidense", "st truiden"],
 ];
 
 function explicitAliasKey(name) {

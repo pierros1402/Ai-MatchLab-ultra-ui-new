@@ -24,6 +24,9 @@ import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
 import { recordMatchResult, getResultsSummary } from "../storage/results-memory-db.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import { athensDayFromKickoff } from "../core/daykey.js";
+import { canonicalFixturesForDay } from "../core/day-fixture-universe.js";
+import { teamPairMatches } from "../core/team-identity.js";
 
 /**
  * Build a matchId → leagueSlug lookup from all fixtures-all.json snapshots
@@ -33,6 +36,177 @@ import { resolveDataPath } from "../storage/data-root.js";
  * matchIds in fixtures-all are prefixed "fs_XXXX"; in the live feed they are
  * bare "XXXX" — we index both forms.
  */
+/**
+ * Resolve one Flashscore FINAL row to the authoritative canonical fixture.
+ *
+ * Identity authority:
+ *   canonical-fixtures = fixture identity truth
+ *   Flashscore matchId = provider provenance only when a unique canonical
+ *   event can be proven.
+ *
+ * Safety:
+ *   - same operational Athens day
+ *   - same league
+ *   - kickoff within 5 minutes
+ *   - teamPairMatches() must pass, including squad-marker boundaries
+ *   - exactly one canonical candidate is required
+ *
+ * Ambiguous or unresolved rows deliberately fall back to the provider id;
+ * this function never guesses a canonical identity.
+ */
+export function resolveCanonicalResultIdentity(
+  match,
+  leagueSlug,
+  {
+    canonicalRows = null,
+  } = {},
+) {
+  const providerMatchId = String(match?.matchId || "").trim();
+
+  if (!providerMatchId) {
+    return {
+      status: "provider_fallback",
+      providerMatchId: "",
+      matchId: "",
+      sourceMatchId: null,
+      canonicalMatchId: null,
+      candidateCount: 0,
+      reason: "missing_provider_match_id",
+    };
+  }
+
+  const dayKey =
+    athensDayFromKickoff(match?.kickoffUtc) ||
+    String(match?.kickoffUtc || "").slice(0, 10) ||
+    null;
+
+  if (!dayKey) {
+    return {
+      status: "provider_fallback",
+      providerMatchId,
+      matchId: providerMatchId,
+      sourceMatchId: null,
+      canonicalMatchId: null,
+      candidateCount: 0,
+      reason: "missing_operational_day",
+    };
+  }
+
+  const rows = Array.isArray(canonicalRows)
+    ? canonicalRows
+    : canonicalFixturesForDay(dayKey);
+
+  const providerKickoffMs = Date.parse(
+    String(match?.kickoffUtc || "")
+  );
+
+  if (!Number.isFinite(providerKickoffMs)) {
+    return {
+      status: "provider_fallback",
+      providerMatchId,
+      matchId: providerMatchId,
+      sourceMatchId: null,
+      canonicalMatchId: null,
+      candidateCount: 0,
+      reason: "invalid_provider_kickoff",
+      dayKey,
+    };
+  }
+
+  const candidates = (Array.isArray(rows) ? rows : []).filter(row => {
+    const rowSlug = String(
+      row?.leagueSlug ||
+      row?.competitionSlug ||
+      ""
+    ).trim();
+
+    if (
+      leagueSlug &&
+      rowSlug &&
+      rowSlug !== String(leagueSlug)
+    ) {
+      return false;
+    }
+
+    const rowKickoffMs = Date.parse(
+      String(
+        row?.kickoffUtc ||
+        row?.kickoff ||
+        ""
+      )
+    );
+
+    if (!Number.isFinite(rowKickoffMs)) {
+      return false;
+    }
+
+    if (
+      Math.abs(
+        providerKickoffMs -
+        rowKickoffMs
+      ) > 5 * 60 * 1000
+    ) {
+      return false;
+    }
+
+    return teamPairMatches(
+      match?.home,
+      match?.away,
+      row?.homeTeam ?? row?.home,
+      row?.awayTeam ?? row?.away,
+    );
+  });
+
+  if (candidates.length !== 1) {
+    return {
+      status:
+        candidates.length > 1
+          ? "ambiguous_canonical_identity"
+          : "provider_fallback",
+      providerMatchId,
+      matchId: providerMatchId,
+      sourceMatchId: null,
+      canonicalMatchId: null,
+      candidateCount: candidates.length,
+      reason:
+        candidates.length > 1
+          ? "multiple_canonical_candidates"
+          : "no_unique_canonical_candidate",
+      dayKey,
+    };
+  }
+
+  const canonicalMatchId = String(
+    candidates[0]?.canonicalId ||
+    candidates[0]?.matchId ||
+    candidates[0]?.id ||
+    ""
+  ).trim();
+
+  if (!canonicalMatchId) {
+    return {
+      status: "provider_fallback",
+      providerMatchId,
+      matchId: providerMatchId,
+      sourceMatchId: null,
+      canonicalMatchId: null,
+      candidateCount: 1,
+      reason: "canonical_candidate_missing_identity",
+      dayKey,
+    };
+  }
+
+  return {
+    status: "canonical",
+    providerMatchId,
+    matchId: canonicalMatchId,
+    sourceMatchId: providerMatchId,
+    canonicalMatchId,
+    candidateCount: 1,
+    reason: "unique_authoritative_canonical_event",
+    dayKey,
+  };
+}
 function buildFixturesAllSlugIndex(daysBack = 8) {
   const index = new Map(); // bare matchId → leagueSlug
   const now = Date.now();
@@ -63,6 +237,9 @@ export async function accumulateResults() {
 
   const stats = {
     scanned: 0, finished: 0, attributed: 0, stored: 0,
+    canonicalIdentityResolved: 0,
+    providerIdentityFallback: 0,
+    canonicalIdentityAmbiguous: 0,
     byLeague: {},
     resolvedBy: { coverageMap: 0, pathMap: 0, fixturesAll: 0, pathFallback: 0 },
   };
@@ -112,8 +289,21 @@ export async function accumulateResults() {
     if (!slug) continue;  // no usable league path at all — cannot attribute
     stats.attributed++;
 
+    const identity = resolveCanonicalResultIdentity(m, slug);
+
+    if (identity.status === "canonical") {
+      stats.canonicalIdentityResolved++;
+    } else if (identity.status === "ambiguous_canonical_identity") {
+      stats.canonicalIdentityAmbiguous++;
+    } else {
+      stats.providerIdentityFallback++;
+    }
+
     const changed = recordMatchResult(slug, {
-      matchId:    String(m.matchId),
+      matchId: identity.matchId,
+      ...(identity.sourceMatchId
+        ? { sourceMatchId: identity.sourceMatchId }
+        : {}),
       home:       m.home,
       away:       m.away,
       scoreHome:  m.scoreHome,
