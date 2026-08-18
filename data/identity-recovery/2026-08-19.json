@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-08-18T20:46:18.013Z",
+  "sourceLatestUpdatedAt": "2026-08-18T21:48:43.640Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "0a089cc65d143be97767372921afbf930934e112f28c44c6f164a15ce4777d5f",
@@ -17,7 +17,7 @@
       "sourceFixtureIds": 148
     }
   },
-  "status": "CLEAN",
+  "status": "REVIEW_REQUIRED",
   "promotionPolicy": {
     "broadFuzzyAllowed": false,
     "unresolvedTwoSidedAutoPromotionAllowed": false,
@@ -25,13 +25,15 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 332,
-    "inputRows": 1141,
+    "scannedLeagueFiles": 393,
+    "inputRows": 1286,
     "autoPromotable": 0,
-    "pendingIndependentConfirmation": 0,
+    "pendingIndependentConfirmation": 1,
     "ambiguous": 0,
     "conflictRejected": 0,
-    "alreadyManagedPairs": 0
+    "alreadyManagedPairs": 0,
+    "independentConfirmed": 0,
+    "independentConfirmationRetryPending": 1
   },
   "targetDays": [
     {
@@ -51,12 +53,83 @@
     },
     {
       "dayKey": "2026-08-21",
-      "leagueFiles": 24,
-      "recoveryLeagueReports": []
+      "leagueFiles": 84,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "conmebol.libertadores",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "conmebol.libertadores",
+              "kickoffUtc": "2026-08-20T22:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "G2hbuBlB",
+                "canonicalId": "cid_conmebollibertadores_lduquitoecu_mirassolbra_20260821",
+                "kickoffUtc": "2026-08-20T22:00:00.000Z",
+                "homeTeam": "LDU Quito (Ecu)",
+                "awayTeam": "Mirassol (Bra)"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401874142",
+                "canonicalId": "cid_conmebollibertadores_ligaquito_mirassol_20260821",
+                "kickoffUtc": "2026-08-20T22:00Z",
+                "homeTeam": "Liga de Quito",
+                "awayTeam": "Mirassol"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-08-18T21:48:43.838Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-08-22",
-      "leagueFiles": 33,
+      "leagueFiles": 34,
       "recoveryLeagueReports": []
     },
     {
@@ -114,5 +187,22 @@
       "leagueFiles": 12,
       "recoveryLeagueReports": []
     }
-  ]
+  ],
+  "independentConfirmation": {
+    "source": "api_football",
+    "evidenceEndpoint": "fixtures",
+    "oddsAllowed": false,
+    "fuzzyMatchingAllowed": false,
+    "runAt": "2026-08-18T21:48:43.838Z",
+    "attempts": [
+      {
+        "dayKey": "2026-08-21",
+        "leagueSlug": "conmebol.libertadores",
+        "key": "cid_conmebollibertadores_lduquitoecu_mirassolbra_20260821|cid_conmebollibertadores_ligaquito_mirassol_20260821",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      }
+    ]
+  }
 }
