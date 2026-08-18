@@ -2,14 +2,14 @@
   "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "tur.1",
   "seasonReference": "2025-2026",
-  "updatedAt": "2026-08-18T02:09:13.909Z",
+  "updatedAt": "2026-08-18T18:07:28.320Z",
   "confidence": 0,
   "completeness": 0,
   "sourceAudit": [
     {
       "type": "history_foundation",
       "label": "history-2026-2027",
-      "ok": false
+      "ok": true
     },
     {
       "type": "competition_contract",
@@ -29,14 +29,12 @@
     "status": "GATED",
     "usable": false,
     "reasonCodes": [
-      "NO_STRICT_HISTORY_ROWS",
-      "TABLE_EMPTY",
       "TEAM_COUNT_AUTHORITY_MISSING"
     ],
-    "builtAt": "2026-08-18T02:09:13.909Z",
+    "builtAt": "2026-08-18T18:07:28.320Z",
     "historySeason": "2026-2027",
-    "historyLeagueRows": 0,
-    "historyLeagueSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "historyLeagueRows": 1,
+    "historyLeagueSha256": "242922d3a159b48dcd52e08727bd26c1665ba27519610f1d168a9d419ac65917",
     "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
     "teamAliasesSha256": "MISSING",
     "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
@@ -45,7 +43,7 @@
     "contractAuthorityScopes": [],
     "contractValidation": {
       "schema": "ai-matchlab.standings-contract-validation.v1",
-      "status": "FAIL",
+      "status": "UNVERIFIED",
       "ok": false,
       "publicationDecision": "NOT_APPLIED_READ_ONLY",
       "leagueSlug": "tur.1",
@@ -63,9 +61,9 @@
       },
       "summary": {
         "primaryUniverseSource": "TABLE",
-        "primaryRowCount": 0,
-        "primaryUniqueTeamCount": 0,
-        "primaryCanonicalIdCount": 0,
+        "primaryRowCount": 2,
+        "primaryUniqueTeamCount": 2,
+        "primaryCanonicalIdCount": 2,
         "primaryFallbackIdentityCount": 0,
         "primaryCanonicalIdentityComplete": true,
         "phaseTableCount": 0,
@@ -73,18 +71,12 @@
           "evaluated": false,
           "pass": null,
           "expected": null,
-          "observed": 0
+          "observed": 2
         },
-        "errorCount": 1,
+        "errorCount": 0,
         "warningCount": 1
       },
       "issues": [
-        {
-          "code": "TABLE_EMPTY",
-          "severity": "error",
-          "scope": "primary",
-          "message": "Standings table is empty."
-        },
         {
           "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
           "severity": "warning",
@@ -98,8 +90,45 @@
         "mutations": []
       }
     },
-    "observedRowCount": 0,
-    "observedTable": [],
+    "observedRowCount": 2,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_49ef7f9dc01e1a275696ab59",
+        "team": "Goztepe",
+        "teamName": "Goztepe",
+        "name": "Goztepe",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 3,
+        "goalsAgainst": 3,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_ae92b90184686be925f22770",
+        "team": "Samsunspor",
+        "teamName": "Samsunspor",
+        "name": "Samsunspor",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 3,
+        "goalsAgainst": 3,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      }
+    ],
     "consumerTableRows": 0,
     "staleOnSourceChange": true
   }

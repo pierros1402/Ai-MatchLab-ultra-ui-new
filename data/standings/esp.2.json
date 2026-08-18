@@ -2,14 +2,14 @@
   "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "esp.2",
   "seasonReference": "2025-2026",
-  "updatedAt": "2026-08-18T02:09:13.874Z",
+  "updatedAt": "2026-08-18T18:07:28.286Z",
   "confidence": 0,
   "completeness": 0,
   "sourceAudit": [
     {
       "type": "history_foundation",
       "label": "history-2026-2027",
-      "ok": false
+      "ok": true
     },
     {
       "type": "competition_contract",
@@ -29,14 +29,12 @@
     "status": "GATED",
     "usable": false,
     "reasonCodes": [
-      "NO_STRICT_HISTORY_ROWS",
-      "TABLE_EMPTY",
       "TEAM_COUNT_AUTHORITY_MISSING"
     ],
-    "builtAt": "2026-08-18T02:09:13.874Z",
+    "builtAt": "2026-08-18T18:07:28.286Z",
     "historySeason": "2026-2027",
-    "historyLeagueRows": 0,
-    "historyLeagueSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "historyLeagueRows": 2,
+    "historyLeagueSha256": "43018c6222acfeb31488bc7a59a1b190f7f51b31d30b78e9be76e9775d2175cc",
     "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
     "teamAliasesSha256": "1f09f11fddac83663f2d8e5667fc3378d8bfb6b1c71ab0bb620c5ac956fb25bc",
     "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
@@ -45,7 +43,7 @@
     "contractAuthorityScopes": [],
     "contractValidation": {
       "schema": "ai-matchlab.standings-contract-validation.v1",
-      "status": "FAIL",
+      "status": "UNVERIFIED",
       "ok": false,
       "publicationDecision": "NOT_APPLIED_READ_ONLY",
       "leagueSlug": "esp.2",
@@ -63,9 +61,9 @@
       },
       "summary": {
         "primaryUniverseSource": "TABLE",
-        "primaryRowCount": 0,
-        "primaryUniqueTeamCount": 0,
-        "primaryCanonicalIdCount": 0,
+        "primaryRowCount": 4,
+        "primaryUniqueTeamCount": 4,
+        "primaryCanonicalIdCount": 4,
         "primaryFallbackIdentityCount": 0,
         "primaryCanonicalIdentityComplete": true,
         "phaseTableCount": 0,
@@ -73,18 +71,12 @@
           "evaluated": false,
           "pass": null,
           "expected": null,
-          "observed": 0
+          "observed": 4
         },
-        "errorCount": 1,
+        "errorCount": 0,
         "warningCount": 1
       },
       "issues": [
-        {
-          "code": "TABLE_EMPTY",
-          "severity": "error",
-          "scope": "primary",
-          "message": "Standings table is empty."
-        },
         {
           "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
           "severity": "warning",
@@ -98,8 +90,81 @@
         "mutations": []
       }
     },
-    "observedRowCount": 0,
-    "observedTable": [],
+    "observedRowCount": 4,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_4476f3904034f894b4298973",
+        "team": "Almería",
+        "teamName": "Almería",
+        "name": "Almería",
+        "played": 1,
+        "wins": 1,
+        "draws": 0,
+        "losses": 0,
+        "goalsFor": 3,
+        "goalsAgainst": 0,
+        "goalDiff": 3,
+        "goalDifference": 3,
+        "points": 3,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_a701a971f9bcfe20f6d09f27",
+        "team": "CD Sabadell",
+        "teamName": "CD Sabadell",
+        "name": "CD Sabadell",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 0,
+        "goalsAgainst": 0,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 3,
+        "rank": 3,
+        "canonicalTeamId": "stid_437521f263f13835ff8486a7",
+        "team": "Sporting Gijón",
+        "teamName": "Sporting Gijón",
+        "name": "Sporting Gijón",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 0,
+        "goalsAgainst": 0,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 4,
+        "rank": 4,
+        "canonicalTeamId": "stid_8cfe395829f6f5d35f2f4cde",
+        "team": "Eldense",
+        "teamName": "Eldense",
+        "name": "Eldense",
+        "played": 1,
+        "wins": 0,
+        "draws": 0,
+        "losses": 1,
+        "goalsFor": 0,
+        "goalsAgainst": 3,
+        "goalDiff": -3,
+        "goalDifference": -3,
+        "points": 0,
+        "confidence": 1
+      }
+    ],
     "consumerTableRows": 0,
     "staleOnSourceChange": true
   }

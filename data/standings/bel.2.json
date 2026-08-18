@@ -1,0 +1,135 @@
+{
+  "schema": "ai-matchlab.history-backed-standings.v1",
+  "league": "bel.2",
+  "seasonReference": "2025-2026",
+  "updatedAt": "2026-08-18T18:07:28.270Z",
+  "confidence": 0,
+  "completeness": 0,
+  "sourceAudit": [
+    {
+      "type": "history_foundation",
+      "label": "history-2026-2027",
+      "ok": true
+    },
+    {
+      "type": "competition_contract",
+      "label": "bel.2@2025-2026#v1",
+      "ok": false
+    }
+  ],
+  "phaseSummary": {
+    "hasPhaseTables": false,
+    "phaseKeys": []
+  },
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "TEAM_COUNT_AUTHORITY_MISSING"
+    ],
+    "builtAt": "2026-08-18T18:07:28.270Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 1,
+    "historyLeagueSha256": "eeadfe96fd8180a16d4d957356c8eae7899f236273fd8ec7a3e44cfd5f2dbb66",
+    "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
+    "teamAliasesSha256": "MISSING",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": "bel.2@2025-2026#v1",
+    "contractSeasonReference": "2025-2026",
+    "contractAuthorityScopes": [],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "UNVERIFIED",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "bel.2",
+      "seasonReference": "2025-2026",
+      "contractId": "bel.2@2025-2026#v1",
+      "authority": {
+        "status": "UNVERIFIED",
+        "scopes": [],
+        "verifiedAt": null
+      },
+      "artifact": {
+        "shape": "OBJECT",
+        "declaredLeague": "bel.2",
+        "observedPhaseKeys": []
+      },
+      "summary": {
+        "primaryUniverseSource": "TABLE",
+        "primaryRowCount": 2,
+        "primaryUniqueTeamCount": 2,
+        "primaryCanonicalIdCount": 2,
+        "primaryFallbackIdentityCount": 0,
+        "primaryCanonicalIdentityComplete": true,
+        "phaseTableCount": 0,
+        "teamCountEvaluation": {
+          "evaluated": false,
+          "pass": null,
+          "expected": null,
+          "observed": 2
+        },
+        "errorCount": 0,
+        "warningCount": 1
+      },
+      "issues": [
+        {
+          "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
+          "severity": "warning",
+          "scope": "contract.teamCount",
+          "message": "Team count is not authoritative for this league/season; count mismatch is not evaluated as compliance failure."
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 2,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_b48ef9a7950e95834f9c29a9",
+        "team": "Francs Borains",
+        "teamName": "Francs Borains",
+        "name": "Francs Borains",
+        "played": 1,
+        "wins": 1,
+        "draws": 0,
+        "losses": 0,
+        "goalsFor": 2,
+        "goalsAgainst": 1,
+        "goalDiff": 1,
+        "goalDifference": 1,
+        "points": 3,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_aa9e7015bb5e29151804f192",
+        "team": "RFC Liege",
+        "teamName": "RFC Liege",
+        "name": "RFC Liege",
+        "played": 1,
+        "wins": 0,
+        "draws": 0,
+        "losses": 1,
+        "goalsFor": 1,
+        "goalsAgainst": 2,
+        "goalDiff": -1,
+        "goalDifference": -1,
+        "points": 0,
+        "confidence": 1
+      }
+    ],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
+}
