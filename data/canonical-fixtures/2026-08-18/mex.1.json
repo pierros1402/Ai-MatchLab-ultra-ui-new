@@ -2,14 +2,46 @@
   "dayKey": "2026-08-18",
   "leagueSlug": "mex.1",
   "leagueName": "Liga MX",
-  "updatedAt": "2026-08-18T01:54:18.176Z",
+  "updatedAt": "2026-08-18T02:21:01.446Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "mex.1",
     "requestedDayKey": "2026-08-18",
-    "mergedAt": "2026-08-18T01:54:18.176Z",
-    "mode": "supplemental_target_seed_only"
+    "providerFetchSlugs": [
+      "mex.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 2,
+      "matches": 2,
+      "fetches": [
+        {
+          "providerSlug": "mex.1",
+          "dayKey": "2026-08-17",
+          "ok": true,
+          "events": 2,
+          "matched": 2
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-18T02:21:01.446Z",
+    "mode": "targeted_live_status_refresh"
   },
   "fixtures": [
     {
@@ -28,18 +60,16 @@
       "awayTeam": "León",
       "venue": "Estadio Victoria",
       "firstSeenAt": "2026-08-03T19:00:49.771Z",
-      "lastSeenAt": "2026-08-18T01:54:18.163Z",
+      "lastSeenAt": "2026-08-18T02:21:01.446Z",
       "providerIds": {
         "espn": "401877011"
       },
       "providerLeagueSlug": "mex.1",
-      "status": "HALF_TIME",
-      "rawStatus": "STATUS_HALFTIME",
-      "minute": "45'+3'",
+      "status": "LIVE",
+      "rawStatus": "STATUS_IN_PROGRESS",
+      "minute": "62'",
       "scoreHome": 0,
-      "scoreAway": 1,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": 1
     },
     {
       "canonicalId": "cid_mex1_pachuca_puebla_20260818",
@@ -57,7 +87,7 @@
       "awayTeam": "Puebla",
       "venue": "Estadio Hidalgo",
       "firstSeenAt": "2026-08-03T19:00:49.771Z",
-      "lastSeenAt": "2026-08-18T01:54:18.163Z",
+      "lastSeenAt": "2026-08-18T02:21:01.446Z",
       "providerIds": {
         "espn": "401877010"
       },
@@ -66,9 +96,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
