@@ -6,15 +6,15 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-08-19T21:45:13.261Z",
+  "sourceLatestUpdatedAt": "2026-08-19T22:44:41.669Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
-    "extensionLedgerSha256": "0a089cc65d143be97767372921afbf930934e112f28c44c6f164a15ce4777d5f",
+    "extensionLedgerSha256": "d0c421eda3d5121b97993716ebfb1c0dfc963dd117fd1f0724e51cd228b54fd6",
     "effectiveCounts": {
-      "identityBindings": 97,
-      "retainedFixtureIds": 74,
-      "suppressedFixtureAliases": 74,
-      "sourceFixtureIds": 148
+      "identityBindings": 98,
+      "retainedFixtureIds": 75,
+      "suppressedFixtureAliases": 75,
+      "sourceFixtureIds": 150
     }
   },
   "status": "REVIEW_REQUIRED",
@@ -27,11 +27,11 @@
     "scannedDays": 16,
     "scannedLeagueFiles": 477,
     "inputRows": 1634,
-    "autoPromotable": 1,
+    "autoPromotable": 0,
     "pendingIndependentConfirmation": 1,
-    "ambiguous": 3,
+    "ambiguous": 4,
     "conflictRejected": 1,
-    "alreadyManagedPairs": 0,
+    "alreadyManagedPairs": 1,
     "independentConfirmed": 0,
     "independentConfirmationRetryPending": 1
   },
@@ -102,7 +102,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-08-19T21:45:13.614Z",
+                "lastAttemptAt": "2026-08-19T22:44:42.024Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -129,60 +129,37 @@
         {
           "leagueSlug": "arg.2",
           "inputRows": 10,
-          "temporalCrossProviderPairs": 6,
-          "autoPromotable": [
+          "temporalCrossProviderPairs": 5,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
             {
               "leagueSlug": "arg.2",
               "kickoffUtc": "2026-08-22T18:30:00.000Z",
-              "left": {
-                "source": "flashscore",
-                "sourceId": "2uoJ6Qh5",
-                "canonicalId": "cid_arg2_patronato_gimnasiajujuy_20260822",
-                "kickoffUtc": "2026-08-22T18:30:00.000Z",
-                "homeTeam": "Patronato",
-                "awayTeam": "Gimnasia Jujuy"
-              },
-              "right": {
-                "source": "espn",
-                "sourceId": "401844079",
-                "canonicalId": "cid_arg2_patronato_gimnasiayesgrimajujuy_20260822",
-                "kickoffUtc": "2026-08-22T18:30Z",
-                "homeTeam": "Patronato",
-                "awayTeam": "Gimnasia y Esgrima (Jujuy)"
-              },
-              "evidence": {
-                "home": {
-                  "kind": "NORMALIZED_EXACT",
-                  "stable": true,
-                  "conflict": false,
-                  "globalClubId": null,
-                  "leftGlobalClubId": null,
-                  "rightGlobalClubId": null,
-                  "productionIdentityComplete": false
-                },
-                "away": {
-                  "kind": "GLOBAL_ID_EXACT",
-                  "stable": true,
-                  "conflict": false,
-                  "globalClubId": "gcid_a78224b54af6e51ee5fa1f72"
-                },
-                "stableSides": 2,
-                "conflict": false
-              },
-              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
-              "promotionAuthorized": true,
-              "requiresIndependentConfirmation": false
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_arg2_almagro_colegiales_20260822",
+                "cid_arg2_defensoresbelgrano_almirantebrown_20260822",
+                "cid_arg2_nuevachicago_atlanta_20260822",
+                "cid_arg2_patronato_gimnasiajujuy_20260822",
+                "cid_arg2_patronato_gimnasiayesgrimajujuy_20260822",
+                "cid_arg2_sanmartinsanjuan_gimnasiaytirosalta_20260822",
+                "cid_arg2_sanmiguel_colonsantafe_20260822"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
             }
           ],
-          "pendingIndependentConfirmation": [],
-          "ambiguous": [],
           "conflictRejected": [],
           "summary": {
-            "autoPromotable": 1,
+            "autoPromotable": 0,
             "pendingIndependentConfirmation": 0,
-            "ambiguous": 0,
+            "ambiguous": 1,
             "conflictRejected": 0,
-            "alreadyManagedPairs": 0
+            "alreadyManagedPairs": 1
           }
         },
         {
@@ -446,7 +423,7 @@
     "evidenceEndpoint": "fixtures",
     "oddsAllowed": false,
     "fuzzyMatchingAllowed": false,
-    "runAt": "2026-08-19T21:45:13.614Z",
+    "runAt": "2026-08-19T22:44:42.024Z",
     "attempts": [
       {
         "dayKey": "2026-08-21",
