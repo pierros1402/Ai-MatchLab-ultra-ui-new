@@ -146,6 +146,85 @@ export function finalizeDayReportVerdict(report) {
   return report;
 }
 
+export function isHistoricalPlanBNotAvailable(
+  planB,
+  planBAudit,
+  dayKey = ""
+) {
+  const expectedDay =
+    String(dayKey || "").trim();
+
+  const planContract =
+    planB?.sourceContract || {};
+
+  const auditContract =
+    planBAudit?.sourceContract || {};
+
+  return Boolean(
+    expectedDay &&
+    planB &&
+    planBAudit &&
+
+    planB.ok !== false &&
+    planBAudit.ok !== false &&
+
+    String(planB.date || "") === expectedDay &&
+    String(planBAudit.date || "") === expectedDay &&
+
+    String(planB.planId || "").toLowerCase() ===
+      "plan-b" &&
+    String(planBAudit.planId || "").toLowerCase() ===
+      "plan-b" &&
+
+    String(planB.status || "").toUpperCase() ===
+      "NOT_AVAILABLE" &&
+    String(planBAudit.status || "").toUpperCase() ===
+      "NOT_AVAILABLE" &&
+
+    String(planB.availability || "").toLowerCase() ===
+      "not_available" &&
+    String(planBAudit.availability || "").toLowerCase() ===
+      "not_available" &&
+
+    String(planB.outputMode || "") ===
+      "historical-not-available" &&
+    String(planBAudit.outputMode || "") ===
+      "historical-not-available" &&
+
+    Number(planB.count || 0) === 0 &&
+    Number(planBAudit.count || 0) === 0 &&
+
+    Array.isArray(planB.picks) &&
+    planB.picks.length === 0 &&
+
+    planContract.historicalRecovery === true &&
+    auditContract.historicalRecovery === true &&
+
+    String(
+      planContract.historicalAvailability || ""
+    ).toUpperCase() === "NOT_AVAILABLE" &&
+
+    String(
+      auditContract.historicalAvailability || ""
+    ).toUpperCase() === "NOT_AVAILABLE" &&
+
+    String(planContract.valueInput || "") ===
+      "none_historical_not_available" &&
+
+    String(auditContract.valueInput || "") ===
+      "none_historical_not_available" &&
+
+    planContract.scoringRerun === false &&
+    auditContract.scoringRerun === false &&
+
+    planContract.deploySnapshotInput === false &&
+    auditContract.deploySnapshotInput === false &&
+
+    planContract.realBookmakerOddsUsed === false &&
+    auditContract.realBookmakerOddsUsed === false
+  );
+}
+
 export function buildDayReport(dayKey, options = {}) {
   const report = {
     ok: true,
@@ -307,6 +386,12 @@ export function buildDayReport(dayKey, options = {}) {
   const planBAudit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b-audit.json"));
   const planBContract = planB?.sourceContract || planBAudit?.sourceContract || null;
   const planBMembership = planBAudit?.membership || null;
+  const historicalPlanBNotAvailable =
+    isHistoricalPlanBNotAvailable(
+      planB,
+      planBAudit,
+      dayKey
+    );
   const planBContractOk = Boolean(
     (
       planBContract?.fixtureUniverse === "canonical_fixtures" ||
@@ -326,6 +411,10 @@ export function buildDayReport(dayKey, options = {}) {
       count: Number(planB.count || 0),
       approved: Number(planBAudit?.approved ?? planBAudit?.summary?.approved ?? 0),
       rejected: Number(planBAudit?.rejected ?? planBAudit?.summary?.rejected ?? 0),
+      historicalAvailabilityNotAvailable:
+        historicalPlanBNotAvailable,
+      canonicalMembershipContractApplicable:
+        !historicalPlanBNotAvailable,
       canonicalMembershipContractOk: planBContractOk,
       membership: planBMembership ? {
         canonicalFixtures: Number(planBMembership.canonicalFixtures || 0),
@@ -391,7 +480,13 @@ export function buildDayReport(dayKey, options = {}) {
     report.hardFailures.push("invariant_blocked");
   }
   if (!report.value.gateOk) report.hardFailures.push("value_artifact_missing");
-  if (report.value.planB && !report.value.planB.canonicalMembershipContractOk) {
+  if (
+    report.value.planB &&
+    report.value.planB
+      .canonicalMembershipContractApplicable !== false &&
+    !report.value.planB
+      .canonicalMembershipContractOk
+  ) {
     report.hardFailures.push("plan_b_canonical_membership_contract_missing");
   }
   if (

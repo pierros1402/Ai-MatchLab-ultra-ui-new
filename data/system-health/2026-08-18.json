@@ -1,69 +1,142 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-18",
-  "generatedAt": "2026-08-17T21:24:04.909Z",
-  "severity": "error",
+  "generatedAt": "2026-08-19T14:14:03.808Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 4,
+    "error": 0,
     "warning": 5,
-    "info": 1
+    "info": 5
   },
   "alert": true,
   "alertCounts": {
-    "error": 4,
+    "error": 0,
     "warning": 3,
     "info": 0
   },
   "activeIssueCount": 10,
-  "actionableIssueCount": 9,
+  "actionableIssueCount": 5,
   "newIssueCount": 8,
-  "newActionableIssueCount": 7,
+  "newActionableIssueCount": 3,
   "resolvedIssueCount": 8,
   "persistentIssueCount": 2,
   "activeIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/invariant-report.json"
-      }
-    },
-    {
-      "severity": "warning",
+      "severity": "info",
       "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/freshness-report.json"
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-08-18.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
-      "severity": "error",
+      "severity": "info",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-18.json"
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 526,
+        "informational": true
       }
     },
     {
       "severity": "warning",
       "source": "build-report",
-      "type": "artifact_missing",
-      "message": "Build report is missing.",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.2,uru.1",
       "details": {
-        "artifact": "data/build-reports/2026-08-18.json"
+        "raw": "canonical_leagues_missing_from_published:arg.2,uru.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bol.copa",
+          "col.copa",
+          "concacaf.central.american.cup",
+          "ksa.kings.cup",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,ksa.kings.cup,usa.ncaa.w.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_active",
+      "message": "Persistent domestic competition admissions are active.",
+      "details": {
+        "admittedSlugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 17,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 17,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_rejected",
+      "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
+      "details": {
+        "rejectedSlugs": [
+          "aff.championship",
+          "arg.3",
+          "arg.copa",
+          "bol.copa",
+          "caf.w.nations",
+          "can.w.nsl",
+          "club.friendly",
+          "col.copa",
+          "concacaf.central.american.cup",
+          "eng.charity",
+          "ksa.kings.cup",
+          "ned.w.1",
+          "usa.ncaa.w.1",
+          "usa.nwsl",
+          "usa.usl.1",
+          "usa.usl.l1",
+          "usa.w.usl.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 17,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 17,
+          "alreadyDeclaredCount": 0
+        }
       }
     },
     {
@@ -752,83 +825,144 @@
       }
     },
     {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value-audit.json"
-      }
-    },
-    {
       "severity": "info",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
       "details": {
-        "artifact": "data/value-comparison/2026-08-18.json",
+        "complete": true,
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        }
       }
     }
   ],
   "actionableIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/invariant-report.json"
-      }
-    },
-    {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.2,uru.1",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/freshness-report.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-18.json"
+        "raw": "canonical_leagues_missing_from_published:arg.2,uru.1"
       }
     },
     {
       "severity": "warning",
       "source": "build-report",
-      "type": "artifact_missing",
-      "message": "Build report is missing.",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
-        "artifact": "data/build-reports/2026-08-18.json"
+        "slugs": [
+          "bol.copa",
+          "col.copa",
+          "concacaf.central.american.cup",
+          "ksa.kings.cup",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,ksa.kings.cup,usa.ncaa.w.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1515,168 +1649,266 @@
           "slv.1"
         ]
       }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value-audit.json"
-      }
     }
   ],
   "newIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/invariant-report.json"
-      }
-    },
-    {
-      "severity": "warning",
+      "severity": "info",
       "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/freshness-report.json"
+        "kind": "expected_matches",
+        "artifact": "expected-matches/2026-08-18.json",
+        "at": null,
+        "staleReason": "snapshot_stale_against_expected_matches",
+        "skipped": "artifact_missing_or_no_timestamp"
       }
     },
     {
-      "severity": "error",
+      "severity": "info",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-18.json"
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 526,
+        "informational": true
       }
     },
     {
       "severity": "warning",
       "source": "build-report",
-      "type": "artifact_missing",
-      "message": "Build report is missing.",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.2,uru.1",
       "details": {
-        "artifact": "data/build-reports/2026-08-18.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value.json"
+        "raw": "canonical_leagues_missing_from_published:arg.2,uru.1"
       }
     },
     {
       "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value-audit.json"
+        "slugs": [
+          "bol.copa",
+          "col.copa",
+          "concacaf.central.american.cup",
+          "ksa.kings.cup",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,ksa.kings.cup,usa.ncaa.w.1",
+        "contextOnly": false
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_active",
+      "message": "Persistent domestic competition admissions are active.",
+      "details": {
+        "admittedSlugs": [
+          "crc.1",
+          "gua.1",
+          "hon.1",
+          "par.1",
+          "slv.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 17,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 17,
+          "alreadyDeclaredCount": 0
+        }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "competition-admission",
+      "type": "competition_admission_rejected",
+      "message": "Observed competition slugs were rejected by the fail-closed admission policy.",
+      "details": {
+        "rejectedSlugs": [
+          "aff.championship",
+          "arg.3",
+          "arg.copa",
+          "bol.copa",
+          "caf.w.nations",
+          "can.w.nsl",
+          "club.friendly",
+          "col.copa",
+          "concacaf.central.american.cup",
+          "eng.charity",
+          "ksa.kings.cup",
+          "ned.w.1",
+          "usa.ncaa.w.1",
+          "usa.nwsl",
+          "usa.usl.1",
+          "usa.usl.l1",
+          "usa.w.usl.1"
+        ],
+        "summary": {
+          "evidenceSlugCount": 17,
+          "admittedCount": 5,
+          "pendingCount": 0,
+          "rejectedCount": 17,
+          "alreadyDeclaredCount": 0
+        }
       }
     },
     {
       "severity": "info",
       "source": "value-comparison",
-      "type": "artifact_missing",
-      "message": "Four-plan Value comparison artifact is missing.",
+      "type": "value_plan_comparison_summary",
+      "message": "Four-plan Value comparison artifact is available.",
       "details": {
-        "artifact": "data/value-comparison/2026-08-18.json",
+        "complete": true,
         "requiredPlans": [
           "A",
           "A2",
           "B",
           "B2"
-        ]
+        ],
+        "presentPlans": [
+          "A",
+          "A2",
+          "B",
+          "B2"
+        ],
+        "missingPlans": [],
+        "planA": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        },
+        "planA2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        },
+        "planB": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        },
+        "planB2": {
+          "count": 0,
+          "summary": {
+            "picks": 0,
+            "uniqueMatches": 0,
+            "settled": 0,
+            "wins": 0,
+            "losses": 0,
+            "voids": 0,
+            "unresolved": 0,
+            "unsupported": 0,
+            "hitRate": 0,
+            "oddsAvailable": 0,
+            "averageOdds": 0,
+            "totalStake": 0,
+            "totalReturn": 0,
+            "profit": 0,
+            "roi": 0
+          }
+        }
       }
     }
   ],
   "newActionableIssues": [
     {
-      "severity": "error",
-      "source": "manifest",
-      "type": "artifact_missing",
-      "message": "Snapshot manifest is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/manifest.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "invariant-report",
-      "type": "artifact_missing",
-      "message": "Invariant report is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/invariant-report.json"
-      }
-    },
-    {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "artifact_missing",
-      "message": "Freshness report is missing.",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:arg.2,uru.1",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/freshness-report.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-18.json"
+        "raw": "canonical_leagues_missing_from_published:arg.2,uru.1"
       }
     },
     {
       "severity": "warning",
       "source": "build-report",
-      "type": "artifact_missing",
-      "message": "Build report is missing.",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
-        "artifact": "data/build-reports/2026-08-18.json"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "value",
-      "type": "artifact_missing",
-      "message": "Production value artifact is missing.",
-      "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value.json"
+        "slugs": [
+          "bol.copa",
+          "col.copa",
+          "concacaf.central.american.cup",
+          "ksa.kings.cup",
+          "usa.ncaa.w.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,ksa.kings.cup,usa.ncaa.w.1",
+        "contextOnly": false
       }
     },
     {
       "severity": "warning",
-      "source": "value-audit",
-      "type": "artifact_missing",
-      "message": "Production value audit artifact is missing.",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-18/value-audit.json"
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     }
   ],
@@ -1687,7 +1919,7 @@
       "type": "artifact_missing",
       "message": "Snapshot manifest is missing.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-17/manifest.json"
+        "artifact": "data/deploy-snapshots/2026-08-19/manifest.json"
       }
     },
     {
@@ -1696,7 +1928,7 @@
       "type": "artifact_missing",
       "message": "Invariant report is missing.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-17/invariant-report.json"
+        "artifact": "data/deploy-snapshots/2026-08-19/invariant-report.json"
       }
     },
     {
@@ -1705,7 +1937,7 @@
       "type": "artifact_missing",
       "message": "Freshness report is missing.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-17/freshness-report.json"
+        "artifact": "data/deploy-snapshots/2026-08-19/freshness-report.json"
       }
     },
     {
@@ -1714,7 +1946,7 @@
       "type": "artifact_missing",
       "message": "Foundation integrity report is missing.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-17.json"
+        "artifact": "data/foundation-integrity/2026-08-19.json"
       }
     },
     {
@@ -1723,7 +1955,7 @@
       "type": "artifact_missing",
       "message": "Build report is missing.",
       "details": {
-        "artifact": "data/build-reports/2026-08-17.json"
+        "artifact": "data/build-reports/2026-08-19.json"
       }
     },
     {
@@ -1732,7 +1964,7 @@
       "type": "artifact_missing",
       "message": "Production value artifact is missing.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-17/value.json"
+        "artifact": "data/deploy-snapshots/2026-08-19/value.json"
       }
     },
     {
@@ -1741,7 +1973,7 @@
       "type": "artifact_missing",
       "message": "Production value audit artifact is missing.",
       "details": {
-        "artifact": "data/deploy-snapshots/2026-08-17/value-audit.json"
+        "artifact": "data/deploy-snapshots/2026-08-19/value-audit.json"
       }
     },
     {
@@ -1750,7 +1982,7 @@
       "type": "artifact_missing",
       "message": "Four-plan Value comparison artifact is missing.",
       "details": {
-        "artifact": "data/value-comparison/2026-08-17.json",
+        "artifact": "data/value-comparison/2026-08-19.json",
         "requiredPlans": [
           "A",
           "A2",
@@ -1768,7 +2000,7 @@
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-08-18",
-        "count": 64,
+        "count": 65,
         "competitions": [
           {
             "providerCompetitionId": "67tiEYre",
