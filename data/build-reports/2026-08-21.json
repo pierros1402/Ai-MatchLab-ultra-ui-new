@@ -1,8 +1,8 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-08-21",
-  "generatedAt": "2026-08-20T23:56:22.385Z",
+  "generatedAt": "2026-08-20T23:58:02.209Z",
   "universe": {
     "expected": null,
     "canonical": 189,
@@ -548,9 +548,16 @@
     }
   },
   "freshness": {
-    "ok": true,
-    "manifestGeneratedAt": "2026-08-20T23:55:09.988Z",
-    "reasons": [],
+    "ok": false,
+    "manifestGeneratedAt": "2026-08-20T23:58:02.067Z",
+    "reasons": [
+      "snapshot_value_audit_stale_against_canonical",
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
+    ],
     "staleInputs": []
   },
   "invariant": {
@@ -558,7 +565,7 @@
     "blocked": 0,
     "warnings": 0,
     "autoFixed": 0,
-    "checkedAt": "2026-08-20T23:55:10.393Z"
+    "checkedAt": "2026-08-20T23:58:02.071Z"
   },
   "value": {
     "source": "canonical_fixtures",
@@ -631,22 +638,7 @@
       "unresolved": 0
     }
   },
-  "foundationIntegrity": {
-    "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-08-20T23:56:22.177Z",
-    "season": "2026-2027",
-    "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
-    "warnings": [
-      {
-        "component": "historySemantic",
-        "reason": "age_expired_results_rows_present",
-        "count": 1422,
-        "informational": true
-      }
-    ]
-  },
+  "foundationIntegrity": null,
   "liveStatusCompleteness": {
     "schema": "ai-matchlab.live-status-completeness.v1",
     "ok": true,
@@ -663,11 +655,14 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "foundation_integrity_missing",
+    "snapshot_stale"
+  ],
   "warnings": [
     "canonical_leagues_missing_from_published:den.1",
     "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }
