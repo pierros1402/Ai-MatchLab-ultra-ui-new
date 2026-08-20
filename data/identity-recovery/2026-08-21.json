@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-08-20T20:52:50.933Z",
+  "sourceLatestUpdatedAt": "2026-08-20T22:49:07.684Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "4721d62b62ad61d04c33b5be5db9cc6c810a32be410a69aca3818616522bc5a4",
@@ -25,15 +25,15 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 482,
-    "inputRows": 1679,
-    "autoPromotable": 0,
-    "pendingIndependentConfirmation": 1,
-    "ambiguous": 4,
+    "scannedLeagueFiles": 555,
+    "inputRows": 1892,
+    "autoPromotable": 1,
+    "pendingIndependentConfirmation": 2,
+    "ambiguous": 6,
     "conflictRejected": 1,
     "alreadyManagedPairs": 1,
     "independentConfirmed": 0,
-    "independentConfirmationRetryPending": 1
+    "independentConfirmationRetryPending": 2
   },
   "targetDays": [
     {
@@ -97,7 +97,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-08-20T20:52:51.277Z",
+                "lastAttemptAt": "2026-08-20T22:49:08.018Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -354,12 +354,193 @@
     },
     {
       "dayKey": "2026-08-23",
-      "leagueFiles": 32,
-      "recoveryLeagueReports": []
+      "leagueFiles": 103,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "fra.1",
+          "inputRows": 4,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [
+            {
+              "leagueSlug": "fra.1",
+              "kickoffUtc": "2026-08-23T18:45:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "p2AX2W4D",
+                "canonicalId": "cid_fra1_psg_rennes_20260823",
+                "kickoffUtc": "2026-08-23T18:45:00.000Z",
+                "homeTeam": "PSG",
+                "awayTeam": "Rennes"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401876487",
+                "canonicalId": "cid_fra1_staderennais_parissaintgermain_20260823",
+                "kickoffUtc": "2026-08-23T18:45Z",
+                "homeTeam": "Stade Rennais",
+                "awayTeam": "Paris Saint-Germain"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 0,
+                "conflict": false
+              },
+              "recoveryStatus": "PENDING_INDEPENDENT_CONFIRMATION",
+              "promotionAuthorized": false,
+              "requiresIndependentConfirmation": true,
+              "independentConfirmation": {
+                "status": "PENDING_RETRY",
+                "source": "api_football",
+                "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
+                "oddsUsed": false,
+                "attempts": 1,
+                "lastAttemptAt": "2026-08-20T22:49:08.018Z",
+                "retryable": true,
+                "providerStatus": "MISSING_API_KEY",
+                "evaluationStatus": null,
+                "thirdSourceKickoffRows": 0
+              }
+            }
+          ],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 1,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ger.dfb_pokal",
+          "inputRows": 14,
+          "temporalCrossProviderPairs": 11,
+          "autoPromotable": [
+            {
+              "leagueSlug": "ger.dfb_pokal",
+              "kickoffUtc": "2026-08-23T16:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "dp4lE1aE",
+                "canonicalId": "cid_gerdfbpokal_rwessen_stpauli_20260823",
+                "kickoffUtc": "2026-08-23T16:00:00.000Z",
+                "homeTeam": "RW Essen",
+                "awayTeam": "St. Pauli"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401875188",
+                "canonicalId": "cid_gerdfbpokal_rotweissessen_stpauli_20260823",
+                "kickoffUtc": "2026-08-23T16:00Z",
+                "homeTeam": "Rot-Weiss Essen",
+                "awayTeam": "St. Pauli"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": false
+              },
+              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
+              "promotionAuthorized": true,
+              "requiresIndependentConfirmation": false
+            }
+          ],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "ger.dfb_pokal",
+              "kickoffUtc": "2026-08-23T11:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_gerdfbpokal_jeddeloh_heidenheim_20260823",
+                "cid_gerdfbpokal_spvgggreutherfurth_vflbochum_20260823",
+                "cid_gerdfbpokal_ssvjeddelohii_1heidenheim1846_20260823"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 1,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ita.2",
+          "inputRows": 9,
+          "temporalCrossProviderPairs": 6,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [
+            {
+              "leagueSlug": "ita.2",
+              "kickoffUtc": "2026-08-23T19:00:00.000Z",
+              "recoveryStatus": "AMBIGUOUS_KICKOFF_BUCKET",
+              "promotionAuthorized": false,
+              "rowIds": [
+                "cid_ita2_cesena_sampdoria_20260823",
+                "cid_ita2_grosseto_spezia_20260823",
+                "cid_ita2_palermo_juvestabia_20260823",
+                "cid_ita2_perugia_ostiamare_20260823",
+                "cid_ita2_sambenedettese_forli_20260823"
+              ],
+              "providers": [
+                "espn",
+                "flashscore"
+              ]
+            }
+          ],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 1,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-08-24",
-      "leagueFiles": 23,
+      "leagueFiles": 25,
       "recoveryLeagueReports": []
     },
     {
@@ -423,12 +604,20 @@
     "evidenceEndpoint": "fixtures",
     "oddsAllowed": false,
     "fuzzyMatchingAllowed": false,
-    "runAt": "2026-08-20T20:52:51.278Z",
+    "runAt": "2026-08-20T22:49:08.018Z",
     "attempts": [
       {
         "dayKey": "2026-08-21",
         "leagueSlug": "conmebol.libertadores",
         "key": "cid_conmebollibertadores_lduquitoecu_mirassolbra_20260821|cid_conmebollibertadores_ligaquito_mirassol_20260821",
+        "status": "PENDING_RETRY",
+        "providerStatus": "MISSING_API_KEY",
+        "evaluationStatus": null
+      },
+      {
+        "dayKey": "2026-08-23",
+        "leagueSlug": "fra.1",
+        "key": "cid_fra1_psg_rennes_20260823|cid_fra1_staderennais_parissaintgermain_20260823",
         "status": "PENDING_RETRY",
         "providerStatus": "MISSING_API_KEY",
         "evaluationStatus": null
