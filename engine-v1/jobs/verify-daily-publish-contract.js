@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey } from "../core/daykey.js";
 import { validateDeploySnapshotManifest } from "../core/deploy-snapshot-release-contract.js";
+import { verifyDetailsValueMirrorDay } from "./verify-details-value-mirror-day.js";
 
 function readJson(file) {
   if (!fs.existsSync(file)) return { exists: false, payload: null, error: null };
@@ -17,18 +18,39 @@ function readJson(file) {
 function parseArgs(argv) {
   let dayKey = "";
   let gate = false;
+  let prepublish = false;
+
   for (const arg of argv) {
-    if (/^\d{4}-\d{2}-\d{2}$/u.test(arg)) dayKey = arg;
-    else if (arg.startsWith("--date=")) dayKey = arg.slice(7);
-    else if (arg === "--gate") gate = true;
+    if (/^\d{4}-\d{2}-\d{2}$/u.test(arg)) {
+      dayKey = arg;
+    }
+    else if (arg.startsWith("--date=")) {
+      dayKey = arg.slice(7);
+    }
+    else if (arg === "--gate") {
+      gate = true;
+    }
+    else if (arg === "--prepublish") {
+      prepublish = true;
+    }
   }
-  return { dayKey: dayKey || athensDayKey(), gate };
+
+  return {
+    dayKey:
+      dayKey ||
+      athensDayKey(),
+    gate,
+    prepublish
+  };
 }
 
 export function verifyDailyPublishContract(dayKey, options = {}) {
   const dataPath = typeof options.resolveDataPath === "function"
     ? options.resolveDataPath
     : resolveDataPath;
+
+  const requireLatest =
+    options.requireLatest !== false;
 
   const snapshotRoot = dataPath("deploy-snapshots", dayKey);
   const required = {
@@ -178,33 +200,184 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
     blocked.push({ code: "details_missing_for_nonempty_fixture_universe", fixtures: fixtureRows.length });
   }
 
-  const latestFile = dataPath("deploy-snapshots", "latest.json");
-  const latestState = readJson(latestFile);
-  if (!latestState.exists || latestState.error) {
-    blocked.push({ code: latestState.exists ? "latest_invalid_json" : "latest_missing", file: latestFile });
-  } else {
-    const latestDay = String(latestState.payload?.date || latestState.payload?.dayKey || "");
-    if (latestDay !== dayKey) blocked.push({ code: "latest_day_mismatch", expected: dayKey, actual: latestDay || null });
-    if (manifest?.hash && latestState.payload?.hash && latestState.payload.hash !== manifest.hash) {
-      blocked.push({ code: "latest_manifest_hash_mismatch", latestHash: latestState.payload.hash, manifestHash: manifest.hash });
+  const detailsValueMirror =
+    verifyDetailsValueMirrorDay(
+      dayKey,
+      {
+        resolveDataPath:
+          dataPath
+      }
+    );
+
+  if (
+    detailsValueMirror.ok !== true
+  ) {
+    blocked.push({
+      code:
+        "details_value_mirror_failed",
+      authority:
+        detailsValueMirror.authority ||
+        null,
+      violations:
+        detailsValueMirror.violations ||
+        []
+    });
+  }
+
+  const latestFile =
+    dataPath(
+      "deploy-snapshots",
+      "latest.json"
+    );
+
+  if (requireLatest) {
+    const latestState =
+      readJson(latestFile);
+
+    if (
+      !latestState.exists ||
+      latestState.error
+    ) {
+      blocked.push({
+        code:
+          latestState.exists
+            ? "latest_invalid_json"
+            : "latest_missing",
+        file:
+          latestFile
+      });
+    }
+    else {
+      const latestDay =
+        String(
+          latestState
+            .payload
+            ?.date ||
+          latestState
+            .payload
+            ?.dayKey ||
+          ""
+        );
+
+      if (
+        latestDay !== dayKey
+      ) {
+        blocked.push({
+          code:
+            "latest_day_mismatch",
+          expected:
+            dayKey,
+          actual:
+            latestDay || null
+        });
+      }
+
+      if (
+        manifest?.hash &&
+        latestState
+          .payload
+          ?.hash &&
+        latestState
+          .payload
+          .hash !== manifest.hash
+      ) {
+        blocked.push({
+          code:
+            "latest_manifest_hash_mismatch",
+          latestHash:
+            latestState
+              .payload
+              .hash,
+          manifestHash:
+            manifest.hash
+        });
+      }
     }
   }
 
   return {
-    ok: blocked.length === 0,
+    ok:
+      blocked.length === 0,
+
     dayKey,
-    checkedAt: new Date().toISOString(),
-    fixtureCount: fixtureRows.length,
-    detailFileCount: detailFiles.length,
+
+    checkedAt:
+      new Date().toISOString(),
+
+    mode:
+      requireLatest
+        ? "final"
+        : "prepublish",
+
+    latestRequired:
+      requireLatest,
+
+    fixtureCount:
+      fixtureRows.length,
+
+    detailFileCount:
+      detailFiles.length,
+
+    detailsValueMirror,
+
     blocked,
-    requiredArtifacts: Object.fromEntries(Object.entries(artifacts).map(([name, state]) => [name, { file: state.file, exists: state.exists, parseError: state.parseError || null }]))
+
+    requiredArtifacts:
+      Object.fromEntries(
+        Object.entries(artifacts)
+          .map(
+            ([name, state]) => [
+              name,
+              {
+                file:
+                  state.file,
+                exists:
+                  state.exists,
+                parseError:
+                  state.parseError ||
+                  null
+              }
+            ]
+          )
+      )
   };
 }
 
-const isCli = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isCli =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) ===
+    fileURLToPath(import.meta.url);
+
 if (isCli) {
-  const { dayKey, gate } = parseArgs(process.argv.slice(2));
-  const report = verifyDailyPublishContract(dayKey);
-  console.log(JSON.stringify(report, null, 2));
-  if (gate && !report.ok) process.exitCode = 1;
+  const {
+    dayKey,
+    gate,
+    prepublish
+  } = parseArgs(
+    process.argv.slice(2)
+  );
+
+  const report =
+    verifyDailyPublishContract(
+      dayKey,
+      {
+        requireLatest:
+          !prepublish
+      }
+    );
+
+  console.log(
+    JSON.stringify(
+      report,
+      null,
+      2
+    )
+  );
+
+  if (
+    gate &&
+    !report.ok
+  ) {
+    process.exitCode = 1;
+  }
 }

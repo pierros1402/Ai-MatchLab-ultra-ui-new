@@ -369,7 +369,7 @@ jobs:
 
       - name: Export deploy snapshot
         if: env.SKIP_BUILD != 'true'
-        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest
 
       - name: Refresh value artifacts after final canonical snapshot
         if: env.SKIP_BUILD != 'true'
@@ -381,7 +381,7 @@ jobs:
           trap 'rm -f "$REFRESH_OUTPUT"' EXIT
 
           set +e
-          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" | tee "$REFRESH_OUTPUT"
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest | tee "$REFRESH_OUTPUT"
           REFRESH_STATUS=${PIPESTATUS[0]}
           set -e
 
@@ -401,8 +401,8 @@ jobs:
             echo "Rebuilding all details and the complete deploy snapshot before retrying Value."
 
             node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
-            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
-            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
           fi
 
       # Immutable Plan A observations stay immutable by default. This narrow
@@ -432,6 +432,21 @@ jobs:
           node ./engine-v1/jobs/recover-plan-a-zero-freeze-day.js \
             --date="$DAY_KEY" \
             --expected-signature="$SIGNATURE"
+
+      # The public Details layer must be built only after the final Plan A
+      # publication authority for this run is known. This covers both the normal
+      # first immutable freeze and the explicit signed zero-freeze recovery path.
+      - name: Synchronize Details with Plan A publication authority
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+
+      - name: Re-export deploy snapshot from synchronized Details
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+
+      - name: Details Value mirror gate after Plan A freeze
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
 
       # A successful build with canonical fixtures but zero model-assessment
       # input is a pipeline failure, not a legitimate "0 picks" result. Fail
@@ -677,8 +692,9 @@ jobs:
           if ! node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate; then
             echo "Snapshot stale against upstream inputs; rebuilding details, re-exporting, and refreshing Value artifacts."
             node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
-            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
-            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
+            node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
             node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
             node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
           fi
@@ -707,8 +723,9 @@ jobs:
 
             echo "Model foundation is ready but Details semantic binding failed; rebuilding Details and downstream artifacts."
             node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
-            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
-            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest --replace-details --no-build-missing-details --fail-on-missing-details
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
+            node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
             node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
             node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
             node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
@@ -760,6 +777,17 @@ jobs:
       - name: Build system health alert artifact
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
+
+      # All release artifacts must be green while deploy-snapshots/latest.json
+      # still points at the previously published day. This is the publication
+      # transaction boundary: no live pointer moves before this contract passes.
+      - name: Complete daily prepublish contract gate
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
+
+      - name: Promote deploy snapshot latest after prepublish gates
+        if: env.SKIP_BUILD != 'true'
+        run: node ./engine-v1/jobs/promote-deploy-snapshot-latest-day.js --date="$DAY_KEY"
 
       # FINAL PUBLISH CONTRACT έΑΦ no snapshot commit is allowed unless every
       # mandatory artifact exists, parses, belongs to DAY_KEY, is fresh, is

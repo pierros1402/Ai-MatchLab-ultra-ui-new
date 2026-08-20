@@ -26,7 +26,7 @@ function buildManifest(valueGate) {
     minTargetFixtures: 0,
     minTargetFixtureSource: "test",
     canonicalCoverageFixtureCount: 0,
-    coverage: { ok: true },
+    coverage: { ok: true, detailsWithValue: 0 },
     sizes: {},
     fileHashes: {
       "fixtures.json": "a".repeat(64),
@@ -52,10 +52,19 @@ function withPublishTree(valueGate, fn) {
     valueSafe: true,
     manifestGeneratedAt: manifest.generatedAt
   });
-  writeJson(path.join(snapshot, "value.json"), {
+  writeJson(dataPath("value", `${DAY}.json`), {
+    date: DAY,
     count: 0,
     picks: [],
     source: "local_value_file"
+  });
+
+  writeJson(path.join(snapshot, "value.json"), {
+    count: 0,
+    picks: [],
+    source: "local_value_file",
+    publicationAuthority:
+      "current_value_artifact_first_freeze"
   });
   writeJson(path.join(snapshot, "freshness-report.json"), { ok: true });
   writeJson(path.join(snapshot, "value-audit.json"), { ok: true });
@@ -119,3 +128,76 @@ test("daily publish contract blocks top-level ok manifest with red Value gate", 
     }
   );
 });
+
+test(
+  "prepublish contract omits only the latest.json requirement",
+  () => {
+    withPublishTree(
+      {
+        fixtures: 0,
+        valuePicks: 0,
+        valueFreshAgainstCanonical: true,
+        ok: true
+      },
+      ({ dataPath }) => {
+        fs.rmSync(
+          dataPath(
+            "deploy-snapshots",
+            "latest.json"
+          )
+        );
+
+        const prepublish =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath,
+              requireLatest:
+                false
+            }
+          );
+
+        assert.equal(
+          prepublish.ok,
+          true,
+          JSON.stringify(
+            prepublish.blocked
+          )
+        );
+
+        assert.equal(
+          prepublish.mode,
+          "prepublish"
+        );
+
+        assert.equal(
+          prepublish.latestRequired,
+          false
+        );
+
+        const final =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath
+            }
+          );
+
+        assert.equal(
+          final.ok,
+          false
+        );
+
+        assert.ok(
+          final.blocked.some(
+            row =>
+              row.code ===
+              "latest_missing"
+          )
+        );
+      }
+    );
+  }
+);

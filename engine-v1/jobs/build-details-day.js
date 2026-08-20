@@ -18,6 +18,9 @@ import {
   validateHistoryIndexFoundationSync,
   validateH2HFoundationSync,
 } from "../core/derived-history-foundation.js";
+import {
+  resolvePlanAPublicationPayload
+} from "../value/plan-a-publication-authority.js";
 
 const DETAILS_SCHEMA_VERSION = "details-snapshot-v3";
 const DETAILS_BUILDER_VERSION = "2026-05-01-player-usage-travel-geo-signature";
@@ -121,11 +124,51 @@ function kickoffDay(match) {
   return null;
 }
 
+export function selectDetailsValuePicksForPublication(
+  dayKey,
+  currentPayload,
+  {
+    publicationResolver =
+      resolvePlanAPublicationPayload
+  } = {}
+) {
+  if (!dayKey) return [];
+
+  const publication =
+    publicationResolver(
+      dayKey,
+      currentPayload
+    );
+
+  const payload =
+    publication?.payload ||
+    currentPayload ||
+    null;
+
+  return Array.isArray(payload?.picks)
+    ? payload.picks
+    : [];
+}
+
 function readValuePicksForDay(dayKey) {
   if (!dayKey) return [];
-  const file = resolveDataPath("value", `${dayKey}.json`);
-  const payload = readJsonSafe(file, null);
-  return Array.isArray(payload?.picks) ? payload.picks : [];
+
+  const file =
+    resolveDataPath(
+      "value",
+      `${dayKey}.json`
+    );
+
+  const currentPayload =
+    readJsonSafe(
+      file,
+      null
+    );
+
+  return selectDetailsValuePicksForPublication(
+    dayKey,
+    currentPayload
+  );
 }
 
 function getValueForMatch(dayKey, matchId) {

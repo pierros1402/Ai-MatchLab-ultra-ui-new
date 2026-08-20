@@ -1347,17 +1347,169 @@ fixturesByLeague,
   };
 }
 
-if (process.argv[1] && process.argv[1].endsWith("export-deploy-snapshot-day.js")) {
-  const dayKey = String(process.argv[2] || "").trim();
+export function parseDeploySnapshotCliArgs(
+  argv = process.argv.slice(2)
+) {
+  const out = {
+    dayKey: null,
+    preserveDetails: true,
+    preserveValue: false,
+    updateLatest: undefined,
+    buildMissingDetails: undefined,
+    failOnMissingDetails: false,
+    help: false
+  };
 
+  for (
+    let index = 0;
+    index < argv.length;
+    index += 1
+  ) {
+    const arg =
+      String(argv[index] || "").trim();
+
+    if (!arg) continue;
+
+    if (
+      /^\d{4}-\d{2}-\d{2}$/u.test(arg) &&
+      !out.dayKey
+    ) {
+      out.dayKey = arg;
+      continue;
+    }
+
+    if (arg === "--no-update-latest") {
+      out.updateLatest = false;
+      continue;
+    }
+
+    if (arg === "--update-latest") {
+      out.updateLatest = true;
+      continue;
+    }
+
+    if (arg === "--replace-details") {
+      out.preserveDetails = false;
+      continue;
+    }
+
+    if (arg === "--preserve-details") {
+      out.preserveDetails = true;
+      continue;
+    }
+
+    if (arg === "--preserve-value") {
+      out.preserveValue = true;
+      continue;
+    }
+
+    if (
+      arg ===
+      "--no-build-missing-details"
+    ) {
+      out.buildMissingDetails = false;
+      continue;
+    }
+
+    if (
+      arg ===
+      "--fail-on-missing-details"
+    ) {
+      out.failOnMissingDetails = true;
+      continue;
+    }
+
+    if (
+      arg === "--help" ||
+      arg === "-h"
+    ) {
+      out.help = true;
+      continue;
+    }
+
+    throw new Error(
+      `Unknown argument: ${arg}`
+    );
+  }
+
+  return out;
+}
+
+function deploySnapshotUsage() {
+  return [
+    "Usage:",
+    "  node engine-v1/jobs/export-deploy-snapshot-day.js YYYY-MM-DD [options]",
+    "",
+    "Options:",
+    "  --no-update-latest          Build snapshot without promoting latest.json",
+    "  --update-latest             Explicitly promote latest.json",
+    "  --replace-details           Replace snapshot details from data/details/<day>",
+    "  --preserve-details          Preserve existing snapshot details (default)",
+    "  --preserve-value            Preserve an existing valid snapshot Value artifact",
+    "  --no-build-missing-details  Never backfill missing Details during export",
+    "  --fail-on-missing-details   Fail if a published fixture has no Detail"
+  ].join("\n");
+}
+
+if (
+  process.argv[1] &&
+  process.argv[1].endsWith(
+    "export-deploy-snapshot-day.js"
+  )
+) {
   (async () => {
     try {
-      const result = await exportDeploySnapshotDay(dayKey, {
-        preserveDetails: true
-      });
-      console.log(JSON.stringify(result, null, 2));
-    } catch (err) {
-      console.error("[export-deploy-snapshot-day] fatal", err);
+      const args =
+        parseDeploySnapshotCliArgs();
+
+      if (args.help) {
+        console.log(
+          deploySnapshotUsage()
+        );
+        return;
+      }
+
+      if (!args.dayKey) {
+        throw new Error(
+          "missing_day_key"
+        );
+      }
+
+      const result =
+        await exportDeploySnapshotDay(
+          args.dayKey,
+          {
+            preserveDetails:
+              args.preserveDetails,
+
+            preserveValue:
+              args.preserveValue,
+
+            updateLatest:
+              args.updateLatest,
+
+            buildMissingDetails:
+              args.buildMissingDetails,
+
+            failOnMissingDetails:
+              args.failOnMissingDetails
+          }
+        );
+
+      console.log(
+        JSON.stringify(
+          result,
+          null,
+          2
+        )
+      );
+    }
+    catch (err) {
+      console.error(
+        "[export-deploy-snapshot-day] fatal",
+        err
+      );
+
       process.exit(1);
     }
   })();

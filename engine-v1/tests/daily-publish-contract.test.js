@@ -58,6 +58,9 @@ const manifest = {
   generatedAt,
   counts: { fixtures: 0, valuePicks: 0, details: 0 },
   details: [],
+  coverage: {
+    detailsWithValue: 0
+  },
   valueGate: {
     fixtures: 0,
     valuePicks: 0,
@@ -79,11 +82,23 @@ writeJson(path.join(snapshotRoot, "manifest.json"), manifest);
   );
 
   writeJson(
+    resolve("value", `${dayKey}.json`),
+    {
+      date: dayKey,
+      source: "canonical_fixtures",
+      count: 0,
+      picks: []
+    }
+  );
+
+  writeJson(
     path.join(snapshotRoot, "value.json"),
     {
       source: "canonical_fixtures",
       count: 0,
-      picks: []
+      picks: [],
+      publicationAuthority:
+        "current_value_artifact_first_freeze"
     }
   );
 
