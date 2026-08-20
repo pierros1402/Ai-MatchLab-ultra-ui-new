@@ -1,10 +1,10 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-08-20T18:50:04.547Z",
+  "generatedAt": "2026-08-20T19:02:35.689Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
   "trialStartDay": "2026-07-05",
-  "dayCount": 42,
+  "dayCount": 43,
   "firstDay": "2026-07-05",
   "lastDay": "2026-08-21",
   "requireIntegrityClean": false,
@@ -51,6 +51,7 @@
     "2026-08-15",
     "2026-08-16",
     "2026-08-17",
+    "2026-08-20",
     "2026-08-21"
   ],
   "daysExcluded": [
@@ -571,13 +572,15 @@
       }
     },
     {
-      "dayKey": "2026-08-21",
+      "dayKey": "2026-08-20",
       "reason": "build_report_not_clean",
       "details": {
         "ok": false,
         "reason": "build_report_not_clean",
         "hardFailures": [
-          "foundation_publication_not_ready"
+          "foundation_integrity_missing",
+          "snapshot_stale",
+          "value_plan_comparison_missing"
         ]
       }
     }
