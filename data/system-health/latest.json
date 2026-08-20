@@ -1,22 +1,22 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-21",
-  "generatedAt": "2026-08-20T21:59:43.193Z",
-  "severity": "error",
+  "generatedAt": "2026-08-20T23:56:22.583Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 1,
-    "warning": 4,
-    "info": 8
+    "error": 0,
+    "warning": 5,
+    "info": 9
   },
   "alert": true,
   "alertCounts": {
-    "error": 1,
-    "warning": 0,
+    "error": 0,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 13,
+  "activeIssueCount": 14,
   "actionableIssueCount": 5,
-  "newIssueCount": 1,
+  "newIssueCount": 2,
   "newActionableIssueCount": 1,
   "resolvedIssueCount": 1,
   "persistentIssueCount": 12,
@@ -61,12 +61,24 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "info",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 1422,
+        "informational": true
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:den.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:den.1"
       }
     },
     {
@@ -191,7 +203,7 @@
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-08-21",
-        "count": 121,
+        "count": 122,
         "competitions": [
           {
             "providerCompetitionId": "tdUWdHKt",
@@ -529,6 +541,17 @@
             ]
           },
           {
+            "providerCompetitionId": "tK1nS6Lk",
+            "providerPath": "/football/bolivia/copa-simon-bolivar/",
+            "providerCountry": "Bolivia",
+            "providerName": "Copa Simon Bolivar",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "IZzMOcSi"
+            ]
+          },
+          {
             "providerCompetitionId": "QVbNTvcc",
             "providerPath": "/football/brazil/alagoano-u20/",
             "providerCountry": "Brazil",
@@ -803,18 +826,6 @@
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
               "z9t0LUvn"
-            ]
-          },
-          {
-            "providerCompetitionId": "Ue7fsAJc",
-            "providerPath": "/football/czech-republic/plzensky-kp/",
-            "providerCountry": "Czech Republic",
-            "providerName": "Plzensky KP",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "4tORrJGG",
-              "WnCxjzOq"
             ]
           }
         ]
@@ -941,12 +952,12 @@
   ],
   "actionableIssues": [
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:den.1",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
+        "raw": "canonical_leagues_missing_from_published:den.1"
       }
     },
     {
@@ -985,7 +996,7 @@
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-08-21",
-        "count": 121,
+        "count": 122,
         "competitions": [
           {
             "providerCompetitionId": "tdUWdHKt",
@@ -1323,6 +1334,17 @@
             ]
           },
           {
+            "providerCompetitionId": "tK1nS6Lk",
+            "providerPath": "/football/bolivia/copa-simon-bolivar/",
+            "providerCountry": "Bolivia",
+            "providerName": "Copa Simon Bolivar",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "IZzMOcSi"
+            ]
+          },
+          {
             "providerCompetitionId": "QVbNTvcc",
             "providerPath": "/football/brazil/alagoano-u20/",
             "providerCountry": "Brazil",
@@ -1598,18 +1620,6 @@
             "targetDaySourceIds": [
               "z9t0LUvn"
             ]
-          },
-          {
-            "providerCompetitionId": "Ue7fsAJc",
-            "providerPath": "/football/czech-republic/plzensky-kp/",
-            "providerCountry": "Czech Republic",
-            "providerName": "Plzensky KP",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "4tORrJGG",
-              "WnCxjzOq"
-            ]
           }
         ]
       }
@@ -1633,28 +1643,6 @@
   ],
   "newIssues": [
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -1662,8 +1650,39 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 1404,
+        "count": 1422,
         "informational": true
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:den.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:den.1"
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:den.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:den.1"
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-21.json"
       }
     }
   ],
@@ -1829,7 +1848,7 @@
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-08-21",
-        "count": 121,
+        "count": 122,
         "competitions": [
           {
             "providerCompetitionId": "tdUWdHKt",
@@ -2167,6 +2186,17 @@
             ]
           },
           {
+            "providerCompetitionId": "tK1nS6Lk",
+            "providerPath": "/football/bolivia/copa-simon-bolivar/",
+            "providerCountry": "Bolivia",
+            "providerName": "Copa Simon Bolivar",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 1,
+            "targetDaySourceIds": [
+              "IZzMOcSi"
+            ]
+          },
+          {
             "providerCompetitionId": "QVbNTvcc",
             "providerPath": "/football/brazil/alagoano-u20/",
             "providerCountry": "Brazil",
@@ -2441,18 +2471,6 @@
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
               "z9t0LUvn"
-            ]
-          },
-          {
-            "providerCompetitionId": "Ue7fsAJc",
-            "providerPath": "/football/czech-republic/plzensky-kp/",
-            "providerCountry": "Czech Republic",
-            "providerName": "Plzensky KP",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "4tORrJGG",
-              "WnCxjzOq"
             ]
           }
         ]
