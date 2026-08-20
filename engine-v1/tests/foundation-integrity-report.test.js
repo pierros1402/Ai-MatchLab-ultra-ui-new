@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildFoundationIntegrityReport } from "../jobs/build-foundation-integrity-report.js";
+import { buildFoundationIntegrityReport, foundationIntegrityCliSummary } from "../jobs/build-foundation-integrity-report.js";
 
 function cleanOptions(overrides = {}) {
   return {
@@ -63,4 +63,28 @@ test("details failure blocks publication but not model foundation", () => {
   assert.equal(report.modelReady, true);
   assert.equal(report.publicationReady, false);
   assert.ok(report.blocked.some(row => row.component === "details"));
+});
+
+test("CLI summary preserves exact details audit issues", () => {
+  const issue = {
+    code: "DETAIL_HISTORY_INDEX_FINGERPRINT_STALE",
+    file: "cid_example.json",
+    id: "cid_example"
+  };
+  const report = buildFoundationIntegrityReport(
+    "2026-08-09",
+    cleanOptions({
+      details: {
+        ok: false,
+        summary: { expectedFixtures: 1, detailFiles: 1, checked: 1, issueCount: 1 },
+        issues: [issue]
+      }
+    })
+  );
+  const summary = foundationIntegrityCliSummary(report);
+  assert.equal(summary.modelReady, true);
+  assert.equal(summary.publicationReady, false);
+  assert.equal(summary.details.ok, false);
+  assert.equal(summary.details.reason, "details_foundation_not_ready");
+  assert.deepEqual(summary.details.issues, [issue]);
 });

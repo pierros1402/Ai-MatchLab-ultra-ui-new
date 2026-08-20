@@ -108,6 +108,25 @@ export function writeFoundationIntegrityReport(dayKey, options = {}) {
   return report;
 }
 
+export function foundationIntegrityCliSummary(report) {
+  const detailsComponent = report?.components?.details || null;
+  const details = detailsComponent?.detail || null;
+  return {
+    dayKey: report?.dayKey || null,
+    season: report?.season || null,
+    modelReady: report?.modelReady === true,
+    publicationReady: report?.publicationReady === true,
+    blocked: Array.isArray(report?.blocked) ? report.blocked : [],
+    warnings: Array.isArray(report?.warnings) ? report.warnings : [],
+    details: {
+      ok: details?.ok === true,
+      reason: detailsComponent?.reason || null,
+      summary: details?.summary || null,
+      issues: Array.isArray(details?.issues) ? details.issues : [],
+    },
+  };
+}
+
 const isCli = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isCli) {
   const dayKey = process.argv.find(arg => /^\d{4}-\d{2}-\d{2}$/u.test(arg))
@@ -118,13 +137,6 @@ if (isCli) {
     process.exit(1);
   }
   const report = writeFoundationIntegrityReport(dayKey);
-  console.log(JSON.stringify({
-    dayKey: report.dayKey,
-    season: report.season,
-    modelReady: report.modelReady,
-    publicationReady: report.publicationReady,
-    blocked: report.blocked,
-    warnings: report.warnings,
-  }, null, 2));
+  console.log(JSON.stringify(foundationIntegrityCliSummary(report), null, 2));
   if (gate && !report.publicationReady) process.exitCode = 1;
 }

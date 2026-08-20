@@ -496,3 +496,69 @@ test(
     assert.ok(publish > build, "final publish contract must follow build report");
   }
 );
+
+test(
+  "details semantic preflight self-heals before invariant and value gates",
+  () => {
+    const preflight = workflow.indexOf(
+      "- name: Details foundation semantic preflight (self-heal, pre-publish)"
+    );
+    const invariant = workflow.indexOf("- name: Invariant gate (pre-publish)");
+    const value = workflow.indexOf("- name: Value artifact gate (pre-publish)");
+    const foundation = workflow.indexOf("- name: Foundation integrity gate (pre-publish)");
+
+    assert.ok(preflight >= 0, "details semantic preflight missing");
+    assert.ok(invariant > preflight, "invariant must follow semantic preflight");
+    assert.ok(value > invariant, "value gate must follow invariant");
+    assert.ok(foundation > value, "foundation gate must follow value");
+
+    const block = workflow.slice(preflight, invariant);
+
+    assert.ok(block.includes(
+      'build-foundation-integrity-report.js --date="$DAY_KEY"'
+    ));
+    assert.ok(block.includes(
+      'build-details-day.js "$DAY_KEY" --rebuild'
+    ));
+    assert.ok(block.includes(
+      'export-deploy-snapshot-day.js "$DAY_KEY"'
+    ));
+    assert.ok(block.includes(
+      'refresh-value-artifacts-day.js --date="$DAY_KEY"'
+    ));
+    assert.ok(block.includes(
+      'verify-artifact-freshness-day.js --date="$DAY_KEY" --gate'
+    ));
+    assert.ok(block.includes("r.modelReady===true"));
+    assert.ok(block.includes(
+      "refusing late foundation mutation"
+    ));
+  }
+);
+
+test(
+  "failed foundation diagnostics are uploaded before build report",
+  () => {
+    const foundation = workflow.indexOf(
+      "- name: Foundation integrity gate (pre-publish)"
+    );
+    const upload = workflow.indexOf(
+      "- name: Preserve foundation integrity diagnostics"
+    );
+    const build = workflow.indexOf("- name: Build day report");
+
+    assert.ok(foundation >= 0, "foundation gate missing");
+    assert.ok(upload > foundation, "diagnostic upload must follow foundation gate");
+    assert.ok(build > upload, "build report must follow diagnostic upload");
+
+    const block = workflow.slice(upload, build);
+
+    assert.ok(block.includes(
+      "if: failure() && env.SKIP_BUILD != 'true'"
+    ));
+    assert.ok(block.includes("uses: actions/upload-artifact@v4"));
+    assert.ok(block.includes(
+      "data/foundation-integrity/${{ env.DAY_KEY }}.json"
+    ));
+  }
+);

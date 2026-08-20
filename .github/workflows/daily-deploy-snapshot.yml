@@ -688,6 +688,33 @@ jobs:
       # value-count mismatches, stale report vs manifest) stop the snapshot
       # BEFORE it is committed. Previously post-commit only, which shipped the
       # broken snapshot and merely turned the run red.
+      # SEMANTIC DETAILS PREFLIGHT — freshness may be green while Details
+      # are semantically stale. Never mutate model foundations at this stage.
+      - name: Details foundation semantic preflight (self-heal, pre-publish)
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY"
+
+          if node -e 'const fs=require("fs"); const p="data/foundation-integrity/"+process.env.DAY_KEY+".json"; const r=JSON.parse(fs.readFileSync(p,"utf8")); process.exit(r.publicationReady===true?0:1)'; then
+            echo "Details foundation already publication-ready."
+          else
+            if ! node -e 'const fs=require("fs"); const p="data/foundation-integrity/"+process.env.DAY_KEY+".json"; const r=JSON.parse(fs.readFileSync(p,"utf8")); process.exit(r.modelReady===true?0:1)'; then
+              echo "Model foundation is not ready; refusing late foundation mutation."
+              node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+            fi
+
+            echo "Model foundation is ready but Details semantic binding failed; rebuilding Details and downstream artifacts."
+            node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY"
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY"
+            node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
+            node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+            node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          fi
+
       - name: Invariant gate (pre-publish)
         if: env.SKIP_BUILD != 'true'
         shell: bash
@@ -715,6 +742,17 @@ jobs:
       # universe parity, acquisition, freshness, invariants, value and
       # settlement into a single clean/not-clean verdict. Consecutive clean
       # days are the Definition-of-Done streak for the autonomous mechanism.
+      - name: Preserve foundation integrity diagnostics
+        if: failure() && env.SKIP_BUILD != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: foundation-integrity-${{ env.DAY_KEY }}
+          path: |
+            data/foundation-integrity/${{ env.DAY_KEY }}.json
+            data/foundation-integrity/latest.json
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Build day report
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
