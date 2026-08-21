@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-21",
-  "generatedAt": "2026-08-21T16:06:07.798Z",
+  "generatedAt": "2026-08-21T16:45:47.220Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-08-21",
     "finalResultsDir": "data/final-results/2026-08-21",
-    "verifiedFinalResults": 31,
+    "verifiedFinalResults": 36,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-21",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,13 +55,13 @@
       "summary": {
         "picks": 10,
         "uniqueMatches": 8,
-        "settled": 0,
-        "wins": 0,
+        "settled": 1,
+        "wins": 1,
         "losses": 0,
         "voids": 0,
-        "unresolved": 10,
+        "unresolved": 9,
         "unsupported": 0,
-        "hitRate": null,
+        "hitRate": 1,
         "oddsAvailable": 0,
         "averageOdds": null,
         "totalStake": null,
@@ -92,13 +92,13 @@
           "market": "Over / Under 2.5",
           "picks": 8,
           "uniqueMatches": 8,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 8,
+          "unresolved": 7,
           "unsupported": 0,
-          "hitRate": null,
+          "hitRate": 1,
           "oddsAvailable": 0,
           "averageOdds": null,
           "totalStake": null,
@@ -154,11 +154,44 @@
           "aiFairOdds": 1.57,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-21T16:45:40.681Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "M90IG4iM",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Belarus",
+                "leagueName": "Pershaya Liga",
+                "leaguePath": "/football/belarus/pershaya-liga/",
+                "home": "Orsha",
+                "away": "BATE 2",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-21T14:30:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -466,8 +499,8 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -10,
-    "settledDeltaPlanBMinusPlanA": 0,
-    "winsDeltaPlanBMinusPlanA": 0,
+    "settledDeltaPlanBMinusPlanA": -1,
+    "winsDeltaPlanBMinusPlanA": -1,
     "lossesDeltaPlanBMinusPlanA": 0,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
