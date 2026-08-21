@@ -2,13 +2,48 @@
   "dayKey": "2026-08-21",
   "leagueSlug": "sco.2",
   "leagueName": "Scottish Championship",
-  "updatedAt": "2026-08-21T19:39:49.391Z",
+  "updatedAt": "2026-08-21T20:28:53.405Z",
   "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "sco.2",
-    "requestedDayKey": "2026-09-03",
-    "mergedAt": "2026-08-21T19:39:49.391Z"
+    "requestedDayKey": "2026-08-21",
+    "providerFetchSlugs": [
+      "sco.2"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-21T20:28:53.405Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-21T20:29:18.942Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -27,7 +62,7 @@
       "awayTeam": "Partick Thistle",
       "venue": "Caledonian Stadium",
       "firstSeenAt": "2026-08-07T00:46:40.545Z",
-      "lastSeenAt": "2026-08-21T19:39:49.385Z",
+      "lastSeenAt": "2026-08-21T20:28:53.404Z",
       "providerIds": {
         "flashscore": "I7Y78fIr",
         "espn": "401878585"
@@ -36,13 +71,37 @@
         "cid_sco2_inverness_partickthistle_20260821"
       ],
       "providerLeagueSlug": "sco.2",
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "scoreHome": 0,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+4'",
+      "scoreHome": 1,
       "scoreAway": 1,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-21T20:29:18.942Z",
+        "provider": "espn",
+        "providerMatchId": "401878585",
+        "dayKey": "2026-08-21",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 1,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }

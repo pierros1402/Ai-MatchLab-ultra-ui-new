@@ -2,13 +2,48 @@
   "dayKey": "2026-08-21",
   "leagueSlug": "uru.1",
   "leagueName": "Uruguay Primera División",
-  "updatedAt": "2026-08-21T19:41:04.213Z",
+  "updatedAt": "2026-08-21T20:28:53.474Z",
   "count": 1,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "uru.1",
-    "requestedDayKey": "2026-09-05",
-    "mergedAt": "2026-08-21T19:41:04.212Z"
+    "requestedDayKey": "2026-08-21",
+    "providerFetchSlugs": [
+      "uru.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-21T20:28:53.474Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-21T20:29:18.942Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -31,15 +66,39 @@
       "awayTeam": "Boston River",
       "venue": "Estadio Luis Franzini",
       "firstSeenAt": "2026-08-11T23:05:52.631Z",
-      "lastSeenAt": "2026-08-21T19:41:04.199Z",
+      "lastSeenAt": "2026-08-21T20:28:53.473Z",
       "providerLeagueSlug": "uru.1",
-      "status": "LIVE",
-      "rawStatus": "STATUS_IN_PROGRESS",
-      "minute": "49'",
-      "scoreHome": 1,
-      "scoreAway": 2,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+8'",
+      "scoreHome": 2,
+      "scoreAway": 3,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-21T20:29:18.942Z",
+        "provider": "espn",
+        "providerMatchId": "401909202",
+        "dayKey": "2026-08-21",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 2,
+          "scoreAway": 3
+        }
+      }
     }
   ]
 }
