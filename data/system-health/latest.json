@@ -1,134 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-21",
-  "generatedAt": "2026-08-21T02:01:39.127Z",
+  "generatedAt": "2026-08-21T03:11:57.676Z",
   "severity": "error",
   "issueCounts": {
-    "error": 4,
-    "warning": 11,
+    "error": 5,
+    "warning": 4,
     "info": 7
   },
   "alert": true,
   "alertCounts": {
-    "error": 1,
-    "warning": 8,
+    "error": 2,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 22,
-  "actionableIssueCount": 15,
-  "newIssueCount": 13,
-  "newActionableIssueCount": 9,
-  "resolvedIssueCount": 12,
-  "persistentIssueCount": 9,
+  "activeIssueCount": 16,
+  "actionableIssueCount": 9,
+  "newIssueCount": 3,
+  "newActionableIssueCount": 2,
+  "resolvedIssueCount": 9,
+  "persistentIssueCount": 13,
   "activeIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-21/value-audit.json",
-        "at": "2026-08-20T23:48:43.165Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -2319517
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-21/plan-a2.json",
-        "at": 1787270398129,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1644553
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-21/plan-a2-audit.json",
-        "at": "2026-08-20T23:59:58.131Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1644551
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-21/plan-b-audit.json",
-        "at": "2026-08-20T23:59:12.264Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1690418
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-21/plan-b2-audit.json",
-        "at": "2026-08-20T23:59:59.413Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1643269
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-21.json",
-        "at": "2026-08-21T00:00:34.533Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1608149
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-08-21.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -158,28 +50,91 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 376,
+        "informational": true
       }
     },
     {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_model_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_model_not_ready"
       }
     },
     {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "snapshot_stale",
+      "message": "foundation_publication_not_ready",
       "details": {
-        "failure": "snapshot_stale"
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -785,18 +740,6 @@
             ]
           },
           {
-            "providerCompetitionId": "GzKFoyZq",
-            "providerPath": "/football/colombia/copa-colombia/",
-            "providerCountry": "Colombia",
-            "providerName": "Copa Colombia - Second stage",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "8EfR3hAs",
-              "fVhZ1Wvf"
-            ]
-          },
-          {
             "providerCompetitionId": "Obnyfa5k",
             "providerPath": "/football/costa-rica/liga-de-ascenso/",
             "providerCountry": "Costa Rica",
@@ -919,6 +862,18 @@
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
               "z9t0LUvn"
+            ]
+          },
+          {
+            "providerCompetitionId": "Ue7fsAJc",
+            "providerPath": "/football/czech-republic/plzensky-kp/",
+            "providerCountry": "Czech Republic",
+            "providerName": "Plzensky KP",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "4tORrJGG",
+              "WnCxjzOq"
             ]
           }
         ]
@@ -1045,125 +1000,81 @@
   ],
   "actionableIssues": [
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
       "details": {
-        "reasons": [
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
         ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-21/value-audit.json",
-        "at": "2026-08-20T23:48:43.165Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -2319517
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-21/plan-a2.json",
-        "at": 1787270398129,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1644553
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-21/plan-a2-audit.json",
-        "at": "2026-08-20T23:59:58.131Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1644551
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-21/plan-b-audit.json",
-        "at": "2026-08-20T23:59:12.264Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1690418
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-21/plan-b2-audit.json",
-        "at": "2026-08-20T23:59:59.413Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1643269
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-21.json",
-        "at": "2026-08-21T00:00:34.533Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1608149
       }
     },
     {
       "severity": "error",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
       }
     },
     {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_model_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_model_not_ready"
       }
     },
     {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "snapshot_stale",
+      "message": "foundation_publication_not_ready",
       "details": {
-        "failure": "snapshot_stale"
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -1699,18 +1610,6 @@
             ]
           },
           {
-            "providerCompetitionId": "GzKFoyZq",
-            "providerPath": "/football/colombia/copa-colombia/",
-            "providerCountry": "Colombia",
-            "providerName": "Copa Colombia - Second stage",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "8EfR3hAs",
-              "fVhZ1Wvf"
-            ]
-          },
-          {
             "providerCompetitionId": "Obnyfa5k",
             "providerPath": "/football/costa-rica/liga-de-ascenso/",
             "providerCountry": "Costa Rica",
@@ -1834,6 +1733,18 @@
             "targetDaySourceIds": [
               "z9t0LUvn"
             ]
+          },
+          {
+            "providerCompetitionId": "Ue7fsAJc",
+            "providerPath": "/football/czech-republic/plzensky-kp/",
+            "providerCountry": "Czech Republic",
+            "providerName": "Plzensky KP",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "4tORrJGG",
+              "WnCxjzOq"
+            ]
           }
         ]
       }
@@ -1856,6 +1767,158 @@
     }
   ],
   "newIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 376,
+        "informational": true
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "snapshot_value_audit_stale_against_canonical",
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
     {
       "severity": "warning",
       "source": "freshness-report",
@@ -1949,6 +2012,17 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-21.json"
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
       "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
@@ -1976,11 +2050,20 @@
     },
     {
       "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_model_not_ready",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
+        "failure": "foundation_model_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -2008,336 +2091,6 @@
         ],
         "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-21",
-        "todayDayKey": "2026-08-21",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 10,
-        "settled": 0,
-        "unresolved": 10
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-21/value-audit.json",
-        "at": "2026-08-20T23:48:43.165Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -2319517
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-21/plan-a2.json",
-        "at": 1787270398129,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1644553
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-21/plan-a2-audit.json",
-        "at": "2026-08-20T23:59:58.131Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1644551
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-21/plan-b-audit.json",
-        "at": "2026-08-20T23:59:12.264Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1690418
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-21/plan-b2-audit.json",
-        "at": "2026-08-20T23:59:59.413Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1643269
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-21.json",
-        "at": "2026-08-21T00:00:34.533Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1608149
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:den.1",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:den.1"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "bol.copa",
-          "col.copa",
-          "concacaf.central.american.cup",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-20/value.json",
-        "at": 1787248223231,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375265
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-20/value-audit.json",
-        "at": "2026-08-20T17:50:23.232Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375264
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-20/plan-a2.json",
-        "at": 1787256741400,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-20/plan-a2-audit.json",
-        "at": "2026-08-20T20:12:21.400Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-20/plan-b-audit.json",
-        "at": "2026-08-20T20:11:50.023Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1888473
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-20/plan-b2-audit.json",
-        "at": "2026-08-20T20:12:22.381Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1856115
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-20.json",
-        "at": "2026-08-20T20:12:53.189Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1825307
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-08-20.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b",
-        "artifact": "value-plans/2026-08-20/plan-b.json",
-        "at": null,
-        "staleReason": "plan_b_stale_against_canonical",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b2",
-        "artifact": "value-plans/2026-08-20/plan-b2.json",
-        "at": null,
-        "staleReason": "plan_b2_stale_against_canonical",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-20.json"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "bol.copa",
-          "col.copa",
-          "concacaf.central.american.cup",
-          "esp.joan_gamper",
-          "ksa.kings.cup",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1"
-        ],
-        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,esp.joan_gamper,ksa.kings.cup,usa.ncaa.m.1,usa.ncaa.w.1",
-        "contextOnly": false
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
-      "details": {
-        "failure": "foundation_integrity_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
       }
     },
     {
@@ -2402,6 +2155,22 @@
           "rejectedCount": 15,
           "alreadyDeclaredCount": 0
         }
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-21",
+        "todayDayKey": "2026-08-21",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 10,
+        "settled": 0,
+        "unresolved": 10
       }
     },
     {
@@ -2900,18 +2669,6 @@
             ]
           },
           {
-            "providerCompetitionId": "GzKFoyZq",
-            "providerPath": "/football/colombia/copa-colombia/",
-            "providerCountry": "Colombia",
-            "providerName": "Copa Colombia - Second stage",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 2,
-            "targetDaySourceIds": [
-              "8EfR3hAs",
-              "fVhZ1Wvf"
-            ]
-          },
-          {
             "providerCompetitionId": "Obnyfa5k",
             "providerPath": "/football/costa-rica/liga-de-ascenso/",
             "providerCountry": "Costa Rica",
@@ -3034,6 +2791,18 @@
             "targetDayFixtureCount": 1,
             "targetDaySourceIds": [
               "z9t0LUvn"
+            ]
+          },
+          {
+            "providerCompetitionId": "Ue7fsAJc",
+            "providerPath": "/football/czech-republic/plzensky-kp/",
+            "providerCountry": "Czech Republic",
+            "providerName": "Plzensky KP",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "4tORrJGG",
+              "WnCxjzOq"
             ]
           }
         ]
