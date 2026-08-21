@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-21",
-  "generatedAt": "2026-08-21T17:41:11.896Z",
+  "generatedAt": "2026-08-21T19:20:04.812Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-08-21",
     "finalResultsDir": "data/final-results/2026-08-21",
-    "verifiedFinalResults": 57,
+    "verifiedFinalResults": 96,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-21",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,11 +55,11 @@
       "summary": {
         "picks": 10,
         "uniqueMatches": 8,
-        "settled": 1,
-        "wins": 1,
+        "settled": 2,
+        "wins": 2,
         "losses": 0,
         "voids": 0,
-        "unresolved": 9,
+        "unresolved": 8,
         "unsupported": 0,
         "hitRate": 1,
         "oddsAvailable": 0,
@@ -92,11 +92,11 @@
           "market": "Over / Under 2.5",
           "picks": 8,
           "uniqueMatches": 8,
-          "settled": 1,
-          "wins": 1,
+          "settled": 2,
+          "wins": 2,
           "losses": 0,
           "voids": 0,
-          "unresolved": 7,
+          "unresolved": 6,
           "unsupported": 0,
           "hitRate": 1,
           "oddsAvailable": 0,
@@ -343,11 +343,44 @@
           "aiFairOdds": 1.86,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 2,
+            "scoreKey": "1-2"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "flashscore_same_day_exact_team_match",
+            "method": "flashscore_same_day_exact_team_match",
+            "authority": null,
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-21T19:19:58.267Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "fZqBU6jT",
+                "finished": true,
+                "playedFinal": true,
+                "nonPlayedTerminal": false,
+                "statusCode": "3",
+                "statusDetailCode": "3",
+                "country": "Finland",
+                "leagueName": "Veikkausliiga",
+                "leaguePath": "/football/finland/veikkausliiga/",
+                "home": "SJK",
+                "away": "Lahti",
+                "scoreHome": 1,
+                "scoreAway": 2,
+                "kickoffUtc": "2026-08-21T16:00:00.000Z",
+                "scoreKey": "1-2"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -499,8 +532,8 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -10,
-    "settledDeltaPlanBMinusPlanA": -1,
-    "winsDeltaPlanBMinusPlanA": -1,
+    "settledDeltaPlanBMinusPlanA": -2,
+    "winsDeltaPlanBMinusPlanA": -2,
     "lossesDeltaPlanBMinusPlanA": 0,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
