@@ -417,13 +417,22 @@ function normalizePick(p) {
 
     if (generation !== refreshGeneration) return;
 
-    if (!data || data?.ok === false) {
+    const fallbackReason =
+      String(
+        data?.error ||
+        data?.reason ||
+        ""
+      ).trim();
+
+    const fallbackUnavailable =
+      !data ||
+      data?.ok === false ||
+      fallbackReason === "snapshot_value_not_found";
+
+    if (fallbackUnavailable) {
       const reason =
-        String(
-          data?.error ||
-          data?.reason ||
-          "value_release_unavailable"
-        );
+        fallbackReason ||
+        "value_release_unavailable";
 
       emitValuePayload(
         unavailableComparisonPayload(
