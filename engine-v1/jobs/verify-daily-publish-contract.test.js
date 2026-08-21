@@ -5,6 +5,10 @@ import os from "node:os";
 import path from "node:path";
 
 import { computeDeploySnapshotManifestHash } from "../core/deploy-snapshot-release-contract.js";
+import {
+  PLAN_A_OBSERVATION_SCHEMA,
+  planAObservationSignature
+} from "../value/plan-a-observation.js";
 import { verifyDailyPublishContract } from "./verify-daily-publish-contract.js";
 
 const DAY = "2026-08-11";
@@ -12,6 +16,15 @@ const DAY = "2026-08-11";
 function writeJson(file, payload) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+function readJson(file) {
+  return JSON.parse(
+    fs.readFileSync(
+      file,
+      "utf8"
+    )
+  );
 }
 
 function buildManifest(valueGate) {
@@ -39,6 +52,90 @@ function buildManifest(valueGate) {
   return manifest;
 }
 
+function buildPlanAObservation() {
+  const observation = {
+    ok: true,
+    schema:
+      PLAN_A_OBSERVATION_SCHEMA,
+    date:
+      DAY,
+    immutable:
+      true,
+    count:
+      0,
+    picks:
+      [],
+    source:
+      "canonical_fixtures",
+    outputMode:
+      "plan-a-observation"
+  };
+
+  observation.observationSignature =
+    planAObservationSignature(
+      DAY,
+      observation
+    );
+
+  return observation;
+}
+
+function buildDirectPlan({
+  planId,
+  outputMode
+}) {
+  return {
+    ok: true,
+    date: DAY,
+    planId,
+    count: 0,
+    picks: [],
+    source: "test",
+    ...(outputMode
+      ? { outputMode }
+      : {})
+  };
+}
+
+function buildComparison() {
+  const plan =
+    (id, outputMode = "") => ({
+      id,
+      count: 0,
+      picks: [],
+      summary: {
+        picks: 0
+      },
+      ...(outputMode
+        ? { outputMode }
+        : {})
+    });
+
+  return {
+    ok: true,
+    date: DAY,
+    plans: {
+      A:
+        plan(
+          "plan-a",
+          "plan-a-observation"
+        ),
+      A2:
+        plan("plan-a2"),
+      B:
+        plan(
+          "plan-b",
+          "plan-b-observation"
+        ),
+      B2:
+        plan(
+          "plan-b2",
+          "plan-b2-observation"
+        )
+    }
+  };
+}
+
 function withPublishTree(valueGate, fn) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-publish-contract-"));
   const dataPath = (...parts) => path.join(root, ...parts);
@@ -59,12 +156,67 @@ function withPublishTree(valueGate, fn) {
     source: "local_value_file"
   });
 
+  const planA =
+    buildPlanAObservation();
+
+  writeJson(
+    dataPath(
+      "value-plans",
+      DAY,
+      "plan-a.json"
+    ),
+    planA
+  );
+
+  writeJson(
+    dataPath(
+      "value-plans",
+      DAY,
+      "plan-a2.json"
+    ),
+    buildDirectPlan({
+      planId: "plan-a2"
+    })
+  );
+
+  writeJson(
+    dataPath(
+      "value-plans",
+      DAY,
+      "plan-b.json"
+    ),
+    buildDirectPlan({
+      planId: "plan-b",
+      outputMode:
+        "plan-b-observation"
+    })
+  );
+
+  writeJson(
+    dataPath(
+      "value-plans",
+      DAY,
+      "plan-b2.json"
+    ),
+    buildDirectPlan({
+      planId: "plan-b2",
+      outputMode:
+        "plan-b2-observation"
+    })
+  );
+
+  writeJson(
+    dataPath(
+      "value-comparison",
+      DAY + ".json"
+    ),
+    buildComparison()
+  );
+
   writeJson(path.join(snapshot, "value.json"), {
-    count: 0,
-    picks: [],
-    source: "local_value_file",
+    ...planA,
     publicationAuthority:
-      "current_value_artifact_first_freeze"
+      "frozen_plan_a_observation"
   });
   writeJson(path.join(snapshot, "freshness-report.json"), { ok: true });
   writeJson(path.join(snapshot, "value-audit.json"), { ok: true });
@@ -196,6 +348,316 @@ test(
               row.code ===
               "latest_missing"
           )
+        );
+      }
+    );
+  }
+);
+
+test(
+  "daily publish contract blocks a missing direct Plan B artifact",
+  () => {
+    withPublishTree(
+      {
+        fixtures: 0,
+        valuePicks: 0,
+        valueFreshAgainstCanonical: true,
+        ok: true
+      },
+      ({ dataPath }) => {
+        fs.rmSync(
+          dataPath(
+            "value-plans",
+            DAY,
+            "plan-b.json"
+          )
+        );
+
+        const report =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath
+            }
+          );
+
+        assert.equal(report.ok, false);
+
+        assert.ok(
+          report.blocked.some(
+            row =>
+              row.code ===
+                "required_artifact_missing" &&
+              row.artifact ===
+                "planB"
+          )
+        );
+      }
+    );
+  }
+);
+
+test(
+  "daily publish contract blocks a direct plan bound to the wrong day",
+  () => {
+    withPublishTree(
+      {
+        fixtures: 0,
+        valuePicks: 0,
+        valueFreshAgainstCanonical: true,
+        ok: true
+      },
+      ({ dataPath }) => {
+        const file =
+          dataPath(
+            "value-plans",
+            DAY,
+            "plan-a2.json"
+          );
+
+        const payload =
+          readJson(file);
+
+        payload.date =
+          "2099-01-01";
+
+        writeJson(file, payload);
+
+        const report =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath
+            }
+          );
+
+        const blocked =
+          report.blocked.find(
+            row =>
+              row.code ===
+                "value_plan_release_contract_failed" &&
+              row.plan === "A2"
+          );
+
+        assert.equal(report.ok, false);
+        assert.ok(blocked);
+        assert.ok(
+          blocked.errors.includes(
+            "day_mismatch"
+          )
+        );
+      }
+    );
+  }
+);
+
+test(
+  "daily publish contract blocks direct plan count and picks mismatch",
+  () => {
+    withPublishTree(
+      {
+        fixtures: 0,
+        valuePicks: 0,
+        valueFreshAgainstCanonical: true,
+        ok: true
+      },
+      ({ dataPath }) => {
+        const file =
+          dataPath(
+            "value-plans",
+            DAY,
+            "plan-b.json"
+          );
+
+        const payload =
+          readJson(file);
+
+        payload.count = 1;
+
+        writeJson(file, payload);
+
+        const report =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath
+            }
+          );
+
+        const blocked =
+          report.blocked.find(
+            row =>
+              row.code ===
+                "value_plan_release_contract_failed" &&
+              row.plan === "B"
+          );
+
+        assert.equal(report.ok, false);
+        assert.ok(blocked);
+        assert.ok(
+          blocked.errors.includes(
+            "count_picks_mismatch"
+          )
+        );
+      }
+    );
+  }
+);
+
+test(
+  "daily publish contract blocks comparison missing Plan B2",
+  () => {
+    withPublishTree(
+      {
+        fixtures: 0,
+        valuePicks: 0,
+        valueFreshAgainstCanonical: true,
+        ok: true
+      },
+      ({ dataPath }) => {
+        const file =
+          dataPath(
+            "value-comparison",
+            DAY + ".json"
+          );
+
+        const payload =
+          readJson(file);
+
+        delete payload.plans.B2;
+
+        writeJson(file, payload);
+
+        const report =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath
+            }
+          );
+
+        const blocked =
+          report.blocked.find(
+            row =>
+              row.code ===
+                "value_comparison_release_contract_failed"
+          );
+
+        assert.equal(report.ok, false);
+        assert.ok(blocked);
+        assert.ok(
+          blocked.errors.includes(
+            "comparison_plan_missing:B2"
+          )
+        );
+      }
+    );
+  }
+);
+
+test(
+  "daily publish contract blocks comparison and direct count mismatch",
+  () => {
+    withPublishTree(
+      {
+        fixtures: 0,
+        valuePicks: 0,
+        valueFreshAgainstCanonical: true,
+        ok: true
+      },
+      ({ dataPath }) => {
+        const file =
+          dataPath(
+            "value-comparison",
+            DAY + ".json"
+          );
+
+        const payload =
+          readJson(file);
+
+        payload.plans.A.summary.picks = 1;
+        payload.plans.A.count = 1;
+
+        writeJson(file, payload);
+
+        const report =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath
+            }
+          );
+
+        const blocked =
+          report.blocked.find(
+            row =>
+              row.code ===
+                "value_comparison_release_contract_failed"
+          );
+
+        assert.equal(report.ok, false);
+        assert.ok(blocked);
+
+        assert.ok(
+          blocked.errors.some(
+            error =>
+              error.startsWith(
+                "comparison_count_mismatch:A:"
+              )
+          )
+        );
+      }
+    );
+  }
+);
+
+test(
+  "daily publish contract accepts a real zero-pick direct plan",
+  () => {
+    withPublishTree(
+      {
+        fixtures: 0,
+        valuePicks: 0,
+        valueFreshAgainstCanonical: true,
+        ok: true
+      },
+      ({ dataPath }) => {
+        const report =
+          verifyDailyPublishContract(
+            DAY,
+            {
+              resolveDataPath:
+                dataPath
+            }
+          );
+
+        assert.equal(
+          report.ok,
+          true,
+          JSON.stringify(
+            report.blocked
+          )
+        );
+
+        assert.equal(
+          report.valueRelease
+            .plans
+            .A2
+            .count,
+          0
+        );
+
+        assert.equal(
+          report.valueRelease
+            .comparison
+            .parity
+            .A2,
+          true
         );
       }
     );

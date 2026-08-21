@@ -10,6 +10,10 @@ import {
 import {
   computeDeploySnapshotManifestHash
 } from "../core/deploy-snapshot-release-contract.js";
+import {
+  PLAN_A_OBSERVATION_SCHEMA,
+  planAObservationSignature
+} from "../value/plan-a-observation.js";
 
 const workflow = fs.readFileSync(
   new URL(
@@ -31,6 +35,92 @@ function writeJson(file, payload) {
     JSON.stringify(payload, null, 2) + "\n",
     "utf8"
   );
+}
+
+function buildPlanAObservation(dayKey) {
+  const observation = {
+    ok: true,
+    schema:
+      PLAN_A_OBSERVATION_SCHEMA,
+    date:
+      dayKey,
+    immutable:
+      true,
+    count:
+      0,
+    picks:
+      [],
+    source:
+      "canonical_fixtures",
+    outputMode:
+      "plan-a-observation"
+  };
+
+  observation.observationSignature =
+    planAObservationSignature(
+      dayKey,
+      observation
+    );
+
+  return observation;
+}
+
+function buildDirectPlan(
+  dayKey,
+  planId,
+  outputMode = ""
+) {
+  return {
+    ok: true,
+    date: dayKey,
+    planId,
+    count: 0,
+    picks: [],
+    source:
+      "test",
+    ...(outputMode
+      ? { outputMode }
+      : {})
+  };
+}
+
+function buildComparison(dayKey) {
+  const plan =
+    (id, outputMode = "") => ({
+      id,
+      count: 0,
+      picks: [],
+      summary: {
+        picks: 0
+      },
+      ...(outputMode
+        ? { outputMode }
+        : {})
+    });
+
+  return {
+    ok: true,
+    date: dayKey,
+    plans: {
+      A:
+        plan(
+          "plan-a",
+          "plan-a-observation"
+        ),
+      A2:
+        plan("plan-a2"),
+      B:
+        plan(
+          "plan-b",
+          "plan-b-observation"
+        ),
+      B2:
+        plan(
+          "plan-b2",
+          "plan-b2-observation"
+        )
+    }
+  };
 }
 
 function createContractFixture() {
@@ -91,14 +181,75 @@ writeJson(path.join(snapshotRoot, "manifest.json"), manifest);
     }
   );
 
+  const planA =
+    buildPlanAObservation(
+      dayKey
+    );
+
+  writeJson(
+    resolve(
+      "value-plans",
+      dayKey,
+      "plan-a.json"
+    ),
+    planA
+  );
+
+  writeJson(
+    resolve(
+      "value-plans",
+      dayKey,
+      "plan-a2.json"
+    ),
+    buildDirectPlan(
+      dayKey,
+      "plan-a2"
+    )
+  );
+
+  writeJson(
+    resolve(
+      "value-plans",
+      dayKey,
+      "plan-b.json"
+    ),
+    buildDirectPlan(
+      dayKey,
+      "plan-b",
+      "plan-b-observation"
+    )
+  );
+
+  writeJson(
+    resolve(
+      "value-plans",
+      dayKey,
+      "plan-b2.json"
+    ),
+    buildDirectPlan(
+      dayKey,
+      "plan-b2",
+      "plan-b2-observation"
+    )
+  );
+
+  writeJson(
+    resolve(
+      "value-comparison",
+      dayKey + ".json"
+    ),
+    buildComparison(
+      dayKey
+    )
+  );
+
+
   writeJson(
     path.join(snapshotRoot, "value.json"),
     {
-      source: "canonical_fixtures",
-      count: 0,
-      picks: [],
+      ...planA,
       publicationAuthority:
-        "current_value_artifact_first_freeze"
+        "frozen_plan_a_observation"
     }
   );
 

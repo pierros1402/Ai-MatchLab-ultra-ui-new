@@ -15,6 +15,224 @@ function readJson(file) {
   }
 }
 
+function nonNegativeInteger(value) {
+  const number = Number(value);
+
+  return Number.isInteger(number) && number >= 0
+    ? number
+    : null;
+}
+
+function validateValuePlanArtifact(planId, payload, dayKey) {
+  const errors = [];
+
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    Array.isArray(payload)
+  ) {
+    return {
+      planId,
+      ok: false,
+      count: null,
+      picks: null,
+      errors: ["payload_missing_or_invalid"]
+    };
+  }
+
+  if (String(payload.date || "") !== dayKey) {
+    errors.push("day_mismatch");
+  }
+
+  const picks =
+    Array.isArray(payload.picks)
+      ? payload.picks
+      : null;
+
+  if (!picks) {
+    errors.push("picks_not_array");
+  }
+
+  const count =
+    nonNegativeInteger(payload.count);
+
+  if (count === null) {
+    errors.push(
+      "count_not_nonnegative_integer"
+    );
+  }
+
+  if (
+    picks &&
+    count !== null &&
+    count !== picks.length
+  ) {
+    errors.push("count_picks_mismatch");
+  }
+
+  if (payload.ok === false) {
+    errors.push("plan_ok_false");
+  }
+
+  return {
+    planId,
+    ok: errors.length === 0,
+    count,
+    picks: picks?.length ?? null,
+    errors
+  };
+}
+
+function comparisonPlanCount(plan) {
+  if (
+    !plan ||
+    typeof plan !== "object" ||
+    Array.isArray(plan)
+  ) {
+    return null;
+  }
+
+  const summaryCount =
+    nonNegativeInteger(
+      plan?.summary?.picks
+    );
+
+  if (summaryCount !== null) {
+    return summaryCount;
+  }
+
+  const count =
+    nonNegativeInteger(plan.count);
+
+  if (count !== null) {
+    return count;
+  }
+
+  return Array.isArray(plan.picks)
+    ? plan.picks.length
+    : null;
+}
+
+function validateValueComparisonArtifact(
+  payload,
+  dayKey,
+  directPlans
+) {
+  const errors = [];
+  const parity = {};
+  const counts = {};
+
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    Array.isArray(payload)
+  ) {
+    return {
+      ok: false,
+      errors: ["comparison_missing_or_invalid"],
+      parity,
+      counts
+    };
+  }
+
+  if (payload.ok === false) {
+    errors.push("comparison_ok_false");
+  }
+
+  if (String(payload.date || "") !== dayKey) {
+    errors.push("comparison_day_mismatch");
+  }
+
+  if (
+    !payload.plans ||
+    typeof payload.plans !== "object" ||
+    Array.isArray(payload.plans)
+  ) {
+    errors.push("comparison_plans_missing");
+
+    return {
+      ok: false,
+      errors,
+      parity,
+      counts
+    };
+  }
+
+  for (const planId of ["A", "A2", "B", "B2"]) {
+    const plan =
+      payload.plans[planId];
+
+    if (
+      !plan ||
+      typeof plan !== "object" ||
+      Array.isArray(plan)
+    ) {
+      errors.push(
+        "comparison_plan_missing:" +
+        planId
+      );
+
+      parity[planId] = false;
+      counts[planId] = null;
+      continue;
+    }
+
+    const comparisonCount =
+      comparisonPlanCount(plan);
+
+    counts[planId] =
+      comparisonCount;
+
+    if (comparisonCount === null) {
+      errors.push(
+        "comparison_count_invalid:" +
+        planId
+      );
+    }
+
+    if (
+      Array.isArray(plan.picks) &&
+      comparisonCount !== null &&
+      comparisonCount !== plan.picks.length
+    ) {
+      errors.push(
+        "comparison_internal_count_mismatch:" +
+        planId
+      );
+    }
+
+    const directCount =
+      directPlans?.[planId]?.count ??
+      null;
+
+    const exact =
+      Number.isInteger(directCount) &&
+      Number.isInteger(comparisonCount) &&
+      directCount === comparisonCount;
+
+    parity[planId] =
+      exact;
+
+    if (!exact) {
+      errors.push(
+        "comparison_count_mismatch:" +
+        planId +
+        ":direct=" +
+        directCount +
+        ":comparison=" +
+        comparisonCount
+      );
+    }
+  }
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    parity,
+    counts
+  };
+}
+
 function parseArgs(argv) {
   let dayKey = "";
   let gate = false;
@@ -60,6 +278,11 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
     value: path.join(snapshotRoot, "value.json"),
     freshness: path.join(snapshotRoot, "freshness-report.json"),
     valueAudit: path.join(snapshotRoot, "value-audit.json"),
+    planA: dataPath("value-plans", dayKey, "plan-a.json"),
+    planA2: dataPath("value-plans", dayKey, "plan-a2.json"),
+    planB: dataPath("value-plans", dayKey, "plan-b.json"),
+    planB2: dataPath("value-plans", dayKey, "plan-b2.json"),
+    valueComparison: dataPath("value-comparison", dayKey + ".json"),
     buildReport: dataPath("build-reports", `${dayKey}.json`),
     foundationIntegrity: dataPath("foundation-integrity", `${dayKey}.json`),
     systemHealth: dataPath("system-health", `${dayKey}.json`)
@@ -81,6 +304,15 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
   const value = artifacts.value?.payload;
   const freshness = artifacts.freshness?.payload;
   const valueAudit = artifacts.valueAudit?.payload;
+  const valuePlans = {
+    A: artifacts.planA?.payload,
+    A2: artifacts.planA2?.payload,
+    B: artifacts.planB?.payload,
+    B2: artifacts.planB2?.payload
+  };
+
+  const valueComparison =
+    artifacts.valueComparison?.payload;
   const buildReport = artifacts.buildReport?.payload;
   const foundationIntegrity = artifacts.foundationIntegrity?.payload;
   const systemHealth = artifacts.systemHealth?.payload;
@@ -118,6 +350,47 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
   }
   if (valueAudit && valueAudit.ok === false) {
     blocked.push({ code: "value_audit_not_ok" });
+  }
+
+  const valuePlanValidation = {};
+
+  for (const planId of ["A", "A2", "B", "B2"]) {
+    const validation =
+      validateValuePlanArtifact(
+        planId,
+        valuePlans[planId],
+        dayKey
+      );
+
+    valuePlanValidation[planId] =
+      validation;
+
+    if (!validation.ok) {
+      blocked.push({
+        code:
+          "value_plan_release_contract_failed",
+        plan:
+          planId,
+        errors:
+          validation.errors
+      });
+    }
+  }
+
+  const valueComparisonValidation =
+    validateValueComparisonArtifact(
+      valueComparison,
+      dayKey,
+      valuePlanValidation
+    );
+
+  if (!valueComparisonValidation.ok) {
+    blocked.push({
+      code:
+        "value_comparison_release_contract_failed",
+      errors:
+        valueComparisonValidation.errors
+    });
   }
 
   if (foundationIntegrity) {
@@ -319,6 +592,13 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
       detailFiles.length,
 
     detailsValueMirror,
+
+    valueRelease: {
+      plans:
+        valuePlanValidation,
+      comparison:
+        valueComparisonValidation
+    },
 
     blocked,
 
