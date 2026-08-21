@@ -6,7 +6,7 @@
     "daysBack": 1,
     "daysForward": 14
   },
-  "sourceLatestUpdatedAt": "2026-08-21T19:41:24.265Z",
+  "sourceLatestUpdatedAt": "2026-08-21T21:42:11.426Z",
   "resolver": {
     "schema": "ai-matchlab.production-identity-resolver-runtime.v2",
     "extensionLedgerSha256": "77e36a7789494fcf1b5fe7c640e9c473f0cb3886634f6e4a99715168c12ff55f",
@@ -25,12 +25,12 @@
   },
   "summary": {
     "scannedDays": 16,
-    "scannedLeagueFiles": 569,
-    "inputRows": 1959,
-    "autoPromotable": 0,
+    "scannedLeagueFiles": 593,
+    "inputRows": 2008,
+    "autoPromotable": 1,
     "pendingIndependentConfirmation": 2,
     "ambiguous": 6,
-    "conflictRejected": 1,
+    "conflictRejected": 2,
     "alreadyManagedPairs": 1,
     "independentConfirmed": 0,
     "independentConfirmationRetryPending": 2
@@ -92,7 +92,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-08-21T19:41:24.593Z",
+                "lastAttemptAt": "2026-08-21T21:42:11.782Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -403,7 +403,7 @@
                 "evidenceKind": "INDEPENDENT_NON_ODDS_FIXTURE_CONFIRMATION",
                 "oddsUsed": false,
                 "attempts": 1,
-                "lastAttemptAt": "2026-08-21T19:41:24.594Z",
+                "lastAttemptAt": "2026-08-21T21:42:11.783Z",
                 "retryable": true,
                 "providerStatus": "MISSING_API_KEY",
                 "evaluationStatus": null,
@@ -491,8 +491,126 @@
     },
     {
       "dayKey": "2026-08-24",
-      "leagueFiles": 25,
-      "recoveryLeagueReports": []
+      "leagueFiles": 49,
+      "recoveryLeagueReports": [
+        {
+          "leagueSlug": "esp.2",
+          "inputRows": 3,
+          "temporalCrossProviderPairs": 1,
+          "autoPromotable": [],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [
+            {
+              "leagueSlug": "esp.2",
+              "kickoffUtc": "2026-08-24T17:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "vPLIHcyh",
+                "canonicalId": "cid_esp2_celtavigob_andorra_20260824",
+                "kickoffUtc": "2026-08-24T17:00:00.000Z",
+                "homeTeam": "Celta Vigo B",
+                "awayTeam": "Andorra"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401883317",
+                "canonicalId": "cid_esp2_rcceltafortuna_andorra_20260824",
+                "kickoffUtc": "2026-08-24T17:00Z",
+                "homeTeam": "RC Celta Fortuna",
+                "awayTeam": "FC Andorra"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "SQUAD_CONFLICT",
+                  "stable": false,
+                  "conflict": true
+                },
+                "away": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "stableSides": 1,
+                "conflict": true
+              },
+              "recoveryStatus": "REJECTED_IDENTITY_CONFLICT",
+              "promotionAuthorized": false
+            }
+          ],
+          "summary": {
+            "autoPromotable": 0,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 1,
+            "alreadyManagedPairs": 0
+          }
+        },
+        {
+          "leagueSlug": "ger.dfb_pokal",
+          "inputRows": 5,
+          "temporalCrossProviderPairs": 3,
+          "autoPromotable": [
+            {
+              "leagueSlug": "ger.dfb_pokal",
+              "kickoffUtc": "2026-08-24T16:00:00.000Z",
+              "left": {
+                "source": "flashscore",
+                "sourceId": "pdc3jb77",
+                "canonicalId": "cid_gerdfbpokal_wurzburgerkickers_koln_20260824",
+                "kickoffUtc": "2026-08-24T16:00:00.000Z",
+                "homeTeam": "Wurzburger Kickers",
+                "awayTeam": "FC Koln"
+              },
+              "right": {
+                "source": "espn",
+                "sourceId": "401874896",
+                "canonicalId": "cid_gerdfbpokal_wurzburgerkickers_cologne_20260824",
+                "kickoffUtc": "2026-08-24T16:00Z",
+                "homeTeam": "Würzburger Kickers",
+                "awayTeam": "FC Cologne"
+              },
+              "evidence": {
+                "home": {
+                  "kind": "NORMALIZED_EXACT",
+                  "stable": true,
+                  "conflict": false,
+                  "globalClubId": null,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null,
+                  "productionIdentityComplete": false
+                },
+                "away": {
+                  "kind": "UNRESOLVED_ALIAS",
+                  "stable": false,
+                  "conflict": false,
+                  "leftGlobalClubId": null,
+                  "rightGlobalClubId": null
+                },
+                "stableSides": 1,
+                "conflict": false
+              },
+              "recoveryStatus": "AUTO_PROMOTABLE_IDENTITY_EXTENSION",
+              "promotionAuthorized": true,
+              "requiresIndependentConfirmation": false
+            }
+          ],
+          "pendingIndependentConfirmation": [],
+          "ambiguous": [],
+          "conflictRejected": [],
+          "summary": {
+            "autoPromotable": 1,
+            "pendingIndependentConfirmation": 0,
+            "ambiguous": 0,
+            "conflictRejected": 0,
+            "alreadyManagedPairs": 0
+          }
+        }
+      ]
     },
     {
       "dayKey": "2026-08-25",
@@ -560,7 +678,7 @@
     "evidenceEndpoint": "fixtures",
     "oddsAllowed": false,
     "fuzzyMatchingAllowed": false,
-    "runAt": "2026-08-21T19:41:24.594Z",
+    "runAt": "2026-08-21T21:42:11.783Z",
     "attempts": [
       {
         "dayKey": "2026-08-21",
