@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-21",
-  "generatedAt": "2026-08-21T07:45:02.037Z",
+  "generatedAt": "2026-08-21T10:08:03.892Z",
   "severity": "error",
   "issueCounts": {
-    "error": 3,
+    "error": 5,
     "warning": 4,
-    "info": 6
+    "info": 7
   },
   "alert": true,
   "alertCounts": {
-    "error": 1,
+    "error": 2,
     "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 13,
-  "actionableIssueCount": 7,
-  "newIssueCount": 1,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 3,
-  "persistentIssueCount": 12,
+  "activeIssueCount": 16,
+  "actionableIssueCount": 9,
+  "newIssueCount": 3,
+  "newActionableIssueCount": 2,
+  "resolvedIssueCount": 1,
+  "persistentIssueCount": 13,
   "activeIssues": [
     {
       "severity": "info",
@@ -50,19 +50,91 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 400,
+        "informational": true
       }
     },
     {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_model_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_model_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -930,19 +1002,79 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
       "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
       }
     },
     {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_model_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_model_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
@@ -1638,28 +1770,6 @@
     {
       "severity": "error",
       "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "artifact_missing",
-      "message": "Foundation integrity report is missing.",
-      "details": {
-        "artifact": "data/foundation-integrity/2026-08-21.json"
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
       "type": "foundation_model_not_ready",
       "message": "Model foundation is not ready.",
       "details": {
@@ -1725,8 +1835,81 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 378,
+        "count": 400,
         "informational": true
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historySemantic",
+            "reason": "history_semantic_errors_present"
+          },
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "h2h",
+            "reason": "h2h_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-21.json"
       }
     }
   ],
@@ -1761,9 +1944,18 @@
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
-      "message": "foundation_integrity_missing",
+      "message": "foundation_model_not_ready",
       "details": {
-        "failure": "foundation_integrity_missing"
+        "failure": "foundation_model_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
       }
     },
     {
