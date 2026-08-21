@@ -1,135 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-20",
-  "generatedAt": "2026-08-20T20:53:03.478Z",
+  "generatedAt": "2026-08-21T17:49:15.093Z",
   "severity": "error",
   "issueCounts": {
-    "error": 4,
-    "warning": 11,
+    "error": 3,
+    "warning": 3,
     "info": 6
   },
   "alert": true,
   "alertCounts": {
-    "error": 4,
-    "warning": 9,
+    "error": 3,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 21,
-  "actionableIssueCount": 15,
-  "newIssueCount": 19,
-  "newActionableIssueCount": 13,
+  "activeIssueCount": 12,
+  "actionableIssueCount": 6,
+  "newIssueCount": 10,
+  "newActionableIssueCount": 4,
   "resolvedIssueCount": 8,
   "persistentIssueCount": 2,
   "activeIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_stale_against_canonical",
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-20/value.json",
-        "at": 1787248223231,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375265
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-20/value-audit.json",
-        "at": "2026-08-20T17:50:23.232Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375264
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-20/plan-a2.json",
-        "at": 1787256741400,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-20/plan-a2-audit.json",
-        "at": "2026-08-20T20:12:21.400Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-20/plan-b-audit.json",
-        "at": "2026-08-20T20:11:50.023Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1888473
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-20/plan-b2-audit.json",
-        "at": "2026-08-20T20:12:22.381Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1856115
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-20.json",
-        "at": "2026-08-20T20:12:53.189Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1825307
-      }
-    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -185,15 +76,6 @@
       "message": "foundation_integrity_missing",
       "details": {
         "failure": "foundation_integrity_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
       }
     },
     {
@@ -985,23 +867,23 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 0,
+          "count": 5,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "picks": 5,
+            "uniqueMatches": 5,
+            "settled": 5,
+            "wins": 4,
+            "losses": 1,
             "voids": 0,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 0.8,
+            "oddsAvailable": 4,
+            "averageOdds": 1.5075,
+            "totalStake": 4,
+            "totalReturn": 4.4,
+            "profit": 0.4,
+            "roi": 0.1
           }
         },
         "planA2": {
@@ -1069,115 +951,6 @@
   ],
   "actionableIssues": [
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_stale_against_canonical",
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-20/value.json",
-        "at": 1787248223231,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375265
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-20/value-audit.json",
-        "at": "2026-08-20T17:50:23.232Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375264
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-20/plan-a2.json",
-        "at": 1787256741400,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-20/plan-a2-audit.json",
-        "at": "2026-08-20T20:12:21.400Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-20/plan-b-audit.json",
-        "at": "2026-08-20T20:11:50.023Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1888473
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-20/plan-b2-audit.json",
-        "at": "2026-08-20T20:12:22.381Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1856115
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-20.json",
-        "at": "2026-08-20T20:12:53.189Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1825307
-      }
-    },
-    {
       "severity": "error",
       "source": "foundation-integrity",
       "type": "artifact_missing",
@@ -1193,15 +966,6 @@
       "message": "foundation_integrity_missing",
       "details": {
         "failure": "foundation_integrity_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
       }
     },
     {
@@ -1918,115 +1682,6 @@
   ],
   "newIssues": [
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_stale_against_canonical",
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-20/value.json",
-        "at": 1787248223231,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375265
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-20/value-audit.json",
-        "at": "2026-08-20T17:50:23.232Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375264
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-20/plan-a2.json",
-        "at": 1787256741400,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-20/plan-a2-audit.json",
-        "at": "2026-08-20T20:12:21.400Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-20/plan-b-audit.json",
-        "at": "2026-08-20T20:11:50.023Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1888473
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-20/plan-b2-audit.json",
-        "at": "2026-08-20T20:12:22.381Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1856115
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-20.json",
-        "at": "2026-08-20T20:12:53.189Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1825307
-      }
-    },
-    {
       "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
@@ -2081,15 +1736,6 @@
       "message": "foundation_integrity_missing",
       "details": {
         "failure": "foundation_integrity_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
       }
     },
     {
@@ -2199,23 +1845,23 @@
         ],
         "missingPlans": [],
         "planA": {
-          "count": 0,
+          "count": 5,
           "summary": {
-            "picks": 0,
-            "uniqueMatches": 0,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "picks": 5,
+            "uniqueMatches": 5,
+            "settled": 5,
+            "wins": 4,
+            "losses": 1,
             "voids": 0,
             "unresolved": 0,
             "unsupported": 0,
-            "hitRate": null,
-            "oddsAvailable": 0,
-            "averageOdds": null,
-            "totalStake": null,
-            "totalReturn": null,
-            "profit": null,
-            "roi": null
+            "hitRate": 0.8,
+            "oddsAvailable": 4,
+            "averageOdds": 1.5075,
+            "totalStake": 4,
+            "totalReturn": 4.4,
+            "profit": 0.4,
+            "roi": 0.1
           }
         },
         "planA2": {
@@ -2283,115 +1929,6 @@
   ],
   "newActionableIssues": [
     {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "snapshot_value_stale_against_canonical",
-          "snapshot_value_audit_stale_against_canonical",
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value",
-        "artifact": "deploy-snapshots/2026-08-20/value.json",
-        "at": 1787248223231,
-        "staleReason": "snapshot_value_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375265
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "snapshot_value_audit",
-        "artifact": "deploy-snapshots/2026-08-20/value-audit.json",
-        "at": "2026-08-20T17:50:23.232Z",
-        "staleReason": "snapshot_value_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -10375264
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-20/plan-a2.json",
-        "at": 1787256741400,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-20/plan-a2-audit.json",
-        "at": "2026-08-20T20:12:21.400Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1857096
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-20/plan-b-audit.json",
-        "at": "2026-08-20T20:11:50.023Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -1888473
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-20/plan-b2-audit.json",
-        "at": "2026-08-20T20:12:22.381Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1856115
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "value_plan_comparison",
-        "artifact": "value-comparison/2026-08-20.json",
-        "at": "2026-08-20T20:12:53.189Z",
-        "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -1825307
-      }
-    },
-    {
       "severity": "error",
       "source": "foundation-integrity",
       "type": "artifact_missing",
@@ -2407,15 +1944,6 @@
       "message": "foundation_integrity_missing",
       "details": {
         "failure": "foundation_integrity_missing"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
       }
     },
     {
