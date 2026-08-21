@@ -529,6 +529,57 @@ function comparisonPlan(plans, key) {
   return plans && plans[key] ? plans[key] : {};
 }
 
+function planIsUnavailable(plan) {
+  const status =
+    String(plan?.status || "").toUpperCase();
+
+  const availability =
+    String(plan?.availability || "").toLowerCase();
+
+  const outputMode =
+    String(plan?.outputMode || "").toLowerCase();
+
+  return (
+    status === "NOT_AVAILABLE" ||
+    availability === "not_available" ||
+    outputMode === "historical-not-available" ||
+    outputMode === "not-available"
+  );
+}
+
+function planPickCount(plan) {
+  if (planIsUnavailable(plan)) {
+    return null;
+  }
+
+  const summaryPicks =
+    Number(plan?.summary?.picks);
+
+  if (Number.isFinite(summaryPicks)) {
+    return summaryPicks;
+  }
+
+  const count =
+    Number(plan?.count);
+
+  if (Number.isFinite(count)) {
+    return count;
+  }
+
+  return Array.isArray(plan?.picks)
+    ? plan.picks.length
+    : 0;
+}
+
+function planCountLabel(plan) {
+  const count =
+    planPickCount(plan);
+
+  return count === null
+    ? "N/A"
+    : String(count);
+}
+
 function resultBadgeHtml(result) {
   const r = String(result || "").toUpperCase();
   if (r === "WIN") return '<span class="value-badge win">WIN</span>';
@@ -625,7 +676,14 @@ function renderComparisonRow(p) {
   ].join("");
 }
 
-function renderPlanSummary(summary) {
+function renderPlanSummary(plan) {
+  if (planIsUnavailable(plan)) {
+    return "N/A • plan unavailable";
+  }
+
+  const summary =
+    plan?.summary || {};
+
   return String(Number(summary?.picks || 0)) + " picks • " +
     String(Number(summary?.settled || 0)) + " settled • " +
     String(Number(summary?.wins || 0)) + "W-" +
@@ -634,6 +692,9 @@ function renderPlanSummary(summary) {
 }
 
 function renderPlanBlock(plan, title, information) {
+    const unavailable =
+      planIsUnavailable(plan);
+
     const picks =
       Array.isArray(plan?.picks)
         ? plan.picks
@@ -670,14 +731,16 @@ function renderPlanBlock(plan, title, information) {
       '  </div>',
       '  <div class="value-plan-summary">' +
         esc(
-          renderPlanSummary(
-            plan?.summary || {}
-          )
+          renderPlanSummary(plan)
         ) +
       '  </div>',
       '  <div class="value-plan-rows">',
       rows ||
-        '<div class="panel-empty">No picks.</div>',
+        (
+          unavailable
+            ? '<div class="panel-empty">Plan unavailable for this date.</div>'
+            : '<div class="panel-empty">No qualifying picks.</div>'
+        ),
       '  </div>',
       '</div>'
     ].join("");
@@ -711,25 +774,41 @@ function renderPlanBlock(plan, title, information) {
       payload?.date ||
       "";
 
+    const countA =
+      planPickCount(planA);
+
+    const countB =
+      planPickCount(planB);
+
+    const countA2 =
+      planPickCount(planA2);
+
+    const countB2 =
+      planPickCount(planB2);
+
     const totalA =
-      Number(
-        planA?.summary?.picks || 0
-      );
+      countA === null ? 0 : countA;
 
     const totalB =
-      Number(
-        planB?.summary?.picks || 0
-      );
+      countB === null ? 0 : countB;
 
     const totalA2 =
-      Number(
-        planA2?.summary?.picks || 0
-      );
+      countA2 === null ? 0 : countA2;
 
     const totalB2 =
-      Number(
-        planB2?.summary?.picks || 0
-      );
+      countB2 === null ? 0 : countB2;
+
+    const labelA =
+      planCountLabel(planA);
+
+    const labelB =
+      planCountLabel(planB);
+
+    const labelA2 =
+      planCountLabel(planA2);
+
+    const labelB2 =
+      planCountLabel(planB2);
 
     const total =
       totalA +
@@ -745,11 +824,11 @@ function renderPlanBlock(plan, title, information) {
         esc(date) +
         ' • Value Plans</div>',
       '      <div class="value-head-sub">' +
-        'A ' + esc(totalA) +
-        ' • B ' + esc(totalB) +
-        ' • A2 ' + esc(totalA2) +
-        ' • B2 ' + esc(totalB2) +
-        ' picks</div>',
+        'A ' + esc(labelA) +
+        ' • B ' + esc(labelB) +
+        ' • A2 ' + esc(labelA2) +
+        ' • B2 ' + esc(labelB2) +
+        '</div>',
       '    </div>',
       '  </div>',
       '</div>'
@@ -792,7 +871,9 @@ function renderPlanBlock(plan, title, information) {
         bodyHtml;
     }
 
-    hideAnalyzingIfHasPicks(total);
+    // A resolved comparison is data even if every plan is
+    // zero-pick or explicitly unavailable.
+    hideAnalyzingIfHasPicks(1);
 
     window.AIML_PANEL?.set(
       root,
@@ -852,9 +933,9 @@ function renderPlanBlock(plan, title, information) {
           </div>
         `;
       }
-      bodyEl.innerHTML = `<div class="panel-empty">No value picks available.</div>`;
+      bodyEl.innerHTML = `<div class="panel-empty">No qualifying value picks.</div>`;
       hideAnalyzingIfHasPicks(0);
-      window.AIML_PANEL?.set(root, "empty", "No value picks available.");
+      window.AIML_PANEL?.set(root, "empty", "No qualifying value picks.");
       return;
     }
 

@@ -153,6 +153,64 @@
     return Array.isArray(rows) ? rows : [];
   }
 
+  function emptyPlanSummary() {
+    return {
+      picks: 0,
+      uniqueMatches: 0,
+      settled: 0,
+      wins: 0,
+      losses: 0,
+      voids: 0,
+      unresolved: 0,
+      unsupported: 0,
+      hitRate: null
+    };
+  }
+
+  function unavailablePlan(id, label, reason) {
+    return {
+      id,
+      label,
+      status: "NOT_AVAILABLE",
+      availability: "not_available",
+      outputMode: "not-available",
+      reason,
+      count: 0,
+      summary: emptyPlanSummary(),
+      picks: []
+    };
+  }
+
+  function unavailableComparisonPayload(date, reason) {
+    const comparison = {
+      ok: false,
+      date,
+      status: "NOT_AVAILABLE",
+      availability: "not_available",
+      comparisonEligible: false,
+      reason,
+      plans: {
+        A: unavailablePlan("plan-a", "Plan A", reason),
+        A2: unavailablePlan("plan-a2", "Plan A2", reason),
+        B: unavailablePlan("plan-b", "Plan B", reason),
+        B2: unavailablePlan("plan-b2", "Plan B2", reason)
+      }
+    };
+
+    return {
+      ok: false,
+      source: "value-comparison-unavailable",
+      mode: "plan-comparison",
+      availability: "not_available",
+      error: reason,
+      date,
+      total: 0,
+      picks: [],
+      items: [],
+      comparison
+    };
+  }
+
   function comparisonPayloadFrom(comparison, date) {
     const planA = comparisonRows(comparison, "A");
     const planB = comparisonRows(comparison, "B");
@@ -359,16 +417,20 @@ function normalizePick(p) {
 
     if (generation !== refreshGeneration) return;
 
-    if (!data) {
-      emitValuePayload({
-        ok: false,
-        source: "engine-release-unavailable",
-        date,
-        total: 0,
-        picks: [],
-        items: [],
-        error: "value_release_unavailable"
-      });
+    if (!data || data?.ok === false) {
+      const reason =
+        String(
+          data?.error ||
+          data?.reason ||
+          "value_release_unavailable"
+        );
+
+      emitValuePayload(
+        unavailableComparisonPayload(
+          date,
+          reason
+        )
+      );
       return;
     }
 
