@@ -1,0 +1,152 @@
+{
+  "ok": true,
+  "schema": "ai-matchlab.historical-repair.v2",
+  "dayKey": "2026-08-20",
+  "startedAt": "2026-08-21T05:07:36.830Z",
+  "finishedAt": "2026-08-21T05:07:36.830Z",
+  "rebuildValue": false,
+  "evidenceMode": "targeted_historical_recovery_closure",
+  "fullHistoricalRepairExecuted": false,
+  "generalValueRefreshExecuted": false,
+  "productionPlanARebuilt": false,
+  "baseline": {
+    "sourceHead": "d55035d103dbb1c6b6b5651d76631d5b2a8d6cea",
+    "acceptedRemoteMain": "1cddc76dea0a8e36705cccf755a66e56a461c63c",
+    "buildReport": {
+      "sha256BeforeTargetedRefresh": "9957504990acc69191b2b0483c12bc1fe5ace18e7af4b5b477d9c6e1cf1544f8",
+      "hardFailuresBeforeTargetedRefresh": [
+        "foundation_integrity_missing",
+        "snapshot_stale"
+      ],
+      "sha256AfterTargetedRefresh": "d3e153abb39ebeba0b7660c8f02d2eb9de7dd3f36b17e2c7a3e73240dd4601a3",
+      "hardFailuresAfterTargetedRefresh": [
+        "foundation_integrity_missing"
+      ],
+      "newHardFailures": [],
+      "removedHardFailures": [
+        "snapshot_stale"
+      ]
+    },
+    "frozenPlanA": {
+      "semanticSignature": "28c76c9772ddbeccf672a6ed903682e3e0292bf68b53b2a15186d857378b2666",
+      "snapshotValueSha256": "874b38228c9e764d7f7b14d03a815181f60ca9054b9406c07df5642b024e06af",
+      "productionValueSha256": "23d6aff0969796eed1c47086a45b9fe5900b6c717e2f08460126c77aae4dac61",
+      "planASha256": "883275e53c64cd4d5c290902ab68f6a5719d2b23588f96eae93ee99c170397ef"
+    }
+  },
+  "validation": {
+    "ok": true,
+    "newFreshnessReasons": [],
+    "newBuildHardFailures": [],
+    "invariantBlocked": 0,
+    "blockingIntegrityHardFailures": [],
+    "preservedBaselineIntegrityHardFailures": [
+      "build_report_not_clean"
+    ],
+    "freshnessOk": true,
+    "invariantOk": true,
+    "invariantValueSafe": true,
+    "invariantValueCount": 5,
+    "manifestSha256": "40b42121720a4a16d50b0893643357f6d425666645c250ada123536bbb59b902",
+    "invariantSha256": "b1abf9453bc4066bd0a65b930efd7d7b648ce01efd3fe08e121d1e162d2cc02b",
+    "buildReportSha256": "d3e153abb39ebeba0b7660c8f02d2eb9de7dd3f36b17e2c7a3e73240dd4601a3",
+    "reconciledDetailSha256": "ade07b38c0bb52db146b68a7319ff035fe3675594b4c8ed32b53e634fb1a43e3"
+  },
+  "steps": [
+    {
+      "step": "reconcile_neftekhimik_detail",
+      "scope": "single_detail_minimal_semantic_reconciliation",
+      "matchId": "cid_rus2_neftekhimik_sochi_20260820",
+      "beforeSha256": "9eb383ae4db1cb9a267c1b88a8b481ccef1d20a402c9c5adef9634f5dfac0dbb",
+      "afterSha256": "ade07b38c0bb52db146b68a7319ff035fe3675594b4c8ed32b53e634fb1a43e3",
+      "directDetailDefectsClosed": true
+    },
+    {
+      "step": "rebind_snapshot_manifest",
+      "scope": "single_detail_manifest_binding",
+      "manifestSha256Before": "a484831945499590c5d8e93bfd590c0357e917801a1acc4730bb85b9df461592",
+      "manifestSha256After": "40b42121720a4a16d50b0893643357f6d425666645c250ada123536bbb59b902",
+      "manifestHashBefore": "891e3afabfac208f04fdc6579a7ab16e3b07560315c01f5c2d327514e6cfec90",
+      "manifestHashAfter": "ef890b8861235a7954962cd162c540875721bb56c0e673275a54b25b3af92fd5",
+      "detailBindingMismatchCountAfter": 0
+    },
+    {
+      "step": "refresh_snapshot_invariant",
+      "scope": "single_invariant_report",
+      "sha256Before": "98972c1a29adf07373b85c5d2674c74fb56503ad4b4c51eb3f12dafab91fd983",
+      "sha256After": "b1abf9453bc4066bd0a65b930efd7d7b648ce01efd3fe08e121d1e162d2cc02b",
+      "ok": true,
+      "blocked": 0,
+      "valueSafe": true,
+      "valueCount": 5
+    },
+    {
+      "step": "refresh_day_build_report",
+      "scope": "single_build_report",
+      "sha256Before": "9957504990acc69191b2b0483c12bc1fe5ace18e7af4b5b477d9c6e1cf1544f8",
+      "sha256After": "d3e153abb39ebeba0b7660c8f02d2eb9de7dd3f36b17e2c7a3e73240dd4601a3",
+      "hardFailuresBefore": [
+        "foundation_integrity_missing",
+        "snapshot_stale"
+      ],
+      "hardFailuresAfter": [
+        "foundation_integrity_missing"
+      ],
+      "newHardFailures": [],
+      "removedHardFailures": [
+        "snapshot_stale"
+      ]
+    },
+    {
+      "step": "preserve_frozen_plan_a_authority",
+      "frozen": true,
+      "productionPlanARebuilt": false,
+      "generalValueRefreshExecuted": false,
+      "snapshotValueSha256": "874b38228c9e764d7f7b14d03a815181f60ca9054b9406c07df5642b024e06af"
+    }
+  ],
+  "integrity": {
+    "ok": false,
+    "clean": false,
+    "classification": "repair_required",
+    "repairRequiredFailures": [
+      "build_report_not_clean"
+    ],
+    "preservedBaselineLimitations": [],
+    "agedOutCanonicalWarning": false,
+    "dayKey": "2026-08-20",
+    "checkedAt": "2026-08-21T05:07:36.830Z",
+    "counts": {
+      "fixtures": 101,
+      "uniqueFixtureIds": 101,
+      "details": 101,
+      "valuePicks": 5,
+      "snapshotRescuedCount": 0
+    },
+    "hardFailures": [
+      "build_report_not_clean"
+    ],
+    "warnings": [],
+    "detailsWithoutFixture": [],
+    "fixturesWithoutDetail": [],
+    "duplicateCanonicalIds": [],
+    "aliasDuplicatePairs": [],
+    "invariant": {
+      "ok": true,
+      "checkedAt": "2026-08-21T04:42:55.804Z",
+      "manifestGeneratedAt": "2026-08-21T03:45:01.856Z",
+      "fresh": true,
+      "blocked": 0
+    },
+    "buildReport": {
+      "clean": false,
+      "cleanStrict": false,
+      "hardFailures": [
+        "foundation_integrity_missing"
+      ],
+      "warnings": [
+        "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,esp.joan_gamper,ksa.kings.cup,usa.ncaa.m.1,usa.ncaa.w.1"
+      ]
+    }
+  }
+}
