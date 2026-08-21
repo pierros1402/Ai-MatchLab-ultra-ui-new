@@ -20,6 +20,7 @@ import {
  */
 
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -63,6 +64,108 @@ function readJsonSafe(filePath, fallback = null) {
 function writeJsonStable(filePath, payload) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+export async function buildPlanARefreshCandidate(
+  dayKey,
+  options = {}
+) {
+  const date =
+    String(dayKey || "").trim();
+
+  const observationPeriod =
+    options.observationPeriod === true;
+
+  const observationFileExists =
+    options.observationFileExists === true;
+
+  const existingObservation =
+    options.existingObservation || null;
+
+  if (
+    observationPeriod &&
+    observationFileExists &&
+    existingObservation?.ok !== true
+  ) {
+    throw new Error(
+      "invalid_existing_plan_a_observation_for_refresh_candidate"
+    );
+  }
+
+  const frozenProduction =
+    observationPeriod &&
+    observationFileExists &&
+    existingObservation?.ok === true;
+
+  const buildValue =
+    typeof options.buildValue === "function"
+      ? options.buildValue
+      : buildValueDay;
+
+  if (!frozenProduction) {
+    return {
+      planA:
+        await buildValue(
+          date,
+          { rebuild: true }
+        ),
+      productionPreserved: false,
+      candidateIsolated: false
+    };
+  }
+
+  const tempRoot =
+    options.tempRoot
+      ? path.resolve(
+          String(options.tempRoot)
+        )
+      : os.tmpdir();
+
+  const candidateDir =
+    fs.mkdtempSync(
+      path.join(
+        tempRoot,
+        "aiml-plan-a-refresh-" + date + "-"
+      )
+    );
+
+  const outputPath =
+    path.join(
+      candidateDir,
+      "value.json"
+    );
+
+  const auditPath =
+    path.join(
+      candidateDir,
+      "value-audit.json"
+    );
+
+  try {
+    const planA =
+      await buildValue(
+        date,
+        {
+          rebuild: true,
+          outputPath,
+          auditPath
+        }
+      );
+
+    return {
+      planA,
+      productionPreserved: true,
+      candidateIsolated: true
+    };
+  } finally {
+    fs.rmSync(
+      candidateDir,
+      {
+        recursive: true,
+        force: true
+      }
+    );
+  }
 }
 
 function bytesOfFile(filePath) {
@@ -654,9 +757,11 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
 
   const startedAt = new Date().toISOString();
   const observationPeriod = isPlanAObservationDay(date);
+  let existingObservation = null;
+  let observationFileExists = false;
   if (observationPeriod) {
-    const existingObservation = readPlanAObservationDay(date);
-    const observationFileExists = fs.existsSync(existingObservation.file);
+    existingObservation = readPlanAObservationDay(date);
+    observationFileExists = fs.existsSync(existingObservation.file);
     if (observationFileExists && !existingObservation.ok) {
       return {
         ok: false,
@@ -689,7 +794,18 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     };
   }
 
-  const planA = await buildValueDay(date, { rebuild: true });
+  const planABuild =
+    await buildPlanARefreshCandidate(
+      date,
+      {
+        observationPeriod,
+        observationFileExists,
+        existingObservation
+      }
+    );
+
+  const planA =
+    planABuild.planA;
   const snapshotValue = updateSnapshotValueArtifacts(date, planA);
   const planAObservation = observationPeriod
     ? ensurePlanAObservationDay(date, snapshotValue.valueOut, {

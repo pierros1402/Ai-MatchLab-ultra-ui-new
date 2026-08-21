@@ -28,6 +28,7 @@
 import fs from "fs";
 import path from "path";
 import { pathToFileURL } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
 
@@ -82,6 +83,38 @@ export function snapshotValueFreshnessTime({ snapshotValue, manifest } = {}) {
     snapshotValue?.createdAt,
     snapshotValue?.generatedAt
   ]);
+}
+
+export function shouldPreserveFrozenPlanAAudit({
+  dayKey,
+  snapshotValue,
+  snapshotAudit,
+  sourceAudit
+} = {}) {
+  const requestedDay = String(dayKey || "").trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(requestedDay)) return false;
+
+  const frozenPlanAPublication = Boolean(
+    snapshotValue?.publicationAuthority === "frozen_plan_a_observation" ||
+    (
+      snapshotValue?.immutable === true &&
+      snapshotValue?.planId === "plan-a" &&
+      snapshotValue?.outputMode === "plan-a-observation"
+    )
+  );
+
+  if (!frozenPlanAPublication) return false;
+  if (!snapshotAudit || typeof snapshotAudit !== "object") return false;
+  if (!sourceAudit || typeof sourceAudit !== "object") return false;
+  if (snapshotAudit?.date !== requestedDay) return false;
+  if (sourceAudit?.date !== requestedDay) return false;
+  if (snapshotAudit?.planId !== "plan-a") return false;
+  if (sourceAudit?.planId !== "plan-a") return false;
+  if (snapshotAudit?.outputMode !== "production") return false;
+  if (sourceAudit?.outputMode !== "production") return false;
+
+  return isDeepStrictEqual(snapshotAudit, sourceAudit);
 }
 
 export function shouldPreserveHistoricalPlanBObservation({
@@ -206,6 +239,7 @@ export function verifyArtifactFreshnessDay(dayKey) {
   if (latestCanonicalInputAt !== null) {
     const snapshotValue = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
     const snapshotAudit = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value-audit.json"));
+    const sourceAudit = readJsonSafe(resolveDataPath("value", "_audit", `${dayKey}.json`));
     const planA2 = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-a2.json"));
     const planA2Audit = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-a2-audit.json"));
     const planB = readJsonSafe(resolveDataPath("value-plans", dayKey, "plan-b.json"));
@@ -294,6 +328,12 @@ export function verifyArtifactFreshnessDay(dayKey) {
       planB,
       planBAudit
     });
+    const preserveFrozenPlanAAudit = shouldPreserveFrozenPlanAAudit({
+      dayKey,
+      snapshotValue,
+      snapshotAudit,
+      sourceAudit
+    });
 
     const derivedArtifacts = [
       {
@@ -306,7 +346,16 @@ export function verifyArtifactFreshnessDay(dayKey) {
         kind: "snapshot_value_audit",
         artifact: `deploy-snapshots/${dayKey}/value-audit.json`,
         at: snapshotAudit?.generatedAt || null,
-        staleReason: "snapshot_value_audit_stale_against_canonical"
+        staleReason: "snapshot_value_audit_stale_against_canonical",
+        preservation: preserveFrozenPlanAAudit
+          ? {
+              reason: "frozen_plan_a_publication_audit",
+              requestedDay: dayKey,
+              planId: snapshotAudit?.planId || null,
+              outputMode: snapshotAudit?.outputMode || null,
+              sourceArtifact: `value/_audit/${dayKey}.json`
+            }
+          : null
       },
       {
         kind: "plan_a2",
