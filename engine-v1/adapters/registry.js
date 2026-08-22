@@ -1,8 +1,7 @@
 import { fetchLeagueFixtures } from "./espn.js";
 import { normalizeFixture } from "../core/normalize.js";
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
-import { resolveSlug, resolveSlugFromPath } from "../odds/flashscore-league-map.js";
-import { resolveInternational } from "../odds/international-competitions.js";
+import { resolveFlashscoreCompetitionIdentity } from "../odds/flashscore-competition-identity.js";
 import { buildCanonicalId } from "../core/canonical-id.js";
 import { athensDayFromKickoff } from "../core/daykey.js";
 import { LEAGUES_COVERAGE } from "../../workers/_shared/leagues-coverage.js";
@@ -97,7 +96,8 @@ const ESPN_SUPPORTED = new Set([
 // does not support, and fallback for ESPN leagues when ESPN returns zero
 // events or errors (ESPN-supported leagues must not be single-provider risk).
 // Its fetch slices the cached full-day feed by resolved slug, so widening
-// support adds no extra HTTP calls and cannot misattribute rows.
+// support adds no extra HTTP calls. Provider-path identity is resolved fail-closed
+// before a row is admitted to a requested canonical league.
 const FLASHSCORE_SUPPORTED = new Set(
   LEAGUES_COVERAGE
     .map(s => String(s?.slug || "").trim())
@@ -153,25 +153,26 @@ const FIXTURE_ADAPTERS = [
       return FLASHSCORE_SUPPORTED.has(slug);
     },
     // Returns raw Flashscore row objects filtered to the requested slug + dayKey.
+    // ZL/leaguePath is authoritative whenever it is present. An unknown provider
+    // path is deliberately NOT fuzzy-attributed to a requested senior league.
     async fetch({ slug, dayKey }) {
       const { rows } = await getFlashscoreRows(dayKey);
-      return rows.filter(fx => {
-        const intl = resolveInternational(fx.leagueName, fx.country);
-        const resolved = intl?.slug
-          || resolveSlugFromPath(fx.leaguePath)
-          || resolveSlug(fx.country, fx.leagueName);
-        return resolved === slug;
-      });
+      return rows.filter(fx =>
+        resolveFlashscoreCompetitionIdentity(fx).slug === slug
+      );
     },
     // Converts a Flashscore row to the canonical fixture shape.
     normalize(fx, slug) {
       if (!fx?.kickoffUtc || !fx?.home || !fx?.away) return null;
 
-      const intl = resolveInternational(fx.leagueName, fx.country);
-      const leagueSlug = intl?.slug
-        || resolveSlugFromPath(fx.leaguePath)
-        || resolveSlug(fx.country, fx.leagueName)
-        || slug;
+      const identity = resolveFlashscoreCompetitionIdentity(fx);
+      const leagueSlug = identity.slug;
+
+      // The fetch phase normally enforces this already, but normalize is also a
+      // hard boundary because callers/tests may invoke it directly. Never inherit
+      // the requested slug when provider competition identity is unresolved or
+      // points at a different competition.
+      if (!leagueSlug || leagueSlug !== slug) return null;
 
       // Identity and bucketing must use the Athens calendar day of the
       // kickoff, like the ESPN path (normalize.js) — NOT the feed's raw
@@ -192,7 +193,12 @@ const FIXTURE_ADAPTERS = [
         sourceMatchId: String(fx.matchId),
 
         leagueSlug,
-        leagueName: intl ? intl.label : fx.leagueName,
+        leagueName: identity.label || fx.leagueName,
+        providerLeagueSlug: leagueSlug,
+        providerLeaguePath: identity.providerPath || null,
+        providerLeagueName: fx.leagueName || null,
+        competitionIdentityResolution: identity.resolution,
+        competitionIdentityAuthoritative: identity.authoritative,
 
         dayKey: athensDayFromKickoff(fx.kickoffUtc),
         kickoffUtc: fx.kickoffUtc,
