@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-22",
-  "generatedAt": "2026-08-22T14:00:34.544Z",
+  "generatedAt": "2026-08-22T14:09:52.595Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-08-22",
     "finalResultsDir": "data/final-results/2026-08-22",
-    "verifiedFinalResults": 101,
+    "verifiedFinalResults": 103,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-22",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [
@@ -57,19 +57,19 @@
       "summary": {
         "picks": 18,
         "uniqueMatches": 17,
-        "settled": 5,
-        "wins": 2,
+        "settled": 6,
+        "wins": 3,
         "losses": 3,
         "voids": 0,
-        "unresolved": 13,
+        "unresolved": 12,
         "unsupported": 0,
-        "hitRate": 0.4,
-        "oddsAvailable": 2,
-        "averageOdds": 1.615,
-        "totalStake": 2,
-        "totalReturn": 0,
-        "profit": -2,
-        "roi": -1
+        "hitRate": 0.5,
+        "oddsAvailable": 3,
+        "averageOdds": 1.5033,
+        "totalStake": 3,
+        "totalReturn": 1.28,
+        "profit": -1.72,
+        "roi": -0.5733
       },
       "marketSummary": [
         {
@@ -112,19 +112,19 @@
           "market": "Over / Under 2.5",
           "picks": 16,
           "uniqueMatches": 16,
-          "settled": 5,
-          "wins": 2,
+          "settled": 6,
+          "wins": 3,
           "losses": 3,
           "voids": 0,
-          "unresolved": 11,
+          "unresolved": 10,
           "unsupported": 0,
-          "hitRate": 0.4,
-          "oddsAvailable": 2,
-          "averageOdds": 1.615,
-          "totalStake": 2,
-          "totalReturn": 0,
-          "profit": -2,
-          "roi": -1
+          "hitRate": 0.5,
+          "oddsAvailable": 3,
+          "averageOdds": 1.5033,
+          "totalStake": 3,
+          "totalReturn": 1.28,
+          "profit": -1.72,
+          "roi": -0.5733
         }
       ],
       "picks": [
@@ -835,11 +835,75 @@
           "aiFairOdds": 1.36,
           "oddsDecimal": 1.28,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 3,
+            "scoreKey": "3-3"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-22T14:09:35.717Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401861456",
+                "canonicalId": "cid_chn1_beijingguoan_yunnanyukun_20260822",
+                "leagueName": "Chinese Super League",
+                "home": "Beijing Guoan",
+                "away": "Yunnan Yukun",
+                "scoreHome": 3,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-08-22T12:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-08-22T14:02:33.711Z",
+                "scoreKey": "3-3",
+                "homeTeam": "Beijing Guoan",
+                "awayTeam": "Yunnan Yukun",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_chn1_beijingguoan_yunnanyukun_20260822"
+                  ],
+                  "sourceFixtureId": "cid_chn1_beijingguoan_yunnanyukun_20260822",
+                  "resolvedFixtureId": "cid_chn1_beijingguoan_yunnanyukun_20260822",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Beijing Guoan",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Yunnan Yukun",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "429WgDun",
+                "country": "China",
+                "leagueName": "Super League",
+                "leaguePath": "/football/china/super-league/",
+                "home": "Beijing Guoan",
+                "away": "Yunnan Yukun",
+                "scoreHome": 3,
+                "scoreAway": 3,
+                "kickoffUtc": "2026-08-22T12:00:00.000Z",
+                "scoreKey": "3-3"
+              }
+            ]
+          }
         }
       ]
     },
@@ -1031,8 +1095,8 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -17,
-    "settledDeltaPlanBMinusPlanA": -5,
-    "winsDeltaPlanBMinusPlanA": -2,
+    "settledDeltaPlanBMinusPlanA": -6,
+    "winsDeltaPlanBMinusPlanA": -3,
     "lossesDeltaPlanBMinusPlanA": -3,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
