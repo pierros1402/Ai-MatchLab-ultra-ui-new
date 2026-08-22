@@ -1,0 +1,89 @@
+name: P3.1 B1 isolated validation
+
+on:
+  push:
+    branches:
+      - work/p31-b1-validation-20260822
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: p31-b1-isolated-validation
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout validation branch
+        uses: actions/checkout@v7
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Syntax checks
+        run: |
+          node --check engine-v1/jobs/build-foundation-integrity-report.js
+          node --check engine-v1/tests/foundation-integrity-report.test.js
+          node --check assets/js/live/operational-day.js
+          node --check engine-v1/tests/ui-atomic-operational-day.test.js
+
+      - name: Targeted P3.1 A plus B1 contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap \
+            engine-v1/tests/foundation-integrity-report.test.js \
+            engine-v1/tests/ui-atomic-operational-day.test.js \
+            engine-v1/tests/publication-runtime-contract.test.js \
+            engine-v1/tests/daily-publish-contract.test.js \
+            engine-v1/tests/daily-details-foundation-order.test.js \
+            2>&1 | tee /tmp/p31-b1-targeted.tap
+
+      - name: Read-only operational foundation observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date=2026-08-22 > /tmp/p31-b1-foundation.json
+          node - <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('data/foundation-integrity/2026-08-22.json', 'utf8'));
+          const summary = {
+            modelReady: report.modelReady === true,
+            publicationReady: report.publicationReady === true,
+            blocked: report.blocked || [],
+            warnings: report.warnings || [],
+            detailsOk: report.components?.details?.ok === true,
+            historySafety: report.components?.historySemantic?.detail?.publicationSafety || null,
+          };
+          console.log(JSON.stringify(summary, null, 2));
+          NODE
+
+      - name: Publish machine-readable validation status
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ job.status }}" = "success" ]; then STATE=success; else STATE=failure; fi
+          PAYLOAD="$(STATE="$STATE" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:"P3.1 B1 isolated validation",description:"syntax + targeted contracts + operational observation"}))')"
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -d "$PAYLOAD" >/dev/null
