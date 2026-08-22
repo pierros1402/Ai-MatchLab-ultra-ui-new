@@ -1,5 +1,9 @@
 import fs from "node:fs";
 
+function normalizeLf(text) {
+  return String(text || "").replace(/\r\n/gu, "\n");
+}
+
 function replaceCount(text, before, after, expected, label) {
   let count = 0;
   let cursor = 0;
@@ -19,7 +23,7 @@ function replaceCount(text, before, after, expected, label) {
 }
 
 const dailyPath = ".github/workflows/daily-deploy-snapshot.yml";
-let daily = fs.readFileSync(dailyPath, "utf8");
+let daily = normalizeLf(fs.readFileSync(dailyPath, "utf8"));
 
 const historyReportCode = [
   '          if compgen -G "data/history/????-????.report.json" > /dev/null; then',
@@ -113,7 +117,7 @@ daily = replaceCount(
 fs.writeFileSync(dailyPath, daily, "utf8");
 
 const intradayPath = ".github/workflows/intraday-deploy-snapshot-refresh.yml";
-let intraday = fs.readFileSync(intradayPath, "utf8");
+let intraday = normalizeLf(fs.readFileSync(intradayPath, "utf8"));
 
 intraday = replaceCount(
   intraday,
