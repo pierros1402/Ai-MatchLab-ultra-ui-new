@@ -1,9 +1,9 @@
 name: Daily autonomous run
 
-# Fully automatic day-rollover run (~02:00 Europe/Athens): awareness refresh,
-# results accumulation (form), comprehensive fixtures, odds opening + drift, and
-# the coverage report. No ESPN, no odds API, nothing manual. Commits the snapshots
-# + memory so the deployed engine serves them. Render redeploy stays manual.
+# Fully automatic SAME-DAY maintenance run (~16:00 Europe/Athens): awareness
+# refresh, prior-day results accumulation, comprehensive fixtures, odds opening +
+# drift, and coverage report. It is deliberately NOT a midnight/day-rollover
+# publisher. The next-day public release is prepared separately before 00:00.
 
 on:
   workflow_dispatch:
@@ -13,8 +13,9 @@ on:
         required: false
         default: ""
   schedule:
-    # 23:00 and 00:00 UTC cover ~02:00 Athens across DST/standard; the guard pins it.
-    - cron: "0 23,0 * * *"
+    # Two UTC candidates cover 16:00 Europe/Athens across DST/standard time.
+    # The local-time guard below admits exactly the 16:xx candidate.
+    - cron: "0 13,14 * * *"
 
 permissions:
   contents: write
@@ -39,7 +40,7 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Resolve day key + Athens 02:00 guard
+      - name: Resolve day key + Athens 16:00 maintenance guard
         shell: bash
         env:
           INPUT_DAY_KEY: ${{ inputs.dayKey }}
@@ -47,8 +48,8 @@ jobs:
         run: |
           set -euo pipefail
           ATHENS_HOUR_NUM=$((10#$(TZ=Europe/Athens date +%H)))
-          if [ "$EVENT_NAME" = "schedule" ] && [ "$ATHENS_HOUR_NUM" -gt 4 ]; then
-            echo "Not the early-morning rollover window (Athens $ATHENS_HOUR_NUM); skipping."
+          if [ "$EVENT_NAME" = "schedule" ] && [ "$ATHENS_HOUR_NUM" -ne 16 ]; then
+            echo "Not the 16:xx Europe/Athens maintenance window (Athens $ATHENS_HOUR_NUM); skipping."
             echo "SKIP=true" >> "$GITHUB_ENV"; exit 0
           fi
           DAY_KEY="$(printf "%s" "${INPUT_DAY_KEY:-}" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n1 || true)"
