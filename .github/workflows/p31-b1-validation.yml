@@ -47,13 +47,15 @@ jobs:
         continue-on-error: true
         run: node --test --test-reporter=tap engine-v1/tests/foundation-integrity-report.test.js
 
-      - name: Atomic rollover contracts
-        id: rollover
+      - name: Atomic operational-day rollover contracts
+        id: atomic
         continue-on-error: true
-        run: |
-          node --test --test-reporter=tap \
-            engine-v1/tests/ui-atomic-operational-day.test.js \
-            engine-v1/tests/publication-runtime-contract.test.js
+        run: node --test --test-reporter=tap engine-v1/tests/ui-atomic-operational-day.test.js
+
+      - name: Legacy publication-runtime static contracts
+        id: publication_runtime
+        continue-on-error: true
+        run: node --test --test-reporter=tap engine-v1/tests/publication-runtime-contract.test.js
 
       - name: Daily publication contracts
         id: daily
@@ -63,7 +65,7 @@ jobs:
             engine-v1/tests/daily-publish-contract.test.js \
             engine-v1/tests/daily-details-foundation-order.test.js
 
-      - name: Operational foundation observation
+      - name: Operational history publication-safety observation
         id: observation
         continue-on-error: true
         shell: bash
@@ -73,14 +75,17 @@ jobs:
           node - <<'NODE'
           const fs = require('fs');
           const report = JSON.parse(fs.readFileSync('data/foundation-integrity/2026-08-22.json', 'utf8'));
+          const history = report.components?.historySemantic || null;
           console.log(JSON.stringify({
             modelReady: report.modelReady === true,
             publicationReady: report.publicationReady === true,
             blocked: report.blocked || [],
             warnings: report.warnings || [],
             detailsOk: report.components?.details?.ok === true,
-            historySafety: report.components?.historySemantic?.detail?.publicationSafety || null,
+            historyOk: history?.ok === true,
+            historySafety: history?.detail?.publicationSafety || null,
           }, null, 2));
+          if (history?.ok !== true) process.exit(1);
           NODE
 
       - name: Publish per-gate statuses
@@ -90,7 +95,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SYNTAX: ${{ steps.syntax.outcome }}
           FOUNDATION: ${{ steps.foundation.outcome }}
-          ROLLOVER: ${{ steps.rollover.outcome }}
+          ATOMIC: ${{ steps.atomic.outcome }}
+          PUBLICATION_RUNTIME: ${{ steps.publication_runtime.outcome }}
           DAILY: ${{ steps.daily.outcome }}
           OBSERVATION: ${{ steps.observation.outcome }}
         run: |
@@ -112,22 +118,23 @@ jobs:
           }
           post_status "P3.1 B1 syntax" "$SYNTAX"
           post_status "P3.1 B1 foundation contracts" "$FOUNDATION"
-          post_status "P3.1 B1 rollover contracts" "$ROLLOVER"
+          post_status "P3.1 B1 atomic rollover" "$ATOMIC"
+          post_status "P3.1 B1 legacy publication-runtime" "$PUBLICATION_RUNTIME"
           post_status "P3.1 B1 daily contracts" "$DAILY"
-          post_status "P3.1 B1 operational observation" "$OBSERVATION"
+          post_status "P3.1 B1 actual history safety" "$OBSERVATION"
 
-      - name: Enforce targeted result
+      - name: Enforce P3.1-specific targeted result
         if: always()
         shell: bash
         env:
           SYNTAX: ${{ steps.syntax.outcome }}
           FOUNDATION: ${{ steps.foundation.outcome }}
-          ROLLOVER: ${{ steps.rollover.outcome }}
+          ATOMIC: ${{ steps.atomic.outcome }}
           DAILY: ${{ steps.daily.outcome }}
           OBSERVATION: ${{ steps.observation.outcome }}
         run: |
           test "$SYNTAX" = success
           test "$FOUNDATION" = success
-          test "$ROLLOVER" = success
+          test "$ATOMIC" = success
           test "$DAILY" = success
           test "$OBSERVATION" = success
