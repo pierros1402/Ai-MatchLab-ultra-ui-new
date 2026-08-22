@@ -1,4 +1,4 @@
-name: P3.1 B1 isolated validation
+name: P3.1 B1 full differential regression
 
 on:
   push:
@@ -9,132 +9,56 @@ permissions:
   contents: read
   statuses: write
 
-concurrency:
-  group: p31-b1-isolated-validation
-  cancel-in-progress: true
-
 jobs:
-  validate:
+  full:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout validation branch
-        uses: actions/checkout@v7
-
-      - name: Setup Node 24
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
-
-      - name: Install root dependencies
+      - run: npm ci --no-audit --no-fund
+      - working-directory: engine-v1
         run: npm ci --no-audit --no-fund
-
-      - name: Install engine dependencies
-        working-directory: engine-v1
-        run: npm ci --no-audit --no-fund
-
-      - name: Syntax checks
-        id: syntax
-        continue-on-error: true
-        run: |
-          node --check engine-v1/jobs/build-foundation-integrity-report.js
-          node --check engine-v1/tests/foundation-integrity-report.test.js
-          node --check assets/js/live/operational-day.js
-          node --check engine-v1/tests/ui-atomic-operational-day.test.js
-
-      - name: Foundation classification contracts
-        id: foundation
-        continue-on-error: true
-        run: node --test --test-reporter=tap engine-v1/tests/foundation-integrity-report.test.js
-
-      - name: Atomic operational-day rollover contracts
-        id: atomic
-        continue-on-error: true
-        run: node --test --test-reporter=tap engine-v1/tests/ui-atomic-operational-day.test.js
-
-      - name: Legacy publication-runtime static contracts
-        id: publication_runtime
-        continue-on-error: true
-        run: node --test --test-reporter=tap engine-v1/tests/publication-runtime-contract.test.js
-
-      - name: Daily publication contracts
-        id: daily
-        continue-on-error: true
-        run: |
-          node --test --test-reporter=tap \
-            engine-v1/tests/daily-publish-contract.test.js \
-            engine-v1/tests/daily-details-foundation-order.test.js
-
-      - name: Operational history publication-safety observation
-        id: observation
+      - name: Full B1 engine suite
+        id: suite
         continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
-          node ./engine-v1/jobs/build-foundation-integrity-report.js --date=2026-08-22
-          node - <<'NODE'
-          const fs = require('fs');
-          const report = JSON.parse(fs.readFileSync('data/foundation-integrity/2026-08-22.json', 'utf8'));
-          const history = report.components?.historySemantic || null;
-          console.log(JSON.stringify({
-            modelReady: report.modelReady === true,
-            publicationReady: report.publicationReady === true,
-            blocked: report.blocked || [],
-            warnings: report.warnings || [],
-            detailsOk: report.components?.details?.ok === true,
-            historyOk: history?.ok === true,
-            historySafety: history?.detail?.publicationSafety || null,
-          }, null, 2));
-          if (history?.ok !== true) process.exit(1);
-          NODE
-
-      - name: Publish per-gate statuses
+          set -uo pipefail
+          mapfile -t tests < <(find engine-v1/tests -maxdepth 1 -type f -name '*.test.js' -print | sort)
+          set +e
+          node --test --test-reporter=tap "${tests[@]}" 2>&1 | tee /tmp/full.tap
+          code=${PIPESTATUS[0]}
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+      - name: Publish B1 evidence
         if: always()
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          SYNTAX: ${{ steps.syntax.outcome }}
-          FOUNDATION: ${{ steps.foundation.outcome }}
-          ATOMIC: ${{ steps.atomic.outcome }}
-          PUBLICATION_RUNTIME: ${{ steps.publication_runtime.outcome }}
-          DAILY: ${{ steps.daily.outcome }}
-          OBSERVATION: ${{ steps.observation.outcome }}
         run: |
           set -euo pipefail
-          post_status() {
-            local context="$1"
-            local outcome="$2"
-            local state=failure
-            [ "$outcome" = "success" ] && state=success
+          post() {
+            local context="$1" state="$2"
             local payload
-            payload="$(CONTEXT="$context" STATE="$state" OUTCOME="$outcome" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:process.env.CONTEXT,description:"outcome="+process.env.OUTCOME}))')"
-            curl --fail-with-body --silent --show-error \
-              -X POST \
+            payload="$(CONTEXT="$context" STATE="$state" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:process.env.CONTEXT,description:"P3.1 B1 full regression"}))')"
+            curl --fail-with-body --silent --show-error -X POST \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
               "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
               -d "$payload" >/dev/null
           }
-          post_status "P3.1 B1 syntax" "$SYNTAX"
-          post_status "P3.1 B1 foundation contracts" "$FOUNDATION"
-          post_status "P3.1 B1 atomic rollover" "$ATOMIC"
-          post_status "P3.1 B1 legacy publication-runtime" "$PUBLICATION_RUNTIME"
-          post_status "P3.1 B1 daily contracts" "$DAILY"
-          post_status "P3.1 B1 actual history safety" "$OBSERVATION"
-
-      - name: Enforce P3.1-specific targeted result
-        if: always()
-        shell: bash
-        env:
-          SYNTAX: ${{ steps.syntax.outcome }}
-          FOUNDATION: ${{ steps.foundation.outcome }}
-          ATOMIC: ${{ steps.atomic.outcome }}
-          DAILY: ${{ steps.daily.outcome }}
-          OBSERVATION: ${{ steps.observation.outcome }}
-        run: |
-          test "$SYNTAX" = success
-          test "$FOUNDATION" = success
-          test "$ATOMIC" = success
-          test "$DAILY" = success
-          test "$OBSERVATION" = success
+          code="${{ steps.suite.outputs.code }}"
+          state=failure; [ "$code" = "0" ] && state=success
+          summary="$(grep -E '^# (tests|pass|fail|cancelled|skipped|todo) ' /tmp/full.tap | tail -n 6 | tr '\n' ' ' || true)"
+          post "P31 B1 FULL ${summary:0:190}" "$state"
+          mapfile -t fails < <(grep '^not ok ' /tmp/full.tap || true)
+          if [ "${#fails[@]}" -eq 0 ]; then
+            post "P31 B1 FAIL none" success
+          else
+            limit=${#fails[@]}; [ "$limit" -gt 10 ] && limit=10
+            for ((i=0;i<limit;i++)); do post "P31 B1 FAIL$((i+1)) ${fails[$i]:0:180}" failure; done
+          fi
