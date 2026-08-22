@@ -100,3 +100,44 @@ test("H2H audit flags the legacy AFC filename and expects the canonical fallback
   assert.equal(report.degradedPairKey, false);
   assert.equal(report.storedPairMismatchCount, 0);
 });
+
+
+test("multi-side alias rows require a reciprocal pair and consistent orientation scores", () => {
+  const payload = {
+    teams: {
+      "Home Club Long": [
+        { matchId: "alias-1", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 1, ga: 0, res: "W" }
+      ],
+      Home: [
+        { matchId: "alias-1", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 1, ga: 0, res: "W" }
+      ],
+      Away: [
+        { matchId: "alias-1", date: "2026-08-21T12:00:00Z", opp: "Home", ha: "A", gf: 0, ga: 1, res: "L" }
+      ]
+    }
+  };
+
+  const report = auditResultsMemoryPayload("test.1", payload);
+  assert.equal(report.multiSideMatchIdCount, 1);
+  assert.equal(report.mirrorConflictCount, 0);
+});
+
+test("multi-side alias rows with a contradictory score remain a mirror conflict", () => {
+  const payload = {
+    teams: {
+      "Home Club Long": [
+        { matchId: "alias-2", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 2, ga: 0, res: "W" }
+      ],
+      Home: [
+        { matchId: "alias-2", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 1, ga: 0, res: "W" }
+      ],
+      Away: [
+        { matchId: "alias-2", date: "2026-08-21T12:00:00Z", opp: "Home", ha: "A", gf: 0, ga: 1, res: "L" }
+      ]
+    }
+  };
+
+  const report = auditResultsMemoryPayload("test.1", payload);
+  assert.equal(report.multiSideMatchIdCount, 1);
+  assert.equal(report.mirrorConflictCount, 1);
+});

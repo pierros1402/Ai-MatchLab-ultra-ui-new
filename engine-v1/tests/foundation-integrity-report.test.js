@@ -34,12 +34,29 @@ test("clean foundation is model-ready and publication-ready even with safely gat
   assert.equal(report.components.standings.detail.summary.gated, 153);
 });
 
-test("history warnings fail closed for model and publication readiness", () => {
-  const options = cleanOptions({ history: { clean: false, ok: true, issueCounts: { error: 0, warning: 1, info: 0 } } });
+test("history warnings stay visible but do not block model or publication readiness", () => {
+  const options = cleanOptions({ history: { clean: false, ok: true, issueCounts: { error: 0, warning: 2, info: 0 } } });
+  const report = buildFoundationIntegrityReport("2026-08-09", options);
+  assert.equal(report.modelReady, true);
+  assert.equal(report.publicationReady, true);
+  assert.ok(!report.blocked.some(row => row.component === "historySemantic"));
+  assert.ok(report.warnings.some(row =>
+    row.component === "historySemantic"
+    && row.reason === "history_semantic_warnings_present"
+    && row.count === 2
+    && row.informational === true
+  ));
+});
+
+test("history semantic errors remain a hard model and publication blocker", () => {
+  const options = cleanOptions({ history: { clean: false, ok: false, issueCounts: { error: 1, warning: 0, info: 0 } } });
   const report = buildFoundationIntegrityReport("2026-08-09", options);
   assert.equal(report.modelReady, false);
   assert.equal(report.publicationReady, false);
-  assert.ok(report.blocked.some(row => row.component === "historySemantic"));
+  assert.ok(report.blocked.some(row =>
+    row.component === "historySemantic"
+    && row.reason === "history_semantic_errors_present"
+  ));
 });
 
 test("unsafe standings foundation blocks model readiness", () => {
