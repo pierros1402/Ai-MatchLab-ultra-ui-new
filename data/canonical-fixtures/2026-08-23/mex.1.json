@@ -2,44 +2,72 @@
   "dayKey": "2026-08-23",
   "leagueSlug": "mex.1",
   "leagueName": "Liga MX",
-  "updatedAt": "2026-08-22T18:55:34.068Z",
-  "count": 5,
+  "updatedAt": "2026-08-22T21:08:26.185Z",
+  "count": 3,
   "sourceMeta": {
-    "acquisitionProvider": "espn_all_scoreboard",
-    "requestedLeagueSlug": "all",
+    "acquisitionProvider": "espn_direct_league_status",
+    "requestedLeagueSlug": "mex.1",
     "requestedDayKey": "2026-08-23",
-    "mergedAt": "2026-08-22T18:55:34.068Z",
-    "mode": "supplemental_target_seed_only"
-  },
-  "fixtures": [
-    {
-      "canonicalId": "cid_mex1_queretaro_toluca_20260823",
-      "matchId": "cid_mex1_queretaro_toluca_20260823",
-      "matchKey": "queretaro|toluca|1787439600000",
-      "source": "espn",
-      "sourceId": "401877007",
-      "sourceMatchId": "401877007",
-      "leagueSlug": "mex.1",
-      "leagueName": "Liga MX",
-      "dayKey": "2026-08-23",
-      "fetchedDayKey": "2026-08-22",
-      "kickoffUtc": "2026-08-22T23:00Z",
-      "homeTeam": "Querétaro",
-      "awayTeam": "Toluca",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "venue": "Estadio Corregidora",
-      "firstSeenAt": "2026-08-08T17:49:33.420Z",
-      "lastSeenAt": "2026-08-18T01:53:59.351Z",
-      "providerIds": {
-        "espn": "401877007"
+    "providerFetchSlugs": [
+      "mex.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 5,
+      "matches": 3,
+      "fetches": [
+        {
+          "providerSlug": "mex.1",
+          "dayKey": "2026-08-22",
+          "ok": true,
+          "events": 3,
+          "matched": 3
+        },
+        {
+          "providerSlug": "mex.1",
+          "dayKey": "2026-08-24",
+          "ok": true,
+          "events": 0,
+          "matched": 0
+        }
+      ]
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 2,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 2,
+      "wrongDayRemovedRows": 2,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [
+        {
+          "providerSlug": "mex.1",
+          "providerMatchId": "401877007",
+          "ok": true,
+          "kind": "other_day",
+          "authoritativeDayKey": "2026-08-22",
+          "reason": null
+        },
+        {
+          "providerSlug": "mex.1",
+          "providerMatchId": "401877005",
+          "ok": true,
+          "kind": "other_day",
+          "authoritativeDayKey": "2026-08-22",
+          "reason": null
+        }
+      ],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
       }
     },
+    "mergedAt": "2026-08-22T21:08:26.185Z",
+    "mode": "targeted_live_status_refresh"
+  },
+  "fixtures": [
     {
       "canonicalId": "cid_mex1_guadalajara_tijuana_20260823",
       "matchId": "cid_mex1_guadalajara_tijuana_20260823",
@@ -56,7 +84,7 @@
       "awayTeam": "Tijuana",
       "venue": "Estadio Akron",
       "firstSeenAt": "2026-08-08T17:49:33.420Z",
-      "lastSeenAt": "2026-08-22T18:55:33.798Z",
+      "lastSeenAt": "2026-08-22T21:08:26.035Z",
       "providerIds": {
         "espn": "401877006"
       },
@@ -68,37 +96,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
-    },
-    {
-      "canonicalId": "cid_mex1_leon_monterrey_20260823",
-      "matchId": "cid_mex1_leon_monterrey_20260823",
-      "matchKey": "leon|monterrey|1787446800000",
-      "source": "espn",
-      "sourceId": "401877005",
-      "sourceMatchId": "401877005",
-      "leagueSlug": "mex.1",
-      "leagueName": "Liga MX",
-      "dayKey": "2026-08-23",
-      "fetchedDayKey": "2026-08-22",
-      "kickoffUtc": "2026-08-23T01:00Z",
-      "homeTeam": "León",
-      "awayTeam": "Monterrey",
-      "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null,
-      "status": "PRE",
-      "rawStatus": "STATUS_SCHEDULED",
-      "minute": "0'",
-      "venue": "Estadio León",
-      "firstSeenAt": "2026-08-08T17:49:33.421Z",
-      "lastSeenAt": "2026-08-17T01:57:57.688Z",
-      "providerIds": {
-        "espn": "401877005"
-      }
+      "scoreAway": null
     },
     {
       "canonicalId": "cid_mex1_puebla_santos_20260823",
@@ -116,7 +114,7 @@
       "awayTeam": "Santos",
       "venue": "Estadio Cuauhtémoc",
       "firstSeenAt": "2026-08-08T17:49:33.422Z",
-      "lastSeenAt": "2026-08-22T18:55:33.800Z",
+      "lastSeenAt": "2026-08-22T21:08:26.035Z",
       "providerIds": {
         "espn": "401877009"
       },
@@ -128,9 +126,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     },
     {
       "canonicalId": "cid_mex1_cruzazul_atlas_20260823",
@@ -148,7 +144,7 @@
       "awayTeam": "Atlas",
       "venue": "Estadio Banorte",
       "firstSeenAt": "2026-08-08T17:49:33.422Z",
-      "lastSeenAt": "2026-08-22T18:55:33.801Z",
+      "lastSeenAt": "2026-08-22T21:08:26.035Z",
       "providerIds": {
         "espn": "401877003"
       },
@@ -157,9 +153,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
