@@ -69,12 +69,14 @@ test("deploy workflows verify sustained public runtime rather than hook acceptan
 });
 
 
-test("UI readiness requires current-day snapshot and latest-pointer hash parity", () => {
+test("UI atomic day requires current-day hash parity and never advances to future prepublication", () => {
   const authority = read("assets/js/live/operational-day.js");
 
-  assert.match(authority, /latestDay === state\.day/);
-  assert.match(authority, /latestHash === snapshotHash/);
-  assert.match(authority, /snapshot\?\.manifest\?\.hash/);
+  assert.match(authority, /releaseMatchesLatest/);
+  assert.match(authority, /latest\.day === day && latest\.hash === snapshot\.hash/);
+  assert.match(authority, /compareDay\(latest\.day, day\) > 0/);
+  assert.match(authority, /compareDay\(verifiedDay, nextCalendarDay\) <= 0/);
+  assert.match(authority, /atomic-published-release/);
 });
 
 test("date navigation aborts obsolete requests before they can overwrite a newer selection", () => {
