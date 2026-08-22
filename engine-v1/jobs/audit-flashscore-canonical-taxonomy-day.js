@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { fetchFlashscoreFixtures } from "../odds/flashscore-fixtures-source.js";
 import { resolveFlashscoreCompetitionIdentity } from "../odds/flashscore-competition-identity.js";
@@ -144,12 +145,12 @@ function parseArgs(argv = process.argv.slice(2)) {
   return { dayKey, includeVerified };
 }
 
-export async function runFlashscoreCanonicalTaxonomyAudit(dayKey, options = {}) {
+export async function runFlashscoreCanonicalTaxonomyAudit(dayKey) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dayKey || ""))) {
     throw new Error("audit-flashscore-canonical-taxonomy-day: expected YYYY-MM-DD day key");
   }
 
-  // This is an evidence audit, not a repair.  The current-day Flashscore feed is
+  // This is an evidence audit, not a repair. The current-day Flashscore feed is
   // fetched with adjacent offsets so provider IDs around local-day boundaries are
   // available. Missing provider evidence remains explicitly unresolved and never
   // becomes permission to delete a canonical row.
@@ -173,7 +174,11 @@ export async function runFlashscoreCanonicalTaxonomyAudit(dayKey, options = {}) 
   };
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
+const isMain =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+
+if (isMain) {
   const { dayKey, includeVerified } = parseArgs();
 
   runFlashscoreCanonicalTaxonomyAudit(dayKey)
