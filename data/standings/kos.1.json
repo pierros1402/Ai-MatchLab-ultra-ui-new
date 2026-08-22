@@ -1,0 +1,135 @@
+{
+  "schema": "ai-matchlab.history-backed-standings.v1",
+  "league": "kos.1",
+  "seasonReference": "2025-2026",
+  "updatedAt": "2026-08-22T17:29:18.288Z",
+  "confidence": 0,
+  "completeness": 0,
+  "sourceAudit": [
+    {
+      "type": "history_foundation",
+      "label": "history-2026-2027",
+      "ok": true
+    },
+    {
+      "type": "competition_contract",
+      "label": "kos.1@2025-2026#v1",
+      "ok": false
+    }
+  ],
+  "phaseSummary": {
+    "hasPhaseTables": false,
+    "phaseKeys": []
+  },
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "TEAM_COUNT_AUTHORITY_MISSING"
+    ],
+    "builtAt": "2026-08-22T17:29:18.288Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 1,
+    "historyLeagueSha256": "8f834d695703bb6e98cacaa81c93ff26f003214d2541663c879bf03446a58583",
+    "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
+    "teamAliasesSha256": "MISSING",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": "kos.1@2025-2026#v1",
+    "contractSeasonReference": "2025-2026",
+    "contractAuthorityScopes": [],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "UNVERIFIED",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "kos.1",
+      "seasonReference": "2025-2026",
+      "contractId": "kos.1@2025-2026#v1",
+      "authority": {
+        "status": "UNVERIFIED",
+        "scopes": [],
+        "verifiedAt": null
+      },
+      "artifact": {
+        "shape": "OBJECT",
+        "declaredLeague": "kos.1",
+        "observedPhaseKeys": []
+      },
+      "summary": {
+        "primaryUniverseSource": "TABLE",
+        "primaryRowCount": 2,
+        "primaryUniqueTeamCount": 2,
+        "primaryCanonicalIdCount": 2,
+        "primaryFallbackIdentityCount": 0,
+        "primaryCanonicalIdentityComplete": true,
+        "phaseTableCount": 0,
+        "teamCountEvaluation": {
+          "evaluated": false,
+          "pass": null,
+          "expected": null,
+          "observed": 2
+        },
+        "errorCount": 0,
+        "warningCount": 1
+      },
+      "issues": [
+        {
+          "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
+          "severity": "warning",
+          "scope": "contract.teamCount",
+          "message": "Team count is not authoritative for this league/season; count mismatch is not evaluated as compliance failure."
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 2,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_679f285518faba449416be24",
+        "team": "Drenica",
+        "teamName": "Drenica",
+        "name": "Drenica",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 1,
+        "goalsAgainst": 1,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_2f179bfc6f79ec84a9ce6522",
+        "team": "Malisheva",
+        "teamName": "Malisheva",
+        "name": "Malisheva",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 1,
+        "goalsAgainst": 1,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      }
+    ],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
+}

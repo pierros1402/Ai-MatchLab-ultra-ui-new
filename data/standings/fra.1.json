@@ -2,14 +2,14 @@
   "schema": "ai-matchlab.history-backed-standings.v1",
   "league": "fra.1",
   "seasonReference": "2025-2026",
-  "updatedAt": "2026-08-22T09:42:19.819Z",
+  "updatedAt": "2026-08-22T17:29:18.269Z",
   "confidence": 0,
   "completeness": 0,
   "sourceAudit": [
     {
       "type": "history_foundation",
       "label": "history-2026-2027",
-      "ok": false
+      "ok": true
     },
     {
       "type": "competition_contract",
@@ -29,14 +29,12 @@
     "status": "GATED",
     "usable": false,
     "reasonCodes": [
-      "NO_STRICT_HISTORY_ROWS",
-      "TABLE_EMPTY",
       "TEAM_COUNT_AUTHORITY_MISSING"
     ],
-    "builtAt": "2026-08-22T09:42:19.819Z",
+    "builtAt": "2026-08-22T17:29:18.269Z",
     "historySeason": "2026-2027",
-    "historyLeagueRows": 0,
-    "historyLeagueSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "historyLeagueRows": 1,
+    "historyLeagueSha256": "1c557f251a2b8428d90c406ebc8d70a86da27d823ed7fc11eadf6b6e5301a286",
     "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
     "teamAliasesSha256": "49be95be2da44ca64a6f9f58775548ab1798f16b86004e59cc2f666cf850f415",
     "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
@@ -45,7 +43,7 @@
     "contractAuthorityScopes": [],
     "contractValidation": {
       "schema": "ai-matchlab.standings-contract-validation.v1",
-      "status": "FAIL",
+      "status": "UNVERIFIED",
       "ok": false,
       "publicationDecision": "NOT_APPLIED_READ_ONLY",
       "leagueSlug": "fra.1",
@@ -63,9 +61,9 @@
       },
       "summary": {
         "primaryUniverseSource": "TABLE",
-        "primaryRowCount": 0,
-        "primaryUniqueTeamCount": 0,
-        "primaryCanonicalIdCount": 0,
+        "primaryRowCount": 2,
+        "primaryUniqueTeamCount": 2,
+        "primaryCanonicalIdCount": 2,
         "primaryFallbackIdentityCount": 0,
         "primaryCanonicalIdentityComplete": true,
         "phaseTableCount": 0,
@@ -73,18 +71,12 @@
           "evaluated": false,
           "pass": null,
           "expected": null,
-          "observed": 0
+          "observed": 2
         },
-        "errorCount": 1,
+        "errorCount": 0,
         "warningCount": 1
       },
       "issues": [
-        {
-          "code": "TABLE_EMPTY",
-          "severity": "error",
-          "scope": "primary",
-          "message": "Standings table is empty."
-        },
         {
           "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
           "severity": "warning",
@@ -98,8 +90,45 @@
         "mutations": []
       }
     },
-    "observedRowCount": 0,
-    "observedTable": [],
+    "observedRowCount": 2,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_c0151fa247800c64eb7e5d29",
+        "team": "Marseille",
+        "teamName": "Marseille",
+        "name": "Marseille",
+        "played": 1,
+        "wins": 1,
+        "draws": 0,
+        "losses": 0,
+        "goalsFor": 4,
+        "goalsAgainst": 0,
+        "goalDiff": 4,
+        "goalDifference": 4,
+        "points": 3,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_87f6c5fa27c848b0d7e71cb5",
+        "team": "Strasbourg",
+        "teamName": "Strasbourg",
+        "name": "Strasbourg",
+        "played": 1,
+        "wins": 0,
+        "draws": 0,
+        "losses": 1,
+        "goalsFor": 0,
+        "goalsAgainst": 4,
+        "goalDiff": -4,
+        "goalDifference": -4,
+        "points": 0,
+        "confidence": 1
+      }
+    ],
     "consumerTableRows": 0,
     "staleOnSourceChange": true
   }

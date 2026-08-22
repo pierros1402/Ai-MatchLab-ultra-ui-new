@@ -1,0 +1,135 @@
+{
+  "schema": "ai-matchlab.history-backed-standings.v1",
+  "league": "alb.1",
+  "seasonReference": "2025-2026",
+  "updatedAt": "2026-08-22T17:29:18.223Z",
+  "confidence": 0,
+  "completeness": 0,
+  "sourceAudit": [
+    {
+      "type": "history_foundation",
+      "label": "history-2026-2027",
+      "ok": true
+    },
+    {
+      "type": "competition_contract",
+      "label": "alb.1@2025-2026#v1",
+      "ok": false
+    }
+  ],
+  "phaseSummary": {
+    "hasPhaseTables": false,
+    "phaseKeys": []
+  },
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "TEAM_COUNT_AUTHORITY_MISSING"
+    ],
+    "builtAt": "2026-08-22T17:29:18.223Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 1,
+    "historyLeagueSha256": "188b1d09a5615b3617721fbf092e1499577fa2cc580f9280d9f9e2480f1cec65",
+    "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
+    "teamAliasesSha256": "MISSING",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": "alb.1@2025-2026#v1",
+    "contractSeasonReference": "2025-2026",
+    "contractAuthorityScopes": [],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "UNVERIFIED",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "alb.1",
+      "seasonReference": "2025-2026",
+      "contractId": "alb.1@2025-2026#v1",
+      "authority": {
+        "status": "UNVERIFIED",
+        "scopes": [],
+        "verifiedAt": null
+      },
+      "artifact": {
+        "shape": "OBJECT",
+        "declaredLeague": "alb.1",
+        "observedPhaseKeys": []
+      },
+      "summary": {
+        "primaryUniverseSource": "TABLE",
+        "primaryRowCount": 2,
+        "primaryUniqueTeamCount": 2,
+        "primaryCanonicalIdCount": 2,
+        "primaryFallbackIdentityCount": 0,
+        "primaryCanonicalIdentityComplete": true,
+        "phaseTableCount": 0,
+        "teamCountEvaluation": {
+          "evaluated": false,
+          "pass": null,
+          "expected": null,
+          "observed": 2
+        },
+        "errorCount": 0,
+        "warningCount": 1
+      },
+      "issues": [
+        {
+          "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
+          "severity": "warning",
+          "scope": "contract.teamCount",
+          "message": "Team count is not authoritative for this league/season; count mismatch is not evaluated as compliance failure."
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 2,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_fed7147cfe340d78521eb701",
+        "team": "Skenderbeu",
+        "teamName": "Skenderbeu",
+        "name": "Skenderbeu",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 2,
+        "goalsAgainst": 2,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_a3da21566472834cfdf8c41e",
+        "team": "Vllaznia",
+        "teamName": "Vllaznia",
+        "name": "Vllaznia",
+        "played": 1,
+        "wins": 0,
+        "draws": 1,
+        "losses": 0,
+        "goalsFor": 2,
+        "goalsAgainst": 2,
+        "goalDiff": 0,
+        "goalDifference": 0,
+        "points": 1,
+        "confidence": 1
+      }
+    ],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
+}
