@@ -32,7 +32,10 @@ import {
 import { buildValueDay } from "../core/build-value-day.js";
 import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import { deriveValueFromOdds } from "./derive-value-from-odds.js";
-import { buildValueA2B2Day } from "./build-value-a2-b2-day.js";
+import {
+  buildValueA2B2Day,
+  shouldFreezeAdjustedValueObservations
+} from "./build-value-a2-b2-day.js";
 import { buildValuePlanComparisonDay } from "./build-value-plan-comparison-day.js";
 import { verifyArtifactFreshnessDay } from "./verify-artifact-freshness-day.js";
 import { runSnapshotInvariantCheck } from "./run-snapshot-invariant-check.js";
@@ -826,7 +829,7 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
   const planB = options.skipPlanB === true
     ? null
     : deriveValueFromOdds(date, {
-        freeze: false,
+        freeze: shouldFreezeAdjustedValueObservations(date, athensDayKey()),
         outputMode: "plan-b-observation"
       });
 
