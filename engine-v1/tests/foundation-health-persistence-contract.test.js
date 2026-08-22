@@ -25,7 +25,7 @@ test("daily persists source-bound derived foundations and foundation diagnostics
     "git add data/h2h",
     "git add data/h2h-foundation/current.json",
     "git add data/model-priors",
-    `git add "data/foundation-integrity/${DAY_KEY}.json"`,
+    'git add "data/foundation-integrity/${DAY_KEY}.json"',
     `git add "data/foundation-integrity/latest.json"`
   ]) {
     assert.ok(text.includes(required), `missing daily persistence: ${required}`);
