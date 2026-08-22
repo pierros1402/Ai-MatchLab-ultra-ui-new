@@ -40,7 +40,7 @@ jobs:
           mapfile -t tests < <(find engine-v1/tests -maxdepth 1 -type f -name '*.test.js' -print | sort)
           echo "ENGINE_TEST_FILES=${#tests[@]}"
           set +e
-          node --test "${tests[@]}" 2>&1 | tee /tmp/p31-full-test.log
+          node --test --test-reporter=tap "${tests[@]}" 2>&1 | tee /tmp/p31-full-test.log
           TEST_EXIT=${PIPESTATUS[0]}
           set -e
           echo "TEST_EXIT=${TEST_EXIT}" >> "$GITHUB_ENV"
