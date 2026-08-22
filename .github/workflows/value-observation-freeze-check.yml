@@ -1,0 +1,51 @@
+name: Value observation freeze isolated validation
+
+on:
+  push:
+    branches:
+      - work/value-observation-freeze-check-20260822
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - run: npm ci --no-audit --no-fund
+      - working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+      - name: Syntax
+        run: |
+          node --check engine-v1/jobs/build-value-a2-b2-day.js
+          node --check engine-v1/tests/adjusted-value-observation-freeze.test.js
+      - name: Targeted Value observation contracts
+        run: |
+          node --test --test-reporter=tap \
+            engine-v1/tests/adjusted-value-observation-freeze.test.js \
+            engine-v1/tests/frozen-value-release-contract.test.js \
+            engine-v1/tests/historical-plan-b-freshness.test.js \
+            engine-v1/tests/value-refresh-publishable-coverage.test.js \
+            engine-v1/tests/value-comparison-exact-identity.test.js
+      - name: Publish result
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          state=failure
+          [ "${{ job.status }}" = "success" ] && state=success
+          payload="$(STATE="$state" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:"Value adjusted observation freeze",description:"syntax + targeted Value observation contracts"}))')"
+          curl --fail-with-body --silent --show-error -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -d "$payload" >/dev/null
