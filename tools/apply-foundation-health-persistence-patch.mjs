@@ -1,125 +1,112 @@
 import fs from "node:fs";
 
-function replaceOnce(text, before, after, label) {
-  const first = text.indexOf(before);
-  const last = text.lastIndexOf(before);
-  if (first < 0 || first !== last) {
-    throw new Error(`${label}: expected exactly one anchor`);
-  }
-  return text.slice(0, first) + after + text.slice(first + before.length);
-}
+function replaceCount(text, before, after, expected, label) {
+  let count = 0;
+  let cursor = 0;
 
-function transformLineOnce(text, predicate, transform, label) {
-  const lines = text.split("\n");
-  const indexes = [];
-  for (let i = 0; i < lines.length; i += 1) {
-    if (predicate(lines[i])) indexes.push(i);
+  while (true) {
+    const index = text.indexOf(before, cursor);
+    if (index < 0) break;
+    count += 1;
+    cursor = index + before.length;
   }
-  if (indexes.length !== 1) {
-    throw new Error(`${label}: expected one line, found ${indexes.length}`);
+
+  if (count !== expected) {
+    throw new Error(`${label}: expected ${expected} anchor(s), found ${count}`);
   }
-  const index = indexes[0];
-  const next = transform(lines[index]);
-  if (next === lines[index]) {
-    throw new Error(`${label}: transform made no change`);
-  }
-  lines[index] = next;
-  return lines.join("\n");
+
+  return text.split(before).join(after);
 }
 
 const dailyPath = ".github/workflows/daily-deploy-snapshot.yml";
 let daily = fs.readFileSync(dailyPath, "utf8");
 
-const historyReportCode = `          if compgen -G "data/history/????-????.report.json" > /dev/null; then
-            git add data/history/????-????.report.json
-          fi
-`;
+const historyReportCode = [
+  '          if compgen -G "data/history/????-????.report.json" > /dev/null; then',
+  '            git add data/history/????-????.report.json',
+  '          fi'
+].join("\n");
 
-const derivedPersistence = `${historyReportCode}
-          # Persist the exact derived model foundations produced by run-daily-cycle
-          # together with their already-staged source history. Otherwise the next
-          # runner starts from stale committed indexes/priors/H2H even though this
-          # runner passed the foundation gate with fresh derived outputs.
-          if [ -d "data/history-index" ]; then
-            git add data/history-index
-          fi
-          if [ -d "data/h2h" ]; then
-            git add data/h2h
-          fi
-          if [ -f "data/h2h-foundation/current.json" ]; then
-            git add data/h2h-foundation/current.json
-          fi
-          if [ -d "data/model-priors" ]; then
-            git add data/model-priors
-          fi
-`;
+const derivedPersistence = [
+  historyReportCode,
+  '',
+  '          # Persist the exact derived foundations produced by run-daily-cycle.',
+  '          # Their source history is committed in this same truth checkpoint,',
+  '          # so the next runner validates the same state that passed publication.',
+  '          if [ -d "data/history-index" ]; then',
+  '            git add data/history-index',
+  '          fi',
+  '          if [ -d "data/h2h" ]; then',
+  '            git add data/h2h',
+  '          fi',
+  '          if [ -f "data/h2h-foundation/current.json" ]; then',
+  '            git add data/h2h-foundation/current.json',
+  '          fi',
+  '          if [ -d "data/model-priors" ]; then',
+  '            git add data/model-priors',
+  '          fi'
+].join("\n");
 
-daily = replaceOnce(
+daily = replaceCount(
   daily,
   historyReportCode,
   derivedPersistence,
+  1,
   "daily derived foundation persistence"
 );
 
-daily = transformLineOnce(
+const truthBoundaryBefore =
+  'data/history/[0-9]{4}-[0-9]{4}(\\.report)?\\.json$|data/coverage-readiness/';
+const truthBoundaryAfter =
+  'data/history/[0-9]{4}-[0-9]{4}(\\.report)?\\.json$|data/history-index/|data/h2h/|data/h2h-foundation/|data/model-priors/|data/coverage-readiness/';
+
+daily = replaceCount(
   daily,
-  line => line.includes("--label=daily-deploy-truth") && line.includes("--allow="),
-  line => line.replace(
-    "|data/coverage-readiness/",
-    "|data/history-index/|data/h2h/|data/h2h-foundation/current\\.json$|data/model-priors/|data/coverage-readiness/"
-  ),
-  "daily truth boundary allow"
+  truthBoundaryBefore,
+  truthBoundaryAfter,
+  2,
+  "daily truth boundary and diagnostic allow"
 );
 
-daily = transformLineOnce(
+const snapshotStageAnchor = [
+  '          if [ -f "data/build-reports/${DAY_KEY}.json" ]; then',
+  '            git add "data/build-reports/${DAY_KEY}.json"',
+  '          fi'
+].join("\n");
+
+const snapshotStageWithFoundation = [
+  snapshotStageAnchor,
+  '',
+  '          if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then',
+  '            git add "data/foundation-integrity/${DAY_KEY}.json"',
+  '          fi',
+  '',
+  '          if [ -f "data/foundation-integrity/latest.json" ]; then',
+  '            git add "data/foundation-integrity/latest.json"',
+  '          fi'
+].join("\n");
+
+daily = replaceCount(
   daily,
-  line => line.includes("DISALLOWED=") && line.includes("data/history/") && line.includes("data/coverage-readiness/"),
-  line => line.replace(
-    "|data/coverage-readiness/",
-    "|data/history-index/|data/h2h/|data/h2h-foundation/|data/model-priors/|data/coverage-readiness/"
-  ),
-  "daily truth diagnostic allow"
-);
-
-const buildReportStage = `          if [ -f "data/build-reports/${DAY_KEY}.json" ]; then
-            git add "data/build-reports/${DAY_KEY}.json"
-          fi
-`;
-
-const foundationStage = `${buildReportStage}
-          if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then
-            git add "data/foundation-integrity/${DAY_KEY}.json"
-          fi
-
-          if [ -f "data/foundation-integrity/latest.json" ]; then
-            git add "data/foundation-integrity/latest.json"
-          fi
-`;
-
-daily = replaceOnce(
-  daily,
-  buildReportStage,
-  foundationStage,
+  snapshotStageAnchor,
+  snapshotStageWithFoundation,
+  1,
   "daily foundation artifact stage"
 );
 
-daily = transformLineOnce(
+daily = replaceCount(
   daily,
-  line => line.includes("--label=daily-deploy-snapshot") && line.includes("data/build-reports/${DAY_KEY}"),
-  line => line.replace(
-    "|data/system-health/${DAY_KEY}",
-    "|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/${DAY_KEY}"
-  ),
+  'data/build-reports/${DAY_KEY}\\.json$|data/system-health/',
+  'data/build-reports/${DAY_KEY}\\.json$|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/',
+  1,
   "daily snapshot boundary allow"
 );
 
-daily = transformLineOnce(
+daily = replaceCount(
   daily,
-  line => line.includes("DISALLOWED=") && line.includes("data/build-reports/") && line.includes("data/system-health/"),
-  line => line.replace(
-    "|data/system-health/",
-    "|data/foundation-integrity/|data/system-health/"
-  ),
+  'data/build-reports/|data/system-health/',
+  'data/build-reports/|data/foundation-integrity/|data/system-health/',
+  1,
   "daily snapshot diagnostic allow"
 );
 
@@ -128,104 +115,118 @@ fs.writeFileSync(dailyPath, daily, "utf8");
 const intradayPath = ".github/workflows/intraday-deploy-snapshot-refresh.yml";
 let intraday = fs.readFileSync(intradayPath, "utf8");
 
-intraday = replaceOnce(
+intraday = replaceCount(
   intraday,
-  `          test -e "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json"\n`,
-  ``,
+  '          test -e "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json"\n',
+  '',
+  1,
   "remove early intraday build-report stage"
 );
 
-intraday = replaceOnce(
+intraday = replaceCount(
   intraday,
-  `            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/build-reports/${DAY_KEY}.json" 2>/dev/null || true\n            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/build-reports/${DAY_KEY}.json" 2>/dev/null || true`,
-  `            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true\n            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true`,
+  [
+    '            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/build-reports/${DAY_KEY}.json" 2>/dev/null || true',
+    '            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/build-reports/${DAY_KEY}.json" 2>/dev/null || true'
+  ].join("\n"),
+  [
+    '            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true',
+    '            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true'
+  ].join("\n"),
+  1,
   "remove early build-report restore"
 );
 
-intraday = transformLineOnce(
+intraday = replaceCount(
   intraday,
-  line => line.includes("--label=intraday-public-truth-checkpoint") && line.includes("data/build-reports/${DAY_KEY}"),
-  line => line.replace(
-    "|data/build-reports/${DAY_KEY}\\\\.json$",
-    ""
-  ),
+  '|data/build-reports/${DAY_KEY}\\\\.json$)',
+  ')',
+  1,
   "remove early build-report boundary"
 );
 
-const failureHealth = `          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY" || true
-          git restore --staged . || true
-          test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json"
-          test -f "data/system-health/latest.json" && git add "data/system-health/latest.json"`;
+const failureHealthBefore = [
+  '          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY" || true',
+  '          git restore --staged . || true',
+  '          test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json"',
+  '          test -f "data/system-health/latest.json" && git add "data/system-health/latest.json"'
+].join("\n");
 
-const coherentFailureHealth = `          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" || true
-          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY" || true
-          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY" || true
-          git restore --staged . || true
-          test -f "data/foundation-integrity/${DAY_KEY}.json" && git add "data/foundation-integrity/${DAY_KEY}.json"
-          test -f "data/foundation-integrity/latest.json" && git add "data/foundation-integrity/latest.json"
-          test -f "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json"
-          test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json"
-          test -f "data/system-health/latest.json" && git add "data/system-health/latest.json"`;
+const failureHealthAfter = [
+  '          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" || true',
+  '          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY" || true',
+  '          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY" || true',
+  '          git restore --staged . || true',
+  '          test -f "data/foundation-integrity/${DAY_KEY}.json" && git add "data/foundation-integrity/${DAY_KEY}.json"',
+  '          test -f "data/foundation-integrity/latest.json" && git add "data/foundation-integrity/latest.json"',
+  '          test -f "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json"',
+  '          test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json"',
+  '          test -f "data/system-health/latest.json" && git add "data/system-health/latest.json"'
+].join("\n");
 
-intraday = replaceOnce(
+intraday = replaceCount(
   intraday,
-  failureHealth,
-  coherentFailureHealth,
+  failureHealthBefore,
+  failureHealthAfter,
+  1,
   "coherent intraday failure health"
 );
 
-const configureAnchor = `      - name: Configure git author
-        if: env.SKIP_BUILD != 'true'`;
+const configureAnchor = [
+  '      - name: Configure git author',
+  "        if: env.SKIP_BUILD != 'true'"
+].join("\n");
 
-const finalFoundationGate = `      # Health must describe the same persisted foundation state as the snapshot.
-      # Intraday may refresh Details/status, but it must never mutate model
-      # foundations merely to silence diagnostics. Stale model foundations fail.
-      - name: Refresh and enforce intraday foundation health
-        if: env.SKIP_BUILD != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
-          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+const finalFoundationGate = [
+  '      - name: Refresh and enforce intraday foundation health',
+  "        if: env.SKIP_BUILD != 'true'",
+  '        shell: bash',
+  '        run: |',
+  '          set -euo pipefail',
+  '          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate',
+  '          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"',
+  '',
+  configureAnchor
+].join("\n");
 
-${configureAnchor}`;
-
-intraday = replaceOnce(
+intraday = replaceCount(
   intraday,
   configureAnchor,
   finalFoundationGate,
+  1,
   "intraday final foundation gate"
 );
 
-const finalBuildReportStage = `          if [ -f "data/build-reports/${DAY_KEY}.json" ]; then git add "data/build-reports/${DAY_KEY}.json"; fi`;
-const finalFoundationStage = `${finalBuildReportStage}
-          if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then git add "data/foundation-integrity/${DAY_KEY}.json"; fi
-          if [ -f "data/foundation-integrity/latest.json" ]; then git add "data/foundation-integrity/latest.json"; fi`;
+const finalBuildReportStage =
+  '          if [ -f "data/build-reports/${DAY_KEY}.json" ]; then git add "data/build-reports/${DAY_KEY}.json"; fi';
 
-intraday = replaceOnce(
+const finalFoundationStage = [
+  finalBuildReportStage,
+  '          if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then git add "data/foundation-integrity/${DAY_KEY}.json"; fi',
+  '          if [ -f "data/foundation-integrity/latest.json" ]; then git add "data/foundation-integrity/latest.json"; fi'
+].join("\n");
+
+intraday = replaceCount(
   intraday,
   finalBuildReportStage,
   finalFoundationStage,
+  1,
   "intraday final foundation stage"
 );
 
-intraday = transformLineOnce(
+intraday = replaceCount(
   intraday,
-  line => line.includes("--label=intraday-deploy-snapshot-refresh") && line.includes("data/build-reports/${DAY_KEY}"),
-  line => line.replace(
-    "|data/system-health/${DAY_KEY}",
-    "|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/${DAY_KEY}"
-  ),
+  'data/build-reports/${DAY_KEY}\\.json$|data/system-health/',
+  'data/build-reports/${DAY_KEY}\\.json$|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/',
+  1,
   "intraday final boundary allow"
 );
 
-intraday = transformLineOnce(
+intraday = replaceCount(
   intraday,
-  line => line.includes("BAD=") && line.includes("data/build-reports/") && line.includes("data/system-health/"),
-  line => line.replace(
-    "|data/system-health/",
-    "|data/foundation-integrity/|data/system-health/"
-  ),
+  'data/build-reports/|data/system-health/',
+  'data/build-reports/|data/foundation-integrity/|data/system-health/',
+  1,
   "intraday final diagnostic allow"
 );
 
