@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-23",
-  "generatedAt": "2026-08-22T18:12:00.525Z",
-  "severity": "warning",
+  "generatedAt": "2026-08-22T21:09:31.011Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 4,
+    "error": 6,
+    "warning": 3,
     "info": 13
   },
-  "alert": true,
+  "alert": false,
   "alertCounts": {
     "error": 0,
-    "warning": 1,
+    "warning": 0,
     "info": 0
   },
-  "activeIssueCount": 17,
-  "actionableIssueCount": 4,
-  "newIssueCount": 5,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 14,
-  "persistentIssueCount": 12,
+  "activeIssueCount": 22,
+  "actionableIssueCount": 9,
+  "newIssueCount": 6,
+  "newActionableIssueCount": 0,
+  "resolvedIssueCount": 8,
+  "persistentIssueCount": 16,
   "activeIssues": [
     {
       "severity": "info",
@@ -61,6 +61,50 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -68,7 +112,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 258,
+        "count": 276,
         "informational": true
       }
     },
@@ -97,6 +141,33 @@
       }
     },
     {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_model_not_ready",
+      "details": {
+        "failure": "foundation_model_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -116,14 +187,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -192,7 +262,7 @@
       "message": "Plan A picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
+        "todayDayKey": "2026-08-23",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
@@ -208,7 +278,7 @@
       "message": "Plan A2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
+        "todayDayKey": "2026-08-23",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
@@ -224,7 +294,7 @@
       "message": "Plan B picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
+        "todayDayKey": "2026-08-23",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
@@ -240,7 +310,7 @@
       "message": "Plan B2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
+        "todayDayKey": "2026-08-23",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
@@ -1026,6 +1096,77 @@
   ],
   "actionableIssues": [
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_model_not_ready",
+      "message": "Model foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "historyIndex",
+            "reason": "history_index_foundation_stale"
+          },
+          {
+            "component": "modelPriors",
+            "reason": "model_priors_foundation_stale"
+          },
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_model_not_ready",
+      "details": {
+        "failure": "foundation_model_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1045,14 +1186,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1769,24 +1909,13 @@
       }
     },
     {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    },
-    {
       "severity": "info",
       "source": "value-comparison",
       "type": "plan_a2_unresolved_settlement",
       "message": "Plan A2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
+        "todayDayKey": "2026-08-23",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
@@ -1794,21 +1923,41 @@
         "settled": 0,
         "unresolved": 22
       }
-    }
-  ],
-  "newActionableIssues": [
+    },
     {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b_unresolved_settlement",
+      "message": "Plan B picks are still unresolved.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "dayKey": "2026-08-23",
+        "todayDayKey": "2026-08-23",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_b2_unresolved_settlement",
+      "message": "Plan B2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-23",
+        "todayDayKey": "2026-08-23",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
       }
     }
   ],
+  "newActionableIssues": [],
   "resolvedIssues": [
     {
       "severity": "warning",
@@ -1835,7 +1984,7 @@
         "artifact": "value-plans/2026-08-22/plan-a2.json",
         "at": 1787407740076,
         "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -8808883
+        "olderThanLatestCanonicalMs": -15885735
       }
     },
     {
@@ -1848,7 +1997,7 @@
         "artifact": "value-plans/2026-08-22/plan-a2-audit.json",
         "at": "2026-08-22T14:09:00.083Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -8808876
+        "olderThanLatestCanonicalMs": -15885728
       }
     },
     {
@@ -1862,7 +2011,7 @@
         "at": "2026-08-22T14:06:45.865Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -8943094
+        "olderThanLatestCanonicalMs": -16019946
       }
     },
     {
@@ -1875,7 +2024,7 @@
         "artifact": "value-plans/2026-08-22/plan-b2-audit.json",
         "at": "2026-08-22T14:09:01.917Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -8807042
+        "olderThanLatestCanonicalMs": -15883894
       }
     },
     {
@@ -1886,9 +2035,9 @@
       "details": {
         "kind": "value_plan_comparison",
         "artifact": "value-comparison/2026-08-22.json",
-        "at": "2026-08-22T14:09:52.595Z",
+        "at": "2026-08-22T17:27:03.861Z",
         "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -8756364
+        "olderThanLatestCanonicalMs": -4001950
       }
     },
     {
@@ -1916,7 +2065,9 @@
         "staleReason": "plan_b2_stale_against_canonical",
         "skipped": "artifact_missing_or_no_timestamp"
       }
-    },
+    }
+  ],
+  "persistentIssues": [
     {
       "severity": "error",
       "source": "foundation-integrity",
@@ -1931,10 +2082,6 @@
           {
             "component": "modelPriors",
             "reason": "model_priors_foundation_stale"
-          },
-          {
-            "component": "h2h",
-            "reason": "h2h_foundation_stale"
           },
           {
             "component": "details",
@@ -1959,14 +2106,46 @@
             "reason": "model_priors_foundation_stale"
           },
           {
-            "component": "h2h",
-            "reason": "h2h_foundation_stale"
-          },
-          {
             "component": "details",
             "reason": "details_foundation_not_ready"
           }
         ]
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 276,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "history_semantic_warnings_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 4,
+        "informational": true
+      }
+    },
+    {
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "score_consistent_alias_mirror_conflicts_present",
+      "message": "Foundation integrity informational condition.",
+      "details": {
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 9,
+        "informational": true
       }
     },
     {
@@ -1997,54 +2176,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "age_expired_results_rows_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "age_expired_results_rows_present",
-        "count": 258,
-        "informational": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "history_semantic_warnings_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "history_semantic_warnings_present",
-        "count": 4,
-        "informational": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "score_consistent_alias_mirror_conflicts_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "score_consistent_alias_mirror_conflicts_present",
-        "count": 9,
-        "informational": true
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -2061,6 +2192,16 @@
         ],
         "raw": "acquisition_skipped_slugs:eng.fa_qual,ger.super_cup,ned.w.1,sco.tennents_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
         "contextOnly": false
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -2129,45 +2270,13 @@
       "message": "Plan A picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
+        "todayDayKey": "2026-08-23",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 22,
         "settled": 0,
         "unresolved": 22
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
       }
     },
     {
