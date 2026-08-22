@@ -315,21 +315,51 @@ export function auditResultsMemoryPayload(slug, payload, options = {}) {
     if (sides.length > 2) multiSideMatchIdCount += 1;
 
     if (sides.length >= 2) {
-      const home = sides.find(side => side.ha === "H") || sides[0];
-      const away = sides.find(side => side.ha === "A") || sides[1];
-      const mirrorOk = Boolean(
-        home && away
-        && semanticTeamKey(slug, home.teamName) === semanticTeamKey(slug, away.opp)
+  const homes = sides.filter(side => side.ha === "H");
+  const aways = sides.filter(side => side.ha === "A");
+  let referencePair = null;
+
+  for (const home of homes) {
+    for (const away of aways) {
+      const identityMirrors = Boolean(
+        semanticTeamKey(slug, home.teamName) === semanticTeamKey(slug, away.opp)
         && semanticTeamKey(slug, away.teamName) === semanticTeamKey(slug, home.opp)
-        && safeNum(home.gf) === safeNum(away.ga)
+      );
+      const scoreMirrors = Boolean(
+        safeNum(home.gf) === safeNum(away.ga)
         && safeNum(home.ga) === safeNum(away.gf)
       );
-      if (!mirrorOk) {
-        mirrorConflictCount += 1;
-        pushExample(examples.mirrorConflicts, { slug, matchId, sides }, maxExamples);
+      if (identityMirrors && scoreMirrors) {
+        referencePair = { home, away };
+        break;
       }
     }
+    if (referencePair) break;
+  }
 
+  // Result memory can legitimately contain more than two rows for one
+  // matchId while team aliases converge. Do not let arbitrary insertion
+  // order turn a same-score alias row into a false mirror conflict.
+  // At least one reciprocal identity+score H/A pair must exist, and every
+  // extra row must preserve the score for its H/A orientation. A
+  // contradictory extra score therefore remains a hard error.
+  const mirrorOk = Boolean(
+    referencePair
+    && sides.every(side => {
+      const reference = side.ha === "H" ? referencePair.home : referencePair.away;
+      return Boolean(
+        reference
+        && safeNum(side.gf) === safeNum(reference.gf)
+        && safeNum(side.ga) === safeNum(reference.ga)
+      );
+    })
+  );
+
+  if (!mirrorOk) {
+    mirrorConflictCount += 1;
+    pushExample(examples.mirrorConflicts, { slug, matchId, sides }, maxExamples);
+  }
+}
     const chosen = sides.find(side => side.ha === "H") || sides[0];
     if (!chosen) continue;
     const isHome = chosen.ha === "H";

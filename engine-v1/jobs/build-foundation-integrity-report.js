@@ -49,9 +49,9 @@ export function buildFoundationIntegrityReport(dayKey, options = {}) {
 
   const components = {
     historySemantic: component(
-      history?.clean === true,
+      history?.ok === true,
       history,
-      history?.ok === true ? "history_semantic_warnings_present" : "history_semantic_errors_present"
+      "history_semantic_errors_present"
     ),
     standings: component(standings?.ok === true, standings, "standings_foundation_not_ready"),
     historyIndex: component(historyIndex?.ok === true, historyIndex, "history_index_foundation_stale"),
@@ -65,6 +65,16 @@ export function buildFoundationIntegrityReport(dayKey, options = {}) {
     .map(([name, value]) => ({ component: name, reason: value.reason }));
 
   const warnings = [];
+  const semanticWarningCount = Number(history?.issueCounts?.warning || 0);
+  if (semanticWarningCount > 0) {
+    warnings.push({
+      component: "historySemantic",
+      reason: "history_semantic_warnings_present",
+      count: semanticWarningCount,
+      informational: true,
+    });
+  }
+
   const expiredResults = Number(history?.resultsMemory?.expiredEntryCount || 0);
   if (expiredResults > 0) {
     warnings.push({
@@ -91,7 +101,9 @@ export function buildFoundationIntegrityReport(dayKey, options = {}) {
     warnings,
     components,
     sourceContract: {
-      historySemanticMustBeClean: true,
+      historySemanticErrorsBlock: true,
+        historySemanticWarningsInformational: true,
+        historySemanticMustBeClean: false,
       standingsGatedArtifactsAllowedWhenSafe: true,
       staleDerivedArtifactsRejected: true,
       detailsMustMatchCurrentFoundation: true,
