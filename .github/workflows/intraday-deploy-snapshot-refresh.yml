@@ -137,7 +137,6 @@ jobs:
 
           test -d "data/deploy-snapshots/${DAY_KEY}" && git add "data/deploy-snapshots/${DAY_KEY}/"
           test -e "data/deploy-snapshots/latest.json" && git add "data/deploy-snapshots/latest.json"
-          test -e "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json"
 
           MATERIAL="$(
             node - <<'NODE'
@@ -255,14 +254,14 @@ jobs:
 
           if [ "$MATERIAL" != "true" ]; then
             echo "No material LIVE/FT/non-played snapshot change."
-            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/build-reports/${DAY_KEY}.json" 2>/dev/null || true
-            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" "data/build-reports/${DAY_KEY}.json" 2>/dev/null || true
+            git restore --staged -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true
+            git restore -- "data/deploy-snapshots/${DAY_KEY}" "data/deploy-snapshots/latest.json" 2>/dev/null || true
             exit 0
           fi
 
           STAGED="$(git diff --cached --name-only || true)"
           if [ -n "$STAGED" ]; then
-            node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-public-truth-checkpoint --dayKey="${DAY_KEY}" --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$|data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\\.json$)"
+            node engine-v1/jobs/guard-staged-data-boundary.js --label=intraday-public-truth-checkpoint --dayKey="${DAY_KEY}" --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\\.json$|data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/)"
           fi
 
           if git diff --cached --quiet; then
@@ -503,8 +502,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -u
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" || true
+          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY" || true
           node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY" || true
           git restore --staged . || true
+          test -f "data/foundation-integrity/${DAY_KEY}.json" && git add "data/foundation-integrity/${DAY_KEY}.json"
+          test -f "data/foundation-integrity/latest.json" && git add "data/foundation-integrity/latest.json"
+          test -f "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json"
           test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json"
           test -f "data/system-health/latest.json" && git add "data/system-health/latest.json"
 
@@ -639,6 +643,14 @@ jobs:
             echo "No value comparison artifact for ${DAY_KEY}; skipping settlement comparison rebuild."
           fi
 
+      - name: Refresh and enforce intraday foundation health
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+
       - name: Configure git author
         if: env.SKIP_BUILD != 'true'
         run: |
@@ -688,6 +700,8 @@ jobs:
           # so they describe THIS re-exported manifest, not the earlier daily one.
           if [ -f "data/deploy-snapshots/${DAY_KEY}/freshness-report.json" ]; then git add "data/deploy-snapshots/${DAY_KEY}/freshness-report.json"; fi
           if [ -f "data/build-reports/${DAY_KEY}.json" ]; then git add "data/build-reports/${DAY_KEY}.json"; fi
+          if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then git add "data/foundation-integrity/${DAY_KEY}.json"; fi
+          if [ -f "data/foundation-integrity/latest.json" ]; then git add "data/foundation-integrity/latest.json"; fi
           if [ -f "data/system-health/${DAY_KEY}.json" ]; then git add "data/system-health/${DAY_KEY}.json"; fi
           if [ -f "data/system-health/latest.json" ]; then git add "data/system-health/latest.json"; fi
           test -d "data/deploy-snapshots/${DAY_KEY}/details" && git add "data/deploy-snapshots/${DAY_KEY}/details"
@@ -705,9 +719,9 @@ jobs:
             node engine-v1/jobs/guard-staged-data-boundary.js \
               --label=intraday-deploy-snapshot-refresh \
               --dayKey="${DAY_KEY}" \
-              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
+              --allow="^(data/canonical-fixtures/${DAY_KEY}/[^/]+\.json$|data/deploy-snapshots/latest\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/${DAY_KEY}/|data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
 
-            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
+            BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/|data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/value/|data/value-plans/|data/final-results/|data/final-result-conflicts/|data/value-comparison/)' || true)"
             if [ -n "$BAD" ]; then
               echo "ERROR: unexpected staged files:"
               echo "$BAD"

@@ -631,6 +631,22 @@ jobs:
             git add data/history/????-????.report.json
           fi
 
+          # Persist the exact derived foundations produced by run-daily-cycle.
+          # Their source history is committed in this same truth checkpoint,
+          # so the next runner validates the same state that passed publication.
+          if [ -d "data/history-index" ]; then
+            git add data/history-index
+          fi
+          if [ -d "data/h2h" ]; then
+            git add data/h2h
+          fi
+          if [ -f "data/h2h-foundation/current.json" ]; then
+            git add data/h2h-foundation/current.json
+          fi
+          if [ -d "data/model-priors" ]; then
+            git add data/model-priors
+          fi
+
           # buildStandingsDay rebuilds data/standings/<slug>.json on the runner
           # every night, but nothing staged them έΑΦ the committed store froze
           # (last real commit 2026-05-03) and Render served months-old tables
@@ -671,10 +687,10 @@ jobs:
           node engine-v1/jobs/guard-staged-data-boundary.js \
             --label=daily-deploy-truth \
             --dayKey="${DAY_KEY}" \
-            --allow="^(data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/${DAY_KEY}\.json$|data/competition-discovery/${DAY_KEY}\.json$|data/provider-competition-registry/flashscore\.json$|data/standings/[^/]+\.json$|data/canonical-fixtures/)"
+            --allow="^(data/team-geo/[^/]+\.json$|data/multi-odds/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/${DAY_KEY}(\.transfermarkt)?\.json$|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/history-index/|data/h2h/|data/h2h-foundation/|data/model-priors/|data/coverage-readiness/${DAY_KEY}\.json$|data/competition-discovery/${DAY_KEY}\.json$|data/provider-competition-registry/flashscore\.json$|data/standings/[^/]+\.json$|data/canonical-fixtures/)"
 
           echo "=== TRUTH STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/coverage-readiness/|data/competition-discovery/|data/provider-competition-registry/|data/standings/|data/canonical-fixtures/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/team-geo/|data/multi-odds/|data/team-news/(_worksets|_research-tasks|_research-results|_research-review|_reports)/|data/history/[0-9]{4}-[0-9]{4}(\.report)?\.json$|data/history-index/|data/h2h/|data/h2h-foundation/|data/model-priors/|data/coverage-readiness/|data/competition-discovery/|data/provider-competition-registry/|data/standings/|data/canonical-fixtures/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed truth files staged:"
@@ -827,6 +843,14 @@ jobs:
             git add "data/build-reports/${DAY_KEY}.json"
           fi
 
+          if [ -f "data/foundation-integrity/${DAY_KEY}.json" ]; then
+            git add "data/foundation-integrity/${DAY_KEY}.json"
+          fi
+
+          if [ -f "data/foundation-integrity/latest.json" ]; then
+            git add "data/foundation-integrity/latest.json"
+          fi
+
           if [ -f "data/system-health/${DAY_KEY}.json" ]; then
             git add "data/system-health/${DAY_KEY}.json"
           fi
@@ -900,10 +924,10 @@ jobs:
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
             --extra-days="${RECENT_CSV}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/|data/final-result-conflicts/(${DAY_KEY}|${RECENT_ALT})\.json$)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/|data/final-result-conflicts/(${DAY_KEY}|${RECENT_ALT})\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/system-health/|data/value/|data/value-plans/|data/value-comparison/|data/final-results/|data/final-result-conflicts/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/value/|data/value-plans/|data/value-comparison/|data/final-results/|data/final-result-conflicts/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"
