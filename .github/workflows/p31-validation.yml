@@ -1,0 +1,57 @@
+name: P3.1 isolated validation
+
+on:
+  push:
+    branches:
+      - work/p31-atomic-midnight-rollover-20260822
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p31-isolated-validation
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Syntax check changed JavaScript
+        run: |
+          node --check assets/js/live/operational-day.js
+          node --check engine-v1/tests/ui-atomic-operational-day.test.js
+
+      - name: P3.1 atomic rollover regression
+        run: node --test engine-v1/tests/ui-atomic-operational-day.test.js
+
+      - name: Existing daily contract regressions
+        run: |
+          node --test \
+            engine-v1/tests/daily-autonomous-result-closure.test.js \
+            engine-v1/tests/daily-details-foundation-order.test.js \
+            engine-v1/tests/daily-publish-contract.test.js \
+            engine-v1/tests/daily-snapshot-final-live-refresh.test.js
+
+      - name: Daily workflow test family
+        shell: bash
+        run: |
+          mapfile -t tests < <(find engine-v1/tests -maxdepth 1 -type f -name 'daily-*.test.js' -print | sort)
+          printf 'Daily tests (%s):\n' "${#tests[@]}"
+          printf '  %s\n' "${tests[@]}"
+          node --test "${tests[@]}"
