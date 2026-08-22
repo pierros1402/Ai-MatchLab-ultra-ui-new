@@ -27,6 +27,103 @@ function component(ok, detail, reason = null) {
   };
 }
 
+function finiteScore(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function scoreConsistentMultiSideAliasMirror(example) {
+  const sides = Array.isArray(example?.sides) ? example.sides : [];
+  if (sides.length < 3) return false;
+
+  const homes = sides.filter(side => side?.ha === "H");
+  const aways = sides.filter(side => side?.ha === "A");
+  if (!homes.length || !aways.length) return false;
+
+  const firstHome = homes[0];
+  const firstAway = aways[0];
+  const homeGf = finiteScore(firstHome?.gf);
+  const homeGa = finiteScore(firstHome?.ga);
+  const awayGf = finiteScore(firstAway?.gf);
+  const awayGa = finiteScore(firstAway?.ga);
+  if ([homeGf, homeGa, awayGf, awayGa].some(value => value === null)) return false;
+
+  const homesAgree = homes.every(side => (
+    finiteScore(side?.gf) === homeGf
+    && finiteScore(side?.ga) === homeGa
+  ));
+  const awaysAgree = aways.every(side => (
+    finiteScore(side?.gf) === awayGf
+    && finiteScore(side?.ga) === awayGa
+  ));
+
+  return homesAgree
+    && awaysAgree
+    && homeGf === awayGa
+    && homeGa === awayGf;
+}
+
+function historyPublicationSafety(history) {
+  const issues = Array.isArray(history?.issues) ? history.issues : [];
+  const errorIssues = issues.filter(issue => issue?.severity === "error");
+  const errorTypeCount = Number(history?.issueCounts?.error || 0);
+
+  if (errorTypeCount === 0 && history?.ok === true) {
+    return {
+      ok: true,
+      reason: null,
+      errorTypeCount: 0,
+      scoreConsistentAliasMirrorConflictCount: 0,
+    };
+  }
+
+  // Fail closed if the aggregate says errors exist but the report does not expose
+  // the exact error rows needed to classify them safely.
+  if (!errorIssues.length) {
+    return {
+      ok: false,
+      reason: "history_semantic_errors_unclassified",
+      errorTypeCount,
+      scoreConsistentAliasMirrorConflictCount: 0,
+    };
+  }
+
+  const nonAliasMirrorErrors = errorIssues.filter(issue => issue?.type !== "results_mirror_conflicts");
+  if (nonAliasMirrorErrors.length) {
+    return {
+      ok: false,
+      reason: "history_semantic_errors_present",
+      errorTypeCount,
+      scoreConsistentAliasMirrorConflictCount: 0,
+    };
+  }
+
+  const declaredMirrorConflictCount = errorIssues
+    .filter(issue => issue?.type === "results_mirror_conflicts")
+    .reduce((sum, issue) => sum + Math.max(0, Number(issue?.count || 0)), 0);
+
+  const mirrorExamples = (Array.isArray(history?.resultsMemory?.affectedLeagues)
+    ? history.resultsMemory.affectedLeagues
+    : [])
+    .flatMap(row => Array.isArray(row?.examples?.mirrorConflicts) ? row.examples.mirrorConflicts : []);
+
+  const safeMirrorConflictCount = mirrorExamples
+    .filter(scoreConsistentMultiSideAliasMirror)
+    .length;
+
+  const allDeclaredMirrorConflictsProvenSafe = declaredMirrorConflictCount > 0
+    && safeMirrorConflictCount === declaredMirrorConflictCount;
+
+  return {
+    ok: allDeclaredMirrorConflictsProvenSafe,
+    reason: allDeclaredMirrorConflictsProvenSafe
+      ? null
+      : "history_semantic_errors_present",
+    errorTypeCount,
+    scoreConsistentAliasMirrorConflictCount: safeMirrorConflictCount,
+  };
+}
+
 export function buildFoundationIntegrityReport(dayKey, options = {}) {
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(String(dayKey || ""))) {
     throw new Error("invalid_day_key");
@@ -46,12 +143,16 @@ export function buildFoundationIntegrityReport(dayKey, options = {}) {
   const modelPriors = validatePriors(season);
   const h2h = validateH2H();
   const details = auditDetails(dayKey);
+  const historySafety = historyPublicationSafety(history);
+  const historyDetail = history && typeof history === "object"
+    ? { ...history, publicationSafety: historySafety }
+    : { publicationSafety: historySafety };
 
   const components = {
     historySemantic: component(
-      history?.clean === true,
-      history,
-      history?.ok === true ? "history_semantic_warnings_present" : "history_semantic_errors_present"
+      historySafety.ok === true,
+      historyDetail,
+      historySafety.reason || "history_semantic_errors_present"
     ),
     standings: component(standings?.ok === true, standings, "standings_foundation_not_ready"),
     historyIndex: component(historyIndex?.ok === true, historyIndex, "history_index_foundation_stale"),
@@ -75,6 +176,25 @@ export function buildFoundationIntegrityReport(dayKey, options = {}) {
     });
   }
 
+  const historyWarningTypes = Number(history?.issueCounts?.warning || 0);
+  if (historySafety.ok === true && historyWarningTypes > 0) {
+    warnings.push({
+      component: "historySemantic",
+      reason: "history_semantic_warnings_present",
+      count: historyWarningTypes,
+      informational: true,
+    });
+  }
+
+  if (historySafety.scoreConsistentAliasMirrorConflictCount > 0) {
+    warnings.push({
+      component: "historySemantic",
+      reason: "score_consistent_alias_mirror_conflicts_present",
+      count: historySafety.scoreConsistentAliasMirrorConflictCount,
+      informational: true,
+    });
+  }
+
   const modelReady = ["historySemantic", "standings", "historyIndex", "modelPriors", "h2h"]
     .every(name => components[name].ok === true);
   const publicationReady = modelReady && components.details.ok === true;
@@ -91,7 +211,9 @@ export function buildFoundationIntegrityReport(dayKey, options = {}) {
     warnings,
     components,
     sourceContract: {
-      historySemanticMustBeClean: true,
+      historySemanticMustBePublicationSafe: true,
+      historyWarningsBlockPublication: false,
+      scoreConsistentAliasMirrorConflictsAreDiagnostic: true,
       standingsGatedArtifactsAllowedWhenSafe: true,
       staleDerivedArtifactsRejected: true,
       detailsMustMatchCurrentFoundation: true,
