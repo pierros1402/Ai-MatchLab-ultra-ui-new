@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-22",
-  "generatedAt": "2026-08-22T12:17:45.216Z",
+  "generatedAt": "2026-08-22T13:03:44.748Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-08-22",
     "finalResultsDir": "data/final-results/2026-08-22",
-    "verifiedFinalResults": 47,
+    "verifiedFinalResults": 65,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-22",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [
@@ -57,19 +57,19 @@
       "summary": {
         "picks": 18,
         "uniqueMatches": 17,
-        "settled": 1,
+        "settled": 2,
         "wins": 1,
-        "losses": 0,
+        "losses": 1,
         "voids": 0,
-        "unresolved": 17,
+        "unresolved": 16,
         "unsupported": 0,
-        "hitRate": 1,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 0.5,
+        "oddsAvailable": 1,
+        "averageOdds": 1.57,
+        "totalStake": 1,
+        "totalReturn": 0,
+        "profit": -1,
+        "roi": -1
       },
       "marketSummary": [
         {
@@ -112,19 +112,19 @@
           "market": "Over / Under 2.5",
           "picks": 16,
           "uniqueMatches": 16,
-          "settled": 1,
+          "settled": 2,
           "wins": 1,
-          "losses": 0,
+          "losses": 1,
           "voids": 0,
-          "unresolved": 15,
+          "unresolved": 14,
           "unsupported": 0,
-          "hitRate": 1,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 0.5,
+          "oddsAvailable": 1,
+          "averageOdds": 1.57,
+          "totalStake": 1,
+          "totalReturn": 0,
+          "profit": -1,
+          "roi": -1
         }
       ],
       "picks": [
@@ -434,11 +434,75 @@
           "aiFairOdds": 1.56,
           "oddsDecimal": 1.57,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-22T13:03:32.834Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401877656",
+                "canonicalId": "cid_jpn1_sanfreccehiroshima_kawasakifrontale_20260822",
+                "leagueName": "J1 League",
+                "home": "Sanfrecce Hiroshima",
+                "away": "Kawasaki Frontale",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-22T10:15Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-08-22T12:58:42.615Z",
+                "scoreKey": "1-1",
+                "homeTeam": "Sanfrecce Hiroshima",
+                "awayTeam": "Kawasaki Frontale",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_jpn1_sanfreccehiroshima_kawasakifrontale_20260822"
+                  ],
+                  "sourceFixtureId": "cid_jpn1_sanfreccehiroshima_kawasakifrontale_20260822",
+                  "resolvedFixtureId": "cid_jpn1_sanfreccehiroshima_kawasakifrontale_20260822",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Sanfrecce Hiroshima",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Kawasaki Frontale",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "2mA7Qzlo",
+                "country": "Japan",
+                "leagueName": "J1 League",
+                "leaguePath": "/football/japan/j1-league/",
+                "home": "Sanfrecce Hiroshima",
+                "away": "Kawasaki Frontale",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-22T10:15:00.000Z",
+                "scoreKey": "1-1"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -837,9 +901,9 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -17,
-    "settledDeltaPlanBMinusPlanA": -1,
+    "settledDeltaPlanBMinusPlanA": -2,
     "winsDeltaPlanBMinusPlanA": -1,
-    "lossesDeltaPlanBMinusPlanA": 0,
+    "lossesDeltaPlanBMinusPlanA": -1,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
   }
