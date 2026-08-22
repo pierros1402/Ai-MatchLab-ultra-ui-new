@@ -16,13 +16,12 @@ on:
         required: false
         default: ""
   schedule:
-    # GitHub scheduled workflows can start late or be dropped under load, so each
-    # window keeps several retry slots.
-    # Evening UTC 17-20 έΚΙ 20:00-23:00 Europe/Athens έΗΤ PRE-BUILD TOMORROW (+deploy)
-    #   so a day's full slate incl. 00:00-05:00 kickoffs is LIVE before midnight.
-    # Early-morning UTC 21,22,23,0 έΚΙ 00:00-03:00 Athens έΗΤ catch-up TODAY for
-    #   leagues that landed after the evening pre-build.
-    - cron: "17 17,18,19,20,21,22,23,0 * * *"
+    # P3.1 atomic-midnight contract: scheduled full publication is PRE-MIDNIGHT
+    # only and always targets TOMORROW. UTC candidates cover both Athens DST and
+    # standard time; the local guard admits the useful 17:30-22:10 window.
+    # A normal early candidate publishes tomorrow once; the 20:45+ candidate is
+    # the final refresh. No scheduled full TODAY build is allowed after 00:00.
+    - cron: "17 14,15,16,17,18,19,20 * * *"
 
 permissions:
   contents: write
@@ -35,7 +34,9 @@ concurrency:
 jobs:
   build-and-commit-snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # Hard deadline budget. A scheduled run admitted at 22:10 Athens must stop
+    # before midnight instead of drifting into the next operational day.
+    timeout-minutes: 100
 
     steps:
       - name: Checkout repository
@@ -62,26 +63,36 @@ jobs:
           ATHENS_HOUR="$(TZ=Europe/Athens date +%H)"
           ATHENS_MINUTE="$(TZ=Europe/Athens date +%M)"
           ATHENS_HOUR_NUM=$((10#$ATHENS_HOUR))
+          ATHENS_TOTAL_MINUTES=$((ATHENS_HOUR_NUM * 60 + 10#$ATHENS_MINUTE))
 
           if [ "$EVENT_NAME" = "schedule" ] && [ -z "$DAY_KEY" ]; then
-            # Pick the target day from the Athens clock (a manual dispatch with an
-            # explicit dayKey bypasses this entirely):
-            #   Evening 18:00-23:59 έΗΤ build TOMORROW so its full slate (incl. the
-            #     00:00-05:00 kickoffs) is ready + deployed BEFORE midnight.
-            #   Early morning 00:00-05:59 έΗΤ catch-up build of TODAY for leagues
-            #     that landed after the evening pre-build.
-            #   Any other hour έΗΤ self-skip.
-            if [ "$ATHENS_HOUR_NUM" -ge 18 ] && [ "$ATHENS_HOUR_NUM" -le 23 ]; then
-              DAY_KEY="$(TZ=Europe/Athens date -d 'tomorrow' +%F)"
-              echo "Evening pre-build window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) έΗΤ TOMORROW $DAY_KEY"
-            elif [ "$ATHENS_HOUR_NUM" -le 5 ]; then
-              DAY_KEY="$(TZ=Europe/Athens date +%F)"
-              echo "Early-morning catch-up window ($ATHENS_HOUR:$ATHENS_MINUTE Athens) έΗΤ TODAY $DAY_KEY"
-            else
-              echo "Skipping scheduled run outside evening(18-23)/early-morning(00-05) Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
+            # Scheduled publication never builds TODAY after midnight. It only
+            # prepares TOMORROW while there is enough wall-clock budget to finish
+            # the complete release transaction before 00:00 Europe/Athens.
+            if [ "$ATHENS_TOTAL_MINUTES" -lt 1050 ] || [ "$ATHENS_TOTAL_MINUTES" -gt 1330 ]; then
+              echo "Skipping scheduled full publication outside 17:30-22:10 Europe/Athens. Athens time: $ATHENS_HOUR:$ATHENS_MINUTE"
               echo "skipBuild=true" >> "$GITHUB_OUTPUT"
               echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
               exit 0
+            fi
+
+            DAY_KEY="$(TZ=Europe/Athens date -d 'tomorrow' +%F)"
+
+            # Before the final refresh window, do not repeat a full build after
+            # tomorrow has already passed the atomic latest promotion. At/after
+            # 20:45 one final refresh is admitted to capture late fixture input.
+            LATEST_DAY="$(node -e 'try{const x=require("./data/deploy-snapshots/latest.json");process.stdout.write(String(x.date||""));}catch{}')"
+            if [ "$ATHENS_TOTAL_MINUTES" -lt 1245 ] && [ "$LATEST_DAY" = "$DAY_KEY" ]; then
+              echo "Tomorrow $DAY_KEY is already atomically published; skipping duplicate early full build."
+              echo "skipBuild=true" >> "$GITHUB_OUTPUT"
+              echo "SKIP_BUILD=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
+
+            if [ "$ATHENS_TOTAL_MINUTES" -ge 1245 ]; then
+              echo "Final pre-midnight release refresh ($ATHENS_HOUR:$ATHENS_MINUTE Athens) -> TOMORROW $DAY_KEY"
+            else
+              echo "Pre-midnight release build ($ATHENS_HOUR:$ATHENS_MINUTE Athens) -> TOMORROW $DAY_KEY"
             fi
           fi
 
