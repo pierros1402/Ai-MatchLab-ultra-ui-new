@@ -33,31 +33,65 @@ jobs:
         working-directory: engine-v1
         run: npm ci --no-audit --no-fund
 
-      - name: Full engine regression
+      - name: Full engine regression with captured result
         shell: bash
         run: |
+          set -uo pipefail
           mapfile -t tests < <(find engine-v1/tests -maxdepth 1 -type f -name '*.test.js' -print | sort)
           echo "ENGINE_TEST_FILES=${#tests[@]}"
-          node --test "${tests[@]}"
+          set +e
+          node --test "${tests[@]}" 2>&1 | tee /tmp/p31-full-test.log
+          TEST_EXIT=${PIPESTATUS[0]}
+          set -e
+          echo "TEST_EXIT=${TEST_EXIT}" >> "$GITHUB_ENV"
+          echo "Captured full regression exit=${TEST_EXIT}"
 
-      - name: Publish machine-readable regression status
+      - name: Publish machine-readable regression status and details
         if: always()
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          JOB_STATUS: ${{ job.status }}
         run: |
           set -euo pipefail
-          case "$JOB_STATUS" in
-            success) STATE=success ;;
-            failure) STATE=failure ;;
-            cancelled) STATE=error ;;
-            *) STATE=error ;;
-          esac
-          curl --fail-with-body --silent --show-error \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -d "{\"state\":\"${STATE}\",\"context\":\"P3.1 full engine regression\",\"description\":\"All engine-v1 test files\"}"
+          TEST_EXIT="${TEST_EXIT:-99}"
+          if [ "$TEST_EXIT" = "0" ]; then
+            STATE=success
+          else
+            STATE=failure
+          fi
+
+          if [ -f /tmp/p31-full-test.log ]; then
+            FIRST_FAIL="$(grep -m1 '^not ok ' /tmp/p31-full-test.log || true)"
+            SUMMARY="$(grep -E '^# (tests|pass|fail|cancelled|skipped|todo) ' /tmp/p31-full-test.log | tail -n 6 | tr '\n' ' ' || true)"
+          else
+            FIRST_FAIL="test log unavailable"
+            SUMMARY="TEST_EXIT=${TEST_EXIT}"
+          fi
+
+          FIRST_FAIL="${FIRST_FAIL:-no failing test line captured}"
+          SUMMARY="${SUMMARY:-TEST_EXIT=${TEST_EXIT}}"
+          FIRST_FAIL="${FIRST_FAIL:0:135}"
+          SUMMARY="${SUMMARY:0:135}"
+
+          post_status() {
+            local context="$1"
+            local description="$2"
+            PAYLOAD="$(CONTEXT="$context" DESCRIPTION="$description" STATE="$STATE" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:process.env.CONTEXT,description:process.env.DESCRIPTION}))')"
+            curl --fail-with-body --silent --show-error \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+              -d "$PAYLOAD" >/dev/null
+          }
+
+          post_status "P3.1 full engine regression" "All engine-v1 tests; exit=${TEST_EXIT}"
+          post_status "P3.1 full regression first failure" "$FIRST_FAIL"
+          post_status "P3.1 full regression counts" "$SUMMARY"
+
+      - name: Enforce full regression result
+        if: always()
+        shell: bash
+        run: |
+          test "${TEST_EXIT:-99}" = "0"
