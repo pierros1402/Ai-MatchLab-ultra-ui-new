@@ -1,0 +1,286 @@
+name: P3.1-B1 isolated applicator
+
+on:
+  push:
+    branches:
+      - work/p31-b1-history-audit-scratch-20260822
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: p31-b1-isolated-applicator
+  cancel-in-progress: true
+
+jobs:
+  apply-and-validate:
+    if: ${{ !startsWith(github.event.head_commit.message, 'P3.1-B1') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout scratch branch
+        uses: actions/checkout@v7
+        with:
+          ref: work/p31-b1-history-audit-scratch-20260822
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Apply exact P3.1-B1 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, before, after):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(before)
+              if count != 1:
+                  raise SystemExit(f"replace contract failed for {path}: expected 1 occurrence, got {count}")
+              p.write_text(text.replace(before, after, 1), encoding='utf-8')
+
+          audit = 'engine-v1/jobs/audit-history-semantic-integrity.js'
+          before = '''    if (sides.length >= 2) {
+              const home = sides.find(side => side.ha === "H") || sides[0];
+              const away = sides.find(side => side.ha === "A") || sides[1];
+              const mirrorOk = Boolean(
+                home && away
+                && semanticTeamKey(slug, home.teamName) === semanticTeamKey(slug, away.opp)
+                && semanticTeamKey(slug, away.teamName) === semanticTeamKey(slug, home.opp)
+                && safeNum(home.gf) === safeNum(away.ga)
+                && safeNum(home.ga) === safeNum(away.gf)
+              );
+              if (!mirrorOk) {
+                mirrorConflictCount += 1;
+                pushExample(examples.mirrorConflicts, { slug, matchId, sides }, maxExamples);
+              }
+            }
+          '''
+          after = '''    if (sides.length >= 2) {
+              const homes = sides.filter(side => side.ha === "H");
+              const aways = sides.filter(side => side.ha === "A");
+              let referencePair = null;
+
+              for (const home of homes) {
+                for (const away of aways) {
+                  const identityMirrors = Boolean(
+                    semanticTeamKey(slug, home.teamName) === semanticTeamKey(slug, away.opp)
+                    && semanticTeamKey(slug, away.teamName) === semanticTeamKey(slug, home.opp)
+                  );
+                  const scoreMirrors = Boolean(
+                    safeNum(home.gf) === safeNum(away.ga)
+                    && safeNum(home.ga) === safeNum(away.gf)
+                  );
+                  if (identityMirrors && scoreMirrors) {
+                    referencePair = { home, away };
+                    break;
+                  }
+                }
+                if (referencePair) break;
+              }
+
+              // Result memory can legitimately contain more than two rows for one
+              // matchId while team aliases converge (for example a long canonical
+              // name plus a provider short name on the same H/A side). Do not let
+              // arbitrary insertion order turn that into a false mirror conflict.
+              // A match is accepted only when at least one reciprocal identity+score
+              // H/A pair exists AND every extra row preserves that orientation's
+              // score. A contradictory extra score therefore remains a hard error.
+              const mirrorOk = Boolean(
+                referencePair
+                && sides.every(side => {
+                  const reference = side.ha === "H" ? referencePair.home : referencePair.away;
+                  return Boolean(
+                    reference
+                    && safeNum(side.gf) === safeNum(reference.gf)
+                    && safeNum(side.ga) === safeNum(reference.ga)
+                  );
+                })
+              );
+
+              if (!mirrorOk) {
+                mirrorConflictCount += 1;
+                pushExample(examples.mirrorConflicts, { slug, matchId, sides }, maxExamples);
+              }
+            }
+          '''
+          replace_once(audit, before, after)
+
+          foundation = 'engine-v1/jobs/build-foundation-integrity-report.js'
+          replace_once(
+              foundation,
+              '''    historySemantic: component(
+                history?.clean === true,
+                history,
+                history?.ok === true ? "history_semantic_warnings_present" : "history_semantic_errors_present"
+              ),''',
+              '''    historySemantic: component(
+                history?.ok === true,
+                history,
+                "history_semantic_errors_present"
+              ),'''
+          )
+          replace_once(
+              foundation,
+              '''  const warnings = [];
+            const expiredResults = Number(history?.resultsMemory?.expiredEntryCount || 0);''',
+              '''  const warnings = [];
+            const semanticWarningCount = Number(history?.issueCounts?.warning || 0);
+            if (semanticWarningCount > 0) {
+              warnings.push({
+                component: "historySemantic",
+                reason: "history_semantic_warnings_present",
+                count: semanticWarningCount,
+                informational: true,
+              });
+            }
+
+            const expiredResults = Number(history?.resultsMemory?.expiredEntryCount || 0);'''
+          )
+          replace_once(
+              foundation,
+              '''      historySemanticMustBeClean: true,
+                  standingsGatedArtifactsAllowedWhenSafe: true,''',
+              '''      historySemanticErrorsBlock: true,
+                  historySemanticWarningsInformational: true,
+                  historySemanticMustBeClean: false,
+                  standingsGatedArtifactsAllowedWhenSafe: true,'''
+          )
+
+          audit_test = Path('engine-v1/jobs/audit-history-semantic-integrity.test.js')
+          audit_text = audit_test.read_text(encoding='utf-8')
+          marker = 'test("multi-side alias rows require a reciprocal pair and consistent orientation scores"'
+          if marker in audit_text:
+              raise SystemExit('audit regression tests already present')
+          audit_text += '''\n\ntest("multi-side alias rows require a reciprocal pair and consistent orientation scores", () => {
+            const payload = {
+              teams: {
+                "Home Club Long": [
+                  { matchId: "alias-1", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 1, ga: 0, res: "W" }
+                ],
+                Home: [
+                  { matchId: "alias-1", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 1, ga: 0, res: "W" }
+                ],
+                Away: [
+                  { matchId: "alias-1", date: "2026-08-21T12:00:00Z", opp: "Home", ha: "A", gf: 0, ga: 1, res: "L" }
+                ]
+              }
+            };
+
+            const report = auditResultsMemoryPayload("test.1", payload);
+            assert.equal(report.multiSideMatchIdCount, 1);
+            assert.equal(report.mirrorConflictCount, 0);
+          });
+
+          test("multi-side alias rows with a contradictory score remain a mirror conflict", () => {
+            const payload = {
+              teams: {
+                "Home Club Long": [
+                  { matchId: "alias-2", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 2, ga: 0, res: "W" }
+                ],
+                Home: [
+                  { matchId: "alias-2", date: "2026-08-21T12:00:00Z", opp: "Away", ha: "H", gf: 1, ga: 0, res: "W" }
+                ],
+                Away: [
+                  { matchId: "alias-2", date: "2026-08-21T12:00:00Z", opp: "Home", ha: "A", gf: 0, ga: 1, res: "L" }
+                ]
+              }
+            };
+
+            const report = auditResultsMemoryPayload("test.1", payload);
+            assert.equal(report.multiSideMatchIdCount, 1);
+            assert.equal(report.mirrorConflictCount, 1);
+          });\n'''
+          audit_test.write_text(audit_text, encoding='utf-8')
+
+          foundation_test = 'engine-v1/tests/foundation-integrity-report.test.js'
+          replace_once(
+              foundation_test,
+              '''test("history warnings fail closed for model and publication readiness", () => {
+              const options = cleanOptions({ history: { clean: false, ok: true, issueCounts: { error: 0, warning: 1, info: 0 } } });
+              const report = buildFoundationIntegrityReport("2026-08-09", options);
+              assert.equal(report.modelReady, false);
+              assert.equal(report.publicationReady, false);
+              assert.ok(report.blocked.some(row => row.component === "historySemantic"));
+            });''',
+              '''test("history warnings stay visible but do not block model or publication readiness", () => {
+              const options = cleanOptions({ history: { clean: false, ok: true, issueCounts: { error: 0, warning: 2, info: 0 } } });
+              const report = buildFoundationIntegrityReport("2026-08-09", options);
+              assert.equal(report.modelReady, true);
+              assert.equal(report.publicationReady, true);
+              assert.ok(!report.blocked.some(row => row.component === "historySemantic"));
+              assert.ok(report.warnings.some(row =>
+                row.component === "historySemantic"
+                && row.reason === "history_semantic_warnings_present"
+                && row.count === 2
+                && row.informational === true
+              ));
+            });
+
+            test("history semantic errors remain a hard model and publication blocker", () => {
+              const options = cleanOptions({ history: { clean: false, ok: false, issueCounts: { error: 1, warning: 0, info: 0 } } });
+              const report = buildFoundationIntegrityReport("2026-08-09", options);
+              assert.equal(report.modelReady, false);
+              assert.equal(report.publicationReady, false);
+              assert.ok(report.blocked.some(row =>
+                row.component === "historySemantic"
+                && row.reason === "history_semantic_errors_present"
+              ));
+            });'''
+          )
+          PY
+
+      - name: Syntax and targeted regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check engine-v1/jobs/audit-history-semantic-integrity.js
+          node --check engine-v1/jobs/audit-history-semantic-integrity.test.js
+          node --check engine-v1/jobs/build-foundation-integrity-report.js
+          node --check engine-v1/tests/foundation-integrity-report.test.js
+          node --test \
+            engine-v1/jobs/audit-history-semantic-integrity.test.js \
+            engine-v1/tests/foundation-integrity-report.test.js
+
+      - name: Real-data history semantic proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import { buildSemanticHistoryAudit } from './engine-v1/jobs/audit-history-semantic-integrity.js';
+          const report = buildSemanticHistoryAudit();
+          const summary = {
+            ok: report.ok,
+            clean: report.clean,
+            issueCounts: report.issueCounts,
+            mirrorConflictCount: report.resultsMemory.mirrorConflictCount,
+            warningTypes: report.issues.filter(x => x.severity === 'warning').map(x => `${x.type}:${x.count}`)
+          };
+          console.log(JSON.stringify(summary, null, 2));
+          if (report.resultsMemory.mirrorConflictCount !== 0) {
+            throw new Error(`expected zero real-data mirror conflicts after alias-safe audit, got ${report.resultsMemory.mirrorConflictCount}`);
+          }
+          if (report.ok !== true) {
+            throw new Error('real-data history audit still has error-severity issues');
+          }
+          NODE
+
+      - name: Commit validated B1 checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            engine-v1/jobs/audit-history-semantic-integrity.js \
+            engine-v1/jobs/audit-history-semantic-integrity.test.js \
+            engine-v1/jobs/build-foundation-integrity-report.js \
+            engine-v1/tests/foundation-integrity-report.test.js
+          git diff --cached --check
+          git commit -m "P3.1-B1 harden history foundation gating"
+          git push origin HEAD:work/p31-b1-history-audit-scratch-20260822
