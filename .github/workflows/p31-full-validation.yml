@@ -1,4 +1,4 @@
-name: P3.1 main baseline regression
+name: P3.1 branch regression evidence
 
 on:
   push:
@@ -10,18 +10,16 @@ permissions:
   statuses: write
 
 concurrency:
-  group: p31-main-baseline-regression
+  group: p31-branch-regression-evidence
   cancel-in-progress: true
 
 jobs:
-  baseline-regression:
+  branch-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout exact main baseline
+      - name: Checkout branch under test
         uses: actions/checkout@v7
-        with:
-          ref: c294a8dc55888a57ebbdb5504c9ddb6399e8450a
 
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -35,19 +33,18 @@ jobs:
         working-directory: engine-v1
         run: npm ci --no-audit --no-fund
 
-      - name: Full baseline regression with TAP evidence
+      - name: Full branch regression with TAP evidence
         shell: bash
         run: |
           set -uo pipefail
           mapfile -t tests < <(find engine-v1/tests -maxdepth 1 -type f -name '*.test.js' -print | sort)
-          echo "ENGINE_TEST_FILES=${#tests[@]}"
           set +e
-          node --test --test-reporter=tap "${tests[@]}" 2>&1 | tee /tmp/p31-baseline-test.log
+          node --test --test-reporter=tap "${tests[@]}" 2>&1 | tee /tmp/p31-branch-test.log
           TEST_EXIT=${PIPESTATUS[0]}
           set -e
           echo "TEST_EXIT=${TEST_EXIT}" >> "$GITHUB_ENV"
 
-      - name: Publish baseline counts and failures
+      - name: Publish branch counts and all failures
         if: always()
         shell: bash
         env:
@@ -59,7 +56,7 @@ jobs:
 
           post_status() {
             local context="$1"
-            PAYLOAD="$(CONTEXT="$context" STATE="$STATE" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:process.env.CONTEXT,description:"P3.1 main baseline regression evidence"}))')"
+            PAYLOAD="$(CONTEXT="$context" STATE="$STATE" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:process.env.CONTEXT,description:"P3.1 branch regression evidence"}))')"
             curl --fail-with-body --silent --show-error \
               -X POST \
               -H "Accept: application/vnd.github+json" \
@@ -69,23 +66,23 @@ jobs:
               -d "$PAYLOAD" >/dev/null
           }
 
-          SUMMARY="$(grep -E '^# (tests|pass|fail|cancelled|skipped|todo) ' /tmp/p31-baseline-test.log | tail -n 6 | tr '\n' ' ' || true)"
+          SUMMARY="$(grep -E '^# (tests|pass|fail|cancelled|skipped|todo) ' /tmp/p31-branch-test.log | tail -n 6 | tr '\n' ' ' || true)"
           SUMMARY="${SUMMARY:-TEST_EXIT=${TEST_EXIT}}"
-          post_status "P3.1 BASELINE SUMMARY ${SUMMARY:0:180}"
+          post_status "P3.1 BRANCH SUMMARY ${SUMMARY:0:180}"
 
-          mapfile -t FAILS < <(grep '^not ok ' /tmp/p31-baseline-test.log || true)
+          mapfile -t FAILS < <(grep '^not ok ' /tmp/p31-branch-test.log || true)
           if [ "${#FAILS[@]}" -eq 0 ]; then
-            post_status "P3.1 BASELINE FAIL none captured"
+            post_status "P3.1 BRANCH FAIL none captured"
           else
             limit=${#FAILS[@]}
-            [ "$limit" -gt 8 ] && limit=8
+            [ "$limit" -gt 10 ] && limit=10
             for ((i=0; i<limit; i++)); do
               line="${FAILS[$i]}"
-              post_status "P3.1 BASELINE FAIL$((i+1)) ${line:0:175}"
+              post_status "P3.1 BRANCH FAIL$((i+1)) ${line:0:175}"
             done
           fi
 
-      - name: Enforce baseline result
+      - name: Enforce branch result
         if: always()
         shell: bash
         run: test "${TEST_EXIT:-99}" = "0"
