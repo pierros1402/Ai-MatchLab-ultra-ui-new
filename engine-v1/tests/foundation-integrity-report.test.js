@@ -10,7 +10,8 @@ function cleanOptions(overrides = {}) {
       ok: true,
       clean: true,
       issueCounts: { error: 0, warning: 0, info: 1 },
-      resultsMemory: { expiredEntryCount: 288 },
+      issues: [],
+      resultsMemory: { expiredEntryCount: 288, affectedLeagues: [] },
       ...overrides.history,
     }),
     auditStandingsFoundation: () => ({
@@ -25,6 +26,39 @@ function cleanOptions(overrides = {}) {
   };
 }
 
+function aliasMirrorHistory({ unsafe = false } = {}) {
+  return {
+    ok: false,
+    clean: false,
+    issueCounts: { error: 1, warning: 2, info: 0 },
+    issues: [
+      { type: "results_mirror_conflicts", severity: "error", count: 1, detail: null },
+      { type: "results_semantic_duplicates", severity: "warning", count: 1, detail: null },
+      { type: "history_archive_duplicate_ids", severity: "warning", count: 2, detail: null },
+    ],
+    resultsMemory: {
+      expiredEntryCount: 0,
+      affectedLeagues: [
+        {
+          slug: "example.1",
+          examples: {
+            mirrorConflicts: [
+              {
+                matchId: "cid_example",
+                sides: [
+                  { teamName: "Alpha FC", ha: "H", gf: 2, ga: 0 },
+                  { teamName: "Beta FC", ha: "A", gf: 0, ga: 2 },
+                  { teamName: "Alpha", ha: "H", gf: unsafe ? 3 : 2, ga: 0 },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+}
+
 test("clean foundation is model-ready and publication-ready even with safely gated standings", () => {
   const report = buildFoundationIntegrityReport("2026-08-09", cleanOptions());
   assert.equal(report.modelReady, true);
@@ -34,9 +68,68 @@ test("clean foundation is model-ready and publication-ready even with safely gat
   assert.equal(report.components.standings.detail.summary.gated, 153);
 });
 
-test("history warnings fail closed for model and publication readiness", () => {
-  const options = cleanOptions({ history: { clean: false, ok: true, issueCounts: { error: 0, warning: 1, info: 0 } } });
+test("history warnings remain diagnostic and do not block model or publication readiness", () => {
+  const options = cleanOptions({
+    history: {
+      clean: false,
+      ok: true,
+      issueCounts: { error: 0, warning: 1, info: 0 },
+      issues: [{ type: "results_semantic_duplicates", severity: "warning", count: 2 }],
+    },
+  });
   const report = buildFoundationIntegrityReport("2026-08-09", options);
+  assert.equal(report.modelReady, true);
+  assert.equal(report.publicationReady, true);
+  assert.equal(report.blocked.some(row => row.component === "historySemantic"), false);
+  assert.ok(report.warnings.some(row => row.reason === "history_semantic_warnings_present"));
+  assert.equal(report.sourceContract.historyWarningsBlockPublication, false);
+});
+
+test("score-consistent multi-side alias mirror conflicts remain visible but do not block publication", () => {
+  const report = buildFoundationIntegrityReport(
+    "2026-08-09",
+    cleanOptions({ history: aliasMirrorHistory() })
+  );
+
+  assert.equal(report.modelReady, true);
+  assert.equal(report.publicationReady, true);
+  assert.equal(report.blocked.some(row => row.component === "historySemantic"), false);
+  assert.equal(
+    report.components.historySemantic.detail.publicationSafety.scoreConsistentAliasMirrorConflictCount,
+    1
+  );
+  assert.ok(report.warnings.some(row => (
+    row.reason === "score_consistent_alias_mirror_conflicts_present" && row.count === 1
+  )));
+});
+
+test("score-inconsistent alias mirror conflicts still fail closed", () => {
+  const report = buildFoundationIntegrityReport(
+    "2026-08-09",
+    cleanOptions({ history: aliasMirrorHistory({ unsafe: true }) })
+  );
+
+  assert.equal(report.modelReady, false);
+  assert.equal(report.publicationReady, false);
+  assert.ok(report.blocked.some(row => (
+    row.component === "historySemantic" && row.reason === "history_semantic_errors_present"
+  )));
+});
+
+test("non-alias history semantic errors still fail closed", () => {
+  const report = buildFoundationIntegrityReport(
+    "2026-08-09",
+    cleanOptions({
+      history: {
+        ok: false,
+        clean: false,
+        issueCounts: { error: 1, warning: 0, info: 0 },
+        issues: [{ type: "results_score_conflicts", severity: "error", count: 1 }],
+        resultsMemory: { expiredEntryCount: 0, affectedLeagues: [] },
+      },
+    })
+  );
+
   assert.equal(report.modelReady, false);
   assert.equal(report.publicationReady, false);
   assert.ok(report.blocked.some(row => row.component === "historySemantic"));
