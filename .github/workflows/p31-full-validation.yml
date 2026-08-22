@@ -44,7 +44,6 @@ jobs:
           TEST_EXIT=${PIPESTATUS[0]}
           set -e
           echo "TEST_EXIT=${TEST_EXIT}" >> "$GITHUB_ENV"
-          echo "Captured full regression exit=${TEST_EXIT}"
 
       - name: Publish machine-readable regression status and details
         if: always()
@@ -54,11 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           TEST_EXIT="${TEST_EXIT:-99}"
-          if [ "$TEST_EXIT" = "0" ]; then
-            STATE=success
-          else
-            STATE=failure
-          fi
+          if [ "$TEST_EXIT" = "0" ]; then STATE=success; else STATE=failure; fi
 
           if [ -f /tmp/p31-full-test.log ]; then
             FIRST_FAIL="$(grep -m1 '^not ok ' /tmp/p31-full-test.log || true)"
@@ -70,13 +65,12 @@ jobs:
 
           FIRST_FAIL="${FIRST_FAIL:-no failing test line captured}"
           SUMMARY="${SUMMARY:-TEST_EXIT=${TEST_EXIT}}"
-          FIRST_FAIL="${FIRST_FAIL:0:135}"
-          SUMMARY="${SUMMARY:0:135}"
+          FIRST_FAIL="${FIRST_FAIL:0:180}"
+          SUMMARY="${SUMMARY:0:180}"
 
           post_status() {
             local context="$1"
-            local description="$2"
-            PAYLOAD="$(CONTEXT="$context" DESCRIPTION="$description" STATE="$STATE" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:process.env.CONTEXT,description:process.env.DESCRIPTION}))')"
+            PAYLOAD="$(CONTEXT="$context" STATE="$STATE" node -e 'process.stdout.write(JSON.stringify({state:process.env.STATE,context:process.env.CONTEXT,description:"P3.1 isolated full regression evidence"}))')"
             curl --fail-with-body --silent --show-error \
               -X POST \
               -H "Accept: application/vnd.github+json" \
@@ -86,12 +80,11 @@ jobs:
               -d "$PAYLOAD" >/dev/null
           }
 
-          post_status "P3.1 full engine regression" "All engine-v1 tests; exit=${TEST_EXIT}"
-          post_status "P3.1 full regression first failure" "$FIRST_FAIL"
-          post_status "P3.1 full regression counts" "$SUMMARY"
+          post_status "P3.1 full engine regression"
+          post_status "P3.1 FIRST_FAIL ${FIRST_FAIL}"
+          post_status "P3.1 SUMMARY ${SUMMARY}"
 
       - name: Enforce full regression result
         if: always()
         shell: bash
-        run: |
-          test "${TEST_EXIT:-99}" = "0"
+        run: test "${TEST_EXIT:-99}" = "0"
