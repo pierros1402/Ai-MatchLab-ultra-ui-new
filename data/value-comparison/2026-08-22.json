@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-22",
-  "generatedAt": "2026-08-22T13:03:44.748Z",
+  "generatedAt": "2026-08-22T13:50:33.298Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-08-22",
     "finalResultsDir": "data/final-results/2026-08-22",
-    "verifiedFinalResults": 65,
+    "verifiedFinalResults": 92,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-22",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [
@@ -57,18 +57,18 @@
       "summary": {
         "picks": 18,
         "uniqueMatches": 17,
-        "settled": 2,
+        "settled": 3,
         "wins": 1,
-        "losses": 1,
+        "losses": 2,
         "voids": 0,
-        "unresolved": 16,
+        "unresolved": 15,
         "unsupported": 0,
-        "hitRate": 0.5,
-        "oddsAvailable": 1,
-        "averageOdds": 1.57,
-        "totalStake": 1,
+        "hitRate": 0.3333,
+        "oddsAvailable": 2,
+        "averageOdds": 1.615,
+        "totalStake": 2,
         "totalReturn": 0,
-        "profit": -1,
+        "profit": -2,
         "roi": -1
       },
       "marketSummary": [
@@ -112,18 +112,18 @@
           "market": "Over / Under 2.5",
           "picks": 16,
           "uniqueMatches": 16,
-          "settled": 2,
+          "settled": 3,
           "wins": 1,
-          "losses": 1,
+          "losses": 2,
           "voids": 0,
-          "unresolved": 14,
+          "unresolved": 13,
           "unsupported": 0,
-          "hitRate": 0.5,
-          "oddsAvailable": 1,
-          "averageOdds": 1.57,
-          "totalStake": 1,
+          "hitRate": 0.3333,
+          "oddsAvailable": 2,
+          "averageOdds": 1.615,
+          "totalStake": 2,
           "totalReturn": 0,
-          "profit": -1,
+          "profit": -2,
           "roi": -1
         }
       ],
@@ -408,11 +408,75 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.66,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 0,
+            "scoreKey": "1-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "terminal_score_sources_converged",
+            "method": "terminal_score_sources_converged",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 2,
+            "independentSourceCount": 2,
+            "generatedAt": "2026-08-22T13:50:18.172Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401889357",
+                "canonicalId": "cid_eng5_worthing_wealdstone_20260822",
+                "leagueName": "National League",
+                "home": "Worthing",
+                "away": "Wealdstone",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-22T11:30Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-08-22T13:44:09.871Z",
+                "scoreKey": "1-0",
+                "homeTeam": "Worthing",
+                "awayTeam": "Wealdstone",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_eng5_worthing_wealdstone_20260822"
+                  ],
+                  "sourceFixtureId": "cid_eng5_worthing_wealdstone_20260822",
+                  "resolvedFixtureId": "cid_eng5_worthing_wealdstone_20260822",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Worthing",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Wealdstone",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              },
+              {
+                "provider": "flashscore",
+                "providerMatchId": "jgbLAtnQ",
+                "country": "England",
+                "leagueName": "National League",
+                "leaguePath": "/football/england/national-league/",
+                "home": "Worthing",
+                "away": "Wealdstone",
+                "scoreHome": 1,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-22T11:30:00.000Z",
+                "scoreKey": "1-0"
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -901,9 +965,9 @@
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -17,
-    "settledDeltaPlanBMinusPlanA": -2,
+    "settledDeltaPlanBMinusPlanA": -3,
     "winsDeltaPlanBMinusPlanA": -1,
-    "lossesDeltaPlanBMinusPlanA": -1,
+    "lossesDeltaPlanBMinusPlanA": -2,
     "hitRateDeltaPlanBMinusPlanA": null,
     "roiDeltaPlanBMinusPlanA": null
   }
