@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { shouldPreserveHistoricalPlanBObservation } from "../jobs/verify-artifact-freshness-day.js";
+import {
+  evaluateFrozenValueObservationFreshness,
+  shouldPreserveHistoricalPlanBObservation
+} from "../jobs/verify-artifact-freshness-day.js";
 
 function validInput() {
   return {
@@ -80,3 +83,307 @@ test("new canonical-joined Plan B contract is preserved for closed days", () => 
 
   assert.equal(shouldPreserveHistoricalPlanBObservation(input), true);
 });
+function frozenUniverse(
+  hash,
+  canonicalIds = [
+    "cid_one",
+    "cid_two"
+  ]
+) {
+  return {
+    schema:
+      "ai-matchlab.value-fixture-universe.v1",
+    source:
+      "canonical_fixtures",
+    count:
+      canonicalIds.length,
+    hash,
+    canonicalIds
+  };
+}
+
+function planBSourceContract(
+  fixtureUniverse
+) {
+  return {
+    valueInput:
+      "canonical_fixture_universe_joined_with_persistent_ai_assessment",
+    fixtureUniverse,
+    canonicalFixtureUniverseRequired:
+      true,
+    exactIdentityJoinOnly:
+      true,
+    oddsMemoryCanCreateFixture:
+      false,
+    deploySnapshotInput:
+      false,
+    realBookmakerOddsUsed:
+      false
+  };
+}
+
+function frozenFreshnessInput({
+  currentIds = [
+    "cid_one",
+    "cid_two"
+  ],
+  currentHash =
+    "current-hash",
+  frozenHash =
+    "frozen-hash",
+  planBHash =
+    frozenHash,
+  planB2Hash =
+    frozenHash,
+  dayKey =
+    "2026-08-22",
+  currentAthensDay =
+    "2026-08-22",
+  orphanPlanBPick =
+    false
+} = {}) {
+  const a2Universe =
+    frozenUniverse(
+      frozenHash
+    );
+
+  const bUniverse =
+    frozenUniverse(
+      planBHash
+    );
+
+  const b2Universe =
+    frozenUniverse(
+      planB2Hash
+    );
+
+  const planBPick =
+    orphanPlanBPick
+      ? "cid_outside"
+      : "cid_one";
+
+  return {
+    dayKey,
+    currentAthensDay,
+
+    currentUniverse:
+      frozenUniverse(
+        currentHash,
+        currentIds
+      ),
+
+    planA2: {
+      date:
+        dayKey,
+      count:
+        0,
+      picks:
+        []
+    },
+
+    planA2Audit: {
+      ok:
+        true,
+      date:
+        dayKey,
+      planId:
+        "plan-a2",
+      fixtureUniverse:
+        a2Universe
+    },
+
+    planB: {
+      ok:
+        true,
+      date:
+        dayKey,
+      planId:
+        "plan-b",
+      outputMode:
+        "plan-b-observation",
+      count:
+        1,
+      picks: [
+        {
+          canonicalId:
+            planBPick
+        }
+      ],
+      sourceContract:
+        planBSourceContract(
+          bUniverse
+        )
+    },
+
+    planBAudit: {
+      ok:
+        true,
+      date:
+        dayKey,
+      sourceContract:
+        planBSourceContract(
+          bUniverse
+        )
+    },
+
+    planB2: {
+      ok:
+        true,
+      date:
+        dayKey,
+      planId:
+        "plan-b2",
+      outputMode:
+        "plan-b2-observation",
+      count:
+        1,
+      picks: [
+        {
+          canonicalId:
+            "cid_two"
+        }
+      ],
+      sourceContract:
+        planBSourceContract(
+          b2Universe
+        )
+    },
+
+    planB2Audit: {
+      ok:
+        true,
+      date:
+        dayKey,
+      sourceContract:
+        planBSourceContract(
+          b2Universe
+        )
+    }
+  };
+}
+
+test(
+  "current-day frozen Value cohort preserves legitimate descriptor drift",
+  () => {
+    const result =
+      evaluateFrozenValueObservationFreshness(
+        frozenFreshnessInput()
+      );
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result.strictFrozenParity,
+      true
+    );
+
+    assert.equal(
+      result.membershipParity,
+      true
+    );
+
+    assert.equal(
+      result.descriptorDrift,
+      true
+    );
+  }
+);
+
+test(
+  "frozen Value freshness fails closed when current canonical membership changes",
+  () => {
+    const result =
+      evaluateFrozenValueObservationFreshness(
+        frozenFreshnessInput({
+          currentIds: [
+            "cid_one",
+            "cid_three"
+          ]
+        })
+      );
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "current_frozen_membership_mismatch"
+    );
+  }
+);
+
+test(
+  "frozen Value freshness retains strict descriptor parity inside the frozen cohort",
+  () => {
+    const result =
+      evaluateFrozenValueObservationFreshness(
+        frozenFreshnessInput({
+          planBHash:
+            "different-frozen-hash"
+        })
+      );
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "frozen_universe_strict_parity_failed"
+    );
+  }
+);
+
+test(
+  "future Value day is never treated as a frozen freshness cohort",
+  () => {
+    const result =
+      evaluateFrozenValueObservationFreshness(
+        frozenFreshnessInput({
+          dayKey:
+            "2026-08-23",
+          currentAthensDay:
+            "2026-08-22"
+        })
+      );
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "future_day_not_frozen"
+    );
+  }
+);
+
+test(
+  "frozen Value freshness rejects a pick outside its frozen universe",
+  () => {
+    const result =
+      evaluateFrozenValueObservationFreshness(
+        frozenFreshnessInput({
+          orphanPlanBPick:
+            true
+        })
+      );
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "invalid_frozen_plan_b"
+    );
+  }
+);

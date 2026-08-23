@@ -1,5 +1,7 @@
 import {
-  assertValueFixtureUniverseParity
+  assertValueFixtureUniverseMembershipParity,
+  assertValueFixtureUniverseParity,
+  valueFixtureUniverseContract
 } from "../core/value-fixture-universe.js";
 /**
  * refresh-value-artifacts-day.js
@@ -321,6 +323,148 @@ function sameFixtureIdSet(left, right) {
   const b = [...right].sort();
 
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export function evaluateValueRefreshUniverseParity({
+  frozenProduction = false,
+  planACandidate = null,
+  publishedPlanA = null,
+  planA2 = null,
+  planB = null,
+  planB2 = null
+} = {}) {
+  const candidateUniverse =
+    planACandidate?.fixtureUniverse ||
+    null;
+
+  const publishedPlanAUniverse =
+    publishedPlanA?.fixtureUniverse ||
+    publishedPlanA?.sourceContract?.fixtureUniverse ||
+    null;
+
+  const planA2Universe =
+    planA2?.fixtureUniverse ||
+    null;
+
+  const planBUniverse =
+    planB?.sourceContract?.fixtureUniverse ||
+    null;
+
+  const planB2Universe =
+    planB2?.sourceContract?.fixtureUniverse ||
+    null;
+
+  if (!frozenProduction) {
+    return {
+      mode:
+        "strict_current_cohort",
+
+      A_B:
+        planB
+          ? assertValueFixtureUniverseParity(
+              candidateUniverse,
+              planBUniverse
+            )
+          : null,
+
+      A_A2:
+        assertValueFixtureUniverseParity(
+          candidateUniverse,
+          planA2Universe
+        ),
+
+      A_B2:
+        assertValueFixtureUniverseParity(
+          candidateUniverse,
+          planB2Universe
+        )
+    };
+  }
+
+  const frozenReferenceUniverse =
+    planBUniverse ||
+    planA2Universe ||
+    planB2Universe;
+
+  if (!frozenReferenceUniverse) {
+    throw new Error(
+      "FROZEN_VALUE_UNIVERSE_REFERENCE_MISSING"
+    );
+  }
+
+  const frozenReference =
+    valueFixtureUniverseContract(
+      frozenReferenceUniverse
+    );
+
+  const currentMembership =
+    assertValueFixtureUniverseMembershipParity(
+      candidateUniverse,
+      frozenReferenceUniverse
+    );
+
+  const frozenPlanAPicks =
+    validateValuePlanPicksAgainstPublishedSnapshot(
+      frozenReference.canonicalIds,
+      {
+        A: publishedPlanA
+      }
+    );
+
+  if (!frozenPlanAPicks.ok) {
+    const error =
+      new Error(
+        "FROZEN_PLAN_A_OUTSIDE_VALUE_UNIVERSE"
+      );
+
+    error.details =
+      frozenPlanAPicks;
+
+    throw error;
+  }
+
+  return {
+    mode:
+      "frozen_observation_cohort",
+
+    currentVsFrozenMembership:
+      currentMembership,
+
+    A_frozen_strict:
+      publishedPlanAUniverse
+        ? assertValueFixtureUniverseParity(
+            publishedPlanAUniverse,
+            frozenReferenceUniverse
+          )
+        : null,
+
+    legacyPlanAUniverseMissing:
+      !publishedPlanAUniverse,
+
+    frozenPlanAPicks,
+
+    A2_B:
+      planB
+        ? assertValueFixtureUniverseParity(
+            planA2Universe,
+            planBUniverse
+          )
+        : null,
+
+    A2_B2:
+      assertValueFixtureUniverseParity(
+        planA2Universe,
+        planB2Universe
+      ),
+
+    B_B2:
+      planB
+        ? assertValueFixtureUniverseParity(
+            planBUniverse,
+            planB2Universe
+          )
+        : null
+  };
 }
 
 export function evaluateValueRefreshSnapshotCoverage({
@@ -887,22 +1031,21 @@ export async function refreshValueArtifactsDay(dayKey = athensDayKey(), options 
     };
   }
 
-  const universeParity = {
-    A_B: planB
-      ? assertValueFixtureUniverseParity(
-          planA?.fixtureUniverse,
-          planB?.sourceContract?.fixtureUniverse
-        )
-      : null,
-    A_A2: assertValueFixtureUniverseParity(
-      planA?.fixtureUniverse,
-      planA2?.fixtureUniverse
-    ),
-    A_B2: assertValueFixtureUniverseParity(
-      planA?.fixtureUniverse,
-      planB2?.sourceContract?.fixtureUniverse
-    )
-  };
+  const frozenProduction =
+    observationPeriod &&
+    observationFileExists &&
+    existingObservation?.ok === true;
+
+  const universeParity =
+    evaluateValueRefreshUniverseParity({
+      frozenProduction,
+      planACandidate: planA,
+      publishedPlanA:
+        snapshotValue.valueOut,
+      planA2,
+      planB,
+      planB2
+    });
 
   const comparison = options.skipComparison === true
     ? null

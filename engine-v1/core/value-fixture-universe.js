@@ -216,3 +216,54 @@ export function assertValueFixtureUniverseParity(
       planA.canonicalIds
   };
 }
+export function assertValueFixtureUniverseMembershipParity(
+  leftUniverse,
+  rightUniverse
+) {
+  const left =
+    valueFixtureUniverseContract(
+      leftUniverse
+    );
+
+  const right =
+    valueFixtureUniverseContract(
+      rightUniverse
+    );
+
+  const sameCanonicalIds =
+    JSON.stringify(
+      left.canonicalIds
+    ) ===
+    JSON.stringify(
+      right.canonicalIds
+    );
+
+  if (
+    left.count !== right.count ||
+    !sameCanonicalIds
+  ) {
+    const error =
+      new Error(
+        "VALUE_PLAN_UNIVERSE_MEMBERSHIP_PARITY_FAILED"
+      );
+
+    error.details = {
+      left,
+      right
+    };
+
+    throw error;
+  }
+
+  return {
+    ok: true,
+    count: left.count,
+    canonicalIds: left.canonicalIds,
+    leftHash: left.hash,
+    rightHash: right.hash,
+    descriptorHashEqual:
+      left.hash === right.hash,
+    descriptorDrift:
+      left.hash !== right.hash
+  };
+}

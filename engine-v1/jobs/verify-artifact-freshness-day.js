@@ -31,6 +31,12 @@ import { pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { athensDayKey } from "../core/daykey.js";
 import { resolveDataPath } from "../storage/data-root.js";
+import {
+  assertValueFixtureUniverseMembershipParity,
+  assertValueFixtureUniverseParity,
+  buildValueFixtureUniverse,
+  valueFixtureUniverseContract
+} from "../core/value-fixture-universe.js";
 
 function readJsonSafe(file) {
   try {
@@ -58,6 +64,359 @@ function parseTime(value) {
 function maxTime(values) {
   const times = values.map(parseTime).filter(Number.isFinite);
   return times.length ? Math.max(...times) : null;
+}
+function validValueUniverseContract(universe) {
+  const contract =
+    valueFixtureUniverseContract(
+      universe
+    );
+
+  return Boolean(
+    Number.isInteger(contract.count) &&
+    contract.count >= 0 &&
+    String(contract.hash || "").trim() &&
+    Array.isArray(contract.canonicalIds) &&
+    contract.canonicalIds.length === contract.count &&
+    new Set(contract.canonicalIds).size ===
+      contract.canonicalIds.length
+  );
+}
+
+function validObservationCount(plan) {
+  const picks =
+    Array.isArray(plan?.picks)
+      ? plan.picks
+      : null;
+
+  const count =
+    Number(plan?.count);
+
+  return Boolean(
+    picks &&
+    Number.isInteger(count) &&
+    count === picks.length
+  );
+}
+
+function picksInsideValueUniverse(
+  plan,
+  universe
+) {
+  if (!validObservationCount(plan)) {
+    return false;
+  }
+
+  const contract =
+    valueFixtureUniverseContract(
+      universe
+    );
+
+  const canonicalIds =
+    new Set(
+      contract.canonicalIds
+    );
+
+  for (const pick of plan.picks) {
+    const id =
+      String(
+        pick?.canonicalId ||
+        pick?.matchId ||
+        pick?.fixtureId ||
+        pick?.id ||
+        ""
+      ).trim();
+
+    if (
+      !id ||
+      !canonicalIds.has(id)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function validPlanBObservationContract(
+  dayKey,
+  plan,
+  audit,
+  expectedPlanId,
+  expectedOutputMode
+) {
+  const planUniverse =
+    plan?.sourceContract
+      ?.fixtureUniverse ||
+    null;
+
+  const auditUniverse =
+    audit?.sourceContract
+      ?.fixtureUniverse ||
+    audit?.membership
+      ?.fixtureUniverse ||
+    null;
+
+  const planContract =
+    plan?.sourceContract ||
+    {};
+
+  const auditContract =
+    audit?.sourceContract ||
+    {};
+
+  if (
+    plan?.ok !== true ||
+    String(plan?.date || "") !== dayKey ||
+    String(plan?.planId || "") !==
+      expectedPlanId ||
+    String(plan?.outputMode || "") !==
+      expectedOutputMode ||
+    !validObservationCount(plan) ||
+    audit?.ok !== true ||
+    String(audit?.date || "") !== dayKey ||
+    planContract
+      .canonicalFixtureUniverseRequired !==
+      true ||
+    planContract
+      .exactIdentityJoinOnly !==
+      true ||
+    planContract
+      .oddsMemoryCanCreateFixture !==
+      false ||
+    planContract
+      .realBookmakerOddsUsed !==
+      false ||
+    auditContract
+      .canonicalFixtureUniverseRequired !==
+      true ||
+    auditContract
+      .exactIdentityJoinOnly !==
+      true ||
+    auditContract
+      .oddsMemoryCanCreateFixture !==
+      false ||
+    auditContract
+      .realBookmakerOddsUsed !==
+      false ||
+    !validValueUniverseContract(
+      planUniverse
+    ) ||
+    !validValueUniverseContract(
+      auditUniverse
+    ) ||
+    !picksInsideValueUniverse(
+      plan,
+      planUniverse
+    )
+  ) {
+    return false;
+  }
+
+  try {
+    assertValueFixtureUniverseParity(
+      planUniverse,
+      auditUniverse
+    );
+
+    return true;
+  }
+  catch {
+    return false;
+  }
+}
+
+export function evaluateFrozenValueObservationFreshness({
+  dayKey,
+  currentAthensDay = athensDayKey(),
+  currentUniverse = null,
+  planA2 = null,
+  planA2Audit = null,
+  planB = null,
+  planBAudit = null,
+  planB2 = null,
+  planB2Audit = null
+} = {}) {
+  const requestedDay =
+    String(dayKey || "").trim();
+
+  const operationalDay =
+    String(currentAthensDay || "").trim();
+
+  const validDay =
+    /^\d{4}-\d{2}-\d{2}$/u;
+
+  const fail = reason => ({
+    ok: false,
+    reason
+  });
+
+  if (
+    !validDay.test(requestedDay) ||
+    !validDay.test(operationalDay)
+  ) {
+    return fail(
+      "invalid_day_contract"
+    );
+  }
+
+  if (
+    requestedDay >
+    operationalDay
+  ) {
+    return fail(
+      "future_day_not_frozen"
+    );
+  }
+
+  const planA2Universe =
+    planA2Audit?.fixtureUniverse ||
+    null;
+
+  if (
+    String(planA2?.date || "") !==
+      requestedDay ||
+    !validObservationCount(planA2) ||
+    planA2Audit?.ok !== true ||
+    String(planA2Audit?.date || "") !==
+      requestedDay ||
+    String(planA2Audit?.planId || "") !==
+      "plan-a2" ||
+    !validValueUniverseContract(
+      planA2Universe
+    ) ||
+    !picksInsideValueUniverse(
+      planA2,
+      planA2Universe
+    )
+  ) {
+    return fail(
+      "invalid_frozen_plan_a2"
+    );
+  }
+
+  if (
+    !validPlanBObservationContract(
+      requestedDay,
+      planB,
+      planBAudit,
+      "plan-b",
+      "plan-b-observation"
+    )
+  ) {
+    return fail(
+      "invalid_frozen_plan_b"
+    );
+  }
+
+  if (
+    !validPlanBObservationContract(
+      requestedDay,
+      planB2,
+      planB2Audit,
+      "plan-b2",
+      "plan-b2-observation"
+    )
+  ) {
+    return fail(
+      "invalid_frozen_plan_b2"
+    );
+  }
+
+  const planBUniverse =
+    planB?.sourceContract
+      ?.fixtureUniverse ||
+    null;
+
+  const planB2Universe =
+    planB2?.sourceContract
+      ?.fixtureUniverse ||
+    null;
+
+  try {
+    assertValueFixtureUniverseParity(
+      planA2Universe,
+      planBUniverse
+    );
+
+    assertValueFixtureUniverseParity(
+      planA2Universe,
+      planB2Universe
+    );
+
+    assertValueFixtureUniverseParity(
+      planBUniverse,
+      planB2Universe
+    );
+  }
+  catch {
+    return fail(
+      "frozen_universe_strict_parity_failed"
+    );
+  }
+
+  if (
+    !validValueUniverseContract(
+      currentUniverse
+    )
+  ) {
+    return fail(
+      "current_canonical_universe_invalid"
+    );
+  }
+
+  let currentMembership;
+
+  try {
+    currentMembership =
+      assertValueFixtureUniverseMembershipParity(
+        currentUniverse,
+        planA2Universe
+      );
+  }
+  catch {
+    return fail(
+      "current_frozen_membership_mismatch"
+    );
+  }
+
+  const frozenContract =
+    valueFixtureUniverseContract(
+      planA2Universe
+    );
+
+  const currentContract =
+    valueFixtureUniverseContract(
+      currentUniverse
+    );
+
+  return {
+    ok: true,
+
+    reason:
+      "frozen_value_observation_cohort_identity_preserved",
+
+    requestedDay,
+    operationalDay,
+
+    fixtureCount:
+      frozenContract.count,
+
+    frozenHash:
+      frozenContract.hash,
+
+    currentHash:
+      currentContract.hash,
+
+    strictFrozenParity:
+      true,
+
+    membershipParity:
+      true,
+
+    descriptorDrift:
+      currentMembership
+        .descriptorDrift === true
+  };
 }
 
 export function snapshotValueFreshnessTime({ snapshotValue, manifest } = {}) {
@@ -322,12 +681,64 @@ export function verifyArtifactFreshnessDay(dayKey) {
       report.reasons.push("four_plan_artifacts_missing_or_invalid");
     }
     const currentAthensDay = athensDayKey();
+
+    let currentValueUniverse = null;
+
+    try {
+      currentValueUniverse =
+        buildValueFixtureUniverse(
+          dayKey
+        );
+    }
+    catch {
+      currentValueUniverse =
+        null;
+    }
+
+    const frozenValueObservationFreshness =
+      evaluateFrozenValueObservationFreshness({
+        dayKey,
+        currentAthensDay,
+        currentUniverse:
+          currentValueUniverse,
+        planA2,
+        planA2Audit,
+        planB,
+        planBAudit,
+        planB2,
+        planB2Audit
+      });
+
+    const frozenCohortPreservation =
+      frozenValueObservationFreshness.ok
+        ? {
+            reason:
+              frozenValueObservationFreshness.reason,
+            requestedDay:
+              dayKey,
+            currentAthensDay,
+            fixtureCount:
+              frozenValueObservationFreshness.fixtureCount,
+            frozenHash:
+              frozenValueObservationFreshness.frozenHash,
+            currentHash:
+              frozenValueObservationFreshness.currentHash,
+            strictFrozenParity:
+              frozenValueObservationFreshness.strictFrozenParity,
+            membershipParity:
+              frozenValueObservationFreshness.membershipParity,
+            descriptorDrift:
+              frozenValueObservationFreshness.descriptorDrift
+          }
+        : null;
+
     const preserveHistoricalPlanBAudit = shouldPreserveHistoricalPlanBObservation({
       dayKey,
       currentAthensDay,
       planB,
       planBAudit
     });
+
     const preserveFrozenPlanAAudit = shouldPreserveFrozenPlanAAudit({
       dayKey,
       snapshotValue,
@@ -365,13 +776,17 @@ export function verifyArtifactFreshnessDay(dayKey) {
           planA2?.updatedAt,
           planA2?.createdAt
         ]),
-        staleReason: "plan_a2_stale_against_canonical"
+        staleReason: "plan_a2_stale_against_canonical",
+        preservation:
+          frozenCohortPreservation
       },
       {
         kind: "plan_a2_audit",
         artifact: `value-plans/${dayKey}/plan-a2-audit.json`,
         at: planA2Audit?.generatedAt || null,
-        staleReason: "plan_a2_audit_stale_against_canonical"
+        staleReason: "plan_a2_audit_stale_against_canonical",
+        preservation:
+          frozenCohortPreservation
       },
       {
         kind: "plan_b",
@@ -381,23 +796,29 @@ export function verifyArtifactFreshnessDay(dayKey) {
           planB?.updatedAt,
           planB?.createdAt
         ]),
-        staleReason: "plan_b_stale_against_canonical"
+        staleReason: "plan_b_stale_against_canonical",
+        preservation:
+          frozenCohortPreservation
       },
       {
         kind: "plan_b_audit",
         artifact: `value-plans/${dayKey}/plan-b-audit.json`,
         at: planBAudit?.generatedAt || null,
         staleReason: "plan_b_audit_stale_against_canonical",
-        preservation: preserveHistoricalPlanBAudit
-          ? {
-              reason: "closed_day_immutable_plan_b_observation",
-              requestedDay: dayKey,
-              currentAthensDay,
-              outputMode: planB?.outputMode || null,
-              auditDate: planBAudit?.date || null,
-              sourceContract: planBAudit?.sourceContract || null
-            }
-          : null
+        preservation:
+          frozenCohortPreservation ||
+          (
+            preserveHistoricalPlanBAudit
+              ? {
+                  reason: "closed_day_immutable_plan_b_observation",
+                  requestedDay: dayKey,
+                  currentAthensDay,
+                  outputMode: planB?.outputMode || null,
+                  auditDate: planBAudit?.date || null,
+                  sourceContract: planBAudit?.sourceContract || null
+                }
+              : null
+          )
       },
       {
         kind: "plan_b2",
@@ -407,13 +828,17 @@ export function verifyArtifactFreshnessDay(dayKey) {
           planB2?.updatedAt,
           planB2?.createdAt
         ]),
-        staleReason: "plan_b2_stale_against_canonical"
+        staleReason: "plan_b2_stale_against_canonical",
+        preservation:
+          frozenCohortPreservation
       },
       {
         kind: "plan_b2_audit",
         artifact: `value-plans/${dayKey}/plan-b2-audit.json`,
         at: planB2Audit?.generatedAt || null,
-        staleReason: "plan_b2_audit_stale_against_canonical"
+        staleReason: "plan_b2_audit_stale_against_canonical",
+        preservation:
+          frozenCohortPreservation
       },
       {
         kind: "value_plan_comparison",

@@ -82,7 +82,7 @@ export function readFrozenAdjustedValueObservations(dayKey) {
 
   return {
     A2: validFrozenA2(dayKey, planA2, auditA2)
-      ? { ...planA2, frozenObservation: true }
+      ? { ...planA2, fixtureUniverse: auditA2.fixtureUniverse, frozenObservation: true }
       : null,
     B2: validFrozenB2(dayKey, planB2, auditB2)
       ? { ...planB2, frozenObservation: true }
@@ -130,7 +130,10 @@ export async function buildValueA2B2Day(dayKey, options = {}) {
       freezeObservations: true,
       preservedExisting: true,
       plans: {
-        A2: frozen.A2,
+        A2: {
+          ...frozen.A2,
+          ok: true
+        },
         B2: frozen.B2
       }
     };

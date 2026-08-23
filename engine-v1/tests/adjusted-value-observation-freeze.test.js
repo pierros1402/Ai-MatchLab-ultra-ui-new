@@ -58,6 +58,7 @@ test("current-day A2/B2 are preserved without invoking either builder", async ()
   assert.equal(result.freezeObservations, true);
   assert.equal(result.preservedExisting, true);
   assert.equal(result.plans.A2.count, 3);
+  assert.equal(result.plans.A2.ok, true);
   assert.equal(result.plans.B2.count, 1);
   assert.equal(a2BuildCalls, 0);
   assert.equal(b2BuildCalls, 0);

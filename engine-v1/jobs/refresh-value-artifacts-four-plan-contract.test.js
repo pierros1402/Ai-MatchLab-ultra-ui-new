@@ -117,16 +117,115 @@ test(
   () => {
     const source = readNormalized(refreshFile);
 
+    /*
+     * Non-frozen Value remains descriptor-strict.
+     * Frozen Value allows current canonical descriptor drift only when
+     * canonical membership is identical, while the frozen cohort itself
+     * remains descriptor-strict.
+     */
     for (const token of [
-      "A_B: planB",
-      "A_A2: assertValueFixtureUniverseParity(",
-      "A_B2: assertValueFixtureUniverseParity(",
-      "planA?.fixtureUniverse",
-      "planA2?.fixtureUniverse",
-      "planB2?.sourceContract?.fixtureUniverse"
+      "export function evaluateValueRefreshUniverseParity({",
+      "assertValueFixtureUniverseMembershipParity",
+      '"strict_current_cohort"',
+      "A_B:",
+      "A_A2:",
+      "A_B2:",
+      "const currentMembership =",
+      "candidateUniverse",
+      "frozenReferenceUniverse",
+      '"frozen_observation_cohort"',
+      "currentVsFrozenMembership:",
+      "A_frozen_strict:",
+      "A2_B:",
+      "A2_B2:",
+      "B_B2:",
+      '"FROZEN_PLAN_A_OUTSIDE_VALUE_UNIVERSE"'
     ]) {
       requireToken(source, token);
     }
+
+    const strictCurrentIndex = tokenIndex(
+      source,
+      '"strict_current_cohort"',
+      "strict current-cohort parity"
+    );
+
+    const strictA2Index = tokenIndex(
+      source,
+      "A_A2:",
+      "strict current A/A2 parity"
+    );
+
+    const strictB2Index = tokenIndex(
+      source,
+      "A_B2:",
+      "strict current A/B2 parity"
+    );
+
+    const membershipIndex = tokenIndex(
+      source,
+      "const currentMembership =",
+      "current-to-frozen membership parity"
+    );
+
+    const frozenIndex = tokenIndex(
+      source,
+      '"frozen_observation_cohort"',
+      "frozen cohort result"
+    );
+
+    const frozenA2BIndex = tokenIndex(
+      source,
+      "A2_B:",
+      "frozen A2/B strict parity"
+    );
+
+    const frozenA2B2Index = tokenIndex(
+      source,
+      "A2_B2:",
+      "frozen A2/B2 strict parity"
+    );
+
+    const frozenBB2Index = tokenIndex(
+      source,
+      "B_B2:",
+      "frozen B/B2 strict parity"
+    );
+
+    assert.ok(
+      strictCurrentIndex < strictA2Index &&
+      strictA2Index < strictB2Index,
+      "non-frozen cohort must retain strict descriptor parity"
+    );
+
+    assert.ok(
+      strictB2Index < membershipIndex,
+      "frozen membership policy must follow the non-frozen strict branch"
+    );
+
+    assert.ok(
+      membershipIndex < frozenIndex,
+      "current canonical membership must be proven before frozen result"
+    );
+
+    assert.ok(
+      frozenIndex < frozenA2BIndex &&
+      frozenA2BIndex < frozenA2B2Index &&
+      frozenA2B2Index < frozenBB2Index,
+      "frozen cohort must retain internal strict descriptor parity"
+    );
+
+    requireToken(
+      source,
+      "assertValueFixtureUniverseMembershipParity(",
+      "shared exact-membership parity primitive"
+    );
+
+    requireToken(
+      source,
+      "assertValueFixtureUniverseParity(",
+      "strict descriptor-parity primitive"
+    );
   }
 );
 
