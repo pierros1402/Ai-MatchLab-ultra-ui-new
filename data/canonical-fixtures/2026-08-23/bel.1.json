@@ -2,13 +2,48 @@
   "dayKey": "2026-08-23",
   "leagueSlug": "bel.1",
   "leagueName": "Belgian Pro League",
-  "updatedAt": "2026-08-23T15:41:42.286Z",
+  "updatedAt": "2026-08-23T16:07:19.125Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "bel.1",
-    "requestedDayKey": "2026-09-07",
-    "mergedAt": "2026-08-23T15:41:42.286Z"
+    "requestedDayKey": "2026-08-23",
+    "providerFetchSlugs": [
+      "bel.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-23T16:07:19.125Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-23T16:07:49.967Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -21,13 +56,13 @@
       "leagueSlug": "bel.1",
       "leagueName": "Belgian Pro League",
       "dayKey": "2026-08-23",
-      "fetchedDayKey": "2026-08-24",
+      "fetchedDayKey": "2026-08-23",
       "kickoffUtc": "2026-08-23T14:00Z",
       "homeTeam": "Lommel SK",
       "awayTeam": "KVC Westerlo",
       "venue": "Soeverein Stadion",
       "firstSeenAt": "2026-08-08T17:48:39.404Z",
-      "lastSeenAt": "2026-08-23T15:41:42.285Z",
+      "lastSeenAt": "2026-08-23T16:07:19.125Z",
       "providerIds": {
         "flashscore": "zTMUG3Qp",
         "espn": "401879017"
@@ -36,13 +71,37 @@
         "cid_bel1_lommelsk_westerlo_20260823"
       ],
       "providerLeagueSlug": "bel.1",
-      "status": "HALF_TIME",
-      "rawStatus": "STATUS_HALFTIME",
-      "minute": "45'+5'",
-      "scoreHome": 2,
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+3'",
+      "scoreHome": 4,
       "scoreAway": 0,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-23T16:07:49.967Z",
+        "provider": "espn",
+        "providerMatchId": "401879017",
+        "dayKey": "2026-08-23",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 4,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_bel1_brugge_cerclebruggeksv_20260823",
@@ -54,13 +113,13 @@
       "leagueSlug": "bel.1",
       "leagueName": "Belgian Pro League",
       "dayKey": "2026-08-23",
-      "fetchedDayKey": "2026-08-24",
+      "fetchedDayKey": "2026-08-23",
       "kickoffUtc": "2026-08-23T16:30Z",
       "homeTeam": "Club Brugge",
       "awayTeam": "Cercle Brugge KSV",
       "venue": "Jan Breydel Stadium",
       "firstSeenAt": "2026-08-08T17:48:39.404Z",
-      "lastSeenAt": "2026-08-23T15:41:42.286Z",
+      "lastSeenAt": "2026-08-23T16:07:19.125Z",
       "providerIds": {
         "flashscore": "SM9Gv7Ii",
         "espn": "401879016"
@@ -73,9 +132,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }

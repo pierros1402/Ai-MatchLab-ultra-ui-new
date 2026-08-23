@@ -2,13 +2,48 @@
   "dayKey": "2026-08-23",
   "leagueSlug": "uru.1",
   "leagueName": "Uruguay Primera División",
-  "updatedAt": "2026-08-23T15:43:01.311Z",
+  "updatedAt": "2026-08-23T16:07:20.825Z",
   "count": 3,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "uru.1",
-    "requestedDayKey": "2026-09-07",
-    "mergedAt": "2026-08-23T15:43:01.311Z"
+    "requestedDayKey": "2026-08-23",
+    "providerFetchSlugs": [
+      "uru.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-23T16:07:20.825Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-23T16:07:49.967Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -82,21 +117,45 @@
       "leagueSlug": "uru.1",
       "leagueName": "Uruguay Primera División",
       "dayKey": "2026-08-23",
-      "fetchedDayKey": "2026-08-24",
+      "fetchedDayKey": "2026-08-23",
       "kickoffUtc": "2026-08-23T14:00Z",
       "homeTeam": "Danubio",
       "awayTeam": "Racing (Montevideo)",
       "venue": "Jardines del Hipódromo",
       "firstSeenAt": "2026-08-11T23:05:52.761Z",
-      "lastSeenAt": "2026-08-23T15:43:01.309Z",
+      "lastSeenAt": "2026-08-23T16:07:20.824Z",
       "providerLeagueSlug": "uru.1",
-      "status": "HALF_TIME",
-      "rawStatus": "STATUS_HALFTIME",
-      "minute": "45'+2'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+4'",
       "scoreHome": 0,
       "scoreAway": 0,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-23T16:07:49.967Z",
+        "provider": "espn",
+        "providerMatchId": "401909200",
+        "dayKey": "2026-08-23",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_uru1_montevideocitytorque_montevideowanderers_20260823",
@@ -112,13 +171,13 @@
       "leagueSlug": "uru.1",
       "leagueName": "Uruguay Primera División",
       "dayKey": "2026-08-23",
-      "fetchedDayKey": "2026-08-24",
+      "fetchedDayKey": "2026-08-23",
       "kickoffUtc": "2026-08-23T18:00Z",
       "homeTeam": "Montevideo City Torque",
       "awayTeam": "Montevideo Wanderers",
       "venue": "Estadio Charrúa",
       "firstSeenAt": "2026-08-11T23:05:52.762Z",
-      "lastSeenAt": "2026-08-23T15:43:01.310Z",
+      "lastSeenAt": "2026-08-23T16:07:20.825Z",
       "canonicalAliases": [
         "cid_uru1_montevideocity_wanderers_20260823"
       ],
@@ -127,9 +186,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
