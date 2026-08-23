@@ -1,8 +1,43 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-08-22T18:56:10.245Z",
-  "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
+  "generatedAt": "2026-08-23T13:06:00.313Z",
+  "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
+  "historicalStatisticsCorrection": {
+    "active": true,
+    "ledgerSchema": "ai-matchlab.historical-value-statistics-exclusions.v1",
+    "ledgerPath": "data/value-comparison/historical-exclusions.json",
+    "ledgerEntryCount": 58,
+    "resolvedLedgerEntries": 58,
+    "validatedPlanAExclusions": 32,
+    "validatedPlanA2Exclusions": 26,
+    "appliedPlanAExclusions": 32,
+    "ledgerAffectedDays": [
+      "2026-07-19",
+      "2026-07-25",
+      "2026-08-03",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10"
+    ],
+    "statisticsCorrectedDays": [
+      "2026-07-19",
+      "2026-07-25",
+      "2026-08-03",
+      "2026-08-05",
+      "2026-08-06",
+      "2026-08-08",
+      "2026-08-09",
+      "2026-08-10"
+    ],
+    "frozenObservationArtifactsImmutable": true,
+    "retrospectiveValueRebuild": false,
+    "exactIdentityOnly": true,
+    "fuzzyMatching": false,
+    "correctedStatisticalPopulation": 401
+  },
   "trialStartDay": "2026-07-05",
   "dayCount": 45,
   "firstDay": "2026-07-05",
@@ -608,28 +643,42 @@
           "snapshot_stale"
         ]
       }
+    },
+    {
+      "dayKey": "2026-08-23",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "foundation_model_not_ready",
+          "foundation_publication_not_ready",
+          "snapshot_stale",
+          "live_status_stale_open_exact_provider_ids:cid_mex1_guadalajara_tijuana_20260823"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 39,
+  "integrityWarningDayCount": 40,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 145,
-        "uniqueMatches": 136,
-        "settled": 117,
-        "wins": 78,
-        "losses": 39,
-        "voids": 4,
+        "picks": 113,
+        "uniqueMatches": 105,
+        "settled": 88,
+        "wins": 59,
+        "losses": 29,
+        "voids": 1,
         "unresolved": 24,
         "unsupported": 0,
-        "oddsAvailable": 59,
-        "totalStake": 59,
-        "totalReturn": 53.02,
-        "profit": -5.9799999999999995,
-        "hitRate": 0.6667,
-        "roi": -0.1014
+        "oddsAvailable": 42,
+        "totalStake": 42,
+        "totalReturn": 40.1,
+        "profit": -1.9,
+        "hitRate": 0.6705,
+        "roi": -0.0452
       }
     },
     "B": {
@@ -654,11 +703,11 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 25,
-    "settledDeltaPlanBMinusPlanA": 51,
-    "winsDeltaPlanBMinusPlanA": 37,
-    "lossesDeltaPlanBMinusPlanA": 14,
-    "hitRateDeltaPlanBMinusPlanA": 0.0178,
-    "roiDeltaPlanBMinusPlanA": 0.5268
+    "picksDeltaPlanBMinusPlanA": 57,
+    "settledDeltaPlanBMinusPlanA": 80,
+    "winsDeltaPlanBMinusPlanA": 56,
+    "lossesDeltaPlanBMinusPlanA": 24,
+    "hitRateDeltaPlanBMinusPlanA": 0.014,
+    "roiDeltaPlanBMinusPlanA": 0.4706
   }
 }
