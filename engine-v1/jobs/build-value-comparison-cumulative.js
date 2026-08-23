@@ -37,6 +37,627 @@ function readJsonSafe(file, fallback = null) {
   }
 }
 
+function clean(value) {
+  return String(value ?? "").trim();
+}
+
+function summarizeComparisonRows(rows) {
+  const safeRows =
+    Array.isArray(rows)
+      ? rows
+      : [];
+
+  const picks =
+    safeRows.length;
+
+  const uniqueMatches =
+    new Set(
+      safeRows
+        .map(row => row?.matchId)
+        .filter(Boolean)
+    ).size;
+
+  const settledRows =
+    safeRows.filter(
+      row =>
+        row?.result === "WIN" ||
+        row?.result === "LOSS"
+    );
+
+  const wins =
+    safeRows.filter(
+      row => row?.result === "WIN"
+    ).length;
+
+  const losses =
+    safeRows.filter(
+      row => row?.result === "LOSS"
+    ).length;
+
+  const voids =
+    safeRows.filter(
+      row => row?.result === "VOID"
+    ).length;
+
+  const unresolved =
+    safeRows.filter(
+      row => row?.result === "UNRESOLVED"
+    ).length;
+
+  const unsupported =
+    safeRows.filter(
+      row => row?.result === "UNSUPPORTED"
+    ).length;
+
+  const oddsRows =
+    settledRows.filter(
+      row =>
+        Number.isFinite(
+          row?.oddsDecimal
+        ) &&
+        row.oddsDecimal > 1
+    );
+
+  const totalStake =
+    oddsRows.length;
+
+  const totalReturn =
+    oddsRows.reduce(
+      (sum, row) =>
+        sum +
+        (
+          row.result === "WIN"
+            ? row.oddsDecimal
+            : 0
+        ),
+      0
+    );
+
+  const profit =
+    oddsRows.length
+      ? totalReturn - totalStake
+      : null;
+
+  return {
+    picks,
+    uniqueMatches,
+
+    settled:
+      settledRows.length,
+
+    wins,
+    losses,
+    voids,
+    unresolved,
+    unsupported,
+
+    hitRate:
+      settledRows.length
+        ? Number(
+            (
+              wins /
+              settledRows.length
+            ).toFixed(4)
+          )
+        : null,
+
+    oddsAvailable:
+      oddsRows.length,
+
+    averageOdds:
+      oddsRows.length
+        ? Number(
+            (
+              oddsRows.reduce(
+                (sum, row) =>
+                  sum +
+                  row.oddsDecimal,
+                0
+              ) /
+              oddsRows.length
+            ).toFixed(4)
+          )
+        : null,
+
+    totalStake:
+      oddsRows.length
+        ? totalStake
+        : null,
+
+    totalReturn:
+      oddsRows.length
+        ? Number(
+            totalReturn.toFixed(4)
+          )
+        : null,
+
+    profit:
+      profit === null
+        ? null
+        : Number(
+            profit.toFixed(4)
+          ),
+
+    roi:
+      profit === null
+        ? null
+        : Number(
+            (
+              profit /
+              totalStake
+            ).toFixed(4)
+          )
+  };
+}
+
+function normalizedRepoPath(value) {
+  return clean(value)
+    .replaceAll("\\", "/");
+}
+
+function comparisonFingerprint(
+  dayKey,
+  plan,
+  row
+) {
+  return [
+    clean(dayKey),
+    clean(plan),
+
+    clean(
+      row?.canonicalMatchId ||
+      row?.matchId
+    ),
+
+    clean(row?.market),
+    clean(row?.pick)
+  ].join("|");
+}
+
+function validateHistoricalExclusionsLedger(
+  payload,
+  file
+) {
+  if (
+    payload?.ok !== true ||
+    payload?.schema !==
+      "ai-matchlab.historical-value-statistics-exclusions.v1" ||
+    payload?.status !== "active" ||
+    !Array.isArray(payload?.entries)
+  ) {
+    throw new Error(
+      "historical_exclusion_ledger_invalid"
+    );
+  }
+
+  const contract =
+    payload.contract || {};
+
+  if (
+    contract.applicationLayer !==
+      "derived_statistics_only" ||
+
+    contract
+      .frozenObservationArtifactsImmutable !==
+      true ||
+
+    contract.retrospectiveValueRebuild !==
+      false ||
+
+    contract.exactIdentityOnly !==
+      true ||
+
+    contract.fuzzyMatching !==
+      false ||
+
+    contract.teamNameMatching !==
+      false ||
+
+    contract.kickoffHeuristic !==
+      false ||
+
+    contract.exclusionReason !==
+      "minimum_recent_sample" ||
+
+    Number(
+      contract
+        .minimumRequiredRecentMatches
+    ) !== 3
+  ) {
+    throw new Error(
+      "historical_exclusion_contract_invalid"
+    );
+  }
+
+  const entries =
+    payload.entries;
+
+  const seenIds =
+    new Set();
+
+  const seenSlots =
+    new Set();
+
+  const byDay =
+    new Map();
+
+  for (const entry of entries) {
+    const exclusionId =
+      clean(entry?.exclusionId);
+
+    const dayKey =
+      clean(entry?.day);
+
+    const plan =
+      clean(entry?.plan);
+
+    const pickIndex =
+      Number(
+        entry?.comparison?.pickIndex
+      );
+
+    if (
+      !exclusionId ||
+      !/^\d{4}-\d{2}-\d{2}$/u
+        .test(dayKey) ||
+      !["A", "A2"].includes(plan) ||
+      !Number.isInteger(pickIndex) ||
+      pickIndex < 0 ||
+      !clean(
+        entry?.source?.fingerprint
+      )
+    ) {
+      throw new Error(
+        "historical_exclusion_entry_invalid"
+      );
+    }
+
+    const expectedComparisonFile =
+      `data/value-comparison/${dayKey}.json`;
+
+    if (
+      normalizedRepoPath(
+        entry?.comparison?.file
+      ) !== expectedComparisonFile
+    ) {
+      throw new Error(
+        `historical_exclusion_comparison_file_invalid:${exclusionId}`
+      );
+    }
+
+    if (
+      entry?.exclusion?.reason !==
+        "minimum_recent_sample" ||
+
+      entry?.exclusion
+        ?.statisticalOnly !== true ||
+
+      entry?.exclusion
+        ?.frozenObservationMutated !==
+        false
+    ) {
+      throw new Error(
+        `historical_exclusion_semantics_invalid:${exclusionId}`
+      );
+    }
+
+    const minimumRequired =
+      Number(
+        entry
+          ?.eligibilityEvidence
+          ?.minimumRequired
+      );
+
+    const homeSample =
+      Number(
+        entry
+          ?.eligibilityEvidence
+          ?.homeSample
+      );
+
+    const awaySample =
+      Number(
+        entry
+          ?.eligibilityEvidence
+          ?.awaySample
+      );
+
+    if (
+      minimumRequired !== 3 ||
+      !Number.isFinite(homeSample) ||
+      !Number.isFinite(awaySample) ||
+      (
+        homeSample >=
+          minimumRequired &&
+        awaySample >=
+          minimumRequired
+      )
+    ) {
+      throw new Error(
+        `historical_exclusion_eligibility_invalid:${exclusionId}`
+      );
+    }
+
+    if (seenIds.has(exclusionId)) {
+      throw new Error(
+        `historical_exclusion_duplicate_id:${exclusionId}`
+      );
+    }
+
+    seenIds.add(exclusionId);
+
+    const slot =
+      `${dayKey}|${plan}|${pickIndex}`;
+
+    if (seenSlots.has(slot)) {
+      throw new Error(
+        `historical_exclusion_duplicate_slot:${slot}`
+      );
+    }
+
+    seenSlots.add(slot);
+
+    if (!byDay.has(dayKey)) {
+      byDay.set(
+        dayKey,
+        []
+      );
+    }
+
+    byDay
+      .get(dayKey)
+      .push(entry);
+  }
+
+  const planACount =
+    entries.filter(
+      row => row?.plan === "A"
+    ).length;
+
+  const planA2Count =
+    entries.filter(
+      row => row?.plan === "A2"
+    ).length;
+
+  const affectedDays =
+    [...byDay.keys()]
+      .sort();
+
+  const declaredDays =
+    Array.isArray(
+      payload?.affectedDays
+    )
+      ? payload.affectedDays
+          .map(clean)
+          .sort()
+      : [];
+
+  if (
+    Number(
+      payload?.counts?.entries
+    ) !== entries.length ||
+
+    Number(
+      payload?.counts?.planA
+    ) !== planACount ||
+
+    Number(
+      payload?.counts?.planA2
+    ) !== planA2Count ||
+
+    Number(
+      payload?.counts?.planB
+    ) !== 0 ||
+
+    Number(
+      payload?.counts?.planB2
+    ) !== 0 ||
+
+    Number(
+      payload?.counts?.affectedDays
+    ) !== affectedDays.length ||
+
+    JSON.stringify(declaredDays) !==
+      JSON.stringify(affectedDays)
+  ) {
+    throw new Error(
+      "historical_exclusion_counts_invalid"
+    );
+  }
+
+  return {
+    active: true,
+    file,
+    payload,
+    entries,
+    byDay,
+    planACount,
+    planA2Count,
+    affectedDays
+  };
+}
+
+function loadHistoricalExclusionsLedger(
+  file,
+  required
+) {
+  if (!fs.existsSync(file)) {
+    if (required) {
+      throw new Error(
+        `historical_exclusion_ledger_missing:${file}`
+      );
+    }
+
+    return {
+      active: false,
+      file,
+      payload: null,
+      entries: [],
+      byDay: new Map(),
+      planACount: 0,
+      planA2Count: 0,
+      affectedDays: []
+    };
+  }
+
+  const payload =
+    readJsonSafe(
+      file,
+      null
+    );
+
+  return validateHistoricalExclusionsLedger(
+    payload,
+    file
+  );
+}
+
+function validateHistoricalEntriesForDay(
+  dayKey,
+  payload,
+  entries,
+  resolvedIds
+) {
+  const planAIndices =
+    new Set();
+
+  let planA2Validated =
+    0;
+
+  for (const entry of entries) {
+    const plan =
+      entry.plan;
+
+    const pickIndex =
+      Number(
+        entry.comparison.pickIndex
+      );
+
+    const picks =
+      payload
+        ?.plans
+        ?.[plan]
+        ?.picks;
+
+    if (
+      !Array.isArray(picks) ||
+      pickIndex >= picks.length
+    ) {
+      throw new Error(
+        `historical_exclusion_pick_missing:${entry.exclusionId}`
+      );
+    }
+
+    const row =
+      picks[pickIndex];
+
+    const actualFingerprint =
+      comparisonFingerprint(
+        dayKey,
+        plan,
+        row
+      );
+
+    if (
+      actualFingerprint !==
+      clean(
+        entry
+          ?.source
+          ?.fingerprint
+      )
+    ) {
+      throw new Error(
+        `historical_exclusion_fingerprint_mismatch:${entry.exclusionId}`
+      );
+    }
+
+    const expectedMatchId =
+      clean(
+        entry
+          ?.comparison
+          ?.matchId
+      );
+
+    const expectedCanonicalId =
+      clean(
+        entry
+          ?.comparison
+          ?.canonicalMatchId
+      );
+
+    const expectedMarket =
+      clean(
+        entry
+          ?.comparison
+          ?.market
+      );
+
+    const expectedPick =
+      clean(
+        entry
+          ?.comparison
+          ?.pick
+      );
+
+    if (
+      (
+        expectedMatchId &&
+        clean(row?.matchId) !==
+          expectedMatchId
+      ) ||
+      (
+        expectedCanonicalId &&
+        clean(
+          row?.canonicalMatchId
+        ) !==
+          expectedCanonicalId
+      ) ||
+      clean(row?.market) !==
+        expectedMarket ||
+      clean(row?.pick) !==
+        expectedPick
+    ) {
+      throw new Error(
+        `historical_exclusion_exact_identity_mismatch:${entry.exclusionId}`
+      );
+    }
+
+    if (
+      resolvedIds.has(
+        entry.exclusionId
+      )
+    ) {
+      throw new Error(
+        `historical_exclusion_resolved_twice:${entry.exclusionId}`
+      );
+    }
+
+    resolvedIds.add(
+      entry.exclusionId
+    );
+
+    if (plan === "A") {
+      planAIndices.add(
+        pickIndex
+      );
+    } else {
+      planA2Validated += 1;
+    }
+  }
+
+  return {
+    planAIndices,
+
+    planACount:
+      planAIndices.size,
+
+    planA2Validated,
+
+    total:
+      entries.length
+  };
+}
+
 function writeJsonPretty(file, payload) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
@@ -151,6 +772,32 @@ export function buildValueComparisonCumulative(options = {}) {
   const outputPath = options.output || path.join(dir, "cumulative.json");
   const trialStartDay = String(options.trialStartDay || PLAN_A_OBSERVATION_START_DAY);
 
+  const productionComparisonDir =
+    path.resolve(
+      dataPath("value-comparison")
+    );
+
+  const requireHistoricalExclusions =
+    options.requireHistoricalExclusions ===
+      undefined
+      ? path.resolve(dir) ===
+          productionComparisonDir
+      : options.requireHistoricalExclusions ===
+          true;
+
+  const historicalExclusionsFile =
+    options.historicalExclusionsFile ||
+    path.join(
+      dir,
+      "historical-exclusions.json"
+    );
+
+  const historicalExclusions =
+    loadHistoricalExclusionsLedger(
+      historicalExclusionsFile,
+      requireHistoricalExclusions
+    );
+
   const days = listComparisonDays(dir).filter(day => day >= trialStartDay);
 
   const totalsA = emptyTotals();
@@ -158,6 +805,22 @@ export function buildValueComparisonCumulative(options = {}) {
   const daysIncluded = [];
   const daysExcluded = [];
   const integrityDiagnostics = [];
+
+  const resolvedHistoricalExclusionIds =
+    new Set();
+
+  const statisticsCorrectedDays =
+    new Set();
+
+  let validatedPlanAExclusions =
+    0;
+
+  let validatedPlanA2Exclusions =
+    0;
+
+  let appliedPlanAExclusions =
+    0;
+
   const requireIntegrityClean = options.requireIntegrityClean === true;
   const requireImmutablePlanA = options.requireImmutablePlanA !== false;
   let planAMeta = { id: "plan-a", label: "Plan A - frozen production observation" };
@@ -165,6 +828,33 @@ export function buildValueComparisonCumulative(options = {}) {
 
   for (const day of days) {
     const payload = readJsonSafe(path.join(dir, `${day}.json`), null);
+
+    const historicalEntriesForDay =
+      historicalExclusions.byDay.get(day) ||
+      [];
+
+    if (
+      historicalEntriesForDay.length > 0 &&
+      payload?.comparisonEligible === false
+    ) {
+      throw new Error(
+        `historical_exclusion_day_became_ineligible:${day}`
+      );
+    }
+
+    const historicalDay =
+      validateHistoricalEntriesForDay(
+        day,
+        payload,
+        historicalEntriesForDay,
+        resolvedHistoricalExclusionIds
+      );
+
+    validatedPlanAExclusions +=
+      historicalDay.planACount;
+
+    validatedPlanA2Exclusions +=
+      historicalDay.planA2Validated;
 
     if (
       payload?.comparisonEligible === false
@@ -197,11 +887,53 @@ export function buildValueComparisonCumulative(options = {}) {
       continue;
     }
 
-    const A = payload?.plans?.A?.summary;
-    const B = payload?.plans?.B?.summary;
+    let A =
+      payload?.plans?.A?.summary;
+
+    const B =
+      payload?.plans?.B?.summary;
+
     if (!A || !B) {
-      daysExcluded.push({ dayKey: day, reason: "comparison_plans_missing" });
+      if (historicalDay.total > 0) {
+        throw new Error(
+          `historical_exclusion_comparison_plans_missing:${day}`
+        );
+      }
+
+      daysExcluded.push({
+        dayKey: day,
+        reason:
+          "comparison_plans_missing"
+      });
+
       continue;
+    }
+
+    if (
+      historicalDay.planAIndices.size >
+      0
+    ) {
+      const planAPicks =
+        payload?.plans?.A?.picks;
+
+      if (!Array.isArray(planAPicks)) {
+        throw new Error(
+          `historical_exclusion_plan_a_picks_missing:${day}`
+        );
+      }
+
+      const correctedPlanAPicks =
+        planAPicks.filter(
+          (_row, index) =>
+            !historicalDay
+              .planAIndices
+              .has(index)
+        );
+
+      A =
+        summarizeComparisonRows(
+          correctedPlanAPicks
+        );
     }
 
     if (requireImmutablePlanA) {
@@ -209,6 +941,12 @@ export function buildValueComparisonCumulative(options = {}) {
       const planImmutable = payload?.plans?.A?.immutable === true;
       const observation = readPlanAObservationDay(day);
       if (!contractImmutable || !planImmutable || !observation.ok) {
+        if (historicalDay.total > 0) {
+          throw new Error(
+            `historical_exclusion_immutable_plan_a_invalid:${day}`
+          );
+        }
+
         daysExcluded.push({
           dayKey: day,
           reason: "immutable_plan_a_observation_invalid",
@@ -236,8 +974,59 @@ export function buildValueComparisonCumulative(options = {}) {
     addInto(totalsB, B);
     daysIncluded.push(day);
 
+    if (
+      historicalDay.planACount > 0
+    ) {
+      appliedPlanAExclusions +=
+        historicalDay.planACount;
+
+      statisticsCorrectedDays.add(
+        day
+      );
+    }
+
     if (payload?.plans?.A?.id) planAMeta = { id: payload.plans.A.id, label: payload.plans.A.label };
     if (payload?.plans?.B?.id) planBMeta = { id: payload.plans.B.id, label: payload.plans.B.label };
+  }
+
+  if (
+    historicalExclusions.active &&
+    resolvedHistoricalExclusionIds.size !==
+      historicalExclusions.entries.length
+  ) {
+    const unresolved =
+      historicalExclusions.entries
+        .filter(
+          entry =>
+            !resolvedHistoricalExclusionIds
+              .has(entry.exclusionId)
+        )
+        .map(
+          entry =>
+            entry.exclusionId
+        );
+
+    throw new Error(
+      `historical_exclusion_entries_unresolved:${unresolved.join(",")}`
+    );
+  }
+
+  if (
+    historicalExclusions.active &&
+    (
+      validatedPlanAExclusions !==
+        historicalExclusions.planACount ||
+
+      validatedPlanA2Exclusions !==
+        historicalExclusions.planA2Count ||
+
+      appliedPlanAExclusions !==
+        historicalExclusions.planACount
+    )
+  ) {
+    throw new Error(
+      "historical_exclusion_application_count_mismatch"
+    );
   }
 
   const finalA = finalizeTotals(totalsA);
@@ -247,7 +1036,89 @@ export function buildValueComparisonCumulative(options = {}) {
     ok: true,
     schema: "ai-matchlab.value-plan-comparison-cumulative.v1",
     generatedAt: new Date().toISOString(),
-    note: "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Snapshot-integrity warnings are retained as diagnostics and do not erase what the trial actually displayed.",
+    note: "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
+
+    historicalStatisticsCorrection: {
+      active:
+        historicalExclusions.active,
+
+      ledgerSchema:
+        historicalExclusions
+          .payload?.schema ||
+        null,
+
+      ledgerPath:
+        historicalExclusions.active
+          ? normalizedRepoPath(
+              path.relative(
+                ROOT,
+                historicalExclusions.file
+              )
+            )
+          : null,
+
+      ledgerEntryCount:
+        historicalExclusions
+          .entries.length,
+
+      resolvedLedgerEntries:
+        resolvedHistoricalExclusionIds
+          .size,
+
+      validatedPlanAExclusions,
+
+      validatedPlanA2Exclusions,
+
+      appliedPlanAExclusions,
+
+      ledgerAffectedDays:
+        historicalExclusions
+          .affectedDays,
+
+      statisticsCorrectedDays:
+        [...statisticsCorrectedDays]
+          .sort(),
+
+      frozenObservationArtifactsImmutable:
+        historicalExclusions
+          .payload?.contract
+          ?.frozenObservationArtifactsImmutable ===
+        true,
+
+      retrospectiveValueRebuild:
+        historicalExclusions
+          .payload?.contract
+          ?.retrospectiveValueRebuild ??
+        null,
+
+      exactIdentityOnly:
+        historicalExclusions
+          .payload?.contract
+          ?.exactIdentityOnly ===
+        true,
+
+      fuzzyMatching:
+        historicalExclusions
+          .payload?.contract
+          ?.fuzzyMatching ??
+        null,
+
+      correctedStatisticalPopulation:
+        Number.isFinite(
+          Number(
+            historicalExclusions
+              .payload?.provenance
+              ?.correctedStatisticalPopulation
+          )
+        )
+          ? Number(
+              historicalExclusions
+                .payload?.provenance
+                ?.correctedStatisticalPopulation
+            )
+          : null
+    },
+
     trialStartDay,
     dayCount: daysIncluded.length,
     firstDay: daysIncluded[0] || null,
@@ -313,6 +1184,11 @@ if (isDirect) {
       planA: result.payload.plans.A.totals,
       planB: result.payload.plans.B.totals,
       comparison: result.payload.comparison,
+
+      historicalStatisticsCorrection:
+        result.payload
+          .historicalStatisticsCorrection,
+
       written: options.write ? result.outputPath : "(dry-run, pass --write)"
     })
   );
