@@ -2,7 +2,7 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-08-23",
-  "generatedAt": "2026-08-23T02:43:36.401Z",
+  "generatedAt": "2026-08-23T03:36:43.414Z",
   "universe": {
     "expected": null,
     "canonical": 360,
@@ -877,7 +877,7 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-08-23T02:43:36.192Z",
+    "generatedAt": "2026-08-23T03:36:43.232Z",
     "season": "2026-2027",
     "modelReady": false,
     "publicationReady": false,
@@ -918,16 +918,33 @@
   },
   "liveStatusCompleteness": {
     "schema": "ai-matchlab.live-status-completeness.v1",
-    "ok": true,
+    "ok": false,
     "policy": {
       "staleAfterHours": 4,
       "exactProviderIdOnly": true,
       "exactProviderLineageSupersession": true,
       "heuristicFinalPromotion": false
     },
-    "staleOpenCount": 0,
-    "staleOpenCanonicalIds": [],
-    "staleOpenFixtures": [],
+    "staleOpenCount": 1,
+    "staleOpenCanonicalIds": [
+      "cid_mex1_guadalajara_tijuana_20260823"
+    ],
+    "staleOpenFixtures": [
+      {
+        "canonicalId": "cid_mex1_guadalajara_tijuana_20260823",
+        "providerId": "401877006",
+        "source": "espn",
+        "leagueSlug": "mex.1",
+        "providerLeagueSlug": "mex.1",
+        "kickoffUtc": "2026-08-22T23:07Z",
+        "ageHours": 4.495,
+        "status": "LIVE",
+        "rawStatus": "STATUS_DELAYED",
+        "statusType": null,
+        "operationalState": null,
+        "classification": "stale_open_exact_provider_id"
+      }
+    ],
     "supersededOpenCount": 0,
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
@@ -935,7 +952,8 @@
   "hardFailures": [
     "foundation_model_not_ready",
     "foundation_publication_not_ready",
-    "snapshot_stale"
+    "snapshot_stale",
+    "live_status_stale_open_exact_provider_ids:cid_mex1_guadalajara_tijuana_20260823"
   ],
   "warnings": [
     "acquisition_skipped_slugs:eng.fa_qual,ger.super_cup,ned.w.1,sco.tennents_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1"
