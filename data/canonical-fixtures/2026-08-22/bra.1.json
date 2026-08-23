@@ -2,7 +2,7 @@
   "dayKey": "2026-08-22",
   "leagueSlug": "bra.1",
   "leagueName": "Brazil Serie A",
-  "updatedAt": "2026-08-22T20:53:15.633Z",
+  "updatedAt": "2026-08-23T13:49:44.484Z",
   "count": 1,
   "sourceMeta": {
     "acquisitionProvider": "espn_direct_league_status",
@@ -33,7 +33,9 @@
       }
     },
     "mergedAt": "2026-08-22T20:53:15.633Z",
-    "mode": "targeted_live_status_refresh"
+    "mode": "results_truth_finalize_sweep",
+    "resultsTruthSweepAt": "2026-08-23T13:49:44.484Z",
+    "resultsTruthSweepUpgraded": 1
   },
   "fixtures": [
     {
@@ -58,11 +60,26 @@
         "espn": "401841205"
       },
       "providerLeagueSlug": "bra.1",
-      "status": "SECOND_HALF",
-      "rawStatus": "STATUS_SECOND_HALF",
-      "minute": "90'+3'",
+      "status": "FT",
+      "statusType": "STATUS_FINAL",
+      "rawStatus": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "minute": "FT",
       "scoreHome": 2,
-      "scoreAway": 1
+      "scoreAway": 1,
+      "isDisplayFinal": true,
+      "resultSource": "league-memory",
+      "resultsTruthStatusTransition": {
+        "schema": "ai-matchlab.results-truth-status-transition.v1",
+        "reason": "verified_unique_result_truth",
+        "previousStatusContract": {
+          "status": "SECOND_HALF",
+          "rawStatus": "STATUS_SECOND_HALF",
+          "minute": "90'+3'",
+          "scoreHome": 2,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }

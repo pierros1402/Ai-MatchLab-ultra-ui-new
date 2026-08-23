@@ -2,7 +2,7 @@
   "dayKey": "2026-08-22",
   "leagueSlug": "esp.1",
   "leagueName": "LaLiga",
-  "updatedAt": "2026-08-22T20:53:15.779Z",
+  "updatedAt": "2026-08-23T13:49:44.495Z",
   "count": 3,
   "sourceMeta": {
     "acquisitionProvider": "espn_direct_league_status",
@@ -33,7 +33,9 @@
       }
     },
     "mergedAt": "2026-08-22T20:53:15.779Z",
-    "mode": "targeted_live_status_refresh"
+    "mode": "results_truth_finalize_sweep",
+    "resultsTruthSweepAt": "2026-08-23T13:49:44.495Z",
+    "resultsTruthSweepUpgraded": 1
   },
   "fixtures": [
     {
@@ -117,11 +119,26 @@
         "espn": "401882912"
       },
       "providerLeagueSlug": "esp.1",
-      "status": "LIVE",
-      "rawStatus": "STATUS_IN_PROGRESS",
-      "minute": "62'",
+      "status": "FT",
+      "statusType": "STATUS_FINAL",
+      "rawStatus": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
+      "minute": "FT",
       "scoreHome": 1,
-      "scoreAway": 1
+      "scoreAway": 2,
+      "isDisplayFinal": true,
+      "resultSource": "league-memory",
+      "resultsTruthStatusTransition": {
+        "schema": "ai-matchlab.results-truth-status-transition.v1",
+        "reason": "verified_unique_result_truth",
+        "previousStatusContract": {
+          "status": "LIVE",
+          "rawStatus": "STATUS_IN_PROGRESS",
+          "minute": "62'",
+          "scoreHome": 1,
+          "scoreAway": 1
+        }
+      }
     }
   ]
 }
