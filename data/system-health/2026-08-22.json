@@ -1,24 +1,24 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-22",
-  "generatedAt": "2026-08-22T18:17:47.048Z",
+  "generatedAt": "2026-08-23T14:46:31.682Z",
   "severity": "error",
   "issueCounts": {
     "error": 6,
     "warning": 9,
-    "info": 9
+    "info": 8
   },
   "alert": true,
   "alertCounts": {
-    "error": 6,
+    "error": 2,
     "warning": 6,
     "info": 0
   },
-  "activeIssueCount": 24,
+  "activeIssueCount": 23,
   "actionableIssueCount": 15,
-  "newIssueCount": 14,
-  "newActionableIssueCount": 12,
-  "resolvedIssueCount": 7,
+  "newIssueCount": 13,
+  "newActionableIssueCount": 8,
+  "resolvedIssueCount": 10,
   "persistentIssueCount": 10,
   "activeIssues": [
     {
@@ -321,22 +321,6 @@
           "rejectedCount": 20,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-22",
-        "todayDayKey": "2026-08-22",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 18,
-        "settled": 16,
-        "unresolved": 2
       }
     },
     {
@@ -1044,19 +1028,19 @@
           "summary": {
             "picks": 18,
             "uniqueMatches": 17,
-            "settled": 16,
+            "settled": 18,
             "wins": 9,
-            "losses": 7,
+            "losses": 9,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.5625,
-            "oddsAvailable": 9,
-            "averageOdds": 1.5656,
-            "totalStake": 9,
+            "hitRate": 0.5,
+            "oddsAvailable": 10,
+            "averageOdds": 1.561,
+            "totalStake": 10,
             "totalReturn": 5.87,
-            "profit": -3.13,
-            "roi": -0.3478
+            "profit": -4.13,
+            "roi": -0.413
           }
         },
         "planA2": {
@@ -1989,21 +1973,6 @@
     {
       "severity": "warning",
       "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
       "type": "stale_derived_artifact",
       "message": "Freshness report found stale derived artifact.",
       "details": {
@@ -2011,7 +1980,7 @@
         "artifact": "value-plans/2026-08-22/plan-a2.json",
         "at": 1787407740076,
         "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -14721751
+        "olderThanLatestCanonicalMs": -15885735
       }
     },
     {
@@ -2024,7 +1993,7 @@
         "artifact": "value-plans/2026-08-22/plan-a2-audit.json",
         "at": "2026-08-22T14:09:00.083Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -14721744
+        "olderThanLatestCanonicalMs": -15885728
       }
     },
     {
@@ -2038,7 +2007,7 @@
         "at": "2026-08-22T14:06:45.865Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -14855962
+        "olderThanLatestCanonicalMs": -16019946
       }
     },
     {
@@ -2051,7 +2020,7 @@
         "artifact": "value-plans/2026-08-22/plan-b2-audit.json",
         "at": "2026-08-22T14:09:01.917Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -14719910
+        "olderThanLatestCanonicalMs": -15883894
       }
     },
     {
@@ -2064,7 +2033,7 @@
         "artifact": "value-comparison/2026-08-22.json",
         "at": "2026-08-22T17:27:03.861Z",
         "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -2837966
+        "olderThanLatestCanonicalMs": -4001950
       }
     },
     {
@@ -2138,59 +2107,62 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_model_not_ready",
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "age_expired_results_rows_present",
+      "message": "Foundation integrity informational condition.",
       "details": {
-        "failure": "foundation_model_not_ready"
+        "component": "historySemantic",
+        "reason": "age_expired_results_rows_present",
+        "count": 276,
+        "informational": true
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "history_semantic_warnings_present",
+      "message": "Foundation integrity informational condition.",
       "details": {
-        "failure": "foundation_publication_not_ready"
+        "component": "historySemantic",
+        "reason": "history_semantic_warnings_present",
+        "count": 4,
+        "informational": true
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
+      "severity": "info",
+      "source": "foundation-integrity",
+      "type": "score_consistent_alias_mirror_conflicts_present",
+      "message": "Foundation integrity informational condition.",
       "details": {
-        "failure": "snapshot_stale"
+        "component": "historySemantic",
+        "reason": "score_consistent_alias_mirror_conflicts_present",
+        "count": 9,
+        "informational": true
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "slugs": [
+          "eng.fa_qual",
+          "ger.super_cup",
+          "ned.w.1",
+          "sco.tennents_qual",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:eng.fa_qual,ger.super_cup,ned.w.1,sco.tennents_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
       }
     }
   ],
   "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical",
-          "value_plan_comparison_stale_against_canonical"
-        ]
-      }
-    },
     {
       "severity": "warning",
       "source": "freshness-report",
@@ -2201,7 +2173,7 @@
         "artifact": "value-plans/2026-08-22/plan-a2.json",
         "at": 1787407740076,
         "staleReason": "plan_a2_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -14721751
+        "olderThanLatestCanonicalMs": -15885735
       }
     },
     {
@@ -2214,7 +2186,7 @@
         "artifact": "value-plans/2026-08-22/plan-a2-audit.json",
         "at": "2026-08-22T14:09:00.083Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -14721744
+        "olderThanLatestCanonicalMs": -15885728
       }
     },
     {
@@ -2228,7 +2200,7 @@
         "at": "2026-08-22T14:06:45.865Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -14855962
+        "olderThanLatestCanonicalMs": -16019946
       }
     },
     {
@@ -2241,7 +2213,7 @@
         "artifact": "value-plans/2026-08-22/plan-b2-audit.json",
         "at": "2026-08-22T14:09:01.917Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -14719910
+        "olderThanLatestCanonicalMs": -15883894
       }
     },
     {
@@ -2254,7 +2226,7 @@
         "artifact": "value-comparison/2026-08-22.json",
         "at": "2026-08-22T17:27:03.861Z",
         "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -2837966
+        "olderThanLatestCanonicalMs": -4001950
       }
     },
     {
@@ -2302,6 +2274,172 @@
       }
     },
     {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "eng.fa_qual",
+          "ger.super_cup",
+          "ned.w.1",
+          "sco.tennents_qual",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:eng.fa_qual,ger.super_cup,ned.w.1,sco.tennents_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2",
+        "artifact": "value-plans/2026-08-21/plan-a2.json",
+        "at": 1787339961135,
+        "staleReason": "plan_a2_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -893641
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_a2_audit",
+        "artifact": "value-plans/2026-08-21/plan-a2-audit.json",
+        "at": "2026-08-21T19:19:21.136Z",
+        "staleReason": "plan_a2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -893640
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b_audit",
+        "artifact": "value-plans/2026-08-21/plan-b-audit.json",
+        "at": "2026-08-21T19:18:34.396Z",
+        "staleReason": "plan_b_audit_stale_against_canonical",
+        "preservation": null,
+        "olderThanLatestCanonicalMs": -940380
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "plan_b2_audit",
+        "artifact": "value-plans/2026-08-21/plan-b2-audit.json",
+        "at": "2026-08-21T19:19:22.627Z",
+        "staleReason": "plan_b2_audit_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -892149
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-21.json",
+        "at": "2026-08-21T19:20:04.812Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -849964
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b",
+        "artifact": "value-plans/2026-08-21/plan-b.json",
+        "at": null,
+        "staleReason": "plan_b_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "info",
+      "source": "freshness-report",
+      "type": "skipped_freshness_input",
+      "message": "Freshness report skipped an optional/missing input.",
+      "details": {
+        "kind": "plan_b2",
+        "artifact": "value-plans/2026-08-21/plan-b2.json",
+        "at": null,
+        "staleReason": "plan_b2_stale_against_canonical",
+        "skipped": "artifact_missing_or_no_timestamp"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "artifact_missing",
+      "message": "Foundation integrity report is missing.",
+      "details": {
+        "artifact": "data/foundation-integrity/2026-08-21.json"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_warning",
+      "message": "canonical_leagues_missing_from_published:den.1",
+      "details": {
+        "raw": "canonical_leagues_missing_from_published:den.1"
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "acquisition_skipped_slugs",
+      "message": "Acquisition skipped slugs during fixture acquisition.",
+      "details": {
+        "slugs": [
+          "bol.copa",
+          "col.copa",
+          "concacaf.central.american.cup",
+          "usa.ncaa.m.1",
+          "usa.ncaa.w.1",
+          "usa.w.usl.1"
+        ],
+        "raw": "acquisition_skipped_slugs:bol.copa,col.copa,concacaf.central.american.cup,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
+        "contextOnly": false
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "plan_a2_stale_against_canonical",
+          "plan_a2_audit_stale_against_canonical",
+          "plan_b_audit_stale_against_canonical",
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
       "severity": "error",
       "source": "build-report",
       "type": "build_hard_failure",
@@ -2336,163 +2474,6 @@
       "details": {
         "clean": false,
         "cleanStrict": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-08-23.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b",
-        "artifact": "value-plans/2026-08-23/plan-b.json",
-        "at": null,
-        "staleReason": "plan_b_stale_against_canonical",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b2",
-        "artifact": "value-plans/2026-08-23/plan-b2.json",
-        "at": null,
-        "staleReason": "plan_b2_stale_against_canonical",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 22,
-        "settled": 0,
-        "unresolved": 22
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-23",
-        "todayDayKey": "2026-08-22",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    }
-  ],
-  "persistentIssues": [
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "age_expired_results_rows_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "age_expired_results_rows_present",
-        "count": 260,
-        "informational": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "history_semantic_warnings_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "history_semantic_warnings_present",
-        "count": 4,
-        "informational": true
-      }
-    },
-    {
-      "severity": "info",
-      "source": "foundation-integrity",
-      "type": "score_consistent_alias_mirror_conflicts_present",
-      "message": "Foundation integrity informational condition.",
-      "details": {
-        "component": "historySemantic",
-        "reason": "score_consistent_alias_mirror_conflicts_present",
-        "count": 9,
-        "informational": true
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "acquisition_skipped_slugs",
-      "message": "Acquisition skipped slugs during fixture acquisition.",
-      "details": {
-        "slugs": [
-          "eng.fa_qual",
-          "ger.super_cup",
-          "ned.w.1",
-          "sco.tennents_qual",
-          "usa.ncaa.m.1",
-          "usa.ncaa.w.1",
-          "usa.w.usl.1"
-        ],
-        "raw": "acquisition_skipped_slugs:eng.fa_qual,ger.super_cup,ned.w.1,sco.tennents_qual,usa.ncaa.m.1,usa.ncaa.w.1,usa.w.usl.1",
-        "contextOnly": false
       }
     },
     {
@@ -2552,22 +2533,6 @@
           "rejectedCount": 20,
           "alreadyDeclaredCount": 0
         }
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-22",
-        "todayDayKey": "2026-08-22",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 18,
-        "settled": 16,
-        "unresolved": 2
       }
     },
     {
@@ -3275,19 +3240,19 @@
           "summary": {
             "picks": 18,
             "uniqueMatches": 17,
-            "settled": 16,
+            "settled": 18,
             "wins": 9,
-            "losses": 7,
+            "losses": 9,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 0,
             "unsupported": 0,
-            "hitRate": 0.5625,
-            "oddsAvailable": 9,
-            "averageOdds": 1.5656,
-            "totalStake": 9,
+            "hitRate": 0.5,
+            "oddsAvailable": 10,
+            "averageOdds": 1.561,
+            "totalStake": 10,
             "totalReturn": 5.87,
-            "profit": -3.13,
-            "roi": -0.3478
+            "profit": -4.13,
+            "roi": -0.413
           }
         },
         "planA2": {
