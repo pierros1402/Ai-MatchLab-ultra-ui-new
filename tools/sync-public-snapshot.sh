@@ -7,6 +7,7 @@ ENGINE_BASE="${ENGINE_BASE:-https://ai-matchlab-engine.onrender.com}"
 CRON_SECRET="${CRON_SECRET:-}"
 MAX_ATTEMPTS="${SNAPSHOT_SYNC_MAX_ATTEMPTS:-90}"
 SLEEP_SECONDS="${SNAPSHOT_SYNC_POLL_SECONDS:-5}"
+POLL_TIMEOUT_SECONDS="${SNAPSHOT_SYNC_POLL_TIMEOUT_SECONDS:-15}"
 # Render can queue the authenticated start request while the service is busy.
 # Keep the start budget above the observed multi-minute queue delay; once the
 # job id is returned, the existing short status polls remain unchanged.
@@ -51,11 +52,21 @@ echo "SNAPSHOT_SYNC_JOB_ID=${JOB_ID}"
 
 FINAL_RESPONSE=""
 for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-  FINAL_RESPONSE="$(
-    curl -fsS --connect-timeout 20 --max-time 45 \
+  if ! FINAL_RESPONSE="$(
+    curl -fsS --connect-timeout 10 --max-time "$POLL_TIMEOUT_SECONDS" \
       -H "X-Cron-Secret: ${CRON_SECRET}" \
       "${ENGINE_BASE}/ops/sync-snapshot/status?id=$(node -p 'encodeURIComponent(process.argv[1])' "$JOB_ID")"
-  )"
+  )"; then
+    echo "SNAPSHOT_SYNC_ATTEMPT=${attempt} STATUS=poll_transport_error"
+
+    if [[ "$attempt" -eq "$MAX_ATTEMPTS" ]]; then
+      echo "ERROR: snapshot sync status transport failed until retry budget exhausted" >&2
+      exit 1
+    fi
+
+    sleep "$SLEEP_SECONDS"
+    continue
+  fi
 
   STATUS="$(
     printf '%s' "$FINAL_RESPONSE" |
@@ -63,8 +74,12 @@ for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
         let raw="";
         process.stdin.on("data", chunk => raw += chunk);
         process.stdin.on("end", () => {
-          const payload = JSON.parse(raw);
-          process.stdout.write(String(payload?.job?.status || "unknown"));
+          try {
+            const payload = JSON.parse(raw);
+            process.stdout.write(String(payload?.job?.status || "unknown"));
+          } catch {
+            process.stdout.write("unknown");
+          }
         });
       '
   )"

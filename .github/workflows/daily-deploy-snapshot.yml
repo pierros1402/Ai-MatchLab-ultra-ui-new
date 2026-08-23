@@ -968,8 +968,10 @@ jobs:
           # Publication is complete only after the engine child process promotes
           # the exact commit-pinned release and the public snapshot endpoint
           # returns the same manifest hash. A failed sync fails the workflow.
-          bash tools/sync-public-snapshot.sh "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"
+          # Promote the release day first. A prior-day synchronization problem
+          # must never strand the newly published operational day behind yesterday.
           bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"
+          bash tools/sync-public-snapshot.sh "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"
 
       - name: Data publication requires no UI deploy
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'
