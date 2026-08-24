@@ -1,0 +1,135 @@
+{
+  "schema": "ai-matchlab.history-backed-standings.v1",
+  "league": "isr.1",
+  "seasonReference": "2025-2026",
+  "updatedAt": "2026-08-24T18:23:16.619Z",
+  "confidence": 0,
+  "completeness": 0,
+  "sourceAudit": [
+    {
+      "type": "history_foundation",
+      "label": "history-2026-2027",
+      "ok": true
+    },
+    {
+      "type": "competition_contract",
+      "label": "isr.1@2025-2026#v1",
+      "ok": false
+    }
+  ],
+  "phaseSummary": {
+    "hasPhaseTables": false,
+    "phaseKeys": []
+  },
+  "phaseTables": {},
+  "phases": {},
+  "table": [],
+  "foundation": {
+    "schema": "ai-matchlab.history-backed-standings-foundation.v1",
+    "status": "GATED",
+    "usable": false,
+    "reasonCodes": [
+      "TEAM_COUNT_AUTHORITY_MISSING"
+    ],
+    "builtAt": "2026-08-24T18:23:16.619Z",
+    "historySeason": "2026-2027",
+    "historyLeagueRows": 1,
+    "historyLeagueSha256": "b8347efed94043527a74c38567a5147d88401d0e0f33d84920d4255a5de61977",
+    "competitionFormatRegistrySha256": "db9a8320f7b3f1e7ef5e898d95c0c7efe6c0fe69f27ac8ae4043691fc0528cd1",
+    "teamAliasesSha256": "c83567694f774de5d381b5329548dbaa79736585f6981c8d67bde327ce406e15",
+    "teamIdentityMode": "LEAGUE_SCOPED_CANONICAL_ALIAS_ID_V1",
+    "contractId": "isr.1@2025-2026#v1",
+    "contractSeasonReference": "2025-2026",
+    "contractAuthorityScopes": [],
+    "contractValidation": {
+      "schema": "ai-matchlab.standings-contract-validation.v1",
+      "status": "UNVERIFIED",
+      "ok": false,
+      "publicationDecision": "NOT_APPLIED_READ_ONLY",
+      "leagueSlug": "isr.1",
+      "seasonReference": "2025-2026",
+      "contractId": "isr.1@2025-2026#v1",
+      "authority": {
+        "status": "UNVERIFIED",
+        "scopes": [],
+        "verifiedAt": null
+      },
+      "artifact": {
+        "shape": "OBJECT",
+        "declaredLeague": "isr.1",
+        "observedPhaseKeys": []
+      },
+      "summary": {
+        "primaryUniverseSource": "TABLE",
+        "primaryRowCount": 2,
+        "primaryUniqueTeamCount": 2,
+        "primaryCanonicalIdCount": 2,
+        "primaryFallbackIdentityCount": 0,
+        "primaryCanonicalIdentityComplete": true,
+        "phaseTableCount": 0,
+        "teamCountEvaluation": {
+          "evaluated": false,
+          "pass": null,
+          "expected": null,
+          "observed": 2
+        },
+        "errorCount": 0,
+        "warningCount": 1
+      },
+      "issues": [
+        {
+          "code": "TEAM_COUNT_CONTRACT_UNVERIFIED",
+          "severity": "warning",
+          "scope": "contract.teamCount",
+          "message": "Team count is not authoritative for this league/season; count mismatch is not evaluated as compliance failure."
+        }
+      ],
+      "mutationGuard": {
+        "readOnly": true,
+        "mutationAttempted": false,
+        "mutations": []
+      }
+    },
+    "observedRowCount": 2,
+    "observedTable": [
+      {
+        "position": 1,
+        "rank": 1,
+        "canonicalTeamId": "stid_65a8c2c381518187b8f2865a",
+        "team": "Maccabi Tel-Aviv",
+        "teamName": "Maccabi Tel-Aviv",
+        "name": "Maccabi Tel-Aviv",
+        "played": 1,
+        "wins": 1,
+        "draws": 0,
+        "losses": 0,
+        "goalsFor": 5,
+        "goalsAgainst": 2,
+        "goalDiff": 3,
+        "goalDifference": 3,
+        "points": 3,
+        "confidence": 1
+      },
+      {
+        "position": 2,
+        "rank": 2,
+        "canonicalTeamId": "stid_22da3d03e8eabd41f56c13eb",
+        "team": "Hapoel Jerusalem",
+        "teamName": "Hapoel Jerusalem",
+        "name": "Hapoel Jerusalem",
+        "played": 1,
+        "wins": 0,
+        "draws": 0,
+        "losses": 1,
+        "goalsFor": 2,
+        "goalsAgainst": 5,
+        "goalDiff": -3,
+        "goalDifference": -3,
+        "points": 0,
+        "confidence": 1
+      }
+    ],
+    "consumerTableRows": 0,
+    "staleOnSourceChange": true
+  }
+}
