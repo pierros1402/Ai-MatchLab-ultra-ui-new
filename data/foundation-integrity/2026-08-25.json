@@ -1,17 +1,22 @@
 {
   "schema": "ai-matchlab.foundation-integrity.v1",
-  "generatedAt": "2026-08-24T19:55:55.451Z",
+  "generatedAt": "2026-08-24T21:17:09.310Z",
   "dayKey": "2026-08-25",
   "season": "2026-2027",
-  "ok": true,
+  "ok": false,
   "modelReady": true,
-  "publicationReady": true,
-  "blocked": [],
+  "publicationReady": false,
+  "blocked": [
+    {
+      "component": "details",
+      "reason": "details_foundation_not_ready"
+    }
+  ],
   "warnings": [
     {
       "component": "historySemantic",
       "reason": "age_expired_results_rows_present",
-      "count": 182,
+      "count": 192,
       "informational": true
     },
     {
@@ -35,7 +40,7 @@
         "ok": false,
         "clean": false,
         "schema": "ai-matchlab.history-semantic-integrity.v1",
-        "generatedAt": "2026-08-24T19:55:54.356Z",
+        "generatedAt": "2026-08-24T21:17:08.291Z",
         "sourceContract": {
           "readOnlyTruthLayers": true,
           "truthWrites": 0,
@@ -83,7 +88,7 @@
           {
             "type": "results_expired_entries",
             "severity": "info",
-            "count": 182,
+            "count": 192,
             "detail": "Age-expired rows are reported separately and are not treated as duplicates."
           }
         ],
@@ -92,7 +97,7 @@
           "teamKeyCount": 17604,
           "entryCount": 433528,
           "reconstructedMatchIdCount": 216659,
-          "expiredEntryCount": 182,
+          "expiredEntryCount": 192,
           "invalidEntryCount": 0,
           "orphanMatchIdCount": 1,
           "multiSideMatchIdCount": 165,
@@ -1337,7 +1342,7 @@
             {
               "slug": "chi.1",
               "actionable": 2,
-              "expiredEntryCount": 4,
+              "expiredEntryCount": 6,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 1,
@@ -1829,7 +1834,7 @@
             {
               "slug": "arg.1",
               "actionable": 1,
-              "expiredEntryCount": 2,
+              "expiredEntryCount": 6,
               "invalidEntryCount": 0,
               "orphanMatchIdCount": 0,
               "mirrorConflictCount": 0,
@@ -4199,7 +4204,7 @@
       "reason": null,
       "detail": {
         "schema": "ai-matchlab.standings-foundation-audit.v1",
-        "generatedAt": "2026-08-24T19:55:54.382Z",
+        "generatedAt": "2026-08-24T21:17:08.343Z",
         "ok": true,
         "season": "2026-2027",
         "summary": {
@@ -176508,16 +176513,16 @@
       }
     },
     "details": {
-      "ok": true,
-      "reason": null,
+      "ok": false,
+      "reason": "details_foundation_not_ready",
       "detail": {
         "schema": "ai-matchlab.details-foundation-audit.v2",
-        "generatedAt": "2026-08-24T19:55:55.450Z",
+        "generatedAt": "2026-08-24T21:17:09.310Z",
         "dayKey": "2026-08-25",
-        "ok": true,
+        "ok": false,
         "publicationUniverse": {
           "mode": "full_current_universe",
-          "currentFixtureCount": 90,
+          "currentFixtureCount": 82,
           "publishedFixtureCount": 90,
           "deferredFixtureCount": 0,
           "deferredFixtureIds": []
@@ -176526,9 +176531,29 @@
           "expectedFixtures": 90,
           "detailFiles": 90,
           "checked": 90,
-          "issueCount": 0
+          "issueCount": 2
         },
-        "issues": []
+        "issues": [
+          {
+            "code": "PUBLISHED_FIXTURE_NOT_IN_CURRENT_UNIVERSE",
+            "ids": [
+              "cid_col1_alianza_deportivopereira_20260825",
+              "cid_col1_cucutadeportivo_alianza_20260825",
+              "cid_engleaguecup_bradfordcity_burnley_20260825",
+              "cid_engleaguecup_chelsea_lutontown_20260825",
+              "cid_engleaguecup_fulham_wimbledon_20260825",
+              "cid_engleaguecup_newcastleunited_westbromwichalbion_20260825",
+              "cid_engleaguecup_prestonnorthend_everton_20260825",
+              "cid_engleaguecup_tottenhamhotspur_charltonathletic_20260825"
+            ]
+          },
+          {
+            "code": "PUBLICATION_COUNT_MISMATCH",
+            "field": "currentFixtureCount",
+            "declared": 90,
+            "actual": 82
+          }
+        ]
       }
     }
   },

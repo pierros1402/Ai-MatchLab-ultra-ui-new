@@ -1,11 +1,11 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-08-25",
-  "generatedAt": "2026-08-24T19:55:55.707Z",
+  "generatedAt": "2026-08-24T21:17:09.549Z",
   "universe": {
     "expected": null,
-    "canonical": 90,
+    "canonical": 82,
     "published": 90,
     "details": 90,
     "byLeague": {
@@ -19,10 +19,10 @@
         "bul.2": 2,
         "chi.1": 1,
         "chi.2": 1,
-        "col.1": 3,
+        "col.1": 1,
         "col.2": 5,
         "ecu.1": 1,
-        "eng.league_cup": 23,
+        "eng.league_cup": 17,
         "eng.trophy": 2,
         "esp.1": 1,
         "isl.2": 1,
@@ -475,10 +475,21 @@
     }
   },
   "freshness": {
-    "ok": true,
+    "ok": false,
     "manifestGeneratedAt": "2026-08-24T19:54:29.120Z",
-    "reasons": [],
-    "staleInputs": []
+    "reasons": [
+      "snapshot_stale_against_canonical",
+      "snapshot_value_stale_against_canonical",
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical",
+      "value_plan_comparison_stale_against_canonical"
+    ],
+    "staleInputs": [
+      "canonical-fixtures/2026-08-25/col.1.json",
+      "canonical-fixtures/2026-08-25/eng.league_cup.json"
+    ]
   },
   "invariant": {
     "ok": true,
@@ -560,16 +571,21 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-08-24T19:55:55.451Z",
+    "generatedAt": "2026-08-24T21:17:09.310Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 182,
+        "count": 192,
         "informational": true
       },
       {
@@ -602,10 +618,13 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
+  "hardFailures": [
+    "foundation_publication_not_ready",
+    "snapshot_stale"
+  ],
   "warnings": [
     "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,eng.fa_qual,uefa.wchampions_qual,usa.ncaa.m.1,usa.ncaa.w.1"
   ],
-  "clean": true,
+  "clean": false,
   "cleanStrict": false
 }

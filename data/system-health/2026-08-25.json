@@ -1,25 +1,25 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-25",
-  "generatedAt": "2026-08-24T18:45:38.028Z",
-  "severity": "warning",
+  "generatedAt": "2026-08-24T21:17:09.813Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 4,
+    "error": 4,
+    "warning": 3,
     "info": 11
   },
   "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 2,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 15,
-  "actionableIssueCount": 4,
-  "newIssueCount": 5,
-  "newActionableIssueCount": 2,
-  "resolvedIssueCount": 13,
-  "persistentIssueCount": 10,
+  "activeIssueCount": 18,
+  "actionableIssueCount": 7,
+  "newIssueCount": 6,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 9,
+  "persistentIssueCount": 12,
   "activeIssues": [
     {
       "severity": "info",
@@ -63,6 +63,20 @@
       }
     },
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
       "severity": "info",
       "source": "foundation-integrity",
       "type": "age_expired_results_rows_present",
@@ -70,7 +84,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 182,
+        "count": 192,
         "informational": true
       }
     },
@@ -99,6 +113,24 @@
       }
     },
     {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -118,14 +150,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -192,7 +223,7 @@
       "message": "Plan A picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-25",
-        "todayDayKey": "2026-08-24",
+        "todayDayKey": "2026-08-25",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
@@ -208,7 +239,7 @@
       "message": "Plan A2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-25",
-        "todayDayKey": "2026-08-24",
+        "todayDayKey": "2026-08-25",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
@@ -1000,6 +1031,38 @@
   ],
   "actionableIssues": [
     {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1019,14 +1082,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1770,14 +1832,35 @@
       }
     },
     {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a_unresolved_settlement",
+      "message": "Plan A picks are still unresolved.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "dayKey": "2026-08-25",
+        "todayDayKey": "2026-08-25",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
+      }
+    },
+    {
+      "severity": "info",
+      "source": "value-comparison",
+      "type": "plan_a2_unresolved_settlement",
+      "message": "Plan A2 picks are still unresolved.",
+      "details": {
+        "dayKey": "2026-08-25",
+        "todayDayKey": "2026-08-25",
+        "ageDays": 0,
+        "overdue": false,
+        "settlementSource": "value-comparison",
+        "picks": 2,
+        "settled": 0,
+        "unresolved": 2
       }
     }
   ],
@@ -1799,17 +1882,6 @@
         ],
         "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,eng.fa_qual,uefa.wchampions_qual,usa.ncaa.m.1,usa.ncaa.w.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
       }
     }
   ],
@@ -1840,7 +1912,7 @@
         "at": 1787502710745,
         "staleReason": "plan_a2_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -89633324
+        "olderThanLatestCanonicalMs": -102168594
       }
     },
     {
@@ -1854,7 +1926,7 @@
         "at": "2026-08-23T16:31:50.746Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -89633323
+        "olderThanLatestCanonicalMs": -102168593
       }
     },
     {
@@ -1868,7 +1940,7 @@
         "at": "2026-08-23T16:29:47.404Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -89756665
+        "olderThanLatestCanonicalMs": -102291935
       }
     },
     {
@@ -1882,7 +1954,7 @@
         "at": "2026-08-23T16:31:51.797Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -89632272
+        "olderThanLatestCanonicalMs": -102167542
       }
     },
     {
@@ -1893,9 +1965,9 @@
       "details": {
         "kind": "value_plan_comparison",
         "artifact": "value-comparison/2026-08-24.json",
-        "at": "2026-08-23T16:31:51.832Z",
+        "at": "2026-08-24T19:31:40.585Z",
         "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -89632237
+        "olderThanLatestCanonicalMs": -4978754
       }
     },
     {
@@ -1927,38 +1999,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -1973,19 +2013,23 @@
         "raw": "acquisition_skipped_slugs:eng.fa_qual,ned.w.1,usa.ncaa.m.1,usa.ncaa.w.1",
         "contextOnly": false
       }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
     }
   ],
   "persistentIssues": [
+    {
+      "severity": "error",
+      "source": "foundation-integrity",
+      "type": "foundation_publication_not_ready",
+      "message": "Publication foundation is not ready.",
+      "details": {
+        "blocked": [
+          {
+            "component": "details",
+            "reason": "details_foundation_not_ready"
+          }
+        ]
+      }
+    },
     {
       "severity": "info",
       "source": "foundation-integrity",
@@ -1994,7 +2038,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 178,
+        "count": 192,
         "informational": true
       }
     },
@@ -2020,6 +2064,34 @@
         "reason": "score_consistent_alias_mirror_conflicts_present",
         "count": 39,
         "informational": true
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "foundation_publication_not_ready",
+      "details": {
+        "failure": "foundation_publication_not_ready"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -2080,45 +2152,13 @@
       }
     },
     {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a_unresolved_settlement",
-      "message": "Plan A picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-25",
-        "todayDayKey": "2026-08-24",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_a2_unresolved_settlement",
-      "message": "Plan A2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-25",
-        "todayDayKey": "2026-08-24",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 2,
-        "settled": 0,
-        "unresolved": 2
-      }
-    },
-    {
       "severity": "warning",
       "source": "active-competition-completeness",
       "type": "active_competition_scope_unresolved",
       "message": "Provider-wide discovery found target-day competitions whose canonical scope is still unresolved.",
       "details": {
         "dayKey": "2026-08-25",
-        "count": 54,
+        "count": 55,
         "competitions": [
           {
             "providerCompetitionId": "zsav4HyS",
@@ -2581,6 +2621,18 @@
             ]
           },
           {
+            "providerCompetitionId": "4bndtoZr",
+            "providerPath": "/football/mozambique/mocambola/",
+            "providerCountry": "Mozambique",
+            "providerName": "Mocambola",
+            "reasonCode": "unmapped_provider_competition",
+            "targetDayFixtureCount": 2,
+            "targetDaySourceIds": [
+              "fRv3K5u1",
+              "n1yeMRAl"
+            ]
+          },
+          {
             "providerCompetitionId": "vcj87Pic",
             "providerPath": "/football/panama/lpf/",
             "providerCountry": "Panama",
@@ -2756,17 +2808,6 @@
             "targetDaySourceIds": [
               "W8w0EymA",
               "phuhGcIc"
-            ]
-          },
-          {
-            "providerCompetitionId": "EP7iPuKj",
-            "providerPath": "/football/usa/mls-next-pro/",
-            "providerCountry": "USA",
-            "providerName": "MLS Next Pro",
-            "reasonCode": "unmapped_provider_competition",
-            "targetDayFixtureCount": 1,
-            "targetDaySourceIds": [
-              "QVkxPTh5"
             ]
           }
         ]
