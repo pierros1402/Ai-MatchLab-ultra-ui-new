@@ -60,6 +60,55 @@ function parseJsonBuffer(buffer, label) {
   }
 }
 
+export const REQUIRED_VALUE_COMPARISON_PLANS =
+  Object.freeze(["A", "A2", "B", "B2"]);
+
+function explicitUnrecoverablePlanAGap(payload) {
+  return Boolean(
+    payload?.comparisonEligible === false &&
+    payload?.planAAvailability?.status === "unrecoverable" &&
+    typeof payload?.planAAvailability?.reason === "string" &&
+    payload.planAAvailability.reason.trim().length > 0 &&
+    payload?.plans?.A === null &&
+    ["A2", "B", "B2"].every(
+      planKey =>
+        payload?.plans?.[planKey] &&
+        typeof payload.plans[planKey] === "object"
+    )
+  );
+}
+
+export function validateValueComparisonPayload(
+  payload,
+  day
+) {
+  if (
+    payload?.ok !== true ||
+    payload?.date !== day
+  ) {
+    throw new Error("value_comparison_contract_failed");
+  }
+
+  const missingPlans =
+    REQUIRED_VALUE_COMPARISON_PLANS.filter(
+      planKey =>
+        !payload?.plans?.[planKey] ||
+        typeof payload.plans[planKey] !== "object"
+    );
+
+  if (missingPlans.length === 0) {
+    return payload;
+  }
+
+  if (explicitUnrecoverablePlanAGap(payload)) {
+    return payload;
+  }
+
+  throw new Error(
+    `value_comparison_four_plan_contract_failed:${missingPlans.join(",")}`
+  );
+}
+
 async function fetchWithTimeout(url, init = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
@@ -482,10 +531,13 @@ async function stageRuntimeReleaseArtifacts({
   const comparisonBuffer = await fetchBuffer(
     rawUrl(repo, ref, `data/value-comparison/${day}.json`)
   );
-  const comparison = parseJsonBuffer(comparisonBuffer, "value_comparison");
-  if (comparison?.date !== day || comparison?.ok !== true) {
-    throw new Error("value_comparison_contract_failed");
-  }
+  validateValueComparisonPayload(
+    parseJsonBuffer(
+      comparisonBuffer,
+      "value_comparison"
+    ),
+    day
+  );
 
   // Current/latest releases must carry diagnostics. Historical days may predate
   // those artifacts; when present they are still embedded and mirrored.
@@ -548,27 +600,81 @@ async function mirrorRuntimeReleaseArtifacts({ day, artifacts, stats, promoteLat
   }
 }
 
-async function syncValueComparison({ repo, ref, day, stageRoot, stats }) {
-  const repoPath = `data/value-comparison/${day}.json`;
-  const buffer = await fetchBuffer(rawUrl(repo, ref, repoPath), { optional: true });
-  const target = resolveDataPath("value-comparison", `${day}.json`);
-  const staged = path.join(stageRoot, "extras", "value-comparison", `${day}.json`);
+async function syncValueComparison({
+  repo,
+  ref,
+  day,
+  stats
+}) {
+  const repoPath =
+    `data/value-comparison/${day}.json`;
 
-  if (buffer === null) {
-    await fsp.rm(target, { force: true });
-    return { present: false };
+  const buffer =
+    await fetchBuffer(
+      rawUrl(repo, ref, repoPath)
+    );
+
+  const payload =
+    validateValueComparisonPayload(
+      parseJsonBuffer(
+        buffer,
+        "value_comparison"
+      ),
+      day
+    );
+
+  const target =
+    resolveDataPath(
+      "value-comparison",
+      `${day}.json`
+    );
+
+  const runtimeDayRoot =
+    resolveDataPath(
+      "deploy-snapshots",
+      day
+    );
+
+  const runtimeTarget =
+    resolveDataPath(
+      "deploy-snapshots",
+      day,
+      "runtime",
+      "value-comparison.json"
+    );
+
+  let runtimeReleaseWritten = false;
+
+  // readValueComparisonArtifact() prefers the embedded runtime release.
+  // A settlement-only sync must update that copy before the generic
+  // mirror or a stale embedded comparison would continue to win.
+  if (fs.existsSync(runtimeDayRoot)) {
+    await writeFileAtomic(
+      runtimeTarget,
+      buffer
+    );
+
+    stats.extraFilesWritten += 1;
+    runtimeReleaseWritten = true;
   }
 
-  const payload = parseJsonBuffer(buffer, "value_comparison");
-  if (payload?.date !== day || payload?.ok !== true) {
-    throw new Error("value_comparison_contract_failed");
-  }
-  await fsp.mkdir(path.dirname(staged), { recursive: true });
-  await fsp.writeFile(staged, buffer);
-  await writeFileAtomic(target, buffer);
+  await writeFileAtomic(
+    target,
+    buffer
+  );
+
   stats.extraFilesWritten += 1;
-  return { present: true };
+
+  return {
+    present: true,
+    runtimeReleaseWritten,
+    comparisonSha256:
+      canonicalBufferSha256(buffer),
+    generatedAt:
+      payload.generatedAt || null
+  };
 }
+
 
 async function syncMultiOdds({ repo, ref, day, stats }) {
   const results = [];
@@ -736,49 +842,120 @@ export async function syncDeploySnapshotFromGithub(dayKey = athensDayKey(), opti
   }
 }
 
-export async function syncValueComparisonFromGithub(dayKey = athensDayKey(), options = {}) {
-  const day = String(dayKey || "").slice(0, 10);
-  if (!DAY_RE.test(day)) throw new Error("snapshot_day_invalid");
-  const repo = String(options.repo || DEFAULT_REPO);
-  const ref = await resolveImmutableGithubRef(options.ref || DEFAULT_REF, repo);
-  const stats = { extraFilesWritten: 0 };
-  const result = await syncValueComparison({
-    repo,
-    ref,
-    day,
-    stageRoot: resolveDataPath(".snapshot-sync", `comparison-${day}-${process.pid}`),
-    stats
-  });
+export async function syncValueComparisonFromGithub(
+  dayKey = athensDayKey(),
+  options = {}
+) {
+  const day =
+    String(dayKey || "").slice(0, 10);
+
+  if (!DAY_RE.test(day)) {
+    throw new Error("snapshot_day_invalid");
+  }
+
+  const repo =
+    String(options.repo || DEFAULT_REPO);
+
+  const ref =
+    await resolveImmutableGithubRef(
+      options.ref || DEFAULT_REF,
+      repo
+    );
+
+  const stats = {
+    extraFilesWritten: 0
+  };
+
+  const result =
+    await syncValueComparison({
+      repo,
+      ref,
+      day,
+      stats
+    });
+
   return {
     ok: true,
+    schema:
+      "ai-matchlab.value-comparison-sync-result.v1",
     dayKey: day,
     repo,
     ref,
-    valueComparisonPresent: result.present,
-    valueComparisonWritten: result.present
+    valueComparisonPresent:
+      result.present,
+    valueComparisonWritten:
+      result.present,
+    runtimeReleaseWritten:
+      result.runtimeReleaseWritten,
+    comparisonSha256:
+      result.comparisonSha256,
+    comparisonGeneratedAt:
+      result.generatedAt,
+    ...stats
   };
 }
 
+
 function parseCliArgs(argv) {
-  const args = { day: "", ref: "" };
+  const args = {
+    day: "",
+    ref: "",
+    comparisonOnly: false
+  };
+
   for (const token of argv) {
-    if (token.startsWith("--day=")) args.day = token.slice(6);
-    else if (token.startsWith("--ref=")) args.ref = token.slice(6);
-    else if (!token.startsWith("--") && !args.day) args.day = token;
+    if (token.startsWith("--day=")) {
+      args.day = token.slice(6);
+    } else if (token.startsWith("--ref=")) {
+      args.ref = token.slice(6);
+    } else if (token === "--comparison-only") {
+      args.comparisonOnly = true;
+    } else if (!token.startsWith("--") && !args.day) {
+      args.day = token;
+    }
   }
+
   return args;
 }
 
-const entryUrl = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;
+const entryUrl =
+  process.argv[1]
+    ? pathToFileURL(process.argv[1]).href
+    : null;
+
 if (entryUrl === import.meta.url) {
-  const args = parseCliArgs(process.argv.slice(2));
-  syncDeploySnapshotFromGithub(args.day || athensDayKey(), { ref: args.ref || DEFAULT_REF })
+  const args =
+    parseCliArgs(process.argv.slice(2));
+
+  const runner =
+    args.comparisonOnly
+      ? syncValueComparisonFromGithub
+      : syncDeploySnapshotFromGithub;
+
+  runner(
+    args.day || athensDayKey(),
+    {
+      ref:
+        args.ref || DEFAULT_REF
+    }
+  )
     .then(result => {
-      process.stdout.write(`${JSON.stringify(result)}\n`);
+      process.stdout.write(
+        `${JSON.stringify(result)}\n`
+      );
     })
     .catch(error => {
-      process.stderr.write(`[snapshot-sync] fatal ${String(error?.stack || error)}\n`);
-      process.stdout.write(`${JSON.stringify({ ok: false, error: String(error?.message || error) })}\n`);
+      process.stderr.write(
+        `[snapshot-sync] fatal ${String(error?.stack || error)}\n`
+      );
+
+      process.stdout.write(
+        `${JSON.stringify({
+          ok: false,
+          error: String(error?.message || error)
+        })}\n`
+      );
+
       process.exitCode = 1;
     });
 }

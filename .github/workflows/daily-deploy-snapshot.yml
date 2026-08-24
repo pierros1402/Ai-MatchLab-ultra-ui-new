@@ -257,6 +257,9 @@ jobs:
           git restore --staged . || true
 
           ATHENS_TODAY="$(TZ=Europe/Athens date +%F)"
+          # The prior settlement catch-up is intentionally anchored to the
+          # real Athens operational day even when DAY_KEY targets tomorrow.
+          # Stage the exact same D-1..D-7 producer window.
           for back in 1 2 3 4 5 6 7; do
             k="$(TZ=Europe/Athens date -d "${ATHENS_TODAY} -${back} day" +%F)"
             test -d "data/canonical-fixtures/$k" && git add "data/canonical-fixtures/$k/"
@@ -271,6 +274,14 @@ jobs:
           test -f "data/system-health/latest.json" && git add "data/system-health/latest.json"
 
           STAGED="$(git diff --cached --name-only || true)"
+
+          PRIOR_SETTLEMENT_DAYS="$(
+            printf "%s\n" "$STAGED" |
+              sed -n -E 's#^data/value-comparison/([0-9]{4}-[0-9]{2}-[0-9]{2})\.json$#\1#p' |
+              sort -u |
+              paste -sd, -
+          )"
+
           if [ -n "$STAGED" ]; then
             BAD="$(printf "%s\n" "$STAGED" | grep -Ev '^(data/canonical-fixtures/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-results/[0-9]{4}-[0-9]{2}-[0-9]{2}/|data/final-result-conflicts/[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$|data/value-comparison/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|cumulative\.json)$|data/system-health/([0-9]{4}-[0-9]{2}-[0-9]{2}\.json|latest\.json)$)' || true)"
             if [ -n "$BAD" ]; then
@@ -287,27 +298,30 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "Persist prior Value settlement checkpoint for ${ATHENS_TODAY}"
             bash tools/git-push-rebase-retry.sh
+
+            if [ -n "$PRIOR_SETTLEMENT_DAYS" ]; then
+              echo "PRIOR_SETTLEMENT_DAYS=${PRIOR_SETTLEMENT_DAYS}" >> "$GITHUB_ENV"
+              echo "PRIOR_SETTLEMENT_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+            fi
           else
             echo "No prior Value settlement checkpoint changes to commit."
           fi
 
-          ATHENS_YESTERDAY="$(TZ=Europe/Athens date -d "${ATHENS_TODAY} -1 day" +%F)"
-          if [ -f "data/deploy-snapshots/${ATHENS_YESTERDAY}/manifest.json" ]; then
-            echo "PRIOR_SETTLEMENT_DAY=${ATHENS_YESTERDAY}" >> "$GITHUB_ENV"
-            echo "PRIOR_SETTLEMENT_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
-            echo "PRIOR_SETTLEMENT_CHECKPOINT_READY=true" >> "$GITHUB_ENV"
-          else
-            echo "No D-1 deploy snapshot exists; public prior-settlement promotion skipped."
-          fi
-
-      - name: Promote prior Value settlement checkpoint
-        if: env.SKIP_BUILD != 'true' && env.PRIOR_SETTLEMENT_CHECKPOINT_READY == 'true'
-        shell: bash
+      - name: Promote prior Value settlement comparisons
+        if: env.SKIP_BUILD != 'true' && env.PRIOR_SETTLEMENT_DAYS != ''
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
-          bash tools/sync-public-snapshot.sh "${PRIOR_SETTLEMENT_DAY}" "${PRIOR_SETTLEMENT_REF}"
+
+          IFS=',' read -ra DAYS <<< "${PRIOR_SETTLEMENT_DAYS}"
+
+          for k in "${DAYS[@]}"; do
+            [ -z "$k" ] && continue
+            echo "Promoting settled Value comparison for ${k} at ${PRIOR_SETTLEMENT_REF}"
+            node tools/sync-public-value-comparison.mjs "$k" "${PRIOR_SETTLEMENT_REF}"
+          done
+
 
       - name: Run daily cycle
         if: env.SKIP_BUILD != 'true'
@@ -971,7 +985,10 @@ jobs:
           # Promote the release day first. A prior-day synchronization problem
           # must never strand the newly published operational day behind yesterday.
           bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"
-          bash tools/sync-public-snapshot.sh "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"
+          # FINALIZE_DAY_KEY is a closed-day settlement publication.
+          # Keep the strict historical snapshot manifest gate intact;
+          # only refresh the authoritative four-plan comparison mirror.
+          node tools/sync-public-value-comparison.mjs "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"
 
       - name: Data publication requires no UI deploy
         if: env.SKIP_BUILD != 'true' && env.DAILY_SNAPSHOT_COMMITTED == 'true' && env.ALLOW_RENDER_DEPLOY != 'true'

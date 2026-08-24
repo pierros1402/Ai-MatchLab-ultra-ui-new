@@ -413,76 +413,14 @@ function normalizePick(p) {
       return;
     }
 
-    const data = await fetchValue(date);
-
-    if (generation !== refreshGeneration) return;
-
-    const fallbackReason =
-      String(
-        data?.error ||
-        data?.reason ||
-        ""
-      ).trim();
-
-    const fallbackUnavailable =
-      !data ||
-      data?.ok === false ||
-      fallbackReason === "snapshot_value_not_found";
-
-    if (fallbackUnavailable) {
-      const reason =
-        fallbackReason ||
-        "value_release_unavailable";
-
-      emitValuePayload(
-        unavailableComparisonPayload(
-          date,
-          reason
-        )
-      );
-      return;
-    }
-
-    const rawItems = Array.isArray(data?.picks)
-      ? data.picks
-      : Array.isArray(data?.items)
-        ? data.items
-        : [];
-
-    const normalizedItems = rawItems
-      .map(normalizePick)
-      .filter(p => p.includeInPanel);
-
-    console.log(
-      `[value-adapter] update ${date} raw=${rawItems.length} panel=${normalizedItems.length}`
+    emitValuePayload(
+      unavailableComparisonPayload(
+        date,
+        "engine-release-unavailable"
+      )
     );
-
-    const payload = {
-      ok: true,
-      source: "value",
-      date,
-      total: normalizedItems.length,
-      picks: normalizedItems,
-      items: normalizedItems
-    };
-
-    console.log("[value-adapter] emit payload", {
-      date,
-      total: payload.total,
-      sample: payload.picks[0] || null
-    });
-
-    // Replay cache: value-picks.js may load after this adapter emits.
-
-    // Keep the last daily value payload so late subscribers can render it.
-
-    window.__AIML_LAST_VALUE = payload;
-
-    window.__AIML_LAST_VALUE_AT = Date.now();
-
-    emit("value-picks:loaded", payload);
-    emit("value:update", payload);
   }
+
 
   on("date:change", payload => {
     const date = String(payload?.date || "").slice(0, 10);

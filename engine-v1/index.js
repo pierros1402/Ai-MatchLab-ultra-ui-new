@@ -289,6 +289,29 @@ function startSnapshotSyncJob(dayKey, ref) {
   });
 }
 
+function startValueComparisonSyncJob(dayKey, ref) {
+  const args = [
+    path.join(
+      __dirname,
+      "jobs",
+      "sync-deploy-snapshot-from-github.js"
+    ),
+    `--day=${dayKey}`,
+    `--ref=${ref}`,
+    "--comparison-only"
+  ];
+
+  return startOpsChildJob({
+    type: "value-comparison-sync",
+    dayKey,
+    ref,
+    command: process.execPath,
+    args,
+    cwd: __dirname
+  });
+}
+
+
 function intParam(value, fallback) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
@@ -1229,6 +1252,87 @@ app.get("/ops/sync-snapshot/status", (req, res) => {
     return res.status(404).json({ ok: false, error: "snapshot_sync_job_not_found" });
   }
   return res.json({ ok: true, job: publicJob(job) });
+});
+
+
+app.get("/ops/sync-value-comparison", (_req, res) => {
+  res.status(405).json({
+    ok: false,
+    error: "method_not_allowed",
+    requiredMethod: "POST",
+    contract: "authenticated_commit_pinned_comparison_child_process"
+  });
+});
+
+app.post("/ops/sync-value-comparison", (req, res) => {
+  if (!snapshotSyncEnabled()) {
+    return res.status(403).json({
+      ok: false,
+      reason: "snapshot_sync_disabled"
+    });
+  }
+
+  if (!authorizeCronRequest(req, res)) return;
+
+  const dayKey =
+    String(req.query.date || "").slice(0, 10);
+
+  const ref =
+    String(req.query.ref || "")
+      .trim()
+      .toLowerCase();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(dayKey)) {
+    return res.status(400).json({
+      ok: false,
+      error: "invalid_day_key"
+    });
+  }
+
+  if (!/^[0-9a-f]{40}$/u.test(ref)) {
+    return res.status(400).json({
+      ok: false,
+      error: "immutable_ref_required"
+    });
+  }
+
+  const { created, job } =
+    startValueComparisonSyncJob(
+      dayKey,
+      ref
+    );
+
+  return res.status(202).json({
+    ok: true,
+    accepted: true,
+    created,
+    job: publicJob(job)
+  });
+});
+
+app.get("/ops/sync-value-comparison/status", (req, res) => {
+  if (!authorizeCronRequest(req, res)) return;
+
+  const id =
+    String(req.query.id || "");
+
+  const job =
+    OPS_JOBS.get(id);
+
+  if (
+    !job ||
+    job.type !== "value-comparison-sync"
+  ) {
+    return res.status(404).json({
+      ok: false,
+      error: "value_comparison_sync_job_not_found"
+    });
+  }
+
+  return res.json({
+    ok: true,
+    job: publicJob(job)
+  });
 });
 
 
@@ -2636,10 +2740,15 @@ function readValueComparisonArtifact(date) {
     };
   }
 
-  const ordinaryComparisonValid = Boolean(
-    payload?.plans?.A &&
-    payload?.plans?.B
-  );
+  const requiredPlans =
+    ["A", "A2", "B", "B2"];
+
+  const ordinaryComparisonValid =
+    requiredPlans.every(
+      planKey =>
+        payload?.plans?.[planKey] &&
+        typeof payload.plans[planKey] === "object"
+    );
 
   const unrecoverablePlanAGapValid = Boolean(
     payload?.comparisonEligible === false &&
@@ -2647,7 +2756,11 @@ function readValueComparisonArtifact(date) {
     typeof payload?.planAAvailability?.reason === "string" &&
     payload.planAAvailability.reason.trim().length > 0 &&
     payload?.plans?.A === null &&
-    payload?.plans?.B
+    ["A2", "B", "B2"].every(
+      planKey =>
+        payload?.plans?.[planKey] &&
+        typeof payload.plans[planKey] === "object"
+    )
   );
 
   if (
@@ -2807,31 +2920,40 @@ function resolveValueExportOdds(oddsEntry, market, marketName, pick) {
 // comparison artifact is authoritative for Value export: invalid JSON must be
 // surfaced, never silently replaced by the production snapshot.
 function loadValueExportComparisonDay(date) {
-  const cmpFile = resolveDataPath("value-comparison", `${date}.json`);
-  if (!fs.existsSync(cmpFile)) return null;
+  const artifact =
+    readValueComparisonArtifact(date);
 
-  try {
-    const comparison = JSON.parse(fs.readFileSync(cmpFile, "utf8"));
-    return {
-      ok: true,
-      day: comparisonToValueExportDay({
-        date,
-        comparison,
-        source: "value_comparison"
-      })
-    };
-  } catch (error) {
+  if (!artifact.ok) {
     return {
       ok: false,
       issue: {
-        code: "VALUE_EXPORT_COMPARISON_INVALID",
+        code:
+          artifact.reason === "value_comparison_not_found"
+            ? "VALUE_EXPORT_COMPARISON_NOT_FOUND"
+            : "VALUE_EXPORT_COMPARISON_INVALID",
         date,
-        artifact: `data/value-comparison/${date}.json`,
-        message: String(error?.message || error)
+        artifact:
+          artifact.file || null,
+        message:
+          artifact.reason ||
+          "value_comparison_invalid"
       }
     };
   }
+
+  return {
+    ok: true,
+    day:
+      comparisonToValueExportDay({
+        date,
+        comparison:
+          artifact.payload,
+        source:
+          "value_comparison_release_artifact"
+      })
+  };
 }
+
 
 function valueExportSourcePicks(result) {
   if (Array.isArray(result?.picks)) return result.picks;

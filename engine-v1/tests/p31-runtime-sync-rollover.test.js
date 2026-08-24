@@ -14,7 +14,7 @@ function readNormalized(relativePath) {
 }
 
 test(
-  "daily publication promotes DAY_KEY before FINALIZE_DAY_KEY",
+  "daily publication promotes DAY_KEY before FINALIZE_DAY_KEY comparison settlement",
   () => {
     const source = readNormalized(
       ".github/workflows/daily-deploy-snapshot.yml"
@@ -23,20 +23,37 @@ test(
     const dayToken =
       'bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${PUBLISHED_REF}"';
 
-    const finalizeToken =
+    const finalizeComparisonToken =
+      'node tools/sync-public-value-comparison.mjs "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"';
+
+    const forbiddenFinalizeSnapshotToken =
       'bash tools/sync-public-snapshot.sh "${FINALIZE_DAY_KEY}" "${PUBLISHED_REF}"';
 
-    const dayIndex = source.indexOf(dayToken);
-    const finalizeIndex = source.indexOf(finalizeToken);
+    const dayIndex =
+      source.indexOf(dayToken);
 
-    assert.ok(dayIndex >= 0, "DAY_KEY public sync must exist");
+    const finalizeComparisonIndex =
+      source.indexOf(finalizeComparisonToken);
+
     assert.ok(
-      finalizeIndex >= 0,
-      "FINALIZE_DAY_KEY public sync must exist"
+      dayIndex >= 0,
+      "DAY_KEY public snapshot sync must exist"
     );
+
     assert.ok(
-      dayIndex < finalizeIndex,
-      "new release day must be promoted before prior-day synchronization"
+      finalizeComparisonIndex >= 0,
+      "FINALIZE_DAY_KEY comparison-only sync must exist"
+    );
+
+    assert.ok(
+      dayIndex < finalizeComparisonIndex,
+      "release day must be promoted before prior-day comparison settlement"
+    );
+
+    assert.equal(
+      source.includes(forbiddenFinalizeSnapshotToken),
+      false,
+      "FINALIZE_DAY_KEY must not use strict historical full-snapshot sync"
     );
   }
 );

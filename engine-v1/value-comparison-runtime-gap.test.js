@@ -38,11 +38,21 @@ test(
 );
 
 test(
-  "runtime value-comparison validator still requires Plan B",
+  "runtime value-comparison validator requires all four ordinary plans",
   () => {
     assert.match(
       source,
-      /payload\?\.plans\?\.B/
+      /const requiredPlans\s*=\s*\["A", "A2", "B", "B2"\]/
+    );
+
+    assert.match(
+      source,
+      /requiredPlans\.every\(/
+    );
+
+    assert.match(
+      source,
+      /payload\?\.plans\?\.\[planKey\]/
     );
   }
 );
