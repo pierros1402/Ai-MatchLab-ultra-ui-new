@@ -2,13 +2,48 @@
   "dayKey": "2026-08-24",
   "leagueSlug": "esp.1",
   "leagueName": "LaLiga",
-  "updatedAt": "2026-08-24T19:04:25.610Z",
+  "updatedAt": "2026-08-24T19:29:55.860Z",
   "count": 2,
   "sourceMeta": {
-    "acquisitionProvider": "flashscore",
+    "acquisitionProvider": "espn_direct_league_status",
     "requestedLeagueSlug": "esp.1",
-    "requestedDayKey": "2026-09-08",
-    "mergedAt": "2026-08-24T19:04:25.609Z"
+    "requestedDayKey": "2026-08-24",
+    "providerFetchSlugs": [
+      "esp.1"
+    ],
+    "exactIdAdjacentDateFallback": {
+      "candidates": 0,
+      "matches": 0,
+      "fetches": []
+    },
+    "exactEventSummaryReconciliation": {
+      "candidates": 0,
+      "sameDayMatches": 0,
+      "wrongDayMatches": 0,
+      "wrongDayRemovedRows": 0,
+      "wrongDayIdentityRejectedRows": 0,
+      "fetches": [],
+      "policy": {
+        "exactProviderIdOnly": true,
+        "authoritativeEventDayOnly": true,
+        "teamIdentityRequired": true,
+        "homeAwayOrientationRequired": true,
+        "crossDayStatusPromotion": false,
+        "heuristicFinalPromotion": false
+      }
+    },
+    "mergedAt": "2026-08-24T19:29:55.860Z",
+    "mode": "targeted_live_status_refresh",
+    "authoritativeTerminalOverlayPromotion": {
+      "schema": "ai-matchlab.authoritative-terminal-overlay-promotion.v1",
+      "promotedAt": "2026-08-24T19:30:18.762Z",
+      "exactProviderIdOnly": true,
+      "orderedTeamIdentityRequired": true,
+      "athensDayRequired": true,
+      "explicitTerminalStatusRequired": true,
+      "numericScoreRequired": true,
+      "heuristicIdentity": false
+    }
   },
   "fixtures": [
     {
@@ -31,15 +66,39 @@
       "awayTeam": "Levante",
       "venue": "El Sadar",
       "firstSeenAt": "2026-08-09T17:50:03.106Z",
-      "lastSeenAt": "2026-08-24T19:04:25.608Z",
+      "lastSeenAt": "2026-08-24T19:29:55.859Z",
       "providerLeagueSlug": "esp.1",
-      "status": "LIVE",
-      "rawStatus": "STATUS_IN_PROGRESS",
-      "minute": "76'",
+      "status": "FT",
+      "rawStatus": "STATUS_FULL_TIME",
+      "minute": "90'+3'",
       "scoreHome": 0,
       "scoreAway": 0,
+      "statusType": "STATUS_FINAL",
+      "operationalState": "TERMINAL_CONFIRMED",
       "penalties": null,
-      "decidedBy": null
+      "decidedBy": null,
+      "authoritativeTerminalWriteback": {
+        "schema": "ai-matchlab.authoritative-terminal-writeback.v1",
+        "promotedAt": "2026-08-24T19:30:18.762Z",
+        "provider": "espn",
+        "providerMatchId": "401882909",
+        "dayKey": "2026-08-24",
+        "identityContract": {
+          "exactProviderId": true,
+          "athensDay": true,
+          "orderedTeamPair": true,
+          "explicitTerminalStatus": true,
+          "numericScore": true,
+          "heuristicIdentity": false
+        },
+        "observation": {
+          "status": "FT",
+          "statusType": null,
+          "rawStatus": "STATUS_FULL_TIME",
+          "scoreHome": 0,
+          "scoreAway": 0
+        }
+      }
     },
     {
       "canonicalId": "cid_esp1_malaga_deportivo_20260824",
@@ -61,7 +120,7 @@
       "awayTeam": "Deportivo",
       "venue": "La Rosaleda",
       "firstSeenAt": "2026-08-09T17:50:03.106Z",
-      "lastSeenAt": "2026-08-24T19:04:25.608Z",
+      "lastSeenAt": "2026-08-24T19:29:55.859Z",
       "canonicalAliases": [
         "cid_esp1_malaga_depacoruna_20260824"
       ],
@@ -70,9 +129,7 @@
       "rawStatus": "STATUS_SCHEDULED",
       "minute": "0'",
       "scoreHome": null,
-      "scoreAway": null,
-      "penalties": null,
-      "decidedBy": null
+      "scoreAway": null
     }
   ]
 }
