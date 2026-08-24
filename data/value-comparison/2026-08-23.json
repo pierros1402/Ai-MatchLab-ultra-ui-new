@@ -2,7 +2,7 @@
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison.v1",
   "date": "2026-08-23",
-  "generatedAt": "2026-08-23T16:11:39.762Z",
+  "generatedAt": "2026-08-24T14:08:50.946Z",
   "sourceContract": {
     "planA": "immutable_plan_a_observation_artifact",
     "planAObservationStartDate": "2026-07-05",
@@ -18,7 +18,7 @@
   "inputs": {
     "fixturesPath": "data/canonical-fixtures/2026-08-23",
     "finalResultsDir": "data/final-results/2026-08-23",
-    "verifiedFinalResults": 159,
+    "verifiedFinalResults": 337,
     "canonicalFinalVetoDir": "data/canonical-fixtures/2026-08-23",
     "canonicalContradictionsRejected": [],
     "canonicalIdentityAmbiguities": [],
@@ -55,19 +55,19 @@
       "summary": {
         "picks": 22,
         "uniqueMatches": 19,
-        "settled": 14,
-        "wins": 9,
-        "losses": 5,
+        "settled": 20,
+        "wins": 12,
+        "losses": 8,
         "voids": 1,
-        "unresolved": 7,
+        "unresolved": 1,
         "unsupported": 0,
-        "hitRate": 0.6429,
-        "oddsAvailable": 10,
-        "averageOdds": 1.526,
-        "totalStake": 10,
-        "totalReturn": 9.15,
-        "profit": -0.85,
-        "roi": -0.085
+        "hitRate": 0.6,
+        "oddsAvailable": 13,
+        "averageOdds": 1.4662,
+        "totalStake": 13,
+        "totalReturn": 11.57,
+        "profit": -1.43,
+        "roi": -0.11
       },
       "marketSummary": [
         {
@@ -92,13 +92,13 @@
           "market": "BTTS",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
+          "settled": 1,
           "wins": 0,
-          "losses": 0,
+          "losses": 1,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
+          "hitRate": 0,
           "oddsAvailable": 0,
           "averageOdds": null,
           "totalStake": null,
@@ -110,19 +110,19 @@
           "market": "Over / Under 2.5",
           "picks": 19,
           "uniqueMatches": 19,
-          "settled": 12,
-          "wins": 8,
-          "losses": 4,
+          "settled": 17,
+          "wins": 11,
+          "losses": 6,
           "voids": 1,
-          "unresolved": 6,
+          "unresolved": 1,
           "unsupported": 0,
-          "hitRate": 0.6667,
-          "oddsAvailable": 8,
-          "averageOdds": 1.5737,
-          "totalStake": 8,
-          "totalReturn": 7.84,
-          "profit": -0.16,
-          "roi": -0.02
+          "hitRate": 0.6471,
+          "oddsAvailable": 11,
+          "averageOdds": 1.49,
+          "totalStake": 11,
+          "totalReturn": 10.26,
+          "profit": -0.74,
+          "roi": -0.0673
         }
       ],
       "picks": [
@@ -146,11 +146,62 @@
           "aiFairOdds": 1.37,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:45.103Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Gr9GfxkJ",
+                "canonicalId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "Vikingur Reykjavik",
+                "away": "Valur",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-23T19:15:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T18:51:35.066Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Vikingur Reykjavik",
+                "awayTeam": "Valur",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_vikingurreykjavik_valur_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "resolvedFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Vikingur Reykjavik",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Valur",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -408,11 +459,62 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.28,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 4,
+            "scoreKey": "2-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:45.063Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401906663",
+                "canonicalId": "cid_bol1_realoruro_bolivar_20260823",
+                "leagueName": "Bol 1",
+                "home": "Real Oruro",
+                "away": "Bolívar",
+                "scoreHome": 2,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-23T19:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-08-23T20:58:01.492Z",
+                "scoreKey": "2-4",
+                "homeTeam": "Real Oruro",
+                "awayTeam": "Bolívar",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_bol1_realoruro_bolivar_20260823"
+                  ],
+                  "sourceFixtureId": "cid_bol1_realoruro_bolivar_20260823",
+                  "resolvedFixtureId": "cid_bol1_realoruro_bolivar_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Real Oruro",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Bolívar",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -673,11 +775,62 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": 1.14,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 5,
+            "scoreKey": "3-5"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.802Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EJCabKkf",
+                "canonicalId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "KA Akureyri",
+                "away": "KR Reykjavik",
+                "scoreHome": 3,
+                "scoreAway": 5,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "3-5",
+                "homeTeam": "KA Akureyri",
+                "awayTeam": "KR Reykjavik",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_kaakureyri_krreykjavik_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "resolvedFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "KA Akureyri",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "KR Reykjavik",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -789,11 +942,62 @@
           "aiFairOdds": 1.5,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 0,
+            "scoreKey": "4-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.813Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Im2aDAsg",
+                "canonicalId": "cid_mda1_sherifftiraspol_politehnicautm_20260823",
+                "leagueName": "Super Liga",
+                "home": "Sheriff Tiraspol",
+                "away": "Politehnica UTM",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.940Z",
+                "scoreKey": "4-0",
+                "homeTeam": "Sheriff Tiraspol",
+                "awayTeam": "Politehnica UTM",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_mda1_sherifftiraspol_politehnicautm_20260823"
+                  ],
+                  "sourceFixtureId": "cid_mda1_sherifftiraspol_politehnicautm_20260823",
+                  "resolvedFixtureId": "cid_mda1_sherifftiraspol_politehnicautm_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Sheriff Tiraspol",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Politehnica UTM",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -874,11 +1078,62 @@
           "aiFairOdds": 1.5,
           "oddsDecimal": 1.38,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.798Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "h4Oj0tLs",
+                "canonicalId": "cid_isl1_akranes_hafnarfjordur_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "Akranes",
+                "away": "Hafnarfjordur",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "1-1",
+                "homeTeam": "Akranes",
+                "awayTeam": "Hafnarfjordur",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_akranes_hafnarfjordur_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_akranes_hafnarfjordur_20260823",
+                  "resolvedFixtureId": "cid_isl1_akranes_hafnarfjordur_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Akranes",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Hafnarfjordur",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -1122,11 +1377,62 @@
           "aiFairOdds": 1.39,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:45.103Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Gr9GfxkJ",
+                "canonicalId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "Vikingur Reykjavik",
+                "away": "Valur",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-23T19:15:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T18:51:35.066Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Vikingur Reykjavik",
+                "awayTeam": "Valur",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_vikingurreykjavik_valur_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "resolvedFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Vikingur Reykjavik",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Valur",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a",
@@ -1319,19 +1625,19 @@
       "summary": {
         "picks": 22,
         "uniqueMatches": 19,
-        "settled": 14,
-        "wins": 9,
-        "losses": 5,
+        "settled": 20,
+        "wins": 12,
+        "losses": 8,
         "voids": 1,
-        "unresolved": 7,
+        "unresolved": 1,
         "unsupported": 0,
-        "hitRate": 0.6429,
-        "oddsAvailable": 10,
-        "averageOdds": 1.526,
-        "totalStake": 10,
-        "totalReturn": 9.15,
-        "profit": -0.85,
-        "roi": -0.085
+        "hitRate": 0.6,
+        "oddsAvailable": 13,
+        "averageOdds": 1.4662,
+        "totalStake": 13,
+        "totalReturn": 11.57,
+        "profit": -1.43,
+        "roi": -0.11
       },
       "marketSummary": [
         {
@@ -1356,13 +1662,13 @@
           "market": "BTTS",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
+          "settled": 1,
           "wins": 0,
-          "losses": 0,
+          "losses": 1,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
+          "hitRate": 0,
           "oddsAvailable": 0,
           "averageOdds": null,
           "totalStake": null,
@@ -1374,19 +1680,19 @@
           "market": "Over / Under 2.5",
           "picks": 19,
           "uniqueMatches": 19,
-          "settled": 12,
-          "wins": 8,
-          "losses": 4,
+          "settled": 17,
+          "wins": 11,
+          "losses": 6,
           "voids": 1,
-          "unresolved": 6,
+          "unresolved": 1,
           "unsupported": 0,
-          "hitRate": 0.6667,
-          "oddsAvailable": 8,
-          "averageOdds": 1.5737,
-          "totalStake": 8,
-          "totalReturn": 7.84,
-          "profit": -0.16,
-          "roi": -0.02
+          "hitRate": 0.6471,
+          "oddsAvailable": 11,
+          "averageOdds": 1.49,
+          "totalStake": 11,
+          "totalReturn": 10.26,
+          "profit": -0.74,
+          "roi": -0.0673
         }
       ],
       "picks": [
@@ -1410,11 +1716,62 @@
           "aiFairOdds": 1.37,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:45.103Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Gr9GfxkJ",
+                "canonicalId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "Vikingur Reykjavik",
+                "away": "Valur",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-23T19:15:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T18:51:35.066Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Vikingur Reykjavik",
+                "awayTeam": "Valur",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_vikingurreykjavik_valur_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "resolvedFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Vikingur Reykjavik",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Valur",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -1672,11 +2029,62 @@
           "aiFairOdds": null,
           "oddsDecimal": 1.28,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
+          "finalStatus": "verified_final_result",
           "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 4,
+            "scoreKey": "2-4"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_espn_terminal_final",
+            "method": "canonical_espn_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:45.063Z",
+            "sources": [
+              {
+                "provider": "espn",
+                "providerMatchId": "401906663",
+                "canonicalId": "cid_bol1_realoruro_bolivar_20260823",
+                "leagueName": "Bol 1",
+                "home": "Real Oruro",
+                "away": "Bolívar",
+                "scoreHome": 2,
+                "scoreAway": 4,
+                "kickoffUtc": "2026-08-23T19:00Z",
+                "rawStatus": "STATUS_FULL_TIME",
+                "statusType": "",
+                "terminalObservedAt": "2026-08-23T20:58:01.492Z",
+                "scoreKey": "2-4",
+                "homeTeam": "Real Oruro",
+                "awayTeam": "Bolívar",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_bol1_realoruro_bolivar_20260823"
+                  ],
+                  "sourceFixtureId": "cid_bol1_realoruro_bolivar_20260823",
+                  "resolvedFixtureId": "cid_bol1_realoruro_bolivar_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Real Oruro",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Bolívar",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -1937,11 +2345,62 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": 1.14,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 5,
+            "scoreKey": "3-5"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.802Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EJCabKkf",
+                "canonicalId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "KA Akureyri",
+                "away": "KR Reykjavik",
+                "scoreHome": 3,
+                "scoreAway": 5,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "3-5",
+                "homeTeam": "KA Akureyri",
+                "awayTeam": "KR Reykjavik",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_kaakureyri_krreykjavik_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "resolvedFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "KA Akureyri",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "KR Reykjavik",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -2053,11 +2512,62 @@
           "aiFairOdds": 1.5,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 4,
+            "awayScore": 0,
+            "scoreKey": "4-0"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.813Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Im2aDAsg",
+                "canonicalId": "cid_mda1_sherifftiraspol_politehnicautm_20260823",
+                "leagueName": "Super Liga",
+                "home": "Sheriff Tiraspol",
+                "away": "Politehnica UTM",
+                "scoreHome": 4,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.940Z",
+                "scoreKey": "4-0",
+                "homeTeam": "Sheriff Tiraspol",
+                "awayTeam": "Politehnica UTM",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_mda1_sherifftiraspol_politehnicautm_20260823"
+                  ],
+                  "sourceFixtureId": "cid_mda1_sherifftiraspol_politehnicautm_20260823",
+                  "resolvedFixtureId": "cid_mda1_sherifftiraspol_politehnicautm_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Sheriff Tiraspol",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Politehnica UTM",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -2138,11 +2648,62 @@
           "aiFairOdds": 1.5,
           "oddsDecimal": 1.38,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 1,
+            "awayScore": 1,
+            "scoreKey": "1-1"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.798Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "h4Oj0tLs",
+                "canonicalId": "cid_isl1_akranes_hafnarfjordur_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "Akranes",
+                "away": "Hafnarfjordur",
+                "scoreHome": 1,
+                "scoreAway": 1,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "1-1",
+                "homeTeam": "Akranes",
+                "awayTeam": "Hafnarfjordur",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_akranes_hafnarfjordur_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_akranes_hafnarfjordur_20260823",
+                  "resolvedFixtureId": "cid_isl1_akranes_hafnarfjordur_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Akranes",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Hafnarfjordur",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -2386,11 +2947,62 @@
           "aiFairOdds": 1.39,
           "oddsDecimal": null,
           "oddsUse": null,
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 2,
+            "awayScore": 0,
+            "scoreKey": "2-0"
+          },
+          "result": "LOSS",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:45.103Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "Gr9GfxkJ",
+                "canonicalId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "Vikingur Reykjavik",
+                "away": "Valur",
+                "scoreHome": 2,
+                "scoreAway": 0,
+                "kickoffUtc": "2026-08-23T19:15:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T18:51:35.066Z",
+                "scoreKey": "2-0",
+                "homeTeam": "Vikingur Reykjavik",
+                "awayTeam": "Valur",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_vikingurreykjavik_valur_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "resolvedFixtureId": "cid_isl1_vikingurreykjavik_valur_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "Vikingur Reykjavik",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "Valur",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-a2",
@@ -2583,56 +3195,56 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 1,
-        "settled": 0,
-        "wins": 0,
+        "settled": 2,
+        "wins": 2,
         "losses": 0,
         "voids": 0,
-        "unresolved": 2,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 1,
+        "oddsAvailable": 2,
+        "averageOdds": 1.34,
+        "totalStake": 2,
+        "totalReturn": 2.68,
+        "profit": 0.68,
+        "roi": 0.34
       },
       "marketSummary": [
         {
           "market": "BTTS",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.54,
+          "totalStake": 1,
+          "totalReturn": 1.54,
+          "profit": 0.54,
+          "roi": 0.54
         },
         {
           "market": "OU25",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.14,
+          "totalStake": 1,
+          "totalReturn": 1.14,
+          "profit": 0.14,
+          "roi": 0.14
         }
       ],
       "picks": [
@@ -2656,11 +3268,62 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": 1.14,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 5,
+            "scoreKey": "3-5"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.802Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EJCabKkf",
+                "canonicalId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "KA Akureyri",
+                "away": "KR Reykjavik",
+                "scoreHome": 3,
+                "scoreAway": 5,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "3-5",
+                "homeTeam": "KA Akureyri",
+                "awayTeam": "KR Reykjavik",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_kaakureyri_krreykjavik_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "resolvedFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "KA Akureyri",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "KR Reykjavik",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b",
@@ -2682,11 +3345,62 @@
           "aiFairOdds": 1.31,
           "oddsDecimal": 1.54,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 5,
+            "scoreKey": "3-5"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.802Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EJCabKkf",
+                "canonicalId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "KA Akureyri",
+                "away": "KR Reykjavik",
+                "scoreHome": 3,
+                "scoreAway": 5,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "3-5",
+                "homeTeam": "KA Akureyri",
+                "awayTeam": "KR Reykjavik",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_kaakureyri_krreykjavik_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "resolvedFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "KA Akureyri",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "KR Reykjavik",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         }
       ]
     },
@@ -2704,56 +3418,56 @@
       "summary": {
         "picks": 2,
         "uniqueMatches": 1,
-        "settled": 0,
-        "wins": 0,
+        "settled": 2,
+        "wins": 2,
         "losses": 0,
         "voids": 0,
-        "unresolved": 2,
+        "unresolved": 0,
         "unsupported": 0,
-        "hitRate": null,
-        "oddsAvailable": 0,
-        "averageOdds": null,
-        "totalStake": null,
-        "totalReturn": null,
-        "profit": null,
-        "roi": null
+        "hitRate": 1,
+        "oddsAvailable": 2,
+        "averageOdds": 1.34,
+        "totalStake": 2,
+        "totalReturn": 2.68,
+        "profit": 0.68,
+        "roi": 0.34
       },
       "marketSummary": [
         {
           "market": "BTTS",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.54,
+          "totalStake": 1,
+          "totalReturn": 1.54,
+          "profit": 0.54,
+          "roi": 0.54
         },
         {
           "market": "OU25",
           "picks": 1,
           "uniqueMatches": 1,
-          "settled": 0,
-          "wins": 0,
+          "settled": 1,
+          "wins": 1,
           "losses": 0,
           "voids": 0,
-          "unresolved": 1,
+          "unresolved": 0,
           "unsupported": 0,
-          "hitRate": null,
-          "oddsAvailable": 0,
-          "averageOdds": null,
-          "totalStake": null,
-          "totalReturn": null,
-          "profit": null,
-          "roi": null
+          "hitRate": 1,
+          "oddsAvailable": 1,
+          "averageOdds": 1.14,
+          "totalStake": 1,
+          "totalReturn": 1.14,
+          "profit": 0.14,
+          "roi": 0.14
         }
       ],
       "picks": [
@@ -2777,11 +3491,62 @@
           "aiFairOdds": 1.27,
           "oddsDecimal": 1.14,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 5,
+            "scoreKey": "3-5"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.802Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EJCabKkf",
+                "canonicalId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "KA Akureyri",
+                "away": "KR Reykjavik",
+                "scoreHome": 3,
+                "scoreAway": 5,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "3-5",
+                "homeTeam": "KA Akureyri",
+                "awayTeam": "KR Reykjavik",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_kaakureyri_krreykjavik_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "resolvedFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "KA Akureyri",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "KR Reykjavik",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         },
         {
           "planId": "plan-b2",
@@ -2803,21 +3568,72 @@
           "aiFairOdds": 1.31,
           "oddsDecimal": 1.54,
           "oddsUse": "display_settlement_only",
-          "finalStatus": null,
-          "finalStatusType": null,
-          "finalScore": null,
-          "result": "UNRESOLVED",
-          "finalResultProvenance": null
+          "finalStatus": "verified_final_result",
+          "finalStatusType": "STATUS_FINAL",
+          "finalScore": {
+            "homeScore": 3,
+            "awayScore": 5,
+            "scoreKey": "3-5"
+          },
+          "result": "WIN",
+          "finalResultProvenance": {
+            "verifiedFinalTruth": true,
+            "verdict": "verified_final_result",
+            "source": "canonical_flashscore_terminal_final",
+            "method": "canonical_flashscore_terminal_final",
+            "authority": "canonical_fixture_store",
+            "sourceCount": 1,
+            "independentSourceCount": 1,
+            "generatedAt": "2026-08-24T14:08:44.802Z",
+            "sources": [
+              {
+                "provider": "flashscore",
+                "providerMatchId": "EJCabKkf",
+                "canonicalId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                "leagueName": "Besta deild karla",
+                "home": "KA Akureyri",
+                "away": "KR Reykjavik",
+                "scoreHome": 3,
+                "scoreAway": 5,
+                "kickoffUtc": "2026-08-23T17:00:00.000Z",
+                "rawStatus": "STATUS_FINAL",
+                "statusType": "STATUS_FINAL",
+                "terminalObservedAt": "2026-08-23T19:47:49.933Z",
+                "scoreKey": "3-5",
+                "homeTeam": "KA Akureyri",
+                "awayTeam": "KR Reykjavik",
+                "productionIdentityBinding": {
+                  "schema": "ai-matchlab.production-evidence-provenance.v1",
+                  "sourceFixtureIds": [
+                    "cid_isl1_kaakureyri_krreykjavik_20260823"
+                  ],
+                  "sourceFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "resolvedFixtureId": "cid_isl1_kaakureyri_krreykjavik_20260823",
+                  "sourceFixtureRole": "unmanaged",
+                  "fixtureManaged": false,
+                  "homeSourceAlias": "KA Akureyri",
+                  "homeGlobalClubId": null,
+                  "awaySourceAlias": "KR Reykjavik",
+                  "awayGlobalClubId": null,
+                  "scoreTruthChanged": false,
+                  "statusTruthChanged": false,
+                  "sourceEvidenceRewritten": false,
+                  "overlayOnly": true,
+                  "productionMutationAuthorized": false
+                }
+              }
+            ]
+          }
         }
       ]
     }
   },
   "comparison": {
     "pickDeltaPlanBMinusPlanA": -20,
-    "settledDeltaPlanBMinusPlanA": -14,
-    "winsDeltaPlanBMinusPlanA": -9,
-    "lossesDeltaPlanBMinusPlanA": -5,
-    "hitRateDeltaPlanBMinusPlanA": null,
-    "roiDeltaPlanBMinusPlanA": null
+    "settledDeltaPlanBMinusPlanA": -18,
+    "winsDeltaPlanBMinusPlanA": -10,
+    "lossesDeltaPlanBMinusPlanA": -8,
+    "hitRateDeltaPlanBMinusPlanA": 0.4,
+    "roiDeltaPlanBMinusPlanA": 0.45
   }
 }
