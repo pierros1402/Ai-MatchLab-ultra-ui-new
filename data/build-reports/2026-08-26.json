@@ -1,11 +1,11 @@
 {
-  "ok": true,
+  "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-08-26",
-  "generatedAt": "2026-08-25T18:26:26.620Z",
+  "generatedAt": "2026-08-25T21:27:30.493Z",
   "universe": {
     "expected": null,
-    "canonical": 52,
+    "canonical": 53,
     "published": 52,
     "details": 52,
     "byLeague": {
@@ -16,7 +16,7 @@
         "blr.2": 1,
         "bol.1": 2,
         "bra.2": 2,
-        "col.1": 4,
+        "col.1": 3,
         "conmebol.libertadores": 1,
         "ecu.2": 1,
         "egy.1": 3,
@@ -28,8 +28,10 @@
         "ksa.2": 3,
         "mys.1": 2,
         "nor.2": 7,
+        "par.1": 1,
         "rsa.1": 4,
-        "uefa.champions": 4
+        "uefa.champions": 4,
+        "uefa.europa.conf": 1
       },
       "published": {
         "arg.2": 6,
@@ -53,28 +55,70 @@
         "ecu.2": 1
       }
     },
-    "canonicalLeaguesMissingFromPublished": [],
+    "canonicalLeaguesMissingFromPublished": [
+      "par.1",
+      "uefa.europa.conf"
+    ],
     "expectedLeaguesMissingFromPublished": []
   },
   "acquisition": {
-    "finishedAt": "2026-08-25T17:48:40.063Z",
-    "accepted": 3205,
-    "failedFetches": 1,
-    "skippedSlugSample": {},
-    "skippedSlugSampleBeforeAdmissionRetry": null,
-    "aliasedSlugSample": null,
+    "finishedAt": "2026-08-25T19:03:28.449Z",
+    "accepted": 3237,
+    "failedFetches": 0,
+    "skippedSlugSample": {
+      "aff.championship": 1,
+      "arg.3": 11,
+      "arg.copa": 1,
+      "bra.copa_do_brazil": 3,
+      "chi.copa_chi": 2,
+      "club.friendly": 8,
+      "concacaf.central.american.cup": 6,
+      "concacaf.leagues.cup": 4,
+      "eng.fa_qual": 25,
+      "fifa.intercontinental_cup": 1,
+      "uefa.w.europa": 11,
+      "uefa.wchampions_qual": 9,
+      "usa.ncaa.m.1": 9,
+      "usa.ncaa.w.1": 5,
+      "usa.nwsl": 1,
+      "usa.usl.1": 2,
+      "usa.usl.l1": 1
+    },
+    "skippedSlugSampleBeforeAdmissionRetry": {
+      "concacaf.leagues.cup": 4,
+      "club.friendly": 8,
+      "uefa.wchampions_qual": 9,
+      "eng.fa_qual": 25,
+      "arg.3": 11,
+      "bra.copa_do_brazil": 3,
+      "concacaf.central.american.cup": 6,
+      "usa.ncaa.m.1": 9,
+      "usa.ncaa.w.1": 5,
+      "usa.nwsl": 1,
+      "usa.usl.1": 2,
+      "usa.usl.l1": 1,
+      "aff.championship": 1,
+      "uefa.w.europa": 11,
+      "fifa.intercontinental_cup": 1,
+      "arg.copa": 1,
+      "chi.copa_chi": 2
+    },
+    "aliasedSlugSample": {
+      "uefa.champions_qual->uefa.champions": 7,
+      "uefa.europa.conf_qual->uefa.europa.conf": 1
+    },
     "sameDayAdmissionRetry": {
       "attempted": false,
       "newlyAdmittedSlugs": []
     },
     "admission": {
       "schema": "ai-matchlab.daily-league-admission.v1",
-      "generatedAt": "2026-08-25T17:48:40.062Z",
+      "generatedAt": "2026-08-25T19:03:28.448Z",
       "summary": {
-        "evidenceSlugCount": 18,
+        "evidenceSlugCount": 22,
         "admittedCount": 5,
         "pendingCount": 0,
-        "rejectedCount": 18,
+        "rejectedCount": 22,
         "alreadyDeclaredCount": 0
       },
       "admittedSlugs": [
@@ -88,15 +132,19 @@
       "rejectedSlugs": [
         "aff.championship",
         "arg.3",
+        "arg.copa",
         "bra.copa_do_brazil",
         "can.w.nsl",
+        "chi.copa_chi",
         "club.friendly",
         "concacaf.central.american.cup",
         "concacaf.leagues.cup",
         "eng.fa_qual",
+        "fifa.intercontinental_cup",
         "ger.super_cup",
         "ned.w.1",
         "sco.tennents_qual",
+        "uefa.w.europa",
         "uefa.wchampions_qual",
         "usa.ncaa.m.1",
         "usa.ncaa.w.1",
@@ -108,10 +156,11 @@
       "decisions": [
         {
           "slug": "aff.championship",
-          "observationDays": 1,
-          "totalObservedFixtures": 1,
+          "observationDays": 2,
+          "totalObservedFixtures": 2,
           "byDay": {
-            "2026-08-23": 1
+            "2026-08-23": 1,
+            "2026-08-26": 1
           },
           "classification": "rejected",
           "admitted": false,
@@ -120,12 +169,25 @@
         },
         {
           "slug": "arg.3",
-          "observationDays": 3,
-          "totalObservedFixtures": 17,
+          "observationDays": 4,
+          "totalObservedFixtures": 28,
           "byDay": {
             "2026-08-23": 8,
             "2026-08-24": 1,
-            "2026-08-25": 8
+            "2026-08-25": 8,
+            "2026-08-26": 11
+          },
+          "classification": "rejected",
+          "admitted": false,
+          "acquisitionEligible": false,
+          "reasonCode": "not_strict_domestic_tier_1_or_2"
+        },
+        {
+          "slug": "arg.copa",
+          "observationDays": 1,
+          "totalObservedFixtures": 1,
+          "byDay": {
+            "2026-08-26": 1
           },
           "classification": "rejected",
           "admitted": false,
@@ -134,10 +196,11 @@
         },
         {
           "slug": "bra.copa_do_brazil",
-          "observationDays": 1,
-          "totalObservedFixtures": 1,
+          "observationDays": 2,
+          "totalObservedFixtures": 4,
           "byDay": {
-            "2026-08-25": 1
+            "2026-08-25": 1,
+            "2026-08-26": 3
           },
           "classification": "rejected",
           "admitted": false,
@@ -158,13 +221,26 @@
           "reasonCode": "not_strict_domestic_tier_1_or_2"
         },
         {
+          "slug": "chi.copa_chi",
+          "observationDays": 1,
+          "totalObservedFixtures": 2,
+          "byDay": {
+            "2026-08-26": 2
+          },
+          "classification": "rejected",
+          "admitted": false,
+          "acquisitionEligible": false,
+          "reasonCode": "not_strict_domestic_tier_1_or_2"
+        },
+        {
           "slug": "club.friendly",
-          "observationDays": 3,
-          "totalObservedFixtures": 57,
+          "observationDays": 4,
+          "totalObservedFixtures": 65,
           "byDay": {
             "2026-08-23": 43,
             "2026-08-24": 11,
-            "2026-08-25": 3
+            "2026-08-25": 3,
+            "2026-08-26": 8
           },
           "classification": "rejected",
           "admitted": false,
@@ -173,10 +249,11 @@
         },
         {
           "slug": "concacaf.central.american.cup",
-          "observationDays": 1,
-          "totalObservedFixtures": 2,
+          "observationDays": 2,
+          "totalObservedFixtures": 8,
           "byDay": {
-            "2026-08-25": 2
+            "2026-08-25": 2,
+            "2026-08-26": 6
           },
           "classification": "rejected",
           "admitted": false,
@@ -185,10 +262,11 @@
         },
         {
           "slug": "concacaf.leagues.cup",
-          "observationDays": 1,
-          "totalObservedFixtures": 2,
+          "observationDays": 2,
+          "totalObservedFixtures": 6,
           "byDay": {
-            "2026-08-25": 2
+            "2026-08-25": 2,
+            "2026-08-26": 4
           },
           "classification": "rejected",
           "admitted": false,
@@ -213,12 +291,25 @@
         },
         {
           "slug": "eng.fa_qual",
-          "observationDays": 3,
-          "totalObservedFixtures": 156,
+          "observationDays": 4,
+          "totalObservedFixtures": 181,
           "byDay": {
             "2026-08-23": 131,
             "2026-08-24": 2,
-            "2026-08-25": 23
+            "2026-08-25": 23,
+            "2026-08-26": 25
+          },
+          "classification": "rejected",
+          "admitted": false,
+          "acquisitionEligible": false,
+          "reasonCode": "not_strict_domestic_tier_1_or_2"
+        },
+        {
+          "slug": "fifa.intercontinental_cup",
+          "observationDays": 1,
+          "totalObservedFixtures": 1,
+          "byDay": {
+            "2026-08-26": 1
           },
           "classification": "rejected",
           "admitted": false,
@@ -327,11 +418,24 @@
           "carriedFromDay": "2026-08-26"
         },
         {
-          "slug": "uefa.wchampions_qual",
+          "slug": "uefa.w.europa",
           "observationDays": 1,
-          "totalObservedFixtures": 1,
+          "totalObservedFixtures": 11,
           "byDay": {
-            "2026-08-25": 1
+            "2026-08-26": 11
+          },
+          "classification": "rejected",
+          "admitted": false,
+          "acquisitionEligible": false,
+          "reasonCode": "not_strict_domestic_tier_1_or_2"
+        },
+        {
+          "slug": "uefa.wchampions_qual",
+          "observationDays": 2,
+          "totalObservedFixtures": 10,
+          "byDay": {
+            "2026-08-25": 1,
+            "2026-08-26": 9
           },
           "classification": "rejected",
           "admitted": false,
@@ -340,12 +444,13 @@
         },
         {
           "slug": "usa.ncaa.m.1",
-          "observationDays": 3,
-          "totalObservedFixtures": 177,
+          "observationDays": 4,
+          "totalObservedFixtures": 186,
           "byDay": {
             "2026-08-23": 61,
             "2026-08-24": 85,
-            "2026-08-25": 31
+            "2026-08-25": 31,
+            "2026-08-26": 9
           },
           "classification": "rejected",
           "admitted": false,
@@ -354,12 +459,13 @@
         },
         {
           "slug": "usa.ncaa.w.1",
-          "observationDays": 3,
-          "totalObservedFixtures": 286,
+          "observationDays": 4,
+          "totalObservedFixtures": 291,
           "byDay": {
             "2026-08-23": 145,
             "2026-08-24": 137,
-            "2026-08-25": 4
+            "2026-08-25": 4,
+            "2026-08-26": 5
           },
           "classification": "rejected",
           "admitted": false,
@@ -368,11 +474,12 @@
         },
         {
           "slug": "usa.nwsl",
-          "observationDays": 2,
-          "totalObservedFixtures": 11,
+          "observationDays": 3,
+          "totalObservedFixtures": 12,
           "byDay": {
             "2026-08-23": 7,
-            "2026-08-24": 4
+            "2026-08-24": 4,
+            "2026-08-26": 1
           },
           "classification": "rejected",
           "admitted": false,
@@ -381,12 +488,13 @@
         },
         {
           "slug": "usa.usl.1",
-          "observationDays": 3,
-          "totalObservedFixtures": 14,
+          "observationDays": 4,
+          "totalObservedFixtures": 16,
           "byDay": {
             "2026-08-23": 12,
             "2026-08-24": 1,
-            "2026-08-25": 1
+            "2026-08-25": 1,
+            "2026-08-26": 2
           },
           "classification": "rejected",
           "admitted": false,
@@ -395,10 +503,11 @@
         },
         {
           "slug": "usa.usl.l1",
-          "observationDays": 1,
-          "totalObservedFixtures": 8,
+          "observationDays": 2,
+          "totalObservedFixtures": 9,
           "byDay": {
-            "2026-08-23": 8
+            "2026-08-23": 8,
+            "2026-08-26": 1
           },
           "classification": "rejected",
           "admitted": false,
@@ -421,10 +530,41 @@
     }
   },
   "freshness": {
-    "ok": true,
+    "ok": false,
     "manifestGeneratedAt": "2026-08-25T18:25:27.700Z",
-    "reasons": [],
-    "staleInputs": []
+    "reasons": [
+      "snapshot_stale_against_canonical",
+      "snapshot_stale_against_coverage_report",
+      "snapshot_value_stale_against_canonical",
+      "plan_a2_stale_against_canonical",
+      "plan_a2_audit_stale_against_canonical",
+      "plan_b_audit_stale_against_canonical",
+      "plan_b2_audit_stale_against_canonical"
+    ],
+    "staleInputs": [
+      "canonical-fixtures/2026-08-26/arg.2.json",
+      "canonical-fixtures/2026-08-26/bih.2.json",
+      "canonical-fixtures/2026-08-26/blr.2.json",
+      "canonical-fixtures/2026-08-26/bol.1.json",
+      "canonical-fixtures/2026-08-26/bra.2.json",
+      "canonical-fixtures/2026-08-26/col.1.json",
+      "canonical-fixtures/2026-08-26/conmebol.libertadores.json",
+      "canonical-fixtures/2026-08-26/ecu.2.json",
+      "canonical-fixtures/2026-08-26/egy.1.json",
+      "canonical-fixtures/2026-08-26/eng.league_cup.json",
+      "canonical-fixtures/2026-08-26/esp.1.json",
+      "canonical-fixtures/2026-08-26/est.1.json",
+      "canonical-fixtures/2026-08-26/kor.1.json",
+      "canonical-fixtures/2026-08-26/ksa.1.json",
+      "canonical-fixtures/2026-08-26/ksa.2.json",
+      "canonical-fixtures/2026-08-26/mys.1.json",
+      "canonical-fixtures/2026-08-26/nor.2.json",
+      "canonical-fixtures/2026-08-26/par.1.json",
+      "canonical-fixtures/2026-08-26/rsa.1.json",
+      "canonical-fixtures/2026-08-26/uefa.champions.json",
+      "canonical-fixtures/2026-08-26/uefa.europa.conf.json",
+      "coverage-reports/2026-08-26.json"
+    ]
   },
   "invariant": {
     "ok": true,
@@ -456,7 +596,7 @@
     }
   },
   "settlement": {
-    "generatedAt": "2026-08-25T18:24:43.065Z",
+    "generatedAt": "2026-08-25T21:26:43.697Z",
     "requiredPlans": [
       "A",
       "A2",
@@ -506,16 +646,21 @@
   },
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-08-25T18:26:21.361Z",
+    "generatedAt": "2026-08-25T21:27:30.264Z",
     "season": "2026-2027",
     "modelReady": true,
-    "publicationReady": true,
-    "blocked": [],
+    "publicationReady": false,
+    "blocked": [
+      {
+        "component": "details",
+        "reason": "details_foundation_not_ready"
+      }
+    ],
     "warnings": [
       {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 140,
+        "count": 156,
         "informational": true
       },
       {
@@ -548,8 +693,14 @@
     "supersededOpenCanonicalIds": [],
     "supersededOpenFixtures": []
   },
-  "hardFailures": [],
-  "warnings": [],
-  "clean": true,
-  "cleanStrict": true
+  "hardFailures": [
+    "foundation_publication_not_ready",
+    "snapshot_stale"
+  ],
+  "warnings": [
+    "canonical_leagues_missing_from_published:par.1,uefa.europa.conf",
+    "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,eng.fa_qual,fifa.intercontinental_cup,uefa.w.europa,uefa.wchampions_qual,usa.ncaa.m.1,usa.ncaa.w.1"
+  ],
+  "clean": false,
+  "cleanStrict": false
 }
