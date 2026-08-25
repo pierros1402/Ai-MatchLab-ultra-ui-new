@@ -111,6 +111,94 @@ jobs:
             echo "No authoritative intraday truth changes to checkpoint."
           fi
 
+      # Verified current-day settlement is mutable result truth, not a model
+      # rebuild. Persist and publish it before downstream Value/foundation
+      # gates can strand an already-known WIN/LOSS/VOID/final score.
+      - name: Checkpoint current Value settlement independently
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/fixtures.json" ]; then
+            node ./engine-v1/jobs/export-verified-final-results-day.js \
+              --date="${DAY_KEY}" \
+              --write \
+              --all-fixtures
+          fi
+
+          if [ -f "data/deploy-snapshots/${DAY_KEY}/value.json" ]; then
+            node ./engine-v1/jobs/export-verified-final-results-day.js \
+              --date="${DAY_KEY}" \
+              --write
+          fi
+
+          for PLAN_FILE in plan-a2.json plan-b.json plan-b2.json; do
+            PLAN_PATH="data/value-plans/${DAY_KEY}/${PLAN_FILE}"
+
+            if [ -f "$PLAN_PATH" ]; then
+              node ./engine-v1/jobs/export-verified-final-results-day.js \
+                --date="${DAY_KEY}" \
+                --write \
+                --value-path="$PLAN_PATH"
+            fi
+          done
+
+          if [ ! -f "data/value-comparison/${DAY_KEY}.json" ]; then
+            echo "No Value comparison for ${DAY_KEY}; no settlement checkpoint required."
+            exit 0
+          fi
+
+          node ./engine-v1/jobs/build-value-plan-comparison-day.js \
+            --date="${DAY_KEY}" \
+            --write
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git restore --staged . || true
+
+          test -d "data/final-results/${DAY_KEY}" && \
+            git add "data/final-results/${DAY_KEY}/"
+
+          test -f "data/final-result-conflicts/${DAY_KEY}.json" && \
+            git add "data/final-result-conflicts/${DAY_KEY}.json"
+
+          git add "data/value-comparison/${DAY_KEY}.json"
+
+          STAGED="$(git diff --cached --name-only || true)"
+
+          if [ -n "$STAGED" ]; then
+            node engine-v1/jobs/guard-staged-data-boundary.js \
+              --label=current-value-settlement-checkpoint \
+              --dayKey="${DAY_KEY}" \
+              --allow="^(data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No current Value settlement changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Persist current Value settlement checkpoint for ${DAY_KEY}"
+          bash tools/git-push-rebase-retry.sh
+
+          VALUE_SETTLEMENT_PUBLISHED_REF="$(git rev-parse HEAD)"
+          echo "VALUE_SETTLEMENT_PUBLISHED_REF=${VALUE_SETTLEMENT_PUBLISHED_REF}" >> "$GITHUB_ENV"
+          echo "VALUE_SETTLEMENT_PUSHED=true" >> "$GITHUB_ENV"
+
+      - name: Promote current Value settlement comparison
+        if: env.SKIP_BUILD != 'true' && env.VALUE_SETTLEMENT_PUSHED == 'true'
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+
+          node tools/sync-public-value-comparison.mjs \
+            "${DAY_KEY}" \
+            "${VALUE_SETTLEMENT_PUBLISHED_REF}"
+
       - name: Run intraday snapshot refresh
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/run-intraday-snapshot-refresh.js "$DAY_KEY" --chunks=0 --chunk-size=12 --days-back=1 --days-forward=14 --no-rebuild-details
@@ -285,94 +373,6 @@ jobs:
         run: |
           set -euo pipefail
           bash tools/sync-public-snapshot.sh "${DAY_KEY}" "${TRUTH_PUBLISHED_REF}"
-
-      # Verified current-day settlement is mutable result truth, not a model
-      # rebuild. Persist and publish it before downstream Value/foundation
-      # gates can strand an already-known WIN/LOSS/VOID/final score.
-      - name: Checkpoint current Value settlement independently
-        if: env.SKIP_BUILD != 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          if [ -f "data/deploy-snapshots/${DAY_KEY}/fixtures.json" ]; then
-            node ./engine-v1/jobs/export-verified-final-results-day.js \
-              --date="${DAY_KEY}" \
-              --write \
-              --all-fixtures
-          fi
-
-          if [ -f "data/deploy-snapshots/${DAY_KEY}/value.json" ]; then
-            node ./engine-v1/jobs/export-verified-final-results-day.js \
-              --date="${DAY_KEY}" \
-              --write
-          fi
-
-          for PLAN_FILE in plan-a2.json plan-b.json plan-b2.json; do
-            PLAN_PATH="data/value-plans/${DAY_KEY}/${PLAN_FILE}"
-
-            if [ -f "$PLAN_PATH" ]; then
-              node ./engine-v1/jobs/export-verified-final-results-day.js \
-                --date="${DAY_KEY}" \
-                --write \
-                --value-path="$PLAN_PATH"
-            fi
-          done
-
-          if [ ! -f "data/value-comparison/${DAY_KEY}.json" ]; then
-            echo "No Value comparison for ${DAY_KEY}; no settlement checkpoint required."
-            exit 0
-          fi
-
-          node ./engine-v1/jobs/build-value-plan-comparison-day.js \
-            --date="${DAY_KEY}" \
-            --write
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git restore --staged . || true
-
-          test -d "data/final-results/${DAY_KEY}" && \
-            git add "data/final-results/${DAY_KEY}/"
-
-          test -f "data/final-result-conflicts/${DAY_KEY}.json" && \
-            git add "data/final-result-conflicts/${DAY_KEY}.json"
-
-          git add "data/value-comparison/${DAY_KEY}.json"
-
-          STAGED="$(git diff --cached --name-only || true)"
-
-          if [ -n "$STAGED" ]; then
-            node engine-v1/jobs/guard-staged-data-boundary.js \
-              --label=current-value-settlement-checkpoint \
-              --dayKey="${DAY_KEY}" \
-              --allow="^(data/final-results/${DAY_KEY}/|data/final-result-conflicts/${DAY_KEY}\.json$|data/value-comparison/${DAY_KEY}\.json$)"
-          fi
-
-          if git diff --cached --quiet; then
-            echo "No current Value settlement changes to commit."
-            exit 0
-          fi
-
-          git commit -m "Persist current Value settlement checkpoint for ${DAY_KEY}"
-          bash tools/git-push-rebase-retry.sh
-
-          VALUE_SETTLEMENT_PUBLISHED_REF="$(git rev-parse HEAD)"
-          echo "VALUE_SETTLEMENT_PUBLISHED_REF=${VALUE_SETTLEMENT_PUBLISHED_REF}" >> "$GITHUB_ENV"
-          echo "VALUE_SETTLEMENT_PUSHED=true" >> "$GITHUB_ENV"
-
-      - name: Promote current Value settlement comparison
-        if: env.SKIP_BUILD != 'true' && env.VALUE_SETTLEMENT_PUSHED == 'true'
-        shell: bash
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          set -euo pipefail
-
-          node tools/sync-public-value-comparison.mjs \
-            "${DAY_KEY}" \
-            "${VALUE_SETTLEMENT_PUBLISHED_REF}"
 
       - name: Self-heal stale or missing value artifacts
         if: env.SKIP_BUILD != 'true'

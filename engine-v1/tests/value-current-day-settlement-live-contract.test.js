@@ -19,21 +19,26 @@ test("current-day settlement checkpoint precedes downstream Value gates", () => 
     ".github/workflows/intraday-deploy-snapshot-refresh.yml"
   );
 
-  const truth = workflow.indexOf(
-    "Promote independent LIVE/FT public checkpoint"
+  const truthCheckpoint = workflow.indexOf(
+    "Persist authoritative intraday truth checkpoint"
   );
 
   const settlement = workflow.indexOf(
     "Checkpoint current Value settlement independently"
   );
 
-  const selfHeal = workflow.indexOf(
-    "Self-heal stale or missing value artifacts"
+  const promotion = workflow.indexOf(
+    "Promote current Value settlement comparison"
   );
 
-  assert.ok(truth >= 0);
-  assert.ok(settlement > truth);
-  assert.ok(selfHeal > settlement);
+  const intradayRefresh = workflow.indexOf(
+    "Run intraday snapshot refresh"
+  );
+
+  assert.ok(truthCheckpoint >= 0);
+  assert.ok(settlement > truthCheckpoint);
+  assert.ok(promotion > settlement);
+  assert.ok(intradayRefresh > promotion);
 
   assert.match(
     workflow,
@@ -61,7 +66,7 @@ test("current-day settlement has comparison-only publication", () => {
   );
 
   const end = workflow.indexOf(
-    "- name: Self-heal stale or missing value artifacts"
+    "- name: Run intraday snapshot refresh"
   );
 
   assert.ok(start >= 0);
