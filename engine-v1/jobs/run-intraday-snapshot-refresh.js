@@ -13,6 +13,7 @@ import { buildDayReport } from "./build-day-report.js";
 import { resolveDataPath, ensureDir } from "../storage/data-root.js";
 import { fixturesForSnapshotDay } from "../core/day-fixture-universe.js";
 import {
+  collectAuthoritativeWrongDayPublishedFixtureIds,
   intradayPublicationFixtureId,
   resolveIntradayPublishedUniverse
 } from "../core/intraday-publication-universe.js";
@@ -82,6 +83,50 @@ function publishedSnapshotState(dayKey) {
     publishedFixtures,
     publishedDetailIds
   };
+}
+
+function canonicalLeaguePayloadsForDay(
+  dayKey
+) {
+  const canonicalDir =
+    resolveDataPath(
+      "canonical-fixtures",
+      dayKey
+    );
+
+  if (!fs.existsSync(canonicalDir)) {
+    return [];
+  }
+
+  return fs.readdirSync(
+    canonicalDir,
+    {
+      withFileTypes: true
+    }
+  )
+    .filter(entry =>
+      entry.isFile() &&
+      entry.name.endsWith(".json")
+    )
+    .sort((left, right) =>
+      left.name.localeCompare(
+        right.name
+      )
+    )
+    .map(entry =>
+      readJsonSafe(
+        path.join(
+          canonicalDir,
+          entry.name
+        ),
+        null
+      )
+    )
+    .filter(payload =>
+      payload &&
+      typeof payload === "object" &&
+      !Array.isArray(payload)
+    );
 }
 
 function runNodeScript(scriptPath, args = []) {
@@ -392,6 +437,23 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       safeDayKey
     );
 
+  /*
+   * Canonical status refresh may strictly prove that a row previously
+   * published for this day actually belongs to another provider-authoritative
+   * day. Only that exact evidence may shrink the status-only publication lock.
+   */
+  const authoritativelyRemovedFixtureIds =
+    collectAuthoritativeWrongDayPublishedFixtureIds({
+      dayKey:
+        safeDayKey,
+      publishedFixtures:
+        previousSnapshot.publishedFixtures,
+      canonicalLeaguePayloads:
+        canonicalLeaguePayloadsForDay(
+          safeDayKey
+        )
+    });
+
   const publicationLock =
     resolveIntradayPublishedUniverse({
       publishedFixtures:
@@ -399,13 +461,16 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       currentFixtures:
         publishableStatusRows,
       publishedDetailIds:
-        previousSnapshot.publishedDetailIds
+        previousSnapshot.publishedDetailIds,
+      authoritativelyRemovedFixtureIds
     });
 
   if (!publicationLock.ok) {
     throw new Error(
       `intraday_status_only_publication_universe_invalid:${safeDayKey}:${publicationLock.reason || "unknown"}` +
       `:missingCurrent=${publicationLock.missingCurrentFixtureIds.join(",")}` +
+      `:authorizedWrongDay=${publicationLock.authoritativelyRemovedFixtureIds.join(",")}` +
+      `:unauthorizedMissingCurrent=${publicationLock.unauthorizedMissingCurrentFixtureIds.join(",")}` +
       `:missingDetails=${publicationLock.missingPublishedDetailIds.join(",")}`
     );
   }
@@ -428,6 +493,16 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
         publicationLock.currentFixtureCount,
       publishedFixtures:
         publicationLock.publishedFixtureCount,
+      allowedFixtures:
+        publicationLock.allowedFixtureCount,
+      authoritativelyRemovedFixtures:
+        publicationLock.authoritativelyRemovedFixtureIds.length,
+      authoritativelyRemovedFixtureIds:
+        publicationLock.authoritativelyRemovedFixtureIds,
+      unauthorizedMissingCurrentFixtures:
+        publicationLock.unauthorizedMissingCurrentFixtureIds.length,
+      unauthorizedMissingCurrentFixtureIds:
+        publicationLock.unauthorizedMissingCurrentFixtureIds,
       deferredFixtures:
         publicationLock.deferredFixtureIds.length,
       deferredFixtureIds:
@@ -560,6 +635,12 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
         publicationLock.publishedFixtureCount,
       currentFixtureCount:
         publicationLock.currentFixtureCount,
+      allowedFixtureCount:
+        publicationLock.allowedFixtureCount,
+      authoritativelyRemovedFixtureIds:
+        publicationLock.authoritativelyRemovedFixtureIds,
+      unauthorizedMissingCurrentFixtureIds:
+        publicationLock.unauthorizedMissingCurrentFixtureIds,
       deferredFixtureIds:
         publicationLock.deferredFixtureIds
     },
