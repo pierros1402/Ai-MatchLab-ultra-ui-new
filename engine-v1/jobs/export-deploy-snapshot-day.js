@@ -845,6 +845,28 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
         )
       : null;
 
+  const authoritativelyRemovedFixtureIds =
+    [
+      ...(
+        normalizeFixtureIdAllowlist(
+          options
+            ?.authoritativelyRemovedFixtureIds
+        ) ||
+        new Set()
+      )
+    ].sort();
+
+  const legacyPrunedFixtureIds =
+    [
+      ...(
+        normalizeFixtureIdAllowlist(
+          options
+            ?.legacyPrunedFixtureIds
+        ) ||
+        new Set()
+      )
+    ].sort();
+
   if (
     publicationMode === "intraday_status_only" &&
     allFixtures.length > 0 &&
@@ -1227,7 +1249,13 @@ const manifest = {
       currentFixtureCount: allFixtures.length,
       publishedFixtureCount: fixtures.length,
       deferredFixtureCount: deferredFixtureIds.length,
-      deferredFixtureIds
+      deferredFixtureIds,
+      authoritativelyRemovedFixtureCount:
+        authoritativelyRemovedFixtureIds.length,
+      authoritativelyRemovedFixtureIds,
+      legacyPrunedFixtureCount:
+        legacyPrunedFixtureIds.length,
+      legacyPrunedFixtureIds
     },
     files: {
       fixtures: "fixtures.json",

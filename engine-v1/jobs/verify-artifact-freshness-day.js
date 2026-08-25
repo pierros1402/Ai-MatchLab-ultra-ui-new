@@ -37,6 +37,9 @@ import {
   buildValueFixtureUniverse,
   valueFixtureUniverseContract
 } from "../core/value-fixture-universe.js";
+import {
+  evaluateFrozenValuePublicationMembership
+} from "../core/frozen-value-publication-membership.js";
 
 function readJsonSafe(file) {
   try {
@@ -229,6 +232,8 @@ export function evaluateFrozenValueObservationFreshness({
   dayKey,
   currentAthensDay = athensDayKey(),
   currentUniverse = null,
+  manifest = null,
+  snapshotFixtures = [],
   planA2 = null,
   planA2Audit = null,
   planB = null,
@@ -365,6 +370,7 @@ export function evaluateFrozenValueObservationFreshness({
   }
 
   let currentMembership;
+  let publicationMembership = null;
 
   try {
     currentMembership =
@@ -374,9 +380,33 @@ export function evaluateFrozenValueObservationFreshness({
       );
   }
   catch {
-    return fail(
-      "current_frozen_membership_mismatch"
-    );
+    publicationMembership =
+      evaluateFrozenValuePublicationMembership({
+        dayKey:
+          requestedDay,
+        currentUniverse,
+        frozenUniverse:
+          planA2Universe,
+        manifest,
+        snapshotFixtures,
+        plans: [
+          planA2,
+          planB,
+          planB2
+        ]
+      });
+
+    if (!publicationMembership.ok) {
+      return {
+        ok: false,
+
+        reason:
+          "current_frozen_membership_mismatch",
+
+        membershipFailureReason:
+          publicationMembership.reason
+      };
+    }
   }
 
   const frozenContract =
@@ -411,11 +441,42 @@ export function evaluateFrozenValueObservationFreshness({
       true,
 
     membershipParity:
-      true,
+      publicationMembership === null,
 
     descriptorDrift:
-      currentMembership
-        .descriptorDrift === true
+      publicationMembership === null
+        ? currentMembership
+            .descriptorDrift === true
+        : null,
+
+    publicationMembershipPreserved:
+      publicationMembership
+        ?.publicationMembershipPreserved ===
+        true,
+
+    authorizedShrink:
+      publicationMembership
+        ?.authorizedShrink ===
+        true,
+
+    removedFixtureIds:
+      publicationMembership
+        ?.removedFixtureIds ||
+      [],
+
+    deferredCurrentFixtureIds:
+      publicationMembership
+        ?.deferredCurrentFixtureIds ||
+      [],
+
+    removalEvidenceSource:
+      publicationMembership
+        ?.evidenceSource ||
+      (
+        publicationMembership === null
+          ? "exact_current_frozen_membership"
+          : null
+      )
   };
 }
 
@@ -596,6 +657,23 @@ export function verifyArtifactFreshnessDay(dayKey) {
   const latestCanonicalInputAt = canonicalInputTimes.length ? Math.max(...canonicalInputTimes) : null;
 
   if (latestCanonicalInputAt !== null) {
+    const snapshotFixturesPayload =
+      readJsonSafe(
+        resolveDataPath(
+          "deploy-snapshots",
+          dayKey,
+          "fixtures.json"
+        )
+      );
+
+    const snapshotFixtures =
+      Array.isArray(
+        snapshotFixturesPayload
+          ?.fixtures
+      )
+        ? snapshotFixturesPayload.fixtures
+        : [];
+
     const snapshotValue = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value.json"));
     const snapshotAudit = readJsonSafe(resolveDataPath("deploy-snapshots", dayKey, "value-audit.json"));
     const sourceAudit = readJsonSafe(resolveDataPath("value", "_audit", `${dayKey}.json`));
@@ -701,6 +779,8 @@ export function verifyArtifactFreshnessDay(dayKey) {
         currentAthensDay,
         currentUniverse:
           currentValueUniverse,
+        manifest,
+        snapshotFixtures,
         planA2,
         planA2Audit,
         planB,
@@ -728,7 +808,22 @@ export function verifyArtifactFreshnessDay(dayKey) {
             membershipParity:
               frozenValueObservationFreshness.membershipParity,
             descriptorDrift:
-              frozenValueObservationFreshness.descriptorDrift
+              frozenValueObservationFreshness.descriptorDrift,
+            publicationMembershipPreserved:
+              frozenValueObservationFreshness
+                .publicationMembershipPreserved === true,
+            authorizedShrink:
+              frozenValueObservationFreshness
+                .authorizedShrink === true,
+            removedFixtureIds:
+              frozenValueObservationFreshness
+                .removedFixtureIds || [],
+            deferredCurrentFixtureIds:
+              frozenValueObservationFreshness
+                .deferredCurrentFixtureIds || [],
+            removalEvidenceSource:
+              frozenValueObservationFreshness
+                .removalEvidenceSource || null
           }
         : null;
 

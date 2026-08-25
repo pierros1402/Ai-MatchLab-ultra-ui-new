@@ -66,6 +66,15 @@ function publishedSnapshotState(dayKey) {
     )
   );
 
+  const publishedManifest =
+    readJsonSafe(
+      path.join(
+        snapshotRoot,
+        "manifest.json"
+      ),
+      null
+    );
+
   const snapshotDetailsDir = path.join(
     snapshotRoot,
     "details"
@@ -81,7 +90,235 @@ function publishedSnapshotState(dayKey) {
 
   return {
     publishedFixtures,
-    publishedDetailIds
+    publishedDetailIds,
+    publishedManifest
+  };
+}
+
+function strictCarryForwardIds(
+  values,
+  {
+    stripJsonSuffix = false
+  } = {}
+) {
+  if (
+    values === null ||
+    values === undefined
+  ) {
+    return {
+      ok: true,
+      ids: []
+    };
+  }
+
+  if (!Array.isArray(values)) {
+    return {
+      ok: false,
+      ids: []
+    };
+  }
+
+  const ids =
+    values.map(value => {
+      const raw =
+        normalizeText(value);
+
+      return stripJsonSuffix
+        ? raw.replace(
+            /\.json$/iu,
+            ""
+          )
+        : raw;
+    });
+
+  if (
+    ids.some(id => !id) ||
+    new Set(ids).size !==
+      ids.length
+  ) {
+    return {
+      ok: false,
+      ids: []
+    };
+  }
+
+  return {
+    ok: true,
+    ids:
+      [...ids].sort()
+  };
+}
+
+export function preservedIntradayPruneLedger({
+  dayKey,
+  manifest,
+  publishedFixtures = [],
+  publishedDetailIds = []
+} = {}) {
+  const empty = {
+    authoritativeFixtureIds: [],
+    legacyFixtureIds: []
+  };
+
+  const fixtureIds =
+    (
+      Array.isArray(
+        publishedFixtures
+      )
+        ? publishedFixtures
+        : []
+    ).map(
+      intradayPublicationFixtureId
+    );
+
+  const detailIds =
+    strictCarryForwardIds(
+      publishedDetailIds
+    );
+
+  const fixtureSet =
+    new Set(
+      fixtureIds
+    );
+
+  const publication =
+    manifest
+      ?.publicationUniverse ||
+    {};
+
+  const counts =
+    manifest?.counts ||
+    {};
+
+  const valueGate =
+    manifest?.valueGate ||
+    {};
+
+  const coherent =
+    isValidDayKey(dayKey) &&
+    manifest?.ok === true &&
+    normalizeText(
+      manifest?.date
+    ) ===
+      normalizeText(dayKey) &&
+    normalizeText(
+      manifest?.source
+    ) ===
+      "local_canonical_export" &&
+    normalizeText(
+      publication?.mode
+    ) ===
+      "intraday_status_only" &&
+    fixtureIds.length > 0 &&
+    fixtureIds.every(id => id) &&
+    new Set(fixtureIds).size ===
+      fixtureIds.length &&
+    detailIds.ok &&
+    detailIds.ids.length ===
+      fixtureIds.length &&
+    detailIds.ids.every(id =>
+      fixtureSet.has(id)
+    ) &&
+    Number(
+      publication
+        ?.publishedFixtureCount
+    ) ===
+      fixtureIds.length &&
+    Number(
+      counts?.fixtures
+    ) ===
+      fixtureIds.length &&
+    Number(
+      counts?.details
+    ) ===
+      fixtureIds.length &&
+    Number(
+      counts
+        ?.detailsMissingForFixtures
+    ) ===
+      0 &&
+    valueGate?.ok === true &&
+    valueGate
+      ?.frozenIdentityBound ===
+      true &&
+    valueGate
+      ?.frozenReleaseSafe ===
+      true &&
+    Number(
+      valueGate
+        ?.orphanPickCount
+    ) ===
+      0 &&
+    Number(
+      valueGate
+        ?.missingMatchIdPickCount
+    ) ===
+      0;
+
+  if (!coherent) {
+    return empty;
+  }
+
+  const explicit =
+    strictCarryForwardIds(
+      publication
+        ?.authoritativelyRemovedFixtureIds
+    );
+
+  const legacy =
+    strictCarryForwardIds(
+      publication
+        ?.legacyPrunedFixtureIds
+    );
+
+  if (
+    !explicit.ok ||
+    !legacy.ok
+  ) {
+    return empty;
+  }
+
+  if (
+    explicit.ids.length > 0 ||
+    legacy.ids.length > 0
+  ) {
+    return {
+      authoritativeFixtureIds:
+        explicit.ids,
+      legacyFixtureIds:
+        legacy.ids
+    };
+  }
+
+  const bootstrap =
+    strictCarryForwardIds(
+      manifest
+        ?.orphanDetailsRemoved,
+      {
+        stripJsonSuffix:
+          true
+      }
+    );
+
+  if (
+    !bootstrap.ok ||
+    bootstrap.ids.length === 0 ||
+    Number(
+      counts
+        ?.orphanDetailsRemoved
+    ) !==
+      bootstrap.ids.length ||
+    bootstrap.ids.some(id =>
+      fixtureSet.has(id)
+    )
+  ) {
+    return empty;
+  }
+
+  return {
+    authoritativeFixtureIds: [],
+    legacyFixtureIds:
+      bootstrap.ids
   };
 }
 
@@ -437,6 +674,21 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
       safeDayKey
     );
 
+  const priorPruneLedger =
+    preservedIntradayPruneLedger({
+      dayKey:
+        safeDayKey,
+      manifest:
+        previousSnapshot
+          .publishedManifest,
+      publishedFixtures:
+        previousSnapshot
+          .publishedFixtures,
+      publishedDetailIds:
+        previousSnapshot
+          .publishedDetailIds
+    });
+
   /*
    * Canonical status refresh may strictly prove that a row previously
    * published for this day actually belongs to another provider-authoritative
@@ -453,6 +705,27 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
           safeDayKey
         )
     });
+
+  const authoritativeRemovalLedger =
+    [
+      ...new Set([
+        ...(
+          priorPruneLedger
+            .authoritativeFixtureIds ||
+          []
+        ),
+        ...authoritativelyRemovedFixtureIds
+      ])
+    ].sort();
+
+  const legacyPrunedFixtureIds =
+    [
+      ...new Set(
+        priorPruneLedger
+          .legacyFixtureIds ||
+        []
+      )
+    ].sort();
 
   const publicationLock =
     resolveIntradayPublishedUniverse({
@@ -561,6 +834,9 @@ export async function runIntradaySnapshotRefresh(dayKey, options = {}) {
         "intraday_status_only",
       fixtureIdAllowlist:
         publicationLock.allowedFixtureIds,
+      authoritativelyRemovedFixtureIds:
+        authoritativeRemovalLedger,
+      legacyPrunedFixtureIds,
       buildMissingDetails: false,
       failOnMissingDetails: true
     }
