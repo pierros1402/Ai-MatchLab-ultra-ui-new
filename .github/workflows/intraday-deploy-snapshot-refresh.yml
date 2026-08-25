@@ -233,6 +233,7 @@ jobs:
 
           const day = process.env.DAY_KEY;
           const fixtureFile = `data/deploy-snapshots/${day}/fixtures.json`;
+          const manifestFile = `data/deploy-snapshots/${day}/manifest.json`;
 
           function readHead(file) {
             try {
@@ -312,9 +313,47 @@ jobs:
               .sort((left, right) => left.matchId.localeCompare(right.matchId));
           }
 
+          function publicationUniverseProjection(payload) {
+            const publication = payload?.publicationUniverse || {};
+
+            function ids(values) {
+              return [
+                ...new Set(
+                  (Array.isArray(values) ? values : [])
+                    .map(value => String(value || "").trim())
+                    .filter(Boolean)
+                )
+              ].sort();
+            }
+
+            return {
+              mode: String(publication.mode || ""),
+              currentFixtureCount: Number(publication.currentFixtureCount ?? 0),
+              publishedFixtureCount: Number(publication.publishedFixtureCount ?? 0),
+              deferredFixtureCount: Number(publication.deferredFixtureCount ?? 0),
+              deferredFixtureIds: ids(publication.deferredFixtureIds),
+              authoritativelyRemovedFixtureCount:
+                Number(publication.authoritativelyRemovedFixtureCount ?? 0),
+              authoritativelyRemovedFixtureIds:
+                ids(publication.authoritativelyRemovedFixtureIds),
+              legacyPrunedFixtureCount:
+                Number(publication.legacyPrunedFixtureCount ?? 0),
+              legacyPrunedFixtureIds:
+                ids(publication.legacyPrunedFixtureIds)
+            };
+          }
+
           const fixtureMaterial =
             JSON.stringify(projection(readHead(fixtureFile))) !==
             JSON.stringify(projection(readFile(fixtureFile)));
+
+          const publicationUniverseMaterial =
+            JSON.stringify(
+              publicationUniverseProjection(readHead(manifestFile))
+            ) !==
+            JSON.stringify(
+              publicationUniverseProjection(readFile(manifestFile))
+            );
 
           const staged = execFileSync(
             "git",
@@ -333,7 +372,10 @@ jobs:
           );
 
           process.stdout.write(
-            fixtureMaterial || canonicalMaterial || detailMaterial
+            fixtureMaterial ||
+            publicationUniverseMaterial ||
+            canonicalMaterial ||
+            detailMaterial
               ? "true"
               : "false"
           );

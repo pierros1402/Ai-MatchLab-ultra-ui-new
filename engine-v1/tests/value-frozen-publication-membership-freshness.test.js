@@ -468,3 +468,42 @@ test(
     );
   }
 );
+
+test(
+  "workflow treats publication-universe provenance as material snapshot state",
+  () => {
+    const workflow =
+      fs.readFileSync(
+        new URL(
+          "../../.github/workflows/intraday-deploy-snapshot-refresh.yml",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    for (const token of [
+      "publicationUniverseProjection",
+      "publicationUniverseMaterial",
+      "deferredFixtureIds",
+      "authoritativelyRemovedFixtureCount",
+      "authoritativelyRemovedFixtureIds",
+      "legacyPrunedFixtureCount",
+      "legacyPrunedFixtureIds"
+    ]) {
+      assert.match(
+        workflow,
+        new RegExp(token, "u")
+      );
+    }
+
+    assert.match(
+      workflow,
+      /fixtureMaterial\s*\|\|\s*publicationUniverseMaterial\s*\|\|\s*canonicalMaterial\s*\|\|\s*detailMaterial/u
+    );
+
+    assert.match(
+      workflow,
+      /if \[ "\$MATERIAL" != "true" \]; then[\s\S]*git restore -- "data\/deploy-snapshots\/\$\{DAY_KEY\}"/u
+    );
+  }
+);
