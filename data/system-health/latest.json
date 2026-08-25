@@ -1,96 +1,26 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-25",
-  "generatedAt": "2026-08-25T04:47:36.578Z",
-  "severity": "error",
+  "generatedAt": "2026-08-25T05:42:38.110Z",
+  "severity": "warning",
   "issueCounts": {
-    "error": 2,
-    "warning": 8,
+    "error": 0,
+    "warning": 4,
     "info": 11
   },
   "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 5,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 21,
-  "actionableIssueCount": 10,
-  "newIssueCount": 5,
-  "newActionableIssueCount": 5,
-  "resolvedIssueCount": 1,
-  "persistentIssueCount": 16,
+  "activeIssueCount": 15,
+  "actionableIssueCount": 4,
+  "newIssueCount": 1,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 7,
+  "persistentIssueCount": 14,
   "activeIssues": [
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-25/plan-a2.json",
-        "at": 1787601191417,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24645942
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-25/plan-a2-audit.json",
-        "at": "2026-08-24T19:53:11.418Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24645941
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-25/plan-b-audit.json",
-        "at": "2026-08-24T19:50:59.818Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24777541
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-25/plan-b2-audit.json",
-        "at": "2026-08-24T19:53:12.776Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24644583
-      }
-    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -114,7 +44,31 @@
         "artifact": "value-plans/2026-08-25/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-08-25",
+          "currentAthensDay": "2026-08-25",
+          "fixtureCount": 90,
+          "frozenHash": "f9d7bb2b02b420ca593394f9dc9b3655bbc7e3a63000bd9a9f1a91f575cb6aa6",
+          "currentHash": "591a2864b813d7df8ff15e5e64ff971f0b3a0c2a98ed58bac2dc97fde091e17e",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_alianza_deportivopereira_20260825",
+            "cid_col1_cucutadeportivo_alianza_20260825",
+            "cid_engleaguecup_bradfordcity_burnley_20260825",
+            "cid_engleaguecup_chelsea_lutontown_20260825",
+            "cid_engleaguecup_fulham_wimbledon_20260825",
+            "cid_engleaguecup_newcastleunited_westbromwichalbion_20260825",
+            "cid_engleaguecup_prestonnorthend_everton_20260825",
+            "cid_engleaguecup_tottenhamhotspur_charltonathletic_20260825"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "removalEvidenceSource": "legacy_orphan_details_bootstrap"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -128,7 +82,31 @@
         "artifact": "value-plans/2026-08-25/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-08-25",
+          "currentAthensDay": "2026-08-25",
+          "fixtureCount": 90,
+          "frozenHash": "f9d7bb2b02b420ca593394f9dc9b3655bbc7e3a63000bd9a9f1a91f575cb6aa6",
+          "currentHash": "591a2864b813d7df8ff15e5e64ff971f0b3a0c2a98ed58bac2dc97fde091e17e",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_alianza_deportivopereira_20260825",
+            "cid_col1_cucutadeportivo_alianza_20260825",
+            "cid_engleaguecup_bradfordcity_burnley_20260825",
+            "cid_engleaguecup_chelsea_lutontown_20260825",
+            "cid_engleaguecup_fulham_wimbledon_20260825",
+            "cid_engleaguecup_newcastleunited_westbromwichalbion_20260825",
+            "cid_engleaguecup_prestonnorthend_everton_20260825",
+            "cid_engleaguecup_tottenhamhotspur_charltonathletic_20260825"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "removalEvidenceSource": "legacy_orphan_details_bootstrap"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -169,15 +147,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -197,13 +166,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1079,85 +1049,6 @@
   "actionableIssues": [
     {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
-      "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-25/plan-a2.json",
-        "at": 1787601191417,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24645942
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-25/plan-a2-audit.json",
-        "at": "2026-08-24T19:53:11.418Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24645941
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-25/plan-b-audit.json",
-        "at": "2026-08-24T19:50:59.818Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24777541
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-25/plan-b2-audit.json",
-        "at": "2026-08-24T19:53:12.776Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24644583
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
       "message": "Acquisition skipped slugs during fixture acquisition.",
@@ -1176,13 +1067,14 @@
       }
     },
     {
-      "severity": "error",
+      "severity": "warning",
       "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "clean": false,
-        "cleanStrict": false
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     },
     {
@@ -1867,78 +1759,32 @@
   "newIssues": [
     {
       "severity": "warning",
-      "source": "freshness-report",
-      "type": "freshness_not_ok",
-      "message": "Freshness report is not OK.",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
       "details": {
-        "reasons": [
-          "plan_a2_stale_against_canonical",
-          "plan_a2_audit_stale_against_canonical",
-          "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
-        ]
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2",
-        "artifact": "value-plans/2026-08-25/plan-a2.json",
-        "at": 1787601191417,
-        "staleReason": "plan_a2_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24645942
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_a2_audit",
-        "artifact": "value-plans/2026-08-25/plan-a2-audit.json",
-        "at": "2026-08-24T19:53:11.418Z",
-        "staleReason": "plan_a2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24645941
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b_audit",
-        "artifact": "value-plans/2026-08-25/plan-b-audit.json",
-        "at": "2026-08-24T19:50:59.818Z",
-        "staleReason": "plan_b_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24777541
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "freshness-report",
-      "type": "stale_derived_artifact",
-      "message": "Freshness report found stale derived artifact.",
-      "details": {
-        "kind": "plan_b2_audit",
-        "artifact": "value-plans/2026-08-25/plan-b2-audit.json",
-        "at": "2026-08-24T19:53:12.776Z",
-        "staleReason": "plan_b2_audit_stale_against_canonical",
-        "preservation": null,
-        "olderThanLatestCanonicalMs": -24644583
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
       }
     }
   ],
   "newActionableIssues": [
     {
       "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
       "source": "freshness-report",
       "type": "freshness_not_ok",
       "message": "Freshness report is not OK.",
@@ -2006,21 +1852,24 @@
         "preservation": null,
         "olderThanLatestCanonicalMs": -24644583
       }
-    }
-  ],
-  "resolvedIssues": [
+    },
     {
       "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
       "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
       }
     }
   ],
@@ -2048,7 +1897,31 @@
         "artifact": "value-plans/2026-08-25/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-08-25",
+          "currentAthensDay": "2026-08-25",
+          "fixtureCount": 90,
+          "frozenHash": "f9d7bb2b02b420ca593394f9dc9b3655bbc7e3a63000bd9a9f1a91f575cb6aa6",
+          "currentHash": "591a2864b813d7df8ff15e5e64ff971f0b3a0c2a98ed58bac2dc97fde091e17e",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_alianza_deportivopereira_20260825",
+            "cid_col1_cucutadeportivo_alianza_20260825",
+            "cid_engleaguecup_bradfordcity_burnley_20260825",
+            "cid_engleaguecup_chelsea_lutontown_20260825",
+            "cid_engleaguecup_fulham_wimbledon_20260825",
+            "cid_engleaguecup_newcastleunited_westbromwichalbion_20260825",
+            "cid_engleaguecup_prestonnorthend_everton_20260825",
+            "cid_engleaguecup_tottenhamhotspur_charltonathletic_20260825"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "removalEvidenceSource": "legacy_orphan_details_bootstrap"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -2062,7 +1935,31 @@
         "artifact": "value-plans/2026-08-25/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-08-25",
+          "currentAthensDay": "2026-08-25",
+          "fixtureCount": 90,
+          "frozenHash": "f9d7bb2b02b420ca593394f9dc9b3655bbc7e3a63000bd9a9f1a91f575cb6aa6",
+          "currentHash": "591a2864b813d7df8ff15e5e64ff971f0b3a0c2a98ed58bac2dc97fde091e17e",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_alianza_deportivopereira_20260825",
+            "cid_col1_cucutadeportivo_alianza_20260825",
+            "cid_engleaguecup_bradfordcity_burnley_20260825",
+            "cid_engleaguecup_chelsea_lutontown_20260825",
+            "cid_engleaguecup_fulham_wimbledon_20260825",
+            "cid_engleaguecup_newcastleunited_westbromwichalbion_20260825",
+            "cid_engleaguecup_prestonnorthend_everton_20260825",
+            "cid_engleaguecup_tottenhamhotspur_charltonathletic_20260825"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "removalEvidenceSource": "legacy_orphan_details_bootstrap"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -2103,15 +2000,6 @@
       }
     },
     {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -2128,16 +2016,6 @@
         ],
         "raw": "acquisition_skipped_slugs:bra.copa_do_brazil,concacaf.central.american.cup,concacaf.leagues.cup,eng.fa_qual,uefa.wchampions_qual,usa.ncaa.m.1,usa.ncaa.w.1",
         "contextOnly": false
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
       }
     },
     {
