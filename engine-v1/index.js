@@ -68,6 +68,9 @@ import {
 import {
   collectActiveCompetitionCompletenessIssues
 } from "./system-health/active-competition-completeness-policy.js";
+import {
+  reconcilePublicSystemHealth
+} from "./system-health/public-mirror-policy.js";
 import 'dotenv/config';
 
 const app = express();
@@ -2035,7 +2038,7 @@ function buildSystemHealthReport(day) {
     invariant
   });
 
-  return {
+  const dynamicReport = {
     ok: runtimeState.ok,
     severity: runtimeState.severity,
     status: runtimeState.status,
@@ -2134,6 +2137,21 @@ function buildSystemHealthReport(day) {
       settlement: buildReport?.settlement || null
     }
   };
+
+  const alertArtifact = readJsonFileSafe(
+    preferRuntimeReleaseArtifact(
+      day,
+      "system-health-alerts.json",
+      resolveDataPath("system-health", day + ".json")
+    ),
+    null
+  );
+
+  return reconcilePublicSystemHealth({
+    dayKey: day,
+    dynamicReport,
+    alertArtifact
+  });
 }
 
 app.get("/system-health-alerts", (req, res) => {
