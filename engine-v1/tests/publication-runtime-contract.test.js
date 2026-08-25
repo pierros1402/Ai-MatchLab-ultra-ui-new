@@ -126,7 +126,7 @@ test("live worker overlay is bounded and labeled with the shared operational day
   assert.match(overlay, /return exact \|\| null/);
   assert.match(
     overlay,
-    /state\.kind === "ft" && row\.classList\.contains\("value-compare-row"\)/
+    /row\.getAttribute\("data-verified-final"\) === "true"/
   );
   assert.match(overlay, /phase \+ " • " \+ score/);
   assert.match(valuePicks, /parts\.push\("FT " \+ p\.finalScore\.scoreKey\)/);
@@ -135,7 +135,8 @@ test("live worker overlay is bounded and labeled with the shared operational day
   assert.doesNotMatch(today, /Date\.now\(\) - ko/);
   assert.match(html, /today-panel\.js\?v=5/);
   assert.match(html, /active-leagues-panel\.js\?v=4/);
-  assert.match(html, /live-overlay\.js\?v=8/);
+  assert.match(html, /live-overlay\.js\?v=9/);
+  assert.match(html, /value-picks\.js\?v=4/);
 });
 
 test("UI aborts are terminal and are not retried as fetch failures", () => {

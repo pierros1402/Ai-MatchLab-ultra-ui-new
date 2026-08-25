@@ -365,10 +365,17 @@
       var meta = row.querySelector(".value-meta");
       if (!state || !meta) return;
 
-      // Comparison rows already render the verified terminal score beside the
-      // pick (for example "76% • FT 0-1"). Keep the top-right overlay for
-      // genuinely live minute/score updates, but do not repeat FT there.
-      if (state.kind === "ft" && row.classList.contains("value-compare-row")) return;
+      // Suppress the worker FT badge only when this comparison row already
+      // carries backend-verified final truth. If settlement publication is
+      // temporarily behind live truth, show worker FT + score as display-only
+      // information. WIN/LOSS/VOID remains exclusively backend-settled truth.
+      if (
+        state.kind === "ft" &&
+        row.classList.contains("value-compare-row") &&
+        row.getAttribute("data-verified-final") === "true"
+      ) {
+        return;
+      }
 
       meta.querySelectorAll(".value-badge.live:not(.value-live-state), .value-badge.ft:not(.value-live-state)")
         .forEach(function (node) { node.remove(); });

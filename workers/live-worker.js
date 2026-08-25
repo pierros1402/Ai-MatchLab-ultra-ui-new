@@ -25,12 +25,12 @@ const CACHE_TTL = 30; // seconds
 const LIVE_WINDOW_SEC = 3.5 * 3600; // a match can't be "live" longer than this
 
 // Robust status: never let an old/finished match linger as LIVE — but also never
-// FABRICATE a final. FT is asserted ONLY on AB=3 (the feed's confirmed-finished
-// flag). A match past the live window, or an unknown code with a score
-// (postponed, abandoned, after-ET, feed lag), becomes STALE_LIVE: the panels
-// treat it as not-live and keep whatever confirmed status the snapshot has.
+// FABRICATE a played final. Flashscore AB=3 is a broad terminal bucket; a played
+// FT additionally requires a complete numeric score. A scoreless terminal stays
+// unconfirmed so the panels preserve canonical non-played/status truth.
 function mapStatus(ab, hasScore, kickoffSec, nowSec) {
-  if (ab === "3") return "FT";            // feed-confirmed final
+  if (ab === "3" && hasScore) return "FT";
+  if (ab === "3") return "STALE_LIVE";
   if (ab === "1" || !hasScore) return "PRE";
   if (kickoffSec && nowSec - kickoffSec > LIVE_WINDOW_SEC) return "STALE_LIVE"; // ended by clock, final unconfirmed
   if (ab === "2") return "LIVE";          // in-play

@@ -584,12 +584,14 @@ function resultBadgeHtml(result) {
   const r = String(result || "").toUpperCase();
   if (r === "WIN") return '<span class="value-badge win">WIN</span>';
   if (r === "LOSS") return '<span class="value-badge loss">LOSS</span>';
+  if (r === "VOID") return '<span class="value-badge pending">VOID</span>';
   // Before the match is played (UNRESOLVED) or non-settleable (UNSUPPORTED),
   // show a neutral dash — no negative-looking badge until there's an FT result.
   return '<span class="value-badge pending">—</span>';
 }
 
 function hitRateLabel(value) {
+  if (value === null || value === undefined || value === "") return "—";
   const n = Number(value);
   if (!Number.isFinite(n)) return "—";
   return String(Math.round(n * 100)) + "%";
@@ -637,6 +639,7 @@ function renderComparisonRow(p) {
   const conf = confidenceKey(p?.band || p?.confidence);
   const pick = comparisonPickLabel(p);
   const resultBadge = resultBadgeHtml(p?.result);
+  const hasVerifiedFinal = Boolean(p?.finalScore?.scoreKey);
 
   // Kickoff time (HH:MM)
   const kickoffMs = resolveKickoffMs(p);
@@ -652,7 +655,7 @@ function renderComparisonRow(p) {
   const mktHtml = oddVal ? '<span class="value-mkt">@' + esc(oddVal) + '</span>' : "";
 
   return [
-    '<div class="value-row value-compare-row conf-' + esc(String(conf).toLowerCase()) + '" data-match-id="' + esc(p?.matchId || "") + '">',
+    '<div class="value-row value-compare-row conf-' + esc(String(conf).toLowerCase()) + '" data-match-id="' + esc(p?.matchId || "") + '" data-verified-final="' + (hasVerifiedFinal ? "true" : "false") + '">',
     '  <div class="value-row-top">',
     '    <div class="value-league">' + esc(countryLeague) + '</div>',
     '    <div class="value-meta">' + timeHtml + resultBadge + '</div>',
