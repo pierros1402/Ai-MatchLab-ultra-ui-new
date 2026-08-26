@@ -1,7 +1,7 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-08-26T15:58:28.895Z",
+  "generatedAt": "2026-08-26T16:41:41.837Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
   "historicalStatisticsCorrection": {
     "active": true,
@@ -39,9 +39,9 @@
     "correctedStatisticalPopulation": 401
   },
   "trialStartDay": "2026-07-05",
-  "dayCount": 48,
+  "dayCount": 49,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-08-26",
+  "lastDay": "2026-08-27",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -92,7 +92,8 @@
     "2026-08-23",
     "2026-08-24",
     "2026-08-25",
-    "2026-08-26"
+    "2026-08-26",
+    "2026-08-27"
   ],
   "daysExcluded": [
     {
@@ -696,21 +697,32 @@
           "snapshot_stale"
         ]
       }
+    },
+    {
+      "dayKey": "2026-08-27",
+      "reason": "build_report_not_clean",
+      "details": {
+        "ok": false,
+        "reason": "build_report_not_clean",
+        "hardFailures": [
+          "foundation_publication_not_ready"
+        ]
+      }
     }
   ],
-  "integrityWarningDayCount": 43,
+  "integrityWarningDayCount": 44,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 122,
-        "uniqueMatches": 114,
+        "picks": 126,
+        "uniqueMatches": 118,
         "settled": 117,
         "wins": 77,
         "losses": 40,
         "voids": 2,
-        "unresolved": 3,
+        "unresolved": 7,
         "unsupported": 0,
         "oddsAvailable": 61,
         "totalStake": 61,
@@ -742,7 +754,7 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 52,
+    "picksDeltaPlanBMinusPlanA": 48,
     "settledDeltaPlanBMinusPlanA": 53,
     "winsDeltaPlanBMinusPlanA": 40,
     "lossesDeltaPlanBMinusPlanA": 13,
