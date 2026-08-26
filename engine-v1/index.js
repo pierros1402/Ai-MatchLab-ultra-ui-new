@@ -1487,7 +1487,11 @@ app.get("/debug/deploy-snapshot", (req, res) => {
   });
 });
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, service: "engine-v1" });
+  res.json({
+    ok: true,
+    service: "engine-v1",
+    season: currentSeason()
+  });
 });
 
 

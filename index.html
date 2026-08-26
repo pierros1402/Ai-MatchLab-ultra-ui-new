@@ -425,10 +425,38 @@
     window.AIML_CONFIG = { BASE_URL: BASE };
     window.AIML_LIVE_CFG = {
       detailsBase: BASE,
-      fixturesBase: BASE,
-      season: "2025-2026"
+      fixturesBase: BASE
     };
     window.AIML_VALUE_CFG = { valueBase: BASE };
+
+    window.AIML_SEASON_READY = fetch(`${BASE}/health`, {
+      method: "GET",
+      cache: "no-store",
+      credentials: "omit"
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`season_health_http_${res.status}`);
+        }
+
+        const payload = await res.json();
+        const season = String(payload?.season || "").trim();
+
+        if (!/^\d{4}-\d{4}$/.test(season)) {
+          throw new Error("season_health_contract_invalid");
+        }
+
+        window.AIML_LIVE_CFG.season = season;
+        window.AIML_CURRENT_SEASON = season;
+        return season;
+      })
+      .catch((err) => {
+        console.warn(
+          "[season-contract] authoritative season unavailable",
+          err
+        );
+        return null;
+      });
   })();
 </script>
 

@@ -1514,7 +1514,11 @@ async function renderLocal(match, mountEl) {
   }
 
   const leagueSlug = String(m.leagueSlug || m.league || "_unknown");
-  const season = String(cfg().season || "2025-2026");
+  if (window.AIML_SEASON_READY) {
+    await window.AIML_SEASON_READY;
+  }
+
+  const season = String(cfg().season || "").trim();
 
   const newDetails = detailsMatchId
     ? await loadFromNewDetailsAPI(detailsMatchId)

@@ -256,14 +256,27 @@ const AI_ENGINE_BASE = "https://aimatchlab-ai-engine.pierros1402.workers.dev";
 
 // TODO: αργότερα το κάνουμε dynamic από UI selection
 const WATCH_LEAGUE = "eng.1";
-const WATCH_SEASON = "2025-2026";
+
+async function __resolveWatchSeason() {
+  const ready = window.AIML_SEASON_READY;
+
+  if (ready && typeof ready.then === "function") {
+    const season = await ready;
+    if (season) return String(season).trim();
+  }
+
+  return String(window.AIML_LIVE_CFG?.season || "").trim();
+}
 
 let __leagueVersionCache = null;
 
 async function __checkLeagueState() {
   try {
+    const watchSeason = await __resolveWatchSeason();
+    if (!watchSeason) return;
+
     const res = await fetch(
-      `${AI_ENGINE_BASE}/ai/league-state?league=${encodeURIComponent(WATCH_LEAGUE)}&season=${encodeURIComponent(WATCH_SEASON)}`
+      `${AI_ENGINE_BASE}/ai/league-state?league=${encodeURIComponent(WATCH_LEAGUE)}&season=${encodeURIComponent(watchSeason)}`
     );
 
     if (!res.ok) return;

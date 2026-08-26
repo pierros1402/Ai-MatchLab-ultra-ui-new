@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { resolveDataPath } from "../storage/data-root.js";
+import { currentSeason } from "../core/season.js";
 import {
   readHistoryRows,
   validateStandingsFoundationArtifact,
@@ -10,7 +11,7 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 
-export function auditStandingsFoundation({ season = "2026-2027" } = {}) {
+export function auditStandingsFoundation({ season = currentSeason() } = {}) {
   const dir = resolveDataPath("standings");
   const historyRows = readHistoryRows(season);
   const files = fs.readdirSync(dir)
