@@ -24,41 +24,69 @@
   "kickoffUtc": "2026-08-22T14:00:00.000Z",
   "finalTruthVerdict": "verified_final_result",
   "verdict": "verified_final_result",
-  "sourceCount": 1,
-  "independentSourceCount": 1,
-  "source": "flashscore_same_day_exact_team_match",
+  "sourceCount": 2,
+  "independentSourceCount": 2,
+  "source": "manual_versioned_truth_adjudication",
   "sources": [
     {
-      "provider": "flashscore",
+      "authority": "flashscore",
       "providerMatchId": "0CursQJ6",
-      "finished": true,
-      "playedFinal": true,
-      "nonPlayedTerminal": false,
-      "statusCode": "3",
-      "statusDetailCode": "3",
-      "country": "England",
-      "leagueName": "Southern League Premier South",
-      "leaguePath": "/football/england/southern-league-premier-south/",
-      "home": "Uxbridge",
-      "away": "Taunton",
-      "scoreHome": 5,
-      "scoreAway": 4,
-      "kickoffUtc": "2026-08-22T14:00:00.000Z",
-      "scoreKey": "5-4"
+      "reference": "data/final-results/2026-08-22/cid_eng1_uxbridge_taunton_20260822.json",
+      "note": "Exact same-day verified-final artifact records 5-4."
+    },
+    {
+      "authority": "uxbridge_fc",
+      "reference": "uxbridgefc:post:goals-galore-as-reds-hang-on",
+      "note": "Official Uxbridge FC match report records Uxbridge 5-4 Taunton Town, FT, 22 August 2026."
     }
   ],
   "verification": {
     "verdict": "verified_final_result",
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result",
-    "method": "flashscore_same_day_exact_team_match",
-    "sourceCount": 1,
-    "independentSourceCount": 1,
-    "generatedAt": "2026-08-22T17:26:19.146Z"
+    "method": "manual_versioned_truth_adjudication",
+    "sourceCount": 2,
+    "independentSourceCount": 2,
+    "generatedAt": "2026-08-26T04:08:22.049Z",
+    "authority": "final_truth_adjudication_ledger",
+    "adjudicationId": "adj_b1cf77179e37d90789da66cf"
   },
   "settlement": {
     "finalTruthVerdict": "verified_final_result",
     "state": "verified_final_result"
   },
-  "generatedAt": "2026-08-22T17:26:19.146Z"
+  "generatedAt": "2026-08-26T04:08:22.049Z",
+  "finalTruthAdjudication": {
+    "schema": "ai-matchlab.final-truth-adjudication.v1",
+    "adjudicationId": "adj_b1cf77179e37d90789da66cf",
+    "state": "APPLIED",
+    "appliedAt": "2026-08-26T04:08:22.049Z",
+    "dayKey": "2026-08-22",
+    "matchId": "cid_eng1_uxbridge_taunton_20260822",
+    "homeTeam": "Uxbridge",
+    "awayTeam": "Taunton",
+    "correctedScore": {
+      "home": 5,
+      "away": 4,
+      "scoreKey": "5-4"
+    },
+    "reason": "stale_canonical_terminal_score_conflicts_with_verified_final_and_official_club_match_report",
+    "evidencePolicy": "two_source_manual_adjudication",
+    "evidenceRecoveredFromPriorRepairSession": false,
+    "evidence": [
+      {
+        "authority": "flashscore",
+        "providerMatchId": "0CursQJ6",
+        "reference": "data/final-results/2026-08-22/cid_eng1_uxbridge_taunton_20260822.json",
+        "note": "Exact same-day verified-final artifact records 5-4."
+      },
+      {
+        "authority": "uxbridge_fc",
+        "reference": "uxbridgefc:post:goals-galore-as-reds-hang-on",
+        "note": "Official Uxbridge FC match report records Uxbridge 5-4 Taunton Town, FT, 22 August 2026."
+      }
+    ],
+    "silentOverwriteForbidden": true,
+    "oddsUsed": false
+  }
 }
