@@ -728,3 +728,25 @@ test(
     ));
   }
 );
+
+test(
+  "daily Plan C remains shadow-only while generation precedes settlement and export",
+  () => {
+    const generate = workflow.indexOf("generate-plan-c-shadow-predictions.js");
+    const refresh = workflow.indexOf("refresh-clubelo-shadow-registry.js");
+    const settle = workflow.indexOf("settle-plan-c-shadow.js");
+    const build = workflow.indexOf("build-plan-c-shadow-day.js");
+    const snapshotExport = workflow.indexOf("export-deploy-snapshot-day.js");
+
+    assert.ok(refresh > 0, "ClubElo shadow refresh missing");
+    assert.ok(refresh < generate, "ClubElo refresh must precede prediction freeze");
+    assert.ok(generate > 0, "Plan C generator missing");
+    assert.ok(generate < settle, "Plan C settlement must follow generation");
+    assert.ok(settle < build, "Plan C daily build must follow settlement");
+    assert.ok(build < snapshotExport, "snapshot export must follow Plan C build");
+    assert.match(workflow, /--max-snapshot-age-days 30/);
+    assert.match(workflow, /data\/plan-c-shadow\/settlement\/latest\.json/);
+    assert.match(workflow, /stale Elo adds no new/);
+    assert.match(workflow, /continue-on-error: true[\s\S]*refresh-clubelo-shadow-registry\.js/);
+  }
+);

@@ -486,6 +486,11 @@ function readDeploySnapshotValue(dayKey) {
   return readJsonFileSafe(filePath, null);
 }
 
+function readDeploySnapshotPlanCShadow(dayKey) {
+  const filePath = path.join(deploySnapshotRoot(dayKey), "plan-c-shadow.json");
+  return readJsonFileSafe(filePath, null);
+}
+
 function readDeploySnapshotFixtures(dayKey) {
   const filePath = path.join(deploySnapshotRoot(dayKey), "fixtures.json");
   return readJsonFileSafe(filePath, null);
@@ -1441,6 +1446,28 @@ app.get("/deploy-snapshot", (req, res) => {
   });
 });
 
+app.get("/plan-c-shadow", (req, res) => {
+  const requestedDate = String(req.query.date || "");
+  const date = resolveSnapshotDate(requestedDate);
+  const payload = date ? readDeploySnapshotPlanCShadow(date) : null;
+
+  if (!payload) {
+    res.status(404).json({
+      ok: false,
+      available: false,
+      error: "plan_c_shadow_snapshot_not_found",
+      date: requestedDate,
+      source: "snapshot"
+    });
+    return;
+  }
+
+  res.json({
+    ...payload,
+    source: "snapshot"
+  });
+});
+
 app.get("/debug/deploy-snapshot", (req, res) => {
   const requestedDate = String(req.query.date || "");
   const date = resolveSnapshotDate(requestedDate);
@@ -1471,6 +1498,8 @@ app.get("/debug/deploy-snapshot", (req, res) => {
       manifest: fileInfoSafe("deploy-snapshots", date, "manifest.json"),
       fixtures: fileInfoSafe("deploy-snapshots", date, "fixtures.json"),
       value: fileInfoSafe("deploy-snapshots", date, "value.json"),
+      planCShadow: fileInfoSafe("deploy-snapshots", date, "plan-c-shadow.json"),
+      planCShadowAudit: fileInfoSafe("deploy-snapshots", date, "plan-c-shadow-audit.json"),
       detailsDir: dirInfoSafe("deploy-snapshots", date, "details")
     },
     runtime: {
@@ -1482,7 +1511,9 @@ app.get("/debug/deploy-snapshot", (req, res) => {
     },
     payloadCounts: {
       fixtures: Array.isArray(fixtures?.fixtures) ? fixtures.fixtures.length : 0,
-      valuePicks: Array.isArray(value?.picks) ? value.picks.length : 0
+      valuePicks: Array.isArray(value?.picks) ? value.picks.length : 0,
+      planCShadowPredictions: Number(manifest?.counts?.planCShadowPredictions || 0),
+      planCShadowPicks: Number(manifest?.counts?.planCShadowPicks || 0)
     }
   });
 });

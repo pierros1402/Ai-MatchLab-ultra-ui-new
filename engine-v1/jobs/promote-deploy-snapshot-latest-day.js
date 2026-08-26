@@ -291,6 +291,18 @@ export function promoteDeploySnapshotLatestDay(
       `data/deploy-snapshots/${day}/fixtures.json`,
     value:
       `data/deploy-snapshots/${day}/value.json`,
+    ...(manifest?.files?.planCShadow
+      ? {
+          planCShadow:
+            `data/deploy-snapshots/${day}/${manifest.files.planCShadow}`
+        }
+      : {}),
+    ...(manifest?.files?.planCShadowAudit
+      ? {
+          planCShadowAudit:
+            `data/deploy-snapshots/${day}/${manifest.files.planCShadowAudit}`
+        }
+      : {}),
     detailsDir:
       `data/deploy-snapshots/${day}/details`,
     hash:

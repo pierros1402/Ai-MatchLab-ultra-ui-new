@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey } from "../core/daykey.js";
 import { validateDeploySnapshotManifest } from "../core/deploy-snapshot-release-contract.js";
+import { validatePlanCShadowExportPayload } from "../value/plan-c-shadow-export.js";
 import { verifyDetailsValueMirrorDay } from "./verify-details-value-mirror-day.js";
 
 function readJson(file) {
@@ -328,6 +329,43 @@ export function verifyDailyPublishContract(dayKey, options = {}) {
 
     if (String(manifest.date || manifest.dayKey || "") !== dayKey) {
       blocked.push({ code: "manifest_day_mismatch", expected: dayKey, actual: manifest.date || manifest.dayKey || null });
+    }
+
+    for (const [artifactName, manifestKey] of [
+      ["planCShadow", "planCShadow"],
+      ["planCShadowAudit", "planCShadowAudit"]
+    ]) {
+      const declaredName = manifest?.files?.[manifestKey];
+      if (!declaredName) continue;
+      const file = path.join(snapshotRoot, declaredName);
+      const state = readJson(file);
+      artifacts[artifactName] = { file, exists: state.exists, parseError: state.error, payload: state.payload };
+      if (!state.exists) blocked.push({ code: "required_artifact_missing", artifact: artifactName, file });
+      else if (state.error) blocked.push({ code: "required_artifact_invalid_json", artifact: artifactName, file, error: state.error });
+    }
+
+    const planCShadow = artifacts.planCShadow?.payload;
+    if (planCShadow) {
+      const planCValidation = validatePlanCShadowExportPayload(planCShadow, dayKey);
+      if (!planCValidation.ok) {
+        blocked.push({ code: "plan_c_shadow_release_contract_failed", errors: planCValidation.errors });
+      }
+      if (planCValidation.count !== Number(manifest.counts?.planCShadowPredictions || 0)) {
+        blocked.push({ code: "plan_c_shadow_count_mismatch", manifest: manifest.counts?.planCShadowPredictions ?? null, artifact: planCValidation.count });
+      }
+      if (planCValidation.pickCount !== Number(manifest.counts?.planCShadowPicks || 0)) {
+        blocked.push({ code: "plan_c_shadow_pick_count_mismatch", manifest: manifest.counts?.planCShadowPicks ?? null, artifact: planCValidation.pickCount });
+      }
+    }
+
+    const planCShadowAudit = artifacts.planCShadowAudit?.payload;
+    if (planCShadowAudit && (
+      planCShadowAudit.ok !== true ||
+      planCShadowAudit.date !== dayKey ||
+      planCShadowAudit.mode !== "SHADOW" ||
+      planCShadowAudit.productionEligible !== false
+    )) {
+      blocked.push({ code: "plan_c_shadow_audit_contract_failed" });
     }
   }
   if (fixtures && String(fixtures.date || fixtures.dayKey || dayKey) !== dayKey) {

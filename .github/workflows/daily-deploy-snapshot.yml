@@ -392,6 +392,47 @@ jobs:
             echo "Persistent aiAssessment input already exists; no extra opening refresh required."
           fi
 
+      - name: Refresh official ClubElo shadow snapshot
+        if: env.SKIP_BUILD != 'true'
+        continue-on-error: true
+        run: >-
+          node ./engine-v1/jobs/refresh-clubelo-shadow-registry.js
+          "$DAY_KEY"
+          --registry data/plan-c-shadow/frozen/i2b-20260825/IDENTITY_REGISTRY.json
+          --timeout-ms 30000
+
+      - name: Generate, settle and build Plan C shadow feed
+        if: env.SKIP_BUILD != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PREDICTION_ROOT="data/plan-c-shadow/frozen/i2b-20260825"
+          SETTLEMENT_FILE="data/plan-c-shadow/settlement/latest.json"
+          PREDICTION_CREATED_AT="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+
+          # Append-only prediction freeze. Exact project name + league identity
+          # and federation-verified ClubElo are mandatory; stale Elo adds no new
+          # predictions but never changes official plans.
+          node ./engine-v1/jobs/generate-plan-c-shadow-predictions.js \
+            "$DAY_KEY" \
+            --prediction-root "$PREDICTION_ROOT" \
+            --prediction-created-at "$PREDICTION_CREATED_AT" \
+            --days-forward 14 \
+            --max-snapshot-age-days 30
+
+          # Canonical FT truth settles frozen rows monotonically. The report is
+          # deterministic and contains no run timestamp; its audit is separate.
+          node ./engine-v1/jobs/settle-plan-c-shadow.js \
+            "$DAY_KEY" \
+            --prediction-root "$PREDICTION_ROOT" \
+            --output "$SETTLEMENT_FILE"
+
+          node ./engine-v1/jobs/build-plan-c-shadow-day.js \
+            "$DAY_KEY" \
+            --prediction-root "$PREDICTION_ROOT" \
+            --settlement-report "$SETTLEMENT_FILE"
+
       - name: Export deploy snapshot
         if: env.SKIP_BUILD != 'true'
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest
@@ -881,6 +922,38 @@ jobs:
             git add "data/value/_audit/${DAY_KEY}.json"
           fi
 
+          if [ -f "data/plan-c-shadow/${DAY_KEY}.json" ]; then
+            git add "data/plan-c-shadow/${DAY_KEY}.json"
+          fi
+
+          if [ -f "data/plan-c-shadow/_audit/${DAY_KEY}.json" ]; then
+            git add "data/plan-c-shadow/_audit/${DAY_KEY}.json"
+          fi
+
+          if [ -d "data/plan-c-shadow/frozen/i2b-20260825" ]; then
+            git add "data/plan-c-shadow/frozen/i2b-20260825/"
+          fi
+
+          if [ -d "data/plan-c-shadow/clubelo-snapshots" ]; then
+            git add "data/plan-c-shadow/clubelo-snapshots/"
+          fi
+
+          if [ -f "data/plan-c-shadow/clubelo-refresh/_audit/${DAY_KEY}.json" ]; then
+            git add "data/plan-c-shadow/clubelo-refresh/_audit/${DAY_KEY}.json"
+          fi
+
+          if [ -f "data/plan-c-shadow/generation/_audit/${DAY_KEY}.json" ]; then
+            git add "data/plan-c-shadow/generation/_audit/${DAY_KEY}.json"
+          fi
+
+          if [ -f "data/plan-c-shadow/settlement/latest.json" ]; then
+            git add "data/plan-c-shadow/settlement/latest.json"
+          fi
+
+          if [ -f "data/plan-c-shadow/settlement/_audit/${DAY_KEY}.json" ]; then
+            git add "data/plan-c-shadow/settlement/_audit/${DAY_KEY}.json"
+          fi
+
           if [ -d "data/value-plans/${DAY_KEY}" ]; then
             git add "data/value-plans/${DAY_KEY}/"
           fi
@@ -938,10 +1011,10 @@ jobs:
             --label=daily-deploy-snapshot \
             --dayKey="${DAY_KEY}" \
             --extra-days="${RECENT_CSV}" \
-            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/|data/final-result-conflicts/(${DAY_KEY}|${RECENT_ALT})\.json$)"
+            --allow="^(data/deploy-snapshots/latest\.json$|data/deploy-snapshots/(${DAY_KEY}|${RECENT_ALT})/|data/build-reports/${DAY_KEY}\.json$|data/foundation-integrity/${DAY_KEY}\.json$|data/foundation-integrity/latest\.json$|data/system-health/${DAY_KEY}\.json$|data/system-health/latest\.json$|data/value/${DAY_KEY}\.json$|data/value/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/${DAY_KEY}\.json$|data/plan-c-shadow/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/frozen/i2b-20260825/|data/plan-c-shadow/clubelo-snapshots/|data/plan-c-shadow/clubelo-refresh/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/generation/_audit/${DAY_KEY}\.json$|data/plan-c-shadow/settlement/latest\.json$|data/plan-c-shadow/settlement/_audit/${DAY_KEY}\.json$|data/value-plans/(${DAY_KEY}|${RECENT_ALT})/|data/value-comparison/(${DAY_KEY}|${RECENT_ALT})\.json$|data/value-comparison/cumulative\.json$|data/final-results/(${DAY_KEY}|${RECENT_ALT})/|data/final-result-conflicts/(${DAY_KEY}|${RECENT_ALT})\.json$)"
 
           echo "=== STAGED FILES OUTSIDE ALLOWLIST - SHOULD BE EMPTY ==="
-          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/value/|data/value-plans/|data/value-comparison/|data/final-results/|data/final-result-conflicts/)' || true)"
+          DISALLOWED="$(git diff --cached --name-only | grep -Ev '^(data/deploy-snapshots/|data/build-reports/|data/foundation-integrity/|data/system-health/|data/value/|data/plan-c-shadow/|data/value-plans/|data/value-comparison/|data/final-results/|data/final-result-conflicts/)' || true)"
 
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: disallowed files staged:"

@@ -120,8 +120,14 @@ export function validateDeploySnapshotManifest(manifest, expectedDay = "") {
     for (const required of ["fixtures.json", "value.json"]) {
       if (!fileHashes?.[required]) errors.push(`manifest_required_file_hash_missing:${required}`);
     }
-    if (manifest?.files?.valueAudit && !fileHashes?.[manifest.files.valueAudit]) {
-      errors.push(`manifest_required_file_hash_missing:${manifest.files.valueAudit}`);
+    for (const optionalBoundFile of [
+      manifest?.files?.valueAudit,
+      manifest?.files?.planCShadow,
+      manifest?.files?.planCShadowAudit
+    ].filter(Boolean)) {
+      if (!fileHashes?.[optionalBoundFile]) {
+        errors.push(`manifest_required_file_hash_missing:${optionalBoundFile}`);
+      }
     }
   }
 

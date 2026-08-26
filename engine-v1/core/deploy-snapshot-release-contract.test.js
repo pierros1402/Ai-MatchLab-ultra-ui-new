@@ -94,3 +94,25 @@ test("legacy manifest remains hash-compatible when v2 fields are absent", () => 
   manifest.hash = computeDeploySnapshotManifestHash(manifest);
   assert.equal(validateDeploySnapshotManifest(manifest, manifest.date).ok, true);
 });
+
+test("v2 manifest binds every declared Plan C shadow export file", () => {
+  const manifest = baseManifest();
+  manifest.files = {
+    fixtures: "fixtures.json",
+    value: "value.json",
+    planCShadow: "plan-c-shadow.json",
+    planCShadowAudit: "plan-c-shadow-audit.json",
+    detailsDir: "details"
+  };
+  manifest.fileHashes["plan-c-shadow.json"] = "c".repeat(64);
+  manifest.fileHashes["plan-c-shadow-audit.json"] = "d".repeat(64);
+  manifest.hash = computeDeploySnapshotManifestHash(manifest);
+
+  assert.equal(validateDeploySnapshotManifest(manifest, manifest.date).ok, true);
+
+  delete manifest.fileHashes["plan-c-shadow-audit.json"];
+  manifest.hash = computeDeploySnapshotManifestHash(manifest);
+  const validation = validateDeploySnapshotManifest(manifest, manifest.date);
+  assert.equal(validation.ok, false);
+  assert.ok(validation.errors.includes("manifest_required_file_hash_missing:plan-c-shadow-audit.json"));
+});
