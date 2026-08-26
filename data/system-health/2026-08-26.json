@@ -1,24 +1,24 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-26",
-  "generatedAt": "2026-08-26T17:00:28.495Z",
+  "generatedAt": "2026-08-26T18:55:04.573Z",
   "severity": "error",
   "issueCounts": {
     "error": 4,
-    "warning": 8,
+    "warning": 9,
     "info": 12
   },
-  "alert": false,
+  "alert": true,
   "alertCounts": {
     "error": 0,
-    "warning": 0,
+    "warning": 1,
     "info": 0
   },
-  "activeIssueCount": 24,
-  "actionableIssueCount": 12,
-  "newIssueCount": 0,
-  "newActionableIssueCount": 0,
-  "resolvedIssueCount": 1,
+  "activeIssueCount": 25,
+  "actionableIssueCount": 13,
+  "newIssueCount": 1,
+  "newActionableIssueCount": 1,
+  "resolvedIssueCount": 0,
   "persistentIssueCount": 24,
   "activeIssues": [
     {
@@ -31,7 +31,8 @@
           "plan_a2_stale_against_canonical",
           "plan_a2_audit_stale_against_canonical",
           "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
         ]
       }
     },
@@ -46,7 +47,7 @@
         "at": 1787682282137,
         "staleReason": "plan_a2_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81201178
+        "olderThanLatestCanonicalMs": -88092398
       }
     },
     {
@@ -60,7 +61,7 @@
         "at": "2026-08-25T18:24:42.137Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81201178
+        "olderThanLatestCanonicalMs": -88092398
       }
     },
     {
@@ -74,7 +75,7 @@
         "at": "2026-08-25T18:23:39.630Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81263685
+        "olderThanLatestCanonicalMs": -88154905
       }
     },
     {
@@ -88,7 +89,20 @@
         "at": "2026-08-25T18:24:43.045Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81200270
+        "olderThanLatestCanonicalMs": -88091490
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-26.json",
+        "at": "2026-08-26T18:52:45.818Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8717
       }
     },
     {
@@ -141,7 +155,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 208,
+        "count": 298,
         "informational": true
       }
     },
@@ -291,8 +305,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 3,
-        "settled": 1,
-        "unresolved": 2
+        "settled": 2,
+        "unresolved": 1
       }
     },
     {
@@ -307,8 +321,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 3,
-        "settled": 1,
-        "unresolved": 2
+        "settled": 2,
+        "unresolved": 1
       }
     },
     {
@@ -1131,19 +1145,19 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 3,
-            "settled": 1,
-            "wins": 1,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 1,
             "unsupported": 0,
             "hitRate": 1,
-            "oddsAvailable": 1,
-            "averageOdds": 1.69,
-            "totalStake": 1,
-            "totalReturn": 1.69,
-            "profit": 0.69,
-            "roi": 0.69
+            "oddsAvailable": 2,
+            "averageOdds": 1.585,
+            "totalStake": 2,
+            "totalReturn": 3.17,
+            "profit": 1.17,
+            "roi": 0.585
           }
         },
         "planA2": {
@@ -1151,19 +1165,19 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 3,
-            "settled": 1,
-            "wins": 1,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 1,
             "unsupported": 0,
             "hitRate": 1,
-            "oddsAvailable": 1,
-            "averageOdds": 1.69,
-            "totalStake": 1,
-            "totalReturn": 1.69,
-            "profit": 0.69,
-            "roi": 0.69
+            "oddsAvailable": 2,
+            "averageOdds": 1.585,
+            "totalStake": 2,
+            "totalReturn": 3.17,
+            "profit": 1.17,
+            "roi": 0.585
           }
         },
         "planB": {
@@ -1220,7 +1234,8 @@
           "plan_a2_stale_against_canonical",
           "plan_a2_audit_stale_against_canonical",
           "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
         ]
       }
     },
@@ -1235,7 +1250,7 @@
         "at": 1787682282137,
         "staleReason": "plan_a2_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81201178
+        "olderThanLatestCanonicalMs": -88092398
       }
     },
     {
@@ -1249,7 +1264,7 @@
         "at": "2026-08-25T18:24:42.137Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81201178
+        "olderThanLatestCanonicalMs": -88092398
       }
     },
     {
@@ -1263,7 +1278,7 @@
         "at": "2026-08-25T18:23:39.630Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81263685
+        "olderThanLatestCanonicalMs": -88154905
       }
     },
     {
@@ -1277,7 +1292,20 @@
         "at": "2026-08-25T18:24:43.045Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81200270
+        "olderThanLatestCanonicalMs": -88091490
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-26.json",
+        "at": "2026-08-26T18:52:45.818Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8717
       }
     },
     {
@@ -2107,9 +2135,7 @@
       }
     }
   ],
-  "newIssues": [],
-  "newActionableIssues": [],
-  "resolvedIssues": [
+  "newIssues": [
     {
       "severity": "warning",
       "source": "freshness-report",
@@ -2118,12 +2144,28 @@
       "details": {
         "kind": "value_plan_comparison",
         "artifact": "value-comparison/2026-08-26.json",
-        "at": "2026-08-26T16:43:56.557Z",
+        "at": "2026-08-26T18:52:45.818Z",
         "staleReason": "value_plan_comparison_stale_against_canonical",
-        "olderThanLatestCanonicalMs": -8195
+        "olderThanLatestCanonicalMs": -8717
       }
     }
   ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-26.json",
+        "at": "2026-08-26T18:52:45.818Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8717
+      }
+    }
+  ],
+  "resolvedIssues": [],
   "persistentIssues": [
     {
       "severity": "warning",
@@ -2135,7 +2177,8 @@
           "plan_a2_stale_against_canonical",
           "plan_a2_audit_stale_against_canonical",
           "plan_b_audit_stale_against_canonical",
-          "plan_b2_audit_stale_against_canonical"
+          "plan_b2_audit_stale_against_canonical",
+          "value_plan_comparison_stale_against_canonical"
         ]
       }
     },
@@ -2150,7 +2193,7 @@
         "at": 1787682282137,
         "staleReason": "plan_a2_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81201178
+        "olderThanLatestCanonicalMs": -88092398
       }
     },
     {
@@ -2164,7 +2207,7 @@
         "at": "2026-08-25T18:24:42.137Z",
         "staleReason": "plan_a2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81201178
+        "olderThanLatestCanonicalMs": -88092398
       }
     },
     {
@@ -2178,7 +2221,7 @@
         "at": "2026-08-25T18:23:39.630Z",
         "staleReason": "plan_b_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81263685
+        "olderThanLatestCanonicalMs": -88154905
       }
     },
     {
@@ -2192,7 +2235,7 @@
         "at": "2026-08-25T18:24:43.045Z",
         "staleReason": "plan_b2_audit_stale_against_canonical",
         "preservation": null,
-        "olderThanLatestCanonicalMs": -81200270
+        "olderThanLatestCanonicalMs": -88091490
       }
     },
     {
@@ -2245,7 +2288,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 208,
+        "count": 298,
         "informational": true
       }
     },
@@ -2395,8 +2438,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 3,
-        "settled": 1,
-        "unresolved": 2
+        "settled": 2,
+        "unresolved": 1
       }
     },
     {
@@ -2411,8 +2454,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 3,
-        "settled": 1,
-        "unresolved": 2
+        "settled": 2,
+        "unresolved": 1
       }
     },
     {
@@ -3235,19 +3278,19 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 3,
-            "settled": 1,
-            "wins": 1,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 1,
             "unsupported": 0,
             "hitRate": 1,
-            "oddsAvailable": 1,
-            "averageOdds": 1.69,
-            "totalStake": 1,
-            "totalReturn": 1.69,
-            "profit": 0.69,
-            "roi": 0.69
+            "oddsAvailable": 2,
+            "averageOdds": 1.585,
+            "totalStake": 2,
+            "totalReturn": 3.17,
+            "profit": 1.17,
+            "roi": 0.585
           }
         },
         "planA2": {
@@ -3255,19 +3298,19 @@
           "summary": {
             "picks": 3,
             "uniqueMatches": 3,
-            "settled": 1,
-            "wins": 1,
+            "settled": 2,
+            "wins": 2,
             "losses": 0,
             "voids": 0,
-            "unresolved": 2,
+            "unresolved": 1,
             "unsupported": 0,
             "hitRate": 1,
-            "oddsAvailable": 1,
-            "averageOdds": 1.69,
-            "totalStake": 1,
-            "totalReturn": 1.69,
-            "profit": 0.69,
-            "roi": 0.69
+            "oddsAvailable": 2,
+            "averageOdds": 1.585,
+            "totalStake": 2,
+            "totalReturn": 3.17,
+            "profit": 1.17,
+            "roi": 0.585
           }
         },
         "planB": {
