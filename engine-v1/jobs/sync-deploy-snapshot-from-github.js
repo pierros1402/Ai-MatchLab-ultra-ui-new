@@ -24,6 +24,7 @@ import {
 } from "../core/deploy-snapshot-release-contract.js";
 import { resolveDataPath } from "../storage/data-root.js";
 import { athensDayKey, shiftDay } from "../core/daykey.js";
+import { validatePlanCShadowExportPayload } from "../value/plan-c-shadow-export.js";
 
 const DEFAULT_REPO = process.env.SNAPSHOT_SYNC_REPO || "pierros1402/Ai-MatchLab-ultra-ui-new";
 const DEFAULT_REF = process.env.SNAPSHOT_SYNC_BRANCH || "main";
@@ -188,21 +189,35 @@ async function runPool(tasks, concurrency = CONCURRENCY) {
   await Promise.all(workers);
 }
 
-function expectedCoreFiles(manifest) {
+export function expectedCoreFiles(manifest) {
   const required = new Set(["manifest.json"]);
   const fixtures = safeName(manifest?.files?.fixtures || "fixtures.json");
   const value = safeName(manifest?.files?.value || "value.json");
   const valueAudit = manifest?.files?.valueAudit
     ? safeName(manifest.files.valueAudit)
     : null;
+  const planCShadow = manifest?.files?.planCShadow
+    ? safeName(manifest.files.planCShadow)
+    : null;
+  const planCShadowAudit = manifest?.files?.planCShadowAudit
+    ? safeName(manifest.files.planCShadowAudit)
+    : null;
 
-  if (!fixtures || !value || (manifest?.files?.valueAudit && !valueAudit)) {
+  if (
+    !fixtures ||
+    !value ||
+    (manifest?.files?.valueAudit && !valueAudit) ||
+    (manifest?.files?.planCShadow && !planCShadow) ||
+    (manifest?.files?.planCShadowAudit && !planCShadowAudit)
+  ) {
     throw new Error("manifest_core_file_name_invalid");
   }
 
   required.add(fixtures);
   required.add(value);
   if (valueAudit) required.add(valueAudit);
+  if (planCShadow) required.add(planCShadow);
+  if (planCShadowAudit) required.add(planCShadowAudit);
 
   return {
     required: [...required].sort(),
@@ -275,6 +290,8 @@ export async function validateStagedRelease(stageDayDir, manifest) {
   const valueName = manifest.files?.value || "value.json";
   const fixturesFile = path.join(stageDayDir, fixturesName);
   const valueFile = path.join(stageDayDir, valueName);
+  const planCShadowName = manifest.files?.planCShadow || null;
+  const planCShadowFile = planCShadowName ? path.join(stageDayDir, planCShadowName) : null;
   const detailsDir = path.join(stageDayDir, "details");
 
   for (const required of [manifestFile, fixturesFile, valueFile]) {
@@ -291,6 +308,19 @@ export async function validateStagedRelease(stageDayDir, manifest) {
   }
   if (valueCount !== Number(manifest.counts?.valuePicks || 0)) {
     throw new Error(`staged_value_count_mismatch:${valueCount}:${manifest.counts?.valuePicks}`);
+  }
+
+  if (planCShadowFile) {
+    if (!fs.existsSync(planCShadowFile)) throw new Error(`staged_required_file_missing:${planCShadowName}`);
+    const planCShadow = parseJsonBuffer(await fsp.readFile(planCShadowFile), "plan-c-shadow");
+    const planCValidation = validatePlanCShadowExportPayload(planCShadow, manifest.date);
+    if (!planCValidation.ok) throw new Error(`staged_plan_c_shadow_contract_failed:${planCValidation.errors.join(",")}`);
+    if (planCValidation.count !== Number(manifest.counts?.planCShadowPredictions || 0)) {
+      throw new Error(`staged_plan_c_shadow_count_mismatch:${planCValidation.count}:${manifest.counts?.planCShadowPredictions}`);
+    }
+    if (planCValidation.pickCount !== Number(manifest.counts?.planCShadowPicks || 0)) {
+      throw new Error(`staged_plan_c_shadow_pick_count_mismatch:${planCValidation.pickCount}:${manifest.counts?.planCShadowPicks}`);
+    }
   }
 
   const actualDetails = fs.existsSync(detailsDir)

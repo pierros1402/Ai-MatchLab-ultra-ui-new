@@ -19,6 +19,10 @@ import {
 import {
   resolvePlanAPublicationPayload
 } from "../value/plan-a-publication-authority.js";
+import {
+  buildPlanCShadowExportAudit,
+  readPlanCShadowDay
+} from "../value/plan-c-shadow-export.js";
 
 function readJsonSafe(filePath, fallback = null) {
   try {
@@ -1205,6 +1209,45 @@ export async function exportDeploySnapshotDay(dayKey, options = {}) {
     );
   }
 
+  // Plan C is exported as an explicitly labelled shadow artifact. A missing
+  // daily source is represented honestly as available:false; an existing but
+  // invalid or modified source fails the entire export closed. It never
+  // changes the official Value artifact or its publication authority.
+  const planCShadowLoaded =
+    readPlanCShadowDay(dayKey);
+
+  const planCShadowOut =
+    planCShadowLoaded.payload;
+
+  const planCShadowAudit =
+    buildPlanCShadowExportAudit(
+      dayKey,
+      planCShadowLoaded,
+      startedAt
+    );
+
+  const snapshotPlanCShadowFile =
+    path.join(
+      snapshotRoot,
+      "plan-c-shadow.json"
+    );
+
+  const snapshotPlanCShadowAuditFile =
+    path.join(
+      snapshotRoot,
+      "plan-c-shadow-audit.json"
+    );
+
+  writeJsonStable(
+    snapshotPlanCShadowFile,
+    planCShadowOut
+  );
+
+  writeJsonStable(
+    snapshotPlanCShadowAuditFile,
+    planCShadowAudit
+  );
+
   const latestCanonicalAt = latestCanonicalFixtureUpdatedAt(dayKey);
   const valueArtifactAt = maxArtifactTime(
     persistedValueOut?.updatedAt,
@@ -1261,6 +1304,8 @@ const manifest = {
       fixtures: "fixtures.json",
       value: "value.json",
       valueAudit: valueAuditPresent ? "value-audit.json" : null,
+      planCShadow: "plan-c-shadow.json",
+      planCShadowAudit: "plan-c-shadow-audit.json",
       detailsDir: "details"
     },
     fileHashes: {
@@ -1268,11 +1313,15 @@ const manifest = {
       "value.json": canonicalFileSha256(path.join(snapshotRoot, "value.json")),
       ...(valueAuditPresent
         ? { "value-audit.json": canonicalFileSha256(snapshotValueAuditFile) }
-        : {})
+        : {}),
+      "plan-c-shadow.json": canonicalFileSha256(snapshotPlanCShadowFile),
+      "plan-c-shadow-audit.json": canonicalFileSha256(snapshotPlanCShadowAuditFile)
     },
     counts: {
       fixtures: fixturesOut.count,
       valuePicks: persistedValueOut.count,
+      planCShadowPredictions: planCShadowOut.count,
+      planCShadowPicks: planCShadowOut.pickCount,
       details: detailsReport.count,
       detailsMatchedToFixtures: detailsReport.count,
       orphanDetailsRemoved: detailsReport.orphansRemoved.length,
@@ -1321,6 +1370,7 @@ fixturesByLeague,
     sizes: {
       fixturesMb: mb(bytesOfFile(path.join(snapshotRoot, "fixtures.json"))),
       valueMb: mb(bytesOfFile(path.join(snapshotRoot, "value.json"))),
+      planCShadowMb: mb(bytesOfFile(snapshotPlanCShadowFile)),
       detailsTotalMb: detailsReport.totalMb,
       largestDetail: detailsReport.largest
     },
@@ -1338,6 +1388,8 @@ fixturesByLeague,
     manifest: `data/deploy-snapshots/${dayKey}/manifest.json`,
     fixtures: `data/deploy-snapshots/${dayKey}/fixtures.json`,
     value: `data/deploy-snapshots/${dayKey}/value.json`,
+    planCShadow: `data/deploy-snapshots/${dayKey}/plan-c-shadow.json`,
+    planCShadowAudit: `data/deploy-snapshots/${dayKey}/plan-c-shadow-audit.json`,
     detailsDir: `data/deploy-snapshots/${dayKey}/details`,
     hash: manifest.hash
   };

@@ -8,6 +8,7 @@ import {
   computeDeploySnapshotManifestHash
 } from "../core/deploy-snapshot-release-contract.js";
 import {
+  expectedCoreFiles,
   promoteDirectory,
   validateStagedRelease
 } from "./sync-deploy-snapshot-from-github.js";
@@ -54,6 +55,36 @@ async function makeRelease(root) {
   return manifest;
 }
 
+async function addUnavailablePlanCShadow(root, manifest) {
+  const payload = {
+    schema: "ai-matchlab.plan-c-shadow-day.v1",
+    ok: true,
+    available: false,
+    mode: "SHADOW",
+    productionEligible: false,
+    date: manifest.date,
+    generatedAt: null,
+    sourcePredictionSetHash: null,
+    count: 0,
+    pickCount: 0,
+    entries: [],
+    reason: "missing_plan_c_shadow_day_artifact"
+  };
+  const audit = { schema: "ai-matchlab.plan-c-shadow-export-audit.v1", ok: true, date: manifest.date };
+  const payloadBuffer = jsonBuffer(payload);
+  const auditBuffer = jsonBuffer(audit);
+  await fs.promises.writeFile(path.join(root, "plan-c-shadow.json"), payloadBuffer);
+  await fs.promises.writeFile(path.join(root, "plan-c-shadow-audit.json"), auditBuffer);
+  manifest.files.planCShadow = "plan-c-shadow.json";
+  manifest.files.planCShadowAudit = "plan-c-shadow-audit.json";
+  manifest.fileHashes["plan-c-shadow.json"] = canonicalBufferSha256(payloadBuffer);
+  manifest.fileHashes["plan-c-shadow-audit.json"] = canonicalBufferSha256(auditBuffer);
+  manifest.counts.planCShadowPredictions = 0;
+  manifest.counts.planCShadowPicks = 0;
+  manifest.hash = computeDeploySnapshotManifestHash(manifest);
+  await fs.promises.writeFile(path.join(root, "manifest.json"), jsonBuffer(manifest));
+}
+
 test("staged v2 release validates file, count and detail integrity", async t => {
   const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "aiml-release-"));
   t.after(() => fs.promises.rm(root, { recursive: true, force: true }));
@@ -81,4 +112,29 @@ test("directory promotion removes stale target files", async t => {
   assert.equal(fs.existsSync(path.join(target, "new.json")), true);
   assert.equal(fs.existsSync(path.join(target, "stale.json")), false);
   assert.equal(fs.existsSync(backup), false);
+});
+
+test("staged release validates and carries the declared Plan C shadow files", async t => {
+  const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "aiml-release-plan-c-"));
+  t.after(() => fs.promises.rm(root, { recursive: true, force: true }));
+  const manifest = await makeRelease(root);
+  await addUnavailablePlanCShadow(root, manifest);
+  assert.deepEqual(await validateStagedRelease(root, manifest), {
+    fixtureCount: 1,
+    valueCount: 0,
+    detailCount: 1
+  });
+});
+
+test("runtime sync downloads declared Plan C shadow files as required core artifacts", () => {
+  const files = expectedCoreFiles({
+    files: {
+      fixtures: "fixtures.json",
+      value: "value.json",
+      planCShadow: "plan-c-shadow.json",
+      planCShadowAudit: "plan-c-shadow-audit.json"
+    }
+  });
+  assert.ok(files.required.includes("plan-c-shadow.json"));
+  assert.ok(files.required.includes("plan-c-shadow-audit.json"));
 });

@@ -503,6 +503,244 @@
 #right-panel .intelligence-panel.value-panel .value-head-wrap .value-toolbar{
   gap: 12px !important;
 }
+
+/* =========================================================
+   PLAN C SHADOW — EXPERIMENTAL, READ-ONLY OBSERVATION PANEL
+========================================================= */
+
+#right-panel .plan-c-shadow-panel .panel-header {
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#right-panel .plan-c-shadow-header-badge {
+  padding: 3px 8px;
+  border: 1px solid color-mix(in srgb, #a78bfa 55%, var(--line-soft));
+  border-radius: 999px;
+  background: color-mix(in srgb, #7c3aed 20%, transparent);
+  color: #ddd6fe;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+#right-panel .plan-c-shadow-panel .panel-body {
+  max-height: 460px;
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#right-panel .plan-c-boundary-note {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+  padding: 9px 10px;
+  border: 1px solid rgba(167, 139, 250, 0.30);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(37, 99, 235, 0.08));
+}
+
+#right-panel .plan-c-boundary-note b {
+  color: #ddd6fe;
+  font-size: 11px;
+  letter-spacing: .7px;
+}
+
+#right-panel .plan-c-boundary-note span {
+  color: color-mix(in srgb, currentColor 70%, transparent);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+#right-panel .plan-c-summary {
+  display: grid;
+  grid-template-columns: .8fr .9fr 1.6fr;
+  gap: 6px;
+  margin-bottom: 9px;
+}
+
+#right-panel .plan-c-summary > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 7px 8px;
+  border: 1px solid var(--line-soft);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--panel-2) 88%, transparent);
+}
+
+#right-panel .plan-c-summary strong {
+  overflow: hidden;
+  color: #f5f3ff;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#right-panel .plan-c-summary span {
+  overflow: hidden;
+  opacity: .62;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#right-panel .plan-c-filter {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+#right-panel .plan-c-filter button {
+  padding: 5px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  opacity: .68;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+#right-panel .plan-c-filter button.active {
+  border-color: rgba(167, 139, 250, .52);
+  background: rgba(124, 58, 237, .20);
+  color: #ede9fe;
+  opacity: 1;
+}
+
+#right-panel .plan-c-card {
+  position: relative;
+  margin-bottom: 9px;
+  padding: 10px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid rgba(148, 163, 184, .45);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--panel-2) 90%, transparent);
+}
+
+#right-panel .plan-c-card.is-pick {
+  border-left-color: #a78bfa;
+  background: linear-gradient(135deg, rgba(124, 58, 237, .13), color-mix(in srgb, var(--panel-2) 92%, transparent));
+}
+
+#right-panel .plan-c-card.win { border-left-color: #22c55e; }
+#right-panel .plan-c-card.loss { border-left-color: #ef4444; }
+
+#right-panel .plan-c-card-top,
+#right-panel .plan-c-card-bottom,
+#right-panel .plan-c-elo,
+#right-panel .plan-c-probability-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#right-panel .plan-c-card-top {
+  margin-bottom: 6px;
+  color: color-mix(in srgb, currentColor 68%, transparent);
+  font-size: 10px;
+}
+
+#right-panel .plan-c-league {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+#right-panel .plan-c-kickoff { margin-left: auto; }
+
+#right-panel .plan-c-state,
+#right-panel .plan-c-pick-badge {
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .35px;
+}
+
+#right-panel .plan-c-state { padding: 2px 6px; }
+#right-panel .plan-c-state.pending { background: rgba(245, 158, 11, .16); color: #fbbf24; }
+#right-panel .plan-c-state.settled { background: rgba(34, 197, 94, .16); color: #4ade80; }
+#right-panel .plan-c-state.void { background: rgba(148, 163, 184, .16); color: #cbd5e1; }
+
+#right-panel .plan-c-fixture {
+  overflow: hidden;
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#right-panel .plan-c-vs {
+  margin: 0 4px;
+  opacity: .45;
+  font-size: 10px;
+}
+
+#right-panel .plan-c-elo {
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: color-mix(in srgb, currentColor 75%, transparent);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+#right-panel .plan-c-edge {
+  color: #c4b5fd;
+  font-weight: 900;
+}
+
+#right-panel .plan-c-probability-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto;
+  padding: 7px 8px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .035);
+}
+
+#right-panel .plan-c-probability-row > div {
+  display: flex;
+  flex-direction: column;
+}
+
+#right-panel .plan-c-metric-label {
+  opacity: .55;
+  font-size: 9px;
+}
+
+#right-panel .plan-c-probability-row strong {
+  color: #fff;
+  font-size: 13px;
+}
+
+#right-panel .plan-c-probability-arrow { opacity: .38; }
+
+#right-panel .plan-c-delta {
+  color: #c4b5fd;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+#right-panel .plan-c-card-bottom {
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+#right-panel .plan-c-pick-badge { padding: 3px 7px; }
+#right-panel .plan-c-pick-badge.pick { background: rgba(124, 58, 237, .24); color: #ddd6fe; }
+#right-panel .plan-c-pick-badge.observe { background: rgba(148, 163, 184, .12); opacity: .65; }
+#right-panel .plan-c-lambdas { opacity: .58; font-size: 10px; font-weight: 800; }
+#right-panel .plan-c-error { color: #fca5a5; }
+
+@media (max-width: 700px) {
+  #right-panel .plan-c-shadow-panel .panel-body { max-height: none; }
+  #right-panel .plan-c-summary { grid-template-columns: .8fr .9fr 1.5fr; }
+}
 /* ======================================================
    LIVE UPDATE ANIMATION
 ====================================================== */
