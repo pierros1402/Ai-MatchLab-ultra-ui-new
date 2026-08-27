@@ -745,6 +745,8 @@ test(
     assert.ok(settle < build, "Plan C daily build must follow settlement");
     assert.ok(build < snapshotExport, "snapshot export must follow Plan C build");
     assert.match(workflow, /--max-snapshot-age-days 30/);
+    assert.match(workflow, /PREDICTION_CREATED_AT=.*new Date\(\)\.toISOString\(\)/);
+    assert.doesNotMatch(workflow, /PREDICTION_CREATED_AT=.*date -u/);
     assert.match(workflow, /data\/plan-c-shadow\/settlement\/latest\.json/);
     assert.match(workflow, /stale Elo adds no new/);
     assert.match(workflow, /continue-on-error: true[\s\S]*refresh-clubelo-shadow-registry\.js/);

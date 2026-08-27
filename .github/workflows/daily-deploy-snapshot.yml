@@ -409,7 +409,9 @@ jobs:
 
           PREDICTION_ROOT="data/plan-c-shadow/frozen/i2b-20260825"
           SETTLEMENT_FILE="data/plan-c-shadow/settlement/latest.json"
-          PREDICTION_CREATED_AT="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          # Preserve real milliseconds. Truncating to .000Z can make this value
+          # appear earlier than the ClubElo snapshot retrieved in the same second.
+          PREDICTION_CREATED_AT="$(node -e 'process.stdout.write(new Date().toISOString())')"
 
           # Append-only prediction freeze. Exact project name + league identity
           # and federation-verified ClubElo are mandatory; stale Elo adds no new
