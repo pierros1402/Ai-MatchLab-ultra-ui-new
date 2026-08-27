@@ -1,26 +1,50 @@
 {
   "schema": "ai-matchlab.system-health-alerts.v1",
   "dayKey": "2026-08-27",
-  "generatedAt": "2026-08-26T16:42:21.577Z",
-  "severity": "warning",
+  "generatedAt": "2026-08-27T18:14:30.911Z",
+  "severity": "error",
   "issueCounts": {
-    "error": 0,
-    "warning": 4,
+    "error": 2,
+    "warning": 5,
     "info": 11
   },
   "alert": true,
   "alertCounts": {
-    "error": 0,
-    "warning": 1,
+    "error": 2,
+    "warning": 2,
     "info": 0
   },
-  "activeIssueCount": 15,
-  "actionableIssueCount": 4,
+  "activeIssueCount": 18,
+  "actionableIssueCount": 7,
   "newIssueCount": 4,
-  "newActionableIssueCount": 1,
-  "resolvedIssueCount": 10,
-  "persistentIssueCount": 11,
+  "newActionableIssueCount": 4,
+  "resolvedIssueCount": 1,
+  "persistentIssueCount": 14,
   "activeIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-27.json",
+        "at": "2026-08-27T18:11:39.575Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8333
+      }
+    },
     {
       "severity": "info",
       "source": "freshness-report",
@@ -104,7 +128,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 380,
+        "count": 1006,
         "informational": true
       }
     },
@@ -133,6 +157,15 @@
       }
     },
     {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
       "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
@@ -154,14 +187,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -234,8 +266,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 4,
-        "settled": 0,
-        "unresolved": 4
+        "settled": 2,
+        "unresolved": 2
       }
     },
     {
@@ -250,8 +282,8 @@
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 4,
-        "settled": 0,
-        "unresolved": 4
+        "settled": 2,
+        "unresolved": 2
       }
     },
     {
@@ -924,13 +956,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 4,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "settled": 2,
+            "wins": 1,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 4,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0.5,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -944,13 +976,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 4,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "settled": 2,
+            "wins": 1,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 4,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0.5,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -1005,6 +1037,39 @@
   "actionableIssues": [
     {
       "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-27.json",
+        "at": "2026-08-27T18:11:39.575Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8333
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "warning",
       "source": "build-report",
       "type": "acquisition_skipped_slugs",
       "message": "Acquisition skipped slugs during fixture acquisition.",
@@ -1025,14 +1090,13 @@
       }
     },
     {
-      "severity": "warning",
+      "severity": "error",
       "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
       "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
+        "clean": false,
+        "cleanStrict": false
       }
     },
     {
@@ -1683,6 +1747,109 @@
   ],
   "newIssues": [
     {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-27.json",
+        "at": "2026-08-27T18:11:39.575Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8333
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "newActionableIssues": [
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "freshness_not_ok",
+      "message": "Freshness report is not OK.",
+      "details": {
+        "reasons": [
+          "value_plan_comparison_stale_against_canonical"
+        ]
+      }
+    },
+    {
+      "severity": "warning",
+      "source": "freshness-report",
+      "type": "stale_derived_artifact",
+      "message": "Freshness report found stale derived artifact.",
+      "details": {
+        "kind": "value_plan_comparison",
+        "artifact": "value-comparison/2026-08-27.json",
+        "at": "2026-08-27T18:11:39.575Z",
+        "staleReason": "value_plan_comparison_stale_against_canonical",
+        "olderThanLatestCanonicalMs": -8333
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_hard_failure",
+      "message": "snapshot_stale",
+      "details": {
+        "failure": "snapshot_stale"
+      }
+    },
+    {
+      "severity": "error",
+      "source": "build-report",
+      "type": "build_not_clean",
+      "message": "Build report is not clean.",
+      "details": {
+        "clean": false,
+        "cleanStrict": false
+      }
+    }
+  ],
+  "resolvedIssues": [
+    {
+      "severity": "warning",
+      "source": "build-report",
+      "type": "build_not_strict_clean",
+      "message": "Build report is clean but not strict-clean.",
+      "details": {
+        "clean": true,
+        "cleanStrict": false,
+        "contextOnlyWarnings": false
+      }
+    }
+  ],
+  "persistentIssues": [
+    {
       "severity": "info",
       "source": "freshness-report",
       "type": "skipped_freshness_input",
@@ -1705,7 +1872,24 @@
         "artifact": "value-plans/2026-08-27/plan-b.json",
         "at": null,
         "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-08-27",
+          "currentAthensDay": "2026-08-27",
+          "fixtureCount": 76,
+          "frozenHash": "9d8df48deacbbcab5861d51458d86e79ec9277e44eb57f166d47b271ddbd4ace",
+          "currentHash": "16e9edbf21ba5bcf2f69d2e03284780e492320e46ac3975cea9764c08f537251",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_internacionalbogota_deportivopasto_20260827"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
@@ -1719,162 +1903,27 @@
         "artifact": "value-plans/2026-08-27/plan-b2.json",
         "at": null,
         "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
+        "preservation": {
+          "reason": "frozen_value_observation_cohort_identity_preserved",
+          "requestedDay": "2026-08-27",
+          "currentAthensDay": "2026-08-27",
+          "fixtureCount": 76,
+          "frozenHash": "9d8df48deacbbcab5861d51458d86e79ec9277e44eb57f166d47b271ddbd4ace",
+          "currentHash": "16e9edbf21ba5bcf2f69d2e03284780e492320e46ac3975cea9764c08f537251",
+          "strictFrozenParity": true,
+          "membershipParity": false,
+          "descriptorDrift": null,
+          "publicationMembershipPreserved": true,
+          "authorizedShrink": true,
+          "removedFixtureIds": [
+            "cid_col1_internacionalbogota_deportivopasto_20260827"
+          ],
+          "deferredCurrentFixtureIds": [],
+          "removalEvidenceSource": "persisted_authoritative_prune_ledger"
+        },
         "skipped": "artifact_missing_or_no_timestamp"
       }
     },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    }
-  ],
-  "newActionableIssues": [
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_not_strict_clean",
-      "message": "Build report is clean but not strict-clean.",
-      "details": {
-        "clean": true,
-        "cleanStrict": false,
-        "contextOnlyWarnings": false
-      }
-    }
-  ],
-  "resolvedIssues": [
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "expected_matches",
-        "artifact": "expected-matches/2026-08-26.json",
-        "at": null,
-        "staleReason": "snapshot_stale_against_expected_matches",
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b",
-        "artifact": "value-plans/2026-08-26/plan-b.json",
-        "at": null,
-        "staleReason": "plan_b_stale_against_canonical",
-        "preservation": null,
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "info",
-      "source": "freshness-report",
-      "type": "skipped_freshness_input",
-      "message": "Freshness report skipped an optional/missing input.",
-      "details": {
-        "kind": "plan_b2",
-        "artifact": "value-plans/2026-08-26/plan-b2.json",
-        "at": null,
-        "staleReason": "plan_b2_stale_against_canonical",
-        "preservation": null,
-        "skipped": "artifact_missing_or_no_timestamp"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "foundation-integrity",
-      "type": "foundation_publication_not_ready",
-      "message": "Publication foundation is not ready.",
-      "details": {
-        "blocked": [
-          {
-            "component": "details",
-            "reason": "details_foundation_not_ready"
-          }
-        ]
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "foundation_publication_not_ready",
-      "details": {
-        "failure": "foundation_publication_not_ready"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_hard_failure",
-      "message": "snapshot_stale",
-      "details": {
-        "failure": "snapshot_stale"
-      }
-    },
-    {
-      "severity": "warning",
-      "source": "build-report",
-      "type": "build_warning",
-      "message": "canonical_leagues_missing_from_published:par.1,uefa.europa.conf",
-      "details": {
-        "raw": "canonical_leagues_missing_from_published:par.1,uefa.europa.conf"
-      }
-    },
-    {
-      "severity": "error",
-      "source": "build-report",
-      "type": "build_not_clean",
-      "message": "Build report is not clean.",
-      "details": {
-        "clean": false,
-        "cleanStrict": false
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b_unresolved_settlement",
-      "message": "Plan B picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-26",
-        "todayDayKey": "2026-08-26",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 0,
-        "unresolved": 4
-      }
-    },
-    {
-      "severity": "info",
-      "source": "value-comparison",
-      "type": "plan_b2_unresolved_settlement",
-      "message": "Plan B2 picks are still unresolved.",
-      "details": {
-        "dayKey": "2026-08-26",
-        "todayDayKey": "2026-08-26",
-        "ageDays": 0,
-        "overdue": false,
-        "settlementSource": "value-comparison",
-        "picks": 4,
-        "settled": 0,
-        "unresolved": 4
-      }
-    }
-  ],
-  "persistentIssues": [
     {
       "severity": "info",
       "source": "foundation-integrity",
@@ -1883,7 +1932,7 @@
       "details": {
         "component": "historySemantic",
         "reason": "age_expired_results_rows_present",
-        "count": 208,
+        "count": 1006,
         "informational": true
       }
     },
@@ -1946,10 +1995,10 @@
           "slv.1"
         ],
         "summary": {
-          "evidenceSlugCount": 22,
+          "evidenceSlugCount": 19,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 22,
+          "rejectedCount": 19,
           "alreadyDeclaredCount": 0
         }
       }
@@ -1972,23 +2021,20 @@
           "concacaf.leagues.cup",
           "eng.fa_qual",
           "fifa.intercontinental_cup",
-          "ger.super_cup",
           "ned.w.1",
-          "sco.tennents_qual",
           "uefa.w.europa",
           "uefa.wchampions_qual",
           "usa.ncaa.m.1",
           "usa.ncaa.w.1",
           "usa.nwsl",
           "usa.usl.1",
-          "usa.usl.l1",
-          "usa.w.usl.1"
+          "usa.usl.l1"
         ],
         "summary": {
-          "evidenceSlugCount": 22,
+          "evidenceSlugCount": 19,
           "admittedCount": 5,
           "pendingCount": 0,
-          "rejectedCount": 22,
+          "rejectedCount": 19,
           "alreadyDeclaredCount": 0
         }
       }
@@ -2000,13 +2046,13 @@
       "message": "Plan A picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-27",
-        "todayDayKey": "2026-08-26",
+        "todayDayKey": "2026-08-27",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 4,
-        "settled": 0,
-        "unresolved": 4
+        "settled": 2,
+        "unresolved": 2
       }
     },
     {
@@ -2016,13 +2062,13 @@
       "message": "Plan A2 picks are still unresolved.",
       "details": {
         "dayKey": "2026-08-27",
-        "todayDayKey": "2026-08-26",
+        "todayDayKey": "2026-08-27",
         "ageDays": 0,
         "overdue": false,
         "settlementSource": "value-comparison",
         "picks": 4,
-        "settled": 0,
-        "unresolved": 4
+        "settled": 2,
+        "unresolved": 2
       }
     },
     {
@@ -2695,13 +2741,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 4,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "settled": 2,
+            "wins": 1,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 4,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0.5,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
@@ -2715,13 +2761,13 @@
           "summary": {
             "picks": 4,
             "uniqueMatches": 4,
-            "settled": 0,
-            "wins": 0,
-            "losses": 0,
+            "settled": 2,
+            "wins": 1,
+            "losses": 1,
             "voids": 0,
-            "unresolved": 4,
+            "unresolved": 2,
             "unsupported": 0,
-            "hitRate": null,
+            "hitRate": 0.5,
             "oddsAvailable": 0,
             "averageOdds": null,
             "totalStake": null,
