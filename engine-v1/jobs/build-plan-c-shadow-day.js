@@ -181,7 +181,7 @@ export function writePlanCShadowDay({ dayKey, predictionRoot, settlementFile = n
 }
 
 export function parsePlanCShadowCli(argv = process.argv.slice(2)) {
-  const out = { dayKey: null, predictionRoot: null, settlementFile: null, outputFile: null, auditFile: null, generatedAt: null };
+  const out = { dayKey: null, predictionRoot: null, settlementFile: null, outputFile: null, auditFile: null, generatedAt: undefined };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = clean(argv[index]);
     if (!out.dayKey && /^\d{4}-\d{2}-\d{2}$/u.test(arg)) { out.dayKey = arg; continue; }

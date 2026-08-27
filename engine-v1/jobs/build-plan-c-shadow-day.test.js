@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { buildPlanCShadowDayArtifact, assertPlanCShadowMonotonic, writePlanCShadowDay } from "./build-plan-c-shadow-day.js";
+import { buildPlanCShadowDayArtifact, assertPlanCShadowMonotonic, parsePlanCShadowCli, writePlanCShadowDay } from "./build-plan-c-shadow-day.js";
 import { planCPredictionSignature } from "../value/plan-c-shadow-export.js";
 
 function fixturePrediction() {
@@ -88,6 +88,24 @@ test("writer creates daily artifact and audit outside the repository when paths 
     assert.equal(fs.existsSync(outputFile), true);
     assert.equal(fs.existsSync(auditFile), true);
     assert.equal(result.audit.productionEligible, false);
+  } finally {
+    fs.rmSync(input.root, { recursive: true, force: true });
+    fs.rmSync(outputRoot, { recursive: true, force: true });
+  }
+});
+
+test("CLI omission of --generated-at uses the builder clock instead of an invalid null", () => {
+  const input = inputPackage();
+  const outputRoot = fs.mkdtempSync(path.join(os.tmpdir(), "aiml-plan-c-output-"));
+  try {
+    const args = parsePlanCShadowCli(["2026-08-26", "--prediction-root", input.root]);
+    assert.equal(args.generatedAt, undefined);
+    const result = writePlanCShadowDay({
+      ...args,
+      outputFile: path.join(outputRoot, "day.json"),
+      auditFile: path.join(outputRoot, "audit.json")
+    });
+    assert.equal(Number.isFinite(Date.parse(result.payload.generatedAt)), true);
   } finally {
     fs.rmSync(input.root, { recursive: true, force: true });
     fs.rmSync(outputRoot, { recursive: true, force: true });
