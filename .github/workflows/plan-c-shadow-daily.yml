@@ -1,0 +1,97 @@
+name: Plan C shadow daily publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      dayKey:
+        description: "Shadow day key, YYYY-MM-DD. Empty means Europe/Athens today."
+        required: false
+        default: ""
+  schedule:
+    - cron: "30 4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  publish-plan-c-shadow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Resolve shadow day
+        shell: bash
+        env:
+          INPUT_DAY_KEY: ${{ inputs.dayKey }}
+        run: |
+          DAY_KEY="$(printf "%s" "${INPUT_DAY_KEY:-}" | grep -Eo '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n 1 || true)"
+          if [ -z "$DAY_KEY" ]; then DAY_KEY="$(TZ=Europe/Athens date +%F)"; fi
+          if ! printf "%s" "$DAY_KEY" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "ERROR: invalid DAY_KEY=$DAY_KEY"
+            exit 1
+          fi
+          echo "DAY_KEY=$DAY_KEY" >> "$GITHUB_ENV"
+
+      - name: Refresh official ClubElo shadow source
+        shell: bash
+        run: |
+          REFRESH_STATUS=0
+          node ./engine-v1/jobs/refresh-clubelo-shadow-registry.js "$DAY_KEY" --registry data/plan-c-shadow/frozen/i2b-20260825/IDENTITY_REGISTRY.json --timeout-ms 30000 || REFRESH_STATUS=$?
+          echo "CLUBELO_REFRESH_STATUS=$REFRESH_STATUS"
+          echo "A failed refresh retains the last verified registry; prediction generation remains fail-closed on freshness."
+
+      - name: Generate settle and build immutable shadow export
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREDICTION_ROOT="data/plan-c-shadow/frozen/i2b-20260825"
+          PREDICTION_CREATED_AT="$(node -e 'process.stdout.write(new Date().toISOString())')"
+          node ./engine-v1/jobs/generate-plan-c-shadow-predictions.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --prediction-created-at "$PREDICTION_CREATED_AT" --days-forward 14 --max-snapshot-age-days 30
+          node ./engine-v1/jobs/settle-plan-c-shadow.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --output data/plan-c-shadow/settlement/latest.json
+          node ./engine-v1/jobs/build-plan-c-shadow-day.js "$DAY_KEY" --prediction-root "$PREDICTION_ROOT" --settlement-report data/plan-c-shadow/settlement/latest.json
+
+      - name: Stage only Plan C shadow artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "data/plan-c-shadow/${DAY_KEY}.json"
+          git add "data/plan-c-shadow/_audit/${DAY_KEY}.json"
+          git add data/plan-c-shadow/frozen/i2b-20260825/
+          git add data/plan-c-shadow/clubelo-snapshots/
+          git add "data/plan-c-shadow/clubelo-refresh/_audit/${DAY_KEY}.json"
+          git add "data/plan-c-shadow/generation/_audit/${DAY_KEY}.json"
+          git add data/plan-c-shadow/settlement/latest.json
+          git add "data/plan-c-shadow/settlement/_audit/${DAY_KEY}.json"
+          node engine-v1/jobs/guard-staged-data-boundary.js --label=plan-c-shadow-daily --dayKey="${DAY_KEY}" --allow="^data/plan-c-shadow/"
+          BAD="$(git diff --cached --name-only | grep -Ev '^data/plan-c-shadow/' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: non-shadow paths staged"
+            printf '%s\n' "$BAD"
+            exit 1
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh Plan C shadow export for ${DAY_KEY}"
+            bash tools/git-push-rebase-retry.sh
+          fi
+          echo "PUBLISHED_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Promote and verify public Plan C shadow runtime
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: bash tools/sync-public-plan-c-shadow.sh "$DAY_KEY" "$PUBLISHED_REF"

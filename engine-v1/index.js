@@ -41,6 +41,7 @@ import { overlayResultsTruth } from "./core/results-truth-overlay.js";
 import { verifyStuckLiveFinals } from "./core/live-ft-verifier.js";
 import { currentSeason } from "./core/season.js";
 import { validateDeploySnapshotManifest } from "./core/deploy-snapshot-release-contract.js";
+import { validatePlanCShadowExportPayload } from "./value/plan-c-shadow-export.js";
 import {
   requestTimeDisplayOverlaysEnabled,
   reusableDisplayRevision,
@@ -292,6 +293,23 @@ function startSnapshotSyncJob(dayKey, ref) {
   });
 }
 
+function startPlanCShadowSyncJob(dayKey, ref) {
+  const args = [
+    path.join(__dirname, "jobs", "sync-plan-c-shadow-from-github.js"),
+    `--day=${dayKey}`,
+    `--ref=${ref}`
+  ];
+
+  return startOpsChildJob({
+    type: "plan-c-shadow-sync",
+    dayKey,
+    ref,
+    command: process.execPath,
+    args,
+    cwd: __dirname
+  });
+}
+
 function startValueComparisonSyncJob(dayKey, ref) {
   const args = [
     path.join(
@@ -486,9 +504,24 @@ function readDeploySnapshotValue(dayKey) {
   return readJsonFileSafe(filePath, null);
 }
 
-function readDeploySnapshotPlanCShadow(dayKey) {
-  const filePath = path.join(deploySnapshotRoot(dayKey), "plan-c-shadow.json");
-  return readJsonFileSafe(filePath, null);
+function readValidatedPlanCShadowCandidate(dayKey, filePath) {
+  const payload = readJsonFileSafe(filePath, null);
+  if (!payload) return null;
+  const validation = validatePlanCShadowExportPayload(payload, dayKey);
+  return validation.ok ? payload : null;
+}
+
+function readAvailablePlanCShadow(dayKey) {
+  const candidates = [
+    { source: "snapshot", file: path.join(deploySnapshotRoot(dayKey), "plan-c-shadow.json") },
+    { source: "shadow_runtime_release", file: resolveDataPath("runtime-releases", "plan-c-shadow", dayKey, "plan-c-shadow.json") },
+    { source: "shadow_source", file: resolveDataPath("plan-c-shadow", `${dayKey}.json`) }
+  ];
+  for (const candidate of candidates) {
+    const payload = readValidatedPlanCShadowCandidate(dayKey, candidate.file);
+    if (payload) return { payload, source: candidate.source };
+  }
+  return null;
 }
 
 function readDeploySnapshotFixtures(dayKey) {
@@ -1262,6 +1295,42 @@ app.get("/ops/sync-snapshot/status", (req, res) => {
   return res.json({ ok: true, job: publicJob(job) });
 });
 
+app.get("/ops/sync-plan-c-shadow", (_req, res) => {
+  res.status(405).json({
+    ok: false,
+    error: "method_not_allowed",
+    requiredMethod: "POST",
+    contract: "authenticated_commit_pinned_shadow_child_process"
+  });
+});
+
+app.post("/ops/sync-plan-c-shadow", (req, res) => {
+  if (!snapshotSyncEnabled()) {
+    return res.status(403).json({ ok: false, reason: "snapshot_sync_disabled" });
+  }
+  if (!authorizeCronRequest(req, res)) return;
+  const dayKey = String(req.query.date || "").slice(0, 10);
+  const ref = String(req.query.ref || "").trim().toLowerCase();
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(dayKey)) {
+    return res.status(400).json({ ok: false, error: "invalid_day_key" });
+  }
+  if (!/^[0-9a-f]{40}$/u.test(ref)) {
+    return res.status(400).json({ ok: false, error: "immutable_ref_required" });
+  }
+  const { created, job } = startPlanCShadowSyncJob(dayKey, ref);
+  return res.status(202).json({ ok: true, accepted: true, created, job: publicJob(job) });
+});
+
+app.get("/ops/sync-plan-c-shadow/status", (req, res) => {
+  if (!authorizeCronRequest(req, res)) return;
+  const id = String(req.query.id || "");
+  const job = OPS_JOBS.get(id);
+  if (!job || job.type !== "plan-c-shadow-sync") {
+    return res.status(404).json({ ok: false, error: "plan_c_shadow_sync_job_not_found" });
+  }
+  return res.json({ ok: true, job: publicJob(job) });
+});
+
 
 app.get("/ops/sync-value-comparison", (_req, res) => {
   res.status(405).json({
@@ -1448,10 +1517,24 @@ app.get("/deploy-snapshot", (req, res) => {
 
 app.get("/plan-c-shadow", (req, res) => {
   const requestedDate = String(req.query.date || "");
-  const date = resolveSnapshotDate(requestedDate);
-  const payload = date ? readDeploySnapshotPlanCShadow(date) : null;
+  if (requestedDate && !/^\d{4}-\d{2}-\d{2}$/u.test(requestedDate)) {
+    return res.status(400).json({ ok: false, available: false, error: "invalid_day_key" });
+  }
+  const dates = requestedDate
+    ? [requestedDate]
+    : [...new Set([athensDayKey(), resolveSnapshotDate("")].filter(Boolean))];
+  let date = dates[0] || "";
+  let loaded = null;
+  for (const candidateDate of dates) {
+    const candidate = readAvailablePlanCShadow(candidateDate);
+    if (candidate) {
+      date = candidateDate;
+      loaded = candidate;
+      break;
+    }
+  }
 
-  if (!payload) {
+  if (!loaded) {
     res.status(404).json({
       ok: false,
       available: false,
@@ -1463,8 +1546,8 @@ app.get("/plan-c-shadow", (req, res) => {
   }
 
   res.json({
-    ...payload,
-    source: "snapshot"
+    ...loaded.payload,
+    source: loaded.source
   });
 });
 
