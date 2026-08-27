@@ -517,11 +517,14 @@ function readAvailablePlanCShadow(dayKey) {
     { source: "shadow_runtime_release", file: resolveDataPath("runtime-releases", "plan-c-shadow", dayKey, "plan-c-shadow.json") },
     { source: "shadow_source", file: resolveDataPath("plan-c-shadow", `${dayKey}.json`) }
   ];
+  let unavailable = null;
   for (const candidate of candidates) {
     const payload = readValidatedPlanCShadowCandidate(dayKey, candidate.file);
-    if (payload) return { payload, source: candidate.source };
+    if (!payload) continue;
+    if (payload.available === true) return { payload, source: candidate.source };
+    unavailable ||= { payload, source: candidate.source };
   }
-  return null;
+  return unavailable;
 }
 
 function readDeploySnapshotFixtures(dayKey) {

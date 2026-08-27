@@ -9,6 +9,8 @@ test("engine exposes the exported Plan C shadow snapshot through a read-only end
   assert.match(source, /app\.get\("\/plan-c-shadow"/);
   assert.match(source, /shadow_runtime_release/);
   assert.match(source, /validatePlanCShadowExportPayload/);
+  assert.match(source, /if \(payload\.available === true\) return/);
+  assert.match(source, /return unavailable/);
   assert.match(source, /app\.post\("\/ops\/sync-plan-c-shadow"/);
   assert.match(source, /plan_c_shadow_snapshot_not_found/);
   assert.match(source, /planCShadowPredictions: Number\(manifest\?\.counts\?\.planCShadowPredictions/);
