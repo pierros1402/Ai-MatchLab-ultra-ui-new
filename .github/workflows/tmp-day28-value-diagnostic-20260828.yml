@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ai-matchlab-data-writer
+  group: ai-matchlab-day28-diagnostic
   cancel-in-progress: false
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sync latest main after writer lock
+      - name: Sync latest main for diagnostic
         shell: bash
         run: |
           set -euo pipefail
