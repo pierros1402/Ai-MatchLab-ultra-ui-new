@@ -1,0 +1,89 @@
+name: Temporary Day28 step25 log diagnostic
+
+on:
+  push:
+    branches:
+      - diag/day28-step25-log-20260828
+    paths:
+      - .github/workflows/tmp-diag-day28-step25-log.yml
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  extract-step25:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch failed job log and extract step 25
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_JOB_ID: "98857184275"
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl -fsSL \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/jobs/${TARGET_JOB_ID}/logs" \
+            -o /tmp/job.log
+
+          python - <<'PY'
+          from pathlib import Path
+
+          src = Path('/tmp/job.log')
+          text = src.read_text(encoding='utf-8', errors='replace')
+          lines = text.splitlines()
+          needles = [
+              'refresh-value-artifacts-day.js',
+              'Refresh value artifacts after final canonical snapshot',
+          ]
+          hits = [i for i, line in enumerate(lines) if any(n in line for n in needles)]
+
+          if hits:
+              start = max(0, hits[0] - 80)
+              end = min(len(lines), hits[-1] + 320)
+          else:
+              start = max(0, len(lines) - 800)
+              end = len(lines)
+
+          excerpt = lines[start:end]
+          interesting = [
+              line for line in lines
+              if any(token in line for token in (
+                  '"reason"', 'ERROR', 'Error', 'error', 'FROZEN_',
+                  'VALUE_', 'value_', 'parity', 'mismatch', 'failed',
+                  'Process completed with exit code'
+              ))
+          ]
+
+          out = Path('/tmp/step25.txt')
+          out.write_text(
+              '\n'.join([
+                  f'TOTAL_LOG_LINES={len(lines)}',
+                  f'HIT_COUNT={len(hits)}',
+                  f'EXCERPT_START_LINE={start + 1}',
+                  f'EXCERPT_END_LINE={end}',
+                  '',
+                  '=== TARGET EXCERPT ===',
+                  *excerpt,
+                  '',
+                  '=== ERROR/REASON INDEX ===',
+                  *interesting[-500:],
+                  ''
+              ]),
+              encoding='utf-8'
+          )
+          print(out.read_text(encoding='utf-8')[-12000:])
+          PY
+
+      - name: Upload focused diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: day28-step25-focused-log
+          path: /tmp/step25.txt
+          if-no-files-found: error
+          retention-days: 2
