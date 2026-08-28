@@ -43,6 +43,17 @@ jobs:
           test ! -f "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
           echo "DAY28_CANONICAL_CHECKPOINT=PASS"
 
+      - name: Self-heal history index foundation only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import { ensureHistoryIndexFoundationForDay } from './engine-v1/jobs/rebuild-indexes-for-season.js';
+          const result = await ensureHistoryIndexFoundationForDay(process.env.DAY_KEY);
+          console.log(JSON.stringify(result, null, 2));
+          if (result?.ok !== true) process.exit(1);
+          NODE
+
       - name: Build current details from persisted canonical truth
         run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
 
