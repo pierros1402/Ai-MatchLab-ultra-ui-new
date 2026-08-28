@@ -96,16 +96,36 @@ jobs:
       - name: Export isolated deploy snapshot candidate
         run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest
 
-      - name: Reproduce Value step25 with compact evidence
+      - name: Reproduce Value step25 and persist compact evidence
         shell: bash
         run: |
           set -o pipefail
-          OUT="$RUNNER_TEMP/value-refresh-output.jsonl"
+          OUT="$GITHUB_WORKSPACE/value-refresh-output.jsonl"
           set +e
-          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest 2>&1 | tee "$OUT"
-          STATUS=${PIPESTATUS[0]}
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest > "$OUT" 2>&1
+          STATUS=$?
           set -e
+          printf '%s\n' "$STATUS" > "$GITHUB_WORKSPACE/value-refresh-exit.txt"
           echo "VALUE_REFRESH_EXIT_CODE=${STATUS}"
           echo "=== LAST 120 LINES ==="
           tail -n 120 "$OUT"
-          exit "$STATUS"
+          exit 0
+
+      - name: Upload compact Value failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: day28-value-step25-output
+          path: |
+            value-refresh-output.jsonl
+            value-refresh-exit.txt
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Assert reproduced Value result
+        shell: bash
+        run: |
+          set -euo pipefail
+          STATUS="$(cat value-refresh-exit.txt)"
+          echo "VALUE_REFRESH_EXIT_CODE=${STATUS}"
+          test "$STATUS" -eq 0
