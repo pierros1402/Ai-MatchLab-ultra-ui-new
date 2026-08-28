@@ -1,0 +1,100 @@
+name: TMP Day28 identity late-lineage diagnostic
+
+on:
+  push:
+    branches:
+      - fix/day28-rennes-psg-identity-v3-20260828
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Syntax check identity repair
+        run: |
+          set -euo pipefail
+          node --check engine-v1/core/identity-extension-promoter.js
+          node --check engine-v1/core/production-identity-extension.js
+          node --check engine-v1/core/identity-extension-late-lineage.test.js
+
+      - name: Run identity regression contracts
+        run: |
+          set -euo pipefail
+          node --test \
+            engine-v1/core/identity-extension-recovery.test.js \
+            engine-v1/core/identity-extension-promoter.test.js \
+            engine-v1/core/production-identity-extension.test.js \
+            engine-v1/core/identity-extension-late-lineage.test.js
+
+      - name: Prove real Day23 Rennes PSG recovery in seven-day lookback
+        shell: bash
+        run: |
+          set -euo pipefail
+          node engine-v1/jobs/build-identity-recovery-window.js 2026-08-28 --days-back 7 --days-forward 14
+
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const artifact = JSON.parse(fs.readFileSync('data/identity-recovery/2026-08-28.json', 'utf8'));
+          const retained = 'cid_fra1_staderennais_parissaintgermain_20260823';
+          const suppressed = 'cid_fra1_rennes_psg_20260823';
+          const target = artifact.targetDays
+            .flatMap(day => (day.recoveryLeagueReports || []).flatMap(report =>
+              (report.autoPromotable || []).map(candidate => ({ dayKey: day.dayKey, leagueSlug: report.leagueSlug, candidate }))
+            ))
+            .find(row => {
+              const ids = [row.candidate?.left?.canonicalId, row.candidate?.right?.canonicalId].sort();
+              return ids.includes(retained) && ids.includes(suppressed);
+            });
+          if (!target) throw new Error('DAY23_RENNES_PSG_NOT_AUTO_PROMOTABLE_IN_7_DAY_LOOKBACK');
+          if (target.dayKey !== '2026-08-23' || target.leagueSlug !== 'fra.1') {
+            throw new Error(`DAY23_RENNES_PSG_WRONG_SCOPE:${target.dayKey}:${target.leagueSlug}`);
+          }
+          if (target.candidate.recoveryStatus !== 'AUTO_PROMOTABLE_LINEAGE') {
+            throw new Error(`DAY23_RENNES_PSG_WRONG_STATUS:${target.candidate.recoveryStatus}`);
+          }
+          console.log('DAY23_RENNES_PSG_RECOVERY_DISCOVERY=PASS');
+          NODE
+
+          node engine-v1/jobs/promote-identity-recovery-window.js 2026-08-28 --dry-run > /tmp/day28-identity-promotion.json
+          cat /tmp/day28-identity-promotion.json
+
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync('/tmp/day28-identity-promotion.json', 'utf8'));
+          const retained = 'cid_fra1_staderennais_parissaintgermain_20260823';
+          const suppressed = 'cid_fra1_rennes_psg_20260823';
+          const expectedKey = [retained, suppressed].sort().join('|');
+          const promoted = (result.promoted || []).find(row => row.key === expectedKey);
+          if (!promoted) throw new Error('DAY23_RENNES_PSG_NOT_PROMOTED_IN_DRY_RUN');
+          const blocked = (result.blocked || []).find(row => row.key === expectedKey);
+          if (blocked) throw new Error(`DAY23_RENNES_PSG_BLOCKED:${blocked.reason}`);
+          if ((promoted.newTeamBindingDecisionIds || []).length !== 0) {
+            throw new Error('DAY23_RENNES_PSG_CREATED_NEW_TEAM_BINDINGS');
+          }
+          console.log('DAY23_RENNES_PSG_PROMOTION_DRY_RUN=PASS');
+          NODE
+
+      - name: Verify diagnostic left repository data-only dirty
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED="$(git status --porcelain || true)"
+          echo "$CHANGED"
+          BAD="$(printf '%s\n' "$CHANGED" | grep -Ev '^[ MARC?]{2} data/identity-recovery/2026-08-28\.json$' || true)"
+          if [ -n "$BAD" ]; then
+            echo "Unexpected diagnostic side effects:"
+            echo "$BAD"
+            exit 1
+          fi
+          echo "IDENTITY_LATE_LINEAGE_DIAGNOSTIC=PASS"
