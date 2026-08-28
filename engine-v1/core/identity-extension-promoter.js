@@ -101,8 +101,6 @@ function sideIdentityPlan({ candidate, side, resolver, leagueSlug, fixtureDecisi
     return { ok: true, globalClubId: known[0], binding: null };
   }
   if (known.length === 1) {
-    // Attaching a new alias to an already-existing immutable identity needs a
-    // separate alias-extension record. Never allocate a second globalClubId.
     return { ok: false, reason: `ALIAS_EXTENSION_TO_EXISTING_ID_REQUIRED:${side}` };
   }
 
@@ -113,12 +111,6 @@ function sideIdentityPlan({ candidate, side, resolver, leagueSlug, fixtureDecisi
 function baseSideStable(baseResolver, candidate, side, leagueSlug) {
   const sources = sortedSources(candidate);
   const ids = sources.map(row => resolveAlias(baseResolver, sourceTeam(row, side), leagueSlug));
-  return Boolean(ids[0] && ids[1] && ids[0] === ids[1]);
-}
-
-function currentSideStable(currentResolver, candidate, side, leagueSlug) {
-  const sources = sortedSources(candidate);
-  const ids = sources.map(row => resolveAlias(currentResolver, sourceTeam(row, side), leagueSlug));
   return Boolean(ids[0] && ids[1] && ids[0] === ids[1]);
 }
 
@@ -133,7 +125,6 @@ function literalSideStable(candidate, side) {
 
 function promotionBasis(
   baseResolver,
-  currentResolver,
   candidate,
   leagueSlug,
   homePlan,
@@ -149,11 +140,6 @@ function promotionBasis(
       baseSideStable(baseResolver, candidate, "home", leagueSlug) &&
       baseSideStable(baseResolver, candidate, "away", leagueSlug)) {
     return "TWO_PROVIDER_EXISTING_PRODUCTION_IDENTITIES";
-  }
-  if (!homePlan.binding && !awayPlan.binding &&
-      currentSideStable(currentResolver, candidate, "home", leagueSlug) &&
-      currentSideStable(currentResolver, candidate, "away", leagueSlug)) {
-    return "TWO_PROVIDER_EXISTING_VALIDATED_EXTENSION_IDENTITIES";
   }
   if (literalSideStable(candidate, "home") ||
       literalSideStable(candidate, "away") ||
@@ -354,7 +340,6 @@ export function promoteIdentityRecoveryArtifact({
 
     const basis = promotionBasis(
       baseResolver,
-      currentResolver,
       fresh,
       leagueSlug,
       homePlan,
