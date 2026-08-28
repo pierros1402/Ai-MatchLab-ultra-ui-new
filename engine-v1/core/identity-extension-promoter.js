@@ -101,6 +101,8 @@ function sideIdentityPlan({ candidate, side, resolver, leagueSlug, fixtureDecisi
     return { ok: true, globalClubId: known[0], binding: null };
   }
   if (known.length === 1) {
+    // Attaching a new alias to an already-existing immutable identity needs a
+    // separate alias-extension record. Never allocate a second globalClubId.
     return { ok: false, reason: `ALIAS_EXTENSION_TO_EXISTING_ID_REQUIRED:${side}` };
   }
 
