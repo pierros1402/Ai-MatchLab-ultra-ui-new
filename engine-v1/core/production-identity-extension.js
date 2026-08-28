@@ -257,6 +257,29 @@ export function validateProductionIdentityExtension({
     );
   }
 
+  const fixtureDecisionByDecisionId = new Map(
+    fixtureDecisions
+      .map(row => [clean(row?.fixtureRetentionDecisionId), row])
+      .filter(([id]) => Boolean(id))
+  );
+
+  function hasPreExistingExtensionFixtureEvidence(globalClubId, currentDecisionId) {
+    const binding = byGlobalClubId.get(clean(globalClubId));
+    if (!binding) return false;
+    const refs = Array.isArray(binding?.sourceFixtureDecisionIds)
+      ? binding.sourceFixtureDecisionIds.map(clean).filter(Boolean)
+      : [];
+    return refs.some(refId => {
+      if (refId === clean(currentDecisionId)) return false;
+      const sourceDecision = fixtureDecisionByDecisionId.get(refId);
+      if (!sourceDecision) return false;
+      return [
+        clean(sourceDecision?.homeGlobalClubId),
+        clean(sourceDecision?.awayGlobalClubId),
+      ].includes(clean(globalClubId));
+    });
+  }
+
   const retained = new Set();
   const suppressed = new Set();
   const fixtureDecisionIds = new Set();
@@ -348,6 +371,7 @@ export function validateProductionIdentityExtension({
     const basis = clean(decision?.promotionBasis);
     const allowedBasis = new Set([
       "TWO_PROVIDER_EXISTING_PRODUCTION_IDENTITIES",
+      "TWO_PROVIDER_EXISTING_VALIDATED_EXTENSION_IDENTITIES",
       "TWO_PROVIDER_EXACT_COUNTERPART_WITH_STABLE_SIDE",
       "TWO_PROVIDER_PLUS_INDEPENDENT_FIXTURE_CONFIRMATION",
     ]);
@@ -404,12 +428,56 @@ export function validateProductionIdentityExtension({
       rightBaseAway &&
       leftBaseAway.globalClubId === rightBaseAway.globalClubId
     );
+    const leftUnionHome = leftSource
+      ? unionResolveAlias(leftSource.homeTeam, decision?.leagueSlug)
+      : null;
+    const rightUnionHome = rightSource
+      ? unionResolveAlias(rightSource.homeTeam, decision?.leagueSlug)
+      : null;
+    const leftUnionAway = leftSource
+      ? unionResolveAlias(leftSource.awayTeam, decision?.leagueSlug)
+      : null;
+    const rightUnionAway = rightSource
+      ? unionResolveAlias(rightSource.awayTeam, decision?.leagueSlug)
+      : null;
+    const unionHomeStable = Boolean(
+      leftUnionHome &&
+      rightUnionHome &&
+      leftUnionHome === rightUnionHome
+    );
+    const unionAwayStable = Boolean(
+      leftUnionAway &&
+      rightUnionAway &&
+      leftUnionAway === rightUnionAway
+    );
+    const preExistingExtensionHome = hasPreExistingExtensionFixtureEvidence(
+      decision?.homeGlobalClubId,
+      decisionId,
+    );
+    const preExistingExtensionAway = hasPreExistingExtensionFixtureEvidence(
+      decision?.awayGlobalClubId,
+      decisionId,
+    );
 
     if (
       basis === "TWO_PROVIDER_EXISTING_PRODUCTION_IDENTITIES" &&
       !(baseHomeStable && baseAwayStable)
     ) {
       issues.push(issue("EXISTING_IDENTITY_PROMOTION_BASIS_NOT_PROVEN", { decisionId }));
+    }
+    if (
+      basis === "TWO_PROVIDER_EXISTING_VALIDATED_EXTENSION_IDENTITIES" &&
+      !(
+        unionHomeStable &&
+        unionAwayStable &&
+        preExistingExtensionHome &&
+        preExistingExtensionAway
+      )
+    ) {
+      issues.push(issue(
+        "EXISTING_EXTENSION_IDENTITY_PROMOTION_BASIS_NOT_PROVEN",
+        { decisionId },
+      ));
     }
     if (
       basis === "TWO_PROVIDER_EXACT_COUNTERPART_WITH_STABLE_SIDE" &&
