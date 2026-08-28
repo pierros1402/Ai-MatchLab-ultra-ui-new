@@ -1,0 +1,131 @@
+name: One-shot Day28 Value diagnostic
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-day28-value-diagnostic-20260828.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      DAY_KEY: "2026-08-28"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main after writer lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout -B main origin/main
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "LATEST=$(node -e 'try{const x=require("./data/deploy-snapshots/latest.json");process.stdout.write(String(x.date||""));}catch{}')"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Rebuild Day28 details from persisted canonical truth
+        run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+
+      - name: Ensure persistent model assessment input
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY" --force
+
+      - name: Rebuild Plan C shadow inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREDICTION_ROOT="data/plan-c-shadow/frozen/i2b-20260825"
+          SETTLEMENT_FILE="data/plan-c-shadow/settlement/latest.json"
+          PREDICTION_CREATED_AT="$(node -e 'process.stdout.write(new Date().toISOString())')"
+
+          node ./engine-v1/jobs/refresh-clubelo-shadow-registry.js \
+            "$DAY_KEY" \
+            --registry data/plan-c-shadow/frozen/i2b-20260825/IDENTITY_REGISTRY.json \
+            --timeout-ms 30000 || true
+
+          node ./engine-v1/jobs/generate-plan-c-shadow-predictions.js \
+            "$DAY_KEY" \
+            --prediction-root "$PREDICTION_ROOT" \
+            --prediction-created-at "$PREDICTION_CREATED_AT" \
+            --days-forward 14 \
+            --max-snapshot-age-days 30
+
+          node ./engine-v1/jobs/settle-plan-c-shadow.js \
+            "$DAY_KEY" \
+            --prediction-root "$PREDICTION_ROOT" \
+            --output "$SETTLEMENT_FILE"
+
+          node ./engine-v1/jobs/build-plan-c-shadow-day.js \
+            "$DAY_KEY" \
+            --prediction-root "$PREDICTION_ROOT" \
+            --settlement-report "$SETTLEMENT_FILE"
+
+      - name: Export candidate Day28 snapshot
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest
+
+      - name: Run Value refresh and capture exact diagnostic
+        id: value
+        shell: bash
+        run: |
+          set -uo pipefail
+          OUT="$RUNNER_TEMP/day28-value-refresh.txt"
+          set +e
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest >"$OUT" 2>&1
+          STATUS=$?
+          set -e
+          {
+            echo "DAY_KEY=$DAY_KEY"
+            echo "HEAD=$(git rev-parse HEAD)"
+            echo "EXIT_STATUS=$STATUS"
+            echo "--- VALUE REFRESH OUTPUT ---"
+            cat "$OUT"
+          } | tee "$RUNNER_TEMP/day28-value-diagnostic.txt"
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload compact diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: day28-value-diagnostic
+          path: ${{ runner.temp }}/day28-value-diagnostic.txt
+          if-no-files-found: error
+          retention-days: 2
+
+      - name: Fail closed if Value refresh failed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.value.outputs.status }}" != "0" ]; then
+            echo "DAY28_VALUE_DIAGNOSTIC=FAILED"
+            exit 1
+          fi
+          echo "DAY28_VALUE_DIAGNOSTIC=PASS"
