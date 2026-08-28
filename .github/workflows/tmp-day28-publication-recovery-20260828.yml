@@ -1,0 +1,402 @@
+name: One-shot Day28 publication recovery
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-day28-publication-recovery-20260828.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  recover-publication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      DAY_KEY: "2026-08-28"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main after writer lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout -B main origin/main
+          test -z "$(git status --porcelain)"
+          echo "SOURCE_HEAD=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "SOURCE_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate Day28 recovery preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import fs from "node:fs";
+
+          const day = process.env.DAY_KEY;
+          const latest = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
+          const planC = JSON.parse(fs.readFileSync(`data/plan-c-shadow/${day}.json`, "utf8"));
+          const odds = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/odds.json`, "utf8"));
+
+          const summary = {
+            latestDay: latest?.date || null,
+            planCAvailable: planC?.available === true,
+            planCCount: Number(planC?.count || 0),
+            planCPickCount: Number(planC?.pickCount || 0),
+            oddsCount: Number(odds?.count || 0),
+            assessmentRows: Number(odds?.assessmentRows || 0)
+          };
+          console.log("RECOVERY_PREFLIGHT=" + JSON.stringify(summary));
+
+          if (latest?.date === day) {
+            throw new Error(`day_already_published:${day}`);
+          }
+          if (planC?.available !== true || Number(planC?.count) !== 10 || Number(planC?.pickCount) !== 6) {
+            throw new Error("plan_c_checkpoint_mismatch");
+          }
+          if (Number(odds?.assessmentRows || 0) <= 0) {
+            throw new Error("missing_model_assessment_input");
+          }
+          NODE
+
+      - name: Rebuild current Details and complete pre-Value snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" \
+            --no-update-latest \
+            --replace-details \
+            --no-build-missing-details \
+            --fail-on-missing-details
+
+      - name: Bootstrap missing A2 B2 observations exactly once
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import {
+            buildValueA2B2Day,
+            readFrozenAdjustedValueObservations
+          } from "./engine-v1/jobs/build-value-a2-b2-day.js";
+
+          const day = process.env.DAY_KEY;
+          const before = readFrozenAdjustedValueObservations(day);
+          const hasA2 = Boolean(before?.A2);
+          const hasB2 = Boolean(before?.B2);
+
+          console.log("A2_B2_BEFORE=" + JSON.stringify({ hasA2, hasB2 }));
+
+          if (hasA2 !== hasB2) {
+            throw new Error("partial_adjusted_observation_state_refused");
+          }
+
+          if (!hasA2 && !hasB2) {
+            const result = await buildValueA2B2Day(day, {
+              // One-shot recovery only: allow first creation while preserving
+              // the normal current-day freeze contract for all ordinary runs.
+              calendarDay: "2026-08-27"
+            });
+
+            console.log("A2_B2_BOOTSTRAP=" + JSON.stringify({
+              ok: result?.ok === true,
+              freezeObservations: result?.freezeObservations,
+              preservedExisting: result?.preservedExisting,
+              a2Count: Number(result?.plans?.A2?.count || 0),
+              b2Count: Number(result?.plans?.B2?.count || 0)
+            }));
+
+            if (result?.ok !== true || result?.freezeObservations !== false) {
+              throw new Error("adjusted_observation_bootstrap_failed");
+            }
+          }
+
+          const after = readFrozenAdjustedValueObservations(day);
+          if (!after?.A2 || !after?.B2) {
+            throw new Error("adjusted_observation_freeze_validation_failed");
+          }
+
+          console.log("A2_B2_AFTER=" + JSON.stringify({
+            a2Count: Number(after.A2?.count || 0),
+            b2Count: Number(after.B2?.count || 0),
+            a2FixtureUniverseHash: after.A2?.fixtureUniverse?.hash || null,
+            b2FixtureUniverseHash:
+              after.B2?.sourceContract?.fixtureUniverse?.hash ||
+              after.B2?.fixtureUniverse?.hash ||
+              null
+          }));
+          NODE
+
+      - name: Refresh official Value artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js \
+            --date="$DAY_KEY" \
+            --no-update-latest
+
+      - name: Synchronize Details with Plan A and re-export
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" \
+            --no-update-latest \
+            --replace-details \
+            --no-build-missing-details \
+            --fail-on-missing-details
+          node ./engine-v1/jobs/verify-details-value-mirror-day.js \
+            --date="$DAY_KEY" \
+            --gate
+
+      - name: Enforce Value Plans B B2 assessment input
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require("fs");
+          const day = process.env.DAY_KEY;
+          const plans = [
+            ["B", `data/value-plans/${day}/plan-b-audit.json`],
+            ["B2", `data/value-plans/${day}/plan-b2-audit.json`]
+          ];
+
+          for (const [plan, file] of plans) {
+            if (!fs.existsSync(file)) {
+              throw new Error(`Plan ${plan} assessment audit missing: ${file}`);
+            }
+
+            const audit = JSON.parse(fs.readFileSync(file, "utf8"));
+            const membership = audit?.membership || {};
+            const canonicalFixtures = Number(
+              membership.canonicalFixtures ??
+              membership.fixtureUniverse?.count ??
+              membership.evaluatedFixtureCount ??
+              0
+            );
+            const assessmentRows = Number(membership.assessmentRows ?? 0);
+            const joinedMatches = Number(membership.joinedMatches ?? 0);
+
+            console.log(JSON.stringify({
+              plan,
+              canonicalFixtures,
+              assessmentRows,
+              joinedMatches,
+              assessmentInputSource: audit?.sourceContract?.assessmentInputSource || null
+            }));
+
+            if (canonicalFixtures > 0 && assessmentRows <= 0) {
+              throw new Error(`Plan ${plan} has ${canonicalFixtures} fixtures but zero aiAssessment rows`);
+            }
+            if (assessmentRows > 0 && joinedMatches <= 0) {
+              throw new Error(`Plan ${plan} has aiAssessment rows but zero canonical identity joins`);
+            }
+          }
+          NODE
+
+      - name: Build comparison and invariant diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
+
+      - name: Artifact freshness gate with standard self-heal
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate; then
+            echo "Snapshot stale against current upstream truth; running the standard downstream-only self-heal."
+            node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" \
+              --no-update-latest \
+              --replace-details \
+              --no-build-missing-details \
+              --fail-on-missing-details
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
+            node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
+            node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
+          fi
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+
+      - name: Details foundation semantic preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY"
+
+          if node -e 'const fs=require("fs"); const p="data/foundation-integrity/"+process.env.DAY_KEY+".json"; const r=JSON.parse(fs.readFileSync(p,"utf8")); process.exit(r.publicationReady===true?0:1)'; then
+            echo "Details foundation already publication-ready."
+          else
+            if ! node -e 'const fs=require("fs"); const p="data/foundation-integrity/"+process.env.DAY_KEY+".json"; const r=JSON.parse(fs.readFileSync(p,"utf8")); process.exit(r.modelReady===true?0:1)'; then
+              echo "Model foundation is not ready; refusing any late model-foundation mutation."
+              node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+            fi
+
+            echo "Model foundation is ready; rebuilding downstream Details only."
+            node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+            node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" \
+              --no-update-latest \
+              --replace-details \
+              --no-build-missing-details \
+              --fail-on-missing-details
+            node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
+            node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
+            node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+            node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" || true
+            node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+            node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          fi
+
+      - name: Hard prepublish gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
+
+      - name: Promote latest and verify final publish contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/promote-deploy-snapshot-latest-day.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --gate
+
+      - name: Stage exact recovery publication outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+
+          git add "data/deploy-snapshots/latest.json"
+          git add "data/deploy-snapshots/${DAY_KEY}/"
+          test -f "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json" || true
+          test -f "data/foundation-integrity/${DAY_KEY}.json" && git add "data/foundation-integrity/${DAY_KEY}.json" || true
+          test -f "data/foundation-integrity/latest.json" && git add "data/foundation-integrity/latest.json" || true
+          test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json" || true
+          test -f "data/system-health/latest.json" && git add "data/system-health/latest.json" || true
+          test -f "data/value/${DAY_KEY}.json" && git add "data/value/${DAY_KEY}.json" || true
+          test -f "data/value/_audit/${DAY_KEY}.json" && git add "data/value/_audit/${DAY_KEY}.json" || true
+          test -d "data/value-plans/${DAY_KEY}" && git add "data/value-plans/${DAY_KEY}/" || true
+          test -f "data/value-comparison/${DAY_KEY}.json" && git add "data/value-comparison/${DAY_KEY}.json" || true
+          test -f "data/value-comparison/cumulative.json" && git add "data/value-comparison/cumulative.json" || true
+          test -f "data/plan-c-shadow/${DAY_KEY}.json" && git add "data/plan-c-shadow/${DAY_KEY}.json" || true
+          test -f "data/plan-c-shadow/_audit/${DAY_KEY}.json" && git add "data/plan-c-shadow/_audit/${DAY_KEY}.json" || true
+
+          node ./engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=day28-publication-recovery \
+            --dayKey="$DAY_KEY" \
+            --allow="^(data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\\.json$|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/${DAY_KEY}\\.json$|data/system-health/latest\\.json$|data/value/${DAY_KEY}\\.json$|data/value/_audit/${DAY_KEY}\\.json$|data/value-plans/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\\.json$|data/value-comparison/cumulative\\.json$|data/plan-c-shadow/${DAY_KEY}\\.json$|data/plan-c-shadow/_audit/${DAY_KEY}\\.json$)"
+
+          git diff --cached --check
+          echo "=== RECOVERY STAGED FILES ==="
+          git diff --cached --name-only
+          test -n "$(git diff --cached --name-only)"
+
+      - name: Commit and race-safe push publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          PARENT="$(git rev-parse HEAD)"
+          git commit -m "Recovery: Publish Day28 snapshot"
+          CANDIDATE="$(git rev-parse HEAD)"
+
+          git fetch origin main
+          REMOTE="$(git rev-parse origin/main)"
+          echo "PARENT=$PARENT"
+          echo "CANDIDATE=$CANDIDATE"
+          echo "REMOTE=$REMOTE"
+
+          if [ "$REMOTE" != "$PARENT" ]; then
+            echo "DAY28_PUBLICATION_PUSH_RACE=STOP"
+            exit 1
+          fi
+
+          git push origin HEAD:main
+          echo "PUBLISHED_REF=$CANDIDATE" >> "$GITHUB_ENV"
+          echo "DAY28_PUBLICATION_PUSH=PASS"
+
+      - name: Promote and verify public engine snapshot
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          bash tools/sync-public-snapshot.sh "$DAY_KEY" "$PUBLISHED_REF"
+
+      - name: Emit final Day28 publication evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require("fs");
+          const day = process.env.DAY_KEY;
+          const latest = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
+          const manifest = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/manifest.json`, "utf8"));
+          const value = JSON.parse(fs.readFileSync(`data/deploy-snapshots/${day}/value.json`, "utf8"));
+          const planC = JSON.parse(fs.readFileSync(`data/plan-c-shadow/${day}.json`, "utf8"));
+
+          if (latest?.date !== day || manifest?.date !== day || planC?.available !== true) {
+            throw new Error("final_publication_evidence_mismatch");
+          }
+
+          console.log("DAY28_PUBLICATION_EVIDENCE=" + JSON.stringify({
+            publishedRef: process.env.PUBLISHED_REF,
+            latestDate: latest.date,
+            latestHash: latest.hash,
+            manifestHash: manifest.hash,
+            counts: manifest.counts,
+            valueCount: Number(value?.count || 0),
+            planCAvailable: planC.available,
+            planCCount: Number(planC?.count || 0),
+            planCPickCount: Number(planC?.pickCount || 0)
+          }));
+          NODE
+
+      - name: Upload Day28 observability evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: day28-publication-observability
+          path: |
+            data/deploy-snapshots/2026-08-28/manifest.json
+            data/deploy-snapshots/2026-08-28/value.json
+            data/deploy-snapshots/2026-08-28/plan-c-shadow.json
+            data/plan-c-shadow/2026-08-28.json
+            data/value-plans/2026-08-28/
+            data/value-comparison/2026-08-28.json
+            data/foundation-integrity/2026-08-28.json
+            data/system-health/2026-08-28.json
+          if-no-files-found: warn
+          retention-days: 14
