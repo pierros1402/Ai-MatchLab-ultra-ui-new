@@ -116,6 +116,12 @@ function baseSideStable(baseResolver, candidate, side, leagueSlug) {
   return Boolean(ids[0] && ids[1] && ids[0] === ids[1]);
 }
 
+function currentSideStable(currentResolver, candidate, side, leagueSlug) {
+  const sources = sortedSources(candidate);
+  const ids = sources.map(row => resolveAlias(currentResolver, sourceTeam(row, side), leagueSlug));
+  return Boolean(ids[0] && ids[1] && ids[0] === ids[1]);
+}
+
 function literalSideStable(candidate, side) {
   const sources = sortedSources(candidate);
   return Boolean(
@@ -127,6 +133,7 @@ function literalSideStable(candidate, side) {
 
 function promotionBasis(
   baseResolver,
+  currentResolver,
   candidate,
   leagueSlug,
   homePlan,
@@ -142,6 +149,11 @@ function promotionBasis(
       baseSideStable(baseResolver, candidate, "home", leagueSlug) &&
       baseSideStable(baseResolver, candidate, "away", leagueSlug)) {
     return "TWO_PROVIDER_EXISTING_PRODUCTION_IDENTITIES";
+  }
+  if (!homePlan.binding && !awayPlan.binding &&
+      currentSideStable(currentResolver, candidate, "home", leagueSlug) &&
+      currentSideStable(currentResolver, candidate, "away", leagueSlug)) {
+    return "TWO_PROVIDER_EXISTING_VALIDATED_EXTENSION_IDENTITIES";
   }
   if (literalSideStable(candidate, "home") ||
       literalSideStable(candidate, "away") ||
@@ -342,6 +354,7 @@ export function promoteIdentityRecoveryArtifact({
 
     const basis = promotionBasis(
       baseResolver,
+      currentResolver,
       fresh,
       leagueSlug,
       homePlan,
