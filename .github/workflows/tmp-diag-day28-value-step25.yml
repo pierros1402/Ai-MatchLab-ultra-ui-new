@@ -1,0 +1,100 @@
+name: Temporary Day28 Value step25 diagnostic
+
+on:
+  push:
+    paths:
+      - ".github/workflows/tmp-diag-day28-value-step25.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DAY_KEY: "2026-08-28"
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify persisted canonical checkpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d "data/canonical-fixtures/${DAY_KEY}"
+          COUNT="$(find "data/canonical-fixtures/${DAY_KEY}" -maxdepth 1 -type f -name '*.json' | wc -l)"
+          echo "CANONICAL_PARTITION_COUNT=${COUNT}"
+          test "$COUNT" -gt 0
+          test ! -f "data/deploy-snapshots/${DAY_KEY}/fixtures.json"
+          echo "DAY28_CANONICAL_CHECKPOINT=PASS"
+
+      - name: Build current details from persisted canonical truth
+        run: node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+
+      - name: Inspect assessment input before refresh
+        shell: bash
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          const day = process.env.DAY_KEY;
+          const file = `data/deploy-snapshots/${day}/odds.json`;
+          let payload = null;
+          try { payload = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
+          const matches = Array.isArray(payload?.matches) ? payload.matches : [];
+          const assessmentRows = matches.filter(r => r?.aiAssessment?.markets && Object.keys(r.aiAssessment.markets).length > 0).length;
+          console.log(JSON.stringify({stage:'assessment_before',file,matches:matches.length,assessmentRows},null,2));
+          NODE
+
+      - name: Prime persistent model assessment input
+        env:
+          ODDSPAPI_KEY: ${{ secrets.ODDSPAPI_KEY }}
+          ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
+        run: node ./engine-v1/jobs/run-odds-refresh.js "$DAY_KEY" --force
+
+      - name: Inspect assessment input after refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const fs = require('fs');
+          const day = process.env.DAY_KEY;
+          const file = `data/deploy-snapshots/${day}/odds.json`;
+          let payload = null;
+          try { payload = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
+          const matches = Array.isArray(payload?.matches) ? payload.matches : [];
+          const assessmentRows = matches.filter(r => r?.aiAssessment?.markets && Object.keys(r.aiAssessment.markets).length > 0).length;
+          console.log(JSON.stringify({stage:'assessment_after',file,matches:matches.length,assessmentRows},null,2));
+          if (matches.length > 0 && assessmentRows <= 0) process.exit(2);
+          NODE
+
+      - name: Export isolated deploy snapshot candidate
+        run: node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" --no-update-latest
+
+      - name: Reproduce Value step25 with compact evidence
+        shell: bash
+        run: |
+          set -o pipefail
+          OUT="$RUNNER_TEMP/value-refresh-output.jsonl"
+          set +e
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest 2>&1 | tee "$OUT"
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          echo "VALUE_REFRESH_EXIT_CODE=${STATUS}"
+          echo "=== LAST 120 LINES ==="
+          tail -n 120 "$OUT"
+          exit "$STATUS"
