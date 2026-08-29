@@ -217,10 +217,25 @@ jobs:
           node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
 
       - name: Gate snapshot invariant
+        id: snapshot_invariant_gate
         shell: bash
         run: |
           set -euo pipefail
-          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+          mkdir -p /tmp/day28-snapshot-invariant-diagnostics
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate \
+            2>&1 | tee /tmp/day28-snapshot-invariant-diagnostics/gate-output.json
+
+      - name: Upload Day28 snapshot invariant diagnostics on failure
+        if: failure() && steps.snapshot_invariant_gate.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: day28-snapshot-invariant-diagnostics
+          path: |
+            /tmp/day28-snapshot-invariant-diagnostics/gate-output.json
+            data/deploy-snapshots/${{ env.DAY_KEY }}/invariant-report.json
+            data/deploy-snapshots/${{ env.DAY_KEY }}/manifest.json
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Gate published-outcome freshness
         shell: bash
