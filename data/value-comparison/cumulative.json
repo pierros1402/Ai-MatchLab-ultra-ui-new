@@ -1,7 +1,7 @@
 {
   "ok": true,
   "schema": "ai-matchlab.value-plan-comparison-cumulative.v1",
-  "generatedAt": "2026-08-28T13:10:14.945Z",
+  "generatedAt": "2026-08-29T14:20:19.391Z",
   "note": "Rolled-up immutable Plan A vs Plan B observations for the full trial window. Historical minimum-sample exclusions are applied only to derived statistics; frozen observations remain immutable. Snapshot-integrity warnings remain diagnostics.",
   "historicalStatisticsCorrection": {
     "active": true,
@@ -39,9 +39,9 @@
     "correctedStatisticalPopulation": 401
   },
   "trialStartDay": "2026-07-05",
-  "dayCount": 49,
+  "dayCount": 50,
   "firstDay": "2026-07-05",
-  "lastDay": "2026-08-27",
+  "lastDay": "2026-08-28",
   "requireIntegrityClean": false,
   "requireImmutablePlanA": true,
   "daysIncluded": [
@@ -93,7 +93,8 @@
     "2026-08-24",
     "2026-08-25",
     "2026-08-26",
-    "2026-08-27"
+    "2026-08-27",
+    "2026-08-28"
   ],
   "daysExcluded": [
     {
@@ -708,21 +709,31 @@
           "snapshot_stale"
         ]
       }
+    },
+    {
+      "dayKey": "2026-08-28",
+      "reason": "invariant_report_stale",
+      "details": {
+        "ok": false,
+        "reason": "invariant_report_stale",
+        "checkedAt": "2026-08-29T14:20:00.503Z",
+        "manifestGeneratedAt": "2026-08-29T14:20:19.307Z"
+      }
     }
   ],
-  "integrityWarningDayCount": 44,
+  "integrityWarningDayCount": 45,
   "plans": {
     "A": {
       "id": "plan-a",
       "label": "Plan A - frozen production observation",
       "totals": {
-        "picks": 126,
-        "uniqueMatches": 118,
+        "picks": 154,
+        "uniqueMatches": 143,
         "settled": 123,
         "wins": 82,
         "losses": 41,
         "voids": 2,
-        "unresolved": 1,
+        "unresolved": 29,
         "unsupported": 0,
         "oddsAvailable": 64,
         "totalStake": 64,
@@ -754,7 +765,7 @@
     }
   },
   "comparison": {
-    "picksDeltaPlanBMinusPlanA": 48,
+    "picksDeltaPlanBMinusPlanA": 20,
     "settledDeltaPlanBMinusPlanA": 51,
     "winsDeltaPlanBMinusPlanA": 39,
     "lossesDeltaPlanBMinusPlanA": 12,
