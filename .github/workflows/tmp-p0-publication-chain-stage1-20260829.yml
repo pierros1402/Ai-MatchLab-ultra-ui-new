@@ -1,0 +1,235 @@
+name: P0 publication chain recovery stage 1
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-p0-publication-chain-stage1-20260829.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+
+jobs:
+  repair-day27-and-prepare-day28:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: ai-matchlab-data-writer
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main after writer lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout -B main origin/main
+          test -z "$(git status --porcelain)"
+          echo "SOURCE_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate permanent stale-terminal catch-up patch
+        run: node --check ./engine-v1/jobs/run-prior-value-settlement-catchup.js
+
+      - name: Refresh exact provider truth for Day27
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-live-status-refresh-day.js 2026-08-27 --include-all-open-states
+          node ./engine-v1/jobs/export-verified-final-results-day.js \
+            --date=2026-08-27 \
+            --write \
+            --all-fixtures \
+            --offsets=-3,-2,-1
+
+      - name: Re-export published Day27 status universe
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/run-intraday-snapshot-refresh.js \
+            2026-08-27 \
+            --chunks=0 \
+            --chunk-size=12 \
+            --days-back=1 \
+            --days-forward=14 \
+            --no-rebuild-details
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js 2026-08-27 --gate
+
+      - name: Rebuild independent Day28 competition completeness proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import { discoverProviderCompetitionsDay } from "./engine-v1/jobs/discover-provider-competitions-day.js";
+
+          const result = await discoverProviderCompetitionsDay("2026-08-28", {
+            offsets: [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+          });
+
+          console.log(JSON.stringify({
+            ok: result?.ok === true,
+            dayKey: result?.dayKey,
+            summary: result?.summary || null,
+            discoveryFile: result?.discoveryFile || null,
+            registryFile: result?.registryFile || null
+          }, null, 2));
+
+          if (result?.ok !== true) process.exit(1);
+          NODE
+
+          node ./engine-v1/jobs/build-league-gap-report-day.js 2026-08-28
+
+          node - <<'NODE'
+          const fs = require("fs");
+          const file = "data/coverage-readiness/2026-08-28.json";
+          const report = JSON.parse(fs.readFileSync(file, "utf8"));
+          const completeness = report?.activeCompetitionCompleteness || {};
+          console.log(JSON.stringify({
+            coverageReadinessOk: report?.ok === true,
+            completenessOk: completeness?.ok === true,
+            completenessStatus: completeness?.status || null,
+            blockingIssues: completeness?.blockingIssues || []
+          }, null, 2));
+          if (report?.ok !== true || completeness?.ok !== true) process.exit(1);
+          NODE
+
+      - name: Stage exact incident recovery outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+
+          git add data/canonical-fixtures/2026-08-27/
+          git add data/deploy-snapshots/2026-08-27/
+          git add data/deploy-snapshots/latest.json
+          test -d data/final-results/2026-08-27 && git add data/final-results/2026-08-27/ || true
+          test -f data/final-result-conflicts/2026-08-27.json && git add data/final-result-conflicts/2026-08-27.json || true
+          test -f data/build-reports/2026-08-27.json && git add data/build-reports/2026-08-27.json || true
+          test -f data/foundation-integrity/2026-08-27.json && git add data/foundation-integrity/2026-08-27.json || true
+          test -f data/system-health/2026-08-27.json && git add data/system-health/2026-08-27.json || true
+          test -f data/value-comparison/2026-08-27.json && git add data/value-comparison/2026-08-27.json || true
+
+          git add data/competition-discovery/2026-08-28.json
+          git add data/coverage-readiness/2026-08-28.json
+          git add data/provider-competition-registry/flashscore.json
+
+          STAGED="$(git diff --cached --name-only || true)"
+          printf '%s\n' "$STAGED"
+
+          BAD="$(printf '%s\n' "$STAGED" | grep -Ev '^(data/canonical-fixtures/2026-08-27/|data/deploy-snapshots/2026-08-27/|data/deploy-snapshots/latest\.json$|data/final-results/2026-08-27/|data/final-result-conflicts/2026-08-27\.json$|data/build-reports/2026-08-27\.json$|data/foundation-integrity/2026-08-27\.json$|data/system-health/2026-08-27\.json$|data/value-comparison/2026-08-27\.json$|data/competition-discovery/2026-08-28\.json$|data/coverage-readiness/2026-08-28\.json$|data/provider-competition-registry/flashscore\.json$)' || true)"
+          if [ -n "$BAD" ]; then
+            echo "ERROR: unexpected staged paths"
+            echo "$BAD"
+            exit 1
+          fi
+
+          git diff --cached --check
+
+      - name: Commit and push Day27 repair plus Day28 completeness proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --cached --quiet; then
+            echo "No incident recovery changes to commit."
+          else
+            git commit -m "P0: Repair Day27 terminal truth and prepare Day28 publication"
+            bash tools/git-push-rebase-retry.sh
+          fi
+
+          echo "REPAIR_REF=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Promote repaired Day27 public snapshot
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          LATEST_DAY="$(node -e 'const x=require("./data/deploy-snapshots/latest.json");process.stdout.write(String(x.date||""))')"
+          if [ "$LATEST_DAY" != "2026-08-27" ]; then
+            echo "Refusing Day27 public promotion because latest advanced to $LATEST_DAY"
+            exit 1
+          fi
+          bash tools/sync-public-snapshot.sh 2026-08-27 "$REPAIR_REF"
+
+  dispatch-and-verify-day28:
+    needs: repair-day27-and-prepare-day28
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Dispatch Day28 publication recovery
+        id: day28
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          WORKFLOW="tmp-day28-publication-recovery-20260828.yml"
+          BEFORE="$(gh run list --workflow "$WORKFLOW" --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+          gh workflow run "$WORKFLOW" --ref main
+
+          RUN_ID=""
+          for attempt in $(seq 1 30); do
+            sleep 2
+            CANDIDATE="$(gh run list --workflow "$WORKFLOW" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId // 0')"
+            if [ -n "$CANDIDATE" ] && [ "$CANDIDATE" != "0" ] && [ "$CANDIDATE" != "$BEFORE" ]; then
+              RUN_ID="$CANDIDATE"
+              break
+            fi
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "ERROR: unable to identify dispatched Day28 recovery run"
+            exit 1
+          fi
+
+          echo "DAY28_RUN_ID=$RUN_ID"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          gh run watch "$RUN_ID" --exit-status --interval 10
+
+      - name: Verify Day28 reached main latest
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          LATEST="$(git show origin/main:data/deploy-snapshots/latest.json)"
+          printf '%s\n' "$LATEST"
+          DAY="$(printf '%s' "$LATEST" | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>process.stdout.write(String(JSON.parse(s).date||"")))')"
+          if [ "$DAY" != "2026-08-28" ]; then
+            echo "ERROR: Day28 recovery completed but latest=$DAY"
+            exit 1
+          fi
+
+      - name: Emit stage-1 closure
+        run: |
+          echo "P0_STAGE1=PASS"
+          echo "DAY27_PUBLIC_TRUTH_REPAIRED=TRUE"
+          echo "DAY28_PUBLICATION_RECOVERY=PASS"
