@@ -1,0 +1,164 @@
+name: P0 one-shot Day28 Plan A freeze repair
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-day28-plan-a-freeze-repair-20260829.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  repair-plan-a-freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DAY_KEY: "2026-08-28"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main after writer lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout -B main origin/main
+          test -z "$(git status --porcelain)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install engine dependencies
+        working-directory: engine-v1
+        run: npm ci --no-audit --no-fund
+
+      - name: Create missing immutable Plan A observation exactly once
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import fs from "node:fs";
+          import os from "node:os";
+          import path from "node:path";
+          import { buildValueDay } from "./engine-v1/core/build-value-day.js";
+          import {
+            ensurePlanAObservationDay,
+            readPlanAObservationDay
+          } from "./engine-v1/value/plan-a-observation.js";
+
+          const day = process.env.DAY_KEY;
+          const observationFile = `data/value-plans/${day}/plan-a.json`;
+          const auditFile = `data/value-plans/${day}/plan-a-audit.json`;
+          const latest = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
+
+          if (String(latest?.date || "") >= day) {
+            throw new Error(`day28_recovery_no_longer_needed:latest=${latest?.date || "missing"}`);
+          }
+
+          const hasObservation = fs.existsSync(observationFile);
+          const hasAudit = fs.existsSync(auditFile);
+          if (hasObservation !== hasAudit) {
+            throw new Error("partial_plan_a_observation_state_refused");
+          }
+          if (hasObservation && hasAudit) {
+            const existing = readPlanAObservationDay(day);
+            if (existing?.ok !== true) {
+              throw new Error(`existing_plan_a_observation_invalid:${existing?.reason || "unknown"}`);
+            }
+            console.log("PLAN_A_FREEZE_ALREADY_VALID=TRUE");
+            process.exit(0);
+          }
+
+          const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `aiml-day28-plan-a-repair-${day}-`));
+          const outputPath = path.join(tempDir, "value.json");
+          const auditPath = path.join(tempDir, "value-audit.json");
+
+          try {
+            const candidate = await buildValueDay(day, {
+              rebuild: true,
+              outputPath,
+              auditPath
+            });
+            if (!candidate || candidate.ok === false) {
+              throw new Error("plan_a_recovery_candidate_build_failed");
+            }
+
+            const frozen = ensurePlanAObservationDay(day, candidate, {
+              sourcePath: `data/value/${day}.json`,
+              provenance: {
+                kind: "day28_publication_recovery_first_freeze",
+                recoveryOnly: true,
+                note: "One-shot first freeze for an unpublished historical day whose original Daily run failed before Plan A observation creation."
+              }
+            });
+
+            if (frozen?.ok !== true || frozen?.created !== true || frozen?.preservedExisting === true) {
+              throw new Error(`plan_a_recovery_freeze_failed:${frozen?.reason || "unknown"}`);
+            }
+
+            const verified = readPlanAObservationDay(day);
+            if (verified?.ok !== true) {
+              throw new Error(`plan_a_recovery_freeze_validation_failed:${verified?.reason || "unknown"}`);
+            }
+
+            console.log("PLAN_A_FREEZE_REPAIR=" + JSON.stringify({
+              ok: true,
+              count: Number(verified?.count || 0),
+              observationSignature: verified?.observationSignature || null,
+              observationFile,
+              auditFile
+            }));
+          } finally {
+            fs.rmSync(tempDir, { recursive: true, force: true });
+          }
+          NODE
+
+      - name: Stage only immutable Plan A observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+          git add "data/value-plans/${DAY_KEY}/plan-a.json"
+          git add "data/value-plans/${DAY_KEY}/plan-a-audit.json"
+          ACTUAL="$(git diff --cached --name-only | sort)"
+          EXPECTED="$(printf '%s\n' \
+            "data/value-plans/${DAY_KEY}/plan-a-audit.json" \
+            "data/value-plans/${DAY_KEY}/plan-a.json" | sort)"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "EXPECTED:"; printf '%s\n' "$EXPECTED"
+            echo "ACTUAL:"; printf '%s\n' "$ACTUAL"
+            exit 1
+          fi
+          git diff --cached --check
+
+      - name: Commit and push Plan A freeze repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "P0: Restore missing Day28 Plan A observation"
+          PARENT="$(git rev-parse HEAD^)"
+          git fetch origin main
+          REMOTE="$(git rev-parse origin/main)"
+          if [ "$REMOTE" != "$PARENT" ]; then
+            git rebase origin/main
+          fi
+          git push origin HEAD:main
+          echo "DAY28_PLAN_A_FREEZE_REPAIR=PASS"
