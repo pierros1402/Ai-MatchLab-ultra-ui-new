@@ -1,4 +1,4 @@
-name: One-shot trigger Day29 bootstrap
+name: One-shot trigger Day29 recovery stage 2
 
 on:
   push:
@@ -15,11 +15,11 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch Day29 current publication bootstrap
+      - name: Dispatch Day29 P0 recovery stage 2
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh workflow run tmp-day29-current-publication-bootstrap-20260829.yml --repo pierros1402/Ai-MatchLab-ultra-ui-new --ref main
-          echo "DAY29_BOOTSTRAP_DISPATCH=PASS"
+          gh workflow run tmp-p0-publication-chain-stage2-day29-20260829.yml --repo pierros1402/Ai-MatchLab-ultra-ui-new --ref main
+          echo "DAY29_STAGE2_DISPATCH=PASS"
