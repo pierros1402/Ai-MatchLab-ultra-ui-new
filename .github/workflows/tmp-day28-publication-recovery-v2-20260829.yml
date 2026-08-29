@@ -222,6 +222,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/day28-snapshot-invariant-diagnostics
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" \
+            2>&1 | tee /tmp/day28-snapshot-invariant-diagnostics/refresh-output.json
           node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate \
             2>&1 | tee /tmp/day28-snapshot-invariant-diagnostics/gate-output.json
 
@@ -231,6 +233,7 @@ jobs:
         with:
           name: day28-snapshot-invariant-diagnostics
           path: |
+            /tmp/day28-snapshot-invariant-diagnostics/refresh-output.json
             /tmp/day28-snapshot-invariant-diagnostics/gate-output.json
             data/deploy-snapshots/${{ env.DAY_KEY }}/invariant-report.json
             data/deploy-snapshots/${{ env.DAY_KEY }}/manifest.json
