@@ -246,7 +246,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
+          mkdir -p /tmp/day28-prepublish-diagnostics
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate \
+            2>&1 | tee /tmp/day28-prepublish-diagnostics/prepublish-contract.json
+
+      - name: Upload Day28 prepublish diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: day28-prepublish-contract-diagnostics
+          path: /tmp/day28-prepublish-diagnostics/prepublish-contract.json
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Promote Day28 atomically
         shell: bash
