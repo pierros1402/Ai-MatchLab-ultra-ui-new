@@ -200,6 +200,16 @@ jobs:
           node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
           node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
 
+      - name: Rebind Day28 manifest after Value refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" \
+            --no-update-latest \
+            --replace-details \
+            --no-build-missing-details \
+            --fail-on-missing-details
+
       - name: Build cumulative Value comparison
         shell: bash
         run: |
