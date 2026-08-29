@@ -1,0 +1,279 @@
+name: P0 Day28 publication recovery v2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-day28-publication-recovery-v2-20260829.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ai-matchlab-data-writer
+  cancel-in-progress: false
+
+jobs:
+  recover-day28:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      DAY_KEY: "2026-08-28"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main after writer lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune origin main
+          git checkout -B main origin/main
+          test -z "$(git status --porcelain)"
+          echo "SOURCE_HEAD=$(git rev-parse HEAD)"
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm --prefix engine-v1 ci --no-audit --no-fund
+
+      - name: Verify recovery is still required
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import fs from "node:fs";
+          const day = process.env.DAY_KEY;
+          const latest = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
+          console.log("LATEST_BEFORE=" + String(latest?.date || ""));
+          if (String(latest?.date || "") > day) {
+            throw new Error(`refuse_retrograde_latest:${latest.date}`);
+          }
+          if (String(latest?.date || "") === day) {
+            console.log("DAY28_ALREADY_PUBLISHED=TRUE");
+            process.exit(0);
+          }
+          if (String(latest?.date || "") !== "2026-08-27") {
+            throw new Error(`unexpected_latest_before_day28_recovery:${latest?.date || "missing"}`);
+          }
+          NODE
+
+      - name: Rebuild full Day28 pre-Value snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" \
+            --no-update-latest \
+            --replace-details \
+            --no-build-missing-details \
+            --fail-on-missing-details
+
+      - name: Bootstrap missing immutable Plan A and adjusted observations exactly once
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'NODE'
+          import fs from "node:fs";
+          import { buildValueDay } from "./engine-v1/core/build-value-day.js";
+          import {
+            ensurePlanAObservationDay,
+            readPlanAObservationDay
+          } from "./engine-v1/value/plan-a-observation.js";
+          import {
+            buildValueA2B2Day,
+            readFrozenAdjustedValueObservations
+          } from "./engine-v1/jobs/build-value-a2-b2-day.js";
+
+          const day = process.env.DAY_KEY;
+          const latest = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
+          if (String(latest?.date || "") !== "2026-08-27") {
+            throw new Error(`day28_bootstrap_requires_unpublished_day:${latest?.date || "missing"}`);
+          }
+
+          const planABefore = readPlanAObservationDay(day);
+          const planAExists = fs.existsSync(planABefore.file);
+          console.log("PLAN_A_BEFORE=" + JSON.stringify({ exists: planAExists, ok: planABefore?.ok === true }));
+
+          if (planAExists && planABefore?.ok !== true) {
+            throw new Error("invalid_existing_plan_a_observation_refused");
+          }
+
+          if (!planAExists) {
+            const candidate = await buildValueDay(day, { rebuild: true });
+            if (candidate?.ok === false) {
+              throw new Error("day28_plan_a_candidate_build_failed");
+            }
+
+            const frozen = ensurePlanAObservationDay(day, candidate, {
+              sourcePath: `data/value/${day}.json`,
+              provenance: {
+                kind: "day28_unpublished_recovery_first_freeze",
+                note: "One-shot recovery: Day28 never reached latest/publication, so this creates its first immutable Plan A observation before historical refresh."
+              }
+            });
+
+            console.log("PLAN_A_BOOTSTRAP=" + JSON.stringify({
+              ok: frozen?.ok === true,
+              created: frozen?.created === true,
+              preservedExisting: frozen?.preservedExisting === true,
+              count: Number(frozen?.count || 0),
+              signature: frozen?.observationSignature || null
+            }));
+
+            if (frozen?.ok !== true || frozen?.created !== true) {
+              throw new Error(`day28_plan_a_freeze_failed:${frozen?.reason || "unknown"}`);
+            }
+          }
+
+          const adjustedBefore = readFrozenAdjustedValueObservations(day);
+          const hasA2 = Boolean(adjustedBefore?.A2);
+          const hasB2 = Boolean(adjustedBefore?.B2);
+          if (hasA2 !== hasB2) {
+            throw new Error("partial_adjusted_observation_state_refused");
+          }
+
+          if (!hasA2 && !hasB2) {
+            const result = await buildValueA2B2Day(day, { calendarDay: "2026-08-27" });
+            console.log("A2_B2_BOOTSTRAP=" + JSON.stringify({
+              ok: result?.ok === true,
+              freezeObservations: result?.freezeObservations,
+              a2Count: Number(result?.plans?.A2?.count || 0),
+              b2Count: Number(result?.plans?.B2?.count || 0)
+            }));
+            if (result?.ok !== true || result?.freezeObservations !== false) {
+              throw new Error("adjusted_observation_bootstrap_failed");
+            }
+          }
+
+          const planAAfter = readPlanAObservationDay(day);
+          const adjustedAfter = readFrozenAdjustedValueObservations(day);
+          if (planAAfter?.ok !== true || !adjustedAfter?.A2 || !adjustedAfter?.B2) {
+            throw new Error("day28_observation_bootstrap_validation_failed");
+          }
+
+          console.log("OBSERVATIONS_READY=" + JSON.stringify({
+            planA: planAAfter?.ok === true,
+            a2: Boolean(adjustedAfter?.A2),
+            b2: Boolean(adjustedAfter?.B2)
+          }));
+          NODE
+
+      - name: Refresh official Value artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
+
+      - name: Synchronize Details with frozen Plan A
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-details-day.js "$DAY_KEY" --rebuild
+          node ./engine-v1/jobs/export-deploy-snapshot-day.js "$DAY_KEY" \
+            --no-update-latest \
+            --replace-details \
+            --no-build-missing-details \
+            --fail-on-missing-details
+          node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
+          node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
+
+      - name: Run hard publication gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+          node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+          node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+          node ./engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+          node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
+
+      - name: Promote Day28 atomically
+        shell: bash
+        run: |
+          set -euo pipefail
+          node ./engine-v1/jobs/promote-deploy-snapshot-latest-day.js --date="$DAY_KEY"
+          node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --gate
+          node --input-type=module - <<'NODE'
+          import fs from "node:fs";
+          const latest = JSON.parse(fs.readFileSync("data/deploy-snapshots/latest.json", "utf8"));
+          if (latest?.date !== process.env.DAY_KEY) throw new Error(`latest_promotion_failed:${latest?.date || "missing"}`);
+          console.log("DAY28_LATEST_PROMOTED=TRUE");
+          NODE
+
+      - name: Stage exact Day28 publication outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore --staged . || true
+          git add "data/deploy-snapshots/latest.json"
+          git add "data/deploy-snapshots/${DAY_KEY}/"
+          test -f "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json" || true
+          test -f "data/foundation-integrity/${DAY_KEY}.json" && git add "data/foundation-integrity/${DAY_KEY}.json" || true
+          test -f "data/foundation-integrity/latest.json" && git add "data/foundation-integrity/latest.json" || true
+          test -f "data/system-health/${DAY_KEY}.json" && git add "data/system-health/${DAY_KEY}.json" || true
+          test -f "data/system-health/latest.json" && git add "data/system-health/latest.json" || true
+          test -f "data/value/${DAY_KEY}.json" && git add "data/value/${DAY_KEY}.json" || true
+          test -f "data/value/_audit/${DAY_KEY}.json" && git add "data/value/_audit/${DAY_KEY}.json" || true
+          test -d "data/value-plans/${DAY_KEY}" && git add "data/value-plans/${DAY_KEY}/" || true
+          test -f "data/value-comparison/${DAY_KEY}.json" && git add "data/value-comparison/${DAY_KEY}.json" || true
+          test -f "data/value-comparison/cumulative.json" && git add "data/value-comparison/cumulative.json" || true
+          test -f "data/plan-c-shadow/${DAY_KEY}.json" && git add "data/plan-c-shadow/${DAY_KEY}.json" || true
+          test -f "data/plan-c-shadow/_audit/${DAY_KEY}.json" && git add "data/plan-c-shadow/_audit/${DAY_KEY}.json" || true
+
+          node ./engine-v1/jobs/guard-staged-data-boundary.js \
+            --label=day28-publication-recovery-v2 \
+            --dayKey="$DAY_KEY" \
+            --allow="^(data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\\.json$|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/${DAY_KEY}\\.json$|data/system-health/latest\\.json$|data/value/${DAY_KEY}\\.json$|data/value/_audit/${DAY_KEY}\\.json$|data/value-plans/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\\.json$|data/value-comparison/cumulative\\.json$|data/plan-c-shadow/${DAY_KEY}\\.json$|data/plan-c-shadow/_audit/${DAY_KEY}\\.json$)"
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+          echo "=== STAGED ==="
+          git diff --cached --name-only
+
+      - name: Commit and push Day28 publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Recovery: Publish Day28 with first frozen Plan A"
+
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "DAY28_PUSHED=TRUE"
+              exit 0
+            fi
+            echo "Push race attempt ${attempt}; rebasing onto current main."
+            git fetch origin main
+            git rebase origin/main
+          done
+          echo "DAY28_PUSH_FAILED=TRUE" >&2
+          exit 1
+
+      - name: Verify Day28 on remote main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:data/deploy-snapshots/latest.json > /tmp/latest.json
+          node --input-type=module - <<'NODE'
+          import fs from "node:fs";
+          const latest = JSON.parse(fs.readFileSync("/tmp/latest.json", "utf8"));
+          if (latest?.date !== "2026-08-28") throw new Error(`remote_latest_not_day28:${latest?.date || "missing"}`);
+          console.log("REMOTE_DAY28_PUBLICATION=PASS");
+          NODE
