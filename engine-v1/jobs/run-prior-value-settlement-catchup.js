@@ -66,6 +66,54 @@ function hasSettlementArtifacts(dayKey) {
   return paths.some(file => fs.existsSync(file));
 }
 
+function rowsOfCanonicalPayload(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.fixtures)) return payload.fixtures;
+  if (Array.isArray(payload?.matches)) return payload.matches;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+}
+
+function canonicalRowIsTerminal(row) {
+  const statusText = [
+    row?.status,
+    row?.statusType,
+    row?.rawStatus,
+    row?.operationalState,
+    row?.phase
+  ]
+    .map(value => String(value || "").trim().toUpperCase())
+    .filter(Boolean)
+    .join(" ");
+
+  return /\b(FT|FINAL|STATUS_FINAL|AET|PEN|CANCELLED|CANCELED|POSTPONED|ABANDONED|SUSPENDED|AWARDED|WALKOVER|WO)\b/u.test(statusText);
+}
+
+export function canonicalDayHasOpenStatusRows(dayKey) {
+  const dir = resolveDataPath("canonical-fixtures", dayKey);
+  if (!fs.existsSync(dir)) return false;
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+
+    try {
+      const payload = JSON.parse(
+        fs.readFileSync(path.join(dir, entry.name), "utf8")
+      );
+
+      if (rowsOfCanonicalPayload(payload).some(row => !canonicalRowIsTerminal(row))) {
+        return true;
+      }
+    } catch {
+      // Unreadable canonical evidence is not treated as terminal. The normal
+      // source/status jobs and health gates remain responsible for surfacing it.
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function verifiedFinalOffsets(dayKey, todayDayKey) {
   const center = dayOffset(dayKey, todayDayKey);
   return [...new Set([center - 1, center, center + 1])];
@@ -108,11 +156,23 @@ export async function runPriorValueSettlementCatchup(baseDayKey, options = {}) {
       settlementAttempted: false,
       unresolvedBefore: countUnresolvedComparisonPicks(dayKey),
       unresolvedAfter: null,
+      openCanonicalBefore: hasCanonical ? canonicalDayHasOpenStatusRows(dayKey) : false,
+      openCanonicalAfter: null,
       errors: []
     };
 
     const needsSettlement = hasSettlement && row.unresolvedBefore !== 0;
-    const refreshTruth = hasCanonical && (back === 1 || needsSettlement);
+
+    // Do not tie historical FT/result truth refresh to Value picks. A past day
+    // may still contain PRE/LIVE/UNKNOWN canonical rows even when every Value
+    // pick is already settled (or the fixture never had a Value pick at all).
+    // Provider refresh remains exact-evidence/monotonic and never promotes FT
+    // merely because time elapsed.
+    const refreshTruth = hasCanonical && (
+      back === 1 ||
+      needsSettlement ||
+      row.openCanonicalBefore
+    );
 
     if (refreshTruth) {
       try {
@@ -155,6 +215,7 @@ export async function runPriorValueSettlementCatchup(baseDayKey, options = {}) {
     }
 
     row.unresolvedAfter = countUnresolvedComparisonPicks(dayKey);
+    row.openCanonicalAfter = hasCanonical ? canonicalDayHasOpenStatusRows(dayKey) : false;
 
     runNodeJob([
       "./engine-v1/jobs/build-system-health-alerts-day.js",
