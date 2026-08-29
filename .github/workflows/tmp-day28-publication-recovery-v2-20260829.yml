@@ -70,6 +70,16 @@ jobs:
           }
           NODE
 
+      - name: Refresh exact provider truth for Day28
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Re-check every still-open Day28 row. The refresh path is exact
+          # provider-ID only and never promotes FT from elapsed time.
+          node ./engine-v1/jobs/run-live-status-refresh-day.js \
+            "$DAY_KEY" \
+            --include-all-open-states
+
       - name: Rebuild full Day28 pre-Value snapshot
         shell: bash
         run: |
@@ -221,6 +231,7 @@ jobs:
         run: |
           set -euo pipefail
           git restore --staged . || true
+          test -d "data/canonical-fixtures/${DAY_KEY}" && git add "data/canonical-fixtures/${DAY_KEY}/" || true
           git add "data/deploy-snapshots/latest.json"
           git add "data/deploy-snapshots/${DAY_KEY}/"
           test -f "data/build-reports/${DAY_KEY}.json" && git add "data/build-reports/${DAY_KEY}.json" || true
@@ -239,7 +250,7 @@ jobs:
           node ./engine-v1/jobs/guard-staged-data-boundary.js \
             --label=day28-publication-recovery-v2 \
             --dayKey="$DAY_KEY" \
-            --allow="^(data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\\.json$|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/${DAY_KEY}\\.json$|data/system-health/latest\\.json$|data/value/${DAY_KEY}\\.json$|data/value/_audit/${DAY_KEY}\\.json$|data/value-plans/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\\.json$|data/value-comparison/cumulative\\.json$|data/plan-c-shadow/${DAY_KEY}\\.json$|data/plan-c-shadow/_audit/${DAY_KEY}\\.json$)"
+            --allow="^(data/canonical-fixtures/${DAY_KEY}/|data/deploy-snapshots/latest\\.json$|data/deploy-snapshots/${DAY_KEY}/|data/build-reports/${DAY_KEY}\\.json$|data/foundation-integrity/${DAY_KEY}\\.json$|data/foundation-integrity/latest\\.json$|data/system-health/${DAY_KEY}\\.json$|data/system-health/latest\\.json$|data/value/${DAY_KEY}\\.json$|data/value/_audit/${DAY_KEY}\\.json$|data/value-plans/${DAY_KEY}/|data/value-comparison/${DAY_KEY}\\.json$|data/value-comparison/cumulative\\.json$|data/plan-c-shadow/${DAY_KEY}\\.json$|data/plan-c-shadow/_audit/${DAY_KEY}\\.json$)"
           git diff --cached --check
           test -n "$(git diff --cached --name-only)"
           echo "=== STAGED ==="
