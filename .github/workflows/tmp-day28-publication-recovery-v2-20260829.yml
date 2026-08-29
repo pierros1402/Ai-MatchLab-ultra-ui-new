@@ -200,17 +200,52 @@ jobs:
           node ./engine-v1/jobs/refresh-value-artifacts-day.js --date="$DAY_KEY" --no-update-latest
           node ./engine-v1/jobs/verify-details-value-mirror-day.js --date="$DAY_KEY" --gate
 
-      - name: Run hard publication gates
+      - name: Build cumulative Value comparison
         shell: bash
         run: |
           set -euo pipefail
           node ./engine-v1/jobs/build-value-comparison-cumulative.js --write
+
+      - name: Gate snapshot invariant
+        shell: bash
+        run: |
+          set -euo pipefail
           node ./engine-v1/jobs/run-snapshot-invariant-check.js "$DAY_KEY" --gate
+
+      - name: Gate published-outcome freshness
+        shell: bash
+        run: |
+          set -euo pipefail
           node ./engine-v1/jobs/verify-artifact-freshness-day.js --date="$DAY_KEY" --gate
+
+      - name: Gate immutable Value artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
           node ./engine-v1/jobs/check-value-artifact-gate.js --date="$DAY_KEY"
+
+      - name: Build Value foundation integrity
+        shell: bash
+        run: |
+          set -euo pipefail
           node ./engine-v1/jobs/build-foundation-integrity-report.js --date="$DAY_KEY" --gate
+
+      - name: Build Day28 Value day report
+        shell: bash
+        run: |
+          set -euo pipefail
           node ./engine-v1/jobs/build-day-report.js --date="$DAY_KEY"
+
+      - name: Build Value System Health
+        shell: bash
+        run: |
+          set -euo pipefail
           node ./engine-v1/jobs/build-system-health-alerts-day.js --date="$DAY_KEY"
+
+      - name: Gate final Day28 prepublish contract
+        shell: bash
+        run: |
+          set -euo pipefail
           node ./engine-v1/jobs/verify-daily-publish-contract.js --date="$DAY_KEY" --prepublish --gate
 
       - name: Promote Day28 atomically
