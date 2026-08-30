@@ -2,7 +2,7 @@
   "ok": false,
   "schema": "ai-matchlab.day-build-report.v1",
   "dayKey": "2026-08-30",
-  "generatedAt": "2026-08-30T07:30:39.673Z",
+  "generatedAt": "2026-08-30T08:46:18.857Z",
   "universe": {
     "expected": null,
     "canonical": 396,
@@ -265,11 +265,19 @@
   "settlement": null,
   "foundationIntegrity": {
     "schema": "ai-matchlab.foundation-integrity.v1",
-    "generatedAt": "2026-08-30T07:30:39.432Z",
+    "generatedAt": "2026-08-30T08:46:18.579Z",
     "season": "2026-2027",
-    "modelReady": true,
+    "modelReady": false,
     "publicationReady": false,
     "blocked": [
+      {
+        "component": "historyIndex",
+        "reason": "history_index_foundation_stale"
+      },
+      {
+        "component": "modelPriors",
+        "reason": "model_priors_foundation_stale"
+      },
       {
         "component": "details",
         "reason": "details_foundation_not_ready"
@@ -314,6 +322,7 @@
   },
   "hardFailures": [
     "manifest_missing",
+    "foundation_model_not_ready",
     "foundation_publication_not_ready",
     "snapshot_stale",
     "value_plan_comparison_missing"
