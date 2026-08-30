@@ -36,7 +36,10 @@ jobs:
     runs-on: ubuntu-latest
     # Hard deadline budget. A scheduled run admitted at 22:10 Athens must stop
     # before midnight instead of drifting into the next operational day.
-    timeout-minutes: 100
+    # Manual incident-recovery runs need enough room for the same exhaustive
+    # cycle plus the publication gates; Day29 proved that the cycle alone can
+    # legitimately consume almost the entire scheduled budget.
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 180 || 100 }}
 
     steps:
       - name: Checkout repository

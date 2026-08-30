@@ -33,13 +33,15 @@ test("scheduled full publication is tomorrow-only and cannot consume midnight", 
     /ATHENS_TOTAL_MINUTES" -gt (\d+)/,
     "scheduled admission cutoff"
   );
-  const timeoutMinutes = numberMatch(
-    workflow,
-    /timeout-minutes:\s*(\d+)/,
-    "daily job timeout"
+  const timeoutMatch = workflow.match(
+    /timeout-minutes:\s*\$\{\{\s*github\.event_name\s*==\s*'workflow_dispatch'\s*&&\s*(\d+)\s*\|\|\s*(\d+)\s*\}\}/
   );
+  assert.ok(timeoutMatch, "missing event-scoped daily job timeout");
+  const manualTimeoutMinutes = Number(timeoutMatch[1]);
+  const timeoutMinutes = Number(timeoutMatch[2]);
 
   assert.equal(cutoffMinutes, 1330);
+  assert.equal(manualTimeoutMinutes, 180);
   assert.equal(timeoutMinutes, 100);
   assert.ok(
     cutoffMinutes + timeoutMinutes < 1440,
