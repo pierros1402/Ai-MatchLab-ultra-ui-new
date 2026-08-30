@@ -53,7 +53,11 @@ jobs:
   seed-day29-adjusted-observations:
     needs: wait-for-day28
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    # The full Day29 daily-cycle rebuild is intentionally exhaustive and the
+    # first recovery attempt was cancelled by the old 100-minute job budget
+    # while details were still making forward progress. Leave enough room for
+    # the post-cycle synchronization and observation-freeze gates as well.
+    timeout-minutes: 180
     concurrency:
       group: ai-matchlab-data-writer
       cancel-in-progress: false
