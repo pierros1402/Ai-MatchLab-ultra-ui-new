@@ -1,0 +1,33 @@
+name: P0 trigger repaired Day29 publication recovery
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-p0-trigger-stage2-day29-20260831.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-stage2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Dispatch repaired Day29 Stage2
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "DISPATCH_TARGET=tmp-p0-publication-chain-stage2-day29-20260829.yml"
+          gh workflow run tmp-p0-publication-chain-stage2-day29-20260829.yml --ref main
+          sleep 8
+          gh run list \
+            --workflow tmp-p0-publication-chain-stage2-day29-20260829.yml \
+            --limit 5 \
+            --json databaseId,status,conclusion,headSha,createdAt,event
