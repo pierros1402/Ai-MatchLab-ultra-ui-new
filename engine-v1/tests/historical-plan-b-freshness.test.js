@@ -318,6 +318,116 @@ test(
 );
 
 test(
+  "full current publication preserves aliased historical observation identities",
+  () => {
+    const input =
+      frozenFreshnessInput({
+        currentIds: [
+          "cid_one",
+          "cid_three"
+        ]
+      });
+
+    input.snapshotFixtures = [
+      {
+        canonicalId:
+          "cid_one"
+      },
+      {
+        canonicalId:
+          "cid_three",
+        canonicalAliases: [
+          "cid_two"
+        ]
+      }
+    ];
+
+    input.snapshotValue = {
+      date:
+        input.dayKey,
+      planId:
+        "plan-a",
+      outputMode:
+        "plan-a-observation",
+      immutable: true,
+      publicationAuthority:
+        "frozen_plan_a_observation",
+      count: 1,
+      picks: [
+        {
+          canonicalId:
+            "cid_one"
+        }
+      ]
+    };
+
+    input.manifest = {
+      ok: true,
+      date:
+        input.dayKey,
+      source:
+        "local_canonical_export",
+      canonicalFixtureCount: 2,
+      fixtureJsonCount: 2,
+      publicationUniverse: {
+        mode:
+          "full_current_universe",
+        currentFixtureCount: 2,
+        publishedFixtureCount: 2,
+        deferredFixtureCount: 0,
+        deferredFixtureIds: []
+      },
+      counts: {
+        fixtures: 2,
+        details: 2,
+        detailsMatchedToFixtures: 2,
+        detailsMissingForFixtures: 0
+      },
+      detailsMissingForFixtures: [],
+      valueGate: {
+        fixtures: 2,
+        ok: true,
+        frozenIdentityBound: true,
+        frozenReleaseSafe: true,
+        orphanPickCount: 0,
+        missingMatchIdPickCount: 0,
+        dayBound: true,
+        canonicalSourceBound: true
+      }
+    };
+
+    const result =
+      evaluateFrozenValueObservationFreshness(
+        input
+      );
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result
+        .publicationMembershipPreserved,
+      true
+    );
+
+    assert.deepEqual(
+      result
+        .resolvedFrozenAliasMappings,
+      [
+        {
+          frozenCanonicalId:
+            "cid_two",
+          publishedCanonicalId:
+            "cid_three"
+        }
+      ]
+    );
+  }
+);
+
+test(
   "frozen Value freshness retains strict descriptor parity inside the frozen cohort",
   () => {
     const result =

@@ -13,10 +13,14 @@ import {
 const day =
   "2026-08-25";
 
-function fixture(id) {
+function fixture(
+  id,
+  canonicalAliases = []
+) {
   return {
     canonicalId: id,
     matchId: id,
+    canonicalAliases,
     leagueSlug: "test.1",
     homeTeam: "Home " + id,
     awayTeam: "Away " + id,
@@ -48,6 +52,8 @@ function plan(ids = []) {
 function makeManifest({
   currentIds,
   publishedIds,
+  publicationMode =
+    "intraday_status_only",
   deferredIds = [],
   explicitIds,
   legacyIds,
@@ -56,7 +62,7 @@ function makeManifest({
 }) {
   const publicationUniverse = {
     mode:
-      "intraday_status_only",
+      publicationMode,
     currentFixtureCount:
       currentIds.length,
     publishedFixtureCount:
@@ -139,6 +145,8 @@ function evaluate({
   frozenIds,
   currentIds,
   publishedIds,
+  publicationMode =
+    "intraday_status_only",
   deferredIds = [],
   explicitIds,
   legacyIds,
@@ -146,6 +154,11 @@ function evaluate({
   a2Picks = [],
   bPicks = [],
   b2Picks = [],
+  planAPicks = [],
+  includePublishedPlan =
+    publicationMode ===
+      "full_current_universe",
+  snapshotAliasesById = {},
   valueGateOverride = {}
 }) {
   return evaluateFrozenValuePublicationMembership({
@@ -158,18 +171,48 @@ function evaluate({
       universe(currentIds),
 
     snapshotFixtures:
-      publishedIds.map(fixture),
+      publishedIds.map(id =>
+        fixture(
+          id,
+          snapshotAliasesById[id] ||
+          []
+        )
+      ),
 
     manifest:
       makeManifest({
         currentIds,
         publishedIds,
+        publicationMode,
         deferredIds,
         explicitIds,
         legacyIds,
         orphanIds,
         valueGateOverride
       }),
+
+    publishedPlan:
+      includePublishedPlan
+        ? {
+            date: day,
+            planId:
+              "plan-a",
+            outputMode:
+              "plan-a-observation",
+            immutable: true,
+            publicationAuthority:
+              "frozen_plan_a_observation",
+            count:
+              planAPicks.length,
+            picks:
+              planAPicks.map(
+                id => ({
+                  canonicalId: id,
+                  matchId: id
+                })
+              )
+          }
+        : null,
 
     plans: [
       plan(a2Picks),
@@ -178,6 +221,231 @@ function evaluate({
     ]
   });
 }
+
+test(
+  "full current publication preserves a strict historical observation cohort",
+  () => {
+    const result =
+      evaluate({
+        frozenIds: [
+          "keep",
+          "renamed-old"
+        ],
+        currentIds: [
+          "keep",
+          "renamed-new",
+          "late"
+        ],
+        publishedIds: [
+          "keep",
+          "renamed-new",
+          "late"
+        ],
+        publicationMode:
+          "full_current_universe",
+        snapshotAliasesById: {
+          "renamed-new": [
+            "renamed-old"
+          ]
+        },
+        planAPicks: [
+          "keep"
+        ],
+        a2Picks: [
+          "renamed-old"
+        ],
+        bPicks: [
+          "keep"
+        ],
+        b2Picks: [
+          "keep"
+        ]
+      });
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result.authorizedShrink,
+      false
+    );
+
+    assert.deepEqual(
+      result.removedFixtureIds,
+      []
+    );
+
+    assert.deepEqual(
+      result
+        .publishedOutsideFrozenFixtureIds,
+      [
+        "late"
+      ]
+    );
+
+    assert.deepEqual(
+      result
+        .resolvedFrozenAliasMappings,
+      [
+        {
+          frozenCanonicalId:
+            "renamed-old",
+          publishedCanonicalId:
+            "renamed-new"
+        }
+      ]
+    );
+
+    assert.equal(
+      result.evidenceSource,
+      "full_current_universe_exact_membership"
+    );
+  }
+);
+
+test(
+  "ambiguous published canonical aliases fail closed",
+  () => {
+    const result =
+      evaluate({
+        frozenIds: [
+          "old"
+        ],
+        currentIds: [
+          "new-a",
+          "new-b"
+        ],
+        publishedIds: [
+          "new-a",
+          "new-b"
+        ],
+        publicationMode:
+          "full_current_universe",
+        snapshotAliasesById: {
+          "new-a": [
+            "old"
+          ],
+          "new-b": [
+            "old"
+          ]
+        }
+      });
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "snapshot_alias_ambiguous"
+    );
+  }
+);
+
+test(
+  "full current publication fails closed when it omits a current fixture",
+  () => {
+    const result =
+      evaluate({
+        frozenIds: [
+          "keep"
+        ],
+        currentIds: [
+          "keep",
+          "late"
+        ],
+        publishedIds: [
+          "keep"
+        ],
+        publicationMode:
+          "full_current_universe",
+        planAPicks: [
+          "keep"
+        ]
+      });
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "full_current_publication_membership_mismatch"
+    );
+  }
+);
+
+test(
+  "full current publication validates frozen Plan A picks too",
+  () => {
+    const result =
+      evaluate({
+        frozenIds: [
+          "keep",
+          "removed"
+        ],
+        currentIds: [
+          "keep"
+        ],
+        publishedIds: [
+          "keep"
+        ],
+        publicationMode:
+          "full_current_universe",
+        planAPicks: [
+          "removed"
+        ]
+      });
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "frozen_pick_not_publishable"
+    );
+  }
+);
+
+test(
+  "full current publication requires the frozen Plan A contract",
+  () => {
+    const result =
+      evaluate({
+        frozenIds: [
+          "keep"
+        ],
+        currentIds: [
+          "keep",
+          "late"
+        ],
+        publishedIds: [
+          "keep",
+          "late"
+        ],
+        publicationMode:
+          "full_current_universe",
+        includePublishedPlan:
+          false
+      });
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.reason,
+      "full_current_publication_plan_invalid"
+    );
+  }
+);
 
 test(
   "legacy wrong-day prune bootstrap preserves the frozen cohort",

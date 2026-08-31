@@ -234,6 +234,7 @@ export function evaluateFrozenValueObservationFreshness({
   currentUniverse = null,
   manifest = null,
   snapshotFixtures = [],
+  snapshotValue = null,
   planA2 = null,
   planA2Audit = null,
   planB = null,
@@ -389,6 +390,8 @@ export function evaluateFrozenValueObservationFreshness({
           planA2Universe,
         manifest,
         snapshotFixtures,
+        publishedPlan:
+          snapshotValue,
         plans: [
           planA2,
           planB,
@@ -467,6 +470,16 @@ export function evaluateFrozenValueObservationFreshness({
     deferredCurrentFixtureIds:
       publicationMembership
         ?.deferredCurrentFixtureIds ||
+      [],
+
+    publishedOutsideFrozenFixtureIds:
+      publicationMembership
+        ?.publishedOutsideFrozenFixtureIds ||
+      [],
+
+    resolvedFrozenAliasMappings:
+      publicationMembership
+        ?.resolvedFrozenAliasMappings ||
       [],
 
     removalEvidenceSource:
@@ -781,6 +794,7 @@ export function verifyArtifactFreshnessDay(dayKey) {
           currentValueUniverse,
         manifest,
         snapshotFixtures,
+        snapshotValue,
         planA2,
         planA2Audit,
         planB,
@@ -821,6 +835,12 @@ export function verifyArtifactFreshnessDay(dayKey) {
             deferredCurrentFixtureIds:
               frozenValueObservationFreshness
                 .deferredCurrentFixtureIds || [],
+            publishedOutsideFrozenFixtureIds:
+              frozenValueObservationFreshness
+                .publishedOutsideFrozenFixtureIds || [],
+            resolvedFrozenAliasMappings:
+              frozenValueObservationFreshness
+                .resolvedFrozenAliasMappings || [],
             removalEvidenceSource:
               frozenValueObservationFreshness
                 .removalEvidenceSource || null

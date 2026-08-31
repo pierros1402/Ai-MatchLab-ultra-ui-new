@@ -122,6 +122,7 @@ export function evaluateFrozenValuePublicationMembership({
   frozenUniverse,
   manifest,
   snapshotFixtures = [],
+  publishedPlan = null,
   plans = []
 } = {}) {
   const fail =
@@ -205,6 +206,110 @@ export function evaluateFrozenValuePublicationMembership({
       snapshotIds
     );
 
+  const snapshotAliasToCanonical =
+    new Map();
+
+  const snapshotAliasesByCanonical =
+    new Map();
+
+  for (
+    let index = 0;
+    index < rows.length;
+    index += 1
+  ) {
+    const row = rows[index];
+    const canonicalId =
+      snapshotIds[index];
+
+    if (
+      row?.canonicalAliases !==
+        undefined &&
+      !Array.isArray(
+        row?.canonicalAliases
+      )
+    ) {
+      return fail(
+        "snapshot_aliases_invalid"
+      );
+    }
+
+    const aliases =
+      (
+        Array.isArray(
+          row?.canonicalAliases
+        )
+          ? row.canonicalAliases
+          : []
+      )
+        .map(clean);
+
+    if (
+      aliases.some(alias =>
+        !alias
+      ) ||
+      new Set(aliases).size !==
+        aliases.length
+    ) {
+      return fail(
+        "snapshot_aliases_invalid"
+      );
+    }
+
+    snapshotAliasesByCanonical.set(
+      canonicalId,
+      aliases
+    );
+
+    for (const alias of aliases) {
+      if (
+        snapshotSet.has(alias) &&
+        alias !== canonicalId
+      ) {
+        return fail(
+          "snapshot_alias_conflicts_current_identity"
+        );
+      }
+
+      const existing =
+        snapshotAliasToCanonical
+          .get(alias);
+
+      if (
+        existing &&
+        existing !== canonicalId
+      ) {
+        return fail(
+          "snapshot_alias_ambiguous"
+        );
+      }
+
+      snapshotAliasToCanonical.set(
+        alias,
+        canonicalId
+      );
+    }
+  }
+
+  const snapshotContainsIdentity =
+    id =>
+      snapshotSet.has(id) ||
+      snapshotAliasToCanonical
+        .has(id);
+
+  const publication =
+    manifest
+      ?.publicationUniverse ||
+    {};
+
+  const publicationMode =
+    clean(
+      publication?.mode
+    );
+
+  const fullCurrentPublication =
+    publicationMode ===
+      "full_current_universe";
+
   const publishedMissingCurrent =
     snapshotIds.filter(
       id =>
@@ -221,12 +326,23 @@ export function evaluateFrozenValuePublicationMembership({
   }
 
   const publishedOutsideFrozen =
-    snapshotIds.filter(
-      id =>
-        !frozenSet.has(id)
-    );
+    snapshotIds.filter(id => {
+      if (frozenSet.has(id)) {
+        return false;
+      }
+
+      const aliases =
+        snapshotAliasesByCanonical
+          .get(id) ||
+        [];
+
+      return !aliases.some(alias =>
+        frozenSet.has(alias)
+      );
+    });
 
   if (
+    !fullCurrentPublication &&
     publishedOutsideFrozen.length >
     0
   ) {
@@ -239,9 +355,29 @@ export function evaluateFrozenValuePublicationMembership({
     frozen.canonicalIds
       .filter(
         id =>
-          !snapshotSet.has(id)
+          !snapshotContainsIdentity(id)
       )
       .sort();
+
+  const resolvedFrozenAliasMappings =
+    frozen.canonicalIds
+      .filter(id =>
+        !snapshotSet.has(id) &&
+        snapshotAliasToCanonical
+          .has(id)
+      )
+      .map(id => ({
+        frozenCanonicalId: id,
+        publishedCanonicalId:
+          snapshotAliasToCanonical
+            .get(id)
+      }))
+      .sort((left, right) =>
+        left.frozenCanonicalId
+          .localeCompare(
+            right.frozenCanonicalId
+          )
+      );
 
   const deferredCurrentFixtureIds =
     current.canonicalIds
@@ -251,10 +387,17 @@ export function evaluateFrozenValuePublicationMembership({
       )
       .sort();
 
-  const publication =
-    manifest
-      ?.publicationUniverse ||
-    {};
+  if (
+    fullCurrentPublication &&
+    !sameIds(
+      snapshotIds,
+      current.canonicalIds
+    )
+  ) {
+    return fail(
+      "full_current_publication_membership_mismatch"
+    );
+  }
 
   const counts =
     manifest?.counts ||
@@ -296,10 +439,11 @@ export function evaluateFrozenValuePublicationMembership({
       manifest?.source
     ) ===
       "local_canonical_export" &&
-    clean(
-      publication?.mode
-    ) ===
-      "intraday_status_only" &&
+    (
+      publicationMode ===
+        "intraday_status_only" ||
+      fullCurrentPublication
+    ) &&
     Number(
       publication
         ?.currentFixtureCount
@@ -381,6 +525,122 @@ export function evaluateFrozenValuePublicationMembership({
     return fail(
       "publication_manifest_not_safe"
     );
+  }
+
+  const publishedPlans =
+    [
+      ...(
+        Array.isArray(plans)
+          ? plans
+          : []
+      )
+    ];
+
+  if (fullCurrentPublication) {
+    const publishedPicks =
+      Array.isArray(
+        publishedPlan?.picks
+      )
+        ? publishedPlan.picks
+        : null;
+
+    const publishedPlanSafe =
+      publishedPlan &&
+      typeof publishedPlan ===
+        "object" &&
+      clean(
+        publishedPlan?.date
+      ) === day &&
+      clean(
+        publishedPlan?.planId
+      ) === "plan-a" &&
+      clean(
+        publishedPlan?.outputMode
+      ) ===
+        "plan-a-observation" &&
+      publishedPlan?.immutable ===
+        true &&
+      clean(
+        publishedPlan
+          ?.publicationAuthority
+      ) ===
+        "frozen_plan_a_observation" &&
+      Array.isArray(
+        publishedPicks
+      ) &&
+      Number.isInteger(
+        publishedPlan?.count
+      ) &&
+      publishedPlan.count ===
+        publishedPicks.length;
+
+    if (!publishedPlanSafe) {
+      return fail(
+        "full_current_publication_plan_invalid"
+      );
+    }
+
+    publishedPlans.push(
+      publishedPlan
+    );
+  }
+
+  for (const plan of publishedPlans) {
+    const picks =
+      Array.isArray(plan?.picks)
+        ? plan.picks
+        : [];
+
+    for (const pick of picks) {
+      const id =
+        pickId(pick);
+
+      if (
+        !id ||
+        !snapshotContainsIdentity(id)
+      ) {
+        return fail(
+          "frozen_pick_not_publishable"
+        );
+      }
+    }
+  }
+
+  if (fullCurrentPublication) {
+    return {
+      ok: true,
+
+      reason:
+        "frozen_value_full_current_publication_membership_preserved",
+
+      publicationMembershipPreserved:
+        true,
+
+      authorizedShrink:
+        false,
+
+      removedFixtureIds,
+
+      deferredCurrentFixtureIds,
+
+      publishedOutsideFrozenFixtureIds:
+        publishedOutsideFrozen
+          .sort(),
+
+      resolvedFrozenAliasMappings,
+
+      evidenceSource:
+        "full_current_universe_exact_membership",
+
+      frozenFixtureCount:
+        frozen.count,
+
+      currentFixtureCount:
+        current.count,
+
+      publishedFixtureCount:
+        snapshotIds.length
+    };
   }
 
   const explicit =
@@ -467,34 +727,6 @@ export function evaluateFrozenValuePublicationMembership({
     );
   }
 
-  for (
-    const plan
-    of (
-      Array.isArray(plans)
-        ? plans
-        : []
-    )
-  ) {
-    const picks =
-      Array.isArray(plan?.picks)
-        ? plan.picks
-        : [];
-
-    for (const pick of picks) {
-      const id =
-        pickId(pick);
-
-      if (
-        !id ||
-        !snapshotSet.has(id)
-      ) {
-        return fail(
-          "frozen_pick_not_publishable"
-        );
-      }
-    }
-  }
-
   return {
     ok: true,
 
@@ -511,6 +743,8 @@ export function evaluateFrozenValuePublicationMembership({
     removedFixtureIds,
 
     deferredCurrentFixtureIds,
+
+    resolvedFrozenAliasMappings,
 
     evidenceSource,
 
