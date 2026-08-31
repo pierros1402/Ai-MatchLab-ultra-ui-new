@@ -57,12 +57,12 @@ jobs:
             if [ -f "data/value-plans/${DAY}/plan-a.json" ]; then
               echo "PLAN_A_ALREADY_PRESENT day=${DAY}"
               node --input-type=module - "$DAY" <<'NODE'
-import { readPlanAObservationDay } from "./engine-v1/value/plan-a-observation.js";
-const day = process.argv[2];
-const read = readPlanAObservationDay(day);
-console.log(JSON.stringify({ day, ok: read.ok, count: read?.payload?.count ?? null, signature: read?.payload?.observationSignature ?? null }, null, 2));
-if (!read.ok) process.exit(1);
-NODE
+          import { readPlanAObservationDay } from "./engine-v1/value/plan-a-observation.js";
+          const day = process.argv[2];
+          const read = readPlanAObservationDay(day);
+          console.log(JSON.stringify({ day, ok: read.ok, count: read?.payload?.count ?? null, signature: read?.payload?.observationSignature ?? null }, null, 2));
+          if (!read.ok) process.exit(1);
+          NODE
               return 0
             fi
 
@@ -70,14 +70,14 @@ NODE
             local SOURCE_AT
             SOURCE_AT="$(git show -s --format=%cI "$SOURCE_REF")"
             node - "$SOURCE_AT" "$BOUNDARY_UTC" <<'NODE'
-const sourceAt = Date.parse(process.argv[2]);
-const boundary = Date.parse(process.argv[3]);
-if (!Number.isFinite(sourceAt) || !Number.isFinite(boundary) || !(sourceAt < boundary)) {
-  console.error(JSON.stringify({ sourceAt: process.argv[2], boundaryUtc: process.argv[3], preEvent: false }, null, 2));
-  process.exit(1);
-}
-console.log(JSON.stringify({ sourceAt: process.argv[2], boundaryUtc: process.argv[3], preEvent: true }, null, 2));
-NODE
+          const sourceAt = Date.parse(process.argv[2]);
+          const boundary = Date.parse(process.argv[3]);
+          if (!Number.isFinite(sourceAt) || !Number.isFinite(boundary) || !(sourceAt < boundary)) {
+            console.error(JSON.stringify({ sourceAt: process.argv[2], boundaryUtc: process.argv[3], preEvent: false }, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify({ sourceAt: process.argv[2], boundaryUtc: process.argv[3], preEvent: true }, null, 2));
+          NODE
 
             rm -rf "$WORKTREE" "$OUT" "$AUDIT"
             git worktree add --detach "$WORKTREE" "$SOURCE_REF"
@@ -87,28 +87,28 @@ NODE
             (cd engine-v1 && npm ci --no-audit --no-fund)
 
             DAY_KEY="$DAY" OUT_PATH="$OUT" AUDIT_PATH="$AUDIT" node --input-type=module <<'NODE'
-import fs from "node:fs";
-import { buildValueDay } from "./engine-v1/core/build-value-day.js";
+          import fs from "node:fs";
+          import { buildValueDay } from "./engine-v1/core/build-value-day.js";
 
-const day = process.env.DAY_KEY;
-const outputPath = process.env.OUT_PATH;
-const auditPath = process.env.AUDIT_PATH;
-const result = await buildValueDay(day, {
-  rebuild: true,
-  outputPath,
-  auditPath
-});
-const payload = JSON.parse(fs.readFileSync(outputPath, "utf8"));
-const picks = Array.isArray(payload?.picks) ? payload.picks : [];
-console.log(JSON.stringify({
-  day,
-  buildOk: result?.ok !== false,
-  source: payload?.source || null,
-  count: picks.length,
-  outputPath
-}, null, 2));
-if (payload?.date !== day || !Array.isArray(payload?.picks)) process.exit(1);
-NODE
+          const day = process.env.DAY_KEY;
+          const outputPath = process.env.OUT_PATH;
+          const auditPath = process.env.AUDIT_PATH;
+          const result = await buildValueDay(day, {
+            rebuild: true,
+            outputPath,
+            auditPath
+          });
+          const payload = JSON.parse(fs.readFileSync(outputPath, "utf8"));
+          const picks = Array.isArray(payload?.picks) ? payload.picks : [];
+          console.log(JSON.stringify({
+            day,
+            buildOk: result?.ok !== false,
+            source: payload?.source || null,
+            count: picks.length,
+            outputPath
+          }, null, 2));
+          if (payload?.date !== day || !Array.isArray(payload?.picks)) process.exit(1);
+          NODE
 
             TRACKED_MUTATIONS="$(git status --porcelain --untracked-files=no)"
             if [ -n "$TRACKED_MUTATIONS" ]; then
@@ -119,39 +119,39 @@ NODE
             popd >/dev/null
 
             SOURCE_REF="$SOURCE_REF" SOURCE_AT="$SOURCE_AT" BOUNDARY_UTC="$BOUNDARY_UTC" DAY_KEY="$DAY" OUT_PATH="$OUT" node --input-type=module <<'NODE'
-import fs from "node:fs";
-import {
-  ensurePlanAObservationDay,
-  readPlanAObservationDay
-} from "./engine-v1/value/plan-a-observation.js";
+          import fs from "node:fs";
+          import {
+            ensurePlanAObservationDay,
+            readPlanAObservationDay
+          } from "./engine-v1/value/plan-a-observation.js";
 
-const day = process.env.DAY_KEY;
-const sourcePayload = JSON.parse(fs.readFileSync(process.env.OUT_PATH, "utf8"));
-const frozen = ensurePlanAObservationDay(day, sourcePayload, {
-  sourcePath: `git:${process.env.SOURCE_REF}:pre-event-replay:${day}`,
-  provenance: {
-    kind: "historical_pre_event_git_replay_recovery",
-    recoveryReason: "missing_historical_plan_a_observation",
-    sourceCommit: process.env.SOURCE_REF,
-    sourceCommitAt: process.env.SOURCE_AT,
-    operationalDayBoundaryUtc: process.env.BOUNDARY_UTC,
-    sourceCommitPrecedesOperationalDay: true,
-    replayReadOnly: true,
-    hindsightInputAllowed: false
-  }
-});
-console.log(JSON.stringify({ day, frozen }, null, 2));
-if (frozen?.ok !== true || frozen?.conflict === true) process.exit(1);
+          const day = process.env.DAY_KEY;
+          const sourcePayload = JSON.parse(fs.readFileSync(process.env.OUT_PATH, "utf8"));
+          const frozen = ensurePlanAObservationDay(day, sourcePayload, {
+            sourcePath: `git:${process.env.SOURCE_REF}:pre-event-replay:${day}`,
+            provenance: {
+              kind: "historical_pre_event_git_replay_recovery",
+              recoveryReason: "missing_historical_plan_a_observation",
+              sourceCommit: process.env.SOURCE_REF,
+              sourceCommitAt: process.env.SOURCE_AT,
+              operationalDayBoundaryUtc: process.env.BOUNDARY_UTC,
+              sourceCommitPrecedesOperationalDay: true,
+              replayReadOnly: true,
+              hindsightInputAllowed: false
+            }
+          });
+          console.log(JSON.stringify({ day, frozen }, null, 2));
+          if (frozen?.ok !== true || frozen?.conflict === true) process.exit(1);
 
-const read = readPlanAObservationDay(day);
-console.log(JSON.stringify({
-  day,
-  readOk: read.ok,
-  count: read?.payload?.count ?? null,
-  signature: read?.payload?.observationSignature ?? null
-}, null, 2));
-if (!read.ok) process.exit(1);
-NODE
+          const read = readPlanAObservationDay(day);
+          console.log(JSON.stringify({
+            day,
+            readOk: read.ok,
+            count: read?.payload?.count ?? null,
+            signature: read?.payload?.observationSignature ?? null
+          }, null, 2));
+          if (!read.ok) process.exit(1);
+          NODE
 
             git worktree remove --force "$WORKTREE"
           }
