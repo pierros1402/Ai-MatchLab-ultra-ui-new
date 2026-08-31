@@ -748,7 +748,7 @@ function normalizedSnapshotValue(dayKey, planAResult) {
   };
 }
 
-function updateSnapshotValueArtifacts(dayKey, planAResult) {
+export function updateSnapshotValueArtifacts(dayKey, planAResult) {
   const snapshotRoot = resolveDataPath("deploy-snapshots", dayKey);
   ensureDir(snapshotRoot);
 
@@ -769,7 +769,7 @@ function updateSnapshotValueArtifacts(dayKey, planAResult) {
   };
 }
 
-function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent, options = {}) {
+export function updateManifestValueMetadata(dayKey, valueOut, valueAuditPresent, options = {}) {
   const snapshotRoot = resolveDataPath("deploy-snapshots", dayKey);
   const manifestFile = path.join(snapshotRoot, "manifest.json");
   const manifest = readJsonSafe(manifestFile, null);
